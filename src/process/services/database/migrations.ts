@@ -1214,6 +1214,39 @@ const migration_v26: IMigration = {
 };
 
 /**
+ * Migration v26 -> v27: Accept 'wcore' alongside 'aionrs' on conversations.type
+ *
+ * Documentation-only migration — no schema change. v22 already removed the
+ * `CHECK(type IN ...)` constraint from `conversations.type`, so the column
+ * accepts any string and no schema-level work is required to allow 'wcore'.
+ *
+ * What changed alongside this version bump (in app code, not the schema):
+ *   - `AgentRegistry.createWCoreAgent()` now emits `kind: 'wcore'`.
+ *   - Other conversation writers (`SystemActions`, `ActionExecutor`,
+ *     `channels/types.ts`) emit `type: 'wcore'` for new conversations.
+ *   - Readers (`ChatSider`, `conversationBridge`, `ConversationServiceImpl`,
+ *     etc.) accept BOTH `'wcore'` (new) and `'aionrs'` (legacy) per the
+ *     dual-write/dual-read policy. Existing user data with `'aionrs'`
+ *     stays readable indefinitely.
+ *
+ * This entry exists so a future maintainer searching the migration history
+ * for "when did 'wcore' become accepted?" lands on a clear record instead
+ * of having to grep code and infer the policy.
+ */
+const migration_v27: IMigration = {
+  version: 27,
+  name: "Accept 'wcore' alongside 'aionrs' on conversations.type (no schema change)",
+  up: (_db) => {
+    console.log(
+      "[Migration v27] 'wcore'/'aionrs' dual-write/read policy documented (no schema change since v22 removed type CHECK)"
+    );
+  },
+  down: (_db) => {
+    console.log('[Migration v27] Rolled back (no schema change)');
+  },
+};
+
+/**
  * All migrations in order
  */
 // prettier-ignore
@@ -1222,7 +1255,7 @@ export const ALL_MIGRATIONS: IMigration[] = [
   migration_v7, migration_v8, migration_v9, migration_v10, migration_v11, migration_v12,
   migration_v13, migration_v14, migration_v15, migration_v16, migration_v17, migration_v18,
   migration_v19, migration_v20, migration_v21, migration_v22, migration_v23, migration_v24,
-  migration_v25, migration_v26,
+  migration_v25, migration_v26, migration_v27,
 ];
 
 /**
