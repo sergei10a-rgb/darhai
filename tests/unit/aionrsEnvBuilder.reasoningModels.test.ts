@@ -44,6 +44,28 @@ describe('defaultMaxTokensForModel', () => {
   it('matches case-insensitively', () => {
     expect(defaultMaxTokensForModel('Gemini-3.1-Pro-Preview')).toBe(32768);
   });
+
+  it('returns 32768 for OpenAI o-series reasoning models (o1, o3, o3-mini, o4, o4-mini)', () => {
+    expect(defaultMaxTokensForModel('o1')).toBe(32768);
+    expect(defaultMaxTokensForModel('o3')).toBe(32768);
+    expect(defaultMaxTokensForModel('o3-mini')).toBe(32768);
+    expect(defaultMaxTokensForModel('o4')).toBe(32768);
+    expect(defaultMaxTokensForModel('o4-mini')).toBe(32768);
+  });
+
+  it('matches o-series case-insensitively (O1, O3-Mini)', () => {
+    expect(defaultMaxTokensForModel('O1')).toBe(32768);
+    expect(defaultMaxTokensForModel('O3-Mini')).toBe(32768);
+  });
+
+  it('returns undefined for non-reasoning models with similar prefixes (gpt-4o, gpt-4o-mini)', () => {
+    expect(defaultMaxTokensForModel('gpt-4o')).toBeUndefined();
+    expect(defaultMaxTokensForModel('gpt-4o-mini')).toBeUndefined();
+  });
+
+  it('still routes o1-preview through the suffix pattern (already-covered case)', () => {
+    expect(defaultMaxTokensForModel('o1-preview')).toBe(32768);
+  });
 });
 
 describe('buildSpawnConfig — reasoning model max_tokens fallback', () => {

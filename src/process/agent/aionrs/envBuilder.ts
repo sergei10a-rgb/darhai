@@ -49,16 +49,25 @@ const GEMINI_OPENAI_COMPAT_PATH = '/v1beta/openai';
  * variants are non-reasoning and work cleanly at low budgets, so we leave
  * them alone — bumping their budget would just waste tokens.
  *
- * Detection is intentionally name-pattern based: any model whose name
- * matches `-pro` / `-preview` / `-thinking` / `-reasoning` (and is NOT a
- * `-flash` variant) gets a 32k default. Callers that pass an explicit
- * `maxTokens` always win — this is only a fallback.
+ * Detection is intentionally name-pattern based:
+ *   - Suffix match (`-pro` / `-preview` / `-thinking` / `-reasoning`) catches
+ *     Gemini Pro, Preview, and any future explicit reasoning variant.
+ *   - Anchored match (`^o\d+(-mini)?$`) catches OpenAI's bare o-series
+ *     reasoning models (`o1`, `o3`, `o3-mini`, `o4`, `o4-mini`). Their names
+ *     lack a reasoning-indicating suffix, so the suffix regex misses them.
+ *     Listed in `src/renderer/utils/model/modelContextLimits.ts`, so they
+ *     are reachable through any OpenAI-protocol provider in Wayland.
+ *
+ * `-flash` variants short-circuit first — they are non-reasoning and work
+ * cleanly at low budgets; bumping them would just waste tokens. Callers that
+ * pass an explicit `maxTokens` always win — this is only a fallback.
  */
 const REASONING_MODEL_DEFAULT_MAX_TOKENS = 32768;
 
 export function defaultMaxTokensForModel(modelName: string): number | undefined {
   if (!modelName) return undefined;
   if (/-flash/i.test(modelName)) return undefined;
+  if (/^o\d+(-mini)?$/i.test(modelName)) return REASONING_MODEL_DEFAULT_MAX_TOKENS;
   return /(-pro|-preview|-thinking|-reasoning)\b/i.test(modelName)
     ? REASONING_MODEL_DEFAULT_MAX_TOKENS
     : undefined;
