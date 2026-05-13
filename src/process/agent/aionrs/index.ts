@@ -70,6 +70,14 @@ export class AionrsAgent {
   private mcpReadyResolve!: () => void;
   public sessionId?: string;
   public capabilities?: AionrsCapabilities;
+  /**
+   * The `--max-tokens` value actually passed to aionrs, after applying the
+   * reasoning-model default fallback in `buildSpawnConfig`. `undefined` when
+   * no `--max-tokens` arg was added. Set during `start()`; `AionrsManager`
+   * mirrors this into `data.data.maxTokens` so the truncation heuristic
+   * compares `output_tokens` against the real budget rather than `undefined`.
+   */
+  public resolvedMaxTokens?: number;
 
   constructor(options: AionrsAgentOptions) {
     this.options = options;
@@ -95,7 +103,7 @@ export class AionrsAgent {
       throw new Error('aionrs binary not found');
     }
 
-    const { args, env, projectConfig } = buildSpawnConfig(this.options.model, {
+    const { args, env, projectConfig, resolvedMaxTokens } = buildSpawnConfig(this.options.model, {
       workspace: this.options.workspace,
       maxTokens: this.options.maxTokens,
       maxTurns: this.options.maxTurns,
@@ -103,6 +111,7 @@ export class AionrsAgent {
       sessionId: this.options.sessionId,
       resume: this.options.resume,
     });
+    this.resolvedMaxTokens = resolvedMaxTokens;
 
     // Write temporary .aionrs.toml for provider compat overrides
     if (projectConfig) {

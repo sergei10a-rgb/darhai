@@ -172,6 +172,13 @@ export class AionrsManager extends BaseAgentManager<AionrsManagerData, string> {
     await agent.start();
     this.agent = agent;
     this._capabilities = agent.capabilities ?? null;
+    // Mirror the resolved CLI budget (which may be the reasoning-model default
+    // from envBuilder) into manager data so detectTruncation can compare
+    // output_tokens against the real budget. Only fill the gap — never
+    // overwrite an explicit caller value.
+    if (this.data.data.maxTokens === undefined && agent.resolvedMaxTokens !== undefined) {
+      this.data.data.maxTokens = agent.resolvedMaxTokens;
+    }
     this.startHeartbeat();
 
     if (this.data.data.teamMcpStdioConfig) {

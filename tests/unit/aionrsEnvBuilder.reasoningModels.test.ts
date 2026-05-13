@@ -90,3 +90,25 @@ describe('buildSpawnConfig — reasoning model max_tokens fallback', () => {
     expect(maxTokensArg(args)).toBe('32768');
   });
 });
+
+describe('buildSpawnConfig — resolvedMaxTokens return value', () => {
+  const workspace = '/tmp/test-workspace';
+
+  it('returns resolvedMaxTokens=32768 for a reasoning model when caller omits maxTokens', () => {
+    const { resolvedMaxTokens } = buildSpawnConfig(makeModel('gemini', 'gemini-2.5-pro'), { workspace });
+    expect(resolvedMaxTokens).toBe(32768);
+  });
+
+  it('returns resolvedMaxTokens matching the caller value when explicitly set', () => {
+    const { resolvedMaxTokens } = buildSpawnConfig(makeModel('gemini', 'gemini-2.5-pro'), {
+      workspace,
+      maxTokens: 12345,
+    });
+    expect(resolvedMaxTokens).toBe(12345);
+  });
+
+  it('returns resolvedMaxTokens=undefined for a non-reasoning model with no explicit maxTokens', () => {
+    const { resolvedMaxTokens } = buildSpawnConfig(makeModel('gemini', 'gemini-2.5-flash'), { workspace });
+    expect(resolvedMaxTokens).toBeUndefined();
+  });
+});

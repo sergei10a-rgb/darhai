@@ -99,7 +99,19 @@ export function buildSpawnConfig(
     sessionId?: string;
     resume?: string;
   }
-): { args: string[]; env: Record<string, string>; projectConfig: string } {
+): {
+  args: string[];
+  env: Record<string, string>;
+  projectConfig: string;
+  /**
+   * The max_tokens value actually passed to aionrs (or undefined if no `--max-tokens`
+   * arg was added). Callers persist this so AionrsManager's truncation heuristic
+   * can compare `output_tokens` against the real budget — including the silent
+   * reasoning-model default from `defaultMaxTokensForModel`, which would otherwise
+   * be invisible to anything above the wrapper.
+   */
+  resolvedMaxTokens: number | undefined;
+} {
   const provider = mapProvider(model);
   const env: Record<string, string> = {};
   const args: string[] = ['--json-stream', '--provider', provider, '--model', model.useModel];
@@ -165,7 +177,7 @@ export function buildSpawnConfig(
   // Generate project config for compat overrides (e.g., max_tokens_field)
   const projectConfig = buildProjectConfig(model, provider);
 
-  return { args, env, projectConfig };
+  return { args, env, projectConfig, resolvedMaxTokens };
 }
 
 /**
