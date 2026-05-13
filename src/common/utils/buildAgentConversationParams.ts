@@ -36,7 +36,10 @@ export function getConversationTypeForBackend(backend: string): ICreateConversat
   switch (backend) {
     case 'gemini':
       return 'gemini';
+    case 'wcore':
     case 'aionrs':
+      // Dual-read: 'wcore' (new) and 'aionrs' (legacy) both resolve to the
+      // internal 'aionrs' backend id (preserved per BLACKBOARD locked decision).
       return 'aionrs';
     case 'openclaw-gateway':
     case 'openclaw':

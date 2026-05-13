@@ -330,6 +330,13 @@ const DingTalkConfigForm: React.FC<DingTalkConfigFormProps> = ({ pluginStatus, m
   };
 
   const hasExistingUsers = authorizedUsers.length > 0;
+  // `backend === 'aionrs'` is correct as written — `backend` is the internal
+  // AgentRegistry lookup id which is intentionally preserved as 'aionrs' even
+  // post-rebrand (the conversation `kind`/`type` was renamed to 'wcore', but
+  // `backend` is the stable internal identifier read by 25+ sites — see
+  // BLACKBOARD locked decisions and AgentRegistry.ts:75). The variable name
+  // `isGeminiAgent` is misleading; it really means "is a native-spawn (non-ACP)
+  // backend". A clearer name like `isNativeBackend` is a future-cleanup item.
   const isGeminiAgent = selectedAgent.backend === 'gemini' || selectedAgent.backend === 'aionrs';
   const agentOptions: Array<{ backend: string; name: string; customAgentId?: string; isExtension?: boolean }> =
     availableAgents.length > 0 ? availableAgents : [{ backend: 'gemini', name: 'Gemini CLI' }];

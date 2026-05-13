@@ -288,7 +288,9 @@ export class WorkerTaskManagerJobExecutor implements ICronJobExecutor {
     switch (backend) {
       case 'gemini':
         return 'gemini';
+      case 'wcore':
       case 'aionrs':
+        // Dual-read: 'wcore' (new) and 'aionrs' (legacy) both map to the same backend.
         return 'aionrs';
       case 'openclaw-gateway':
       case 'openclaw' as AgentBackend:

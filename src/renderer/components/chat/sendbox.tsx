@@ -862,7 +862,10 @@ const SendBox: React.FC<{
         case 'gemini':
           emitter.emit('gemini.selected.file.append', [item]);
           break;
+        case 'wcore':
         case 'aionrs':
+          // Internal event name preserved per BLACKBOARD; emits the same event
+          // for both new ('wcore') and legacy ('aionrs') conversation kinds.
           emitter.emit('aionrs.selected.file.append', [item]);
           break;
         case 'acp':

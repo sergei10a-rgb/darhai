@@ -341,6 +341,10 @@ const LarkConfigForm: React.FC<LarkConfigFormProps> = ({ pluginStatus, modelSele
   };
 
   const hasExistingUsers = authorizedUsers.length > 0;
+  // `backend === 'aionrs'` is correct as written — see the matching comment in
+  // DingTalkConfigForm.tsx for the rationale. `backend` is the internal
+  // AgentRegistry id (preserved as 'aionrs' per BLACKBOARD locked decision);
+  // only conversation `kind`/`type` was renamed to 'wcore'.
   const isGeminiAgent = selectedAgent.backend === 'gemini' || selectedAgent.backend === 'aionrs';
   const agentOptions: Array<{ backend: string; name: string; customAgentId?: string; isExtension?: boolean }> =
     availableAgents.length > 0 ? availableAgents : [{ backend: 'gemini', name: 'Gemini CLI' }];

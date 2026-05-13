@@ -130,7 +130,10 @@ const setDraft = <K extends TChatConversation['type']>(
         store.remote.delete(conversation_id);
       }
       break;
+    case 'wcore':
     case 'aionrs':
+      // Dual-read: persist drafts for both new ('wcore') and legacy ('aionrs')
+      // kinds in the same store. Store key is the internal id (preserved per BLACKBOARD).
       if (draft) {
         store.aionrs.set(conversation_id, draft as Extract<Draft, { _type: 'aionrs' }>);
       } else {
@@ -160,6 +163,7 @@ const getDraft = <K extends TChatConversation['type']>(
       return store.nanobot.get(conversation_id) as Extract<Draft, { _type: K }>;
     case 'remote':
       return store.remote.get(conversation_id) as Extract<Draft, { _type: K }>;
+    case 'wcore':
     case 'aionrs':
       return store.aionrs.get(conversation_id) as Extract<Draft, { _type: K }>;
     default:

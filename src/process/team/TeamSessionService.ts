@@ -349,7 +349,9 @@ export class TeamSessionService {
     switch (conversation.type) {
       case 'gemini':
         return 'gemini';
+      case 'wcore':
       case 'aionrs':
+        // Dual-read: 'wcore' (new) and 'aionrs' (legacy) both map to the same backend.
         return 'aionrs';
       case 'remote':
         return 'remote';

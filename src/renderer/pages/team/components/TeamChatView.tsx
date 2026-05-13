@@ -131,6 +131,7 @@ const TeamChatView: React.FC<TeamChatViewProps> = ({ conversation, hideSendBox, 
             emptySlot={emptySlot}
           />
         );
+      case 'wcore':
       case 'aionrs':
         return (
           <WCoreTeamChat
