@@ -16,6 +16,7 @@ import SyntaxHighlighter from 'react-syntax-highlighter';
 import { vs, vs2015 } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import SelectionToolbar from '../renderers/SelectionToolbar';
 import { useTranslation } from 'react-i18next';
+import { sanitizeHtml } from '@/renderer/utils/sanitize';
 
 interface DiffPreviewProps {
   content: string; // Diff content
@@ -195,7 +196,7 @@ const DiffPreview: React.FC<DiffPreviewProps> = ({
                 'd2h-dark-color-scheme': currentTheme === 'dark',
               }
             )}
-            dangerouslySetInnerHTML={{ __html: diffHtmlContent }}
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(diffHtmlContent) }}
           />
         )}
       </div>

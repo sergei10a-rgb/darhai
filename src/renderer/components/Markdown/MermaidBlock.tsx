@@ -10,6 +10,7 @@ import SyntaxHighlighter from 'react-syntax-highlighter';
 import { vs, vs2015 } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 
 import { copyText } from '@/renderer/utils/ui/clipboard';
+import { sanitizeSvg } from '@/renderer/utils/sanitize';
 import { Message } from '@arco-design/web-react';
 import { usePreviewContext } from '@/renderer/pages/conversation/Preview';
 import React, { useEffect, useRef, useState } from 'react';
@@ -248,7 +249,11 @@ function MermaidBlock({ code, style, showOpenInPanelButton = true }: MermaidBloc
               display: 'flex',
               justifyContent: 'center',
             }}
-            dangerouslySetInnerHTML={{ __html: svg }}
+            dangerouslySetInnerHTML={{
+              // Mermaid uses <foreignObject> for HTML-in-SVG node labels and <a target="_blank"> for
+              // clickable nodes; keep those at this call site only — do NOT loosen sanitizeSvg globally.
+              __html: sanitizeSvg(svg, { ADD_TAGS: ['foreignObject'], ADD_ATTR: ['target'] }),
+            }}
           />
         ) : shouldShowLoading ? (
           <div

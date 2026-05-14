@@ -27,6 +27,7 @@ import MarkdownEditor from '../editors/MarkdownEditor';
 import SelectionToolbar from '../renderers/SelectionToolbar';
 import { useContainerScroll, useContainerScrollTarget } from '../../hooks/useScrollSyncHelpers';
 import { convertLatexDelimiters } from '@/renderer/utils/chat/latexDelimiters';
+import { sanitizeMath } from '@/renderer/utils/sanitize';
 import MermaidBlock from '@/renderer/components/Markdown/MermaidBlock';
 
 interface MarkdownPreviewProps {
@@ -461,7 +462,7 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({
                           displayMode: true,
                           throwOnError: false,
                         });
-                        return <div className='katex-display' dangerouslySetInnerHTML={{ __html: html }} />;
+                        return <div className='katex-display' dangerouslySetInnerHTML={{ __html: sanitizeMath(html) }} />;
                       } catch {
                         // Fall through to render as code block if KaTeX fails
                       }

@@ -11,6 +11,7 @@ import classNames from 'classnames';
 import React, { useMemo } from 'react';
 import MarkdownView from '@renderer/components/Markdown';
 import CollapsibleContent from '@renderer/components/chat/CollapsibleContent';
+import { sanitizeHtml } from '@renderer/utils/sanitize';
 
 const icon = {
   success: <CheckCircle2 size={16} color={theme.Color.FunctionalColor.success} className='m-t-2px' />,
@@ -65,7 +66,7 @@ const MessageTips: React.FC<{ message: IMessageTips }> = ({ message }) => {
           <span
             className='whitespace-break-spaces text-t-primary [word-break:break-word]'
             dangerouslySetInnerHTML={{
-              __html: displayContent,
+              __html: sanitizeHtml(displayContent),
             }}
           ></span>
         </CollapsibleContent>

@@ -19,6 +19,7 @@ import ReactDOM from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { usePreviewLauncher } from '@renderer/hooks/file/usePreviewLauncher';
 import CollapsibleContent from '@renderer/components/chat/CollapsibleContent';
+import { sanitizeHtml } from '@renderer/utils/sanitize';
 
 const Diff2Html = ({
   diff,
@@ -160,7 +161,7 @@ const Diff2Html = ({
           )}
           ref={containerRef}
           dangerouslySetInnerHTML={{
-            __html: diffHtmlContent,
+            __html: sanitizeHtml(diffHtmlContent),
           }}
         ></div>
         {operatorRef.current &&

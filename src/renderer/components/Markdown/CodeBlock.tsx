@@ -11,6 +11,7 @@ import { vs, vs2015 } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import katex from 'katex';
 
 import { copyText } from '@/renderer/utils/ui/clipboard';
+import { sanitizeMath } from '@/renderer/utils/sanitize';
 import { Message } from '@arco-design/web-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -95,7 +96,7 @@ function CodeBlock(props: CodeBlockProps) {
           displayMode: true,
           throwOnError: false,
         });
-        return <div className='katex-display' dangerouslySetInnerHTML={{ __html: html }} />;
+        return <div className='katex-display' dangerouslySetInnerHTML={{ __html: sanitizeMath(html) }} />;
       } catch {
         // Fall through to render as code block if KaTeX fails
       }
