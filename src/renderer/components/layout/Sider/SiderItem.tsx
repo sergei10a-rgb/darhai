@@ -5,7 +5,7 @@
  */
 
 import { Dropdown, Menu, Tooltip } from '@arco-design/web-react';
-import { Pushpin } from '@icon-park/react';
+import { Pin } from 'lucide-react';
 import classNames from 'classnames';
 import React, { useState } from 'react';
 
@@ -109,7 +109,7 @@ const SiderItem: React.FC<SiderItemProps> = ({
         {/* Resting pin indicator — sits in its own reserved slot, no gradient overlay */}
         {hasMenu && pinned && !menuVisible && (
           <span className='absolute right-8px top-1/2 -translate-y-1/2 flex-center text-t-secondary group-hover:hidden pointer-events-none'>
-            <Pushpin theme='outline' size='16' />
+            <Pin size={16} />
           </span>
         )}
 

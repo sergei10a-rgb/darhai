@@ -7,7 +7,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Tooltip } from '@arco-design/web-react';
-import { ListCheckbox, Plus } from '@icon-park/react';
+import { ListChecks, Plus } from 'lucide-react';
 import classNames from 'classnames';
 import type { SiderTooltipProps } from '@renderer/utils/ui/siderTooltip';
 import styles from '../Sider.module.css';
@@ -42,13 +42,7 @@ const SiderToolbar: React.FC<SiderToolbarProps> = ({
             )}
             onClick={onNewChat}
           >
-            <Plus
-              theme='outline'
-              size='20'
-              fill='currentColor'
-              className={classNames('block leading-none', styles.newChatIcon)}
-              style={{ lineHeight: 0 }}
-            />
+            <Plus size={20} className={classNames('block leading-none', styles.newChatIcon)} style={{ lineHeight: 0 }} />
           </div>
         </Tooltip>
       </div>
@@ -67,13 +61,7 @@ const SiderToolbar: React.FC<SiderToolbarProps> = ({
           onClick={onNewChat}
         >
           <div className='size-28px rd-8px bg-aou-2 border border-solid border-[var(--color-border-2)] group-hover:bg-fill-3 group-hover:border-transparent flex items-center justify-center shrink-0 transition-colors'>
-            <Plus
-              theme='outline'
-              size='20'
-              fill='currentColor'
-              className={classNames('block leading-none', styles.newChatIcon)}
-              style={{ lineHeight: 0 }}
-            />
+            <Plus size={20} className={classNames('block leading-none', styles.newChatIcon)} style={{ lineHeight: 0 }} />
           </div>
           <span className='collapsed-hidden text-t-primary text-14px font-medium leading-24px'>
             {t('conversation.welcome.newConversation')}
@@ -96,7 +84,7 @@ const SiderToolbar: React.FC<SiderToolbarProps> = ({
           )}
           onClick={onToggleBatchMode}
         >
-          <ListCheckbox theme='outline' size='20' className='block leading-none shrink-0' style={{ lineHeight: 0 }} />
+          <ListChecks size={20} className='block leading-none shrink-0' style={{ lineHeight: 0 }} />
         </div>
       </Tooltip>
     </div>

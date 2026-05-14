@@ -1,15 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import classNames from 'classnames';
-import {
-  ArrowCircleLeft,
-  ArrowLeft,
-  ArrowRight,
-  ExpandLeft,
-  ExpandRight,
-  MenuFold,
-  MenuUnfold,
-  Plus,
-} from '@icon-park/react';
+import { ArrowLeftCircle, ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -298,7 +289,7 @@ const Titlebar: React.FC<TitlebarProps> = ({ workspaceAvailable }) => {
             onClick={handleBackToChat}
             aria-label={backToChatTooltip}
           >
-            <ArrowCircleLeft theme='outline' size={iconSize} fill='currentColor' />
+            <ArrowLeftCircle size={iconSize} />
           </button>
         )}
         {showSiderToggle && (
@@ -310,9 +301,9 @@ const Titlebar: React.FC<TitlebarProps> = ({ workspaceAvailable }) => {
           >
             {layout?.isMobile ? (
               layout?.siderCollapsed ? (
-                <MenuUnfold theme='outline' size={iconSize} fill='currentColor' />
+                <PanelLeftOpen size={iconSize} />
               ) : (
-                <MenuFold theme='outline' size={iconSize} fill='currentColor' />
+                <PanelLeftClose size={iconSize} />
               )
             ) : (
               <SidebarIcon size={iconSize} strokeWidth={desktopIconStroke} />
@@ -329,7 +320,7 @@ const Titlebar: React.FC<TitlebarProps> = ({ workspaceAvailable }) => {
               aria-label={historyBackTooltip}
               title={historyBackTooltip}
             >
-              <ArrowLeft theme='outline' size={iconSize} fill='currentColor' strokeWidth={desktopIconStroke} />
+              <ChevronLeft size={iconSize} strokeWidth={desktopIconStroke} />
             </button>
             <button
               type='button'
@@ -339,7 +330,7 @@ const Titlebar: React.FC<TitlebarProps> = ({ workspaceAvailable }) => {
               aria-label={historyForwardTooltip}
               title={historyForwardTooltip}
             >
-              <ArrowRight theme='outline' size={iconSize} fill='currentColor' strokeWidth={desktopIconStroke} />
+              <ChevronRight size={iconSize} strokeWidth={desktopIconStroke} />
             </button>
           </>
         )}
@@ -370,7 +361,7 @@ const Titlebar: React.FC<TitlebarProps> = ({ workspaceAvailable }) => {
             onClick={handleCreateConversation}
             aria-label={newConversationTooltip}
           >
-            <Plus theme='outline' size={iconSize} fill='currentColor' />
+            <Plus size={iconSize} />
           </button>
         )}
         {showWorkspaceButton && (
@@ -381,9 +372,9 @@ const Titlebar: React.FC<TitlebarProps> = ({ workspaceAvailable }) => {
             aria-label={workspaceTooltip}
           >
             {workspaceCollapsed ? (
-              <ExpandRight theme='outline' size={iconSize} fill='currentColor' />
+              <PanelRightOpen size={iconSize} />
             ) : (
-              <ExpandLeft theme='outline' size={iconSize} fill='currentColor' />
+              <PanelRightClose size={iconSize} />
             )}
           </button>
         )}

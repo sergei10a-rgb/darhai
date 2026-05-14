@@ -7,7 +7,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Tooltip } from '@arco-design/web-react';
-import { ArrowCircleLeft, CloseOne, Moon, SettingTwo, SunOne } from '@icon-park/react';
+import { ArrowLeftCircle, LogOut, Moon, Settings, Sun } from 'lucide-react';
 import classNames from 'classnames';
 import { iconColors } from '@renderer/styles/colors';
 import type { SiderTooltipProps } from '@renderer/utils/ui/siderTooltip';
@@ -38,21 +38,9 @@ const SiderFooter: React.FC<SiderFooterProps> = ({
   const { t } = useTranslation();
 
   const settingsIcon = isSettings ? (
-    <ArrowCircleLeft
-      theme='outline'
-      size='20'
-      fill={iconColors.primary}
-      className='block leading-none'
-      style={{ lineHeight: 0 }}
-    />
+    <ArrowLeftCircle size={20} color={iconColors.primary} className='block leading-none' style={{ lineHeight: 0 }} />
   ) : (
-    <SettingTwo
-      theme='outline'
-      size='20'
-      fill={iconColors.primary}
-      className='block leading-none'
-      style={{ lineHeight: 0 }}
-    />
+    <Settings size={20} color={iconColors.primary} className='block leading-none' style={{ lineHeight: 0 }} />
   );
   const showThemeToggle = isSettings && !collapsed;
   const themeTooltip = theme === 'dark' ? t('settings.lightMode') : t('settings.darkMode');
@@ -90,13 +78,7 @@ const SiderFooter: React.FC<SiderFooterProps> = ({
               )}
             >
               <span className='w-28px h-24px flex items-center justify-center shrink-0'>
-                <CloseOne
-                  theme='outline'
-                  size='18'
-                  fill={iconColors.primary}
-                  className='block leading-none'
-                  style={{ lineHeight: 0 }}
-                />
+                <LogOut size={18} color={iconColors.primary} className='block leading-none' style={{ lineHeight: 0 }} />
               </span>
               <span className='collapsed-hidden text-t-primary text-14px font-medium leading-24px truncate'>
                 {t('settings.googleLogout')}
@@ -117,9 +99,9 @@ const SiderFooter: React.FC<SiderFooterProps> = ({
             >
               <span className='w-28px h-28px flex items-center justify-center shrink-0'>
                 {theme === 'dark' ? (
-                  <SunOne theme='outline' size='18' fill='currentColor' className='block leading-none' />
+                  <Sun size={18} className='block leading-none' />
                 ) : (
-                  <Moon theme='outline' size='18' fill='currentColor' className='block leading-none' />
+                  <Moon size={18} className='block leading-none' />
                 )}
               </span>
             </div>
