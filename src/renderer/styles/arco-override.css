@@ -1,5 +1,26 @@
 /* Arco Design custom overrides - non-theme related */
 
+/* ---------- Typography (Forge Suite brand: Inter) ---------- */
+:root {
+  --forge-font: 'Inter Variable', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+html,
+body {
+  font-family: var(--forge-font);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Arco Design uses its own CSS var for the font stack; override it so all
+   Arco components (Button, Input, Modal, etc.) inherit Inter automatically. */
+:root,
+body,
+.arco-design {
+  --arco-font-family: var(--forge-font);
+}
+
+
 /* Override Arco Design component backgrounds to white in light mode */
 /* .arco-input,
 .arco-textarea,

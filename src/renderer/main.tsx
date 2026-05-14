@@ -41,7 +41,8 @@ import zhTW from '@arco-design/web-react/es/locale/zh-TW';
 import koKR from '@arco-design/web-react/es/locale/ko-KR';
 import { useTranslation } from 'react-i18next';
 
-// Styles
+// Styles — Inter font first so it's available before Arco/Uno set their defaults
+import '@fontsource-variable/inter';
 import 'uno.css';
 import './styles/arco-override.css';
 import './styles/themes/index.css';
