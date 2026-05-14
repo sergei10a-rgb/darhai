@@ -160,7 +160,7 @@
     "turndown": "^7.2.2",
     "turndown-plugin-gfm": "^1.0.2",
     "web-tree-sitter": "^0.25.10",
-    "ws": "^8.18.3",
+    "ws": "^8.20.1",
     "xlsx-republish": "^0.20.3",
     "zod": "^3.25.76"
   },
@@ -216,6 +216,8 @@
     "electron-winstaller": "^5.4.0"
   },
   "resolutions": {
+    "@xmldom/xmldom": "^0.8.13",
+    "axios": ">=1.16.0",
     "body-parser": "^2.2.1",
     "hono": "^4.11.7",
     "jws": "4.0.1",
@@ -223,9 +225,12 @@
     "mdast-util-to-hast": "^13.2.1",
     "node-forge": "^1.4.0",
     "tar": "^7.5.7",
-    "tmp": "^0.2.5"
+    "tmp": "^0.2.5",
+    "ws": "^8.20.1"
   },
   "overrides": {
+    "@xmldom/xmldom": "^0.8.13",
+    "axios": ">=1.16.0",
     "body-parser": "^2.2.1",
     "hono": "^4.11.7",
     "jws@<4": "3.2.3",
@@ -234,7 +239,8 @@
     "mdast-util-to-hast": "^13.2.1",
     "node-forge": "^1.4.0",
     "tar": "^7.5.7",
-    "tmp": "^0.2.5"
+    "tmp": "^0.2.5",
+    "ws": "^8.20.1"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
