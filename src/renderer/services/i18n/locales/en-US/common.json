@@ -84,6 +84,8 @@
   "processing": "Processing...",
   "optional": "(optional)",
   "clear": "Clear",
+  "brand": "Wayland",
+  "brandTagline": "AI Agent",
   "unit": {
     "minute_short": "m",
     "second_short": "s"

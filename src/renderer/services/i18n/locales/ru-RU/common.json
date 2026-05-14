@@ -83,5 +83,7 @@
   "optional": "(необязательно)",
   "clear": "Очистить",
   "historyBack": "Назад",
-  "agentMode": "Режим агента"
+  "agentMode": "Режим агента",
+  "brand": "Wayland",
+  "brandTagline": "AI Agent"
 }

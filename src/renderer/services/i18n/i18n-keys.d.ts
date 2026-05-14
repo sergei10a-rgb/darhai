@@ -160,6 +160,8 @@ export type I18nKey =
   | 'common.agentMode'
   | 'common.attach'
   | 'common.back'
+  | 'common.brand'
+  | 'common.brandTagline'
   | 'common.browse'
   | 'common.cancel'
   | 'common.clear'

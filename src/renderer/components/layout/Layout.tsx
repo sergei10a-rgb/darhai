@@ -5,6 +5,7 @@
  */
 
 import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { ipcBridge } from '@/common';
 import { TEAM_MODE_ENABLED } from '@/common/config/constants';
 import { ConfigStorage, type ICssTheme } from '@/common/config/storage';
@@ -85,6 +86,7 @@ const Layout: React.FC<{
   sider: React.ReactNode;
   onSessionClick?: () => void;
 }> = ({ sider, onSessionClick: _onSessionClick }) => {
+  const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [viewportWidth, setViewportWidth] = useState<number>(() =>
@@ -481,9 +483,9 @@ const Layout: React.FC<{
                   </svg>
                 </div>
                 <div className='flex-1 flex flex-col gap-2px collapsed-hidden min-w-0'>
-                  <span className='text-14px font-700 text-t-primary leading-none tracking-[0.01em]'>Wayland</span>
+                  <span className='text-14px font-700 text-t-primary leading-none tracking-[0.01em]'>{t('common.brand')}</span>
                   <span className='text-10px font-500 uppercase tracking-[0.16em] text-[var(--text-dim,#555)] leading-none'>
-                    AI Agent
+                    {t('common.brandTagline')}
                   </span>
                 </div>
                 {isMobile && !collapsed && (

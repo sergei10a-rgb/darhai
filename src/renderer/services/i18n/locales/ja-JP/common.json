@@ -83,5 +83,7 @@
   "import": "インポート",
   "processing": "処理中...",
   "optional": "（任意）",
-  "clear": "クリア"
+  "clear": "クリア",
+  "brand": "Wayland",
+  "brandTagline": "AI Agent"
 }

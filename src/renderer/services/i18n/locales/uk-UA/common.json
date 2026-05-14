@@ -85,6 +85,8 @@
   "processing": "Обробка...",
   "optional": "(необов'язково)",
   "clear": "Очистити",
+  "brand": "Wayland",
+  "brandTagline": "AI Agent",
   "unit": {
     "minute_short": "хв",
     "second_short": "с"

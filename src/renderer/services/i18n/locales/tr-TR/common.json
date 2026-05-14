@@ -83,5 +83,7 @@
   "import": "İçe Aktar",
   "processing": "İşleniyor...",
   "optional": "(isteğe bağlı)",
-  "clear": "Temizle"
+  "clear": "Temizle",
+  "brand": "Wayland",
+  "brandTagline": "AI Agent"
 }
