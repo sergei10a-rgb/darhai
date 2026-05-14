@@ -216,10 +216,12 @@ const LoginPage: React.FC = () => {
         </label>
 
         <div className='login-page__header'>
-          <div className='login-page__logo'>
-            <img src={loginLogo} alt={t('login.brand')} />
+          <div className='login-page__brand-row'>
+            <div className='login-page__logo'>
+              <img src={loginLogo} alt={t('login.brand')} />
+            </div>
+            <h1 className='login-page__title'>{t('login.brand')}</h1>
           </div>
-          <h1 className='login-page__title'>{t('login.brand')}</h1>
           <p className='login-page__subtitle'>{t('login.subtitle')}</p>
         </div>
 

@@ -163,7 +163,6 @@ async function initializeDefaultAdmin(): Promise<{
     return { username, password };
   } catch (error) {
     console.error('❌ Failed to initialize default admin account:', error);
-    console.error('❌ 初始化默认管理员账户失败:', error);
     return null;
   }
 }
@@ -181,16 +180,16 @@ function displayInitialCredentials(
   const { qrUrl } = generateQRLoginUrlDirect(port, allowRemote);
 
   console.log('\n' + '='.repeat(70));
-  console.log('🎉 Wayland Web Server Started Successfully! / Wayland Web 服务器启动成功！');
+  console.log('🎉 Wayland Web Server Started');
   console.log('='.repeat(70));
-  console.log(`\n📍 Local URL / 本地地址:    ${localUrl}`);
+  console.log(`\n📍 Local URL:    ${localUrl}`);
 
   if (allowRemote && networkUrl && networkUrl !== localUrl) {
-    console.log(`📍 Network URL / 网络地址:  ${networkUrl}`);
+    console.log(`📍 Network URL:  ${networkUrl}`);
   }
 
   // Display QR Code
-  console.log('\n📱 Scan QR Code to Login (expires in 5 mins) / 扫描二维码登录 (5分钟内有效)');
+  console.log('\n📱 Scan QR Code to Login (expires in 5 mins)');
   const qrcode = loadQRCodeTerminal();
   if (qrcode) {
     qrcode.generate(qrUrl, { small: true }, (qr: string) => {
@@ -202,11 +201,10 @@ function displayInitialCredentials(
   console.log(`   QR URL: ${qrUrl}`);
 
   // Display traditional credentials as fallback
-  console.log('\n🔐 Or Use Initial Admin Credentials / 或使用初始管理员凭证:');
-  console.log(`   Username / 用户名: ${credentials.username}`);
-  console.log(`   Password / 密码:   ${credentials.password}`);
+  console.log('\n🔐 Or use the initial admin credentials:');
+  console.log(`   Username: ${credentials.username}`);
+  console.log(`   Password: ${credentials.password}`);
   console.log('\n⚠️  Please change the password after first login!');
-  console.log('⚠️  请在首次登录后修改密码！');
 
   console.log('='.repeat(70) + '\n');
 }
@@ -313,10 +311,10 @@ export async function startWebServerWithInstance(port: number, allowRemote = fal
         displayInitialCredentials(initialCredentials, localUrl, allowRemote, displayUrl);
       } else {
         if (allowRemote && serverIP && serverIP !== 'localhost') {
-          console.log(`\n   🚀 Local access / 本地访问: ${localUrl}`);
-          console.log(`   🚀 Network access / 网络访问: ${displayUrl}\n`);
+          console.log(`\n   🚀 Local access:   ${localUrl}`);
+          console.log(`   🚀 Network access: ${displayUrl}\n`);
         } else {
-          console.log(`\n   🚀 WebUI started / WebUI 已启动: ${localUrl}\n`);
+          console.log(`\n   🚀 WebUI started: ${localUrl}\n`);
         }
       }
 
@@ -336,15 +334,15 @@ export async function startWebServerWithInstance(port: number, allowRemote = fal
         const nextPort = port + 1;
         const maxPort = SERVER_CONFIG.DEFAULT_PORT + 10;
         if (nextPort <= maxPort) {
-          console.warn(`⚠️ Port ${port} is in use, trying ${nextPort}... / 端口 ${port} 已被占用，尝试 ${nextPort}...`);
+          console.warn(`⚠️ Port ${port} is in use, trying ${nextPort}...`);
           server.close();
           resolve(startWebServerWithInstance(nextPort, allowRemote));
         } else {
-          console.error(`❌ Ports ${SERVER_CONFIG.DEFAULT_PORT}-${maxPort} all in use / 端口全部被占用`);
+          console.error(`❌ Ports ${SERVER_CONFIG.DEFAULT_PORT}-${maxPort} all in use`);
           reject(err);
         }
       } else {
-        console.error('❌ Server error / 服务器错误:', err);
+        console.error('❌ Server error:', err);
         reject(err);
       }
     });

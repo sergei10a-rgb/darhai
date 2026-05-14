@@ -5,8 +5,10 @@ export const useInputFocusRing = () => {
   const isDarkTheme = theme === 'dark';
 
   return {
-    activeBorderColor: isDarkTheme ? '#4D4B87' : '#E1E0FF',
-    inactiveBorderColor: 'var(--border-base, #e5e6eb)',
-    activeShadow: isDarkTheme ? '0px 2px 20px rgba(77, 75, 135, 0.45)' : '0px 2px 20px rgba(225, 224, 255, 0.6)',
+    activeBorderColor: isDarkTheme ? 'rgba(255, 107, 53, 0.55)' : 'rgba(255, 107, 53, 0.65)',
+    inactiveBorderColor: isDarkTheme ? 'var(--border-mid, #353535)' : 'var(--border-base, #e5e6eb)',
+    activeShadow: isDarkTheme
+      ? '0 0 0 1px rgba(255, 107, 53, 0.35), 0 0 24px rgba(255, 107, 53, 0.18), 0 8px 32px rgba(0, 0, 0, 0.4)'
+      : '0 0 0 1px rgba(255, 107, 53, 0.25), 0 2px 24px rgba(255, 107, 53, 0.18)',
   };
 };

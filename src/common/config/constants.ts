@@ -8,7 +8,7 @@
  * Wayland应用程序共用常量
  */
 
-// ===== 文件处理相关常量 =====
+// ===== File handling constants =====
 
 /** 临时文件时间戳分隔符 */
 export const WAYLAND_TIMESTAMP_SEPARATOR = '_wayland_';
@@ -17,7 +17,7 @@ export const WAYLAND_TIMESTAMP_SEPARATOR = '_wayland_';
 export const WAYLAND_TIMESTAMP_REGEX = /_wayland_\d{13}(\.\w+)?$/;
 export const WAYLAND_FILES_MARKER = '[[AION_FILES]]';
 
-// ===== 媒体类型相关常量 =====
+// ===== Media type constants =====
 
 /** 支持的图片文件扩展名 */
 export const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.tiff', '.svg'] as const;
@@ -49,7 +49,7 @@ export const MIME_TO_EXT_MAP: Record<string, string> = {
 /** 默认图片文件扩展名 */
 export const DEFAULT_IMAGE_EXTENSION = '.png';
 
-// ===== WebUI 相关常量 =====
+// ===== WebUI constants =====
 
 /** WebUI default port: 25808 for production, 25809 for development, 25810 for multi-instance dev */
 export const WEBUI_DEFAULT_PORT = (() => {
@@ -60,7 +60,7 @@ export const WEBUI_DEFAULT_PORT = (() => {
 
 export const TEAM_MODE_ENABLED = true;
 
-// ===== AI Provider 相关常量 =====
+// ===== AI Provider constants =====
 
 // Stable ID for the Google Auth virtual provider.
 // Shared between frontend (useModelProviderList) and backend (SystemActions).

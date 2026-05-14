@@ -19,35 +19,136 @@ import { verifyQRTokenDirect } from '@process/bridge/webuiQR';
  * JavaScript reads token directly from URL params to prevent XSS
  */
 const QR_LOGIN_PAGE_HTML = `<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>QR Login - Wayland</title>
+  <title>QR Login · Wayland</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: #f5f5f5; }
-    .container { text-align: center; padding: 40px; background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 400px; }
-    .loading { color: #3498db; font-size: 18px; }
-    .success { color: #27ae60; }
-    .error { color: #e74c3c; }
-    .spinner { border: 3px solid #f3f3f3; border-top: 3px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    h2 { margin-bottom: 16px; }
-    p { color: #666; margin-top: 12px; }
+    :root {
+      --brand: #ff6b35;
+      --brand-soft: rgba(255, 107, 53, 0.18);
+      --bg-0: #0a0a0a;
+      --bg-1: #161616;
+      --border: #2a2a2a;
+      --text-primary: #f5f5f5;
+      --text-secondary: #a8a8a8;
+      --success: #4ade80;
+      --error: #f87171;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: var(--text-primary);
+      background:
+        radial-gradient(circle at 20% 10%, rgba(255, 107, 53, 0.10), transparent 55%),
+        radial-gradient(circle at 80% 85%, rgba(255, 107, 53, 0.06), transparent 60%),
+        var(--bg-0);
+    }
+    body { display: flex; justify-content: center; align-items: center; }
+    .container {
+      text-align: center;
+      padding: 48px 40px;
+      background: var(--bg-1);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+      max-width: 420px;
+      width: calc(100% - 48px);
+    }
+    .logo {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 14px;
+      background:
+        radial-gradient(circle at 30% 30%, var(--brand-soft), transparent 70%),
+        #141414;
+      border: 1px solid var(--border);
+    }
+    .brand { font-size: 13px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 8px; }
+    h2 { font-size: 22px; font-weight: 600; margin: 0 0 12px; letter-spacing: -0.01em; }
+    h2.success { color: var(--success); }
+    h2.error { color: var(--error); }
+    p { font-size: 14px; line-height: 1.55; color: var(--text-secondary); margin: 12px 0 0; }
+    .loading { color: var(--brand); font-size: 16px; }
+    .spinner {
+      border: 3px solid rgba(255, 107, 53, 0.18);
+      border-top-color: var(--brand);
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      animation: spin 0.9s linear infinite;
+      margin: 24px auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
   <div class="container" id="content">
+    <div class="logo">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ff6b35" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M20.341 6.484A10 10 0 0 1 10.266 21.85"/>
+        <path d="M3.659 17.516A10 10 0 0 1 13.74 2.152"/>
+        <circle cx="12" cy="12" r="3"/>
+        <circle cx="19" cy="5" r="2"/>
+        <circle cx="5" cy="19" r="2"/>
+      </svg>
+    </div>
+    <div class="brand">Wayland</div>
     <div class="spinner"></div>
-    <p class="loading">Verifying... / 验证中...</p>
+    <p class="loading">Verifying QR code…</p>
   </div>
   <script>
     (async function() {
       var container = document.getElementById('content');
+      var SVG_NS = 'http://www.w3.org/2000/svg';
+      function el(tag, attrs, ns) {
+        var node = ns ? document.createElementNS(ns, tag) : document.createElement(tag);
+        if (attrs) for (var k in attrs) node.setAttribute(k, attrs[k]);
+        return node;
+      }
+      function buildLogoBlock() {
+        var frag = document.createDocumentFragment();
+        var box = el('div'); box.className = 'logo';
+        var svg = el('svg', { width: '32', height: '32', viewBox: '0 0 24 24', fill: 'none', stroke: '#ff6b35', 'stroke-width': '2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'aria-hidden': 'true' }, SVG_NS);
+        var paths = [
+          ['path', { d: 'M20.341 6.484A10 10 0 0 1 10.266 21.85' }],
+          ['path', { d: 'M3.659 17.516A10 10 0 0 1 13.74 2.152' }],
+          ['circle', { cx: '12', cy: '12', r: '3' }],
+          ['circle', { cx: '19', cy: '5', r: '2' }],
+          ['circle', { cx: '5', cy: '19', r: '2' }],
+        ];
+        for (var i = 0; i < paths.length; i++) svg.appendChild(el(paths[i][0], paths[i][1], SVG_NS));
+        box.appendChild(svg);
+        frag.appendChild(box);
+        var brand = el('div'); brand.className = 'brand'; brand.textContent = 'Wayland';
+        frag.appendChild(brand);
+        return frag;
+      }
+      function render(kind, title, detail) {
+        while (container.firstChild) container.removeChild(container.firstChild);
+        container.appendChild(buildLogoBlock());
+        var h2 = document.createElement('h2');
+        h2.className = kind;
+        h2.textContent = title;
+        container.appendChild(h2);
+        if (detail) {
+          var p = document.createElement('p');
+          p.textContent = detail;
+          container.appendChild(p);
+        }
+      }
       var params = new URLSearchParams(window.location.search);
       var qrToken = params.get('token');
       if (!qrToken) {
-        container.innerHTML = '<h2 class="error">Invalid QR Code</h2><p>The QR code is invalid or missing.</p><p>二维码无效或缺失。</p>';
+        render('error', 'Invalid QR code', 'The QR code is invalid or missing.');
         return;
       }
       try {
@@ -59,25 +160,13 @@ const QR_LOGIN_PAGE_HTML = `<!DOCTYPE html>
         });
         var data = await response.json();
         if (data.success) {
-          container.innerHTML = '<h2 class="success">Login Successful!</h2><p>Redirecting... / 登录成功，正在跳转...</p>';
-          setTimeout(function() { window.location.href = '/'; }, 1000);
+          render('success', 'Login successful', 'Redirecting…');
+          setTimeout(function() { window.location.href = '/'; }, 900);
         } else {
-          // XSS 安全修复：使用 textContent 而非 innerHTML 插入错误消息
-          // XSS Security fix: Use textContent instead of innerHTML for error message
-          var h2 = document.createElement('h2');
-          h2.className = 'error';
-          h2.textContent = 'Login Failed';
-          var p1 = document.createElement('p');
-          p1.textContent = data.error || 'QR code expired or invalid';
-          var p2 = document.createElement('p');
-          p2.textContent = '二维码已过期或无效，请重新扫描。';
-          container.innerHTML = '';
-          container.appendChild(h2);
-          container.appendChild(p1);
-          container.appendChild(p2);
+          render('error', 'Login failed', data.error || 'QR code expired or invalid. Please scan a fresh one.');
         }
       } catch (e) {
-        container.innerHTML = '<h2 class="error">Error</h2><p>Network error. Please try again.</p><p>网络错误，请重试。</p>';
+        render('error', 'Network error', 'Could not reach the server. Please try again.');
       }
     })();
   </script>
