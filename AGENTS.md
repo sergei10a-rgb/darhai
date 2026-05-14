@@ -121,13 +121,13 @@ Detailed rules and guidelines are organized into Skills for better modularity:
 
 > Skills are located in `.claude/skills/` and contain project conventions that apply to **all** agents and contributors. Every agent working in this repository must read and follow the relevant skill files when the task matches their scope.
 
-## PR 自动化流程
+## PR Automation Pipeline
 
-本仓库运行 PR 自动化 agent，定期处理 open PR（review、fix、合并）。
+This repo runs a PR automation agent that periodically processes open PRs (review, fix, merge).
 
-- **运行方式**：`scripts/pr-automation.sh` 作为 daemon 持续运行，每轮间隔 30 秒；日志默认写入 `~/Library/Logs/Wayland/`，可通过 `LOG_DIR=...` 覆盖
-- **状态追踪**：通过 `bot:*` label（`bot:reviewing`、`bot:fixing`、`bot:ready-to-fix`、`bot:ci-waiting`、`bot:needs-human-review`、`bot:ready-to-merge`、`bot:done`）
-- **详细说明**：[docs/contributing/pr-automation.md](docs/contributing/pr-automation.md)
+- **How it runs**: `scripts/pr-automation.sh` runs as a daemon with a 30-second interval per cycle; logs default to `~/Library/Logs/Wayland/` and can be overridden via `LOG_DIR=...`
+- **State tracking**: via `bot:*` labels (`bot:reviewing`, `bot:fixing`, `bot:ready-to-fix`, `bot:ci-waiting`, `bot:needs-human-review`, `bot:ready-to-merge`, `bot:done`)
+- **Details**: [docs/contributing/pr-automation.md](docs/contributing/pr-automation.md)
 
 ## Internationalization
 
