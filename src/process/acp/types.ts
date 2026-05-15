@@ -54,6 +54,12 @@ export type AgentConfig = {
 
   // 恢复信息（从 DB 重建时使用）
   resumeSessionId?: string;
+  /**
+   * Wrapper version pinned when `resumeSessionId` was created (format: `<backend>@<version>`).
+   * Compared at session-restore time against the current wrapper version; if they differ,
+   * the resume path is bypassed and the conversation is rebuilt via history replay.
+   */
+  acpWrapperVersion?: string;
 
   // 用户在 session 建立前的选择（如 Guid 页面选的 model / mode / config）
   initialDesired?: InitialDesiredConfig;

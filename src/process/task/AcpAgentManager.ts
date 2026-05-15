@@ -20,7 +20,7 @@ import type {
   AcpBackendConfig,
   AcpSessionConfigOption,
 } from '@/common/types/acpTypes';
-import { ACP_BACKENDS_ALL } from '@/common/types/acpTypes';
+import { ACP_BACKENDS_ALL, getCurrentWrapperVersion } from '@/common/types/acpTypes';
 import { ExtensionRegistry } from '@process/extensions';
 import { getDatabase } from '@process/services/database';
 import { ProcessConfig } from '@process/utils/initStorage';
@@ -67,6 +67,8 @@ interface AcpAgentManagerData {
   acpSessionId?: string;
   /** Last update time of ACP session */
   acpSessionUpdatedAt?: number;
+  /** Wrapper version pinned when acpSessionId was created (`<backend>@<version>`). */
+  acpWrapperVersion?: string;
   /** Persisted session mode for resume support */
   sessionMode?: string;
   /** Persisted model ID for resume support */
@@ -924,6 +926,7 @@ ${collectedResponses.join('\n')}`;
           agentName: data.agentName,
           acpSessionId: data.acpSessionId,
           acpSessionUpdatedAt: data.acpSessionUpdatedAt,
+          acpWrapperVersion: data.acpWrapperVersion,
           currentModelId: this.persistedModelId ?? undefined,
           sessionMode: this.currentMode,
           pendingConfigOptions: data.pendingConfigOptions,
@@ -1656,11 +1659,13 @@ ${collectedResponses.join('\n')}`;
       const result = db.getConversation(this.conversation_id);
       if (result.success && result.data && result.data.type === 'acp') {
         const conversation = result.data;
+        const wrapperVersion = getCurrentWrapperVersion(this.options.backend);
         const updatedExtra = {
           ...conversation.extra,
           acpSessionId: sessionId,
           acpSessionConversationId: this.conversation_id,
           acpSessionUpdatedAt: Date.now(),
+          ...(wrapperVersion ? { acpWrapperVersion: wrapperVersion } : {}),
         };
         db.updateConversation(this.conversation_id, {
           extra: updatedExtra,

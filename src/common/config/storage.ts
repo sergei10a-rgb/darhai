@@ -290,6 +290,13 @@ export type TChatConversation =
           acpSessionConversationId?: string;
           /** ACP session 最后更新时间 / Last update time of ACP session */
           acpSessionUpdatedAt?: number;
+          /**
+           * ACP wrapper version pinned when this session was created
+           * (format: `<backend>@<version>`). Used by the self-healing replay path:
+           * on conversation reopen, if this differs from the current wrapper version,
+           * the resume path is skipped and history is replayed into a fresh session.
+           */
+          acpWrapperVersion?: string;
           /** Last context usage from usage_update */
           lastTokenUsage?: TokenUsageData;
           /** Context window capacity from usage_update */

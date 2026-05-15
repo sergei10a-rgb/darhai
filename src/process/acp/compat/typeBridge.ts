@@ -35,6 +35,8 @@ export type OldAcpAgentConfig = {
     acpSessionId?: string;
     acpSessionConversationId?: string;
     acpSessionUpdatedAt?: number;
+    /** Wrapper version pinned when acpSessionId was created (`<backend>@<version>`). */
+    acpWrapperVersion?: string;
     currentModelId?: string;
     sessionMode?: string;
     teamMcpStdioConfig?: {
@@ -104,6 +106,7 @@ export function toAgentConfig(old: OldAcpAgentConfig): AgentConfig {
     teamMcpConfig: teamMcpConfig,
 
     resumeSessionId: old.extra?.acpSessionId,
+    acpWrapperVersion: old.extra?.acpWrapperVersion,
     initialDesired: hasInitialDesired ? initialDesired : undefined,
 
     yoloMode: old.extra?.yoloMode,

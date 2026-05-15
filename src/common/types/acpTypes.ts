@@ -13,6 +13,29 @@ export const CLAUDE_ACP_NPX_PACKAGE = `@agentclientprotocol/claude-agent-acp@${C
 export const CODEBUDDY_ACP_BRIDGE_VERSION = '2.73.0';
 export const CODEBUDDY_ACP_NPX_PACKAGE = `@tencent-ai/codebuddy-code@${CODEBUDDY_ACP_BRIDGE_VERSION}`;
 
+/**
+ * Current ACP wrapper version for a given backend, in the format `<backend>@<version>`,
+ * or `null` for backends whose wrapper version we don't pin (locally installed CLIs).
+ *
+ * Self-healing replay path uses this: on session creation we persist the value to
+ * `conversations.extra.acpWrapperVersion`. On reopen, if the persisted value differs
+ * from what we return now, the resume path is skipped (some wrappers silently return
+ * success on a session id created by an older version while the session state is
+ * internally broken) and a fresh session is started with replayed history prepended.
+ */
+export function getCurrentWrapperVersion(backend: string): string | null {
+  switch (backend) {
+    case 'claude':
+      return `claude@${CLAUDE_ACP_BRIDGE_VERSION}`;
+    case 'codex':
+      return `codex@${CODEX_ACP_BRIDGE_VERSION}`;
+    case 'codebuddy':
+      return `codebuddy@${CODEBUDDY_ACP_BRIDGE_VERSION}`;
+    default:
+      return null;
+  }
+}
+
 // ACP 后端类型定义 — 仅包含 ACP 协议相关的后端
 // ACP backend types — only ACP protocol backends
 export type AcpBackendAll =
