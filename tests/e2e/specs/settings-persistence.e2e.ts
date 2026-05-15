@@ -406,14 +406,39 @@ test.describe('Settings persistence across app restart', () => {
   // Update + per-namespace round-trip) is documented for the next pass and
   // the spec stays runnable as soon as the harness lands.
   //
-  // TODO(e2e-harness): add `quitApp()` + sandboxed-launch helpers to
-  // `tests/e2e/fixtures.ts`, then drop this `beforeAll`.
+  // HARNESS BLOCKER (deep root cause documented 2026-05-15):
+  // Playwright Electron's electron.launch() against this app hangs at the
+  // post-WS-connect / pre-__playwright_run handshake step. Plain Electron
+  // launches the app fine (env diag prints, whenReady fires). But under
+  // Playwright's loader.js, app.whenReady() is intercepted and only resolved
+  // when Playwright calls globalThis.__playwright_run() over the Node
+  // Inspector — and that call never arrives. Verified ALL of:
+  //   - with/without --user-data-dir flag
+  //   - with/without WAYLAND_CDP_PORT=0
+  //   - with NODE_ENV=production / development / unset
+  //   - with executablePath + script path vs args:['.']
+  //   - opt out of ../fixtures singleton (this spec runs alone in worker)
+  // None unblock the hang. The Node Inspector WS connects ("ws connected"),
+  // env diag prints, but our `whenReady().then(handleAppReady)` chain never
+  // runs. Likely a subtle interaction between configureChromium.ts (top-level
+  // app.setName + app.setPath) and Playwright's app.emit/whenReady override.
+  //
+  // FOLLOW-UP — alternative test design (not implemented):
+  //   1. Use singleton fixture, write storage via bridge, fsync, then
+  //      read userData JSON files directly from disk and assert content.
+  //      Validates writeFileAtomic + C1 storage allowlist without relaunch.
+  //   2. OR replace electron.launch() in this spec with child_process.spawn
+  //      of the Electron binary, parse stdout for ready signal, manually
+  //      drive via stdin JSON-RPC.
+  //
+  // Until then: skip the live runs with a pointed reason; test bodies are
+  // complete and reusable when the harness lands.
   test.beforeAll(() => {
     test.skip(
       true,
-      'Per-test Electron relaunch needs harness support (clean-quit helper + sandboxed-launch fixture). ' +
-        'Test bodies are complete; storage bridge round-trip is the same write/quit/relaunch/read pattern. ' +
-        'See TODO(e2e-harness) in tests/e2e/specs/settings-persistence.e2e.ts.'
+      'Harness blocker: Playwright electron.launch() hangs at __playwright_run handshake against this app. ' +
+        'Plain Electron works (env diag fires, whenReady fires). Under Playwright loader, ' +
+        'app.whenReady is overridden + never resolved. Test bodies complete; see comment above for follow-up plan.'
     );
   });
 
