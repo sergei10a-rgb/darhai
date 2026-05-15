@@ -8,7 +8,7 @@ import type { RefInputType } from '@arco-design/web-react/es/Input/interface';
 import { Lock, User } from 'lucide-react';
 import AppLoader from '@renderer/components/layout/AppLoader';
 import { useAuth } from '../../hooks/context/AuthContext';
-import './LoginPage.css';
+import styles from './LoginPage.module.css';
 
 type MessageState = {
   type: 'error' | 'success';
@@ -192,12 +192,12 @@ const LoginPage: React.FC = () => {
   }
 
   return (
-    <div className='login-page'>
-      <div className='login-page__card'>
-        <label className='login-page__lang-select-wrapper' htmlFor='lang-select'>
+    <div className={styles['login-page']}>
+      <div className={styles['login-page__card']}>
+        <label className={styles['login-page__lang-select-wrapper']} htmlFor='lang-select'>
           <Select
             id='lang-select'
-            className='login-page__lang-select'
+            className={styles['login-page__lang-select']}
             value={i18n.language}
             onChange={handleLanguageChange}
           >
@@ -209,27 +209,27 @@ const LoginPage: React.FC = () => {
           </Select>
         </label>
 
-        <div className='login-page__header'>
-          <div className='login-page__brand-row'>
-            <div className='login-page__logo'>
+        <div className={styles['login-page__header']}>
+          <div className={styles['login-page__brand-row']}>
+            <div className={styles['login-page__logo']}>
               <img src={loginLogo} alt={t('login.brand')} />
             </div>
-            <h1 className='login-page__title'>{t('login.brand')}</h1>
+            <h1 className={styles['login-page__title']}>{t('login.brand')}</h1>
           </div>
-          <p className='login-page__subtitle'>{t('login.subtitle')}</p>
+          <p className={styles['login-page__subtitle']}>{t('login.subtitle')}</p>
         </div>
 
-        <form className='login-page__form' onSubmit={handleSubmit}>
-          <div className='login-page__form-item'>
-            <label className='login-page__label' htmlFor='username'>
+        <form className={styles['login-page__form']} onSubmit={handleSubmit}>
+          <div className={styles['login-page__form-item']}>
+            <label className={styles['login-page__label']} htmlFor='username'>
               {t('login.username')}
             </label>
-            <div className='login-page__input-wrapper'>
+            <div className={styles['login-page__input-wrapper']}>
               <Input
                 ref={usernameRef}
                 id='username'
                 name='username'
-                className='login-page__input'
+                className={styles['login-page__input']}
                 placeholder={t('login.usernamePlaceholder')}
                 autoComplete='username'
                 value={username}
@@ -240,15 +240,15 @@ const LoginPage: React.FC = () => {
             </div>
           </div>
 
-          <div className='login-page__form-item'>
-            <label className='login-page__label' htmlFor='password'>
+          <div className={styles['login-page__form-item']}>
+            <label className={styles['login-page__label']} htmlFor='password'>
               {t('login.password')}
             </label>
-            <div className='login-page__input-wrapper'>
+            <div className={styles['login-page__input-wrapper']}>
               <Input.Password
                 id='password'
                 name='password'
-                className='login-page__input'
+                className={styles['login-page__input']}
                 placeholder={t('login.passwordPlaceholder')}
                 autoComplete='current-password'
                 value={password}
@@ -259,7 +259,7 @@ const LoginPage: React.FC = () => {
             </div>
           </div>
 
-          <div className='login-page__checkbox'>
+          <div className={styles['login-page__checkbox']}>
             <Checkbox id='remember-me' checked={rememberMe} onChange={(checked) => setRememberMe(checked)}>
               {t('login.rememberMe')}
             </Checkbox>
@@ -268,7 +268,7 @@ const LoginPage: React.FC = () => {
           <Button
             type='primary'
             htmlType='submit'
-            className='login-page__submit'
+            className={styles['login-page__submit']}
             disabled={loading}
             loading={loading}
           >
@@ -278,17 +278,17 @@ const LoginPage: React.FC = () => {
           <div
             role='alert'
             aria-live='polite'
-            className={`login-page__message ${message ? 'login-page__message--visible' : ''} ${message ? (message.type === 'success' ? 'login-page__message--success' : 'login-page__message--error') : ''}`}
+            className={`${styles['login-page__message']} ${message ? styles['login-page__message--visible'] : ''} ${message ? (message.type === 'success' ? styles['login-page__message--success'] : styles['login-page__message--error']) : ''}`}
             hidden={!message}
           >
             {message?.text}
           </div>
         </form>
 
-        <div className='login-page__footer'>
-          <div className='login-page__footer-content'>
+        <div className={styles['login-page__footer']}>
+          <div className={styles['login-page__footer-content']}>
             <span>{t('login.footerPrimary')}</span>
-            <span className='login-page__footer-divider'>•</span>
+            <span className={styles['login-page__footer-divider']}>•</span>
             <span>{t('login.footerSecondary')}</span>
           </div>
         </div>

@@ -4,9 +4,17 @@
  * initialised before auth). Matches Direction C: deep black bg with
  * subtle radial orange glow, dark card with hairline border, brand
  * orange focus rings and submit button.
+ *
+ * Local CSS variables (--login-brand, --login-bg) are deliberately
+ * scoped to `.login-page` rather than promoted to global theme tokens.
+ * The login screen renders pre-auth, before the theme system is
+ * initialised, so it cannot rely on global tokens. Keeping the carve-out
+ * scoped here documents that constraint and avoids accidental coupling.
  */
 
 .login-page {
+  --login-brand: #ff6b35;
+  --login-bg: #0a0a0a;
   position: relative;
   display: flex;
   align-items: center;
@@ -16,14 +24,15 @@
   background:
     radial-gradient(ellipse 1200px 600px at 50% -10%, rgba(255, 107, 53, 0.10), transparent 70%),
     radial-gradient(ellipse 800px 400px at 80% 110%, rgba(255, 107, 53, 0.06), transparent 70%),
-    #0a0a0a;
+    var(--login-bg);
   color: #f5f5f5;
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-body.login-page-active {
+/* Applied imperatively via document.body.classList — must remain global */
+:global(body.login-page-active) {
   overflow: hidden;
 }
 
@@ -219,7 +228,7 @@ body.login-page-active {
 }
 
 .login-page__toggle-password:hover {
-  color: #ff6b35;
+  color: var(--login-brand);
 }
 
 .login-page__checkbox {
@@ -234,7 +243,7 @@ body.login-page-active {
   width: 14px;
   height: 14px;
   cursor: pointer;
-  accent-color: #ff6b35;
+  accent-color: var(--login-brand);
 }
 
 .login-page__checkbox label {
@@ -253,8 +262,8 @@ body.login-page-active {
   font-family: inherit;
   letter-spacing: 0.01em;
   border-radius: 10px;
-  background: linear-gradient(180deg, #ff8255 0%, #ff6b35 100%);
-  border: 1px solid #ff6b35;
+  background: linear-gradient(180deg, #ff8255 0%, var(--login-brand) 100%);
+  border: 1px solid var(--login-brand);
   color: #ffffff;
   cursor: pointer;
   transition: all 0.18s ease;
