@@ -902,7 +902,7 @@
     "pendingTimeRemaining": "Kalan süre: {{time}}"
   },
   "noExternalSources": "Harici beceri kaynağı bulunamadı",
-  "aionrs": {
+  "wcore": {
     "available": "Mevcut",
     "notFound": "Bulunamadı",
     "version": "Sürüm",

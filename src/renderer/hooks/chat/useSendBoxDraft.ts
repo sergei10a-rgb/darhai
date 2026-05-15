@@ -46,14 +46,6 @@ type Draft =
       uploadFile: string[];
     }
   | {
-      _type: 'aionrs';
-      content: string;
-      atPath: Array<string | FileOrFolderItem>;
-      uploadFile: string[];
-    }
-  | {
-      // Dual-write/read alias: same shape as 'aionrs'; targets the
-      // wayland-core engine. New conversations write _type: 'wcore'.
       _type: 'wcore';
       content: string;
       atPath: Array<string | FileOrFolderItem>;
@@ -74,10 +66,6 @@ const store: SendBoxDraftStore = {
   'openclaw-gateway': new Map(),
   nanobot: new Map(),
   remote: new Map(),
-  // 'wcore' and 'aionrs' both target the wayland-core engine. Keep them
-  // as separate Maps so drafts persisted under the old key remain
-  // addressable; new conversations write into the 'wcore' map.
-  aionrs: new Map(),
   wcore: new Map(),
 };
 
@@ -131,13 +119,10 @@ const setDraft = <K extends TChatConversation['type']>(
       }
       break;
     case 'wcore':
-    case 'aionrs':
-      // Dual-read: persist drafts for both new ('wcore') and legacy ('aionrs')
-      // kinds in the same store. Store key is the internal id (preserved per BLACKBOARD).
       if (draft) {
-        store.aionrs.set(conversation_id, draft as Extract<Draft, { _type: 'aionrs' }>);
+        store.wcore.set(conversation_id, draft as Extract<Draft, { _type: 'wcore' }>);
       } else {
-        store.aionrs.delete(conversation_id);
+        store.wcore.delete(conversation_id);
       }
       break;
     default:
@@ -164,8 +149,7 @@ const getDraft = <K extends TChatConversation['type']>(
     case 'remote':
       return store.remote.get(conversation_id) as Extract<Draft, { _type: K }>;
     case 'wcore':
-    case 'aionrs':
-      return store.aionrs.get(conversation_id) as Extract<Draft, { _type: K }>;
+      return store.wcore.get(conversation_id) as Extract<Draft, { _type: K }>;
     default:
       return undefined;
   }

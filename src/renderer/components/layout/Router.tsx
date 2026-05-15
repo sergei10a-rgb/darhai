@@ -59,7 +59,7 @@ const PanelRoute: React.FC<{ layout: React.ReactElement }> = ({ layout }) => {
             path='/conversation/:id'
             element={<ErrorBoundary>{withRouteFallback(Conversation)}</ErrorBoundary>}
           />
-          <Route path='/settings/aionrs' element={withRouteFallback(WCoreSettings)} />
+          <Route path='/settings/wcore' element={withRouteFallback(WCoreSettings)} />
           <Route
             path='/team/:id'
             element={TEAM_MODE_ENABLED ? withRouteFallback(TeamIndex) : <Navigate to='/guid' replace />}

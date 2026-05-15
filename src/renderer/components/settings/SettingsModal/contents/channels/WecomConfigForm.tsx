@@ -307,7 +307,7 @@ const WecomConfigForm: React.FC<WecomConfigFormProps> = ({
   };
 
   const hasExistingUsers = authorizedUsers.length > 0;
-  const isGeminiAgent = selectedAgent.backend === 'gemini' || selectedAgent.backend === 'aionrs';
+  const isGeminiAgent = selectedAgent.backend === 'gemini' || selectedAgent.backend === 'wcore';
   const agentOptions: Array<{ backend: string; name: string; customAgentId?: string; isExtension?: boolean }> =
     availableAgents.length > 0 ? availableAgents : [{ backend: 'gemini', name: 'Gemini CLI' }];
 

@@ -904,7 +904,7 @@
     "pendingTimeRemaining": "剩餘時間：{{time}}"
   },
   "noExternalSources": "未發現外部技能來源",
-  "aionrs": {
+  "wcore": {
     "available": "可用",
     "notFound": "未找到",
     "version": "版本",

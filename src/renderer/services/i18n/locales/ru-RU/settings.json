@@ -894,7 +894,7 @@
     "pendingCancel": "Отмена",
     "pendingTimeRemaining": "Осталось времени: {{time}}"
   },
-  "aionrs": {
+  "wcore": {
     "available": "Доступен",
     "notFound": "Не найден",
     "version": "Версия",

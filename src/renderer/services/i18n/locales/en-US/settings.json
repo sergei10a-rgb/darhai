@@ -903,7 +903,7 @@
     "pendingTimeRemaining": "Time remaining: {{time}}"
   },
   "noExternalSources": "No external skill sources discovered",
-  "aionrs": {
+  "wcore": {
     "available": "Available",
     "notFound": "Not Found",
     "version": "Version",

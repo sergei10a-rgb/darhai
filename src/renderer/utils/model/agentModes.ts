@@ -61,7 +61,7 @@ export const AGENT_MODES: Record<string, AgentModeOption[]> = {
     { value: 'autoEdit', label: 'Auto-Accept Edits' },
     { value: 'yolo', label: 'YOLO' },
   ],
-  aionrs: [
+  wcore: [
     { value: 'default', label: 'Default' },
     { value: 'auto_edit', label: 'Auto-Accept Edits' },
     { value: 'yolo', label: 'YOLO' },

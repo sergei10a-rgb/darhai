@@ -788,9 +788,9 @@ const SendBox: React.FC<{
     [conversationContext?.type, handleExternalSelectionAppend]
   );
   useAddEventListener(
-    'aionrs.selected.file.append',
+    'wcore.selected.file.append',
     (items: FileSelectionItem[]) => {
-      if (conversationContext?.type === 'aionrs') {
+      if (conversationContext?.type === 'wcore') {
         handleExternalSelectionAppend(items);
       }
     },
@@ -849,10 +849,7 @@ const SendBox: React.FC<{
           emitter.emit('gemini.selected.file.append', [item]);
           break;
         case 'wcore':
-        case 'aionrs':
-          // Internal event name preserved per BLACKBOARD; emits the same event
-          // for both new ('wcore') and legacy ('aionrs') conversation kinds.
-          emitter.emit('aionrs.selected.file.append', [item]);
+          emitter.emit('wcore.selected.file.append', [item]);
           break;
         case 'acp':
           emitter.emit('acp.selected.file.append', [item]);

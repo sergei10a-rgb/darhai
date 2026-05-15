@@ -867,7 +867,7 @@
     "pendingTimeRemaining": "Залишилося часу: {{time}}"
   },
   "noExternalSources": "Зовнішні джерела навичок не знайдені",
-  "aionrs": {
+  "wcore": {
     "available": "Доступний",
     "notFound": "Не знайдений",
     "version": "Версія",
