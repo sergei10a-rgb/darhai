@@ -19,15 +19,27 @@ Per the Apache 2.0 License, Section 4(b), files modified by Wayland carry no rem
 the original copyright notices. The full Apache License is included as `LICENSE` at the
 root of this repository.
 
-## aionrs
+## Wayland-Core (fork of aionrs)
 
-- **Project:** aionrs
-- **Source:** https://github.com/iOfficeAI/aionrs
+- **Project:** Wayland-Core, a TradeCanyon-maintained fork of aionrs
+- **Upstream source:** https://github.com/iOfficeAI/aionrs
 - **License:** Apache License, Version 2.0
-- **Use in Wayland:** Wayland integrates `aionrs` as an external, unmodified upstream
-  dependency. Source code under `src/process/agent/aionrs/`, `scripts/prepareAionrs.js`,
-  and related integration points references `aionrs` as a third-party package and is
-  intentionally left under its original naming to preserve interoperability.
+- **Copyright:** Copyright 2025 aionrs contributors (upstream); modifications Copyright
+  2026 TradeCanyon
+- **Use in Wayland:** Wayland integrates Wayland-Core as its Rust engine. Source code
+  under `src/process/agent/wcore/`, `scripts/prepareWaylandCore.js`, and related
+  integration points references the engine as `wayland-core`.
+- **Modifications:** Per Apache-2.0 Section 4(b), the following changes have been made
+  to the upstream aionrs source. See `engine/CHANGELOG.md` (Unreleased section) for the
+  authoritative divergence summary:
+  - All 11 workspace crates renamed (`aion-*` → `wcore-*`).
+  - Compiled binary renamed (`aionrs` → `wayland-core`).
+  - Default config file renamed (`.aionrs.toml` → `.wcore.toml`).
+  - User config directory renamed (`~/.aionrs` → `~/.wcore`).
+  - New `WCORE_*` env vars and template tokens added as primary names; legacy
+    `AIONRS_*` forms retained as backward-compat aliases.
+  - Original aionrs Apache-2.0 copyright headers are preserved in all forked source
+    files.
 
 ---
 
