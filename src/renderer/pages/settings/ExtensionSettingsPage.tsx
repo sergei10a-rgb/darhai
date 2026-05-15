@@ -163,7 +163,7 @@ const ExtensionSettingsPage: React.FC = () => {
                 key={tab.id}
                 src={resolvedEntryUrl}
                 onLoad={() => setLoading(false)}
-                sandbox='allow-scripts allow-same-origin'
+                sandbox='allow-scripts'
                 className='w-full border-none'
                 style={{
                   minHeight: '400px',

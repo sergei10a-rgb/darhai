@@ -131,7 +131,7 @@ const ExtensionSettingsTabContent: React.FC<ExtensionSettingsTabContentProps> = 
             key={tabId}
             src={resolvedEntryUrl}
             onLoad={() => setLoading(false)}
-            sandbox='allow-scripts allow-same-origin'
+            sandbox='allow-scripts'
             className='w-full h-full border-none'
             style={{
               minHeight: '200px',
