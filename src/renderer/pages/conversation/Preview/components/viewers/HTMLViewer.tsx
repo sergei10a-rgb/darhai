@@ -5,9 +5,8 @@
  */
 
 import { Message } from '@arco-design/web-react';
-import { html as htmlLang } from '@codemirror/lang-html';
-import CodeMirror from '@uiw/react-codemirror';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import MonacoEditor from '@monaco-editor/react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface HTMLPreviewProps {
@@ -168,9 +167,6 @@ const HTMLPreview: React.FC<HTMLPreviewProps> = ({ content, filePath, hideToolba
   const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>(() => {
     return (document.documentElement.getAttribute('data-theme') as 'light' | 'dark') || 'light';
   });
-
-  // CodeMirror extensions for HTML editing
-  const htmlExtensions = useMemo(() => [htmlLang()], []);
 
   // Monitor theme changes
   useEffect(() => {
@@ -386,19 +382,22 @@ const HTMLPreview: React.FC<HTMLPreviewProps> = ({ content, filePath, hideToolba
         {/* Left: code editor (shown in edit mode) */}
         {editMode && (
           <div className='flex-1 overflow-hidden border-r border-border-base'>
-            <CodeMirror
-              value={htmlCode}
+            <MonacoEditor
               height='100%'
-              theme={currentTheme === 'dark' ? 'dark' : 'light'}
-              extensions={htmlExtensions}
-              onChange={(value) => setHtmlCode(value)}
-              basicSetup={{
-                lineNumbers: true,
-                foldGutter: true,
-                highlightActiveLine: true,
-                highlightActiveLineGutter: true,
+              language='html'
+              theme={currentTheme === 'dark' ? 'vs-dark' : 'vs'}
+              value={htmlCode}
+              onChange={(value) => setHtmlCode(value || '')}
+              options={{
+                minimap: { enabled: false },
+                fontSize: 13,
+                lineNumbers: 'on',
+                wordWrap: 'on',
+                automaticLayout: true,
+                scrollBeyondLastLine: false,
+                formatOnPaste: true,
+                formatOnType: true,
               }}
-              style={{ fontSize: '13px', height: '100%' }}
             />
           </div>
         )}
