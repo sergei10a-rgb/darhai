@@ -1,5 +1,33 @@
 name: 'PR Checks'
 
+# Consolidated PR-gate workflow for the Wayland fork.
+#
+# This file is the union of the legacy upstream `pr-checks.yml` and the
+# Wayland-fork `pr-gate.yml` (commit dc59d43e3). The two duplicated
+# tsc/lint/vitest/build steps across separate runners; they are now one
+# workflow.
+#
+# Job names ("Code Quality", "Unit Tests (<os>)", "Coverage Test",
+# "I18n Check", "Security Audit E2E", "Release Script Test") are
+# referenced by branch protection required-checks and by
+# `pr-checks-docs.yml` (the docs-only stub that mirrors required-check
+# names so docs-only PRs can satisfy the same set). DO NOT rename
+# without updating both branch-protection settings and pr-checks-docs.yml.
+#
+# Cross-platform PACKAGED builds (electron-builder, ~45min per platform)
+# were removed from PRs -- they now live in `build-matrix.yml`, gated on
+# the repo variable `CI_BUILD_MATRIX_ENABLED`. PRs still run a fast
+# unpackaged `electron-vite build` to catch compile errors.
+#
+# Required repo secrets / variables:
+#   secrets.CODECOV_TOKEN          -- optional, falls back to OIDC if unset
+#                                     (only used on TradeCanyon/Wayland)
+#   vars.CI_BUILD_MATRIX_ENABLED   -- owned by build-matrix.yml, not used here
+#
+# Security: no untrusted PR/issue text is interpolated into any run: step.
+# env.PR_BASE_REF is set by ./.github/actions/checkout-pr from trusted
+# sources (github.base_ref or the PR's base.ref via gh api).
+
 on:
   workflow_dispatch:
     inputs:
@@ -8,16 +36,19 @@ on:
         required: true
         type: string
       skip_build_test:
-        description: 'Skip the build test job (saves ~45 min)'
+        description: 'Skip the unpackaged build / e2e job'
         type: boolean
         required: false
         default: false
   pull_request:
-    types: [opened, synchronize, edited, closed, ready_for_review]
-    branches: [main, dev]
+    types: [opened, synchronize, edited, closed, ready_for_review, reopened]
+    branches: [main, dev, 'feat/**', 'release/**']
     paths-ignore:
       - '**/*.md'
       - 'docs/**'
+      - 'design-mockups/**'
+      - '.planning/**'
+      - '.blackboard/**'
       - '.vscode/**'
       - '.github/ISSUE_TEMPLATE/**'
 
@@ -34,6 +65,10 @@ permissions:
 
 env:
   BUN_INSTALL_REGISTRY: 'https://registry.npmjs.org/'
+  # Wayland-core release stream does not exist yet (see commit 48d155826).
+  WCORE_SKIP: '1'
+  CI: 'true'
+  NODE_OPTIONS: '--max-old-space-size=8192'
 
 jobs:
   # Cancel in-progress runs when PR is closed (merged or manually closed)
@@ -44,7 +79,7 @@ jobs:
     steps:
       - run: echo "PR closed, cancelling in-progress runs via concurrency."
 
-  # Job 1: Code quality checks (TypeScript, Oxlint, Oxfmt)
+  # Job 1: Code quality checks (TypeScript, Oxlint, Oxfmt via prek)
   code-quality:
     name: Code Quality
     if: github.event_name == 'workflow_dispatch' || (github.event.action != 'closed' && github.event.pull_request.draft == false)
@@ -83,9 +118,13 @@ jobs:
         run: npm install -g @j178/prek
 
       - name: Run prek checks
-        run: prek run --from-ref origin/${{ env.PR_BASE_REF }} --to-ref HEAD
+        env:
+          PR_BASE_REF: ${{ env.PR_BASE_REF }}
+        run: prek run --from-ref "origin/$PR_BASE_REF" --to-ref HEAD
 
-  # Job 2: Unit tests across all platforms
+  # Job 2: Unit tests across all platforms.
+  # NOTE: job name "Unit Tests (<os>)" is a required check; pr-checks-docs.yml
+  # mirrors these for docs-only PRs. Do not rename or collapse.
   unit-tests:
     name: Unit Tests (${{ matrix.os }})
     if: github.event_name == 'workflow_dispatch' || (github.event.action != 'closed' && github.event.pull_request.draft == false)
@@ -129,10 +168,10 @@ jobs:
       - name: Run postinstall
         run: npm run postinstall || true
 
-      - name: Run extension system tests
+      - name: Run unit tests (vitest)
         run: bunx vitest run
 
-  # Job 3: Coverage test (Linux only)
+  # Job 3: Coverage test (Linux only) + Codecov upload
   coverage-tests:
     name: Coverage Test
     if: github.event_name == 'workflow_dispatch' || (github.event.action != 'closed' && github.event.pull_request.draft == false)
@@ -179,17 +218,23 @@ jobs:
           files: coverage/lcov.info
           fail_ci_if_error: false
           verbose: true
+
       - name: Skip Codecov upload when preconditions are not met
         if: always() && hashFiles('coverage/lcov.info') != '' && github.repository != 'TradeCanyon/Wayland'
         shell: bash
+        env:
+          REPO: ${{ github.repository }}
         run: |
           echo 'Skipping Codecov upload due to unmet preconditions.'
-          echo "Repository: ${{ github.repository }}"
+          echo "Repository: $REPO"
+
       - name: Coverage result summary
         if: always()
         shell: bash
+        env:
+          COVERAGE_OUTCOME: ${{ steps.coverage.outcome }}
         run: |
-          if [ "${{ steps.coverage.outcome }}" = "failure" ]; then
+          if [ "$COVERAGE_OUTCOME" = "failure" ]; then
             echo "::warning::Coverage tests failed (non-blocking). Check logs for failed test details."
             echo "## Coverage check (non-blocking warning)" >> $GITHUB_STEP_SUMMARY
             echo "Coverage command failed in this run. Please review test failures in logs." >> $GITHUB_STEP_SUMMARY
@@ -216,6 +261,7 @@ jobs:
           path: coverage/
           if-no-files-found: warn
 
+  # Job 4: I18n validation (warning-only)
   i18n-check:
     name: I18n Check
     if: github.event_name == 'workflow_dispatch' || (github.event.action != 'closed' && github.event.pull_request.draft == false)
@@ -254,7 +300,7 @@ jobs:
         shell: bash
         run: |
           echo "## i18n validation" >> $GITHUB_STEP_SUMMARY
-          if grep -q "⚠️" i18n-check.log; then
+          if grep -q "warning" i18n-check.log; then
             echo "Missing/incomplete translations found. Please review warnings below." >> $GITHUB_STEP_SUMMARY
           else
             echo "No i18n warnings detected." >> $GITHUB_STEP_SUMMARY
@@ -267,47 +313,15 @@ jobs:
           echo '```' >> $GITHUB_STEP_SUMMARY
           echo "</details>" >> $GITHUB_STEP_SUMMARY
 
-  # Job 4: Build test across all platforms (parallel with code-quality and unit-tests)
-  build-test:
-    name: Build Test (${{ matrix.platform }})
+  # Job 5: Fast unpackaged build + security-audit e2e spec.
+  # Merged from pr-gate.yml (commit dc59d43e3). The HEAVY cross-platform
+  # electron-builder packaging step that used to live in pr-checks.yml
+  # was removed -- it now lives in build-matrix.yml (push/cron + flag).
+  security-audit:
+    name: Security Audit E2E
     if: github.event.action != 'closed' && github.event.pull_request.draft == false && inputs.skip_build_test != true
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 45
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform: 'macos-arm64'
-            os: 'macos-14'
-            arch: 'arm64'
-            target: '--mac'
-            build_args: '--mac --arm64'
-            unpacked_dir: 'mac-arm64'
-          - platform: 'macos-x64'
-            os: 'macos-14'
-            arch: 'x64'
-            target: '--mac'
-            build_args: '--mac --x64'
-            unpacked_dir: 'mac'
-          - platform: 'windows-x64'
-            os: 'windows-2022'
-            arch: 'x64'
-            target: '--win'
-            build_args: '--win --x64'
-            unpacked_dir: 'win-unpacked'
-          - platform: 'windows-arm64'
-            os: 'windows-2022'
-            arch: 'arm64'
-            target: '--win'
-            build_args: '--win --arm64'
-            unpacked_dir: 'win-arm64-unpacked'
-          - platform: 'linux'
-            os: 'ubuntu-latest'
-            arch: 'x64'
-            target: '--linux'
-            build_args: '--linux --x64'
-            unpacked_dir: 'linux-unpacked'
-
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -315,245 +329,56 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          # Pinned to ../mise.toml (node = "24"). engines.node allows >=22 <25.
+          node-version: '24'
 
-      - name: Setup bun
+      - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
-          cache: true
+          # Pinned to ../mise.toml (bun = "1.3").
+          bun-version: '1.3'
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Cache Bun + node_modules
+        uses: actions/cache@v4
         with:
-          python-version: '3.12'
-
-      - name: Setup just
-        uses: extractions/setup-just@v2
+          path: |
+            ~/.bun/install/cache
+            node_modules
+          key: pr-checks-bun-${{ runner.os }}-${{ hashFiles('bun.lock', 'package.json') }}
+          restore-keys: |
+            pr-checks-bun-${{ runner.os }}-
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Run postinstall
-        run: npm run postinstall || true
+      - name: Postinstall (CI uses prebuilt binaries; see scripts/postinstall.js)
+        run: bun run postinstall || true
 
-      - name: Install Linux dependencies
-        if: matrix.platform == 'linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential python3 python3-pip pkg-config libsqlite3-dev fakeroot dpkg-dev rpm libnss3-dev libatk-bridge2.0-dev libdrm2 libxkbcommon-dev libxss1 libatspi2.0-dev libgtk-3-dev libxrandr2 libasound2-dev
+      - name: Typecheck
+        run: bunx tsc --noEmit
 
-      - name: Get Electron version
-        id: electron-version
-        shell: bash
-        run: |
-          ELECTRON_VERSION=$(node -p "require('./package.json').devDependencies.electron.replace(/[\^~]/g, '')")
-          echo "version=$ELECTRON_VERSION" >> $GITHUB_OUTPUT
-          echo "Electron version: $ELECTRON_VERSION"
+      - name: Lint
+        run: bun run lint
 
-      # Restore Electron/Electron-Builder caches before install-app-deps
-      - name: Cache Electron artifacts
-        id: electron-cache
-        uses: actions/cache@v4
+      - name: Build (electron-vite, no packaging)
+        run: bunx electron-vite build
+
+      - name: Install Playwright system deps
+        run: bunx playwright install --with-deps chromium
+
+      - name: Run security-audit e2e spec
+        run: bunx playwright test tests/e2e/specs/security-audit-verification.e2e.ts
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
         with:
-          path: |
-            ${{ runner.temp }}/.cache/electron
-            ${{ runner.temp }}/.cache/electron-builder
-            ~/.cache/electron
-            ~/.cache/electron-builder
-            ${{ env.LOCALAPPDATA }}\electron-builder\Cache
-          key: electron-cache-${{ matrix.platform }}-${{ matrix.arch }}-${{ hashFiles('package.json', 'bun.lock') }}
-          restore-keys: |
-            electron-cache-${{ matrix.platform }}-${{ matrix.arch }}-
-            electron-cache-${{ matrix.platform }}-
+          name: pr-checks-playwright-report
+          path: tests/e2e/report
+          if-no-files-found: ignore
+          retention-days: 7
 
-      - name: Cache status
-        run: echo "electron-cache-hit=${{ steps.electron-cache.outputs.cache-hit }}"
-
-      - name: Rebuild native modules for Electron (non-Windows)
-        if: "!startsWith(matrix.platform, 'windows')"
-        run: bunx electron-builder install-app-deps
-        env:
-          npm_config_runtime: electron
-          npm_config_disturl: https://electronjs.org/headers
-          ELECTRON_CACHE: ${{ runner.temp }}/.cache/electron
-          ELECTRON_BUILDER_CACHE: ${{ runner.temp }}/.cache/electron-builder
-
-      - name: Setup MSBuild (Windows only)
-        if: startsWith(matrix.platform, 'windows')
-        uses: microsoft/setup-msbuild@v2
-        with:
-          vs-version: '17.0'
-
-      - name: Build test (Windows x64)
-        if: matrix.platform == 'windows-x64'
-        shell: pwsh
-        run: |
-          Write-Host "=========================================="
-          Write-Host "BUILD TEST: ${{ matrix.platform }}"
-          Write-Host "=========================================="
-          just build-win-x64
-          Write-Host "✓Build test passed for ${{ matrix.platform }}"
-        env:
-          NODE_OPTIONS: '--max-old-space-size=8192'
-          MSVS_VERSION: 2022
-          GYP_MSVS_VERSION: 2022
-          WindowsTargetPlatformVersion: 10.0.19041.0
-          CI: true
-          GH_TOKEN: ${{ github.token }}
-
-      - name: Build test (Windows arm64)
-        if: matrix.platform == 'windows-arm64'
-        shell: pwsh
-        run: |
-          Write-Host "=========================================="
-          Write-Host "BUILD TEST: ${{ matrix.platform }}"
-          Write-Host "=========================================="
-          just build-win-arm64
-          Write-Host "✓Build test passed for ${{ matrix.platform }}"
-        env:
-          NODE_OPTIONS: '--max-old-space-size=8192'
-          MSVS_VERSION: 2022
-          GYP_MSVS_VERSION: 2022
-          WindowsTargetPlatformVersion: 10.0.19041.0
-          CI: true
-          GH_TOKEN: ${{ github.token }}
-
-      - name: Build test (non-Windows)
-        if: "!startsWith(matrix.platform, 'windows')"
-        shell: bash
-        run: |
-          echo "=========================================="
-          echo "BUILD TEST: ${{ matrix.platform }}"
-          echo "=========================================="
-          node scripts/build-with-builder.js auto ${{ matrix.build_args }}
-          echo "✓Build test passed for ${{ matrix.platform }}"
-        env:
-          NODE_OPTIONS: '--max-old-space-size=8192'
-          npm_config_arch: ${{ matrix.arch }}
-          npm_config_target_arch: ${{ matrix.arch }}
-          npm_config_runtime: electron
-          npm_config_target: ${{ steps.electron-version.outputs.version }}
-          npm_config_disturl: https://electronjs.org/headers
-          CI: true
-          GH_TOKEN: ${{ github.token }}
-
-      - name: Verify packaged bundled bun assets
-        run: bun run test:packaged:bun
-
-      - name: Verify build artifacts exist
-        shell: bash
-        run: |
-          echo "=========================================="
-          echo "VERIFY ARTIFACTS: ${{ matrix.platform }}"
-          echo "=========================================="
-          ls -lah out || true
-
-          case "${{ matrix.platform }}" in
-            windows-*)
-              ls out/*.exe out/*latest*.yml >/dev/null
-              ;;
-            macos-*)
-              ls out/*.dmg out/*.zip out/*latest*.yml >/dev/null
-              ;;
-            linux)
-              ls out/*.deb out/*latest*.yml >/dev/null
-              ;;
-          esac
-
-      - name: Silent install smoke test (Windows x64)
-        if: matrix.platform == 'windows-x64'
-        shell: pwsh
-        run: |
-          Write-Host "=========================================="
-          Write-Host "SMOKE INSTALL: windows-x64"
-          Write-Host "=========================================="
-
-          $installer = Get-ChildItem -Path out -Filter "Wayland-*-win-*.exe" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-          if (-not $installer) {
-            throw "No Windows installer found in out/"
-          }
-
-          Write-Host "Using installer: $($installer.FullName)"
-          Start-Process -FilePath $installer.FullName -ArgumentList '/S' -Wait -NoNewWindow
-
-          $candidates = @(
-            "$env:LOCALAPPDATA\\Programs\\Wayland\\Wayland.exe",
-            "$env:ProgramFiles\\Wayland\\Wayland.exe",
-            "$env:ProgramFiles(x86)\\Wayland\\Wayland.exe"
-          )
-
-          $installedExe = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
-          if (-not $installedExe) {
-            throw "Silent install finished but app executable not found in expected locations"
-          }
-
-          Write-Host "Installed executable: $installedExe"
-
-      - name: Skip executable smoke for Windows arm64 cross build
-        if: matrix.platform == 'windows-arm64'
-        shell: pwsh
-        run: |
-          Write-Host "Skipping runtime install smoke for windows-arm64: runner is windows-x64, cannot reliably execute arm64 installer."
-          Get-ChildItem -Path out -Filter "Wayland-*-win-*.exe" | Format-Table Name, Length
-
-      - name: Install smoke test (macOS arm64)
-        if: matrix.platform == 'macos-arm64'
-        shell: bash
-        run: |
-          set -euo pipefail
-          echo "=========================================="
-          echo "SMOKE INSTALL: macos-arm64"
-          echo "=========================================="
-
-          DMG_FILE=$(ls out/*.dmg | head -n 1)
-          MOUNT_POINT="/tmp/wayland-smoke-mount"
-          APP_DIR="/tmp/wayland-smoke-app"
-
-          rm -rf "$MOUNT_POINT" "$APP_DIR"
-          mkdir -p "$MOUNT_POINT" "$APP_DIR"
-
-          hdiutil attach "$DMG_FILE" -nobrowse -mountpoint "$MOUNT_POINT"
-          cp -R "$MOUNT_POINT"/*.app "$APP_DIR"/
-          hdiutil detach "$MOUNT_POINT"
-
-          APP_PATH=$(ls -d "$APP_DIR"/*.app | head -n 1)
-          APP_BIN="$APP_PATH/Contents/MacOS/Wayland"
-
-          test -x "$APP_BIN"
-          "$APP_BIN" --version || true
-
-      - name: Skip executable smoke for macOS x64 cross build
-        if: matrix.platform == 'macos-x64'
-        shell: bash
-        run: |
-          echo "Skipping runtime launch smoke for macos-x64 cross build on arm64 runner."
-          ls -lah out/*.dmg out/*.zip
-
-      - name: Install smoke test (Linux)
-        if: matrix.platform == 'linux'
-        shell: bash
-        run: |
-          set -euo pipefail
-          echo "=========================================="
-          echo "SMOKE INSTALL: linux"
-          echo "=========================================="
-
-          DEB_FILE=$(ls out/*.deb | head -n 1)
-          PKG_NAME=$(dpkg-deb -f "$DEB_FILE" Package)
-          sudo dpkg -i "$DEB_FILE" || sudo apt-get install -f -y
-
-          INSTALLED_BIN=$(dpkg -L "$PKG_NAME" | grep -Ei '/(bin|opt)/.*(wayland)$' | head -n 1 || true)
-          if [ -z "$INSTALLED_BIN" ]; then
-            echo "Package files:"
-            dpkg -L "$PKG_NAME" | head -n 50
-            echo "No installed executable path matched expected pattern"
-            exit 1
-          fi
-
-          test -x "$INSTALLED_BIN"
-
-  # Job 5: Test release scripts (fast, no build required)
+  # Job 6: Test release scripts (fast, no build required)
   release-script-test:
     name: Release Script Test
     if: github.event.action != 'closed' && github.event.pull_request.draft == false
