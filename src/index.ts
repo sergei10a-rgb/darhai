@@ -21,7 +21,7 @@ declare global {
 // L11 (AUDIT-04 F20): strip PII from Sentry events before transmit.
 // Removes auth-style keys from event metadata and rewrites homedir-prefixed
 // paths to `~` in messages, exception values, and stacktrace filenames.
-function scrubPii(event: Sentry.Event): Sentry.Event {
+function scrubPii(event: Sentry.ErrorEvent): Sentry.ErrorEvent {
   const SENSITIVE_KEYS = /^(?:username|password|authorization|bearer|jwt_secret|.*token.*)$/i;
   const HOME = os.homedir();
   const stripObj = (obj: Record<string, unknown>): Record<string, unknown> => {
