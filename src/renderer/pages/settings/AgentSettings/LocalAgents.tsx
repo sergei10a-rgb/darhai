@@ -24,6 +24,10 @@ const LocalAgents: React.FC = () => {
   const [hubModalVisible, setHubModalVisible] = useState(false);
 
   // Detected agents (include built-in backends and extension-contributed agents, exclude user custom and remote)
+  // TODO(M13/AUDIT-05 F19): AgentRegistry now exposes `getLoadErrors()` (e.g.
+  // remote-agent DB read failures). Surface those errors here so the user can
+  // tell "no remote agents configured" apart from "remote loading failed".
+  // Requires wiring through the IPC bridge first — not part of this slice.
   const { data: detectedAgents } = useSWR('acp.agents.available.settings', async () => {
     const result = await ipcBridge.acpConversation.getAvailableAgents.invoke();
     if (result.success && result.data) {

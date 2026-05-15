@@ -49,6 +49,15 @@ class AgentRegistry {
   private otherAgents: DetectedAgent[] = [];
   private customAgents: AcpDetectedAgent[] = [];
 
+  /**
+   * Caught errors from sub-detector loading paths (e.g. remote agent DB read).
+   * Surfaced via `getLoadErrors()` so the renderer can distinguish
+   * "no agents configured" from "agent loading failed". Cleared on every
+   * full re-detection (initialize/refreshAll) and on the targeted refresh
+   * for the affected source (e.g. refreshRemoteAgents clears remote errors).
+   */
+  loadErrors: string[] = [];
+
   private createGeminiAgent(): GeminiDetectedAgent {
     return {
       id: 'gemini',
@@ -125,7 +134,11 @@ class AgentRegistry {
         authType: config.authType,
       }));
     } catch (error) {
+      const message = `[remote] ${String((error as { message?: unknown })?.message ?? error)}`;
       console.error('[AgentRegistry] Failed to load remote agents:', error);
+      this.loadErrors.push(message);
+      // NOTE: Sentry is not currently imported in this file; capture deferred
+      // to a follow-up slice that wires Sentry into the main process modules.
       return [];
     }
   }
@@ -188,6 +201,7 @@ class AgentRegistry {
    */
   private async detectAll(): Promise<void> {
     acpDetector.clearEnvCache();
+    this.loadErrors = [];
 
     const [builtinAgents, extensionAgents, remoteAgents, customAgents] = await Promise.all([
       acpDetector.detectBuiltinAgents(),
@@ -228,6 +242,18 @@ class AgentRegistry {
 
   getDetectedAgents(): DetectedAgent[] {
     return [...this.detectedAgents];
+  }
+
+  /**
+   * Returns errors caught during sub-detector loading (e.g. remote agent DB
+   * read failures). Surfaced separately from `getDetectedAgents()` so the
+   * existing array return shape (consumed by 10+ sites) is unchanged.
+   *
+   * Renderer should display these alongside the agent list so the user can
+   * tell "no remote agents configured" apart from "remote loading failed".
+   */
+  getLoadErrors(): string[] {
+    return [...this.loadErrors];
   }
 
   getAcpAgents(): AcpDetectedAgent[] {
@@ -278,6 +304,9 @@ class AgentRegistry {
    */
   async refreshRemoteAgents(): Promise<void> {
     await this.runExclusiveMutation(async () => {
+      // Drop only the [remote]-prefixed errors so a successful reload clears
+      // a previously surfaced failure without losing errors from other sources.
+      this.loadErrors = this.loadErrors.filter((e) => !e.startsWith('[remote]'));
       this.remoteAgents = await this.loadRemoteAgents();
       this.merge();
     });
