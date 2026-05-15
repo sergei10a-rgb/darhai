@@ -656,4 +656,11 @@ export function initUpdateBridge(): void {
       console.error('quitAndInstall failed:', err);
     }
   });
+
+  // L17 (AUDIT-05 F16): expose auto-updater bootstrap status so renderer System tab
+  // can warn when auto-updates are disabled for this session. Defaults to `available: true`
+  // because the channel only sets the global on explicit success/failure of the import.
+  ipcBridge.autoUpdate.getStatus.provider(async (): Promise<{ available: boolean; error?: string }> => {
+    return globalThis.__waylandUpdateChannelStatus ?? { available: true };
+  });
 }

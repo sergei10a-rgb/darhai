@@ -9,7 +9,7 @@ import { ipcBridge } from '@/common';
 import { ConfigStorage } from '@/common/config/storage';
 import type { AcpBackendConfig } from '@/common/types/acpTypes';
 import WaylandModal from '@/renderer/components/base/WaylandModal';
-import { Button, Typography } from '@arco-design/web-react';
+import { Alert, Button, Typography } from '@arco-design/web-react';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -24,16 +24,23 @@ const LocalAgents: React.FC = () => {
   const [hubModalVisible, setHubModalVisible] = useState(false);
 
   // Detected agents (include built-in backends and extension-contributed agents, exclude user custom and remote)
-  // TODO(M13/AUDIT-05 F19): AgentRegistry now exposes `getLoadErrors()` (e.g.
-  // remote-agent DB read failures). Surface those errors here so the user can
-  // tell "no remote agents configured" apart from "remote loading failed".
-  // Requires wiring through the IPC bridge first — not part of this slice.
   const { data: detectedAgents } = useSWR('acp.agents.available.settings', async () => {
     const result = await ipcBridge.acpConversation.getAvailableAgents.invoke();
     if (result.success && result.data) {
       return result.data.filter((agent) => agent.backend !== 'remote' && agent.backend !== 'custom' && !agent.isPreset);
     }
     return [];
+  });
+
+  // AUDIT-05 F19: AgentRegistry sub-detector failures (e.g. remote-agent DB
+  // read error) come back through a separate IPC endpoint so the user can
+  // tell "no remote agents configured" apart from "remote loading failed".
+  const { data: loadErrors } = useSWR('acp.agents.loadErrors.settings', async () => {
+    const result = await ipcBridge.acpConversation.getLoadErrors.invoke();
+    if (result.success && result.data) {
+      return result.data;
+    }
+    return [] as string[];
   });
 
   // Custom agents (user-defined, stored in 'acp.customAgents')
@@ -132,6 +139,30 @@ const LocalAgents: React.FC = () => {
               {t('settings.agentManagement.installFromMarket')}
             </Button>
           </div>
+        </div>
+      )}
+
+      {/* AUDIT-05 F19: surface AgentRegistry sub-detector failures so users can
+          distinguish "no remote agents configured" from "remote loading failed". */}
+      {loadErrors && loadErrors.length > 0 && (
+        <div className='px-16px mt-8px'>
+          <Alert
+            type='warning'
+            content={
+              <div className='flex flex-col gap-4px'>
+                <Typography.Text className='text-12px font-medium'>
+                  {t('settings.agentManagement.loadErrorsTitle', {
+                    defaultValue: 'Some agents failed to load',
+                  })}
+                </Typography.Text>
+                {loadErrors.map((err, idx) => (
+                  <Typography.Text key={idx} className='text-12px'>
+                    {err}
+                  </Typography.Text>
+                ))}
+              </div>
+            }
+          />
         </div>
       )}
 

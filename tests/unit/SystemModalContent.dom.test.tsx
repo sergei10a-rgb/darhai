@@ -145,6 +145,11 @@ vi.mock('@/common', () => ({
       openExternal: { invoke: (...args: any[]) => mockOpenExternal(...args) },
       openFile: { invoke: (...args: any[]) => mockOpenFile(...args) },
     },
+    autoUpdate: {
+      // L17 wired SystemModalContent to surface auto-updater init failures.
+      // Default to "available" so the existing test surface is unchanged.
+      getStatus: { invoke: vi.fn().mockResolvedValue({ available: true }) },
+    },
   },
 }));
 

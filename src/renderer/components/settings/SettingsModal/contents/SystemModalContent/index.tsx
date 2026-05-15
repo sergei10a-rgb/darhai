@@ -51,6 +51,9 @@ const SystemModalContent: React.FC = () => {
   const [agentIdleTimeout, setAgentIdleTimeout] = useState<number>(5);
   const [saveUploadToWorkspace, setSaveUploadToWorkspace] = useState(false);
   const [autoPreviewOfficeFiles, setAutoPreviewOfficeFiles] = useState(true);
+  // L17 (AUDIT-05 F16): surface auto-updater bootstrap failures so users know auto-updates
+  // are disabled until next launch. `null` = unknown/loading, `available: true` = healthy.
+  const [updateChannelStatus, setUpdateChannelStatus] = useState<{ available: boolean; error?: string } | null>(null);
 
   useEffect(() => {
     if (!isDesktop) {
@@ -116,6 +119,14 @@ const SystemModalContent: React.FC = () => {
       .invoke()
       .then((enabled) => setAutoPreviewOfficeFiles(enabled))
       .catch((err) => console.warn('[SystemModalContent.getAutoPreviewOfficeFiles]', err));
+  }, []);
+
+  // L17 (AUDIT-05 F16): poll auto-updater bootstrap status once on mount.
+  useEffect(() => {
+    ipcBridge.autoUpdate.getStatus
+      .invoke()
+      .then((status) => setUpdateChannelStatus(status))
+      .catch((err) => console.warn('[SystemModalContent.getAutoUpdaterStatus]', err));
   }, []);
 
   const handleCloseToTrayChange = useCallback((checked: boolean) => {
@@ -334,6 +345,14 @@ const SystemModalContent: React.FC = () => {
       <WaylandScrollArea className='flex-1 min-h-0 pb-16px' disableOverflow={isPageMode}>
         <div className='space-y-16px'>
           <div className='px-[12px] md:px-[32px] py-16px bg-2 rd-16px space-y-12px'>
+            {updateChannelStatus && !updateChannelStatus.available && (
+              <Alert
+                type='warning'
+                content={t('settings.systemUpdateChannelUnavailable', {
+                  error: updateChannelStatus.error || 'unknown',
+                })}
+              />
+            )}
             <div className='w-full flex flex-col divide-y divide-border-2'>
               {preferenceItems.map((item) => (
                 <PreferenceRow key={item.key} label={item.label} description={item.description}>

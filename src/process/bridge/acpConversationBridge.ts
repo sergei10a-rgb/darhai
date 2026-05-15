@@ -72,6 +72,20 @@ export function initAcpConversationBridge(workerTaskManager: IWorkerTaskManager)
     }
   });
 
+  // AUDIT-05 F19: surface AgentRegistry sub-detector load failures (e.g.
+  // remote agent DB read errors) so the UI can show "remote agents failed
+  // to load: <reason>" instead of silently rendering an empty list.
+  ipcBridge.acpConversation.getLoadErrors.provider(() => {
+    try {
+      return Promise.resolve({ success: true as const, data: agentRegistry.getLoadErrors() });
+    } catch (error) {
+      return Promise.resolve({
+        success: false as const,
+        msg: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  });
+
   // Refresh custom ACP agents after the user adds/edits/deletes one in Settings.
   ipcBridge.acpConversation.refreshCustomAgents.provider(async () => {
     await agentRegistry.refreshCustomAgents();

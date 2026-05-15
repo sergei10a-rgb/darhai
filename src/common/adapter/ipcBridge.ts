@@ -203,6 +203,12 @@ export const autoUpdate = {
   quitAndInstall: buildProvider<void, void>('auto-update.quit-and-install'),
   /** Auto-update status events */
   status: buildEmitter<AutoUpdateStatus>('auto-update.status'),
+  /**
+   * Reports whether the auto-update channel initialized successfully on app launch.
+   * `available: false` means the bootstrap import failed (e.g. missing module, network);
+   * the renderer should surface this so users know auto-updates are disabled until next launch.
+   */
+  getStatus: buildProvider<{ available: boolean; error?: string }, void>('auto-update.get-status'),
 };
 
 export const starOffice = {
@@ -470,6 +476,11 @@ export const acpConversation = {
     void
   >('acp.get-available-agents'),
   checkEnv: buildProvider<{ env: Record<string, string> }, void>('acp.check.env'),
+  // AUDIT-05 F19: surface AgentRegistry load failures (e.g. remote-agent DB
+  // read errors) to the renderer so the UI can distinguish "no agents
+  // configured" from "agent loading failed". Sibling to getAvailableAgents
+  // so 10+ existing consumers of getAvailableAgents.data stay unchanged.
+  getLoadErrors: buildProvider<IBridgeResponse<string[]>, void>('acp.get-load-errors'),
   refreshCustomAgents: buildProvider<IBridgeResponse, void>('acp.refresh-custom-agents'),
   testCustomAgent: buildProvider<
     IBridgeResponse<{ step: 'cli_check' | 'acp_initialize'; error?: string }>,

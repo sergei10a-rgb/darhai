@@ -10,6 +10,14 @@ import './process/utils/configureChromium';
 import * as Sentry from '@sentry/electron/main';
 import os from 'node:os';
 
+// L17 (AUDIT-05 F16): expose auto-updater bootstrap status to the renderer so the
+// System settings tab can surface "auto-updates disabled until next launch" when
+// the updater dynamic import fails. Set on init success/failure below.
+declare global {
+  // eslint-disable-next-line no-var
+  var __waylandUpdateChannelStatus: { available: boolean; error?: string } | undefined;
+}
+
 // L11 (AUDIT-04 F20): strip PII from Sentry events before transmit.
 // Removes auth-style keys from event metadata and rewrites homedir-prefixed
 // paths to `~` in messages, exception values, and stacktrace filenames.
@@ -423,6 +431,7 @@ const createWindow = ({ showOnReady = true }: { showOnReady?: boolean } = {}): v
         // Create status broadcast callback that emits via ipcBridge (pure emitter, no window binding)
         const statusBroadcast = createAutoUpdateStatusBroadcast();
         autoUpdaterService.initialize(statusBroadcast);
+        globalThis.__waylandUpdateChannelStatus = { available: true };
         // Check for updates after 3 seconds delay
         // 3秒后检查更新
         setTimeout(() => {
@@ -431,6 +440,10 @@ const createWindow = ({ showOnReady = true }: { showOnReady?: boolean } = {}): v
       })
       .catch((error) => {
         console.error('[App] Failed to initialize autoUpdaterService:', error);
+        globalThis.__waylandUpdateChannelStatus = {
+          available: false,
+          error: error instanceof Error ? error.message : String(error),
+        };
       });
   } else {
     console.log('[Wayland] Auto-updater disabled via env/CI guard');
