@@ -49,7 +49,7 @@ vi.mock('@icon-park/react', () => ({
   Down: ({ className }: any) => <span data-testid='icon-down' className={className} />,
   FolderOpen: () => <span data-testid='icon-folder-open' />,
   FolderSearch: () => <span data-testid='icon-folder-search' />,
-  Link: () => <span data-testid='icon-link' />,
+  Link: () => <span data-testid='icon-Link' />,
 }));
 
 vi.mock('@/renderer/components/settings/LanguageSwitcher', () => ({
@@ -661,11 +661,11 @@ describe('SystemModalContent', () => {
       render(<SystemModalContent />);
 
       await waitFor(() => {
-        expect(screen.getByTestId('icon-link')).toBeInTheDocument();
+        expect(screen.getByTestId('icon-Link')).toBeInTheDocument();
       });
 
       await act(async () => {
-        fireEvent.click(screen.getByTestId('icon-link').closest('button')!);
+        fireEvent.click(screen.getByTestId('icon-Link').closest('button')!);
       });
 
       expect(mockOpenExternal).toHaveBeenCalledWith('http://127.0.0.1:9230/json');
