@@ -115,7 +115,11 @@ describe('TeammateManager', () => {
   });
 
   afterEach(() => {
-    // No cleanup needed - managers are disposed in individual tests
+    // M14/AUDIT-05 F4: belt-and-suspenders cleanup so a forgotten mgr.dispose()
+    // in any single test can't leak listeners into the next one. Without this,
+    // the 51st test that subscribes to teamEventBus trips the 50-listener cap
+    // (MaxListenersExceededWarning -> failure in strict CI configs).
+    teamEventBus.removeAllListeners('responseStream');
   });
 
   // -------------------------------------------------------------------------

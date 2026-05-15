@@ -21,18 +21,19 @@ export class ForkTask<Data> extends Pipe {
   protected path = '';
   protected data: Data;
   protected fcp: IWorkerProcess | undefined;
-  private killFn: () => void;
   private enableFork: boolean;
   private childExitExpected = false;
+  // NOTE(M14/AUDIT-05 F5): per-instance `process.on('exit', ...)` registration
+  // was removed here. Every ForkTask used to register its own exit listener,
+  // which tripped Node's default 11-listener cap once >10 forks were live
+  // concurrently or errored before kill(). The owning registry (e.g.
+  // WorkerTaskManager) is now responsible for installing ONE shared exit
+  // handler that iterates its task list and calls kill() on each.
   constructor(path: string, data: Data, enableFork = true) {
     super(true);
     this.path = path;
     this.data = data;
     this.enableFork = enableFork;
-    this.killFn = () => {
-      this.kill();
-    };
-    process.on('exit', this.killFn);
     if (this.enableFork) this.init();
   }
   kill() {
@@ -40,7 +41,6 @@ export class ForkTask<Data> extends Pipe {
       this.childExitExpected = true;
       this.fcp.kill();
     }
-    process.off('exit', this.killFn);
   }
   protected init() {
     const platform = getPlatformServices();

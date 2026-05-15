@@ -178,6 +178,7 @@ const initializeConversationListSyncStore = () => {
     }
     refreshConversations();
   });
+  // TODO(M14): confirm intentional module-scope subscription; if not, move into a per-conversation effect.
   ipcBridge.conversation.responseStream.on((message) => {
     const conversationId = message.conversation_id;
     if (!conversationId) {

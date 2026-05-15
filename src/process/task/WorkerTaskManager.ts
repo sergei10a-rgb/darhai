@@ -21,12 +21,27 @@ const AGENT_IDLE_CHECK_INTERVAL_MS = 1 * 60 * 1000;
 export class WorkerTaskManager implements IWorkerTaskManager {
   private taskList: Array<{ id: string; task: IAgentManager }> = [];
   private idleCheckTimer: ReturnType<typeof setInterval> | undefined;
+  // NOTE(M14/AUDIT-05 F5): single shared `process.on('exit', ...)` handler
+  // installed here instead of one-per-ForkTask. Iterates taskList on shutdown
+  // and calls kill() on every live agent, so concurrent forks no longer trip
+  // Node's 11-listener default cap.
+  private readonly shutdownHandler: () => void;
 
   constructor(
     private readonly factory: IAgentFactory,
     private readonly repo: IConversationRepository
   ) {
     this.idleCheckTimer = setInterval(() => this.killIdleCliAgents(), AGENT_IDLE_CHECK_INTERVAL_MS);
+    this.shutdownHandler = () => {
+      for (const item of this.taskList) {
+        try {
+          item.task.kill();
+        } catch {
+          // best-effort during process exit
+        }
+      }
+    };
+    process.on('exit', this.shutdownHandler);
   }
 
   private async getIdleTimeoutMs(): Promise<number> {
@@ -99,6 +114,9 @@ export class WorkerTaskManager implements IWorkerTaskManager {
   async clear(): Promise<void> {
     clearInterval(this.idleCheckTimer);
     this.idleCheckTimer = undefined;
+    // Detach the shared exit handler so repeated singleton resets / tests don't
+    // leak listeners on the global `process` emitter.
+    process.off('exit', this.shutdownHandler);
     const tasks = [...this.taskList];
     this.taskList = [];
     // Trigger kill on all tasks — kill() returns void but may start async
