@@ -198,12 +198,15 @@ function displayInitialCredentials(
   } else {
     console.log('QRCode output disabled: qrcode-terminal is not installed.');
   }
-  console.log(`   QR URL: ${qrUrl}`);
+  // M2: Do NOT print the QR URL — it contains the one-shot login token and
+  // electron-log captures stdout into ~/Library/Logs/Wayland/main.log.
+  console.log('   (QR URL omitted from log; scan QR code above to login)');
 
   // Display traditional credentials as fallback
   console.log('\n🔐 Or use the initial admin credentials:');
   console.log(`   Username: ${credentials.username}`);
-  console.log(`   Password: ${credentials.password}`);
+  // Direct stdout — bypasses electron-log to keep credentials out of persistent logs (M3)
+  process.stdout.write(`   Password: ${credentials.password}\n`);
   console.log('\n⚠️  Please change the password after first login!');
 
   console.log('='.repeat(70) + '\n');

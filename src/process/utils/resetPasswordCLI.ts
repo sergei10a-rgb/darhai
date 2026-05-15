@@ -147,7 +147,8 @@ export async function resetPasswordCLI(username: string): Promise<void> {
     console.log('');
     log.highlight('========================================');
     log.highlight(`  Username: ${user.username}`);
-    log.highlight(`  New Password: ${newPassword}`);
+    // Direct stdout — bypasses electron-log to keep credentials out of persistent logs (M3)
+    process.stdout.write(`  New Password: ${newPassword}\n`);
     log.highlight('========================================');
     console.log('');
     log.warning('JWT secret has been rotated');
