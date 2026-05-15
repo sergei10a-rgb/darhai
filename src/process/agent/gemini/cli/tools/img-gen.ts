@@ -5,7 +5,17 @@
  */
 
 import type { TProviderWithModel } from '@/common/config/storage';
-import { Type } from '@google/genai';
+import type { Type as TypeEnum } from '@google/genai';
+
+// Inlined @google/genai `Type` enum values to avoid loading the SDK
+// module at app boot just to read these string constants. The SDK
+// defines each member as its own name string (e.g. Type.OBJECT === 'OBJECT'),
+// so the typed casts here are exact.
+const Type = {
+  OBJECT: 'OBJECT' as TypeEnum,
+  STRING: 'STRING' as TypeEnum,
+  ARRAY: 'ARRAY' as TypeEnum,
+};
 import type {
   Config,
   ToolResult,

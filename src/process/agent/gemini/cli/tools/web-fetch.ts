@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Type } from '@google/genai';
+import type { Type as TypeEnum } from '@google/genai';
 import type {
   GeminiClient,
   Config,
@@ -14,6 +14,15 @@ import type {
   ToolCallConfirmationDetails,
   MessageBus,
 } from '@office-ai/aioncli-core';
+
+// Inlined @google/genai `Type` enum values to avoid loading the SDK
+// module at app boot just to read these string constants. The SDK
+// defines each member as its own name string (e.g. Type.OBJECT === 'OBJECT'),
+// so the typed casts here are exact.
+const Type = {
+  OBJECT: 'OBJECT' as TypeEnum,
+  STRING: 'STRING' as TypeEnum,
+};
 import {
   BaseDeclarativeTool,
   BaseToolInvocation,
