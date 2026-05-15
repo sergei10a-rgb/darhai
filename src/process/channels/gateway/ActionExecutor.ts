@@ -504,9 +504,8 @@ export class ActionExecutor {
                 channelChatId: chatId,
                 extra: conversationExtra,
               });
-            } else if (backend === 'aionrs') {
+            } else if (backend === 'wcore') {
               sessionConversation = await conversationServiceSingleton.createConversation({
-                // Dual-write: NEW writes emit 'wcore'; readers accept both.
                 type: 'wcore',
                 model,
                 name: conversationName,

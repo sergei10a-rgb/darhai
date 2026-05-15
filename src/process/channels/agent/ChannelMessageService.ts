@@ -275,7 +275,7 @@ export class ChannelMessageService {
       });
 
       // Build payload based on agent type.
-      // Gemini expects { input }; aionrs and all other agents expect { content }.
+      // Gemini expects { input }; all other agents expect { content }.
       const useInputPayload = task.type === 'gemini';
       const payload: { input?: string; content?: string; msg_id: string } = useInputPayload
         ? { input: message, msg_id: msgId }

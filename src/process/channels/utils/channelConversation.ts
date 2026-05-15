@@ -28,7 +28,6 @@ export function buildChannelConversationExtra(args: {
 
   if (
     args.backend === 'gemini' ||
-    args.backend === 'aionrs' ||
     args.backend === 'codex' ||
     args.backend === 'openclaw-gateway'
   ) {

@@ -353,8 +353,7 @@ export const createWCoreAgent = async (options: ICreateConversationParams): Prom
   }
 
   return {
-    // 'wcore' is the canonical conversation type. Legacy 'aionrs' alias was
-    // ripped out in session 4 — there were no production users to migrate.
+    // 'wcore' is the canonical conversation type.
     type: 'wcore',
     model: options.model,
     extra: {

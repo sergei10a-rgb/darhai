@@ -70,8 +70,7 @@ agentFactory.register('remote', (conv, opts) => {
   }) as unknown as ReturnType<typeof agentFactory.create>;
 });
 
-// 'wcore' is the canonical kind for wayland-core agents. Legacy 'aionrs' alias
-// was ripped out in session 4 — there were no production users to migrate.
+// 'wcore' is the canonical kind for wayland-core agents.
 agentFactory.register('wcore', (conv, opts) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const c = conv as any;

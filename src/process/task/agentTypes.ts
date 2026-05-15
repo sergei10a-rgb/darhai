@@ -6,8 +6,7 @@
 
 // src/process/task/agentTypes.ts
 
-// 'wcore' targets the Wayland-Core Rust engine. Legacy 'aionrs' alias was
-// ripped out in session 4 — there are no production users to migrate.
+// 'wcore' targets the Wayland-Core Rust engine.
 export type AgentType = 'gemini' | 'acp' | 'openclaw-gateway' | 'nanobot' | 'remote' | 'wcore';
 export type AgentStatus = 'pending' | 'running' | 'finished';
 

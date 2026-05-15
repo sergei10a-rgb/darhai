@@ -1214,17 +1214,18 @@ const migration_v26: IMigration = {
 };
 
 /**
- * Migration v26 -> v27: Accept 'wcore' alongside 'aionrs' on conversations.type
+ * Migration v26 -> v27: documentation-only entry for the conversations.type
+ * column accepting 'wcore' alongside the prior legacy backend identifier.
  *
- * Documentation-only migration — no schema change. v22 already removed the
- * `CHECK(type IN ...)` constraint from `conversations.type`, so the column
- * accepts any string and no schema-level work is required to allow 'wcore'.
+ * No schema change. v22 already removed the `CHECK(type IN ...)` constraint
+ * from `conversations.type`, so the column accepts any string and no
+ * schema-level work is required to allow 'wcore'.
  *
  * Historical note: this migration originally documented a dual-write/dual-read
- * policy where readers accepted both 'wcore' (new) and 'aionrs' (legacy). The
- * 'aionrs' alias was subsequently ripped out in session 4 — there were no
- * production users to migrate. New writes only use 'wcore'; readers no longer
- * accept 'aionrs'. The migration name string is preserved as historical record.
+ * policy that briefly accepted the prior legacy backend identifier alongside
+ * 'wcore'. That alias was subsequently removed — there were no production
+ * users to migrate. New writes and readers only use 'wcore'. The migration
+ * name and console.log strings below are preserved as historical record.
  */
 const migration_v27: IMigration = {
   version: 27,
