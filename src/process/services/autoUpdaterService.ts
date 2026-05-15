@@ -292,6 +292,7 @@ class AutoUpdaterService extends EventEmitter {
         throw new Error('AutoUpdaterService not initialized');
       }
 
+      // TODO(v0.1.3): verify GPG-signed .deb.sig artifact before applying — see docs/SECURITY.md for status.
       await autoUpdater.downloadUpdate();
       return { success: true };
     } catch (error) {
