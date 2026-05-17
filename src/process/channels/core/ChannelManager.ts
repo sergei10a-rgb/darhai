@@ -20,6 +20,9 @@ import { DiscordPlugin } from '../plugins/tier1/discord/DiscordPlugin';
 import { SlackPlugin } from '../plugins/tier1/slack/SlackPlugin';
 import { SmsTwilioPlugin } from '../plugins/tier1/sms/SmsTwilioPlugin';
 import { WhatsAppPlugin } from '../plugins/tier1/whatsapp/WhatsAppPlugin';
+import { EmailAgentMailPlugin } from '../plugins/tier2/email-agentmail/EmailAgentMailPlugin';
+import { EmailImapPlugin } from '../plugins/tier2/email-imap/EmailImapPlugin';
+import { MatrixPlugin } from '../plugins/tier2/matrix/MatrixPlugin';
 import { isBuiltinChannelPlatform, resolveChannelConvType } from '../types';
 import type { ChannelPlatform, IChannelPluginConfig, PluginType } from '../types';
 import { getTokenStore, registerWebhookDispatcher } from '../webhook';
@@ -64,6 +67,9 @@ export class ChannelManager {
     registerPlugin('slack', SlackPlugin);
     registerPlugin('sms-twilio', SmsTwilioPlugin);
     registerPlugin('whatsapp', WhatsAppPlugin);
+    registerPlugin('email-agentmail', EmailAgentMailPlugin);
+    registerPlugin('email-imap', EmailImapPlugin);
+    registerPlugin('matrix', MatrixPlugin);
   }
 
   /**

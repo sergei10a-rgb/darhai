@@ -466,7 +466,35 @@
     },
     "matrix": {
       "comingSoonTitle": "Matrix coming in {{phase}}",
-      "comingSoonBody": "Federation-aware via matrix-js-sdk. Optional E2E encryption with device verification. Compatible with any homeserver."
+      "comingSoonBody": "Federation-aware via matrix-js-sdk. Optional E2E encryption with device verification. Compatible with any homeserver.",
+      "help": "Federation-aware messaging via matrix-js-sdk. Provide your homeserver URL, full mxid (e.g. @bot:matrix.org), and a long-lived access token.",
+      "replaceWarning": "Connecting a new Matrix account will replace your existing one.",
+      "connectionSuccess": "Matrix connected",
+      "connectionFailed": "Matrix connection failed",
+      "pluginEnabled": "Matrix plugin enabled",
+      "enableFailed": "Failed to enable plugin",
+      "testAndEnable": "Test & Enable",
+      "accessTokenHowTo": "How to get an access token: see https://t2bot.io/docs/access_tokens/ or your homeserver settings.",
+      "credentials": {
+        "homeserverUrl": {
+          "label": "Homeserver URL",
+          "placeholder": "https://matrix.org",
+          "help": "HTTPS base URL of your Matrix homeserver. Use https://matrix.org for the public flagship server.",
+          "required": "Please enter a homeserver URL"
+        },
+        "userId": {
+          "label": "User ID (mxid)",
+          "placeholder": "@bot:matrix.org",
+          "help": "Full Matrix ID including the server suffix, e.g. @bot:matrix.org.",
+          "required": "Please enter a Matrix user ID (mxid)"
+        },
+        "accessToken": {
+          "label": "Access Token",
+          "placeholder": "syt_...your-matrix-access-token...",
+          "help": "Long-lived access token. Element: All settings → Help & About → Access Token. Or use a dedicated bot account.",
+          "required": "Please enter an access token"
+        }
+      }
     },
     "msTeams": {
       "comingSoonTitle": "MS Teams coming in {{phase}}",
@@ -556,9 +584,110 @@
       "comingSoonTitle": "Email (AgentMail) coming in {{phase}}",
       "comingSoonBody": "Per-agent dedicated inbox at <agent-slug>@<workspace>.agentmail.to. AgentMail handles deliverability, threading, attachments."
     },
+    "emailAgentMail": {
+      "help": "Webhook-driven SaaS email via AgentMail. Each agent gets a dedicated inbox; AgentMail handles deliverability, threading, and signed inbound webhooks.",
+      "replaceWarning": "Replacing the AgentMail account invalidates the existing webhook URL.",
+      "accountLockWarning": "Connecting a new AgentMail account will replace your existing one. Existing webhook URL becomes invalid.",
+      "connectionSuccess": "AgentMail connection verified",
+      "connectionFailed": "AgentMail connection test failed",
+      "pluginEnabled": "AgentMail channel enabled",
+      "enableFailed": "Failed to enable AgentMail plugin",
+      "testAndEnable": "Test & Enable",
+      "credentials": {
+        "apiKey": {
+          "label": "API Key",
+          "placeholder": "am_xxxxxxxxxxxxxxxx",
+          "help": "AgentMail dashboard → API Keys. Treat like a password.",
+          "required": "API key is required"
+        },
+        "inboxAddress": {
+          "label": "Inbox Address",
+          "placeholder": "agent@workspace.agentmail.to",
+          "help": "The dedicated inbox AgentMail provisioned for this agent, e.g. agent@workspace.agentmail.to.",
+          "required": "Inbox address is required"
+        },
+        "webhookSecret": {
+          "label": "Webhook Secret",
+          "placeholder": "whsec_xxxxxxxxxxxxxxxx",
+          "help": "Optional HMAC secret AgentMail uses to sign webhook deliveries. Copy from the AgentMail dashboard.",
+          "required": "Webhook secret is required for signed delivery verification"
+        }
+      },
+      "webhookUrl": {
+        "label": "Inbound Webhook URL",
+        "help": "Paste this URL into the AgentMail dashboard \"Webhook URL\" field.",
+        "tunnelPlaceholder": "(configure tunnel in Phase 4)",
+        "notMinted": "<not-minted>",
+        "copyButton": "Copy",
+        "rotateButton": "Rotate",
+        "rotateSuccess": "Webhook URL rotated",
+        "rotateFailed": "Rotation failed"
+      }
+    },
     "emailImap": {
       "comingSoonTitle": "Email (IMAP/SMTP) coming in {{phase}}",
-      "comingSoonBody": "Bring your own inbox. IMAP IDLE for inbound, SMTP for outbound. OAuth supported for Gmail and Outlook."
+      "comingSoonBody": "Bring your own inbox. IMAP IDLE for inbound, SMTP for outbound. OAuth supported for Gmail and Outlook.",
+      "help": "Bring your own inbox. IMAP IDLE for inbound when available (polling fallback at 30s), SMTP for outbound. Use an app password for Gmail / Outlook.",
+      "connectionFailed": "Connection test failed",
+      "pluginEnabled": "Email (IMAP) enabled",
+      "enableFailed": "Failed to enable plugin",
+      "testAndEnable": "Test & Enable",
+      "sections": {
+        "imap": "IMAP (inbound)",
+        "smtp": "SMTP (outbound)"
+      },
+      "credentials": {
+        "imapHost": {
+          "label": "IMAP Host",
+          "placeholder": "imap.gmail.com",
+          "help": "Hostname of your IMAP server, e.g. imap.gmail.com.",
+          "required": "IMAP host is required"
+        },
+        "imapPort": {
+          "label": "IMAP Port",
+          "help": "Default 993 for IMAPS."
+        },
+        "imapUser": {
+          "label": "IMAP User",
+          "placeholder": "agent@example.com",
+          "help": "Usually your full email address.",
+          "required": "IMAP user is required"
+        },
+        "imapPassword": {
+          "label": "IMAP Password",
+          "help": "Use an app password for Gmail / Outlook — your account login will not work.",
+          "required": "IMAP password is required"
+        },
+        "imapTls": {
+          "label": "IMAP TLS",
+          "help": "Use TLS (recommended)."
+        },
+        "useSameAuth": {
+          "label": "Use IMAP credentials for SMTP",
+          "help": "When on, SMTP reuses the IMAP user + password. Turn off to supply a separate SMTP login."
+        },
+        "smtpHost": {
+          "label": "SMTP Host",
+          "placeholder": "smtp.gmail.com",
+          "help": "Leave blank to reuse the IMAP host."
+        },
+        "smtpPort": {
+          "label": "SMTP Port",
+          "help": "Default 587 for STARTTLS. Use 465 for implicit TLS."
+        },
+        "smtpUser": {
+          "label": "SMTP User",
+          "required": "SMTP user is required"
+        },
+        "smtpPassword": {
+          "label": "SMTP Password",
+          "required": "SMTP password is required"
+        },
+        "smtpTls": {
+          "label": "SMTP TLS",
+          "help": "STARTTLS when port = 587, implicit TLS when port = 465."
+        }
+      }
     }
   },
   "webui.description": "Use Wayland as your \"24/7 Remote Assistant\" - arrange tasks from any remote device, anytime, anywhere.",

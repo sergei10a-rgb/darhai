@@ -5,6 +5,7 @@
  */
 
 import type { WebhookVerifier } from '../types';
+import { agentMailVerifier } from './agentmail';
 import { discordVerifier } from './discord';
 import { genericVerifier } from './generic';
 import { slackVerifier } from './slack';
@@ -18,6 +19,7 @@ import { whatsappVerifier } from './whatsapp';
  */
 export const VERIFIER_REGISTRY: Record<string, WebhookVerifier> = {
   'sms-twilio': twilioVerifier,
+  'email-agentmail': agentMailVerifier,
   discord: discordVerifier,
   slack: slackVerifier,
   whatsapp: whatsappVerifier,

@@ -35,7 +35,10 @@ export type BuiltinPluginType =
   | 'lark'
   | 'dingtalk'
   | 'weixin'
-  | 'wecom';
+  | 'wecom'
+  | 'matrix'
+  | 'email-agentmail'
+  | 'email-imap';
 
 /**
  * Supported platform types for plugins.
@@ -101,6 +104,30 @@ export interface IPluginCredentials {
   phoneNumberId?: string;
   businessAccountId?: string;
   verifyToken?: string;
+  // Matrix (Tier 2) — federation-aware messaging via matrix-js-sdk. accessToken
+  // reused from WhatsApp Meta. homeserverUrl is the canonical HTTPS base
+  // (e.g. https://matrix.org); userId is the full mxid (e.g. @bot:matrix.org).
+  homeserverUrl?: string;
+  userId?: string;
+  // Email (AgentMail) — apiKey + inboxAddress are required; webhookSecret is
+  // optional and used by the AgentMail HMAC-SHA256 webhook verifier.
+  apiKey?: string;
+  inboxAddress?: string;
+  webhookSecret?: string;
+  // Email (IMAP/SMTP) — operator-owned mailbox via imapflow + nodemailer.
+  // useSameAuth (default true) makes SMTP reuse the IMAP creds; smtpHost
+  // defaults to imapHost when blank.
+  imapHost?: string;
+  imapPort?: number;
+  imapUser?: string;
+  imapPassword?: string;
+  imapTls?: boolean;
+  smtpHost?: string;
+  smtpPort?: number;
+  smtpUser?: string;
+  smtpPassword?: string;
+  smtpTls?: boolean;
+  useSameAuth?: boolean;
   // Extension plugins: arbitrary credential fields
   [key: string]: string | number | boolean | undefined;
 }
@@ -132,6 +159,15 @@ export function hasPluginCredentials(type: PluginType, credentials?: IPluginCred
       return !!(credentials.accessToken && credentials.phoneNumberId);
     }
     return true;
+  }
+  if (type === 'matrix') {
+    return !!(credentials.homeserverUrl && credentials.accessToken && credentials.userId);
+  }
+  if (type === 'email-agentmail') {
+    return !!(credentials.apiKey && credentials.inboxAddress);
+  }
+  if (type === 'email-imap') {
+    return !!(credentials.imapHost && credentials.imapUser && credentials.imapPassword);
   }
   if (type === 'weixin') return !!(credentials.accountId && credentials.botToken);
   if (type === 'wecom') {

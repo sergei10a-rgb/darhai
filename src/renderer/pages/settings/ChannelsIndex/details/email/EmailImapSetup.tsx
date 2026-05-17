@@ -1,19 +1,47 @@
-import React from "react";
-import { useTranslation } from "react-i18next";
-import { Mail } from "lucide-react";
-import EmptyState from "@renderer/components/settings/shared/feedback/EmptyState";
-import ChannelDetailLayout from "../../ChannelDetailLayout";
+/**
+ * @license
+ * Copyright 2026 Wayland (tradecanyon.com)
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-// Placeholder. Real implementation lands in a future phase.
+import React, { useCallback, useEffect, useState } from 'react';
+import { channel } from '@/common/adapter/ipcBridge';
+import type { IChannelPluginStatus } from '@process/channels/types';
+import EmailImapConfigForm from '@renderer/components/settings/SettingsModal/contents/channels/email/EmailImapConfigForm';
+import ChannelDetailLayout from '../../ChannelDetailLayout';
+
 const EmailImapSetup: React.FC = () => {
-  const { t } = useTranslation();
+  const [pluginStatus, setPluginStatus] = useState<IChannelPluginStatus | null>(null);
+
+  const loadStatus = useCallback(async () => {
+    try {
+      const result = await channel.getPluginStatus.invoke();
+      if (result.success && result.data) {
+        setPluginStatus(result.data.find((p) => p.type === 'email-imap') ?? null);
+      }
+    } catch (error) {
+      console.error('[EmailImapSetup] loadStatus failed:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadStatus();
+  }, [loadStatus]);
+
+  useEffect(() => {
+    const unsubscribe = channel.pluginStatusChanged.on(({ status }) => {
+      if (status.type === 'email-imap') setPluginStatus(status);
+    });
+    return () => unsubscribe();
+  }, []);
+
   return (
-    <ChannelDetailLayout channelId="email-imap" displayName="Email (IMAP / SMTP)" showDisconnect={false}>
-      <EmptyState
-        icon={Mail}
-        title={t("settings.channels.emailImap.comingSoonTitle")}
-        body={t("settings.channels.emailImap.comingSoonBody", { phase: t("settings.channelsIndex.phase2Label") })}
-      />
+    <ChannelDetailLayout
+      channelId='email-imap'
+      displayName='Email (IMAP / SMTP)'
+      pluginId={pluginStatus?.id ?? 'email-imap_default'}
+    >
+      <EmailImapConfigForm pluginStatus={pluginStatus} onStatusChange={setPluginStatus} />
     </ChannelDetailLayout>
   );
 };

@@ -1,21 +1,47 @@
-import React from 'react';
-import { useTranslation } from 'react-i18next';
-import { Mail } from 'lucide-react';
-import EmptyState from '@renderer/components/settings/shared/feedback/EmptyState';
+/**
+ * @license
+ * Copyright 2026 Wayland (tradecanyon.com)
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import React, { useCallback, useEffect, useState } from 'react';
+import { channel } from '@/common/adapter/ipcBridge';
+import type { IChannelPluginStatus } from '@process/channels/types';
+import EmailAgentMailConfigForm from '@renderer/components/settings/SettingsModal/contents/channels/email/EmailAgentMailConfigForm';
 import ChannelDetailLayout from '../../ChannelDetailLayout';
 
-// Placeholder. AgentMail-backed two-way email lands in Phase 2.
 const EmailAgentMailSetup: React.FC = () => {
-  const { t } = useTranslation();
+  const [pluginStatus, setPluginStatus] = useState<IChannelPluginStatus | null>(null);
+
+  const loadStatus = useCallback(async () => {
+    try {
+      const result = await channel.getPluginStatus.invoke();
+      if (result.success && result.data) {
+        setPluginStatus(result.data.find((p) => p.type === 'email-agentmail') ?? null);
+      }
+    } catch (error) {
+      console.error('[EmailAgentMailSetup] loadStatus failed:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadStatus();
+  }, [loadStatus]);
+
+  useEffect(() => {
+    const unsubscribe = channel.pluginStatusChanged.on(({ status }) => {
+      if (status.type === 'email-agentmail') setPluginStatus(status);
+    });
+    return () => unsubscribe();
+  }, []);
+
   return (
-    <ChannelDetailLayout channelId='email-agentmail' displayName='Email (AgentMail)' showDisconnect={false}>
-      <EmptyState
-        icon={Mail}
-        title={t('settings.channels.emailAgentmail.comingSoonTitle')}
-        body={t('settings.channels.emailAgentmail.comingSoonBody', {
-          phase: t('settings.channelsIndex.phase2Label'),
-        })}
-      />
+    <ChannelDetailLayout
+      channelId='email-agentmail'
+      displayName='Email (AgentMail)'
+      pluginId={pluginStatus?.id ?? 'email-agentmail_default'}
+    >
+      <EmailAgentMailConfigForm pluginStatus={pluginStatus} onStatusChange={setPluginStatus} />
     </ChannelDetailLayout>
   );
 };
