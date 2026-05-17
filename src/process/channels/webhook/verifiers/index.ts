@@ -8,7 +8,11 @@ import type { WebhookVerifier } from '../types';
 import { agentMailVerifier } from './agentmail';
 import { discordVerifier } from './discord';
 import { genericVerifier } from './generic';
+import { googleChatVerifier } from './google-chat';
+import { lineVerifier } from './line';
+import { msTeamsVerifier } from './ms-teams';
 import { slackVerifier } from './slack';
+import { synologyChatVerifier } from './synology-chat';
 import { twilioVerifier } from './twilio';
 import { whatsappVerifier } from './whatsapp';
 
@@ -20,7 +24,11 @@ import { whatsappVerifier } from './whatsapp';
 export const VERIFIER_REGISTRY: Record<string, WebhookVerifier> = {
   'sms-twilio': twilioVerifier,
   'email-agentmail': agentMailVerifier,
+  'google-chat': googleChatVerifier,
+  'ms-teams': msTeamsVerifier,
+  'synology-chat': synologyChatVerifier,
   discord: discordVerifier,
+  line: lineVerifier,
   slack: slackVerifier,
   whatsapp: whatsappVerifier,
   generic: genericVerifier,

@@ -52,6 +52,23 @@ export function initChannelBridge(channelRepo: IChannelRepository): void {
         'email-agentmail',
         'email-imap',
         'matrix',
+        // OpenClaw fork wave 1 (W2.x) — 2026-05-18
+        'line',
+        'webhook',
+        'irc',
+        // OpenClaw fork wave 2 (W2.y) — 2026-05-18
+        'mattermost',
+        'google-chat',
+        'nextcloud-talk',
+        'synology-chat',
+        'nostr',
+        // OpenClaw fork wave 3 (W2.z) — 2026-05-18
+        'twitch',
+        'bluebubbles',
+        'imessage',
+        // OpenClaw fork wave 4 (W2.w) — 2026-05-18
+        'signal',
+        'ms-teams',
       ]);
 
       let dbPlugins: import('@process/channels/types').IChannelPluginConfig[] = [];
@@ -171,6 +188,23 @@ export function initChannelBridge(channelRepo: IChannelRepository): void {
         'email-agentmail': 'Email (AgentMail)',
         'email-imap': 'Email (IMAP/SMTP)',
         matrix: 'Matrix',
+        // OpenClaw fork wave 1 (W2.x) — 2026-05-18
+        line: 'LINE',
+        webhook: 'Webhook',
+        irc: 'IRC',
+        // OpenClaw fork wave 2 (W2.y) — 2026-05-18
+        mattermost: 'Mattermost',
+        'google-chat': 'Google Chat',
+        'nextcloud-talk': 'Nextcloud Talk',
+        'synology-chat': 'Synology Chat',
+        nostr: 'Nostr',
+        // OpenClaw fork wave 3 (W2.z) — 2026-05-18
+        twitch: 'Twitch',
+        bluebubbles: 'BlueBubbles (iMessage)',
+        imessage: 'iMessage',
+        // OpenClaw fork wave 4 (W2.w) — 2026-05-18
+        signal: 'Signal',
+        'ms-teams': 'Microsoft Teams',
       };
       for (const builtinType of BUILTIN_TYPES) {
         if (statusMap.has(builtinType)) continue;
@@ -375,7 +409,7 @@ export function initChannelBridge(channelRepo: IChannelRepository): void {
    * fresh one. Surfaces the new record back to the renderer so the UI can
    * re-display the freshly minted webhook URL.
    */
-  channel.rotateWebhookToken.provider(async ({ platform, pluginInstanceId, agentId }) => {
+  channel.rotateWebhookToken.provider(async ({ platform, pluginInstanceId, agentId, secret }) => {
     try {
       if (!platform || !pluginInstanceId || !agentId) {
         return { success: false, msg: 'platform, pluginInstanceId and agentId are required' };
@@ -395,7 +429,15 @@ export function initChannelBridge(channelRepo: IChannelRepository): void {
           store.revoke(record.token);
         }
       }
-      const minted = store.register(platform, pluginInstanceId, agentId);
+      // Resolve the per-platform verifier secret from persisted credentials
+      // when the caller didn't pass one explicitly. Without this, pre-existing
+      // forms (generic webhook / AgentMail / WhatsApp / Twilio) that call
+      // rotate without a secret would persist secret='' and inbound delivery
+      // would fail with secret-not-found (audit fix NEW HIGH1 2026-05-18).
+      const resolvedSecret = secret && secret.trim()
+        ? secret
+        : await resolvePersistedSecretForPlatform(platform, pluginInstanceId);
+      const minted = store.register(platform, pluginInstanceId, agentId, resolvedSecret);
       // CRITICAL: persist the mutated store back to ProcessConfig so the new
       // URL survives restart. Without this, ChannelManager.wireWebhookDispatcher
       // hydrates from a stale snapshot and the rotated URL becomes a 404
@@ -418,4 +460,66 @@ export function initChannelBridge(channelRepo: IChannelRepository): void {
   });
 
   console.log('[ChannelBridge] Initialized');
+}
+
+/**
+ * Per-platform secret resolution for `rotateWebhookToken` callers that don't
+ * pass a secret explicitly. Looks up the persisted plugin credentials and
+ * picks the field each verifier expects.
+ *
+ * Returns '' if no credentials are persisted yet — callers will get a token
+ * but inbound delivery will return secret-not-found until credentials are
+ * saved. That's intentional: it preserves the existing "mint a URL before
+ * saving credentials" flow without silently shipping a broken token.
+ *
+ * Audit fix NEW HIGH1 2026-05-18.
+ */
+async function resolvePersistedSecretForPlatform(
+  platform: string,
+  pluginInstanceId: string,
+): Promise<string> {
+  try {
+    const cm = getChannelManager();
+    // ChannelManager exposes plugin configs via the same DB the bridge uses.
+    // Look up by pluginInstanceId since multiple plugins can share a type.
+    const db = await import('@process/services/database').then((m) => m.getDatabase());
+    const result = db.getChannelPlugins();
+    if (!result.success || !result.data) return '';
+    const plugin = result.data.find((p) => p.id === pluginInstanceId || p.type === platform);
+    if (!plugin?.credentials) return '';
+    const creds = plugin.credentials as Record<string, unknown>;
+
+    // Field name varies by platform — pick the field the verifier uses.
+    switch (platform) {
+      case 'email-agentmail':
+        return typeof creds.webhookSecret === 'string' ? creds.webhookSecret : '';
+      case 'sms-twilio':
+        return typeof creds.authToken === 'string' ? creds.authToken : '';
+      case 'whatsapp':
+        // Meta Cloud API uses verifyToken for the GET handshake + app secret
+        // for HMAC. Prefer verifyToken (used by current verifier path).
+        if (typeof creds.verifyToken === 'string' && creds.verifyToken) return creds.verifyToken;
+        return typeof creds.appSecret === 'string' ? creds.appSecret : '';
+      case 'webhook':
+        // Generic webhook: operator-provided outboundSecret doubles as inbound
+        // HMAC key. If unset, fall back to '' (operator must set it before
+        // inbound works).
+        return typeof creds.outboundSecret === 'string' ? creds.outboundSecret : '';
+      // Wave-1 OpenClaw fork channels — these forms pass secret explicitly,
+      // so the lookup path is defensive only.
+      case 'line':
+        return typeof creds.channelSecret === 'string' ? creds.channelSecret : '';
+      case 'google-chat':
+        return typeof creds.audience === 'string' ? creds.audience : '';
+      case 'ms-teams':
+        return typeof creds.appId === 'string' ? creds.appId : '';
+      case 'synology-chat':
+        return typeof creds.incomingToken === 'string' ? creds.incomingToken : '';
+      default:
+        return '';
+    }
+  } catch (error) {
+    console.warn('[ChannelBridge] resolvePersistedSecretForPlatform failed:', error);
+    return '';
+  }
 }

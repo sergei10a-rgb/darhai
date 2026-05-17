@@ -14,7 +14,7 @@
  * so we never touch the real network or pino logger.
  */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { IChannelPluginConfig } from '@process/channels/types';
 
@@ -162,6 +162,13 @@ describe('EmailImapPlugin — reconnect state machine', () => {
     idleQueue.length = 0;
     sendMailSpy.mockClear();
     transporterCloseSpy.mockClear();
+    // Disable jitter so deterministic advanceTimersByTime() steps still hit
+    // the reconnect. Jitter (0-1000ms) was added per gemini MED1 2026-05-18.
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it('creates a NEW ImapFlow instance after idle() throws (not just calls idle() again on the dead one)', async () => {

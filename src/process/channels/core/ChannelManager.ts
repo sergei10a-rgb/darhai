@@ -23,6 +23,19 @@ import { WhatsAppPlugin } from '../plugins/tier1/whatsapp/WhatsAppPlugin';
 import { EmailAgentMailPlugin } from '../plugins/tier2/email-agentmail/EmailAgentMailPlugin';
 import { EmailImapPlugin } from '../plugins/tier2/email-imap/EmailImapPlugin';
 import { MatrixPlugin } from '../plugins/tier2/matrix/MatrixPlugin';
+import { LinePlugin } from '../plugins/tier2/line/LinePlugin';
+import { WebhookPlugin } from '../plugins/tier1/webhook/WebhookPlugin';
+import { IrcPlugin } from '../plugins/tier3/irc/IrcPlugin';
+import { MattermostPlugin } from '../plugins/tier3/mattermost/MattermostPlugin';
+import { GoogleChatPlugin } from '../plugins/tier3/google-chat/GoogleChatPlugin';
+import { NextcloudTalkPlugin } from '../plugins/tier3/nextcloud-talk/NextcloudTalkPlugin';
+import { SynologyChatPlugin } from '../plugins/tier3/synology-chat/SynologyChatPlugin';
+import { NostrPlugin } from '../plugins/tier3/nostr/NostrPlugin';
+import { TwitchPlugin } from '../plugins/tier3/twitch/TwitchPlugin';
+import { BluebubblesPlugin } from '../plugins/tier3/bluebubbles/BluebubblesPlugin';
+import { ImessagePlugin } from '../plugins/tier2/imessage/ImessagePlugin';
+import { SignalPlugin } from '../plugins/tier2/signal/SignalPlugin';
+import { MsTeamsPlugin } from '../plugins/tier2/ms-teams/MsTeamsPlugin';
 import { isBuiltinChannelPlatform, resolveChannelConvType } from '../types';
 import type { ChannelPlatform, IChannelPluginConfig, PluginType } from '../types';
 import { getTokenStore, registerWebhookDispatcher } from '../webhook';
@@ -70,6 +83,23 @@ export class ChannelManager {
     registerPlugin('email-agentmail', EmailAgentMailPlugin);
     registerPlugin('email-imap', EmailImapPlugin);
     registerPlugin('matrix', MatrixPlugin);
+    registerPlugin('line', LinePlugin);
+    // OpenClaw fork wave 1 (W2.x) — 2026-05-18
+    registerPlugin('webhook', WebhookPlugin);
+    registerPlugin('irc', IrcPlugin);
+    // OpenClaw fork wave 2 (W2.y) — 2026-05-18
+    registerPlugin('mattermost', MattermostPlugin);
+    registerPlugin('google-chat', GoogleChatPlugin);
+    registerPlugin('nextcloud-talk', NextcloudTalkPlugin);
+    registerPlugin('synology-chat', SynologyChatPlugin);
+    registerPlugin('nostr', NostrPlugin);
+    // OpenClaw fork wave 3 (W2.z) — 2026-05-18
+    registerPlugin('twitch', TwitchPlugin);
+    registerPlugin('bluebubbles', BluebubblesPlugin);
+    registerPlugin('imessage', ImessagePlugin);
+    // OpenClaw fork wave 4 (W2.w) — 2026-05-18 — heaviest ports
+    registerPlugin('signal', SignalPlugin);
+    registerPlugin('ms-teams', MsTeamsPlugin);
   }
 
   /**
@@ -263,6 +293,23 @@ export class ChannelManager {
       'email-agentmail',
       'email-imap',
       'matrix',
+      // OpenClaw fork wave 1 (W2.x) — 2026-05-18
+      'line',
+      'webhook',
+      'irc',
+      // OpenClaw fork wave 2 (W2.y) — 2026-05-18
+      'mattermost',
+      'google-chat',
+      'nextcloud-talk',
+      'synology-chat',
+      'nostr',
+      // OpenClaw fork wave 3 (W2.z) — 2026-05-18
+      'twitch',
+      'bluebubbles',
+      'imessage',
+      // OpenClaw fork wave 4 (W2.w) — 2026-05-18
+      'signal',
+      'ms-teams',
     ]);
     const extensionRegistry = ExtensionRegistry.getInstance();
 
@@ -380,42 +427,74 @@ export class ChannelManager {
           }
         | undefined;
 
-      const nextCredentials: Record<string, string | number | boolean | undefined> = {
+      const nextCredentials: Record<string, string | number | boolean | readonly string[] | readonly number[] | undefined> = {
         ...credentials,
       };
+      // pluginRuntimeConfig stays scalar-only — array-typed fields like IRC
+      // channels[] or Nostr relays[] go to credentials (where they belong as
+      // auth/scope material), not runtime config.
       const nextRuntimeConfig: Record<string, string | number | boolean | undefined> = {
         ...pluginRuntimeConfig,
       };
 
-      const primitiveEntries = Object.entries(config).filter(([, value]) => {
+      // Accept arrays-of-primitives in addition to scalars so plugins that need
+      // list-shaped credentials (IRC channels, Nostr relays, iMessage
+      // allowedHandles) don't silently lose them on enable. Audit fix CRIT4
+      // 2026-05-18: previously these were filtered out and dropped.
+      const persistableEntries = Object.entries(config).filter(([, value]) => {
         const t = typeof value;
-        return t === 'string' || t === 'number' || t === 'boolean';
-      }) as Array<[string, string | number | boolean]>;
+        if (t === 'string' || t === 'number' || t === 'boolean') return true;
+        if (Array.isArray(value)) {
+          return value.every((v) => typeof v === 'string' || typeof v === 'number');
+        }
+        return false;
+      }) as Array<[string, string | number | boolean | readonly string[] | readonly number[]]>;
 
       const credentialKeys = new Set((meta?.credentialFields || []).map((f) => f.key));
       const configKeys = new Set((meta?.configFields || []).map((f) => f.key));
 
+      // Type-narrow helpers — Array.isArray doesn't narrow a `readonly
+      // string[] | readonly number[]` union back to a scalar in the
+      // negative branch, so we use explicit type predicates.
+      const isScalar = (v: unknown): v is string | number | boolean => {
+        const t = typeof v;
+        return t === 'string' || t === 'number' || t === 'boolean';
+      };
+      const isArrayValue = (v: unknown): v is readonly string[] | readonly number[] => Array.isArray(v);
+
       if (credentialKeys.size === 0 && configKeys.size === 0) {
-        // Legacy fallback: string values are credentials, non-strings go to config
-        for (const [key, value] of primitiveEntries) {
-          if (typeof value === 'string') {
+        // Legacy fallback: strings + arrays are credentials (operator-typed
+        // values plugins need to authenticate / connect); other primitives
+        // go to runtime config.
+        for (const [key, value] of persistableEntries) {
+          if (typeof value === 'string' || isArrayValue(value)) {
             nextCredentials[key] = value;
-          } else {
+          } else if (isScalar(value)) {
             nextRuntimeConfig[key] = value;
           }
         }
       } else {
-        for (const [key, value] of primitiveEntries) {
+        for (const [key, value] of persistableEntries) {
           if (credentialKeys.has(key)) {
             nextCredentials[key] = value;
             continue;
           }
           if (configKeys.has(key)) {
-            nextRuntimeConfig[key] = value;
+            // Arrays can't go into runtimeConfig (scalar-only); promote to
+            // credentials instead.
+            if (isArrayValue(value)) {
+              nextCredentials[key] = value;
+            } else if (isScalar(value)) {
+              nextRuntimeConfig[key] = value;
+            }
             continue;
           }
-          // Unknown field fallback: keep as runtime config to avoid losing data.
-          nextRuntimeConfig[key] = value;
+          // Unknown field fallback: arrays -> credentials; scalars -> runtime config.
+          if (isArrayValue(value)) {
+            nextCredentials[key] = value;
+          } else if (isScalar(value)) {
+            nextRuntimeConfig[key] = value;
+          }
         }
       }
 
@@ -581,6 +660,75 @@ export class ChannelManager {
       return { success: result.success, botUsername: result.botUsername, error: result.error };
     }
 
+    if (pluginType === 'line') {
+      const result = await LinePlugin.testConnection(token);
+      return { success: result.success, botUsername: result.botUsername, error: result.error };
+    }
+
+    // OpenClaw fork wave 1 (W2.x) — 2026-05-18
+    if (pluginType === 'webhook') {
+      const result = await WebhookPlugin.testConnection(token);
+      return { success: result.success, botUsername: result.botUsername, error: result.error };
+    }
+
+    if (pluginType === 'irc') {
+      const result = await IrcPlugin.testConnection(token);
+      return { success: result.success, botUsername: result.botUsername, error: result.error };
+    }
+
+    // OpenClaw fork wave 2 (W2.y) — 2026-05-18
+    if (pluginType === 'mattermost') {
+      const result = await MattermostPlugin.testConnection(token);
+      return { success: result.success, botUsername: result.botUsername, error: result.error };
+    }
+
+    if (pluginType === 'google-chat') {
+      const result = await GoogleChatPlugin.testConnection(token);
+      return { success: result.success, botUsername: result.botUsername, error: result.error };
+    }
+
+    if (pluginType === 'nextcloud-talk') {
+      const result = await NextcloudTalkPlugin.testConnection(token);
+      return { success: result.success, botUsername: result.botUsername, error: result.error };
+    }
+
+    if (pluginType === 'synology-chat') {
+      const result = await SynologyChatPlugin.testConnection(token);
+      return { success: result.success, botUsername: result.botUsername, error: result.error };
+    }
+
+    if (pluginType === 'nostr') {
+      const result = await NostrPlugin.testConnection(token);
+      return { success: result.success, botUsername: result.botUsername, error: result.error };
+    }
+
+    // OpenClaw fork wave 3 (W2.z) — 2026-05-18
+    if (pluginType === 'twitch') {
+      const result = await TwitchPlugin.testConnection(token);
+      return { success: result.success, botUsername: result.botUsername, error: result.error };
+    }
+
+    if (pluginType === 'bluebubbles') {
+      const result = await BluebubblesPlugin.testConnection(token);
+      return { success: result.success, botUsername: result.botUsername, error: result.error };
+    }
+
+    if (pluginType === 'imessage') {
+      const result = await ImessagePlugin.testConnection(token);
+      return { success: result.success, botUsername: result.botUsername, error: result.error };
+    }
+
+    // OpenClaw fork wave 4 (W2.w) — 2026-05-18
+    if (pluginType === 'signal') {
+      const result = await SignalPlugin.testConnection(token);
+      return { success: result.success, botUsername: result.botUsername, error: result.error };
+    }
+
+    if (pluginType === 'ms-teams') {
+      const result = await MsTeamsPlugin.testConnection(token);
+      return { success: result.success, botUsername: result.botUsername, error: result.error };
+    }
+
     // Extension plugins: test connection not supported yet (will be handled by the plugin itself on start)
     return { success: true, botUsername: undefined, error: undefined };
   }
@@ -605,6 +753,26 @@ export class ChannelManager {
     if (pluginId.startsWith('dingtalk')) return 'dingtalk';
     if (pluginId.startsWith('weixin')) return 'weixin';
     if (pluginId.startsWith('wecom')) return 'wecom';
+    // OpenClaw fork wave 1 (W2.x) — 2026-05-18
+    if (pluginId.startsWith('webhook')) return 'webhook';
+    if (pluginId.startsWith('line')) return 'line';
+    if (pluginId.startsWith('irc')) return 'irc';
+    // OpenClaw fork wave 2 (W2.y) — 2026-05-18. Hyphenated types MUST be
+    // checked before their bare-prefix counterparts (e.g. 'nextcloud-talk'
+    // before any future 'nextcloud').
+    if (pluginId.startsWith('nextcloud-talk')) return 'nextcloud-talk';
+    if (pluginId.startsWith('synology-chat')) return 'synology-chat';
+    if (pluginId.startsWith('google-chat')) return 'google-chat';
+    if (pluginId.startsWith('mattermost')) return 'mattermost';
+    if (pluginId.startsWith('nostr')) return 'nostr';
+    // OpenClaw fork wave 3 (W2.z) — 2026-05-18
+    if (pluginId.startsWith('bluebubbles')) return 'bluebubbles';
+    if (pluginId.startsWith('imessage')) return 'imessage';
+    if (pluginId.startsWith('twitch')) return 'twitch';
+    // OpenClaw fork wave 4 (W2.w) — 2026-05-18. 'ms-teams' must be checked
+    // before any future 'ms' prefix.
+    if (pluginId.startsWith('ms-teams')) return 'ms-teams';
+    if (pluginId.startsWith('signal')) return 'signal';
     // Extension plugins: use pluginId as type (e.g., 'ext-feishu')
     return pluginId;
   }

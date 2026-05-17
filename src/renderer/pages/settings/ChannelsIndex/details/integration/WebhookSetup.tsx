@@ -1,24 +1,50 @@
-import React from 'react';
-import { useTranslation } from 'react-i18next';
-import { Webhook } from 'lucide-react';
-import EmptyState from '@renderer/components/settings/shared/feedback/EmptyState';
+/**
+ * @license
+ * Copyright 2026 Wayland (tradecanyon.com)
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Setup detail page for the generic Webhook channel plugin.
+ * Replaces the "coming soon" stub with a live config form.
+ */
+
+import React, { useCallback, useEffect, useState } from 'react';
+import { channel } from '@/common/adapter/ipcBridge';
+import type { IChannelPluginStatus } from '@process/channels/types';
+import WebhookConfigForm from '@renderer/components/settings/SettingsModal/contents/channels/integration/WebhookConfigForm';
 import ChannelDetailLayout from '../../ChannelDetailLayout';
 
 const WebhookSetup: React.FC = () => {
-  const { t } = useTranslation();
+  const [pluginStatus, setPluginStatus] = useState<IChannelPluginStatus | null>(null);
+
+  const loadStatus = useCallback(async () => {
+    try {
+      const result = await channel.getPluginStatus.invoke();
+      if (result.success && result.data) {
+        setPluginStatus(result.data.find((p) => p.type === 'webhook') ?? null);
+      }
+    } catch (error) {
+      console.error('[WebhookSetup] loadStatus failed:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadStatus();
+  }, [loadStatus]);
+
+  useEffect(() => {
+    const unsubscribe = channel.pluginStatusChanged.on(({ status }) => {
+      if (status.type === 'webhook') setPluginStatus(status);
+    });
+    return () => unsubscribe();
+  }, []);
 
   return (
-    <ChannelDetailLayout channelId='webhook' displayName='Webhook' showDisconnect={false}>
-      <EmptyState
-        icon={Webhook}
-        title={t('settings.channels.webhook.comingSoonTitle', 'Webhook channel coming soon')}
-        body={t(
-          'settings.channels.webhook.comingSoonBody',
-          'Inbound webhook with signing secret, route-to picker, and token regeneration lands in the next release.'
-        )}
-        actionLabel={t('settings.channels.webhook.learnMore', 'Learn more')}
-        onAction={() => window.open('https://github.com/TradeCanyon/Wayland/wiki/Channels', '_blank')}
-      />
+    <ChannelDetailLayout
+      channelId='webhook'
+      displayName='Webhook'
+      pluginId={pluginStatus?.id ?? 'webhook_default'}
+    >
+      <WebhookConfigForm pluginStatus={pluginStatus} onStatusChange={setPluginStatus} />
     </ChannelDetailLayout>
   );
 };

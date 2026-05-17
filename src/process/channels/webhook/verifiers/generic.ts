@@ -46,8 +46,14 @@ function pickHeader(value: string | string[] | undefined): string | null {
 }
 
 function safeEqual(a: string, b: string): boolean {
-  const aBuf = Buffer.from(a);
-  const bBuf = Buffer.from(b);
-  if (aBuf.length !== bBuf.length) return false;
-  return timingSafeEqual(aBuf, bBuf);
+  // Always compare a FIXED-LENGTH window even when inputs differ, so the
+  // duration of `timingSafeEqual` does not leak the expected signature length
+  // through timing. 'sha256=' (7) + 64 hex chars = 71. Pad both sides, then
+  // assert equal length AFTER the constant-time work has already run.
+  // Aligns with the padded pattern in verifiers/agentmail.ts (audit fix
+  // HIGH8 2026-05-18 — re-applied after first edit silently failed to land).
+  const TARGET_LEN = 71;
+  const pad = (s: string): string => s.padEnd(TARGET_LEN, '0').slice(0, TARGET_LEN);
+  const result = timingSafeEqual(Buffer.from(pad(a)), Buffer.from(pad(b)));
+  return result && a.length === b.length;
 }

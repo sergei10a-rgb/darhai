@@ -462,7 +462,29 @@
     },
     "signal": {
       "comingSoonTitle": "Signal coming in {{phase}}",
-      "comingSoonBody": "Connect via signal-cli subprocess. End-to-end encrypted. Requires a dedicated phone number for one-time registration."
+      "comingSoonBody": "Connect via signal-cli subprocess. End-to-end encrypted. Requires a dedicated phone number for one-time registration.",
+      "help": "End-to-end encrypted messaging via signal-cli subprocess daemon. Requires a dedicated phone number registered with Signal. signal-cli must be installed or available via the bundled runtime.",
+      "replaceWarning": "Connecting a new Signal account will replace your existing one.",
+      "connectionSuccess": "Signal connected",
+      "connectionFailed": "Signal connection test failed",
+      "pluginEnabled": "Signal plugin enabled",
+      "enableFailed": "Failed to enable Signal plugin",
+      "testAndEnable": "Test & Enable",
+      "installHowTo": "signal-cli must be installed separately if the bundled runtime is not present. Install via: brew install signal-cli | apt-get install signal-cli. After installing, register your number: signal-cli -a +1… register",
+      "credentials": {
+        "phoneNumber": {
+          "label": "Phone Number",
+          "placeholder": "+14155551234",
+          "help": "E.164 format — must be registered with Signal. A dedicated number is recommended.",
+          "required": "Please enter your Signal phone number",
+          "invalid": "Phone number must be in E.164 format, e.g. +14155551234"
+        },
+        "cliPath": {
+          "label": "signal-cli path (optional)",
+          "placeholder": "/usr/local/bin/signal-cli",
+          "help": "Leave blank to use the bundled runtime or the signal-cli on your PATH."
+        }
+      }
     },
     "matrix": {
       "comingSoonTitle": "Matrix coming in {{phase}}",
@@ -498,11 +520,67 @@
     },
     "msTeams": {
       "comingSoonTitle": "MS Teams coming in {{phase}}",
-      "comingSoonBody": "Microsoft Bot Framework via Azure Bot Service. Adaptive Cards for rich messages. Requires Azure subscription and Teams admin approval."
+      "comingSoonBody": "Microsoft Bot Framework via Azure Bot Service. Adaptive Cards for rich messages. Requires Azure subscription and Teams admin approval.",
+      "help": "Bot Framework via Azure Bot Service. Register a bot, set the webhook endpoint, and paste your App ID and client secret below.",
+      "replaceWarning": "Saving new credentials will replace the existing MS Teams bot connection.",
+      "connectionFailed": "MS Teams connection failed",
+      "connectionSuccess": "MS Teams connected",
+      "pluginEnabled": "MS Teams plugin enabled",
+      "enableFailed": "Failed to enable plugin",
+      "testAndEnable": "Test & Enable",
+      "setupHint": "Register a bot at https://dev.botframework.com, set the messaging endpoint to your Wayland webhook URL, then paste the App ID and secret above.",
+      "credentials": {
+        "appId": {
+          "label": "App ID (MicrosoftAppId)",
+          "help": "Azure AD app registration client ID — found in Azure Portal → App Registrations → Overview.",
+          "placeholder": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+          "required": "Please enter an App ID"
+        },
+        "appPassword": {
+          "label": "App Password (Client Secret)",
+          "help": "Azure AD client secret — App Registrations → Certificates & secrets → New client secret.",
+          "placeholder": "Paste your client secret value",
+          "required": "Please enter an App Password"
+        },
+        "tenantId": {
+          "label": "Tenant ID (optional)",
+          "help": "Leave blank for multi-tenant bots. Set to your Azure AD tenant ID to restrict to a single tenant.",
+          "placeholder": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx (optional)"
+        }
+      },
+      "webhookUrl": {
+        "label": "Inbound Webhook URL",
+        "help": "Set this as the Messaging Endpoint in Azure Bot Service.",
+        "copyButton": "Copy",
+        "notMinted": "<not-minted>"
+      }
     },
     "line": {
-      "comingSoonTitle": "LINE coming in {{phase}}",
-      "comingSoonBody": "Bot integration via the LINE Messaging API. Free tier: 500 outbound messages per month."
+      "credentials": {
+        "bothRequired": "Channel Access Token and Channel Secret are required",
+        "channelAccessToken": {
+          "label": "Channel Access Token",
+          "help": "Long-lived token from LINE Developers Console → Messaging API → Channel access token.",
+          "placeholder": "Paste your channel access token"
+        },
+        "channelSecret": {
+          "label": "Channel Secret",
+          "help": "Channel secret from LINE Developers Console → Basic settings. Used to verify webhook signatures.",
+          "placeholder": "Paste your channel secret"
+        }
+      },
+      "accountLockWarning": "Saving new credentials will replace the existing LINE bot connection.",
+      "connectionFailed": "Connection failed",
+      "connectionSuccess": "Connected as {{botUsername}}",
+      "pluginEnabled": "LINE plugin enabled",
+      "enableFailed": "Failed to enable plugin",
+      "testAndEnable": "Test & Enable",
+      "webhookUrl": {
+        "label": "Inbound Webhook URL",
+        "help": "Paste this URL into LINE Developers Console → Messaging API → Webhook URL.",
+        "copyButton": "Copy",
+        "notMinted": "<not-minted>"
+      }
     },
     "imessage": {
       "comingSoonTitle": "iMessage coming in {{phase}}",
@@ -534,7 +612,32 @@
     },
     "twitch": {
       "comingSoonTitle": "Twitch coming in {{phase}}",
-      "comingSoonBody": "Twitch chat via the IRC bridge or EventSub. Connects to one channel per token."
+      "comingSoonBody": "Twitch chat via the IRC bridge or EventSub. Connects to one channel per token.",
+      "help": "Twitch chat via IRC (tmi.js). Connect a bot account with OAuth to read and send messages in one or more channels.",
+      "connectionSuccess": "Twitch connected successfully",
+      "connectionFailed": "Twitch connection failed — check token and username",
+      "pluginEnabled": "Twitch plugin enabled",
+      "enableFailed": "Failed to enable Twitch plugin",
+      "replaceWarning": "Connecting a new Twitch bot will replace your existing credentials.",
+      "testAndEnable": "Test & Enable",
+      "tokenHowTo": "Use a dedicated bot account — never use your personal Twitch account. Generate a token at twitchtokengenerator.com and select the chat:read and chat:edit scopes.",
+      "credentials": {
+        "botUsername": {
+          "label": "Bot Username",
+          "help": "The Twitch login name of your bot account (lowercase).",
+          "required": "Please enter the bot username"
+        },
+        "oauthToken": {
+          "label": "OAuth Token",
+          "help": "Bot OAuth token with chat:read + chat:edit scopes. Get one at twitchtokengenerator.com.",
+          "required": "Please enter the OAuth token"
+        },
+        "channels": {
+          "label": "Channels",
+          "help": "Comma-separated channel names to join (e.g. mychannel, otherchannel). The # prefix is optional.",
+          "required": "Please enter at least one channel to join"
+        }
+      }
     },
     "nostr": {
       "comingSoonTitle": "Nostr coming in {{phase}}",
@@ -550,15 +653,97 @@
     },
     "googleChat": {
       "comingSoonTitle": "Google Chat coming in {{phase}}",
-      "comingSoonBody": "Google Workspace integration via the Chat API. OAuth required."
+      "comingSoonBody": "Google Workspace integration via the Chat API. OAuth required.",
+      "help": "Google Chat (Workspace) bot. Paste your service-account JSON keyfile and provide the expected JWT audience (project number or app URL) for webhook verification.",
+      "replaceWarning": "Saving new credentials will replace the existing Google Chat bot connection.",
+      "connectionSuccess": "Google Chat connected as {{email}}",
+      "connectionFailed": "Google Chat connection failed",
+      "pluginEnabled": "Google Chat plugin enabled",
+      "enableFailed": "Failed to enable Google Chat plugin",
+      "testAndEnable": "Test & Enable",
+      "credentials": {
+        "serviceAccountJson": {
+          "label": "Service Account JSON",
+          "help": "Paste the full contents of your Google Cloud service-account keyfile (JSON). The bot must have the Chat API scope (chat.bot).",
+          "placeholder": "{ \"type\": \"service_account\", \"project_id\": \"...\", ... }"
+        },
+        "audience": {
+          "label": "JWT Audience",
+          "help": "The expected `aud` claim in Google Chat's Bearer JWT. Use your Google Cloud project number (e.g. 123456789012) or the registered app URL.",
+          "placeholder": "123456789012",
+          "required": "JWT audience is required for webhook verification"
+        },
+        "bothRequired": "Service Account JSON and JWT audience are required"
+      },
+      "webhookUrl": {
+        "label": "Inbound Webhook URL",
+        "help": "Paste this URL into Google Cloud Console → Google Chat API → Configuration → App URL.",
+        "copyButton": "Copy",
+        "notMinted": "<not-minted>"
+      }
     },
     "nextcloudTalk": {
       "comingSoonTitle": "Nextcloud Talk coming in {{phase}}",
-      "comingSoonBody": "Self-hosted chat for Nextcloud instances. Username + app password."
+      "comingSoonBody": "Self-hosted chat for Nextcloud instances. Username + app password.",
+      "help": "Self-hosted Nextcloud Talk via app-password Basic auth. Provide your server URL, Nextcloud username, and an app password generated under Personal → Security → App passwords.",
+      "replaceWarning": "Connecting a new account will replace your existing Nextcloud Talk connection.",
+      "connectionSuccess": "Nextcloud Talk connected",
+      "connectionFailed": "Nextcloud Talk connection failed",
+      "pluginEnabled": "Nextcloud Talk plugin enabled",
+      "enableFailed": "Failed to enable plugin",
+      "testAndEnable": "Test & Enable",
+      "appPasswordHowTo": "How to create an app password: open Nextcloud → top-right avatar → Personal settings → Security → App passwords.",
+      "credentials": {
+        "serverUrl": {
+          "label": "Server URL",
+          "help": "Base URL of your Nextcloud instance, e.g. https://cloud.example.com",
+          "placeholder": "https://cloud.example.com",
+          "required": "Please enter the Nextcloud server URL"
+        },
+        "username": {
+          "label": "Username",
+          "help": "Your Nextcloud login name.",
+          "placeholder": "youruser",
+          "required": "Please enter your Nextcloud username"
+        },
+        "appPassword": {
+          "label": "App Password",
+          "help": "Generate under Personal → Security → App passwords in your Nextcloud settings.",
+          "placeholder": "xxxx-xxxx-xxxx-xxxx",
+          "required": "Please enter an app password"
+        }
+      }
     },
     "synologyChat": {
       "comingSoonTitle": "Synology Chat coming in {{phase}}",
-      "comingSoonBody": "Chat on Synology NAS. Webhook for inbound, REST for outbound."
+      "comingSoonBody": "Chat on Synology NAS. Webhook for inbound, REST for outbound.",
+      "replaceWarning": "Connecting a new Synology Chat account will replace your existing one.",
+      "connectionSuccess": "Synology Chat connected",
+      "connectionFailed": "Synology Chat connection failed",
+      "pluginEnabled": "Synology Chat plugin enabled",
+      "enableFailed": "Failed to enable Synology Chat plugin",
+      "testAndEnable": "Test & Enable",
+      "howTo": "Setup guide: Synology Chat → Administration → Integrations → Incoming/Outgoing Webhooks.",
+      "credentials": {
+        "incomingUrl": {
+          "label": "Incoming Webhook URL",
+          "help": "The webhook URL from Synology Chat admin panel (Integration → Incoming Webhooks). We POST replies here.",
+          "placeholder": "https://your-nas/webapi/entry.cgi?api=SYNO.Chat.External&method=incoming&...",
+          "required": "Please enter the Synology Chat incoming webhook URL"
+        },
+        "incomingToken": {
+          "label": "Webhook Token",
+          "help": "The token Synology Chat sends with each outgoing webhook request (Outgoing Webhooks → Token). Used to verify inbound deliveries.",
+          "placeholder": "your-synology-webhook-token",
+          "required": "Please enter the webhook token"
+        }
+      },
+      "webhookUrl": {
+        "label": "Inbound Webhook URL",
+        "help": "Paste this URL into Synology Chat → Outgoing Webhooks → Outgoing URL.",
+        "copyButton": "Copy",
+        "notMinted": "<not-minted>"
+      }
     },
     "irc": {
       "comingSoonTitle": "IRC coming in {{phase}}",
@@ -1422,24 +1607,14 @@
     "msteamsTagline": "Bot Framework via Azure Bot Service.",
     "lineTagline": "Bot via LINE Messaging API.",
     "imessageTagline": "macOS-only via AppleScript (experimental).",
-    "viberTagline": "Viber Bot API integration.",
     "bluebubblesTagline": "iMessage relay (requires a spare Mac).",
-    "threemaTagline": "Threema Gateway (B2B contract).",
-    "mastodonTagline": "OAuth + streaming per instance.",
-    "blueskyTagline": "AT Protocol via @atproto/api.",
-    "redditTagline": "Direct messages via Reddit API.",
     "twitchTagline": "Twitch chat via IRC or EventSub.",
     "nostrTagline": "Encrypted DMs over Nostr relays.",
-    "telegramUserbotTagline": "Telegram MTProto user-mode (gramjs).",
     "mattermostTagline": "Self-hostable Slack alternative.",
     "googleChatTagline": "Google Workspace Chat API.",
     "nextcloudTalkTagline": "Self-hosted Nextcloud chat.",
     "synologyChatTagline": "Chat on Synology NAS.",
     "ircTagline": "Classic IRC connectivity.",
-    "qqTagline": "Tencent QQ (CN audience).",
-    "xiaomiTagline": "Xiaomi MIUI messaging (CN).",
-    "zaloTagline": "Vietnamese messaging platform.",
-    "xDmsTagline": "Premium API tier required.",
     "emailAgentMailTagline": "Per-agent dedicated inbox via AgentMail.",
     "emailImapTagline": "Bring your own IMAP / SMTP inbox.",
     "slackTagline": "Post and receive messages in your Slack workspace.",

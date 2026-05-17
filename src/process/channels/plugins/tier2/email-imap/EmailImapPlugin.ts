@@ -339,7 +339,10 @@ export class EmailImapPlugin extends BasePlugin {
       }
     }
 
-    const delay = this.reconnectBackoffMs;
+    // Audit gemini MED1 2026-05-18: jitter (0-1000ms) to avoid synchronized
+    // IMAP reconnect storms when many operators hit the same hosted-mail
+    // provider during a brief outage.
+    const delay = this.reconnectBackoffMs + Math.floor(Math.random() * 1000);
     this.reconnectBackoffMs = Math.min(this.reconnectBackoffMs * 2, RECONNECT_BACKOFF_MAX_MS);
 
     this.reconnectTimer = setTimeout(() => {

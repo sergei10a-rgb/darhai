@@ -20,17 +20,11 @@ export { default as SmsSetup } from './messaging/SmsSetup';
 export { default as SignalSetup } from './messaging/SignalSetup';
 export { default as LineSetup } from './messaging/LineSetup';
 export { default as IMessageSetup } from './messaging/IMessageSetup';
-export { default as ViberSetup } from './messaging/ViberSetup';
 export { default as BluebubblesSetup } from './messaging/BluebubblesSetup';
-export { default as ThreemaSetup } from './messaging/ThreemaSetup';
 
 // social
-export { default as MastodonSetup } from './social/MastodonSetup';
-export { default as BlueskySetup } from './social/BlueskySetup';
-export { default as RedditSetup } from './social/RedditSetup';
 export { default as TwitchSetup } from './social/TwitchSetup';
 export { default as NostrSetup } from './social/NostrSetup';
-export { default as TelegramUserbotSetup } from './social/TelegramUserbotSetup';
 
 // collab
 export { default as MsTeamsSetup } from './collab/MsTeamsSetup';
@@ -40,11 +34,6 @@ export { default as GoogleChatSetup } from './collab/GoogleChatSetup';
 export { default as NextcloudTalkSetup } from './collab/NextcloudTalkSetup';
 export { default as SynologyChatSetup } from './collab/SynologyChatSetup';
 
-// regional
-export { default as QqSetup } from './regional/QqSetup';
-export { default as XiaomiSetup } from './regional/XiaomiSetup';
-export { default as ZaloSetup } from './regional/ZaloSetup';
-
 // email
 export { default as EmailAgentMailSetup } from './email/EmailAgentMailSetup';
 export { default as EmailImapSetup } from './email/EmailImapSetup';
@@ -52,4 +41,3 @@ export { default as EmailImapSetup } from './email/EmailImapSetup';
 // integration
 export { default as WebhookSetup } from './integration/WebhookSetup';
 export { default as IrcSetup } from './integration/IrcSetup';
-export { default as XDmsStubSetup } from './integration/XDmsStubSetup';

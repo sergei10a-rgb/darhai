@@ -317,7 +317,14 @@ export async function startWebServerWithInstance(port: number, allowRemote = fal
   // requires the unparsed body) and so inbound webhooks bypass CSRF — they
   // are authenticated by per-platform signatures, not by browser cookies.
   setupCors(app, port, allowRemote);
-  mountWebhookRoutes(app);
+  mountWebhookRoutes(app, {
+    getSecretForToken: async (token: string): Promise<string | null> => {
+      const { getTokenStore } = await import('@process/channels/webhook');
+      const record = getTokenStore().resolve(token);
+      if (!record) return null;
+      return record.secret || null;
+    },
+  });
 
   // Configure middleware (applies to all non-webhook routes)
   setupBasicMiddleware(app);

@@ -30,14 +30,21 @@ export class ConnectionTokenStore {
   /**
    * Register a new token for the given routing target. Returns the persisted
    * record.
+   *
+   * `secret` is the per-platform verifier material (LINE channelSecret, Google
+   * Chat JWT audience, MS Teams appId, Synology Chat incomingToken, generic
+   * webhook HMAC secret, etc.). It is stored alongside the token so the
+   * receiver resolver can hand it to the verifier without touching the
+   * credential store.
    */
-  register(platform: string, pluginInstanceId: string, agentId: string): ConnectionTokenRecord {
+  register(platform: string, pluginInstanceId: string, agentId: string, secret: string): ConnectionTokenRecord {
     const token = this.generateConnectionToken();
     const record: ConnectionTokenRecord = {
       token,
       platform,
       pluginInstanceId,
       agentId,
+      secret,
       createdAt: Date.now(),
     };
     this.records.set(token, record);

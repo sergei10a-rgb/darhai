@@ -20,17 +20,11 @@ const SmsSetup = React.lazy(() => import('./details/messaging/SmsSetup'));
 const SignalSetup = React.lazy(() => import('./details/messaging/SignalSetup'));
 const LineSetup = React.lazy(() => import('./details/messaging/LineSetup'));
 const IMessageSetup = React.lazy(() => import('./details/messaging/IMessageSetup'));
-const ViberSetup = React.lazy(() => import('./details/messaging/ViberSetup'));
 const BluebubblesSetup = React.lazy(() => import('./details/messaging/BluebubblesSetup'));
-const ThreemaSetup = React.lazy(() => import('./details/messaging/ThreemaSetup'));
 
 // social
-const MastodonSetup = React.lazy(() => import('./details/social/MastodonSetup'));
-const BlueskySetup = React.lazy(() => import('./details/social/BlueskySetup'));
-const RedditSetup = React.lazy(() => import('./details/social/RedditSetup'));
 const TwitchSetup = React.lazy(() => import('./details/social/TwitchSetup'));
 const NostrSetup = React.lazy(() => import('./details/social/NostrSetup'));
-const TelegramUserbotSetup = React.lazy(() => import('./details/social/TelegramUserbotSetup'));
 
 // collab
 const MsTeamsSetup = React.lazy(() => import('./details/collab/MsTeamsSetup'));
@@ -40,11 +34,6 @@ const GoogleChatSetup = React.lazy(() => import('./details/collab/GoogleChatSetu
 const NextcloudTalkSetup = React.lazy(() => import('./details/collab/NextcloudTalkSetup'));
 const SynologyChatSetup = React.lazy(() => import('./details/collab/SynologyChatSetup'));
 
-// regional
-const QqSetup = React.lazy(() => import('./details/regional/QqSetup'));
-const XiaomiSetup = React.lazy(() => import('./details/regional/XiaomiSetup'));
-const ZaloSetup = React.lazy(() => import('./details/regional/ZaloSetup'));
-
 // email
 const EmailAgentMailSetup = React.lazy(() => import('./details/email/EmailAgentMailSetup'));
 const EmailImapSetup = React.lazy(() => import('./details/email/EmailImapSetup'));
@@ -52,7 +41,6 @@ const EmailImapSetup = React.lazy(() => import('./details/email/EmailImapSetup')
 // integration
 const WebhookSetup = React.lazy(() => import('./details/integration/WebhookSetup'));
 const IrcSetup = React.lazy(() => import('./details/integration/IrcSetup'));
-const XDmsStubSetup = React.lazy(() => import('./details/integration/XDmsStubSetup'));
 
 const CHANNEL_COMPONENTS: Record<string, React.LazyExoticComponent<React.FC>> = {
   // chat
@@ -69,16 +57,10 @@ const CHANNEL_COMPONENTS: Record<string, React.LazyExoticComponent<React.FC>> = 
   signal: SignalSetup,
   line: LineSetup,
   imessage: IMessageSetup,
-  viber: ViberSetup,
   bluebubbles: BluebubblesSetup,
-  threema: ThreemaSetup,
   // social
-  mastodon: MastodonSetup,
-  bluesky: BlueskySetup,
-  reddit: RedditSetup,
   twitch: TwitchSetup,
   nostr: NostrSetup,
-  'telegram-userbot': TelegramUserbotSetup,
   // collab
   'ms-teams': MsTeamsSetup,
   matrix: MatrixSetup,
@@ -86,10 +68,6 @@ const CHANNEL_COMPONENTS: Record<string, React.LazyExoticComponent<React.FC>> = 
   'google-chat': GoogleChatSetup,
   'nextcloud-talk': NextcloudTalkSetup,
   'synology-chat': SynologyChatSetup,
-  // regional
-  qq: QqSetup,
-  xiaomi: XiaomiSetup,
-  zalo: ZaloSetup,
   // email
   email: EmailAgentMailSetup, // legacy alias — earlier index linked /channels/email
   'email-agentmail': EmailAgentMailSetup,
@@ -97,7 +75,6 @@ const CHANNEL_COMPONENTS: Record<string, React.LazyExoticComponent<React.FC>> = 
   // integration
   webhook: WebhookSetup,
   irc: IrcSetup,
-  'x-dms': XDmsStubSetup,
 };
 
 const ChannelDetailPage: React.FC = () => {

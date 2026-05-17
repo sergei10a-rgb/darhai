@@ -123,6 +123,14 @@ extraResources:
       - '**/*'
       - '!**/*.test.*'
       - '!**/*.spec.*'
+  # signal-cli runtime: native binary spawned by SignalDaemon via child_process.spawn.
+  # Must live outside app.asar so the OS can execute it directly.
+  # Run `node scripts/install-signal-cli.mjs` to populate bin/ before packaging.
+  - from: src/process/channels/signal-cli-runtime
+    to: signal-cli-runtime
+    filter:
+      - '**/*'
+      - '!README.md'
 win:
   target:
     - nsis

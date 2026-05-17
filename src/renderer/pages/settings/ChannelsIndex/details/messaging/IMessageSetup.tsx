@@ -1,19 +1,56 @@
-import React from "react";
-import { useTranslation } from "react-i18next";
-import { Apple } from "lucide-react";
-import EmptyState from "@renderer/components/settings/shared/feedback/EmptyState";
-import ChannelDetailLayout from "../../ChannelDetailLayout";
+/**
+ * @license
+ * Copyright 2026 Wayland (tradecanyon.com)
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * IMessageSetup — settings detail page for the macOS iMessage channel plugin.
+ */
 
-// Placeholder. Real implementation lands in a future phase.
+import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { channel } from '@/common/adapter/ipcBridge';
+import type { IChannelPluginStatus } from '@process/channels/types';
+import IMessageConfigForm from '@renderer/components/settings/SettingsModal/contents/channels/messaging/IMessageConfigForm';
+import ChannelDetailLayout from '../../ChannelDetailLayout';
+
 const IMessageSetup: React.FC = () => {
   const { t } = useTranslation();
+  const [pluginStatus, setPluginStatus] = useState<IChannelPluginStatus | null>(null);
+
+  const loadStatus = useCallback(async () => {
+    try {
+      const result = await channel.getPluginStatus.invoke();
+      if (result.success && result.data) {
+        setPluginStatus(result.data.find((p) => p.type === 'imessage') ?? null);
+      }
+    } catch (error) {
+      console.error('[IMessageSetup] loadStatus failed:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadStatus();
+  }, [loadStatus]);
+
+  useEffect(() => {
+    const unsub = channel.pluginStatusChanged.on(({ status }) => {
+      if (status.type === 'imessage') setPluginStatus(status);
+    });
+    return () => unsub();
+  }, []);
+
   return (
-    <ChannelDetailLayout channelId="imessage" displayName="iMessage" showDisconnect={false}>
-      <EmptyState
-        icon={Apple}
-        title={t("settings.channels.imessage.comingSoonTitle")}
-        body={t("settings.channels.imessage.comingSoonBody", { phase: t("settings.channelsIndex.phase3Label") })}
-      />
+    <ChannelDetailLayout
+      channelId='imessage'
+      displayName='iMessage'
+      pluginId='imessage_default'
+      helpText={t(
+        'settings.channels.imessage.help',
+        'macOS-only. Polls ~/Library/Messages/chat.db for incoming messages and sends via AppleScript. Requires Full Disk Access.',
+      )}
+    >
+      <IMessageConfigForm pluginStatus={pluginStatus} onStatusChange={setPluginStatus} />
     </ChannelDetailLayout>
   );
 };

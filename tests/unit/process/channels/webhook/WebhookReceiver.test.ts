@@ -96,7 +96,7 @@ describe('WebhookReceiver pipeline', () => {
 
   it('returns 401 for an invalid signature', async () => {
     const tokenStore = getTokenStore();
-    const record = tokenStore.register('slack', 'plugin-1', 'agent-1');
+    const record = tokenStore.register('slack', 'plugin-1', 'agent-1', SLACK_SECRET);
     const { server, baseUrl } = await startApp(async () => SLACK_SECRET);
     try {
       const body = JSON.stringify({ event_id: 'evt-bad-sig' });
@@ -117,7 +117,7 @@ describe('WebhookReceiver pipeline', () => {
 
   it('returns 503 when no dispatcher is registered', async () => {
     const tokenStore = getTokenStore();
-    const record = tokenStore.register('slack', 'plugin-1', 'agent-1');
+    const record = tokenStore.register('slack', 'plugin-1', 'agent-1', SLACK_SECRET);
     const { server, baseUrl } = await startApp(async () => SLACK_SECRET);
     try {
       registerWebhookDispatcher(null);
@@ -137,7 +137,7 @@ describe('WebhookReceiver pipeline', () => {
 
   it('dispatches a verified event exactly once and returns 202', async () => {
     const tokenStore = getTokenStore();
-    const record = tokenStore.register('slack', 'plugin-1', 'agent-1');
+    const record = tokenStore.register('slack', 'plugin-1', 'agent-1', SLACK_SECRET);
     const dispatcher = vi.fn().mockResolvedValue(undefined);
     registerWebhookDispatcher(dispatcher);
 
@@ -166,7 +166,7 @@ describe('WebhookReceiver pipeline', () => {
 
   it('drops replays without re-dispatching', async () => {
     const tokenStore = getTokenStore();
-    const record = tokenStore.register('slack', 'plugin-1', 'agent-1');
+    const record = tokenStore.register('slack', 'plugin-1', 'agent-1', SLACK_SECRET);
     const dispatcher = vi.fn().mockResolvedValue(undefined);
     registerWebhookDispatcher(dispatcher);
 
@@ -190,5 +190,29 @@ describe('WebhookReceiver pipeline', () => {
     } finally {
       await closeServer(server);
     }
+  });
+
+  it('resolver reads the per-platform secret from the token store', async () => {
+    // Verify that the token-store-backed resolver (the one wired in
+    // webserver/index.ts) hands the correct secret to the verifier.
+    // We reproduce it inline: register with a known secret, build a resolver
+    // that calls tokenStore.resolve(), assert it returns the stored secret.
+    const tokenStore = getTokenStore();
+    const secret = 'line-channel-secret-xyz';
+    const record = tokenStore.register('line', 'line_default', 'default', secret);
+
+    // Inline the resolver logic from webserver/index.ts to verify the contract.
+    const resolver = async (token: string): Promise<string | null> => {
+      const r = tokenStore.resolve(token);
+      if (!r) return null;
+      return r.secret || null;
+    };
+
+    expect(await resolver(record.token)).toBe(secret);
+    expect(await resolver('unknown-token')).toBeNull();
+
+    // Revoked tokens must not expose the secret.
+    tokenStore.revoke(record.token);
+    expect(await resolver(record.token)).toBeNull();
   });
 });

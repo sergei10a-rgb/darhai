@@ -38,7 +38,10 @@ const LEGACY_B64_PREFIX = 'b64:';
 const LEGACY_PLAIN_PREFIX = 'plain:';
 const LEGACY_ENC_PREFIX = 'enc:';
 
-type CredentialRecord = Record<string, string | number | boolean | undefined>;
+// Arrays-of-primitives are passed through unchanged (encrypt/decrypt only
+// touch string-typed sensitive fields). Widened for IRC channels[], Nostr
+// relays[], iMessage allowedHandles[] — audit fix CRIT4 2026-05-18.
+type CredentialRecord = Record<string, string | number | boolean | readonly string[] | readonly number[] | undefined>;
 
 /**
  * Returns `true` when the host OS exposes a working secret-store backend.

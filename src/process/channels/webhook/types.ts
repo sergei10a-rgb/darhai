@@ -35,12 +35,19 @@ export type WebhookVerifier = (
  * Connection token record minted per (platform, pluginInstance, agent) tuple.
  * Used to identify the routing target on inbound webhook delivery without
  * exposing the plugin/agent identity in the URL.
+ *
+ * `secret` holds the per-platform verifier material (LINE channelSecret,
+ * Google Chat JWT audience, MS Teams appId, Synology Chat incomingToken,
+ * generic webhook HMAC secret, etc.). The receiver resolver reads it directly
+ * so the verifier chain can do signature/JWT checks without round-tripping
+ * the credential store.
  */
 export type ConnectionTokenRecord = {
   token: string;
   platform: string;
   pluginInstanceId: string;
   agentId: string;
+  secret: string;
   createdAt: number;
   lastUsedAt?: number;
   revokedAt?: number;

@@ -1281,7 +1281,7 @@ export const channel = {
   // the inbound URL without disabling the plugin.
   rotateWebhookToken: buildProvider<
     IBridgeResponse<{ token: string; platform: string; createdAt: number }>,
-    { platform: string; pluginInstanceId: string; agentId: string }
+    { platform: string; pluginInstanceId: string; agentId: string; secret?: string }
   >('channel.rotate-webhook-token'),
 
   // Settings Sync

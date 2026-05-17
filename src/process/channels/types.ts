@@ -128,8 +128,11 @@ export interface IPluginCredentials {
   smtpPassword?: string;
   smtpTls?: boolean;
   useSameAuth?: boolean;
-  // Extension plugins: arbitrary credential fields
-  [key: string]: string | number | boolean | undefined;
+  // Extension plugins + new-channel array/list fields (IRC channels, Nostr
+  // relays, iMessage allowedHandles, etc). arrays-of-primitives are stored
+  // as-is; nested objects are NOT permitted by design — push them into
+  // pluginRuntimeConfig instead.
+  [key: string]: string | number | boolean | readonly string[] | readonly number[] | undefined;
 }
 
 /**

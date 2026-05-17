@@ -1,19 +1,49 @@
-import React from "react";
-import { useTranslation } from "react-i18next";
-import { MessageCircle } from "lucide-react";
-import EmptyState from "@renderer/components/settings/shared/feedback/EmptyState";
-import ChannelDetailLayout from "../../ChannelDetailLayout";
+/**
+ * @license
+ * Copyright 2026 Wayland (tradecanyon.com)
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-// Placeholder. Real implementation lands in a future phase.
+import React, { useCallback, useEffect, useState } from 'react';
+
+import { channel } from '@/common/adapter/ipcBridge';
+import type { IChannelPluginStatus } from '@process/channels/types';
+import LineConfigForm from '@renderer/components/settings/SettingsModal/contents/channels/messaging/LineConfigForm';
+
+import ChannelDetailLayout from '../../ChannelDetailLayout';
+
 const LineSetup: React.FC = () => {
-  const { t } = useTranslation();
+  const [pluginStatus, setPluginStatus] = useState<IChannelPluginStatus | null>(null);
+
+  const loadStatus = useCallback(async () => {
+    try {
+      const result = await channel.getPluginStatus.invoke();
+      if (result.success && result.data) {
+        setPluginStatus(result.data.find((p) => p.type === 'line') ?? null);
+      }
+    } catch (error) {
+      console.error('[LineSetup] loadStatus failed:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadStatus();
+  }, [loadStatus]);
+
+  useEffect(() => {
+    const unsubscribe = channel.pluginStatusChanged.on(({ status }) => {
+      if (status.type === 'line') setPluginStatus(status);
+    });
+    return () => unsubscribe();
+  }, []);
+
   return (
-    <ChannelDetailLayout channelId="line" displayName="LINE" showDisconnect={false}>
-      <EmptyState
-        icon={MessageCircle}
-        title={t("settings.channels.line.comingSoonTitle")}
-        body={t("settings.channels.line.comingSoonBody", { phase: t("settings.channelsIndex.phase3Label") })}
-      />
+    <ChannelDetailLayout
+      channelId='line'
+      displayName='LINE'
+      pluginId={pluginStatus?.id ?? 'line_default'}
+    >
+      <LineConfigForm pluginStatus={pluginStatus} onStatusChange={setPluginStatus} />
     </ChannelDetailLayout>
   );
 };
