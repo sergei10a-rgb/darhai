@@ -126,7 +126,6 @@ const TeamLauncherPage: React.FC = () => {
   const [launching, setLaunching] = useState(false);
   const [pickerVisible, setPickerVisible] = useState(false);
   const [pickerMode, setPickerMode] = useState<'leader' | 'teammate'>('teammate');
-  const [loadError] = useState<string | null>(null);
 
   const excludeIds = useMemo(() => {
     const ids: string[] = [];
@@ -404,12 +403,6 @@ const TeamLauncherPage: React.FC = () => {
               {subtitle && <p className={styles.subtitle}>{subtitle}</p>}
             </div>
           </div>
-
-          {loadError && (
-            <div className={styles.errorBanner} data-testid='launcher-error'>
-              {loadError}
-            </div>
-          )}
 
           <div className={styles.nameCard}>
             <label className={styles.nameLabel} htmlFor='launcher-name-input'>
