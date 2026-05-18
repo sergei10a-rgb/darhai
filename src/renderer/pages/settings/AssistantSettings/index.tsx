@@ -156,39 +156,10 @@ const AssistantSettings: React.FC = () => {
           />
 
           <AssistantEditDrawer
-            editVisible={editor.editVisible}
-            setEditVisible={editor.setEditVisible}
-            isCreating={editor.isCreating}
-            editName={editor.editName}
-            setEditName={editor.setEditName}
-            editDescription={editor.editDescription}
-            setEditDescription={editor.setEditDescription}
-            editAvatar={editor.editAvatar}
-            setEditAvatar={editor.setEditAvatar}
-            editAvatarImage={editAvatarImage}
-            editAgent={editor.editAgent}
-            setEditAgent={editor.setEditAgent}
-            editContext={editor.editContext}
-            setEditContext={editor.setEditContext}
-            promptViewMode={editor.promptViewMode}
-            setPromptViewMode={editor.setPromptViewMode}
-            availableSkills={editor.availableSkills}
-            selectedSkills={editor.selectedSkills}
-            setSelectedSkills={editor.setSelectedSkills}
-            pendingSkills={editor.pendingSkills}
-            customSkills={editor.customSkills}
-            setDeletePendingSkillName={editor.setDeletePendingSkillName}
-            setDeleteCustomSkillName={editor.setDeleteCustomSkillName}
-            setSkillsModalVisible={editor.setSkillsModalVisible}
-            builtinAutoSkills={editor.builtinAutoSkills}
-            disabledBuiltinSkills={editor.disabledBuiltinSkills}
-            setDisabledBuiltinSkills={editor.setDisabledBuiltinSkills}
-            activeAssistant={activeAssistant}
-            activeAssistantId={activeAssistantId}
-            isExtensionAssistant={isExtensionAssistant}
+            editor={editor}
+            list={{ activeAssistant, activeAssistantId, isExtensionAssistant }}
             availableBackends={availableBackends}
-            handleSave={editor.handleSave}
-            handleDeleteClick={editor.handleDeleteClick}
+            editAvatarImage={editAvatarImage}
           />
 
           <DeleteAssistantModal
