@@ -90,5 +90,25 @@
   "unit": {
     "minute_short": "хв",
     "second_short": "с"
+  },
+  "cmdk": {
+    "label": "[TODO:translate] Command palette",
+    "placeholder": "[TODO:translate] Search assistants, chats, prompts…",
+    "noResults": "[TODO:translate] No results",
+    "groups": {
+      "bestMatch": "[TODO:translate] Best match",
+      "teams": "[TODO:translate] Teams",
+      "specialists": "[TODO:translate] Specialists",
+      "builtins": "[TODO:translate] Built-ins",
+      "recents": "[TODO:translate] Recent chats",
+      "prompts": "[TODO:translate] Starter prompts"
+    },
+    "prompts": {
+      "brainstorm": "[TODO:translate] Brainstorm ideas",
+      "summarize": "[TODO:translate] Summarize text",
+      "codeReview": "[TODO:translate] Review code",
+      "explain": "[TODO:translate] Explain a topic",
+      "plan": "[TODO:translate] Draft a plan"
+    }
   }
 }

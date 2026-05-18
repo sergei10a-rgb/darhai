@@ -101,7 +101,7 @@ const GuidPage: React.FC = () => {
   }, [agentSelection.selectedAgent]);
 
   const guidInput = useGuidInput({
-    locationState: location.state as { workspace?: string } | null,
+    locationState: location.state as { workspace?: string; paletteInitialPrompt?: string } | null,
   });
 
   const mention = useGuidMention({
