@@ -5,7 +5,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { EmailImapPlugin } from '@process/channels/plugins/tier2/email-imap/EmailImapPlugin';
+import { EmailImapPlugin } from '@process/channels/plugins/tier1/email-imap/EmailImapPlugin';
 import { hasPluginCredentials } from '@process/channels/types';
 
 describe('EmailImapPlugin capabilities and status', () => {

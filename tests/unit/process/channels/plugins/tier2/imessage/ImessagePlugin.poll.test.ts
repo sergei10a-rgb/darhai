@@ -11,7 +11,14 @@
  *  - tapback via AppleScript
  */
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+
+// Force process.platform=darwin so the iMessage plugin's macOS-only guards
+// don't short-circuit on Linux CI runners. Without this stub the suite would
+// silently no-op pass on every non-darwin runner.
+const ORIGINAL_PLATFORM = process.platform;
+beforeAll(() => Object.defineProperty(process, 'platform', { value: 'darwin', configurable: true }));
+afterAll(() => Object.defineProperty(process, 'platform', { value: ORIGINAL_PLATFORM, configurable: true }));
 
 // ---------------------------------------------------------------------------
 // Hoist mocks — all vi.mock + vi.hoisted at module top level
@@ -71,7 +78,9 @@ function cfg(overrides: Record<string, unknown> = {}): IChannelPluginConfig {
     name: 'iMessage',
     enabled: true,
     status: 'created',
-    credentials: { pollIntervalMs: 50, ...overrides },
+    // 500 is the production floor (DOS guard); using exactly the floor here
+    // keeps tests fast while exercising the clamped path.
+    credentials: { pollIntervalMs: 500, ...overrides },
     createdAt: 0,
     updatedAt: 0,
   };
@@ -100,6 +109,7 @@ beforeEach(() => {
   mockStmt.all.mockReturnValue([]);
   mockDbInstance.prepare.mockImplementation(function (sql: string) {
     if (sql.includes('MAX(rowid)')) return { get: vi.fn(() => ({ maxid: 0 })) };
+    if (sql.includes('WHERE rowid')) return { get: vi.fn(() => ({ text: 'original body' })) };
     return mockStmt;
   });
   plugin = new ImessagePlugin();
@@ -111,7 +121,6 @@ afterEach(async () => {
 
 describe('ImessagePlugin poll loop', () => {
   it('emits unified messages for new inbound rows', async () => {
-    if (process.platform !== 'darwin') return;
     const received: unknown[] = [];
     plugin.onMessage(async (msg) => { received.push(msg); });
 
@@ -122,7 +131,7 @@ describe('ImessagePlugin poll loop', () => {
     await plugin.initialize(cfg());
     await plugin.start();
 
-    await vi.waitFor(() => expect(received.length).toBeGreaterThan(0), { timeout: 500 });
+    await vi.waitFor(() => expect(received.length).toBeGreaterThan(0), { timeout: 2000 });
 
     expect(received[0]).toMatchObject({
       platform: 'imessage',
@@ -132,7 +141,6 @@ describe('ImessagePlugin poll loop', () => {
   });
 
   it('advances the cursor so rows are not reprocessed', async () => {
-    if (process.platform !== 'darwin') return;
     const received: unknown[] = [];
     plugin.onMessage(async (msg) => { received.push(msg); });
 
@@ -142,7 +150,7 @@ describe('ImessagePlugin poll loop', () => {
 
     await plugin.initialize(cfg());
     await plugin.start();
-    await vi.waitFor(() => expect(received.length).toBe(1), { timeout: 500 });
+    await vi.waitFor(() => expect(received.length).toBe(1), { timeout: 2000 });
 
     const calls = mockStmt.all.mock.calls;
     expect(calls[0][0]).toBe(0);
@@ -153,7 +161,6 @@ describe('ImessagePlugin poll loop', () => {
   });
 
   it('filters out own messages (is_from_me=1)', async () => {
-    if (process.platform !== 'darwin') return;
     const received: unknown[] = [];
     plugin.onMessage(async (msg) => { received.push(msg); });
 
@@ -161,13 +168,12 @@ describe('ImessagePlugin poll loop', () => {
 
     await plugin.initialize(cfg());
     await plugin.start();
-    await new Promise((r) => setTimeout(r, 150));
+    await new Promise((r) => setTimeout(r, 1000));
     expect(received).toHaveLength(0);
     await plugin.stop();
   });
 
   it('filters messages by allowedHandles when configured', async () => {
-    if (process.platform !== 'darwin') return;
     const received: unknown[] = [];
     plugin.onMessage(async (msg) => { received.push(msg); });
 
@@ -177,13 +183,12 @@ describe('ImessagePlugin poll loop', () => {
 
     await plugin.initialize(cfg({ allowedHandles: ['+15551234567'] }));
     await plugin.start();
-    await new Promise((r) => setTimeout(r, 150));
+    await new Promise((r) => setTimeout(r, 1000));
     expect(received).toHaveLength(0);
     await plugin.stop();
   });
 
   it('allows messages from handles in the allowedHandles list', async () => {
-    if (process.platform !== 'darwin') return;
     const received: unknown[] = [];
     plugin.onMessage(async (msg) => { received.push(msg); });
 
@@ -193,14 +198,13 @@ describe('ImessagePlugin poll loop', () => {
 
     await plugin.initialize(cfg({ allowedHandles: ['+15551234567'] }));
     await plugin.start();
-    await vi.waitFor(() => expect(received.length).toBe(1), { timeout: 500 });
+    await vi.waitFor(() => expect(received.length).toBe(1), { timeout: 2000 });
     await plugin.stop();
   });
 });
 
 describe('ImessagePlugin sendMessage', () => {
   it('calls osascript with a 1:1 send script and returns a stable id', async () => {
-    if (process.platform !== 'darwin') return;
     await plugin.initialize(cfg());
     await plugin.start();
     const id = await plugin.sendMessage('+15551234567', { type: 'text', text: 'Hello!' });
@@ -215,7 +219,6 @@ describe('ImessagePlugin sendMessage', () => {
   });
 
   it('throws when the text is empty', async () => {
-    if (process.platform !== 'darwin') return;
     await plugin.initialize(cfg());
     await plugin.start();
     await expect(plugin.sendMessage('+15551234567', { type: 'text', text: '   ' })).rejects.toThrow(/empty/i);
@@ -223,7 +226,6 @@ describe('ImessagePlugin sendMessage', () => {
   });
 
   it('throws when osascript exits non-zero', async () => {
-    if (process.platform !== 'darwin') return;
     mockExecFileNoThrow.mockResolvedValue({ stdout: '', stderr: 'Messages not running', exitCode: 1 });
 
     await plugin.initialize(cfg());
@@ -237,10 +239,9 @@ describe('ImessagePlugin sendMessage', () => {
 
 describe('ImessagePlugin reactToMessage (tapback)', () => {
   it('calls osascript with the heart tapback code (2005)', async () => {
-    if (process.platform !== 'darwin') return;
     await plugin.initialize(cfg());
     await plugin.start();
-    await plugin.reactToMessage('chatdeadbeef', 'rowid-1', 'heart');
+    await plugin.reactToMessage('chatdeadbeef', '42', 'heart');
 
     expect(mockExecFileNoThrow).toHaveBeenCalledWith(
       'osascript',
@@ -251,7 +252,6 @@ describe('ImessagePlugin reactToMessage (tapback)', () => {
   });
 
   it('throws for an unknown tapback reaction name', async () => {
-    if (process.platform !== 'darwin') return;
     await plugin.initialize(cfg());
     await plugin.start();
     await expect(

@@ -54,7 +54,7 @@ async function fetchRecentMessages(conversationId: string, limitN: number): Prom
   // page=0 + DESC = the last `limitN` messages in reverse chronological order;
   // reverse client-side to get chronological for the replay narrative.
   const result = await repo.getMessages(conversationId, 0, limitN, 'DESC');
-  return [...result.data].reverse();
+  return [...result.data].toReversed();
 }
 
 function formatMessage(msg: TMessage): string | null {

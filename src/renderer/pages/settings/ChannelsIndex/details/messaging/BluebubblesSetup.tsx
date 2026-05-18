@@ -8,6 +8,7 @@
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { channel } from '@/common/adapter/ipcBridge';
 import type { IChannelPluginStatus } from '@process/channels/types';
@@ -16,6 +17,7 @@ import BluebubblesConfigForm from '@renderer/components/settings/SettingsModal/c
 import ChannelDetailLayout from '../../ChannelDetailLayout';
 
 const BluebubblesSetup: React.FC = () => {
+  const { t } = useTranslation();
   const [pluginStatus, setPluginStatus] = useState<IChannelPluginStatus | null>(null);
 
   const loadStatus = useCallback(async () => {
@@ -45,6 +47,10 @@ const BluebubblesSetup: React.FC = () => {
       channelId='bluebubbles'
       displayName='BlueBubbles'
       pluginId={pluginStatus?.id ?? 'bluebubbles_default'}
+      helpText={t(
+        'settings.channels.bluebubbles.help',
+        'iMessage bridge via BlueBubbles Server. Requires a Mac running BlueBubbles Server.app to host. For remote access from non-Mac platforms, expose via a tunnel (ngrok, Cloudflare Tunnel, Tailscale).',
+      )}
     >
       <BluebubblesConfigForm pluginStatus={pluginStatus} onStatusChange={setPluginStatus} />
     </ChannelDetailLayout>

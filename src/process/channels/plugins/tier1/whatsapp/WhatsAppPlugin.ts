@@ -30,7 +30,8 @@
  * messageHandler path the Baileys/web backends use.
  */
 
-import { ChildProcess, fork } from 'child_process';
+import type { ChildProcess} from 'child_process';
+import { fork } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import axios from 'axios';

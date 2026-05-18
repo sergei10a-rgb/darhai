@@ -369,7 +369,7 @@ export async function createBackend({ emit, sessionDir }) {
         await s.presenceSubscribe(chatId);
         return { ok: true };
       } catch (err) {
-        throw new Error(`subscribe_failed: ${err?.message || err}`);
+        throw new Error(`subscribe_failed: ${err?.message || err}`, { cause: err });
       }
     },
   };

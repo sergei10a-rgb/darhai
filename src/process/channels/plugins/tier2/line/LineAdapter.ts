@@ -42,10 +42,20 @@ export type LineStickerMessageContent = {
   keywords?: string[];
 };
 
+export type LineLocationMessageContent = {
+  type: 'location';
+  id: string;
+  title?: string;
+  address?: string;
+  latitude: number;
+  longitude: number;
+};
+
 export type LineMessageContent =
   | LineTextMessageContent
   | LineMediaMessageContent
   | LineStickerMessageContent
+  | LineLocationMessageContent
   | { type: string; id: string };
 
 export type LineMessageEvent = {
@@ -175,6 +185,15 @@ export function extractLineMessageText(message: LineMessageContent): string {
       ? `[Sent a ${packageName} sticker: ${keywords}]`
       : `[Sent a ${packageName} sticker]`;
   }
+  if (message.type === 'location') {
+    const loc = message as LineLocationMessageContent;
+    const title = loc.title?.trim() || 'Location';
+    const coords = `${loc.latitude}, ${loc.longitude}`;
+    const address = loc.address?.trim();
+    return address
+      ? `📍 ${title} (${coords}) — ${address}`
+      : `📍 ${title} (${coords})`;
+  }
   if (message.type === 'image') return '<media:image>';
   if (message.type === 'video') return '<media:video>';
   if (message.type === 'audio') return '<media:audio>';
@@ -226,6 +245,18 @@ export function linePostbackEventToUnified(
   const data = event.postback?.data?.trim() ?? '';
   if (!data) return null;
 
+  // LINE built-in actions arrive as URL-encoded querystrings with a
+  // `line.action=` prefix. Rewrite to a human-readable phrase so the agent
+  // sees an actionable intent rather than an opaque querystring.
+  // Adapted from openclaw/extensions/line/src/bot-message-context.ts:538-543.
+  let text = data;
+  if (data.includes('line.action=')) {
+    const searchParams = new URLSearchParams(data);
+    const action = searchParams.get('line.action') ?? '';
+    const device = searchParams.get('line.device');
+    text = device ? `line action ${action} device ${device}` : `line action ${action}`;
+  }
+
   const { userId } = getLineSourceInfo(event.source);
   const chatId = resolveChatId(event.source);
   const senderId = userId ?? chatId;
@@ -241,7 +272,7 @@ export function linePostbackEventToUnified(
     },
     content: {
       type: 'text',
-      text: data,
+      text,
     },
     timestamp: event.timestamp,
     raw: { event },

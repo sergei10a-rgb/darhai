@@ -63,31 +63,58 @@ async function makeInitializedPlugin(): Promise<MsTeamsPlugin> {
   return plugin;
 }
 
+/**
+ * sendMessage now wraps the actual POST in a typing keep-alive loop
+ * (startTypingLoop → POST {type:'typing'} → setInterval). That means each
+ * sendMessage call produces N+1 fetches: 1 immediate typing POST + N
+ * activity POSTs. Tests filter mockFetch.mock.calls to find the real
+ * message-activity POST by inspecting body.type.
+ */
+function findMessageCall(): [string, RequestInit] {
+  const call = mockFetch.mock.calls.find(([, init]) => {
+    if (!init) return false;
+    const body = (init as RequestInit).body;
+    if (typeof body !== 'string') return false;
+    try {
+      return (JSON.parse(body) as { type?: string }).type === 'message';
+    } catch {
+      return false;
+    }
+  });
+  if (!call) throw new Error('No message activity POST found in fetch calls');
+  return [String(call[0]), call[1] as RequestInit];
+}
+
 describe('MsTeamsPlugin.sendMessage', () => {
   let plugin: MsTeamsPlugin;
 
   beforeEach(async () => {
     mockFetch.mockReset();
     plugin = await makeInitializedPlugin();
+    // Default: any unmatched fetch (e.g. typing keep-alive POSTs) returns 200.
+    mockFetch.mockResolvedValue(
+      new Response('{}', { status: 200, headers: { 'content-type': 'application/json' } }),
+    );
   });
 
   it('sends POST to the Connector URL and returns activity id', async () => {
-    // Token cached from start(); sendMessage only does the send.
+    // Token cached from start(); the typing POST + the message POST both fire.
+    // Override the next call (the send) to return the expected activity id.
     mockFetchOk({ id: 'act-001' });
 
     const id = await plugin.sendMessage(CHAT_ID, MSG);
 
     expect(id).toBe('act-001');
-    expect(mockFetch).toHaveBeenCalledTimes(1);
-    const [url, init] = mockFetch.mock.calls[0]!;
-    expect(String(url)).toContain('/v3/conversations/');
-    expect(String(url)).toContain('19%3Athread-abc%40thread.v2');
-    expect((init as RequestInit).method).toBe('POST');
-    const headers = (init as RequestInit).headers as Record<string, string>;
+    const [url, init] = findMessageCall();
+    expect(url).toContain('/v3/conversations/');
+    expect(url).toContain('19%3Athread-abc%40thread.v2');
+    expect(init.method).toBe('POST');
+    const headers = init.headers as Record<string, string>;
     expect(headers['authorization']).toMatch(/^Bearer /);
   });
 
   it('throws on non-ok HTTP response', async () => {
+    // Override the next (send) fetch to fail. Typing POSTs swallow errors.
     mockFetchFail(403, 'Forbidden');
     await expect(plugin.sendMessage(CHAT_ID, MSG)).rejects.toThrow(/403/);
   });
@@ -95,8 +122,8 @@ describe('MsTeamsPlugin.sendMessage', () => {
   it('falls back to default serviceUrl when chatId has no pipe separator', async () => {
     mockFetchOk({ id: 'act-002' });
     await plugin.sendMessage('19:conv-id@thread.v2', MSG);
-    const [url] = mockFetch.mock.calls[0]!;
-    expect(String(url)).toContain('smba.trafficmanager.net');
+    const [url] = findMessageCall();
+    expect(url).toContain('smba.trafficmanager.net');
   });
 
   it('throws when plugin is not initialized', async () => {

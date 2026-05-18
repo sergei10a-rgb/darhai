@@ -96,7 +96,142 @@ describe('SynologyChatPlugin.sendMessage — happy paths', () => {
       plugin.sendMessage('1', { type: 'text', text: 'hello' }),
     ).rejects.toThrow(/ECONNREFUSED/);
     await plugin.stop();
-  });
+  }, 10_000);
+});
+
+// ── Retry + throttle (MED) ────────────────────────────────────────────────────
+//
+// The wrapper enforces a 500ms minimum interval between sends and runs up to 3
+// attempts with exponential backoff (300ms base) on failure — both lifted from
+// OpenClaw to absorb Synology Chat's documented 429-prone behaviour.
+
+describe('SynologyChatPlugin.sendMessage — retry + throttle', () => {
+  it('retries up to 3 times when fetch rejects, then surfaces the last error', async () => {
+    mockFetch
+      .mockRejectedValueOnce(new Error('boom-1'))
+      .mockRejectedValueOnce(new Error('boom-2'))
+      .mockRejectedValueOnce(new Error('boom-3'));
+
+    const plugin = await startPlugin();
+    await expect(
+      plugin.sendMessage('1', { type: 'text', text: 'hello' }),
+    ).rejects.toThrow(/boom-3/);
+    expect(mockFetch).toHaveBeenCalledTimes(3);
+    await plugin.stop();
+  }, 15_000);
+
+  it('succeeds on the second attempt after a transient 500', async () => {
+    mockFetch
+      .mockResolvedValueOnce(new Response('flake', { status: 500 }))
+      .mockResolvedValueOnce(new Response('{"success":true}', { status: 200 }));
+
+    const plugin = await startPlugin();
+    const id = await plugin.sendMessage('1', { type: 'text', text: 'hello' });
+    expect(id).toMatch(/^synology-chat:1:\d+$/);
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    await plugin.stop();
+  }, 15_000);
+
+  it('enforces a minimum 500ms interval between consecutive sends', async () => {
+    const plugin = await startPlugin();
+    const t0 = Date.now();
+    await plugin.sendMessage('1', { type: 'text', text: 'a' });
+    await plugin.sendMessage('2', { type: 'text', text: 'b' });
+    const elapsed = Date.now() - t0;
+    // Allow 50ms scheduler slack — what we care about is "≥ ~500ms".
+    expect(elapsed).toBeGreaterThanOrEqual(450);
+    await plugin.stop();
+  }, 15_000);
+});
+
+// ── user_id remapping (MED) ───────────────────────────────────────────────────
+//
+// On Synology servers whose incoming-webhook URL exposes `method=incoming`, we
+// swap to `method=user_list` to fetch the (webhook id → Chat-API id) map.
+// Lookup failures fall back to the webhook id (the canonical bot-DM case).
+
+function makeConfigWithMethodUrl(): IChannelPluginConfig {
+  return {
+    id: 'synology-chat_default',
+    type: 'synology-chat',
+    name: 'Synology Chat',
+    enabled: true,
+    status: 'created',
+    credentials: {
+      incomingUrl:
+        'https://nas.example.com/webapi/entry.cgi?api=SYNO.Chat.External&method=incoming&token=abc',
+      incomingToken: 'secret-token',
+    },
+    createdAt: 0,
+    updatedAt: 0,
+  };
+}
+
+describe('SynologyChatPlugin.sendMessage — webhook→Chat user_id mapping', () => {
+  it('remaps nickname-shaped webhook id to numeric Chat user_id via user_list', async () => {
+    // First call = user_list lookup; second call = the actual send POST.
+    mockFetch
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            success: true,
+            data: { users: [{ user_id: 99, nickname: 'alice' }] },
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(new Response('{"success":true}', { status: 200 }));
+
+    const plugin = new SynologyChatPlugin();
+    await plugin.initialize(makeConfigWithMethodUrl());
+    await plugin.start();
+
+    await plugin.sendMessage('alice', { type: 'text', text: 'hello' });
+
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    const [listUrl] = mockFetch.mock.calls[0] as [string, RequestInit];
+    expect(listUrl).toContain('method=user_list');
+
+    const [, sendInit] = mockFetch.mock.calls[1] as [string, RequestInit];
+    const inner = JSON.parse(
+      new URLSearchParams(sendInit.body as string).get('payload')!,
+    ) as { user_ids?: number[] };
+    expect(inner.user_ids).toEqual([99]);
+
+    await plugin.stop();
+  }, 15_000);
+
+  it('falls back to the webhook id when user_list fetch fails', async () => {
+    mockFetch
+      .mockResolvedValueOnce(new Response('nope', { status: 500 }))
+      .mockResolvedValueOnce(new Response('{"success":true}', { status: 200 }));
+
+    const plugin = new SynologyChatPlugin();
+    await plugin.initialize(makeConfigWithMethodUrl());
+    await plugin.start();
+
+    // Numeric webhook id — should pass through to user_ids verbatim.
+    await plugin.sendMessage('77', { type: 'text', text: 'hello' });
+
+    const [, sendInit] = mockFetch.mock.calls[1] as [string, RequestInit];
+    const inner = JSON.parse(
+      new URLSearchParams(sendInit.body as string).get('payload')!,
+    ) as { user_ids?: number[] };
+    expect(inner.user_ids).toEqual([77]);
+
+    await plugin.stop();
+  }, 15_000);
+
+  it('skips the user_list lookup entirely when incomingUrl has no method=incoming segment', async () => {
+    // Default config in this file uses a plain `/webhook` URL — no `method=`
+    // to swap, so we should never hit user_list. Only the send POST happens.
+    const plugin = await startPlugin();
+    await plugin.sendMessage('5', { type: 'text', text: 'hello' });
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    const [url] = mockFetch.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('https://nas.example.com/webhook');
+    await plugin.stop();
+  }, 10_000);
 });
 
 describe('SynologyChatPlugin.handleWebhookPayload — inbound message emission', () => {

@@ -135,8 +135,9 @@ describe('TwitchPlugin reconnect — gives up after 5 failed attempts', () => {
         // First call succeeds (onStart).
         return ['irc.chat.twitch.tv', 6697] as [string, number];
       }
-      // All subsequent reconnect attempts fail.
-      throw new Error('Auth failed');
+      // All subsequent reconnect attempts fail with a non-auth reason
+      // (auth failures fast-fail per F-2 — covered separately below).
+      throw new Error('Connection reset by peer');
     });
 
     const plugin = new TwitchPlugin();
@@ -144,8 +145,8 @@ describe('TwitchPlugin reconnect — gives up after 5 failed attempts', () => {
     await plugin.start();
     expect(plugin.status).toBe('running');
 
-    // Trigger initial disconnect.
-    mockTmiInstance.emit('disconnected', 'Auth failed');
+    // Trigger initial disconnect with a transient (non-auth) reason.
+    mockTmiInstance.emit('disconnected', 'Connection reset by peer');
 
     // Drive through all 5 backoff windows: 5s, 10s, 20s, 40s, 60s = 135s total.
     // Each failing reconnect triggers another scheduleReconnect immediately.
@@ -157,5 +158,27 @@ describe('TwitchPlugin reconnect — gives up after 5 failed attempts', () => {
 
     expect(plugin.status).toBe('error');
     expect(plugin.error).toMatch(/reconnect attempts/i);
+  });
+});
+
+describe('TwitchPlugin reconnect — F-2 fast-fail on auth failure', () => {
+  it('transitions to error immediately without burning backoff attempts', async () => {
+    const plugin = new TwitchPlugin();
+    await plugin.initialize(makeConfig());
+    await plugin.start();
+    expect(plugin.status).toBe('running');
+
+    const connectCallsBefore = mockTmiInstance.connect.mock.calls.length;
+
+    // Twitch tmi.js auth-failure disconnect message.
+    mockTmiInstance.emit('disconnected', 'Login authentication failed');
+
+    // Status flips to error synchronously inside the listener.
+    expect(plugin.status).toBe('error');
+    expect(plugin.error).toMatch(/token invalid or expired/i);
+
+    // No reconnect attempt scheduled — advance well past any backoff.
+    await vi.advanceTimersByTimeAsync(90_000);
+    expect(mockTmiInstance.connect.mock.calls.length).toBe(connectCallsBefore);
   });
 });

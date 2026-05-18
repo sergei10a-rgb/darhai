@@ -8,7 +8,7 @@
  * then enablePlugin with the raw credential fields.
  */
 
-import { Button, Input, Message } from '@arco-design/web-react';
+import { Button, Input, Message, Switch } from '@arco-design/web-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle } from 'lucide-react';
@@ -44,6 +44,9 @@ const MattermostConfigForm: React.FC<MattermostConfigFormProps> = ({
   const [serverUrl, setServerUrl] = useState('https://');
   const [accessToken, setAccessToken] = useState('');
   const [teamId, setTeamId] = useState('');
+  // SSRF guard toggle. Default unchecked = allowPrivateNetwork:true (the
+  // common self-hosted Mattermost case). Checking it flips to strict.
+  const [blockPrivateNetwork, setBlockPrivateNetwork] = useState(false);
   const [testLoading, setTestLoading] = useState(false);
 
   const hasExisting = !!pluginStatus?.hasToken;
@@ -72,6 +75,7 @@ const MattermostConfigForm: React.FC<MattermostConfigFormProps> = ({
       serverUrl: serverUrl.trim(),
       accessToken: accessToken.trim(),
       ...(teamId.trim() ? { teamId: teamId.trim() } : {}),
+      allowPrivateNetwork: !blockPrivateNetwork,
     });
 
     setTestLoading(true);
@@ -99,6 +103,7 @@ const MattermostConfigForm: React.FC<MattermostConfigFormProps> = ({
           serverUrl: serverUrl.trim(),
           accessToken: accessToken.trim(),
           ...(teamId.trim() ? { teamId: teamId.trim() } : {}),
+          allowPrivateNetwork: !blockPrivateNetwork,
         },
       });
 
@@ -164,7 +169,7 @@ const MattermostConfigForm: React.FC<MattermostConfigFormProps> = ({
         )}
         description={t(
           'settings.channels.mattermost.credentials.accessToken.help',
-          'Create in Mattermost under Account Settings → Security → Personal Access Tokens.',
+          'Create a Personal Access Token in Mattermost under Account Settings → Security → Personal Access Tokens. NOTE: A System Admin must first enable Integrations → Integration Management → Enable Personal Access Tokens in the System Console — if you don\'t see the menu, ask your admin to enable it.',
         )}
       >
         <Input.Password
@@ -190,7 +195,7 @@ const MattermostConfigForm: React.FC<MattermostConfigFormProps> = ({
         )}
         description={t(
           'settings.channels.mattermost.credentials.teamId.help',
-          'Limit the bot to a specific team. Leave blank to receive messages from all teams.',
+          'Scope the bot to a specific team — inbound events from other teams are dropped (direct messages still pass through). Leave blank to receive events from all teams.',
         )}
       >
         <Input
@@ -201,6 +206,22 @@ const MattermostConfigForm: React.FC<MattermostConfigFormProps> = ({
             'team-id or leave blank',
           )}
           style={{ width: 280 }}
+        />
+      </PreferenceRow>
+
+      <PreferenceRow
+        label={t(
+          'settings.channels.mattermost.credentials.blockPrivateNetwork.label',
+          'Block private-network destinations (advanced)',
+        )}
+        description={t(
+          'settings.channels.mattermost.credentials.blockPrivateNetwork.help',
+          'Default OFF — Mattermost is overwhelmingly self-hosted on LAN/private IPs, so private addresses are allowed. Turn ON only for managed SaaS Mattermost; this blocks DNS-rebinding/SSRF pivots but will break LAN servers.',
+        )}
+      >
+        <Switch
+          checked={blockPrivateNetwork}
+          onChange={setBlockPrivateNetwork}
         />
       </PreferenceRow>
 

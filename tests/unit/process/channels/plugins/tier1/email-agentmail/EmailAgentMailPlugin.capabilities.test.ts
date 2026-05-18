@@ -5,7 +5,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { EmailAgentMailPlugin } from '@process/channels/plugins/tier2/email-agentmail/EmailAgentMailPlugin';
+import { EmailAgentMailPlugin } from '@process/channels/plugins/tier1/email-agentmail/EmailAgentMailPlugin';
 import { hasPluginCredentials } from '@process/channels/types';
 
 describe('EmailAgentMailPlugin capabilities and status', () => {

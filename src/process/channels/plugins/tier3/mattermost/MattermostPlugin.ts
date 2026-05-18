@@ -18,6 +18,9 @@
  * Reconnect backoff: 5s → 60s, max 5 attempts then status='error'.
  */
 
+import { lookup as dnsLookup } from 'dns';
+import { isIP } from 'net';
+import { promisify } from 'util';
 import WebSocket from 'ws';
 
 import type {
@@ -27,6 +30,8 @@ import type {
   IUnifiedOutgoingMessage,
   PluginType,
 } from '../../../types';
+
+const dnsLookupAsync = promisify(dnsLookup);
 import { BasePlugin } from '../../BasePlugin';
 import {
   MATTERMOST_MESSAGE_LIMIT,
@@ -50,7 +55,66 @@ type MattermostCreds = {
   serverUrl: string;
   accessToken: string;
   teamId?: string;
+  // SSRF guard: when false, block fetches that resolve to private IPs.
+  // Default true because Mattermost is overwhelmingly self-hosted on LANs;
+  // users on managed SaaS Mattermost can flip the "Block private-network
+  // destinations" advanced toggle to harden against DNS-rebinding.
+  allowPrivateNetwork: boolean;
 };
+
+// Private/loopback/link-local ranges we refuse to fetch when allowPrivateNetwork=false.
+// IPv4: 10/8, 172.16/12, 192.168/16, 127/8. IPv6: ::1, fc00::/7, fe80::/10.
+function isPrivateAddress(addr: string): boolean {
+  const family = isIP(addr);
+  if (family === 4) {
+    const [a, b] = addr.split('.').map((p) => Number.parseInt(p, 10));
+    if (a === 10) return true;
+    if (a === 127) return true;
+    if (a === 192 && b === 168) return true;
+    if (a === 172 && b >= 16 && b <= 31) return true;
+    return false;
+  }
+  if (family === 6) {
+    const lower = addr.toLowerCase();
+    if (lower === '::1') return true;
+    // fc00::/7 → first byte 0xFC or 0xFD
+    if (/^f[cd][0-9a-f]{2}:/.test(lower)) return true;
+    // fe80::/10 → fe8x, fe9x, feax, febx
+    if (/^fe[89ab][0-9a-f]:/.test(lower)) return true;
+    return false;
+  }
+  return false;
+}
+
+async function assertSsrfAllowed(urlString: string, allowPrivate: boolean): Promise<void> {
+  if (allowPrivate) return;
+  let host: string;
+  try {
+    host = new URL(urlString).hostname;
+  } catch {
+    throw new Error(`Mattermost SSRF guard: invalid URL ${urlString}`);
+  }
+  // Strip [] from IPv6 literals.
+  const cleaned = host.replace(/^\[|\]$/g, '');
+  let resolved: string;
+  if (isIP(cleaned)) {
+    resolved = cleaned;
+  } else {
+    try {
+      const result = await dnsLookupAsync(cleaned);
+      resolved = result.address;
+    } catch (err) {
+      throw new Error(
+        `Mattermost SSRF guard: DNS lookup failed for ${cleaned}: ${err instanceof Error ? err.message : String(err)}`, { cause: err },
+      );
+    }
+  }
+  if (isPrivateAddress(resolved)) {
+    throw new Error(
+      `Mattermost SSRF guard: ${cleaned} resolved to private/loopback address ${resolved} (enable "I'm running Mattermost on my LAN" to allow)`,
+    );
+  }
+}
 
 type MattermostUser = {
   id: string;
@@ -80,14 +144,24 @@ export class MattermostPlugin extends BasePlugin {
 
   protected async onInitialize(config: IChannelPluginConfig): Promise<void> {
     const raw = config.credentials ?? {};
-    const serverUrl = readString(raw['serverUrl']).replace(/\/$/, '');
+    // Audit MED 2026-05-18: strip trailing slashes AND a trailing /api/v4
+    // suffix. Users routinely paste the canonical REST URL from Mattermost
+    // docs (https://mm.example.com/api/v4); without this, every request
+    // hits /api/v4/api/v4/... and 404s. Matches OpenClaw's
+    // normalizeMattermostBaseUrl (client.ts:62-69).
+    const withoutTrailing = readString(raw['serverUrl']).replace(/\/+$/, '');
+    const serverUrl = withoutTrailing.replace(/\/api\/v4$/i, '');
     const accessToken = readString(raw['accessToken']);
     const teamId = readString(raw['teamId']) || undefined;
+    // Default true: Mattermost is overwhelmingly self-hosted on LAN/private
+    // ranges, so blocking those by default would break the common case.
+    // SaaS users can opt in to the strict check via the form toggle.
+    const allowPrivateNetwork = raw['allowPrivateNetwork'] === false ? false : true;
 
     if (!serverUrl) throw new Error('Mattermost server URL is required');
     if (!accessToken) throw new Error('Mattermost access token is required');
 
-    this.creds = { serverUrl, accessToken, teamId };
+    this.creds = { serverUrl, accessToken, teamId, allowPrivateNetwork };
   }
 
   protected async onStart(): Promise<void> {
@@ -138,10 +212,15 @@ export class MattermostPlugin extends BasePlugin {
 
     const chunks = splitMattermostMessage(text, MATTERMOST_MESSAGE_LIMIT);
     let lastId = '';
+    let rootId: string | undefined;
     for (const chunk of chunks) {
-      const payload = toMattermostPostPayload(chatId, { ...message, text: chunk });
+      // Audit LOW 2026-05-18: thread chunks 2..N under the first chunk's id
+      // so a split message appears as a single conversation in Mattermost,
+      // not N top-level posts. Matches OpenClaw's createMattermostPost flow.
+      const payload = toMattermostPostPayload(chatId, { ...message, text: chunk }, rootId);
       const post = await this.restPost<{ id: string }>('/api/v4/posts', payload);
       lastId = post.id;
+      if (!rootId) rootId = post.id;
     }
     return lastId;
   }
@@ -164,9 +243,14 @@ export class MattermostPlugin extends BasePlugin {
 
   // ── WebSocket ────────────────────────────────────────────────────────────────
 
-  private connectWs(): Promise<void> {
-    if (!this.creds) return Promise.reject(new Error('Mattermost plugin not initialized'));
-    const { serverUrl, accessToken } = this.creds;
+  private async connectWs(): Promise<void> {
+    if (!this.creds) throw new Error('Mattermost plugin not initialized');
+    const { serverUrl, accessToken, allowPrivateNetwork } = this.creds;
+
+    // Audit LOW 2026-05-18: SSRF guard runs before the socket opens so a
+    // poisoned serverUrl can't pivot to internal hosts from the Electron
+    // main process.
+    await assertSsrfAllowed(serverUrl, allowPrivateNetwork);
 
     // Convert http(s) → ws(s) for the WS endpoint.
     const wsUrl = serverUrl.replace(/^http/, 'ws') + '/api/v4/websocket';
@@ -208,6 +292,16 @@ export class MattermostPlugin extends BasePlugin {
         }
 
         if (evt.event === 'posted') {
+          // Audit MED 2026-05-18: when teamId is configured, scope inbound
+          // events to that team. Mattermost WS events carry the originating
+          // team on the broadcast envelope; drop any event from a different
+          // team so the bot only acts within its assigned team.
+          if (this.creds?.teamId) {
+            const eventTeamId = evt.broadcast?.team_id ?? evt.data?.team_id;
+            // Only filter when the event actually carries a team_id — direct
+            // messages have no team and should still be delivered.
+            if (eventTeamId && eventTeamId !== this.creds.teamId) return;
+          }
           const post = extractPostFromEvent(evt);
           if (post) this.activeUsers.add(post.user_id ?? '');
           const unified = toUnifiedIncomingFromMattermost(evt, this.selfUserId);
@@ -308,6 +402,7 @@ export class MattermostPlugin extends BasePlugin {
   ): Promise<T> {
     if (!this.creds) throw new Error('Mattermost client not initialized');
     const url = this.creds.serverUrl + path;
+    await assertSsrfAllowed(url, this.creds.allowPrivateNetwork);
     const resp = await fetch(url, {
       method,
       headers: {
@@ -325,6 +420,7 @@ export class MattermostPlugin extends BasePlugin {
 
   private async fetchMe(creds: MattermostCreds): Promise<MattermostUser> {
     const url = creds.serverUrl + '/api/v4/users/me';
+    await assertSsrfAllowed(url, creds.allowPrivateNetwork);
     const resp = await fetch(url, {
       headers: { Authorization: `Bearer ${creds.accessToken}` },
     });
@@ -348,7 +444,7 @@ export class MattermostPlugin extends BasePlugin {
   static override async testConnection(
     tokenJson: string,
   ): Promise<{ success: boolean; botUsername?: string; error?: string }> {
-    let creds: { serverUrl?: string; accessToken?: string };
+    let creds: { serverUrl?: string; accessToken?: string; allowPrivateNetwork?: boolean };
     try {
       creds = JSON.parse(tokenJson) as typeof creds;
     } catch {
@@ -357,11 +453,13 @@ export class MattermostPlugin extends BasePlugin {
 
     const serverUrl = (creds.serverUrl ?? '').trim().replace(/\/$/, '');
     const accessToken = (creds.accessToken ?? '').trim();
+    const allowPrivateNetwork = creds.allowPrivateNetwork === false ? false : true;
 
     if (!serverUrl) return { success: false, error: 'Server URL is required' };
     if (!accessToken) return { success: false, error: 'Access token is required' };
 
     try {
+      await assertSsrfAllowed(`${serverUrl}/api/v4/users/me`, allowPrivateNetwork);
       const resp = await fetch(`${serverUrl}/api/v4/users/me`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });

@@ -146,7 +146,7 @@ export class MatrixPlugin extends BasePlugin {
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       throw new Error(
-        `Matrix whoami() failed; refusing to start without confirmed identity (echo-filter safety): ${message}`,
+        `Matrix whoami() failed; refusing to start without confirmed identity (echo-filter safety): ${message}`, { cause: error },
       );
     }
     this.setupHandlers();

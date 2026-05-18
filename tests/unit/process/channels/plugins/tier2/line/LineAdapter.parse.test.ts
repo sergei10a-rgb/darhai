@@ -79,7 +79,7 @@ describe('extractLineMessageText', () => {
   });
 
   it('returns empty string for unknown message type', () => {
-    expect(extractLineMessageText({ type: 'location', id: 'm8' } as any)).toBe('');
+    expect(extractLineMessageText({ type: 'contact', id: 'm8' } as any)).toBe('');
   });
 });
 
@@ -114,7 +114,7 @@ describe('lineMessageEventToUnified', () => {
   });
 
   it('returns null for unsupported message type with no text', () => {
-    const event = baseEvent({ message: { type: 'location', id: 'm99' } as any });
+    const event = baseEvent({ message: { type: 'contact', id: 'm99' } as any });
     expect(lineMessageEventToUnified(event)).toBeNull();
   });
 
@@ -122,6 +122,37 @@ describe('lineMessageEventToUnified', () => {
     const event = baseEvent({ message: { type: 'image', id: 'img01' } });
     const unified = lineMessageEventToUnified(event);
     expect(unified?.content.text).toBe('<media:image>');
+  });
+
+  it('formats location messages with title, coords, and address', () => {
+    const event = baseEvent({
+      message: {
+        type: 'location',
+        id: 'loc1',
+        title: 'Tokyo Station',
+        address: '1 Chome Marunouchi, Chiyoda',
+        latitude: 35.6812,
+        longitude: 139.7671,
+      } as any,
+    });
+    const unified = lineMessageEventToUnified(event);
+    expect(unified?.content.text).toBe(
+      '📍 Tokyo Station (35.6812, 139.7671) — 1 Chome Marunouchi, Chiyoda',
+    );
+  });
+
+  it('formats location messages without address', () => {
+    const event = baseEvent({
+      message: {
+        type: 'location',
+        id: 'loc2',
+        title: 'Pin',
+        latitude: 1,
+        longitude: 2,
+      } as any,
+    });
+    const unified = lineMessageEventToUnified(event);
+    expect(unified?.content.text).toBe('📍 Pin (1, 2)');
   });
 });
 
@@ -149,5 +180,29 @@ describe('linePostbackEventToUnified', () => {
       postback: { data: '   ' },
     };
     expect(linePostbackEventToUnified(event)).toBeNull();
+  });
+
+  it('rewrites line.action= postback querystring into a human phrase', () => {
+    const event: LinePostbackEvent = {
+      type: 'postback',
+      replyToken: 'rt-pb-act',
+      source: { type: 'user', userId: 'U444' },
+      timestamp: 1716000003000,
+      postback: { data: 'line.action=open&line.device=phone' },
+    };
+    const unified = linePostbackEventToUnified(event);
+    expect(unified?.content.text).toBe('line action open device phone');
+  });
+
+  it('rewrites line.action= postback without device into a shorter phrase', () => {
+    const event: LinePostbackEvent = {
+      type: 'postback',
+      replyToken: 'rt-pb-act2',
+      source: { type: 'user', userId: 'U555' },
+      timestamp: 1716000004000,
+      postback: { data: 'line.action=close' },
+    };
+    const unified = linePostbackEventToUnified(event);
+    expect(unified?.content.text).toBe('line action close');
   });
 });

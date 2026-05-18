@@ -115,6 +115,57 @@ describe('synologyChatVerifier — body parsing', () => {
   });
 });
 
+// ── Non-object payload shapes (MED) ───────────────────────────────────────────
+//
+// `parseSynologyChatBody` must reject any payload that JSON.parses to
+// something other than a plain object — downstream `toUnifiedIncomingFrom…`
+// blindly dereferences `.user_id` and would throw `TypeError` on null / array /
+// primitive payloads.
+
+describe('synologyChatVerifier — non-object payload rejection (MED)', () => {
+  it('rejects when payload JSON-parses to null', () => {
+    const result = synologyChatVerifier(
+      makeInput({ body: Buffer.from('payload=null', 'utf8') }),
+      SECRET,
+    );
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.reason).toBe('invalid-payload');
+      expect(result.status).toBe(400);
+    }
+  });
+
+  it('rejects when payload JSON-parses to a string', () => {
+    const result = synologyChatVerifier(
+      makeInput({ body: Buffer.from(`payload=${encodeURIComponent('"just a string"')}`, 'utf8') }),
+      SECRET,
+    );
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.status).toBe(400);
+    }
+  });
+
+  it('rejects when payload JSON-parses to an array', () => {
+    const result = synologyChatVerifier(
+      makeInput({ body: Buffer.from(`payload=${encodeURIComponent('[]')}`, 'utf8') }),
+      SECRET,
+    );
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.status).toBe(400);
+    }
+  });
+
+  it('rejects when payload JSON-parses to a number', () => {
+    const result = synologyChatVerifier(
+      makeInput({ body: Buffer.from('payload=42', 'utf8') }),
+      SECRET,
+    );
+    expect(result.ok).toBe(false);
+  });
+});
+
 // ── Event ID extraction ───────────────────────────────────────────────────────
 
 describe('synologyChatVerifier — eventId', () => {

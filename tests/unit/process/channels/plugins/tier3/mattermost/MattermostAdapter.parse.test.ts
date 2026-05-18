@@ -170,3 +170,33 @@ describe('toUnifiedIncomingFromMattermost — skip conditions', () => {
     expect(toUnifiedIncomingFromMattermost(evt, SELF_USER)).toBeNull();
   });
 });
+
+// ── sender_name vs UUID (Audit MED 2026-05-18) ────────────────────────────────
+
+describe('toUnifiedIncomingFromMattermost — sender_name resolution', () => {
+  it('uses data.sender_name for username/displayName when present', () => {
+    const post = makePost();
+    const evt: MattermostEventPayload = {
+      event: 'posted',
+      data: { post: JSON.stringify(post), sender_name: '@alice' },
+      broadcast: { channel_id: post.channel_id ?? '' },
+    };
+    const result = toUnifiedIncomingFromMattermost(evt, SELF_USER);
+    expect(result).not.toBeNull();
+    // id remains the immutable UUID so downstream consumers can still
+    // reconcile against /api/v4/users/{id} if needed.
+    expect(result!.user.id).toBe('alice-id');
+    expect(result!.user.username).toBe('@alice');
+    expect(result!.user.displayName).toBe('@alice');
+  });
+
+  it('falls back to user_id when sender_name is missing', () => {
+    const post = makePost();
+    const evt = makeEvent(post); // no sender_name in data
+    const result = toUnifiedIncomingFromMattermost(evt, SELF_USER);
+    expect(result).not.toBeNull();
+    expect(result!.user.id).toBe('alice-id');
+    expect(result!.user.username).toBe('alice-id');
+    expect(result!.user.displayName).toBe('alice-id');
+  });
+});

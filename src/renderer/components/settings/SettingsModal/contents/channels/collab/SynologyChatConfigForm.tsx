@@ -8,7 +8,7 @@
  * then enablePlugin with the raw credential fields.
  */
 
-import { Button, Input, Message } from '@arco-design/web-react';
+import { Button, Input, Message, Switch } from '@arco-design/web-react';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle, Copy } from 'lucide-react';
@@ -43,6 +43,7 @@ const SynologyChatConfigForm: React.FC<SynologyChatConfigFormProps> = ({
 
   const [incomingUrl, setIncomingUrl] = useState('');
   const [incomingToken, setIncomingToken] = useState('');
+  const [allowInsecureSsl, setAllowInsecureSsl] = useState(false);
   const [testLoading, setTestLoading] = useState(false);
   const [webhookToken, setWebhookToken] = useState<string | null>(null);
 
@@ -85,6 +86,7 @@ const SynologyChatConfigForm: React.FC<SynologyChatConfigFormProps> = ({
     const tokenJson = JSON.stringify({
       incomingUrl: incomingUrl.trim(),
       incomingToken: incomingToken.trim(),
+      allowInsecureSsl,
     });
 
     setTestLoading(true);
@@ -114,6 +116,7 @@ const SynologyChatConfigForm: React.FC<SynologyChatConfigFormProps> = ({
         config: {
           incomingUrl: incomingUrl.trim(),
           incomingToken: incomingToken.trim(),
+          allowInsecureSsl,
         },
       });
 
@@ -174,7 +177,7 @@ const SynologyChatConfigForm: React.FC<SynologyChatConfigFormProps> = ({
         )}
         description={t(
           'settings.channels.synologyChat.credentials.incomingUrl.help',
-          'The webhook URL from Synology Chat admin panel (Integration → Incoming Webhooks). We POST replies here.',
+          'The webhook URL from Synology Chat: Chat app → user-profile menu → Integration → Incoming Webhooks. We POST replies here.',
         )}
       >
         <Input
@@ -212,6 +215,19 @@ const SynologyChatConfigForm: React.FC<SynologyChatConfigFormProps> = ({
           style={{ width: 320 }}
           visibilityToggle
         />
+      </PreferenceRow>
+
+      <PreferenceRow
+        label={t(
+          'settings.channels.synologyChat.credentials.allowInsecureSsl.label',
+          'Allow self-signed certificate (LAN Synology NAS)',
+        )}
+        description={t(
+          'settings.channels.synologyChat.credentials.allowInsecureSsl.help',
+          'Only enable for local-network Synology with a self-signed cert. Never enable for public Synology hosts.',
+        )}
+      >
+        <Switch checked={allowInsecureSsl} onChange={setAllowInsecureSsl} />
       </PreferenceRow>
 
       <div className='text-12px text-t-tertiary'>

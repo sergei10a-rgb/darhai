@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest';
 import {
   toAgentMailSendBody,
   toUnifiedIncomingFromAgentMail,
-} from '@process/channels/plugins/tier2/email-agentmail/EmailAgentMailAdapter';
+} from '@process/channels/plugins/tier1/email-agentmail/EmailAgentMailAdapter';
 
 describe('toUnifiedIncomingFromAgentMail', () => {
   const inboxAddress = 'agent@workspace.agentmail.to';

@@ -125,6 +125,31 @@ describe('toUnifiedIncomingFromSynologyChat — happy paths', () => {
   });
 });
 
+describe('toUnifiedIncomingFromSynologyChat — trigger_word stripping', () => {
+  it('strips trigger_word prefix from text', () => {
+    const result = toUnifiedIncomingFromSynologyChat(
+      payload({ trigger_word: '/bot', text: '/bot hello' }),
+    );
+    expect(result).not.toBeNull();
+    expect(result!.content.text).toBe('hello');
+  });
+
+  it('leaves text unchanged when trigger_word is not a prefix', () => {
+    const result = toUnifiedIncomingFromSynologyChat(
+      payload({ trigger_word: '/bot', text: 'say /bot now' }),
+    );
+    expect(result!.content.text).toBe('say /bot now');
+  });
+
+  it('returns null when text is only the trigger_word', () => {
+    expect(
+      toUnifiedIncomingFromSynologyChat(
+        payload({ trigger_word: '/bot', text: '/bot' }),
+      ),
+    ).toBeNull();
+  });
+});
+
 describe('toUnifiedIncomingFromSynologyChat — skip conditions', () => {
   it('returns null when user_id is absent', () => {
     expect(toUnifiedIncomingFromSynologyChat(payload({ user_id: undefined }))).toBeNull();

@@ -30,7 +30,7 @@ vi.mock('node:fs', () => ({
   existsSync: vi.fn(() => false),
 }));
 
-import { SignalPlugin } from '@process/channels/plugins/tier2/signal/SignalPlugin';
+import { SignalPlugin } from '@process/channels/plugins/tier1/signal/SignalPlugin';
 
 /** Helper: make execFile resolve with given stdout/stderr/code */
 function stubExecFile(stdout: string, stderr: string, code: number) {

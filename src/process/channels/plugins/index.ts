@@ -33,20 +33,20 @@ export { WhatsAppPlugin } from './tier1/whatsapp/WhatsAppPlugin';
 export type { WhatsAppBackend } from './tier1/whatsapp/WhatsAppPlugin';
 
 // Email (AgentMail) plugin (tier 2) — webhook-driven buffered SaaS email
-export { EmailAgentMailPlugin } from './tier2/email-agentmail/EmailAgentMailPlugin';
+export { EmailAgentMailPlugin } from './tier1/email-agentmail/EmailAgentMailPlugin';
 export {
   toAgentMailSendBody,
   toUnifiedIncomingFromAgentMail,
-} from './tier2/email-agentmail/EmailAgentMailAdapter';
+} from './tier1/email-agentmail/EmailAgentMailAdapter';
 export type {
   AgentMailInboundPayload,
   AgentMailSendBody,
-} from './tier2/email-agentmail/EmailAgentMailAdapter';
+} from './tier1/email-agentmail/EmailAgentMailAdapter';
 
 // Email (IMAP/SMTP) plugin (tier 2) — bring-your-own-inbox via imapflow + nodemailer
-export { EmailImapPlugin } from './tier2/email-imap/EmailImapPlugin';
-export { buildSmtpEnvelope, parseImapMessage } from './tier2/email-imap/EmailImapAdapter';
-export type { ImapMessageEnvelope, SmtpEnvelope } from './tier2/email-imap/EmailImapAdapter';
+export { EmailImapPlugin } from './tier1/email-imap/EmailImapPlugin';
+export { buildSmtpEnvelope, parseImapMessage } from './tier1/email-imap/EmailImapAdapter';
+export type { ImapMessageEnvelope, SmtpEnvelope } from './tier1/email-imap/EmailImapAdapter';
 
 // Matrix plugin (tier 2) — federated messaging via matrix-js-sdk
 export { MatrixPlugin } from './tier2/matrix/MatrixPlugin';

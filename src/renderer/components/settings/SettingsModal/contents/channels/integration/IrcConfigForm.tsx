@@ -8,7 +8,7 @@
  * then enablePlugin with the raw credential fields.
  */
 
-import { Button, Input, Message } from '@arco-design/web-react';
+import { Button, Input, Message, Radio, Switch } from '@arco-design/web-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle } from 'lucide-react';
@@ -41,8 +41,12 @@ const IrcConfigForm: React.FC<IrcConfigFormProps> = ({ pluginStatus, onStatusCha
   const [server, setServer] = useState('irc.libera.chat');
   const [port, setPort] = useState('6697');
   const [nick, setNick] = useState('');
+  const [username, setUsername] = useState('');
+  const [realname, setRealname] = useState('');
   const [password, setPassword] = useState('');
   const [channels, setChannels] = useState('#wayland-bots');
+  const [tls, setTls] = useState(true);
+  const [saslMechanism, setSaslMechanism] = useState<'PLAIN' | 'none'>('PLAIN');
   const [testLoading, setTestLoading] = useState(false);
 
   const hasExisting = !!pluginStatus?.hasToken;
@@ -66,15 +70,20 @@ const IrcConfigForm: React.FC<IrcConfigFormProps> = ({ pluginStatus, onStatusCha
       .map((c) => c.trim())
       .filter(Boolean);
 
+    const effectiveUsername = username.trim() || nick.trim();
+    const effectiveRealname = realname.trim() || effectiveUsername;
+    const effectiveMechanism: 'PLAIN' | 'none' = password.trim() ? saslMechanism : 'none';
+
     const tokenJson = JSON.stringify({
       server: server.trim(),
       port: Number(port) || 6697,
-      tls: true,
+      tls,
       nick: nick.trim(),
-      username: nick.trim(),
+      username: effectiveUsername,
+      realname: effectiveRealname,
       password: password.trim(),
       channels: channelList,
-      saslMechanism: password.trim() ? 'PLAIN' : 'none',
+      saslMechanism: effectiveMechanism,
     });
 
     setTestLoading(true);
@@ -99,12 +108,13 @@ const IrcConfigForm: React.FC<IrcConfigFormProps> = ({ pluginStatus, onStatusCha
         config: {
           server: server.trim(),
           port: Number(port) || 6697,
-          tls: true,
+          tls,
           nick: nick.trim(),
-          username: nick.trim(),
+          username: effectiveUsername,
+          realname: effectiveRealname,
           password: password.trim(),
           channels: channelList,
-          saslMechanism: password.trim() ? 'PLAIN' : 'none',
+          saslMechanism: effectiveMechanism,
         },
       });
 
@@ -183,6 +193,62 @@ const IrcConfigForm: React.FC<IrcConfigFormProps> = ({ pluginStatus, onStatusCha
           placeholder='wayland-bot'
           style={{ width: 280 }}
         />
+      </PreferenceRow>
+
+      <PreferenceRow
+        label={t('settings.channels.irc.credentials.username.label', 'Username (optional)')}
+        description={t(
+          'settings.channels.irc.credentials.username.help',
+          'IRC ident/username. Defaults to the bot nick.',
+        )}
+      >
+        <Input
+          value={username}
+          onChange={setUsername}
+          placeholder={nick || 'wayland-bot'}
+          style={{ width: 280 }}
+        />
+      </PreferenceRow>
+
+      <PreferenceRow
+        label={t('settings.channels.irc.credentials.realname.label', 'Real name (optional)')}
+        description={t(
+          'settings.channels.irc.credentials.realname.help',
+          'GECOS / real name shown in WHOIS. Defaults to the username.',
+        )}
+      >
+        <Input
+          value={realname}
+          onChange={setRealname}
+          placeholder={username || nick || 'Wayland IRC bot'}
+          style={{ width: 280 }}
+        />
+      </PreferenceRow>
+
+      <PreferenceRow
+        label={t('settings.channels.irc.credentials.tls.label', 'TLS')}
+        description={t(
+          'settings.channels.irc.credentials.tls.help',
+          'Enable TLS (default). Disable for legacy plain-text servers on port 6667.',
+        )}
+      >
+        <Switch checked={tls} onChange={setTls} />
+      </PreferenceRow>
+
+      <PreferenceRow
+        label={t('settings.channels.irc.credentials.sasl.label', 'SASL Mechanism')}
+        description={t(
+          'settings.channels.irc.credentials.sasl.help',
+          'PLAIN authenticates via SASL (recommended). None falls back to server PASS (NickServ-style).',
+        )}
+      >
+        <Radio.Group
+          value={saslMechanism}
+          onChange={(v: 'PLAIN' | 'none') => setSaslMechanism(v)}
+        >
+          <Radio value='PLAIN'>PLAIN</Radio>
+          <Radio value='none'>None</Radio>
+        </Radio.Group>
       </PreferenceRow>
 
       <PreferenceRow

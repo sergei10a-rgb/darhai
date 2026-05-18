@@ -166,7 +166,12 @@ export class LinePlugin extends BasePlugin {
         ? chatId.slice('room:'.length)
         : chatId;
 
-    await this.client.pushMessage({ to, messages: [lineMsg] });
+    try {
+      await this.client.pushMessage({ to, messages: [lineMsg] });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      throw new Error(`LINE pushMessage failed (likely quota or permission): ${msg}`, { cause: err });
+    }
     return `push:${to}:${now}`;
   }
 

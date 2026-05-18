@@ -210,6 +210,125 @@ describe('MattermostPlugin handleWebhookPayload', () => {
   });
 });
 
+// ── serverUrl normalization (Audit MED 2026-05-18) ───────────────────────────
+//
+// Mattermost docs show the canonical REST URL as https://mm/api/v4. Users
+// who paste that verbatim previously produced /api/v4/api/v4/... 404s.
+// Both forms (with and without trailing slash) must resolve to the bare host.
+
+describe('MattermostPlugin serverUrl normalization', () => {
+  it('strips a trailing /api/v4 suffix from serverUrl', async () => {
+    setupHappyPath();
+    const plugin = new MattermostPlugin();
+    await plugin.initialize(makeConfig({ serverUrl: 'https://mm.example.com/api/v4' }));
+    await plugin.start();
+    // fetchMe should hit the bare host + /api/v4/users/me — NOT
+    // /api/v4/api/v4/users/me.
+    const callUrl = mockFetch.mock.calls[0]?.[0] as string;
+    expect(callUrl).toBe('https://mm.example.com/api/v4/users/me');
+    await plugin.stop();
+  });
+
+  it('strips a trailing /api/v4/ (with slash) from serverUrl', async () => {
+    setupHappyPath();
+    const plugin = new MattermostPlugin();
+    await plugin.initialize(makeConfig({ serverUrl: 'https://mm.example.com/api/v4/' }));
+    await plugin.start();
+    const callUrl = mockFetch.mock.calls[0]?.[0] as string;
+    expect(callUrl).toBe('https://mm.example.com/api/v4/users/me');
+    await plugin.stop();
+  });
+});
+
+// ── teamId filter (Audit MED 2026-05-18) ─────────────────────────────────────
+//
+// When creds.teamId is set, inbound 'posted' events whose
+// broadcast.team_id (or data.team_id) doesn't match must be dropped.
+// Events with no team_id (DMs) still pass through.
+
+describe('MattermostPlugin teamId filter', () => {
+  async function startWithTeamId(teamId: string | undefined) {
+    setupHappyPath();
+    const plugin = new MattermostPlugin();
+    await plugin.initialize(makeConfig(teamId === undefined ? {} : { teamId }));
+    await plugin.start();
+    return plugin;
+  }
+
+  function emitPostedEvent(opts: {
+    userId?: string;
+    teamId?: string;
+    broadcastTeamId?: string;
+  }) {
+    const post = {
+      id: 'post-1',
+      user_id: opts.userId ?? 'alice-id',
+      channel_id: 'channel-xyz',
+      message: 'hello',
+      root_id: null,
+      create_at: 1_700_000_000_000,
+      type: '',
+    };
+    const evt: Record<string, unknown> = {
+      event: 'posted',
+      data: { post: JSON.stringify(post), sender_name: '@alice' },
+      broadcast: { channel_id: 'channel-xyz' },
+    };
+    if (opts.teamId !== undefined) {
+      (evt.data as Record<string, unknown>).team_id = opts.teamId;
+    }
+    if (opts.broadcastTeamId !== undefined) {
+      (evt.broadcast as Record<string, unknown>).team_id = opts.broadcastTeamId;
+    }
+    mockWsInstance.emit('message', JSON.stringify(evt));
+  }
+
+  it('delivers events when no teamId is configured', async () => {
+    const plugin = await startWithTeamId(undefined);
+    const handler = vi.fn();
+    plugin.onMessage(handler);
+    emitPostedEvent({ broadcastTeamId: 'team-X' });
+    // emitMessage is async-fire-and-forget — flush microtasks.
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(handler).toHaveBeenCalledTimes(1);
+    await plugin.stop();
+  });
+
+  it('delivers events whose broadcast.team_id matches creds.teamId', async () => {
+    const plugin = await startWithTeamId('team-A');
+    const handler = vi.fn();
+    plugin.onMessage(handler);
+    emitPostedEvent({ broadcastTeamId: 'team-A' });
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(handler).toHaveBeenCalledTimes(1);
+    await plugin.stop();
+  });
+
+  it('drops events whose broadcast.team_id does NOT match creds.teamId', async () => {
+    const plugin = await startWithTeamId('team-A');
+    const handler = vi.fn();
+    plugin.onMessage(handler);
+    emitPostedEvent({ broadcastTeamId: 'team-B' });
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(handler).not.toHaveBeenCalled();
+    await plugin.stop();
+  });
+
+  it('delivers events that carry no team_id at all (DMs) even when teamId is set', async () => {
+    const plugin = await startWithTeamId('team-A');
+    const handler = vi.fn();
+    plugin.onMessage(handler);
+    emitPostedEvent({}); // no team_id anywhere
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(handler).toHaveBeenCalledTimes(1);
+    await plugin.stop();
+  });
+});
+
 describe('MattermostPlugin reconnect backoff', () => {
   it('schedules a reconnect when the WS closes unexpectedly', async () => {
     setupHappyPath();

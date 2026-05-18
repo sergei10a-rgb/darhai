@@ -76,7 +76,7 @@ vi.mock('node:fs', () => ({
 }));
 
 import type { IChannelPluginConfig } from '@process/channels/types';
-import { SignalPlugin } from '@process/channels/plugins/tier2/signal/SignalPlugin';
+import { SignalPlugin } from '@process/channels/plugins/tier1/signal/SignalPlugin';
 
 function makeConfig(overrides: Partial<IChannelPluginConfig['credentials']> = {}): IChannelPluginConfig {
   return {
@@ -126,12 +126,13 @@ describe('SignalPlugin lifecycle', () => {
     expect(p.getBotInfo()).toBeNull();
   });
 
-  it('exposes correct capabilities: no edit, no stream, react + typing', () => {
+  it('exposes correct capabilities: no edit, no stream, no react (until wired), typing', () => {
     const p = new SignalPlugin();
     expect(p.capabilities).toEqual({
       canEdit: false,
       canStream: false,
-      canReact: true,
+      // canReact is intentionally false — reactions aren't wired yet (S-MED-3).
+      canReact: false,
       canTypingIndicator: true,
     });
   });

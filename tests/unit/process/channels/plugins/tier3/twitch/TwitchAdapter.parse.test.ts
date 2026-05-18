@@ -10,8 +10,10 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  extractTwitchRoles,
   toUnifiedIncomingFromTwitch,
   type TmiMessageEvent,
+  type TwitchRoles,
 } from '@process/channels/plugins/tier3/twitch/TwitchAdapter';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -126,5 +128,65 @@ describe('toUnifiedIncomingFromTwitch — fallback user fields', () => {
     delete event.userstate['user-id'];
     const msg = toUnifiedIncomingFromTwitch(event);
     expect(msg!.user.id).toBe('chatter');
+  });
+});
+
+describe('extractTwitchRoles — F-3 role/badge surfacing', () => {
+  it('flags a moderator with subscriber badge', () => {
+    const roles = extractTwitchRoles({
+      username: 'modsub',
+      mod: '1',
+      subscriber: '1',
+      badges: { moderator: '1', subscriber: '12' },
+    });
+    expect(roles).toEqual<TwitchRoles>({
+      isMod: true,
+      isVip: false,
+      isSubscriber: true,
+      isBroadcaster: false,
+      badges: { moderator: '1', subscriber: '12' },
+    });
+  });
+
+  it('flags a broadcaster from badges.broadcaster', () => {
+    const roles = extractTwitchRoles({
+      username: 'streamer',
+      badges: { broadcaster: '1' },
+    });
+    expect(roles.isBroadcaster).toBe(true);
+  });
+
+  it('flags a VIP', () => {
+    const roles = extractTwitchRoles({ username: 'vip', vip: '1' });
+    expect(roles.isVip).toBe(true);
+  });
+
+  it('returns all-false roles for an anonymous chatter', () => {
+    const roles = extractTwitchRoles({ username: 'rando' });
+    expect(roles).toEqual<TwitchRoles>({
+      isMod: false,
+      isVip: false,
+      isSubscriber: false,
+      isBroadcaster: false,
+      badges: {},
+    });
+  });
+
+  it('surfaces roles inside the unified message raw field', () => {
+    const msg = toUnifiedIncomingFromTwitch(
+      makeEvent({
+        userstate: {
+          ...makeEvent().userstate,
+          mod: '1',
+          subscriber: '1',
+          badges: { moderator: '1', subscriber: '6' },
+        },
+      }),
+    );
+    expect(msg).not.toBeNull();
+    const raw = msg!.raw as { roles: TwitchRoles };
+    expect(raw.roles.isMod).toBe(true);
+    expect(raw.roles.isSubscriber).toBe(true);
+    expect(raw.roles.badges['moderator']).toBe('1');
   });
 });

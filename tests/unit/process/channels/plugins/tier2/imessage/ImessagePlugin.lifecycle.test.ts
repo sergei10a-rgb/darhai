@@ -8,7 +8,14 @@
  * no real filesystem or process access occurs.
  */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+
+// Force process.platform=darwin so the iMessage plugin's macOS-only guards
+// don't short-circuit on Linux CI runners. Tests that need to assert non-darwin
+// behavior re-stub locally.
+const ORIGINAL_PLATFORM = process.platform;
+beforeAll(() => Object.defineProperty(process, 'platform', { value: 'darwin', configurable: true }));
+afterAll(() => Object.defineProperty(process, 'platform', { value: ORIGINAL_PLATFORM, configurable: true }));
 
 // ---------------------------------------------------------------------------
 // Hoist mocks — must be at module top level per MANDATORY Vitest hoisting rules
@@ -129,14 +136,12 @@ describe('ImessagePlugin — lifecycle', () => {
   });
 
   it('transitions created → initializing → ready on initialize()', async () => {
-    if (process.platform !== 'darwin') return;
     const plugin = new ImessagePlugin();
     await plugin.initialize(makeConfig());
     expect(plugin.status).toBe('ready');
   });
 
   it('transitions ready → starting → running on start()', async () => {
-    if (process.platform !== 'darwin') return;
     const plugin = new ImessagePlugin();
     await plugin.initialize(makeConfig());
     await plugin.start();
@@ -145,7 +150,6 @@ describe('ImessagePlugin — lifecycle', () => {
   });
 
   it('transitions running → stopping → stopped on stop()', async () => {
-    if (process.platform !== 'darwin') return;
     const plugin = new ImessagePlugin();
     await plugin.initialize(makeConfig());
     await plugin.start();
@@ -160,7 +164,6 @@ describe('ImessagePlugin — lifecycle', () => {
   });
 
   it('getBotInfo returns imessage-bot identity when running', async () => {
-    if (process.platform !== 'darwin') return;
     const plugin = new ImessagePlugin();
     await plugin.initialize(makeConfig());
     await plugin.start();

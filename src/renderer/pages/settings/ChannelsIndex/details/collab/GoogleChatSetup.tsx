@@ -46,7 +46,7 @@ const GoogleChatSetup: React.FC = () => {
       pluginId={pluginStatus?.id ?? 'google-chat_default'}
       helpText={t(
         'settings.channels.googleChat.help',
-        'Google Chat (Workspace) bot. Paste your service-account JSON keyfile and provide the expected JWT audience (project number or app URL) for webhook verification.',
+        'Google Chat (Workspace) bot. SETUP: (1) GCP Console → enable Google Chat API; (2) IAM → Service Accounts → create new + download JSON key; (3) Chat API → Configuration → set Bot URL to the inbound webhook URL printed after setup; (4) Publish bot to your Workspace. THEN paste the service-account JSON keyfile and provide the expected JWT audience (project number or app URL).',
       )}
     >
       <GoogleChatConfigForm pluginStatus={pluginStatus} onStatusChange={setPluginStatus} />

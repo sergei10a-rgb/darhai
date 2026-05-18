@@ -20,6 +20,8 @@
  * Reconnect backoff: 5 s → 60 s, max 5 attempts, then status='error'.
  */
 
+import { randomUUID } from 'node:crypto';
+
 import { io, type Socket } from 'socket.io-client';
 
 import type {
@@ -57,6 +59,21 @@ type BBTextResponse = {
   };
 };
 
+type BBChatQueryResponse = {
+  status: number;
+  data?: Array<{ guid?: string }> | { guid?: string };
+};
+
+type BBChatNewResponse = {
+  status: number;
+  data?: { guid?: string };
+};
+
+const CHAT_GUID_DM_RE = /^iMessage;-;.+$/;
+const CHAT_GUID_GROUP_RE = /^iMessage;\+;.+$/;
+const PHONE_RE = /^\+\d{8,15}$/;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export class BluebubblesPlugin extends BasePlugin {
   readonly type: PluginType = 'bluebubbles';
 
@@ -73,6 +90,7 @@ export class BluebubblesPlugin extends BasePlugin {
   private reconnectFailureCount = 0;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private stopped = false;
+  private readonly chatGuidCache = new Map<string, string>();
 
   // ── Lifecycle ────────────────────────────────────────────────────────────────
 
@@ -130,11 +148,17 @@ export class BluebubblesPlugin extends BasePlugin {
     const text = message.text ?? '';
     if (!text.trim()) return '';
 
+    const resolvedChatGuid = await this.resolveChatGuid(chatId, text);
+
     const url = `${this.creds.serverUrl}/api/v1/message/text?password=${encodeURIComponent(this.creds.password)}`;
     const resp = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chatGuid: chatId, message: text }),
+      body: JSON.stringify({
+        chatGuid: resolvedChatGuid,
+        message: text,
+        tempGuid: randomUUID(),
+      }),
     });
 
     if (!resp.ok) {
@@ -144,6 +168,97 @@ export class BluebubblesPlugin extends BasePlugin {
 
     const body = (await resp.json()) as BBTextResponse;
     return body.data?.guid ?? '';
+  }
+
+  /**
+   * Resolve a caller-supplied target to a BlueBubbles chatGuid.
+   *
+   * Accepts:
+   * - An iMessage DM chat GUID (`iMessage;-;...`) — returned as-is.
+   * - An iMessage group chat GUID (`iMessage;+;...`) — returned as-is.
+   * - A phone number (`+15551234567`) or email — queries `/api/v1/chat/query`,
+   *   falling back to `/api/v1/chat/new` to create a 1:1 chat. The first
+   *   outgoing `message` is sent as the seed body when creating.
+   *
+   * Resolved guids are cached per-target to avoid re-querying on every send.
+   */
+  private async resolveChatGuid(target: string, seedMessage: string): Promise<string> {
+    if (!this.creds) throw new Error('BlueBubbles client not initialized');
+
+    if (CHAT_GUID_DM_RE.test(target) || CHAT_GUID_GROUP_RE.test(target)) {
+      return target;
+    }
+
+    const cached = this.chatGuidCache.get(target);
+    if (cached) return cached;
+
+    const isHandle = PHONE_RE.test(target) || EMAIL_RE.test(target);
+    if (!isHandle) {
+      throw new Error(
+        `BlueBubbles: cannot resolve chatGuid for target "${target}". ` +
+          `Expected an iMessage chat GUID (iMessage;-;... or iMessage;+;...), ` +
+          `a phone number (+15551234567), or an email address.`,
+      );
+    }
+
+    const queriedGuid = await this.queryChatGuidByAddress(target);
+    if (queriedGuid) {
+      this.chatGuidCache.set(target, queriedGuid);
+      return queriedGuid;
+    }
+
+    const newGuid = await this.createChatForAddress(target, seedMessage);
+    if (!newGuid) {
+      throw new Error(
+        `BlueBubbles: failed to create new chat for address "${target}" (no guid returned)`,
+      );
+    }
+    this.chatGuidCache.set(target, newGuid);
+    return newGuid;
+  }
+
+  private async queryChatGuidByAddress(address: string): Promise<string | null> {
+    if (!this.creds) return null;
+    const url = `${this.creds.serverUrl}/api/v1/chat/query?password=${encodeURIComponent(this.creds.password)}`;
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ address, limit: 1, offset: 0 }),
+    });
+    if (!resp.ok) return null;
+    const body = (await resp.json()) as BBChatQueryResponse;
+    const data = body.data;
+    if (Array.isArray(data)) {
+      const first = data[0];
+      const guid = first?.guid;
+      return typeof guid === 'string' && guid ? guid : null;
+    }
+    const guid = data?.guid;
+    return typeof guid === 'string' && guid ? guid : null;
+  }
+
+  private async createChatForAddress(
+    address: string,
+    seedMessage: string,
+  ): Promise<string | null> {
+    if (!this.creds) return null;
+    const url = `${this.creds.serverUrl}/api/v1/chat/new?password=${encodeURIComponent(this.creds.password)}`;
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        addresses: [address],
+        message: seedMessage,
+        tempGuid: randomUUID(),
+      }),
+    });
+    if (!resp.ok) {
+      const errText = await resp.text().catch(() => '');
+      throw new Error(`BlueBubbles chat/new failed ${resp.status}: ${errText}`);
+    }
+    const body = (await resp.json()) as BBChatNewResponse;
+    const guid = body.data?.guid;
+    return typeof guid === 'string' && guid ? guid : null;
   }
 
   /**

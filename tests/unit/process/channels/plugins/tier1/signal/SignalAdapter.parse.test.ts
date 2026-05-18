@@ -13,8 +13,8 @@ import {
   signalInboundToUnified,
   looksLikeUuid,
   normalizeSignalRecipient,
-} from '@process/channels/plugins/tier2/signal/SignalAdapter';
-import type { SignalInboundMessage } from '@process/channels/plugins/tier2/signal/SignalDaemon';
+} from '@process/channels/plugins/tier1/signal/SignalAdapter';
+import type { SignalInboundMessage } from '@process/channels/plugins/tier1/signal/SignalDaemon';
 
 const SELF = '+14155551234';
 

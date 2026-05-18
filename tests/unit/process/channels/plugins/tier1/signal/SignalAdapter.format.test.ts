@@ -13,7 +13,7 @@ import {
   chunkSignalText,
   unifiedToSignalSend,
   SIGNAL_TEXT_CHUNK_LIMIT,
-} from '@process/channels/plugins/tier2/signal/SignalAdapter';
+} from '@process/channels/plugins/tier1/signal/SignalAdapter';
 import type { IUnifiedOutgoingMessage } from '@process/channels/types';
 
 const ACCOUNT = '+14155551234';

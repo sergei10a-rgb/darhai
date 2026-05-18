@@ -142,6 +142,13 @@ const SignalConfigForm: React.FC<SignalConfigFormProps> = ({ pluginStatus, onSta
         />
       </PreferenceRow>
 
+      <div className='text-12px text-t-tertiary'>
+        {t(
+          'settings.channels.signal.captchaHint',
+          'If registration fails with "CaptchaRequired", visit https://signalcaptchas.org/registration/generate.html and pass --captcha <token> to signal-cli register.',
+        )}
+      </div>
+
       <PreferenceRow
         label={t('settings.channels.signal.credentials.cliPath.label', 'signal-cli path (optional)')}
         description={t(

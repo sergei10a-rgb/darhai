@@ -18,6 +18,7 @@
  * Capabilities: text + reactions (kind:7). No edits — Nostr is append-only.
  */
 
+import { verifyEvent } from 'nostr-tools';
 import WebSocket from 'ws';
 
 import type {
@@ -34,6 +35,7 @@ import {
   hexToNpub,
   nip04Decrypt,
   nip04Encrypt,
+  normalizePubkey,
   toUnifiedIncomingFromNostr,
   validatePrivateKey,
   type NostrEventLike,
@@ -49,6 +51,28 @@ const RECONNECT_BACKOFF_MAX_ATTEMPTS = 5;
 const TEST_CONNECT_TIMEOUT_MS = 5_000;
 
 const DEFAULT_RELAYS = ['wss://relay.damus.io', 'wss://nos.lol'];
+
+/**
+ * Hard caps on inbound NIP-04 payloads to prevent DoS from a malicious or
+ * misbehaving relay. Values mirror OpenClaw's `guardPolicy.maxCiphertextBytes`
+ * and `maxPlaintextBytes` defaults (nostr-bus.ts:586-592, :635-638).
+ */
+const MAX_CIPHERTEXT_BYTES = 64_000;
+const MAX_PLAINTEXT_BYTES = 32_000;
+
+// ── Guard policy constants (audit MED-1/2/3 2026-05-18) ──────────────────────
+/** Bounded LRU+TTL for inbound event dedupe (MED-1). Mirrors OpenClaw
+ *  `maxSeenEntries = 100_000`, `seenTtlMs = 60 * 60 * 1000` (nostr-bus.ts:421-424). */
+const MAX_SEEN = 100_000;
+const SEEN_TTL_MS = 60 * 60 * 1000;
+/** Clock-skew guard for inbound events (MED-2). Mirrors OpenClaw
+ *  `guardPolicy.maxFutureSkewSec` (nostr-bus.ts:520-523). */
+const MAX_FUTURE_SKEW_SEC = 60 * 5;
+/** Per-sender + global fixed-window rate-limiting (MED-3). Mirrors OpenClaw
+ *  `createFixedWindowRateLimiter` defaults (nostr-bus.ts:478-487). */
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX_PER_SENDER = 30;
+const RATE_LIMIT_MAX_GLOBAL = 200;
 
 // ── Nostr wire types ──────────────────────────────────────────────────────────
 
@@ -113,9 +137,39 @@ export class NostrPlugin extends BasePlugin {
   private pk: string = '';
   private relayStates: RelayState[] = [];
   private stopped = false;
-  /** Unix seconds: start time - small overlap so we don't miss recent events. */
+  /**
+   * Unix seconds: start time - small overlap so we don't miss recent events.
+   * NOTE (LOW-1 documented limitation): `since` is NOT persisted across restarts.
+   * After a restart, events older than 120s before the bot came back up are lost,
+   * and events inside the 120s window may be replayed (since `seenEvents` below
+   * is also in-memory and empty on cold start). OpenClaw persists both
+   * `lastProcessedAt` and `recentEventIds` to disk via `nostr-state-store`
+   * (nostr-bus.ts:434-450); porting that requires Electron `app.getPath('userData')`
+   * wiring that lives outside this class. Deferred — see review LOW-1.
+   */
   private since = 0;
-  private readonly seenEventIds = new Set<string>();
+  /**
+   * Bounded LRU+TTL dedupe map: event id → expires-at (ms). Replaces the
+   * previously-unbounded `Set<string>` (audit MED-1). Capped at MAX_SEEN
+   * entries; entries expire after SEEN_TTL_MS. Cleanup runs lazily on insert
+   * via `cleanSeen()`.
+   */
+  private seenEvents: Map<string, number> = new Map();
+  /**
+   * Hex pubkeys allowed to message the bot. Empty Set = open mode (every
+   * authenticated sender is accepted). Populated from `credentials.allowedSenders`
+   * (comma-separated npub or hex) in `onInitialize`. Mirrors OpenClaw's
+   * `dmPolicy: allowlist` + `allowFrom: string[]` (nostr-bus.ts:609-618).
+   */
+  private readonly allowedSenders = new Set<string>();
+
+  /**
+   * Per-sender fixed-window rate-limit state (audit MED-3). Resets every
+   * RATE_LIMIT_WINDOW_MS. Mirrors OpenClaw `perSenderRateLimiter`.
+   */
+  private senderWindowCounts = new Map<string, { count: number; resetAt: number }>();
+  /** Global fixed-window rate-limit state (audit MED-3). */
+  private globalWindow = { count: 0, resetAt: 0 };
 
   // ── Lifecycle ────────────────────────────────────────────────────────────────
 
@@ -134,6 +188,29 @@ export class NostrPlugin extends BasePlugin {
         : DEFAULT_RELAYS;
 
     if (relays.length === 0) throw new Error('At least one wss:// relay URL is required');
+
+    // Parse optional sender allowlist. Accepts comma-separated string or string[].
+    // Each entry is normalized (npub → hex, hex → lowercase) via normalizePubkey.
+    // Invalid entries are dropped with a warning; empty result = open mode.
+    this.allowedSenders.clear();
+    const rawAllowed = creds['allowedSenders'];
+    const allowedRaw: string[] = Array.isArray(rawAllowed)
+      ? (rawAllowed as unknown[]).filter((v): v is string => typeof v === 'string')
+      : typeof rawAllowed === 'string'
+        ? rawAllowed.split(',')
+        : [];
+    for (const entry of allowedRaw) {
+      const trimmed = entry.trim();
+      if (!trimmed) continue;
+      try {
+        this.allowedSenders.add(normalizePubkey(trimmed));
+      } catch (err) {
+        console.warn(
+          `[NostrPlugin] Skipping invalid allowedSenders entry "${trimmed}":`,
+          err instanceof Error ? err.message : String(err),
+        );
+      }
+    }
 
     this.relayStates = relays.map((url): RelayState => ({
       url,
@@ -174,7 +251,60 @@ export class NostrPlugin extends BasePlugin {
     this.relayStates = [];
     this.sk = null;
     this.pk = '';
-    this.seenEventIds.clear();
+    this.seenEvents.clear();
+    this.senderWindowCounts.clear();
+    this.globalWindow = { count: 0, resetAt: 0 };
+  }
+
+  // ── Guards: dedupe LRU + rate-limit (audit MED-1 / MED-3) ────────────────────
+
+  /** Evict expired entries, then trim to MAX_SEEN by oldest-insertion order. */
+  private cleanSeen(): void {
+    const now = Date.now();
+    for (const [id, exp] of this.seenEvents) {
+      if (exp < now) this.seenEvents.delete(id);
+    }
+    while (this.seenEvents.size > MAX_SEEN) {
+      const oldest = this.seenEvents.keys().next().value;
+      if (!oldest) break;
+      this.seenEvents.delete(oldest);
+    }
+  }
+
+  private markSeen(id: string): void {
+    this.cleanSeen();
+    this.seenEvents.set(id, Date.now() + SEEN_TTL_MS);
+  }
+
+  private isSeen(id: string): boolean {
+    const exp = this.seenEvents.get(id);
+    if (exp === undefined) return false;
+    if (exp < Date.now()) {
+      this.seenEvents.delete(id);
+      return false;
+    }
+    return true;
+  }
+
+  /** Returns true if the inbound event is within both the per-sender and global windows. */
+  private withinRateLimit(sender: string): boolean {
+    const now = Date.now();
+    // Global window
+    if (this.globalWindow.resetAt < now) {
+      this.globalWindow = { count: 0, resetAt: now + RATE_LIMIT_WINDOW_MS };
+    }
+    if (this.globalWindow.count >= RATE_LIMIT_MAX_GLOBAL) return false;
+    // Per-sender window
+    const slot = this.senderWindowCounts.get(sender);
+    if (!slot || slot.resetAt < now) {
+      this.senderWindowCounts.set(sender, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+      this.globalWindow.count += 1;
+      return true;
+    }
+    if (slot.count >= RATE_LIMIT_MAX_PER_SENDER) return false;
+    slot.count += 1;
+    this.globalWindow.count += 1;
+    return true;
   }
 
   // ── Send / React ─────────────────────────────────────────────────────────────
@@ -368,9 +498,9 @@ export class NostrPlugin extends BasePlugin {
   private handleInboundEvent(event: NostrEventLike): void {
     if (!this.sk || !this.pk) return;
 
-    // Deduplicate across relay fanout.
-    if (this.seenEventIds.has(event.id)) return;
-    this.seenEventIds.add(event.id);
+    // Deduplicate across relay fanout (MED-1 — bounded LRU+TTL).
+    if (this.isSeen(event.id)) return;
+    this.markSeen(event.id);
 
     // Only kind:4 NIP-04 DMs.
     if (event.kind !== 4) return;
@@ -385,11 +515,69 @@ export class NostrPlugin extends BasePlugin {
     // Stale-event filter.
     if (event.created_at < this.since) return;
 
+    // Future-timestamp guard (MED-2). Reject events more than
+    // MAX_FUTURE_SKEW_SEC ahead of our clock to prevent clock-skew attacks.
+    if (event.created_at > Math.floor(Date.now() / 1000) + MAX_FUTURE_SKEW_SEC) {
+      console.warn(
+        `[NostrPlugin] Dropping future-dated event: ${event.id} from ${event.pubkey}`,
+      );
+      return;
+    }
+
+    // [HIGH-1] Verify Schnorr signature. NIP-04 provides confidentiality but
+    // NOT authenticity — without verifyEvent a malicious relay can forge a
+    // kind:4 event bearing any pubkey and have it routed to emitMessage.
+    // Mirrors OpenClaw nostr-bus.ts:599-603.
+    if (!verifyEvent(event as unknown as Parameters<typeof verifyEvent>[0])) {
+      console.warn(`[NostrPlugin] Dropping event with invalid signature: id=${event.id}`);
+      return;
+    }
+
+    // [HIGH-2] Sender authorization. When `allowedSenders` is non-empty, only
+    // listed pubkeys may message the bot. Empty = open mode (matches OpenClaw
+    // `dmPolicy: open`); production deployments should set an allowlist.
+    // Mirrors OpenClaw nostr-bus.ts:609-618.
+    if (this.allowedSenders.size > 0 && !this.allowedSenders.has(event.pubkey)) {
+      console.warn(`[NostrPlugin] Dropping event from unauthorized sender: ${event.pubkey}`);
+      return;
+    }
+
+    // Per-sender + global rate-limit (MED-3). Applied AFTER the cheap-to-check
+    // filters so we don't burn rate-limit budget on self-echo or wrong-target
+    // events.
+    if (!this.withinRateLimit(event.pubkey)) {
+      console.debug(
+        `[NostrPlugin] Rate-limit drop: event ${event.id} from ${event.pubkey}`,
+      );
+      return;
+    }
+
+    // [HIGH-3] Cap ciphertext size BEFORE decrypt to prevent DoS via giant
+    // payloads streamed through nip04Decrypt's AES path. Mirrors OpenClaw
+    // nostr-bus.ts:586-592.
+    const ciphertextBytes = Buffer.byteLength(event.content, 'utf8');
+    if (ciphertextBytes > MAX_CIPHERTEXT_BYTES) {
+      console.warn(
+        `[NostrPlugin] Dropping oversized ciphertext: ${ciphertextBytes} bytes from ${event.pubkey}`,
+      );
+      return;
+    }
+
     let plaintext: string;
     try {
       plaintext = nip04Decrypt(this.sk, event.pubkey, event.content);
     } catch (err) {
       console.warn(`[NostrPlugin] NIP-04 decrypt failed for event ${event.id}:`, err);
+      return;
+    }
+
+    // [HIGH-3] Cap plaintext size AFTER decrypt to prevent downstream DoS
+    // (decryption can expand the payload). Mirrors OpenClaw nostr-bus.ts:635-638.
+    const plaintextBytes = Buffer.byteLength(plaintext, 'utf8');
+    if (plaintextBytes > MAX_PLAINTEXT_BYTES) {
+      console.warn(
+        `[NostrPlugin] Dropping oversized plaintext: ${plaintextBytes} bytes from ${event.pubkey}`,
+      );
       return;
     }
 

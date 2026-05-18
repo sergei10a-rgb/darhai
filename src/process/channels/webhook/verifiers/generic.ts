@@ -7,12 +7,17 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import type { WebhookVerifier } from '../types';
 
+/** Replay-protection window: reject timestamps more than 5 minutes from now. */
+const REPLAY_WINDOW_MS = 5 * 60 * 1000;
+
 /**
  * Generic webhook verifier for user-configured "generic webhook" channels.
  *
- * Scheme: HMAC-SHA256 over the raw request body, keyed by the user's webhook
- * secret. Signature is delivered as `X-Webhook-Signature: sha256=<hex>` to
- * mirror GitHub / Meta conventions. Timing-safe compare.
+ * Scheme: HMAC-SHA256 over `<timestamp>.<rawBody>`, keyed by the user's webhook
+ * secret. Signature is delivered as `X-Webhook-Signature: sha256=<hex>` and the
+ * sender-supplied unix-millisecond timestamp as `X-Webhook-Timestamp`. The
+ * timestamp is rejected when it falls outside ±5min of server time, mirroring
+ * the Slack/Stripe replay-protection convention. Timing-safe compare.
  */
 export const genericVerifier: WebhookVerifier = (input, secret) => {
   const headerSig = pickHeader(input.headers['x-webhook-signature']);
@@ -20,7 +25,23 @@ export const genericVerifier: WebhookVerifier = (input, secret) => {
     return { ok: false, reason: 'missing-signature', status: 401 };
   }
 
-  const expected = 'sha256=' + createHmac('sha256', secret).update(input.rawBody).digest('hex');
+  const headerTs = pickHeader(input.headers['x-webhook-timestamp']);
+  if (!headerTs) {
+    return { ok: false, reason: 'missing-timestamp', status: 401 };
+  }
+  const ts = Number.parseInt(headerTs, 10);
+  if (!Number.isFinite(ts)) {
+    return { ok: false, reason: 'invalid-timestamp', status: 401 };
+  }
+  if (Math.abs(Date.now() - ts) > REPLAY_WINDOW_MS) {
+    return { ok: false, reason: 'stale-timestamp', status: 401 };
+  }
+
+  const signedPayload = Buffer.concat([
+    Buffer.from(`${headerTs}.`, 'utf8'),
+    input.rawBody,
+  ]);
+  const expected = 'sha256=' + createHmac('sha256', secret).update(signedPayload).digest('hex');
   if (!safeEqual(expected, headerSig)) {
     return { ok: false, reason: 'invalid-signature', status: 401 };
   }

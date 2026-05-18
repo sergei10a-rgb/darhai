@@ -528,7 +528,7 @@
       "pluginEnabled": "MS Teams plugin enabled",
       "enableFailed": "Failed to enable plugin",
       "testAndEnable": "Test & Enable",
-      "setupHint": "Register a bot at https://dev.botframework.com, set the messaging endpoint to your Wayland webhook URL, then paste the App ID and secret above.",
+      "setupHint": "Register your bot in the Azure Portal: Azure Bot Service → Create resource → configure Microsoft Teams channel → set messaging endpoint to your Wayland webhook URL → copy App ID and client secret here.",
       "credentials": {
         "appId": {
           "label": "App ID (MicrosoftAppId)",
@@ -541,11 +541,6 @@
           "help": "Azure AD client secret — App Registrations → Certificates & secrets → New client secret.",
           "placeholder": "Paste your client secret value",
           "required": "Please enter an App Password"
-        },
-        "tenantId": {
-          "label": "Tenant ID (optional)",
-          "help": "Leave blank for multi-tenant bots. Set to your Azure AD tenant ID to restrict to a single tenant.",
-          "placeholder": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx (optional)"
         }
       },
       "webhookUrl": {

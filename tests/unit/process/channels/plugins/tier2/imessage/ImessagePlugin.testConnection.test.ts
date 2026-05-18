@@ -7,7 +7,14 @@
  * Covers: platform check, chat.db existence, permission denied, osascript probe.
  */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+
+// Force process.platform=darwin so the iMessage plugin's macOS-only guards
+// don't short-circuit on Linux CI runners. Tests that need to assert non-darwin
+// behavior re-stub locally.
+const ORIGINAL_PLATFORM = process.platform;
+beforeAll(() => Object.defineProperty(process, 'platform', { value: 'darwin', configurable: true }));
+afterAll(() => Object.defineProperty(process, 'platform', { value: ORIGINAL_PLATFORM, configurable: true }));
 
 // ---------------------------------------------------------------------------
 // Hoist mocks — all vi.mock + vi.hoisted at module top level
@@ -54,7 +61,6 @@ beforeEach(() => {
 
 describe('ImessagePlugin.testConnection', () => {
   it('returns success with botUsername=imessage-bot on darwin with all checks passing', async () => {
-    if (process.platform !== 'darwin') return;
     const result = await ImessagePlugin.testConnection(JSON.stringify({}));
     expect(result).toEqual({ success: true, botUsername: 'imessage-bot' });
   });
@@ -72,7 +78,6 @@ describe('ImessagePlugin.testConnection', () => {
   });
 
   it('fails with clear error when chat.db does not exist', async () => {
-    if (process.platform !== 'darwin') return;
     mockFsExistsSync.mockReturnValue(false);
     const result = await ImessagePlugin.testConnection('{}');
     expect(result.success).toBe(false);
@@ -80,7 +85,6 @@ describe('ImessagePlugin.testConnection', () => {
   });
 
   it('fails with Full Disk Access message when chat.db is not readable', async () => {
-    if (process.platform !== 'darwin') return;
     mockFsExistsSync.mockReturnValue(true);
     mockFsAccessSync.mockImplementation(() => { throw new Error('EACCES: permission denied'); });
     const result = await ImessagePlugin.testConnection('{}');
@@ -89,7 +93,6 @@ describe('ImessagePlugin.testConnection', () => {
   });
 
   it('fails when osascript is not in PATH', async () => {
-    if (process.platform !== 'darwin') return;
     // mockReset clears queued Once values; clearAllMocks does not
     mockExecFileNoThrow.mockReset();
     mockFsExistsSync.mockReset();
@@ -103,7 +106,6 @@ describe('ImessagePlugin.testConnection', () => {
   });
 
   it('fails when the osascript smoke-test itself fails', async () => {
-    if (process.platform !== 'darwin') return;
     // mockReset clears queued Once values; clearAllMocks does not
     mockExecFileNoThrow.mockReset();
     mockFsExistsSync.mockReset();
@@ -119,7 +121,6 @@ describe('ImessagePlugin.testConnection', () => {
   });
 
   it('handles invalid JSON credentials gracefully', async () => {
-    if (process.platform !== 'darwin') return;
     const result = await ImessagePlugin.testConnection('not-json');
     expect(result.success).toBe(false);
     expect(result.error).toMatch(/invalid json/i);

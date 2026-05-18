@@ -91,9 +91,12 @@ describe('MsTeamsPlugin.testConnection', () => {
     expect(result.error).toMatch(/ECONNREFUSED/);
   });
 
-  it('passes tenantId when provided', async () => {
+  it('ignores extra tenantId field for back-compat (multi-tenant common endpoint is used)', async () => {
     mockTokenOk();
 
+    // tenantId was dropped from the form in v0.4.1, but the testConnection
+    // contract is forgiving: extra fields don't break the mint. This pins
+    // the back-compat behavior so old persisted creds keep working.
     const result = await MsTeamsPlugin.testConnection(
       JSON.stringify({
         appId: 'my-app-id',
@@ -103,7 +106,6 @@ describe('MsTeamsPlugin.testConnection', () => {
     );
 
     expect(result.success).toBe(true);
-    // Verify fetch was called with the standard token URL (tenantId flows through creds)
     expect(mockFetch).toHaveBeenCalledOnce();
     const [, init] = mockFetch.mock.calls[0]!;
     const body = (init as RequestInit).body as string;

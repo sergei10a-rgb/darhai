@@ -152,7 +152,7 @@ export async function createBackend({ emit, sessionDir: _sessionDir }) {
       } catch (err) {
         config = null;
         const detail = err?.response?.data?.error?.message || err?.message || String(err);
-        throw new Error(`meta_auth_failed: ${detail}`);
+        throw new Error(`meta_auth_failed: ${detail}`, { cause: err });
       }
       setStatus('connected', { phoneNumberId: config.phoneNumberId });
       return { state: 'connected', phoneNumberId: config.phoneNumberId };

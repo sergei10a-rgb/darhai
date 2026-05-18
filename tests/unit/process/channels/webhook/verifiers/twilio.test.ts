@@ -11,7 +11,7 @@ import { twilioVerifier } from '@process/channels/webhook/verifiers/twilio';
 const AUTH_TOKEN = 'twilio-auth-token-for-testing';
 
 function signTwilio(url: string, params: Record<string, string>): string {
-  const sorted = Object.keys(params).sort();
+  const sorted = Object.keys(params).toSorted();
   let data = url;
   for (const key of sorted) data += key + params[key];
   return createHmac('sha1', AUTH_TOKEN).update(data).digest('base64');

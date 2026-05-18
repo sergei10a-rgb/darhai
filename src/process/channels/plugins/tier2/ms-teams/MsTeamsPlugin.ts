@@ -43,8 +43,9 @@ import {
 } from './MsTeamsAdapter';
 
 // Bot Framework token endpoint — client-credentials grant against the
-// multi-tenant common endpoint. A single-tenant bot should pass its tenantId
-// instead of 'botframework.com', but the common endpoint works for both.
+// multi-tenant common endpoint. Bot Framework Connector accepts tokens minted
+// against 'botframework.com' for both single-tenant and multi-tenant bots,
+// so we do not collect tenantId from users.
 const BF_TOKEN_URL = 'https://login.microsoftonline.com/botframework.com/oauth2/v2.0/token';
 const BF_TOKEN_SCOPE = 'https://api.botframework.com/.default';
 
@@ -57,7 +58,6 @@ const TYPING_INTERVAL_MS = 5_000;
 type MsTeamsCreds = {
   appId: string;
   appPassword: string;
-  tenantId?: string;
 };
 
 type TokenCache = {
@@ -112,12 +112,11 @@ export class MsTeamsPlugin extends BasePlugin {
     const c = config.credentials ?? {};
     const appId = typeof c.appId === 'string' ? c.appId.trim() : '';
     const appPassword = typeof c.appPassword === 'string' ? c.appPassword.trim() : '';
-    const tenantId = typeof c.tenantId === 'string' ? c.tenantId.trim() : undefined;
 
     if (!appId) throw new Error('MS Teams: appId (Azure AD app registration ID) is required');
     if (!appPassword) throw new Error('MS Teams: appPassword (Azure AD client secret) is required');
 
-    this.creds = { appId, appPassword, tenantId: tenantId || undefined };
+    this.creds = { appId, appPassword };
     this.botId = appId; // Bot Framework uses appId as the recipient ID in activities
   }
 
@@ -135,7 +134,7 @@ export class MsTeamsPlugin extends BasePlugin {
       await this.getToken();
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
-      throw new Error(`MS Teams credential check failed (cannot mint Bot Framework token): ${msg}`);
+      throw new Error(`MS Teams credential check failed (cannot mint Bot Framework token): ${msg}`, { cause: error });
     }
   }
 
@@ -179,30 +178,38 @@ export class MsTeamsPlugin extends BasePlugin {
     const text = message.text ?? '';
     const chunks = splitMsTeamsMessage(text);
 
-    let lastActivityId = '';
-    for (const chunk of chunks) {
-      const activity = toOutboundActivity({ ...message, text: chunk });
-      const url = `${serviceUrl}/v3/conversations/${encodeURIComponent(conversationId)}/activities`;
+    // Keep the Teams typing indicator alive across multi-chunk sends. Teams
+    // auto-expires typing after ~8s, so we re-POST every 5s until done.
+    const stopTyping = this.startTypingLoop(chatId);
 
-      const resp = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(activity),
-      });
+    try {
+      let lastActivityId = '';
+      for (const chunk of chunks) {
+        const activity = toOutboundActivity({ ...message, text: chunk });
+        const url = `${serviceUrl}/v3/conversations/${encodeURIComponent(conversationId)}/activities`;
 
-      if (!resp.ok) {
-        const errText = await safeText(resp);
-        throw new Error(`MS Teams send failed (${resp.status}): ${errText}`);
+        const resp = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(activity),
+        });
+
+        if (!resp.ok) {
+          const errText = await safeText(resp);
+          throw new Error(`MS Teams send failed (${resp.status}): ${errText}`);
+        }
+
+        const json = (await resp.json().catch(() => ({}))) as { id?: string };
+        lastActivityId = json.id ?? lastActivityId;
       }
 
-      const json = (await resp.json().catch(() => ({}))) as { id?: string };
-      lastActivityId = json.id ?? lastActivityId;
+      return lastActivityId;
+    } finally {
+      stopTyping();
     }
-
-    return lastActivityId;
   }
 
   /**
@@ -238,26 +245,59 @@ export class MsTeamsPlugin extends BasePlugin {
   }
 
   /**
-   * Send a typing indicator activity.
+   * Send a single typing indicator activity.
    * The typing activity has no response body worth reading.
    */
   async sendTypingIndicator(chatId: string): Promise<void> {
     if (!this.creds) return;
+    await this.postTypingOnce(chatId);
+  }
+
+  /**
+   * Start a typing keep-alive loop. Teams auto-expires typing after ~8s,
+   * so we re-POST every 5s until the returned stop function is called.
+   * The first typing activity fires immediately; subsequent ones every 5s.
+   * Returns a stop function that clears the interval. Safe to call before
+   * the first send completes; safe to call the stop function multiple times.
+   */
+  startTypingLoop(chatId: string): () => void {
+    if (!this.creds) return () => {};
+
+    // Fire-and-forget the first activity immediately
+    void this.postTypingOnce(chatId);
+
+    const handle = setInterval(() => {
+      void this.postTypingOnce(chatId);
+    }, TYPING_INTERVAL_MS);
+
+    let stopped = false;
+    return () => {
+      if (stopped) return;
+      stopped = true;
+      clearInterval(handle);
+    };
+  }
+
+  private async postTypingOnce(chatId: string): Promise<void> {
+    if (!this.creds) return;
 
     const { serviceUrl, conversationId } = parseChatId(chatId);
-    const token = await this.getToken();
+    const token = await this.getToken().catch((): string | null => null);
+    if (!token) return;
 
     const url = `${serviceUrl}/v3/conversations/${encodeURIComponent(conversationId)}/activities`;
-    await fetch(url, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ type: 'typing' }),
-    }).catch((err: unknown) => {
+    try {
+      await fetch(url, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ type: 'typing' }),
+      });
+    } catch (err: unknown) {
       console.warn('[MsTeamsPlugin] typing indicator failed (non-fatal):', err);
-    });
+    }
   }
 
   /**
@@ -339,7 +379,9 @@ export class MsTeamsPlugin extends BasePlugin {
    * Test connection by minting a Bot Framework token. A successful token mint
    * proves the appId + appPassword are valid Azure AD credentials.
    *
-   * Expects JSON-encoded `{ appId, appPassword, tenantId? }`.
+   * Expects JSON-encoded `{ appId, appPassword }`. The multi-tenant common
+   * endpoint handles single-tenant bots correctly; tenantId is intentionally
+   * not collected (dropped in v0.4.1 as part of the channel cleanup wave).
    */
   static override async testConnection(
     tokenJson: string,

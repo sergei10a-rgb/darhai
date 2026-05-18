@@ -17,9 +17,10 @@ import type { IUnifiedIncomingMessage, IUnifiedOutgoingMessage } from '../../../
 
 // IRC PRIVMSG lines: ":prefix PRIVMSG target :text\r\n"
 // The raw line overhead (prefix + PRIVMSG + target + colons + spaces + CRLF)
-// typically consumes ~60-100 bytes of the 512-byte limit. 400 chars leaves
-// comfortable headroom for all common nick/host lengths.
-export const IRC_MESSAGE_CHUNK_CHARS = 400;
+// typically consumes ~60-100 bytes of the 512-byte limit. 350 chars matches
+// OpenClaw's default and leaves ~162 bytes of headroom — enough for long nicks
+// (32+ chars) plus long channel names plus user@host on extended networks.
+export const IRC_MESSAGE_CHUNK_CHARS = 350;
 
 // ── mIRC / IRC control-char stripping ────────────────────────────────────────
 // Adapted from openclaw/extensions/irc/src/control-chars.ts (MIT).
@@ -61,6 +62,32 @@ export function stripIrcControlChars(value: string): string {
  */
 export function sanitizeIrcOutboundText(text: string): string {
   return stripIrcControlChars(text.replace(/\r?\n/g, ' ')).trim();
+}
+
+// IRC target = channel name or nick — must contain no whitespace, no colon,
+// and no control characters. Anything else can smuggle protocol bytes through
+// `client.say(target, line)` and forge arbitrary IRC commands.
+const IRC_TARGET_PATTERN = /^[^\s:]+$/u;
+
+/**
+ * Validate an IRC target (channel or nick) before passing to client.say.
+ * Throws if the input is empty, contains CR/LF/NUL/other control characters,
+ * or fails the [^\s:]+ pattern. Adapted from
+ * openclaw/extensions/irc/src/protocol.ts (MIT).
+ */
+export function sanitizeIrcTarget(raw: string): string {
+  const decoded = typeof raw === 'string' ? raw.trim() : '';
+  if (!decoded) {
+    throw new Error('IRC target is required');
+  }
+  // eslint-disable-next-line no-control-regex
+  if (/[\x00-\x1F\r\n]/.test(decoded)) {
+    throw new Error(`Invalid IRC target (control chars): ${raw}`);
+  }
+  if (!IRC_TARGET_PATTERN.test(decoded)) {
+    throw new Error(`Invalid IRC target (pattern): ${raw}`);
+  }
+  return decoded;
 }
 
 /**

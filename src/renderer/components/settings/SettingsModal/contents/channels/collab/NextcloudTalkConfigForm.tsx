@@ -198,7 +198,7 @@ const NextcloudTalkConfigForm: React.FC<NextcloudTalkConfigFormProps> = ({
         )}
         description={t(
           'settings.channels.nextcloudTalk.credentials.appPassword.help',
-          'Generate under Personal → Security → App passwords in your Nextcloud settings.',
+          'Generate under Personal → Security → Devices & sessions in your Nextcloud settings.',
         )}
       >
         <Input.Password
@@ -220,7 +220,7 @@ const NextcloudTalkConfigForm: React.FC<NextcloudTalkConfigFormProps> = ({
       <div className='text-12px text-t-tertiary'>
         {t(
           'settings.channels.nextcloudTalk.appPasswordHowTo',
-          'How to create an app password: open Nextcloud → top-right avatar → Personal settings → Security → App passwords.',
+          'How to create an app password: open Nextcloud → top-right avatar → Personal settings → Security → Devices & sessions → Create new app password.',
         )}
       </div>
 

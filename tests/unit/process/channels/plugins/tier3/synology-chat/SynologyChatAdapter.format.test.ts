@@ -31,16 +31,52 @@ describe('toSynologyChatSendBody — text messages', () => {
     expect(parsed.text).toBe('hi');
   });
 
-  it('handles empty text without throwing', () => {
-    const body = toSynologyChatSendBody({ type: 'text', text: '' });
-    const parsed = decodeBody(body);
-    expect(parsed.text).toBe('');
+  it('throws when text is empty and no fileUrl is provided', () => {
+    expect(() => toSynologyChatSendBody({ type: 'text', text: '' })).toThrow(
+      /requires text or fileUrl/i,
+    );
   });
 
-  it('handles absent text field', () => {
-    const body = toSynologyChatSendBody({ type: 'text' });
+  it('throws when text is absent and no fileUrl is provided', () => {
+    expect(() => toSynologyChatSendBody({ type: 'text' })).toThrow(
+      /requires text or fileUrl/i,
+    );
+  });
+});
+
+describe('toSynologyChatSendBody — text + fileUrl edge cases (LOW)', () => {
+  it('omits the text field entirely when text is blank and fileUrl is present', () => {
+    const body = toSynologyChatSendBody({
+      type: 'file',
+      text: '',
+      fileUrl: 'https://example.com/x.pdf',
+    });
     const parsed = decodeBody(body);
-    expect(parsed.text).toBe('');
+    expect(parsed.file_url).toBe('https://example.com/x.pdf');
+    // Critical: blank text is omitted, not emitted as `text:""`. Synology's
+    // incoming webhook rejects empty `text` even when `file_url` is set.
+    expect('text' in parsed).toBe(false);
+  });
+
+  it('omits the text field when text is only whitespace + fileUrl is present', () => {
+    const body = toSynologyChatSendBody({
+      type: 'file',
+      text: '   ',
+      fileUrl: 'https://example.com/x.pdf',
+    });
+    const parsed = decodeBody(body);
+    expect('text' in parsed).toBe(false);
+  });
+
+  it('keeps text when both text and fileUrl are present', () => {
+    const body = toSynologyChatSendBody({
+      type: 'file',
+      text: 'caption',
+      fileUrl: 'https://example.com/x.pdf',
+    });
+    const parsed = decodeBody(body);
+    expect(parsed.text).toBe('caption');
+    expect(parsed.file_url).toBe('https://example.com/x.pdf');
   });
 });
 

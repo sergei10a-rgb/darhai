@@ -124,6 +124,20 @@ const IMessageConfigForm: React.FC<IMessageConfigFormProps> = ({ pluginStatus, o
         )}
       </div>
 
+      <div className='text-12px text-t-tertiary p-12px rd-8px bg-fill-2'>
+        {t(
+          'settings.channels.imessage.automationNote',
+          'iMessage also requires macOS Automation consent for Messages.app. Accept the OS prompt the first time outbound is used, or grant in System Settings → Privacy & Security → Automation → this app → Messages.',
+        )}
+      </div>
+
+      <div className='text-12px text-t-tertiary p-12px rd-8px bg-fill-2'>
+        {t(
+          'settings.channels.imessage.attachmentsNote',
+          'Text-only — image, video, and audio attachments are dropped silently on inbound and not supported on outbound.',
+        )}
+      </div>
+
       <PreferenceRow
         label={t('settings.channels.imessage.pollInterval.label', 'Poll interval (ms)')}
         description={t(

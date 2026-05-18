@@ -201,7 +201,7 @@ const GoogleChatConfigForm: React.FC<GoogleChatConfigFormProps> = ({
           onChange={setAudience}
           placeholder={t(
             'settings.channels.googleChat.credentials.audience.placeholder',
-            '123456789012',
+            '123456789012 OR https://your-app-url',
           )}
           style={{ width: 320 }}
         />

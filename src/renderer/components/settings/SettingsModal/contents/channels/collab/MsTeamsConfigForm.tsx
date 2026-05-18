@@ -39,7 +39,6 @@ const MsTeamsConfigForm: React.FC<MsTeamsConfigFormProps> = ({ pluginStatus, onS
 
   const [appId, setAppId] = useState('');
   const [appPassword, setAppPassword] = useState('');
-  const [tenantId, setTenantId] = useState('');
   const [testLoading, setTestLoading] = useState(false);
   const [webhookToken, setWebhookToken] = useState<string | null>(null);
 
@@ -81,7 +80,6 @@ const MsTeamsConfigForm: React.FC<MsTeamsConfigFormProps> = ({ pluginStatus, onS
       const tokenJson = JSON.stringify({
         appId: appId.trim(),
         appPassword: appPassword.trim(),
-        ...(tenantId.trim() ? { tenantId: tenantId.trim() } : {}),
       });
 
       const testResult = await channel.testPlugin.invoke({
@@ -104,7 +102,6 @@ const MsTeamsConfigForm: React.FC<MsTeamsConfigFormProps> = ({ pluginStatus, onS
         config: {
           appId: appId.trim(),
           appPassword: appPassword.trim(),
-          ...(tenantId.trim() ? { tenantId: tenantId.trim() } : {}),
         },
       });
 
@@ -197,28 +194,10 @@ const MsTeamsConfigForm: React.FC<MsTeamsConfigFormProps> = ({ pluginStatus, onS
         />
       </PreferenceRow>
 
-      <PreferenceRow
-        label={t('settings.channels.msTeams.credentials.tenantId.label', 'Tenant ID (optional)')}
-        description={t(
-          'settings.channels.msTeams.credentials.tenantId.help',
-          'Leave blank for multi-tenant bots. Set to your Azure AD tenant ID to restrict to a single tenant.',
-        )}
-      >
-        <Input
-          value={tenantId}
-          onChange={setTenantId}
-          placeholder={t(
-            'settings.channels.msTeams.credentials.tenantId.placeholder',
-            'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx (optional)',
-          )}
-          style={{ width: 280 }}
-        />
-      </PreferenceRow>
-
       <div className='text-12px text-t-tertiary'>
         {t(
           'settings.channels.msTeams.setupHint',
-          'Register a bot at https://dev.botframework.com, set the messaging endpoint to your Wayland webhook URL, then paste the App ID and secret above.',
+          'Register your bot in the Azure Portal: Azure Bot Service → Create resource → configure Microsoft Teams channel → set messaging endpoint to your Wayland webhook URL → copy App ID and client secret here.',
         )}
       </div>
 

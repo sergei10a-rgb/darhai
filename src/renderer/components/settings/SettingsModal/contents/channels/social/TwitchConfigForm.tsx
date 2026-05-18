@@ -43,6 +43,11 @@ const TwitchConfigForm: React.FC<TwitchConfigFormProps> = ({ pluginStatus, onSta
   const [oauthToken, setOauthToken] = useState('');
   const [channels, setChannels] = useState('');
   const [testLoading, setTestLoading] = useState(false);
+  // F-1: optional OAuth refresh-token flow.
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [clientId, setClientId] = useState('');
+  const [clientSecret, setClientSecret] = useState('');
+  const [refreshToken, setRefreshToken] = useState('');
 
   const hasExisting = !!pluginStatus?.hasToken;
 
@@ -73,10 +78,21 @@ const TwitchConfigForm: React.FC<TwitchConfigFormProps> = ({ pluginStatus, onSta
       return;
     }
 
+    // F-1: only include refresh-token fields when all three are set.
+    const refreshFields =
+      clientId.trim() && clientSecret.trim() && refreshToken.trim()
+        ? {
+            clientId: clientId.trim(),
+            clientSecret: clientSecret.trim(),
+            refreshToken: refreshToken.trim(),
+          }
+        : {};
+
     const tokenJson = JSON.stringify({
       botUsername: botUsername.trim(),
       oauthToken: oauthToken.trim(),
       channels: channelList,
+      ...refreshFields,
     });
 
     setTestLoading(true);
@@ -102,6 +118,7 @@ const TwitchConfigForm: React.FC<TwitchConfigFormProps> = ({ pluginStatus, onSta
           botUsername: botUsername.trim(),
           oauthToken: oauthToken.trim(),
           channels: channelList,
+          ...refreshFields,
         },
       });
 
@@ -189,6 +206,76 @@ const TwitchConfigForm: React.FC<TwitchConfigFormProps> = ({ pluginStatus, onSta
           'Use a dedicated bot account — never use your personal Twitch account. Generate a token at twitchtokengenerator.com and select the chat:read and chat:edit scopes.',
         )}
       </div>
+
+      <div className='pt-8px'>
+        <button
+          type='button'
+          className='text-12px text-t-secondary hover:text-t-primary cursor-pointer bg-transparent border-none p-0'
+          onClick={() => setShowAdvanced((v) => !v)}
+        >
+          {showAdvanced
+            ? t('settings.channels.twitch.advanced.hide', '▾ Advanced: token refresh')
+            : t('settings.channels.twitch.advanced.show', '▸ Advanced: token refresh')}
+        </button>
+      </div>
+
+      {showAdvanced && (
+        <>
+          <div className='text-12px text-t-tertiary'>
+            {t(
+              'settings.channels.twitch.advanced.help',
+              'Optional: provide a Twitch app Client ID + Client Secret + Refresh Token to enable automatic token refresh. When set, the static OAuth Token above is ignored and a fresh access token is minted before each connect.',
+            )}
+          </div>
+
+          <PreferenceRow
+            label={t('settings.channels.twitch.credentials.clientId.label', 'Client ID')}
+            description={t(
+              'settings.channels.twitch.credentials.clientId.help',
+              'Twitch app Client ID (dev.twitch.tv → Console → Apps).',
+            )}
+          >
+            <Input
+              value={clientId}
+              onChange={setClientId}
+              placeholder='abcd1234...'
+              style={{ width: 280 }}
+            />
+          </PreferenceRow>
+
+          <PreferenceRow
+            label={t('settings.channels.twitch.credentials.clientSecret.label', 'Client Secret')}
+            description={t(
+              'settings.channels.twitch.credentials.clientSecret.help',
+              'Twitch app Client Secret — never share this value.',
+            )}
+          >
+            <Input.Password
+              value={clientSecret}
+              onChange={setClientSecret}
+              placeholder='••••••••••••••••'
+              style={{ width: 280 }}
+              visibilityToggle
+            />
+          </PreferenceRow>
+
+          <PreferenceRow
+            label={t('settings.channels.twitch.credentials.refreshToken.label', 'Refresh Token')}
+            description={t(
+              'settings.channels.twitch.credentials.refreshToken.help',
+              'Refresh token obtained via the Authorization Code grant flow.',
+            )}
+          >
+            <Input.Password
+              value={refreshToken}
+              onChange={setRefreshToken}
+              placeholder='••••••••••••••••'
+              style={{ width: 280 }}
+              visibilityToggle
+            />
+          </PreferenceRow>
+        </>
+      )}
 
       <div className='flex justify-end pt-8px'>
         <Button type='primary' loading={testLoading} onClick={() => void handleTestAndEnable()}>

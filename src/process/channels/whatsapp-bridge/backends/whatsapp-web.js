@@ -179,7 +179,7 @@ export async function createBackend({ emit, sessionDir }) {
         else await chat.sendStateTyping();
         return { ok: true };
       } catch (err) {
-        throw new Error(`setPresence_failed: ${err?.message || err}`);
+        throw new Error(`setPresence_failed: ${err?.message || err}`, { cause: err });
       }
     },
 
@@ -194,7 +194,7 @@ export async function createBackend({ emit, sessionDir }) {
         await target.react(emoji || '');
         return { ok: true };
       } catch (err) {
-        throw new Error(`react_failed: ${err?.message || err}`);
+        throw new Error(`react_failed: ${err?.message || err}`, { cause: err });
       }
     },
 

@@ -10,9 +10,10 @@
  * SignalPlugin — Wayland's tier-2 Signal Messenger surface.
  *
  * Transport: spawns signal-cli as a long-lived subprocess daemon and speaks
- * JSON-RPC 2.0 over stdio (via the daemon's --http endpoint).  Mirrors the
- * WhatsApp bridge subprocess pattern but without a Node bridge layer — we
- * interact with signal-cli directly.
+ * JSON-RPC 2.0 over the daemon's `--http` endpoint.  Outbound calls go via
+ * HTTP POST to `/api/v1/rpc`; inbound messages are polled via the `receive`
+ * RPC method.  Mirrors the WhatsApp bridge subprocess pattern but without a
+ * Node bridge layer — we interact with signal-cli directly.
  *
  * Lifecycle: created → initializing → ready → starting → running.
  * Daemon exits trigger auto-restart with 5s → 60s backoff (max 5 attempts),
@@ -55,7 +56,11 @@ export class SignalPlugin extends BasePlugin {
   readonly capabilities: IPluginCapabilities = {
     canEdit: false,
     canStream: false,
-    canReact: true,
+    // Reactions are inbound-dropped (SignalAdapter.ts) and no outbound sendReaction
+    // RPC is wired. Advertise honestly until reactions are implemented.
+    // TODO: port OpenClaw's `extensions/signal/src/send-reactions.ts` +
+    // `reaction-level.ts` and flip back to true.
+    canReact: false,
     canTypingIndicator: true,
   };
 
@@ -128,7 +133,15 @@ export class SignalPlugin extends BasePlugin {
       const result = await this.daemon.rpc('send', params as unknown as Record<string, JsonValue>) as
         | { timestamp?: number }
         | null;
-      lastTimestamp = result?.timestamp ? String(result.timestamp) : String(Date.now());
+      // signal-cli's `send` RPC always returns `{ timestamp: <long> }` on success;
+      // a missing timestamp indicates a malformed/unhandled response — surface it
+      // rather than synthesising a wall-clock id that hides transport failures.
+      if (!result?.timestamp) {
+        throw new Error(
+          'Signal send returned malformed response (no timestamp); message may not have been delivered',
+        );
+      }
+      lastTimestamp = String(result.timestamp);
     }
 
     return lastTimestamp;

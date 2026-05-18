@@ -65,7 +65,11 @@ export function parseSynologyChatBody(rawBody: string): SynologyChatInboundPaylo
   if (!payloadStr) return null;
 
   try {
-    return JSON.parse(payloadStr) as SynologyChatInboundPayload;
+    const parsed: unknown = JSON.parse(payloadStr);
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+      return null;
+    }
+    return parsed as SynologyChatInboundPayload;
   } catch {
     return null;
   }
@@ -79,7 +83,14 @@ export function toUnifiedIncomingFromSynologyChat(
   payload: SynologyChatInboundPayload,
 ): IUnifiedIncomingMessage | null {
   const userId = String(payload.user_id ?? '').trim();
-  const text = (payload.text ?? '').trim();
+  let text = (payload.text ?? '').trim();
+
+  // Strip slash-command trigger word prefix when present (Synology outgoing
+  // webhooks echo the trigger_word into text — operators don't want it
+  // duplicated into the agent prompt).
+  if (payload.trigger_word && text.startsWith(payload.trigger_word)) {
+    text = text.slice(payload.trigger_word.length).trim();
+  }
 
   if (!userId || !text) return null;
 
@@ -117,17 +128,30 @@ export function toSynologyChatSendBody(
   chatUserId?: string | number,
 ): string {
   const text = (message.text ?? '').trim();
+  const fileUrl = message.fileUrl;
+
+  // Synology's incoming webhook requires at least one of text or file_url.
+  // Empty payloads silently succeed in the bridge but never render in chat.
+  if (!text && !fileUrl) {
+    throw new Error('SynologyChat outgoing message requires text or fileUrl');
+  }
 
   type OutboundPayload = {
-    text: string;
+    text?: string;
     file_url?: string;
     user_ids?: number[];
   };
 
-  const payload: OutboundPayload = { text };
+  const payload: OutboundPayload = {};
 
-  if (message.fileUrl) {
-    payload.file_url = message.fileUrl;
+  // Omit `text` entirely when blank + file_url present — Synology rejects
+  // empty `text` fields even when accompanied by a file_url.
+  if (text) {
+    payload.text = text;
+  }
+
+  if (fileUrl) {
+    payload.file_url = fileUrl;
   }
 
   const numericId = parseNumericUserId(chatUserId);

@@ -136,15 +136,24 @@ export function toOutboundBody(chatId: string, message: IUnifiedOutgoingMessage)
 
 /**
  * Compute the HMAC-SHA256 signature header value for an outbound POST body.
- * Format mirrors GitHub / Meta conventions: "sha256=<hex>".
- * Returns null when secret is empty (signing disabled).
+ * Signs `<timestamp>.<bodyJson>` so the receiving end can enforce a replay
+ * window (Slack/Stripe convention). The caller must send the same `timestamp`
+ * in the `X-Webhook-Timestamp` header alongside `X-Webhook-Signature`.
+ * Format mirrors GitHub / Meta: "sha256=<hex>". Returns null when secret is
+ * empty (signing disabled).
  *
  * Harvested concept from OpenClaw http.ts timingSafeEquals + secret extraction.
  */
-export function signOutboundBody(bodyJson: string, secret: string): string | null {
+export function signOutboundBody(
+  bodyJson: string,
+  secret: string,
+  timestampMs: number
+): string | null {
   const trimmed = secret.trim();
   if (!trimmed) return null;
-  const hex = createHmac('sha256', trimmed).update(bodyJson, 'utf8').digest('hex');
+  const hex = createHmac('sha256', trimmed)
+    .update(`${timestampMs}.${bodyJson}`, 'utf8')
+    .digest('hex');
   return `sha256=${hex}`;
 }
 

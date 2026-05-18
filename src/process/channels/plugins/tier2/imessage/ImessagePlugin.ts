@@ -20,7 +20,11 @@
  *
  * Tapbacks (reactions): sent via AppleScript `perform action` on the message.
  *
- * Requires macOS + Full Disk Access for the running process to open chat.db.
+ * Requires macOS + Full Disk Access for the running process to open chat.db,
+ * AND macOS Automation consent (TCC) for Messages.app to send outbound.
+ *
+ * Limitations (v0): text-only. Inbound attachment-only rows (image, video,
+ * audio) are silently dropped; outbound `mediaUrl` is not supported.
  */
 
 import os from 'node:os';
@@ -43,6 +47,8 @@ import { execFileNoThrow } from '@/utils/execFileNoThrow';
 // ---------------------------------------------------------------------------
 
 const DEFAULT_POLL_INTERVAL_MS = 2_000;
+const MIN_POLL_INTERVAL_MS = 500;
+const MAX_POLL_INTERVAL_MS = 60_000;
 const CHAT_DB_RELATIVE = path.join('Library', 'Messages', 'chat.db');
 
 /**
@@ -119,10 +125,12 @@ export class ImessagePlugin extends BasePlugin {
 
     const creds = config.credentials ?? {};
 
-    const intervalMs = typeof creds.pollIntervalMs === 'number' && creds.pollIntervalMs > 0
+    const rawIntervalMs = typeof creds.pollIntervalMs === 'number' && creds.pollIntervalMs > 0
       ? creds.pollIntervalMs
       : DEFAULT_POLL_INTERVAL_MS;
-    this.pollIntervalMs = intervalMs;
+    // Clamp to [500ms, 60s] so a misconfigured 1ms cannot DOS the main process,
+    // and an unreasonably high value cannot stall delivery for >1min.
+    this.pollIntervalMs = Math.min(MAX_POLL_INTERVAL_MS, Math.max(MIN_POLL_INTERVAL_MS, rawIntervalMs));
 
     const rawHandles = Array.isArray(creds.allowedHandles)
       ? (creds.allowedHandles as unknown[]).filter((h): h is string => typeof h === 'string' && h.trim().length > 0)
@@ -144,7 +152,7 @@ export class ImessagePlugin extends BasePlugin {
       const hint = msg.includes('EACCES') || msg.includes('permission')
         ? ' — grant Full Disk Access to this app in System Settings → Privacy & Security'
         : '';
-      throw new Error(`iMessage: cannot open chat.db: ${msg}${hint}`);
+      throw new Error(`iMessage: cannot open chat.db: ${msg}${hint}`, { cause: err });
     }
 
     // Seed the cursor to the current max rowid so we only deliver NEW messages.
@@ -185,6 +193,11 @@ export class ImessagePlugin extends BasePlugin {
     const result = await execFileNoThrow('osascript', ['-e', script], { timeoutMs: 15_000 });
 
     if (result.exitCode !== 0) {
+      if (isAutomationDeniedStderr(result.stderr)) {
+        throw new Error(
+          'iMessage Automation access denied. Grant in System Settings → Privacy & Security → Automation → <app name> → Messages.',
+        );
+      }
       throw new Error(`iMessage: osascript send failed (exit ${result.exitCode}): ${result.stderr}`);
     }
 
@@ -199,20 +212,51 @@ export class ImessagePlugin extends BasePlugin {
    * Send an iMessage tapback on a previously-received message.
    *
    * @param chatId   Chat GUID or phone/email handle (same as sendMessage).
-   * @param _msgId   Wayland message ID (not used — tapback targets by body text).
+   * @param msgId    Wayland message ID (== chat.db rowid as string). Looked up
+   *                 in chat.db to recover the original body text, which the
+   *                 AppleScript then targets by body match. If lookup fails
+   *                 the tapback is aborted rather than risk targeting the
+   *                 wrong message.
    * @param reaction Tapback emoji key: 'heart', 'thumbsup', 'thumbsdown',
    *                 'haha', 'emphasis', 'question'.
    */
-  async reactToMessage(chatId: string, _msgId: string, reaction: string): Promise<void> {
+  async reactToMessage(chatId: string, msgId: string, reaction: string): Promise<void> {
     const code = TAPBACK_CODES[reaction.toLowerCase()];
     if (code == null) {
       throw new Error(`iMessage: unknown tapback reaction '${reaction}'. Valid: ${Object.keys(TAPBACK_CODES).join(', ')}`);
     }
 
-    const script = buildTapbackScript(chatId, code);
+    // Resolve the original message body from chat.db so we can target a
+    // specific message instead of "last message of targetChat".
+    if (!this.db) {
+      throw new Error(`iMessage tapback: plugin not started; cannot look up message id ${msgId}`);
+    }
+    const rowidNum = Number(msgId);
+    if (!Number.isFinite(rowidNum) || rowidNum <= 0) {
+      throw new Error(`iMessage tapback: could not find original message with id ${msgId}; tapback aborted to avoid wrong-target race`);
+    }
+    let body: string | null = null;
+    try {
+      const lookup = this.db
+        .prepare('SELECT text FROM message WHERE rowid = ?')
+        .get(rowidNum) as { text: string | null } | undefined;
+      body = lookup?.text?.trim() ?? null;
+    } catch {
+      body = null;
+    }
+    if (!body) {
+      throw new Error(`iMessage tapback: could not find original message with id ${msgId}; tapback aborted to avoid wrong-target race`);
+    }
+
+    const script = buildTapbackScript(chatId, code, body);
     const result = await execFileNoThrow('osascript', ['-e', script], { timeoutMs: 15_000 });
 
     if (result.exitCode !== 0) {
+      if (isAutomationDeniedStderr(result.stderr)) {
+        throw new Error(
+          'iMessage Automation access denied. Grant in System Settings → Privacy & Security → Automation → <app name> → Messages.',
+        );
+      }
       throw new Error(`iMessage: tapback failed (exit ${result.exitCode}): ${result.stderr}`);
     }
   }
@@ -371,16 +415,42 @@ function buildSendScript(chatId: string, text: string): string {
 }
 
 /**
- * Build an osascript script to send a tapback on the most recent message in a
- * chat. The tapback action code maps to Messages.app internal action IDs.
+ * Build an osascript script to send a tapback on the message in `chatId`
+ * whose body matches `bodyText`. AppleScript's Messages.app dictionary cannot
+ * address messages by rowid/guid, so we match by body — exact equality on the
+ * iMessage body text. The orchestrator MUST resolve `bodyText` from chat.db
+ * via the Wayland message id before calling this; do not pass arbitrary text.
  */
-function buildTapbackScript(chatId: string, actionCode: number): string {
+function buildTapbackScript(chatId: string, actionCode: number, bodyText: string): string {
   const quotedChat = quoteAppleScriptString(chatId);
+  const quotedBody = quoteAppleScriptString(bodyText);
   return [
     'tell application "Messages"',
     `  set targetChat to chat id ${quotedChat}`,
-    `  set lastMsg to last message of targetChat`,
-    `  perform action ${actionCode} on lastMsg`,
+    `  set targetBody to ${quotedBody}`,
+    `  set targetMsg to missing value`,
+    `  repeat with m in (messages of targetChat)`,
+    `    if (text of m) is targetBody then`,
+    `      set targetMsg to m`,
+    `      exit repeat`,
+    `    end if`,
+    `  end repeat`,
+    `  if targetMsg is missing value then error "iMessage tapback: matching message not found in target chat"`,
+    `  perform action ${actionCode} on targetMsg`,
     'end tell',
   ].join('\n');
+}
+
+/**
+ * Detect macOS Automation (TCC) denial in osascript stderr. Apple does not
+ * use a stable code, but these substrings reliably appear in the localized
+ * error message when the user denies "control Messages" consent.
+ */
+function isAutomationDeniedStderr(stderr: string | undefined): boolean {
+  if (!stderr) return false;
+  return (
+    stderr.includes('not allowed to send Apple events') ||
+    stderr.includes('-1743') ||
+    stderr.includes('AppleScript')
+  );
 }

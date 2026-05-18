@@ -133,4 +133,39 @@ describe('GoogleChatPlugin lifecycle', () => {
     await plugin.stop();
     expect(plugin.getBotInfo()).toBeNull();
   });
+
+  // ── HIGH5 regression guard ──────────────────────────────────────────────
+  // The form persists the JWT audience under `creds.audience`. A prior
+  // revision read `creds.projectId` (different field), so inbound webhook
+  // verification could never succeed. Pin the canonical key here.
+  it('reads the JWT audience from creds.audience, not from any other field', async () => {
+    const plugin = new GoogleChatPlugin();
+    await plugin.initialize({
+      ...validConfig,
+      credentials: {
+        serviceAccountJson: VALID_SA_JSON,
+        audience: 'aud-value',
+        // Decoy: must NOT be read in place of creds.audience.
+        projectId: 'should-not-be-read',
+      },
+    });
+    // The audience field is private; assert through the only public surface
+    // that exposes it — the property access via bracket notation under the
+    // test-only cast keeps strict typing intact in production code.
+    const captured = (plugin as unknown as { audience: string | null }).audience;
+    expect(captured).toBe('aud-value');
+  });
+
+  it('falls back to service-account project_id only when creds.audience is empty', async () => {
+    const plugin = new GoogleChatPlugin();
+    await plugin.initialize({
+      ...validConfig,
+      credentials: {
+        serviceAccountJson: VALID_SA_JSON,
+        audience: '',
+      },
+    });
+    const captured = (plugin as unknown as { audience: string | null }).audience;
+    expect(captured).toBe('my-project');
+  });
 });

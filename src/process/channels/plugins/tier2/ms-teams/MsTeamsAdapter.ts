@@ -242,7 +242,10 @@ export function toOutboundActivity(message: IUnifiedOutgoingMessage): BotFramewo
   const activity: BotFrameworkOutboundActivity = {
     type: 'message',
     text: message.text ?? '',
-    textFormat: 'plain',
+    // Teams renders markdown when textFormat='markdown'; 'plain' would strip
+    // **bold**, links, and ```code``` from agent responses. Matches OpenClaw's
+    // chunkerMode='markdown' default.
+    textFormat: 'markdown',
     entities: [AI_GENERATED_ENTITY],
   };
 

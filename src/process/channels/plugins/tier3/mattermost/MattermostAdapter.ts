@@ -28,7 +28,8 @@ export type MattermostPost = {
   root_id?: string | null;
   create_at?: number | null;
   type?: string | null;
-  props?: Record<string, unknown> | null;
+  file_ids?: readonly string[];
+  props?: Record<string, unknown>;
 };
 
 export type MattermostEventPayload = {
@@ -103,14 +104,21 @@ export function toUnifiedIncomingFromMattermost(
 
   const channelId = post.channel_id ?? payload.broadcast?.channel_id ?? '';
   const userId = post.user_id ?? '';
+  // Audit MED 2026-05-18: prefer sender_name (typically "@username") from
+  // the WS event over the raw user_id UUID. Mattermost ships it on every
+  // posted event; without this fix any UI rendering the author surfaces a
+  // user_id like "abc123def456" instead of "@alice".
+  const senderName = payload.data?.sender_name;
+  const username = senderName ?? userId;
+  const displayName = senderName ?? userId;
 
   return {
     id: post.id,
     content: { type: 'text', text },
     user: {
       id: userId,
-      username: userId,
-      displayName: userId,
+      username,
+      displayName,
     },
     chatId: channelId,
     timestamp: post.create_at ? Number(post.create_at) : Date.now(),

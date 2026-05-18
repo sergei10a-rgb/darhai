@@ -110,6 +110,22 @@ function extractChatGuid(msg: Record<string, unknown>): string | undefined {
   return undefined;
 }
 
+const DM_CHAT_GUID_PATTERN = new RegExp('^iMessage;-;(.+)$');
+
+/**
+ * Extract the remote handle from a DM chatGuid (iMessage;-;+15551234567).
+ * Returns undefined for group chats (iMessage;+;...) or unparseable input.
+ *
+ * Mirrors OpenClaw's webhook fallback: BlueBubbles sometimes omits handle
+ * in new-message deliveries for DMs but the address is always recoverable
+ * from the chat GUID.
+ */
+export function extractHandleFromChatGuid(chatGuid: string | undefined): string | undefined {
+  if (!chatGuid) return undefined;
+  const match = DM_CHAT_GUID_PATTERN.exec(chatGuid);
+  return match ? match[1] : undefined;
+}
+
 /**
  * Convert a raw `new-message` Socket.IO payload to IUnifiedIncomingMessage.
  *
@@ -139,20 +155,29 @@ export function toUnifiedIncomingFromBluebubbles(
     typeof msg['associatedMessageType'] === 'number' ? msg['associatedMessageType'] : undefined;
   if (assocType !== undefined && assocType >= 2000 && assocType < 4000) return null;
 
-  // Sender: prefer handle.address, fall back to extracting from chatGuid for DMs.
-  const handleRec = asRecord(msg['handle']);
+  const chatGuid = extractChatGuid(msg);
+  if (!chatGuid) return null;
+
+  // Sender: prefer handle.address, with full OpenClaw fallback chain.
+  // Real BB payloads vary by server version; some webhook deliveries omit
+  // `handle` entirely for DMs, in which case the address is recoverable
+  // from the chatGuid via extractHandleFromChatGuid.
+  const handleVal = msg['handle'] ?? msg['from'];
+  const handleRec =
+    asRecord(handleVal) ?? (typeof handleVal === 'string' ? { address: handleVal } : null);
   const senderAddress =
     (handleRec ? readString(handleRec, 'address') : undefined) ??
+    (handleRec ? readString(handleRec, 'handle') : undefined) ??
+    (handleRec ? readString(handleRec, 'id') : undefined) ??
     readString(msg, 'senderId') ??
-    readString(msg, 'from');
+    readString(msg, 'sender') ??
+    readString(msg, 'from') ??
+    extractHandleFromChatGuid(chatGuid);
   const senderDisplayName = handleRec
     ? (readString(handleRec, 'displayName') ?? senderAddress ?? '')
     : (senderAddress ?? '');
 
   if (!senderAddress) return null;
-
-  const chatGuid = extractChatGuid(msg);
-  if (!chatGuid) return null;
 
   const messageId = readString(msg, 'guid') ?? readString(msg, 'id') ?? `bb-${Date.now()}`;
 

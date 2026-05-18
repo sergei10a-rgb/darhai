@@ -275,8 +275,9 @@ export class NextcloudTalkPlugin extends BasePlugin {
     void (async () => {
       while (!this.stopped) {
         try {
-          const got304 = await this.pollOnce(roomToken);
-          if (got304 && !this.stopped) {
+          const result = await this.pollOnce(roomToken);
+          if (result === 'stop') return;
+          if (result === 'idle' && !this.stopped) {
             // Yield before the next poll so we don't starve the event loop.
             await new Promise<void>((r) => setTimeout(r, POLL_IDLE_YIELD_MS));
           }
@@ -298,10 +299,12 @@ export class NextcloudTalkPlugin extends BasePlugin {
   /**
    * Issue a single long-poll request and dispatch any new messages.
    * Respects per-room lastKnownId as X-Chat-Last-Given.
-   * Returns true if the server returned 304 (no new messages), false otherwise.
+   * Returns 'idle' on 304, 'ok' on a successful poll with/without messages,
+   * and 'stop' when this room's loop should exit (e.g. 401 plugin-wide error
+   * or 404 room-not-found).
    */
-  private async pollOnce(roomToken: string): Promise<boolean> {
-    if (!this.creds || !this.selfUserId) return true;
+  private async pollOnce(roomToken: string): Promise<'idle' | 'ok' | 'stop'> {
+    if (!this.creds || !this.selfUserId) return 'idle';
 
     const lastId = this.lastKnownIds.get(roomToken) ?? 0;
     const url = new URL(
@@ -329,7 +332,29 @@ export class NextcloudTalkPlugin extends BasePlugin {
     }
 
     // 304 = no new messages within the poll window — normal, signal idle.
-    if (resp.status === 304) return true;
+    if (resp.status === 304) return 'idle';
+
+    // Fast-fail on 401 (app password revoked) — skip reconnect backoff and
+    // surface an actionable error so the user knows to re-test credentials.
+    if (resp.status === 401) {
+      this.stopped = true;
+      this.setStatus(
+        'error',
+        'Nextcloud Talk: app-password revoked or invalid — re-test credentials',
+      );
+      return 'stop';
+    }
+
+    // 404 = room/token not found. Skip this room without consuming reconnect
+    // attempts; other rooms continue polling normally.
+    if (resp.status === 404) {
+      console.warn(
+        `[NextcloudTalkPlugin] Room ${roomToken} not found (404) — skipping further polls for this room`,
+      );
+      this.rooms = this.rooms.filter((r) => r !== roomToken);
+      this.lastKnownIds.delete(roomToken);
+      return 'stop';
+    }
 
     if (!resp.ok) {
       throw new Error(
@@ -339,7 +364,7 @@ export class NextcloudTalkPlugin extends BasePlugin {
 
     const json = (await resp.json()) as OcsEnvelope<NextcloudTalkChatMessage[]>;
     const messages = json?.ocs?.data;
-    if (!Array.isArray(messages) || messages.length === 0) return false;
+    if (!Array.isArray(messages) || messages.length === 0) return 'ok';
 
     // Reset reconnect counter on a successful poll.
     this.reconnectFailureCount = 0;
@@ -362,7 +387,7 @@ export class NextcloudTalkPlugin extends BasePlugin {
         console.error('[NextcloudTalkPlugin] emitMessage failed:', err),
       );
     }
-    return false;
+    return 'ok';
   }
 
   // ── Reconnect state machine ─────────────────────────────────────────────────
@@ -414,7 +439,7 @@ export class NextcloudTalkPlugin extends BasePlugin {
   // ── HTTP helpers ────────────────────────────────────────────────────────────
 
   /**
-   * Authenticated fetch wrapper — injects Basic auth, OCS-APIREQUEST, and
+   * Authenticated fetch wrapper — injects Basic auth, OCS-APIRequest, and
    * Accept headers for every request to the Nextcloud instance.
    */
   private async ncFetch(
@@ -427,7 +452,7 @@ export class NextcloudTalkPlugin extends BasePlugin {
 
     const headers = new Headers(init.headers as HeadersInit | undefined);
     headers.set('Authorization', `Basic ${basic}`);
-    headers.set('OCS-APIREQUEST', 'true');
+    headers.set('OCS-APIRequest', 'true');
     headers.set('Accept', 'application/json');
     headers.set('User-Agent', WAYLAND_UA);
 
@@ -443,7 +468,7 @@ export class NextcloudTalkPlugin extends BasePlugin {
     const resp = await fetch(`${creds.serverUrl}/ocs/v2.php/cloud/user`, {
       headers: {
         Authorization: `Basic ${basic}`,
-        'OCS-APIREQUEST': 'true',
+        'OCS-APIRequest': 'true',
         Accept: 'application/json',
         'User-Agent': WAYLAND_UA,
       },
@@ -486,7 +511,7 @@ export class NextcloudTalkPlugin extends BasePlugin {
       const resp = await fetch(`${creds.serverUrl}/ocs/v2.php/cloud/user`, {
         headers: {
           Authorization: `Basic ${basic}`,
-          'OCS-APIREQUEST': 'true',
+          'OCS-APIRequest': 'true',
           Accept: 'application/json',
           'User-Agent': WAYLAND_UA,
         },

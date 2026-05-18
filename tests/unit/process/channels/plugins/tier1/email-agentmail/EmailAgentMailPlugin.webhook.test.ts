@@ -6,7 +6,7 @@
 
 import { createHmac } from 'node:crypto';
 import { describe, expect, it, vi } from 'vitest';
-import { EmailAgentMailPlugin } from '@process/channels/plugins/tier2/email-agentmail/EmailAgentMailPlugin';
+import { EmailAgentMailPlugin } from '@process/channels/plugins/tier1/email-agentmail/EmailAgentMailPlugin';
 import { verifyAgentMailSignature } from '@process/channels/webhook/verifiers/agentmail';
 import type { IUnifiedIncomingMessage } from '@process/channels/types';
 

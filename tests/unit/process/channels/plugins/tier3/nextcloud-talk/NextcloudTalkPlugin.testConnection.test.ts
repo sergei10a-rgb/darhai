@@ -71,7 +71,7 @@ describe('NextcloudTalkPlugin.testConnection — happy path', () => {
     // testConnection passes headers as a plain object, not a Headers instance.
     const headers = init.headers as Record<string, string>;
     expect(headers['Authorization']).toMatch(/^Basic /);
-    expect(headers['OCS-APIREQUEST']).toBe('true');
+    expect(headers['OCS-APIRequest']).toBe('true');
   });
 
   it('strips trailing slash from serverUrl', async () => {

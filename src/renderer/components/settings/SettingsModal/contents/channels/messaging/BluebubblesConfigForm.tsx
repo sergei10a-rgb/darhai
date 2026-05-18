@@ -137,7 +137,7 @@ const BluebubblesConfigForm: React.FC<BluebubblesConfigFormProps> = ({
         label={t('settings.channels.bluebubbles.credentials.serverUrl.label', 'Server URL')}
         description={t(
           'settings.channels.bluebubbles.credentials.serverUrl.help',
-          'URL of your BlueBubbles server, e.g. https://bb.example.com:1234',
+          'URL of your BlueBubbles server (the Mac running BlueBubbles Server.app). Find under Connection settings in the BB Server app. For LAN: http://192.168.1.100:1234. For remote access, use a tunnel (ngrok, Cloudflare Tunnel, Tailscale).',
         )}
         required
       >
@@ -146,7 +146,7 @@ const BluebubblesConfigForm: React.FC<BluebubblesConfigFormProps> = ({
           onChange={setServerUrl}
           placeholder={t(
             'settings.channels.bluebubbles.credentials.serverUrl.placeholder',
-            'https://bb.example.com:1234',
+            'http://192.168.1.100:1234',
           )}
           style={{ width: 320 }}
         />
@@ -156,7 +156,7 @@ const BluebubblesConfigForm: React.FC<BluebubblesConfigFormProps> = ({
         label={t('settings.channels.bluebubbles.credentials.password.label', 'Server Password')}
         description={t(
           'settings.channels.bluebubbles.credentials.password.help',
-          'Password set in the BlueBubbles server settings on your Mac.',
+          'Password set in the BlueBubbles Server app under Settings.',
         )}
         required
       >

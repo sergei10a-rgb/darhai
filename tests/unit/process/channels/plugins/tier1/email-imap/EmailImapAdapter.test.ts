@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildSmtpEnvelope,
   parseImapMessage,
-} from '@process/channels/plugins/tier2/email-imap/EmailImapAdapter';
+} from '@process/channels/plugins/tier1/email-imap/EmailImapAdapter';
 
 describe('parseImapMessage', () => {
   const inboxAddress = 'agent@example.com';

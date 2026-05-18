@@ -10,7 +10,7 @@ import express from 'express';
 import http from 'node:http';
 import path from 'node:path';
 import os from 'node:os';
-import { AddressInfo } from 'node:net';
+import type { AddressInfo } from 'node:net';
 import { __setLogPathForTests } from '@process/channels/webhook/audit-log';
 import {
   getReplayCache,

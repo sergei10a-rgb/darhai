@@ -125,7 +125,7 @@ vi.mock('nodemailer', () => ({
   },
 }));
 
-import { EmailImapPlugin } from '@process/channels/plugins/tier2/email-imap/EmailImapPlugin';
+import { EmailImapPlugin } from '@process/channels/plugins/tier1/email-imap/EmailImapPlugin';
 
 function makeConfig(): IChannelPluginConfig {
   return {

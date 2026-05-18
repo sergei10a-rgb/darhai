@@ -7,8 +7,16 @@
  * Copyright (c) 2025 Peter Steinberger
  * Licensed under the MIT License — see LICENSES/openclaw.txt
  *
- * SignalDaemon — long-lived signal-cli subprocess with JSON-RPC over stdio,
- * auto-restart on unexpected exit (5s → 60s backoff, max 5 attempts).
+ * SignalDaemon — long-lived signal-cli subprocess that serves JSON-RPC over
+ * HTTP (signal-cli's `daemon --http` mode).  Outbound calls go via HTTP POST
+ * to `/api/v1/rpc`; inbound messages are polled via the `receive` RPC method
+ * at ~2s cadence.  Auto-restart on unexpected exit (5s → 60s backoff, max 5
+ * attempts).
+ *
+ * Why HTTP, not stdio: `daemon --http <host>:<port>` exposes RPC over the
+ * socket only; combined with `--no-receive-stdout` (which suppresses inbound
+ * frames on stdout) the previous stdio transport could neither send nor
+ * receive.  See REVIEW-signal.md (HIGH 4, 2026-05-18) for the audit trail.
  */
 
 import { spawn } from 'node:child_process';
@@ -42,18 +50,10 @@ type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
 
 interface JsonRpcResponse {
   jsonrpc: '2.0';
-  id: number;
+  id: number | string;
   result?: unknown;
   error?: { code: number; message: string };
 }
-
-interface JsonRpcNotification {
-  jsonrpc: '2.0';
-  method: string;
-  params?: Record<string, unknown>;
-}
-
-type JsonRpcFrame = JsonRpcResponse | JsonRpcNotification;
 
 /** Emitted for every inbound Signal message. */
 export type SignalInboundMessage = {
@@ -81,6 +81,12 @@ const BACKOFF_INITIAL_MS = 5_000;
 const BACKOFF_MAX_MS = 60_000;
 const BACKOFF_FACTOR = 2;
 const MAX_RESTART_ATTEMPTS = 5;
+
+const RPC_TIMEOUT_MS = 30_000;
+const READY_PROBE_TIMEOUT_MS = 30_000;
+const READY_PROBE_INTERVAL_MS = 250;
+const RECEIVE_POLL_INTERVAL_MS = 2_000;
+const RECEIVE_RPC_TIMEOUT_MS = 60_000;
 
 // ── Binary resolution ─────────────────────────────────────────────────────────
 
@@ -155,11 +161,11 @@ export async function probeSignalCli(cliPath: string): Promise<string | null> {
 export class SignalDaemon {
   private child: ChildProcess | null = null;
   private rpcId = 0;
-  private readonly pending = new Map<number, { resolve: (v: unknown) => void; reject: (e: Error) => void }>();
-  private stdoutBuf = '';
   private _status: SignalDaemonStatus = 'stopped';
   private restartAttempts = 0;
   private restartTimer: ReturnType<typeof setTimeout> | null = null;
+  private receiveTimer: ReturnType<typeof setTimeout> | null = null;
+  private receiveInFlight = false;
   private stopRequested = false;
   private messageHandlers: SignalMessageHandler[] = [];
   private statusHandlers: Array<(status: SignalDaemonStatus) => void> = [];
@@ -168,9 +174,9 @@ export class SignalDaemon {
 
   constructor(opts: SignalDaemonOpts) {
     this.opts = {
-      httpHost: '127.0.0.1',
-      httpPort: 8080,
       ...opts,
+      httpHost: opts.httpHost?.trim() ? opts.httpHost.trim() : '127.0.0.1',
+      httpPort: typeof opts.httpPort === 'number' ? opts.httpPort : 8080,
     };
   }
 
@@ -216,7 +222,7 @@ export class SignalDaemon {
     }
   }
 
-  /** Spawn signal-cli daemon and connect. Resolves when process is up. */
+  /** Spawn signal-cli daemon and connect. Resolves once the HTTP endpoint is up. */
   async start(): Promise<void> {
     this.stopRequested = false;
     this.restartAttempts = 0;
@@ -224,7 +230,7 @@ export class SignalDaemon {
     this.spawnChild();
   }
 
-  /** Gracefully stop the daemon and cancel any pending restart. */
+  /** Gracefully stop the daemon and cancel any pending restart / poll. */
   async stop(): Promise<void> {
     this.stopRequested = true;
     this.setStatus('stopped');
@@ -232,29 +238,20 @@ export class SignalDaemon {
       clearTimeout(this.restartTimer);
       this.restartTimer = null;
     }
+    this.stopReceiveLoop();
     await this.killChild();
-    this.rejectPending('signal daemon stopped');
   }
 
   /**
-   * Send a JSON-RPC request to the running daemon via stdin.
-   * Throws if the daemon is not running or the RPC returns an error.
+   * Send a JSON-RPC request to the running daemon over HTTP.
+   * Throws if the daemon is not running, the HTTP call fails, or the daemon
+   * returns a JSON-RPC error envelope.
    */
   async rpc(method: string, params: Record<string, JsonValue>): Promise<unknown> {
-    if (!this.child || !this.child.stdin) {
+    if (!this.child || this._status === 'stopped' || this._status === 'error') {
       throw new Error('signal-cli daemon is not running');
     }
-    const id = ++this.rpcId;
-    const frame = JSON.stringify({ jsonrpc: '2.0', id, method, params }) + '\n';
-    return new Promise<unknown>((resolve, reject) => {
-      this.pending.set(id, { resolve, reject });
-      this.child!.stdin!.write(frame, (err) => {
-        if (err) {
-          this.pending.delete(id);
-          reject(err);
-        }
-      });
-    });
+    return this.postRpc(method, params, RPC_TIMEOUT_MS);
   }
 
   // ── Private spawn/restart logic ──────────────────────────────────────────
@@ -271,30 +268,22 @@ export class SignalDaemon {
       '--no-receive-stdout',
     ];
 
+    // stdin is `ignore` — RPC travels over HTTP, not stdio.  stdout/stderr
+    // remain piped so we can capture signal-cli's log lines for diagnostics.
     const child = spawn(cliPath, args, {
-      stdio: ['pipe', 'pipe', 'pipe'],
+      stdio: ['ignore', 'pipe', 'pipe'],
     });
 
     this.child = child;
 
     if (child.stdout) {
       child.stdout.setEncoding('utf8');
-      child.stdout.on('data', (chunk: string) => this.consumeStdout(chunk));
+      child.stdout.on('data', (chunk: string) => this.logSignalCliOutput(chunk));
     }
 
     if (child.stderr) {
       child.stderr.setEncoding('utf8');
-      child.stderr.on('data', (chunk: string) => {
-        for (const line of chunk.split(/\r?\n/)) {
-          const trimmed = line.trim();
-          if (!trimmed) continue;
-          if (/\b(ERROR|WARN|FAILED|EXCEPTION)\b/i.test(trimmed)) {
-            console.error('[SignalDaemon] signal-cli:', trimmed);
-          } else {
-            console.log('[SignalDaemon] signal-cli:', trimmed);
-          }
-        }
-      });
+      child.stderr.on('data', (chunk: string) => this.logSignalCliOutput(chunk));
     }
 
     child.once('error', (err) => {
@@ -309,12 +298,41 @@ export class SignalDaemon {
       this.handleUnexpectedExit(why);
     });
 
-    this.setStatus('running');
+    // Stay in `starting` until the HTTP endpoint is reachable. `awaitReady()`
+    // polls /api/v1/check in the background; on success it flips status to
+    // `running` and starts the receive loop. On timeout it flips to `error`.
+    // This avoids a window where consumers see status=running but RPC fails.
+    void this.awaitReadyAndStartReceive();
+  }
+
+  private async awaitReadyAndStartReceive(): Promise<void> {
+    const deadline = Date.now() + READY_PROBE_TIMEOUT_MS;
+    const probeUrl = `${this.baseUrl}/api/v1/check`;
+    while (!this.stopRequested && this.child !== null && Date.now() < deadline) {
+      try {
+        const res = await fetch(probeUrl, { method: 'GET' });
+        if (res.ok) {
+          // Re-check after the awaited fetch — stop() or an unexpected exit
+          // can land between the fetch resolving and the setStatus call.
+          if (this.stopRequested || this.child === null) return;
+          this.setStatus('running');
+          this.startReceiveLoop();
+          return;
+        }
+      } catch {
+        // daemon not up yet — keep probing
+      }
+      await sleep(READY_PROBE_INTERVAL_MS);
+    }
+    if (!this.stopRequested && this.child !== null) {
+      console.warn('[SignalDaemon] signal-cli HTTP endpoint did not become ready before deadline');
+      this.setStatus('error');
+    }
   }
 
   private handleUnexpectedExit(reason: string): void {
-    this.rejectPending(`signal-cli exited: ${reason}`);
     this.child = null;
+    this.stopReceiveLoop();
 
     if (this.stopRequested) return;
 
@@ -339,61 +357,120 @@ export class SignalDaemon {
     }, delayMs);
   }
 
-  private consumeStdout(chunk: string): void {
-    this.stdoutBuf += chunk;
-    let nl: number;
-    while ((nl = this.stdoutBuf.indexOf('\n')) !== -1) {
-      const line = this.stdoutBuf.slice(0, nl).trim();
-      this.stdoutBuf = this.stdoutBuf.slice(nl + 1);
-      if (line) this.handleFrame(line);
+  private logSignalCliOutput(chunk: string): void {
+    for (const line of chunk.split(/\r?\n/)) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      if (/\b(ERROR|WARN|FAILED|EXCEPTION)\b/i.test(trimmed)) {
+        console.error('[SignalDaemon] signal-cli:', trimmed);
+      } else {
+        console.log('[SignalDaemon] signal-cli:', trimmed);
+      }
     }
   }
 
-  private handleFrame(line: string): void {
-    let frame: JsonRpcFrame;
+  // ── HTTP RPC ──────────────────────────────────────────────────────────────
+
+  private async postRpc(
+    method: string,
+    params: Record<string, JsonValue>,
+    timeoutMs: number,
+  ): Promise<unknown> {
+    const id = ++this.rpcId;
+    const body = JSON.stringify({ jsonrpc: '2.0', id, method, params });
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    let res: Response;
     try {
-      frame = JSON.parse(line) as JsonRpcFrame;
-    } catch {
-      console.warn('[SignalDaemon] invalid JSON from daemon:', line.slice(0, 200));
-      return;
+      res = await fetch(`${this.baseUrl}/api/v1/rpc`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+        signal: controller.signal,
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      throw new Error(`signal-cli RPC transport failed: ${msg}`, { cause: err });
+    } finally {
+      clearTimeout(timer);
     }
 
-    if ('id' in frame && typeof frame.id === 'number') {
-      const slot = this.pending.get(frame.id);
-      if (slot) {
-        this.pending.delete(frame.id);
-        if (frame.error) {
-          slot.reject(new Error(`signal-cli RPC ${frame.error.code}: ${frame.error.message}`));
-        } else {
-          slot.resolve(frame.result);
-        }
-      }
-      return;
-    }
+    // signal-cli answers 201 No Content for notification-style methods.
+    if (res.status === 201) return null;
 
-    if ('method' in frame) {
-      this.handleNotification(frame.method, frame.params ?? {});
+    const text = await res.text();
+    if (!text) {
+      throw new Error(`signal-cli RPC empty response (HTTP ${res.status})`);
+    }
+    let parsed: JsonRpcResponse;
+    try {
+      parsed = JSON.parse(text) as JsonRpcResponse;
+    } catch (err) {
+      const cause = err instanceof Error ? err.message : String(err);
+      throw new Error(`signal-cli RPC returned malformed JSON (HTTP ${res.status}): ${cause}`, { cause: err });
+    }
+    if (parsed.error) {
+      throw new Error(`signal-cli RPC ${parsed.error.code}: ${parsed.error.message}`);
+    }
+    return parsed.result;
+  }
+
+  // ── Inbound polling loop ──────────────────────────────────────────────────
+
+  private startReceiveLoop(): void {
+    if (this.receiveTimer !== null) return;
+    const tick = (): void => {
+      this.receiveTimer = null;
+      if (this.stopRequested || this._status !== 'running') return;
+      void this.pollReceive().finally(() => {
+        if (this.stopRequested || this._status !== 'running') return;
+        this.receiveTimer = setTimeout(tick, RECEIVE_POLL_INTERVAL_MS);
+      });
+    };
+    // First tick fires immediately so initial inbound traffic isn't delayed.
+    this.receiveTimer = setTimeout(tick, 0);
+  }
+
+  private stopReceiveLoop(): void {
+    if (this.receiveTimer !== null) {
+      clearTimeout(this.receiveTimer);
+      this.receiveTimer = null;
     }
   }
 
-  private handleNotification(method: string, params: Record<string, unknown>): void {
-    if (method === 'receive') {
-      const msg = params as unknown as SignalInboundMessage;
-      for (const handler of this.messageHandlers) {
-        try {
-          handler(msg);
-        } catch (err) {
-          console.error('[SignalDaemon] message handler threw:', err);
+  private async pollReceive(): Promise<void> {
+    if (this.receiveInFlight) return;
+    this.receiveInFlight = true;
+    try {
+      const result = await this.postRpc(
+        'receive',
+        { account: this.opts.phoneNumber, ignoreAttachments: false },
+        RECEIVE_RPC_TIMEOUT_MS,
+      );
+      const envelopes = Array.isArray(result) ? result : [];
+      for (const env of envelopes) {
+        if (env && typeof env === 'object') {
+          this.dispatchMessage(env as SignalInboundMessage);
         }
       }
+    } catch (err) {
+      // Polling errors are expected when the daemon is restarting; log at
+      // debug level so we don't drown the console.
+      const msg = err instanceof Error ? err.message : String(err);
+      console.warn('[SignalDaemon] receive poll failed:', msg);
+    } finally {
+      this.receiveInFlight = false;
     }
   }
 
-  private rejectPending(reason: string): void {
-    for (const { reject } of this.pending.values()) {
-      reject(new Error(reason));
+  private dispatchMessage(msg: SignalInboundMessage): void {
+    for (const handler of this.messageHandlers) {
+      try {
+        handler(msg);
+      } catch (err) {
+        console.error('[SignalDaemon] message handler threw:', err);
+      }
     }
-    this.pending.clear();
   }
 
   private resolveDefaultConfigDir(): string {
@@ -426,4 +503,8 @@ export class SignalDaemon {
       }
     });
   }
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }

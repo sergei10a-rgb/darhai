@@ -47,11 +47,10 @@ export class WebhookPlugin extends BasePlugin {
 
   private outboundUrl: string | null = null;
   private outboundSecret: string | null = null;
-  private inboundFormat: 'json-flexible' | 'wayland-v1' = 'json-flexible';
 
   /**
-   * Validate credentials — outboundUrl is required. Secret and inboundFormat
-   * are optional. We do NOT connect here; nothing to connect for a webhook-only channel.
+   * Validate credentials — outboundUrl is required. Secret is optional. We do
+   * NOT connect here; nothing to connect for a webhook-only channel.
    */
   protected async onInitialize(config: IChannelPluginConfig): Promise<void> {
     const creds = config.credentials ?? {};
@@ -68,11 +67,6 @@ export class WebhookPlugin extends BasePlugin {
     this.outboundUrl = outboundUrl;
     this.outboundSecret =
       typeof creds.outboundSecret === 'string' ? creds.outboundSecret.trim() : null;
-
-    const fmt = creds.inboundFormat;
-    if (fmt === 'wayland-v1' || fmt === 'json-flexible') {
-      this.inboundFormat = fmt;
-    }
   }
 
   /**
@@ -115,12 +109,14 @@ export class WebhookPlugin extends BasePlugin {
 
     const body = toOutboundBody(chatId, message);
     const bodyJson = JSON.stringify(body);
+    const timestampMs = Date.now();
     const headers: Record<string, string> = {
       'content-type': 'application/json',
+      'x-webhook-timestamp': String(timestampMs),
     };
 
     if (this.outboundSecret) {
-      const sig = signOutboundBody(bodyJson, this.outboundSecret);
+      const sig = signOutboundBody(bodyJson, this.outboundSecret, timestampMs);
       if (sig) headers['x-webhook-signature'] = sig;
     }
 
@@ -143,8 +139,9 @@ export class WebhookPlugin extends BasePlugin {
    * Handle an inbound webhook payload routed here by WebhookReceiver after the
    * genericVerifier has verified the signature and parsed the JSON body.
    *
-   * Supports both 'wayland-v1' (structured) and 'json-flexible' (best-effort
-   * text extraction) formats, selectable via credentials.inboundFormat.
+   * Uses best-effort text extraction from the payload — operators may POST
+   * either the structured `{id,chatId,userId,text}` shape or any JSON body
+   * carrying a `text`/`message`/`content` field.
    */
   async handleWebhookPayload(
     payload: object,
@@ -194,9 +191,13 @@ export class WebhookPlugin extends BasePlugin {
     }
 
     const pingBody = JSON.stringify({ type: 'test' });
-    const headers: Record<string, string> = { 'content-type': 'application/json' };
+    const timestampMs = Date.now();
+    const headers: Record<string, string> = {
+      'content-type': 'application/json',
+      'x-webhook-timestamp': String(timestampMs),
+    };
     if (creds.outboundSecret?.trim()) {
-      const sig = signOutboundBody(pingBody, creds.outboundSecret);
+      const sig = signOutboundBody(pingBody, creds.outboundSecret, timestampMs);
       if (sig) headers['x-webhook-signature'] = sig;
     }
 

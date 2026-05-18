@@ -27,6 +27,7 @@ import type {
 import { BasePlugin } from '../../BasePlugin';
 import {
   fromUnifiedOutgoingToIrc,
+  sanitizeIrcTarget,
   toUnifiedIncomingFromIrc,
   type IrcPrivmsgEvent,
 } from './IrcAdapter';
@@ -45,9 +46,20 @@ type IrcCreds = {
   tls: boolean;
   nick: string;
   username: string;
+  realname: string;
   password: string;
   channels: string[];
-  saslMechanism: 'PLAIN' | 'SCRAM-SHA-256' | 'none';
+  saslMechanism: 'PLAIN' | 'none';
+  /**
+   * Optional NickServ IDENTIFY credentials for networks that gate un-cloaked
+   * channels behind NickServ rather than SASL. On 'registered' we send
+   * `PRIVMSG <service> :IDENTIFY <password>`. This is an alternative to SASL
+   * PLAIN for older ircds.
+   */
+  nickServ?: {
+    password: string;
+    service?: string;
+  };
 };
 
 /**
@@ -61,9 +73,26 @@ export type IrcClientLike = {
   join(channel: string): void;
   say(target: string, message: string): void;
   on(event: string, cb: (...args: unknown[]) => void): unknown;
+  off?(event: string, cb: (...args: unknown[]) => void): unknown;
+  changeNick?(nick: string): void;
   removeAllListeners(): void;
   user: { nick: string };
   connected: boolean;
+};
+
+// Nick-collision retry: server sends ERR_NICKNAMEINUSE (numeric 433) when the
+// requested nick is taken. We retry by appending trailing underscores up to
+// NICK_COLLISION_MAX_RETRIES times before failing the connect.
+const NICK_COLLISION_MAX_RETRIES = 3;
+
+// IRC numerics that indicate a JOIN attempt failed. Surfaced via setError()
+// without failing the plugin — the bot keeps running on whatever channels did
+// successfully join.
+const JOIN_FAILURE_NUMERICS: Record<string, string> = {
+  '471': 'channel full',
+  '473': 'invite-only',
+  '474': 'banned from channel',
+  '477': 'registered nick required',
 };
 
 export class IrcPlugin extends BasePlugin {
@@ -136,13 +165,17 @@ export class IrcPlugin extends BasePlugin {
     if (!this.client || !this.client.connected) {
       throw new Error('IRC client not connected');
     }
+    // Validate the target before any send — rejects CRLF/control chars and
+    // colons that would otherwise let a caller smuggle arbitrary IRC commands
+    // via `client.say(target, line)`. Throws on invalid input.
+    const safeTarget = sanitizeIrcTarget(chatId);
     const { lines } = fromUnifiedOutgoingToIrc(message);
     if (lines.length === 0) return '';
     for (const line of lines) {
-      this.client.say(chatId, line);
+      this.client.say(safeTarget, line);
     }
     // IRC has no server-assigned message id — return a synthetic one.
-    return `irc:${chatId}:${Date.now()}`;
+    return `irc:${safeTarget}:${Date.now()}`;
   }
 
   async handleWebhookPayload(): Promise<void> {
@@ -178,11 +211,33 @@ export class IrcPlugin extends BasePlugin {
         this.scheduleReconnect();
       });
 
+      // Track nick-collision retries: each ERR_NICKNAMEINUSE (433) before
+      // RPL_WELCOME appends an underscore and re-issues NICK via changeNick.
+      let nickCollisionAttempts = 0;
+
       // 'registered' fires when the server sends RPL_WELCOME (001).
       client.on('registered', () => {
         // Successful registration — record the negotiated nick, reset backoff.
         this.selfNick = client.user.nick;
         this.reconnectFailureCount = 0;
+
+        // Detach the pre-welcome error listener — any further `irc error`
+        // events are post-registration concerns (e.g. JOIN failures), handled
+        // by the dedicated listener below. Leaking this listener used to call
+        // reject() on the already-resolved Promise (no-op but sloppy).
+        if (typeof client.off === 'function') {
+          client.off('irc error', onPreWelcomeError);
+        }
+
+        // NickServ IDENTIFY (alternative to SASL PLAIN for older networks).
+        if (creds.nickServ?.password) {
+          const service = creds.nickServ.service ?? 'NickServ';
+          try {
+            client.say(service, `IDENTIFY ${creds.nickServ.password}`);
+          } catch (err) {
+            console.warn('[IrcPlugin] NickServ IDENTIFY failed:', err);
+          }
+        }
 
         // Join configured channels.
         for (const ch of creds.channels) {
@@ -200,6 +255,23 @@ export class IrcPlugin extends BasePlugin {
         resolve();
       });
 
+      // Post-welcome JOIN failures (asynchronous numerics): surface to the
+      // user via setError so the UI can show "joined N/M channels" instead of
+      // silently reporting "running" with channels un-joined.
+      client.on('irc error', (event: unknown) => {
+        // Only relevant after we've registered the active client.
+        if (this.client !== client) return;
+        const e = event as { command?: string; reason?: string; channel?: string };
+        const numeric = e?.command;
+        if (!numeric) return;
+        const label = JOIN_FAILURE_NUMERICS[numeric];
+        if (!label) return;
+        const ch = e.channel ? ` ${e.channel}` : '';
+        const msg = `IRC JOIN${ch} failed: ${label}${e.reason ? ` (${e.reason})` : ''}`;
+        console.warn(`[IrcPlugin] ${msg}`);
+        this.setError(msg);
+      });
+
       // irc-framework emits 'message' for privmsg/notice/action via the
       // command handler (see client.js line 246). Each event has: nick, ident,
       // hostname, target, message, type.
@@ -213,10 +285,72 @@ export class IrcPlugin extends BasePlugin {
         );
       });
 
-      // Set up a one-time error listener for pre-welcome failures (bad creds,
-      // nick collision, etc.) so connectAndListen() rejects cleanly.
+      // NOTICE handling: distinct from PRIVMSG (NICKSERV/CHANSERV replies,
+      // server-wide broadcasts, channel-wide alerts). We prefix the text with
+      // "[NOTICE] " so downstream consumers can distinguish it, and skip
+      // server-numeric notices that lack an event.target (those carry no
+      // user-actionable content).
+      client.on('notice', (event: unknown) => {
+        const e = event as IrcPrivmsgEvent;
+        if (!e || !e.target || !e.nick) return;
+        // Server numeric NOTICEs identify themselves by event.nick matching
+        // the server hostname (no ident, no hostname). Drop them.
+        if (!e.ident && !e.hostname) return;
+        const unified = toUnifiedIncomingFromIrc(e, this.selfNick);
+        if (!unified) return;
+        if (unified.content.type === 'text') {
+          unified.content = {
+            ...unified.content,
+            text: `[NOTICE] ${unified.content.text}`,
+          };
+        }
+        this.activeUsers.add(unified.user.id);
+        void this.emitMessage(unified).catch((err) =>
+          console.error('[IrcPlugin] emitMessage failed:', err),
+        );
+      });
+
+      // Pre-welcome error listener: handles nick collision (433) with an
+      // underscore-suffix retry, and rejects on any other pre-welcome error.
+      // Removed (via client.off) once `registered` fires so it does not
+      // double-handle post-welcome errors. JOIN failures are handled by the
+      // dedicated listener attached inside the `registered` handler.
       const onPreWelcomeError = (event: unknown) => {
-        const e = event as { error?: string; reason?: string } | string;
+        // Already-registered clients drop through to the JOIN-failure handler.
+        if (this.client === client) return;
+        const e = event as {
+          error?: string;
+          reason?: string;
+          command?: string;
+          nick?: string;
+        } | string;
+        const isNickInUse =
+          typeof e === 'object' &&
+          e !== null &&
+          (e.command === '433' || e.error === 'nickname_in_use');
+        if (isNickInUse) {
+          nickCollisionAttempts += 1;
+          if (nickCollisionAttempts > NICK_COLLISION_MAX_RETRIES) {
+            reject(
+              new Error(
+                `IRC nick collision: tried ${creds.nick} + ${NICK_COLLISION_MAX_RETRIES} underscore retries`,
+              ),
+            );
+            return;
+          }
+          const retryNick = `${creds.nick}${'_'.repeat(nickCollisionAttempts)}`;
+          console.warn(
+            `[IrcPlugin] nick ${creds.nick} in use; retrying as ${retryNick} (attempt ${nickCollisionAttempts}/${NICK_COLLISION_MAX_RETRIES})`,
+          );
+          try {
+            if (typeof client.changeNick === 'function') {
+              client.changeNick(retryNick);
+            }
+          } catch (err) {
+            reject(new Error(`IRC changeNick failed: ${err instanceof Error ? err.message : String(err)}`));
+          }
+          return;
+        }
         const msg =
           typeof e === 'string'
             ? e
@@ -235,7 +369,7 @@ export class IrcPlugin extends BasePlugin {
         tls: creds.tls,
         nick: creds.nick,
         username: creds.username,
-        gecos: 'Wayland IRC bot',
+        gecos: creds.realname || 'Wayland IRC bot',
         auto_reconnect: false, // we own the reconnect state machine
       };
 
@@ -432,6 +566,7 @@ function resolveCreds(raw: Record<string, unknown>): IrcCreds {
   const port = readNumber(raw['port'] ?? raw['ircPort'], 6697);
   const tls = readBool(raw['tls'] ?? raw['ircTls'], true);
   const username = readString(raw['username'] ?? raw['ircUsername']) || nick;
+  const realname = readString(raw['realname'] ?? raw['ircRealname']) || username;
   const password = readString(raw['password'] ?? raw['ircPassword']);
 
   const rawChannels = raw['channels'] ?? raw['ircChannels'];
@@ -446,14 +581,36 @@ function resolveCreds(raw: Record<string, unknown>): IrcCreds {
   }
 
   const rawMechanism = readString(raw['saslMechanism'] ?? raw['ircSaslMechanism']);
+  // irc-framework only negotiates SASL PLAIN natively; SCRAM-SHA-256 is
+  // intentionally not supported here to avoid silent degrade.
   const saslMechanism: IrcCreds['saslMechanism'] =
-    rawMechanism === 'SCRAM-SHA-256'
-      ? 'SCRAM-SHA-256'
-      : rawMechanism === 'none'
-        ? 'none'
-        : 'PLAIN';
+    rawMechanism === 'none' ? 'none' : 'PLAIN';
 
-  return { server, port, tls, nick, username, password, channels, saslMechanism };
+  // Optional NickServ IDENTIFY block — alternative to SASL PLAIN for older
+  // networks that gate un-cloaked channels behind NickServ.
+  const nickServRaw = raw['nickServ'] as { password?: unknown; service?: unknown } | undefined;
+  const nickServPassword = readString(
+    raw['nickServPassword'] ?? raw['ircNickServPassword'] ?? nickServRaw?.password,
+  );
+  const nickServService = readString(
+    raw['nickServService'] ?? raw['ircNickServService'] ?? nickServRaw?.service,
+  );
+  const nickServ = nickServPassword
+    ? { password: nickServPassword, ...(nickServService ? { service: nickServService } : {}) }
+    : undefined;
+
+  return {
+    server,
+    port,
+    tls,
+    nick,
+    username,
+    realname,
+    password,
+    channels,
+    saslMechanism,
+    ...(nickServ ? { nickServ } : {}),
+  };
 }
 
 function readString(value: unknown): string {

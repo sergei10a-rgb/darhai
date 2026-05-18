@@ -58,10 +58,17 @@ export type ChatDbRow = {
  *   quoteAppleScriptString('line1\nline2') → '"line1\\nline2"'  (newlines literal in AS)
  */
 export function quoteAppleScriptString(s: string): string {
+  // 0. Strip NUL bytes — AppleScript can mis-handle them and they have no
+  //    legitimate place in a user-visible message body.
   // 1. Escape backslashes first (must come before quote escaping).
   // 2. Escape double-quotes.
   // 3. Wrap in double-quotes to produce a valid AppleScript string literal.
-  const escaped = s.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/\r/g, '\\r');
+  const escaped = s
+    .replace(/\0/g, '')
+    .replace(/\\/g, '\\\\')
+    .replace(/"/g, '\\"')
+    .replace(/\n/g, '\\n')
+    .replace(/\r/g, '\\r');
   return `"${escaped}"`;
 }
 

@@ -40,6 +40,7 @@ const NostrConfigForm: React.FC<NostrConfigFormProps> = ({ pluginStatus, onStatu
 
   const [privateKey, setPrivateKey] = useState('');
   const [relays, setRelays] = useState('wss://relay.damus.io,wss://nos.lol');
+  const [allowedSenders, setAllowedSenders] = useState('');
   const [testLoading, setTestLoading] = useState(false);
 
   const hasExisting = !!pluginStatus?.hasToken;
@@ -86,11 +87,17 @@ const NostrConfigForm: React.FC<NostrConfigFormProps> = ({ pluginStatus, onStatu
 
       Message.success(t('settings.channels.nostr.connectionSuccess', 'Nostr relay connected'));
 
+      const allowedList = allowedSenders
+        .split(',')
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0);
+
       const enableResult = await channel.enablePlugin.invoke({
         pluginId: 'nostr_default',
         config: {
           privateKey: privateKey.trim(),
           relays: relayList,
+          allowedSenders: allowedList,
         },
       });
 
@@ -161,6 +168,22 @@ const NostrConfigForm: React.FC<NostrConfigFormProps> = ({ pluginStatus, onStatu
           onChange={setRelays}
           placeholder='wss://relay.damus.io,wss://nos.lol'
           style={{ width: 320 }}
+        />
+      </PreferenceRow>
+
+      <PreferenceRow
+        label={t('settings.channels.nostr.credentials.allowedSenders.label', 'Allowed Senders')}
+        description={t(
+          'settings.channels.nostr.credentials.allowedSenders.help',
+          'Comma-separated list of npub or hex pubkeys allowed to message this bot. Leave empty for open mode (NOT recommended for public npubs).',
+        )}
+      >
+        <Input.TextArea
+          value={allowedSenders}
+          onChange={setAllowedSenders}
+          placeholder='npub1..., npub1..., or 64-char hex'
+          style={{ width: 320 }}
+          autoSize={{ minRows: 2, maxRows: 4 }}
         />
       </PreferenceRow>
 

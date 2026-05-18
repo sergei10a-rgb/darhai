@@ -130,10 +130,48 @@ export type TmiMessageEvent = {
     'display-name'?: string;
     'message-type'?: string;
     emotes?: Record<string, string[]> | null;
+    // F-3: Twitch role tags. tmi.js delivers these as IRCv3 tag strings
+    // ('1' / '0') or sometimes booleans depending on version.
+    mod?: string | boolean;
+    subscriber?: string | boolean;
+    vip?: string | boolean;
+    turbo?: string | boolean;
+    badges?: Record<string, string> | null;
+    'badges-raw'?: string;
+    bits?: string;
   };
   message: string;
   self: boolean;
 };
+
+/** F-3: Extracted Twitch role flags + raw badge map. */
+export type TwitchRoles = {
+  isMod: boolean;
+  isVip: boolean;
+  isSubscriber: boolean;
+  isBroadcaster: boolean;
+  badges: Record<string, string>;
+};
+
+function flagTrue(value: string | boolean | undefined): boolean {
+  if (value === true) return true;
+  return value === '1';
+}
+
+/**
+ * F-3: Extract role/badge metadata from a tmi.js userstate.
+ * Exported for unit tests.
+ */
+export function extractTwitchRoles(userstate: TmiMessageEvent['userstate']): TwitchRoles {
+  const badges = userstate.badges ?? {};
+  return {
+    isMod: flagTrue(userstate.mod),
+    isVip: flagTrue(userstate.vip),
+    isSubscriber: flagTrue(userstate.subscriber) || Boolean(badges['subscriber']),
+    isBroadcaster: badges['broadcaster'] === '1',
+    badges: { ...badges },
+  };
+}
 
 /**
  * Convert a tmi.js PRIVMSG event to a unified incoming message.
@@ -163,6 +201,10 @@ export function toUnifiedIncomingFromTwitch(event: TmiMessageEvent): IUnifiedInc
   // chatId is the channel name (normalised, no '#')
   const chatId = normalizeTwitchChannel(event.channel);
 
+  // F-3: extract role/badge metadata so downstream agents can gate on
+  // mods-only / subs-only / broadcaster without re-parsing IRC tags.
+  const roles = extractTwitchRoles(event.userstate);
+
   return {
     id: event.userstate.id ?? randomUUID(),
     platform: 'twitch',
@@ -177,7 +219,7 @@ export function toUnifiedIncomingFromTwitch(event: TmiMessageEvent): IUnifiedInc
       text,
     },
     timestamp: Date.now(),
-    raw: event,
+    raw: { ...event, roles },
   };
 }
 

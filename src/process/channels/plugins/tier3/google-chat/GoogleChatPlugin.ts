@@ -39,6 +39,7 @@ import type {
 } from '../../../types';
 import { BasePlugin } from '../../BasePlugin';
 import {
+  deriveThreadName,
   googleChatEventToUnified,
   toGoogleChatMessageBody,
   type GoogleChatEvent,
@@ -150,8 +151,16 @@ export class GoogleChatPlugin extends BasePlugin {
    */
   async sendMessage(chatId: string, message: IUnifiedOutgoingMessage): Promise<string> {
     if (!this.auth) throw new Error('Google Chat plugin not initialized');
-    const body = toGoogleChatMessageBody(message);
-    const url = `${CHAT_API_BASE}/${chatId}/messages`;
+    // Preserve thread continuity: if the caller passed a reply target OR the
+    // chatId already encodes a thread, post into that thread instead of
+    // creating a new top-level message.
+    const threadName =
+      deriveThreadName(chatId, message.replyToMessageId) ?? undefined;
+    const body = toGoogleChatMessageBody(message, { threadName });
+    // POST target is always the space — strip any `/threads/<id>` suffix so we
+    // don't double-encode the thread context.
+    const spaceSegment = chatId.replace(/\/threads\/[^/]+.*$/, '');
+    const url = `${CHAT_API_BASE}/${spaceSegment}/messages`;
     const token = await this.getAccessToken();
     const response = await fetch(url, {
       method: 'POST',

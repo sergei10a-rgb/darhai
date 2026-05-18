@@ -237,10 +237,10 @@ describe('LinePlugin.handleWebhookPayload', () => {
         events: [
           {
             type: 'message',
-            replyToken: 'rt-loc',
+            replyToken: 'rt-unsup',
             source: { type: 'user', userId: 'U444' },
             timestamp: Date.now(),
-            message: { type: 'location', id: 'loc01' },
+            message: { type: 'contact', id: 'ct01' },
           },
         ],
       },

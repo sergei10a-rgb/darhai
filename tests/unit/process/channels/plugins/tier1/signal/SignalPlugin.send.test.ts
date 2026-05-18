@@ -6,28 +6,26 @@
  * SignalPlugin.send — sendMessage dispatches the correct RPC params and
  * returns a stable message id (timestamp string).  Multi-chunk sends are
  * tested too.
+ *
+ * Transport changed from stdio → HTTP (audit HIGH 4 2026-05-18); these tests
+ * mock `fetch` rather than child.stdin.
  */
 
 import { EventEmitter } from 'node:events';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ── Hoist spawn mock ──────────────────────────────────────────────────────────
 
-const { mockSpawn, triggerStdout } = vi.hoisted(() => {
-  type FakeStream = EventEmitter & {
-    setEncoding: ReturnType<typeof vi.fn>;
-    write: ReturnType<typeof vi.fn>;
-  };
+const { mockSpawn } = vi.hoisted(() => {
+  type FakeStream = EventEmitter & { setEncoding: ReturnType<typeof vi.fn> };
 
   function makeStream(): FakeStream {
     const s = new EventEmitter() as FakeStream;
     s.setEncoding = vi.fn();
-    s.write = vi.fn();
     return s;
   }
 
   type Child = EventEmitter & {
-    stdin: FakeStream;
     stdout: FakeStream;
     stderr: FakeStream;
     pid: number;
@@ -35,43 +33,20 @@ const { mockSpawn, triggerStdout } = vi.hoisted(() => {
     kill: ReturnType<typeof vi.fn>;
   };
 
-  let lastStdin: FakeStream | null = null;
-  let lastStdout: FakeStream | null = null;
-
   const mockSpawn = vi.fn(function (): Child {
     const child = new EventEmitter() as Child;
-    child.stdin = makeStream();
     child.stdout = makeStream();
     child.stderr = makeStream();
-    child.stdout.setEncoding = vi.fn();
     child.pid = 99;
     child.killed = false;
     child.kill = vi.fn((sig: string) => {
       child.killed = true;
       setImmediate(() => child.emit('exit', null, sig ?? 'SIGTERM'));
     });
-    lastStdin = child.stdin;
-    lastStdout = child.stdout;
-
-    // Auto-reply to every RPC write with a successful response.
-    child.stdin.write = vi.fn(function (data: string, cb?: (err?: Error) => void) {
-      cb?.();
-      // Parse what was written and echo back a result with a timestamp.
-      try {
-        const frame = JSON.parse(data.replace(/\n$/, '')) as { id: number };
-        const reply = JSON.stringify({ jsonrpc: '2.0', id: frame.id, result: { timestamp: 1_700_000_001_000 } }) + '\n';
-        setImmediate(() => lastStdout!.emit('data', reply));
-      } catch { /* ignore malformed */ }
-      return true;
-    });
-
     return child;
   });
 
-  return {
-    mockSpawn,
-    triggerStdout: (data: string) => lastStdout?.emit('data', data),
-  };
+  return { mockSpawn };
 });
 
 vi.mock('node:child_process', () => ({
@@ -91,7 +66,35 @@ vi.mock('node:fs', () => ({
 }));
 
 import type { IChannelPluginConfig } from '@process/channels/types';
-import { SignalPlugin } from '@process/channels/plugins/tier2/signal/SignalPlugin';
+import { SignalPlugin } from '@process/channels/plugins/tier1/signal/SignalPlugin';
+
+// ── fetch mock ───────────────────────────────────────────────────────────────
+
+type RpcCall = { method: string; params: Record<string, unknown>; id: number };
+let rpcCalls: RpcCall[] = [];
+
+function installFetchMock(): void {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = typeof input === 'string' ? input : input.toString();
+      if (url.endsWith('/api/v1/check')) {
+        return new Response('', { status: 200 });
+      }
+      if (url.endsWith('/api/v1/rpc')) {
+        const body = JSON.parse(String(init?.body ?? '{}')) as RpcCall;
+        if (body.method === 'send') rpcCalls.push(body);
+        // Receive polls get empty list; send gets timestamp.
+        const result = body.method === 'receive' ? [] : { timestamp: 1_700_000_001_000 };
+        return new Response(JSON.stringify({ jsonrpc: '2.0', id: body.id, result }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      return new Response('', { status: 404 });
+    }),
+  );
+}
 
 function makeConfig(): IChannelPluginConfig {
   return {
@@ -108,6 +111,12 @@ function makeConfig(): IChannelPluginConfig {
 
 beforeEach(() => {
   mockSpawn.mockClear();
+  rpcCalls = [];
+  installFetchMock();
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
 });
 
 describe('SignalPlugin.sendMessage', () => {
@@ -129,15 +138,11 @@ describe('SignalPlugin.sendMessage', () => {
 
     await p.sendMessage('+12125550100', { type: 'text', text: 'Hello' });
 
-    // Inspect the RPC frame written to stdin.
-    const writeCalls = (mockSpawn.mock.results[0].value.stdin.write as ReturnType<typeof vi.fn>).mock.calls;
-    const frame = JSON.parse(writeCalls[0][0] as string) as {
-      method: string;
-      params: { recipient?: string[]; message: string };
-    };
-    expect(frame.method).toBe('send');
-    expect(frame.params.recipient).toEqual(['+12125550100']);
-    expect(frame.params.message).toBe('Hello');
+    expect(rpcCalls.length).toBeGreaterThanOrEqual(1);
+    const send = rpcCalls[0];
+    expect(send.method).toBe('send');
+    expect((send.params as { recipient?: string[] }).recipient).toEqual(['+12125550100']);
+    expect((send.params as { message: string }).message).toBe('Hello');
 
     await p.stop();
   });
@@ -149,12 +154,10 @@ describe('SignalPlugin.sendMessage', () => {
 
     await p.sendMessage('group:abc123==', { type: 'text', text: 'Group msg' });
 
-    const writeCalls = (mockSpawn.mock.results[0].value.stdin.write as ReturnType<typeof vi.fn>).mock.calls;
-    const frame = JSON.parse(writeCalls[0][0] as string) as {
-      params: { groupId?: string; recipient?: string[] };
-    };
-    expect(frame.params.groupId).toBe('abc123==');
-    expect(frame.params.recipient).toBeUndefined();
+    expect(rpcCalls.length).toBeGreaterThanOrEqual(1);
+    const send = rpcCalls[0];
+    expect((send.params as { groupId?: string }).groupId).toBe('abc123==');
+    expect((send.params as { recipient?: string[] }).recipient).toBeUndefined();
 
     await p.stop();
   });
@@ -178,9 +181,8 @@ describe('SignalPlugin.sendMessage', () => {
     const longText = ('word ').repeat(900).trim(); // ~4500 chars
     await p.sendMessage('+12125550100', { type: 'text', text: longText });
 
-    const writeCalls = (mockSpawn.mock.results[0].value.stdin.write as ReturnType<typeof vi.fn>).mock.calls;
-    // At least 2 RPC writes expected (text was chunked).
-    expect(writeCalls.length).toBeGreaterThanOrEqual(2);
+    // At least 2 send RPC posts expected (text was chunked).
+    expect(rpcCalls.length).toBeGreaterThanOrEqual(2);
 
     await p.stop();
   });

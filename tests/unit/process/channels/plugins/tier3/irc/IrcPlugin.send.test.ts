@@ -208,3 +208,103 @@ describe('IrcPlugin inbound message emission', () => {
     await plugin.stop();
   });
 });
+
+// ── HIGH fix: chatId CRLF injection ──────────────────────────────────────────
+describe('IrcPlugin.sendMessage — target sanitisation', () => {
+  it('throws if chatId contains CRLF + smuggled IRC command', async () => {
+    const plugin = await startPlugin();
+    await expect(
+      plugin.sendMessage('#wayland-bots\r\nQUIT', { type: 'text', text: 'pwn' }),
+    ).rejects.toThrow(/Invalid IRC target/);
+    expect(mockClientInstance.say).not.toHaveBeenCalled();
+    await plugin.stop();
+  });
+
+  it('throws for target with whitespace', async () => {
+    const plugin = await startPlugin();
+    await expect(
+      plugin.sendMessage('#wayland bots', { type: 'text', text: 'hello' }),
+    ).rejects.toThrow(/Invalid IRC target/);
+    await plugin.stop();
+  });
+
+  it('throws for target with embedded colon', async () => {
+    const plugin = await startPlugin();
+    await expect(
+      plugin.sendMessage('#bad:target', { type: 'text', text: 'hello' }),
+    ).rejects.toThrow(/Invalid IRC target/);
+    await plugin.stop();
+  });
+
+  it('throws for empty target', async () => {
+    const plugin = await startPlugin();
+    await expect(plugin.sendMessage('', { type: 'text', text: 'hello' })).rejects.toThrow(
+      /required/,
+    );
+    await plugin.stop();
+  });
+});
+
+// ── HIGH fix: NOTICE handling ────────────────────────────────────────────────
+describe('IrcPlugin inbound NOTICE handling', () => {
+  it('emits NOTICE messages with a [NOTICE] prefix', async () => {
+    const plugin = await startPlugin();
+    const received: unknown[] = [];
+    plugin.onMessage(async (m) => {
+      received.push(m);
+    });
+
+    mockClientInstance.emit('notice', {
+      nick: 'ChanServ',
+      ident: 'ChanServ',
+      hostname: 'services.libera.chat',
+      target: '#wayland-bots',
+      message: 'You are now identified.',
+    });
+
+    await new Promise((r) => setTimeout(r, 0));
+    expect(received.length).toBe(1);
+    const m = received[0] as { content: { type: string; text: string } };
+    expect(m.content.type).toBe('text');
+    expect(m.content.text).toBe('[NOTICE] You are now identified.');
+    await plugin.stop();
+  });
+
+  it('skips server-numeric NOTICEs (no ident/hostname)', async () => {
+    const plugin = await startPlugin();
+    const received: unknown[] = [];
+    plugin.onMessage(async (m) => {
+      received.push(m);
+    });
+
+    mockClientInstance.emit('notice', {
+      nick: 'irc.libera.chat',
+      target: 'wayland-bot',
+      message: '*** Looking up your hostname...',
+    });
+
+    await new Promise((r) => setTimeout(r, 0));
+    expect(received.length).toBe(0);
+    await plugin.stop();
+  });
+
+  it('skips NOTICE echoes from our own nick', async () => {
+    const plugin = await startPlugin();
+    const received: unknown[] = [];
+    plugin.onMessage(async (m) => {
+      received.push(m);
+    });
+
+    mockClientInstance.emit('notice', {
+      nick: 'wayland-bot',
+      ident: 'wayland-bot',
+      hostname: 'example.com',
+      target: '#wayland-bots',
+      message: 'self-notice',
+    });
+
+    await new Promise((r) => setTimeout(r, 0));
+    expect(received.length).toBe(0);
+    await plugin.stop();
+  });
+});

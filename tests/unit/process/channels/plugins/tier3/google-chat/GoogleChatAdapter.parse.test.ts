@@ -89,11 +89,16 @@ describe('googleChatEventToUnified — parse', () => {
     expect(result!.user.displayName).toBe('Bob');
   });
 
-  it('uses pluginInstanceId as chatId when space name is absent', () => {
-    const event = makeMessageEvent({ space: {} });
-    const result = googleChatEventToUnified(event, PLUGIN_ID);
-    expect(result).not.toBeNull();
-    expect(result!.chatId).toBe(PLUGIN_ID);
+  it('returns null when space.name is absent (would otherwise 404 on reply)', () => {
+    // Regression guard: previously this fell back to pluginInstanceId, which
+    // turned downstream sendMessage(chatId,…) into a POST against
+    // `/v1/google-chat_default/messages` — 404 every time. Now we drop the
+    // event the same way we drop empty-text MESSAGE events.
+    const eventEmptySpace = makeMessageEvent({ space: {} });
+    expect(googleChatEventToUnified(eventEmptySpace, PLUGIN_ID)).toBeNull();
+
+    const eventNoSpace = makeMessageEvent({ space: undefined });
+    expect(googleChatEventToUnified(eventNoSpace, PLUGIN_ID)).toBeNull();
   });
 
   it('returns null for ADDED_TO_SPACE events', () => {

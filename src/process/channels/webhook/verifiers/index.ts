@@ -32,4 +32,8 @@ export const VERIFIER_REGISTRY: Record<string, WebhookVerifier> = {
   slack: slackVerifier,
   whatsapp: whatsappVerifier,
   generic: genericVerifier,
+  // Alias: WebhookPlugin uses type='webhook' and the ConfigForm mints
+  // `/webhooks/webhook/<token>` URLs. Without this alias inbound 404s with
+  // 'unknown-platform'. Both keys resolve to the same verifier.
+  webhook: genericVerifier,
 };

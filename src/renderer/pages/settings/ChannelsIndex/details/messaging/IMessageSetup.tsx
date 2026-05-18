@@ -45,10 +45,17 @@ const IMessageSetup: React.FC = () => {
       channelId='imessage'
       displayName='iMessage'
       pluginId='imessage_default'
-      helpText={t(
-        'settings.channels.imessage.help',
-        'macOS-only. Polls ~/Library/Messages/chat.db for incoming messages and sends via AppleScript. Requires Full Disk Access.',
-      )}
+      helpText={
+        t(
+          'settings.channels.imessage.help',
+          'macOS-only. Polls chat.db (requires Full Disk Access) and sends via AppleScript (requires Automation consent for Messages.app — accept the OS prompt when it appears, or grant in System Settings → Privacy & Security → Automation).',
+        ) +
+        ' ' +
+        t(
+          'settings.channels.imessage.attachmentsHelp',
+          'Text-only — image, video, and audio attachments are dropped silently on inbound and not supported on outbound.',
+        )
+      }
     >
       <IMessageConfigForm pluginStatus={pluginStatus} onStatusChange={setPluginStatus} />
     </ChannelDetailLayout>

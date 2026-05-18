@@ -112,6 +112,103 @@ describe('BluebubblesPlugin.sendMessage', () => {
     const body = JSON.parse(opts.body as string) as Record<string, unknown>;
     expect(body.chatGuid).toBe(CHAT_ID);
     expect(body.message).toBe('Hello iMessage');
+    // tempGuid must be present + valid UUID v4 format for BB idempotency.
+    expect(typeof body.tempGuid).toBe('string');
+    expect(body.tempGuid).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+    );
+
+    await plugin.stop();
+  });
+
+  it('passes through group chatGuids (iMessage;+;...) unchanged', async () => {
+    const plugin = await startPlugin();
+    const groupGuid = 'iMessage;+;chat12345';
+
+    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(SEND_RESPONSE) });
+
+    await plugin.sendMessage(groupGuid, outgoing('Group hi'));
+
+    const body = JSON.parse(
+      (mockFetch.mock.calls[1] as [string, RequestInit])[1].body as string,
+    ) as Record<string, unknown>;
+    expect(body.chatGuid).toBe(groupGuid);
+    expect(typeof body.tempGuid).toBe('string');
+
+    await plugin.stop();
+  });
+
+  it('resolves a phone-number target via /chat/query and caches the result', async () => {
+    const plugin = await startPlugin();
+
+    // First send: chat/query returns an existing chat.
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({ status: 200, data: [{ guid: 'iMessage;-;+14155550100' }] }),
+    });
+    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(SEND_RESPONSE) });
+
+    await plugin.sendMessage('+14155550100', outgoing('Hi by phone'));
+
+    const queryUrl = (mockFetch.mock.calls[1] as [string, RequestInit])[0];
+    expect(queryUrl).toContain('/api/v1/chat/query');
+    const sendBody = JSON.parse(
+      (mockFetch.mock.calls[2] as [string, RequestInit])[1].body as string,
+    ) as Record<string, unknown>;
+    expect(sendBody.chatGuid).toBe('iMessage;-;+14155550100');
+
+    // Second send to same target: must reuse cached guid, NOT re-query.
+    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(SEND_RESPONSE) });
+    await plugin.sendMessage('+14155550100', outgoing('Hi again'));
+
+    const secondCallUrl = (mockFetch.mock.calls[3] as [string, RequestInit])[0];
+    expect(secondCallUrl).toContain('/api/v1/message/text'); // not /chat/query
+    expect(secondCallUrl).not.toContain('/chat/query');
+
+    await plugin.stop();
+  });
+
+  it('falls back to /chat/new when /chat/query returns no existing chat', async () => {
+    const plugin = await startPlugin();
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ status: 200, data: [] }),
+    });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({ status: 200, data: { guid: 'iMessage;-;newuser@example.com' } }),
+    });
+    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(SEND_RESPONSE) });
+
+    await plugin.sendMessage('newuser@example.com', outgoing('Hi by email'));
+
+    expect((mockFetch.mock.calls[1] as [string, RequestInit])[0]).toContain('/api/v1/chat/query');
+    expect((mockFetch.mock.calls[2] as [string, RequestInit])[0]).toContain('/api/v1/chat/new');
+
+    const newBody = JSON.parse(
+      (mockFetch.mock.calls[2] as [string, RequestInit])[1].body as string,
+    ) as Record<string, unknown>;
+    expect(newBody.addresses).toEqual(['newuser@example.com']);
+    expect(newBody.message).toBe('Hi by email');
+    expect(typeof newBody.tempGuid).toBe('string');
+
+    const sendBody = JSON.parse(
+      (mockFetch.mock.calls[3] as [string, RequestInit])[1].body as string,
+    ) as Record<string, unknown>;
+    expect(sendBody.chatGuid).toBe('iMessage;-;newuser@example.com');
+
+    await plugin.stop();
+  });
+
+  it('throws a clear error for unparseable targets (not a guid, not a handle)', async () => {
+    const plugin = await startPlugin();
+
+    await expect(plugin.sendMessage('not-a-valid-target', outgoing('Hi'))).rejects.toThrow(
+      /cannot resolve chatGuid/i,
+    );
 
     await plugin.stop();
   });

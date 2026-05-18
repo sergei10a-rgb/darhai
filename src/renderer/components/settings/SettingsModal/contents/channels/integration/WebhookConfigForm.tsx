@@ -9,7 +9,7 @@
 import { Copy, RefreshCw } from 'lucide-react';
 import type { IChannelPluginStatus } from '@process/channels/types';
 import { channel } from '@/common/adapter/ipcBridge';
-import { Alert, Button, Input, Message, Select } from '@arco-design/web-react';
+import { Alert, Button, Input, Message } from '@arco-design/web-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -46,24 +46,29 @@ const WebhookConfigForm: React.FC<WebhookConfigFormProps> = ({
 
   const [outboundUrl, setOutboundUrl] = useState('');
   const [outboundSecret, setOutboundSecret] = useState('');
-  const [inboundFormat, setInboundFormat] = useState<'json-flexible' | 'wayland-v1'>(
-    'json-flexible'
-  );
   const [webhookToken, setWebhookToken] = useState<string | null>(null);
   const [rotating, setRotating] = useState(false);
   const [testing, setTesting] = useState(false);
 
   const pluginInstanceId = pluginStatus?.id ?? 'webhook_default';
 
+  // Tunnel host is supplied by the reverse-proxy / tunnel layer (Phase 4).
+  // Until that resolves to a real hostname we MUST NOT compose and display a
+  // URL containing the placeholder — operators would copy a malformed URL.
+  const TUNNEL_PLACEHOLDER = '(configure tunnel in Phase 4)';
+  const rawTunnelHost = t(
+    'settings.channels.webhook.webhookUrl.tunnelPlaceholder',
+    TUNNEL_PLACEHOLDER
+  );
+  const tunnelConfigured =
+    rawTunnelHost !== TUNNEL_PLACEHOLDER && !rawTunnelHost.startsWith('(');
+
   const inboundUrl = useMemo(() => {
-    const tunnelHost = t(
-      'settings.channels.webhook.webhookUrl.tunnelPlaceholder',
-      '(configure tunnel in Phase 4)'
-    );
+    if (!tunnelConfigured) return '';
     const tokenSegment =
       webhookToken ?? t('settings.channels.webhook.webhookUrl.notMinted', '<not-minted>');
-    return `https://${tunnelHost}/webhooks/webhook/${tokenSegment}`;
-  }, [webhookToken, t]);
+    return `https://${rawTunnelHost}/webhooks/webhook/${tokenSegment}`;
+  }, [webhookToken, tunnelConfigured, rawTunnelHost, t]);
 
   const handleCopyInboundUrl = useCallback(() => {
     void navigator.clipboard
@@ -127,7 +132,6 @@ const WebhookConfigForm: React.FC<WebhookConfigFormProps> = ({
         config: {
           outboundUrl: outboundUrl.trim(),
           ...(outboundSecret.trim() ? { outboundSecret: outboundSecret.trim() } : {}),
-          inboundFormat,
         },
       });
       if (enableResult.success) {
@@ -145,7 +149,7 @@ const WebhookConfigForm: React.FC<WebhookConfigFormProps> = ({
     } finally {
       setTesting(false);
     }
-  }, [outboundUrl, outboundSecret, inboundFormat, t]);
+  }, [outboundUrl, outboundSecret, t]);
 
   return (
     <div className='flex flex-col gap-24px'>
@@ -198,54 +202,44 @@ const WebhookConfigForm: React.FC<WebhookConfigFormProps> = ({
         />
       </PreferenceRow>
 
-      <PreferenceRow
-        label={t(
-          'settings.channels.webhook.credentials.inboundFormat.label',
-          'Inbound Parse Format'
-        )}
-        description={t(
-          'settings.channels.webhook.credentials.inboundFormat.help',
-          'wayland-v1: structured {id,chatId,userId,text}. json-flexible: best-effort text extraction from any JSON body.'
-        )}
-      >
-        <Select
-          value={inboundFormat}
-          onChange={(value) => setInboundFormat(value as 'json-flexible' | 'wayland-v1')}
-          style={{ width: 180 }}
-          options={[
-            { label: 'json-flexible', value: 'json-flexible' },
-            { label: 'wayland-v1', value: 'wayland-v1' },
-          ]}
+      {tunnelConfigured ? (
+        <PreferenceRow
+          label={t('settings.channels.webhook.webhookUrl.label', 'Inbound Webhook URL')}
+          description={t(
+            'settings.channels.webhook.webhookUrl.help',
+            'Paste this URL into your platform as the webhook destination. The inbound secret is managed by Wayland.'
+          )}
+        >
+          <div className='flex items-center gap-8px'>
+            <Input value={inboundUrl} readOnly style={{ width: 360 }} />
+            <Button
+              type='outline'
+              icon={<Copy size={14} />}
+              onClick={handleCopyInboundUrl}
+              disabled={webhookToken === null}
+            >
+              {t('settings.channels.webhook.webhookUrl.copyButton', 'Copy')}
+            </Button>
+            <Button
+              type='outline'
+              icon={<RefreshCw size={14} />}
+              loading={rotating}
+              onClick={() => void handleRotateInboundUrl()}
+              disabled={webhookToken === null}
+            >
+              {t('settings.channels.webhook.webhookUrl.rotateButton', 'Rotate')}
+            </Button>
+          </div>
+        </PreferenceRow>
+      ) : (
+        <Alert
+          type='warning'
+          content={t(
+            'settings.channels.webhook.webhookUrl.tunnelNotConfigured',
+            'Configure your reverse-proxy / tunnel first. Once a public hostname is reachable, the inbound webhook URL will appear here for you to copy.'
+          )}
         />
-      </PreferenceRow>
-
-      <PreferenceRow
-        label={t('settings.channels.webhook.webhookUrl.label', 'Inbound Webhook URL')}
-        description={t(
-          'settings.channels.webhook.webhookUrl.help',
-          'Paste this URL into your platform as the webhook destination. The inbound secret is managed by Wayland.'
-        )}
-      >
-        <div className='flex items-center gap-8px'>
-          <Input value={inboundUrl} readOnly style={{ width: 360 }} />
-          <Button
-            type='outline'
-            icon={<Copy size={14} />}
-            onClick={handleCopyInboundUrl}
-            disabled={webhookToken === null}
-          >
-            {t('settings.channels.webhook.webhookUrl.copyButton', 'Copy')}
-          </Button>
-          <Button
-            type='outline'
-            icon={<RefreshCw size={14} />}
-            loading={rotating}
-            onClick={() => void handleRotateInboundUrl()}
-          >
-            {t('settings.channels.webhook.webhookUrl.rotateButton', 'Rotate')}
-          </Button>
-        </div>
-      </PreferenceRow>
+      )}
 
       <div className='flex justify-end'>
         <Button type='primary' loading={testing} onClick={() => void handleTestAndEnable()}>

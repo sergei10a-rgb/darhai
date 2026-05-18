@@ -12,6 +12,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  extractHandleFromChatGuid,
   extractTapbackFromPayload,
   toUnifiedIncomingFromBluebubbles,
 } from '@process/channels/plugins/tier3/bluebubbles/BluebubblesAdapter';
@@ -117,12 +118,26 @@ describe('toUnifiedIncomingFromBluebubbles — skip conditions', () => {
     }
   });
 
-  it('returns null when sender address is absent', () => {
+  it('falls back to extractHandleFromChatGuid when handle is absent for a DM', () => {
     const payload = {
-      guid: 'no-sender',
-      text: 'No handle',
+      guid: 'fallback-msg',
+      text: 'No handle but DM chatGuid',
       isFromMe: false,
-      chatGuid: 'iMessage;-;unknown',
+      chatGuid: 'iMessage;-;+14155550500',
+    };
+
+    const result = toUnifiedIncomingFromBluebubbles(payload, PLUGIN_TYPE);
+    expect(result).not.toBeNull();
+    expect(result!.user.id).toBe('+14155550500');
+    expect(result!.chatId).toBe('iMessage;-;+14155550500');
+  });
+
+  it('returns null when handle absent and chatGuid is a group chat (not parseable)', () => {
+    const payload = {
+      guid: 'group-no-handle',
+      text: 'No handle group',
+      isFromMe: false,
+      chatGuid: 'iMessage;+;chat-group-xyz',
     };
 
     expect(toUnifiedIncomingFromBluebubbles(payload, PLUGIN_TYPE)).toBeNull();
@@ -143,6 +158,81 @@ describe('toUnifiedIncomingFromBluebubbles — skip conditions', () => {
     expect(toUnifiedIncomingFromBluebubbles(null, PLUGIN_TYPE)).toBeNull();
     expect(toUnifiedIncomingFromBluebubbles('string', PLUGIN_TYPE)).toBeNull();
     expect(toUnifiedIncomingFromBluebubbles(42, PLUGIN_TYPE)).toBeNull();
+  });
+});
+
+describe('toUnifiedIncomingFromBluebubbles — sender fallback chain', () => {
+  it('accepts string-only handle (handle: "+15551234567")', () => {
+    const payload = {
+      guid: 'string-handle',
+      text: 'String handle',
+      isFromMe: false,
+      handle: '+14155550600',
+      chatGuid: 'iMessage;-;+14155550600',
+    };
+
+    const result = toUnifiedIncomingFromBluebubbles(payload, PLUGIN_TYPE);
+    expect(result).not.toBeNull();
+    expect(result!.user.id).toBe('+14155550600');
+  });
+
+  it('falls back to handle.handle when handle.address absent', () => {
+    const payload = {
+      guid: 'handle-handle',
+      text: 'Handle in handle field',
+      isFromMe: false,
+      handle: { handle: '+14155550601' },
+      chatGuid: 'iMessage;-;+14155550601',
+    };
+
+    const result = toUnifiedIncomingFromBluebubbles(payload, PLUGIN_TYPE);
+    expect(result).not.toBeNull();
+    expect(result!.user.id).toBe('+14155550601');
+  });
+
+  it('falls back to handle.id when address and handle absent', () => {
+    const payload = {
+      guid: 'handle-id',
+      text: 'Handle id field',
+      isFromMe: false,
+      handle: { id: '+14155550602' },
+      chatGuid: 'iMessage;-;+14155550602',
+    };
+
+    const result = toUnifiedIncomingFromBluebubbles(payload, PLUGIN_TYPE);
+    expect(result).not.toBeNull();
+    expect(result!.user.id).toBe('+14155550602');
+  });
+
+  it('falls back to msg.sender field', () => {
+    const payload = {
+      guid: 'msg-sender',
+      text: 'sender field',
+      isFromMe: false,
+      sender: '+14155550603',
+      chatGuid: 'iMessage;-;+14155550603',
+    };
+
+    const result = toUnifiedIncomingFromBluebubbles(payload, PLUGIN_TYPE);
+    expect(result).not.toBeNull();
+    expect(result!.user.id).toBe('+14155550603');
+  });
+});
+
+describe('extractHandleFromChatGuid', () => {
+  it('extracts the handle from a DM chat GUID', () => {
+    expect(extractHandleFromChatGuid('iMessage;-;+14155550700')).toBe('+14155550700');
+    expect(extractHandleFromChatGuid('iMessage;-;user@example.com')).toBe('user@example.com');
+  });
+
+  it('returns undefined for group chat GUIDs', () => {
+    expect(extractHandleFromChatGuid('iMessage;+;chat-abc')).toBeUndefined();
+  });
+
+  it('returns undefined for unparseable or empty input', () => {
+    expect(extractHandleFromChatGuid(undefined)).toBeUndefined();
+    expect(extractHandleFromChatGuid('')).toBeUndefined();
+    expect(extractHandleFromChatGuid('not-a-chat-guid')).toBeUndefined();
   });
 });
 

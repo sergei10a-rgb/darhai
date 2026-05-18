@@ -20,7 +20,7 @@ describe('toOutboundActivity', () => {
 
     expect(activity.type).toBe('message');
     expect(activity.text).toBe('Hello Teams!');
-    expect(activity.textFormat).toBe('plain');
+    expect(activity.textFormat).toBe('markdown');
   });
 
   it('includes the AI-generated entity', () => {

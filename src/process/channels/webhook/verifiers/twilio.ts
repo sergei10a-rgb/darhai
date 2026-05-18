@@ -26,7 +26,7 @@ export const twilioVerifier: WebhookVerifier = (input, secret) => {
   }
 
   const params = parseFormBody(input.rawBody);
-  const sorted = Object.keys(params).sort();
+  const sorted = Object.keys(params).toSorted();
   let data = input.url;
   for (const key of sorted) {
     data += key + params[key];

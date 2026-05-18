@@ -58,6 +58,9 @@ vi.mock('nostr-tools', () => ({
       sig: 'sig',
     }),
   ),
+  // Always-true Schnorr verify stub. Real-signature tests live in
+  // NostrPlugin.security.test.ts which toggles this per-test.
+  verifyEvent: vi.fn(() => true),
 }));
 
 vi.mock('nostr-tools/nip04', () => ({

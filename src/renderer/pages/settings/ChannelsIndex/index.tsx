@@ -47,15 +47,15 @@ const CHANNELS: ChannelMeta[] = [
   { id: 'whatsapp', displayName: 'WhatsApp', taglineKey: 'settings.channelsIndex.whatsappTagline', icon: MessageCircle, status: 'idle', tier: 1 },
   { id: 'sms-twilio', displayName: 'SMS (Twilio)', taglineKey: 'settings.channelsIndex.smsTwilioTagline', icon: MessageSquare, status: 'idle', tier: 1 },
   { id: 'webhook', displayName: 'Webhook', taglineKey: 'settings.channelsIndex.webhookTagline', icon: Webhook, status: 'idle', tier: 1 },
+  { id: 'signal', displayName: 'Signal', taglineKey: 'settings.channelsIndex.signalTagline', icon: ShieldCheck, status: 'idle', tier: 1 },
+  { id: 'email-agentmail', displayName: 'Email (AgentMail)', taglineKey: 'settings.channelsIndex.emailAgentMailTagline', icon: Mail, status: 'idle', tier: 1 },
+  { id: 'email-imap', displayName: 'Email (IMAP/SMTP)', taglineKey: 'settings.channelsIndex.emailImapTagline', icon: Mail, status: 'idle', tier: 1 },
 
   // ---------- Tier 2 — pro & regional ----------
-  { id: 'signal', displayName: 'Signal', taglineKey: 'settings.channelsIndex.signalTagline', icon: ShieldCheck, status: 'idle', tier: 2 },
   { id: 'matrix', displayName: 'Matrix', taglineKey: 'settings.channelsIndex.matrixTagline', icon: Network, status: 'idle', tier: 2 },
   { id: 'ms-teams', displayName: 'MS Teams', taglineKey: 'settings.channelsIndex.msteamsTagline', icon: Users, status: 'idle', tier: 2 },
   { id: 'line', displayName: 'LINE', taglineKey: 'settings.channelsIndex.lineTagline', icon: Send, status: 'idle', tier: 2 },
   { id: 'imessage', displayName: 'iMessage', taglineKey: 'settings.channelsIndex.imessageTagline', icon: MessageSquareDot, status: 'idle', tier: 2 },
-  { id: 'email-agentmail', displayName: 'Email (AgentMail)', taglineKey: 'settings.channelsIndex.emailAgentMailTagline', icon: Mail, status: 'idle', tier: 2 },
-  { id: 'email-imap', displayName: 'Email (IMAP/SMTP)', taglineKey: 'settings.channelsIndex.emailImapTagline', icon: Mail, status: 'idle', tier: 2 },
   { id: 'lark', displayName: 'Lark / Feishu', taglineKey: 'settings.channelsIndex.larkTagline', icon: Bird, status: 'idle', tier: 2 },
   { id: 'dingtalk', displayName: 'DingTalk', taglineKey: 'settings.channelsIndex.dingtalkTagline', icon: Building2, status: 'idle', tier: 2 },
   { id: 'wechat', displayName: 'WeChat', taglineKey: 'settings.channelsIndex.wechatTagline', icon: QrCode, status: 'idle', tier: 2 },

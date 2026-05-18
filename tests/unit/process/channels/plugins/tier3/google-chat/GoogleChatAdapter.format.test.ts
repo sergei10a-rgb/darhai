@@ -5,7 +5,10 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { toGoogleChatMessageBody } from '@process/channels/plugins/tier3/google-chat/GoogleChatAdapter';
+import {
+  deriveThreadName,
+  toGoogleChatMessageBody,
+} from '@process/channels/plugins/tier3/google-chat/GoogleChatAdapter';
 import type { IUnifiedOutgoingMessage } from '@process/channels/types';
 
 describe('toGoogleChatMessageBody — format', () => {
@@ -49,5 +52,39 @@ describe('toGoogleChatMessageBody — format', () => {
     const body = toGoogleChatMessageBody(msg);
     // Adapter only maps text — imageUrl handling is a future enhancement
     expect(body).toEqual({ text: 'caption' });
+  });
+
+  it('emits a thread.name when options.threadName is provided', () => {
+    const msg: IUnifiedOutgoingMessage = { type: 'text', text: 'reply' };
+    const body = toGoogleChatMessageBody(msg, {
+      threadName: 'spaces/AAA/threads/TTT',
+    });
+    expect(body).toEqual({
+      text: 'reply',
+      thread: { name: 'spaces/AAA/threads/TTT' },
+    });
+  });
+
+  it('omits thread when options.threadName is empty/whitespace', () => {
+    const msg: IUnifiedOutgoingMessage = { type: 'text', text: 'top-level' };
+    expect(toGoogleChatMessageBody(msg, { threadName: '' })).toEqual({ text: 'top-level' });
+    expect(toGoogleChatMessageBody(msg, { threadName: '   ' })).toEqual({ text: 'top-level' });
+  });
+});
+
+describe('deriveThreadName', () => {
+  it('extracts thread from a chatId that encodes one', () => {
+    expect(deriveThreadName('spaces/AAA/threads/TTT')).toBe('spaces/AAA/threads/TTT');
+  });
+
+  it('extracts thread from a replyToMessageId that encodes one', () => {
+    expect(
+      deriveThreadName('spaces/AAA', 'spaces/AAA/threads/TTT/messages/M1'),
+    ).toBe('spaces/AAA/threads/TTT');
+  });
+
+  it('returns null when chatId is space-only and replyTo has no thread segment', () => {
+    expect(deriveThreadName('spaces/AAA', 'spaces/AAA/messages/M1')).toBeNull();
+    expect(deriveThreadName('spaces/AAA')).toBeNull();
   });
 });
