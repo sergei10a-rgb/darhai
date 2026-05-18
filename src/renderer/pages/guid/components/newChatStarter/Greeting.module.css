@@ -1,0 +1,10 @@
+.greeting {
+  margin: 0 0 24px;
+  font-family: 'New York', 'Georgia', 'Iowan Old Style', serif;
+  font-weight: 500;
+  font-size: 36px;
+  line-height: 1.15;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+  text-align: center;
+}

@@ -141,6 +141,14 @@ body[arco-theme='light'] {
   --fill-white-to-black: #ffffff;
   --border-special: var(--bg-3);
   --color-guid-agent-bar: #fff5ef;
+
+  /* ---- Chat-redesign intent accents (RGB triples for rgb()/rgba() use) ----
+     Used by the new-chat starter to colour active intent pills and the
+     attribution dot on suggestion rows. Tuned against the light-mode neutral
+     ramp so any of the three reads as a soft accent next to the brand orange. */
+  --color-team: 99, 102, 241;       /* indigo-500 — extension-contributed assistants */
+  --color-specialist: 16, 185, 129; /* emerald-500 — narrow-domain specialists */
+  --color-builtin: 251, 146, 60;    /* warm-orange — first-party built-ins */
 }
 
 /* ============================================================
@@ -266,4 +274,10 @@ body[arco-theme='dark'] {
   --fill-white-to-black: #0a0a0a;
   --border-special: #444444;
   --color-guid-agent-bar: var(--bg-2);
+
+  /* Chat-redesign intent accents — dark mode (lighter triples so they read
+     against the cinematic neutral ramp). */
+  --color-team: 129, 140, 248;       /* indigo-400 */
+  --color-specialist: 52, 211, 153;  /* emerald-400 */
+  --color-builtin: 253, 186, 116;    /* warm-orange-300 */
 }

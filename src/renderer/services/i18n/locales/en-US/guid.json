@@ -17,5 +17,34 @@
     "statusTesting": "Testing latency...",
     "statusUnreachable": "Unreachable",
     "statusAvailable": "Available"
+  },
+  "newChat": {
+    "greeting": {
+      "morning": "Morning",
+      "afternoon": "Afternoon",
+      "evening": "Evening",
+      "night": "Night",
+      "withName": "{{timeLabel}}, {{name}}"
+    },
+    "intent": {
+      "sell": "Sell",
+      "write": "Write",
+      "research": "Research",
+      "build": "Build",
+      "run": "Run"
+    },
+    "pillBar": {
+      "label": "Choose an intent",
+      "pillLabel": "{{label}} intent"
+    },
+    "suggestionPanel": {
+      "label": "{{label}} starter prompts",
+      "heading": "Start with {{label}}",
+      "close": "Close suggestions"
+    },
+    "recents": {
+      "label": "Recent conversations",
+      "heading": "Recent"
+    }
   }
 }

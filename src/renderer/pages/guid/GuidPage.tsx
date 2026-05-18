@@ -14,6 +14,13 @@ import { useConversationTabs } from '@/renderer/pages/conversation/hooks/Convers
 import { CUSTOM_AVATAR_IMAGE_MAP } from './constants';
 import AgentPillBar from './components/AgentPillBar';
 import AssistantSelectionArea from './components/AssistantSelectionArea';
+import Greeting from './components/newChatStarter/Greeting';
+import IntentPillBar from './components/newChatStarter/IntentPillBar';
+import IntentSuggestionPanel from './components/newChatStarter/IntentSuggestionPanel';
+import RecentsStrip from './components/newChatStarter/RecentsStrip';
+import type { IntentKey, IntentPrompt } from './intents';
+import { useAuth } from '@/renderer/hooks/context/AuthContext';
+import { ASSISTANT_PRESETS } from '@/common/config/presets/assistantPresets';
 import { AgentPillBarSkeleton } from './components/GuidSkeleton';
 import GuidActionRow from './components/GuidActionRow';
 import GuidInputCard from './components/GuidInputCard';
@@ -282,6 +289,57 @@ const GuidPage: React.FC = () => {
       mention.setMentionSelectorOpen,
       mention.setMentionActiveIndex,
     ]
+  );
+
+  // --- Phase 2 chat-redesign: new-chat starter (greeting + intent pills + recents) ---
+  const auth = useAuth();
+  const greetingDisplayName = auth.user?.username ?? null;
+  const [activeIntent, setActiveIntent] = useState<IntentKey | null>(null);
+
+  const handleSelectIntent = useCallback((intent: IntentKey | null) => {
+    setActiveIntent(intent);
+  }, []);
+
+  const handleCloseIntentPanel = useCallback(() => {
+    setActiveIntent(null);
+  }, []);
+
+  const handleSelectIntentPrompt = useCallback(
+    (prompt: IntentPrompt) => {
+      const preset = ASSISTANT_PRESETS.find((p) => p.id === prompt.targetAssistantId);
+      if (preset) {
+        agentSelection.selectPresetAssistant({ id: preset.id, presetAgentType: preset.presetAgentType });
+      } else {
+        // Extension-bundle assistants follow the same Rory rule, but their
+        // presetAgentType comes from the runtime extension cache. We don't
+        // resolve it synchronously here — selectPresetAssistant defaults to
+        // gemini when presetAgentType is absent, which matches Phase 1's
+        // documented fallback.
+        agentSelection.selectPresetAssistant({ id: prompt.targetAssistantId });
+      }
+      guidInput.setInput(prompt.promptText);
+      guidInput.handleTextareaFocus();
+      mention.setMentionOpen(false);
+      mention.setMentionQuery(null);
+      mention.setMentionSelectorOpen(false);
+      mention.setMentionActiveIndex(0);
+    },
+    [
+      agentSelection.selectPresetAssistant,
+      guidInput.setInput,
+      guidInput.handleTextareaFocus,
+      mention.setMentionOpen,
+      mention.setMentionQuery,
+      mention.setMentionSelectorOpen,
+      mention.setMentionActiveIndex,
+    ]
+  );
+
+  const handleSelectRecent = useCallback(
+    (conv: { id: string }) => {
+      void navigate(`/conversation/${conv.id}`);
+    },
+    [navigate]
   );
 
   // Typewriter placeholder
@@ -702,6 +760,8 @@ const GuidPage: React.FC = () => {
             />
           ) : null}
 
+          {!agentSelection.isPresetAgent ? <Greeting displayName={greetingDisplayName} /> : null}
+
           <GuidInputCard
             input={guidInput.input}
             onInputChange={handleInputChange}
@@ -735,6 +795,23 @@ const GuidPage: React.FC = () => {
             actionRow={actionRowNode}
           />
 
+          {!agentSelection.isPresetAgent ? (
+            <div className={styles.newChatStarter} data-testid='new-chat-starter'>
+              <IntentPillBar activeIntent={activeIntent} onSelect={handleSelectIntent} />
+              {activeIntent ? (
+                <IntentSuggestionPanel
+                  intent={activeIntent}
+                  onSelect={handleSelectIntentPrompt}
+                  onClose={handleCloseIntentPanel}
+                />
+              ) : null}
+              <RecentsStrip onSelect={handleSelectRecent} />
+            </div>
+          ) : null}
+
+          {/* Phase 2 keeps AssistantSelectionArea mounted only for its modal/drawer
+              tree (edit drawer, skills modals). The inline pill grid is owned by
+              the layered starter above. Phase 6 deletes this component outright. */}
           <AssistantSelectionArea
             isPresetAgent={agentSelection.isPresetAgent}
             selectedAgentInfo={agentSelection.selectedAgentInfo}
@@ -747,6 +824,7 @@ const GuidPage: React.FC = () => {
             onRegisterOpenDetails={(openDetails) => {
               openAssistantDetailsRef.current = openDetails;
             }}
+            hideInlineGrid
           />
         </div>
 

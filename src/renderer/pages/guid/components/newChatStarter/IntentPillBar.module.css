@@ -1,0 +1,23 @@
+.pillBar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 0 0 16px;
+}
+
+.pill {
+  min-width: 96px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+/* Active pill picks up the team accent so it visually separates from the
+   brand-orange primary buttons elsewhere on the surface. */
+.pillActive:global(.arco-btn-primary),
+.pillActive:global(.arco-btn-primary):hover,
+.pillActive:global(.arco-btn-primary):focus {
+  background-color: rgb(var(--color-team));
+  border-color: rgb(var(--color-team));
+  color: #ffffff;
+}

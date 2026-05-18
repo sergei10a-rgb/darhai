@@ -38,6 +38,14 @@ type AssistantSelectionAreaProps = {
   onSetInput: (text: string) => void;
   onFocusInput: () => void;
   onRegisterOpenDetails?: (openDetails: (() => void) | null) => void;
+  /**
+   * Phase 2 chat-redesign: when true, the inline pill grid is suppressed so
+   * the new layered starter (Greeting + IntentPillBar + SuggestionPanel +
+   * Recents) owns the new-chat surface. The modal/drawer tree (edit drawer,
+   * skills modals, etc.) still mounts so existing callers can open them via
+   * `onRegisterOpenDetails`. Phase 6 deletes this component outright.
+   */
+  hideInlineGrid?: boolean;
 };
 
 const resolveAssistantCandidateIds = (assistantId: string): string[] => {
@@ -56,6 +64,7 @@ const AssistantSelectionArea: React.FC<AssistantSelectionAreaProps> = ({
   onSetInput,
   onFocusInput,
   onRegisterOpenDetails,
+  hideInlineGrid = false,
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -262,7 +271,13 @@ const AssistantSelectionArea: React.FC<AssistantSelectionAreaProps> = ({
     );
   }
 
-  // Assistant List View
+  // Assistant List View — Phase 2 hides the inline pill grid; only the modal
+  // tree (edit drawer, skills modals) needs to stay mounted so existing
+  // callers like the hero title's edit button keep working.
+  if (hideInlineGrid) {
+    return <>{modalTree}</>;
+  }
+
   return (
     <div className='mt-12px w-full'>
       <div className='flex flex-wrap gap-8px justify-center'>
