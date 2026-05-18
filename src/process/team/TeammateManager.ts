@@ -21,6 +21,12 @@ type TeammateManagerParams = {
   workerTaskManager: IWorkerTaskManager;
   hasMcpTools?: boolean;
   teamWorkspace?: string;
+  /**
+   * W4c — When true, role prompts emitted by this manager are wrapped in
+   * `<!-- IMPORTED-UNTRUSTED-CONTENT -->` markers and (for the leader)
+   * suffixed with a non-overridable SYSTEM SANDBOX NOTICE.
+   */
+  isSandboxed?: boolean;
   /** Called after an agent is removed from in-memory list, so the caller can persist the change (e.g. update DB) */
   onAgentRemoved?: (teamId: string, agents: TeamAgent[]) => void;
   /**
@@ -43,6 +49,8 @@ export class TeammateManager extends EventEmitter {
   private readonly onAgentRemovedFn?: (teamId: string, agents: TeamAgent[]) => void;
   /** Shared team workspace path (leader's working directory) */
   private readonly teamWorkspace: string | undefined;
+  /** W4c — when true, wrap outgoing role prompts as imported untrusted content */
+  private readonly isSandboxed: boolean;
   /** W1e — optional team_event_log writer */
   private readonly eventLogger: EventLogger | undefined;
 
@@ -70,6 +78,7 @@ export class TeammateManager extends EventEmitter {
     this.workerTaskManager = params.workerTaskManager;
     this.onAgentRemovedFn = params.onAgentRemoved;
     this.teamWorkspace = params.teamWorkspace;
+    this.isSandboxed = params.isSandboxed === true;
     this.eventLogger = params.eventLogger;
 
     for (const agent of this.agents) {
@@ -242,6 +251,7 @@ export class TeammateManager extends EventEmitter {
           availableAssistants,
           renamedAgents: this.renamedAgents,
           teamWorkspace: this.teamWorkspace,
+          isSandboxed: this.isSandboxed,
         });
 
         message =

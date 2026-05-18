@@ -65,6 +65,7 @@ export class TeamSession extends EventEmitter {
       mailbox: this.mailbox,
       workerTaskManager,
       teamWorkspace: team.workspace || undefined,
+      isSandboxed: team.isSandboxed === true,
       onAgentRemoved: (teamId, agents) => {
         void this.repo.update(teamId, { agents, updatedAt: Date.now() });
       },
