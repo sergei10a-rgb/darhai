@@ -37,7 +37,8 @@ import AssistantListPanel from './AssistantListPanel';
 import DeleteAssistantModal from './DeleteAssistantModal';
 import SkillConfirmModals from './SkillConfirmModals';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { useLocation, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 type AssistantNavigationState = {
   openAssistantId?: string;
@@ -46,6 +47,7 @@ type AssistantNavigationState = {
 const OPEN_ASSISTANT_EDITOR_INTENT_KEY = 'guid.openAssistantEditorIntent';
 
 const AssistantSettings: React.FC = () => {
+  const { t } = useTranslation();
   const [message, messageContext] = Message.useMessage({ maxCount: 10 });
   const viewMode = useSettingsViewMode();
   const isPageMode = viewMode === 'page';
@@ -140,6 +142,18 @@ const AssistantSettings: React.FC = () => {
     <SettingsPageWrapper>
       <div className='flex flex-col h-full w-full'>
         {messageContext}
+        {/* Phase 6 chat-redesign: pointer from Settings (pro management
+            surface) to the new /assistants library (consumer browse). */}
+        <div className='px-16px pt-8px pb-4px text-12px text-t-tertiary'>
+          {t('settings.assistants.libraryHint.prefix', {
+            defaultValue: 'Looking to browse and launch assistants? ',
+          })}
+          <Link to='/assistants' className='text-primary hover:underline'>
+            {t('settings.assistants.libraryHint.link', {
+              defaultValue: 'Open the Assistants library →',
+            })}
+          </Link>
+        </div>
         <WaylandScrollArea className='flex-1 min-h-0 pb-16px scrollbar-hide' disableOverflow={isPageMode}>
           <AssistantListPanel
             assistants={assistants}
