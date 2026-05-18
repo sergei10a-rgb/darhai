@@ -83,6 +83,30 @@ export type TTeam = {
   sessionCount?: number;
   /** Unix-ms timestamp of the first session start. Used for "14 days" eligibility. */
   firstActiveAt?: number;
+  /**
+   * W4a — origin URL, filename, or 'manual' for the source of an imported
+   * team. Undefined for teams created directly by the user. Persisted
+   * forever so the team settings header can always show provenance.
+   */
+  importedFrom?: string;
+  /** W4a — Unix-ms timestamp of the import event. Undefined for non-imported teams. */
+  importedAt?: number;
+  /**
+   * W4a — `'unsigned-v1'` in v1 (no signing yet). Reserved so the v2 signed-
+   * package format can populate `'verified:<issuer>'` / `'failed:<reason>'`.
+   */
+  importedSignatureStatus?: string;
+  /**
+   * W4a — map of capability name → grant record persisted at import time.
+   * Drives the W4b runtime enforcement matrix. Undefined for non-imported teams.
+   */
+  importCapabilityGrants?: Record<string, { granted_at: number; by_user: boolean }>;
+  /**
+   * W4a — true when the team was imported with at least one capability
+   * still in the `false` state. Drives W4b's FS sandbox + cross-team
+   * mailbox gates. Existing teams default to `false`.
+   */
+  isSandboxed?: boolean;
   createdAt: number;
   updatedAt: number;
 };

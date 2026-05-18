@@ -7,6 +7,9 @@
 import { ipcBridge } from '@/common';
 import { suggestRoster } from '@process/team/suggestRoster';
 import type { TeamSessionService } from '@process/team/TeamSessionService';
+import { ExtensionRegistry } from '@process/extensions/ExtensionRegistry';
+import type { SpecialistCatalog } from '@process/team/importExport/importTeam';
+import type { RitualsResolver } from '@process/team/importExport/exportTeam';
 
 /**
  * Wrap an async provider handler so that unhandled rejections are caught and
@@ -153,6 +156,78 @@ export function initTeamBridge(teamSessionService: TeamSessionService): void {
       return suggestRoster(params);
     })
   );
+
+  // W4 (T4.1) — team export. Resolves rituals from the live extension
+  // registry; if the registry has not booted yet the export still works
+  // but omits rituals.
+  ipcBridge.team.export.provider(
+    safeProvider(async ({ teamId }) => {
+      return teamSessionService.exportTeam(teamId, makeRitualsResolver());
+    })
+  );
+
+  // W4 (T4.2 + T4.6 + T4.6.1) — preview an import payload. All guard
+  // failures are translated to JSON error sentinels by safeProvider so the
+  // renderer can surface them in the import dialog.
+  ipcBridge.team.importPreview.provider(
+    safeProvider(async ({ jsonText }) => {
+      return teamSessionService.previewTeamImport(jsonText, makeSpecialistCatalog());
+    })
+  );
+
+  // W4 (T4.5 + T4.6) — accept an already-previewed import + persist.
+  // W4b will add a renderer-side capability-review dialog ahead of this
+  // call; until then, the renderer MUST pass an empty grants map.
+  ipcBridge.team.importAccept.provider(
+    safeProvider(async ({ userId, parsed, capabilityGrants, source }) => {
+      return teamSessionService.acceptTeamImport({
+        userId,
+        parsed,
+        capabilityGrants,
+        source,
+        specialistCatalog: makeSpecialistCatalog(),
+      });
+    })
+  );
+}
+
+/**
+ * Build the specialist-id catalog from the live ExtensionRegistry. The
+ * registry stores assistants with ids prefixed `ext-<id>`; the export
+ * format uses the unprefixed id so the catalog set must mirror that.
+ */
+function makeSpecialistCatalog(): SpecialistCatalog {
+  return async () => {
+    const registry = ExtensionRegistry.getInstance();
+    const assistants = registry.getAssistants();
+    const ids = new Set<string>();
+    for (const a of assistants) {
+      const rawId = (a as { id?: string }).id;
+      if (typeof rawId !== 'string') continue;
+      const stripped = rawId.startsWith('ext-') ? rawId.slice(4) : rawId;
+      ids.add(stripped);
+    }
+    return ids;
+  };
+}
+
+/**
+ * Look up the `rituals` array for a source launcher id by walking the
+ * extension registry's assistant list. Returns undefined when no match.
+ */
+function makeRitualsResolver(): RitualsResolver {
+  return async (sourceLauncherId: string) => {
+    const registry = ExtensionRegistry.getInstance();
+    const assistants = registry.getAssistants();
+    const norm = sourceLauncherId.startsWith('ext-') ? sourceLauncherId : `ext-${sourceLauncherId}`;
+    for (const a of assistants) {
+      const candidate = a as { id?: string; rituals?: Array<{ name: string; cadence: string }> };
+      if (candidate.id === norm || candidate.id === sourceLauncherId) {
+        return candidate.rituals;
+      }
+    }
+    return undefined;
+  };
 }
 
 /** Stop all active team sessions (TCP servers + child processes). Call on app quit. */

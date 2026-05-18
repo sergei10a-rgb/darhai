@@ -25,6 +25,15 @@ import fs from 'fs/promises';
 import path from 'path';
 import { resolveLocaleKey } from '@/common/utils';
 import { hasGeminiOauthCreds } from './googleAuthCheck';
+import { buildTeamExport, serializeTeamExport, type RitualsResolver } from './importExport/exportTeam';
+import {
+  buildCapabilityGrants,
+  isSandboxedAfterImport,
+  previewImport,
+  type ImportPreviewResult,
+  type SpecialistCatalog,
+} from './importExport/importTeam';
+import type { TeamExport } from './importExport/TeamExportSchema';
 
 export class TeamSessionService {
   private readonly sessions: Map<string, TeamSession> = new Map();
@@ -854,6 +863,118 @@ export class TeamSessionService {
     });
 
     ipcBridge.team.listChanged.emit({ teamId, action: 'standing_changed' });
+  }
+
+  /**
+   * W4 (T4.1) — Build the whitelist-only JSON export for a team. The caller
+   * (renderer save dialog) is responsible for actually writing the file.
+   * Throws when the team is unknown or has no leader.
+   *
+   * `resolveRituals` is optional so callers without access to the extension
+   * registry (e.g. tests) can omit it; rituals will simply be absent from
+   * the payload.
+   */
+  async exportTeam(teamId: string, resolveRituals?: RitualsResolver): Promise<string> {
+    const team = await this.repo.findById(teamId);
+    if (!team) throw new Error(`Team "${teamId}" not found`);
+    const payload = await buildTeamExport(team, resolveRituals);
+    return serializeTeamExport(payload);
+  }
+
+  /**
+   * W4 (T4.2 + T4.6 + T4.6.1) — Validate an import payload and surface
+   * missing-specialist info to the caller. Throws TeamImportError on any
+   * guard failure (DOS, prototype-pollution, depth, schema). Throws
+   * TeamImportBusyError when the bounded parse queue is saturated.
+   */
+  async previewTeamImport(
+    jsonText: string,
+    specialistCatalog: SpecialistCatalog
+  ): Promise<ImportPreviewResult> {
+    return previewImport(jsonText, specialistCatalog);
+  }
+
+  /**
+   * W4 (T4.5 + T4.6) — Persist an imported team with origin tracking +
+   * sandbox-flag derived from the caller-supplied capability grants.
+   * Hard-rejects if any specialist in the payload is missing from the
+   * receiver's bundle.
+   *
+   * For W4a the IPC handler trusts whatever grants the caller passes. W4b
+   * adds the per-cap review dialog + 5s cool-off; until then, the renderer
+   * MUST pass an all-false grants map for any preview that came back with
+   * `specialistsAvailable=false`.
+   */
+  async acceptTeamImport(params: {
+    userId: string;
+    parsed: TeamExport;
+    capabilityGrants: Record<string, boolean>;
+    source: string;
+    specialistCatalog: SpecialistCatalog;
+  }): Promise<TTeam> {
+    const { userId, parsed, capabilityGrants, source, specialistCatalog } = params;
+
+    // Re-check specialist availability at accept-time so a payload that was
+    // valid at preview cannot slip past if the user uninstalled a bundle in
+    // between. Hard reject (no soft-warn in v1 per T4.6).
+    const installed = await specialistCatalog();
+    const referenced = [parsed.leader.id, ...parsed.teammates.map((t) => t.id)];
+    const missing = referenced.filter((id) => !installed.has(id));
+    if (missing.length > 0) {
+      const dedup = Array.from(new Set(missing));
+      throw new Error(`Missing specialists: ${dedup.join(', ')}. Install them first or use a different team.`);
+    }
+
+    const now = Date.now();
+    const grants = buildCapabilityGrants(capabilityGrants, now);
+    const sandboxed = isSandboxedAfterImport(parsed.capabilities, capabilityGrants);
+
+    // Build the agents roster from the payload. Leader first, then teammates.
+    // The renderer-side launcher path also uses `ext-${id}` for customAgentId,
+    // and the backend resolver reads it back the same way.
+    const leaderAgent: TeamAgent = {
+      slotId: '',
+      conversationId: '',
+      role: 'leader',
+      agentType: parsed.leader.recommendBackend || 'gemini',
+      agentName: parsed.name.slice(0, 100),
+      conversationType: this.resolveConversationType(parsed.leader.recommendBackend || 'gemini'),
+      status: 'pending',
+      customAgentId: `ext-${parsed.leader.id}`,
+    };
+    const teammateAgents: TeamAgent[] = parsed.teammates.map((t) => ({
+      slotId: '',
+      conversationId: '',
+      role: 'teammate',
+      agentType: t.recommendBackend || parsed.leader.recommendBackend || 'gemini',
+      agentName: t.name,
+      conversationType: this.resolveConversationType(t.recommendBackend || parsed.leader.recommendBackend || 'gemini'),
+      status: 'pending',
+      customAgentId: `ext-${t.id}`,
+    }));
+
+    const team = await this.createTeam({
+      userId,
+      name: parsed.name,
+      workspace: '',
+      workspaceMode: 'shared',
+      agents: [leaderAgent, ...teammateAgents],
+    });
+
+    // Stamp provenance + sandbox flag on the freshly-created team. Done as a
+    // follow-up update so `createTeam` stays single-responsibility and the
+    // origin fields cannot accidentally be set by callers other than this
+    // import path.
+    await this.repo.update(team.id, {
+      importedFrom: source,
+      importedAt: now,
+      importedSignatureStatus: 'unsigned-v1',
+      importCapabilityGrants: grants,
+      isSandboxed: sandboxed,
+      updatedAt: now,
+    });
+    const refreshed = await this.repo.findById(team.id);
+    return refreshed ?? { ...team, importedFrom: source, importedAt: now, isSandboxed: sandboxed };
   }
 
   async removeAgent(teamId: string, slotId: string): Promise<void> {

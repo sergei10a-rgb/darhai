@@ -21,6 +21,11 @@ type TeamRow = {
   promoted_to_standing: number;
   session_count: number;
   first_active_at: number | null;
+  imported_from: string | null;
+  imported_at: number | null;
+  imported_signature_status: string | null;
+  import_capability_grants: string | null;
+  is_sandboxed: number;
   created_at: number;
   updated_at: number;
 };
@@ -80,6 +85,13 @@ function rowToTeam(row: TeamRow): TTeam {
     promotedToStanding: row.promoted_to_standing === 1,
     sessionCount: row.session_count,
     firstActiveAt: row.first_active_at ?? undefined,
+    importedFrom: row.imported_from ?? undefined,
+    importedAt: row.imported_at ?? undefined,
+    importedSignatureStatus: row.imported_signature_status ?? undefined,
+    importCapabilityGrants: row.import_capability_grants
+      ? (JSON.parse(row.import_capability_grants) as Record<string, { granted_at: number; by_user: boolean }>)
+      : undefined,
+    isSandboxed: row.is_sandboxed === 1,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -156,8 +168,13 @@ export class SqliteTeamRepository implements ITeamRepository {
   async create(team: TTeam): Promise<TTeam> {
     const db = await this.getDb();
     db.prepare(
-      `INSERT INTO teams (id, user_id, name, workspace, workspace_mode, lead_agent_id, agents, session_mode, source_launcher_id, promoted_to_standing, session_count, first_active_at, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO teams (
+         id, user_id, name, workspace, workspace_mode, lead_agent_id, agents,
+         session_mode, source_launcher_id, promoted_to_standing, session_count, first_active_at,
+         imported_from, imported_at, imported_signature_status, import_capability_grants, is_sandboxed,
+         created_at, updated_at
+       )
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).run(
       team.id,
       team.userId,
@@ -171,6 +188,11 @@ export class SqliteTeamRepository implements ITeamRepository {
       team.promotedToStanding ? 1 : 0,
       team.sessionCount ?? 0,
       team.firstActiveAt ?? null,
+      team.importedFrom ?? null,
+      team.importedAt ?? null,
+      team.importedSignatureStatus ?? null,
+      team.importCapabilityGrants ? JSON.stringify(team.importCapabilityGrants) : null,
+      team.isSandboxed ? 1 : 0,
       team.createdAt,
       team.updatedAt
     );
@@ -196,7 +218,10 @@ export class SqliteTeamRepository implements ITeamRepository {
     const db = await this.getDb();
     db.prepare(
       `UPDATE teams
-       SET name = ?, workspace = ?, workspace_mode = ?, lead_agent_id = ?, agents = ?, session_mode = ?, source_launcher_id = ?, promoted_to_standing = ?, session_count = ?, first_active_at = ?, updated_at = ?
+       SET name = ?, workspace = ?, workspace_mode = ?, lead_agent_id = ?, agents = ?,
+           session_mode = ?, source_launcher_id = ?, promoted_to_standing = ?, session_count = ?, first_active_at = ?,
+           imported_from = ?, imported_at = ?, imported_signature_status = ?, import_capability_grants = ?, is_sandboxed = ?,
+           updated_at = ?
        WHERE id = ?`
     ).run(
       merged.name,
@@ -209,6 +234,11 @@ export class SqliteTeamRepository implements ITeamRepository {
       merged.promotedToStanding ? 1 : 0,
       merged.sessionCount ?? 0,
       merged.firstActiveAt ?? null,
+      merged.importedFrom ?? null,
+      merged.importedAt ?? null,
+      merged.importedSignatureStatus ?? null,
+      merged.importCapabilityGrants ? JSON.stringify(merged.importCapabilityGrants) : null,
+      merged.isSandboxed ? 1 : 0,
       merged.updatedAt,
       id
     );

@@ -1623,6 +1623,45 @@ const migration_v37: IMigration = {
 };
 
 /**
+ * Migration v37 -> v38: Origin tracking + sandbox flag for imported teams.
+ *
+ * W4a (D7 #5) — every imported team carries a permanent provenance trail
+ * (filename or URL the JSON came from, timestamp, signature status) plus
+ * the per-capability grant map the user accepted at import time. The
+ * `is_sandboxed` flag drives the W4b runtime enforcement matrix: when
+ * true, every workspace FS op + cross-team mailbox write is gated by the
+ * matching capability grant. Existing teams default to `is_sandboxed=0`
+ * (they pre-date the sandbox model and were created directly by the user).
+ */
+const migration_v38: IMigration = {
+  version: 38,
+  name: 'Add origin tracking + sandbox flag to teams table',
+  up: (db) => {
+    const cols = new Set((db.pragma('table_info(teams)') as Array<{ name: string }>).map((c) => c.name));
+    if (!cols.has('imported_from')) {
+      db.exec('ALTER TABLE teams ADD COLUMN imported_from TEXT');
+    }
+    if (!cols.has('imported_at')) {
+      db.exec('ALTER TABLE teams ADD COLUMN imported_at INTEGER');
+    }
+    if (!cols.has('imported_signature_status')) {
+      db.exec('ALTER TABLE teams ADD COLUMN imported_signature_status TEXT');
+    }
+    if (!cols.has('import_capability_grants')) {
+      db.exec('ALTER TABLE teams ADD COLUMN import_capability_grants TEXT');
+    }
+    if (!cols.has('is_sandboxed')) {
+      db.exec('ALTER TABLE teams ADD COLUMN is_sandboxed INTEGER NOT NULL DEFAULT 0');
+    }
+    console.log('[Migration v38] Added import-origin + sandbox-flag columns to teams table');
+  },
+  down: (_db) => {
+    // SQLite cannot DROP COLUMN cleanly without table rebuild; provenance columns are safe to leave.
+    console.log('[Migration v38] No-op rollback (columns are origin-tracking only)');
+  },
+};
+
+/**
  * All migrations in order
  */
 // prettier-ignore
@@ -1633,7 +1672,7 @@ export const ALL_MIGRATIONS: IMigration[] = [
   migration_v19, migration_v20, migration_v21, migration_v22, migration_v23, migration_v24,
   migration_v25, migration_v26, migration_v27, migration_v28, migration_v29, migration_v30,
   migration_v31, migration_v32, migration_v33, migration_v34, migration_v35, migration_v36,
-  migration_v37,
+  migration_v37, migration_v38,
 ];
 
 /**

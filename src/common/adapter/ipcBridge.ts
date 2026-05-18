@@ -1446,6 +1446,40 @@ export const team = {
       targetSize?: number;
     }
   >('team.suggest-roster'),
+  /**
+   * W4 (T4.1) — Build the whitelist-only v1 JSON export for a team.
+   * Returns a pretty-printed JSON string for the user to review + save.
+   */
+  export: buildProvider<string, { teamId: string }>('team.export'),
+  /**
+   * W4 (T4.2 + T4.6) — Validate an import payload + surface missing
+   * specialists without persisting. Throws TeamImportError on guard
+   * failure or TeamImportBusyError when the parse queue is saturated.
+   */
+  importPreview: buildProvider<
+    {
+      parsed: import('@process/team/importExport/TeamExportSchema').TeamExport;
+      specialistsAvailable: boolean;
+      missingSpecialists: string[];
+    },
+    { jsonText: string }
+  >('team.import-preview'),
+  /**
+   * W4 (T4.5 + T4.6) — Persist an imported team with origin tracking +
+   * sandbox-flag derived from the caller-supplied capability grants.
+   * The W4b capability-review UI is the only caller that should pass
+   * non-empty grants; until W4b ships, the renderer must pass an
+   * empty (all-false) grants map.
+   */
+  importAccept: buildProvider<
+    import('@process/team/types').TTeam,
+    {
+      userId: string;
+      parsed: import('@process/team/importExport/TeamExportSchema').TeamExport;
+      capabilityGrants: Record<string, boolean>;
+      source: string;
+    }
+  >('team.import-accept'),
   agentStatusChanged: buildEmitter<import('@process/team/types').ITeamAgentStatusEvent>('team.agent.status'),
   agentSpawned: buildEmitter<import('@/common/types/teamTypes').ITeamAgentSpawnedEvent>('team.agent.spawned'),
   agentRemoved: buildEmitter<import('@/common/types/teamTypes').ITeamAgentRemovedEvent>('team.agent.removed'),
