@@ -107,17 +107,31 @@ const TeamChatEmptyState: React.FC<Props> = ({ conversationId }) => {
   const agentName = resolveAgentName(conversation, presetInfo?.name ?? null);
   const backendLogo = getAgentLogo(agentType);
 
+  // Live-smoke fix #4a (2026-05-19): pin every avatar branch to the
+  // same 48px box so the previous "huge dark blob" Sean reported on the
+  // fallback path can't visually dominate the empty state. The muted
+  // bg-fill-2 + text-t-tertiary container demotes the fallback to a
+  // background-weight glyph and matches the proportions of the preset
+  // and backend-logo branches above it.
   const renderAvatar = () => {
     if (presetInfo) {
       if (presetInfo.isEmoji) {
         return (
-          <span className='w-48px h-48px rounded-8px flex items-center justify-center text-32px leading-none bg-fill-2'>
+          <span
+            data-testid='team-chat-empty-state-avatar'
+            data-variant='emoji'
+            className='w-48px h-48px rounded-8px flex items-center justify-center text-32px leading-none bg-fill-2'
+          >
             {presetInfo.logo}
           </span>
         );
       }
       return (
         <img
+          data-testid='team-chat-empty-state-avatar'
+          data-variant='preset'
+          width={48}
+          height={48}
           src={presetInfo.logo}
           alt={presetInfo.name}
           className='w-48px h-48px object-contain rounded-8px opacity-90'
@@ -125,10 +139,24 @@ const TeamChatEmptyState: React.FC<Props> = ({ conversationId }) => {
       );
     }
     if (backendLogo) {
-      return <img src={backendLogo} alt={agentName} className='w-48px h-48px object-contain rounded-8px opacity-80' />;
+      return (
+        <img
+          data-testid='team-chat-empty-state-avatar'
+          data-variant='backend'
+          width={48}
+          height={48}
+          src={backendLogo}
+          alt={agentName}
+          className='w-48px h-48px object-contain rounded-8px opacity-80'
+        />
+      );
     }
     return (
-      <div className='w-48px h-48px rounded-full bg-fill-3 flex items-center justify-center text-20px font-medium text-t-secondary'>
+      <div
+        data-testid='team-chat-empty-state-avatar'
+        data-variant='fallback'
+        className='w-48px h-48px rounded-8px bg-fill-2 flex items-center justify-center text-18px font-medium text-t-tertiary'
+      >
         {agentName.charAt(0).toUpperCase()}
       </div>
     );
