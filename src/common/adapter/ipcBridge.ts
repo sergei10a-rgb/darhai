@@ -1410,6 +1410,17 @@ export const team = {
   stop: buildProvider<void, { teamId: string }>('team.stop'),
   ensureSession: buildProvider<void, { teamId: string }>('team.ensure-session'),
   renameAgent: buildProvider<void, { teamId: string; slotId: string; newName: string }>('team.rename-agent'),
+  /**
+   * Live-smoke fix #4b (2026-05-19) — swap a teammate's backend CLI
+   * without recreating the team. Same-conversationType swaps only
+   * (Claude ↔ Codex; not Gemini ↔ Claude — those would destroy the
+   * conversation history). The service rejects cross-type swaps with
+   * a descriptive error the renderer surfaces via Message.error.
+   */
+  changeAgentBackend: buildProvider<
+    void,
+    { teamId: string; slotId: string; newBackend: string; newModel?: string }
+  >('team.change-agent-backend'),
   renameTeam: buildProvider<void, { id: string; name: string }>('team.rename'),
   setSessionMode: buildProvider<void, { teamId: string; sessionMode: string }>('team.set-session-mode'),
   updateWorkspace: buildProvider<void, { teamId: string; workspace: string }>('team.update-workspace'),

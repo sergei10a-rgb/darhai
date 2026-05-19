@@ -64,5 +64,9 @@
       "body": "[TODO:translate] It may have been deleted, or its data is no longer available. Head back to the Teams library to pick another team or start a new one.",
       "backCta": "[TODO:translate] Back to Teams"
     }
+  },
+  "agentBackendSwap": {
+    "success": "[TODO:translate] Agent backend changed",
+    "error": "[TODO:translate] Failed to change agent backend"
   }
 }

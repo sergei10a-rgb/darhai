@@ -817,6 +817,103 @@ export class TeamSessionService {
   }
 
   /**
+   * Live-smoke fix #4b (2026-05-19) — swap a teammate's backend CLI in
+   * place. Same-conversationType swaps only (e.g. claude ↔ codex, both
+   * 'acp'). Cross-type swaps (gemini ↔ claude, wcore ↔ remote, etc.)
+   * are rejected with a descriptive error because the agent's
+   * conversation row is typed at creation and would have to be torn
+   * down + recreated to host a different protocol — losing chat
+   * history in the process. The renderer surfaces the error as a
+   * toast so the user can fall back to recreating the agent.
+   *
+   * Flow on the success path mirrors restartAgent: refuse if a wake
+   * is in flight → kill the worker process (clears ACP team context,
+   * worker task, wake state) → flip agent to {pending, new backend,
+   * new model?} → persist → emit agentStatusChanged → log a
+   * `decision` event with the from/to backends so the Activity tab
+   * tells the story.
+   */
+  async changeAgentBackend(params: {
+    teamId: string;
+    slotId: string;
+    newBackend: string;
+    newModel?: string;
+  }): Promise<void> {
+    const { teamId, slotId, newBackend, newModel } = params;
+    const team = await this.repo.findById(teamId);
+    if (!team) throw new Error(`Team "${teamId}" not found`);
+
+    const agent = team.agents.find((a) => a.slotId === slotId);
+    if (!agent) throw new Error(`Agent "${slotId}" not found in team "${teamId}"`);
+
+    const fromBackend = agent.agentType;
+    if (fromBackend === newBackend) return; // idempotent no-op
+
+    // Conversation type is locked at conversation creation. Swapping
+    // backends across protocols would require deleting + recreating the
+    // conversation, dropping chat history. Refuse rather than silently
+    // wipe.
+    const newConversationType = this.resolveConversationType(newBackend);
+    if (newConversationType !== agent.conversationType) {
+      throw new Error(
+        `Cannot swap backend "${fromBackend}" → "${newBackend}": ` +
+          `conversation type "${agent.conversationType}" → "${newConversationType}" ` +
+          `is not supported in place. Remove the agent and add a new one instead to preserve a clean history.`
+      );
+    }
+
+    const session = this.sessions.get(teamId);
+    if (session?.isWakeActive(slotId)) {
+      throw new Error('Cannot change backend while wake in progress');
+    }
+
+    // Kill residual worker + clear ACP context + wake state.
+    session?.killAgentProcess(slotId);
+
+    const updatedAgents = team.agents.map((a) =>
+      a.slotId === slotId
+        ? {
+            ...a,
+            agentType: newBackend,
+            status: 'pending' as const,
+          }
+        : a
+    );
+    await this.repo.update(teamId, { agents: updatedAgents, updatedAt: Date.now() });
+
+    // The conversation row carries the live model; the agent record
+    // does not. Update the conversation's model when a new one is
+    // supplied so the next wake reflects the user's pick.
+    if (newModel && agent.conversationId) {
+      try {
+        await this.conversationService.updateConversation(agent.conversationId, {
+          extra: { backend: newBackend, currentModelId: newModel },
+        } as Partial<TChatConversation>);
+      } catch (error) {
+        console.warn(
+          `[TeamSessionService] changeAgentBackend: failed to persist new model on conversation "${agent.conversationId}":`,
+          error instanceof Error ? error.message : error
+        );
+      }
+    }
+
+    ipcBridge.team.agentStatusChanged.emit({ teamId, slotId, status: 'pending' });
+
+    void this.eventLogger.append({
+      teamId,
+      eventType: 'decision',
+      actorSlotId: slotId,
+      payload: {
+        outcome: 'backend_changed',
+        actor: 'user',
+        from_backend: fromBackend,
+        to_backend: newBackend,
+        slot_id: slotId,
+      },
+    });
+  }
+
+  /**
    * W3b — User-driven promotion of a team to Standing Company status.
    * Idempotent: a no-op if the team is already promoted. The flag is
    * persisted, a `decision` event is appended for the Activity tab, and a

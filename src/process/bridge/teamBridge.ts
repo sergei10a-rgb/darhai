@@ -62,6 +62,19 @@ const restartAgentParamSchema = z
   })
   .strict();
 
+// Live-smoke fix #4b (2026-05-19) — schema for the changeAgentBackend
+// IPC. newBackend is capped at the same length as agentType strings
+// elsewhere in the codebase; newModel is optional because a swap
+// between equivalent default models doesn't need a model override.
+const changeAgentBackendParamSchema = z
+  .object({
+    teamId: z.string().min(1).max(64),
+    slotId: z.string().min(1).max(128),
+    newBackend: z.string().min(1).max(64),
+    newModel: z.string().min(1).max(128).optional(),
+  })
+  .strict();
+
 const teamIdOnlyParamSchema = z
   .object({
     teamId: z.string().min(1).max(64),
@@ -133,6 +146,20 @@ export function initTeamBridge(teamSessionService: TeamSessionService): void {
     safeProvider(async (raw) => {
       const { teamId, slotId } = restartAgentParamSchema.parse(raw);
       await teamSessionService.restartAgent(teamId, slotId);
+    })
+  );
+
+  // Live-smoke fix #4b (2026-05-19) — backend swap handler. The Zod
+  // boundary check mirrors the W5 audit pattern; service-side enforces
+  // same-conversationType + not-mid-wake invariants. Destructure into
+  // a fresh object because Zod's inferred type from .strict() still
+  // marks the fields as TS-optional even though the schema guarantees
+  // presence at runtime.
+  ipcBridge.team.changeAgentBackend.provider(
+    safeProvider(async (raw) => {
+      const { teamId, slotId, newBackend, newModel } =
+        changeAgentBackendParamSchema.parse(raw);
+      await teamSessionService.changeAgentBackend({ teamId, slotId, newBackend, newModel });
     })
   );
 

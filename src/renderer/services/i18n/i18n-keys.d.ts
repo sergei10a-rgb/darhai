@@ -2510,6 +2510,8 @@ export type I18nKey =
   | 'starOffice.monitor.visualStepLive'
   | 'starOffice.monitor.visualStepUi'
   | 'starOffice.monitor.visualTitle'
+  | 'team.agentBackendSwap.error'
+  | 'team.agentBackendSwap.success'
   | 'team.agentNotConfigured'
   | 'team.create.chooseDifferentFolder'
   | 'team.create.confirm'

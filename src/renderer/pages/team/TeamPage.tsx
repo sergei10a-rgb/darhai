@@ -22,6 +22,7 @@ import TeamRightRail from './components/TeamRightRail';
 import TeamActivityTab from './components/TeamActivityTab';
 import TeamHeaderBadges from './components/TeamHeaderBadges';
 import PromoteToStandingModal from './components/PromoteToStandingModal';
+import AgentBackendPill from './components/AgentBackendPill';
 import { TeamTabsProvider, useTeamTabs } from './hooks/TeamTabsContext';
 import { TeamPermissionProvider } from './hooks/TeamPermissionContext';
 import { useTeamSession } from './hooks/useTeamSession';
@@ -119,6 +120,10 @@ const AgentChatSlot: React.FC<{
           nameClassName='text-13px text-[color:var(--color-text-2)] font-medium'
         />
         <div className='flex items-center gap-8px shrink-0'>
+          {/* Live-smoke fix #4b (2026-05-19) — per-agent backend swap.
+              Hides itself when fewer than 2 backends are installed and
+              surfaces same-conversationType-only constraints via toast. */}
+          <AgentBackendPill teamId={teamId} slotId={agent.slotId} agentType={agent.agentType} />
           {agent.conversationId && !isWCore && isAcpLike && (
             <div className='min-w-0 max-w-140px [&_button]:max-w-full [&_button_span]:truncate'>
               <AcpModelSelector

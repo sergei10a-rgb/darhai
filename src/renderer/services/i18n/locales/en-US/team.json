@@ -68,5 +68,9 @@
       "body": "It may have been deleted, or its data is no longer available. Head back to the Teams library to pick another team or start a new one.",
       "backCta": "Back to Teams"
     }
+  },
+  "agentBackendSwap": {
+    "success": "Agent backend changed",
+    "error": "Failed to change agent backend"
   }
 }
