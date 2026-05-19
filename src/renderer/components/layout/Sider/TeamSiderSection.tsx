@@ -21,6 +21,7 @@ import { ipcBridge } from '@/common';
 import SiderItem from './SiderItem';
 import type { SiderMenuItem } from './SiderItem';
 import ActiveTeamGroup from './ActiveTeamGroup';
+import DeleteTeamConfirmModal from './DeleteTeamConfirmModal';
 import { useTeamGroupPersistence } from './useTeamGroupPersistence';
 import type { TeamAgent } from '@/common/types/teamTypes';
 
@@ -70,6 +71,41 @@ const TeamSiderSection: React.FC<TeamSiderSectionProps> = ({
   const [renameId, setRenameId] = useState<string | null>(null);
   const [renameName, setRenameName] = useState('');
   const [renameLoading, setRenameLoading] = useState(false);
+
+  // Live-smoke fix #3 (2026-05-19): Arco Modal.confirm is one-shot and
+  // cannot gate its OK button on input state, so we drive the
+  // destructive delete with a stateful WaylandModal instead. The pending
+  // team-id captures which row to delete on confirm.
+  const [deleteVisible, setDeleteVisible] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const handleDeleteCancel = useCallback(() => {
+    setDeleteVisible(false);
+    setDeleteTarget(null);
+    setDeleteLoading(false);
+  }, []);
+
+  const handleDeleteConfirm = useCallback(async () => {
+    if (!deleteTarget) return;
+    setDeleteLoading(true);
+    const targetId = deleteTarget.id;
+    try {
+      await removeTeam(targetId);
+      Message.success(t('team.sider.deleteSuccess'));
+      if (pathname.startsWith(`/team/${targetId}`)) {
+        // intentional fire-and-forget; failure is non-actionable
+        Promise.resolve(navigate('/')).catch(() => {});
+      }
+      setDeleteVisible(false);
+      setDeleteTarget(null);
+    } catch (err) {
+      console.error('Failed to delete team:', err);
+      Message.error(t('team.sider.delete'));
+    } finally {
+      setDeleteLoading(false);
+    }
+  }, [deleteTarget, navigate, pathname, removeTeam, t]);
 
   const handleRenameConfirm = useCallback(async () => {
     if (!renameId || !renameName.trim()) return;
@@ -209,24 +245,8 @@ const TeamSiderSection: React.FC<TeamSiderSectionProps> = ({
                         setRenameName(team.name);
                         setRenameVisible(true);
                       } else if (key === 'delete') {
-                        Modal.confirm({
-                          title: t('team.sider.deleteConfirm'),
-                          content: t('team.sider.deleteConfirmContent'),
-                          okText: t('team.sider.deleteOk'),
-                          cancelText: t('team.sider.deleteCancel'),
-                          okButtonProps: { status: 'warning' },
-                          onOk: async () => {
-                            await removeTeam(team.id);
-                            Message.success(t('team.sider.deleteSuccess'));
-                            if (pathname.startsWith(`/team/${team.id}`)) {
-                              // intentional fire-and-forget; failure is non-actionable
-                              Promise.resolve(navigate('/')).catch(() => {});
-                            }
-                          },
-                          style: { borderRadius: '12px' },
-                          alignCenter: true,
-                          getPopupContainer: () => document.body,
-                        });
+                        setDeleteTarget({ id: team.id, name: team.name });
+                        setDeleteVisible(true);
                       }
                     }}
                     onClick={() => handleTeamClick(team.id)}
@@ -261,6 +281,13 @@ const TeamSiderSection: React.FC<TeamSiderSectionProps> = ({
           void refreshTeams();
           Promise.resolve(navigate(`/team/${team.id}`)).catch(console.error);
         }}
+      />
+      <DeleteTeamConfirmModal
+        visible={deleteVisible}
+        teamName={deleteTarget?.name ?? ''}
+        loading={deleteLoading}
+        onConfirm={() => void handleDeleteConfirm()}
+        onCancel={handleDeleteCancel}
       />
       <Modal
         title={t('team.sider.renameTitle')}
