@@ -175,6 +175,8 @@ desdoc/
 tests/e2e/screenshots/
 tests/e2e/results/
 tests/e2e/report/
+# Local-only diagnostic harness; not part of the suite.
+tests/e2e/debug-harness.cjs
 
 # PowerShell accidentally creates a literal file named '$null' when a command
 # redirects output to $null (e.g. `cmd > $null`) on Windows runners.
