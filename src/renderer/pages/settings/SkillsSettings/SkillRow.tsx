@@ -13,9 +13,10 @@ type Props = {
   entry: SkillIndexEntry;
   pinned: boolean;
   onTogglePin: (name: string, pinned: boolean) => void;
+  onClick?: (entry: SkillIndexEntry) => void;
 };
 
-const VERDICT_ICON: Record<SkillVerdict, React.ReactNode> = {
+export const VERDICT_ICON: Record<SkillVerdict, React.ReactNode> = {
   clean: <Shield size={14} style={{ color: 'var(--success)' }} />,
   review: <ShieldAlert size={14} style={{ color: 'var(--warning)' }} />,
   blocked: <ShieldOff size={14} style={{ color: 'var(--danger)' }} />,
@@ -25,7 +26,7 @@ const VERDICT_ICON: Record<SkillVerdict, React.ReactNode> = {
 // Static map avoids a dynamic-key t() lookup whose template-literal type
 // is too wide for react-i18next's overload signatures. Verdict copy is
 // short and verdict count is small, so a static map is the right tool.
-const SOURCE_LABEL: Record<SkillSource, string> = {
+export const SOURCE_LABEL: Record<SkillSource, string> = {
   'wayland-library': 'Wayland library',
   team: 'Team',
   user: 'My skills',
@@ -33,7 +34,7 @@ const SOURCE_LABEL: Record<SkillSource, string> = {
   'cli-discovered': 'From your CLIs',
 };
 
-const STATUS_LABEL: Record<SkillVerdict, string> = {
+export const STATUS_LABEL: Record<SkillVerdict, string> = {
   clean: 'Scanned — no red flags found',
   review: 'Needs review',
   blocked: 'Blocked — quarantined',
@@ -49,7 +50,7 @@ const SOURCE_BADGE_CLASS: Record<string, string> = {
     'bg-[rgba(var(--primary-6),0.08)] text-primary-6 border-[rgba(var(--primary-6),0.2)]',
 };
 
-const SkillRow: React.FC<Props> = ({ entry, pinned, onTogglePin }) => {
+const SkillRow: React.FC<Props> = ({ entry, pinned, onTogglePin, onClick }) => {
   const { t } = useTranslation('skills');
   const verdict = entry.security?.verdict ?? 'unscanned';
   const sourceLabel =
@@ -67,8 +68,9 @@ const SkillRow: React.FC<Props> = ({ entry, pinned, onTogglePin }) => {
 
   return (
     <div
-      className='group flex items-center gap-12px px-16px py-10px hover:bg-fill-1 transition-colors'
+      className='group flex items-center gap-12px px-16px py-10px hover:bg-fill-1 transition-colors cursor-pointer'
       style={{ borderBottom: '1px solid var(--border-1)' }}
+      onClick={() => onClick?.(entry)}
     >
       {/* Name + source badge */}
       <div className='flex-1 min-w-0 flex items-center gap-8px'>
