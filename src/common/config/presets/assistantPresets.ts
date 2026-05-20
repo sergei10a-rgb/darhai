@@ -1,3 +1,8 @@
+// B17 persona curation pending — run `node scripts/convert-team-bundle.mjs personas` against the
+// wayland-teams + FoundrySkills bundles to populate out/team-personas/assistants.staged.json (39
+// entries) and out/team-personas/agent-profiles.staged.json (25 entries), then re-run B17 to
+// evaluate each staged persona against ASSISTANT_PRESETS below for MERGE / DIFFERENTIATE / DROP.
+
 /**
  * Category used to filter assistants in the chat surface picker.
  * Phase 1 (chat-redesign) data shape; UI routing follows in later phases.
