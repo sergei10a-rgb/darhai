@@ -5,6 +5,7 @@
  */
 
 import { Button, Input } from '@arco-design/web-react';
+import { Download, Sparkles } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Virtuoso } from 'react-virtuoso';
@@ -17,6 +18,7 @@ import FilterRail from './FilterRail';
 import LibraryHealth from './LibraryHealth';
 import SkillDetailDrawer from './SkillDetailDrawer';
 import SkillRow from './SkillRow';
+import './SkillsSettings.module.css';
 
 const SkillsSettings: React.FC = () => {
   const { t } = useTranslation(undefined, { keyPrefix: 'skills' });
@@ -158,7 +160,7 @@ const SkillsSettings: React.FC = () => {
         </div>
       ) : null}
 
-      <div className='flex items-center gap-12px'>
+      <div className='flex items-center gap-10px'>
         <Input.Search
           placeholder={t('search.placeholder')}
           value={query}
@@ -166,7 +168,26 @@ const SkillsSettings: React.FC = () => {
           style={{ flex: 1, maxWidth: 'unset' }}
           allowClear
         />
-        <Button type='primary' onClick={() => setBuildModalVisible(true)}>
+        <Button
+          type='secondary'
+          icon={<Download size={14} />}
+          onClick={() => {
+            // TODO: B12 wiring — open the existing import flow (folder/git/zip/single-md
+            // already provided via ipcBridge.skills.import.*). The button is here so
+            // the page matches the mockup affordance; the modal is a future follow-up.
+            // eslint-disable-next-line no-alert
+            window.alert(
+              'Import flow is wired via IPC (folder / git / zip / single SKILL.md). The picker UI ships in the next pass.'
+            );
+          }}
+        >
+          {t('actions.import', 'Import skills')}
+        </Button>
+        <Button
+          type='primary'
+          icon={<Sparkles size={14} />}
+          onClick={() => setBuildModalVisible(true)}
+        >
           {t('actions.build')}
         </Button>
       </div>
@@ -178,8 +199,11 @@ const SkillsSettings: React.FC = () => {
       />
 
       <div
-        className='bg-base rd-12px border overflow-hidden flex'
-        style={{ borderColor: 'var(--border-1)' }}
+        className='skills-shell rd-12px overflow-hidden flex'
+        style={{
+          background: 'var(--fill-1)',
+          border: '1px solid var(--border-1)',
+        }}
       >
         <FilterRail
           entries={entries}
@@ -191,7 +215,27 @@ const SkillsSettings: React.FC = () => {
           onCategoriesChange={setSelectedCategories}
         />
 
-        <div className='flex-1 min-w-0'>
+        <div
+          className='flex-1 min-w-0 flex flex-col'
+          style={{ background: 'var(--bg)' }}
+        >
+          {/* Row-list header — count + filter summary, mirrors the mockup's
+              "2,047 skills · showing all sources" affordance. */}
+          {filtered.length > 0 ? (
+            <div
+              className='flex items-center justify-between px-16px py-10px text-11px uppercase font-semibold'
+              style={{
+                borderBottom: '1px solid var(--border-1)',
+                color: 'var(--text-tertiary)',
+                letterSpacing: '0.08em',
+              }}
+            >
+              <span>
+                {filtered.length.toLocaleString()} {filtered.length === 1 ? 'skill' : 'skills'}
+              </span>
+            </div>
+          ) : null}
+
           {filtered.length === 0 ? (
             <div
               className='text-center text-13px py-40px'
@@ -205,7 +249,8 @@ const SkillsSettings: React.FC = () => {
             </div>
           ) : (
             <Virtuoso
-              style={{ height: Math.min(filtered.length * 78, 640) }}
+              className='skills-virtuoso'
+              style={{ height: Math.min(filtered.length * 84, 640) }}
               totalCount={filtered.length}
               data={filtered}
               itemContent={renderRow}

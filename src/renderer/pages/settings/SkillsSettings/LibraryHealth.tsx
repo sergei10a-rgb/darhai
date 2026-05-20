@@ -39,7 +39,7 @@ const LibraryHealth: React.FC<Props> = ({ stats }) => {
       {/* 1. Skills ready */}
       <div
         className='rd-12px p-15px'
-        style={{ background: 'var(--bg-1)', border: '1px solid var(--border-1)' }}
+        style={{ background: 'var(--fill-1)', border: '1px solid var(--border-1)' }}
       >
         <div
           className='text-24px font-bold leading-none'
@@ -61,7 +61,7 @@ const LibraryHealth: React.FC<Props> = ({ stats }) => {
       {/* 2. Pinned always-on */}
       <div
         className='rd-12px p-15px'
-        style={{ background: 'var(--bg-1)', border: '1px solid var(--border-1)' }}
+        style={{ background: 'var(--fill-1)', border: '1px solid var(--border-1)' }}
       >
         <div
           className='text-24px font-bold leading-none'
@@ -83,7 +83,7 @@ const LibraryHealth: React.FC<Props> = ({ stats }) => {
       {/* 3. Sources, unified */}
       <div
         className='rd-12px p-15px'
-        style={{ background: 'var(--bg-1)', border: '1px solid var(--border-1)' }}
+        style={{ background: 'var(--fill-1)', border: '1px solid var(--border-1)' }}
       >
         <div
           className='text-24px font-bold leading-none'

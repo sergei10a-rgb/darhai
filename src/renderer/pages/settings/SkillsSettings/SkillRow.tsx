@@ -15,6 +15,7 @@ import {
   Star,
 } from 'lucide-react';
 import type { SkillIndexEntry, SkillSource, SkillVerdict } from '@/common/types/skillTypes';
+import { toDisplayName } from './displayName';
 
 type Props = {
   entry: SkillIndexEntry;
@@ -131,7 +132,7 @@ const SkillRow: React.FC<Props> = ({ entry, pinned, onTogglePin, onClick }) => {
             style={{ color: 'var(--text-primary)', maxWidth: 360 }}
             title={entry.name}
           >
-            {entry.name}
+            {toDisplayName(entry.name)}
           </span>
           <span
             className='shrink-0 text-10px px-7px py-1px rd-4px border font-medium uppercase'
@@ -184,7 +185,7 @@ const SkillRow: React.FC<Props> = ({ entry, pinned, onTogglePin, onClick }) => {
             className='text-10px uppercase font-medium'
             style={{ color: 'var(--text-tertiary)', letterSpacing: '0.06em' }}
           >
-            {entry.metadata.category.replace(/-/g, ' ')}
+            {toDisplayName(entry.metadata.category)}
           </div>
         ) : null}
       </div>
