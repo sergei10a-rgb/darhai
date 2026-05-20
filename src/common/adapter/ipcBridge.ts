@@ -337,9 +337,6 @@ export const fs = {
     'add-custom-external-path'
   ),
   removeCustomExternalPath: buildProvider<IBridgeResponse, { path: string }>('remove-custom-external-path'),
-  // Skills Market: inject/remove the wayland-skills builtin skill
-  enableSkillsMarket: buildProvider<IBridgeResponse, void>('enable-skills-market'),
-  disableSkillsMarket: buildProvider<IBridgeResponse, void>('disable-skills-market'),
 };
 
 export const speechToText = {
