@@ -26,7 +26,7 @@ import type {
 import type { ProtocolDetectionRequest, ProtocolDetectionResponse } from '../utils/protocolDetector';
 import type { SpeechToTextRequest, SpeechToTextResult } from '../types/speech';
 import type { DownloadResult, VoiceAsset } from '../types/voiceAsset';
-import type { SkillSecurityReport, SkillIndexEntry, SkillSource } from '../types/skillTypes';
+import type { SkillSecurityReport, SkillIndexEntry, SkillSource, SkillVerdict } from '../types/skillTypes';
 import type { ImportResult } from '../../process/services/skills/SkillImport';
 
 export type SkillStats = {
@@ -378,6 +378,21 @@ export const skills = {
   stats: buildProvider<SkillStats, void>('skills.stats'),
   /** Pin or unpin a skill by name. */
   setPinned: buildProvider<void, { name: string; pinned: boolean }>('skills.set-pinned'),
+  build: {
+    /**
+     * Draft a SKILL.md from a plain-text description.
+     * TODO: wire to real model call; currently returns a deterministic template.
+     */
+    draft: buildProvider<{ skillMd: string }, { description: string }>('skills.build.draft'),
+  },
+  /**
+   * Write a new SKILL.md to ~/.wayland/skills/<kebab-name>/SKILL.md,
+   * scan it via SkillGuard, register in SkillLibrary, and return the verdict.
+   */
+  save: buildProvider<
+    { name: string; verdict: SkillVerdict },
+    { name: string; description: string; category: string; tags: string[]; body: string }
+  >('skills.save'),
 };
 
 export const voiceAsset = {

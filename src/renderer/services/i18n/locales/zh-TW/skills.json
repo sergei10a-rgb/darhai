@@ -68,6 +68,49 @@
     "tab": {
       "write": "自己撰寫",
       "describe": "描述需求"
+    },
+    "form": {
+      "name": {
+        "label": "名稱",
+        "placeholder": "如 my-skill"
+      },
+      "description": {
+        "label": "描述",
+        "placeholder": "這個技能做什麼？",
+        "hint": "包含使用場景和禁止場景，協助模型準確啟用。"
+      },
+      "category": {
+        "label": "分類",
+        "placeholder": "如 coding"
+      },
+      "tags": {
+        "label": "標籤",
+        "placeholder": "逗號分隔，如 git, review"
+      },
+      "body": {
+        "label": "SKILL.md 正文"
+      }
+    },
+    "describe": {
+      "label": "描述您的技能",
+      "placeholder": "用自然語言描述您的技能，我們將為您生成 SKILL.md…",
+      "generate": "生成",
+      "generating": "生成中…"
+    },
+    "actions": {
+      "save": "儲存技能",
+      "saving": "儲存中…",
+      "cancel": "取消",
+      "done": "完成"
+    },
+    "verdict": {
+      "clean": "技能 \"{{name}}\" 已成功儲存。",
+      "review": "技能 \"{{name}}\" 已儲存，但需要審核。",
+      "blocked": "技能 \"{{name}}\" 被 Skill Guard 攔截，未註冊。請編輯正文以移除標記內容。"
+    },
+    "error": {
+      "saveFailed": "儲存失敗",
+      "generateFailed": "生成失敗"
     }
   },
   "detail": {

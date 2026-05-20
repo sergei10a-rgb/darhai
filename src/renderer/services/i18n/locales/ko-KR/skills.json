@@ -68,6 +68,49 @@
     "tab": {
       "write": "직접 작성",
       "describe": "설명하기"
+    },
+    "form": {
+      "name": {
+        "label": "이름",
+        "placeholder": "예: my-skill"
+      },
+      "description": {
+        "label": "설명",
+        "placeholder": "이 스킬은 무엇을 합니까?",
+        "hint": "Use-when 및 Do-NOT-use 가이드를 포함하면 모델이 정확하게 활성화됩니다."
+      },
+      "category": {
+        "label": "카테고리",
+        "placeholder": "예: coding"
+      },
+      "tags": {
+        "label": "태그",
+        "placeholder": "쉼표로 구분, 예: git, review"
+      },
+      "body": {
+        "label": "SKILL.md 본문"
+      }
+    },
+    "describe": {
+      "label": "스킬 설명",
+      "placeholder": "자연어로 스킬을 설명하면 SKILL.md 를 생성합니다…",
+      "generate": "생성",
+      "generating": "생성 중…"
+    },
+    "actions": {
+      "save": "스킬 저장",
+      "saving": "저장 중…",
+      "cancel": "취소",
+      "done": "완료"
+    },
+    "verdict": {
+      "clean": "스킬 \"{{name}}\" 이(가) 성공적으로 저장되었습니다.",
+      "review": "스킬 \"{{name}}\" 이(가) 저장되었지만 검토가 필요합니다.",
+      "blocked": "스킬 \"{{name}}\" 이(가) Skill Guard에 의해 차단되어 등록되지 않았습니다. 플래그된 내용을 수정하세요."
+    },
+    "error": {
+      "saveFailed": "저장 실패",
+      "generateFailed": "생성 실패"
     }
   },
   "detail": {

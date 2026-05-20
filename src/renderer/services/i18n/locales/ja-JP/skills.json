@@ -68,6 +68,49 @@
     "tab": {
       "write": "自分で書く",
       "describe": "説明する"
+    },
+    "form": {
+      "name": {
+        "label": "名前",
+        "placeholder": "例: my-skill"
+      },
+      "description": {
+        "label": "説明",
+        "placeholder": "このスキルは何をしますか？",
+        "hint": "Use-when と Do-NOT-use のガイダンスを含めるとモデルが正確に起動します。"
+      },
+      "category": {
+        "label": "カテゴリ",
+        "placeholder": "例: coding"
+      },
+      "tags": {
+        "label": "タグ",
+        "placeholder": "カンマ区切り、例: git, review"
+      },
+      "body": {
+        "label": "SKILL.md 本文"
+      }
+    },
+    "describe": {
+      "label": "スキルを説明する",
+      "placeholder": "自然言語でスキルを説明してください。SKILL.md を生成します…",
+      "generate": "生成",
+      "generating": "生成中…"
+    },
+    "actions": {
+      "save": "スキルを保存",
+      "saving": "保存中…",
+      "cancel": "キャンセル",
+      "done": "完了"
+    },
+    "verdict": {
+      "clean": "スキル \"{{name}}\" を保存しました。",
+      "review": "スキル \"{{name}}\" を保存しましたが、レビューが必要です。",
+      "blocked": "スキル \"{{name}}\" は Skill Guard によってブロックされ、登録されませんでした。本文のフラグ付きコンテンツを修正してください。"
+    },
+    "error": {
+      "saveFailed": "保存に失敗しました",
+      "generateFailed": "生成に失敗しました"
     }
   },
   "detail": {

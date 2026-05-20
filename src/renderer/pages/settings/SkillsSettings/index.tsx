@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Input } from '@arco-design/web-react';
+import { Button, Input } from '@arco-design/web-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Virtuoso } from 'react-virtuoso';
@@ -12,6 +12,7 @@ import { ipcBridge } from '@/common';
 import type { SkillStats } from '@/common/adapter/ipcBridge';
 import type { SkillIndexEntry } from '@/common/types/skillTypes';
 import SettingsPageShell from '@renderer/pages/settings/components/SettingsPageShell';
+import BuildSkillModal from './BuildSkillModal';
 import LibraryHealth from './LibraryHealth';
 import SkillRow from './SkillRow';
 
@@ -22,6 +23,7 @@ const SkillsSettings: React.FC = () => {
   const [stats, setStats] = useState<SkillStats | null>(null);
   const [pinnedNames, setPinnedNames] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState('');
+  const [buildModalVisible, setBuildModalVisible] = useState(false);
 
   const fetchData = useCallback(async () => {
     const [list, s] = await Promise.all([
@@ -87,12 +89,23 @@ const SkillsSettings: React.FC = () => {
     >
       <LibraryHealth stats={stats} />
 
-      <Input.Search
-        placeholder={t('search.placeholder')}
-        value={query}
-        onChange={(v) => setQuery(v)}
-        style={{ maxWidth: 320 }}
-        allowClear
+      <div className='flex items-center gap-12px'>
+        <Input.Search
+          placeholder={t('search.placeholder')}
+          value={query}
+          onChange={(v) => setQuery(v)}
+          style={{ maxWidth: 320 }}
+          allowClear
+        />
+        <Button type='primary' onClick={() => setBuildModalVisible(true)}>
+          {t('actions.build')}
+        </Button>
+      </div>
+
+      <BuildSkillModal
+        visible={buildModalVisible}
+        onClose={() => setBuildModalVisible(false)}
+        onSaved={() => { void fetchData(); setBuildModalVisible(false); }}
       />
 
       <div

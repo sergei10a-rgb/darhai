@@ -4,7 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import path from 'node:path';
+import { homedir } from 'node:os';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { ipcBridge } from '@/common';
+import { SkillGuard } from '@process/services/skills/SkillGuard';
 import { SkillLibrary } from '@process/services/skills/SkillLibrary';
 import { SkillImport } from '@process/services/skills/SkillImport';
 import { ProcessConfig } from '@process/utils/initStorage';
@@ -62,5 +66,63 @@ export function initSkillsBridge(): void {
       disabled: prefs.disabled ?? [],
       revision: (prefs.revision ?? 0) + 1,
     });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Skill builder
+  // ---------------------------------------------------------------------------
+
+  ipcBridge.skills.build.draft.provider(async ({ description }) => {
+    // TODO: replace with a real model call to generate a SKILL.md from the description.
+    // The stub returns a minimal valid template so the UI can bootstrap the Write tab.
+    const skillMd = [
+      '# new-skill',
+      '',
+      `> ${description}`,
+      '',
+      '## Use when',
+      '',
+      '- (fill in)',
+      '',
+      '## Do NOT use when',
+      '',
+      '- (fill in)',
+      '',
+      '## Instructions',
+      '',
+      description,
+    ].join('\n');
+    return { skillMd };
+  });
+
+  ipcBridge.skills.save.provider(async ({ name, description, category, tags, body }) => {
+    const kebab = name
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+
+    const destDir = path.join(homedir(), '.wayland', 'skills', kebab);
+    await mkdir(destDir, { recursive: true });
+    const destFile = path.join(destDir, 'SKILL.md');
+    await writeFile(destFile, body, 'utf-8');
+
+    const [report] = await SkillGuard.scan([{ name: kebab, body, description, tags }]);
+
+    if (report.verdict !== 'blocked') {
+      SkillLibrary.getInstance().registerSource([
+        {
+          name: kebab,
+          description,
+          type: 'skill',
+          source: 'user',
+          metadata: { tags, category: category || undefined },
+          path: destFile,
+          security: report,
+        },
+      ]);
+    }
+
+    return { name: kebab, verdict: report.verdict };
   });
 }
