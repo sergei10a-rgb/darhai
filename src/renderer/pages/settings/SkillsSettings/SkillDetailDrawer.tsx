@@ -5,7 +5,7 @@
  */
 
 import { Alert, Button, Drawer, Tag, Typography } from '@arco-design/web-react';
-import { Star } from '@icon-park/react';
+import { Star } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import type { SkillIndexEntry } from '@/common/types/skillTypes';

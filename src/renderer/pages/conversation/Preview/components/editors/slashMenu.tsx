@@ -22,21 +22,24 @@
  *     incompatibility where `.element` could be null at portal-append time.
  */
 
+// Migrated from @icon-park/react to lucide-react after the icon-sweep commit
+// (6ba3a0659) removed IconParkHOC. JSX usages keep the icon-park-style names
+// via import aliases to minimize diff.
 import {
-  AlignTextLeft,
-  CheckOne,
+  AlignLeft as AlignTextLeft,
+  Braces as CodeBrackets,
+  CheckSquare as CheckOne,
   Code,
-  CodeBrackets,
-  H1,
-  H2,
-  H3,
-  ListView,
+  Heading1 as H1,
+  Heading2 as H2,
+  Heading3 as H3,
+  LayoutList as ListView,
+  List as UnorderedList,
+  ListOrdered as OrderedList,
   Minus,
-  OrderedList,
   Quote,
-  TableFile,
-  UnorderedList,
-} from '@icon-park/react';
+  Table as TableFile,
+} from 'lucide-react';
 import { type Editor, Extension, type Range } from '@tiptap/core';
 import Suggestion from '@tiptap/suggestion';
 import React, { useEffect, useRef, useState } from 'react';
@@ -53,14 +56,13 @@ export type SlashItem = {
 };
 
 const ICON_SIZE = '18';
-const ICON_THEME = 'outline' as const;
 
 export const SLASH_ITEMS: SlashItem[] = [
   {
     label: 'Text',
     description: 'Plain paragraph',
     keywords: ['text', 'paragraph', 'plain', 'p'],
-    icon: <AlignTextLeft theme={ICON_THEME} size={ICON_SIZE} />,
+    icon: <AlignTextLeft size={ICON_SIZE} />,
     action: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).setParagraph().run();
     },
@@ -69,7 +71,7 @@ export const SLASH_ITEMS: SlashItem[] = [
     label: 'Heading 1',
     description: 'Large section heading',
     keywords: ['heading', 'h1', 'title', 'large'],
-    icon: <H1 theme={ICON_THEME} size={ICON_SIZE} />,
+    icon: <H1 size={ICON_SIZE} />,
     action: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).setNode('heading', { level: 1 }).run();
     },
@@ -78,7 +80,7 @@ export const SLASH_ITEMS: SlashItem[] = [
     label: 'Heading 2',
     description: 'Medium section heading',
     keywords: ['heading', 'h2', 'subtitle', 'medium'],
-    icon: <H2 theme={ICON_THEME} size={ICON_SIZE} />,
+    icon: <H2 size={ICON_SIZE} />,
     action: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).setNode('heading', { level: 2 }).run();
     },
@@ -87,7 +89,7 @@ export const SLASH_ITEMS: SlashItem[] = [
     label: 'Heading 3',
     description: 'Small section heading',
     keywords: ['heading', 'h3', 'small'],
-    icon: <H3 theme={ICON_THEME} size={ICON_SIZE} />,
+    icon: <H3 size={ICON_SIZE} />,
     action: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).setNode('heading', { level: 3 }).run();
     },
@@ -96,7 +98,7 @@ export const SLASH_ITEMS: SlashItem[] = [
     label: 'Bulleted list',
     description: 'Simple bullet list',
     keywords: ['bullet', 'list', 'unordered', 'ul'],
-    icon: <UnorderedList theme={ICON_THEME} size={ICON_SIZE} />,
+    icon: <UnorderedList size={ICON_SIZE} />,
     action: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).toggleBulletList().run();
     },
@@ -105,7 +107,7 @@ export const SLASH_ITEMS: SlashItem[] = [
     label: 'Numbered list',
     description: 'List with 1., 2., 3.',
     keywords: ['numbered', 'list', 'ordered', 'ol'],
-    icon: <OrderedList theme={ICON_THEME} size={ICON_SIZE} />,
+    icon: <OrderedList size={ICON_SIZE} />,
     action: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).toggleOrderedList().run();
     },
@@ -114,7 +116,7 @@ export const SLASH_ITEMS: SlashItem[] = [
     label: 'Task list',
     description: 'Track to-dos with checkboxes',
     keywords: ['task', 'todo', 'to-do', 'checkbox', 'check'],
-    icon: <CheckOne theme={ICON_THEME} size={ICON_SIZE} />,
+    icon: <CheckOne size={ICON_SIZE} />,
     action: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).toggleList('taskList', 'taskItem').run();
     },
@@ -123,7 +125,7 @@ export const SLASH_ITEMS: SlashItem[] = [
     label: 'Quote',
     description: 'Pull-quote block',
     keywords: ['quote', 'blockquote', 'citation'],
-    icon: <Quote theme={ICON_THEME} size={ICON_SIZE} />,
+    icon: <Quote size={ICON_SIZE} />,
     action: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).setBlockquote().run();
     },
@@ -132,7 +134,7 @@ export const SLASH_ITEMS: SlashItem[] = [
     label: 'Code block',
     description: 'Multi-line code with monospace font',
     keywords: ['code', 'codeblock', 'pre', 'fenced'],
-    icon: <CodeBrackets theme={ICON_THEME} size={ICON_SIZE} />,
+    icon: <CodeBrackets size={ICON_SIZE} />,
     action: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).toggleCodeBlock().run();
     },
@@ -141,7 +143,7 @@ export const SLASH_ITEMS: SlashItem[] = [
     label: 'Inline code',
     description: 'Wrap in `backticks`',
     keywords: ['code', 'inline', 'mono'],
-    icon: <Code theme={ICON_THEME} size={ICON_SIZE} />,
+    icon: <Code size={ICON_SIZE} />,
     action: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).setMark('code').run();
     },
@@ -150,7 +152,7 @@ export const SLASH_ITEMS: SlashItem[] = [
     label: 'Divider',
     description: 'Horizontal rule across the page',
     keywords: ['divider', 'hr', 'horizontal', 'rule', 'separator'],
-    icon: <Minus theme={ICON_THEME} size={ICON_SIZE} />,
+    icon: <Minus size={ICON_SIZE} />,
     action: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).setHorizontalRule().run();
     },
@@ -159,7 +161,7 @@ export const SLASH_ITEMS: SlashItem[] = [
     label: 'Table',
     description: '3×3 grid with header row',
     keywords: ['table', 'grid', 'rows', 'columns'],
-    icon: <TableFile theme={ICON_THEME} size={ICON_SIZE} />,
+    icon: <TableFile size={ICON_SIZE} />,
     action: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
     },
@@ -168,7 +170,7 @@ export const SLASH_ITEMS: SlashItem[] = [
     label: 'Bulleted list (nested)',
     description: 'List that can have sub-items',
     keywords: ['nested', 'tree', 'sub', 'hierarchy', 'outline'],
-    icon: <ListView theme={ICON_THEME} size={ICON_SIZE} />,
+    icon: <ListView size={ICON_SIZE} />,
     action: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).toggleBulletList().run();
     },

@@ -6,24 +6,27 @@
 
 import { useThemeContext } from '@/renderer/hooks/context/ThemeContext';
 import { Button } from '@arco-design/web-react';
+// Migrated from @icon-park/react to lucide-react after the icon-sweep commit
+// (6ba3a0659) removed IconParkHOC. JSX usages keep the icon-park-style names
+// via import aliases to minimize diff.
 import {
+  Bold as TextBold,
   Code,
-  DividingLine,
-  Drag,
-  H1,
-  H2,
-  H3,
+  GripVertical as Drag,
+  Heading1 as H1,
+  Heading2 as H2,
+  Heading3 as H3,
+  Italic as TextItalic,
   Link as LinkIcon,
-  OrderedList,
+  List as UnorderedList,
+  ListOrdered as OrderedList,
+  Minus as DividingLine,
   Plus,
   Quote,
   Redo,
   Strikethrough,
-  TextBold,
-  TextItalic,
   Undo,
-  UnorderedList,
-} from '@icon-park/react';
+} from 'lucide-react';
 import { DragHandle } from '@tiptap/extension-drag-handle-react';
 import Placeholder from '@tiptap/extension-placeholder';
 import { TableKit } from '@tiptap/extension-table';
@@ -100,21 +103,21 @@ const FormatButtons: React.FC<FormatButtonsProps> = ({ editor, variant }) => {
         active={editor.isActive('heading', { level: 1 })}
         onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
       >
-        <H1 theme='outline' size='16' />
+        <H1 size='16' />
       </ToolbarButton>
       <ToolbarButton
         title='Heading 2'
         active={editor.isActive('heading', { level: 2 })}
         onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
       >
-        <H2 theme='outline' size='16' />
+        <H2 size='16' />
       </ToolbarButton>
       <ToolbarButton
         title='Heading 3'
         active={editor.isActive('heading', { level: 3 })}
         onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
       >
-        <H3 theme='outline' size='16' />
+        <H3 size='16' />
       </ToolbarButton>
       <ToolbarDivider />
       <ToolbarButton
@@ -122,28 +125,28 @@ const FormatButtons: React.FC<FormatButtonsProps> = ({ editor, variant }) => {
         active={editor.isActive('bold')}
         onClick={() => editor.chain().focus().toggleBold().run()}
       >
-        <TextBold theme='outline' size='16' />
+        <TextBold size='16' />
       </ToolbarButton>
       <ToolbarButton
         title='Italic (⌘I)'
         active={editor.isActive('italic')}
         onClick={() => editor.chain().focus().toggleItalic().run()}
       >
-        <TextItalic theme='outline' size='16' />
+        <TextItalic size='16' />
       </ToolbarButton>
       <ToolbarButton
         title='Strikethrough'
         active={editor.isActive('strike')}
         onClick={() => editor.chain().focus().toggleStrike().run()}
       >
-        <Strikethrough theme='outline' size='16' />
+        <Strikethrough size='16' />
       </ToolbarButton>
       <ToolbarButton
         title='Inline code'
         active={editor.isActive('code')}
         onClick={() => editor.chain().focus().toggleCode().run()}
       >
-        <Code theme='outline' size='16' />
+        <Code size='16' />
       </ToolbarButton>
       <ToolbarDivider />
       <ToolbarButton
@@ -151,30 +154,30 @@ const FormatButtons: React.FC<FormatButtonsProps> = ({ editor, variant }) => {
         active={editor.isActive('bulletList')}
         onClick={() => editor.chain().focus().toggleBulletList().run()}
       >
-        <UnorderedList theme='outline' size='16' />
+        <UnorderedList size='16' />
       </ToolbarButton>
       <ToolbarButton
         title='Numbered list'
         active={editor.isActive('orderedList')}
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
       >
-        <OrderedList theme='outline' size='16' />
+        <OrderedList size='16' />
       </ToolbarButton>
       <ToolbarButton
         title='Blockquote'
         active={editor.isActive('blockquote')}
         onClick={() => editor.chain().focus().toggleBlockquote().run()}
       >
-        <Quote theme='outline' size='16' />
+        <Quote size='16' />
       </ToolbarButton>
       <ToolbarDivider />
       <ToolbarButton title='Link' active={editor.isActive('link')} onClick={promptLink}>
-        <LinkIcon theme='outline' size='16' />
+        <LinkIcon size='16' />
       </ToolbarButton>
       {variant === 'full' && (
         <>
           <ToolbarButton title='Horizontal rule' onClick={() => editor.chain().focus().setHorizontalRule().run()}>
-            <DividingLine theme='outline' size='16' />
+            <DividingLine size='16' />
           </ToolbarButton>
           <ToolbarDivider />
           <ToolbarButton
@@ -182,14 +185,14 @@ const FormatButtons: React.FC<FormatButtonsProps> = ({ editor, variant }) => {
             disabled={!editor.can().undo()}
             onClick={() => editor.chain().focus().undo().run()}
           >
-            <Undo theme='outline' size='16' />
+            <Undo size='16' />
           </ToolbarButton>
           <ToolbarButton
             title='Redo (⌘⇧Z)'
             disabled={!editor.can().redo()}
             onClick={() => editor.chain().focus().redo().run()}
           >
-            <Redo theme='outline' size='16' />
+            <Redo size='16' />
           </ToolbarButton>
         </>
       )}
@@ -423,7 +426,7 @@ const TipTapMarkdownEditor: React.FC<TipTapMarkdownEditorProps> = ({
               onMouseDown={(e) => e.preventDefault()}
               onClick={insertBlockBelow}
             >
-              <Plus theme='outline' size='14' />
+              <Plus size='14' />
             </button>
             <span
               role='button'
@@ -433,7 +436,7 @@ const TipTapMarkdownEditor: React.FC<TipTapMarkdownEditorProps> = ({
               className={styles.blockHandleGrip}
               data-drag-handle
             >
-              <Drag theme='outline' size='14' />
+              <Drag size='14' />
             </span>
           </div>
         </DragHandle>
