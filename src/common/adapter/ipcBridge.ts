@@ -344,6 +344,11 @@ export const speechToText = {
   transcribe: buildProvider<SpeechToTextResult, SpeechToTextRequest>('speech-to-text.transcribe'),
 };
 
+export const voiceSynth = {
+  speak: buildProvider<{ data: number[]; mimeType: string }, { text: string }>('voice-synth.speak'),
+  stop: buildProvider<Record<string, never>, void>('voice-synth.stop'),
+};
+
 export const voiceAsset = {
   download: buildProvider<DownloadResult, VoiceAsset>('voice-asset.download'),
   cancel: buildProvider<{ cancelled: boolean }, { assetId: string }>('voice-asset.cancel'),
