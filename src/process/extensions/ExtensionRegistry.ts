@@ -25,6 +25,7 @@ import { extensionEventBus, ExtensionSystemEvents } from './lifecycle/ExtensionE
 import { analyzePermissions, getOverallRiskLevel } from './sandbox/permissions';
 import type { PermissionSummary, PermissionLevel } from './sandbox/permissions';
 import { applyVendoredOverlay } from './data/bundle-vendored/vendoredAssistantOverlay';
+import { mergeVendoredAgentProfiles } from './data/bundle-vendored/agentProfileMerge';
 
 export class ExtensionRegistry {
   private static instance: ExtensionRegistry | undefined;
@@ -340,7 +341,12 @@ export class ExtensionRegistry {
     // — which predates the team-blitz schema additions — still surfaces
     // Standing Companies + roster + rituals on the /teams page. The
     // overlay is non-destructive: existing fields on the live record win.
-    this._assistants = await applyVendoredOverlay(assistants);
+    // Vendored bundle overlay: patch blitz schema fields onto live assistants.
+    const overlaid = await applyVendoredOverlay(assistants);
+    // Agent-profile merge: pull the 25 vendored persona entries from the
+    // skills-library and add them as additional assistants (id-deduped
+    // against the overlaid set — live waylandteams records win).
+    this._assistants = mergeVendoredAgentProfiles(overlaid);
     this._agents = agents;
     this._extI18n = extI18n;
   }
