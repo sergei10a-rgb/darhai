@@ -1006,6 +1006,24 @@
     "tokenWarning": "Uyum üst sınırına (~2,000 token) yaklaşılıyor. Bölümleri uzman katmanlarına ayırmayı düşünün.",
     "tokenError": "Uyum üst sınırı aşıldı. Bölümleri ~/.wayland/specialists/<id>.md konumundaki uzman katmanlarına taşıyın."
   },
+  "constitutionSpecialists": {
+    "title": "Uzman Katmanları",
+    "description": "Katmanlar, Anayasa'nın üzerine asistana özgü kurallar ekler. Asistan kimliğine göre isteğe bağlı olarak etkinleşir ve o asistanın istemine eklenir.",
+    "addButton": "Katman ekle",
+    "idLabel": "Asistan kimliği",
+    "idPlaceholder": "ör. copy, spark, humanizer",
+    "idInvalid": "Yalnızca harf, rakam, tire ve alt çizgi kullanın.",
+    "idDuplicate": "Bu kimliğe sahip bir katman zaten mevcut.",
+    "create": "Oluştur",
+    "edit": "Düzenle",
+    "delete": "Sil",
+    "deleteConfirmTitle": "Katman silinsin mi?",
+    "deleteConfirmBody": "\"{{value}}\" için katman kalıcı olarak kaldırılacak.",
+    "cancel": "İptal",
+    "empty": "Henüz uzman katmanı yok. Belirli bir asistana ek kurallar vermek için bir tane ekleyin.",
+    "close": "Kapat",
+    "tokenCount": "{{value}} token"
+  },
   "agentsPage": {
     "title": "Ajanlar"
   },

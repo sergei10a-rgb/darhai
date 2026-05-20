@@ -1008,6 +1008,24 @@
     "tokenWarning": "即將達到遵循上限（約 2,000 個權杖）。請考慮拆分為專家疊加層。",
     "tokenError": "已超過遵循上限。請將章節移至 ~/.wayland/specialists/<id>.md 中的專家疊加層。"
   },
+  "constitutionSpecialists": {
+    "title": "專家疊加層",
+    "description": "疊加層在章程之上新增特定智慧型代理的規則。它們依智慧型代理 ID 選擇性啟用，並整合進該智慧型代理的提示詞。",
+    "addButton": "新增疊加層",
+    "idLabel": "智慧型代理 ID",
+    "idPlaceholder": "例如 copy、spark、humanizer",
+    "idInvalid": "只能使用字母、數字、連字號和底線。",
+    "idDuplicate": "該 ID 的疊加層已存在。",
+    "create": "建立",
+    "edit": "編輯",
+    "delete": "刪除",
+    "deleteConfirmTitle": "刪除疊加層？",
+    "deleteConfirmBody": "「{{value}}」的疊加層將被永久刪除。",
+    "cancel": "取消",
+    "empty": "尚無專家疊加層。新增一個即可為特定智慧型代理提供額外規則。",
+    "close": "關閉",
+    "tokenCount": "{{value}} 個權杖"
+  },
   "agentsPage": {
     "title": "智能體"
   },

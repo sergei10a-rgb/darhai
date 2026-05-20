@@ -1008,6 +1008,24 @@
     "tokenWarning": "遵守上限（約 2,000 トークン）に近づいています。専門オーバーレイへの分割を検討してください。",
     "tokenError": "遵守上限を超えています。セクションを ~/.wayland/specialists/<id>.md の専門オーバーレイに移動してください。"
   },
+  "constitutionSpecialists": {
+    "title": "専門オーバーレイ",
+    "description": "オーバーレイは、憲章に加えてアシスタント固有のルールを追加します。アシスタント ID ごとにオプトインで適用され、そのアシスタントのプロンプトに組み込まれます。",
+    "addButton": "オーバーレイを追加",
+    "idLabel": "アシスタント ID",
+    "idPlaceholder": "例: copy、spark、humanizer",
+    "idInvalid": "使用できるのは英字、数字、ハイフン、アンダースコアのみです。",
+    "idDuplicate": "その ID のオーバーレイはすでに存在します。",
+    "create": "作成",
+    "edit": "編集",
+    "delete": "削除",
+    "deleteConfirmTitle": "オーバーレイを削除しますか？",
+    "deleteConfirmBody": "「{{value}}」のオーバーレイは完全に削除されます。",
+    "cancel": "キャンセル",
+    "empty": "専門オーバーレイはまだありません。追加すると、特定のアシスタントに追加ルールを与えられます。",
+    "close": "閉じる",
+    "tokenCount": "{{value}} トークン"
+  },
   "agentsPage": {
     "title": "エージェント"
   },

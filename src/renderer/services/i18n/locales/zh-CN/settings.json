@@ -1007,6 +1007,24 @@
     "tokenWarning": "即将达到遵循上限（约 2,000 个令牌）。请考虑拆分为专家叠加层。",
     "tokenError": "已超过遵循上限。请将章节移至 ~/.wayland/specialists/<id>.md 中的专家叠加层。"
   },
+  "constitutionSpecialists": {
+    "title": "专家叠加层",
+    "description": "叠加层在章程之上添加特定智能体的规则。它们按智能体 ID 选择性启用，并整合进该智能体的提示词。",
+    "addButton": "添加叠加层",
+    "idLabel": "智能体 ID",
+    "idPlaceholder": "例如 copy、spark、humanizer",
+    "idInvalid": "只能使用字母、数字、连字符和下划线。",
+    "idDuplicate": "该 ID 的叠加层已存在。",
+    "create": "创建",
+    "edit": "编辑",
+    "delete": "删除",
+    "deleteConfirmTitle": "删除叠加层？",
+    "deleteConfirmBody": "“{{value}}”的叠加层将被永久删除。",
+    "cancel": "取消",
+    "empty": "暂无专家叠加层。添加一个即可为特定智能体提供额外规则。",
+    "close": "关闭",
+    "tokenCount": "{{value}} 个令牌"
+  },
   "agentsPage": {
     "title": "智能体"
   },

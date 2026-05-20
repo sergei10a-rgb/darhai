@@ -1008,6 +1008,24 @@
     "tokenWarning": "준수 한도(~2,000 토큰)에 근접하고 있습니다. 전문 오버레이로 분할하는 것을 고려하세요.",
     "tokenError": "준수 한도를 초과했습니다. 섹션을 ~/.wayland/specialists/<id>.md의 전문 오버레이로 이동하세요."
   },
+  "constitutionSpecialists": {
+    "title": "전문 오버레이",
+    "description": "오버레이는 헌장 위에 어시스턴트별 규칙을 추가합니다. 어시스턴트 ID별로 옵트인 방식으로 적용되며 해당 어시스턴트의 프롬프트에 결합됩니다.",
+    "addButton": "오버레이 추가",
+    "idLabel": "어시스턴트 ID",
+    "idPlaceholder": "예: copy, spark, humanizer",
+    "idInvalid": "영문자, 숫자, 하이픈, 밑줄만 사용할 수 있습니다.",
+    "idDuplicate": "해당 ID의 오버레이가 이미 존재합니다.",
+    "create": "만들기",
+    "edit": "편집",
+    "delete": "삭제",
+    "deleteConfirmTitle": "오버레이를 삭제하시겠습니까?",
+    "deleteConfirmBody": "\"{{value}}\"의 오버레이가 영구적으로 삭제됩니다.",
+    "cancel": "취소",
+    "empty": "아직 전문 오버레이가 없습니다. 추가하면 특정 어시스턴트에 추가 규칙을 부여할 수 있습니다.",
+    "close": "닫기",
+    "tokenCount": "{{value}} 토큰"
+  },
   "agentsPage": {
     "title": "에이전트"
   },
