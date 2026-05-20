@@ -13,8 +13,14 @@ import { SkillLibrary } from '@process/services/skills/SkillLibrary';
 import { SkillImport } from '@process/services/skills/SkillImport';
 import { SkillQuarantine } from '@process/services/skills/SkillQuarantine';
 import { ProcessConfig } from '@process/utils/initStorage';
+import { loadTeamSkills } from '@process/extensions/data/bundle-vendored/teamSkillMerge';
 
 export function initSkillsBridge(): void {
+  // Register the waylandteams bundle's 88 curated skills as the second
+  // source on the Skills page (alongside the 1,965 vendored library
+  // skills). Runs once per process, fail-soft when the bundle isn't on
+  // disk (e.g. packaged build with no team install).
+  loadTeamSkills();
   ipcBridge.skills.scan.provider(async ({ name }) => {
     const lib = SkillLibrary.getInstance();
     return lib.rescanIfStale(name) ?? null;

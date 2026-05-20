@@ -300,7 +300,11 @@ export class SkillLibrary {
       return null;
     }
 
-    const bodyPath = path.join(this.resourceDir, entry.path);
+    // Externally-rooted sources (team, user, imported, cli-discovered) carry
+    // absolute paths because their SKILL.md lives outside the bundled
+    // `resourceDir`. Honor those directly. Vendored entries keep relative
+    // paths and continue to resolve against `resourceDir`.
+    const bodyPath = path.isAbsolute(entry.path) ? entry.path : path.join(this.resourceDir, entry.path);
     try {
       return await this.readFileFn(bodyPath);
     } catch {
