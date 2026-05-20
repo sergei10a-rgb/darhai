@@ -19,7 +19,96 @@ import type { TProviderWithModel } from '@/common/config/storage';
 import type { UnifiedChatCompletionResponse } from '@/common/api/RotatingApiClient';
 import { IMAGE_EXTENSIONS, MIME_TYPE_MAP, MIME_TO_EXT_MAP, DEFAULT_IMAGE_EXTENSION } from '@/common/config/constants';
 
+// Copyright 2026 Ferrox Labs
+
 const API_TIMEOUT_MS = 120000; // 2 minutes for image generation API calls
+
+// ===== FAL.ai Provider =====
+
+const FAL_FLUX_ENDPOINT = 'https://fal.run/fal-ai/flux-2-pro';
+const FAL_UPSCALER_ENDPOINT = 'https://fal.run/fal-ai/clarity-upscaler';
+
+export type FalOpts = {
+  upscale?: boolean;
+  /**
+   * Injects the FAL API key. Defaults to reading from the encrypted secret
+   * store via `decryptString` + the stored `falApiKey` credential. In tests,
+   * pass a sync function that returns the key directly.
+   */
+  getApiKey?: () => string;
+  /** Injectable fetch for testing. Defaults to `globalThis.fetch`. */
+  fetchFn?: typeof globalThis.fetch;
+};
+
+export type FalResult = {
+  imageUrl: string;
+  upscaledUrl?: string;
+};
+
+/**
+ * Generates an image via FAL.ai FLUX 2 Pro, optionally post-processing
+ * through the Clarity upscaler. API key is read from the encrypted secret
+ * store unless overridden by `opts.getApiKey` (used in tests).
+ */
+export async function generateWithFal(prompt: string, opts: FalOpts = {}): Promise<FalResult> {
+  const { upscale = false, fetchFn = globalThis.fetch } = opts;
+
+  const apiKey = opts.getApiKey
+    ? opts.getApiKey()
+    : (() => {
+        // Lazy import to avoid pulling Electron into renderer/worker bundles.
+        // This path only runs in the main process where safeStorage is available.
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const { decryptString } = require('@process/secrets') as typeof import('../../../src/process/secrets/index');
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const db = require('@process/services/database') as { getSystemSetting: (key: string) => string | undefined };
+        const stored = db.getSystemSetting('falApiKey');
+        if (!stored) throw new Error('[FAL] falApiKey not configured in secret store');
+        return decryptString(stored);
+      })();
+
+  if (!apiKey) throw new Error('[FAL] falApiKey resolved to empty string');
+
+  const authHeader = `Key ${apiKey}`;
+
+  const genResponse = await fetchFn(FAL_FLUX_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: authHeader },
+    body: JSON.stringify({ prompt }),
+  });
+
+  if (!genResponse.ok) {
+    const body = await genResponse.text();
+    throw new Error(`[FAL] FLUX 2 Pro request failed (${genResponse.status}): ${body}`);
+  }
+
+  const genJson = (await genResponse.json()) as { images?: Array<{ url: string }>; image?: { url: string } };
+  const imageUrl =
+    genJson.images?.[0]?.url ?? genJson.image?.url ?? (() => { throw new Error('[FAL] No image URL in FLUX response'); })();
+
+  if (!upscale) {
+    return { imageUrl };
+  }
+
+  const upscaleResponse = await fetchFn(FAL_UPSCALER_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: authHeader },
+    body: JSON.stringify({ image_url: imageUrl }),
+  });
+
+  if (!upscaleResponse.ok) {
+    const body = await upscaleResponse.text();
+    throw new Error(`[FAL] Clarity upscaler request failed (${upscaleResponse.status}): ${body}`);
+  }
+
+  const upscaleJson = (await upscaleResponse.json()) as { image?: { url: string }; output?: { image_url: string } };
+  const upscaledUrl =
+    upscaleJson.image?.url ??
+    upscaleJson.output?.image_url ??
+    (() => { throw new Error('[FAL] No image URL in upscaler response'); })();
+
+  return { imageUrl, upscaledUrl };
+}
 
 type ImageExtension = (typeof IMAGE_EXTENSIONS)[number];
 
