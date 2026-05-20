@@ -25,6 +25,7 @@ import type {
 } from '../update/updateTypes';
 import type { ProtocolDetectionRequest, ProtocolDetectionResponse } from '../utils/protocolDetector';
 import type { SpeechToTextRequest, SpeechToTextResult } from '../types/speech';
+import type { DownloadResult, VoiceAsset } from '../types/voiceAsset';
 
 export const shell = {
   openFile: buildProvider<void, string>('open-file'), // Open file with the system default program
@@ -341,6 +342,11 @@ export const fs = {
 
 export const speechToText = {
   transcribe: buildProvider<SpeechToTextResult, SpeechToTextRequest>('speech-to-text.transcribe'),
+};
+
+export const voiceAsset = {
+  download: buildProvider<DownloadResult, VoiceAsset>('voice-asset.download'),
+  cancel: buildProvider<{ cancelled: boolean }, { assetId: string }>('voice-asset.cancel'),
 };
 
 export const fileWatch = {
