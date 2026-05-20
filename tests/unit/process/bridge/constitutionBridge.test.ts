@@ -12,6 +12,8 @@ const { fsMock } = vi.hoisted(() => ({
   fsMock: {
     existsSync: vi.fn(),
     readFileSync: vi.fn(),
+    readdirSync: vi.fn(),
+    statSync: vi.fn(),
     mkdirSync: vi.fn(),
     writeFileSync: vi.fn(),
     renameSync: vi.fn(),
@@ -26,6 +28,8 @@ vi.mock('electron', () => ({
 vi.mock('fs', () => ({
   existsSync: fsMock.existsSync,
   readFileSync: fsMock.readFileSync,
+  readdirSync: fsMock.readdirSync,
+  statSync: fsMock.statSync,
   mkdirSync: fsMock.mkdirSync,
   writeFileSync: fsMock.writeFileSync,
   renameSync: fsMock.renameSync,
@@ -165,5 +169,181 @@ describe('readConstitutionWithOverlay', () => {
         expect(calledPath).not.toContain('specialists');
       }
     }
+  });
+});
+
+describe('specialist overlay CRUD', () => {
+  beforeEach(() => {
+    vi.resetModules();
+    fsMock.existsSync.mockReset();
+    fsMock.readFileSync.mockReset();
+    fsMock.readdirSync.mockReset();
+    fsMock.statSync.mockReset();
+    fsMock.mkdirSync.mockReset();
+    fsMock.writeFileSync.mockReset();
+    fsMock.renameSync.mockReset();
+    fsMock.unlinkSync.mockReset();
+  });
+
+  describe('listConstitutionSpecialists', () => {
+    it('returns [] when the specialists/ directory does not exist', async () => {
+      fsMock.existsSync.mockReturnValue(false);
+
+      const { __test__ } = await import('@process/bridge/constitutionBridge');
+      const result = __test__.listConstitutionSpecialists();
+
+      expect(result).toEqual([]);
+      // Directory missing — no readdir attempt.
+      expect(fsMock.readdirSync).not.toHaveBeenCalled();
+    });
+
+    it('returns only .md files, ids without extension, sorted ascending, with byte sizes', async () => {
+      fsMock.existsSync.mockImplementation((p) => p === SPECIALISTS_DIR);
+      // Deliberately out of order + one non-.md file.
+      fsMock.readdirSync.mockReturnValue(['zeta.md', 'alpha.md', 'README.txt']);
+      const sizes: Record<string, number> = {
+        [join(SPECIALISTS_DIR, 'zeta.md')]: 128,
+        [join(SPECIALISTS_DIR, 'alpha.md')]: 42,
+      };
+      fsMock.statSync.mockImplementation((p) => {
+        const size = sizes[String(p)];
+        if (size === undefined) throw new Error(`unexpected statSync: ${String(p)}`);
+        return { size };
+      });
+
+      const { __test__ } = await import('@process/bridge/constitutionBridge');
+      const result = __test__.listConstitutionSpecialists();
+
+      expect(result).toEqual([
+        { id: 'alpha', bytes: 42 },
+        { id: 'zeta', bytes: 128 },
+      ]);
+      // README.txt must not have been stat'd.
+      expect(fsMock.statSync).not.toHaveBeenCalledWith(join(SPECIALISTS_DIR, 'README.txt'));
+    });
+  });
+
+  describe('readConstitutionSpecialist', () => {
+    it('returns file content for a valid id when the overlay file exists', async () => {
+      const body = 'OVERLAY for copy';
+      const overlayPath = overlayPathFor('copy');
+      fsMock.existsSync.mockImplementation((p) => p === overlayPath);
+      fsMock.readFileSync.mockImplementation((p) => {
+        if (p === overlayPath) return body;
+        throw new Error(`unexpected readFileSync: ${String(p)}`);
+      });
+
+      const { __test__ } = await import('@process/bridge/constitutionBridge');
+      const result = __test__.readConstitutionSpecialist('copy');
+
+      expect(result).toBe(body);
+    });
+
+    it("returns '' for a valid id when the overlay file is absent", async () => {
+      fsMock.existsSync.mockReturnValue(false);
+
+      const { __test__ } = await import('@process/bridge/constitutionBridge');
+      const result = __test__.readConstitutionSpecialist('copy');
+
+      expect(result).toBe('');
+      expect(fsMock.readFileSync).not.toHaveBeenCalled();
+    });
+
+    it("returns '' for path-traversal ids without probing the dangerous path", async () => {
+      const dangerousIds = ['../../etc/passwd', 'a/b', '', 'foo bar', '..', './foo'];
+
+      const { __test__ } = await import('@process/bridge/constitutionBridge');
+
+      for (const id of dangerousIds) {
+        fsMock.existsSync.mockClear();
+        fsMock.readFileSync.mockClear();
+
+        const result = __test__.readConstitutionSpecialist(id);
+
+        expect(result).toBe('');
+        // Regex gate short-circuits before any fs access.
+        expect(fsMock.existsSync).not.toHaveBeenCalled();
+        expect(fsMock.readFileSync).not.toHaveBeenCalled();
+      }
+    });
+  });
+
+  describe('writeConstitutionSpecialist', () => {
+    it('creates the directory and atomically writes the overlay file for a valid id', async () => {
+      const content = '# Copy overlay\nTighter voice rules.';
+      const overlayPath = overlayPathFor('copy');
+      fsMock.mkdirSync.mockReturnValue(undefined);
+      fsMock.writeFileSync.mockReturnValue(undefined);
+      fsMock.renameSync.mockReturnValue(undefined);
+
+      const { __test__ } = await import('@process/bridge/constitutionBridge');
+      const result = __test__.writeConstitutionSpecialist('copy', content);
+
+      expect(result).toBe(true);
+      expect(fsMock.mkdirSync).toHaveBeenCalledWith(SPECIALISTS_DIR, { recursive: true });
+      // Atomic write: content goes to a .tmp file, then renamed onto the final path.
+      expect(fsMock.writeFileSync).toHaveBeenCalledWith(`${overlayPath}.tmp`, content, 'utf-8');
+      expect(fsMock.renameSync).toHaveBeenCalledWith(`${overlayPath}.tmp`, overlayPath);
+    });
+
+    it('returns false and does not write for an invalid id', async () => {
+      const invalidIds = ['../../evil', 'a/b', ''];
+
+      const { __test__ } = await import('@process/bridge/constitutionBridge');
+
+      for (const id of invalidIds) {
+        fsMock.mkdirSync.mockClear();
+        fsMock.writeFileSync.mockClear();
+        fsMock.renameSync.mockClear();
+
+        const result = __test__.writeConstitutionSpecialist(id, 'payload');
+
+        expect(result).toBe(false);
+        expect(fsMock.mkdirSync).not.toHaveBeenCalled();
+        expect(fsMock.writeFileSync).not.toHaveBeenCalled();
+        expect(fsMock.renameSync).not.toHaveBeenCalled();
+      }
+    });
+  });
+
+  describe('deleteConstitutionSpecialist', () => {
+    it('deletes the file and returns true for a valid id when the file exists', async () => {
+      const overlayPath = overlayPathFor('copy');
+      fsMock.existsSync.mockImplementation((p) => p === overlayPath);
+      fsMock.unlinkSync.mockReturnValue(undefined);
+
+      const { __test__ } = await import('@process/bridge/constitutionBridge');
+      const result = __test__.deleteConstitutionSpecialist('copy');
+
+      expect(result).toBe(true);
+      expect(fsMock.unlinkSync).toHaveBeenCalledWith(overlayPath);
+    });
+
+    it('returns true (idempotent) for a valid id when the file is already absent', async () => {
+      fsMock.existsSync.mockReturnValue(false);
+
+      const { __test__ } = await import('@process/bridge/constitutionBridge');
+      const result = __test__.deleteConstitutionSpecialist('copy');
+
+      expect(result).toBe(true);
+      // Nothing to unlink — idempotent delete.
+      expect(fsMock.unlinkSync).not.toHaveBeenCalled();
+    });
+
+    it('returns false and does not unlink for an invalid id', async () => {
+      const invalidIds = ['../../etc/passwd', 'a/b', ''];
+
+      const { __test__ } = await import('@process/bridge/constitutionBridge');
+
+      for (const id of invalidIds) {
+        fsMock.existsSync.mockClear();
+        fsMock.unlinkSync.mockClear();
+
+        const result = __test__.deleteConstitutionSpecialist(id);
+
+        expect(result).toBe(false);
+        expect(fsMock.unlinkSync).not.toHaveBeenCalled();
+      }
+    });
   });
 });
