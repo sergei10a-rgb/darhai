@@ -110,6 +110,49 @@
     "tab": {
       "write": "Write it myself",
       "describe": "Describe it"
+    },
+    "form": {
+      "name": {
+        "label": "Name",
+        "placeholder": "e.g. my-skill"
+      },
+      "description": {
+        "label": "Description",
+        "placeholder": "What does this skill do?",
+        "hint": "Include Use-when and Do-NOT-use guidance so the model activates it accurately."
+      },
+      "category": {
+        "label": "Category",
+        "placeholder": "e.g. coding"
+      },
+      "tags": {
+        "label": "Tags",
+        "placeholder": "comma-separated, e.g. git, review"
+      },
+      "body": {
+        "label": "SKILL.md body"
+      }
+    },
+    "describe": {
+      "label": "Describe your skill",
+      "placeholder": "Describe your skill in plain language and we will draft a SKILL.md for you…",
+      "generate": "Generate",
+      "generating": "Generating…"
+    },
+    "actions": {
+      "save": "Save skill",
+      "saving": "Saving…",
+      "cancel": "Cancel",
+      "done": "Done"
+    },
+    "verdict": {
+      "clean": "Skill \"{{name}}\" saved successfully.",
+      "review": "Skill \"{{name}}\" saved, but flagged for review.",
+      "blocked": "Skill \"{{name}}\" was blocked by Skill Guard and not registered. Edit the body to remove flagged content."
+    },
+    "error": {
+      "saveFailed": "Save failed",
+      "generateFailed": "Generation failed"
     }
   },
   "detail": {

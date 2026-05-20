@@ -68,6 +68,49 @@
     "tab": {
       "write": "Kendim yazarım",
       "describe": "Açıkla"
+    },
+    "form": {
+      "name": {
+        "label": "Ad",
+        "placeholder": "ör. my-skill"
+      },
+      "description": {
+        "label": "Açıklama",
+        "placeholder": "Bu beceri ne yapar?",
+        "hint": "Modelin doğru etkinleştirmesi için kullanım ve kullanmama koşullarını belirtin."
+      },
+      "category": {
+        "label": "Kategori",
+        "placeholder": "ör. coding"
+      },
+      "tags": {
+        "label": "Etiketler",
+        "placeholder": "virgülle ayrılmış, ör. git, review"
+      },
+      "body": {
+        "label": "SKILL.md gövdesi"
+      }
+    },
+    "describe": {
+      "label": "Becerini açıkla",
+      "placeholder": "Becerini doğal dilde açıkla, sana bir SKILL.md taslağı oluşturalım…",
+      "generate": "Oluştur",
+      "generating": "Oluşturuluyor…"
+    },
+    "actions": {
+      "save": "Beceriyi kaydet",
+      "saving": "Kaydediliyor…",
+      "cancel": "İptal",
+      "done": "Tamam"
+    },
+    "verdict": {
+      "clean": "\"{{name}}\" becerisi başarıyla kaydedildi.",
+      "review": "\"{{name}}\" becerisi kaydedildi, ancak inceleme gerekiyor.",
+      "blocked": "\"{{name}}\" becerisi Skill Guard tarafından engellendi ve kaydedilmedi. İşaretli içeriği kaldırmak için gövdeyi düzenleyin."
+    },
+    "error": {
+      "saveFailed": "Kayıt başarısız",
+      "generateFailed": "Oluşturma başarısız"
     }
   },
   "detail": {
