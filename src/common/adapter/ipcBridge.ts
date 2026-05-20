@@ -26,6 +26,7 @@ import type {
 import type { ProtocolDetectionRequest, ProtocolDetectionResponse } from '../utils/protocolDetector';
 import type { SpeechToTextRequest, SpeechToTextResult } from '../types/speech';
 import type { DownloadResult, VoiceAsset } from '../types/voiceAsset';
+import type { SkillSecurityReport } from '../types/skillTypes';
 
 export const shell = {
   openFile: buildProvider<void, string>('open-file'), // Open file with the system default program
@@ -347,6 +348,12 @@ export const speechToText = {
 export const voiceSynth = {
   speak: buildProvider<{ data: number[]; mimeType: string }, { text: string }>('voice-synth.speak'),
   stop: buildProvider<Record<string, never>, void>('voice-synth.stop'),
+};
+
+export const skills = {
+  scan: buildProvider<SkillSecurityReport | null, { name: string }>('skills.scan'),
+  getReport: buildProvider<SkillSecurityReport | null, { name: string }>('skills.get-report'),
+  rescanAll: buildProvider<{ rescanned: number }, void>('skills.rescan-all'),
 };
 
 export const voiceAsset = {

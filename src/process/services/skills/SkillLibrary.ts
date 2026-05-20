@@ -15,9 +15,10 @@
 
 import path from 'path';
 import { readFile as fsReadFile } from 'fs/promises';
-import type { SkillIndexEntry, SkillSource } from '@/common/types/skillTypes';
+import { SKILL_SCANNER_VERSION, type SkillIndexEntry, type SkillSecurityReport, type SkillSource } from '@/common/types/skillTypes';
 import { mainWarn } from '@process/utils/mainLogger';
 import { ProcessConfig } from '@process/utils/initStorage';
+import { SkillGuard } from './SkillGuard';
 
 const TAG = '[SkillLibrary]';
 
@@ -225,5 +226,32 @@ export class SkillLibrary {
     } catch {
       return null;
     }
+  }
+
+  /**
+   * Re-scan a skill if its stored scannerVersion is older than the current
+   * SKILL_SCANNER_VERSION. Reads the body off the resource dir and updates
+   * the in-memory entry's `security` field in place. Returns the new report
+   * (or the existing one if no re-scan was needed), or null for unknown skills.
+   * Runs lazily / on demand — never on the startup path.
+   */
+  async rescanIfStale(name: string, opts?: { llm?: boolean }): Promise<SkillSecurityReport | null> {
+    await this.ensureLoaded();
+    const entry = this.byName.get(name);
+    if (!entry) return null;
+    const stored = entry.security?.scannerVersion ?? 0;
+    if (stored >= SKILL_SCANNER_VERSION) return entry.security ?? null;
+    let body: string;
+    try {
+      body = await this.readFileFn(path.join(this.resourceDir, entry.path));
+    } catch {
+      return entry.security ?? null;
+    }
+    const [report] = await SkillGuard.scan(
+      [{ name: entry.name, body, description: entry.description, tags: entry.metadata.tags ?? [] }],
+      opts
+    );
+    entry.security = report;
+    return report;
   }
 }
