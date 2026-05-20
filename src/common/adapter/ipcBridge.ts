@@ -27,6 +27,7 @@ import type { ProtocolDetectionRequest, ProtocolDetectionResponse } from '../uti
 import type { SpeechToTextRequest, SpeechToTextResult } from '../types/speech';
 import type { DownloadResult, VoiceAsset } from '../types/voiceAsset';
 import type { SkillSecurityReport } from '../types/skillTypes';
+import type { ImportResult } from '../../process/services/skills/SkillImport';
 
 export const shell = {
   openFile: buildProvider<void, string>('open-file'), // Open file with the system default program
@@ -354,6 +355,16 @@ export const skills = {
   scan: buildProvider<SkillSecurityReport | null, { name: string }>('skills.scan'),
   getReport: buildProvider<SkillSecurityReport | null, { name: string }>('skills.get-report'),
   rescanAll: buildProvider<{ rescanned: number }, void>('skills.rescan-all'),
+  import: {
+    /** Import a skill from a local folder path. */
+    folder: buildProvider<ImportResult, { srcPath: string }>('skills.import.folder'),
+    /** Clone a git URL and import the resulting skill folder. */
+    git: buildProvider<ImportResult, { url: string }>('skills.import.git'),
+    /** Extract a zip archive and import contained skills. */
+    zip: buildProvider<ImportResult, { zipPath: string }>('skills.import.zip'),
+    /** Import a single SKILL.md file. */
+    singleSkillMd: buildProvider<ImportResult, { srcPath: string }>('skills.import.single-skill-md'),
+  },
 };
 
 export const voiceAsset = {

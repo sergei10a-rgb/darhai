@@ -60,7 +60,49 @@
       "folder": "Folder",
       "git": "Git URL",
       "zip": "ZIP file",
+      "singleSkillMd": "Single SKILL.md",
       "marketplace": "Marketplace (coming soon)"
+    },
+    "folder": {
+      "label": "Skill folder",
+      "placeholder": "Click to choose a folder…",
+      "browse": "Browse"
+    },
+    "git": {
+      "label": "Git URL",
+      "placeholder": "https://github.com/user/my-skill"
+    },
+    "zip": {
+      "label": "ZIP file",
+      "placeholder": "Click to choose a ZIP…",
+      "browse": "Browse"
+    },
+    "singleSkillMd": {
+      "label": "SKILL.md file",
+      "placeholder": "Click to choose a SKILL.md…",
+      "browse": "Browse"
+    },
+    "actions": {
+      "import": "Import",
+      "importing": "Importing…",
+      "importAllClean": "Import all clean",
+      "reviewAndSelect": "Review and select",
+      "cancel": "Cancel"
+    },
+    "scan": {
+      "title": "Scan results",
+      "verdict": {
+        "clean": "Clean",
+        "review": "Needs review",
+        "blocked": "Blocked"
+      },
+      "noFindings": "No issues found",
+      "finding": "{{count}} finding",
+      "finding_other": "{{count}} findings"
+    },
+    "error": {
+      "failed": "Import failed",
+      "invalidUrl": "Enter a valid https:// or git@ URL"
     }
   },
   "builder": {

@@ -6,6 +6,7 @@
 
 import { ipcBridge } from '@/common';
 import { SkillLibrary } from '@process/services/skills/SkillLibrary';
+import { SkillImport } from '@process/services/skills/SkillImport';
 
 export function initSkillsBridge(): void {
   ipcBridge.skills.scan.provider(async ({ name }) => {
@@ -32,5 +33,23 @@ export function initSkillsBridge(): void {
       }
     }
     return { rescanned };
+  });
+
+  const importer = new SkillImport();
+
+  ipcBridge.skills.import.folder.provider(async ({ srcPath }) => {
+    return importer.importFolder(srcPath);
+  });
+
+  ipcBridge.skills.import.git.provider(async ({ url }) => {
+    return importer.importGit(url);
+  });
+
+  ipcBridge.skills.import.zip.provider(async ({ zipPath }) => {
+    return importer.importZip(zipPath);
+  });
+
+  ipcBridge.skills.import.singleSkillMd.provider(async ({ srcPath }) => {
+    return importer.importSingleSkillMd(srcPath);
   });
 }
