@@ -165,6 +165,8 @@ export class AcpSkillManager {
   private initialized: boolean = false;
   private autoInitialized: boolean = false;
   private extensionInitialized: boolean = false;
+  /** Globally disabled skill names — getSkill refuses to return content for these. */
+  private disabledSkills: Set<string> = new Set();
 
   constructor(skillsDir?: string) {
     this.skillsDir = skillsDir || getSkillsDir();
@@ -172,16 +174,24 @@ export class AcpSkillManager {
   }
 
   /**
-   * Get singleton instance (with enabledSkills + excludeBuiltinSkills cache key)
+   * Get singleton instance (with enabledSkills + excludeBuiltinSkills + preferences revision cache key)
    *
    * @param enabledSkills - Enabled skills list
    * @param excludeBuiltinSkills - Builtin skills to exclude
+   * @param prefsRevision - Current skills.preferences.revision value; bumping it invalidates the cache
    * @returns AcpSkillManager instance
    */
-  static getInstance(enabledSkills?: string[], excludeBuiltinSkills?: string[]): AcpSkillManager {
+  static getInstance(
+    enabledSkills?: string[],
+    excludeBuiltinSkills?: string[],
+    prefsRevision?: number
+  ): AcpSkillManager {
     const enabledPart = enabledSkills?.toSorted().join(',') || 'all';
     const excludePart = excludeBuiltinSkills?.toSorted().join(',') || '';
-    const cacheKey = excludePart ? `${enabledPart}|exclude:${excludePart}` : enabledPart;
+    const revPart = prefsRevision !== undefined ? `|rev:${prefsRevision}` : '';
+    const cacheKey = excludePart
+      ? `${enabledPart}|exclude:${excludePart}${revPart}`
+      : `${enabledPart}${revPart}`;
 
     // If cache key changed, need to recreate instance
     if (AcpSkillManager.instance && AcpSkillManager.instanceKey === cacheKey) {
@@ -443,6 +453,10 @@ export class AcpSkillManager {
   /**
    * Get full content of a skill by name (on-demand loading)
    * Priority: optional (user-configured) > builtin > extension
+   *
+   * Returns null (not available) when:
+   *  - skill has security.verdict === 'blocked' (quarantined)
+   *  - skill name is in the globally-disabled set (skills.preferences.disabled)
    */
   async getSkill(name: string): Promise<SkillDefinition | null> {
     // Check optional skills first (explicitly configured for this assistant)
@@ -456,6 +470,16 @@ export class AcpSkillManager {
       skill = this.extensionSkills.get(name);
     }
     if (!skill) return null;
+
+    // Defense-in-depth: refuse blocked or globally-disabled skills
+    if (skill.security?.verdict === 'blocked') {
+      console.warn(`[AcpSkillManager] Refused to load blocked skill '${name}'`);
+      return null;
+    }
+    if (this.disabledSkills.has(name)) {
+      console.warn(`[AcpSkillManager] Refused to load disabled skill '${name}'`);
+      return null;
+    }
 
     // If body has not been loaded yet, load it now
     if (skill.body === undefined) {
@@ -493,6 +517,15 @@ export class AcpSkillManager {
   }
 
   /**
+   * Set the globally-disabled skill names.
+   * getSkill will refuse to return content for any name in this set.
+   * Call after discoverSkills when the caller has loaded skills.preferences.
+   */
+  setDisabled(disabled: string[]): void {
+    this.disabledSkills = new Set(disabled);
+  }
+
+  /**
    * Clear cached body content (for refresh)
    */
   clearCache(): void {
@@ -509,18 +542,27 @@ export class AcpSkillManager {
 }
 
 /**
- * Build skills index text (for first message injection)
+ * Build skills index text (for first message injection).
+ *
+ * Only the always-on set (builtin + pinned + assistant enabledSkills) is listed here.
+ * When the full skill library is available, a one-line note directs the agent to call
+ * `wayland_search_skills` for anything else — the library is never dumped inline.
+ *
+ * @param skills - always-on skill entries to list
+ * @param hasLibrary - when true, append the wayland_search_skills discovery note
  */
-export function buildSkillsIndexText(skills: SkillIndex[]): string {
-  if (skills.length === 0) return '';
+export function buildSkillsIndexText(skills: SkillIndex[], hasLibrary = false): string {
+  if (skills.length === 0 && !hasLibrary) return '';
 
   const lines = skills.map((s) => `- ${s.name}: ${s.description}`);
+  const listBlock = lines.length > 0 ? `\n\n${lines.join('\n')}` : '';
+  const searchNote = hasLibrary
+    ? '\n\nFor skills not listed above, call `wayland_search_skills` to search the full library.'
+    : '';
 
   return `[Available Skills]
 The following skills are available. When you need detailed instructions for a specific skill,
-you can request it by outputting: [LOAD_SKILL: skill-name]
-
-${lines.join('\n')}`;
+you can request it by outputting: [LOAD_SKILL: skill-name]${listBlock}${searchNote}`;
 }
 
 /**

@@ -24,7 +24,6 @@ import type { GeminiAgentManager } from '../task/GeminiAgentManager';
 import { WCoreApprovalStore, type WCoreManager } from '../task/WCoreManager';
 import type OpenClawAgentManager from '../task/OpenClawAgentManager';
 import { prepareFirstMessage } from '../task/agentUtils';
-import { AcpSkillManager } from '../task/AcpSkillManager';
 import { refreshTrayMenu } from '@process/utils/tray';
 import { copyFilesToDirectory, readDirectoryRecursive } from '@process/utils';
 import { computeOpenClawIdentityHash } from '@process/utils/openclawUtils';
@@ -140,27 +139,39 @@ export function initConversationBridge(
         source: 'wayland',
       } as CreateConversationParams);
 
-      // Discover and persist loaded skills snapshot at creation time
-      // so the UI can display them immediately without waiting for the first message.
+      // Persist a lightweight skills summary at creation time so the UI can
+      // display basic skill info immediately without waiting for the first message.
+      // We store only the pinned skill NAMES + a total count — the library is
+      // never snapshotted here; it is reached on-demand via wayland_search_skills.
       try {
         const extra = createParams.extra as {
           enabledSkills?: string[];
           excludeBuiltinSkills?: string[];
         };
-        const skillManager = AcpSkillManager.getInstance(extra.enabledSkills);
-        await skillManager.discoverSkills(extra.enabledSkills, extra.excludeBuiltinSkills);
+        const prefs = await ProcessConfig.get('skills.preferences').catch((): undefined => undefined);
+        const pinnedNames = prefs?.pinned ?? [];
+        // Merge assistant's own enabledSkills with globally-pinned names for the summary.
+        // Store as { name, description: '' } to match the loadedSkills storage type while
+        // keeping the payload minimal — descriptions are not needed here (no library dump).
+        const alwaysOnNames = Array.from(
+          new Set([...(extra.enabledSkills ?? []), ...pinnedNames])
+        );
         const excludeSet = new Set(extra.excludeBuiltinSkills ?? []);
-        // Filter out excluded builtin skills — the singleton cache may not reflect excludeBuiltinSkills
-        const loadedSkills = skillManager.getSkillsIndex().filter((s) => !excludeSet.has(s.name));
+        const loadedSkills = alwaysOnNames
+          .filter((n) => !excludeSet.has(n))
+          .map((name) => ({ name, description: '' }));
         if (loadedSkills.length > 0) {
-          const updatedExtra = { ...conversation.extra, loadedSkills };
+          const updatedExtra = {
+            ...conversation.extra,
+            loadedSkills,
+          };
           conversationService.updateConversation(conversation.id, {
             extra: updatedExtra,
           } as Partial<typeof conversation>);
           conversation.extra = updatedExtra as typeof conversation.extra;
         }
       } catch (error) {
-        console.warn('[conversationBridge] Failed to discover skills at creation:', error);
+        console.warn('[conversationBridge] Failed to persist skills summary at creation:', error);
       }
 
       emitConversationListChanged(conversation, 'created');
