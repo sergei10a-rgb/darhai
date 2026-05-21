@@ -82,8 +82,8 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose }) => {
         aria-label={t('settings.commandPalette.placeholder')}
       >
         {/* Search input */}
-        <div className='flex items-center gap-10px px-16px py-12px border-b border-[var(--bg-3)]'>
-          <Search size={16} className='text-[var(--text-muted)] shrink-0' />
+        <div className='flex items-center gap-10px px-16px py-12px border-b border-[var(--color-border-1)]'>
+          <Search size={16} className='text-[var(--color-text-3)] shrink-0' />
           <Input
             ref={inputRef}
             value={query}
@@ -92,13 +92,13 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose }) => {
             className='flex-1'
             style={{ background: 'transparent', boxShadow: 'none', border: 'none' }}
           />
-          <kbd className='text-11px text-[var(--text-muted)] bg-[var(--bg-3)] rounded-4px px-6px py-2px'>Esc</kbd>
+          <kbd className='text-11px text-[var(--color-text-3)] bg-[var(--color-bg-4)] rounded-4px px-6px py-2px'>Esc</kbd>
         </div>
 
         {/* Results */}
         <div className='max-h-400px overflow-y-auto py-8px'>
           {results.length === 0 ? (
-            <div className='px-16px py-20px text-14px text-[var(--text-muted)] text-center'>
+            <div className='px-16px py-20px text-14px text-[var(--color-text-3)] text-center'>
               {t('settings.commandPalette.noResults')}
             </div>
           ) : (
@@ -109,15 +109,15 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose }) => {
                 className={[
                   'w-full text-left flex items-center gap-12px px-16px py-10px transition-colors',
                   idx === activeIdx
-                    ? 'bg-[var(--brand-soft-bg)] text-[var(--text-primary)]'
-                    : 'text-[var(--text-primary)] hover:bg-[var(--bg-3)]',
+                    ? 'bg-[var(--brand-soft-bg)] text-[var(--color-text-1)]'
+                    : 'text-[var(--color-text-1)] hover:bg-[var(--color-bg-4)]',
                 ].join(' ')}
                 onMouseEnter={() => setActiveIdx(idx)}
                 onClick={() => navigate_(entry)}
               >
                 <span className='text-14px flex-1 truncate'>{entry.title}</span>
                 {entry.subtitle && (
-                  <span className='text-12px text-[var(--text-muted)] shrink-0'>{entry.subtitle}</span>
+                  <span className='text-12px text-[var(--color-text-3)] shrink-0'>{entry.subtitle}</span>
                 )}
               </button>
             ))

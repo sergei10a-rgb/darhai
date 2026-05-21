@@ -15,7 +15,7 @@ const DOT_COLORS: Record<StatusVariant, string> = {
   running: 'bg-[var(--success)]',
   soon: 'bg-[var(--warning)]',
   error: 'bg-[var(--danger)]',
-  idle: 'bg-[var(--text-muted)]',
+  idle: 'bg-[var(--color-text-3)]',
   custom: '',
 };
 
@@ -24,7 +24,7 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ variant, label, customColor }
   const dotClass = variant === 'custom' ? '' : DOT_COLORS[variant];
 
   return (
-    <span className='inline-flex items-center gap-5px px-8px py-2px rounded-full bg-[var(--bg-3)] text-12px text-[var(--text-secondary)]'>
+    <span className='inline-flex items-center gap-5px px-8px py-2px rounded-full bg-[var(--color-bg-4)] text-12px text-[var(--color-text-2)]'>
       <span
         className={classNames('w-6px h-6px rounded-full shrink-0', dotClass)}
         style={variant === 'custom' && customColor ? { backgroundColor: customColor } : undefined}

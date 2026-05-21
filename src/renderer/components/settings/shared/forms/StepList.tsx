@@ -22,15 +22,15 @@ const StepList: React.FC<StepListProps> = ({ steps }) => {
               'w-22px h-22px rounded-full flex items-center justify-center text-12px font-semibold shrink-0 mt-1px',
               step.done
                 ? 'bg-[var(--success)] text-white'
-                : 'bg-[var(--bg-3)] text-[var(--text-muted)]'
+                : 'bg-[var(--color-bg-4)] text-[var(--color-text-3)]'
             )}
           >
             {step.done ? <Check size={12} /> : i + 1}
           </span>
           <div className='flex flex-col gap-2px'>
-            <div className='text-13px font-medium text-[var(--text-primary)]'>{step.title}</div>
+            <div className='text-13px font-medium text-[var(--color-text-1)]'>{step.title}</div>
             {step.body && (
-              <div className='text-12px text-[var(--text-muted)] leading-relaxed'>{step.body}</div>
+              <div className='text-12px text-[var(--color-text-3)] leading-relaxed'>{step.body}</div>
             )}
           </div>
         </li>

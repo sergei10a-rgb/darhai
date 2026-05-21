@@ -39,13 +39,13 @@ const UsageCard: React.FC = () => {
         </div>
       ) : (
         <>
-          <p className='text-12px text-[var(--text-muted)] mb-8px'>
+          <p className='text-12px text-[var(--color-text-3)] mb-8px'>
             {t('settings.storagePage.totalUsed', { used: formatBytes(total), total: '—' })}
           </p>
 
           {/* Multi-segment progress bar */}
           {data && data.breakdown.length > 0 && (
-            <div className='rounded-4px overflow-hidden h-8px flex mb-12px bg-[var(--bg-3)]'>
+            <div className='rounded-4px overflow-hidden h-8px flex mb-12px bg-[var(--color-bg-4)]'>
               {data.breakdown.map((item) => {
                 const pct = total > 0 ? (item.bytes / total) * 100 : 0;
                 return (
@@ -64,7 +64,7 @@ const UsageCard: React.FC = () => {
             {data?.breakdown.map((item) => (
               <div key={item.label} className='flex items-center gap-6px'>
                 <span className='w-8px h-8px rounded-full shrink-0' style={{ background: item.color }} />
-                <span className='text-12px text-[var(--text-secondary)]'>
+                <span className='text-12px text-[var(--color-text-2)]'>
                   {t(`settings.storagePage.${item.label}`)} ({formatBytes(item.bytes)})
                 </span>
               </div>
@@ -72,7 +72,7 @@ const UsageCard: React.FC = () => {
           </div>
 
           {data && (
-            <p className='text-11px text-[var(--text-muted)] mt-8px'>
+            <p className='text-11px text-[var(--color-text-3)] mt-8px'>
               {t('settings.storagePage.usageStale', { ago: timeAgo(data.computedAt) })}
             </p>
           )}

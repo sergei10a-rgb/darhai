@@ -73,7 +73,7 @@ const CHANNELS: ChannelMeta[] = [
 ];
 
 const STATUS_STYLES: Record<ChannelStatus, string> = {
-  idle: 'bg-[var(--bg-3)] text-[var(--text-muted)]',
+  idle: 'bg-[var(--color-bg-4)] text-[var(--color-text-3)]',
   connected: 'bg-[var(--success-soft-bg,rgba(34,197,94,0.12))] text-[var(--success,#22c55e)]',
   soon: 'bg-[var(--warning-soft-bg,rgba(245,158,11,0.12))] text-[var(--warning,#f59e0b)]',
 };
@@ -122,14 +122,14 @@ const ChannelsIndex: React.FC = () => {
             }
           >
             <div className='flex items-center gap-12px'>
-              <span className='w-36px h-36px rounded-9px bg-[var(--bg-3)] border border-[var(--border-light)] flex items-center justify-center shrink-0 text-[var(--text-primary)]'>
+              <span className='w-36px h-36px rounded-9px bg-[var(--color-bg-4)] border border-[var(--color-border-1)] flex items-center justify-center shrink-0 text-[var(--color-text-1)]'>
                 <Icon size={18} />
               </span>
-              <div className='text-[14.5px] font-bold text-[var(--text-primary)] min-w-0 truncate'>
+              <div className='text-[14.5px] font-bold text-[var(--color-text-1)] min-w-0 truncate'>
                 {channel.displayName}
               </div>
             </div>
-            <p className='text-[12.5px] text-[var(--text-muted)] m-0 leading-[1.5]'>{t(channel.taglineKey)}</p>
+            <p className='text-[12.5px] text-[var(--color-text-3)] m-0 leading-[1.5]'>{t(channel.taglineKey)}</p>
             <div className='flex items-center justify-between gap-8px mt-auto'>
               <span
                 className={`inline-flex items-center whitespace-nowrap px-8px py-2px rounded-full text-11px font-medium ${STATUS_STYLES[channel.status]}`}
@@ -163,7 +163,7 @@ const ChannelsIndex: React.FC = () => {
           {renderTier(3)}
         </Tabs.TabPane>
       </Tabs>
-      <div className='mt-24px text-12px text-[var(--text-muted)] text-center'>
+      <div className='mt-24px text-12px text-[var(--color-text-3)] text-center'>
         {t('settings.channelsIndex.footerText')}{' '}
         <span className='text-[var(--brand)] cursor-pointer'>{t('settings.channelsIndex.browseExtensions')}</span>
       </div>
