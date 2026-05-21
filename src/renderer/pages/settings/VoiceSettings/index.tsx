@@ -19,6 +19,7 @@ import {
   TextToSpeechSettingsSection,
   normalizeSpeechToTextConfig,
 } from '@renderer/components/settings/SettingsModal/contents/ToolsModalContent';
+import ProviderHintBanner from './ProviderHintBanner';
 
 const VoiceSettings: React.FC = () => {
   const { t } = useTranslation();
@@ -90,6 +91,7 @@ const VoiceSettings: React.FC = () => {
       )}
     >
       <div className='space-y-16px'>
+        <ProviderHintBanner ttsConfig={ttsConfig} onChange={handleTtsChange} />
         <SpeechToTextSettingsSection config={sttConfig} onChange={handleSttChange} />
         <TextToSpeechSettingsSection config={ttsConfig} onChange={handleTtsChange} />
       </div>
