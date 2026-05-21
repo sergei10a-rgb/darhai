@@ -51,8 +51,14 @@ function getBinaryName(platform) {
   return platform === 'win32' ? 'wayland-core.exe' : 'wayland-core';
 }
 
+// Pinned default tag. The engine release stream lives at
+// TradeCanyon/wayland-core; Desktop integrates against a specific tag rather
+// than tracking `latest` so version drift can't sneak in via a release made
+// while a CI build is mid-flight. Override with WCORE_VERSION=... when bumping.
+const DEFAULT_WCORE_VERSION = 'v0.6.5-wayland-base';
+
 function getVersion() {
-  return (process.env.WCORE_VERSION || 'latest').trim();
+  return (process.env.WCORE_VERSION || DEFAULT_WCORE_VERSION).trim();
 }
 
 // ---------------------------------------------------------------------------
