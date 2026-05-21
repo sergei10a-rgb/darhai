@@ -292,11 +292,11 @@ const OneClickImportModal: React.FC<OneClickImportModalProps> = ({ visible, onCa
           <WaylandSteps current={currentStep} size='small'>
             <WaylandSteps.Step
               title={t('settings.mcpStepSelectAgent')}
-              icon={currentStep > 1 ? <Check size={16} color='#165dff' /> : undefined}
+              icon={currentStep > 1 ? <Check size={16} color='rgb(var(--primary-6))' /> : undefined}
             />
             <WaylandSteps.Step
               title={t('settings.mcpStepFetchTools')}
-              icon={currentStep > 2 ? <Check size={16} color='#165dff' /> : undefined}
+              icon={currentStep > 2 ? <Check size={16} color='rgb(var(--primary-6))' /> : undefined}
             />
             <WaylandSteps.Step title={t('settings.mcpStepImportSuccess')} />
           </WaylandSteps>

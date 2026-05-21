@@ -185,7 +185,7 @@ const TeamSiderSection: React.FC<TeamSiderSectionProps> = ({
                     {(teamBadgeCounts.get(team.id) ?? 0) > 0 && (
                       <span
                         className='absolute top-4px right-4px w-18px h-18px rounded-full text-10px font-bold flex items-center justify-center leading-none'
-                        style={{ backgroundColor: '#F53F3F', color: '#fff', lineHeight: 1 }}
+                        style={{ backgroundColor: 'rgb(var(--danger-6))', color: 'var(--text-white)', lineHeight: 1 }}
                       >
                         {(teamBadgeCounts.get(team.id) ?? 0) > 99 ? '99+' : teamBadgeCounts.get(team.id)}
                       </span>
@@ -254,7 +254,7 @@ const TeamSiderSection: React.FC<TeamSiderSectionProps> = ({
                   {teamBadge > 0 && (
                     <span
                       className='absolute right-11px top-1/2 -translate-y-1/2 min-w-18px h-18px px-5px rounded-full text-10px font-bold flex items-center justify-center pointer-events-none z-10 group-hover:hidden'
-                      style={{ backgroundColor: '#F53F3F', color: '#fff', lineHeight: 1 }}
+                      style={{ backgroundColor: 'rgb(var(--danger-6))', color: 'var(--text-white)', lineHeight: 1 }}
                     >
                       {teamBadge > 99 ? '99+' : teamBadge}
                     </span>
