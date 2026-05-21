@@ -242,15 +242,20 @@ export const TextToSpeechSettingsSection: React.FC<{
         </Form.Item>
 
         <Form.Item label={t('settings.textToSpeechSpeed')}>
-          <Slider
-            min={0.5}
-            max={2.0}
-            step={0.1}
-            value={config.speed}
-            onChange={(value) => onChange((current) => ({ ...current, speed: value as number }))}
-            marks={{ 0.5: '0.5×', 1: '1×', 1.5: '1.5×', 2: '2×' }}
-            className='w-full'
-          />
+          {/* Reserve horizontal padding so the leftmost (0.5×) and rightmost
+              (2×) mark labels — which Arco centers on each mark position —
+              don't overflow the slider's container edges. */}
+          <div className='w-full px-12px'>
+            <Slider
+              min={0.5}
+              max={2.0}
+              step={0.1}
+              value={config.speed}
+              onChange={(value) => onChange((current) => ({ ...current, speed: value as number }))}
+              marks={{ 0.5: '0.5×', 1: '1×', 1.5: '1.5×', 2: '2×' }}
+              className='w-full'
+            />
+          </div>
         </Form.Item>
 
         <Form.Item label={t('settings.textToSpeechAutoRead')}>

@@ -223,8 +223,8 @@ const SkillsSettings: React.FC = () => {
       <div
         className='flex items-center justify-between px-14px py-10px rd-10px'
         style={{
-          background: 'var(--color-fill-1)',
-          border: '1px solid var(--color-border-1)',
+          background: 'var(--color-bg-2)',
+          border: '1px solid var(--color-border-2)',
         }}
       >
         <div className='flex-1 min-w-0'>
@@ -258,8 +258,8 @@ const SkillsSettings: React.FC = () => {
       <div
         className='skills-shell rd-12px overflow-hidden flex'
         style={{
-          background: 'var(--color-fill-1)',
-          border: '1px solid var(--color-border-1)',
+          background: 'var(--color-bg-2)',
+          border: '1px solid var(--color-border-2)',
         }}
       >
         <FilterRail
