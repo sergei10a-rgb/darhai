@@ -38,14 +38,18 @@ import WorkflowDetailModal from './WorkflowDetailModal';
 // with the lifestyle bucket. The list also covers what to do with
 // unknown future categories (fall through to the bottom under "Other").
 type CategoryDef = { slug: string; label: string };
+// Alphabetical by display label (Sean's directive 2026-05-21). Keeps the
+// rail predictable when categories expand — no implicit ranking, no
+// remembering 'is Lifestyle before or after Career?' Scanning a-z is
+// always the answer.
 const CATEGORY_ORDER: CategoryDef[] = [
-  { slug: 'life-event', label: 'Lifestyle' },
-  { slug: 'career', label: 'Career' },
-  { slug: 'creative-project', label: 'Creative Projects' },
-  { slug: 'software-project', label: 'Software & Engineering' },
   { slug: 'business-operations', label: 'Business Operations' },
+  { slug: 'career', label: 'Career' },
   { slug: 'content-creation', label: 'Content Creation' },
+  { slug: 'creative-project', label: 'Creative Projects' },
   { slug: 'cross-domain', label: 'Cross-Domain' },
+  { slug: 'life-event', label: 'Lifestyle' },
+  { slug: 'software-project', label: 'Software & Engineering' },
 ];
 
 // Eight workflows that read as broadly applicable AND high-leverage —
@@ -138,20 +142,20 @@ const WorkflowsLibraryPage: React.FC = () => {
   return (
     <div
       className='size-full overflow-y-auto overflow-x-hidden px-24px py-24px'
-      style={{ background: 'var(--bg)' }}
+      style={{ background: 'var(--color-bg-1)' }}
     >
       <div className='max-w-[1240px] mx-auto flex flex-col gap-20px min-w-0'>
         <header className='flex items-start justify-between gap-16px flex-wrap'>
           <div className='flex-1 min-w-0'>
             <h1
               className='text-24px font-semibold m-0'
-              style={{ color: 'var(--text-primary)' }}
+              style={{ color: 'var(--color-text-1)' }}
             >
               {t('title', 'Workflows')}
             </h1>
             <p
               className='text-14px mt-6px m-0'
-              style={{ color: 'var(--text-secondary)' }}
+              style={{ color: 'var(--color-text-2)' }}
             >
               {t(
                 'subtitle',
@@ -199,7 +203,7 @@ const WorkflowsLibraryPage: React.FC = () => {
               control surface instead of a search bar floating above. */}
           <aside
             className='shrink-0 w-200px sticky top-0 flex flex-col gap-8px py-2px'
-            style={{ color: 'var(--text-secondary)' }}
+            style={{ color: 'var(--color-text-2)' }}
           >
             <Input.Search
               placeholder={t('search.placeholder', 'Search workflows…')}
@@ -214,14 +218,14 @@ const WorkflowsLibraryPage: React.FC = () => {
                   onClick={() => setActiveCategory(null)}
                   className='flex items-center justify-between gap-12px px-10px py-6px rd-6px text-13px cursor-pointer transition-colors'
                   style={{
-                    background: activeCategory === null ? 'var(--fill-2)' : 'transparent',
-                    color: activeCategory === null ? 'var(--text-primary)' : 'var(--text-secondary)',
+                    background: activeCategory === null ? 'var(--color-fill-2)' : 'transparent',
+                    color: activeCategory === null ? 'var(--color-text-1)' : 'var(--color-text-2)',
                     fontWeight: activeCategory === null ? 600 : 400,
                     border: 'none',
                   }}
                 >
                   <span className='truncate'>{t('allCategories', 'All workflows')}</span>
-                  <span className='text-11px shrink-0' style={{ color: 'var(--text-tertiary)' }}>
+                  <span className='text-11px shrink-0' style={{ color: 'var(--color-text-3)' }}>
                     {workflows.length}
                   </span>
                 </button>
@@ -232,21 +236,21 @@ const WorkflowsLibraryPage: React.FC = () => {
                     onClick={() => setActiveCategory(s.slug)}
                     className='flex items-center justify-between gap-12px px-10px py-6px rd-6px text-13px cursor-pointer transition-colors'
                     style={{
-                      background: activeCategory === s.slug ? 'var(--fill-2)' : 'transparent',
-                      color: activeCategory === s.slug ? 'var(--text-primary)' : 'var(--text-secondary)',
+                      background: activeCategory === s.slug ? 'var(--color-fill-2)' : 'transparent',
+                      color: activeCategory === s.slug ? 'var(--color-text-1)' : 'var(--color-text-2)',
                       fontWeight: activeCategory === s.slug ? 600 : 400,
                       border: 'none',
                     }}
                   >
                     <span className='truncate'>{s.label}</span>
-                    <span className='text-11px shrink-0' style={{ color: 'var(--text-tertiary)' }}>
+                    <span className='text-11px shrink-0' style={{ color: 'var(--color-text-3)' }}>
                       {s.entries.length}
                     </span>
                   </button>
                 ))}
               </div>
             ) : (
-              <div className='text-12px px-10px' style={{ color: 'var(--text-tertiary)' }}>
+              <div className='text-12px px-10px' style={{ color: 'var(--color-text-3)' }}>
                 {t('count', '{{count}} workflows', { count: searchFiltered.length })}
               </div>
             )}
@@ -257,7 +261,7 @@ const WorkflowsLibraryPage: React.FC = () => {
               searchFiltered.length === 0 ? (
                 <div
                   className='text-center text-13px py-40px'
-                  style={{ color: 'var(--text-secondary)' }}
+                  style={{ color: 'var(--color-text-2)' }}
                 >
                   {t('search.empty', 'No workflows match your search')}
                 </div>
@@ -283,7 +287,7 @@ const WorkflowsLibraryPage: React.FC = () => {
                       style={{ color: 'rgb(var(--primary-6))', letterSpacing: '0.08em' }}
                     >
                       <span>{t('section.featured', 'Featured workflows')}</span>
-                      <span style={{ color: 'var(--text-tertiary)', fontWeight: 400 }}>
+                      <span style={{ color: 'var(--color-text-3)', fontWeight: 400 }}>
                         · {featured.length}
                       </span>
                     </h2>
@@ -306,7 +310,7 @@ const WorkflowsLibraryPage: React.FC = () => {
                 {activeCategory === null && featured.length > 0 ? (
                   <div
                     className='flex items-center gap-12px'
-                    style={{ color: 'var(--text-primary)' }}
+                    style={{ color: 'var(--color-text-1)' }}
                   >
                     <h2
                       className='text-13px font-semibold uppercase m-0 shrink-0'
@@ -316,13 +320,13 @@ const WorkflowsLibraryPage: React.FC = () => {
                     </h2>
                     <span
                       className='text-11px shrink-0'
-                      style={{ color: 'var(--text-tertiary)' }}
+                      style={{ color: 'var(--color-text-3)' }}
                     >
                       · {workflows.length - featured.length}
                     </span>
                     <div
                       className='flex-1 h-1px'
-                      style={{ background: 'var(--border-1)' }}
+                      style={{ background: 'var(--color-border-2)' }}
                     />
                   </div>
                 ) : null}
@@ -331,10 +335,10 @@ const WorkflowsLibraryPage: React.FC = () => {
                   <section key={s.slug}>
                     <h2
                       className='text-13px font-semibold uppercase m-0 mb-10px flex items-center gap-8px'
-                      style={{ color: 'var(--text-tertiary)', letterSpacing: '0.08em' }}
+                      style={{ color: 'var(--color-text-3)', letterSpacing: '0.08em' }}
                     >
                       <span>{s.label}</span>
-                      <span style={{ color: 'var(--text-tertiary)', fontWeight: 400 }}>
+                      <span style={{ color: 'var(--color-text-3)', fontWeight: 400 }}>
                         · {s.entries.length}
                       </span>
                     </h2>
