@@ -20,6 +20,8 @@ import styles from './WorkflowCard.module.css';
 interface WorkflowCardProps {
   entry: SkillIndexEntry;
   onClick: (entry: SkillIndexEntry) => void;
+  /** When true, the card renders with the Featured tier accent. */
+  featured?: boolean;
 }
 
 function sourceLabel(entry: SkillIndexEntry): { label: string; bg: string } {
@@ -43,12 +45,13 @@ function sourceLabel(entry: SkillIndexEntry): { label: string; bg: string } {
   }
 }
 
-const WorkflowCard: React.FC<WorkflowCardProps> = ({ entry, onClick }) => {
+const WorkflowCard: React.FC<WorkflowCardProps> = ({ entry, onClick, featured = false }) => {
   const handleClick = useCallback(() => onClick(entry), [onClick, entry]);
   const src = sourceLabel(entry);
+  const className = featured ? `${styles.card} ${styles.cardFeatured}` : styles.card;
 
   return (
-    <button type='button' onClick={handleClick} className={styles.card}>
+    <button type='button' onClick={handleClick} className={className}>
       <div className={styles.header}>
         <div className={styles.iconWrap}>
           <WorkflowIcon size={18} />

@@ -193,68 +193,66 @@ const WorkflowsLibraryPage: React.FC = () => {
           </div>
         </header>
 
-        <div className='flex items-center gap-12px'>
-          <Input.Search
-            placeholder={t('search.placeholder', 'Search workflows…')}
-            value={query}
-            onChange={(v) => setQuery(v)}
-            style={{ flex: 1, maxWidth: 'unset' }}
-            allowClear
-          />
-          <div className='text-12px shrink-0' style={{ color: 'var(--text-tertiary)' }}>
-            {searching
-              ? t('count', '{{count}} workflows', { count: searchFiltered.length })
-              : t('count', '{{count}} workflows', { count: workflows.length })}
-          </div>
-        </div>
-
         <div className='flex gap-20px items-start'>
-          {/* Category rail — only relevant when not searching. Click to
-              focus a single section; click again (or "All") to reset. */}
-          {!searching ? (
-            <aside
-              className='shrink-0 w-180px sticky top-0 flex flex-col gap-2px py-2px'
-              style={{ color: 'var(--text-secondary)' }}
-            >
-              <button
-                type='button'
-                onClick={() => setActiveCategory(null)}
-                className='flex items-center justify-between gap-12px px-10px py-6px rd-6px text-13px cursor-pointer transition-colors'
-                style={{
-                  background: activeCategory === null ? 'var(--fill-2)' : 'transparent',
-                  color: activeCategory === null ? 'var(--text-primary)' : 'var(--text-secondary)',
-                  fontWeight: activeCategory === null ? 600 : 400,
-                  border: 'none',
-                }}
-              >
-                <span className='truncate'>{t('allCategories', 'All workflows')}</span>
-                <span className='text-11px shrink-0' style={{ color: 'var(--text-tertiary)' }}>
-                  {workflows.length}
-                </span>
-              </button>
-              {sections.map((s) => (
+          {/* Category rail — search lifts in here (mirrors Assistants
+              page pattern) so the user sees filter + categories as one
+              control surface instead of a search bar floating above. */}
+          <aside
+            className='shrink-0 w-200px sticky top-0 flex flex-col gap-8px py-2px'
+            style={{ color: 'var(--text-secondary)' }}
+          >
+            <Input.Search
+              placeholder={t('search.placeholder', 'Search workflows…')}
+              value={query}
+              onChange={(v) => setQuery(v)}
+              allowClear
+            />
+            {!searching ? (
+              <div className='flex flex-col gap-2px'>
                 <button
-                  key={s.slug}
                   type='button'
-                  onClick={() => setActiveCategory(s.slug)}
+                  onClick={() => setActiveCategory(null)}
                   className='flex items-center justify-between gap-12px px-10px py-6px rd-6px text-13px cursor-pointer transition-colors'
                   style={{
-                    background: activeCategory === s.slug ? 'var(--fill-2)' : 'transparent',
-                    color: activeCategory === s.slug ? 'var(--text-primary)' : 'var(--text-secondary)',
-                    fontWeight: activeCategory === s.slug ? 600 : 400,
+                    background: activeCategory === null ? 'var(--fill-2)' : 'transparent',
+                    color: activeCategory === null ? 'var(--text-primary)' : 'var(--text-secondary)',
+                    fontWeight: activeCategory === null ? 600 : 400,
                     border: 'none',
                   }}
                 >
-                  <span className='truncate'>{s.label}</span>
+                  <span className='truncate'>{t('allCategories', 'All workflows')}</span>
                   <span className='text-11px shrink-0' style={{ color: 'var(--text-tertiary)' }}>
-                    {s.entries.length}
+                    {workflows.length}
                   </span>
                 </button>
-              ))}
-            </aside>
-          ) : null}
+                {sections.map((s) => (
+                  <button
+                    key={s.slug}
+                    type='button'
+                    onClick={() => setActiveCategory(s.slug)}
+                    className='flex items-center justify-between gap-12px px-10px py-6px rd-6px text-13px cursor-pointer transition-colors'
+                    style={{
+                      background: activeCategory === s.slug ? 'var(--fill-2)' : 'transparent',
+                      color: activeCategory === s.slug ? 'var(--text-primary)' : 'var(--text-secondary)',
+                      fontWeight: activeCategory === s.slug ? 600 : 400,
+                      border: 'none',
+                    }}
+                  >
+                    <span className='truncate'>{s.label}</span>
+                    <span className='text-11px shrink-0' style={{ color: 'var(--text-tertiary)' }}>
+                      {s.entries.length}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className='text-12px px-10px' style={{ color: 'var(--text-tertiary)' }}>
+                {t('count', '{{count}} workflows', { count: searchFiltered.length })}
+              </div>
+            )}
+          </aside>
 
-          <div className='flex-1 min-w-0 flex flex-col gap-28px'>
+          <div className='flex-1 min-w-0 flex flex-col gap-20px'>
             {searching ? (
               searchFiltered.length === 0 ? (
                 <div
@@ -266,7 +264,7 @@ const WorkflowsLibraryPage: React.FC = () => {
               ) : (
                 <div
                   className='grid gap-12px'
-                  style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}
+                  style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))' }}
                 >
                   {searchFiltered.map((w) => (
                     <WorkflowCard key={w.name} entry={w} onClick={handleCardClick} />
@@ -275,9 +273,9 @@ const WorkflowsLibraryPage: React.FC = () => {
               )
             ) : (
               <>
-                {/* Featured — Forge Orange header so it parallels the
-                    Standing Companies treatment on the Teams page. Only
-                    shows on the All-workflows view (per Sean's directive). */}
+                {/* Featured — Forge Orange header + accented cards so the
+                    curated tier reads as a distinct emphasis without
+                    leaving the page rhythm. Only shows on All-workflows. */}
                 {activeCategory === null && featured.length > 0 ? (
                   <section>
                     <h2
@@ -291,23 +289,24 @@ const WorkflowsLibraryPage: React.FC = () => {
                     </h2>
                     <div
                       className='grid gap-12px'
-                      style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}
+                      style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))' }}
                     >
                       {featured.map((w) => (
-                        <WorkflowCard key={w.name} entry={w} onClick={handleCardClick} />
+                        <WorkflowCard key={w.name} entry={w} onClick={handleCardClick} featured />
                       ))}
                     </div>
                   </section>
                 ) : null}
 
-                {/* "All workflows" boundary marker — only on the
-                    All-workflows view, only when Featured is present
-                    above. Visually separates curated picks from the
-                    long-tail category sections below. */}
+                {/* "All workflows" header — high-contrast prominent label
+                    so it reads as a tier marker, not as muted body chrome
+                    (Sean: 'all workflows is barely visible'). Tight 8px
+                    gap below collapses the dead space between Featured
+                    and Lifestyle that read as a layout error. */}
                 {activeCategory === null && featured.length > 0 ? (
                   <div
-                    className='flex items-center gap-12px mt-8px'
-                    style={{ color: 'var(--text-tertiary)' }}
+                    className='flex items-center gap-12px'
+                    style={{ color: 'var(--text-primary)' }}
                   >
                     <h2
                       className='text-13px font-semibold uppercase m-0 shrink-0'
@@ -315,6 +314,12 @@ const WorkflowsLibraryPage: React.FC = () => {
                     >
                       {t('section.all', 'All workflows')}
                     </h2>
+                    <span
+                      className='text-11px shrink-0'
+                      style={{ color: 'var(--text-tertiary)' }}
+                    >
+                      · {workflows.length - featured.length}
+                    </span>
                     <div
                       className='flex-1 h-1px'
                       style={{ background: 'var(--border-1)' }}
@@ -335,7 +340,7 @@ const WorkflowsLibraryPage: React.FC = () => {
                     </h2>
                     <div
                       className='grid gap-12px'
-                      style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}
+                      style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))' }}
                     >
                       {s.entries.map((w) => (
                         <WorkflowCard key={w.name} entry={w} onClick={handleCardClick} />

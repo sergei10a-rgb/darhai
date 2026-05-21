@@ -52,11 +52,16 @@
   min-width: 0;
 }
 
+/* Title + pill stack vertically so the pill placement is consistent
+   regardless of title length (Sean: 'sometimes next to it and sometimes
+   on a new line, fix the inconsistency'). Title on top, pill on its own
+   row underneath. */
 .titleRow {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
 }
 
 .title {
@@ -66,6 +71,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  width: 100%;
 }
 
 .pill {
@@ -75,6 +81,20 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--color-text-2);
+  align-self: flex-start;
+}
+
+/* Featured tier — subtle orange accent border + slightly lifted
+   background so the curated picks read as a distinct tier without
+   shouting. */
+.cardFeatured {
+  border-color: rgb(var(--primary-6) / 0.5);
+  background: linear-gradient(180deg, var(--color-fill-1) 0%, rgb(var(--primary-6) / 0.04) 100%);
+}
+
+.cardFeatured:hover {
+  border-color: rgb(var(--primary-6));
+  background: linear-gradient(180deg, var(--color-fill-2) 0%, rgb(var(--primary-6) / 0.08) 100%);
 }
 
 .description {
