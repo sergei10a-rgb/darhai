@@ -91,7 +91,15 @@
    before the title. */
 .cardFeatured {
   border-color: rgb(var(--primary-6));
-  background: color-mix(in srgb, var(--color-fill-1) 88%, rgb(var(--primary-6)) 12%);
+  /* Orange-tinted dark grey, then pulled halfway toward black so the
+     featured surface reads as 'lower than the regular card' — orange
+     border on a deeper-than-base background. Sean's '50% between that
+     and black' direction. */
+  background: color-mix(
+    in srgb,
+    color-mix(in srgb, var(--color-fill-1) 88%, rgb(var(--primary-6)) 12%) 50%,
+    black 50%
+  );
 }
 
 /* Reserve right padding ONLY on the title row of featured cards so the
@@ -103,7 +111,14 @@
 
 .cardFeatured:hover {
   border-color: rgb(var(--primary-6));
-  background: color-mix(in srgb, var(--color-fill-2) 84%, rgb(var(--primary-6)) 16%);
+  /* Hover warms the mix slightly (16% orange vs 12%) while keeping
+     the 50% darkening, so the affordance reads without losing the
+     'deeper than base' feel. */
+  background: color-mix(
+    in srgb,
+    color-mix(in srgb, var(--color-fill-2) 84%, rgb(var(--primary-6)) 16%) 50%,
+    black 50%
+  );
   box-shadow: 0 0 0 1px rgb(var(--primary-6) / 0.5);
 }
 
