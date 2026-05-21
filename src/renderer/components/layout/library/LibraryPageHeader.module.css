@@ -39,3 +39,9 @@
   gap: var(--space-2);
   flex-shrink: 0;
 }
+
+.actions :global(.arco-btn-primary) {
+  border-radius: 100px;
+  height: 32px;
+  padding: 0 16px;
+}
