@@ -27,6 +27,7 @@ import { Download, Sparkles } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ipcBridge } from '@/common';
+import { LibraryPageHeader } from '@/renderer/components/layout/library';
 import type { SkillIndexEntry } from '@/common/types/skillTypes';
 import WorkflowCard from './WorkflowCard';
 import WorkflowDetailModal from './WorkflowDetailModal';
@@ -147,57 +148,43 @@ const WorkflowsLibraryPage: React.FC = () => {
       className='size-full overflow-hidden flex flex-col'
       style={{ background: 'var(--color-bg-1)' }}
     >
-      <div className='flex-1 min-h-0 overflow-y-auto px-24px py-20px'>
+      <LibraryPageHeader
+        title={t('title', 'Workflows')}
+        countLabel={t('count', '{{count}} workflow', { count: workflows.length })}
+      >
+        <Button
+          type='secondary'
+          icon={<Download size={14} />}
+          onClick={() => {
+            // eslint-disable-next-line no-alert
+            window.alert(
+              t(
+                'import.placeholder',
+                'Import wiring lands next: folder / git URL / SKILL.md with type:workflow auto-detected via frontmatter, scanned by Skill Guard, and registered as source:imported.',
+              ),
+            );
+          }}
+        >
+          {t('actions.import', 'Import workflow')}
+        </Button>
+        <Button
+          type='primary'
+          icon={<Sparkles size={14} />}
+          onClick={() => {
+            // eslint-disable-next-line no-alert
+            window.alert(
+              t(
+                'build.placeholder',
+                'Workflow builder coming next: describe it in plain language → AI drafts a SKILL.md with category + depends inferred from the live skill library → review + save.',
+              ),
+            );
+          }}
+        >
+          {t('actions.build', 'Build a workflow')}
+        </Button>
+      </LibraryPageHeader>
+      <div className='flex-1 min-h-0 overflow-y-auto px-24px pb-20px'>
         <div className='flex flex-col gap-16px min-w-0'>
-        <header className='flex items-center justify-between gap-16px'>
-          <div className='flex items-baseline gap-12px min-w-0'>
-            <h1
-              className='text-20px font-semibold m-0 truncate'
-              style={{ color: 'var(--color-text-1)' }}
-            >
-              {t('title', 'Workflows')}
-            </h1>
-            <span
-              className='text-13px shrink-0'
-              style={{ color: 'var(--color-text-3)' }}
-            >
-              {t('count', '{{count}} workflow', { count: workflows.length })}
-            </span>
-          </div>
-          <div className='flex items-center gap-8px shrink-0'>
-            <Button
-              type='secondary'
-              icon={<Download size={14} />}
-              onClick={() => {
-                // eslint-disable-next-line no-alert
-                window.alert(
-                  t(
-                    'import.placeholder',
-                    'Import wiring lands next: folder / git URL / SKILL.md with type:workflow auto-detected via frontmatter, scanned by Skill Guard, and registered as source:imported.',
-                  ),
-                );
-              }}
-            >
-              {t('actions.import', 'Import workflow')}
-            </Button>
-            <Button
-              type='primary'
-              icon={<Sparkles size={14} />}
-              onClick={() => {
-                // eslint-disable-next-line no-alert
-                window.alert(
-                  t(
-                    'build.placeholder',
-                    'Workflow builder coming next: describe it in plain language → AI drafts a SKILL.md with category + depends inferred from the live skill library → review + save.',
-                  ),
-                );
-              }}
-            >
-              {t('actions.build', 'Build a workflow')}
-            </Button>
-          </div>
-        </header>
-
         <div className='flex gap-20px items-start'>
           {/* Category rail — search lifts in here (mirrors Assistants
               page pattern) so the user sees filter + categories as one

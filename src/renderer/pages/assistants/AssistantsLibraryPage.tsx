@@ -21,6 +21,7 @@
 
 import { ipcBridge } from '@/common';
 import coworkSvg from '@/renderer/assets/icons/cowork.svg';
+import { LibraryPageHeader } from '@/renderer/components/layout/library';
 import {
   useAssistantEditor,
   useAssistantList,
@@ -34,14 +35,14 @@ import AssistantEditDrawer from '@/renderer/pages/settings/AssistantSettings/Ass
 import DeleteAssistantModal from '@/renderer/pages/settings/AssistantSettings/DeleteAssistantModal';
 import SkillConfirmModals from '@/renderer/pages/settings/AssistantSettings/SkillConfirmModals';
 import { resolveAvatarImageSrc } from '@/renderer/pages/settings/AssistantSettings/assistantUtils';
-import { Message } from '@arco-design/web-react';
+import { Button, Message } from '@arco-design/web-react';
+import { Download, Plus } from 'lucide-react';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import useSWR from 'swr';
 import type { AssistantCategory } from '@/common/config/presets/assistantPresets';
 import AssistantCard, { type AssistantCardType } from './components/AssistantCard';
-import AssistantsActionBar from './components/AssistantsActionBar';
 import BuildMyOwnCard from './components/BuildMyOwnCard';
 import FilterRail from './components/FilterRail';
 import {
@@ -314,10 +315,48 @@ const AssistantsLibraryPage: React.FC = () => {
   // Built-ins group always renders because BuildMyOwnCard lives at its tail.
   const showBuildCardInBuiltins = selectedType === 'all' || selectedType === 'builtin';
 
+  const handleImport = useCallback(() => {
+    // Import wiring is paralleled in the Workflows page — the Skill Import
+    // flow detects type via frontmatter, so a future pass reuses it for
+    // assistants. Placeholder until that wire lands.
+    // eslint-disable-next-line no-alert
+    window.alert(
+      t('assistants.import.placeholder', {
+        defaultValue:
+          'Import wiring lands next: folder / git URL / SKILL.md with type:agent-profile auto-detected via frontmatter, scanned by Skill Guard, and registered as an Assistant.',
+      })
+    );
+  }, [t]);
+
   return (
     <div className={styles.page} data-testid='assistants-library-page'>
       {messageContext}
-      <AssistantsActionBar totalCount={typeCounts.all} onBuildMyOwn={handleBuildMyOwn} />
+      <LibraryPageHeader
+        title={t('assistants.title', { defaultValue: 'Assistants' })}
+        countLabel={t('assistants.totalCount', {
+          count: typeCounts.all,
+          defaultValue: '{{count}} assistants',
+        })}
+        testId='assistants-action-bar'
+        countTestId='assistants-total-count'
+      >
+        <Button
+          type='secondary'
+          icon={<Download size={14} />}
+          onClick={handleImport}
+          data-testid='assistants-import-cta'
+        >
+          {t('assistants.import.cta', { defaultValue: 'Import assistant' })}
+        </Button>
+        <Button
+          type='primary'
+          icon={<Plus size={14} />}
+          onClick={handleBuildMyOwn}
+          data-testid='assistants-build-my-own-cta'
+        >
+          {t('assistants.buildMyOwn.cta', { defaultValue: 'Build my own' })}
+        </Button>
+      </LibraryPageHeader>
       <div className={styles.layout}>
         <FilterRail
           query={query}

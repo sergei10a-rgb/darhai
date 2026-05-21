@@ -30,35 +30,6 @@
   padding: 24px 28px 48px;
 }
 
-.actionBar {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 28px 12px;
-  gap: 16px;
-}
-
-.actionBarTitleGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.actionBarTitle {
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--color-text-1);
-  line-height: 28px;
-  margin: 0;
-}
-
-.actionBarSubtitle {
-  font-size: 13px;
-  font-weight: 400;
-  color: var(--color-text-3);
-}
-
 .sectionHeader {
   display: flex;
   align-items: baseline;

@@ -29,6 +29,7 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { ipcBridge } from '@/common';
+import { LibraryPageHeader } from '@/renderer/components/layout/library';
 import { useAuth } from '@/renderer/hooks/context/AuthContext';
 import { useAssistantList } from '@/renderer/hooks/assistant';
 import type { AssistantListItem } from '@/renderer/pages/settings/AssistantSettings/types';
@@ -207,43 +208,37 @@ const TeamsLibraryPage: React.FC = () => {
 
   return (
     <div className={styles.page} data-testid='teams-library-page'>
-      <div className={styles.actionBar} data-testid='teams-action-bar'>
-        <div className={styles.actionBarTitleGroup}>
-          <h1 className={styles.actionBarTitle}>{t('teams.title', { defaultValue: 'Teams' })}</h1>
-          <span className={styles.actionBarSubtitle} data-testid='teams-total-count'>
-            {t('teams.totalCount', {
-              count: totalTeams,
-              defaultValue: '{{count}} teams',
-            })}
-          </span>
-        </div>
-        <div className='flex items-center gap-8px'>
-          <Button
-            type='outline'
-            icon={<Upload size={14} />}
-            onClick={triggerImportPicker}
-            data-testid='teams-import-cta'
-          >
-            {t('teams.import.button', { defaultValue: 'Import team' })}
-          </Button>
-          <Button
-            type='primary'
-            icon={<Plus size={14} />}
-            onClick={handleBuildMyOwn}
-            data-testid='teams-build-my-own-cta'
-          >
-            {t('teams.buildMyOwn.cta', { defaultValue: 'Build my own team' })}
-          </Button>
-        </div>
-        <input
-          ref={fileInputRef}
-          type='file'
-          accept='.json,application/json'
-          onChange={handleFileSelected}
-          style={{ display: 'none' }}
-          data-testid='teams-import-file-input'
-        />
-      </div>
+      <LibraryPageHeader
+        title={t('teams.title', { defaultValue: 'Teams' })}
+        countLabel={t('teams.totalCount', { count: totalTeams, defaultValue: '{{count}} teams' })}
+        testId='teams-action-bar'
+        countTestId='teams-total-count'
+      >
+        <Button
+          type='secondary'
+          icon={<Upload size={14} />}
+          onClick={triggerImportPicker}
+          data-testid='teams-import-cta'
+        >
+          {t('teams.import.button', { defaultValue: 'Import team' })}
+        </Button>
+        <Button
+          type='primary'
+          icon={<Plus size={14} />}
+          onClick={handleBuildMyOwn}
+          data-testid='teams-build-my-own-cta'
+        >
+          {t('teams.buildMyOwn.cta', { defaultValue: 'Build my own team' })}
+        </Button>
+      </LibraryPageHeader>
+      <input
+        ref={fileInputRef}
+        type='file'
+        accept='.json,application/json'
+        onChange={handleFileSelected}
+        style={{ display: 'none' }}
+        data-testid='teams-import-file-input'
+      />
 
       <div className={styles.scroll}>
         {totalTeams === 0 && (
