@@ -14,6 +14,7 @@ import {
   SiderSearchEntry,
   SiderScheduledEntry,
   SiderAssistantsEntry,
+  SiderWorkflowsEntry,
   SiderTeamsEntry,
 } from './SiderNav';
 import SiderFooter from './SiderFooter';
@@ -109,6 +110,19 @@ const Sider: React.FC<SiderProps> = ({ onSessionClick, collapsed = false }) => {
     closePreview();
     setIsBatchMode(false);
     Promise.resolve(navigate('/assistants')).catch((error) => {
+      console.error('Navigation failed:', error);
+    });
+    if (onSessionClick) {
+      onSessionClick();
+    }
+  };
+
+  const handleWorkflowsClick = () => {
+    cleanupSiderTooltips();
+    blurActiveElement();
+    closePreview();
+    setIsBatchMode(false);
+    Promise.resolve(navigate('/workflows')).catch((error) => {
       console.error('Navigation failed:', error);
     });
     if (onSessionClick) {
@@ -224,6 +238,17 @@ const Sider: React.FC<SiderProps> = ({ onSessionClick, collapsed = false }) => {
               collapsed={collapsed}
               siderTooltipProps={siderTooltipProps}
               onClick={handleAssistantsClick}
+            />
+            {/* Workflows nav entry — procedure-shaped automation. Lives
+                between Assistants (people-shaped) and Scheduled (time-shaped)
+                so the three nav items mirror the three ways users invoke
+                the agent universe. */}
+            <SiderWorkflowsEntry
+              isMobile={isMobile}
+              isActive={pathname === '/workflows'}
+              collapsed={collapsed}
+              siderTooltipProps={siderTooltipProps}
+              onClick={handleWorkflowsClick}
             />
             {/* Scheduled tasks nav entry - fixed above scroll */}
             <SiderScheduledEntry

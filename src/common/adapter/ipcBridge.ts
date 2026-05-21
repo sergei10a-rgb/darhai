@@ -374,8 +374,13 @@ export const skills = {
     /** Import a single SKILL.md file. */
     singleSkillMd: buildProvider<ImportResult, { srcPath: string }>('skills.import.single-skill-md'),
   },
-  /** Return all entries from the SkillLibrary index. */
-  list: buildProvider<SkillIndexEntry[], void>('skills.list'),
+  /**
+   * Return entries from the SkillLibrary index. Defaults to `type: 'skill'`
+   * so the Skills page contract is preserved; pass `{ type: 'workflow' }`
+   * to feed the Workflows page or `{ type: 'agent-profile' }` if a third
+   * caller ever needs them.
+   */
+  list: buildProvider<SkillIndexEntry[], { type?: SkillIndexEntry['type'] } | undefined>('skills.list'),
   /** Return aggregate library statistics. */
   stats: buildProvider<SkillStats, void>('skills.stats'),
   /** Pin or unpin a skill by name. */

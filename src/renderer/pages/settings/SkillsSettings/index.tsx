@@ -46,7 +46,7 @@ const SkillsSettings: React.FC = () => {
 
   const fetchData = useCallback(async () => {
     const [list, s] = await Promise.all([
-      ipcBridge.skills.list.invoke(),
+      ipcBridge.skills.list.invoke({ type: 'skill' }),
       ipcBridge.skills.stats.invoke(),
     ]);
     setEntries(list);

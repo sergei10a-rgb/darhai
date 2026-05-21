@@ -60,14 +60,13 @@ export function initSkillsBridge(): void {
   ipcBridge.skills.import.zip.provider(async ({ zipPath }) => importer.importZip(zipPath));
   ipcBridge.skills.import.singleSkillMd.provider(async ({ srcPath }) => importer.importSingleSkillMd(srcPath));
 
-  ipcBridge.skills.list.provider(async () => {
-    // Skills page contract: surface ONLY `type === 'skill'`. The vendored
-    // library also carries 107 workflows (routed to Workspace > Workflows)
-    // and 25 agent-profiles (merged into Workspace > Assistants via the
-    // vendoredAssistantOverlay). Mixing them onto the Skills page misleads
-    // users into thinking workflows/personas are skills.
+  ipcBridge.skills.list.provider(async (req) => {
+    // Default to `type: 'skill'` so the existing Skills page (which invokes
+    // with no args) sees only the 1,965 + 88 + N skills. Workflows page
+    // calls with `{ type: 'workflow' }`; agent-profiles never surface
+    // via this IPC (they're merged into Workspace > Assistants).
     const lib = SkillLibrary.getInstance();
-    return lib.list({ type: 'skill' });
+    return lib.list({ type: req?.type ?? 'skill' });
   });
 
   ipcBridge.skills.stats.provider(async () => {

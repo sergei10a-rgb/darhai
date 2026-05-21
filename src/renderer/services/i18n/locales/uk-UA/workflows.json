@@ -1,0 +1,25 @@
+{
+  "siderEntry": "Workflows",
+  "title": "Workflows",
+  "subtitle": "Step-by-step recipes you can launch in one click or schedule to run automatically. Pick a workflow, choose your engine, and the agent will walk you through it.",
+  "count": "{{count}} workflow available",
+  "count_other": "{{count}} workflows available",
+  "search": {
+    "placeholder": "Search workflows…",
+    "empty": "No workflows match your search",
+    "emptyLibrary": "No workflows loaded yet. The bundled library will populate at next restart."
+  },
+  "whatHappens": "When you launch this",
+  "bodyFallback": "The agent loads this workflow as its first directive and walks you through it step by step. You can interrupt or change direction at any point.",
+  "noDescription": "No description provided.",
+  "actions": {
+    "launch": "Launch now",
+    "schedule": "Schedule"
+  },
+  "launch": {
+    "placeholder": "Launch wiring is in flight. Soon you will pick an engine (Wayland Core / Gemini / Claude / Codex), and the workflow will load as the agent's first directive in a fresh chat."
+  },
+  "schedule": {
+    "placeholder": "Schedule wiring lands in the next pass — the Create Scheduled Task modal will gain a \"From workflow\" tab and open here pre-filled with this workflow. For now, open Scheduled Tasks in the sidebar and paste the workflow as the prompt."
+  }
+}

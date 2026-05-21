@@ -2897,7 +2897,22 @@ export type I18nKey =
   | 'update.readyToInstall'
   | 'update.readyToInstallDesc'
   | 'update.showInFolder'
-  | 'update.upToDateTitle';
+  | 'update.upToDateTitle'
+  | 'workflows.actions.launch'
+  | 'workflows.actions.schedule'
+  | 'workflows.bodyFallback'
+  | 'workflows.count'
+  | 'workflows.count_other'
+  | 'workflows.launch.placeholder'
+  | 'workflows.noDescription'
+  | 'workflows.schedule.placeholder'
+  | 'workflows.search.empty'
+  | 'workflows.search.emptyLibrary'
+  | 'workflows.search.placeholder'
+  | 'workflows.siderEntry'
+  | 'workflows.subtitle'
+  | 'workflows.title'
+  | 'workflows.whatHappens';
 
 export type I18nModule =
   | 'common'
@@ -2921,4 +2936,5 @@ export type I18nModule =
   | 'team'
   | 'assistants'
   | 'teams'
-  | 'skills';
+  | 'skills'
+  | 'workflows';

@@ -8,6 +8,7 @@ import { ToastProvider } from '@renderer/components/settings/shared/feedback/Toa
 const Conversation = React.lazy(() => import('@renderer/pages/conversation'));
 const Guid = React.lazy(() => import('@renderer/pages/guid'));
 const AssistantsLibraryPage = React.lazy(() => import('@renderer/pages/assistants/AssistantsLibraryPage'));
+const WorkflowsLibraryPage = React.lazy(() => import('@renderer/pages/workflows/WorkflowsLibraryPage'));
 const AgentSettings = React.lazy(() => import('@renderer/pages/settings/AgentSettings'));
 const AgentsSettings = React.lazy(() => import('@renderer/pages/settings/AgentsSettings'));
 const AssistantSettings = React.lazy(() => import('@renderer/pages/settings/AssistantSettings'));
@@ -120,6 +121,7 @@ const PanelRoute: React.FC<{ layout: React.ReactElement }> = ({ layout }) => {
           <Route path='/scheduled' element={withRouteFallback(ScheduledTasksPage)} />
           <Route path='/scheduled/:jobId' element={withRouteFallback(TaskDetailPage)} />
           <Route path='/assistants' element={withRouteFallback(AssistantsLibraryPage)} />
+          <Route path='/workflows' element={withRouteFallback(WorkflowsLibraryPage)} />
           {/*
            * Plural /teams* = the team-blitz launcher library (W2a+).
            * Singular /team/:id above (line 103) is the legacy
