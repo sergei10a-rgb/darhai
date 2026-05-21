@@ -680,7 +680,7 @@ const WebuiModalContent: React.FC = () => {
         */}
 
         {/* WebUI Service Card */}
-        <div className='px-[12px] md:px-[28px] py-14px bg-[var(--color-bg-2)] border border-solid border-[var(--color-border-2)] rd-12px'>
+        <div className='px-[12px] md:px-[28px] py-14px bg-[var(--color-bg-2)] border-2 border-solid border-[var(--color-border-2)] rd-12px'>
           {/* WebUI hint */}
           <div className='mb-8px rd-10px border border-line bg-fill-1 px-10px py-8px flex items-start gap-6px'>
             <Globe size={16} className='mt-1px text-[rgb(var(--primary-6))]' />
@@ -748,7 +748,7 @@ const WebuiModalContent: React.FC = () => {
         </div>
 
         {/* Login Info Card */}
-        <div className='px-[12px] md:px-[28px] py-14px bg-[var(--color-bg-2)] border border-solid border-[var(--color-border-2)] rd-12px'>
+        <div className='px-[12px] md:px-[28px] py-14px bg-[var(--color-bg-2)] border-2 border-solid border-[var(--color-border-2)] rd-12px'>
           <div className='text-14px font-500 mb-8px text-t-primary'>{t('settings.webui.loginInfo')}</div>
 
           {/* Account */}

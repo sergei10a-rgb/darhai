@@ -152,7 +152,7 @@ const DevSettings: React.FC = () => {
   return (
     <div className='space-y-12px'>
       {/* DevTools toggle */}
-      <div className='px-[12px] md:px-[32px] py-16px bg-[var(--color-bg-2)] border border-solid border-[var(--color-border-2)] rd-12px'>
+      <div className='px-[12px] md:px-[32px] py-16px bg-[var(--color-bg-2)] border-2 border-solid border-[var(--color-border-2)] rd-12px'>
         <PreferenceRow label={t('settings.devTools')}>
           <Button
             size='small'
@@ -166,7 +166,7 @@ const DevSettings: React.FC = () => {
       </div>
 
       {/* CDP section */}
-      <div className='px-[12px] md:px-[32px] py-16px bg-[var(--color-bg-2)] border border-solid border-[var(--color-border-2)] rd-12px space-y-12px'>
+      <div className='px-[12px] md:px-[32px] py-16px bg-[var(--color-bg-2)] border-2 border-solid border-[var(--color-border-2)] rd-12px space-y-12px'>
         <div className='text-14px font-medium text-t-primary mb-8px'>{t('settings.cdp.title')}</div>
         <div className='space-y-12px'>
           {/* CDP remote debugging toggle */}

@@ -344,7 +344,7 @@ const SystemModalContent: React.FC = () => {
 
       <WaylandScrollArea className='flex-1 min-h-0 pb-16px' disableOverflow={isPageMode}>
         <div className='space-y-16px'>
-          <div className='px-[12px] md:px-[32px] py-16px bg-[var(--color-bg-2)] border border-solid border-[var(--color-border-2)] rd-12px space-y-12px'>
+          <div className='px-[12px] md:px-[32px] py-16px bg-[var(--color-bg-2)] border-2 border-solid border-[var(--color-border-2)] rd-12px space-y-12px'>
             {updateChannelStatus && !updateChannelStatus.available && (
               <Alert
                 type='warning'

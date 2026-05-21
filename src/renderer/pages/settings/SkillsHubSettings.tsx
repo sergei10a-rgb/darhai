@@ -243,7 +243,7 @@ const SkillsHubSettings: React.FC<SkillsHubSettingsProps> = ({ withWrapper = tru
       <div className='space-y-16px pb-24px'>
         {/* ======== Discovered External Skills ======== */}
         {totalExternal > 0 && (
-          <div className='px-[16px] md:px-[32px] py-32px bg-[var(--color-bg-2)] rd-12px mb-16px border border-solid border-[var(--color-border-2)] relative overflow-hidden transition-all'>
+          <div className='px-[16px] md:px-[32px] py-32px bg-[var(--color-bg-2)] rd-12px mb-16px border-2 border-solid border-[var(--color-border-2)] relative overflow-hidden transition-all'>
             {/* Section Header with Search Bar */}
             <div className='flex flex-col lg:flex-row lg:items-start justify-between gap-16px mb-24px relative z-10 w-full'>
               <div className='flex flex-col'>
@@ -385,7 +385,7 @@ const SkillsHubSettings: React.FC<SkillsHubSettingsProps> = ({ withWrapper = tru
         )}
 
         {/* ======== My Skills ======== */}
-        <div className='px-[16px] md:px-[32px] py-32px bg-[var(--color-bg-2)] rd-12px border border-solid border-[var(--color-border-2)] relative overflow-hidden transition-all'>
+        <div className='px-[16px] md:px-[32px] py-32px bg-[var(--color-bg-2)] rd-12px border-2 border-solid border-[var(--color-border-2)] relative overflow-hidden transition-all'>
           {/* Toolbar for My Skills */}
           <div className='flex flex-col lg:flex-row lg:items-center justify-between gap-16px mb-24px relative z-10'>
             <div className='flex items-center gap-10px shrink-0'>
@@ -581,7 +581,7 @@ const SkillsHubSettings: React.FC<SkillsHubSettingsProps> = ({ withWrapper = tru
 
         {/* ======== Extension Skills ======== */}
         {extensionSkills.length > 0 && (
-          <div className='px-[16px] md:px-[32px] py-32px bg-[var(--color-bg-2)] rd-12px border border-solid border-[var(--color-border-2)] relative overflow-hidden transition-all'>
+          <div className='px-[16px] md:px-[32px] py-32px bg-[var(--color-bg-2)] rd-12px border-2 border-solid border-[var(--color-border-2)] relative overflow-hidden transition-all'>
             <div className='flex items-center gap-10px mb-24px'>
               <Puzzle size={20} color='var(--color-primary-6)' />
               <span className='text-16px md:text-18px text-t-primary font-bold tracking-tight'>
@@ -624,7 +624,7 @@ const SkillsHubSettings: React.FC<SkillsHubSettingsProps> = ({ withWrapper = tru
 
         {/* ======== Builtin Auto-injected Skills ======== */}
         {builtinAutoSkills.length > 0 && (
-          <div className='px-[16px] md:px-[32px] py-32px bg-[var(--color-bg-2)] rd-12px border border-solid border-[var(--color-border-2)] relative overflow-hidden transition-all'>
+          <div className='px-[16px] md:px-[32px] py-32px bg-[var(--color-bg-2)] rd-12px border-2 border-solid border-[var(--color-border-2)] relative overflow-hidden transition-all'>
             <div className='flex items-center gap-10px mb-24px'>
               <Zap size={20} color='var(--color-primary-6)' />
               <span className='text-16px md:text-18px text-t-primary font-bold tracking-tight'>
@@ -666,7 +666,7 @@ const SkillsHubSettings: React.FC<SkillsHubSettingsProps> = ({ withWrapper = tru
         )}
 
         {/* ======== Usage Tip ======== */}
-        <div className='px-16px md:px-[24px] py-20px bg-[var(--color-bg-2)] border border-solid border-[var(--color-border-2)] rd-12px flex items-start gap-12px text-t-secondary'>
+        <div className='px-16px md:px-[24px] py-20px bg-[var(--color-bg-2)] border-2 border-solid border-[var(--color-border-2)] rd-12px flex items-start gap-12px text-t-secondary'>
           <Info size={18} className='text-primary-6 mt-2px shrink-0' />
           <div className='flex flex-col gap-4px'>
             <span className='font-bold text-t-primary text-14px'>

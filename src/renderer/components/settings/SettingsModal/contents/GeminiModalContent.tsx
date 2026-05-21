@@ -155,7 +155,7 @@ const GeminiModalContent: React.FC = () => {
       {/* Content Area */}
       <WaylandScrollArea className='flex-1 min-h-0' disableOverflow={isPageMode}>
         <div className='space-y-16px'>
-          <div className='px-[12px] py-[24px] md:px-[32px] bg-[var(--color-bg-2)] rd-12px border border-solid border-[var(--color-border-2)]'>
+          <div className='px-[12px] py-[24px] md:px-[32px] bg-[var(--color-bg-2)] rd-12px border-2 border-solid border-[var(--color-border-2)]'>
             <Form
               form={form}
               layout='horizontal'

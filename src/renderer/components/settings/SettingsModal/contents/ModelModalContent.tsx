@@ -454,7 +454,7 @@ const ModelModalContent: React.FC = () => {
   });
 
   return (
-    <div className='flex flex-col bg-[var(--color-bg-2)] border border-solid border-[var(--color-border-2)] rd-12px px-16px md:px-24px lg:px-28px py-16px md:py-18px'>
+    <div className='flex flex-col bg-[var(--color-bg-2)] border-2 border-solid border-[var(--color-border-2)] rd-12px px-16px md:px-24px lg:px-28px py-16px md:py-18px'>
       {messageContext}
       {addPlatformModalContext}
       {editModalContext}

@@ -106,7 +106,7 @@ const DisplayModalContent: React.FC = () => {
       <WaylandScrollArea className='flex-1 min-h-0 pb-16px' disableOverflow={isPageMode}>
         <div className='space-y-16px'>
           {/* Display Settings */}
-          <div className='px-16px md:px-24px lg:px-28px py-14px md:py-16px bg-[var(--color-bg-2)] border border-solid border-[var(--color-border-2)] rd-12px space-y-10px md:space-y-12px'>
+          <div className='px-16px md:px-24px lg:px-28px py-14px md:py-16px bg-[var(--color-bg-2)] border-2 border-solid border-[var(--color-border-2)] rd-12px space-y-10px md:space-y-12px'>
             <div className='w-full flex flex-col divide-y divide-border-2'>
               {displayItems.map((item) => (
                 <PreferenceRow key={item.key} label={item.label}>
