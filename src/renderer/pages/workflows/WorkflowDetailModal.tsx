@@ -98,13 +98,13 @@ const WorkflowDetailModal: React.FC<WorkflowDetailModalProps> = ({ entry, onClos
   };
 
   const handleSchedule = () => {
-    // eslint-disable-next-line no-alert
-    window.alert(
-      t(
-        'schedule.placeholder',
-        'Schedule wiring lands in the next pass — the Create Scheduled Task modal will gain a "From workflow" tab and open here pre-filled with this workflow. For now, open Scheduled Tasks in the sidebar and paste the workflow as the prompt.',
-      ),
-    );
+    if (!entry) return;
+    // Route through /scheduled?workflow=<slug>. The Scheduled Tasks page
+    // reads the param on mount, opens the Create Task dialog in
+    // 'From workflow' mode, and clears the param so refreshes don't
+    // re-fire the dialog.
+    onClose();
+    void navigate(`/scheduled?workflow=${encodeURIComponent(entry.name)}`);
   };
 
   return (

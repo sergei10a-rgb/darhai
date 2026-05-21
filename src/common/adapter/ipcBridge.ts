@@ -383,6 +383,13 @@ export const skills = {
   list: buildProvider<SkillIndexEntry[], { type?: SkillIndexEntry['type'] } | undefined>('skills.list'),
   /** Return aggregate library statistics. */
   stats: buildProvider<SkillStats, void>('skills.stats'),
+  /**
+   * Load the body (markdown content) of a skill or workflow by name.
+   * Used by the Workflows → Schedule flow to pre-fill the scheduled
+   * task prompt with the chosen workflow's full SKILL.md body. Returns
+   * null for unknown names or blocked (quarantined) entries.
+   */
+  getBody: buildProvider<string | null, { name: string }>('skills.get-body'),
   /** Pin or unpin a skill by name. */
   setPinned: buildProvider<void, { name: string; pinned: boolean }>('skills.set-pinned'),
   /**

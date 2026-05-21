@@ -6,7 +6,20 @@
   "count_other": "{{count}} workflows",
   "allCategories": "All workflows",
   "section": {
-    "featured": "Featured"
+    "featured": "Featured workflows",
+    "all": "All workflows"
+  },
+  "actions": {
+    "launch": "Launch now",
+    "schedule": "Schedule",
+    "import": "Import workflow",
+    "build": "Build a workflow"
+  },
+  "import": {
+    "placeholder": "Import wiring lands next: folder / git URL / SKILL.md with type:workflow auto-detected via frontmatter, scanned by Skill Guard, and registered as source:imported."
+  },
+  "build": {
+    "placeholder": "Workflow builder coming next: describe it in plain language → AI drafts a SKILL.md with category + depends inferred from the live skill library → review + save."
   },
   "depends": {
     "title": "Uses these skills",
@@ -20,14 +33,7 @@
   "whatHappens": "When you launch this",
   "bodyFallback": "The agent loads this workflow as its first directive and walks you through it step by step. You can interrupt or change direction at any point.",
   "noDescription": "No description provided.",
-  "actions": {
-    "launch": "Launch now",
-    "schedule": "Schedule"
-  },
   "launch": {
     "placeholder": "Launch wiring is in flight. Soon you will pick an engine (Wayland Core / Gemini / Claude / Codex), and the workflow will load as the agent's first directive in a fresh chat."
-  },
-  "schedule": {
-    "placeholder": "Schedule wiring lands in the next pass — the Create Scheduled Task modal will gain a \"From workflow\" tab and open here pre-filled with this workflow. For now, open Scheduled Tasks in the sidebar and paste the workflow as the prompt."
   }
 }

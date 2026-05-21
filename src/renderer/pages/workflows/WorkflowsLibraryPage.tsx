@@ -22,7 +22,8 @@
  * plus a list of skill dependencies it activates.
  */
 
-import { Input } from '@arco-design/web-react';
+import { Button, Input } from '@arco-design/web-react';
+import { Download, Sparkles } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ipcBridge } from '@/common';
@@ -136,26 +137,60 @@ const WorkflowsLibraryPage: React.FC = () => {
 
   return (
     <div
-      className='size-full overflow-y-auto px-32px py-24px'
+      className='size-full overflow-y-auto overflow-x-hidden px-24px py-24px'
       style={{ background: 'var(--bg)' }}
     >
-      <div className='max-w-[1280px] mx-auto flex flex-col gap-20px'>
-        <header>
-          <h1
-            className='text-24px font-semibold m-0'
-            style={{ color: 'var(--text-primary)' }}
-          >
-            {t('title', 'Workflows')}
-          </h1>
-          <p
-            className='text-14px mt-6px m-0'
-            style={{ color: 'var(--text-secondary)' }}
-          >
-            {t(
-              'subtitle',
-              'Step-by-step recipes you can launch in one click or schedule to run automatically. Pick a workflow, choose your engine, and the agent will walk you through it.',
-            )}
-          </p>
+      <div className='max-w-[1240px] mx-auto flex flex-col gap-20px min-w-0'>
+        <header className='flex items-start justify-between gap-16px flex-wrap'>
+          <div className='flex-1 min-w-0'>
+            <h1
+              className='text-24px font-semibold m-0'
+              style={{ color: 'var(--text-primary)' }}
+            >
+              {t('title', 'Workflows')}
+            </h1>
+            <p
+              className='text-14px mt-6px m-0'
+              style={{ color: 'var(--text-secondary)' }}
+            >
+              {t(
+                'subtitle',
+                'Step-by-step recipes you can launch in one click or schedule to run automatically. Pick a workflow, choose your engine, and the agent will walk you through it.',
+              )}
+            </p>
+          </div>
+          <div className='flex items-center gap-8px shrink-0'>
+            <Button
+              type='secondary'
+              icon={<Download size={14} />}
+              onClick={() => {
+                // eslint-disable-next-line no-alert
+                window.alert(
+                  t(
+                    'import.placeholder',
+                    'Import wiring lands next: folder / git URL / SKILL.md with type:workflow auto-detected via frontmatter, scanned by Skill Guard, and registered as source:imported.',
+                  ),
+                );
+              }}
+            >
+              {t('actions.import', 'Import workflow')}
+            </Button>
+            <Button
+              type='primary'
+              icon={<Sparkles size={14} />}
+              onClick={() => {
+                // eslint-disable-next-line no-alert
+                window.alert(
+                  t(
+                    'build.placeholder',
+                    'Workflow builder coming next: describe it in plain language → AI drafts a SKILL.md with category + depends inferred from the live skill library → review + save.',
+                  ),
+                );
+              }}
+            >
+              {t('actions.build', 'Build a workflow')}
+            </Button>
+          </div>
         </header>
 
         <div className='flex items-center gap-12px'>
@@ -184,7 +219,7 @@ const WorkflowsLibraryPage: React.FC = () => {
               <button
                 type='button'
                 onClick={() => setActiveCategory(null)}
-                className='text-left px-10px py-6px rd-6px text-13px cursor-pointer transition-colors'
+                className='flex items-center justify-between gap-12px px-10px py-6px rd-6px text-13px cursor-pointer transition-colors'
                 style={{
                   background: activeCategory === null ? 'var(--fill-2)' : 'transparent',
                   color: activeCategory === null ? 'var(--text-primary)' : 'var(--text-secondary)',
@@ -192,8 +227,8 @@ const WorkflowsLibraryPage: React.FC = () => {
                   border: 'none',
                 }}
               >
-                <span>{t('allCategories', 'All workflows')}</span>
-                <span className='float-right text-11px' style={{ color: 'var(--text-tertiary)' }}>
+                <span className='truncate'>{t('allCategories', 'All workflows')}</span>
+                <span className='text-11px shrink-0' style={{ color: 'var(--text-tertiary)' }}>
                   {workflows.length}
                 </span>
               </button>
@@ -202,7 +237,7 @@ const WorkflowsLibraryPage: React.FC = () => {
                   key={s.slug}
                   type='button'
                   onClick={() => setActiveCategory(s.slug)}
-                  className='text-left px-10px py-6px rd-6px text-13px cursor-pointer transition-colors'
+                  className='flex items-center justify-between gap-12px px-10px py-6px rd-6px text-13px cursor-pointer transition-colors'
                   style={{
                     background: activeCategory === s.slug ? 'var(--fill-2)' : 'transparent',
                     color: activeCategory === s.slug ? 'var(--text-primary)' : 'var(--text-secondary)',
@@ -210,8 +245,8 @@ const WorkflowsLibraryPage: React.FC = () => {
                     border: 'none',
                   }}
                 >
-                  <span>{s.label}</span>
-                  <span className='float-right text-11px' style={{ color: 'var(--text-tertiary)' }}>
+                  <span className='truncate'>{s.label}</span>
+                  <span className='text-11px shrink-0' style={{ color: 'var(--text-tertiary)' }}>
                     {s.entries.length}
                   </span>
                 </button>
@@ -240,14 +275,19 @@ const WorkflowsLibraryPage: React.FC = () => {
               )
             ) : (
               <>
-                {/* Featured — only shows when viewing all categories. */}
+                {/* Featured — Forge Orange header so it parallels the
+                    Standing Companies treatment on the Teams page. Only
+                    shows on the All-workflows view (per Sean's directive). */}
                 {activeCategory === null && featured.length > 0 ? (
                   <section>
                     <h2
-                      className='text-13px font-semibold uppercase m-0 mb-10px'
-                      style={{ color: 'var(--text-tertiary)', letterSpacing: '0.08em' }}
+                      className='text-13px font-semibold uppercase m-0 mb-10px flex items-center gap-8px'
+                      style={{ color: 'rgb(var(--primary-6))', letterSpacing: '0.08em' }}
                     >
-                      {t('section.featured', 'Featured')}
+                      <span>{t('section.featured', 'Featured workflows')}</span>
+                      <span style={{ color: 'var(--text-tertiary)', fontWeight: 400 }}>
+                        · {featured.length}
+                      </span>
                     </h2>
                     <div
                       className='grid gap-12px'
@@ -258,6 +298,28 @@ const WorkflowsLibraryPage: React.FC = () => {
                       ))}
                     </div>
                   </section>
+                ) : null}
+
+                {/* "All workflows" boundary marker — only on the
+                    All-workflows view, only when Featured is present
+                    above. Visually separates curated picks from the
+                    long-tail category sections below. */}
+                {activeCategory === null && featured.length > 0 ? (
+                  <div
+                    className='flex items-center gap-12px mt-8px'
+                    style={{ color: 'var(--text-tertiary)' }}
+                  >
+                    <h2
+                      className='text-13px font-semibold uppercase m-0 shrink-0'
+                      style={{ letterSpacing: '0.08em' }}
+                    >
+                      {t('section.all', 'All workflows')}
+                    </h2>
+                    <div
+                      className='flex-1 h-1px'
+                      style={{ background: 'var(--border-1)' }}
+                    />
+                  </div>
                 ) : null}
 
                 {visibleSections.map((s) => (

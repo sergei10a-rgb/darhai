@@ -4,13 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Bot, ChevronDown } from 'lucide-react';
+import { Bot, ChevronDown, Workflow as WorkflowIcon } from 'lucide-react';
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Form, Input, Select, Message, TimePicker, Radio, Button } from '@arco-design/web-react';
 import ModalWrapper from '@renderer/components/base/ModalWrapper';
 import { ipcBridge } from '@/common';
 import type { ICreateCronJobParams, ICronAgentConfig, ICronJob } from '@/common/adapter/ipcBridge';
+import type { SkillIndexEntry } from '@/common/types/skillTypes';
+import { toDisplayName } from '@renderer/pages/settings/SkillsSettings/displayName';
 import { useConversationAgents } from '@renderer/pages/conversation/hooks/useConversationAgents';
 import { getAgentLogo } from '@renderer/utils/model/agentLogo';
 import { CUSTOM_AVATAR_IMAGE_MAP } from '@/renderer/pages/guid/constants';
@@ -37,10 +39,17 @@ interface CreateTaskDialogProps {
   conversationId?: string;
   conversationTitle?: string;
   agentType?: string;
+  /**
+   * When set, the dialog opens in 'From workflow' mode with this slug
+   * pre-selected. Used by the Workflows page's Schedule button to route
+   * users into the same modal pre-filled with the recipe they picked.
+   */
+  initialWorkflowSlug?: string;
 }
 
 type FrequencyType = 'manual' | 'hourly' | 'daily' | 'weekdays' | 'weekly' | 'custom';
 type ExecutionMode = 'new_conversation' | 'existing';
+type TaskSource = 'manual' | 'workflow';
 
 const WEEKDAYS = [
   { value: 'MON', label: 'monday' },
@@ -134,6 +143,7 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
   conversationId: _conversationId,
   conversationTitle,
   agentType,
+  initialWorkflowSlug,
 }) => {
   const { t } = useTranslation();
   const [form] = Form.useForm();
@@ -149,6 +159,17 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
   const [executionMode, setExecutionMode] = useState<ExecutionMode>('new_conversation');
   const [advancedOpen, setAdvancedOpen] = useState(false);
 
+  // Workflow-source state (step #6 of the Skills/Workflows split): when
+  // `taskSource === 'workflow'` the dialog renders a workflow Select above
+  // the Name field. Picking a workflow loads its body via skills.getBody
+  // and auto-fills name/description/prompt — the user can still tweak
+  // each field afterward (no field is locked). `manual` keeps the
+  // original 'describe-a-task' UX intact.
+  const [taskSource, setTaskSource] = useState<TaskSource>('manual');
+  const [workflows, setWorkflows] = useState<SkillIndexEntry[]>([]);
+  const [workflowSlug, setWorkflowSlug] = useState<string | null>(null);
+  const [workflowLoading, setWorkflowLoading] = useState(false);
+
   // Advanced settings state
   const [modelId, setModelId] = useState<string | undefined>(undefined);
   const [configOptions, setConfigOptions] = useState<Record<string, string> | undefined>(undefined);
@@ -156,6 +177,48 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
   const [cachedConfigOptions, setCachedConfigOptions] = useState<unknown[] | undefined>(undefined);
   const [acpCachedModelInfo, setAcpCachedModelInfo] = useState<AcpModelInfo | null>(null);
   const [selectedAgent, setSelectedAgent] = useState<string | undefined>(undefined);
+
+  // Load the workflow list once per modal open — cheap (already cached
+  // server-side). Skipped in edit mode since edit operates on a saved
+  // cron job, not a workflow recipe.
+  useEffect(() => {
+    if (!visible || isEditMode) return;
+    void ipcBridge.skills.list.invoke({ type: 'workflow' }).then(setWorkflows);
+  }, [visible, isEditMode]);
+
+  // Pre-select the workflow when the caller passed `initialWorkflowSlug`
+  // (Workflows page → Schedule button). Also flips the source toggle.
+  useEffect(() => {
+    if (!visible || isEditMode) return;
+    if (initialWorkflowSlug) {
+      setTaskSource('workflow');
+      setWorkflowSlug(initialWorkflowSlug);
+    } else {
+      setTaskSource('manual');
+      setWorkflowSlug(null);
+    }
+  }, [visible, isEditMode, initialWorkflowSlug]);
+
+  // When a workflow is selected, fetch its body via skills.getBody and
+  // auto-fill the form. Best-effort — if the body is unavailable (e.g.
+  // a `cli-discovered` workflow whose source disappeared) we still fill
+  // name + description from the index entry.
+  useEffect(() => {
+    if (taskSource !== 'workflow' || !workflowSlug) return;
+    const entry = workflows.find((w) => w.name === workflowSlug);
+    if (!entry) return;
+    setWorkflowLoading(true);
+    void ipcBridge.skills.getBody
+      .invoke({ name: workflowSlug })
+      .then((body) => {
+        form.setFieldsValue({
+          name: toDisplayName(entry.name),
+          description: entry.description,
+          prompt: body ?? entry.description,
+        });
+      })
+      .finally(() => setWorkflowLoading(false));
+  }, [taskSource, workflowSlug, workflows, form]);
 
   // Populate form when entering edit mode
   useEffect(() => {
@@ -512,6 +575,64 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
     >
       <div className='overflow-y-auto px-24px pb-16px pr-18px max-h-[min(68vh,640px)]'>
         <Form form={form} layout='vertical'>
+          {/* Source toggle — hidden in edit mode since the saved job is
+              already past the "did we start from a workflow?" choice.
+              In create mode the two tabs route to the same submit path;
+              "From workflow" is just an auto-fill convenience on top of
+              the existing manual flow. */}
+          {!isEditMode && (
+            <FormItem label={t('cron.page.form.source', { defaultValue: 'Source' })} className='mb-12px'>
+              <Radio.Group
+                type='button'
+                value={taskSource}
+                onChange={(v: TaskSource) => {
+                  setTaskSource(v);
+                  if (v === 'manual') setWorkflowSlug(null);
+                }}
+              >
+                <Radio value='manual'>{t('cron.page.form.sourceDescribe', { defaultValue: 'Describe task' })}</Radio>
+                <Radio value='workflow'>
+                  <span className='inline-flex items-center gap-4px'>
+                    <WorkflowIcon size={12} />
+                    {t('cron.page.form.sourceFromWorkflow', { defaultValue: 'From workflow' })}
+                  </span>
+                </Radio>
+              </Radio.Group>
+            </FormItem>
+          )}
+
+          {/* Workflow picker — only shown in "From workflow" mode. Selecting
+              a workflow triggers the auto-fill effect above. */}
+          {!isEditMode && taskSource === 'workflow' && (
+            <FormItem label={t('cron.page.form.workflow', { defaultValue: 'Workflow' })}>
+              <Select
+                placeholder={t('cron.page.form.workflowPlaceholder', { defaultValue: 'Pick a workflow…' })}
+                value={workflowSlug ?? undefined}
+                onChange={(v: string) => setWorkflowSlug(v)}
+                showSearch
+                loading={workflowLoading}
+                filterOption={(input, option) => {
+                  const label = (option as { props?: { children?: unknown } } | null)?.props?.children;
+                  return String(label ?? '').toLowerCase().includes(input.toLowerCase());
+                }}
+              >
+                {workflows.map((w) => (
+                  <Option key={w.name} value={w.name}>
+                    {toDisplayName(w.name)}
+                  </Option>
+                ))}
+              </Select>
+              {workflowSlug && (
+                <p className='mb-0 mt-6px text-12px leading-18px text-t-secondary'>
+                  {t('cron.page.form.workflowHint', {
+                    defaultValue:
+                      'The workflow body becomes the prompt. Tweak any field below before saving.',
+                  })}
+                </p>
+              )}
+            </FormItem>
+          )}
+
           <FormItem
             label={t('cron.page.form.name')}
             field='name'

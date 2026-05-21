@@ -85,6 +85,10 @@ export function initSkillsBridge(): void {
     await ProcessConfig.set('skills.cliDiscovery.enabled', enabled);
   });
 
+  ipcBridge.skills.getBody.provider(async ({ name }) => {
+    return SkillLibrary.getInstance().loadBody(name);
+  });
+
   ipcBridge.skills.setPinned.provider(async ({ name, pinned }) => {
     const prefs = (await ProcessConfig.get('skills.preferences')) ?? { pinned: [], disabled: [], revision: 0 };
     const current = prefs.pinned ?? [];
