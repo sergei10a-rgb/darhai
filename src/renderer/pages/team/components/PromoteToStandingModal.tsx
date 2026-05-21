@@ -40,10 +40,10 @@ const PromoteToStandingModal: React.FC<Props> = ({ visible, teamName, onConfirm,
       size='medium'
       header={t('teams.standing.modalTitle', { defaultValue: 'Promote to Standing Company' })}
       footer={
-        <div className='flex justify-end gap-10px mt-10px'>
+        <div className='flex justify-end gap-12px'>
           <Button
             onClick={onCancel}
-            className='px-20px min-w-80px'
+            className='px-16px min-w-80px'
             style={{ borderRadius: 8 }}
             data-testid='promote-to-standing-cancel'
           >
@@ -54,8 +54,7 @@ const PromoteToStandingModal: React.FC<Props> = ({ visible, teamName, onConfirm,
             onClick={onConfirm}
             disabled={!bothChecked || loading}
             loading={loading}
-            className='px-20px min-w-80px'
-            style={{ borderRadius: 8 }}
+            className='!rounded-[100px] !h-32px !px-16px min-w-80px'
             data-testid='promote-to-standing-confirm'
           >
             {t('teams.standing.confirmButton', { defaultValue: 'Promote to Standing' })}
