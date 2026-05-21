@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Bot, ChevronDown, ChevronLeft, PenSquare } from 'lucide-react';
+import { ArrowUpRight, Bot, ChevronDown, ChevronLeft, PenSquare, Sparkles } from 'lucide-react';
 import { ipcBridge } from '@/common';
 import { resolveLocaleKey } from '@/common/utils';
 
@@ -70,6 +70,9 @@ const GuidPage: React.FC = () => {
   // --- Skills state ---
   const [builtinAutoSkills, setBuiltinAutoSkills] = useState<Array<{ name: string; description: string }>>([]);
   const [guidDisabledBuiltinSkills, setGuidDisabledBuiltinSkills] = useState<string[] | undefined>(undefined);
+  // H3: capability flex chip — aggregate skills count from the live
+  // SkillLibrary stats. Field is `total` per SkillStats in ipcBridge.ts.
+  const [skillsCount, setSkillsCount] = useState(0);
 
   useEffect(() => {
     ipcBridge.fs.listBuiltinAutoSkills
@@ -77,6 +80,17 @@ const GuidPage: React.FC = () => {
       .then(setBuiltinAutoSkills)
       .catch(() => setBuiltinAutoSkills([]));
   }, []);
+
+  useEffect(() => {
+    ipcBridge.skills.stats
+      .invoke()
+      .then((stats) => setSkillsCount(stats.total))
+      .catch(() => setSkillsCount(0));
+  }, []);
+
+  const openSkillsPage = useCallback(() => {
+    void navigate('/settings/skills');
+  }, [navigate]);
 
   const handleToggleBuiltinSkill = useCallback((skillName: string) => {
     setGuidDisabledBuiltinSkills((prev) => {
@@ -713,7 +727,29 @@ const GuidPage: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <p className='text-2xl font-semibold mb-0 text-0 text-center'>{heroTitle}</p>
+              <div className='flex flex-col items-center gap-8px'>
+                <p className='text-2xl font-semibold mb-0 text-0 text-center'>{heroTitle}</p>
+                {skillsCount > 0 ? (
+                  <button
+                    type='button'
+                    onClick={openSkillsPage}
+                    className='flex items-center gap-6px px-12px h-26px rounded-[100px] bg-[var(--color-fill-2)] hover:bg-[var(--color-fill-3)] text-12px font-medium text-t-secondary hover:text-t-primary transition-colors'
+                    aria-label={t('chat.skillsReady', {
+                      count: skillsCount,
+                      defaultValue: '{{count}} skills ready — manage in settings',
+                    })}
+                  >
+                    <Sparkles size={12} />
+                    <span>
+                      {t('chat.skillsReady', {
+                        count: skillsCount,
+                        defaultValue: '{{count}} skills ready',
+                      })}
+                    </span>
+                    <ArrowUpRight size={12} />
+                  </button>
+                ) : null}
+              </div>
             )}
           </div>
 
