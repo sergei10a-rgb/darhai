@@ -187,7 +187,7 @@ const ConstitutionSettings: React.FC = () => {
       savedIndicator={saveState}
     >
       {showResetConfirm && (
-        <div className='b-1 b-color-border-2 rd-8px p-12px flex flex-col gap-8px'>
+        <div className='border border-solid border-[var(--color-border-2)] rd-12px p-12px flex flex-col gap-8px bg-[var(--color-bg-2)]'>
           <div className='text-14px text-t-primary font-medium'>
             {t('settings.constitutionPage.resetConfirmTitle', 'Reset Constitution?')}
           </div>

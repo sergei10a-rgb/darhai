@@ -197,7 +197,7 @@ const ImageGenSettings: React.FC = () => {
       {messageContext}
 
       {/* MCP server enable/disable */}
-      <div className='px-[12px] md:px-[32px] py-[24px] bg-2 rd-12px md:rd-16px border border-border-2'>
+      <div className='px-[12px] md:px-[32px] py-[24px] bg-[var(--color-bg-2)] rd-12px border border-solid border-[var(--color-border-2)]'>
         <div className='flex items-center justify-between gap-12px mb-16px'>
           <div className='flex flex-col gap-4px'>
             <span className='text-14px text-t-primary'>{t('settings.imageGenPage.mcpToggleLabel')}</span>
