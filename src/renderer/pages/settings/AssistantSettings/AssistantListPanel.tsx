@@ -210,7 +210,7 @@ const AssistantListPanel: React.FC<AssistantListPanelProps> = ({
 
   return (
     <div className='py-2'>
-      <div className={`bg-fill-2 rounded-24px ${isMobile ? 'p-16px' : 'p-20px'}`}>
+      <div className={`bg-[var(--color-fill-2)] rounded-16px ${isMobile ? 'p-16px' : 'p-20px'}`}>
         <div className='flex flex-col gap-14px mb-20px'>
           <div className={`flex gap-12px ${isMobile ? 'flex-col' : 'items-start justify-between'}`}>
             <div className='min-w-0'>
