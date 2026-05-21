@@ -75,13 +75,25 @@ function checkBannedTokens(files) {
   }
 }
 
+// Strip block comments + JS line comments + var() fallback hex expressions
+// so the hex scan only flags actually-rendered raw colors. The fallback
+// inside `var(--token, #abc)` never paints when --token is defined; flagging
+// it produced noise without surfacing real drift.
+function stripFalsePositives(content) {
+  return content
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/(^|[^:])\/\/.*$/gm, '$1')
+    .replace(/var\(\s*--[\w-]+\s*,\s*#[0-9a-fA-F]{3,8}\s*\)/g, '');
+}
+
 function checkRawHex(files) {
   for (const file of files) {
     if (HEX_ALLOWLIST.some((re) => re.test(file))) continue;
     const content = fs.readFileSync(file, 'utf-8');
+    const stripped = stripFalsePositives(content);
     const rel = path.relative(process.cwd(), file);
-    for (const m of content.matchAll(HEX_RE)) {
-      warnings.push(`${rel}:${lineNumberAt(content, m.index)}: raw hex "${m[0]}"`);
+    for (const m of stripped.matchAll(HEX_RE)) {
+      warnings.push(`${rel}:${lineNumberAt(stripped, m.index)}: raw hex "${m[0]}"`);
     }
   }
 }

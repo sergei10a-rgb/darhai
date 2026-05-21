@@ -13,7 +13,7 @@
 .send-button-custom.arco-btn-primary:not(:disabled) {
   background-color: var(--brand) !important;
   border-color: var(--brand) !important;
-  color: #ffffff !important;
+  color: var(--text-white) !important;
   transition:
     background-color 140ms ease,
     border-color 140ms ease,

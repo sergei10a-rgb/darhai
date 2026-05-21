@@ -344,7 +344,7 @@ const WaylandModal: React.FC<WaylandModalProps> = ({
         {headerConfig.title && <h3 className={TITLE_BASE_CLASS}>{headerConfig.title}</h3>}
         {headerConfig.showClose && (
           <button onClick={onCancel} className={CLOSE_BUTTON_CLASS} aria-label='Close'>
-            {headerConfig.closeIcon || <X size={20} color='#86909c' />}
+            {headerConfig.closeIcon || <X size={20} color='var(--color-text-3)' />}
           </button>
         )}
       </div>
