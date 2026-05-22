@@ -1477,8 +1477,12 @@ export type IModelRegistryCatalogView = {
   curated: CuratedModel[];
 };
 
-/** Credentials for connect / re-key — a bare API key or per-field cloud creds. */
-export type IModelRegistryCreds = { key: string } | { fields: Record<string, string> };
+/**
+ * Credentials for connect / re-key — a bare API key, per-field cloud creds, or
+ * `useDiscovered` to resolve an auto-discovered key from the main process
+ * (the renderer never sees auto-discovered key values).
+ */
+export type IModelRegistryCreds = { key: string } | { fields: Record<string, string> } | { useDiscovered: true };
 
 export const modelRegistry = {
   // Auto-discover provider keys from the environment / credential stores.
