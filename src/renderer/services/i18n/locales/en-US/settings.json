@@ -1837,6 +1837,10 @@
       "errorUnrecognized": "Those credentials are incomplete or were not accepted for {{provider}}. Check every field.",
       "errorNoModels": "{{provider}} connected but returned no models. Try refreshing it from Manage.",
       "errorUnknown": "Couldn't connect to {{provider}}. Please try again."
+    },
+    "homePicker": {
+      "empty": "No models available for this agent yet. Connect a provider to add one.",
+      "priceTierAria": "Price tier {{tier}}"
     }
   },
   "mcpPage": {

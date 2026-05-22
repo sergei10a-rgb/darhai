@@ -2075,6 +2075,8 @@ export type I18nKey =
   | 'settings.modelsPage.detected.ignore'
   | 'settings.modelsPage.detected.use'
   | 'settings.modelsPage.empty.note'
+  | 'settings.modelsPage.homePicker.empty'
+  | 'settings.modelsPage.homePicker.priceTierAria'
   | 'settings.modelsPage.loadError'
   | 'settings.modelsPage.manage.cancel'
   | 'settings.modelsPage.manage.capAudio'

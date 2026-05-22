@@ -1173,6 +1173,10 @@
       "errorUnrecognized": "這些憑證不完整或未被 {{provider}} 接受。請檢查每個欄位。",
       "errorNoModels": "{{provider}} 已連接，但未傳回任何模型。請在「管理」中嘗試重新整理。",
       "errorUnknown": "無法連接到 {{provider}}。請重試。"
+    },
+    "homePicker": {
+      "empty": "此代理目前沒有可用的模型。請連接供應商以新增模型。",
+      "priceTierAria": "價格等級 {{tier}}"
     }
   },
   "mcpPage": {

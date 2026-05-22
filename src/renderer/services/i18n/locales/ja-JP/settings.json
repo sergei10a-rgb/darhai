@@ -1173,6 +1173,10 @@
       "errorUnrecognized": "これらの認証情報は不完全であるか、{{provider}} で受け入れられませんでした。すべての項目を確認してください。",
       "errorNoModels": "{{provider}} に接続しましたが、モデルが返されませんでした。「管理」から更新してみてください。",
       "errorUnknown": "{{provider}} に接続できませんでした。再試行してください。"
+    },
+    "homePicker": {
+      "empty": "このエージェントで利用できるモデルはまだありません。プロバイダーを接続して追加してください。",
+      "priceTierAria": "価格帯 {{tier}}"
     }
   },
   "mcpPage": {

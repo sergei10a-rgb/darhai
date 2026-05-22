@@ -1171,6 +1171,10 @@
       "errorUnrecognized": "Bu kimlik bilgileri eksik veya {{provider}} tarafından kabul edilmedi. Her alanı kontrol edin.",
       "errorNoModels": "{{provider}} bağlandı ancak hiç model döndürmedi. Yönet ekranından yenilemeyi deneyin.",
       "errorUnknown": "{{provider}} bağlanılamadı. Lütfen tekrar deneyin."
+    },
+    "homePicker": {
+      "empty": "Bu aracı için henüz model yok. Bir model eklemek için bir sağlayıcı bağlayın.",
+      "priceTierAria": "Fiyat kademesi {{tier}}"
     }
   },
   "mcpPage": {

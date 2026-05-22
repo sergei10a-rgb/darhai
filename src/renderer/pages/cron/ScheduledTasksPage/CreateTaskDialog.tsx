@@ -149,7 +149,7 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
   const [form] = Form.useForm();
   const [submitting, setSubmitting] = useState(false);
   const { cliAgents, presetAssistants } = useConversationAgents();
-  const { providers, geminiModeLookup, getAvailableModels, formatModelLabel } = useModelProviderList();
+  const { providers, getAvailableModels } = useModelProviderList();
   const [frequency, setFrequency] = useState<FrequencyType>('manual');
   const [time, setTime] = useState('09:00');
   const [weekday, setWeekday] = useState('MON');
@@ -620,7 +620,9 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
                 loading={workflowLoading}
                 filterOption={(input, option) => {
                   const label = (option as { props?: { children?: unknown } } | null)?.props?.children;
-                  return String(label ?? '').toLowerCase().includes(input.toLowerCase());
+                  return String(label ?? '')
+                    .toLowerCase()
+                    .includes(input.toLowerCase());
                 }}
               >
                 {workflows.map((w) => (
@@ -632,8 +634,7 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
               {workflowSlug && (
                 <p className='mb-0 mt-6px text-12px leading-18px text-t-secondary'>
                   {t('cron.page.form.workflowHint', {
-                    defaultValue:
-                      'The workflow body becomes the prompt. Tweak any field below before saving.',
+                    defaultValue: 'The workflow body becomes the prompt. Tweak any field below before saving.',
                   })}
                 </p>
               )}
@@ -830,7 +831,8 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
               className='!h-auto !p-0 hover:!bg-transparent'
             >
               <span className='flex items-center gap-6px text-14px font-medium text-t-primary'>
-                <ChevronDown size={14}
+                <ChevronDown
+                  size={14}
                   className={`shrink-0 transition-transform ${advancedOpen ? 'rotate-180' : ''}`}
                 />
                 <span>{t('cron.page.form.advancedSettings')}</span>
@@ -849,7 +851,7 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
                       modelList={filteredProviders}
                       currentModel={geminiCurrentModel}
                       setCurrentModel={handleGeminiModelSelect}
-                      geminiModeLookup={geminiModeLookup}
+                      agentKey={resolvedBackend ?? 'wcore'}
                       currentAcpCachedModelInfo={acpCachedModelInfo}
                       selectedAcpModel={modelId ?? null}
                       setSelectedAcpModel={handleAcpModelSelect}

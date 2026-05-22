@@ -5,73 +5,167 @@
  */
 
 import { Brain, ChevronDown, Plus } from 'lucide-react';
-import { ipcBridge } from '@/common';
 import type { IProvider, TProviderWithModel } from '@/common/config/storage';
+import type { CuratedModel } from '@process/providers/types';
+import { useModelRegistry } from '@/renderer/hooks/useModelRegistry';
+import { resolveAgentScope } from '@/renderer/pages/settings/AgentSettings/agentScopes';
 import { iconColors } from '@/renderer/styles/colors';
 import { getModelDisplayLabel } from '@/renderer/utils/model/agentLogo';
 import { formatAcpModelDisplayLabel, getAcpModelSourceLabel } from '@/renderer/utils/model/modelSource';
 import type { AcpModelInfo } from '../types';
-import { getAvailableModels } from '../utils/modelUtils';
 import { Button, Dropdown, Menu, Tooltip } from '@arco-design/web-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import useSWR from 'swr';
 
 type GuidModelSelectorProps = {
-  // Gemini model state
+  // Provider-based agent model state (Gemini / Wayland Core)
   isGeminiMode: boolean;
   modelList: IProvider[];
   currentModel: TProviderWithModel | undefined;
   setCurrentModel: (model: TProviderWithModel) => Promise<void>;
-  geminiModeLookup: Map<string, any>;
 
-  // ACP model state
+  // The currently-selected agent — scopes the curated model list and the
+  // plain-language caption. Provider-based agents pass 'gemini' / 'wcore';
+  // CLI agents pass their backend key ('claude', 'codex', …).
+  agentKey: string;
+
+  // ACP model state (CLI agents)
   currentAcpCachedModelInfo: AcpModelInfo | null;
   selectedAcpModel: string | null;
   setSelectedAcpModel: React.Dispatch<React.SetStateAction<string | null>>;
 };
+
+/**
+ * Map a model's blended USD-per-million-token cost to a $ / $$ / $$$ tier.
+ *
+ * The blend weights output 3:1 (output tokens dominate real chat spend).
+ * Thresholds are tuned against the live curated set: a blended cost of
+ * USD/M ≤ 5 lands at $ (Haiku, GPT mini, Gemini Flash), ≤ 15 at $$ (Sonnet,
+ * GPT-5.4), and > 15 at $$$ (Opus, GPT-5.5). A model with no cost data
+ * returns `null` — its row shows no tier rather than a fabricated one.
+ */
+export function costToPriceTier(
+  costInPerM: number | undefined,
+  costOutPerM: number | undefined
+): '$' | '$$' | '$$$' | null {
+  const hasIn = typeof costInPerM === 'number' && Number.isFinite(costInPerM);
+  const hasOut = typeof costOutPerM === 'number' && Number.isFinite(costOutPerM);
+  if (!hasIn && !hasOut) return null;
+  const inCost = hasIn ? (costInPerM as number) : (costOutPerM as number);
+  const outCost = hasOut ? (costOutPerM as number) : (costInPerM as number);
+  const blended = (inCost + outCost * 3) / 4;
+  if (blended <= 5) return '$';
+  if (blended <= 15) return '$$';
+  return '$$$';
+}
 
 const GuidModelSelector: React.FC<GuidModelSelectorProps> = ({
   isGeminiMode,
   modelList,
   currentModel,
   setCurrentModel,
-  geminiModeLookup,
+  agentKey,
   currentAcpCachedModelInfo,
   selectedAcpModel,
   setSelectedAcpModel,
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { curatedForAgent } = useModelRegistry();
   const defaultModelLabel = t('common.defaultModel');
 
-  // Fetch model config data (includes health status)
-  const { data: modelConfig } = useSWR<IProvider[]>('model.config', () => ipcBridge.mode.getModelConfig.invoke());
+  // Plain-language scope sentence for the selected agent. Reuses the same
+  // copy as the Agents settings page so the explanation lives at the point
+  // of friction (spec §4.8) without diverging from §4.7.
+  const scopeCaption = React.useMemo(() => {
+    const scope = resolveAgentScope(agentKey);
+    return t(`settings.agentsPage.scope.${scope.scopeKey}`);
+  }, [agentKey, t]);
 
-  // Filter out disabled providers
-  const enabledModelList = React.useMemo(() => {
-    return modelList.filter((p) => p.enabled !== false);
-  }, [modelList]);
+  const scopeCaptionNode = (
+    <div className='px-12px pt-8px pb-6px text-11px text-t-tertiary leading-snug'>{scopeCaption}</div>
+  );
 
-  const geminiSelectedLabel = React.useMemo(() => {
-    if (!currentModel?.useModel) return '';
-    const isGoogleProvider = currentModel.platform?.toLowerCase().includes('gemini-with-google-auth');
-    if (isGoogleProvider) {
-      return geminiModeLookup.get(currentModel.useModel)?.label || currentModel.useModel;
+  // ── Curated set, scoped to the selected agent ────────────────────────────
+  // Re-fetched whenever the agent changes (`agentKey` in the deps). May
+  // resolve to `[]` for a non-enumerable CLI whose provider isn't connected.
+  const [curated, setCurated] = React.useState<CuratedModel[] | undefined>(undefined);
+  React.useEffect(() => {
+    let cancelled = false;
+    setCurated(undefined);
+    curatedForAgent(agentKey)
+      .then((models) => {
+        if (!cancelled) setCurated(models);
+      })
+      .catch(() => {
+        if (!cancelled) setCurated([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [agentKey, curatedForAgent]);
+
+  // Group the curated set by family for the droplist, preserving the order
+  // `curatedForAgent` returned (already release-date sorted by the Curator).
+  const curatedGroups = React.useMemo(() => {
+    if (!curated) return [];
+    const groups: Array<{ family: string; models: CuratedModel[] }> = [];
+    const index = new Map<string, number>();
+    for (const model of curated) {
+      const family = model.family || model.displayName;
+      let pos = index.get(family);
+      if (pos === undefined) {
+        pos = groups.length;
+        index.set(family, pos);
+        groups.push({ family, models: [] });
+      }
+      groups[pos].models.push(model);
     }
+    return groups;
+  }, [curated]);
+
+  // Resolve the currently-selected curated model so its row is highlighted
+  // and its label shown on the button.
+  const selectedCuratedKey = React.useMemo(() => {
+    if (!currentModel?.useModel) return null;
     return currentModel.useModel;
-  }, [currentModel?.platform, currentModel?.useModel, geminiModeLookup]);
+  }, [currentModel?.useModel]);
 
-  const geminiButtonLabel = React.useMemo(() => {
+  const curatedButtonLabel = React.useMemo(() => {
+    if (!curated || curated.length === 0) return defaultModelLabel;
+    const match = curated.find((m) => m.id === selectedCuratedKey);
     return getModelDisplayLabel({
-      selectedValue: currentModel?.useModel,
-      selectedLabel: geminiSelectedLabel,
+      selectedValue: match?.id,
+      selectedLabel: match?.displayName,
       defaultModelLabel,
-      fallbackLabel: defaultModelLabel,
+      fallbackLabel: curated[0]?.displayName || defaultModelLabel,
     });
-  }, [currentModel?.useModel, defaultModelLabel, geminiSelectedLabel]);
+  }, [curated, defaultModelLabel, selectedCuratedKey]);
 
+  // Pick a curated model: map it back to a configured provider so the
+  // chat-start flow keeps receiving a fully-formed `TProviderWithModel`.
+  const handlePickCurated = React.useCallback(
+    (model: CuratedModel) => {
+      // The legacy provider list keys models by name; a curated model's `id`
+      // matches that name. Find the provider that actually exposes it.
+      const provider =
+        modelList.find((p) => p.id === model.providerId && p.model?.includes(model.id)) ||
+        modelList.find((p) => p.model?.includes(model.id));
+      if (!provider) {
+        // The curated model isn't in a connected provider yet — route the
+        // user to the Models page to connect it.
+        navigate('/settings/model');
+        return;
+      }
+      setCurrentModel({ ...provider, useModel: model.id }).catch((error) => {
+        console.error('Failed to set current model:', error);
+      });
+    },
+    [modelList, navigate, setCurrentModel]
+  );
+
+  // ── ACP model state (CLI agents) ─────────────────────────────────────────
   const acpSelectedLabel = React.useMemo(() => {
     return (
       currentAcpCachedModelInfo?.availableModels?.find((m) => m.id === selectedAcpModel)?.label ||
@@ -103,153 +197,81 @@ const GuidModelSelector: React.FC<GuidModelSelectorProps> = ({
     [acpButtonLabel, acpSourceLabel]
   );
 
+  // ── Provider-based agents (Gemini / Wayland Core) — curated picker ────────
   if (isGeminiMode) {
     return (
       <Dropdown
         trigger='hover'
         droplist={
-          <Menu selectedKeys={currentModel ? [currentModel.id + currentModel.useModel] : []}>
-            {!enabledModelList || enabledModelList.length === 0
+          <Menu selectedKeys={selectedCuratedKey ? [selectedCuratedKey] : []}>
+            {scopeCaptionNode}
+            {curated === undefined
               ? [
                   <Menu.Item
-                    key='no-models'
+                    key='loading'
                     className='px-12px py-12px text-t-secondary text-14px text-center flex justify-center items-center'
                     disabled
                   >
-                    {t('settings.noAvailableModels')}
-                  </Menu.Item>,
-                  <Menu.Item
-                    key='add-model'
-                    className='text-12px text-t-secondary'
-                    onClick={() => navigate('/settings/model')}
-                  >
-                    <Plus size={12} />
-                    {t('settings.addModel')}
+                    {t('common.loading')}
                   </Menu.Item>,
                 ]
-              : [
-                  ...(enabledModelList || []).map((provider) => {
-                    const availableModels = getAvailableModels(provider);
-                    if (availableModels.length === 0) return null;
-                    return (
-                      <Menu.ItemGroup title={provider.name} key={provider.id}>
-                        {availableModels.map((modelName) => {
-                          const isGoogleProvider = provider.platform?.toLowerCase().includes('gemini-with-google-auth');
-                          const option = isGoogleProvider ? geminiModeLookup.get(modelName) : undefined;
-
-                          // Get model health status
-                          const matchedProvider = modelConfig?.find((p) => p.id === provider.id);
-                          const healthStatus = matchedProvider?.modelHealth?.[modelName]?.status || 'unknown';
-                          const healthColor =
-                            healthStatus === 'healthy'
-                              ? 'bg-green-500'
-                              : healthStatus === 'unhealthy'
-                                ? 'bg-red-500'
-                                : 'bg-gray-400';
-
-                          // Manual mode: show submenu with specific models
-                          if (option?.subModels && option.subModels.length > 0) {
-                            return (
-                              <Menu.SubMenu
-                                key={provider.id + modelName}
-                                title={
-                                  <div className='flex items-center gap-8px w-full'>
-                                    {healthStatus !== 'unknown' && (
-                                      <div className={`w-6px h-6px rounded-full shrink-0 ${healthColor}`} />
-                                    )}
-                                    <span>{option.label}</span>
-                                  </div>
-                                }
-                              >
-                                {option.subModels.map((subModel: { label: string; value: string }) => (
-                                  <Menu.Item
-                                    key={provider.id + subModel.value}
-                                    className={
-                                      currentModel?.id + currentModel?.useModel === provider.id + subModel.value
-                                        ? '!bg-2'
-                                        : ''
-                                    }
-                                    onClick={() => {
-                                      setCurrentModel({ ...provider, useModel: subModel.value }).catch((error) => {
-                                        console.error('Failed to set current model:', error);
-                                      });
-                                    }}
-                                  >
-                                    {subModel.label}
-                                  </Menu.Item>
-                                ))}
-                              </Menu.SubMenu>
-                            );
-                          }
-
-                          // Normal mode: show single item
+              : curated.length === 0
+                ? [
+                    <Menu.Item
+                      key='no-models'
+                      className='px-12px py-12px text-t-secondary text-14px text-center flex justify-center items-center'
+                      disabled
+                    >
+                      {t('settings.modelsPage.homePicker.empty')}
+                    </Menu.Item>,
+                    <Menu.Item
+                      key='add-model'
+                      className='text-12px text-t-secondary'
+                      onClick={() => navigate('/settings/model')}
+                    >
+                      <Plus size={12} />
+                      {t('settings.addModel')}
+                    </Menu.Item>,
+                  ]
+                : [
+                    ...curatedGroups.map((group) => (
+                      <Menu.ItemGroup title={group.family} key={group.family}>
+                        {group.models.map((model) => {
+                          const tier = costToPriceTier(model.costInPerM, model.costOutPerM);
                           return (
-                            <Menu.Item
-                              key={provider.id + modelName}
-                              className={
-                                currentModel?.id + currentModel?.useModel === provider.id + modelName ? '!bg-2' : ''
-                              }
-                              onClick={() => {
-                                setCurrentModel({ ...provider, useModel: modelName }).catch((error) => {
-                                  console.error('Failed to set current model:', error);
-                                });
-                              }}
-                            >
-                              {(() => {
-                                if (!option) {
-                                  return (
-                                    <div className='flex items-center gap-8px w-full'>
-                                      {healthStatus !== 'unknown' && (
-                                        <div className={`w-6px h-6px rounded-full shrink-0 ${healthColor}`} />
-                                      )}
-                                      <span>{modelName}</span>
-                                    </div>
-                                  );
-                                }
-                                return (
-                                  <Tooltip
-                                    position='right'
-                                    trigger='hover'
-                                    content={
-                                      <div className='max-w-240px space-y-6px'>
-                                        <div className='text-12px text-t-secondary leading-5'>{option.description}</div>
-                                        {option.modelHint && (
-                                          <div className='text-11px text-t-tertiary'>{option.modelHint}</div>
-                                        )}
-                                      </div>
-                                    }
+                            <Menu.Item key={model.id} onClick={() => handlePickCurated(model)}>
+                              <div className='flex items-center gap-8px w-full'>
+                                <span className='flex-1 min-w-0 truncate'>{model.displayName}</span>
+                                {tier && (
+                                  <span
+                                    className='text-11px font-600 text-t-tertiary tracking-wider shrink-0'
+                                    aria-label={t('settings.modelsPage.homePicker.priceTierAria', { tier })}
                                   >
-                                    <div className='flex items-center gap-8px w-full'>
-                                      {healthStatus !== 'unknown' && (
-                                        <div className={`w-6px h-6px rounded-full shrink-0 ${healthColor}`} />
-                                      )}
-                                      <span>{option.label}</span>
-                                    </div>
-                                  </Tooltip>
-                                );
-                              })()}
+                                    {tier}
+                                  </span>
+                                )}
+                              </div>
                             </Menu.Item>
                           );
                         })}
                       </Menu.ItemGroup>
-                    );
-                  }),
-                  <Menu.Item
-                    key='add-model'
-                    className='text-12px text-t-secondary'
-                    onClick={() => navigate('/settings/model')}
-                  >
-                    <Plus size={12} />
-                    {t('settings.addModel')}
-                  </Menu.Item>,
-                ]}
+                    )),
+                    <Menu.Item
+                      key='add-model'
+                      className='text-12px text-t-secondary'
+                      onClick={() => navigate('/settings/model')}
+                    >
+                      <Plus size={12} />
+                      {t('settings.addModel')}
+                    </Menu.Item>,
+                  ]}
           </Menu>
         }
       >
         <Button className={'sendbox-model-btn guid-config-btn'} shape='round' size='small'>
           <span className='flex items-center gap-6px min-w-0'>
             <Brain size={14} color={iconColors.secondary} className='shrink-0' />
-            <span>{geminiButtonLabel}</span>
+            <span>{curatedButtonLabel}</span>
             <ChevronDown size={12} color={iconColors.secondary} className='shrink-0' />
           </span>
         </Button>
@@ -257,37 +279,35 @@ const GuidModelSelector: React.FC<GuidModelSelectorProps> = ({
     );
   }
 
-  // ACP cached model selector
+  // ── CLI agents — ACP cached model selector ───────────────────────────────
   if (currentAcpCachedModelInfo && currentAcpCachedModelInfo.availableModels?.length > 0) {
     if (currentAcpCachedModelInfo.canSwitch) {
+      // Cost lookup for the agent's curated set — CLI model lists carry no
+      // cost data themselves, so the tier is sourced from the curated catalog.
+      const tierFor = (modelId: string): '$' | '$$' | '$$$' | null => {
+        const match = curated?.find((m) => m.id === modelId);
+        return match ? costToPriceTier(match.costInPerM, match.costOutPerM) : null;
+      };
       return (
         <Dropdown
           trigger='click'
           droplist={
             <Menu selectedKeys={selectedAcpModel ? [selectedAcpModel] : []}>
+              {scopeCaptionNode}
               {currentAcpCachedModelInfo.availableModels.map((model) => {
-                // Get model health status
-                const backend = currentAcpCachedModelInfo.source;
-                const providerConfig = modelConfig?.find((p) => p.platform?.includes(backend || ''));
-                const healthStatus = providerConfig?.modelHealth?.[model.id]?.status || 'unknown';
-                const healthColor =
-                  healthStatus === 'healthy'
-                    ? 'bg-green-500'
-                    : healthStatus === 'unhealthy'
-                      ? 'bg-red-500'
-                      : 'bg-gray-400';
-
+                const tier = tierFor(model.id);
                 return (
-                  <Menu.Item
-                    key={model.id}
-                    className={model.id === selectedAcpModel ? '!bg-2' : ''}
-                    onClick={() => setSelectedAcpModel(model.id)}
-                  >
+                  <Menu.Item key={model.id} onClick={() => setSelectedAcpModel(model.id)}>
                     <div className='flex items-center gap-8px w-full'>
-                      {healthStatus !== 'unknown' && (
-                        <div className={`w-6px h-6px rounded-full shrink-0 ${healthColor}`} />
+                      <span className='flex-1 min-w-0 truncate'>{model.label}</span>
+                      {tier && (
+                        <span
+                          className='text-11px font-600 text-t-tertiary tracking-wider shrink-0'
+                          aria-label={t('settings.modelsPage.homePicker.priceTierAria', { tier })}
+                        >
+                          {tier}
+                        </span>
                       )}
-                      <span>{model.label}</span>
                     </div>
                   </Menu.Item>
                 );
@@ -323,7 +343,7 @@ const GuidModelSelector: React.FC<GuidModelSelectorProps> = ({
     );
   }
 
-  // Fallback: no model switching
+  // ── Fallback: no model switching ─────────────────────────────────────────
   return (
     <Tooltip content={t('conversation.welcome.modelSwitchNotSupported')} position='top'>
       <Button className={'sendbox-model-btn guid-config-btn'} shape='round' size='small' style={{ cursor: 'default' }}>
