@@ -18,6 +18,9 @@
     "webui:prod": "cross-env NODE_ENV=production electron-vite dev -- --webui",
     "webui:prod:remote": "cross-env NODE_ENV=production electron-vite dev -- --webui --remote",
     "resetpass": "electron-vite dev -- --resetpass",
+    "bundle:modelsdev": "bunx tsx scripts/bundle-modelsdev.ts",
+    "prebuild": "bun run bundle:modelsdev",
+    "prepackage": "bun run bundle:modelsdev",
     "package": "electron-vite build",
     "make": "electron-vite build",
     "dist": "node scripts/build-with-builder.js",
@@ -295,11 +298,11 @@
       "oxfmt"
     ]
   },
-  "packageManager": "bun@1.3.11",
   "engines": {
     "bun": ">=1.3.0 <2.0.0",
     "node": ">=22 <25"
   },
+  "packageManager": "bun@1.3.11",
   "electronRebuild": {
     "electronVersion": "^41.6.0"
   },

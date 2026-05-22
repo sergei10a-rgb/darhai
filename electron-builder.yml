@@ -114,6 +114,10 @@ extraResources:
     to: bundled-wayland-core
   - from: resources/hub
     to: hub
+  # models.dev enrichment snapshot — offline floor for ModelsDevClient.
+  # Generated at build time by scripts/bundle-modelsdev.ts (prebuild hook).
+  - from: resources/modelsdev-snapshot.json
+    to: modelsdev-snapshot.json
   # Bundled voice STT model (Whisper-tiny ONNX, ~43 MB). Ships in the
   # installer so offline dictation works on a fresh install with zero
   # download. Fetched at build time by scripts/prepareVoiceModel.js.
