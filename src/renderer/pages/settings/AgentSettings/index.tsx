@@ -17,17 +17,20 @@ import RemoteAgents from './RemoteAgents';
 import { resolveAgentScope } from './agentScopes';
 import styles from './AgentsSettings.module.css';
 
-/** Shape returned by `acp.get-available-agents` for a detected agent. */
-type DetectedAgent = {
-  backend: string;
-  name: string;
-  isExtension?: boolean;
-  extensionName?: string;
-  customAgentId?: string;
-  avatar?: string;
-};
+/**
+ * Shape of one detected agent — derived from the `acp.get-available-agents`
+ * IPC return type so the page and the bridge contract cannot drift. `avatar`
+ * is added locally because extension-contributed agents carry it on the same
+ * record even though the bridge type predates the field.
+ */
+type AvailableAgentsResponse = Awaited<ReturnType<typeof ipcBridge.acpConversation.getAvailableAgents.invoke>>;
+type DetectedAgent = NonNullable<AvailableAgentsResponse['data']>[number] & { avatar?: string };
 
-/** Detected agents whose model-scope warrants the full hero/featured card. */
+/**
+ * Detected agents whose model-scope warrants the full hero/featured card.
+ * Keyed by `backend` — must stay consistent with the scope map in
+ * `agentScopes.ts` (both are backend-keyed lists).
+ */
 const FEATURED_BACKENDS = ['wcore', 'claude', 'codex'];
 
 /**
@@ -118,9 +121,7 @@ const AgentsSettings: React.FC = () => {
   const { data: detectedAgents, isLoading } = useSWR('acp.agents.available.agentsPage', async () => {
     const result = await ipcBridge.acpConversation.getAvailableAgents.invoke();
     if (result.success && result.data) {
-      return result.data.filter(
-        (agent) => agent.backend !== 'remote' && agent.backend !== 'custom' && !agent.isPreset
-      ) as DetectedAgent[];
+      return result.data.filter((agent) => agent.backend !== 'remote' && agent.backend !== 'custom' && !agent.isPreset);
     }
     return [] as DetectedAgent[];
   });
@@ -154,8 +155,8 @@ const AgentsSettings: React.FC = () => {
               <Typography.Text className='text-12px font-medium'>
                 {t('settings.agentsPage.loadErrorsTitle')}
               </Typography.Text>
-              {loadErrors.map((err, idx) => (
-                <Typography.Text key={idx} className='text-12px'>
+              {loadErrors.map((err) => (
+                <Typography.Text key={err} className='text-12px'>
                   {err}
                 </Typography.Text>
               ))}

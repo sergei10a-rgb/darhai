@@ -50,6 +50,8 @@
   overflow: hidden;
   font-size: 16px;
   font-weight: 700;
+  /* Intentional literal: the robot-emoji fallback glyph reads white on any
+     agent brand wash; no semantic token maps to "always-white on art". */
   color: #fff;
 }
 
@@ -159,6 +161,7 @@
   overflow: hidden;
   font-size: 12px;
   font-weight: 700;
+  /* Intentional literal — see `.avatar` above. */
   color: #fff;
 }
 

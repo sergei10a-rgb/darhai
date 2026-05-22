@@ -30,6 +30,9 @@ const ANY: AgentScope = { scopeKey: 'any', accent: true };
 /**
  * Agent backend → scope copy. Keyed by the `backend` field returned from
  * `acp.get-available-agents`. Unknown backends fall back to {@link ANY}.
+ *
+ * Backend-keyed, like `FEATURED_BACKENDS` in `index.tsx` — keep the two
+ * consistent when adding or renaming an agent backend.
  */
 const AGENT_SCOPES: Record<string, AgentScope> = {
   // Wayland's own engine — runs every connected provider's models.

@@ -125,6 +125,9 @@ const AGENTS = [
   { backend: 'codex', name: 'Codex' },
   { backend: 'gemini', name: 'Gemini CLI' },
   { backend: 'qwen', name: 'Qwen Code' },
+  // `vibe` is the one non-obvious backend → scope mapping: it maps to the
+  // `mistral` scope key ("Runs Mistral models"), not a same-named key.
+  { backend: 'vibe', name: 'Vibe CLI' },
 ];
 
 function agentsOk(data: unknown) {
@@ -159,8 +162,8 @@ describe('AgentsSettings (Packet 2D)', () => {
     expect(screen.getByText('Claude Code')).toBeTruthy();
     expect(screen.getByText('Codex')).toBeTruthy();
 
-    // Gemini / Qwen fall into the compact "More detected" tile grid.
-    expect(screen.getAllByTestId('agent-tile')).toHaveLength(2);
+    // Gemini / Qwen / Vibe fall into the compact "More detected" tile grid.
+    expect(screen.getAllByTestId('agent-tile')).toHaveLength(3);
     expect(screen.getByText('Gemini CLI')).toBeTruthy();
   });
 
@@ -174,6 +177,16 @@ describe('AgentsSettings (Packet 2D)', () => {
     expect(screen.getByText('Runs GPT models')).toBeTruthy();
     expect(screen.getByText('Runs Gemini models')).toBeTruthy();
     expect(screen.getByText('Runs Qwen models')).toBeTruthy();
+  });
+
+  it('maps the `vibe` backend to the Mistral scope copy', async () => {
+    render(<AgentsSettings />);
+    await waitFor(() => expect(screen.getByText('Wayland Core')).toBeTruthy());
+
+    // `vibe` is the one non-obvious backend → scope mapping: it resolves to
+    // the `mistral` scope key, not a `vibe`-named one (agentScopes.ts).
+    expect(screen.getByText('Vibe CLI')).toBeTruthy();
+    expect(screen.getByText('Runs Mistral models')).toBeTruthy();
   });
 
   it('uses no "family" jargon and no padlock metaphor', async () => {
@@ -218,6 +231,20 @@ describe('AgentsSettings (Packet 2D)', () => {
 
   it('shows an empty note when no agents are detected', async () => {
     mockGetAvailableAgents.mockResolvedValue(agentsOk([]));
+    render(<AgentsSettings />);
+
+    await waitFor(() =>
+      expect(
+        screen.getByText('No agents detected yet. Wayland Core is always available once a model is connected.')
+      ).toBeTruthy()
+    );
+    expect(screen.queryByTestId('agent-card')).toBeNull();
+  });
+
+  it('degrades to the empty state when the agents IPC call fails', async () => {
+    // The SWR fetcher swallows `success: false` into an empty array — the page
+    // must show the empty-state note, not crash.
+    mockGetAvailableAgents.mockResolvedValue({ success: false });
     render(<AgentsSettings />);
 
     await waitFor(() =>
