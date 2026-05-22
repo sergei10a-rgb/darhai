@@ -175,6 +175,7 @@ const ConnectPanel: React.FC<Props> = ({ detectedKeys, onConnectKey, onUseDetect
           onChange={onInput}
           onPressEnter={() => void handleConnect()}
           placeholder={t('settings.modelsPage.connect.keyPlaceholder')}
+          aria-label={t('settings.modelsPage.connect.keyLabel')}
           className='flex-1'
           disabled={connecting}
         />

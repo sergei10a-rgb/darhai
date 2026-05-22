@@ -1001,6 +1001,7 @@
     "crumbAiModels": "AI 模型",
     "connectedLabel": "已連接",
     "loadError": "無法載入已連接的提供商，請稍後重試。",
+    "fixFailed": "無法重設該提供商，請重試。",
     "connect": {
       "title": "連接提供商",
       "keyLabel": "貼上 API 金鑰",
@@ -1043,7 +1044,12 @@
       "errorOffline": "無法連接提供商",
       "errorUnrecognized": "金鑰無法辨識",
       "errorNoModels": "未回傳模型",
-      "errorUnknown": "連接問題"
+      "errorUnknown": "連接問題",
+      "via": {
+        "apiKey": "API 金鑰",
+        "autoDiscovered": "自動探索的金鑰",
+        "cloudCredentials": "雲端憑證"
+      }
     },
     "empty": {
       "note": "還沒有連接任何提供商。在上方連接一個——最快的開始方式是 <1>使用 Google 繼續</1>。"

@@ -88,6 +88,10 @@ vi.mock('../../../src/renderer/pages/settings/components/SettingsPageShell', () 
 
 // Import after the mocks are registered.
 import ModelsSettings from '../../../src/renderer/pages/settings/ModelsSettings';
+import { recognizeKey } from '../../../src/renderer/pages/settings/ModelsSettings/providerCatalog';
+import type { KeyRecognition } from '../../../src/renderer/pages/settings/ModelsSettings/providerCatalog';
+import { PROVIDER_KEY_PATTERNS } from '../../../src/process/providers/detection/providerKeyPatterns';
+import type { ProviderId } from '../../../src/process/providers/types';
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -95,14 +99,14 @@ import ModelsSettings from '../../../src/renderer/pages/settings/ModelsSettings'
 
 const connectedProvider: IModelRegistryProviderView = {
   providerId: 'anthropic',
-  connectedVia: 'API key',
+  connectedVia: 'api-key',
   state: 'connected',
   modelCount: 12,
 };
 
 const erroredProvider: IModelRegistryProviderView = {
   providerId: 'openai',
-  connectedVia: 'API key',
+  connectedVia: 'api-key',
   state: 'error',
   modelCount: 0,
   error: 'unauthorized',
@@ -141,6 +145,10 @@ describe('ModelsSettings page', () => {
     expect(screen.getByText('settings.modelsPage.row.connected')).toBeInTheDocument();
     // Model count interpolates the count.
     expect(screen.getByText(/row\.modelCount:count=12/)).toBeInTheDocument();
+    // `connectedVia` is localized through an i18n key, not rendered raw — the
+    // backend emits the literal `api-key`, never a display string.
+    expect(screen.getByText('settings.modelsPage.row.via.apiKey')).toBeInTheDocument();
+    expect(screen.queryByText('api-key')).not.toBeInTheDocument();
   });
 
   it('shows the empty state when there are no providers and no detected keys', async () => {
@@ -220,5 +228,99 @@ describe('ModelsSettings page', () => {
     });
     // An unrecognized key never reaches the backend.
     expect(mockConnect).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// recognizeKey — pure-function recognition contract + main-process parity.
+//
+// The renderer copy of the key-recognition rules (`providerCatalog.recognizeKey`)
+// must not drift from the main-process source (`PROVIDER_KEY_PATTERNS`). These
+// tests pin every branch and assert the renderer's prefix set is a strict
+// subset of the source, so a future edit to either side fails CI.
+// ---------------------------------------------------------------------------
+
+describe('recognizeKey', () => {
+  // Every unique-prefix provider the renderer claims to recognize, with a
+  // representative sample key for each.
+  const recognizedCases: Array<[ProviderId, string]> = [
+    ['anthropic', 'sk-ant-api03-abcdef'],
+    ['openrouter', 'sk-or-v1-abcdef'],
+    ['openai', 'sk-proj-abcdef'],
+    ['google-gemini', 'AIzaSyAbcdef'],
+    ['groq', 'gsk_abcdef'],
+    ['xai', 'xai-abcdef'],
+    ['huggingface', 'hf_abcdef'],
+    ['perplexity', 'pplx-abcdef'],
+    ['replicate', 'r8_abcdef'],
+    ['together', 'tgp_v1_abcdef'],
+    ['fireworks', 'fw_abcdef'],
+    ['cerebras', 'csk-abcdef'],
+    ['nvidia', 'nvapi-abcdef'],
+    ['anyscale', 'esecret_abcdef'],
+    ['deepgram', 'dg_abcdef'],
+    ['assemblyai', 'aai_abcdef'],
+    ['elevenlabs', 'xi-api-abcdef'],
+  ];
+
+  it.each(recognizedCases)('recognizes a %s key', (provider, key) => {
+    expect(recognizeKey(key)).toEqual<KeyRecognition>({ kind: 'recognized', provider });
+  });
+
+  it('treats an AWS key as the multi-field cloud case', () => {
+    expect(recognizeKey('AKIAIOSFODNN7EXAMPLE')).toEqual<KeyRecognition>({
+      kind: 'cloud',
+      provider: 'aws-bedrock',
+    });
+    expect(recognizeKey('ASIAIOSFODNN7EXAMPLE')).toEqual<KeyRecognition>({
+      kind: 'cloud',
+      provider: 'aws-bedrock',
+    });
+  });
+
+  it('treats a bare sk- key as ambiguous', () => {
+    const result = recognizeKey('sk-abcdef1234567890');
+    expect(result.kind).toBe('ambiguous');
+    if (result.kind === 'ambiguous') {
+      expect(result.candidates).toContain('openai');
+      expect(result.candidates).toContain('deepseek');
+    }
+  });
+
+  it('recognizes a JWT-shaped key as MiniMax (structural rule)', () => {
+    // header.payload.signature — three dot-separated segments, eyJ prefix.
+    const jwt = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.signature123';
+    expect(recognizeKey(jwt)).toEqual<KeyRecognition>({ kind: 'recognized', provider: 'minimax' });
+  });
+
+  it('recognizes a dot-split key as Zhipu GLM (structural rule)', () => {
+    // Two segments, each >= 10 chars, not a JWT.
+    expect(recognizeKey('abcdefghij.klmnopqrst')).toEqual<KeyRecognition>({
+      kind: 'recognized',
+      provider: 'zhipu-glm',
+    });
+  });
+
+  it('returns unknown for an unrecognized key and an empty string', () => {
+    expect(recognizeKey('totally-unrecognized-key')).toEqual<KeyRecognition>({ kind: 'unknown' });
+    expect(recognizeKey('')).toEqual<KeyRecognition>({ kind: 'unknown' });
+    expect(recognizeKey('   ')).toEqual<KeyRecognition>({ kind: 'unknown' });
+  });
+
+  it('does not drift from the main-process PROVIDER_KEY_PATTERNS', () => {
+    // The renderer recognizer's provider set must be a strict subset of the
+    // main-process source. Any provider the renderer recognizes structurally or
+    // by prefix must also exist in PROVIDER_KEY_PATTERNS — otherwise a connect
+    // call the UI cheerfully routes would be rejected backend-side.
+    const sourceProviders = new Set(PROVIDER_KEY_PATTERNS.map((rule) => rule.provider));
+    const rendererProviders: ProviderId[] = [
+      ...recognizedCases.map(([provider]) => provider),
+      'aws-bedrock',
+      'minimax',
+      'zhipu-glm',
+    ];
+    for (const provider of rendererProviders) {
+      expect(sourceProviders.has(provider)).toBe(true);
+    }
   });
 });

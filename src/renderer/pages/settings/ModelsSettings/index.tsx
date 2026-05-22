@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Spin } from '@arco-design/web-react';
+import { Message, Spin } from '@arco-design/web-react';
 import { useTranslation } from 'react-i18next';
 import type { IModelRegistryDetectedKey, IModelRegistryProviderView } from '@/common/adapter/ipcBridge';
 import type { ProviderId } from '@process/providers/types';
@@ -83,12 +83,18 @@ const ModelsSettings: React.FC = () => {
   }, []);
 
   const handleFix = useCallback(
-    (provider: IModelRegistryProviderView) => {
+    async (provider: IModelRegistryProviderView) => {
       // TODO(2B): the Manage page owns the re-key dialog. Until 2B lands, the
       // safe recovery is to disconnect so the user can re-connect cleanly.
-      void disconnect(provider.providerId);
+      try {
+        await disconnect(provider.providerId);
+      } catch {
+        // A failed disconnect leaves the errored provider in place — surface it
+        // rather than failing silently with an unhandled rejection.
+        Message.error(t('settings.modelsPage.fixFailed'));
+      }
     },
-    [disconnect]
+    [disconnect, t]
   );
 
   const showEmptyState = !loading && providers.length === 0 && visibleDetected.length === 0;
@@ -116,7 +122,7 @@ const ModelsSettings: React.FC = () => {
       <div className={styles.sectionLabel}>{t('settings.modelsPage.connectedLabel')}</div>
 
       {loading && providers.length === 0 && (
-        <div className='flex justify-center py-32px'>
+        <div className={styles.loadingRow}>
           <Spin />
         </div>
       )}

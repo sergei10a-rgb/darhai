@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { modelRegistry } from '@/common/adapter/ipcBridge';
 import type {
   IModelRegistryCatalogView,
@@ -57,16 +57,25 @@ export function useModelRegistry(): UseModelRegistry {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Monotonic request sequence. Concurrent mutations each `await reload()`;
+  // `list()` calls can resolve out of order, so a stale snapshot could win.
+  // Each reload captures its sequence number and only commits its result if no
+  // newer reload has started since.
+  const reloadSeq = useRef(0);
+
   const reload = useCallback(async () => {
+    const seq = ++reloadSeq.current;
     setLoading(true);
     setError(null);
     try {
       const list = await modelRegistry.list.invoke();
+      if (seq !== reloadSeq.current) return; // a newer reload superseded this one
       setProviders(Array.isArray(list) ? list : []);
     } catch (err) {
+      if (seq !== reloadSeq.current) return;
       setError(err instanceof Error ? err.message : String(err));
     } finally {
-      setLoading(false);
+      if (seq === reloadSeq.current) setLoading(false);
     }
   }, []);
 

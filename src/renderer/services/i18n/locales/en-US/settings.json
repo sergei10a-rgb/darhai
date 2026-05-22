@@ -1665,6 +1665,7 @@
     "crumbAiModels": "AI Models",
     "connectedLabel": "Connected",
     "loadError": "Couldn't load your connected providers. Try again in a moment.",
+    "fixFailed": "Couldn't reset that provider. Please try again.",
     "connect": {
       "title": "Connect a provider",
       "keyLabel": "Paste an API key",
@@ -1707,7 +1708,12 @@
       "errorOffline": "can't reach provider",
       "errorUnrecognized": "key not recognized",
       "errorNoModels": "no models returned",
-      "errorUnknown": "connection problem"
+      "errorUnknown": "connection problem",
+      "via": {
+        "apiKey": "API key",
+        "autoDiscovered": "Auto-discovered key",
+        "cloudCredentials": "Cloud credentials"
+      }
     },
     "empty": {
       "note": "No providers connected yet. Connect one above — the fastest start is <1>Continue with Google</1>."

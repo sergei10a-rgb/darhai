@@ -1001,6 +1001,7 @@
     "crumbAiModels": "AI モデル",
     "connectedLabel": "接続済み",
     "loadError": "接続済みプロバイダーを読み込めませんでした。しばらくしてから再試行してください。",
+    "fixFailed": "プロバイダーをリセットできませんでした。もう一度お試しください。",
     "connect": {
       "title": "プロバイダーを接続",
       "keyLabel": "API キーを貼り付け",
@@ -1043,7 +1044,12 @@
       "errorOffline": "プロバイダーに接続できません",
       "errorUnrecognized": "キーが認識されません",
       "errorNoModels": "モデルが返されませんでした",
-      "errorUnknown": "接続の問題"
+      "errorUnknown": "接続の問題",
+      "via": {
+        "apiKey": "API キー",
+        "autoDiscovered": "自動検出されたキー",
+        "cloudCredentials": "クラウド認証情報"
+      }
     },
     "empty": {
       "note": "まだプロバイダーが接続されていません。上で 1 つ接続してください——最速のスタートは <1>Google で続行</1> です。"

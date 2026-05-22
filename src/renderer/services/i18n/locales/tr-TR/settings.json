@@ -999,6 +999,7 @@
     "crumbAiModels": "Yapay Zeka Modelleri",
     "connectedLabel": "Bağlı",
     "loadError": "Bağlı sağlayıcılar yüklenemedi. Birazdan tekrar deneyin.",
+    "fixFailed": "Sağlayıcı sıfırlanamadı. Lütfen tekrar deneyin.",
     "connect": {
       "title": "Sağlayıcı bağla",
       "keyLabel": "Bir API anahtarı yapıştır",
@@ -1041,7 +1042,12 @@
       "errorOffline": "sağlayıcıya ulaşılamıyor",
       "errorUnrecognized": "anahtar tanınmadı",
       "errorNoModels": "model döndürülmedi",
-      "errorUnknown": "bağlantı sorunu"
+      "errorUnknown": "bağlantı sorunu",
+      "via": {
+        "apiKey": "API anahtarı",
+        "autoDiscovered": "Otomatik bulunan anahtar",
+        "cloudCredentials": "Bulut kimlik bilgileri"
+      }
     },
     "empty": {
       "note": "Henüz bağlı sağlayıcı yok. Yukarıdan bir tane bağlayın — en hızlı başlangıç <1>Google ile devam et</1>."

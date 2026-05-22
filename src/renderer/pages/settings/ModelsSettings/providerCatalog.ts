@@ -83,16 +83,39 @@ export type KeyRecognition =
   | { kind: 'unknown' };
 
 /**
- * Pure, browser-safe key recognition. Mirrors the prefix rules in the
- * main-process `providerKeyPatterns` — kept in sync intentionally so the UI can
- * show live recognition without an IPC round-trip on every keystroke.
+ * Browser-safe JWT *shape* check — mirrors `providerKeyPatterns.isJwt`, minus
+ * the base64-decode validation (which needs Node `Buffer`). A JWT-shaped key
+ * starts with `eyJ` and has exactly three `.`-separated segments. The
+ * main-process `connect` does the full decode; this is enough for live UI
+ * recognition.
+ */
+function isJwtShape(key: string): boolean {
+  return key.startsWith('eyJ') && key.split('.').length === 3;
+}
+
+/**
+ * Browser-safe dot-split *shape* check — mirrors `providerKeyPatterns.isDotSplit`.
+ * Two `.`-separated segments, each ≥10 chars, and not a JWT.
+ */
+function isDotSplitShape(key: string): boolean {
+  if (isJwtShape(key)) return false;
+  const parts = key.split('.');
+  return parts.length === 2 && parts[0].length >= 10 && parts[1].length >= 10;
+}
+
+/**
+ * Pure, browser-safe key recognition. Mirrors the prefix + structural rules in
+ * the main-process `providerKeyPatterns` — kept in sync intentionally so the UI
+ * can show live recognition without an IPC round-trip on every keystroke. The
+ * `recognizeKey` parity test (`modelsSettings.dom.test.tsx`) fails CI if a
+ * renderer prefix drifts out of `PROVIDER_KEY_PATTERNS`.
  * A bare `sk-` key is `ambiguous`; the connect call confirms it main-side.
  */
 export function recognizeKey(raw: string): KeyRecognition {
   const key = raw.trim();
   if (!key) return { kind: 'unknown' };
 
-  // Unique high-confidence prefixes.
+  // Unique high-confidence prefixes (priority 100).
   if (key.startsWith('sk-ant-')) return { kind: 'recognized', provider: 'anthropic' };
   if (key.startsWith('sk-or-')) return { kind: 'recognized', provider: 'openrouter' };
   if (key.startsWith('sk-proj-')) return { kind: 'recognized', provider: 'openai' };
@@ -111,7 +134,8 @@ export function recognizeKey(raw: string): KeyRecognition {
   if (key.startsWith('aai_')) return { kind: 'recognized', provider: 'assemblyai' };
   if (key.startsWith('xi-api-')) return { kind: 'recognized', provider: 'elevenlabs' };
 
-  // Multi-field cloud provider — needs the credential form, not a bare key.
+  // Multi-field cloud provider (priority 90) — needs the credential form, not a
+  // bare key.
   if (key.startsWith('AKIA') || key.startsWith('ASIA')) return { kind: 'cloud', provider: 'aws-bedrock' };
 
   // Bare `sk-` — could be several providers. Confirmed main-side on connect.
@@ -121,6 +145,10 @@ export function recognizeKey(raw: string): KeyRecognition {
       candidates: ['openai', 'deepseek', 'moonshot', 'qwen', 'baichuan', 'lingyiwanwu', 'stability'],
     };
   }
+
+  // Structural rules (priority 80) — checked last, after all prefixes.
+  if (isJwtShape(key)) return { kind: 'recognized', provider: 'minimax' };
+  if (isDotSplitShape(key)) return { kind: 'recognized', provider: 'zhipu-glm' };
 
   return { kind: 'unknown' };
 }

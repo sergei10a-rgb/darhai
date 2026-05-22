@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button } from '@arco-design/web-react';
+import { Button, Spin } from '@arco-design/web-react';
 import { useTranslation } from 'react-i18next';
 import type { IModelRegistryProviderView } from '@/common/adapter/ipcBridge';
 import type { ConnectError } from '@process/providers/types';
@@ -25,6 +25,16 @@ const ERROR_KEY: Record<ConnectError, string> = {
 };
 
 /**
+ * Map a backend `connectedVia` enum value to its i18n key suffix. The backend
+ * (`modelRegistryIpc.connectedViaLabel`) only ever emits these three literals.
+ */
+const VIA_KEY: Record<string, string> = {
+  'api-key': 'apiKey',
+  'auto-discovered': 'autoDiscovered',
+  'cloud-credentials': 'cloudCredentials',
+};
+
+/**
  * One compact connected-provider row. No chips, no overflow menu (spec §4.2).
  *
  * Drives three states from the registry view:
@@ -44,6 +54,11 @@ const ConnectedRow: React.FC<Props> = ({ provider, onManage, onFix }) => {
   const isTesting = provider.state === 'testing';
   const noModels = !isError && !isTesting && provider.modelCount === 0;
 
+  // Localize the `connectedVia` enum; fall back to the raw value if the backend
+  // ever emits an unmapped literal so the row still renders something readable.
+  const viaSuffix = VIA_KEY[provider.connectedVia];
+  const viaLabel = viaSuffix ? t(`settings.modelsPage.row.via.${viaSuffix}`) : provider.connectedVia;
+
   const rowClass = [styles.row, isTesting ? styles.rowTesting : '', isError ? styles.rowError : '']
     .filter(Boolean)
     .join(' ');
@@ -60,12 +75,12 @@ const ConnectedRow: React.FC<Props> = ({ provider, onManage, onFix }) => {
 
       <div className='min-w-0'>
         <div className={styles.rowName}>{meta.displayName}</div>
-        <div className={styles.rowVia}>{provider.connectedVia}</div>
+        <div className={styles.rowVia}>{viaLabel}</div>
       </div>
 
       {isTesting && (
         <div className={`${styles.status} ${styles.statusTesting}`}>
-          <span className='arco-spin-icon' />
+          <Spin size={14} />
           {t('settings.modelsPage.row.testing')}
         </div>
       )}
