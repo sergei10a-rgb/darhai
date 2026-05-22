@@ -40,6 +40,8 @@ type VendoredAgentProfile = {
   description: string;
   presetAgentType: 'agent-profile';
   category: string;
+  /** SKILL.md body, mirroring waylandteams resolver shape so editor's Rules surface reads it. */
+  context: string;
   prompts: { system: string };
   isPreset: true;
   kind: 'specialist';
@@ -159,7 +161,9 @@ function buildOverlay(): VendoredAgentProfile[] {
     let body = '';
     if (relPath) {
       try {
-        body = readFileSync(path.join(dir, relPath), 'utf-8');
+        // index.json records paths relative to the library root WITHOUT the
+        // `bodies/` segment; the actual SKILL.md files live under bodies/.
+        body = readFileSync(path.join(dir, 'bodies', relPath), 'utf-8');
       } catch {
         // Skip silently — the metadata-only assistant still surfaces.
       }
@@ -171,6 +175,10 @@ function buildOverlay(): VendoredAgentProfile[] {
       description,
       presetAgentType: 'agent-profile',
       category: mapCategory(rawCategory),
+      // The editor's "Rules" surface reads `context`; mirror the field used
+      // by the waylandteams resolver so vendored agent-profiles surface
+      // their SKILL.md body the same way.
+      context: body,
       prompts: { system: body },
       isPreset: true,
       kind: 'specialist',
