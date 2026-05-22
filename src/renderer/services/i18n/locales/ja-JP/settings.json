@@ -1101,6 +1101,78 @@
       "errorUnrecognized": "そのキーは {{provider}} として認識されませんでした。",
       "errorNoModels": "{{provider}} はキーを受け入れましたがモデルを返しませんでした。更新してみてください。",
       "errorUnknown": "{{provider}} を更新できませんでした。再試行してください。"
+    },
+    "browse": {
+      "title": "すべてのプロバイダー",
+      "subtitle": "接続するプロバイダーを選択してください。ほとんどはキーのみ、クラウドプロバイダーは短い認証フォームが必要です。",
+      "searchPlaceholder": "30 以上のプロバイダーを検索…",
+      "noMatch": "「{{query}}」に一致するプロバイダーがありません",
+      "back": "すべてのプロバイダー",
+      "connected": "接続済み",
+      "connectAria": "{{provider}} に接続",
+      "cloudTag": "認証フォーム",
+      "group": {
+        "frontier": "フロンティア",
+        "cloud": "クラウド — 認証フォーム",
+        "open": "オープン推論",
+        "chinese": "中国フロンティア",
+        "voice": "音声と文字起こし"
+      },
+      "keySubtitle": "{{provider}} の API キーを貼り付けて接続します。",
+      "keyLabel": "API キー",
+      "keyPlaceholder": "API キーを貼り付け…",
+      "connect": "接続してテスト",
+      "errorUnauthorized": "その {{provider}} キーは拒否されました（未承認）。キーを確認して再試行してください。",
+      "errorNoCredit": "接続しましたが、その {{provider}} キーには利用可能なクレジットがありません。モデルを実行するには請求情報を追加してください。",
+      "errorOffline": "{{provider}} に接続できません。オフラインのようです。接続を確認して再試行してください。",
+      "errorUnrecognized": "そのキーは {{provider}} で認識されませんでした。キーを確認して再試行してください。",
+      "errorNoModels": "{{provider}} に接続しましたが、モデルが返されませんでした。「管理」から更新してみてください。",
+      "errorUnknown": "{{provider}} に接続できませんでした。再試行してください。"
+    },
+    "cloud": {
+      "subtitle": {
+        "aws-bedrock": "Bedrock には IAM 認証情報とリージョンが必要です。",
+        "vertex": "Vertex にはプロジェクト、リージョン、サービスアカウントキーが必要です。",
+        "azure": "Azure OpenAI にはリソースのエンドポイントと API キーが必要です。"
+      },
+      "fields": {
+        "accessKeyId": {
+          "label": "アクセスキー ID",
+          "placeholder": "AKIA…"
+        },
+        "secretAccessKey": {
+          "label": "シークレットアクセスキー",
+          "placeholder": "シークレットアクセスキーを貼り付け…"
+        },
+        "region": {
+          "label": "リージョン",
+          "placeholder": "us-east-1"
+        },
+        "projectId": {
+          "label": "プロジェクト ID",
+          "placeholder": "my-gcp-project"
+        },
+        "serviceAccountJson": {
+          "label": "サービスアカウントキー (JSON)",
+          "placeholder": "サービスアカウントの JSON を貼り付け…"
+        },
+        "endpoint": {
+          "label": "エンドポイント",
+          "placeholder": "https://my-resource.openai.azure.com"
+        },
+        "apiKey": {
+          "label": "API キー",
+          "placeholder": "API キーを貼り付け…"
+        }
+      },
+      "submitConnect": "接続してテスト",
+      "submitRekey": "認証情報を更新",
+      "errorUnauthorized": "その {{provider}} の認証情報は拒否されました（未承認）。確認して再試行してください。",
+      "errorNoCredit": "接続しましたが、{{provider}} には利用可能なクレジットがありません。モデルを実行するには請求情報を追加してください。",
+      "errorOffline": "{{provider}} に接続できません。オフラインのようです。接続を確認して再試行してください。",
+      "errorUnrecognized": "これらの認証情報は不完全であるか、{{provider}} で受け入れられませんでした。すべての項目を確認してください。",
+      "errorNoModels": "{{provider}} に接続しましたが、モデルが返されませんでした。「管理」から更新してみてください。",
+      "errorUnknown": "{{provider}} に接続できませんでした。再試行してください。"
     }
   },
   "mcpPage": {

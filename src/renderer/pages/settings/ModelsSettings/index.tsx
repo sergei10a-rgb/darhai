@@ -5,6 +5,7 @@ import type { IModelRegistryDetectedKey, IModelRegistryProviderView } from '@/co
 import type { ProviderId } from '@process/providers/types';
 import SettingsPageShell from '@renderer/pages/settings/components/SettingsPageShell';
 import { useModelRegistry } from '@renderer/hooks/useModelRegistry';
+import BrowseModal from './BrowseModal';
 import ConnectPanel from './components/ConnectPanel';
 import ConnectedRow from './components/ConnectedRow';
 import EmptyState from './components/EmptyState';
@@ -37,6 +38,9 @@ const ModelsSettings: React.FC = () => {
   // View-switch seam: when a provider is selected for Manage, this holds its id
   // and the page swaps to `ManageProvider` (prototype `#screen-manage`).
   const [managedProviderId, setManagedProviderId] = useState<ProviderId | null>(null);
+
+  // Whether the Browse-all-providers modal is open (prototype `#overlay-browse`).
+  const [browseOpen, setBrowseOpen] = useState(false);
 
   // Auto-discover keys already on the machine (spec §4.4). Surfaced as the
   // consent strip — never used silently.
@@ -80,7 +84,11 @@ const ModelsSettings: React.FC = () => {
   }, []);
 
   const handleBrowse = useCallback(() => {
-    // TODO(2C): open the Browse-all-providers modal built in Packet 2C.
+    setBrowseOpen(true);
+  }, []);
+
+  const handleBrowseClose = useCallback(() => {
+    setBrowseOpen(false);
   }, []);
 
   const handleManage = useCallback((provider: IModelRegistryProviderView) => {
@@ -161,6 +169,8 @@ const ModelsSettings: React.FC = () => {
           ))}
         </div>
       )}
+
+      <BrowseModal visible={browseOpen} onClose={handleBrowseClose} />
     </SettingsPageShell>
   );
 };

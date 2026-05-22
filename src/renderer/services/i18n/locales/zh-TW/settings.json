@@ -1101,6 +1101,78 @@
       "errorUnrecognized": "無法為 {{provider}} 辨識該金鑰。",
       "errorNoModels": "{{provider}} 接受了金鑰但未傳回任何模型。請嘗試重新整理。",
       "errorUnknown": "無法更新 {{provider}}，請重試。"
+    },
+    "browse": {
+      "title": "所有供應商",
+      "subtitle": "選擇一個進行連接。大多數只需金鑰；雲端供應商需要填寫簡短的憑證表單。",
+      "searchPlaceholder": "搜尋 30+ 個供應商…",
+      "noMatch": "沒有符合「{{query}}」的供應商",
+      "back": "所有供應商",
+      "connected": "已連接",
+      "connectAria": "連接 {{provider}}",
+      "cloudTag": "憑證表單",
+      "group": {
+        "frontier": "前沿",
+        "cloud": "雲端 — 憑證表單",
+        "open": "開放推理",
+        "chinese": "中國前沿",
+        "voice": "語音與轉錄"
+      },
+      "keySubtitle": "貼上 {{provider}} 的 API 金鑰以進行連接。",
+      "keyLabel": "API 金鑰",
+      "keyPlaceholder": "貼上你的 API 金鑰…",
+      "connect": "連接並測試",
+      "errorUnauthorized": "該 {{provider}} 金鑰遭拒——未授權。請檢查金鑰後重試。",
+      "errorNoCredit": "已連接，但該 {{provider}} 金鑰沒有可用額度。請新增帳單以執行模型。",
+      "errorOffline": "無法連接 {{provider}}——你似乎處於離線狀態。請檢查網路連接後重試。",
+      "errorUnrecognized": "該金鑰未被 {{provider}} 識別。請檢查金鑰後重試。",
+      "errorNoModels": "{{provider}} 已連接，但未傳回任何模型。請在「管理」中嘗試重新整理。",
+      "errorUnknown": "無法連接到 {{provider}}。請重試。"
+    },
+    "cloud": {
+      "subtitle": {
+        "aws-bedrock": "Bedrock 需要 IAM 憑證和一個區域。",
+        "vertex": "Vertex 需要一個專案、一個區域和一個服務帳戶金鑰。",
+        "azure": "Azure OpenAI 需要你的資源端點和一個 API 金鑰。"
+      },
+      "fields": {
+        "accessKeyId": {
+          "label": "存取金鑰 ID",
+          "placeholder": "AKIA…"
+        },
+        "secretAccessKey": {
+          "label": "私密存取金鑰",
+          "placeholder": "貼上你的私密存取金鑰…"
+        },
+        "region": {
+          "label": "區域",
+          "placeholder": "us-east-1"
+        },
+        "projectId": {
+          "label": "專案 ID",
+          "placeholder": "my-gcp-project"
+        },
+        "serviceAccountJson": {
+          "label": "服務帳戶金鑰 (JSON)",
+          "placeholder": "貼上服務帳戶 JSON…"
+        },
+        "endpoint": {
+          "label": "端點",
+          "placeholder": "https://my-resource.openai.azure.com"
+        },
+        "apiKey": {
+          "label": "API 金鑰",
+          "placeholder": "貼上你的 API 金鑰…"
+        }
+      },
+      "submitConnect": "連接並測試",
+      "submitRekey": "更新憑證",
+      "errorUnauthorized": "該 {{provider}} 憑證遭拒——未授權。請檢查後重試。",
+      "errorNoCredit": "已連接，但 {{provider}} 沒有可用額度。請新增帳單以執行模型。",
+      "errorOffline": "無法連接 {{provider}}——你似乎處於離線狀態。請檢查網路連接後重試。",
+      "errorUnrecognized": "這些憑證不完整或未被 {{provider}} 接受。請檢查每個欄位。",
+      "errorNoModels": "{{provider}} 已連接，但未傳回任何模型。請在「管理」中嘗試重新整理。",
+      "errorUnknown": "無法連接到 {{provider}}。請重試。"
     }
   },
   "mcpPage": {

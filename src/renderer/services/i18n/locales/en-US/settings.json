@@ -1765,6 +1765,78 @@
       "errorUnrecognized": "That key was not recognized for {{provider}}.",
       "errorNoModels": "{{provider}} accepted the key but returned no models. Try refreshing.",
       "errorUnknown": "Couldn't update {{provider}}. Please try again."
+    },
+    "browse": {
+      "title": "All providers",
+      "subtitle": "Pick one to connect. Most take a key; cloud providers take a short credential form.",
+      "searchPlaceholder": "Search 30+ providers…",
+      "noMatch": "No providers match \"{{query}}\"",
+      "back": "All providers",
+      "connected": "Connected",
+      "connectAria": "Connect {{provider}}",
+      "cloudTag": "credential form",
+      "group": {
+        "frontier": "Frontier",
+        "cloud": "Cloud — credential form",
+        "open": "Open inference",
+        "chinese": "Chinese frontier",
+        "voice": "Voice & transcription"
+      },
+      "keySubtitle": "Paste an API key for {{provider}} to connect.",
+      "keyLabel": "API key",
+      "keyPlaceholder": "Paste your API key…",
+      "connect": "Connect & test",
+      "errorUnauthorized": "That {{provider}} key was rejected — unauthorized. Check the key and try again.",
+      "errorNoCredit": "Connected, but that {{provider}} key has no usable credit. Add billing to run models.",
+      "errorOffline": "Couldn't reach {{provider}} — you appear to be offline. Check your connection and retry.",
+      "errorUnrecognized": "That key was not recognized for {{provider}}. Check the key and try again.",
+      "errorNoModels": "{{provider}} connected but returned no models. Try refreshing it from Manage.",
+      "errorUnknown": "Couldn't connect to {{provider}}. Please try again."
+    },
+    "cloud": {
+      "subtitle": {
+        "aws-bedrock": "Bedrock needs IAM credentials and a region.",
+        "vertex": "Vertex needs a project, a region, and a service-account key.",
+        "azure": "Azure OpenAI needs your resource endpoint and an API key."
+      },
+      "fields": {
+        "accessKeyId": {
+          "label": "Access Key ID",
+          "placeholder": "AKIA…"
+        },
+        "secretAccessKey": {
+          "label": "Secret Access Key",
+          "placeholder": "Paste your secret access key…"
+        },
+        "region": {
+          "label": "Region",
+          "placeholder": "us-east-1"
+        },
+        "projectId": {
+          "label": "Project ID",
+          "placeholder": "my-gcp-project"
+        },
+        "serviceAccountJson": {
+          "label": "Service account key (JSON)",
+          "placeholder": "Paste the service-account JSON…"
+        },
+        "endpoint": {
+          "label": "Endpoint",
+          "placeholder": "https://my-resource.openai.azure.com"
+        },
+        "apiKey": {
+          "label": "API Key",
+          "placeholder": "Paste your API key…"
+        }
+      },
+      "submitConnect": "Connect & test",
+      "submitRekey": "Update credentials",
+      "errorUnauthorized": "Those {{provider}} credentials were rejected — unauthorized. Check them and try again.",
+      "errorNoCredit": "Connected, but {{provider}} has no usable credit. Add billing to run models.",
+      "errorOffline": "Couldn't reach {{provider}} — you appear to be offline. Check your connection and retry.",
+      "errorUnrecognized": "Those credentials are incomplete or were not accepted for {{provider}}. Check every field.",
+      "errorNoModels": "{{provider}} connected but returned no models. Try refreshing it from Manage.",
+      "errorUnknown": "Couldn't connect to {{provider}}. Please try again."
     }
   },
   "mcpPage": {

@@ -8,6 +8,20 @@
  */
 import type { ProviderId } from '@process/providers/types';
 
+/**
+ * A Browse-modal group (prototype `#overlay-browse`, spec §4.6). Every provider
+ * belongs to exactly one. Group order here is the render order in the grid.
+ */
+export type ProviderGroup = 'frontier' | 'cloud' | 'open' | 'chinese' | 'voice';
+
+/** The cloud `ProviderId`s — these need the multi-field `CloudCredentialForm`. */
+export const CLOUD_PROVIDER_IDS = ['aws-bedrock', 'vertex', 'azure'] as const satisfies readonly ProviderId[];
+
+/** True if a provider connects via the multi-field cloud credential form. */
+export function isCloudProvider(id: ProviderId): boolean {
+  return (CLOUD_PROVIDER_IDS as readonly ProviderId[]).includes(id);
+}
+
 /** Visual + label metadata for one provider. */
 export type ProviderMeta = {
   id: ProviderId;
@@ -19,46 +33,140 @@ export type ProviderMeta = {
   bg: string;
   /** Avatar foreground — true = dark text on a light avatar. */
   darkText: boolean;
+  /** Browse-modal group this provider belongs to (spec §4.6). */
+  group: ProviderGroup;
 };
 
 /** Provider metadata keyed by id. Display names mirror the Browse picker. */
 export const PROVIDER_META: Record<ProviderId, ProviderMeta> = {
-  anthropic: { id: 'anthropic', displayName: 'Anthropic', mono: 'A', bg: '#d4a27f', darkText: true },
-  openai: { id: 'openai', displayName: 'OpenAI', mono: 'O', bg: '#10a37f', darkText: false },
-  'google-gemini': { id: 'google-gemini', displayName: 'Google Gemini', mono: 'G', bg: '#1a73e8', darkText: false },
-  'aws-bedrock': { id: 'aws-bedrock', displayName: 'AWS Bedrock', mono: 'aws', bg: '#ff9900', darkText: true },
-  vertex: { id: 'vertex', displayName: 'Google Vertex AI', mono: 'V', bg: '#1a73e8', darkText: false },
-  openrouter: { id: 'openrouter', displayName: 'OpenRouter', mono: 'OR', bg: '#6566f1', darkText: false },
-  groq: { id: 'groq', displayName: 'Groq', mono: 'Gq', bg: '#f55036', darkText: false },
-  xai: { id: 'xai', displayName: 'xAI Grok', mono: 'x', bg: '#1a1a1a', darkText: false },
-  mistral: { id: 'mistral', displayName: 'Mistral', mono: 'M', bg: '#fa5111', darkText: false },
-  cohere: { id: 'cohere', displayName: 'Cohere', mono: 'C', bg: '#39594d', darkText: false },
-  perplexity: { id: 'perplexity', displayName: 'Perplexity', mono: 'P', bg: '#20808d', darkText: false },
-  together: { id: 'together', displayName: 'Together AI', mono: 'T', bg: '#0f6fff', darkText: false },
-  fireworks: { id: 'fireworks', displayName: 'Fireworks AI', mono: 'F', bg: '#5019c5', darkText: false },
-  cerebras: { id: 'cerebras', displayName: 'Cerebras', mono: 'Cb', bg: '#f15a29', darkText: false },
-  replicate: { id: 'replicate', displayName: 'Replicate', mono: 'R', bg: '#1a1a1a', darkText: false },
-  huggingface: { id: 'huggingface', displayName: 'Hugging Face', mono: 'HF', bg: '#ffd21e', darkText: true },
-  nvidia: { id: 'nvidia', displayName: 'NVIDIA NIM', mono: 'N', bg: '#76b900', darkText: true },
-  anyscale: { id: 'anyscale', displayName: 'Anyscale', mono: 'As', bg: '#1444f0', darkText: false },
-  deepseek: { id: 'deepseek', displayName: 'DeepSeek', mono: 'D', bg: '#4d6bfe', darkText: false },
-  moonshot: { id: 'moonshot', displayName: 'Moonshot', mono: 'Ms', bg: '#16151a', darkText: false },
-  qwen: { id: 'qwen', displayName: 'Qwen', mono: 'Q', bg: '#615ced', darkText: false },
-  baichuan: { id: 'baichuan', displayName: 'Baichuan', mono: 'Bc', bg: '#ff6a00', darkText: false },
-  lingyiwanwu: { id: 'lingyiwanwu', displayName: 'Yi', mono: 'Yi', bg: '#003425', darkText: false },
-  'zhipu-glm': { id: 'zhipu-glm', displayName: 'Zhipu GLM', mono: 'GLM', bg: '#3859ff', darkText: false },
-  minimax: { id: 'minimax', displayName: 'MiniMax', mono: 'Mm', bg: '#e8472b', darkText: false },
-  stability: { id: 'stability', displayName: 'Stability AI', mono: 'S', bg: '#330033', darkText: false },
-  deepgram: { id: 'deepgram', displayName: 'Deepgram', mono: 'Dg', bg: '#13ef93', darkText: true },
-  assemblyai: { id: 'assemblyai', displayName: 'AssemblyAI', mono: 'Ai', bg: '#2545fd', darkText: false },
-  elevenlabs: { id: 'elevenlabs', displayName: 'ElevenLabs', mono: 'EL', bg: '#1a1a1a', darkText: false },
-  azure: { id: 'azure', displayName: 'Azure OpenAI', mono: 'Az', bg: '#0078d4', darkText: false },
+  anthropic: { id: 'anthropic', displayName: 'Anthropic', mono: 'A', bg: '#d4a27f', darkText: true, group: 'frontier' },
+  openai: { id: 'openai', displayName: 'OpenAI', mono: 'O', bg: '#10a37f', darkText: false, group: 'frontier' },
+  'google-gemini': {
+    id: 'google-gemini',
+    displayName: 'Google Gemini',
+    mono: 'G',
+    bg: '#1a73e8',
+    darkText: false,
+    group: 'frontier',
+  },
+  'aws-bedrock': {
+    id: 'aws-bedrock',
+    displayName: 'AWS Bedrock',
+    mono: 'aws',
+    bg: '#ff9900',
+    darkText: true,
+    group: 'cloud',
+  },
+  vertex: { id: 'vertex', displayName: 'Google Vertex AI', mono: 'V', bg: '#1a73e8', darkText: false, group: 'cloud' },
+  openrouter: {
+    id: 'openrouter',
+    displayName: 'OpenRouter',
+    mono: 'OR',
+    bg: '#6566f1',
+    darkText: false,
+    group: 'open',
+  },
+  groq: { id: 'groq', displayName: 'Groq', mono: 'Gq', bg: '#f55036', darkText: false, group: 'open' },
+  xai: { id: 'xai', displayName: 'xAI Grok', mono: 'x', bg: '#1a1a1a', darkText: false, group: 'frontier' },
+  mistral: { id: 'mistral', displayName: 'Mistral', mono: 'M', bg: '#fa5111', darkText: false, group: 'frontier' },
+  cohere: { id: 'cohere', displayName: 'Cohere', mono: 'C', bg: '#39594d', darkText: false, group: 'frontier' },
+  perplexity: {
+    id: 'perplexity',
+    displayName: 'Perplexity',
+    mono: 'P',
+    bg: '#20808d',
+    darkText: false,
+    group: 'open',
+  },
+  together: { id: 'together', displayName: 'Together AI', mono: 'T', bg: '#0f6fff', darkText: false, group: 'open' },
+  fireworks: {
+    id: 'fireworks',
+    displayName: 'Fireworks AI',
+    mono: 'Fw',
+    bg: '#5a3df0',
+    darkText: false,
+    group: 'open',
+  },
+  cerebras: { id: 'cerebras', displayName: 'Cerebras', mono: 'Cb', bg: '#f97316', darkText: false, group: 'open' },
+  replicate: {
+    id: 'replicate',
+    displayName: 'Replicate',
+    mono: 'R',
+    bg: '#1a1a1a',
+    darkText: false,
+    group: 'open',
+  },
+  huggingface: {
+    id: 'huggingface',
+    displayName: 'Hugging Face',
+    mono: 'HF',
+    bg: '#ffd21e',
+    darkText: true,
+    group: 'open',
+  },
+  nvidia: { id: 'nvidia', displayName: 'NVIDIA NIM', mono: 'N', bg: '#76b900', darkText: true, group: 'open' },
+  anyscale: { id: 'anyscale', displayName: 'Anyscale', mono: 'As', bg: '#1444f0', darkText: false, group: 'open' },
+  deepseek: { id: 'deepseek', displayName: 'DeepSeek', mono: 'DS', bg: '#4d6bfe', darkText: false, group: 'chinese' },
+  moonshot: {
+    id: 'moonshot',
+    displayName: 'Moonshot',
+    mono: 'K',
+    bg: '#16151a',
+    darkText: false,
+    group: 'chinese',
+  },
+  qwen: { id: 'qwen', displayName: 'Qwen', mono: 'Q', bg: '#6d4aff', darkText: false, group: 'chinese' },
+  baichuan: {
+    id: 'baichuan',
+    displayName: 'Baichuan',
+    mono: 'Bc',
+    bg: '#ff6a00',
+    darkText: false,
+    group: 'chinese',
+  },
+  lingyiwanwu: { id: 'lingyiwanwu', displayName: 'Yi', mono: 'Yi', bg: '#003425', darkText: false, group: 'chinese' },
+  'zhipu-glm': {
+    id: 'zhipu-glm',
+    displayName: 'Zhipu GLM',
+    mono: 'GLM',
+    bg: '#3859ff',
+    darkText: false,
+    group: 'chinese',
+  },
+  minimax: { id: 'minimax', displayName: 'MiniMax', mono: 'Mm', bg: '#e8472b', darkText: false, group: 'chinese' },
+  stability: {
+    id: 'stability',
+    displayName: 'Stability AI',
+    mono: 'S',
+    bg: '#330033',
+    darkText: false,
+    group: 'open',
+  },
+  deepgram: { id: 'deepgram', displayName: 'Deepgram', mono: 'Dg', bg: '#13ef93', darkText: true, group: 'voice' },
+  assemblyai: {
+    id: 'assemblyai',
+    displayName: 'AssemblyAI',
+    mono: 'Ai',
+    bg: '#2545fd',
+    darkText: false,
+    group: 'voice',
+  },
+  elevenlabs: {
+    id: 'elevenlabs',
+    displayName: 'ElevenLabs',
+    mono: '11',
+    bg: '#1a1a1a',
+    darkText: false,
+    group: 'voice',
+  },
+  azure: { id: 'azure', displayName: 'Azure OpenAI', mono: 'Az', bg: '#0078d4', darkText: false, group: 'cloud' },
   'openai-compatible': {
     id: 'openai-compatible',
     displayName: 'OpenAI-compatible',
     mono: 'API',
     bg: '#5a3df0',
     darkText: false,
+    group: 'open',
   },
 };
 
@@ -71,8 +179,20 @@ export function providerMeta(id: ProviderId): ProviderMeta {
       mono: id.charAt(0).toUpperCase(),
       bg: '#5a3df0',
       darkText: false,
+      group: 'open',
     }
   );
+}
+
+/** Browse-modal group render order (spec §4.6). */
+export const PROVIDER_GROUP_ORDER: readonly ProviderGroup[] = ['frontier', 'cloud', 'open', 'chinese', 'voice'];
+
+/** All provider metadata in a stable order (frontier → voice, declaration order within). */
+export const ALL_PROVIDERS: readonly ProviderMeta[] = Object.values(PROVIDER_META);
+
+/** Providers belonging to one Browse group, in declaration order. */
+export function providersInGroup(group: ProviderGroup): ProviderMeta[] {
+  return ALL_PROVIDERS.filter((p) => p.group === group);
 }
 
 /** Result of recognizing a provider from a pasted API key. */

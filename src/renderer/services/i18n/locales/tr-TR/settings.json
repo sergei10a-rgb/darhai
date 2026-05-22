@@ -1099,6 +1099,78 @@
       "errorUnrecognized": "Bu anahtar {{provider}} için tanınmadı.",
       "errorNoModels": "{{provider}} anahtarı kabul etti ancak hiç model döndürmedi. Yenilemeyi deneyin.",
       "errorUnknown": "{{provider}} güncellenemedi. Lütfen tekrar deneyin."
+    },
+    "browse": {
+      "title": "Tüm sağlayıcılar",
+      "subtitle": "Bağlanmak için birini seçin. Çoğu bir anahtar ister; bulut sağlayıcılar kısa bir kimlik bilgisi formu ister.",
+      "searchPlaceholder": "30+ sağlayıcı arayın…",
+      "noMatch": "“{{query}}” ile eşleşen sağlayıcı yok",
+      "back": "Tüm sağlayıcılar",
+      "connected": "Bağlı",
+      "connectAria": "{{provider}} bağla",
+      "cloudTag": "kimlik bilgisi formu",
+      "group": {
+        "frontier": "Öncü",
+        "cloud": "Bulut — kimlik bilgisi formu",
+        "open": "Açık çıkarım",
+        "chinese": "Çin öncüsü",
+        "voice": "Ses ve transkripsiyon"
+      },
+      "keySubtitle": "Bağlanmak için {{provider}} API anahtarını yapıştırın.",
+      "keyLabel": "API anahtarı",
+      "keyPlaceholder": "API anahtarınızı yapıştırın…",
+      "connect": "Bağlan ve test et",
+      "errorUnauthorized": "O {{provider}} anahtarı reddedildi — yetkisiz. Anahtarı kontrol edip tekrar deneyin.",
+      "errorNoCredit": "Bağlandı, ancak o {{provider}} anahtarının kullanılabilir kredisi yok. Model çalıştırmak için faturalandırma ekleyin.",
+      "errorOffline": "{{provider}} erişilemedi — çevrimdışı görünüyorsunuz. Bağlantınızı kontrol edip tekrar deneyin.",
+      "errorUnrecognized": "O anahtar {{provider}} için tanınmadı. Anahtarı kontrol edip tekrar deneyin.",
+      "errorNoModels": "{{provider}} bağlandı ancak hiç model döndürmedi. Yönet ekranından yenilemeyi deneyin.",
+      "errorUnknown": "{{provider}} bağlanılamadı. Lütfen tekrar deneyin."
+    },
+    "cloud": {
+      "subtitle": {
+        "aws-bedrock": "Bedrock, IAM kimlik bilgileri ve bir bölge gerektirir.",
+        "vertex": "Vertex bir proje, bir bölge ve bir hizmet hesabı anahtarı gerektirir.",
+        "azure": "Azure OpenAI, kaynak uç noktanızı ve bir API anahtarı gerektirir."
+      },
+      "fields": {
+        "accessKeyId": {
+          "label": "Erişim Anahtarı Kimliği",
+          "placeholder": "AKIA…"
+        },
+        "secretAccessKey": {
+          "label": "Gizli Erişim Anahtarı",
+          "placeholder": "Gizli erişim anahtarınızı yapıştırın…"
+        },
+        "region": {
+          "label": "Bölge",
+          "placeholder": "us-east-1"
+        },
+        "projectId": {
+          "label": "Proje Kimliği",
+          "placeholder": "my-gcp-project"
+        },
+        "serviceAccountJson": {
+          "label": "Hizmet hesabı anahtarı (JSON)",
+          "placeholder": "Hizmet hesabı JSON dosyasını yapıştırın…"
+        },
+        "endpoint": {
+          "label": "Uç nokta",
+          "placeholder": "https://my-resource.openai.azure.com"
+        },
+        "apiKey": {
+          "label": "API Anahtarı",
+          "placeholder": "API anahtarınızı yapıştırın…"
+        }
+      },
+      "submitConnect": "Bağlan ve test et",
+      "submitRekey": "Kimlik bilgilerini güncelle",
+      "errorUnauthorized": "O {{provider}} kimlik bilgileri reddedildi — yetkisiz. Kontrol edip tekrar deneyin.",
+      "errorNoCredit": "Bağlandı, ancak {{provider}} kullanılabilir krediye sahip değil. Model çalıştırmak için faturalandırma ekleyin.",
+      "errorOffline": "{{provider}} erişilemedi — çevrimdışı görünüyorsunuz. Bağlantınızı kontrol edip tekrar deneyin.",
+      "errorUnrecognized": "Bu kimlik bilgileri eksik veya {{provider}} tarafından kabul edilmedi. Her alanı kontrol edin.",
+      "errorNoModels": "{{provider}} bağlandı ancak hiç model döndürmedi. Yönet ekranından yenilemeyi deneyin.",
+      "errorUnknown": "{{provider}} bağlanılamadı. Lütfen tekrar deneyin."
     }
   },
   "mcpPage": {
