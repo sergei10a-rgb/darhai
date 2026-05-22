@@ -1448,7 +1448,6 @@ export const providers = {
 export type IModelRegistryConnectResult = {
   ok: boolean;
   error?: ConnectError;
-  providerId?: ProviderId;
 };
 
 /** Result of a connectivity test against an already-connected provider. */
@@ -1478,19 +1477,16 @@ export type IModelRegistryCatalogView = {
   curated: CuratedModel[];
 };
 
-/** Credentials payload for `connect` — either a bare key or per-field creds. */
-export type IModelRegistryConnectArg =
-  | { key: string }
-  | { provider: ProviderId; fields: Record<string, string> };
-
-/** Credentials payload for `rekey` — either a bare key or per-field creds. */
-export type IModelRegistryRekeyCreds = { key: string } | { fields: Record<string, string> };
+/** Credentials for connect / re-key — a bare API key or per-field cloud creds. */
+export type IModelRegistryCreds = { key: string } | { fields: Record<string, string> };
 
 export const modelRegistry = {
   // Auto-discover provider keys from the environment / credential stores.
   detectKeys: buildProvider<IModelRegistryDetectedKey[], void>('modelRegistry.detectKeys'),
-  // Connect a provider via a bare key or per-field credentials.
-  connect: buildProvider<IModelRegistryConnectResult, IModelRegistryConnectArg>('modelRegistry.connect'),
+  // Connect a provider (explicit providerId) via a bare key or per-field credentials.
+  connect: buildProvider<IModelRegistryConnectResult, { providerId: ProviderId; creds: IModelRegistryCreds }>(
+    'modelRegistry.connect'
+  ),
   // Test connectivity of an already-connected provider.
   testConnection: buildProvider<IModelRegistryTestResult, { providerId: ProviderId }>('modelRegistry.testConnection'),
   // List all connected providers with live state + model counts.
@@ -1506,7 +1502,7 @@ export const modelRegistry = {
   // Disconnect a provider and drop its persisted catalog.
   disconnect: buildProvider<{ ok: boolean }, { providerId: ProviderId }>('modelRegistry.disconnect'),
   // Replace a connected provider's credentials.
-  rekey: buildProvider<IModelRegistryConnectResult, { providerId: ProviderId; creds: IModelRegistryRekeyCreds }>(
+  rekey: buildProvider<IModelRegistryConnectResult, { providerId: ProviderId; creds: IModelRegistryCreds }>(
     'modelRegistry.rekey'
   ),
   // Curated model list for a given CLI agent / backend key.
