@@ -370,6 +370,11 @@ describe('recognizeKey', () => {
     ['deepgram', 'dg_abcdef'],
     ['assemblyai', 'aai_abcdef'],
     ['elevenlabs', 'xi-api-abcdef'],
+    // Structural sk- variants — these resolve uniquely despite the bare-sk
+    // prefix because their internal shape is distinctive (32-hex for DeepSeek;
+    // 48-mixed-alnum minus OpenAI's `T3BlbkFJ` signature for Moonshot).
+    ['deepseek', 'sk-d5640f0e48904de7ac51062a4ec3b830'],
+    ['moonshot', 'sk-k44yYrLwjwxEeLddGHBMe4OoSibUr7H65bQyh0cyKOmiHSD7'],
   ];
 
   it.each(recognizedCases)('recognizes a %s key', (provider, key) => {
@@ -394,6 +399,15 @@ describe('recognizeKey', () => {
       expect(result.candidates).toContain('openai');
       expect(result.candidates).toContain('deepseek');
     }
+  });
+
+  it('falls back to ambiguous for a 48-char sk- key carrying the OpenAI T3BlbkFJ signature', () => {
+    // OpenAI legacy keys are `sk-` + 48 chars where `T3BlbkFJ` appears as the
+    // signature middle segment. The Moonshot structural rule MUST exclude these
+    // to avoid mis-routing an OpenAI legacy key to Moonshot.
+    const openaiLegacy = 'sk-abcdefghijklmnopqrstT3BlbkFJabcdefghijklmnopqrst';
+    const result = recognizeKey(openaiLegacy);
+    expect(result.kind).toBe('ambiguous');
   });
 
   it('recognizes a JWT-shaped key as MiniMax (structural rule)', () => {

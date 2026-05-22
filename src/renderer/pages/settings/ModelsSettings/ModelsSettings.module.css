@@ -86,18 +86,22 @@
   flex-shrink: 0;
 }
 
-/* ---- Inline connect error ---- */
+/* ---- Inline connect error ----
+   Uses Wayland's --danger token family (defined in both light and dark themes
+   via default-color-scheme.css). The Arco --color-danger-N variables are NOT
+   defined in this app's CSS pipeline, so referencing them caused color/bg to
+   fall through to inherited (black-on-dark — unreadable). */
 .connectError {
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  background: var(--color-danger-1);
-  border: 1px solid var(--color-danger-6);
+  background: var(--danger-soft-bg);
+  border: 1px solid var(--danger-soft-border);
   border-radius: 9px;
   padding: 9px 11px;
   margin-top: 10px;
   font-size: 12px;
-  color: var(--color-danger-6);
+  color: var(--danger);
   line-height: 1.45;
 }
 
@@ -180,7 +184,7 @@
 }
 
 .rowError {
-  border-color: var(--color-danger-6);
+  border-color: var(--danger);
 }
 
 .avatar {
@@ -217,7 +221,7 @@
 }
 
 .statusConnected {
-  color: var(--color-success-6);
+  color: var(--success);
 }
 
 .statusTesting {
@@ -225,7 +229,7 @@
 }
 
 .statusError {
-  color: var(--color-danger-6);
+  color: var(--danger);
 }
 
 .statusDot {

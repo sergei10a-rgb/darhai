@@ -258,6 +258,18 @@ export function recognizeKey(raw: string): KeyRecognition {
   // bare key.
   if (key.startsWith('AKIA') || key.startsWith('ASIA')) return { kind: 'cloud', provider: 'aws-bedrock' };
 
+  // Structural sk- variants (priority 95) — bare-sk shapes that carry enough
+  // signal to resolve to one provider without a server probe. Must be matched
+  // before the bare `sk-` fallback below.
+  // DeepSeek: `sk-` + exactly 32 lowercase hex chars (distinct from OpenAI's
+  // 48-mixed-case legacy shape).
+  if (/^sk-[a-f0-9]{32}$/.test(key)) return { kind: 'recognized', provider: 'deepseek' };
+  // Moonshot / Kimi: `sk-` + 48 mixed-case alphanumerics, minus OpenAI's
+  // `T3BlbkFJ` middle signature.
+  if (/^sk-[A-Za-z0-9]{48}$/.test(key) && !key.includes('T3BlbkFJ')) {
+    return { kind: 'recognized', provider: 'moonshot' };
+  }
+
   // Bare `sk-` — could be several providers. Confirmed main-side on connect.
   if (key.startsWith('sk-')) {
     return {
