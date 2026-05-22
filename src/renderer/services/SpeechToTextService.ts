@@ -5,8 +5,10 @@
  */
 
 import { ipcBridge } from '@/common';
+import { ConfigStorage } from '@/common/config/storage';
 import type { SpeechToTextResult } from '@/common/types/speech';
 import { isElectronDesktop } from '@/renderer/utils/platform';
+import { transcribeLocally } from '@/renderer/services/voice/localWhisper';
 
 const MAX_AUDIO_FILE_SIZE_MB = 30;
 const MAX_AUDIO_FILE_SIZE_BYTES = MAX_AUDIO_FILE_SIZE_MB * 1024 * 1024;
@@ -58,6 +60,18 @@ export async function transcribeAudioBlob(blob: Blob, languageHint?: string): Pr
 
   const mimeType = blob.type || 'audio/webm';
   const fileName = createAudioFileName(mimeType);
+
+  // Local tier — transcription runs entirely in the renderer via the bundled
+  // Whisper-tiny ONNX model (transformers.js / WASM). No IPC, no cloud, no
+  // native binary. This is the default when no cloud provider key is set.
+  // `whisper-local` is the legacy provider id; treat it + an unset provider
+  // as "use the bundled local engine".
+  const sttConfig = await ConfigStorage.get('tools.speechToText').catch((): undefined => undefined);
+  const provider = sttConfig?.provider;
+  if (!provider || provider === 'whisper-local') {
+    const text = await transcribeLocally(blob);
+    return { text, provider: 'whisper-local', model: 'whisper-tiny', language: languageHint };
+  }
 
   if (isElectronDesktop()) {
     const audioBuffer = new Uint8Array(await blob.arrayBuffer());

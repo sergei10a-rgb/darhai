@@ -8,6 +8,8 @@ import { existsSync } from 'node:fs';
 import { ipcBridge } from '@/common';
 import { VoiceAssetManager } from '@process/services/voice/VoiceAssetManager';
 import { resolveVoiceAsset } from '@process/services/voice/voiceAssetRegistry';
+import { getVoiceModelsDir } from '@process/extensions/constants';
+import { toAssetUrl } from '@process/extensions/protocol/assetProtocol';
 
 export function initVoiceAssetBridge(): void {
   ipcBridge.voiceAsset.download.provider(async (asset) => {
@@ -28,5 +30,11 @@ export function initVoiceAssetBridge(): void {
     const resolved = resolveVoiceAsset({ id, url: '', destPath: '', sha256: '' });
     if (!resolved.destPath) return { installed: false, destPath: null };
     return { installed: existsSync(resolved.destPath), destPath: resolved.destPath };
+  });
+  ipcBridge.voiceAsset.localModelBase.provider(async () => {
+    // transformers.js fetches `${localModelPath}/<modelId>/<file>` — return
+    // the wayland-asset:// URL for the bundled voice-models dir so the
+    // renderer worker resolves e.g. wayland-asset://asset/<dir>/whisper-tiny/.
+    return { url: toAssetUrl(getVoiceModelsDir()) };
   });
 }

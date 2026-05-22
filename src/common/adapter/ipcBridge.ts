@@ -426,6 +426,10 @@ export const voiceAsset = {
   exists: buildProvider<{ installed: boolean; destPath: string | null }, { id: string }>(
     'voice-asset.exists'
   ),
+  // wayland-asset:// URL base for the bundled voice-models directory. The
+  // renderer's transformers.js STT worker uses this as env.localModelPath
+  // so it can fetch the bundled Whisper-tiny ONNX files offline.
+  localModelBase: buildProvider<{ url: string }, void>('voice-asset.local-model-base'),
 };
 
 export const fileWatch = {
