@@ -120,11 +120,19 @@ export const normalizeExtensionAssistants = (extensionAssistants: Record<string,
 };
 
 /**
- * Check if an assistant originates from an extension.
+ * Check if an assistant originates from an extension or another bundle-vendored
+ * source (waylandteams via the resolver, FoundrySkills via the agent-profile
+ * merge). All of these are read-only, ship their context inline on the record,
+ * and should bypass the local-file context loader used for user-created
+ * assistants.
  */
 export const isExtensionAssistant = (assistant: AssistantListItem | null | undefined): boolean => {
   if (!assistant) return false;
-  return assistant._source === 'extension' || assistant.id.startsWith('ext-');
+  return (
+    assistant._source === 'extension' ||
+    assistant._source === 'vendored-agent-profile' ||
+    assistant.id.startsWith('ext-')
+  );
 };
 
 /**

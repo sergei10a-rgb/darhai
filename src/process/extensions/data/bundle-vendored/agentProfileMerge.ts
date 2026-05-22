@@ -160,12 +160,16 @@ function buildOverlay(): VendoredAgentProfile[] {
 
     let body = '';
     if (relPath) {
+      const tried = path.join(dir, 'bodies', relPath);
       try {
         // index.json records paths relative to the library root WITHOUT the
         // `bodies/` segment; the actual SKILL.md files live under bodies/.
-        body = readFileSync(path.join(dir, 'bodies', relPath), 'utf-8');
-      } catch {
-        // Skip silently — the metadata-only assistant still surfaces.
+        body = readFileSync(tried, 'utf-8');
+      } catch (err) {
+        // Loud one-line warning so the next time someone wonders why a
+        // vendored agent-profile shows empty rules, the log says exactly
+        // which file failed to resolve and why.
+        console.warn(`${TAG} body read failed for ${name} at ${tried}: ${String(err).slice(0, 200)}`);
       }
     }
 
