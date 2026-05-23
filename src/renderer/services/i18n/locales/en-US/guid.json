@@ -17,5 +17,38 @@
     "statusTesting": "Testing latency...",
     "statusUnreachable": "Unreachable",
     "statusAvailable": "Available"
+  },
+  "newChat": {
+    "greeting": {
+      "withName": "{{timeLabel}}, {{name}}",
+      "labels": {
+        "lateNight": ["Working late", "Burning the midnight oil", "Up late"],
+        "morning": ["Morning", "Good morning", "Rise and shine"],
+        "afternoon": ["Afternoon", "Good afternoon", "Welcome back"],
+        "evening": ["Evening", "Good evening", "Welcome back"],
+        "night": ["Evening", "Good evening", "Winding down"]
+      }
+    },
+    "intent": {
+      "sell": "Sell",
+      "write": "Write",
+      "research": "Research",
+      "build": "Build",
+      "run": "Run"
+    },
+    "pillBar": {
+      "label": "Choose an intent",
+      "pillLabel": "{{label}} intent"
+    },
+    "suggestionPanel": {
+      "label": "{{label}} starter prompts",
+      "heading": "Start with {{label}}",
+      "close": "Close suggestions"
+    },
+    "recents": {
+      "label": "Recent conversations",
+      "heading": "Jump back in"
+    },
+    "voiceHint": "Click the mic to talk"
   }
 }

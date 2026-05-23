@@ -16,10 +16,7 @@
     "none": "Hiçbiri",
     "quickActionsTitle": "Wayland neler yapabilir?",
     "quickActionFeedback": "Geri bildirim veya öneriniz mi var?",
-    "quickActionStar": "Bizi beğendiniz mi? Yıldız verin!",
-    "skillsMarket": "Wayland Skills Market",
-    "skillsMarketDesc": "Topluluk Skills'lerini ihtiyaç duyduğunuzda arayın ve etkinleştirin. Bir kez yapılandırın, tüm Agent'larda kullanılabilir.",
-    "skillsMarketDetails": "Ayrıntılar >>"
+    "quickActionStar": "Bizi beğendiniz mi? Yıldız verin!"
   },
   "history": {
     "recents": "Son",

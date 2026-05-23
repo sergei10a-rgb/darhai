@@ -18,11 +18,18 @@
     "webui:prod": "cross-env NODE_ENV=production electron-vite dev -- --webui",
     "webui:prod:remote": "cross-env NODE_ENV=production electron-vite dev -- --webui --remote",
     "resetpass": "electron-vite dev -- --resetpass",
+    "bundle:modelsdev": "bunx tsx scripts/bundle-modelsdev.ts",
+    "prebuild": "bun run bundle:modelsdev",
+    "prepackage": "bun run bundle:modelsdev",
     "package": "electron-vite build",
     "make": "electron-vite build",
+    "predist": "bun run bundle:modelsdev",
     "dist": "node scripts/build-with-builder.js",
+    "predist:mac": "bun run bundle:modelsdev",
     "dist:mac": "node scripts/build-with-builder.js auto --mac",
+    "predist:win": "bun run bundle:modelsdev",
     "dist:win": "node scripts/build-with-builder.js auto --win",
+    "predist:linux": "bun run bundle:modelsdev",
     "dist:linux": "node scripts/build-with-builder.js auto --linux",
     "build-mac": "node scripts/build-with-builder.js auto --mac --arm64 --x64",
     "build-win": "node scripts/build-with-builder.js auto --win",
@@ -92,6 +99,7 @@
     "@fontsource-variable/inter": "^5.2.8",
     "@google/genai": "^1.16.0",
     "@grammyjs/transformer-throttler": "^1.2.1",
+    "@huggingface/transformers": "^4.2.0",
     "@icon-park/react": "^1.4.2",
     "@larksuiteoapi/node-sdk": "^1.58.0",
     "@line/bot-sdk": "^11.0.0",
@@ -128,6 +136,7 @@
     "better-sqlite3": "^12.4.1",
     "buffer": "^6.0.3",
     "classnames": "^2.5.1",
+    "cmdk": "^1.1.1",
     "cookie": "^1.0.2",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -293,11 +302,11 @@
       "oxfmt"
     ]
   },
-  "packageManager": "bun@1.3.11",
   "engines": {
     "bun": ">=1.3.0 <2.0.0",
     "node": ">=22 <25"
   },
+  "packageManager": "bun@1.3.11",
   "electronRebuild": {
     "electronVersion": "^41.6.0"
   },

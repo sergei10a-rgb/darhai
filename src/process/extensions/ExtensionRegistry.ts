@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -24,6 +24,8 @@ import { activateExtension, deactivateExtension } from './lifecycle/lifecycle';
 import { extensionEventBus, ExtensionSystemEvents } from './lifecycle/ExtensionEventBus';
 import { analyzePermissions, getOverallRiskLevel } from './sandbox/permissions';
 import type { PermissionSummary, PermissionLevel } from './sandbox/permissions';
+import { applyVendoredOverlay } from './data/bundle-vendored/vendoredAssistantOverlay';
+import { mergeVendoredAgentProfiles } from './data/bundle-vendored/agentProfileMerge';
 
 export class ExtensionRegistry {
   private static instance: ExtensionRegistry | undefined;
@@ -333,7 +335,18 @@ export class ExtensionRegistry {
       resolveExtensionI18n(enabledExtensions),
     ]);
 
-    this._assistants = assistants;
+    // Live-smoke fix #1 (2026-05-19): overlay the in-repo vendored
+    // bundle's blitz schema fields (`standing`, `teammates`, `rituals`)
+    // onto the live-loaded assistants so the on-disk waylandteams symlink
+    // — which predates the team-blitz schema additions — still surfaces
+    // Standing Companies + roster + rituals on the /teams page. The
+    // overlay is non-destructive: existing fields on the live record win.
+    // Vendored bundle overlay: patch blitz schema fields onto live assistants.
+    const overlaid = await applyVendoredOverlay(assistants);
+    // Agent-profile merge: pull the 25 vendored persona entries from the
+    // skills-library and add them as additional assistants (id-deduped
+    // against the overlaid set — live waylandteams records win).
+    this._assistants = mergeVendoredAgentProfiles(overlaid);
     this._agents = agents;
     this._extI18n = extI18n;
   }

@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -24,6 +24,8 @@ import type { AcpBackendConfig, AvailableAgent, EffectiveAgentInfo } from '../ty
 import { Message } from '@arco-design/web-react';
 import React, { useCallback, useLayoutEffect, useMemo } from 'react';
 import { resolveExtensionAssetUrl } from '@/renderer/utils/platform';
+import { isImageAvatar } from '@/renderer/utils/avatar';
+import { getLucideIcon } from '@/renderer/utils/lucideAvatar';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
@@ -38,6 +40,14 @@ type AssistantSelectionAreaProps = {
   onSetInput: (text: string) => void;
   onFocusInput: () => void;
   onRegisterOpenDetails?: (openDetails: (() => void) | null) => void;
+  /**
+   * Phase 2 chat-redesign: when true, the inline pill grid is suppressed so
+   * the new layered starter (Greeting + IntentPillBar + SuggestionPanel +
+   * Recents) owns the new-chat surface. The modal/drawer tree (edit drawer,
+   * skills modals, etc.) still mounts so existing callers can open them via
+   * `onRegisterOpenDetails`. Phase 6 deletes this component outright.
+   */
+  hideInlineGrid?: boolean;
 };
 
 const resolveAssistantCandidateIds = (assistantId: string): string[] => {
@@ -56,6 +66,7 @@ const AssistantSelectionArea: React.FC<AssistantSelectionAreaProps> = ({
   onSetInput,
   onFocusInput,
   onRegisterOpenDetails,
+  hideInlineGrid = false,
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -101,39 +112,10 @@ const AssistantSelectionArea: React.FC<AssistantSelectionAreaProps> = ({
     <>
       {agentMessageContext}
       <AssistantEditDrawer
-        editVisible={editor.editVisible}
-        setEditVisible={editor.setEditVisible}
-        isCreating={editor.isCreating}
-        editName={editor.editName}
-        setEditName={editor.setEditName}
-        editDescription={editor.editDescription}
-        setEditDescription={editor.setEditDescription}
-        editAvatar={editor.editAvatar}
-        setEditAvatar={editor.setEditAvatar}
-        editAvatarImage={editAvatarImage}
-        editAgent={editor.editAgent}
-        setEditAgent={editor.setEditAgent}
-        editContext={editor.editContext}
-        setEditContext={editor.setEditContext}
-        promptViewMode={editor.promptViewMode}
-        setPromptViewMode={editor.setPromptViewMode}
-        availableSkills={editor.availableSkills}
-        selectedSkills={editor.selectedSkills}
-        setSelectedSkills={editor.setSelectedSkills}
-        pendingSkills={editor.pendingSkills}
-        customSkills={editor.customSkills}
-        setDeletePendingSkillName={editor.setDeletePendingSkillName}
-        setDeleteCustomSkillName={editor.setDeleteCustomSkillName}
-        setSkillsModalVisible={editor.setSkillsModalVisible}
-        builtinAutoSkills={editor.builtinAutoSkills}
-        disabledBuiltinSkills={editor.disabledBuiltinSkills}
-        setDisabledBuiltinSkills={editor.setDisabledBuiltinSkills}
-        activeAssistant={activeAssistant}
-        activeAssistantId={activeAssistantId}
-        isExtensionAssistant={isExtensionAssistant}
+        editor={editor}
+        list={{ activeAssistant, activeAssistantId, isExtensionAssistant }}
         availableBackends={availableBackends}
-        handleSave={editor.handleSave}
-        handleDeleteClick={editor.handleDeleteClick}
+        editAvatarImage={editAvatarImage}
       />
       <DeleteAssistantModal
         visible={editor.deleteConfirmVisible}
@@ -291,7 +273,13 @@ const AssistantSelectionArea: React.FC<AssistantSelectionAreaProps> = ({
     );
   }
 
-  // Assistant List View
+  // Assistant List View — Phase 2 hides the inline pill grid; only the modal
+  // tree (edit drawer, skills modals) needs to stay mounted so existing
+  // callers like the hero title's edit button keep working.
+  if (hideInlineGrid) {
+    return <>{modalTree}</>;
+  }
+
   return (
     <div className='mt-12px w-full'>
       <div className='flex flex-wrap gap-8px justify-center'>
@@ -304,14 +292,13 @@ const AssistantSelectionArea: React.FC<AssistantSelectionAreaProps> = ({
           })
           .map((assistant) => {
             const avatarValue = assistant.avatar?.trim();
-            const mappedAvatar = avatarValue ? CUSTOM_AVATAR_IMAGE_MAP[avatarValue] : undefined;
-            const resolvedAvatar = avatarValue ? resolveExtensionAssetUrl(avatarValue) : undefined;
+            const LucideIconComponent = getLucideIcon(avatarValue);
+            const mappedAvatar =
+              !LucideIconComponent && avatarValue ? CUSTOM_AVATAR_IMAGE_MAP[avatarValue] : undefined;
+            const resolvedAvatar =
+              !LucideIconComponent && avatarValue ? resolveExtensionAssetUrl(avatarValue) : undefined;
             const avatarImage = mappedAvatar || resolvedAvatar;
-            const isImageAvatar = Boolean(
-              avatarImage &&
-              (/\.(svg|png|jpe?g|webp|gif)$/i.test(avatarImage) ||
-                /^(https?:|wayland-asset:\/\/|file:\/\/|data:)/i.test(avatarImage))
-            );
+            const showImage = Boolean(avatarImage && isImageAvatar(avatarImage));
             return (
               <div
                 key={assistant.id}
@@ -323,7 +310,9 @@ const AssistantSelectionArea: React.FC<AssistantSelectionAreaProps> = ({
                 }}
                 onClick={() => onSelectAssistant(`custom:${assistant.id}`)}
               >
-                {isImageAvatar ? (
+                {LucideIconComponent ? (
+                  <LucideIconComponent size={16} className='text-[var(--color-text-2)]' />
+                ) : showImage ? (
                   <img src={avatarImage} alt='' width={16} height={16} style={{ objectFit: 'contain' }} />
                 ) : avatarValue ? (
                   <span style={{ fontSize: 16, lineHeight: '18px' }}>{avatarValue}</span>

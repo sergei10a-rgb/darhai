@@ -79,6 +79,19 @@ repos:
         files: ^src/renderer/services/i18n/locales/
         pass_filenames: false
 
+  # UI System token drift validator — fails on undefined CSS-var names
+  # (var(--text-tertiary), var(--fill-N), var(--border-N), var(--bg)) that
+  # silently fall back to browser defaults. Locks the dark-mode legibility
+  # fix shipped in the UI System v1 rollout.
+  - repo: local
+    hooks:
+      - id: ui-tokens-check
+        name: UI Tokens Check
+        entry: node scripts/check-ui-tokens.js
+        language: system
+        files: ^src/renderer/.*\.(tsx?|css)$
+        pass_filenames: false
+
   # Commit message format (Conventional Commits)
   - repo: https://github.com/compilerla/conventional-pre-commit
     rev: v4.2.0

@@ -389,3 +389,56 @@
     height: 60px;
   }
 }
+
+/* Suppress Arco Input's internal chrome on the login page.
+ *
+ * Arco's `<Input>` renders three stacked layers that each carry their own
+ * border + background:
+ *   - .arco-input-wrapper           (outer wrapper — gets the user className)
+ *   - .arco-input-inner-wrapper     (intermediate, in some variants)
+ *   - .arco-input                   (the actual <input> element — has
+ *                                    `background: var(--color-fill-2)` +
+ *                                    `border: 1px solid transparent`, which
+ *                                    is what reads as the second border)
+ *
+ * Reset all three layers so only the outermost .login-page__input border
+ * + background shows. */
+.login-page__input-wrapper :global(.arco-input-inner-wrapper),
+.login-page__input-wrapper :global(.arco-input-inner-wrapper:hover),
+.login-page__input-wrapper :global(.arco-input-inner-wrapper:focus-within) {
+  border: none;
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.login-page__input-wrapper :global(.arco-input),
+.login-page__input-wrapper :global(.arco-input:hover),
+.login-page__input-wrapper :global(.arco-input:focus),
+.login-page__input-wrapper :global(.arco-input.arco-input-focus) {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0;
+  border-radius: 0;
+  color: #f5f5f5;
+}
+.login-page__input-wrapper :global(.arco-input::placeholder) {
+  color: #555;
+}
+.login-page__input-wrapper :global(.arco-input-prefix) {
+  background: transparent;
+  border: none;
+  padding: 0 8px 0 0;
+  color: #777;
+  display: flex;
+  align-items: center;
+}
+.login-page__input-wrapper :global(.arco-input-suffix) {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: #777;
+  display: flex;
+  align-items: center;
+}

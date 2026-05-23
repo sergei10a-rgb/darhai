@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -10,18 +10,28 @@ import { resolveLocaleKey } from '@/common/utils';
 
 import { useInputFocusRing } from '@/renderer/hooks/chat/useInputFocusRing';
 import { openExternalUrl, resolveExtensionAssetUrl } from '@/renderer/utils/platform';
+import { isImageAvatar } from '@/renderer/utils/avatar';
+import { getLucideIcon } from '@/renderer/utils/lucideAvatar';
 import { useConversationTabs } from '@/renderer/pages/conversation/hooks/ConversationTabsContext';
 import { CUSTOM_AVATAR_IMAGE_MAP } from './constants';
-import AgentPillBar from './components/AgentPillBar';
 import AssistantSelectionArea from './components/AssistantSelectionArea';
+import Greeting from './components/newChatStarter/Greeting';
+import IntentPillBar from './components/newChatStarter/IntentPillBar';
+import IntentSuggestionPanel from './components/newChatStarter/IntentSuggestionPanel';
+import RecentsStrip from './components/newChatStarter/RecentsStrip';
+import type { IntentKey, IntentPrompt } from './intents';
+import { useUserDisplayName } from '@/renderer/hooks/system/useUserDisplayName';
+import { ASSISTANT_PRESETS } from '@/common/config/presets/assistantPresets';
+import AgentPillBar from './components/AgentPillBar';
 import { AgentPillBarSkeleton } from './components/GuidSkeleton';
 import GuidActionRow from './components/GuidActionRow';
 import GuidInputCard from './components/GuidInputCard';
 import GuidModelSelector from './components/GuidModelSelector';
 import MentionDropdown, { MentionSelectorBadge } from './components/MentionDropdown';
 import QuickActionButtons from './components/QuickActionButtons';
-import SkillsMarketBanner from './components/SkillsMarketBanner';
 import FeedbackReportModal from '@/renderer/components/settings/SettingsModal/contents/FeedbackReportModal';
+import SpeechInputButton from '@/renderer/components/chat/SpeechInputButton';
+import { appendSpeechTranscript } from '@/renderer/hooks/system/useSpeechInput';
 import { useGuidAgentSelection } from './hooks/useGuidAgentSelection';
 import { useGuidInput } from './hooks/useGuidInput';
 import { useGuidMention } from './hooks/useGuidMention';
@@ -101,7 +111,7 @@ const GuidPage: React.FC = () => {
   }, [agentSelection.selectedAgent]);
 
   const guidInput = useGuidInput({
-    locationState: location.state as { workspace?: string } | null,
+    locationState: location.state as { workspace?: string; paletteInitialPrompt?: string } | null,
   });
 
   const mention = useGuidMention({
@@ -250,7 +260,7 @@ const GuidPage: React.FC = () => {
     [mention, guidInput.input, send.sendMessageHandler]
   );
 
-  const handleSelectAgentFromPillBar = useCallback(
+  const handleSelectAgent = useCallback(
     (key: string) => {
       agentSelection.setSelectedAgentKey(key);
       mention.setMentionOpen(false);
@@ -282,6 +292,56 @@ const GuidPage: React.FC = () => {
       mention.setMentionSelectorOpen,
       mention.setMentionActiveIndex,
     ]
+  );
+
+  // --- Phase 2 chat-redesign: new-chat starter (greeting + intent pills + recents) ---
+  const { resolvedName: greetingDisplayName } = useUserDisplayName();
+  const [activeIntent, setActiveIntent] = useState<IntentKey | null>(null);
+
+  const handleSelectIntent = useCallback((intent: IntentKey | null) => {
+    setActiveIntent(intent);
+  }, []);
+
+  const handleCloseIntentPanel = useCallback(() => {
+    setActiveIntent(null);
+  }, []);
+
+  const handleSelectIntentPrompt = useCallback(
+    (prompt: IntentPrompt) => {
+      const preset = ASSISTANT_PRESETS.find((p) => p.id === prompt.targetAssistantId);
+      if (preset) {
+        agentSelection.selectPresetAssistant({ id: preset.id, presetAgentType: preset.presetAgentType });
+      } else {
+        // Extension-bundle assistants follow the same Rory rule, but their
+        // presetAgentType comes from the runtime extension cache. We don't
+        // resolve it synchronously here — selectPresetAssistant defaults to
+        // gemini when presetAgentType is absent, which matches Phase 1's
+        // documented fallback.
+        agentSelection.selectPresetAssistant({ id: prompt.targetAssistantId });
+      }
+      guidInput.setInput(prompt.promptText);
+      guidInput.handleTextareaFocus();
+      mention.setMentionOpen(false);
+      mention.setMentionQuery(null);
+      mention.setMentionSelectorOpen(false);
+      mention.setMentionActiveIndex(0);
+    },
+    [
+      agentSelection.selectPresetAssistant,
+      guidInput.setInput,
+      guidInput.handleTextareaFocus,
+      mention.setMentionOpen,
+      mention.setMentionQuery,
+      mention.setMentionSelectorOpen,
+      mention.setMentionActiveIndex,
+    ]
+  );
+
+  const handleSelectRecent = useCallback(
+    (conv: { id: string }) => {
+      void navigate(`/conversation/${conv.id}`);
+    },
+    [navigate]
   );
 
   // Typewriter placeholder
@@ -320,15 +380,15 @@ const GuidPage: React.FC = () => {
     const selectedAssistant = agentSelection.customAgents.find((item) => candidates.has(item.id));
     const avatarValue = selectedAssistant?.avatar?.trim() || agentSelection.selectedAgentInfo?.avatar?.trim();
     if (!avatarValue) return { kind: 'icon' as const };
+    const LucideIconComponent = getLucideIcon(avatarValue);
+    if (LucideIconComponent) {
+      return { kind: 'lucide' as const, Icon: LucideIconComponent };
+    }
     const mappedAvatar = CUSTOM_AVATAR_IMAGE_MAP[avatarValue];
     const resolvedAvatar = resolveExtensionAssetUrl(avatarValue);
     const avatarImage = mappedAvatar || resolvedAvatar;
-    const isImageAvatar = Boolean(
-      avatarImage &&
-      (/\.(svg|png|jpe?g|webp|gif)$/i.test(avatarImage) ||
-        /^(https?:|wayland-asset:\/\/|file:\/\/|data:)/i.test(avatarImage))
-    );
-    if (isImageAvatar && avatarImage) {
+    const showImage = Boolean(avatarImage && isImageAvatar(avatarImage));
+    if (showImage && avatarImage) {
       return { kind: 'image' as const, value: avatarImage };
     }
     return { kind: 'emoji' as const, value: avatarValue };
@@ -343,11 +403,18 @@ const GuidPage: React.FC = () => {
 
   // Reset guid-local UI state before paint so same-route navigations do not
   // briefly show the previous draft or preset assistant layout.
+  //
+  // `pendingPrompt` carries an inbound directive (e.g. the body of a
+  // workflow the user clicked "Launch" on) so the textarea opens
+  // pre-filled. The Workflows page sets this via React Router's location
+  // state when handling the Launch button. Other entry points (typed
+  // input, intent prompts) clear the field as before.
   useLayoutEffect(() => {
-    guidInput.setInput('');
+    const state = location.state as { workspace?: string; pendingPrompt?: string } | null;
+    guidInput.setInput(state?.pendingPrompt ?? '');
     guidInput.setFiles([]);
     guidInput.setLoading(false);
-    if (!(location.state as { workspace?: string } | null)?.workspace) {
+    if (!state?.workspace) {
       guidInput.setDir('');
     }
     setIsDescriptionExpanded(false);
@@ -495,11 +562,18 @@ const GuidPage: React.FC = () => {
       modelList={modelSelection.modelList}
       currentModel={modelSelection.currentModel}
       setCurrentModel={modelSelection.setCurrentModel}
-      geminiModeLookup={modelSelection.geminiModeLookup}
+      agentKey={effectiveAgentType}
       currentAcpCachedModelInfo={agentSelection.currentAcpCachedModelInfo}
       selectedAcpModel={agentSelection.selectedAcpModel}
       setSelectedAcpModel={agentSelection.setSelectedAcpModel}
     />
+  );
+
+  const handleSpeechTranscript = useCallback(
+    (transcript: string) => {
+      guidInput.setInput((prev) => appendSpeechTranscript(prev, transcript));
+    },
+    [guidInput.setInput]
   );
 
   // Build the action row
@@ -532,6 +606,9 @@ const GuidPage: React.FC = () => {
       hidePresetTag
       loading={guidInput.loading}
       isButtonDisabled={send.isButtonDisabled}
+      speechInputNode={
+        <SpeechInputButton variant='prominent' locale={i18n.language} onTranscript={handleSpeechTranscript} />
+      }
       onSend={() => {
         send.handleSend().catch((error) => {
           console.error('Failed to send message:', error);
@@ -543,10 +620,9 @@ const GuidPage: React.FC = () => {
   return (
     <ConfigProvider getPopupContainer={() => guidContainerRef.current || document.body}>
       <div ref={guidContainerRef} className={styles.guidContainer}>
-        <SkillsMarketBanner />
         <div className={styles.guidLayout}>
-          <div className={styles.heroHeader}>
-            {agentSelection.isPresetAgent ? (
+          {agentSelection.isPresetAgent ? (
+            <div className={styles.heroHeader}>
               <div className={styles.heroHeaderControls}>
                 <div className={styles.heroHeaderLeft}>
                   <Button
@@ -564,7 +640,12 @@ const GuidPage: React.FC = () => {
                   />
                   <p className={`${styles.heroTitle} text-2xl font-semibold mb-0 text-0`}>
                     <span className={styles.heroTitleInlineIcon} aria-hidden='true'>
-                      {selectedAssistantAvatar?.kind === 'image' ? (
+                      {selectedAssistantAvatar?.kind === 'lucide' ? (
+                        (() => {
+                          const Icon = selectedAssistantAvatar.Icon;
+                          return <Icon size={26} className='text-[var(--color-text-1)]' />;
+                        })()
+                      ) : selectedAssistantAvatar?.kind === 'image' ? (
                         <img
                           src={selectedAssistantAvatar.value}
                           alt=''
@@ -652,10 +733,8 @@ const GuidPage: React.FC = () => {
                   </Dropdown>
                 </div>
               </div>
-            ) : (
-              <p className='text-2xl font-semibold mb-0 text-0 text-center'>{heroTitle}</p>
-            )}
-          </div>
+            </div>
+          ) : null}
 
           {agentSelection.isPresetAgent && selectedAssistantDescription ? (
             <div
@@ -697,10 +776,12 @@ const GuidPage: React.FC = () => {
               availableAgents={agentSelection.availableAgents}
               selectedAgentKey={agentSelection.selectedAgentKey}
               getAgentKey={agentSelection.getAgentKey}
-              onSelectAgent={handleSelectAgentFromPillBar}
+              onSelectAgent={handleSelectAgent}
               suppressSelectionAnimation={resetAssistantRequested}
             />
           ) : null}
+
+          {!agentSelection.isPresetAgent ? <Greeting displayName={greetingDisplayName} /> : null}
 
           <GuidInputCard
             input={guidInput.input}
@@ -735,6 +816,23 @@ const GuidPage: React.FC = () => {
             actionRow={actionRowNode}
           />
 
+          {!agentSelection.isPresetAgent ? (
+            <div className={styles.newChatStarter} data-testid='new-chat-starter'>
+              <IntentPillBar activeIntent={activeIntent} onSelect={handleSelectIntent} />
+              {activeIntent ? (
+                <IntentSuggestionPanel
+                  intent={activeIntent}
+                  onSelect={handleSelectIntentPrompt}
+                  onClose={handleCloseIntentPanel}
+                />
+              ) : null}
+              <RecentsStrip onSelect={handleSelectRecent} />
+            </div>
+          ) : null}
+
+          {/* Phase 2 keeps AssistantSelectionArea mounted only for its modal/drawer
+              tree (edit drawer, skills modals). The inline pill grid is owned by
+              the layered starter above. Phase 6 deletes this component outright. */}
           <AssistantSelectionArea
             isPresetAgent={agentSelection.isPresetAgent}
             selectedAgentInfo={agentSelection.selectedAgentInfo}
@@ -747,6 +845,7 @@ const GuidPage: React.FC = () => {
             onRegisterOpenDetails={(openDetails) => {
               openAssistantDetailsRef.current = openDetails;
             }}
+            hideInlineGrid
           />
         </div>
 

@@ -1,12 +1,13 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import { Bot, Plus } from 'lucide-react';
 import { resolveAgentLogo } from '@/renderer/utils/model/agentLogo';
 import { resolveExtensionAssetUrl } from '@/renderer/utils/platform';
+import { getLucideIcon } from '@/renderer/utils/lucideAvatar';
 import { useLayoutContext } from '@/renderer/hooks/context/LayoutContext';
 import type { AcpBackend, AvailableAgent } from '../types';
 import { Tooltip } from '@arco-design/web-react';
@@ -59,18 +60,24 @@ const AgentPillBar: React.FC<AgentPillBarProps> = ({
           .filter((agent) => !agent.isPreset)
           .map((agent, index) => {
             const isSelected = selectedAgentKey === getAgentKey(agent);
-            const extensionAvatar = resolveExtensionAssetUrl(agent.isExtension ? agent.avatar : undefined);
+            const LucideIconComponent = getLucideIcon(agent.avatar);
+            const extensionAvatar = LucideIconComponent
+              ? undefined
+              : resolveExtensionAssetUrl(agent.isExtension ? agent.avatar : undefined);
             // Remote agents use emoji avatars — not image URLs
-            const emojiAvatar = agent.backend === 'remote' && agent.avatar ? agent.avatar : undefined;
+            const emojiAvatar =
+              !LucideIconComponent && agent.backend === 'remote' && agent.avatar ? agent.avatar : undefined;
             const logoSrc =
-              extensionAvatar ||
-              (!emojiAvatar
-                ? resolveAgentLogo({
-                    backend: agent.backend,
-                    customAgentId: agent.customAgentId,
-                    isExtension: agent.isExtension,
-                  })
-                : undefined);
+              LucideIconComponent
+                ? undefined
+                : extensionAvatar ||
+                  (!emojiAvatar
+                    ? resolveAgentLogo({
+                        backend: agent.backend,
+                        customAgentId: agent.customAgentId,
+                        isExtension: agent.isExtension,
+                      })
+                    : undefined);
 
             return (
               <React.Fragment key={getAgentKey(agent)}>
@@ -91,7 +98,9 @@ const AgentPillBar: React.FC<AgentPillBarProps> = ({
                   }
                   onClick={() => onSelectAgent(getAgentKey(agent))}
                 >
-                  {emojiAvatar ? (
+                  {LucideIconComponent ? (
+                    <LucideIconComponent size={20} className='flex-shrink-0 text-[var(--color-text-1)]' />
+                  ) : emojiAvatar ? (
                     <span style={{ fontSize: 20, lineHeight: 1, flexShrink: 0 }}>{emojiAvatar}</span>
                   ) : logoSrc ? (
                     <img

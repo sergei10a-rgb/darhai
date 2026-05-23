@@ -10,6 +10,11 @@
     "renamePlaceholder": "Название команды",
     "deleteConfirm": "Удалить эту команду?",
     "deleteConfirmContent": "Это действие нельзя отменить.",
+    "deleteConfirmTitle": "[TODO:translate] Delete team?",
+    "deleteConfirmBody": "[TODO:translate] This will permanently delete {{teamName}} and its conversation history. Type \"delete\" below to confirm.",
+    "deleteConfirmCta": "[TODO:translate] Delete team",
+    "deleteConfirmCancelCta": "[TODO:translate] Cancel",
+    "deleteConfirmInputPlaceholder": "[TODO:translate] delete",
     "deleteOk": "Удалить",
     "deleteCancel": "Отмена",
     "renameOk": "Сохранить",
@@ -56,5 +61,16 @@
       "interview": "Спланировать глубинное интервью между агентами",
       "expert_review": "Несколько экспертов анализируют одну проблему"
     }
+  },
+  "errors": {
+    "loadFailed": {
+      "title": "[TODO:translate] This team could not be loaded",
+      "body": "[TODO:translate] It may have been deleted, or its data is no longer available. Head back to the Teams library to pick another team or start a new one.",
+      "backCta": "[TODO:translate] Back to Teams"
+    }
+  },
+  "agentBackendSwap": {
+    "success": "[TODO:translate] Agent backend changed",
+    "error": "[TODO:translate] Failed to change agent backend"
   }
 }

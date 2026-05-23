@@ -1,5 +1,6 @@
-import { Pencil, X } from 'lucide-react';
+import { Activity, Pencil, X } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { TeammateStatus } from '@/common/types/teamTypes';
 import AgentStatusBadge from './AgentStatusBadge';
 import TeamAgentIdentity from './TeamAgentIdentity';
@@ -95,7 +96,7 @@ const TeamTabView: React.FC<TeamTabViewProps> = ({
       className={`relative group flex items-center gap-8px px-12px h-full max-w-240px cursor-pointer transition-all duration-200 shrink-0 border-r border-[color:var(--border-base)] ${
         isActive
           ? 'bg-[color:var(--color-primary-1)] text-[color:var(--color-text-1)] border-t-2 border-t-solid border-t-[color:var(--color-primary-6)]'
-          : 'bg-2 text-[color:var(--color-text-3)] hover:text-[color:var(--color-text-2)] hover:bg-[color:var(--fill-2)] border-b border-[color:var(--border-base)]'
+          : 'bg-2 text-[color:var(--color-text-3)] hover:text-[color:var(--color-text-2)] hover:bg-[color:var(--color-fill-2)] border-b border-[color:var(--border-base)]'
       } ${isDragOver ? DRAG_OVER_CLASS : ''}`}
       style={isRunning ? { animation: 'team-tab-breathe 2s ease-in-out infinite' } : undefined}
       onClick={() => !editing && onSwitch(slotId)}
@@ -174,13 +175,26 @@ type TeamTabsProps = {
   onTabClick?: (slotId: string) => void;
   /** Pending permission confirmation counts per slot ID */
   pendingCounts?: Map<string, number>;
+  /** W2c — when true, the Activity tab is rendered as a sibling tab. */
+  showActivityTab?: boolean;
+  /** W2c — whether Activity is the currently active view (mutually exclusive with agent slots). */
+  activityActive?: boolean;
+  /** W2c — fired when the Activity tab is clicked. */
+  onActivityClick?: () => void;
 };
 
 /**
  * Tab bar for team mode showing agent tabs with status badges.
  * Supports scroll overflow with fade indicators and add-agent dropdown.
  */
-const TeamTabs: React.FC<TeamTabsProps> = ({ onTabClick, pendingCounts }) => {
+const TeamTabs: React.FC<TeamTabsProps> = ({
+  onTabClick,
+  pendingCounts,
+  showActivityTab = false,
+  activityActive = false,
+  onActivityClick,
+}) => {
+  const { t } = useTranslation();
   const { agents, activeSlotId, statusMap, switchTab, renameAgent, removeAgent, reorderAgents } = useTeamTabs();
   const tabsContainerRef = useRef<HTMLDivElement>(null);
   const [showLeftFade, setShowLeftFade] = useState(false);
@@ -246,6 +260,7 @@ const TeamTabs: React.FC<TeamTabsProps> = ({ onTabClick, pendingCounts }) => {
         >
           {agents.map((agent) => {
             const statusInfo = statusMap.get(agent.slotId);
+            const isActive = !activityActive && agent.slotId === activeSlotId;
             return (
               <TeamTabView
                 key={agent.slotId}
@@ -253,7 +268,7 @@ const TeamTabs: React.FC<TeamTabsProps> = ({ onTabClick, pendingCounts }) => {
                 agentName={agent.agentName}
                 agentType={agent.agentType}
                 conversationId={agent.conversationId}
-                isActive={agent.slotId === activeSlotId}
+                isActive={isActive}
                 status={statusInfo?.status ?? agent.status}
                 isLeader={agent.role === 'leader'}
                 pendingCount={pendingCounts?.get(agent.slotId) ?? 0}
@@ -270,6 +285,22 @@ const TeamTabs: React.FC<TeamTabsProps> = ({ onTabClick, pendingCounts }) => {
               />
             );
           })}
+          {showActivityTab && (
+            <button
+              type='button'
+              data-testid='team-activity-tab-button'
+              aria-pressed={activityActive}
+              onClick={() => onActivityClick?.()}
+              className={`relative flex items-center gap-6px px-12px h-full shrink-0 border-r border-[color:var(--border-base)] cursor-pointer transition-all duration-200 bg-transparent border-none text-13.5px ${
+                activityActive
+                  ? 'bg-[color:var(--color-primary-1)] text-[color:var(--color-text-1)] border-t-2 border-t-solid border-t-[color:var(--color-primary-6)]'
+                  : 'text-[color:var(--color-text-3)] hover:text-[color:var(--color-text-2)] hover:bg-[color:var(--color-fill-2)] border-b border-[color:var(--border-base)]'
+              }`}
+            >
+              <Activity size={14} />
+              <span>{t('teams.activity.tabLabel', { defaultValue: 'Activity' })}</span>
+            </button>
+          )}
         </div>
         {showLeftFade && (
           <div

@@ -18,10 +18,19 @@ import { useWCoreModelSelection } from '@/renderer/pages/conversation/platforms/
 import TeamTabs from './components/TeamTabs';
 import TeamChatView from './components/TeamChatView';
 import TeamAgentIdentity from './components/TeamAgentIdentity';
+import TeamRightRail from './components/TeamRightRail';
+import TeamActivityTab from './components/TeamActivityTab';
+import TeamHeaderBadges from './components/TeamHeaderBadges';
+import PromoteToStandingModal from './components/PromoteToStandingModal';
+import AgentBackendPill from './components/AgentBackendPill';
 import { TeamTabsProvider, useTeamTabs } from './hooks/TeamTabsContext';
 import { TeamPermissionProvider } from './hooks/TeamPermissionContext';
 import { useTeamSession } from './hooks/useTeamSession';
+import { useTeamSourceLauncher } from './hooks/useTeamSourceLauncher';
+import { useStandingEligibility } from './hooks/useStandingEligibility';
+import { resolveConversationType } from './components/agentSelectUtils';
 import { dispatchWorkspaceHasFilesEvent } from '@/renderer/utils/workspace/workspaceEvents';
+import type { AssistantListItem } from '@/renderer/pages/settings/AssistantSettings/types';
 
 type Props = {
   team: TTeam;
@@ -111,6 +120,10 @@ const AgentChatSlot: React.FC<{
           nameClassName='text-13px text-[color:var(--color-text-2)] font-medium'
         />
         <div className='flex items-center gap-8px shrink-0'>
+          {/* Live-smoke fix #4b (2026-05-19) — per-agent backend swap.
+              Hides itself when fewer than 2 backends are installed and
+              surfaces same-conversationType-only constraints via toast. */}
+          <AgentBackendPill teamId={teamId} slotId={agent.slotId} agentType={agent.agentType} />
           {agent.conversationId && !isWCore && isAcpLike && (
             <div className='min-w-0 max-w-140px [&_button]:max-w-full [&_button_span]:truncate'>
               <AcpModelSelector
@@ -137,14 +150,14 @@ const AgentChatSlot: React.FC<{
           )}
           {!isLeader && onRemove && (
             <div
-              className='shrink-0 cursor-pointer hover:bg-[var(--fill-3)] p-4px rd-4px text-[color:var(--color-text-3)] hover:text-[color:var(--color-danger-6)] transition-colors'
+              className='shrink-0 cursor-pointer hover:bg-[var(--color-fill-3)] p-4px rd-4px text-[color:var(--color-text-3)] hover:text-[color:var(--color-danger-6)] transition-colors'
               onClick={onRemove}
             >
               <X size={16} />
             </div>
           )}
           <div
-            className='shrink-0 cursor-pointer hover:bg-[var(--fill-3)] p-4px rd-4px text-[color:var(--color-text-3)] hover:text-[color:var(--color-text-1)] transition-colors'
+            className='shrink-0 cursor-pointer hover:bg-[var(--color-fill-3)] p-4px rd-4px text-[color:var(--color-text-3)] hover:text-[color:var(--color-text-1)] transition-colors'
             onClick={() => onToggleFullscreen?.()}
           >
             {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
@@ -180,6 +193,13 @@ const TeamPageContent: React.FC<TeamPageContentProps> = ({ team, onRenameTeam })
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(false);
   const [fullscreenSlotId, setFullscreenSlotId] = useState<string | null>(null);
+  // W2c — chat vs activity view. Activity tab is mutually exclusive with the
+  // agent tabs; clicking an agent tab snaps back to chat.
+  const [viewMode, setViewMode] = useState<'chat' | 'activity'>('chat');
+
+  // W2c — best-effort lookup of the bundle launcher this team was spawned
+  // from. Used for header Standing badge + right-rail rituals.
+  const { launcher } = useTeamSourceLauncher(team);
 
   const activeAgent = agents.find((a) => a.slotId === activeSlotId);
   const leadAgent = agents.find((a) => a.role === 'leader');
@@ -214,6 +234,47 @@ const TeamPageContent: React.FC<TeamPageContentProps> = ({ team, onRenameTeam })
       }
     },
     [statusMap, doRemoveAgent, t]
+  );
+
+  // W3a — right-rail + Add teammate. The picker hands the chosen specialist
+  // up to this handler; we build the agent payload using the specialist's
+  // preferred backend (preset agent type) and fall back to the leader's
+  // backend so unknown specialists still get a sensible default. The
+  // `agentSpawned` IPC subscription in useTeamSession refreshes the tabs.
+  const handleAddTeammate = useCallback(
+    async (specialist: AssistantListItem) => {
+      const leaderAgentType = leadAgent?.agentType ?? 'claude';
+      const agentType =
+        ('presetAgentType' in specialist && (specialist as { presetAgentType?: string }).presetAgentType) ||
+        leaderAgentType;
+      const agentName =
+        specialist.nameI18n?.['en-US'] || specialist.name || specialist.id;
+      try {
+        const result = (await ipcBridge.team.addAgent.invoke({
+          teamId: team.id,
+          agent: {
+            conversationId: '',
+            role: 'teammate',
+            agentType,
+            agentName,
+            conversationType: resolveConversationType(agentType),
+            status: 'pending',
+            customAgentId: specialist.id,
+          },
+        })) as TeamAgent | { __bridgeError: true; message?: string };
+        if (result && typeof result === 'object' && '__bridgeError' in result) {
+          Message.error(
+            result.message ?? t('teams.rightRail.addTeammateError', { defaultValue: 'Failed to add teammate' })
+          );
+          return;
+        }
+        Message.success(t('teams.rightRail.addTeammateSuccess', { defaultValue: 'Teammate added' }));
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        Message.error(msg || t('teams.rightRail.addTeammateError', { defaultValue: 'Failed to add teammate' }));
+      }
+    },
+    [team.id, leadAgent?.agentType, t]
   );
   const leaderConversationId = leadAgent?.conversationId ?? '';
   const isLeaderAgent = activeAgent?.role === 'leader';
@@ -275,6 +336,8 @@ const TeamPageContent: React.FC<TeamPageContentProps> = ({ team, onRenameTeam })
 
   const handleTabClick = useCallback(
     (slotId: string) => {
+      // W2c — clicking an agent tab always exits Activity view.
+      setViewMode('chat');
       switchTab(slotId);
       if (fullscreenSlotId) setFullscreenSlotId(slotId);
       requestAnimationFrame(() => {
@@ -350,8 +413,81 @@ const TeamPageContent: React.FC<TeamPageContentProps> = ({ team, onRenameTeam })
   }, [agents, pendingCounts]);
 
   const tabsSlot = useMemo(
-    () => <TeamTabs onTabClick={handleTabClick} pendingCounts={slotPendingCounts} />,
-    [handleTabClick, slotPendingCounts]
+    () => (
+      <TeamTabs
+        onTabClick={handleTabClick}
+        pendingCounts={slotPendingCounts}
+        showActivityTab
+        activityActive={viewMode === 'activity'}
+        onActivityClick={() => setViewMode('activity')}
+      />
+    ),
+    [handleTabClick, slotPendingCounts, viewMode]
+  );
+
+  // W3b — Standing-promotion state: eligibility predicate + modal visibility +
+  // pending IPC flag. The promote/demote handlers are intentionally thin —
+  // service-side methods are idempotent and emit listChanged('standing_changed')
+  // which the page-level subscription picks up to refresh the team record.
+  const eligibility = useStandingEligibility(team);
+  const [promoteModalVisible, setPromoteModalVisible] = useState(false);
+  const [promoteLoading, setPromoteLoading] = useState(false);
+
+  const handlePromoteClick = useCallback(() => setPromoteModalVisible(true), []);
+  const handlePromoteCancel = useCallback(() => setPromoteModalVisible(false), []);
+
+  const handlePromoteConfirm = useCallback(async () => {
+    setPromoteLoading(true);
+    try {
+      const result = (await ipcBridge.team.promoteToStanding.invoke({ teamId: team.id })) as
+        | void
+        | { __bridgeError: true; message?: string };
+      if (result && typeof result === 'object' && '__bridgeError' in result) {
+        Message.error(result.message ?? t('teams.standing.promoteError', { defaultValue: 'Failed to promote team' }));
+        return;
+      }
+      Message.success(t('teams.standing.promoteSuccess', { defaultValue: 'Team promoted to Standing' }));
+      setPromoteModalVisible(false);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      Message.error(msg || t('teams.standing.promoteError', { defaultValue: 'Failed to promote team' }));
+    } finally {
+      setPromoteLoading(false);
+    }
+  }, [team.id, t]);
+
+  const handleDemote = useCallback(async () => {
+    try {
+      const result = (await ipcBridge.team.demoteFromStanding.invoke({ teamId: team.id })) as
+        | void
+        | { __bridgeError: true; message?: string };
+      if (result && typeof result === 'object' && '__bridgeError' in result) {
+        Message.error(result.message ?? t('teams.standing.demoteError', { defaultValue: 'Failed to demote team' }));
+        return;
+      }
+      Message.success(t('teams.standing.demoteSuccess', { defaultValue: 'Team demoted to regular' }));
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      Message.error(msg || t('teams.standing.demoteError', { defaultValue: 'Failed to demote team' }));
+    }
+  }, [team.id, t]);
+
+  // W2c — header extras: Standing badge + backend rollup. We keep the
+  // title slot as the raw `team.name` string so the inline rename flow
+  // (useTitleRename → canRenameTitle requires a string title) keeps
+  // working unchanged. W3b adds the Promote CTA + Demote action.
+  const headerExtra = useMemo(
+    () => (
+      <TeamHeaderBadges
+        agents={agents}
+        launcher={launcher}
+        team={team}
+        eligibility={eligibility}
+        onPromoteClick={handlePromoteClick}
+        onDemote={handleDemote}
+      />
+    ),
+    [agents, launcher, team, eligibility, handlePromoteClick, handleDemote]
   );
 
   return (
@@ -368,32 +504,38 @@ const TeamPageContent: React.FC<TeamPageContentProps> = ({ team, onRenameTeam })
         sider={sider}
         workspaceEnabled={workspaceEnabled}
         tabsSlot={tabsSlot}
+        headerExtra={headerExtra}
         conversationId={activeAgent?.conversationId}
         agentName={undefined}
         workspacePath={effectiveWorkspace}
         onRenameTitle={onRenameTeam}
       >
         <div className='relative flex h-full'>
-          {fullscreenSlotId ? (
-            // Fullscreen: single agent fills the entire content area
-            (() => {
-              const agent = agents.find((a) => a.slotId === fullscreenSlotId);
-              if (!agent) return null;
-              const isLeaderSlot = agent.slotId === leadAgent?.slotId;
-              return (
-                <div className='flex-1 h-full'>
-                  <AgentChatSlot
-                    agent={agent}
-                    teamId={team.id}
-                    isLeader={isLeaderSlot}
-                    isFullscreen
-                    onToggleFullscreen={() => setFullscreenSlotId(null)}
-                    onRemove={() => handleRemoveAgent(agent.slotId)}
-                  />
-                </div>
-              );
-            })()
-          ) : (
+          <div className='relative flex flex-1 min-w-0 h-full'>
+            {viewMode === 'activity' ? (
+              <div className='flex flex-1 min-w-0 flex-col'>
+                <TeamActivityTab teamId={team.id} />
+              </div>
+            ) : fullscreenSlotId ? (
+              // Fullscreen: single agent fills the entire content area
+              (() => {
+                const agent = agents.find((a) => a.slotId === fullscreenSlotId);
+                if (!agent) return null;
+                const isLeaderSlot = agent.slotId === leadAgent?.slotId;
+                return (
+                  <div className='flex-1 h-full'>
+                    <AgentChatSlot
+                      agent={agent}
+                      teamId={team.id}
+                      isLeader={isLeaderSlot}
+                      isFullscreen
+                      onToggleFullscreen={() => setFullscreenSlotId(null)}
+                      onRemove={() => handleRemoveAgent(agent.slotId)}
+                    />
+                  </div>
+                );
+              })()
+            ) : (
             <>
               {showLeftArrow && (
                 <div
@@ -462,7 +604,23 @@ const TeamPageContent: React.FC<TeamPageContentProps> = ({ team, onRenameTeam })
               )}
             </>
           )}
+          </div>
+          <TeamRightRail
+            agents={agents}
+            statusMap={statusMap}
+            launcher={launcher}
+            workspacePath={effectiveWorkspace}
+            teamId={team.id}
+            onTeammateAdded={handleAddTeammate}
+          />
         </div>
+        <PromoteToStandingModal
+          visible={promoteModalVisible}
+          teamName={team.name}
+          onConfirm={handlePromoteConfirm}
+          onCancel={handlePromoteCancel}
+          loading={promoteLoading}
+        />
       </ChatLayout>
     </TeamPermissionProvider>
   );

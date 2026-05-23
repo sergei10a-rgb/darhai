@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -16,7 +16,7 @@ import type { IMcpServer, IMcpServerTransport } from '@/common/config/storage';
 
 /**
  * wayland-core config.toml transport type (kebab-case)
- * Maps to AionUi transport types (snake_case)
+ * Maps to wayland transport types (snake_case)
  */
 type WCoreTransportType = 'stdio' | 'sse' | 'streamable-http';
 
@@ -64,15 +64,15 @@ function getWCoreConfigPath(cliPath?: string): string {
 }
 
 /**
- * Map wayland-core transport type (kebab-case) to AionUi transport type
+ * Map wayland-core transport type (kebab-case) to wayland transport type
  */
-function toAionUiTransportType(wcoreType: WCoreTransportType): IMcpServerTransport['type'] {
+function toWaylandTransportType(wcoreType: WCoreTransportType): IMcpServerTransport['type'] {
   if (wcoreType === 'streamable-http') return 'streamable_http';
   return wcoreType;
 }
 
 /**
- * Map AionUi transport type to wayland-core transport type (kebab-case)
+ * Map wayland transport type to wayland-core transport type (kebab-case)
  */
 function toWCoreTransportType(type: IMcpServerTransport['type']): WCoreTransportType {
   if (type === 'streamable_http') return 'streamable-http';
@@ -81,10 +81,10 @@ function toWCoreTransportType(type: IMcpServerTransport['type']): WCoreTransport
 }
 
 /**
- * Convert a wayland-core server config entry to an AionUi IMcpServer
+ * Convert a wayland-core server config entry to a wayland IMcpServer
  */
 function toMcpServer(name: string, config: WCoreServerConfig): IMcpServer {
-  const transportType = toAionUiTransportType(config.transport);
+  const transportType = toWaylandTransportType(config.transport);
   const now = Date.now();
 
   const transport: IMcpServerTransport =
@@ -116,7 +116,7 @@ function toMcpServer(name: string, config: WCoreServerConfig): IMcpServer {
 }
 
 /**
- * Convert an AionUi IMcpServer to a wayland-core server config entry
+ * Convert a wayland IMcpServer to a wayland-core server config entry
  */
 function toWCoreConfig(server: IMcpServer): WCoreServerConfig {
   const wcoreType = toWCoreTransportType(server.transport.type);
@@ -158,7 +158,7 @@ export class WCoreMcpAgent extends AbstractMcpAgent {
   }
 
   getSupportedTransports(): string[] {
-    // wayland-core supports stdio, sse, streamable-http (mapped to streamable_http in AionUi)
+    // wayland-core supports stdio, sse, streamable-http (mapped to streamable_http in wayland)
     return ['stdio', 'sse', 'streamable_http'];
   }
 

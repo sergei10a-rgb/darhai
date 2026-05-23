@@ -1,10 +1,20 @@
 // src/process/team/Mailbox.ts
+import type { EventLogger } from './EventLogger';
 import type { ITeamRepository } from './repository/ITeamRepository';
 import type { MailboxMessage } from './types';
 
 /** Thin service layer over ITeamRepository's mailbox methods. */
 export class Mailbox {
-  constructor(private readonly repo: ITeamRepository) {}
+  /**
+   * @param repo         underlying persistence
+   * @param eventLogger  W1e — optional team_event_log writer. Each successful
+   *                     `write()` appends a `'mailbox'` event. Logger absence
+   *                     keeps the legacy callers (and tests) working unchanged.
+   */
+  constructor(
+    private readonly repo: ITeamRepository,
+    private readonly eventLogger?: EventLogger
+  ) {}
 
   /**
    * Write a message to an agent's mailbox.
@@ -32,7 +42,25 @@ export class Mailbox {
       createdAt: Date.now(),
     };
 
-    return this.repo.writeMessage(message);
+    const persisted = await this.repo.writeMessage(message);
+
+    // W1e: log event AFTER successful persistence so failed writes don't pollute the log.
+    if (this.eventLogger) {
+      void this.eventLogger.append({
+        teamId: params.teamId,
+        eventType: 'mailbox',
+        actorSlotId: params.fromAgentId,
+        targetSlotId: params.toAgentId,
+        payload: {
+          messageId: persisted.id,
+          type: persisted.type,
+          summary: persisted.summary,
+          hasFiles: Boolean(persisted.files && persisted.files.length > 0),
+        },
+      });
+    }
+
+    return persisted;
   }
 
   /**

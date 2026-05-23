@@ -1,8 +1,13 @@
 /* Arco Design custom overrides - non-theme related */
 
-/* ---------- Typography (Forge Suite brand: Inter) ---------- */
+/* ---------- Typography (UI System v1: Sora display + IBM Plex Mono) ----------
+   Sora is the primary display face. Inter / system fonts stay in the fallback
+   chain so the renderer never goes unstyled when the Google Fonts CDN is
+   unreachable on first launch. IBM Plex Mono powers eyebrows, chips, code,
+   and any monospace surface. */
 :root {
-  --forge-font: 'Inter Variable', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --forge-font: 'Sora', 'Inter Variable', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --forge-mono-font: 'IBM Plex Mono', ui-monospace, SFMono-Regular, 'Menlo', 'Monaco', 'Consolas', monospace;
 }
 
 html,
@@ -13,7 +18,8 @@ body {
 }
 
 /* Arco Design uses its own CSS var for the font stack; override it so all
-   Arco components (Button, Input, Modal, etc.) inherit Inter automatically. */
+   Arco components (Button, Input, Modal, etc.) inherit the Forge font
+   automatically. */
 :root,
 body,
 .arco-design {
@@ -389,6 +395,27 @@ body[arco-theme='dark'] .arco-message-error {
 .arco-input-tag.arco-input-tag-focus {
   background-color: var(--input-bg);
   border-color: var(--input-border-focus);
+}
+
+/* ---------- Switch — Forge Orange across all states ----------
+   Arco's default disabled-checked rendering drops the active color to a
+   dim brown that reads as 'wrong shade' (see the Assistants page where
+   extension assistants — forced disabled={true} checked={true} — were
+   visually muddled with bright user-toggled ones). Pin the checked state
+   to full Forge Orange and keep disabled-checked at full saturation so
+   every toggle across the system renders the same green-light tone.
+   Semantic non-interactivity is communicated by surrounding chrome (an
+   'EXTENSION' badge etc.), not by dimming the orange. */
+.arco-switch.arco-switch-checked,
+.arco-switch.arco-switch-checked.arco-switch-disabled {
+  background-color: rgb(var(--primary-6)) !important;
+}
+.arco-switch.arco-switch-checked.arco-switch-disabled {
+  opacity: 1;
+  cursor: not-allowed;
+}
+.arco-switch.arco-switch-checked.arco-switch-disabled .arco-switch-dot {
+  background-color: var(--text-white);
 }
 
 /* WebUI / Channels tabs in Remote settings */

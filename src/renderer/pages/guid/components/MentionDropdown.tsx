@@ -1,12 +1,13 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import { Bot, ChevronDown } from 'lucide-react';
 import type { MentionOption } from '../types';
 import { resolveExtensionAssetUrl } from '@/renderer/utils/platform';
+import { getLucideIcon } from '@/renderer/utils/lucideAvatar';
 import { Dropdown, Menu } from '@arco-design/web-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -33,28 +34,33 @@ const MentionDropdown: React.FC<MentionDropdownProps> = ({ menuRef, options, sel
         className='min-w-180px max-h-200px overflow-auto'
       >
         {options.length > 0 ? (
-          options.map((option, index) => (
-            <Menu.Item key={option.key} data-mention-index={index}>
-              <div className='flex items-center gap-8px'>
-                {option.avatarImage ? (
-                  <img
-                    src={resolveExtensionAssetUrl(option.avatarImage)}
-                    alt=''
-                    width={16}
-                    height={16}
-                    style={{ objectFit: 'contain' }}
-                  />
-                ) : option.avatar ? (
-                  <span style={{ fontSize: 14, lineHeight: '16px' }}>{option.avatar}</span>
-                ) : option.logo ? (
-                  <img src={option.logo} alt={option.label} width={16} height={16} style={{ objectFit: 'contain' }} />
-                ) : (
-                  <Bot size={16} />
-                )}
-                <span>{option.label}</span>
-              </div>
-            </Menu.Item>
-          ))
+          options.map((option, index) => {
+            const LucideIconComponent = getLucideIcon(option.avatar);
+            return (
+              <Menu.Item key={option.key} data-mention-index={index}>
+                <div className='flex items-center gap-8px'>
+                  {LucideIconComponent ? (
+                    <LucideIconComponent size={16} className='text-[var(--color-text-2)]' />
+                  ) : option.avatarImage ? (
+                    <img
+                      src={resolveExtensionAssetUrl(option.avatarImage)}
+                      alt=''
+                      width={16}
+                      height={16}
+                      style={{ objectFit: 'contain' }}
+                    />
+                  ) : option.avatar ? (
+                    <span style={{ fontSize: 14, lineHeight: '16px' }}>{option.avatar}</span>
+                  ) : option.logo ? (
+                    <img src={option.logo} alt={option.label} width={16} height={16} style={{ objectFit: 'contain' }} />
+                  ) : (
+                    <Bot size={16} />
+                  )}
+                  <span>{option.label}</span>
+                </div>
+              </Menu.Item>
+            );
+          })
         ) : (
           <Menu.Item key='empty' disabled>
             {t('conversation.welcome.none', { defaultValue: 'None' })}

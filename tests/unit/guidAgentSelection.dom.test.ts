@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -407,5 +407,53 @@ describe('useGuidAgentSelection – preset agent config resolution', () => {
       { id: 'gpt-5', label: 'GPT-5' },
       { id: 'gpt-5-mini', label: 'GPT-5 Mini' },
     ]);
+  });
+
+  // ---------------------------------------------------------------------------
+  // selectPresetAssistant — the "Rory rule" for chat-redesign Phase 2/3.
+  // Picks an assistant; the chat's backend follows automatically via the
+  // existing per-backend preferred-model chain. No modal, no prompt.
+  // ---------------------------------------------------------------------------
+  describe('selectPresetAssistant — Rory backend defaulting', () => {
+    it('sets a custom: key when selecting a preset whose backend is claude', async () => {
+      setupMocks({});
+      const { result } = renderHook(() => useGuidAgentSelection(hookOptions));
+      await waitFor(() => expect(result.current.availableAgents).toBeDefined());
+
+      act(() => {
+        result.current.selectPresetAssistant({ id: 'cold-outbound', presetAgentType: 'claude' });
+      });
+
+      // getAgentKey returns custom:<id> for any non-remote backend with a
+      // customAgentId. The backend choice flows through the existing chain
+      // via the preset's presetAgentType resolution — no extra prompt.
+      expect(result.current.selectedAgentKey).toBe('custom:cold-outbound');
+      expect(configStorageMock.set).toHaveBeenCalledWith('guid.lastSelectedAgent', 'custom:cold-outbound');
+    });
+
+    it('sets a remote: key when selecting a preset whose backend is remote', async () => {
+      setupMocks({});
+      const { result } = renderHook(() => useGuidAgentSelection(hookOptions));
+      await waitFor(() => expect(result.current.availableAgents).toBeDefined());
+
+      act(() => {
+        result.current.selectPresetAssistant({ id: 'remote-team-x', presetAgentType: 'remote' });
+      });
+
+      expect(result.current.selectedAgentKey).toBe('remote:remote-team-x');
+    });
+
+    it('falls back to gemini backend when preset has no presetAgentType', async () => {
+      setupMocks({});
+      const { result } = renderHook(() => useGuidAgentSelection(hookOptions));
+      await waitFor(() => expect(result.current.availableAgents).toBeDefined());
+
+      act(() => {
+        result.current.selectPresetAssistant({ id: 'word-creator' });
+      });
+
+      // gemini is not 'remote', and customAgentId is present → custom:<id>.
+      expect(result.current.selectedAgentKey).toBe('custom:word-creator');
+    });
   });
 });

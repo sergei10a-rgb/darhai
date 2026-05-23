@@ -10,6 +10,11 @@
     "renamePlaceholder": "チーム名",
     "deleteConfirm": "このチームを削除しますか？",
     "deleteConfirmContent": "この操作は元に戻せません。",
+    "deleteConfirmTitle": "[TODO:translate] Delete team?",
+    "deleteConfirmBody": "[TODO:translate] This will permanently delete {{teamName}} and its conversation history. Type \"delete\" below to confirm.",
+    "deleteConfirmCta": "[TODO:translate] Delete team",
+    "deleteConfirmCancelCta": "[TODO:translate] Cancel",
+    "deleteConfirmInputPlaceholder": "[TODO:translate] delete",
     "deleteOk": "削除",
     "deleteCancel": "キャンセル",
     "renameOk": "保存",
@@ -56,5 +61,16 @@
       "interview": "Agentによる深層インタビューを企画する",
       "expert_review": "複数の専門家が同じ問題を分析する"
     }
+  },
+  "errors": {
+    "loadFailed": {
+      "title": "[TODO:translate] This team could not be loaded",
+      "body": "[TODO:translate] It may have been deleted, or its data is no longer available. Head back to the Teams library to pick another team or start a new one.",
+      "backCta": "[TODO:translate] Back to Teams"
+    }
+  },
+  "agentBackendSwap": {
+    "success": "[TODO:translate] Agent backend changed",
+    "error": "[TODO:translate] Failed to change agent backend"
   }
 }

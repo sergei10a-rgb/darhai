@@ -79,3 +79,5 @@ export const useAssistantList = () => {
     localeKey,
   };
 };
+
+export type UseAssistantListReturn = ReturnType<typeof useAssistantList>;

@@ -41,6 +41,7 @@ import { extractAndStripThinkTags } from './ThinkTagDetector';
 import type { AgentKillReason } from './IAgentManager';
 import { hasNativeSkillSupport } from '@/common/types/acpTypes';
 import { prepareFirstMessageWithSkillsIndex } from '@process/task/agentUtils';
+import { composePrompt } from '@process/services/constitution/composePrompt';
 import { shouldInjectTeamGuideMcp } from '@process/team/prompts/teamGuideCapability.ts';
 import { extractTextFromMessage, processCronInMessage } from './MessageMiddleware';
 import { ConversationTurnCompletionService } from './ConversationTurnCompletionService';
@@ -768,8 +769,17 @@ ${collectedResponses.join('\n')}`;
 
     const emitStart = Date.now();
     ipcBridge.acpConversation.responseStream.emit(processedMessage);
-    // Only emit terminal events to team bus for agent lifecycle management
-    if (processedMessage.type === 'finish' || processedMessage.type === 'error') {
+    // Forward to team bus:
+    //  - `finish`/`error`: terminal lifecycle events TeammateManager uses for wake watchdog
+    //  - `acp_context_usage`: per-turn token accounting that W1e's TeammateManager
+    //    listens for to write `team_event_log` event_type='token_usage' rows
+    //    (foundation for the W2d cost meter). Without this branch the W1e
+    //    token_usage hook is a dead code path.
+    if (
+      processedMessage.type === 'finish' ||
+      processedMessage.type === 'error' ||
+      processedMessage.type === 'acp_context_usage'
+    ) {
       teamEventBus.emit('responseStream', {
         ...processedMessage,
         conversation_id: this.conversation_id,
@@ -977,7 +987,7 @@ ${collectedResponses.join('\n')}`;
     // a `session/load` replay that emits historical events. If `bootstrapping`
     // is false during that replay, those events flow through transformMessage
     // → addOrUpdateMessage and get inserted as fresh SQLite rows with new
-    // client-side UUIDs (upstream aionui-org/AionUi#2887 / H9). The bootstrap
+    // client-side UUIDs (upstream upstream issue #2887 / H9). The bootstrap
     // gate is now released only inside initAgent() AFTER `agent.start()`
     // resolves; the `agent_status` allowlist in handleStreamEvent keeps init
     // progress visible to the UI in the meantime.
@@ -1053,10 +1063,16 @@ ${collectedResponses.join('\n')}`;
               );
               parts.push(getTeamGuidePrompt({ backend: this.options.backend, leaderLabel }));
             }
-            if (parts.length > 0) {
-              contentToSend = `[Assistant Rules - You MUST follow these instructions]\n${parts.join(
-                '\n\n'
-              )}\n\n[User Request]\n${contentToSend}`;
+            // Prepend Wayland Constitution + optional specialist overlay above
+            // the preset rules + team guide. composePrompt returns '' when no
+            // Constitution file exists, preserving the prior "skip rules block
+            // when empty" behaviour for fresh installs.
+            const rulesBody = composePrompt({
+              assistantId: this.options.presetAssistantId || this.options.customAgentId,
+              basePrompt: parts.join('\n\n'),
+            }).text;
+            if (rulesBody.length > 0) {
+              contentToSend = `[Assistant Rules - You MUST follow these instructions]\n${rulesBody}\n\n[User Request]\n${contentToSend}`;
             }
           } else {
             // Custom workspace or no native support — inject rules + skills via prompt

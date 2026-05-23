@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -114,9 +114,9 @@ const LocalAgents: React.FC = () => {
 
       {process.env.NODE_ENV === 'development' && (
         <div className='px-16px mt-8px'>
-          <div className='flex flex-col gap-14px rounded-16px border border-solid border-[rgba(var(--primary-6),0.18)] bg-[rgba(var(--primary-6),0.06)] p-16px md:flex-row md:items-center md:justify-between'>
+          <div className='flex flex-col gap-14px rounded-12px border border-solid border-[rgba(var(--primary-6),0.18)] bg-[rgba(var(--primary-6),0.06)] p-16px md:flex-row md:items-center md:justify-between'>
             <div className='flex items-center gap-12px'>
-              <div className='flex h-40px w-40px items-center justify-center leading-none rounded-12px border border-solid border-[rgba(var(--primary-6),0.12)] bg-[rgba(var(--primary-6),0.10)] text-primary-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.28)]'>
+              <div className='flex h-40px w-40px items-center justify-center leading-none rounded-10px border border-solid border-[rgba(var(--primary-6),0.12)] bg-[rgba(var(--primary-6),0.10)] text-primary-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.28)]'>
                 <Home size={20} strokeWidth={2} className='block' />
               </div>
               <div className='min-w-0'>
@@ -133,7 +133,7 @@ const LocalAgents: React.FC = () => {
               type='primary'
               size='small'
               icon={<Plus size={14} />}
-              className='!rounded-10px md:!min-w-144px'
+              className='md:!min-w-144px'
               onClick={() => setHubModalVisible(true)}
             >
               {t('settings.agentManagement.installFromMarket')}
@@ -187,7 +187,7 @@ const LocalAgents: React.FC = () => {
             type='detected'
             agent={geminiAgent}
             settingsDisabled={false}
-            onSettings={() => navigate('/settings/gemini')}
+            onSettings={() => navigate('/settings/models')}
             variant='grid'
           />
         )}

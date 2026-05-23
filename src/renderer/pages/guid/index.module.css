@@ -732,3 +732,15 @@
     max-width: 100px;
   }
 }
+
+/* Phase 2 chat-redesign: layered new-chat starter (greeting + intent pills
+   + suggestion panel + recents). Sits below the input card on the new-chat
+   surface only; the wrapper provides consistent vertical rhythm without
+   altering the input card itself. */
+.newChatStarter {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  margin-top: 16px;
+}

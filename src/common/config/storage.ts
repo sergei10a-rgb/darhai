@@ -1,11 +1,12 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import type { AcpBackend, AcpBackendAll, AcpBackendConfig } from '@/common/types/acpTypes';
 import type { SpeechToTextConfig } from '@/common/types/speech';
+import type { TextToSpeechConfig } from '@/common/types/ttsTypes';
 // C1: route through wrapped buildStorage so every namespace's storage.{get,set,clear,remove}
 // wire key is recorded in the bridge allowlist. The raw `storage.buildStorage` from
 // @office-ai/platform bypasses the allowlist and causes "Bridge event not allowed"
@@ -83,6 +84,8 @@ export interface IConfigStorageRefer {
   language: string;
   theme: string;
   colorScheme: string;
+  /** User's preferred display name for the new-chat greeting. Empty = use the OS account name. */
+  'user.displayName'?: string;
   /** Persisted app-wide UI zoom factor for Display settings */
   'ui.zoomFactor'?: number;
   /** 桌面模式下是否自动启用 WebUI / Auto-enable WebUI in desktop mode */
@@ -105,6 +108,7 @@ export interface IConfigStorageRefer {
     switch?: boolean;
   };
   'tools.speechToText'?: SpeechToTextConfig;
+  'tools.textToSpeech'?: TextToSpeechConfig;
   // Per-category notification preferences (master switch lives in system.notificationEnabled via systemSettingsBridge)
   'notifications.agentFinished'?: boolean;
   'notifications.agentError'?: boolean;
@@ -130,6 +134,23 @@ export interface IConfigStorageRefer {
   'migration.assistantsSplitCustom'?: boolean;
   /** Migration flag: Electron desktop config has been imported to server config */
   'migration.electronConfigImported'?: boolean;
+  /**
+   * Migration flag: legacy `model.config` providers have been one-time migrated
+   * into the new `model_registry_*` SQLite tables (Packet 3B). Set after a
+   * successful run by `runLegacyModelConfigMigration`; subsequent boots skip
+   * the translation entirely.
+   */
+  'migration.legacyModelConfigToRegistry'?: boolean;
+  /**
+   * Catalog data-version cursor for the polish-pass post-upgrade refresh.
+   * Bumped whenever the Curator's eligibility logic or `CatalogModel`'s
+   * derived fields (e.g. `tags`) change in a way that requires re-deriving
+   * already-persisted rows. On boot, when the stored value is less than the
+   * `CATALOG_DATA_VERSION` baked into the build, the model-registry IPC
+   * iterates every connected provider and calls `refresh()` once, then bumps
+   * the stored value. Absent the cursor is treated as `0`.
+   */
+  'migration.modelRegistryCatalogDataVersion'?: number;
   // 关闭窗口时最小化到系统托盘 / Minimize to system tray when closing window
   'system.closeToTray'?: boolean;
   // First-run flag: set once after applying smart defaults (close-to-tray on, start-on-boot on).
@@ -218,6 +239,37 @@ export interface IConfigStorageRefer {
   };
   // Skills Market: whether the wayland-skills builtin skill is enabled
   'skillsMarket.enabled'?: boolean;
+  /**
+   * Global skills preference layer.
+   *
+   * Precedence rules (highest → lowest):
+   *   1. `disabled` (global) — a skill listed here is NEVER loaded, even if a
+   *      per-assistant `enabledSkills` entry would otherwise include it.
+   *   2. `pinned` (global) — skills that are always-on across every assistant
+   *      unless overridden by `disabled`.
+   *   3. Per-assistant `enabledSkills` / `disabledBuiltinSkills` — scoped to
+   *      a single assistant; evaluated after the global layer is applied.
+   *
+   * `revision` is bumped whenever the preference set is programmatically
+   * modified; readers can use it to detect staleness without deep comparison.
+   */
+  'skills.preferences'?: {
+    /** Skills pinned globally (always loaded for every assistant). */
+    pinned: string[];
+    /** Skills disabled globally (never loaded, overrides per-assistant enables). */
+    disabled: string[];
+    /** Monotonically increasing version counter. */
+    revision: number;
+  };
+  /** Migration flag: skills.preferences seeded from existing assistant enabledSkills. */
+  'migration.skillsPreferences_v1'?: boolean;
+  /**
+   * Opt-in mirror of locally-installed CLI tool skills (`~/.claude/skills`,
+   * `~/.codex/skills`, `~/.gemini/skills`). Default off — surfaces the
+   * user's parallel tooling as discoverable on the Skills page filter rail.
+   * Requires app restart to take effect (no live re-scan yet).
+   */
+  'skills.cliDiscovery.enabled'?: boolean;
   // Ambient Mode (M1 skeleton): enable bubble + agent-driven UI flow
   'ambient.enabled'?: boolean;
   // Ambient Mode: persisted bubble window position (displayId used for multi-monitor recovery)

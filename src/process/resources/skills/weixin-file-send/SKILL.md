@@ -13,9 +13,6 @@ Use this skill when:
   - "send me the file"
   - "send the image over"
   - "pass the file to me"
-  - "发给我"
-  - "图片发过来"
-  - "把文件传给我"
 - A local file already exists and should be delivered to the current chat.
 
 Do not claim a file was sent unless you emit the protocol block exactly.

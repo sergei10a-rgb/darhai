@@ -24,7 +24,7 @@ const ModalWrapper: React.FC<ModalWrapperProps> = ({
           <div className='wayland-modal-header'>
             <h3 className='wayland-modal-title'>{title}</h3>
             <button onClick={onCancel} className='wayland-modal-close-btn'>
-              <X size={20} color='#86909c' />
+              <X size={20} color='var(--color-text-3)' />
             </button>
           </div>
         )}

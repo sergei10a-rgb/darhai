@@ -73,7 +73,7 @@ const CHANNELS: ChannelMeta[] = [
 ];
 
 const STATUS_STYLES: Record<ChannelStatus, string> = {
-  idle: 'bg-[var(--bg-3)] text-[var(--text-muted)]',
+  idle: 'bg-[var(--color-bg-4)] text-[var(--color-text-3)]',
   connected: 'bg-[var(--success-soft-bg,rgba(34,197,94,0.12))] text-[var(--success,#22c55e)]',
   soon: 'bg-[var(--warning-soft-bg,rgba(245,158,11,0.12))] text-[var(--warning,#f59e0b)]',
 };
@@ -93,20 +93,26 @@ const ChannelsIndex: React.FC = () => {
     status === 'connected' ? t('settings.channelsIndex.configure') : t('settings.channelsIndex.setUp');
 
   const renderTier = (tier: ChannelTier) => (
-    <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-14px pt-12px'>
+    // overflow-hidden on the wrapper + min-w-0 on each card defends against
+    // the first-paint case where Electron's renderer briefly measures the
+    // content area wider than its eventual parent, causing the 3rd column
+    // to clip off the right edge. UnoCSS's grid-cols-3 maps to
+    // repeat(3, minmax(0, 1fr)) — min-w-0 on the children lets that minmax
+    // actually shrink past content min-width instead of pushing the grid
+    // wider.
+    <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-14px pt-12px overflow-hidden'>
       {CHANNELS.filter((c) => c.tier === tier).map((channel) => {
         const Icon = channel.icon;
-        const isComingSoon = channel.status === 'soon';
-        // Coming-soon tiles remain clickable so users can read about what's planned + when.
         const clickable = true;
         return (
           <article
             key={channel.id}
-            className={`flex flex-col gap-12px p-18px rounded-12px bg-[var(--bg-1)] border border-[var(--border-base)] min-h-[150px] transition-all duration-160 ${
-              isComingSoon
-                ? 'hover:border-[var(--border-strong)] hover:bg-[var(--bg-2)] cursor-pointer'
-                : 'hover:border-[var(--brand-soft-border)] hover:bg-[var(--bg-2)] hover:-translate-y-2px cursor-pointer'
-            }`}
+            // Card recipe matches AssistantCard / TeamCard / WorkflowCard: 1px
+            // border, 12px radius, --color-bg-2 surface, 12/14/10 padding,
+            // primary-6 hover border + soft ring. Channels needs slightly more
+            // vertical room than 104px because of the status pill + CTA row.
+            className={`group flex flex-col gap-8px rounded-12px bg-[var(--color-bg-2)] border border-solid border-[var(--color-border-2)] min-h-[124px] min-w-0 cursor-pointer transition-[border-color,background,box-shadow,transform] duration-160 hover:border-[rgb(var(--primary-6))] hover:bg-[var(--color-fill-1)] hover:shadow-[0_0_0_1px_rgb(var(--primary-6)/0.4)] active:scale-[0.99]`}
+            style={{ padding: '12px 14px 10px' }}
             onClick={clickable ? () => navigate(`/settings/channels/${channel.id}`) : undefined}
             role={clickable ? 'button' : undefined}
             tabIndex={clickable ? 0 : undefined}
@@ -121,15 +127,15 @@ const ChannelsIndex: React.FC = () => {
                 : undefined
             }
           >
-            <div className='flex items-center gap-12px'>
-              <span className='w-36px h-36px rounded-9px bg-[var(--bg-3)] border border-[var(--border-light)] flex items-center justify-center shrink-0 text-[var(--text-primary)]'>
+            <div className='flex items-center gap-10px'>
+              <span className='w-32px h-32px rounded-8px bg-[var(--color-fill-2)] flex items-center justify-center shrink-0 text-[var(--color-text-1)] overflow-hidden'>
                 <Icon size={18} />
               </span>
-              <div className='text-[14.5px] font-bold text-[var(--text-primary)] min-w-0 truncate'>
+              <div className='text-14px font-semibold text-[var(--color-text-1)] min-w-0 truncate leading-20px'>
                 {channel.displayName}
               </div>
             </div>
-            <p className='text-[12.5px] text-[var(--text-muted)] m-0 leading-[1.5]'>{t(channel.taglineKey)}</p>
+            <p className='text-[12.5px] text-[var(--color-text-3)] m-0 leading-[18px]'>{t(channel.taglineKey)}</p>
             <div className='flex items-center justify-between gap-8px mt-auto'>
               <span
                 className={`inline-flex items-center whitespace-nowrap px-8px py-2px rounded-full text-11px font-medium ${STATUS_STYLES[channel.status]}`}
@@ -163,7 +169,7 @@ const ChannelsIndex: React.FC = () => {
           {renderTier(3)}
         </Tabs.TabPane>
       </Tabs>
-      <div className='mt-24px text-12px text-[var(--text-muted)] text-center'>
+      <div className='mt-24px text-12px text-[var(--color-text-3)] text-center'>
         {t('settings.channelsIndex.footerText')}{' '}
         <span className='text-[var(--brand)] cursor-pointer'>{t('settings.channelsIndex.browseExtensions')}</span>
       </div>

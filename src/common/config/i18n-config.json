@@ -21,6 +21,10 @@
     "starOffice",
     "guid",
     "agent",
-    "team"
+    "team",
+    "assistants",
+    "teams",
+    "skills",
+    "workflows"
   ]
 }

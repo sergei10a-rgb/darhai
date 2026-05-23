@@ -36,4 +36,10 @@ export type AssistantListItem = AcpBackendConfig & {
   _source?: string;
   _extensionName?: string;
   _kind?: string;
+  /** W1a — Roster of specialist assistant IDs that compose this launcher (kind==='team' only). */
+  _teammates?: string[];
+  /** W1a — Recurring rituals declared by the launcher (e.g. weekly standup). */
+  _rituals?: Array<{ name: string; cadence: string }>;
+  /** W1a / TRIAGE C4 — True only for the 5 Standing Companies. */
+  _standing?: boolean;
 };

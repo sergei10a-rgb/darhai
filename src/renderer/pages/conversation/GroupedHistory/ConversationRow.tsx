@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -9,6 +9,7 @@ import { getAgentLogo } from '@/renderer/utils/model/agentLogo';
 import FlexFullContainer from '@/renderer/components/layout/FlexFullContainer';
 import siderStyles from '@/renderer/components/layout/Sider/Sider.module.css';
 import { usePresetAssistantInfo } from '@/renderer/hooks/agent/usePresetAssistantInfo';
+import { getLucideIcon } from '@/renderer/utils/lucideAvatar';
 import { CronJobIndicator } from '@/renderer/pages/cron';
 import { cleanupSiderTooltips, getSiderTooltipProps } from '@/renderer/utils/ui/siderTooltip';
 import { useLayoutContext } from '@/renderer/hooks/context/LayoutContext';
@@ -59,6 +60,10 @@ const ConversationRow: React.FC<ConversationRowProps> = (props) => {
     }
 
     if (assistantInfo) {
+      const LucideIconComponent = getLucideIcon(assistantInfo.lucideIcon);
+      if (LucideIconComponent) {
+        return <LucideIconComponent size={16} className='flex-shrink-0 text-[var(--color-text-2)]' />;
+      }
       if (assistantInfo.isEmoji) {
         // Emoji glyphs render with built-in padding, so 16px text ≈ 18px line icon visual weight
         return <span className='text-16px leading-none flex-shrink-0'>{assistantInfo.logo}</span>;
@@ -105,7 +110,7 @@ const ConversationRow: React.FC<ConversationRowProps> = (props) => {
 
     return (
       <span className='absolute right-10px top-1/2 -translate-y-1/2 flex items-center justify-center group-hover:hidden'>
-        <span className='h-8px w-8px rounded-full bg-#2C7FFF shadow-[0_0_0_2px_rgba(44,127,255,0.18)]' />
+        <span className='h-8px w-8px rounded-full bg-[rgb(var(--primary-6))] shadow-[0_0_0_2px_rgba(var(--primary-6),0.18)]' />
       </span>
     );
   };

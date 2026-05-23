@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -250,6 +250,9 @@ export const ExtMcpServerSchema = z.object({
 
 // ============ Assistant Schema ============
 
+/** Categories used by the chat-surface assistant picker. Matches AssistantPreset.category. */
+export const ASSISTANT_CATEGORIES = ['sell', 'write', 'research', 'build', 'run', 'office', 'general'] as const;
+
 export const ExtAssistantSchema = z.object({
   id: z.string().min(1, 'Assistant id is required'),
   name: z.string().min(1, 'Assistant name is required'),
@@ -260,10 +263,31 @@ export const ExtAssistantSchema = z.object({
     z.enum(PRESET_AGENT_TYPES),
     z.string().min(1, 'presetAgentType must be a non-empty string'),
   ]),
+  /** Optional category aligned with built-in AssistantPreset.category for Phase 2 routing. */
+  category: z.enum(ASSISTANT_CATEGORIES).optional(),
+  /**
+   * Optional library-grouping kind. 'team' = composes multiple roles into a
+   * workflow (Standing Companies, launchers). 'specialist' = single role.
+   * Used by the /assistants library page (Phase 3) to split the 3-group grid.
+   */
+  kind: z.enum(['team', 'specialist']).optional(),
   contextFile: z.string().min(1, 'contextFile is required'),
   models: z.array(z.string()).optional(),
   enabledSkills: z.array(z.string()).optional(),
   prompts: z.array(z.string()).optional(),
+  /** W1a — Roster of specialist assistant IDs that compose this launcher (kind==='team' only). */
+  teammates: z.array(z.string()).optional(),
+  /** W1a — Recurring rituals declared by the launcher (e.g. weekly standup). */
+  rituals: z
+    .array(
+      z.object({
+        name: z.string(),
+        cadence: z.string(),
+      })
+    )
+    .optional(),
+  /** W1a / TRIAGE C4 — Marks Standing Companies (always-on multi-role orgs). True for the 5 standing teams only. */
+  standing: z.boolean().optional(),
 });
 
 // ============ Skill Schema ============

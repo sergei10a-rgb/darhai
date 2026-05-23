@@ -98,8 +98,23 @@ const AssistantListPanel: React.FC<AssistantListPanelProps> = ({
   const renderSourceTag = (assistant: AssistantListItem) => {
     const source = getAssistantSource(assistant);
 
-    if (source === 'builtin' || source === 'extension') {
+    if (source === 'builtin') {
       return null;
+    }
+
+    if (source === 'extension') {
+      // Extension assistants are always-on (the toggle is disabled). Surface
+      // that explicitly so the dim toggle reads as 'managed by extension'
+      // rather than 'broken color'.
+      return (
+        <Tag
+          size='small'
+          bordered={false}
+          className='!text-11px !leading-16px !px-8px !py-1px !rounded-8px !bg-[var(--color-fill-2)] !text-t-tertiary uppercase tracking-wider'
+        >
+          {t('settings.assistantSourceExtension', { defaultValue: 'From extension' })}
+        </Tag>
+      );
     }
 
     return (
@@ -122,7 +137,7 @@ const AssistantListPanel: React.FC<AssistantListPanelProps> = ({
         key={assistant.id}
         ref={cardRefSetter(assistant.id)}
         data-testid={`assistant-card-${assistant.id}`}
-        className={`group border border-solid rounded-16px px-16px py-14px flex items-center justify-between cursor-pointer transition-all duration-180 hover:border-[var(--color-primary-light-4)] hover:bg-bg-1 ${highlightedId === assistant.id ? 'border-primary-5 bg-primary-1' : 'border-[var(--color-neutral-3)] bg-fill-0'}`}
+        className={`group border border-solid rounded-12px px-16px py-14px flex items-center justify-between cursor-pointer transition-all duration-180 hover:border-[var(--color-primary-light-4)] hover:bg-bg-1 ${highlightedId === assistant.id ? 'border-primary-5 bg-primary-1' : 'border-[var(--color-border-2)] bg-[var(--color-bg-2)]'}`}
         onClick={() => {
           setActiveAssistantId(assistant.id);
           onEdit(assistant);
@@ -195,7 +210,7 @@ const AssistantListPanel: React.FC<AssistantListPanelProps> = ({
 
   return (
     <div className='py-2'>
-      <div className={`bg-fill-2 rounded-24px ${isMobile ? 'p-16px' : 'p-20px'}`}>
+      <div className={`bg-[var(--color-fill-2)] rounded-16px ${isMobile ? 'p-16px' : 'p-20px'}`}>
         <div className='flex flex-col gap-14px mb-20px'>
           <div className={`flex gap-12px ${isMobile ? 'flex-col' : 'items-start justify-between'}`}>
             <div className='min-w-0'>
@@ -207,7 +222,7 @@ const AssistantListPanel: React.FC<AssistantListPanelProps> = ({
               <Button
                 type='primary'
                 size='small'
-                className={`!rounded-[100px] ${isMobile ? '!w-full !h-36px' : '!px-16px !h-32px'}`}
+                className={`${isMobile ? '!w-full !h-36px' : '!px-16px !h-32px'}`}
                 icon={<Plus size={14} />}
                 onClick={onCreate}
                 data-testid='btn-create-assistant'

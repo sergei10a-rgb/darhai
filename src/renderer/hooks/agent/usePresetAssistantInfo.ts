@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -12,11 +12,18 @@ import { ConfigStorage } from '@/common/config/storage';
 import { ipcBridge } from '@/common';
 import CoworkLogo from '@/renderer/assets/icons/cowork.svg';
 import { resolveExtensionAssetUrl } from '@/renderer/utils/platform';
+import { isLucideAvatar } from '@/renderer/utils/lucideAvatar';
 import useSWR from 'swr';
 export interface PresetAssistantInfo {
   name: string;
   logo: string;
   isEmoji: boolean;
+  /**
+   * Raw `lucide:IconName` reference when the avatar resolved to a Lucide
+   * icon. Render via `renderLucideAvatar(lucideIcon, size)` from
+   * `@/renderer/utils/lucideAvatar`. Falls back to logo/isEmoji when unset.
+   */
+  lucideIcon?: string;
 }
 
 type AssistantLike = {
@@ -81,12 +88,20 @@ export function resolvePresetId(conversation: TChatConversation): string | null 
 }
 
 /**
- * Normalize avatar to either emoji text or a renderable image URL.
- * Supports emoji / built-in svg / extension resource URL.
+ * Normalize avatar to either emoji text, renderable image URL, or Lucide
+ * icon reference. Supports emoji / built-in svg / extension resource URL /
+ * `lucide:IconName` strings emitted by ASSISTANT_PRESETS.
  */
-function normalizeAvatar(avatar: string | undefined): { logo: string; isEmoji: boolean } {
+function normalizeAvatar(avatar: string | undefined): { logo: string; isEmoji: boolean; lucideIcon?: string } {
   const value = (avatar || '').trim();
   if (!value) return { logo: '🤖', isEmoji: true };
+
+  // Lucide reference — emit the raw string so render sites can resolve to
+  // the component. Fall-back logo/isEmoji are still set so consumers that
+  // haven't been swept yet render a sane default instead of "lucide:Foo".
+  if (isLucideAvatar(value)) {
+    return { logo: '🤖', isEmoji: true, lucideIcon: value };
+  }
 
   if (value === 'cowork.svg') {
     return { logo: CoworkLogo, isEmoji: false };
@@ -181,7 +196,7 @@ function buildPresetInfo(presetId: string, locale: string): PresetAssistantInfo 
   const avatar = typeof preset.avatar === 'string' ? preset.avatar : '';
   const normalized = normalizeAvatar(avatar);
 
-  return { name, logo: normalized.logo, isEmoji: normalized.isEmoji };
+  return { name, logo: normalized.logo, isEmoji: normalized.isEmoji, lucideIcon: normalized.lucideIcon };
 }
 
 /**
@@ -198,6 +213,7 @@ function buildCustomAgentInfo(
     name: customAgent.nameI18n?.[localeKey] || customAgent.name || '🤖',
     logo: normalized.logo,
     isEmoji: normalized.isEmoji,
+    lucideIcon: normalized.lucideIcon,
   };
 }
 
@@ -217,6 +233,7 @@ function buildExtensionAssistantInfo(
     name,
     logo: normalized.logo,
     isEmoji: normalized.isEmoji,
+    lucideIcon: normalized.lucideIcon,
   };
 }
 
@@ -333,7 +350,12 @@ export function usePresetAssistantInfo(conversation: TChatConversation | undefin
       if (remoteAgent) {
         const normalized = normalizeAvatar(remoteAgent.avatar);
         return {
-          info: { name: remoteAgent.name, logo: normalized.logo, isEmoji: normalized.isEmoji },
+          info: {
+            name: remoteAgent.name,
+            logo: normalized.logo,
+            isEmoji: normalized.isEmoji,
+            lucideIcon: normalized.lucideIcon,
+          },
           isLoading: false,
         };
       }
@@ -407,7 +429,15 @@ export function usePresetAssistantInfo(conversation: TChatConversation | undefin
           const name = typeof adapter.name === 'string' ? adapter.name : adapterId;
           const avatar = typeof adapter.avatar === 'string' ? adapter.avatar : '';
           const normalized = normalizeAvatar(avatar);
-          return { info: { name, logo: normalized.logo, isEmoji: normalized.isEmoji }, isLoading: false };
+          return {
+            info: {
+              name,
+              logo: normalized.logo,
+              isEmoji: normalized.isEmoji,
+              lucideIcon: normalized.lucideIcon,
+            },
+            isLoading: false,
+          };
         }
       }
     }

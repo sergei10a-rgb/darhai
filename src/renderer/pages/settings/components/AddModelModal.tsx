@@ -49,7 +49,7 @@ const AddModelModal = ModalHOC<{ data?: IProvider; onSubmit: (model: IProvider) 
         visible={modalProps.visible}
         onCancel={modalCtrl.close}
         header={{ title: t('settings.addModel'), showClose: true }}
-        style={{ maxHeight: '90vh' }}
+        style={{ width: 640, maxHeight: '90vh' }}
         contentStyle={{
           background: 'var(--dialog-fill-0)',
           borderRadius: 16,

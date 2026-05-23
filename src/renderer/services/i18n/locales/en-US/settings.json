@@ -17,7 +17,9 @@
     "reduceMotion": "Reduce Motion",
     "densityComfortable": "Comfortable",
     "densityCompact": "Compact",
-    "sidebarWidth": "Sidebar Width"
+    "sidebarWidth": "Sidebar Width",
+    "yourName": "Your name",
+    "yourNamePlaceholder": "Enter your name"
   },
   "skillsHub": {
     "title": "Skills Hub",
@@ -1075,6 +1077,26 @@
   "speechToTextSmartFormat": "Smart Formatting",
   "speechToTextRequired": "Required",
   "speechToTextOptional": "Optional",
+  "speechToTextProviderWhisperLocal": "Whisper (Local)",
+  "speechToTextWhisperModel": "Whisper Model",
+  "speechToTextDownloadModel": "Download Model",
+  "speechToTextDownloading": "Downloading...",
+  "speechToTextDownloadSuccess": "Model downloaded successfully",
+  "speechToTextDownloadError": "Download failed",
+  "speechToTextCancelDownload": "Cancel",
+  "textToSpeech": "Text to Speech",
+  "textToSpeechDescription": "Read AI responses aloud using a local or system voice engine.",
+  "textToSpeechProvider": "Provider",
+  "textToSpeechProviderKokoroLocal": "Kokoro (Local)",
+  "textToSpeechProviderSystemNative": "System Native",
+  "textToSpeechVoice": "Voice",
+  "textToSpeechSpeed": "Speed",
+  "textToSpeechAutoRead": "Auto-read Responses",
+  "textToSpeechDownloadModel": "Download Model",
+  "textToSpeechDownloading": "Downloading...",
+  "textToSpeechDownloadSuccess": "Model downloaded successfully",
+  "textToSpeechDownloadError": "Download failed",
+  "textToSpeechCancelDownload": "Cancel",
   "mcp": "MCP Integration",
   "imageGenerationModel": "Image Model",
   "imageGenerationGuide": "Image Model Setup Guide",
@@ -1572,6 +1594,7 @@
     "groupAppearance": "APPEARANCE",
     "groupSystem": "SYSTEM",
     "groupAbout": "ABOUT",
+    "models": "Models",
     "providers": "Providers",
     "images": "Image Generation",
     "voice": "Voice",
@@ -1583,7 +1606,8 @@
     "notifications": "Notifications",
     "storage": "Storage",
     "skills": "Skills & Tools",
-    "agents": "Agents"
+    "agents": "Agents",
+    "constitution": "Constitution"
   },
   "channelsIndex": {
     "title": "Channels",
@@ -1631,10 +1655,203 @@
     "channelsMovedHint": "Channels have been moved to Integrations →",
     "detailComingSoon": "Per-channel setup with credential fields and Connection Card UI lands in the next release."
   },
-  "providersPage": {
-    "title": "Providers",
-    "subtitle": "Connect AI model providers. Paste a key to auto-detect the provider and fetch its model catalog.",
-    "emptyHint": "No providers connected yet. Paste a key above to get started."
+  "modelsPage": {
+    "title": "Models",
+    "subtitle": "Connect a provider with a key or a Google sign-in. Your models appear automatically.",
+    "crumbAiModels": "AI Models",
+    "connectedLabel": "Connected",
+    "loadError": "Couldn't load your connected providers. Try again in a moment.",
+    "connect": {
+      "title": "Connect a provider",
+      "keyLabel": "Paste an API key",
+      "keyPlaceholder": "Paste a key from any provider…",
+      "connect": "Connect",
+      "hintDefault": "Wayland recognizes the provider on its own — no need to pick one.",
+      "hintAmbiguous": "Looks like an OpenAI-style key — connect to confirm the provider.",
+      "recognized": "Recognized:",
+      "cloudHint": "this provider needs a credential form from Browse.",
+      "unrecognizedPrefix": "Not a recognized key format —",
+      "unrecognizedBrowse": "pick your provider from Browse",
+      "or": "or",
+      "google": "Continue with Google",
+      "googleSuccess": "Signed in to Google as {{account}}.",
+      "googleFailed": "Google sign-in failed. Please try again.",
+      "browse": "Browse all 30+ providers →",
+      "thatProvider": "that provider",
+      "errorUnauthorized": "That {{provider}} key was rejected — unauthorized. Check the key and try again.",
+      "errorNoCredit": "Connected, but that {{provider}} key has no usable credit. Add billing to run models.",
+      "errorOffline": "Couldn't reach {{provider}} — you appear to be offline. Check your connection and retry.",
+      "errorUnrecognized": "That key was not recognized. Open Browse and pick your provider.",
+      "errorCloud": "Recognized {{provider}} — this provider needs more than one field. Open Browse to enter the full credentials.",
+      "errorAmbiguous": "Couldn't tell which provider this key is for. Open Browse and pick the provider.",
+      "errorNoModels": "{{provider}} connected but returned no models. Try refreshing it from Manage.",
+      "errorUnknown": "Couldn't connect to {{provider}}. Please try again.",
+      "undecryptableHint": "Your saved key for this provider is unreadable. Please re-enter it.",
+      "fromDeepLink": "From deep link"
+    },
+    "detected": {
+      "found": "Found a {{provider}} API key on this machine. Use it?",
+      "use": "Use it",
+      "ignore": "Ignore"
+    },
+    "row": {
+      "connected": "Connected",
+      "testing": "Testing…",
+      "manage": "Manage",
+      "fix": "Fix",
+      "modelCount": "{{count}} models",
+      "noModelsHint": "No models — refresh from Manage",
+      "actionNeeded": "Action needed — {{reason}}",
+      "errorUnauthorized": "key rejected",
+      "errorNoCredit": "no usable credit",
+      "errorOffline": "can't reach provider",
+      "errorUnrecognized": "key not recognized",
+      "errorNoModels": "no models returned",
+      "errorUnknown": "connection problem",
+      "via": {
+        "apiKey": "API key",
+        "autoDiscovered": "Auto-discovered key",
+        "cloudCredentials": "Cloud credentials"
+      }
+    },
+    "empty": {
+      "note": "No providers connected yet. Connect one above — the fastest start is <1>Continue with Google</1>."
+    },
+    "manage": {
+      "statusConnected": "Connected",
+      "statusError": "Action needed",
+      "refresh": "Refresh",
+      "rekey": "Re-key",
+      "disconnect": "Disconnect",
+      "cancel": "Cancel",
+      "retry": "Try again",
+      "statusLine": "{{via}} · {{count}} models in catalog · updates automatically",
+      "sectionLabel": "This provider's models",
+      "sectionExplain": "Recommended models are on by default — the latest plus one generation back. Toggle any off, or switch on an older, image, or audio model. Search the whole catalog.",
+      "searchPlaceholder": "Search this provider's models…",
+      "loading": "Loading this provider's catalog…",
+      "loadError": "Couldn't load this provider's models. Try again.",
+      "empty": "This provider returned no models. Refresh to try again.",
+      "noMatch": "No models match \"{{query}}\"",
+      "recommendedHead": "Recommended — on by default",
+      "moreHead": "More in the catalog",
+      "recommended": "Recommended",
+      "roleFlagship": "Most capable",
+      "roleFast": "Fastest",
+      "rolePrevious": "Recommended",
+      "capImage": "Image",
+      "capAudio": "Audio",
+      "capEmbedding": "Embedding",
+      "capOther": "Other",
+      "tagChat": "Chat",
+      "tagVision": "Vision",
+      "tagImage": "Image",
+      "tagAudio": "Audio",
+      "tagEmbeddings": "Embeddings",
+      "tagReasoning": "Reasoning",
+      "tagTools": "Tools",
+      "tagResearch": "Research",
+      "contextWindow": "{{count}}K context",
+      "cost": "${{in}} / ${{out}} per M",
+      "toggleAria": "Enable {{model}}",
+      "toggleFailed": "Couldn't change that model. Please try again.",
+      "refreshDone": "Catalog up to date.",
+      "refreshFailed": "Couldn't refresh this provider. Please try again.",
+      "disconnectTitle": "Disconnect this provider?",
+      "disconnectBody": "Disconnecting {{provider}} removes it and its models. You can reconnect later with a key.",
+      "disconnectConfirm": "Disconnect",
+      "disconnectFailed": "Couldn't disconnect this provider. Please try again.",
+      "rekeyTitle": "Re-key {{provider}}",
+      "rekeyBody": "Paste a new API key for this provider. It replaces the current credentials and runs a connection test.",
+      "rekeyPlaceholder": "Paste a new API key…",
+      "rekeyConfirm": "Update key",
+      "rekeyDone": "Provider credentials updated.",
+      "rekeyCloudDisabled": "Cloud credentials are re-keyed from the cloud connection form, not here.",
+      "errorUnauthorized": "That {{provider}} key was rejected — unauthorized. Check the key and try again.",
+      "errorNoCredit": "That {{provider}} key has no usable credit. Add billing to run models.",
+      "errorOffline": "Couldn't reach {{provider}} — you appear to be offline. Check your connection and retry.",
+      "errorUnrecognized": "That key was not recognized for {{provider}}.",
+      "errorNoModels": "{{provider}} accepted the key but returned no models. Try refreshing.",
+      "errorUnknown": "Couldn't update {{provider}}. Please try again."
+    },
+    "browse": {
+      "title": "All providers",
+      "subtitle": "Pick one to connect. Most take a key; cloud providers take a short credential form.",
+      "searchPlaceholder": "Search 30+ providers…",
+      "noMatch": "No providers match \"{{query}}\"",
+      "back": "All providers",
+      "connected": "Connected",
+      "connectAria": "Connect {{provider}}",
+      "cloudTag": "credential form",
+      "group": {
+        "frontier": "Frontier",
+        "cloud": "Cloud — credential form",
+        "open": "Open inference",
+        "chinese": "Chinese frontier",
+        "voice": "Voice & transcription"
+      },
+      "keySubtitle": "Paste an API key for {{provider}} to connect.",
+      "keyLabel": "API key",
+      "keyPlaceholder": "Paste your API key…",
+      "baseUrlLabel": "Base URL (optional)",
+      "baseUrlPlaceholder": "https://your-endpoint.example/v1",
+      "connect": "Connect & test",
+      "errorUnauthorized": "That {{provider}} key was rejected — unauthorized. Check the key and try again.",
+      "errorNoCredit": "Connected, but that {{provider}} key has no usable credit. Add billing to run models.",
+      "errorOffline": "Couldn't reach {{provider}} — you appear to be offline. Check your connection and retry.",
+      "errorUnrecognized": "That key was not recognized for {{provider}}. Check the key and try again.",
+      "errorNoModels": "{{provider}} connected but returned no models. Try refreshing it from Manage.",
+      "errorUnknown": "Couldn't connect to {{provider}}. Please try again."
+    },
+    "cloud": {
+      "subtitle": {
+        "aws-bedrock": "Bedrock needs IAM credentials and a region.",
+        "vertex": "Vertex needs a project, a region, and a service-account key.",
+        "azure": "Azure OpenAI needs your resource endpoint and an API key."
+      },
+      "fields": {
+        "accessKeyId": {
+          "label": "Access Key ID",
+          "placeholder": "AKIA…"
+        },
+        "secretAccessKey": {
+          "label": "Secret Access Key",
+          "placeholder": "Paste your secret access key…"
+        },
+        "region": {
+          "label": "Region",
+          "placeholder": "us-east-1"
+        },
+        "projectId": {
+          "label": "Project ID",
+          "placeholder": "my-gcp-project"
+        },
+        "serviceAccountJson": {
+          "label": "Service account key (JSON)",
+          "placeholder": "Paste the service-account JSON…"
+        },
+        "endpoint": {
+          "label": "Endpoint",
+          "placeholder": "https://my-resource.openai.azure.com"
+        },
+        "apiKey": {
+          "label": "API Key",
+          "placeholder": "Paste your API key…"
+        }
+      },
+      "submitConnect": "Connect & test",
+      "submitRekey": "Update credentials",
+      "errorUnauthorized": "Those {{provider}} credentials were rejected — unauthorized. Check them and try again.",
+      "errorNoCredit": "Connected, but {{provider}} has no usable credit. Add billing to run models.",
+      "errorOffline": "Couldn't reach {{provider}} — you appear to be offline. Check your connection and retry.",
+      "errorUnrecognized": "Those credentials are incomplete or were not accepted for {{provider}}. Check every field.",
+      "errorNoModels": "{{provider}} connected but returned no models. Try refreshing it from Manage.",
+      "errorUnknown": "Couldn't connect to {{provider}}. Please try again."
+    },
+    "homePicker": {
+      "empty": "No models available for this agent yet. Connect a provider to add one.",
+      "priceTierAria": "Price tier {{tier}}"
+    }
   },
   "mcpPage": {
     "title": "MCP Servers",
@@ -1642,14 +1859,16 @@
   },
   "imageGenPage": {
     "title": "Image Generation",
-    "subtitle": "Pick which configured image-capable model the in-chat image generation tool should use by default.",
-    "dedicatedPageTitle": "Dedicated page coming next release",
-    "dedicatedPageBody": "For now, configure the image generation default model in Skills & Tools → MCP & Voice. We are moving this to its own first-class page.",
-    "openInSkills": "Open in Skills & Tools"
+    "subtitle": "Configure the built-in image generation tool: choose a default model and enable or disable the MCP server.",
+    "mcpToggleLabel": "Enable image generation tool",
+    "mcpToggleDescription": "When enabled, agents can generate and edit images using the configured model.",
+    "defaultModelLabel": "Default image model",
+    "noModels": "No image-capable models configured.",
+    "toggleError": "Failed to toggle image generation. Please try again."
   },
   "voicePage": {
     "title": "Voice",
-    "subtitle": "Speech-to-text providers used by the chat box on desktop and WebUI. Toggle on to enable voice input."
+    "subtitle": "Speech-to-text and text-to-speech settings for the chat box. Toggle sections on to enable voice input and output."
   },
   "generalPage": {
     "title": "General",
@@ -1758,90 +1977,69 @@
   "skillsPage": {
     "title": "Skills & Tools"
   },
+  "constitutionPage": {
+    "subtitle": "Wayland's rules. Loaded fresh on every turn — edits apply immediately, no restart. See §11 for how overrides work.",
+    "tocTitle": "Sections",
+    "tocEmpty": "No sections yet",
+    "reset": "Reset",
+    "resetTooltip": "Reset to the default Constitution",
+    "resetConfirmTitle": "Reset Constitution?",
+    "resetConfirmBody": "Your current edits will be lost. The default Constitution will be restored.",
+    "resetCancel": "Cancel",
+    "loading": "Loading…",
+    "tokenCount": "{{value}} tokens",
+    "tokenWarning": "Approaching adherence ceiling (~2,000 tokens). Consider splitting into specialist overlays.",
+    "tokenError": "Past the adherence ceiling. Move sections into specialist overlays at ~/.wayland/specialists/<id>.md."
+  },
+  "constitutionSpecialists": {
+    "title": "Specialist Overlays",
+    "description": "Overlays add assistant-specific rules on top of the Constitution. They are opt-in by assistant ID and compose into that assistant's prompt.",
+    "addButton": "Add overlay",
+    "idLabel": "Assistant ID",
+    "idPlaceholder": "e.g. copy, spark, humanizer",
+    "idInvalid": "Use only letters, numbers, hyphens, and underscores.",
+    "idDuplicate": "An overlay with that ID already exists.",
+    "create": "Create",
+    "edit": "Edit",
+    "delete": "Delete",
+    "deleteConfirmTitle": "Delete overlay?",
+    "deleteConfirmBody": "The overlay for \"{{value}}\" will be permanently removed.",
+    "cancel": "Cancel",
+    "empty": "No specialist overlays yet. Add one to give a specific assistant extra rules.",
+    "close": "Close",
+    "tokenCount": "{{value}} tokens"
+  },
   "agentsPage": {
     "title": "Agents",
-    "subtitle": "Auto-detected local agents and remote agent connections. Built-in agents are always available."
-  },
-  "providers": {
-    "heroTitle": "Connect a provider",
-    "heroPlaceholder": "Paste an API key...",
-    "detectButton": "Detect & connect",
-    "browseButton": "Browse 24+ providers",
-    "connected": "Connected",
-    "refreshed": "Refreshed {{n}}h ago",
-    "refreshNow": "Refresh now",
-    "disconnect": "Disconnect",
-    "configure": "Configure",
-    "deprecationBanner": "Some models in this provider’s catalog have been removed",
-    "defaultsTitle": "Default models",
-    "defaultChat": "Default chat model",
-    "defaultCoding": "Default coding model",
-    "defaultVision": "Default vision model",
-    "defaultImage": "Default image model",
-    "defaultAudio": "Default audio model",
-    "noDefault": "No default set",
-    "connect": {
-      "entryTitle": "Connect a provider",
-      "placeholder": "Paste your API key here...",
-      "detectButton": "Detect & connect",
-      "browseButton": "Browse 24+ providers",
-      "detectingProvider": "Detecting provider…",
-      "verifyingKey": "Verifying key…",
-      "fetchingCatalog": "Fetching model catalog…",
-      "moreInfoTitle": "Additional details required",
-      "pickerTitle": "Choose a provider",
-      "pickerSearch": "Search providers…",
-      "resultsTitle": "Select models to enable",
-      "resultsSelectAll": "Select all",
-      "resultsDeselectAll": "Deselect all",
-      "connectButton": "Connect",
-      "cancel": "Cancel",
-      "retry": "Try again",
-      "editKey": "Edit key",
-      "openConsole": "Open provider console",
-      "errorTitle": "Connection failed",
-      "errorNetwork": "Could not reach the provider. Check your network connection.",
-      "errorUnauthorized": "Invalid API key. Check your key and try again.",
-      "errorForbidden": "This key does not have the required permissions.",
-      "errorRateLimit": "Rate limit hit. Wait a moment and try again.",
-      "errorUnknown": "An unexpected error occurred.",
-      "fieldRegion": "AWS Region",
-      "fieldSecretKey": "Secret Access Key",
-      "fieldAccessKeyId": "Access Key ID",
-      "fieldEndpoint": "Endpoint URL",
-      "fieldDeployment": "Deployment Name",
-      "fieldApiVersion": "API Version",
-      "fieldProjectId": "Google Cloud Project ID",
-      "fieldServiceAccount": "Service Account JSON",
-      "browseServiceAccount": "Browse…"
+    "subtitle": "The assistants you chat with. Each one runs on a set of models.",
+    "yourAgents": "Your agents",
+    "moreDetected": "More detected · {{count}}",
+    "remoteAgents": "Remote agents",
+    "roadmap": "On the roadmap",
+    "empty": "No agents detected yet. Wayland Core is always available once a model is connected.",
+    "loadErrorsTitle": "Some agents failed to load",
+    "badge": {
+      "active": "Active",
+      "detected": "Detected"
     },
-    "tiers": {
-      "flagship": "Flagship",
-      "everyday": "Everyday",
-      "fast": "Fast",
-      "reasoning": "Reasoning",
-      "legacy": "Legacy"
+    "scope": {
+      "any": "Runs any model you connect",
+      "claude": "Runs Claude models",
+      "gpt": "Runs GPT models",
+      "gemini": "Runs Gemini models",
+      "qwen": "Runs Qwen models",
+      "kimi": "Runs Kimi models",
+      "mistral": "Runs Mistral models"
     },
-    "capabilities": {
-      "chat": "Chat",
-      "vision": "Vision",
-      "image": "Image generation",
-      "audio": "Audio",
-      "embeddings": "Embeddings",
-      "reasoning": "Reasoning"
+    "about": {
+      "wcore": "Wayland’s own engine. Draws on every provider on your Models page.",
+      "claude": "Anthropic’s coding agent. Signs in with its own account — it cannot run GPT or Gemini.",
+      "codex": "OpenAI’s coding agent. Signs in with its own account — it cannot run Claude or Gemini."
     },
-    "search": {
-      "placeholder": "Search models…",
-      "noResults": "No models match your search"
-    },
-    "categories": {
-      "frontier": "Frontier",
-      "openInference": "Open inference",
-      "cloud": "Cloud",
-      "chineseFrontier": "Chinese frontier",
-      "specialised": "Specialised",
-      "voice": "Voice",
-      "custom": "Custom"
+    "flux": {
+      "title": "Flux Router",
+      "soon": "Coming",
+      "desc": "Lets any agent route across every model and provider you have connected — not just its own."
     }
   }
 }

@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -245,7 +245,11 @@ const FeedbackReportModal: React.FC<FeedbackReportModalProps> = ({ visible, onCa
       confirmLoading={submitting}
       okText={t('settings.bugReportSubmit')}
       cancelText={t('settings.bugReportCancel')}
-      okButtonProps={{ disabled: !isFormValid }}
+      okButtonProps={{
+        disabled: !isFormValid,
+        className: '',
+      }}
+      cancelButtonProps={{ style: { borderRadius: 8 }, className: 'px-16px' }}
       alignCenter
       className='w-[min(600px,calc(100vw-32px))] max-w-600px rd-16px'
       autoFocus={false}

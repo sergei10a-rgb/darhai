@@ -221,7 +221,7 @@ At the `dashboard` preset's default title font, the chart plot-box width (in col
 
 ### Print-ready delivery (board-pack / investor-send / one-pager)
 
-Triggers: ask contains "print" / "一页" / "董事会" / "投资人". Four artefacts on the Dashboard sheet; non-Dashboard sheets hidden so the print pipeline emits one page only.
+Triggers: ask contains "print" / "one-pager" / "board" / "investor". Four artefacts on the Dashboard sheet; non-Dashboard sheets hidden so the print pipeline emits one page only.
 
 ```bash
 # 1. Print_Area scoped to Dashboard (xlnm convention).
@@ -338,10 +338,10 @@ done
 
 Gate 7 must **NEVER** be skipped — skipping ships `###` to the user.
 
-If scene keywords include print / 一页 / board / 投资人 / 董事会, extend Gate 7 with a structural print-scope check:
+If scene keywords include print / one-pager / board / investor, extend Gate 7 with a structural print-scope check:
 
 ```bash
-if echo "$USER_REQ" | grep -qiE 'print|一页|投资人|董事会|board'; then
+if echo "$USER_REQ" | grep -qiE 'print|one-pager|investor|board'; then
   # Every non-Dashboard sheet must be hidden or veryHidden.
   LEAKING=$(officecli query "$FILE" 'sheet' --json | jq -r '.data.results[] | select(.name != "Dashboard" and (.state // "visible") == "visible") | .name')
   [ -n "$LEAKING" ] && { echo "REJECT Gate 7 print-scope: visible non-Dashboard sheet(s): $LEAKING — hide before delivery"; exit 1; }
@@ -392,7 +392,7 @@ Scatter's `series1.xValues` is not exposed in `get --json` (series `values=""`) 
 | D-2  | `referenceline` format is `value:color:label:dash` (color BEFORE label). `"0:Break-Even:FF0000:dash"` fails `Invalid color value`.                                                                                                                                       | Order is value, color, label, dash.                                                                                                                                                                                                                                                                              |
 | D-3  | Scatter charts use `series1.xValues`, not `series1.categories`. `<cat>` inside `<scatterChart>` is schema-invalid.                                                                                                                                                       | `--prop series1.xValues="Sheet1!A2:A13"`                                                                                                                                                                                                                                                                         |
 | D-4  | `formulacf` rejects `font.bold` (dxf/font schema disallows `<b>`).                                                                                                                                                                                                       | Use `fill` + `font.color` only; bold is not available via CF.                                                                                                                                                                                                                                                    |
-| D-5  | Dashboard column widths default to 8.43 — KPI values at 24pt bold show `###`                                                                                                                                                                                             | Size by cachedValue bracket: 4–6 digits → 22–24; 7–9 digits (million) → 26–30; 10+ digits (亿 / billion) → 32–36; 百亿 / 10-digit + currency symbol + fit-to-page landscape → **40–44**. Formula `ceil((visible_chars+2)*1.3)` is a starting point; always verify via Gate 7 fallback b). Sparkline columns: 12. |
+| D-5  | Dashboard column widths default to 8.43 — KPI values at 24pt bold show `###`                                                                                                                                                                                             | Size by cachedValue bracket: 4–6 digits → 22–24; 7–9 digits (million) → 26–30; 10+ digits (billion) → 32–36; 10-digit + currency symbol + fit-to-page landscape → **40–44**. Formula `ceil((visible_chars+2)*1.3)` is a starting point; always verify via Gate 7 fallback b). Sparkline columns: 12. |
 | D-6  | `raw-set activeTab` must be the LAST mutation. Inserting before all sheets exist shifts indices.                                                                                                                                                                         | Finish all sheets / charts / CF / sparklines / tabColors, then `raw-set`.                                                                                                                                                                                                                                        |
 | D-7  | `calc.fullCalcOnLoad` via `raw-set` creates duplicate `<calcPr>` → validate fails                                                                                                                                                                                        | Use `officecli set "$FILE" / --prop calc.fullCalcOnLoad=true`.                                                                                                                                                                                                                                                   |
 | D-8  | LibreOffice does not evaluate hidden-column formulas at render → charts referencing hidden cells render blank                                                                                                                                                            | Aggregate into a visible Summary sheet, chart reads from Summary. Hide only columns that are not chart sources.                                                                                                                                                                                                  |

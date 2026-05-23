@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -131,9 +131,15 @@ export class OpenAI2AnthropicConverter implements ProtocolConverter<
       messages: validatedMessages,
     };
 
-    // Add system message if present
-    if (systemMessage) {
-      request.system = systemMessage;
+    // Add system message if present. Wrap in a structured TextBlockParam with
+    // a single ephemeral cache_control breakpoint so the full system prefix
+    // bills at the cached rate (0.1x base) from the second turn onward.
+    // The Anthropic prompt cache is keyed on the prefix bytes, so a stable
+    // wrapper across turns is what unlocks the discount.
+    if (systemMessage && systemMessage.length > 0) {
+      request.system = [
+        { type: 'text' as const, text: systemMessage, cache_control: { type: 'ephemeral' as const } },
+      ];
     }
 
     // Add optional parameters — Anthropic API forbids sending both temperature and top_p

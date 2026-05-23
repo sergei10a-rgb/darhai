@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -58,7 +58,14 @@ export async function resolveAgents(extensions: LoadedExtension[]): Promise<Reco
 async function convertAssistant(
   assistant: ExtAssistant,
   ext: LoadedExtension,
-  kind: 'assistant' | 'agent' = 'assistant'
+  /**
+   * Internal discriminator from the calling resolver (`resolveAssistants` vs
+   * `resolveAgents`). Currently unused by any downstream consumer — kept as
+   * an inert parameter so the call-site signatures stay stable while we
+   * repurpose the `_kind` output field to carry the bundle's library kind
+   * (`'team' | 'specialist'`) for the /assistants library page classifier.
+   */
+  _origin: 'assistant' | 'agent' = 'assistant'
 ): Promise<Record<string, unknown>> {
   const context = await readContextFile(assistant.contextFile, ext.directory);
 
@@ -77,7 +84,20 @@ async function convertAssistant(
     enabled: true,
     _source: 'extension',
     _extensionName: ext.manifest.name,
-    _kind: kind,
+    // Bundle-declared library kind ('team' | 'specialist'). The /assistants
+    // library page classifier reads this via AssistantListItem._kind to
+    // split the grid into Teams vs Specialists vs Built-ins. Undefined for
+    // older bundles — classifier falls back to the category heuristic.
+    _kind: assistant.kind,
+    // Bundle-declared category ('sell' | 'write' | ...). Lets the library's
+    // domain filter rail count and filter ext-contributed assistants.
+    category: assistant.category,
+    // W1a — Pass through teammates roster, rituals cadence, and standing-company
+    // flag so the renderer can render pre-configured spawn (W2b) and the
+    // Standing Companies sub-group (W2a).
+    teammates: assistant.teammates,
+    rituals: assistant.rituals,
+    standing: assistant.standing,
   };
 }
 

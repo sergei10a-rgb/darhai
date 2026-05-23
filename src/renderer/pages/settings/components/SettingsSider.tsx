@@ -12,6 +12,7 @@ import {
   Pencil,
   Puzzle,
   Radio,
+  ScrollText,
   Server,
   Sparkles,
   Zap,
@@ -31,10 +32,11 @@ import { getSiderTooltipProps } from '@/renderer/utils/ui/siderTooltip';
 export const BUILTIN_TAB_IDS = [
   // WORKSPACE
   'assistants',
-  'agents',
   'skills',
+  'constitution',
   // AI MODELS
-  'providers',
+  'models',
+  'agents',
   'images',
   'voice',
   // INTEGRATIONS
@@ -60,8 +62,12 @@ export const LEGACY_ANCHOR_REMAP: Record<string, string> = {
   'skills-hub': 'skills',
   tools: 'mcp',
   capabilities: 'skills',
-  gemini: 'providers',
-  model: 'providers',
+  // Legacy `providers` / `gemini` / `model` all point at the new Models page —
+  // the redesigned `ModelsSettings` page replaces both the legacy Providers
+  // settings and the Gemini-specific surface.
+  providers: 'models',
+  gemini: 'models',
+  model: 'models',
   display: 'theme',
   agent: 'agents',
   system: 'general',
@@ -73,7 +79,7 @@ export const LEGACY_ANCHOR_REMAP: Record<string, string> = {
  */
 const GROUP_HEADER_BEFORE: Record<string, string> = {
   assistants: 'settings.sider.groupWorkspace',
-  providers: 'settings.sider.groupAiModels',
+  models: 'settings.sider.groupAiModels',
   webui: 'settings.sider.groupIntegrations',
   theme: 'settings.sider.groupAppearance',
   general: 'settings.sider.groupSystem',
@@ -163,6 +169,12 @@ const SettingsSider: React.FC<{ collapsed?: boolean; tooltipEnabled?: boolean }>
         icon: <BookOpen />,
         path: 'assistants',
       },
+      constitution: {
+        id: 'constitution',
+        label: t('settings.sider.constitution', { defaultValue: 'Constitution' }),
+        icon: <ScrollText />,
+        path: 'constitution',
+      },
       agents: {
         id: 'agents',
         label: t('settings.sider.agents', { defaultValue: 'Agents' }),
@@ -175,11 +187,11 @@ const SettingsSider: React.FC<{ collapsed?: boolean; tooltipEnabled?: boolean }>
         icon: <Zap />,
         path: 'skills',
       },
-      providers: {
-        id: 'providers',
-        label: t('settings.sider.providers', { defaultValue: 'Providers' }),
+      models: {
+        id: 'models',
+        label: t('settings.sider.models', { defaultValue: 'Models' }),
         icon: <Sparkles />,
-        path: 'providers',
+        path: 'models',
       },
       images: {
         id: 'images',
@@ -323,8 +335,7 @@ const SettingsSider: React.FC<{ collapsed?: boolean; tooltipEnabled?: boolean }>
       })}
     >
       {menus.map((item, index) => {
-        const isSelected =
-          pathname === `/settings/${item.path}` || pathname.startsWith(`/settings/${item.path}/`);
+        const isSelected = pathname === `/settings/${item.path}` || pathname.startsWith(`/settings/${item.path}/`);
         const groupHeaderKey = groupHeaderAt.get(index);
         const groupHeader =
           groupHeaderKey && !collapsed ? (

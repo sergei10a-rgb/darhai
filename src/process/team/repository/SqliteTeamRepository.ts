@@ -1,7 +1,7 @@
 // src/process/team/repository/SqliteTeamRepository.ts
 import { getDatabase } from '@process/services/database';
 import type { ISqliteDriver } from '@process/services/database/drivers/ISqliteDriver';
-import type { MailboxMessage, TeamAgent, TeamTask, TTeam } from '../types';
+import type { MailboxMessage, TeamAgent, TeamEvent, TeamEventType, TeamTask, TTeam } from '../types';
 import type { ITeamRepository } from './ITeamRepository';
 
 // ---------------------------------------------------------------------------
@@ -17,6 +17,15 @@ type TeamRow = {
   lead_agent_id: string;
   agents: string;
   session_mode: string | null;
+  source_launcher_id: string | null;
+  promoted_to_standing: number;
+  session_count: number;
+  first_active_at: number | null;
+  imported_from: string | null;
+  imported_at: number | null;
+  imported_signature_status: string | null;
+  import_capability_grants: string | null;
+  is_sandboxed: number;
   created_at: number;
   updated_at: number;
 };
@@ -48,6 +57,16 @@ type TaskRow = {
   updated_at: number;
 };
 
+type EventRow = {
+  id: string;
+  team_id: string;
+  event_type: string;
+  actor_slot_id: string | null;
+  target_slot_id: string | null;
+  payload: string;
+  created_at: number;
+};
+
 // ---------------------------------------------------------------------------
 // Row -> domain converters
 // ---------------------------------------------------------------------------
@@ -62,6 +81,17 @@ function rowToTeam(row: TeamRow): TTeam {
     leaderAgentId: row.lead_agent_id,
     agents: JSON.parse(row.agents) as TeamAgent[],
     sessionMode: row.session_mode ?? undefined,
+    sourceLauncherId: row.source_launcher_id ?? undefined,
+    promotedToStanding: row.promoted_to_standing === 1,
+    sessionCount: row.session_count,
+    firstActiveAt: row.first_active_at ?? undefined,
+    importedFrom: row.imported_from ?? undefined,
+    importedAt: row.imported_at ?? undefined,
+    importedSignatureStatus: row.imported_signature_status ?? undefined,
+    importCapabilityGrants: row.import_capability_grants
+      ? (JSON.parse(row.import_capability_grants) as Record<string, { granted_at: number; by_user: boolean }>)
+      : undefined,
+    isSandboxed: row.is_sandboxed === 1,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -78,6 +108,18 @@ function rowToMailbox(row: MailboxRow): MailboxMessage {
     summary: row.summary ?? undefined,
     files: row.files ? (JSON.parse(row.files) as string[]) : undefined,
     read: Boolean(row.read),
+    createdAt: row.created_at,
+  };
+}
+
+function rowToEvent(row: EventRow): TeamEvent {
+  return {
+    id: row.id,
+    teamId: row.team_id,
+    eventType: row.event_type as TeamEventType,
+    actorSlotId: row.actor_slot_id ?? undefined,
+    targetSlotId: row.target_slot_id ?? undefined,
+    payload: JSON.parse(row.payload) as Record<string, unknown>,
     createdAt: row.created_at,
   };
 }
@@ -126,8 +168,13 @@ export class SqliteTeamRepository implements ITeamRepository {
   async create(team: TTeam): Promise<TTeam> {
     const db = await this.getDb();
     db.prepare(
-      `INSERT INTO teams (id, user_id, name, workspace, workspace_mode, lead_agent_id, agents, session_mode, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO teams (
+         id, user_id, name, workspace, workspace_mode, lead_agent_id, agents,
+         session_mode, source_launcher_id, promoted_to_standing, session_count, first_active_at,
+         imported_from, imported_at, imported_signature_status, import_capability_grants, is_sandboxed,
+         created_at, updated_at
+       )
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).run(
       team.id,
       team.userId,
@@ -137,6 +184,15 @@ export class SqliteTeamRepository implements ITeamRepository {
       team.leaderAgentId,
       JSON.stringify(team.agents),
       team.sessionMode ?? null,
+      team.sourceLauncherId ?? null,
+      team.promotedToStanding ? 1 : 0,
+      team.sessionCount ?? 0,
+      team.firstActiveAt ?? null,
+      team.importedFrom ?? null,
+      team.importedAt ?? null,
+      team.importedSignatureStatus ?? null,
+      team.importCapabilityGrants ? JSON.stringify(team.importCapabilityGrants) : null,
+      team.isSandboxed ? 1 : 0,
       team.createdAt,
       team.updatedAt
     );
@@ -162,7 +218,10 @@ export class SqliteTeamRepository implements ITeamRepository {
     const db = await this.getDb();
     db.prepare(
       `UPDATE teams
-       SET name = ?, workspace = ?, workspace_mode = ?, lead_agent_id = ?, agents = ?, session_mode = ?, updated_at = ?
+       SET name = ?, workspace = ?, workspace_mode = ?, lead_agent_id = ?, agents = ?,
+           session_mode = ?, source_launcher_id = ?, promoted_to_standing = ?, session_count = ?, first_active_at = ?,
+           imported_from = ?, imported_at = ?, imported_signature_status = ?, import_capability_grants = ?, is_sandboxed = ?,
+           updated_at = ?
        WHERE id = ?`
     ).run(
       merged.name,
@@ -171,6 +230,15 @@ export class SqliteTeamRepository implements ITeamRepository {
       merged.leaderAgentId,
       JSON.stringify(merged.agents),
       merged.sessionMode ?? null,
+      merged.sourceLauncherId ?? null,
+      merged.promotedToStanding ? 1 : 0,
+      merged.sessionCount ?? 0,
+      merged.firstActiveAt ?? null,
+      merged.importedFrom ?? null,
+      merged.importedAt ?? null,
+      merged.importedSignatureStatus ?? null,
+      merged.importCapabilityGrants ? JSON.stringify(merged.importCapabilityGrants) : null,
+      merged.isSandboxed ? 1 : 0,
       merged.updatedAt,
       id
     );
@@ -377,5 +445,57 @@ export class SqliteTeamRepository implements ITeamRepository {
       return { ...current, blocked_by: JSON.stringify(blockedBy), updated_at: now };
     })();
     return rowToTask(row);
+  }
+
+  // -------------------------------------------------------------------------
+  // Team event log (W1e — append-only)
+  // -------------------------------------------------------------------------
+
+  async appendEvent(event: TeamEvent): Promise<void> {
+    const db = await this.getDb();
+    db.prepare(
+      `INSERT INTO team_event_log (id, team_id, event_type, actor_slot_id, target_slot_id, payload, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`
+    ).run(
+      event.id,
+      event.teamId,
+      event.eventType,
+      event.actorSlotId ?? null,
+      event.targetSlotId ?? null,
+      JSON.stringify(event.payload),
+      event.createdAt
+    );
+  }
+
+  async listEvents(
+    teamId: string,
+    options: { since?: number; limit?: number; eventType?: TeamEventType } = {}
+  ): Promise<TeamEvent[]> {
+    const db = await this.getDb();
+    const limit = options.limit ?? 100;
+    const since = options.since ?? 0;
+
+    // Build query in pieces so we can conditionally add the event_type filter.
+    // The two indexes (team_id, created_at) and (team_id, event_type, created_at)
+    // both cover this access path; SQLite picks whichever matches the WHERE clause.
+    if (options.eventType) {
+      const rows = db
+        .prepare(
+          `SELECT * FROM team_event_log
+           WHERE team_id = ? AND event_type = ? AND created_at > ?
+           ORDER BY created_at DESC LIMIT ?`
+        )
+        .all(teamId, options.eventType, since, limit) as EventRow[];
+      return rows.map(rowToEvent);
+    }
+
+    const rows = db
+      .prepare(
+        `SELECT * FROM team_event_log
+         WHERE team_id = ? AND created_at > ?
+         ORDER BY created_at DESC LIMIT ?`
+      )
+      .all(teamId, since, limit) as EventRow[];
+    return rows.map(rowToEvent);
   }
 }

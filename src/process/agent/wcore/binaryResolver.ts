@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -46,21 +46,33 @@ function lookupOnPath(name: string): string | null {
 /**
  * Resolve the wayland-core engine binary path.
  * Search order:
- *  1. Bundled with app (production) — tries each `BINARY_CANDIDATES` filename.
- *  2. System PATH — tries each `BINARY_CANDIDATES` name in order.
+ *  1. Bundled with app (production resourcesPath) — tries each `BINARY_CANDIDATES` filename.
+ *  2. Project-root resources/bundled-wayland-core/ (dev mode) — mirrors the
+ *     bundled-bun resolution in shellEnv.ts so `bun start` finds the same
+ *     binary the packaged build does.
+ *  3. System PATH — tries each `BINARY_CANDIDATES` name in order.
  */
 export function resolveWCoreBinary(): string | null {
+  const runtimeKey = `${process.platform}-${process.arch}`;
+
   // 1. Bundled binary (production) — same layout as bundled-bun
   const resourcesPath = (process as NodeJS.Process & { resourcesPath?: string }).resourcesPath;
   if (resourcesPath) {
-    const runtimeKey = `${process.platform}-${process.arch}`;
     for (const candidate of BINARY_CANDIDATES) {
       const bundled = join(resourcesPath, 'bundled-wayland-core', runtimeKey, withPlatformExt(candidate));
       if (existsSync(bundled)) return bundled;
     }
   }
 
-  // 2. System PATH — try each candidate in priority order.
+  // 2. Dev-mode project-root fallback. In dev, `process.resourcesPath` points
+  //    at Electron's own resources dir, not ours — so step 1 misses our
+  //    prepared binary. Check project-root resources/ directly.
+  for (const candidate of BINARY_CANDIDATES) {
+    const devBundled = join(process.cwd(), 'resources', 'bundled-wayland-core', runtimeKey, withPlatformExt(candidate));
+    if (existsSync(devBundled)) return devBundled;
+  }
+
+  // 3. System PATH — try each candidate in priority order.
   for (const candidate of BINARY_CANDIDATES) {
     const found = lookupOnPath(candidate);
     if (found) return found;

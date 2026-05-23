@@ -8,10 +8,19 @@ import type { IResponseMessage } from '@/common/adapter/ipcBridge';
 import type { TeamAgent, TeammateStatus } from './types';
 import { isTeamCapableBackend } from '@/common/types/teamTypes';
 import { ProcessConfig } from '@process/utils/initStorage';
+import type { EventLogger } from './EventLogger';
 import type { Mailbox } from './Mailbox';
 import { buildRolePrompt } from './prompts/buildRolePrompt';
 import { formatMessages } from './prompts/formatHelpers';
 import { agentRegistry } from '@process/agent/AgentRegistry';
+// W4 audit CRIT-1 (2026-05-19): register / unregister team context for
+// each agent conversation so the ACP file-op gate can resolve the team
+// when sandboxed imported agents request file ops.
+import type { TTeam } from './types';
+import {
+  registerTeamConversation,
+  unregisterTeamConversation,
+} from './sandbox/acpTeamContextRegistry';
 
 type TeammateManagerParams = {
   teamId: string;
@@ -20,8 +29,35 @@ type TeammateManagerParams = {
   workerTaskManager: IWorkerTaskManager;
   hasMcpTools?: boolean;
   teamWorkspace?: string;
+  /**
+   * W4c — When true, role prompts emitted by this manager are wrapped in
+   * `<!-- IMPORTED-UNTRUSTED-CONTENT -->` markers and (for the leader)
+   * suffixed with a non-overridable SYSTEM SANDBOX NOTICE.
+   */
+  isSandboxed?: boolean;
+  /**
+   * W4 audit CRIT-1 (2026-05-19): true when the team was imported (i.e.
+   * `team.importedFrom != null`). When set, every agent's conversation id
+   * is registered with the ACP file-op gate so sandboxed reads/writes go
+   * through `withOpenInsideWorkspace`. Distinct from `isSandboxed`: the
+   * `isImported` flag is the SECURITY trigger; `isSandboxed` is the
+   * cosmetic/prompt-wrap trigger.
+   */
+  isImported?: boolean;
+  /**
+   * W4 audit CRIT-1 (2026-05-19): async accessor for the current TTeam
+   * snapshot used by the ACP file-op gate. Required when `isImported` is
+   * true so the gate can re-check the per-cap grant map after live edits.
+   */
+  getTeamSnapshot?: () => Promise<TTeam | null>;
   /** Called after an agent is removed from in-memory list, so the caller can persist the change (e.g. update DB) */
   onAgentRemoved?: (teamId: string, agents: TeamAgent[]) => void;
+  /**
+   * W1e — optional team_event_log writer. When present, `wake()` logs a
+   * `'wake'` event on completion and `acp_context_usage` stream messages
+   * log a `'token_usage'` event.
+   */
+  eventLogger?: EventLogger;
 };
 
 /**
@@ -36,6 +72,14 @@ export class TeammateManager extends EventEmitter {
   private readonly onAgentRemovedFn?: (teamId: string, agents: TeamAgent[]) => void;
   /** Shared team workspace path (leader's working directory) */
   private readonly teamWorkspace: string | undefined;
+  /** W4c — when true, wrap outgoing role prompts as imported untrusted content */
+  private readonly isSandboxed: boolean;
+  /** W4 audit CRIT-1 — true when the team was imported (gates ACP fs ops). */
+  private readonly isImported: boolean;
+  /** W4 audit CRIT-1 — async accessor used by the ACP file-op gate. */
+  private readonly getTeamSnapshot: (() => Promise<TTeam | null>) | undefined;
+  /** W1e — optional team_event_log writer */
+  private readonly eventLogger: EventLogger | undefined;
 
   /** Tracks which slotIds currently have an in-progress wake to avoid loops */
   private readonly activeWakes = new Set<string>();
@@ -61,9 +105,14 @@ export class TeammateManager extends EventEmitter {
     this.workerTaskManager = params.workerTaskManager;
     this.onAgentRemovedFn = params.onAgentRemoved;
     this.teamWorkspace = params.teamWorkspace;
+    this.isSandboxed = params.isSandboxed === true;
+    this.isImported = params.isImported === true;
+    this.getTeamSnapshot = params.getTeamSnapshot;
+    this.eventLogger = params.eventLogger;
 
     for (const agent of this.agents) {
       this.ownedConversationIds.add(agent.conversationId);
+      this.registerAcpTeamContext(agent.conversationId);
     }
 
     // Listen on teamEventBus instead of ipcBridge: ipcBridge.emit() routes through
@@ -82,8 +131,69 @@ export class TeammateManager extends EventEmitter {
   addAgent(agent: TeamAgent): void {
     this.agents = [...this.agents, agent];
     this.ownedConversationIds.add(agent.conversationId);
+    this.registerAcpTeamContext(agent.conversationId);
     // Notify renderer so it can refresh team data (tabs, status, etc.)
     ipcBridge.team.agentSpawned.emit({ teamId: this.teamId, agent });
+  }
+
+  /**
+   * W4 audit CRIT-1 (2026-05-19) — Register the ACP file-op gate context
+   * for an agent's conversation. No-op for non-imported teams; the gate
+   * checks `isImported` and falls through to the legacy direct-fs path.
+   */
+  private registerAcpTeamContext(conversationId: string | undefined | null): void {
+    if (!conversationId || !this.isImported || !this.getTeamSnapshot) return;
+    const getTeam = this.getTeamSnapshot;
+    registerTeamConversation(conversationId, {
+      teamId: this.teamId,
+      isImported: true,
+      getTeam,
+    });
+  }
+
+  /**
+   * W4 audit CRIT-1 (2026-05-19) — Unregister an agent's ACP file-op gate
+   * context. Safe to call for non-imported teams.
+   */
+  private unregisterAcpTeamContext(conversationId: string | undefined | null): void {
+    if (!conversationId) return;
+    unregisterTeamConversation(conversationId);
+  }
+
+  /**
+   * Kill the underlying CLI process for a slot and clear in-memory wake state,
+   * but keep the agent in the roster. Used by both crash handling (lifecycle
+   * managed internally) and by `TeamSessionService.restartAgent` (user-driven
+   * recovery) so neither path duplicates the kill/timeout cleanup logic.
+   */
+  killAgentProcess(slotId: string): void {
+    const agent = this.agents.find((a) => a.slotId === slotId);
+    if (!agent) return;
+
+    if (agent.conversationId) {
+      // W5 audit HIGH-2 fix (2026-05-19): drop the ACP team context BEFORE
+      // killing the worker so a racing file-op request between kill + the
+      // next addAgent/registerAcpTeamContext cannot resolve the stale ctx.
+      // The conversationId is reused when the slot restarts, so leaving the
+      // registry entry from a prior process is a latent UAF on the ctx
+      // accessor. `unregisterAcpTeamContext` is safe to call for non-imported
+      // teams (no-ops below the guard).
+      this.unregisterAcpTeamContext(agent.conversationId);
+      this.workerTaskManager.kill(agent.conversationId);
+      this.finalizedTurns.delete(agent.conversationId);
+    }
+
+    const timeoutHandle = this.wakeTimeouts.get(slotId);
+    if (timeoutHandle) {
+      clearTimeout(timeoutHandle);
+      this.wakeTimeouts.delete(slotId);
+    }
+    this.activeWakes.delete(slotId);
+  }
+
+  /** True when a wake is currently in flight for the given slot. */
+  isWakeActive(slotId: string): boolean {
+    return this.activeWakes.has(slotId);
   }
 
   /**
@@ -102,6 +212,8 @@ export class TeammateManager extends EventEmitter {
 
     console.log(`[TeammateManager] wake(${agent.agentName}): status=${agent.status}, proceeding`);
 
+    // W1e: capture wall-clock duration of the wake for the event log
+    const wakeStart = Date.now();
     this.activeWakes.add(slotId);
     // Clear any stale finalizedTurns entry so a re-woken agent's finish event
     // is not silently dropped by the 5-second dedup window from a prior turn.
@@ -202,6 +314,7 @@ export class TeammateManager extends EventEmitter {
           availableAssistants,
           renamedAgents: this.renamedAgents,
           teamWorkspace: this.teamWorkspace,
+          isSandboxed: this.isSandboxed,
         });
 
         message =
@@ -214,6 +327,7 @@ export class TeammateManager extends EventEmitter {
           // Nothing to send — restore idle status and release wake
           this.setStatus(slotId, 'idle');
           this.activeWakes.delete(slotId);
+          this.logWakeEvent(slotId, wakeStart, true, { noop: true });
           return;
         }
         message = formatMessages(mailboxMessages, this.agents);
@@ -249,10 +363,19 @@ export class TeammateManager extends EventEmitter {
       // resets it via handleResponseStream → resetWakeTimeout. It only fires
       // when the agent has been silent for WAKE_TIMEOUT_MS with no finish event.
       this.resetWakeTimeout(slotId);
+
+      // W1e: log the successful wake (post-sendMessage, before turn completes).
+      this.logWakeEvent(slotId, wakeStart, true, {
+        promptKind: needsFullPrompt ? 'full' : 'messages-only',
+        mailboxCount: mailboxMessages.length,
+      });
     } catch (error) {
       console.error(`[TeammateManager] wake(${slotId}) failed:`, error);
       this.setStatus(slotId, 'failed');
       this.activeWakes.delete(slotId);
+      this.logWakeEvent(slotId, wakeStart, false, {
+        error: error instanceof Error ? error.message : String(error),
+      });
       throw error;
     }
     // activeWakes entry is removed when turnCompleted fires (or by timeout)
@@ -273,6 +396,13 @@ export class TeammateManager extends EventEmitter {
     }
     this.wakeTimeouts.clear();
     this.activeWakes.clear();
+    // W5 audit HIGH-2 fix (2026-05-19): drain ACP team-context registry
+    // entries for every owned conversation so a disposed session cannot
+    // leak gate-routing data into the next team that reuses any of these
+    // conversation IDs. Safe for non-imported teams.
+    for (const agent of this.agents) {
+      this.unregisterAcpTeamContext(agent.conversationId);
+    }
     this.removeAllListeners();
   }
 
@@ -280,12 +410,70 @@ export class TeammateManager extends EventEmitter {
   // Private stream handlers
   // ---------------------------------------------------------------------------
 
+  /**
+   * W1e — emit a `'wake'` event with duration + success flag. Helper so the
+   * three wake() exit points (noop, success, failure) all share one schema.
+   */
+  private logWakeEvent(
+    slotId: string,
+    startedAt: number,
+    success: boolean,
+    extra: Record<string, unknown> = {}
+  ): void {
+    if (!this.eventLogger) return;
+    void this.eventLogger.append({
+      teamId: this.teamId,
+      eventType: 'wake',
+      actorSlotId: slotId,
+      payload: {
+        success,
+        duration_ms: Date.now() - startedAt,
+        ...extra,
+      },
+    });
+  }
+
   private handleResponseStream(msg: IResponseMessage): void {
     // Fast O(1) check: skip events for conversations not owned by this team
     if (!this.ownedConversationIds.has(msg.conversation_id)) return;
 
     const agent = this.agents.find((a) => a.conversationId === msg.conversation_id);
     if (!agent) return;
+
+    // W1e: token-usage events flow through the response stream as `acp_context_usage`.
+    // Capture them as `'token_usage'` rows so the W2d cost meter can sum tokens
+    // and cost across teammates. We don't have a clean prompt/completion split
+    // from this stream (ACP emits `used` total + optional `cost`), so the split
+    // fields default to 0 with the actual total preserved as `total_tokens`.
+    if (msg.type === 'acp_context_usage') {
+      const usage = msg.data as
+        | { used?: number; size?: number; cost?: { amount?: number; currency?: string } }
+        | null;
+      if (usage && typeof usage.used === 'number') {
+        const costAmount = typeof usage.cost?.amount === 'number' ? usage.cost.amount : 0;
+        const currency = usage.cost?.currency ?? 'USD';
+        // Only USD cost estimates are meaningful for the W2d meter; other
+        // currencies are recorded but normalized to 0 in cost_estimate_usd.
+        const costUsd = currency === 'USD' ? costAmount : 0;
+        if (this.eventLogger) {
+          void this.eventLogger.append({
+            teamId: this.teamId,
+            eventType: 'token_usage',
+            actorSlotId: agent.slotId,
+            payload: {
+              slot_id: agent.slotId,
+              backend: agent.agentType,
+              prompt_tokens: usage.used,
+              completion_tokens: 0,
+              cost_estimate_usd: costUsd,
+              total_tokens: usage.used,
+              currency,
+              context_window: typeof usage.size === 'number' ? usage.size : 0,
+            },
+          });
+        }
+      }
+    }
 
     // Detect agent crash:
     // 1. AcpAgent.handleDisconnect emits finish with agentCrash flag (wrapper process dies)
@@ -569,6 +757,7 @@ export class TeammateManager extends EventEmitter {
     // Clean up owned conversation tracking
     if (agent.conversationId) {
       this.ownedConversationIds.delete(agent.conversationId);
+      this.unregisterAcpTeamContext(agent.conversationId);
       this.finalizedTurns.delete(agent.conversationId);
     }
 

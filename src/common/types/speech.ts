@@ -1,10 +1,10 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export type SpeechToTextProvider = 'openai' | 'deepgram';
+export type SpeechToTextProvider = 'openai' | 'deepgram' | 'whisper-local';
 
 export type OpenAISpeechToTextConfig = {
   apiKey: string;
@@ -25,12 +25,20 @@ export type DeepgramSpeechToTextConfig = {
   smartFormat?: boolean;
 };
 
+export type WhisperLocalSpeechToTextConfig = {
+  /** whisper.cpp model identifier, e.g. 'base', 'small'. The binary and model
+   *  are acquired at runtime by VoiceAssetManager (task D2); absent until then. */
+  model: string;
+  language?: string;
+};
+
 export type SpeechToTextConfig = {
   autoSend?: boolean;
   enabled: boolean;
   provider: SpeechToTextProvider;
   deepgram?: DeepgramSpeechToTextConfig;
   openai?: OpenAISpeechToTextConfig;
+  whisperLocal?: WhisperLocalSpeechToTextConfig;
 };
 
 export type SpeechToTextAudioBuffer = Uint8Array | number[] | Record<string, number>;

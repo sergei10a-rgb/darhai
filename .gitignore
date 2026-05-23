@@ -175,6 +175,8 @@ desdoc/
 tests/e2e/screenshots/
 tests/e2e/results/
 tests/e2e/report/
+# Local-only diagnostic harness; not part of the suite.
+tests/e2e/debug-harness.cjs
 
 # PowerShell accidentally creates a literal file named '$null' when a command
 # redirects output to $null (e.g. `cmd > $null`) on Windows runners.
@@ -196,6 +198,7 @@ docs/superpowers/
 resources/bundled-bun
 resources/bundled-wayland-core
 resources/hub
+resources/voice-models
 
 # Server build output
 dist-server/
@@ -207,3 +210,11 @@ graphify-out/
 .graphify_python
 
 .snow/
+
+# Team Blitz workstream (orchestrator-local, never tracked)
+.blackboard/
+.planning/
+design-mockups/
+
+# Quarantine for deleted skills/assistants — never tracked
+.archive/

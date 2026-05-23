@@ -8,7 +8,15 @@ import { useLayoutContext } from '@renderer/hooks/context/LayoutContext';
 import { blurActiveElement } from '@renderer/utils/ui/focus';
 import { useThemeContext } from '@renderer/hooks/context/ThemeContext';
 import { useAllCronJobs } from '@renderer/pages/cron/useCronJobs';
-import { SiderToolbar, SiderSearchEntry, SiderScheduledEntry } from './SiderNav';
+import {
+  SiderActiveTeams,
+  SiderToolbar,
+  SiderSearchEntry,
+  SiderScheduledEntry,
+  SiderAssistantsEntry,
+  SiderWorkflowsEntry,
+  SiderTeamsEntry,
+} from './SiderNav';
 import SiderFooter from './SiderFooter';
 import CronJobSiderSection from './CronJobSiderSection';
 import TeamSiderSection from './TeamSiderSection';
@@ -67,7 +75,7 @@ const Sider: React.FC<SiderProps> = ({ onSessionClick, collapsed = false }) => {
         console.error('Navigation failed:', error);
       });
     } else {
-      Promise.resolve(navigate('/settings/gemini')).catch((error) => {
+      Promise.resolve(navigate('/settings/models')).catch((error) => {
         console.error('Navigation failed:', error);
       });
     }
@@ -89,6 +97,45 @@ const Sider: React.FC<SiderProps> = ({ onSessionClick, collapsed = false }) => {
     closePreview();
     setIsBatchMode(false);
     Promise.resolve(navigate('/scheduled')).catch((error) => {
+      console.error('Navigation failed:', error);
+    });
+    if (onSessionClick) {
+      onSessionClick();
+    }
+  };
+
+  const handleAssistantsClick = () => {
+    cleanupSiderTooltips();
+    blurActiveElement();
+    closePreview();
+    setIsBatchMode(false);
+    Promise.resolve(navigate('/assistants')).catch((error) => {
+      console.error('Navigation failed:', error);
+    });
+    if (onSessionClick) {
+      onSessionClick();
+    }
+  };
+
+  const handleWorkflowsClick = () => {
+    cleanupSiderTooltips();
+    blurActiveElement();
+    closePreview();
+    setIsBatchMode(false);
+    Promise.resolve(navigate('/workflows')).catch((error) => {
+      console.error('Navigation failed:', error);
+    });
+    if (onSessionClick) {
+      onSessionClick();
+    }
+  };
+
+  const handleTeamsClick = () => {
+    cleanupSiderTooltips();
+    blurActiveElement();
+    closePreview();
+    setIsBatchMode(false);
+    Promise.resolve(navigate('/teams')).catch((error) => {
       console.error('Navigation failed:', error);
     });
     if (onSessionClick) {
@@ -176,13 +223,39 @@ const Sider: React.FC<SiderProps> = ({ onSessionClick, collapsed = false }) => {
               onConversationSelect={handleConversationSelect}
               onSessionClick={onSessionClick}
             />
-            {/* Scheduled tasks nav entry - fixed above scroll */}
+            {/* Workspace nav order (Sean's directive, 2026-05-21):
+                Assistants → Scheduled → Workflows → Teams.
+                Reasoning: the single-shot person → the timed task →
+                the procedure → the full org sit in increasing scope,
+                so the user descends the list when they need more
+                machinery. */}
+            <SiderAssistantsEntry
+              isMobile={isMobile}
+              isActive={pathname === '/assistants'}
+              collapsed={collapsed}
+              siderTooltipProps={siderTooltipProps}
+              onClick={handleAssistantsClick}
+            />
             <SiderScheduledEntry
               isMobile={isMobile}
               isActive={pathname === '/scheduled'}
               collapsed={collapsed}
               siderTooltipProps={siderTooltipProps}
               onClick={handleScheduledClick}
+            />
+            <SiderWorkflowsEntry
+              isMobile={isMobile}
+              isActive={pathname === '/workflows'}
+              collapsed={collapsed}
+              siderTooltipProps={siderTooltipProps}
+              onClick={handleWorkflowsClick}
+            />
+            <SiderTeamsEntry
+              isMobile={isMobile}
+              isActive={pathname === '/teams' || pathname.startsWith('/teams/')}
+              collapsed={collapsed}
+              siderTooltipProps={siderTooltipProps}
+              onClick={handleTeamsClick}
             />
             {/* Divider between fixed top nav and scrollable content area */}
             <div
@@ -191,8 +264,10 @@ const Sider: React.FC<SiderProps> = ({ onSessionClick, collapsed = false }) => {
                 collapsed ? 'mx-6px' : 'mx-10px'
               )}
             />
-            {/* Scrollable content: team + scheduled tasks + conversation history */}
+            {/* Scrollable content: active rollup + team + scheduled tasks + conversation history */}
             <div className={classNames('flex-1 min-h-0 overflow-y-auto', siderStyles.scrollArea)}>
+              {/* W2d — Active section: running teams with token+cost rollup */}
+              <SiderActiveTeams pathname={pathname} collapsed={collapsed} onSessionClick={onSessionClick} />
               {/* Team section */}
               <TeamSiderSection
                 collapsed={collapsed}

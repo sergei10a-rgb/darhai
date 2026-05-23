@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -13,6 +13,7 @@ import type {
 } from '@/common/types/speech';
 import { mainError, mainLog, mainWarn } from '@process/utils/mainLogger';
 import { ProcessConfig } from '@process/utils/initStorage';
+import { WhisperLocal } from '@process/services/voice/WhisperLocal';
 
 type OpenAITranscriptionResponse = {
   language?: string;
@@ -34,6 +35,7 @@ const DEFAULT_OPENAI_BASE_URL = 'https://api.openai.com/v1';
 const DEFAULT_OPENAI_MODEL = 'whisper-1';
 const DEFAULT_DEEPGRAM_BASE_URL = 'https://api.deepgram.com/v1/listen';
 const DEFAULT_DEEPGRAM_MODEL = 'nova-2';
+const DEFAULT_WHISPER_LOCAL_MODEL = 'base';
 const STT_LOG_TAG = '[SpeechToText]';
 
 const createRequestId = () => `stt-${Date.now().toString(36)}-${Math.random().toString(16).slice(2, 8)}`;
@@ -140,6 +142,16 @@ const resolveProviderApiKey = (provider: SpeechToTextProvider, config: SpeechToT
   return apiKey;
 };
 
+const resolveProviderModel = (config: SpeechToTextConfig): string | undefined => {
+  if (config.provider === 'openai') {
+    return config.openai?.model || DEFAULT_OPENAI_MODEL;
+  }
+  if (config.provider === 'deepgram') {
+    return config.deepgram?.model || DEFAULT_DEEPGRAM_MODEL;
+  }
+  return config.whisperLocal?.model || DEFAULT_WHISPER_LOCAL_MODEL;
+};
+
 export class SpeechToTextService {
   static async transcribe(request: SpeechToTextRequest): Promise<SpeechToTextResult> {
     const requestId = createRequestId();
@@ -154,13 +166,15 @@ export class SpeechToTextService {
       mainLog(STT_LOG_TAG, 'Resolved speech-to-text provider', {
         requestId,
         provider: config.provider,
-        model: config.provider === 'openai' ? config.openai?.model || DEFAULT_OPENAI_MODEL : config.deepgram?.model,
+        model: resolveProviderModel(config),
       });
 
       const result =
         config.provider === 'openai'
           ? await this.transcribeWithOpenAI(config, request)
-          : await this.transcribeWithDeepgram(config, request);
+          : config.provider === 'deepgram'
+            ? await this.transcribeWithDeepgram(config, request)
+            : await this.transcribeWithWhisperLocal(config, request);
 
       mainLog(STT_LOG_TAG, 'Transcription completed', {
         requestId,
@@ -256,5 +270,12 @@ export class SpeechToTextService {
       provider: 'deepgram',
       text: transcript,
     };
+  }
+
+  private static async transcribeWithWhisperLocal(
+    config: SpeechToTextConfig,
+    request: SpeechToTextRequest
+  ): Promise<SpeechToTextResult> {
+    return WhisperLocal.transcribe(request, config.whisperLocal ?? { model: DEFAULT_WHISPER_LOCAL_MODEL });
   }
 }

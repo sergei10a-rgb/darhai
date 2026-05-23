@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -9,6 +9,7 @@ import { ipcBridge } from '@/common';
 import type { IMessageSearchItem } from '@/common/types/database';
 import WaylandModal from '@/renderer/components/base/WaylandModal';
 import { usePresetAssistantInfo } from '@/renderer/hooks/agent/usePresetAssistantInfo';
+import { getLucideIcon } from '@/renderer/utils/lucideAvatar';
 import { useOptionalConversationTabs } from '@/renderer/pages/conversation/hooks/ConversationTabsContext';
 import { getAgentLogo } from '@/renderer/utils/model/agentLogo';
 import { blockMobileInputFocus, blurActiveElement } from '@/renderer/utils/ui/focus';
@@ -103,6 +104,16 @@ const ConversationAgentMark: React.FC<{ conversation: IMessageSearchItem['conver
   const { info: assistantInfo } = usePresetAssistantInfo(conversation);
 
   if (assistantInfo) {
+    const LucideIconComponent = getLucideIcon(assistantInfo.lucideIcon);
+    if (LucideIconComponent) {
+      return (
+        <LucideIconComponent
+          size={16}
+          className='flex-shrink-0 text-[var(--color-text-2)]'
+          aria-label={assistantInfo.name}
+        />
+      );
+    }
     if (assistantInfo.isEmoji) {
       return (
         <span className='text-18px leading-none flex-shrink-0' title={assistantInfo.name}>

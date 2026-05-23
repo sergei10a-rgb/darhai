@@ -5,6 +5,7 @@ import type {
   ITeamAgentRenamedEvent,
   ITeamAgentSpawnedEvent,
   ITeamAgentStatusEvent,
+  ITeamListChangedEvent,
   TeamAgent,
   TeammateStatus,
   TTeam,
@@ -54,11 +55,21 @@ export function useTeamSession(team: TTeam) {
       void mutateTeam();
     });
 
+    // W3b — promote/demote toggles emit listChanged('standing_changed');
+    // refresh the cached team so promotedToStanding flips in the UI.
+    const unsubListChanged = ipcBridge.team.listChanged.on((event: ITeamListChangedEvent) => {
+      if (event.teamId !== team.id) return;
+      if (event.action === 'standing_changed') {
+        void mutateTeam();
+      }
+    });
+
     return () => {
       unsubStatus();
       unsubSpawned();
       unsubRemoved();
       unsubRenamed();
+      unsubListChanged();
     };
   }, [team.id, mutateTeam]);
 

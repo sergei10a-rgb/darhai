@@ -269,8 +269,12 @@ const ApiKeyEditorModal: React.FC<ApiKeyEditorModalProps> = ({ visible, apiKeys,
         </div>
 
         {/* Confirm button */}
-        <div className='flex justify-end pt-8px'>
-          <Button type='primary' onClick={handleSave}>
+        <div className='flex justify-end gap-12px pt-8px'>
+          <Button
+            type='primary'
+            onClick={handleSave}
+            className=''
+          >
             {t('common.confirm')}
           </Button>
         </div>

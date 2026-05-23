@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -19,7 +19,6 @@ import AboutModalContent from './contents/AboutModalContent';
 import AgentModalContent from './contents/AgentModalContent';
 import ExtensionSettingsTabContent from './contents/ExtensionSettingsTabContent';
 import GeminiModalContent from './contents/GeminiModalContent';
-import ModelModalContent from './contents/ModelModalContent';
 import SystemModalContent from './contents/SystemModalContent';
 import ToolsModalContent from './contents/ToolsModalContent';
 import WebuiModalContent from './contents/WebuiModalContent';
@@ -312,8 +311,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onCancel, defaul
     switch (activeTab) {
       case 'gemini':
         return <GeminiModalContent />;
-      case 'model':
-        return <ModelModalContent />;
       case 'agent':
         return <AgentModalContent />;
       case 'tools':
@@ -376,7 +373,10 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onCancel, defaul
 
   // Desktop menu (sidebar)
   const desktopMenu = (
-    <WaylandScrollArea className='flex-shrink-0 b-color-border-2 scrollbar-hide' style={{ width: `${SIDEBAR_WIDTH}px` }}>
+    <WaylandScrollArea
+      className='flex-shrink-0 b-color-border-2 scrollbar-hide'
+      style={{ width: `${SIDEBAR_WIDTH}px` }}
+    >
       <div className='flex flex-col gap-2px'>
         {menuItems.map((item) => (
           <div

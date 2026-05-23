@@ -446,6 +446,26 @@
   "speechToTextSmartFormat": "スマート整形",
   "speechToTextRequired": "必須",
   "speechToTextOptional": "任意",
+  "speechToTextProviderWhisperLocal": "Whisper（ローカル）",
+  "speechToTextWhisperModel": "Whisper モデル",
+  "speechToTextDownloadModel": "モデルをダウンロード",
+  "speechToTextDownloading": "ダウンロード中...",
+  "speechToTextDownloadSuccess": "モデルのダウンロードが完了しました",
+  "speechToTextDownloadError": "ダウンロードに失敗しました",
+  "speechToTextCancelDownload": "キャンセル",
+  "textToSpeech": "テキスト読み上げ",
+  "textToSpeechDescription": "ローカルまたはシステムの音声エンジンで AI の返答を読み上げます。",
+  "textToSpeechProvider": "プロバイダー",
+  "textToSpeechProviderKokoroLocal": "Kokoro（ローカル）",
+  "textToSpeechProviderSystemNative": "システム標準",
+  "textToSpeechVoice": "音声",
+  "textToSpeechSpeed": "速度",
+  "textToSpeechAutoRead": "返答を自動読み上げ",
+  "textToSpeechDownloadModel": "モデルをダウンロード",
+  "textToSpeechDownloading": "ダウンロード中...",
+  "textToSpeechDownloadSuccess": "モデルのダウンロードが完了しました",
+  "textToSpeechDownloadError": "ダウンロードに失敗しました",
+  "textToSpeechCancelDownload": "キャンセル",
   "mcp": "MCP統合",
   "imageGenerationModel": "画像モデル",
   "imageGenerationGuide": "画像モデル設定ガイド",
@@ -942,6 +962,7 @@
     "groupAppearance": "外観",
     "groupSystem": "システム",
     "groupAbout": "情報",
+    "models": "モデル",
     "providers": "プロバイダー",
     "channels": "チャンネル",
     "mcp": "MCPサーバー",
@@ -951,7 +972,8 @@
     "notifications": "通知",
     "storage": "ストレージ",
     "skills": "スキルとツール",
-    "agents": "エージェント"
+    "agents": "エージェント",
+    "constitution": "憲章"
   },
   "channelsIndex": {
     "title": "チャンネル",
@@ -971,11 +993,215 @@
     "browseExtensions": "拡張機能を見る →",
     "channelsMovedHint": "チャンネルは連携に移動しました →"
   },
-  "providersPage": {
-    "title": "プロバイダー"
+  "modelsPage": {
+    "title": "モデル",
+    "subtitle": "キーまたは Google サインインでプロバイダーを接続すると、モデルが自動的に表示されます。",
+    "crumbAiModels": "AI モデル",
+    "connectedLabel": "接続済み",
+    "loadError": "接続済みプロバイダーを読み込めませんでした。しばらくしてから再試行してください。",
+    "connect": {
+      "title": "プロバイダーを接続",
+      "keyLabel": "API キーを貼り付け",
+      "keyPlaceholder": "任意のプロバイダーのキーを貼り付け…",
+      "connect": "接続",
+      "hintDefault": "Wayland がプロバイダーを自動的に認識します——選択は不要です。",
+      "hintAmbiguous": "OpenAI 形式のキーのようです——接続してプロバイダーを確認します。",
+      "recognized": "認識:",
+      "cloudHint": "このプロバイダーには「参照」からの認証フォームが必要です。",
+      "unrecognizedPrefix": "認識できないキー形式です——",
+      "unrecognizedBrowse": "「参照」からプロバイダーを選択してください",
+      "or": "または",
+      "google": "Google で続行",
+      "googleSuccess": "{{account}} として Google にサインインしました。",
+      "googleFailed": "Google サインインに失敗しました。再試行してください。",
+      "browse": "30 以上のプロバイダーをすべて参照 →",
+      "thatProvider": "そのプロバイダー",
+      "errorUnauthorized": "その {{provider}} キーは拒否されました——未承認です。キーを確認して再試行してください。",
+      "errorNoCredit": "接続しましたが、その {{provider}} キーには利用可能なクレジットがありません。モデルを実行するには請求を追加してください。",
+      "errorOffline": "{{provider}} に接続できませんでした——オフラインのようです。接続を確認して再試行してください。",
+      "errorUnrecognized": "そのキーは認識されませんでした。「参照」を開いてプロバイダーを選択してください。",
+      "errorCloud": "{{provider}} を認識しました — このプロバイダーは複数のフィールドが必要です。「参照」を開いて完全な認証情報を入力してください。",
+      "errorAmbiguous": "どのプロバイダーのキーか特定できませんでした。「参照」を開いてプロバイダーを選択してください。",
+      "errorNoModels": "{{provider}} に接続しましたが、モデルが返されませんでした。「管理」から更新してみてください。",
+      "errorUnknown": "{{provider}} に接続できませんでした。再試行してください。",
+      "undecryptableHint": "Your saved key for this provider is unreadable. Please re-enter it.",
+      "fromDeepLink": "ディープリンクから"
+    },
+    "detected": {
+      "found": "このマシンで {{provider}} API キーが見つかりました。使用しますか？",
+      "use": "使用する",
+      "ignore": "無視"
+    },
+    "row": {
+      "connected": "接続済み",
+      "testing": "テスト中…",
+      "manage": "管理",
+      "fix": "修正",
+      "modelCount": "{{count}} モデル",
+      "noModelsHint": "モデルなし——「管理」から更新",
+      "actionNeeded": "対応が必要——{{reason}}",
+      "errorUnauthorized": "キーが拒否されました",
+      "errorNoCredit": "利用可能なクレジットなし",
+      "errorOffline": "プロバイダーに接続できません",
+      "errorUnrecognized": "キーが認識されません",
+      "errorNoModels": "モデルが返されませんでした",
+      "errorUnknown": "接続の問題",
+      "via": {
+        "apiKey": "API キー",
+        "autoDiscovered": "自動検出されたキー",
+        "cloudCredentials": "クラウド認証情報"
+      }
+    },
+    "empty": {
+      "note": "まだプロバイダーが接続されていません。上で 1 つ接続してください——最速のスタートは <1>Google で続行</1> です。"
+    },
+    "manage": {
+      "statusConnected": "接続済み",
+      "statusError": "対応が必要",
+      "refresh": "更新",
+      "rekey": "キーを変更",
+      "disconnect": "切断",
+      "cancel": "キャンセル",
+      "retry": "再試行",
+      "statusLine": "{{via}} · カタログに {{count}} モデル · 自動更新",
+      "sectionLabel": "このプロバイダーのモデル",
+      "sectionExplain": "推奨モデルは既定でオンです——最新世代と1世代前。任意のモデルをオフにしたり、古い・画像・音声モデルをオンにできます。カタログ全体を検索できます。",
+      "searchPlaceholder": "このプロバイダーのモデルを検索…",
+      "loading": "このプロバイダーのカタログを読み込み中…",
+      "loadError": "このプロバイダーのモデルを読み込めませんでした。再試行してください。",
+      "empty": "このプロバイダーはモデルを返しませんでした。更新して再試行してください。",
+      "noMatch": "「{{query}}」に一致するモデルはありません",
+      "recommendedHead": "推奨——既定でオン",
+      "moreHead": "カタログのその他のモデル",
+      "recommended": "推奨",
+      "roleFlagship": "最も高性能",
+      "roleFast": "最速",
+      "rolePrevious": "推奨",
+      "capImage": "画像",
+      "capAudio": "音声",
+      "capEmbedding": "埋め込み",
+      "capOther": "その他",
+      "tagChat": "チャット",
+      "tagVision": "ビジョン",
+      "tagImage": "画像",
+      "tagAudio": "音声",
+      "tagEmbeddings": "埋め込み",
+      "tagReasoning": "推論",
+      "tagTools": "ツール",
+      "tagResearch": "リサーチ",
+      "contextWindow": "{{count}}K コンテキスト",
+      "cost": "100万あたり ${{in}} / ${{out}}",
+      "toggleAria": "{{model}} を有効化",
+      "toggleFailed": "そのモデルを変更できませんでした。再試行してください。",
+      "refreshDone": "カタログは最新です。",
+      "refreshFailed": "このプロバイダーを更新できませんでした。再試行してください。",
+      "disconnectTitle": "このプロバイダーを切断しますか？",
+      "disconnectBody": "{{provider}} を切断すると、そのモデルも削除されます。後でキーを使って再接続できます。",
+      "disconnectConfirm": "切断",
+      "disconnectFailed": "このプロバイダーを切断できませんでした。再試行してください。",
+      "rekeyTitle": "{{provider}} のキーを変更",
+      "rekeyBody": "このプロバイダーの新しい API キーを貼り付けてください。現在の資格情報を置き換え、接続テストを実行します。",
+      "rekeyPlaceholder": "新しい API キーを貼り付け…",
+      "rekeyConfirm": "キーを更新",
+      "rekeyDone": "プロバイダーの資格情報を更新しました。",
+      "rekeyCloudDisabled": "クラウド資格情報はここではなく、クラウド接続フォームで再設定します。",
+      "errorUnauthorized": "その {{provider}} キーは拒否されました——認証されていません。キーを確認して再試行してください。",
+      "errorNoCredit": "その {{provider}} キーには利用可能なクレジットがありません。モデルを実行するには課金を追加してください。",
+      "errorOffline": "{{provider}} に到達できませんでした——オフラインのようです。接続を確認して再試行してください。",
+      "errorUnrecognized": "そのキーは {{provider}} として認識されませんでした。",
+      "errorNoModels": "{{provider}} はキーを受け入れましたがモデルを返しませんでした。更新してみてください。",
+      "errorUnknown": "{{provider}} を更新できませんでした。再試行してください。"
+    },
+    "browse": {
+      "title": "すべてのプロバイダー",
+      "subtitle": "接続するプロバイダーを選択してください。ほとんどはキーのみ、クラウドプロバイダーは短い認証フォームが必要です。",
+      "searchPlaceholder": "30 以上のプロバイダーを検索…",
+      "noMatch": "「{{query}}」に一致するプロバイダーがありません",
+      "back": "すべてのプロバイダー",
+      "connected": "接続済み",
+      "connectAria": "{{provider}} に接続",
+      "cloudTag": "認証フォーム",
+      "group": {
+        "frontier": "フロンティア",
+        "cloud": "クラウド — 認証フォーム",
+        "open": "オープン推論",
+        "chinese": "中国フロンティア",
+        "voice": "音声と文字起こし"
+      },
+      "keySubtitle": "{{provider}} の API キーを貼り付けて接続します。",
+      "keyLabel": "API キー",
+      "keyPlaceholder": "API キーを貼り付け…",
+      "connect": "接続してテスト",
+      "errorUnauthorized": "その {{provider}} キーは拒否されました（未承認）。キーを確認して再試行してください。",
+      "errorNoCredit": "接続しましたが、その {{provider}} キーには利用可能なクレジットがありません。モデルを実行するには請求情報を追加してください。",
+      "errorOffline": "{{provider}} に接続できません。オフラインのようです。接続を確認して再試行してください。",
+      "errorUnrecognized": "そのキーは {{provider}} で認識されませんでした。キーを確認して再試行してください。",
+      "errorNoModels": "{{provider}} に接続しましたが、モデルが返されませんでした。「管理」から更新してみてください。",
+      "errorUnknown": "{{provider}} に接続できませんでした。再試行してください。",
+      "baseUrlLabel": "ベース URL（任意）",
+      "baseUrlPlaceholder": "https://your-endpoint.example/v1"
+    },
+    "cloud": {
+      "subtitle": {
+        "aws-bedrock": "Bedrock には IAM 認証情報とリージョンが必要です。",
+        "vertex": "Vertex にはプロジェクト、リージョン、サービスアカウントキーが必要です。",
+        "azure": "Azure OpenAI にはリソースのエンドポイントと API キーが必要です。"
+      },
+      "fields": {
+        "accessKeyId": {
+          "label": "アクセスキー ID",
+          "placeholder": "AKIA…"
+        },
+        "secretAccessKey": {
+          "label": "シークレットアクセスキー",
+          "placeholder": "シークレットアクセスキーを貼り付け…"
+        },
+        "region": {
+          "label": "リージョン",
+          "placeholder": "us-east-1"
+        },
+        "projectId": {
+          "label": "プロジェクト ID",
+          "placeholder": "my-gcp-project"
+        },
+        "serviceAccountJson": {
+          "label": "サービスアカウントキー (JSON)",
+          "placeholder": "サービスアカウントの JSON を貼り付け…"
+        },
+        "endpoint": {
+          "label": "エンドポイント",
+          "placeholder": "https://my-resource.openai.azure.com"
+        },
+        "apiKey": {
+          "label": "API キー",
+          "placeholder": "API キーを貼り付け…"
+        }
+      },
+      "submitConnect": "接続してテスト",
+      "submitRekey": "認証情報を更新",
+      "errorUnauthorized": "その {{provider}} の認証情報は拒否されました（未承認）。確認して再試行してください。",
+      "errorNoCredit": "接続しましたが、{{provider}} には利用可能なクレジットがありません。モデルを実行するには請求情報を追加してください。",
+      "errorOffline": "{{provider}} に接続できません。オフラインのようです。接続を確認して再試行してください。",
+      "errorUnrecognized": "これらの認証情報は不完全であるか、{{provider}} で受け入れられませんでした。すべての項目を確認してください。",
+      "errorNoModels": "{{provider}} に接続しましたが、モデルが返されませんでした。「管理」から更新してみてください。",
+      "errorUnknown": "{{provider}} に接続できませんでした。再試行してください。"
+    },
+    "homePicker": {
+      "empty": "このエージェントで利用できるモデルはまだありません。プロバイダーを接続して追加してください。",
+      "priceTierAria": "価格帯 {{tier}}"
+    }
   },
   "mcpPage": {
     "title": "MCPサーバー"
+  },
+  "imageGenPage": {
+    "title": "画像生成",
+    "subtitle": "組み込みの画像生成ツールを設定します。デフォルトモデルを選択し、MCPサーバーを有効または無効にします。",
+    "mcpToggleLabel": "画像生成ツールを有効にする",
+    "mcpToggleDescription": "有効にすると、エージェントは設定されたモデルを使用して画像の生成・編集ができます。",
+    "defaultModelLabel": "デフォルト画像モデル",
+    "noModels": "画像生成に対応したモデルが設定されていません。",
+    "toggleError": "画像生成の切り替えに失敗しました。もう一度お試しください。"
   },
   "generalPage": {
     "title": "一般"
@@ -993,85 +1219,69 @@
   "skillsPage": {
     "title": "スキルとツール"
   },
-  "agentsPage": {
-    "title": "エージェント"
+  "constitutionPage": {
+    "subtitle": "Wayland のルール。毎ターンごとに新しく読み込まれ、編集は再起動なしで即座に反映されます。オーバーライドの仕組みは §11 を参照してください。",
+    "tocTitle": "セクション",
+    "tocEmpty": "セクションはまだありません",
+    "reset": "リセット",
+    "resetTooltip": "デフォルトの憲章にリセット",
+    "resetConfirmTitle": "憲章をリセットしますか？",
+    "resetConfirmBody": "現在の編集内容は失われます。デフォルトの憲章が復元されます。",
+    "resetCancel": "キャンセル",
+    "loading": "読み込み中…",
+    "tokenCount": "{{value}} トークン",
+    "tokenWarning": "遵守上限（約 2,000 トークン）に近づいています。専門オーバーレイへの分割を検討してください。",
+    "tokenError": "遵守上限を超えています。セクションを ~/.wayland/specialists/<id>.md の専門オーバーレイに移動してください。"
   },
-  "providers": {
-    "heroTitle": "Connect a provider",
-    "heroPlaceholder": "Paste an API key...",
-    "detectButton": "Detect & connect",
-    "browseButton": "Browse 24+ providers",
-    "connected": "Connected",
-    "refreshed": "Refreshed {{n}}h ago",
-    "refreshNow": "Refresh now",
-    "disconnect": "Disconnect",
-    "configure": "Configure",
-    "deprecationBanner": "Some models in this provider’s catalog have been removed",
-    "defaultsTitle": "Default models",
-    "defaultChat": "Default chat model",
-    "defaultCoding": "Default coding model",
-    "defaultVision": "Default vision model",
-    "defaultImage": "Default image model",
-    "defaultAudio": "Default audio model",
-    "noDefault": "No default set",
-    "connect": {
-      "entryTitle": "Connect a provider",
-      "placeholder": "Paste your API key here...",
-      "detectButton": "Detect & connect",
-      "browseButton": "Browse 24+ providers",
-      "detectingProvider": "Detecting provider…",
-      "verifyingKey": "Verifying key…",
-      "fetchingCatalog": "Fetching model catalog…",
-      "moreInfoTitle": "Additional details required",
-      "pickerTitle": "Choose a provider",
-      "pickerSearch": "Search providers…",
-      "resultsTitle": "Select models to enable",
-      "resultsSelectAll": "Select all",
-      "resultsDeselectAll": "Deselect all",
-      "connectButton": "Connect",
-      "cancel": "Cancel",
-      "retry": "Try again",
-      "editKey": "Edit key",
-      "openConsole": "Open provider console",
-      "errorTitle": "Connection failed",
-      "errorNetwork": "Could not reach the provider. Check your network connection.",
-      "errorUnauthorized": "Invalid API key. Check your key and try again.",
-      "errorForbidden": "This key does not have the required permissions.",
-      "errorRateLimit": "Rate limit hit. Wait a moment and try again.",
-      "errorUnknown": "An unexpected error occurred.",
-      "fieldRegion": "AWS Region",
-      "fieldSecretKey": "Secret Access Key",
-      "fieldAccessKeyId": "Access Key ID",
-      "fieldEndpoint": "Endpoint URL",
-      "fieldDeployment": "Deployment Name",
-      "fieldApiVersion": "API Version",
-      "fieldProjectId": "Google Cloud Project ID",
-      "fieldServiceAccount": "Service Account JSON",
-      "browseServiceAccount": "Browse…"
+  "constitutionSpecialists": {
+    "title": "専門オーバーレイ",
+    "description": "オーバーレイは、憲章に加えてアシスタント固有のルールを追加します。アシスタント ID ごとにオプトインで適用され、そのアシスタントのプロンプトに組み込まれます。",
+    "addButton": "オーバーレイを追加",
+    "idLabel": "アシスタント ID",
+    "idPlaceholder": "例: copy、spark、humanizer",
+    "idInvalid": "使用できるのは英字、数字、ハイフン、アンダースコアのみです。",
+    "idDuplicate": "その ID のオーバーレイはすでに存在します。",
+    "create": "作成",
+    "edit": "編集",
+    "delete": "削除",
+    "deleteConfirmTitle": "オーバーレイを削除しますか？",
+    "deleteConfirmBody": "「{{value}}」のオーバーレイは完全に削除されます。",
+    "cancel": "キャンセル",
+    "empty": "専門オーバーレイはまだありません。追加すると、特定のアシスタントに追加ルールを与えられます。",
+    "close": "閉じる",
+    "tokenCount": "{{value}} トークン"
+  },
+  "agentsPage": {
+    "title": "エージェント",
+    "subtitle": "チャットするアシスタントです。それぞれが一組のモデルで動作します。",
+    "yourAgents": "あなたのエージェント",
+    "moreDetected": "その他の検出 · {{count}}",
+    "remoteAgents": "リモートエージェント",
+    "roadmap": "ロードマップ",
+    "empty": "エージェントはまだ検出されていません。モデルを接続すれば Wayland Core は常に利用できます。",
+    "loadErrorsTitle": "一部のエージェントの読み込みに失敗しました",
+    "badge": {
+      "active": "アクティブ",
+      "detected": "検出済み"
     },
-    "tiers": {
-      "flagship": "Flagship",
-      "everyday": "Everyday",
-      "fast": "Fast",
-      "reasoning": "Reasoning",
-      "legacy": "Legacy"
+    "scope": {
+      "any": "接続したあらゆるモデルを実行",
+      "claude": "Claude モデルを実行",
+      "gpt": "GPT モデルを実行",
+      "gemini": "Gemini モデルを実行",
+      "qwen": "Qwen モデルを実行",
+      "kimi": "Kimi モデルを実行",
+      "mistral": "Mistral モデルを実行"
     },
-    "capabilities": {
-      "chat": "Chat",
-      "vision": "Vision",
-      "image": "Image generation",
-      "audio": "Audio",
-      "embeddings": "Embeddings",
-      "reasoning": "Reasoning"
+    "about": {
+      "wcore": "Wayland 独自のエンジン。「モデル」ページのすべてのプロバイダーを活用します。",
+      "claude": "Anthropic のコーディングエージェント。独自のアカウントでサインインします — GPT や Gemini は実行できません。",
+      "codex": "OpenAI のコーディングエージェント。独自のアカウントでサインインします — Claude や Gemini は実行できません。"
     },
-    "categories": {
-      "frontier": "Frontier",
-      "openInference": "Open inference",
-      "cloud": "Cloud",
-      "chineseFrontier": "Chinese frontier",
-      "specialised": "Specialised",
-      "voice": "Voice",
-      "custom": "Custom"
+    "flux": {
+      "title": "Flux Router",
+      "soon": "近日公開",
+      "desc": "どのエージェントも、自身のものだけでなく接続したすべてのモデルとプロバイダーにルーティングできます。"
     }
   }
 }

@@ -72,7 +72,7 @@ INPUTS=$(officecli query "$FILE" '/Assumptions/cell[type=Number]' --json | jq '[
 
 ## Print delivery (board / IC / LP)
 
-When the ask contains "print" / "一页" / "董事会" / "投资人" / "IC memo" / "LP update", the print pipeline must emit **only** the Outputs zone. Two artefacts:
+When the ask contains "print" / "one-pager" / "board" / "investor" / "IC memo" / "LP update", the print pipeline must emit **only** the Outputs zone. Two artefacts:
 
 ```bash
 # 1. Print_Area scoped to the Outputs sheet (Summary or Dashboard).

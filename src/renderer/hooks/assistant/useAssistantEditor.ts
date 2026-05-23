@@ -468,3 +468,5 @@ export const useAssistantEditor = ({
     handleToggleEnabled,
   };
 };
+
+export type UseAssistantEditorReturn = ReturnType<typeof useAssistantEditor>;

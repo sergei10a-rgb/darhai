@@ -5,7 +5,7 @@ description: "Use this skill when the user is building a fundraising / investor 
 
 # OfficeCLI Pitch Deck Skill
 
-**This skill is a scene layer on top of `officecli-pptx`.** Every pptx hard rule — visual delivery floor (title ≥ 36pt / body ≥ 18pt / title ≥ 2× body), 12-column grid on 33.87×19.05cm, 4 canonical palettes, chart-choice decision table, connector canon (`shape` / `from` / `to` / `tailEnd=triangle`), shell escape, resident + batch, Delivery Gate 1–5a — is inherited, not re-taught. This file adds only what **fundraising** needs on top: stage diagnosis (A / B / C), 5 赛道 arc templates, 10 key-slide recipes (cover / problem / solution / market / product / model / traction / team / financials / ask), pitch-specific numbers convention, a VC ship-check, and a pitch-specific fresh-eyes Gate 6.
+**This skill is a scene layer on top of `officecli-pptx`.** Every pptx hard rule — visual delivery floor (title ≥ 36pt / body ≥ 18pt / title ≥ 2× body), 12-column grid on 33.87×19.05cm, 4 canonical palettes, chart-choice decision table, connector canon (`shape` / `from` / `to` / `tailEnd=triangle`), shell escape, resident + batch, Delivery Gate 1–5a — is inherited, not re-taught. This file adds only what **fundraising** needs on top: stage diagnosis (A / B / C), 5 vertical arc templates, 10 key-slide recipes (cover / problem / solution / market / product / model / traction / team / financials / ask), pitch-specific numbers convention, a VC ship-check, and a pitch-specific fresh-eyes Gate 6.
 
 When the pptx base rules cover it, the text here says `→ see pptx v2 §X`. Read `skills/officecli-pptx/SKILL.md` first if you have not.
 
@@ -69,7 +69,7 @@ If the user says "fundraising deck" but the context is a corporate BU quarterly 
 | **Series C**      | $30M+ ARR                    | 100+ FTE     | 20 – 24     | **Financials + Scale + Moat (40%)** + Market expansion + Team depth                                       | Multi-year GAAP, rule-of-40, GM trajectory, international expansion plan, defensibility      | No moat slide; revenue growth without margin story; team slide has no prior CEO / CFO |
 | **Bridge / SAFE** | any                          | any          | 8 – 10      | **Specific bridge reason** + runway math + commitments                                                    | Prior round context; specific milestone the bridge funds; committed investor amount          | Treating a bridge like a Series A — too many slides dilutes the ask                   |
 
-**Decision procedure.** From one or two user sentences ("Series B, $18M ARR, 120 customers, $35M raise"), pick exactly one stage row. All later choices in this skill reference your stage: which 赛道 template to pull, which recipes are mandatory vs optional, and which Delivery Gate 6 checks fire.
+**Decision procedure.** From one or two user sentences ("Series B, $18M ARR, 120 customers, $35M raise"), pick exactly one stage row. All later choices in this skill reference your stage: which vertical template to pull, which recipes are mandatory vs optional, and which Delivery Gate 6 checks fire.
 
 **Corner cases.** Bridge rounds & convertibles between A → B are closer to A or B depending on whether the bridge milestone is "finish PMF" (A shape) or "hit unit-econ target" (B shape). "Extension" rounds at the same stage reuse the earlier stage's skeleton and add a one-slide "progress since last round" update.
 
@@ -84,7 +84,7 @@ If the user says "fundraising deck" but the context is a corporate BU quarterly 
 
 Substitute the analogue grep when running Gate 6.3 on these verticals. False WARN on SaaS CAC/LTV = expected; real concern = vertical-specific analogue present. Bio Series B decks especially: burn + runway-to-milestone IS the "unit econ" story.
 
-## 赛道 arc templates (5 families)
+## Vertical arc templates (5 families)
 
 5 mainstream verticals. Each one has different slide weights because what VCs require as proof-of-concept differs. Pick the vertical row; the slide skeleton is a copy-able starting point. Slide counts assume the matching stage row above.
 
@@ -338,7 +338,7 @@ EOF
 
 ### (2b) Why Now slide — Consumer / Seed / early A must-have
 
-**Visual outcome.** 3 cards across: each = **trigger headline** (24pt bold) + **data point** (60pt number or date) + **one-line implication** (16pt) + **source footnote** (12pt gray). Reuse Problem grid math (`col=9.78cm`, x = `1.5 / 12.04 / 22.58`). §赛道 Consumer row 2 must-have; Seed / early A in any vertical benefits when "market window" IS the thesis.
+**Visual outcome.** 3 cards across: each = **trigger headline** (24pt bold) + **data point** (60pt number or date) + **one-line implication** (16pt) + **source footnote** (12pt gray). Reuse Problem grid math (`col=9.78cm`, x = `1.5 / 12.04 / 22.58`). §Vertical Consumer row 2 must-have; Seed / early A in any vertical benefits when "market window" IS the thesis.
 
 ```bash
 SLIDE=3
@@ -577,7 +577,7 @@ officecli add "$FILE" "/slide[$SLIDE]" --type shape --prop text='18 months runwa
 
 ### (11) Pipeline chart — Bio / Deep Tech must-have
 
-**Visual outcome.** Horizontal swimlane. Left column = candidate name; 4 stage columns to the right (Preclinical / Ph1 / Ph2 / Ph3 for bio — or TRL1-3 / TRL4-6 / TRL7-8 / TRL9 for deep tech). Each row's bar extends to its current stage; darker fill for later stages. NCT / trial-ID footer below. §赛道 row 5 Bio must-have; SaaS / Consumer skip.
+**Visual outcome.** Horizontal swimlane. Left column = candidate name; 4 stage columns to the right (Preclinical / Ph1 / Ph2 / Ph3 for bio — or TRL1-3 / TRL4-6 / TRL7-8 / TRL9 for deep tech). Each row's bar extends to its current stage; darker fill for later stages. NCT / trial-ID footer below. §Vertical row 5 Bio must-have; SaaS / Consumer skip.
 
 Grid math: usable `= 30.87cm`, candidate col `= 7cm`, stage cols `= (30.87 − 7) / 4 = 5.97cm` each, row height `= 2.3cm`. Stage col x: `8.5 / 14.47 / 20.44 / 26.41`.
 
@@ -711,7 +711,7 @@ STRIP=$(officecli view "$FILE" text | grep -niE '(^|[^A-Za-z0-9])M (ARR|raised|S
 [ -z "$STRIP" ] && echo "Gate 2b OK (no \$-strip signatures)" || { echo "REJECT Gate 2b (likely zsh \$-strip — re-issue with single quotes):"; echo "$STRIP"; exit 1; }
 ```
 
-Fix: re-issue the offending `add`/`set` with single quotes around the text value (`--prop text='Series B · $35M'`, not double quotes). The same strip hits **chart series names / axis titles** (`--prop name="营收 ($M)"` → legend shows `营收 ()`): single-quote every chart prop carrying `$`.
+Fix: re-issue the offending `add`/`set` with single quotes around the text value (`--prop text='Series B · $35M'`, not double quotes). The same strip hits **chart series names / axis titles** (`--prop name="Revenue ($M)"` → legend shows `Revenue ()`): single-quote every chart prop carrying `$`.
 
 ### Gate 5b — Visual audit via HTML preview (MANDATORY, NOT optional)
 
@@ -803,7 +803,7 @@ Pitch-specific:
 - **TAM without methodology.** A claimed number with no "top-down" or "bottom-up" source footnote = fabricated. Pick one methodology per deck; don't mix.
 - **Use-of-Funds as 3-bucket or 5-bucket.** 4-bucket (Eng / GTM / G&A / Reserve) is convention; departing from it reads as sloppy. Gate 6.4 checks presence.
 - **Pitch deck used for a board review / sales deck.** Narrative arc (problem → ask) makes board reviews awkward — route to pptx v2 Recipe (d) 10-slide instead. See §Reverse handoff above.
-- **pptx v2 Recipe (d′) 20-slide is a starting point, not a formula.** It is stage-agnostic SaaS. Adjust for your stage + 赛道 via §Stage diagnosis and §赛道 arc templates — never ship (d′) unchanged for a non-SaaS Series A.
+- **pptx v2 Recipe (d′) 20-slide is a starting point, not a formula.** It is stage-agnostic SaaS. Adjust for your stage + vertical via §Stage diagnosis and §Vertical arc templates — never ship (d′) unchanged for a non-SaaS Series A.
 
 ## Help pointer
 

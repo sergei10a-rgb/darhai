@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -45,6 +45,21 @@ contextBridge.exposeInMainWorld('electronAPI', {
   webuiChangeUsername: (newUsername: string) => ipcRenderer.invoke('webui-direct-change-username', { newUsername }),
   // Feedback: collect and compress recent log files
   collectFeedbackLogs: () => ipcRenderer.invoke('feedback:collect-logs'),
+  // Wayland Constitution: agent behavioral spec stored at ~/.wayland/CONSTITUTION.md
+  readConstitution: (): Promise<string> => ipcRenderer.invoke('constitution:read'),
+  writeConstitution: (content: string): Promise<boolean> => ipcRenderer.invoke('constitution:write', content),
+  resetConstitution: (): Promise<string> => ipcRenderer.invoke('constitution:reset'),
+  readConstitutionWithOverlay: (assistantId?: string): Promise<{ constitution: string; overlay: string | null }> =>
+    ipcRenderer.invoke('constitution:readWithOverlay', assistantId),
+  // Per-specialist Constitution overlays at ~/.wayland/specialists/<id>.md
+  listConstitutionSpecialists: (): Promise<{ id: string; bytes: number }[]> =>
+    ipcRenderer.invoke('constitution:listSpecialists'),
+  readConstitutionSpecialist: (id: string): Promise<string> =>
+    ipcRenderer.invoke('constitution:readSpecialist', id),
+  writeConstitutionSpecialist: (id: string, content: string): Promise<boolean> =>
+    ipcRenderer.invoke('constitution:writeSpecialist', id, content),
+  deleteConstitutionSpecialist: (id: string): Promise<boolean> =>
+    ipcRenderer.invoke('constitution:deleteSpecialist', id),
   // 生��二维码 token / Generate QR token
   webuiGenerateQRToken: () => ipcRenderer.invoke('webui-direct-generate-qr-token'),
   // WeChat login IPC

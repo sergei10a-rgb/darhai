@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -27,6 +27,7 @@ import {
   getEnvExtensionsDirs,
   getHubResourcesDir,
   getUserExtensionsDir,
+  getVoiceModelsDir,
 } from '../constants';
 import { isPathWithinDirectory } from '../sandbox/pathSafety';
 
@@ -54,6 +55,9 @@ export function buildAssetAllowlist(): string[] {
   push(getUserExtensionsDir());
   push(getAppDataExtensionsDir());
   push(getHubResourcesDir());
+  // Bundled voice STT model — the renderer's transformers.js worker fetches
+  // the Whisper-tiny ONNX files through wayland-asset://.
+  push(getVoiceModelsDir());
 
   // Expand: when an extension dir contains symlinked children (the dev-mount
   // pattern: `ln -s /path/to/repo ~/.wayland-dev/extensions/my-ext`), the

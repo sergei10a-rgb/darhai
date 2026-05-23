@@ -12,6 +12,7 @@ import {
   Pencil,
   Puzzle,
   Radio,
+  ScrollText,
   Server,
   Sparkles,
   Zap,
@@ -49,6 +50,12 @@ export function getBuiltinSettingsNavItems(isDesktop: boolean, t: TranslateFn): 
       icon: <BookOpen size={16} />,
       path: 'assistants',
     },
+    constitution: {
+      id: 'constitution',
+      label: t('settings.sider.constitution', { defaultValue: 'Constitution' }),
+      icon: <ScrollText size={16} />,
+      path: 'constitution',
+    },
     agents: {
       id: 'agents',
       label: t('settings.sider.agents', { defaultValue: 'Agents' }),
@@ -61,11 +68,11 @@ export function getBuiltinSettingsNavItems(isDesktop: boolean, t: TranslateFn): 
       icon: <Zap size={16} />,
       path: 'skills',
     },
-    providers: {
-      id: 'providers',
-      label: t('settings.sider.providers', { defaultValue: 'Providers' }),
+    models: {
+      id: 'models',
+      label: t('settings.sider.models', { defaultValue: 'Models' }),
       icon: <Sparkles size={16} />,
-      path: 'providers',
+      path: 'models',
     },
     images: {
       id: 'images',

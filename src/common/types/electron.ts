@@ -67,6 +67,16 @@ export interface ElectronBridgeAPI {
   weixinLoginOnDone?: (callback: (data: { accountId: string }) => void) => () => void;
   // Feedback log collection / 收集反馈日志
   collectFeedbackLogs?: () => Promise<{ filename: string; data: number[] } | null>;
+  // Wayland Constitution: agent behavioral spec at ~/.wayland/CONSTITUTION.md
+  readConstitution?: () => Promise<string>;
+  writeConstitution?: (content: string) => Promise<boolean>;
+  resetConstitution?: () => Promise<string>;
+  readConstitutionWithOverlay?: (assistantId?: string) => Promise<{ constitution: string; overlay: string | null }>;
+  // Per-specialist Constitution overlays at ~/.wayland/specialists/<id>.md
+  listConstitutionSpecialists?: () => Promise<{ id: string; bytes: number }[]>;
+  readConstitutionSpecialist?: (id: string) => Promise<string>;
+  writeConstitutionSpecialist?: (id: string, content: string) => Promise<boolean>;
+  deleteConstitutionSpecialist?: (id: string) => Promise<boolean>;
 }
 
 declare global {

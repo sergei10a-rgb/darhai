@@ -118,6 +118,47 @@ function resolvePackagedApp(): { executablePath: string; cwd: string } | null {
   return null;
 }
 
+/**
+ * Auto-bootstrap the waylandteams-bundle symlink so specs that need the 24
+ * standing/launcher assistants find them without manual setup. Resolution
+ * order:
+ *   1. WAYLAND_E2E_BUNDLE_PATH env var — CI sets this after cloning the
+ *      waylandteams repo at the pinned ref.
+ *   2. ~/dev/waylandteams — sibling-repo convention on contributor machines.
+ *
+ * No-op if the candidate isn't a valid extension dir (missing manifest) or
+ * the symlink already points at it. Safe to run on every test launch.
+ */
+function ensureWaylandteamsBundleSymlink(wrapperDir: string, projectRoot: string): void {
+  const linkName = 'waylandteams-bundle';
+  const linkPath = path.join(wrapperDir, linkName);
+  const explicit = process.env.WAYLAND_E2E_BUNDLE_PATH;
+  // From ~/dev/wayland/app → ../../waylandteams = ~/dev/waylandteams
+  const sibling = path.resolve(projectRoot, '../../waylandteams');
+  const candidate = explicit ?? sibling;
+  const manifestExists = candidate && fs.existsSync(path.join(candidate, 'aion-extension.json'));
+  if (!manifestExists) return;
+
+  try {
+    fs.mkdirSync(wrapperDir, { recursive: true });
+    const linkStat = fs.lstatSync(linkPath, { throwIfNoEntry: false });
+    if (linkStat?.isSymbolicLink()) {
+      if (fs.readlinkSync(linkPath) === candidate) return;
+      fs.unlinkSync(linkPath);
+    } else if (linkStat) {
+      // A non-symlink file/dir is sitting at the target path — leave it
+      // alone so we don't blow away a developer's manual setup.
+      return;
+    }
+    fs.symlinkSync(candidate, linkPath, 'dir');
+  } catch (err) {
+    // Best-effort — if symlink creation fails (Windows without dev mode,
+    // permissions, etc.) the specs that need the bundle will fail with a
+    // clear message instead of a mysterious silent skip.
+    console.warn(`[e2e] could not create ${linkPath} -> ${candidate}:`, err instanceof Error ? err.message : err);
+  }
+}
+
 function shouldUsePackagedMode(): boolean {
   if (process.env.E2E_PACKAGED === '1') return true;
   if (process.env.E2E_DEV === '1') return false;
@@ -139,9 +180,31 @@ export async function launchAppWithEnv(extraEnv: Record<string, string> = {}): P
   const projectRoot = path.resolve(__dirname, '../..');
   const usePackaged = shouldUsePackagedMode();
 
+  // Build the extensions search path. Priority order:
+  //   1. examples/ — the harness's 6 in-repo test extensions (always).
+  //   2. tests/e2e/fixtures/extensions/ — wrapper dir scanned by
+  //      ExtensionLoader for `<child>/aion-extension.json` manifests. Auto-
+  //      bootstrap below creates a `waylandteams-bundle` symlink here when
+  //      either WAYLAND_E2E_BUNDLE_PATH (CI) or ~/dev/waylandteams (local)
+  //      resolves to a valid extension. Specs that assert against the 24
+  //      standing/launcher assistants (teams-library-load, golden-path,
+  //      launcher flows) depend on this bundle being present.
+  //
+  // ExtensionLoader scans each path's CHILDREN for manifests, not the path
+  // itself — so always point at the wrapper dir, not a bundle root.
+  const wrapperDir = path.join(projectRoot, 'tests/e2e/fixtures/extensions');
+  ensureWaylandteamsBundleSymlink(wrapperDir, projectRoot);
+  const PATH_SEP = process.platform === 'win32' ? ';' : ':';
+  const extensionPaths: string[] = [];
+  if (process.env.WAYLAND_EXTENSIONS_PATH) {
+    extensionPaths.push(process.env.WAYLAND_EXTENSIONS_PATH);
+  } else {
+    extensionPaths.push(path.join(projectRoot, 'examples'));
+    extensionPaths.push(wrapperDir);
+  }
   const commonEnv = {
     ...process.env,
-    WAYLAND_EXTENSIONS_PATH: process.env.WAYLAND_EXTENSIONS_PATH || path.join(projectRoot, 'examples'),
+    WAYLAND_EXTENSIONS_PATH: extensionPaths.join(PATH_SEP),
     WAYLAND_EXTENSION_STATES_FILE: process.env.WAYLAND_EXTENSION_STATES_FILE || e2eStateFile,
     WAYLAND_DISABLE_AUTO_UPDATE: '1',
     WAYLAND_DISABLE_DEVTOOLS: '1',

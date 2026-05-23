@@ -2,6 +2,7 @@ import { Bot } from 'lucide-react';
 import React from 'react';
 import { getAgentLogo } from '@renderer/utils/model/agentLogo';
 import { CUSTOM_AVATAR_IMAGE_MAP } from '@renderer/pages/guid/constants';
+import { getLucideIcon } from '@renderer/utils/lucideAvatar';
 import type { AvailableAgent } from '@renderer/utils/model/agentTypes';
 import type { AcpInitializeResult } from '@/common/types/acpTypes';
 import { isTeamCapableBackend } from '@/common/types/teamTypes';
@@ -42,12 +43,17 @@ export function resolveConversationType(
 }
 
 export const AgentOptionLabel: React.FC<{ agent: AvailableAgent }> = ({ agent }) => {
-  const logo = getAgentLogo(agent.backend);
-  const avatarImage = agent.avatar ? CUSTOM_AVATAR_IMAGE_MAP[agent.avatar] : undefined;
-  const isEmoji = agent.avatar && !avatarImage && !agent.avatar.endsWith('.svg');
+  const LucideIconComponent = getLucideIcon(agent.avatar);
+  const logo = LucideIconComponent ? null : getAgentLogo(agent.backend);
+  const avatarImage =
+    !LucideIconComponent && agent.avatar ? CUSTOM_AVATAR_IMAGE_MAP[agent.avatar] : undefined;
+  const isEmoji =
+    !LucideIconComponent && agent.avatar && !avatarImage && !agent.avatar.endsWith('.svg');
   return (
     <div className='flex items-center gap-8px'>
-      {avatarImage ? (
+      {LucideIconComponent ? (
+        <LucideIconComponent size={16} className='text-[var(--color-text-2)]' />
+      ) : avatarImage ? (
         <img src={avatarImage} alt={agent.name} style={{ width: 16, height: 16, objectFit: 'contain' }} />
       ) : isEmoji ? (
         <span style={{ fontSize: 14, lineHeight: '16px' }}>{agent.avatar}</span>

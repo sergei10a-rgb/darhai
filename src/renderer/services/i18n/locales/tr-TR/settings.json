@@ -446,6 +446,26 @@
   "speechToTextSmartFormat": "Akıllı Biçimlendirme",
   "speechToTextRequired": "Zorunlu",
   "speechToTextOptional": "İsteğe bağlı",
+  "speechToTextProviderWhisperLocal": "Whisper (Yerel)",
+  "speechToTextWhisperModel": "Whisper Modeli",
+  "speechToTextDownloadModel": "Modeli İndir",
+  "speechToTextDownloading": "İndiriliyor...",
+  "speechToTextDownloadSuccess": "Model başarıyla indirildi",
+  "speechToTextDownloadError": "İndirme başarısız",
+  "speechToTextCancelDownload": "İptal",
+  "textToSpeech": "Metinden Sese",
+  "textToSpeechDescription": "AI yanıtlarını yerel veya sistem ses motoruyla sesli okuyun.",
+  "textToSpeechProvider": "Sağlayıcı",
+  "textToSpeechProviderKokoroLocal": "Kokoro (Yerel)",
+  "textToSpeechProviderSystemNative": "Sistem Varsayılanı",
+  "textToSpeechVoice": "Ses",
+  "textToSpeechSpeed": "Hız",
+  "textToSpeechAutoRead": "Yanıtları Otomatik Oku",
+  "textToSpeechDownloadModel": "Modeli İndir",
+  "textToSpeechDownloading": "İndiriliyor...",
+  "textToSpeechDownloadSuccess": "Model başarıyla indirildi",
+  "textToSpeechDownloadError": "İndirme başarısız",
+  "textToSpeechCancelDownload": "İptal",
   "mcp": "MCP Entegrasyonu",
   "imageGenerationModel": "Görüntü Modeli",
   "imageGenerationGuide": "Görüntü Modeli Kurulum Rehberi",
@@ -940,6 +960,7 @@
     "groupAppearance": "GÖRÜNÜM",
     "groupSystem": "SİSTEM",
     "groupAbout": "HAKKINDA",
+    "models": "Modeller",
     "providers": "Sağlayıcılar",
     "channels": "Kanallar",
     "mcp": "MCP Sunucuları",
@@ -949,7 +970,8 @@
     "notifications": "Bildirimler",
     "storage": "Depolama",
     "skills": "Beceriler ve Araçlar",
-    "agents": "Ajanlar"
+    "agents": "Ajanlar",
+    "constitution": "Anayasa"
   },
   "channelsIndex": {
     "title": "Kanallar",
@@ -969,11 +991,215 @@
     "browseExtensions": "Uzantılara göz at →",
     "channelsMovedHint": "Kanallar Entegrasyonlar bölümüne taşındı →"
   },
-  "providersPage": {
-    "title": "Sağlayıcılar"
+  "modelsPage": {
+    "title": "Modeller",
+    "subtitle": "Bir anahtar veya Google girişiyle bir sağlayıcı bağlayın; modelleriniz otomatik olarak görünür.",
+    "crumbAiModels": "Yapay Zeka Modelleri",
+    "connectedLabel": "Bağlı",
+    "loadError": "Bağlı sağlayıcılar yüklenemedi. Birazdan tekrar deneyin.",
+    "connect": {
+      "title": "Sağlayıcı bağla",
+      "keyLabel": "Bir API anahtarı yapıştır",
+      "keyPlaceholder": "Herhangi bir sağlayıcının anahtarını yapıştırın…",
+      "connect": "Bağlan",
+      "hintDefault": "Wayland sağlayıcıyı kendisi tanır — birini seçmenize gerek yok.",
+      "hintAmbiguous": "OpenAI biçiminde bir anahtar gibi görünüyor — sağlayıcıyı doğrulamak için bağlanın.",
+      "recognized": "Tanındı:",
+      "cloudHint": "bu sağlayıcı Gözat'tan bir kimlik bilgisi formu gerektirir.",
+      "unrecognizedPrefix": "Tanınmayan anahtar biçimi —",
+      "unrecognizedBrowse": "sağlayıcınızı Gözat'tan seçin",
+      "or": "veya",
+      "google": "Google ile devam et",
+      "googleSuccess": "{{account}} olarak Google'a giriş yapıldı.",
+      "googleFailed": "Google girişi başarısız oldu. Lütfen tekrar deneyin.",
+      "browse": "30+ sağlayıcının tümüne gözat →",
+      "thatProvider": "o sağlayıcı",
+      "errorUnauthorized": "{{provider}} anahtarı reddedildi — yetkisiz. Anahtarı kontrol edip tekrar deneyin.",
+      "errorNoCredit": "Bağlandı, ancak {{provider}} anahtarının kullanılabilir kredisi yok. Model çalıştırmak için faturalandırma ekleyin.",
+      "errorOffline": "{{provider}} adresine ulaşılamadı — çevrimdışı görünüyorsunuz. Bağlantınızı kontrol edip tekrar deneyin.",
+      "errorUnrecognized": "Anahtar tanınmadı. Gözat'ı açın ve sağlayıcınızı seçin.",
+      "errorCloud": "{{provider}} tanındı — bu sağlayıcı birden fazla alan gerektiriyor. Tam kimlik bilgilerini girmek için Gözat'ı açın.",
+      "errorAmbiguous": "Bu anahtarın hangi sağlayıcıya ait olduğu belirlenemedi. Gözat'ı açın ve sağlayıcınızı seçin.",
+      "errorNoModels": "{{provider}} bağlandı ancak hiç model döndürmedi. Yönet'ten yenilemeyi deneyin.",
+      "errorUnknown": "{{provider}} adresine bağlanılamadı. Lütfen tekrar deneyin.",
+      "undecryptableHint": "Your saved key for this provider is unreadable. Please re-enter it.",
+      "fromDeepLink": "Derin bağlantıdan"
+    },
+    "detected": {
+      "found": "Bu makinede bir {{provider}} API anahtarı bulundu. Kullanılsın mı?",
+      "use": "Kullan",
+      "ignore": "Yok say"
+    },
+    "row": {
+      "connected": "Bağlı",
+      "testing": "Test ediliyor…",
+      "manage": "Yönet",
+      "fix": "Düzelt",
+      "modelCount": "{{count}} model",
+      "noModelsHint": "Model yok — Yönet'ten yenileyin",
+      "actionNeeded": "İşlem gerekiyor — {{reason}}",
+      "errorUnauthorized": "anahtar reddedildi",
+      "errorNoCredit": "kullanılabilir kredi yok",
+      "errorOffline": "sağlayıcıya ulaşılamıyor",
+      "errorUnrecognized": "anahtar tanınmadı",
+      "errorNoModels": "model döndürülmedi",
+      "errorUnknown": "bağlantı sorunu",
+      "via": {
+        "apiKey": "API anahtarı",
+        "autoDiscovered": "Otomatik bulunan anahtar",
+        "cloudCredentials": "Bulut kimlik bilgileri"
+      }
+    },
+    "empty": {
+      "note": "Henüz bağlı sağlayıcı yok. Yukarıdan bir tane bağlayın — en hızlı başlangıç <1>Google ile devam et</1>."
+    },
+    "manage": {
+      "statusConnected": "Bağlandı",
+      "statusError": "İşlem gerekiyor",
+      "refresh": "Yenile",
+      "rekey": "Anahtarı değiştir",
+      "disconnect": "Bağlantıyı kes",
+      "cancel": "İptal",
+      "retry": "Tekrar dene",
+      "statusLine": "{{via}} · katalogda {{count}} model · otomatik güncellenir",
+      "sectionLabel": "Bu sağlayıcının modelleri",
+      "sectionExplain": "Önerilen modeller varsayılan olarak açıktır — en yeni nesil ile bir önceki nesil. İstediğinizi kapatabilir veya daha eski, görsel ya da ses modelini açabilirsiniz. Tüm katalogda arama yapın.",
+      "searchPlaceholder": "Bu sağlayıcının modellerinde ara…",
+      "loading": "Bu sağlayıcının kataloğu yükleniyor…",
+      "loadError": "Bu sağlayıcının modelleri yüklenemedi. Tekrar deneyin.",
+      "empty": "Bu sağlayıcı hiç model döndürmedi. Yenileyip tekrar deneyin.",
+      "noMatch": "\"{{query}}\" ile eşleşen model yok",
+      "recommendedHead": "Önerilen — varsayılan olarak açık",
+      "moreHead": "Katalogdaki diğer modeller",
+      "recommended": "Önerilen",
+      "roleFlagship": "En yetenekli",
+      "roleFast": "En hızlı",
+      "rolePrevious": "Önerilen",
+      "capImage": "Görsel",
+      "capAudio": "Ses",
+      "capEmbedding": "Gömme",
+      "capOther": "Diğer",
+      "tagChat": "Sohbet",
+      "tagVision": "Görü",
+      "tagImage": "Görsel",
+      "tagAudio": "Ses",
+      "tagEmbeddings": "Gömmeler",
+      "tagReasoning": "Akıl yürütme",
+      "tagTools": "Araçlar",
+      "tagResearch": "Araştırma",
+      "contextWindow": "{{count}}K bağlam",
+      "cost": "M başına ${{in}} / ${{out}}",
+      "toggleAria": "{{model}} modelini etkinleştir",
+      "toggleFailed": "Bu model değiştirilemedi. Lütfen tekrar deneyin.",
+      "refreshDone": "Katalog güncel.",
+      "refreshFailed": "Bu sağlayıcı yenilenemedi. Lütfen tekrar deneyin.",
+      "disconnectTitle": "Bu sağlayıcının bağlantısı kesilsin mi?",
+      "disconnectBody": "{{provider}} bağlantısını kesmek onu ve modellerini kaldırır. Daha sonra bir anahtarla yeniden bağlanabilirsiniz.",
+      "disconnectConfirm": "Bağlantıyı kes",
+      "disconnectFailed": "Bu sağlayıcının bağlantısı kesilemedi. Lütfen tekrar deneyin.",
+      "rekeyTitle": "{{provider}} anahtarını değiştir",
+      "rekeyBody": "Bu sağlayıcı için yeni bir API anahtarı yapıştırın. Mevcut kimlik bilgilerini değiştirir ve bir bağlantı testi çalıştırır.",
+      "rekeyPlaceholder": "Yeni bir API anahtarı yapıştırın…",
+      "rekeyConfirm": "Anahtarı güncelle",
+      "rekeyDone": "Sağlayıcı kimlik bilgileri güncellendi.",
+      "rekeyCloudDisabled": "Bulut kimlik bilgileri buradan değil, bulut bağlantı formundan yeniden ayarlanır.",
+      "errorUnauthorized": "Bu {{provider}} anahtarı reddedildi — yetkisiz. Anahtarı kontrol edip tekrar deneyin.",
+      "errorNoCredit": "Bu {{provider}} anahtarının kullanılabilir kredisi yok. Model çalıştırmak için faturalandırma ekleyin.",
+      "errorOffline": "{{provider}} sağlayıcısına ulaşılamadı — çevrimdışı görünüyorsunuz. Bağlantınızı kontrol edip tekrar deneyin.",
+      "errorUnrecognized": "Bu anahtar {{provider}} için tanınmadı.",
+      "errorNoModels": "{{provider}} anahtarı kabul etti ancak hiç model döndürmedi. Yenilemeyi deneyin.",
+      "errorUnknown": "{{provider}} güncellenemedi. Lütfen tekrar deneyin."
+    },
+    "browse": {
+      "title": "Tüm sağlayıcılar",
+      "subtitle": "Bağlanmak için birini seçin. Çoğu bir anahtar ister; bulut sağlayıcılar kısa bir kimlik bilgisi formu ister.",
+      "searchPlaceholder": "30+ sağlayıcı arayın…",
+      "noMatch": "“{{query}}” ile eşleşen sağlayıcı yok",
+      "back": "Tüm sağlayıcılar",
+      "connected": "Bağlı",
+      "connectAria": "{{provider}} bağla",
+      "cloudTag": "kimlik bilgisi formu",
+      "group": {
+        "frontier": "Öncü",
+        "cloud": "Bulut — kimlik bilgisi formu",
+        "open": "Açık çıkarım",
+        "chinese": "Çin öncüsü",
+        "voice": "Ses ve transkripsiyon"
+      },
+      "keySubtitle": "Bağlanmak için {{provider}} API anahtarını yapıştırın.",
+      "keyLabel": "API anahtarı",
+      "keyPlaceholder": "API anahtarınızı yapıştırın…",
+      "connect": "Bağlan ve test et",
+      "errorUnauthorized": "O {{provider}} anahtarı reddedildi — yetkisiz. Anahtarı kontrol edip tekrar deneyin.",
+      "errorNoCredit": "Bağlandı, ancak o {{provider}} anahtarının kullanılabilir kredisi yok. Model çalıştırmak için faturalandırma ekleyin.",
+      "errorOffline": "{{provider}} erişilemedi — çevrimdışı görünüyorsunuz. Bağlantınızı kontrol edip tekrar deneyin.",
+      "errorUnrecognized": "O anahtar {{provider}} için tanınmadı. Anahtarı kontrol edip tekrar deneyin.",
+      "errorNoModels": "{{provider}} bağlandı ancak hiç model döndürmedi. Yönet ekranından yenilemeyi deneyin.",
+      "errorUnknown": "{{provider}} bağlanılamadı. Lütfen tekrar deneyin.",
+      "baseUrlLabel": "Temel URL (isteğe bağlı)",
+      "baseUrlPlaceholder": "https://your-endpoint.example/v1"
+    },
+    "cloud": {
+      "subtitle": {
+        "aws-bedrock": "Bedrock, IAM kimlik bilgileri ve bir bölge gerektirir.",
+        "vertex": "Vertex bir proje, bir bölge ve bir hizmet hesabı anahtarı gerektirir.",
+        "azure": "Azure OpenAI, kaynak uç noktanızı ve bir API anahtarı gerektirir."
+      },
+      "fields": {
+        "accessKeyId": {
+          "label": "Erişim Anahtarı Kimliği",
+          "placeholder": "AKIA…"
+        },
+        "secretAccessKey": {
+          "label": "Gizli Erişim Anahtarı",
+          "placeholder": "Gizli erişim anahtarınızı yapıştırın…"
+        },
+        "region": {
+          "label": "Bölge",
+          "placeholder": "us-east-1"
+        },
+        "projectId": {
+          "label": "Proje Kimliği",
+          "placeholder": "my-gcp-project"
+        },
+        "serviceAccountJson": {
+          "label": "Hizmet hesabı anahtarı (JSON)",
+          "placeholder": "Hizmet hesabı JSON dosyasını yapıştırın…"
+        },
+        "endpoint": {
+          "label": "Uç nokta",
+          "placeholder": "https://my-resource.openai.azure.com"
+        },
+        "apiKey": {
+          "label": "API Anahtarı",
+          "placeholder": "API anahtarınızı yapıştırın…"
+        }
+      },
+      "submitConnect": "Bağlan ve test et",
+      "submitRekey": "Kimlik bilgilerini güncelle",
+      "errorUnauthorized": "O {{provider}} kimlik bilgileri reddedildi — yetkisiz. Kontrol edip tekrar deneyin.",
+      "errorNoCredit": "Bağlandı, ancak {{provider}} kullanılabilir krediye sahip değil. Model çalıştırmak için faturalandırma ekleyin.",
+      "errorOffline": "{{provider}} erişilemedi — çevrimdışı görünüyorsunuz. Bağlantınızı kontrol edip tekrar deneyin.",
+      "errorUnrecognized": "Bu kimlik bilgileri eksik veya {{provider}} tarafından kabul edilmedi. Her alanı kontrol edin.",
+      "errorNoModels": "{{provider}} bağlandı ancak hiç model döndürmedi. Yönet ekranından yenilemeyi deneyin.",
+      "errorUnknown": "{{provider}} bağlanılamadı. Lütfen tekrar deneyin."
+    },
+    "homePicker": {
+      "empty": "Bu aracı için henüz model yok. Bir model eklemek için bir sağlayıcı bağlayın.",
+      "priceTierAria": "Fiyat kademesi {{tier}}"
+    }
   },
   "mcpPage": {
     "title": "MCP Sunucuları"
+  },
+  "imageGenPage": {
+    "title": "Görsel Oluşturma",
+    "subtitle": "Yerleşik görsel oluşturma aracını yapılandırın: varsayılan modeli seçin, MCP sunucusunu etkinleştirin veya devre dışı bırakın.",
+    "mcpToggleLabel": "Görsel oluşturma aracını etkinleştir",
+    "mcpToggleDescription": "Etkinleştirildiğinde ajanlar, yapılandırılan modeli kullanarak görsel oluşturabilir ve düzenleyebilir.",
+    "defaultModelLabel": "Varsayılan görsel modeli",
+    "noModels": "Görsel oluşturmaya uygun model yapılandırılmamış.",
+    "toggleError": "Görsel oluşturma değiştirilemedi. Lütfen tekrar deneyin."
   },
   "generalPage": {
     "title": "Genel"
@@ -991,85 +1217,69 @@
   "skillsPage": {
     "title": "Beceriler ve Araçlar"
   },
-  "agentsPage": {
-    "title": "Ajanlar"
+  "constitutionPage": {
+    "subtitle": "Wayland'in kuralları. Her turda yeniden yüklenir — düzenlemeler yeniden başlatma olmadan anında uygulanır. Geçersiz kılmaların nasıl çalıştığı için §11'e bakın.",
+    "tocTitle": "Bölümler",
+    "tocEmpty": "Henüz bölüm yok",
+    "reset": "Sıfırla",
+    "resetTooltip": "Varsayılan Anayasaya sıfırla",
+    "resetConfirmTitle": "Anayasa sıfırlansın mı?",
+    "resetConfirmBody": "Mevcut düzenlemeleriniz kaybolacak. Varsayılan Anayasa geri yüklenecek.",
+    "resetCancel": "İptal",
+    "loading": "Yükleniyor…",
+    "tokenCount": "{{value}} token",
+    "tokenWarning": "Uyum üst sınırına (~2,000 token) yaklaşılıyor. Bölümleri uzman katmanlarına ayırmayı düşünün.",
+    "tokenError": "Uyum üst sınırı aşıldı. Bölümleri ~/.wayland/specialists/<id>.md konumundaki uzman katmanlarına taşıyın."
   },
-  "providers": {
-    "heroTitle": "Connect a provider",
-    "heroPlaceholder": "Paste an API key...",
-    "detectButton": "Detect & connect",
-    "browseButton": "Browse 24+ providers",
-    "connected": "Connected",
-    "refreshed": "Refreshed {{n}}h ago",
-    "refreshNow": "Refresh now",
-    "disconnect": "Disconnect",
-    "configure": "Configure",
-    "deprecationBanner": "Some models in this provider’s catalog have been removed",
-    "defaultsTitle": "Default models",
-    "defaultChat": "Default chat model",
-    "defaultCoding": "Default coding model",
-    "defaultVision": "Default vision model",
-    "defaultImage": "Default image model",
-    "defaultAudio": "Default audio model",
-    "noDefault": "No default set",
-    "connect": {
-      "entryTitle": "Connect a provider",
-      "placeholder": "Paste your API key here...",
-      "detectButton": "Detect & connect",
-      "browseButton": "Browse 24+ providers",
-      "detectingProvider": "Detecting provider…",
-      "verifyingKey": "Verifying key…",
-      "fetchingCatalog": "Fetching model catalog…",
-      "moreInfoTitle": "Additional details required",
-      "pickerTitle": "Choose a provider",
-      "pickerSearch": "Search providers…",
-      "resultsTitle": "Select models to enable",
-      "resultsSelectAll": "Select all",
-      "resultsDeselectAll": "Deselect all",
-      "connectButton": "Connect",
-      "cancel": "Cancel",
-      "retry": "Try again",
-      "editKey": "Edit key",
-      "openConsole": "Open provider console",
-      "errorTitle": "Connection failed",
-      "errorNetwork": "Could not reach the provider. Check your network connection.",
-      "errorUnauthorized": "Invalid API key. Check your key and try again.",
-      "errorForbidden": "This key does not have the required permissions.",
-      "errorRateLimit": "Rate limit hit. Wait a moment and try again.",
-      "errorUnknown": "An unexpected error occurred.",
-      "fieldRegion": "AWS Region",
-      "fieldSecretKey": "Secret Access Key",
-      "fieldAccessKeyId": "Access Key ID",
-      "fieldEndpoint": "Endpoint URL",
-      "fieldDeployment": "Deployment Name",
-      "fieldApiVersion": "API Version",
-      "fieldProjectId": "Google Cloud Project ID",
-      "fieldServiceAccount": "Service Account JSON",
-      "browseServiceAccount": "Browse…"
+  "constitutionSpecialists": {
+    "title": "Uzman Katmanları",
+    "description": "Katmanlar, Anayasa'nın üzerine asistana özgü kurallar ekler. Asistan kimliğine göre isteğe bağlı olarak etkinleşir ve o asistanın istemine eklenir.",
+    "addButton": "Katman ekle",
+    "idLabel": "Asistan kimliği",
+    "idPlaceholder": "ör. copy, spark, humanizer",
+    "idInvalid": "Yalnızca harf, rakam, tire ve alt çizgi kullanın.",
+    "idDuplicate": "Bu kimliğe sahip bir katman zaten mevcut.",
+    "create": "Oluştur",
+    "edit": "Düzenle",
+    "delete": "Sil",
+    "deleteConfirmTitle": "Katman silinsin mi?",
+    "deleteConfirmBody": "\"{{value}}\" için katman kalıcı olarak kaldırılacak.",
+    "cancel": "İptal",
+    "empty": "Henüz uzman katmanı yok. Belirli bir asistana ek kurallar vermek için bir tane ekleyin.",
+    "close": "Kapat",
+    "tokenCount": "{{value}} token"
+  },
+  "agentsPage": {
+    "title": "Ajanlar",
+    "subtitle": "Sohbet ettiğiniz asistanlar. Her biri bir model kümesi üzerinde çalışır.",
+    "yourAgents": "Ajanlarınız",
+    "moreDetected": "Daha fazla algılanan · {{count}}",
+    "remoteAgents": "Uzak ajanlar",
+    "roadmap": "Yol haritasında",
+    "empty": "Henüz ajan algılanmadı. Bir model bağlandığında Wayland Core her zaman kullanılabilir.",
+    "loadErrorsTitle": "Bazı ajanlar yüklenemedi",
+    "badge": {
+      "active": "Etkin",
+      "detected": "Algılandı"
     },
-    "tiers": {
-      "flagship": "Flagship",
-      "everyday": "Everyday",
-      "fast": "Fast",
-      "reasoning": "Reasoning",
-      "legacy": "Legacy"
+    "scope": {
+      "any": "Bağladığınız her modeli çalıştırır",
+      "claude": "Claude modellerini çalıştırır",
+      "gpt": "GPT modellerini çalıştırır",
+      "gemini": "Gemini modellerini çalıştırır",
+      "qwen": "Qwen modellerini çalıştırır",
+      "kimi": "Kimi modellerini çalıştırır",
+      "mistral": "Mistral modellerini çalıştırır"
     },
-    "capabilities": {
-      "chat": "Chat",
-      "vision": "Vision",
-      "image": "Image generation",
-      "audio": "Audio",
-      "embeddings": "Embeddings",
-      "reasoning": "Reasoning"
+    "about": {
+      "wcore": "Waylandın kendi motoru. Modeller sayfanızdaki her sağlayıcıyı kullanır.",
+      "claude": "Anthropicin kodlama ajanı. Kendi hesabıyla oturum açar — GPT veya Gemini çalıştıramaz.",
+      "codex": "OpenAInin kodlama ajanı. Kendi hesabıyla oturum açar — Claude veya Gemini çalıştıramaz."
     },
-    "categories": {
-      "frontier": "Frontier",
-      "openInference": "Open inference",
-      "cloud": "Cloud",
-      "chineseFrontier": "Chinese frontier",
-      "specialised": "Specialised",
-      "voice": "Voice",
-      "custom": "Custom"
+    "flux": {
+      "title": "Flux Router",
+      "soon": "Yakında",
+      "desc": "Herhangi bir ajanın yalnızca kendi modelleri değil, bağladığınız tüm modeller ve sağlayıcılar arasında yönlendirme yapmasını sağlar."
     }
   }
 }

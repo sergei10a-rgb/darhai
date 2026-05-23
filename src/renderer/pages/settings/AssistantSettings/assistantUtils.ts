@@ -97,18 +97,42 @@ export const normalizeExtensionAssistants = (extensionAssistants: Record<string,
         enabled: true,
         _source: 'extension',
         _extensionName: typeof ext._extensionName === 'string' ? ext._extensionName : undefined,
-        _kind: typeof ext._kind === 'string' ? ext._kind : undefined,
+        // Prefer the bundle-declared `kind` ('team' | 'specialist' for the
+        // /assistants library page). Fall back to legacy `_kind` if older
+        // bundles set it.
+        _kind:
+          typeof ext.kind === 'string'
+            ? ext.kind
+            : typeof ext._kind === 'string'
+              ? ext._kind
+              : undefined,
+        // W1a — Carry the launcher roster, ritual cadences, and standing flag
+        // through to the renderer so W2a (Standing Companies sub-group) and
+        // W2b (pre-configured spawn) can render without re-reading bundle.
+        _teammates: Array.isArray(ext.teammates) ? (ext.teammates as string[]) : undefined,
+        _rituals: Array.isArray(ext.rituals)
+          ? (ext.rituals as Array<{ name: string; cadence: string }>)
+          : undefined,
+        _standing: typeof ext.standing === 'boolean' ? ext.standing : undefined,
       } as AssistantListItem;
     })
     .filter((item): item is AssistantListItem => item !== null);
 };
 
 /**
- * Check if an assistant originates from an extension.
+ * Check if an assistant originates from an extension or another bundle-vendored
+ * source (waylandteams via the resolver, FoundrySkills via the agent-profile
+ * merge). All of these are read-only, ship their context inline on the record,
+ * and should bypass the local-file context loader used for user-created
+ * assistants.
  */
 export const isExtensionAssistant = (assistant: AssistantListItem | null | undefined): boolean => {
   if (!assistant) return false;
-  return assistant._source === 'extension' || assistant.id.startsWith('ext-');
+  return (
+    assistant._source === 'extension' ||
+    assistant._source === 'vendored-agent-profile' ||
+    assistant.id.startsWith('ext-')
+  );
 };
 
 /**

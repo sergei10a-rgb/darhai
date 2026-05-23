@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -287,17 +287,16 @@ const WaylandModal: React.FC<WaylandModalProps> = ({
       const okLabel = props.okText ?? t('common.confirm', { defaultValue: 'Confirm' });
       return {
         render: () => (
-          <div className='flex justify-end gap-10px mt-10px'>
-            {/* Default buttons ship with rounded corners; text can be overridden via cancelText/okText */}
-            <Button onClick={onCancel} className='px-20px min-w-80px' style={{ borderRadius: 8 }}>
+          <div className='flex justify-end gap-12px'>
+            {/* Canonical recipe: secondary rectangular 8px, primary pill h-32px px-16px */}
+            <Button onClick={onCancel} className='px-16px min-w-80px' style={{ borderRadius: 8 }}>
               {cancelLabel}
             </Button>
             <Button
               type='primary'
               onClick={props.onOk}
               loading={props.confirmLoading}
-              className='px-20px min-w-80px'
-              style={{ borderRadius: 8 }}
+              className='min-w-80px'
             >
               {okLabel}
             </Button>
@@ -335,7 +334,7 @@ const WaylandModal: React.FC<WaylandModalProps> = ({
     const headerClassName = classNames(HEADER_BASE_CLASS, headerConfig.className);
 
     const headerStyle: CSSProperties = {
-      borderBottom: '1px solid var(--bg-3)',
+      borderBottom: '1px solid var(--color-border-2)',
       ...headerConfig.style,
     };
 
@@ -344,7 +343,7 @@ const WaylandModal: React.FC<WaylandModalProps> = ({
         {headerConfig.title && <h3 className={TITLE_BASE_CLASS}>{headerConfig.title}</h3>}
         {headerConfig.showClose && (
           <button onClick={onCancel} className={CLOSE_BUTTON_CLASS} aria-label='Close'>
-            {headerConfig.closeIcon || <X size={20} color='#86909c' />}
+            {headerConfig.closeIcon || <X size={20} color='var(--color-text-3)' />}
           </button>
         )}
       </div>

@@ -135,7 +135,7 @@ const TeamCreateModal: React.FC<Props> = ({ visible, onClose, onCreated }) => {
       visible={visible}
       onCancel={handleClose}
       className='team-create-modal'
-      style={{ width: 560 }}
+      style={{ width: 640 }}
       wrapStyle={{ zIndex: 10000 }}
       maskStyle={{ zIndex: 9999 }}
       autoFocus={false}
@@ -147,7 +147,7 @@ const TeamCreateModal: React.FC<Props> = ({ visible, onClose, onCreated }) => {
       }}
       header={{
         render: () => (
-          <div className='flex items-center justify-between border-b border-border-1 bg-dialog-fill-0 px-24px py-20px'>
+          <div className='flex items-center justify-between border-b border-[color:var(--color-border-2)] bg-dialog-fill-0 px-24px py-20px'>
             <h3 className='m-0 text-18px font-500 text-t-primary'>
               {t('team.create.title', { defaultValue: 'Create Team' })}
             </h3>
@@ -161,8 +161,8 @@ const TeamCreateModal: React.FC<Props> = ({ visible, onClose, onCreated }) => {
         ),
       }}
       footer={
-        <div className='flex justify-end gap-10px border-t border-border-1 bg-dialog-fill-0 px-24px py-20px'>
-          <Button onClick={handleClose} className='min-w-88px' style={{ borderRadius: 8 }}>
+        <div className='flex justify-end gap-12px border-t border-[color:var(--color-border-2)] bg-dialog-fill-0 px-24px py-20px'>
+          <Button onClick={handleClose} className='min-w-88px px-16px' style={{ borderRadius: 8 }}>
             {t('common.cancel', { defaultValue: 'Cancel' })}
           </Button>
           <Button
@@ -170,7 +170,6 @@ const TeamCreateModal: React.FC<Props> = ({ visible, onClose, onCreated }) => {
             onClick={handleCreate}
             loading={loading}
             className='min-w-88px'
-            style={{ borderRadius: 8 }}
           >
             {t('team.create.confirm', { defaultValue: 'Create Team' })}
           </Button>

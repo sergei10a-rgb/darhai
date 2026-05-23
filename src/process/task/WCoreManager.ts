@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -15,6 +15,7 @@ import { BaseApprovalStore, type IApprovalKey } from '@/common/chat/approval';
 import { ToolConfirmationOutcome } from '../agent/gemini/cli/tools/tools';
 import { WCoreAgent, type StdioMcpOption } from '@process/agent/wcore';
 import type { WCoreCapabilities } from '@process/agent/wcore/protocol';
+import { buildSystemInstructionsWithSkillsIndex } from './agentUtils';
 import { getDatabase } from '@process/services/database';
 import { addMessage, addOrUpdateMessage } from '@process/utils/message';
 import { uuid } from '@/common/utils';
@@ -88,6 +89,13 @@ type WCoreManagerData = {
   conversation_id: string;
   yoloMode?: boolean;
   presetRules?: string;
+  presetAssistantId?: string;
+  /** Assistant-scoped always-on skill names (pinned/preset-enabled).  */
+  enabledSkills?: string[];
+  /** Builtin skill names to exclude from auto-injection. */
+  excludeBuiltinSkills?: string[];
+  /** True when this agent should advertise the team-guide MCP. */
+  enableTeamGuide?: boolean;
   maxTokens?: number;
   maxTurns?: number;
   sessionMode?: string;
@@ -179,12 +187,30 @@ export class WCoreManager extends BaseAgentManager<WCoreManagerData, string> {
       if (teamGuide) stdioMcpServers.push(teamGuide);
     }
 
+    // Prepend Wayland Constitution + specialist overlay AND inject the
+    // builtin-skills index + `wayland_search_skills` MCP advert into the
+    // system prompt. wcore delivers these via `init_history` as
+    // `[Assistant System Rules]\n...` on the first turn. The helper returns
+    // undefined when there is nothing to inject (no Constitution, no preset,
+    // no skills, no library) — in that case we keep the prior "no
+    // presetRules" behaviour for fresh installs. (H1: WCoreManager advertise
+    // the second channel.)
+    const systemInstructions = await buildSystemInstructionsWithSkillsIndex({
+      presetContext: mergedData.presetRules,
+      enabledSkills: mergedData.enabledSkills,
+      excludeBuiltinSkills: mergedData.excludeBuiltinSkills,
+      enableTeamGuide: mergedData.enableTeamGuide,
+      backend: 'wcore',
+      presetAssistantId: mergedData.presetAssistantId,
+    });
+    const effectivePresetRules = systemInstructions ?? mergedData.presetRules;
+
     const agent = new WCoreAgent({
       workspace: mergedData.workspace,
       model: mergedData.model,
       proxy: mergedData.proxy,
       yoloMode: mergedData.yoloMode,
-      presetRules: mergedData.presetRules,
+      presetRules: effectivePresetRules,
       maxTokens: mergedData.maxTokens,
       maxTurns: mergedData.maxTurns,
       sessionId: mergedData.sessionId,

@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -44,7 +44,15 @@ const validateAddProviderDecoded = (decoded: unknown): DeepLinkAddProviderDetail
   };
 };
 
-/** Pending deep link data for the add-provider action. Read-once: consumed by ModelModalContent on mount. */
+/**
+ * Pending deep link data for the add-provider action. Read-once: consumed by
+ * the Models settings page on mount.
+ *
+ * Historical note: the Wave 3B refactor deleted the `ModelModalContent` flow
+ * that originally read this pending value, but the deep-link API is still
+ * exported for forward-compatibility with a future add-provider deep-link
+ * handler in the new Models page.
+ */
 let pendingDeepLinkData: DeepLinkAddProviderDetail | null = null;
 
 /**
@@ -65,10 +73,10 @@ const ALLOWED_NAVIGATE_PATTERNS = [/^\/team\/[^/]+$/, /^\/conversation\/[^/]+$/]
 
 /**
  * Hook to listen for wayland:// deep link events from main process.
- * Routes 'add-provider' action to the model settings page.
+ * Routes 'add-provider' action to the Models settings page.
  * Routes 'navigate' action to the specified route (whitelist-validated).
  * The pre-fill data is stored in a module-level variable and consumed
- * by ModelModalContent on mount via consumePendingDeepLink().
+ * by the Models settings page on mount via consumePendingDeepLink().
  */
 export const useDeepLink = () => {
   const navigate = useNavigate();
@@ -88,8 +96,9 @@ export const useDeepLink = () => {
           platform: fromDecoded.platform ?? payload.params.platform,
         };
 
-        // Navigate to model settings page; ModelModalContent will pick up the pending data
-        void navigate('/settings/model');
+        // Navigate to the Models settings page; consumers can read the
+        // pending data via `consumePendingDeepLink()` on mount.
+        void navigate('/settings/models');
         return;
       }
 

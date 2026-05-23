@@ -89,5 +89,25 @@
   "unit": {
     "minute_short": "m",
     "second_short": "s"
+  },
+  "cmdk": {
+    "label": "Command palette",
+    "placeholder": "Search assistants, chats, prompts…",
+    "noResults": "No results",
+    "groups": {
+      "bestMatch": "Best match",
+      "teams": "Teams",
+      "specialists": "Specialists",
+      "builtins": "Built-ins",
+      "recents": "Recent chats",
+      "prompts": "Starter prompts"
+    },
+    "prompts": {
+      "brainstorm": "Brainstorm ideas",
+      "summarize": "Summarize text",
+      "codeReview": "Review code",
+      "explain": "Explain a topic",
+      "plan": "Draft a plan"
+    }
   }
 }

@@ -458,6 +458,13 @@ try {
   execSync('node scripts/prepareHubResources.js', { stdio: 'inherit', env: process.env });
   // 5b. Prepare wayland-core binary (Rust CLI for agent integration)
   prepareWaylandCore();
+  // 5c. Prepare the bundled voice STT model (Whisper-tiny ONNX, ~43 MB) so
+  // offline dictation works on a fresh install with zero download.
+  // spawnSync with arg array — no shell, safe.
+  spawnSync('node', [path.join(__dirname, 'prepareVoiceModel.js')], {
+    stdio: 'inherit',
+    env: process.env,
+  });
 
   // 6. 运行 electron-builder 生成分发包（DMG/ZIP/EXE等）
   // Run electron-builder to create distributables (DMG/ZIP/EXE, etc.)

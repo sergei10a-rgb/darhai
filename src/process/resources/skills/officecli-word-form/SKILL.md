@@ -63,17 +63,17 @@ A Word form is a `.docx` plus four OpenXML payload layers plain-docx skills do n
 
 `--after find:<text>` matches the **first** occurrence. Bad anchor = wrong insertion location, expensive to debug. Three rules:
 
-1. **Anchor must be globally unique.** In bilingual contracts "甲方签字" matches both parties — use a unique phrase like "甲方签字（Service Provider）" or full English title.
+1. **Anchor must be globally unique.** In a two-party contract a label like "Signature" matches both parties — use a unique phrase like "Signature (Service Provider)" or a full role-qualified title.
 2. **After insert, `/body/p[last()]` is unreliable** — the find insertion changes `<w:body>` child order. To continue operating on the new paragraph, read its real paraId: `officecli query "$FILE" paragraph --json | jq -r '.data.results[-1].format.paraId'`.
-3. **Chinese + full-width parens `（）`** match literally in `find`, but when unsure, `officecli view "$FILE" text | grep -n "锚点"` first to confirm the exact bytes in the file.
+3. **Non-ASCII characters and full-width parens `（）`** match literally in `find`, but when unsure, `officecli view "$FILE" text | grep -n "anchor"` first to confirm the exact bytes in the file.
 
 ```bash
-# Trap: first-match hits 甲方 only, 乙方 missed
-officecli add "$FILE" /body --type sdt --after 'find:签字'
+# Trap: first-match hits Party A only, Party B missed
+officecli add "$FILE" /body --type sdt --after 'find:Signature'
 
 # Fix: two signatories, two unique anchors
 officecli add "$FILE" /body --type sdt --prop alias=Party_A_Name --prop tag=party_a \
-  --after 'find:甲方签字（Service Provider）'
+  --after 'find:Signature (Service Provider)'
 PID_A=$(officecli query "$FILE" paragraph --json | jq -r '.data.results[-1].format.paraId')
 officecli add "$FILE" "/body/p[@paraId='$PID_A']" --type sdt --prop alias=Party_A_Title --prop tag=party_a_title
 ```
@@ -91,7 +91,7 @@ A real fillable form requires **structured fields** + **document protection**.
 | MERGEFIELD placeholders                 | `«CustomerName»` merged by downstream engine | `query field`                    | **YES** (template-time) |
 | Underscores `___` / blank lines         | Visual-only; whole doc editable              | No — no structured fields        | **NO**                  |
 
-**Do not simulate fields with underscores.** `姓名：_______________` produces zero structured data and leaks past every verification. Always use `--type sdt` or `--type formfield`.
+**Do not simulate fields with underscores.** `Name: _______________` produces zero structured data and leaks past every verification. Always use `--type sdt` or `--type formfield`.
 
 **Checkbox is formfield, NOT SDT.** `--type sdt --prop type=checkbox` exits 1 (`SDT type 'checkbox' is not implemented`). Every checkbox in every recipe uses `--type formfield --prop type=checkbox`.
 
@@ -253,17 +253,16 @@ Only difference from B1: `w:comboBox` vs `w:dropDownList` in the xpath tail. Com
 officecli add "$FILE" /body --type sdt --prop type=date \
   --prop alias="Contract Start Date" --prop tag=contract_start
 
-# Chinese: yyyy年MM月dd日
+# US:    w:val=MM/dd/yyyy
 officecli raw-set "$FILE" /document \
   --xpath "//w:sdt[w:sdtPr/w:tag/@w:val='contract_start']/w:sdtPr/w:date/w:dateFormat" \
   --action setattr \
-  --xml "w:val=yyyy年MM月dd日"
+  --xml "w:val=MM/dd/yyyy"
 
-# US:    w:val=MM/dd/yyyy
 # ISO:   w:val=yyyy-MM-dd  (already the default)
 # Long:  w:val="MMMM d, yyyy"
 
-officecli get "$FILE" '/body/sdt[N]'   # expect: type=date format=yyyy年MM月dd日
+officecli get "$FILE" '/body/sdt[N]'   # expect: type=date format=MM/dd/yyyy
 ```
 
 `setattr` replaces one attribute — do not quote the value inside `--xml`. Only `w:val` is touched; the `<w:dateFormat>` wrapper is preserved.

@@ -24,21 +24,22 @@ interface ExternalSource {
   skills: Array<{ name: string; description: string; path: string }>;
 }
 
-const getAvatarColorClass = (name: string) => {
-  if (!name) return 'bg-[#165DFF] text-white';
-  const colors = [
-    'bg-[#165DFF] text-white', // Blue
-    'bg-[#00B42A] text-white', // Green
-    'bg-[#722ED1] text-white', // Purple
-    'bg-[#F5319D] text-white', // Pink
-    'bg-[#F77234] text-white', // Orange
-    'bg-[#14C9C9] text-white', // Cyan
-  ];
+const AVATAR_PALETTE: Array<{ background: string; color: string }> = [
+  { background: 'var(--brand)', color: 'var(--text-white)' },                      // orange
+  { background: 'var(--success)', color: 'var(--text-white)' },                    // green
+  { background: 'rgb(var(--color-team))', color: 'var(--text-white)' },            // indigo
+  { background: 'var(--danger)', color: 'var(--text-white)' },                     // red
+  { background: 'var(--warning)', color: 'var(--text-primary)' },                  // amber — dark fg for contrast
+  { background: 'rgb(var(--color-specialist))', color: 'var(--text-white)' },      // emerald
+];
+
+const getAvatarStyle = (name: string): React.CSSProperties => {
+  if (!name) return AVATAR_PALETTE[0];
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
     hash = name.charCodeAt(i) + ((hash << 5) - hash);
   }
-  return colors[Math.abs(hash) % colors.length];
+  return AVATAR_PALETTE[Math.abs(hash) % AVATAR_PALETTE.length];
 };
 
 interface SkillsHubSettingsProps {
@@ -242,7 +243,7 @@ const SkillsHubSettings: React.FC<SkillsHubSettingsProps> = ({ withWrapper = tru
       <div className='space-y-16px pb-24px'>
         {/* ======== Discovered External Skills ======== */}
         {totalExternal > 0 && (
-          <div className='px-[16px] md:px-[32px] py-32px bg-base rd-16px md:rd-24px mb-16px shadow-sm border border-b-base relative overflow-hidden transition-all'>
+          <div className='px-[16px] md:px-[32px] py-32px bg-[var(--color-bg-2)] rd-12px mb-16px border-2 border-solid border-[var(--color-border-2)] relative overflow-hidden transition-all'>
             {/* Section Header with Search Bar */}
             <div className='flex flex-col lg:flex-row lg:items-start justify-between gap-16px mb-24px relative z-10 w-full'>
               <div className='flex flex-col'>
@@ -384,7 +385,7 @@ const SkillsHubSettings: React.FC<SkillsHubSettingsProps> = ({ withWrapper = tru
         )}
 
         {/* ======== My Skills ======== */}
-        <div className='px-[16px] md:px-[32px] py-32px bg-base rd-16px md:rd-24px shadow-sm border border-b-base relative overflow-hidden transition-all'>
+        <div className='px-[16px] md:px-[32px] py-32px bg-[var(--color-bg-2)] rd-12px border-2 border-solid border-[var(--color-border-2)] relative overflow-hidden transition-all'>
           {/* Toolbar for My Skills */}
           <div className='flex flex-col lg:flex-row lg:items-center justify-between gap-16px mb-24px relative z-10'>
             <div className='flex items-center gap-10px shrink-0'>
@@ -454,7 +455,8 @@ const SkillsHubSettings: React.FC<SkillsHubSettingsProps> = ({ withWrapper = tru
                 >
                   <div className='shrink-0 flex items-start sm:mt-2px'>
                     <div
-                      className={`w-40px h-40px rd-10px flex items-center justify-center font-bold text-16px shadow-sm text-transform-uppercase ${getAvatarColorClass(skill.name)}`}
+                      className='w-40px h-40px rd-10px flex items-center justify-center font-bold text-16px shadow-sm text-transform-uppercase'
+                      style={getAvatarStyle(skill.name)}
                     >
                       {skill.name.charAt(0).toUpperCase()}
                     </div>
@@ -579,7 +581,7 @@ const SkillsHubSettings: React.FC<SkillsHubSettingsProps> = ({ withWrapper = tru
 
         {/* ======== Extension Skills ======== */}
         {extensionSkills.length > 0 && (
-          <div className='px-[16px] md:px-[32px] py-32px bg-base rd-16px md:rd-24px shadow-sm border border-b-base relative overflow-hidden transition-all'>
+          <div className='px-[16px] md:px-[32px] py-32px bg-[var(--color-bg-2)] rd-12px border-2 border-solid border-[var(--color-border-2)] relative overflow-hidden transition-all'>
             <div className='flex items-center gap-10px mb-24px'>
               <Puzzle size={20} color='var(--color-primary-6)' />
               <span className='text-16px md:text-18px text-t-primary font-bold tracking-tight'>
@@ -622,7 +624,7 @@ const SkillsHubSettings: React.FC<SkillsHubSettingsProps> = ({ withWrapper = tru
 
         {/* ======== Builtin Auto-injected Skills ======== */}
         {builtinAutoSkills.length > 0 && (
-          <div className='px-[16px] md:px-[32px] py-32px bg-base rd-16px md:rd-24px shadow-sm border border-b-base relative overflow-hidden transition-all'>
+          <div className='px-[16px] md:px-[32px] py-32px bg-[var(--color-bg-2)] rd-12px border-2 border-solid border-[var(--color-border-2)] relative overflow-hidden transition-all'>
             <div className='flex items-center gap-10px mb-24px'>
               <Zap size={20} color='var(--color-primary-6)' />
               <span className='text-16px md:text-18px text-t-primary font-bold tracking-tight'>
@@ -664,7 +666,7 @@ const SkillsHubSettings: React.FC<SkillsHubSettingsProps> = ({ withWrapper = tru
         )}
 
         {/* ======== Usage Tip ======== */}
-        <div className='px-16px md:px-[24px] py-20px bg-base border border-b-base shadow-sm rd-16px flex items-start gap-12px text-t-secondary'>
+        <div className='px-16px md:px-[24px] py-20px bg-[var(--color-bg-2)] border-2 border-solid border-[var(--color-border-2)] rd-12px flex items-start gap-12px text-t-secondary'>
           <Info size={18} className='text-primary-6 mt-2px shrink-0' />
           <div className='flex flex-col gap-4px'>
             <span className='font-bold text-t-primary text-14px'>

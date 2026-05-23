@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -164,11 +164,36 @@ export class AnthropicRotatingClient extends RotatingApiClient<Anthropic> {
   }
 
   /**
-   * Direct Anthropic API call for native usage
+   * Direct Anthropic API call for native usage.
+   *
+   * Defensively applies a prompt-cache breakpoint on the system field so
+   * external callers benefit from the 5-minute ephemeral cache turn-to-turn
+   * without each call site having to remember the shape. Two cases:
+   *  - string system: wrap as a single TextBlockParam with cache_control.
+   *  - array system: set cache_control on the LAST block, but only if no
+   *    block already carries a cache_control (caller already picked their
+   *    breakpoints — don't double-mark).
+   * Empty / undefined system is left untouched.
    */
   async createMessage(request: Anthropic.MessageCreateParamsNonStreaming): Promise<Anthropic.Message> {
+    let effectiveRequest = request;
+    if (typeof request.system === 'string' && request.system.length > 0) {
+      const cachedSystem: Anthropic.TextBlockParam[] = [
+        { type: 'text' as const, text: request.system, cache_control: { type: 'ephemeral' as const } },
+      ];
+      effectiveRequest = { ...request, system: cachedSystem };
+    } else if (Array.isArray(request.system) && request.system.length > 0) {
+      const alreadyCached = request.system.some((b) => b?.cache_control);
+      if (!alreadyCached) {
+        const next: Anthropic.TextBlockParam[] = request.system.slice();
+        const lastIdx = next.length - 1;
+        next[lastIdx] = { ...next[lastIdx], cache_control: { type: 'ephemeral' as const } };
+        effectiveRequest = { ...request, system: next };
+      }
+    }
+
     return await this.executeWithRetry(async (client) => {
-      return await client.messages.create(request);
+      return await client.messages.create(effectiveRequest);
     });
   }
 }

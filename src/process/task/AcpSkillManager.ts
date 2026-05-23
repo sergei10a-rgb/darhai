@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -14,11 +14,12 @@ import path from 'path';
 import { existsSync } from 'fs';
 import { getSkillsDir, getBuiltinSkillsCopyDir, getAutoSkillsDir } from '@process/utils/initStorage';
 import { ExtensionRegistry } from '@process/extensions';
+import type { SkillMetadata, SkillSecurityReport, SkillSource, SkillType } from '@/common/types/skillTypes';
 
 /**
  * Skill definition (compatible with aioncli-core)
  */
-export interface SkillDefinition {
+export type SkillDefinition = {
   /** Unique skill name */
   name: string;
   /** Skill description (for indexing) */
@@ -27,45 +28,117 @@ export interface SkillDefinition {
   location: string;
   /** Full content (lazy loaded) */
   body?: string;
-}
+  /** Extended fields — optional, backward compatible */
+  source?: SkillSource;
+  type?: SkillType;
+  metadata?: SkillMetadata;
+  security?: SkillSecurityReport;
+  pinned?: boolean;
+};
 
 /**
  * Skill index (lightweight, for first message injection)
  */
-export interface SkillIndex {
+export type SkillIndex = {
   name: string;
   description: string;
+};
+
+/** Result type returned by parseFrontmatter */
+export type ParsedFrontmatter = {
+  name: string;
+  description?: string;
+  type?: SkillType;
+  metadata: SkillMetadata;
+};
+
+/**
+ * Parse a space-delimited YAML scalar into a string array.
+ * Empty/blank input returns [].
+ */
+function splitSpaceList(value: string): string[] {
+  return value.trim().split(/\s+/).filter(Boolean);
 }
 
 /**
- * Parse frontmatter from SKILL.md
+ * Parse frontmatter from SKILL.md.
+ * Returns null when the frontmatter block is absent or the name field is missing/empty.
+ *
+ * Tolerant of CLI-tool SKILL.md formats that omit the `metadata:` block
+ * (Claude Code / Codex / Gemini CLI slash-command files use a flat
+ * `name + description + argument-hint + allowed-tools` shape); those
+ * surface with `metadata: { tags: [] }` and no other fields.
  */
-function parseFrontmatter(content: string): {
-  name?: string;
-  description?: string;
-} {
+export function parseFrontmatter(content: string): ParsedFrontmatter | null {
   const frontmatterMatch = content.match(/^---\s*\n([\s\S]*?)\n---/);
-  if (!frontmatterMatch) {
-    return {};
-  }
+  if (!frontmatterMatch) return null;
 
   const frontmatter = frontmatterMatch[1];
-  const result: { name?: string; description?: string } = {};
 
-  // Parse name
-  const nameMatch = frontmatter.match(/^name:\s*['"]?([^'"\n]+)['"]?\s*$/m);
-  if (nameMatch) {
-    result.name = nameMatch[1].trim();
+  // Parse name — required; reject if absent or blank.
+  // Use [ \t]* (not \s*) so the match cannot consume the newline and bleed
+  // into the next frontmatter line.
+  const nameMatch = frontmatter.match(/^name:[ \t]*['"]?([^'"\n]+?)['"]?[ \t]*$/m);
+  const name = nameMatch ? nameMatch[1].trim() : '';
+  if (!name) return null;
+
+  // Parse description
+  const descMatch = frontmatter.match(/^description:[ \t]*['"]?(.+?)['"]?[ \t]*$/m);
+  const description = descMatch ? descMatch[1].trim() : undefined;
+
+  // Parse top-level type field
+  const typeMatch = frontmatter.match(/^type:[ \t]*['"]?([^'"\n]+?)['"]?[ \t]*$/m);
+  const rawType = typeMatch ? typeMatch[1].trim() : undefined;
+  const skillType: SkillType | undefined =
+    rawType === 'skill' || rawType === 'workflow' || rawType === 'agent-profile'
+      ? rawType
+      : undefined;
+
+  // Parse metadata: block — everything indented under "metadata:"
+  const metadata: SkillMetadata = { tags: [] };
+
+  const metaBlockMatch = frontmatter.match(/^metadata:\s*\n((?:[ \t]+[^\n]*\n?)*)/m);
+  if (metaBlockMatch) {
+    const block = metaBlockMatch[1];
+
+    const field = (key: string): string | undefined => {
+      const m = block.match(new RegExp(`^[ \\t]+${key}:[ \\t]*(.+?)[ \\t]*$`, 'm'));
+      return m ? m[1].trim() : undefined;
+    };
+
+    const author = field('author');
+    if (author) metadata.author = author;
+
+    const version = field('version');
+    if (version) metadata.version = version;
+
+    const tagsRaw = field('tags');
+    if (tagsRaw) metadata.tags = splitSpaceList(tagsRaw);
+
+    const category = field('category');
+    if (category) metadata.category = category;
+
+    const subcategory = field('subcategory');
+    if (subcategory) metadata.subcategory = subcategory;
+
+    const difficulty = field('difficulty');
+    if (difficulty) metadata.difficulty = difficulty;
+
+    const model = field('model');
+    if (model) metadata.model = model;
+
+    const tools = field('tools');
+    if (tools) metadata.tools = tools;
+
+    const dependsRaw = field('depends');
+    if (dependsRaw) metadata.depends = splitSpaceList(dependsRaw);
   }
 
-  // Parse description (supports single quotes, double quotes, or no quotes)
-  const descMatch = frontmatter.match(/^description:\s*['"]?(.+?)['"]?\s*$/m);
-  if (descMatch) {
-    result.description = descMatch[1].trim();
-  }
-
-  return result;
+  return { name, description, type: skillType, metadata };
 }
+
+/** Exported for unit tests only — do not use in production code */
+export const parseFrontmatterForTest = parseFrontmatter;
 
 /**
  * Remove frontmatter, keep only body content
@@ -97,6 +170,8 @@ export class AcpSkillManager {
   private initialized: boolean = false;
   private autoInitialized: boolean = false;
   private extensionInitialized: boolean = false;
+  /** Globally disabled skill names — getSkill refuses to return content for these. */
+  private disabledSkills: Set<string> = new Set();
 
   constructor(skillsDir?: string) {
     this.skillsDir = skillsDir || getSkillsDir();
@@ -104,16 +179,24 @@ export class AcpSkillManager {
   }
 
   /**
-   * Get singleton instance (with enabledSkills + excludeBuiltinSkills cache key)
+   * Get singleton instance (with enabledSkills + excludeBuiltinSkills + preferences revision cache key)
    *
    * @param enabledSkills - Enabled skills list
    * @param excludeBuiltinSkills - Builtin skills to exclude
+   * @param prefsRevision - Current skills.preferences.revision value; bumping it invalidates the cache
    * @returns AcpSkillManager instance
    */
-  static getInstance(enabledSkills?: string[], excludeBuiltinSkills?: string[]): AcpSkillManager {
+  static getInstance(
+    enabledSkills?: string[],
+    excludeBuiltinSkills?: string[],
+    prefsRevision?: number
+  ): AcpSkillManager {
     const enabledPart = enabledSkills?.toSorted().join(',') || 'all';
     const excludePart = excludeBuiltinSkills?.toSorted().join(',') || '';
-    const cacheKey = excludePart ? `${enabledPart}|exclude:${excludePart}` : enabledPart;
+    const revPart = prefsRevision !== undefined ? `|rev:${prefsRevision}` : '';
+    const cacheKey = excludePart
+      ? `${enabledPart}|exclude:${excludePart}${revPart}`
+      : `${enabledPart}${revPart}`;
 
     // If cache key changed, need to recreate instance
     if (AcpSkillManager.instance && AcpSkillManager.instanceKey === cacheKey) {
@@ -167,17 +250,17 @@ export class AcpSkillManager {
 
         try {
           const content = await fs.readFile(skillFile, 'utf-8');
-          const { name, description } = parseFrontmatter(content);
+          const parsed = parseFrontmatter(content);
+
+          // Also check by resolved name
+          if (parsed && excludeSet.has(parsed.name)) continue;
 
           const skillDef: SkillDefinition = {
-            name: name || skillName,
-            description: description || `Builtin Skill: ${skillName}`,
+            name: parsed?.name || skillName,
+            description: parsed?.description || `Builtin Skill: ${skillName}`,
             location: skillFile,
             // body is loaded on demand, not here
           };
-
-          // Also check by resolved name
-          if (name && excludeSet.has(name)) continue;
 
           this.autoSkills.set(skillName, skillDef);
         } catch (error) {
@@ -295,11 +378,14 @@ export class AcpSkillManager {
 
           try {
             const content = await fs.readFile(skillFile, 'utf-8');
-            const { name, description } = parseFrontmatter(content);
+            const parsed = parseFrontmatter(content);
+
+            // Skip skills with unparseable or nameless frontmatter
+            if (!parsed) continue;
 
             this.skills.set(skillName, {
-              name: name || skillName,
-              description: description || `Skill: ${skillName}`,
+              name: parsed.name,
+              description: parsed.description || `Skill: ${skillName}`,
               location: skillFile,
             });
           } catch (error) {
@@ -372,6 +458,10 @@ export class AcpSkillManager {
   /**
    * Get full content of a skill by name (on-demand loading)
    * Priority: optional (user-configured) > builtin > extension
+   *
+   * Returns null (not available) when:
+   *  - skill has security.verdict === 'blocked' (quarantined)
+   *  - skill name is in the globally-disabled set (skills.preferences.disabled)
    */
   async getSkill(name: string): Promise<SkillDefinition | null> {
     // Check optional skills first (explicitly configured for this assistant)
@@ -385,6 +475,16 @@ export class AcpSkillManager {
       skill = this.extensionSkills.get(name);
     }
     if (!skill) return null;
+
+    // Defense-in-depth: refuse blocked or globally-disabled skills
+    if (skill.security?.verdict === 'blocked') {
+      console.warn(`[AcpSkillManager] Refused to load blocked skill '${name}'`);
+      return null;
+    }
+    if (this.disabledSkills.has(name)) {
+      console.warn(`[AcpSkillManager] Refused to load disabled skill '${name}'`);
+      return null;
+    }
 
     // If body has not been loaded yet, load it now
     if (skill.body === undefined) {
@@ -422,6 +522,15 @@ export class AcpSkillManager {
   }
 
   /**
+   * Set the globally-disabled skill names.
+   * getSkill will refuse to return content for any name in this set.
+   * Call after discoverSkills when the caller has loaded skills.preferences.
+   */
+  setDisabled(disabled: string[]): void {
+    this.disabledSkills = new Set(disabled);
+  }
+
+  /**
    * Clear cached body content (for refresh)
    */
   clearCache(): void {
@@ -438,18 +547,27 @@ export class AcpSkillManager {
 }
 
 /**
- * Build skills index text (for first message injection)
+ * Build skills index text (for first message injection).
+ *
+ * Only the always-on set (builtin + pinned + assistant enabledSkills) is listed here.
+ * When the full skill library is available, a one-line note directs the agent to call
+ * `wayland_search_skills` for anything else — the library is never dumped inline.
+ *
+ * @param skills - always-on skill entries to list
+ * @param hasLibrary - when true, append the wayland_search_skills discovery note
  */
-export function buildSkillsIndexText(skills: SkillIndex[]): string {
-  if (skills.length === 0) return '';
+export function buildSkillsIndexText(skills: SkillIndex[], hasLibrary = false): string {
+  if (skills.length === 0 && !hasLibrary) return '';
 
   const lines = skills.map((s) => `- ${s.name}: ${s.description}`);
+  const listBlock = lines.length > 0 ? `\n\n${lines.join('\n')}` : '';
+  const searchNote = hasLibrary
+    ? '\n\nFor skills not listed above, call `wayland_search_skills` to search the full library.'
+    : '';
 
   return `[Available Skills]
 The following skills are available. When you need detailed instructions for a specific skill,
-you can request it by outputting: [LOAD_SKILL: skill-name]
-
-${lines.join('\n')}`;
+you can request it by outputting: [LOAD_SKILL: skill-name]${listBlock}${searchNote}`;
 }
 
 /**

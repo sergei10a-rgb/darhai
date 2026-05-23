@@ -57,3 +57,34 @@ export type IdleNotification = {
   completedTaskId?: string;
   failureReason?: string;
 };
+
+// ---------- W1e — team_event_log primitives ----------
+
+/**
+ * Discriminator for `team_event_log.event_type`.
+ *   - `mailbox`      — Mailbox.write fired
+ *   - `task`         — TaskManager.create / update fired
+ *   - `spawn`        — TeamSessionService.addAgent fired
+ *   - `decision`     — reserved for future leader-side decision tracking
+ *   - `wake`         — TeammateManager.wake completed (success or failure)
+ *   - `shutdown`     — reserved for future session disposal tracking
+ *   - `token_usage`  — agent conversation turn produced a usage report
+ */
+export type TeamEventType = 'mailbox' | 'task' | 'spawn' | 'decision' | 'wake' | 'shutdown' | 'token_usage';
+
+/**
+ * A single durable row in `team_event_log`. Foundation for the Activity tab
+ * (W2c) and the cost meter (W2d). Append-only — never updated in place.
+ */
+export type TeamEvent = {
+  id: string;
+  teamId: string;
+  eventType: TeamEventType;
+  /** slotId of the agent (or `'user'`) that triggered the event, when known. */
+  actorSlotId?: string;
+  /** slotId of the agent (or task id, etc.) the event targeted, when known. */
+  targetSlotId?: string;
+  /** Event-specific JSON blob. Shape depends on `eventType` — see EventLogger. */
+  payload: Record<string, unknown>;
+  createdAt: number;
+};

@@ -21,7 +21,8 @@ const ENTRIES: SearchEntry[] = [
   { id: 'page-assistants', title: 'Assistants', subtitle: 'Page', path: 'assistants' },
   { id: 'page-agents', title: 'Agents', subtitle: 'Page', path: 'agents' },
   { id: 'page-skills', title: 'Skills & Tools', subtitle: 'Page', path: 'skills' },
-  { id: 'page-providers', title: 'Providers', subtitle: 'Page', path: 'providers' },
+  { id: 'page-constitution', title: 'Constitution', subtitle: 'Page', path: 'constitution' },
+  { id: 'page-providers', title: 'Models & Providers', subtitle: 'Page', path: 'models' },
   { id: 'page-channels', title: 'Channels', subtitle: 'Page', path: 'channels' },
   { id: 'page-mcp', title: 'MCP Servers', subtitle: 'Page', path: 'mcp' },
   { id: 'page-theme', title: 'Theme & Display', subtitle: 'Page', path: 'theme' },
@@ -50,12 +51,17 @@ const ENTRIES: SearchEntry[] = [
 
   // Notifications settings
   { id: 'setting-notifications', title: 'Notifications', subtitle: 'Notifications', path: 'notifications' },
-  { id: 'setting-cron-notifications', title: 'Scheduled Task Notifications', subtitle: 'Notifications', path: 'notifications' },
+  {
+    id: 'setting-cron-notifications',
+    title: 'Scheduled Task Notifications',
+    subtitle: 'Notifications',
+    path: 'notifications',
+  },
 
-  // Provider settings
-  { id: 'setting-api-key', title: 'API Key', subtitle: 'Providers', path: 'providers' },
-  { id: 'setting-base-url', title: 'Base URL', subtitle: 'Providers', path: 'providers' },
-  { id: 'setting-model', title: 'Model', subtitle: 'Providers', path: 'providers' },
+  // Models & Providers settings
+  { id: 'setting-api-key', title: 'API Key', subtitle: 'Models & Providers', path: 'models' },
+  { id: 'setting-base-url', title: 'Base URL', subtitle: 'Models & Providers', path: 'models' },
+  { id: 'setting-model', title: 'Model', subtitle: 'Models & Providers', path: 'models' },
 
   // About actions
   { id: 'action-check-updates', title: 'Check for Updates', subtitle: 'About', path: 'about' },

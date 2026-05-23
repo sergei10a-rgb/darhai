@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -12,7 +12,7 @@ type WCoreProvider = 'anthropic' | 'openai' | 'bedrock' | 'vertex';
 /**
  * Map provider name to wcore provider name.
  *
- * AionUi PlatformType values: 'custom' | 'new-api' | 'gemini' | 'gemini-vertex-ai' | 'anthropic' | 'bedrock'
+ * Platform values: 'custom' | 'new-api' | 'gemini' | 'gemini-vertex-ai' | 'anthropic' | 'bedrock'
  */
 function mapProvider(model: TProviderWithModel): WCoreProvider {
   // Special handling for new-api: respect per-model protocol setting

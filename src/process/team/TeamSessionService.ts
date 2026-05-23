@@ -18,23 +18,43 @@ import type { AgentBackend } from '@/common/types/acpTypes';
 import type { TChatConversation, TProviderWithModel } from '@/common/config/storage';
 import { ProcessConfig } from '@process/utils/initStorage';
 import { getAssistantsDir } from '@process/utils/initStorage';
+import { EventLogger } from './EventLogger';
 import { TeamSession } from './TeamSession';
 import type { TTeam, TeamAgent } from './types';
 import fs from 'fs/promises';
 import path from 'path';
 import { resolveLocaleKey } from '@/common/utils';
 import { hasGeminiOauthCreds } from './googleAuthCheck';
+import { buildTeamExport, serializeTeamExport, type RitualsResolver } from './importExport/exportTeam';
+import {
+  buildCapabilityGrants,
+  isSandboxedAfterImport,
+  previewImport,
+  type ImportPreviewResult,
+  type SpecialistCatalog,
+} from './importExport/importTeam';
+import { TeamExportSchema, type TeamExport } from './importExport/TeamExportSchema';
+import { TeamImportError } from './importExport/errors';
 
 export class TeamSessionService {
   private readonly sessions: Map<string, TeamSession> = new Map();
   /** Per-team mutex to serialize addAgent calls, preventing read-modify-write race conditions */
   private readonly addAgentLocks: Map<string, Promise<unknown>> = new Map();
+  /** W1e — append-only event log writer shared with TeamSession primitives */
+  private readonly eventLogger: EventLogger;
 
   constructor(
     private readonly repo: ITeamRepository,
     private readonly workerTaskManager: IWorkerTaskManager,
     private readonly conversationService: IConversationService
-  ) {}
+  ) {
+    this.eventLogger = new EventLogger(repo);
+  }
+
+  /** Expose the shared event logger so TeamSession can wire it into Mailbox + TaskManager + TeammateManager. */
+  getEventLogger(): EventLogger {
+    return this.eventLogger;
+  }
 
   /**
    * Returns the workspace path as-is, or empty string when not specified.
@@ -479,6 +499,7 @@ export class TeamSessionService {
     workspaceMode: TTeam['workspaceMode'];
     agents: TeamAgent[];
     sessionMode?: string;
+    sourceLauncherId?: string;
   }): Promise<TTeam> {
     const now = Date.now();
     const teamId = uuid(36);
@@ -551,10 +572,16 @@ export class TeamSessionService {
       leaderAgentId: leadAgent.slotId,
       agents: agentsWithConversations,
       sessionMode: params.sessionMode,
+      sourceLauncherId: params.sourceLauncherId,
       createdAt: now,
       updatedAt: now,
     };
     await this.repo.create(team);
+    // Notify the sidebar + library page so newly-created teams appear without
+    // a manual refresh. Without this emit, useTeamList()'s SWR cache only
+    // re-fetched on revalidation triggers, and brand-new teams were invisible
+    // in the sidebar until the user reloaded.
+    ipcBridge.team.listChanged.emit({ teamId: team.id, action: 'created' });
     return team;
   }
 
@@ -608,6 +635,9 @@ export class TeamSessionService {
     await this.repo.deleteMailboxByTeam(id);
     await this.repo.deleteTasksByTeam(id);
     await this.repo.delete(id);
+    // Mirror the create-emit so the sidebar/library removes the row without
+    // a manual refresh.
+    ipcBridge.team.listChanged.emit({ teamId: id, action: 'removed' });
   }
 
   async addAgent(teamId: string, agent: Omit<TeamAgent, 'slotId'>): Promise<TeamAgent> {
@@ -672,6 +702,20 @@ export class TeamSessionService {
     const updatedAgents = [...team.agents, newAgent];
     await this.repo.update(teamId, { agents: updatedAgents, updatedAt: Date.now() });
     this.sessions.get(teamId)?.addAgent(newAgent);
+
+    // W1e: log spawn AFTER the agent is durably persisted to the team roster.
+    void this.eventLogger.append({
+      teamId,
+      eventType: 'spawn',
+      targetSlotId: newAgent.slotId,
+      payload: {
+        agent_name: newAgent.agentName,
+        agent_type: newAgent.agentType,
+        role: newAgent.role,
+        conversation_id: newAgent.conversationId,
+      },
+    });
+
     // Notify renderer so SWR caches (useTeamList, useSiderTeamBadges) revalidate
     ipcBridge.team.listChanged.emit({ teamId, action: 'agent_added' });
     return newAgent;
@@ -737,6 +781,353 @@ export class TeamSessionService {
     }
   }
 
+  /**
+   * Restart a crashed teammate's CLI process while keeping the slot + history
+   * intact. Refuses to act mid-wake to avoid corrupting an in-flight turn.
+   *
+   * Flow: kill residual process (if any) → reset status to 'pending' → emit
+   * IPC so the right rail flips the dot back → append a `wake` event with
+   * `{ outcome: 'restarted_by_user', actor: 'user' }` for the Activity tab.
+   * The next user message or leader wake will rebuild the worker task and the
+   * full role prompt is replayed because `status === 'pending'`.
+   */
+  async restartAgent(teamId: string, slotId: string): Promise<void> {
+    const team = await this.repo.findById(teamId);
+    if (!team) throw new Error(`Team "${teamId}" not found`);
+
+    const agent = team.agents.find((a) => a.slotId === slotId);
+    if (!agent) throw new Error(`Agent "${slotId}" not found in team "${teamId}"`);
+
+    const session = this.sessions.get(teamId);
+    if (session?.isWakeActive(slotId)) {
+      throw new Error('Cannot restart while wake in progress');
+    }
+
+    // Kill residual process + clear wake state when a session is live; otherwise
+    // there's nothing in-memory to clean up — the repo update below is the only
+    // state change needed.
+    session?.killAgentProcess(slotId);
+
+    const updatedAgents = team.agents.map((a) => (a.slotId === slotId ? { ...a, status: 'pending' as const } : a));
+    await this.repo.update(teamId, { agents: updatedAgents, updatedAt: Date.now() });
+
+    ipcBridge.team.agentStatusChanged.emit({ teamId, slotId, status: 'pending' });
+
+    void this.eventLogger.append({
+      teamId,
+      eventType: 'wake',
+      actorSlotId: slotId,
+      payload: {
+        outcome: 'restarted_by_user',
+        actor: 'user',
+      },
+    });
+  }
+
+  /**
+   * Live-smoke fix #4b (2026-05-19) — swap a teammate's backend CLI in
+   * place. Same-conversationType swaps only (e.g. claude ↔ codex, both
+   * 'acp'). Cross-type swaps (gemini ↔ claude, wcore ↔ remote, etc.)
+   * are rejected with a descriptive error because the agent's
+   * conversation row is typed at creation and would have to be torn
+   * down + recreated to host a different protocol — losing chat
+   * history in the process. The renderer surfaces the error as a
+   * toast so the user can fall back to recreating the agent.
+   *
+   * Flow on the success path mirrors restartAgent: refuse if a wake
+   * is in flight → kill the worker process (clears ACP team context,
+   * worker task, wake state) → flip agent to {pending, new backend,
+   * new model?} → persist → emit agentStatusChanged → log a
+   * `decision` event with the from/to backends so the Activity tab
+   * tells the story.
+   */
+  async changeAgentBackend(params: {
+    teamId: string;
+    slotId: string;
+    newBackend: string;
+    newModel?: string;
+  }): Promise<void> {
+    const { teamId, slotId, newBackend, newModel } = params;
+    const team = await this.repo.findById(teamId);
+    if (!team) throw new Error(`Team "${teamId}" not found`);
+
+    const agent = team.agents.find((a) => a.slotId === slotId);
+    if (!agent) throw new Error(`Agent "${slotId}" not found in team "${teamId}"`);
+
+    const fromBackend = agent.agentType;
+    if (fromBackend === newBackend) return; // idempotent no-op
+
+    // Conversation type is locked at conversation creation. Swapping
+    // backends across protocols would require deleting + recreating the
+    // conversation, dropping chat history. Refuse rather than silently
+    // wipe.
+    const newConversationType = this.resolveConversationType(newBackend);
+    if (newConversationType !== agent.conversationType) {
+      throw new Error(
+        `Cannot swap backend "${fromBackend}" → "${newBackend}": ` +
+          `conversation type "${agent.conversationType}" → "${newConversationType}" ` +
+          `is not supported in place. Remove the agent and add a new one instead to preserve a clean history.`
+      );
+    }
+
+    const session = this.sessions.get(teamId);
+    if (session?.isWakeActive(slotId)) {
+      throw new Error('Cannot change backend while wake in progress');
+    }
+
+    // Kill residual worker + clear ACP context + wake state.
+    session?.killAgentProcess(slotId);
+
+    const updatedAgents = team.agents.map((a) =>
+      a.slotId === slotId
+        ? {
+            ...a,
+            agentType: newBackend,
+            status: 'pending' as const,
+          }
+        : a
+    );
+    await this.repo.update(teamId, { agents: updatedAgents, updatedAt: Date.now() });
+
+    // The conversation row carries the live model; the agent record
+    // does not. Update the conversation's model when a new one is
+    // supplied so the next wake reflects the user's pick.
+    if (newModel && agent.conversationId) {
+      try {
+        await this.conversationService.updateConversation(agent.conversationId, {
+          extra: { backend: newBackend, currentModelId: newModel },
+        } as Partial<TChatConversation>);
+      } catch (error) {
+        console.warn(
+          `[TeamSessionService] changeAgentBackend: failed to persist new model on conversation "${agent.conversationId}":`,
+          error instanceof Error ? error.message : error
+        );
+      }
+    }
+
+    ipcBridge.team.agentStatusChanged.emit({ teamId, slotId, status: 'pending' });
+
+    void this.eventLogger.append({
+      teamId,
+      eventType: 'decision',
+      actorSlotId: slotId,
+      payload: {
+        outcome: 'backend_changed',
+        actor: 'user',
+        from_backend: fromBackend,
+        to_backend: newBackend,
+        slot_id: slotId,
+      },
+    });
+  }
+
+  /**
+   * W3b — User-driven promotion of a team to Standing Company status.
+   * Idempotent: a no-op if the team is already promoted. The flag is
+   * persisted, a `decision` event is appended for the Activity tab, and a
+   * `standing_changed` listChanged event signals SWR caches to revalidate.
+   */
+  async promoteTeamToStanding(teamId: string): Promise<void> {
+    const team = await this.repo.findById(teamId);
+    if (!team) throw new Error(`Team "${teamId}" not found`);
+    if (team.promotedToStanding === true) return;
+
+    await this.repo.update(teamId, { promotedToStanding: true, updatedAt: Date.now() });
+
+    void this.eventLogger.append({
+      teamId,
+      eventType: 'decision',
+      payload: {
+        outcome: 'promoted_to_standing',
+        actor: 'user',
+      },
+    });
+
+    ipcBridge.team.listChanged.emit({ teamId, action: 'standing_changed' });
+  }
+
+  /**
+   * W3b — Reverse a previous promotion. Idempotent when the team was never
+   * promoted (or has already been demoted). Bundle-derived Standing teams
+   * (`launcher._standing`) are unaffected because the flag we toggle is the
+   * user-promotion flag, not the bundle attribute.
+   */
+  async demoteTeamFromStanding(teamId: string): Promise<void> {
+    const team = await this.repo.findById(teamId);
+    if (!team) throw new Error(`Team "${teamId}" not found`);
+    if (!team.promotedToStanding) return;
+
+    await this.repo.update(teamId, { promotedToStanding: false, updatedAt: Date.now() });
+
+    void this.eventLogger.append({
+      teamId,
+      eventType: 'decision',
+      payload: {
+        outcome: 'demoted_from_standing',
+        actor: 'user',
+      },
+    });
+
+    ipcBridge.team.listChanged.emit({ teamId, action: 'standing_changed' });
+  }
+
+  /**
+   * W4 (T4.1) — Build the whitelist-only JSON export for a team. The caller
+   * (renderer save dialog) is responsible for actually writing the file.
+   * Throws when the team is unknown or has no leader.
+   *
+   * `resolveRituals` is optional so callers without access to the extension
+   * registry (e.g. tests) can omit it; rituals will simply be absent from
+   * the payload.
+   */
+  async exportTeam(teamId: string, resolveRituals?: RitualsResolver): Promise<string> {
+    const team = await this.repo.findById(teamId);
+    if (!team) throw new Error(`Team "${teamId}" not found`);
+    const payload = await buildTeamExport(team, resolveRituals);
+    return serializeTeamExport(payload);
+  }
+
+  /**
+   * W4 (T4.2 + T4.6 + T4.6.1) — Validate an import payload and surface
+   * missing-specialist info to the caller. Throws TeamImportError on any
+   * guard failure (DOS, prototype-pollution, depth, schema). Throws
+   * TeamImportBusyError when the bounded parse queue is saturated.
+   */
+  async previewTeamImport(
+    jsonText: string,
+    specialistCatalog: SpecialistCatalog
+  ): Promise<ImportPreviewResult> {
+    return previewImport(jsonText, specialistCatalog);
+  }
+
+  /**
+   * W4 (T4.5 + T4.6) — Persist an imported team with origin tracking +
+   * sandbox-flag derived from the caller-supplied capability grants.
+   * Hard-rejects if any specialist in the payload is missing from the
+   * receiver's bundle.
+   *
+   * For W4a the IPC handler trusts whatever grants the caller passes. W4b
+   * adds the per-cap review dialog + 5s cool-off; until then, the renderer
+   * MUST pass an all-false grants map for any preview that came back with
+   * `specialistsAvailable=false`.
+   */
+  async acceptTeamImport(params: {
+    userId: string;
+    parsed: TeamExport;
+    capabilityGrants: Record<string, boolean>;
+    source: string;
+    specialistCatalog: SpecialistCatalog;
+  }): Promise<TTeam> {
+    const { userId, parsed: rawParsed, capabilityGrants, source, specialistCatalog } = params;
+
+    // W5 audit HIGH-1 fix (2026-05-19): re-validate the parsed payload at the
+    // service boundary. The bridge layer also validates structurally via Zod,
+    // but the accept path used to trust whatever object the renderer handed
+    // back from the preview round-trip. If a malicious renderer (compromised
+    // preload, dev-mode injection) skipped preview and crafted a `parsed`
+    // object directly, the only previous safety net was specialist-id +
+    // capability whitelisting. Re-running the strict schema here closes the
+    // gap with zero behavior change for honest callers.
+    const reparse = TeamExportSchema.safeParse(rawParsed);
+    if (!reparse.success) {
+      throw new TeamImportError(
+        `Invalid parsed payload: ${reparse.error.message}`,
+        'TEAM_IMPORT_VALIDATION'
+      );
+    }
+    const parsed = reparse.data;
+
+    // Re-check specialist availability at accept-time so a payload that was
+    // valid at preview cannot slip past if the user uninstalled a bundle in
+    // between. Hard reject (no soft-warn in v1 per T4.6).
+    const installed = await specialistCatalog();
+    const referenced = [parsed.leader.id, ...parsed.teammates.map((t) => t.id)];
+    const missing = referenced.filter((id) => !installed.has(id));
+    if (missing.length > 0) {
+      const dedup = Array.from(new Set(missing));
+      throw new Error(`Missing specialists: ${dedup.join(', ')}. Install them first or use a different team.`);
+    }
+
+    const now = Date.now();
+    // W4 audit CRIT-2 + HIGH-1 fix (2026-05-19):
+    //  - Whitelist grants to ONLY capabilities the import file declared.
+    //    Any incoming grant for an undeclared cap is dropped.
+    //  - Force `canNetworkRequest` to `by_user: false`: the capability has
+    //    no runtime gate in v1 (HIGH-1), so we never honor a grant for it.
+    //  - Imported teams ALWAYS persist `isSandboxed: true`. The flag is
+    //    informational (drives UI badges + prompt-injection wrap); the
+    //    security gate is the per-cap grant map consulted by
+    //    `isCapGranted` whenever `importedFrom` is set.
+    const declaredCaps = (Object.keys(parsed.capabilities) as Array<keyof TeamExport['capabilities']>).filter(
+      (k) => parsed.capabilities[k] === true
+    );
+    const sanitizedGrants: Record<string, boolean> = {};
+    for (const cap of declaredCaps) {
+      // Never honor a grant for canNetworkRequest until W4 v2 wires the gate.
+      sanitizedGrants[cap] = cap === 'canNetworkRequest' ? false : capabilityGrants[cap] === true;
+    }
+    const grants = buildCapabilityGrants(sanitizedGrants, now);
+    // Mark the by_user=false grants explicitly so the audit trail records
+    // that the user was shown the capability and we deliberately denied it.
+    for (const cap of declaredCaps) {
+      if (!grants[cap]) {
+        grants[cap] = { granted_at: now, by_user: false };
+      }
+    }
+    // Reference isSandboxedAfterImport to keep the legacy helper exported
+    // for the unit-test surface; the value is intentionally ignored — imports
+    // are always sandboxed per the audit fix.
+    void isSandboxedAfterImport;
+    const sandboxed = true;
+
+    // Build the agents roster from the payload. Leader first, then teammates.
+    // The renderer-side launcher path also uses `ext-${id}` for customAgentId,
+    // and the backend resolver reads it back the same way.
+    const leaderAgent: TeamAgent = {
+      slotId: '',
+      conversationId: '',
+      role: 'leader',
+      agentType: parsed.leader.recommendBackend || 'gemini',
+      agentName: parsed.name.slice(0, 100),
+      conversationType: this.resolveConversationType(parsed.leader.recommendBackend || 'gemini'),
+      status: 'pending',
+      customAgentId: `ext-${parsed.leader.id}`,
+    };
+    const teammateAgents: TeamAgent[] = parsed.teammates.map((t) => ({
+      slotId: '',
+      conversationId: '',
+      role: 'teammate',
+      agentType: t.recommendBackend || parsed.leader.recommendBackend || 'gemini',
+      agentName: t.name,
+      conversationType: this.resolveConversationType(t.recommendBackend || parsed.leader.recommendBackend || 'gemini'),
+      status: 'pending',
+      customAgentId: `ext-${t.id}`,
+    }));
+
+    const team = await this.createTeam({
+      userId,
+      name: parsed.name,
+      workspace: '',
+      workspaceMode: 'shared',
+      agents: [leaderAgent, ...teammateAgents],
+    });
+
+    // Stamp provenance + sandbox flag on the freshly-created team. Done as a
+    // follow-up update so `createTeam` stays single-responsibility and the
+    // origin fields cannot accidentally be set by callers other than this
+    // import path.
+    await this.repo.update(team.id, {
+      importedFrom: source,
+      importedAt: now,
+      importedSignatureStatus: 'unsigned-v1',
+      importCapabilityGrants: grants,
+      isSandboxed: sandboxed,
+      updatedAt: now,
+    });
+    const refreshed = await this.repo.findById(team.id);
+    return refreshed ?? { ...team, importedFrom: source, importedAt: now, isSandboxed: sandboxed };
+  }
+
   async removeAgent(teamId: string, slotId: string): Promise<void> {
     const team = await this.repo.findById(teamId);
     if (!team) throw new Error(`Team "${teamId}" not found`);
@@ -785,7 +1176,7 @@ export class TeamSessionService {
       }
       return newAgent;
     };
-    session = new TeamSession(team, this.repo, this.workerTaskManager, spawnAgent);
+    session = new TeamSession(team, this.repo, this.workerTaskManager, spawnAgent, this.eventLogger);
     // Do NOT add to sessions map yet — only add after MCP server is running and
     // teamMcpStdioConfig is written to DB. If we add early and then fail, a
     // subsequent getOrStartSession call would return a broken session (no MCP config).
@@ -825,6 +1216,20 @@ export class TeamSessionService {
       throw err;
     }
 
+    // W3b — best-effort bump of the promote-to-Standing eligibility counters.
+    // First successful in-process start for this team increments sessionCount
+    // and stamps firstActiveAt (if unset). Failures are logged and swallowed —
+    // the counters are tracking-only and must never block session start.
+    const nextSessionCount = (team.sessionCount ?? 0) + 1;
+    const nextFirstActiveAt = team.firstActiveAt ?? Date.now();
+    void this.repo
+      .update(teamId, {
+        sessionCount: nextSessionCount,
+        firstActiveAt: nextFirstActiveAt,
+        updatedAt: Date.now(),
+      })
+      .catch((err) => console.warn('[TeamSessionService] failed to bump sessionCount', err));
+
     // Only register the session after full initialization so that getOrStartSession
     // always returns a session with a live MCP server and injected DB config.
     this.sessions.set(teamId, session);
@@ -835,6 +1240,21 @@ export class TeamSessionService {
   async stopSession(teamId: string): Promise<void> {
     await this.sessions.get(teamId)?.dispose();
     this.sessions.delete(teamId);
+  }
+
+  /**
+   * W1e — read append-only events for a team, newest first. Backs the W2c
+   * Activity tab and the W2d cost meter.
+   */
+  async listEvents(
+    teamId: string,
+    options?: {
+      since?: number;
+      limit?: number;
+      eventType?: import('./types').TeamEventType;
+    }
+  ): Promise<import('./types').TeamEvent[]> {
+    return this.repo.listEvents(teamId, options);
   }
 
   async stopAllSessions(): Promise<void> {

@@ -1,0 +1,998 @@
+[
+  {
+    "id": "research",
+    "name": "Research",
+    "description": "Switch-interview specialist - finds who'll buy and why now, using Bob Moesta's Jobs-to-be-Done method.",
+    "avatar": "icons/research.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/roles/research.md",
+    "enabledSkills": [
+      "research-jtbd-interviews",
+      "research-audience-discovery",
+      "research-competitive-scan"
+    ],
+    "prompts": [
+      "Find me the real customer for [product] - I'm tired of guessing.",
+      "Run a switch-interview script for a product I'm about to validate.",
+      "Map who my actual competitors are - including the option of doing nothing."
+    ],
+    "category": "research",
+    "kind": "specialist"
+  },
+  {
+    "id": "copy",
+    "name": "Copy",
+    "description": "Copywriter - hooks, headlines, CTAs, sales pages, rewrites, anchored on customer voice and awareness stage.",
+    "avatar": "icons/copy.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/roles/copy.md",
+    "enabledSkills": [
+      "copy-customer-voice",
+      "copy-awareness-stages",
+      "copy-hook-craft"
+    ],
+    "prompts": [
+      "Write a hook for [audience] - the second line has to feel inevitable.",
+      "Diagnose the awareness stage and rewrite this landing-page hero.",
+      "Mine customer voice from these reviews and draft an email subject line."
+    ],
+    "category": "write",
+    "kind": "specialist"
+  },
+  {
+    "id": "sales",
+    "name": "Sales",
+    "description": "Sales specialist - SPIN-disciplined discovery, real-vs-stated objection sorting, and advancement-not-continuation close mechanics.",
+    "avatar": "icons/sales.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/roles/sales.md",
+    "enabledSkills": [
+      "sales-discovery-call",
+      "sales-objection-handling",
+      "sales-close-and-next-step"
+    ],
+    "prompts": [
+      "Run me through a SPIN discovery call for a $[X] sale.",
+      "I'm losing deals at the close - what's the real objection vs the stated one?",
+      "Write the next-step ask that actually moves a stalled deal forward."
+    ],
+    "category": "sell",
+    "kind": "specialist"
+  },
+  {
+    "id": "forge",
+    "name": "Offer",
+    "description": "Offer specialist - value-based pricing, willingness-to-pay research, and offer-construction grounded in Madhavan Ramanujam.",
+    "avatar": "icons/forge.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/roles/forge.md",
+    "enabledSkills": [
+      "forge-value-pricing",
+      "forge-offer-construction",
+      "forge-packaging-tiers"
+    ],
+    "prompts": [
+      "Price my [product] based on the outcome the buyer actually pays for.",
+      "Build me a 3-tier good/better/best package for this offer.",
+      "My pricing feels wrong - where's the value-equation gap?"
+    ],
+    "category": "sell",
+    "kind": "specialist"
+  },
+  {
+    "id": "mira",
+    "name": "Brand",
+    "description": "Brand specialist - onlyness-first positioning and visual systems via Marty Neumeier's difference-beats-betterness method.",
+    "avatar": "icons/mira.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/roles/mira.md",
+    "enabledSkills": [
+      "mira-brand-foundation",
+      "mira-visual-system",
+      "mira-presentation-design"
+    ],
+    "prompts": [
+      "Write my onlyness statement - one sentence, no betterness.",
+      "Build the visual system for a [vibe] brand.",
+      "Audit this landing page against the brand promise."
+    ],
+    "category": "write",
+    "kind": "specialist"
+  },
+  {
+    "id": "beacon",
+    "name": "Channels",
+    "description": "Channels specialist - channel-mix and discovery via Avinash Kaushik's See/Think/Do/Care intent-based framework.",
+    "avatar": "icons/beacon.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/roles/beacon.md",
+    "enabledSkills": [
+      "beacon-channel-strategy",
+      "beacon-seo-organic",
+      "beacon-paid-acquisition"
+    ],
+    "prompts": [
+      "Pick the right channel mix for a [budget/stage] business.",
+      "I'm spending on TikTok - is that the right channel for my See/Think/Do/Care stage?",
+      "Diagnose where I'm wasting budget across these channels."
+    ],
+    "category": "run",
+    "kind": "specialist"
+  },
+  {
+    "id": "patch",
+    "name": "Ops",
+    "description": "Ops specialist - operating rhythms, CRM hygiene, and SOP design via Verne Harnish's Scaling Up cadence discipline.",
+    "avatar": "icons/patch.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/roles/patch.md",
+    "enabledSkills": [
+      "patch-operating-rhythm",
+      "patch-crm-hygiene",
+      "patch-process-design"
+    ],
+    "prompts": [
+      "Install a weekly operating rhythm for a 5-person team.",
+      "Audit my CRM hygiene and find the stale-deal rot.",
+      "Turn this chaos into an SOP - start with the failure mode."
+    ],
+    "category": "run",
+    "kind": "specialist"
+  },
+  {
+    "id": "spark",
+    "name": "Build",
+    "description": "Long-form builder - course, book, and curriculum architecture via Wiggins & McTighe's Backward Design.",
+    "avatar": "icons/spark.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/roles/spark.md",
+    "enabledSkills": [
+      "spark-curriculum-architecture",
+      "spark-long-form-narrative",
+      "spark-learner-engagement"
+    ],
+    "prompts": [
+      "Outline a course that delivers a specific learner transformation.",
+      "I have a book idea - design the chapter arc from the outcome backward.",
+      "My course completion rate is awful - fix the engagement design."
+    ],
+    "category": "build",
+    "kind": "specialist"
+  },
+  {
+    "id": "coin",
+    "name": "Numbers",
+    "description": "Numbers specialist - runway, unit economics, pricing math via Greg Crabtree's Simple Numbers founder-friendly frame.",
+    "avatar": "icons/coin.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/roles/coin.md",
+    "enabledSkills": [
+      "coin-runway-and-burn",
+      "coin-unit-economics",
+      "coin-pricing-math"
+    ],
+    "prompts": [
+      "What's my runway given $[cash] and $[monthly burn]?",
+      "Calculate the CAC payback period for this funnel.",
+      "Can I afford to hire [role]? Show me the math."
+    ],
+    "category": "office",
+    "kind": "specialist"
+  },
+  {
+    "id": "sentry",
+    "name": "Counsel",
+    "description": "Counsel - startup-stage legal framing on formation, contracts, IP, and compliance. Not your lawyer; flags when you need one.",
+    "avatar": "icons/sentry.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/roles/sentry.md",
+    "enabledSkills": [
+      "sentry-formation-and-structure",
+      "sentry-contracts-and-terms",
+      "sentry-ip-and-compliance"
+    ],
+    "prompts": [
+      "I'm starting a business - LLC, C-corp, or S-corp?",
+      "Draft the framework for a contractor MSA - not legal advice.",
+      "Flag the legal exposure on this [activity / business model]."
+    ],
+    "category": "office",
+    "kind": "specialist"
+  },
+  {
+    "id": "stage",
+    "name": "Pitch",
+    "description": "Pitch specialist - investor decks, strategic narrative, and demo-day craft via Sequoia + Andy Raskin's shift framing.",
+    "avatar": "icons/stage.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/roles/stage.md",
+    "enabledSkills": [
+      "stage-pitch-deck",
+      "stage-narrative-shift",
+      "stage-demo-day-and-q-a"
+    ],
+    "prompts": [
+      "Name the macro-trend shift that makes my company inevitable.",
+      "Build my Series A deck outline.",
+      "Rehearse the partner-meeting Q&A - the 20 questions I'll get."
+    ],
+    "category": "sell",
+    "kind": "specialist"
+  },
+  {
+    "id": "helm",
+    "name": "Coach",
+    "description": "Coach - decision frames, founder cadence, stuck-and-unstuck thinking via Ben Horowitz's no-shortcuts tradition.",
+    "avatar": "icons/helm.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/roles/helm.md",
+    "enabledSkills": [
+      "helm-decision-frames",
+      "helm-founder-cadence",
+      "helm-stuck-and-unstuck"
+    ],
+    "prompts": [
+      "What am I avoiding right now?",
+      "Help me decide: push, walk away, or ask for help?",
+      "Pre-mortem this strategic decision."
+    ],
+    "category": "run",
+    "kind": "specialist"
+  },
+  {
+    "id": "probe",
+    "name": "Validator",
+    "description": "Validator - quantitative validation, fake-door tests, MVP discipline via Eric Ries's build-measure-learn.",
+    "avatar": "icons/probe.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/roles/probe.md",
+    "enabledSkills": [
+      "probe-fake-door-tests",
+      "probe-mvp-design",
+      "probe-validation-rubric"
+    ],
+    "prompts": [
+      "Design a fake-door test for [hypothesis].",
+      "What's the smallest experiment that could disprove my idea?",
+      "Set the kill criteria for this validation test."
+    ],
+    "category": "research",
+    "kind": "specialist"
+  },
+  {
+    "id": "vault",
+    "name": "Storefront",
+    "description": "Storefront specialist - DTC, marketplace, and agentic GEO (generative engine optimization) for modern ecommerce.",
+    "avatar": "icons/vault.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/roles/vault.md",
+    "enabledSkills": [
+      "vault-storefront-foundation",
+      "vault-agentic-geo",
+      "vault-marketplace-ops"
+    ],
+    "prompts": [
+      "Optimize my PDP for AI-shopping discovery (GEO).",
+      "I'm on Shopify - diagnose the storefront's highest-impact fix.",
+      "Should I start Amazon PPC at this scale?"
+    ],
+    "category": "sell",
+    "kind": "specialist"
+  },
+  {
+    "id": "smith",
+    "name": "Code",
+    "description": "Code architect - specs, ADRs, agent handoffs via Ryan Singer's Shape Up. PM/architect, not the coding agent.",
+    "avatar": "icons/smith.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/roles/smith.md",
+    "enabledSkills": [
+      "smith-shape-and-spec",
+      "smith-architecture-decisions",
+      "smith-agent-handoff"
+    ],
+    "prompts": [
+      "Shape this feature - my appetite is 6 weeks.",
+      "Write the spec my coding agent can execute reliably.",
+      "ADR-format this architecture decision: option A vs option B."
+    ],
+    "category": "build",
+    "kind": "specialist"
+  },
+  {
+    "id": "mend",
+    "name": "Support",
+    "description": "Support specialist - ticket triage, onboarding flow, churn prevention via Lincoln Murphy's Desired Outcome framework.",
+    "avatar": "icons/mend.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/roles/mend.md",
+    "enabledSkills": [
+      "mend-ticket-triage",
+      "mend-onboarding-flow",
+      "mend-churn-prevention"
+    ],
+    "prompts": [
+      "Design the onboarding flow - the Desired Outcome path.",
+      "My churn rate is [X]% - design the save-call playbook.",
+      "Triage these tickets: P0-P3 with response templates."
+    ],
+    "category": "run",
+    "kind": "specialist"
+  },
+  {
+    "id": "lens",
+    "name": "Analyst",
+    "description": "Analyst - funnel diagnosis, cohort retention, experiment discipline via Kaushik measurement + Kohavi rigor.",
+    "avatar": "icons/lens.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/roles/lens.md",
+    "enabledSkills": [
+      "lens-funnel-diagnosis",
+      "lens-cohort-and-retention",
+      "lens-north-star-and-experiments"
+    ],
+    "prompts": [
+      "Diagnose where my funnel drops - start with the leading indicator.",
+      "Design a cohort-retention analysis for [time horizon].",
+      "Set the kill criteria for this experiment - no peeking."
+    ],
+    "category": "research",
+    "kind": "specialist"
+  },
+  {
+    "id": "verdict",
+    "name": "Quality Gate",
+    "description": "Quality gate - scores content on 8 dimensions, flags issues, names the one specific edit. Scores, doesn't rewrite.",
+    "avatar": "icons/verdict.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/roles/verdict.md",
+    "enabledSkills": [
+      "verdict-score-and-rank",
+      "verdict-flag-and-fix",
+      "verdict-the-one-edit"
+    ],
+    "prompts": [
+      "Score this draft on the 8 dimensions and name the one edit.",
+      "Flag the AI-mush in this content.",
+      "Pre-mortem this strategy doc - what would make it fail?"
+    ],
+    "category": "build",
+    "kind": "specialist"
+  },
+  {
+    "id": "slate",
+    "name": "Talent",
+    "description": "Hiring specialist - role design, structured candidate evaluation, contractor-vs-employee structuring via Claire Hughes Johnson's Scaling People.",
+    "avatar": "icons/slate.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/roles/slate.md",
+    "enabledSkills": [
+      "slate-role-design",
+      "slate-candidate-evaluation",
+      "slate-hiring-structure"
+    ],
+    "prompts": [
+      "Design the role before I post the job - what outcome stops being delivered?",
+      "First hire: contractor, fractional, or full-time?",
+      "Write the interview loop for a [role] hire."
+    ],
+    "category": "run",
+    "kind": "specialist"
+  },
+  {
+    "id": "voiceprint",
+    "name": "Voiceprint",
+    "description": "Voice-profile builder - captures how you write so any AI can write as you. Samples beat self-report.",
+    "avatar": "icons/voiceprint.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/roles/voiceprint.md",
+    "enabledSkills": [
+      "voiceprint-voice-interview",
+      "voiceprint-voice-compile",
+      "voiceprint-voice-maintenance"
+    ],
+    "prompts": [
+      "Build my voice profile - I have 5 writing samples ready (full path, ~1 hr).",
+      "Lite path - I only have 20 minutes. Just samples + audience note.",
+      "Refresh my existing voice profile - my audience has shifted."
+    ],
+    "category": "write",
+    "kind": "specialist"
+  },
+  {
+    "id": "cold-outbound",
+    "name": "Cold Outbound",
+    "description": "Team launcher - pick me to auto-assemble a cold-outbound team (Research + Copy + Sales) and run a one-question intake.",
+    "avatar": "icons/cold-outbound.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/launchers/cold-outbound.md",
+    "prompts": [
+      "Run a cold-outbound campaign for my offer.",
+      "Build me a 5-touch cold-outbound sequence.",
+      "I have 200 prospects - assemble the team."
+    ],
+    "category": "sell",
+    "kind": "team",
+    "teammates": [
+      "research",
+      "copy",
+      "sales"
+    ],
+    "standing": false
+  },
+  {
+    "id": "product-launch",
+    "name": "Product Launch",
+    "description": "Team launcher - assembles Research + Brand + Copy + Channels + Sales to ship a coordinated product launch in one session.",
+    "avatar": "icons/product-launch.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/launchers/product-launch.md",
+    "prompts": [
+      "I'm launching [product] in 30 days - assemble the team.",
+      "Run a full product launch playbook for a B2B release.",
+      "Coordinate the launch: research, brand, copy, channels, sales."
+    ],
+    "category": "sell",
+    "kind": "team",
+    "teammates": [
+      "research",
+      "mira",
+      "copy",
+      "beacon",
+      "sales"
+    ],
+    "standing": false
+  },
+  {
+    "id": "sales-pipeline",
+    "name": "Sales Pipeline",
+    "description": "Team launcher - sharpens an existing sales pipeline with Research + Sales + Offer focused on the current bottleneck.",
+    "avatar": "icons/sales-pipeline.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/launchers/sales-pipeline.md",
+    "prompts": [
+      "My sales pipeline is leaking - diagnose and fix.",
+      "Sharpen the discovery script for [deal size].",
+      "Audit my ICP against my actual won deals."
+    ],
+    "category": "sell",
+    "kind": "team",
+    "teammates": [
+      "research",
+      "sales",
+      "forge"
+    ],
+    "standing": false
+  },
+  {
+    "id": "info-product-launch",
+    "name": "Info-Product Launch",
+    "description": "Team launcher - assembles Build + Copy + Brand + Channels to ship a course, book, or info-product launch.",
+    "avatar": "icons/info-product-launch.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/launchers/info-product-launch.md",
+    "prompts": [
+      "Launch my course - curriculum, copy, brand, channels.",
+      "Build me a book launch playbook.",
+      "Cohort vs evergreen for my [topic] course?"
+    ],
+    "category": "sell",
+    "kind": "team",
+    "teammates": [
+      "spark",
+      "copy",
+      "mira",
+      "beacon"
+    ],
+    "standing": false
+  },
+  {
+    "id": "validate-before-build",
+    "name": "Validate Before Build",
+    "description": "Team launcher - runs Validator + Research + Offer to test a hypothesis before you build the thing.",
+    "avatar": "icons/validate-before-build.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/launchers/validate-before-build.md",
+    "prompts": [
+      "Before I build this idea, test it. Falsifiable hypothesis required.",
+      "Design a smoke test for [hypothesis].",
+      "Cheapest experiment to validate [assumption]?"
+    ],
+    "category": "research",
+    "kind": "team",
+    "teammates": [
+      "probe",
+      "research",
+      "forge"
+    ],
+    "standing": false
+  },
+  {
+    "id": "first-customers",
+    "name": "First Customers",
+    "description": "Team launcher - Research + Sales + Copy + Channels working toward your first five paying customers.",
+    "avatar": "icons/first-customers.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/launchers/first-customers.md",
+    "prompts": [
+      "Help me get my first 5 paying customers.",
+      "I have a product but no audience - start from zero.",
+      "Outbound-first strategy for first customers."
+    ],
+    "category": "sell",
+    "kind": "team",
+    "teammates": [
+      "research",
+      "sales",
+      "copy",
+      "beacon"
+    ],
+    "standing": false
+  },
+  {
+    "id": "fundraise",
+    "name": "Fundraise",
+    "description": "Team launcher - Pitch + Numbers + Brand + Copy assembling deck, model, and investor narrative.",
+    "avatar": "icons/fundraise.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/launchers/fundraise.md",
+    "prompts": [
+      "I'm raising a [pre-seed / seed / Series A] - assemble the team.",
+      "Build my pitch deck, financial model, and investor narrative.",
+      "Rehearse the partner-meeting Q&A."
+    ],
+    "category": "sell",
+    "kind": "team",
+    "teammates": [
+      "stage",
+      "coin",
+      "mira",
+      "copy"
+    ],
+    "standing": false
+  },
+  {
+    "id": "founder-setup",
+    "name": "Founder Setup",
+    "description": "Team launcher - Counsel + Numbers + Brand + Ops install the legal, financial, brand, and operational foundation.",
+    "avatar": "icons/founder-setup.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/launchers/founder-setup.md",
+    "prompts": [
+      "I'm starting a business in [jurisdiction] - set the foundation.",
+      "First-year setup: legal, finance, brand, ops.",
+      "Pre-revenue founder setup - what's the minimum I need?"
+    ],
+    "category": "run",
+    "kind": "team",
+    "teammates": [
+      "sentry",
+      "coin",
+      "mira",
+      "patch"
+    ],
+    "standing": false
+  },
+  {
+    "id": "bootstrap-profit",
+    "name": "Bootstrap Profit",
+    "description": "Team launcher - Numbers + Offer + Channels + Sales push toward ramen profitability via highest-impact levers.",
+    "avatar": "icons/bootstrap-profit.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/launchers/bootstrap-profit.md",
+    "prompts": [
+      "Get me to ramen-profitable in 90 days.",
+      "I'm not raising - bootstrap my way to profit.",
+      "Diagnose the highest-impact lever for margin."
+    ],
+    "category": "sell",
+    "kind": "team",
+    "teammates": [
+      "coin",
+      "forge",
+      "beacon",
+      "sales"
+    ],
+    "standing": false
+  },
+  {
+    "id": "affiliate-site-engine",
+    "name": "Affiliate Site Engine",
+    "description": "Team launcher - Research + Copy + Channels + Analyst build an SEO-driven affiliate or content site.",
+    "avatar": "icons/affiliate-site-engine.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/launchers/affiliate-site-engine.md",
+    "prompts": [
+      "Build my affiliate site for [niche].",
+      "Buyer keywords vs info keywords - design the content plan.",
+      "Set up the measurement framework for affiliate revenue."
+    ],
+    "category": "sell",
+    "kind": "team",
+    "teammates": [
+      "research",
+      "copy",
+      "beacon",
+      "lens"
+    ],
+    "standing": false
+  },
+  {
+    "id": "support-stack",
+    "name": "Support Stack",
+    "description": "Team launcher - Support + Ops + Copy install triage, onboarding, churn-prevention, and voice-consistent macros.",
+    "avatar": "icons/support-stack.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/launchers/support-stack.md",
+    "prompts": [
+      "Install a support stack for [customer count] customers.",
+      "Design my onboarding flow and ticket triage.",
+      "Reduce my churn rate - design the playbook."
+    ],
+    "category": "run",
+    "kind": "team",
+    "teammates": [
+      "mend",
+      "patch",
+      "copy"
+    ],
+    "standing": false
+  },
+  {
+    "id": "growth-loop",
+    "name": "Growth Loop",
+    "description": "Team launcher - Analyst + Research + Channels diagnose and double the highest-impact funnel point.",
+    "avatar": "icons/growth-loop.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/launchers/growth-loop.md",
+    "prompts": [
+      "Diagnose my funnel - where's the leverage?",
+      "Build a growth loop for [metric].",
+      "Experiment design for moving [activation / retention]."
+    ],
+    "category": "sell",
+    "kind": "team",
+    "teammates": [
+      "lens",
+      "research",
+      "beacon"
+    ],
+    "standing": false
+  },
+  {
+    "id": "creator-studio",
+    "name": "Creator Studio",
+    "description": "Team launcher - Copy + Brand + Channels + Build for creators ready to monetize their audience.",
+    "avatar": "icons/creator-studio.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/launchers/creator-studio.md",
+    "prompts": [
+      "I'm a creator monetizing - content calendar + long-form product.",
+      "Build my creator brand: copy, visual, channels, course.",
+      "Diversify creator monetization beyond sponsorships."
+    ],
+    "category": "write",
+    "kind": "team",
+    "teammates": [
+      "copy",
+      "mira",
+      "beacon",
+      "spark"
+    ],
+    "standing": false
+  },
+  {
+    "id": "ecommerce-engine",
+    "name": "Ecommerce Engine",
+    "description": "Team launcher - Storefront + Copy + Channels + Brand + Support optimize a DTC or marketplace operation.",
+    "avatar": "icons/ecommerce-engine.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/launchers/ecommerce-engine.md",
+    "prompts": [
+      "Optimize my Shopify store.",
+      "Diagnose my ecommerce bottleneck: traffic, conversion, or retention?",
+      "Multi-channel ecommerce: Shopify + Amazon + marketplaces."
+    ],
+    "category": "sell",
+    "kind": "team",
+    "teammates": [
+      "vault",
+      "copy",
+      "beacon",
+      "mira",
+      "mend"
+    ],
+    "standing": false
+  },
+  {
+    "id": "saas-mvp-sprint",
+    "name": "SaaS MVP Sprint",
+    "description": "Chained pipeline - Code + Validator + Copy + Brand ship a shaped MVP spec, validation plan, landing page, and visual direction (4 stages).",
+    "avatar": "icons/saas-mvp-sprint.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/launchers/saas-mvp-sprint.md",
+    "prompts": [
+      "Shape my SaaS MVP - 6-week appetite.",
+      "Design the validation plan + landing page for my SaaS idea.",
+      "Spec the MVP my coding agent can actually build."
+    ],
+    "category": "build",
+    "kind": "team",
+    "teammates": [
+      "smith",
+      "probe",
+      "copy",
+      "mira"
+    ],
+    "standing": false
+  },
+  {
+    "id": "content-studio",
+    "name": "Content Pipeline",
+    "description": "Chained pipeline - Channels + Copy (through 7 lens passes) + Brand + Quality Gate ship three publish-ready content variants in your voice (10 stages).",
+    "avatar": "icons/content-studio.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/launchers/content-studio.md",
+    "prompts": [
+      "Run this content idea through the 10-stage chain.",
+      "Build three publish-ready variants of [topic] in my voice.",
+      "Strategy \u2192 packaging \u2192 hooks \u2192 clarity \u2192 positioning \u2192 \u2026 \u2192 verdict."
+    ],
+    "category": "write",
+    "kind": "team",
+    "teammates": [
+      "beacon",
+      "copy",
+      "mira",
+      "verdict"
+    ],
+    "standing": false
+  },
+  {
+    "id": "service-studio",
+    "name": "Service Studio",
+    "description": "Team launcher - Research + Sales + Offer + Ops for B2B agencies, consultancies, and professional services.",
+    "avatar": "icons/service-studio.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/launchers/service-studio.md",
+    "prompts": [
+      "Productize my agency services.",
+      "Sharpen my service-business sales motion.",
+      "Design the SOW + delivery rhythm for my consultancy."
+    ],
+    "category": "run",
+    "kind": "team",
+    "teammates": [
+      "research",
+      "sales",
+      "forge",
+      "patch"
+    ],
+    "standing": false
+  },
+  {
+    "id": "marketing-strategy",
+    "name": "Marketing Plan",
+    "description": "Chained pipeline - Research + Brand + Offer + Channels + Numbers + Copy + Analyst + Quality Gate produce a one-page marketing plan, scored (8 stages).",
+    "avatar": "icons/marketing-strategy.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/launchers/marketing-strategy.md",
+    "prompts": [
+      "Build me a one-page marketing strategy I can ship from.",
+      "I have [stage / budget / 90-day goal] - orchestrate the strategy.",
+      "Marketing strategy with measurement framework and kill criteria."
+    ],
+    "category": "sell",
+    "kind": "team",
+    "teammates": [
+      "research",
+      "mira",
+      "forge",
+      "beacon",
+      "coin",
+      "copy",
+      "lens",
+      "verdict"
+    ],
+    "standing": false
+  },
+  {
+    "id": "damage-control",
+    "name": "Damage Control",
+    "description": "Team launcher - crisis comms. Research + Counsel + Copy + Brand assess damage, gate legal exposure, draft the statement, protect the brand.",
+    "avatar": "icons/damage-control.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/launchers/damage-control.md",
+    "prompts": [
+      "Something just leaked publicly - assemble the team.",
+      "Viral complaint on social. Need a response by end of day.",
+      "Regulatory inquiry came in. We have a week. Walk us through it."
+    ],
+    "category": "run",
+    "kind": "team",
+    "teammates": [
+      "research",
+      "sentry",
+      "copy",
+      "mira"
+    ],
+    "standing": false
+  },
+  {
+    "id": "marketing-agency",
+    "name": "Marketing Agency",
+    "description": "Standing Company - Director (CMO) + Scout + Mira + Beacon + Quill + Lens run weekly Monday check-ins, plan campaigns, and audit channels. Persists across sessions, fires on its own heartbeat.",
+    "avatar": "icons/marketing-agency.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/launchers/marketing-agency.md",
+    "enabledSkills": [
+      "cron"
+    ],
+    "prompts": [
+      "Set up my standing marketing agency - first run.",
+      "Open the agency - what's new since last week?",
+      "Plan a campaign for [product/audience] with the team."
+    ],
+    "category": "sell",
+    "kind": "team",
+    "teammates": [
+      "research",
+      "mira",
+      "beacon",
+      "copy",
+      "lens"
+    ],
+    "standing": true,
+    "rituals": [
+      {
+        "name": "weekly-checkin",
+        "cadence": "weekly:monday:09:00"
+      }
+    ]
+  },
+  {
+    "id": "sales-org",
+    "name": "Sales Org",
+    "description": "Standing Company - Pace (VP Sales) + Anchor + Scout + Forge + Lens run weekly Monday pipeline reviews, plan outbound sequences, audit stalled deals. Persists across sessions.",
+    "avatar": "icons/sales-org.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/launchers/sales-org.md",
+    "enabledSkills": [
+      "cron"
+    ],
+    "prompts": [
+      "Set up my standing sales org - first run.",
+      "Open the sales org - what's on the pipeline this week?",
+      "Plan an outbound sequence for [segment] with the team."
+    ],
+    "category": "sell",
+    "kind": "team",
+    "teammates": [
+      "sales",
+      "research",
+      "forge",
+      "lens"
+    ],
+    "standing": true,
+    "rituals": [
+      {
+        "name": "weekly-checkin",
+        "cadence": "weekly:monday:08:00"
+      }
+    ]
+  },
+  {
+    "id": "customer-success-org",
+    "name": "Customer Success Org",
+    "description": "Standing Company - Keeper (VP CS) + Mend + Anchor + Lens + Patch run weekly Monday renewal reviews, save churning accounts, audit health scores. Persists across sessions.",
+    "avatar": "icons/customer-success-org.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/launchers/customer-success-org.md",
+    "enabledSkills": [
+      "cron"
+    ],
+    "prompts": [
+      "Set up my standing CS org - first run.",
+      "Open CS - any at-risk accounts since last week?",
+      "Save a churning account [name] with the team."
+    ],
+    "category": "run",
+    "kind": "team",
+    "teammates": [
+      "mend",
+      "sales",
+      "lens",
+      "patch"
+    ],
+    "standing": true,
+    "rituals": [
+      {
+        "name": "weekly-checkin",
+        "cadence": "weekly:monday:10:00"
+      }
+    ]
+  },
+  {
+    "id": "editorial-newsroom",
+    "name": "Editorial Newsroom",
+    "description": "Standing Company - Editor (Editor-in-Chief) + Quill + Scout + Mira + Beacon + Lens run weekly Sunday editorial planning, ship issues and series, audit content performance. Persists across sessions.",
+    "avatar": "icons/editorial-newsroom.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/launchers/editorial-newsroom.md",
+    "enabledSkills": [
+      "cron"
+    ],
+    "prompts": [
+      "Set up my standing newsroom - first run.",
+      "Open the newsroom - what's queued for this week?",
+      "Plan an issue or series on [topic] with the team."
+    ],
+    "category": "write",
+    "kind": "team",
+    "teammates": [
+      "copy",
+      "research",
+      "mira",
+      "beacon",
+      "lens"
+    ],
+    "standing": true,
+    "rituals": [
+      {
+        "name": "weekly-checkin",
+        "cadence": "weekly:sunday:18:00"
+      }
+    ]
+  },
+  {
+    "id": "dev-shop",
+    "name": "Dev Shop",
+    "description": "Standing Company - Ship (CTO) + Smith + Patch + Verdict + Sentry run daily weekday standups, ship features, audit code health, plan releases. Persists across sessions. Inspired by Garry Tan's GStack workflow, adapted for solo founders and indie hackers.",
+    "avatar": "icons/dev-shop.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/launchers/dev-shop.md",
+    "enabledSkills": [
+      "cron"
+    ],
+    "prompts": [
+      "Set up my standing dev shop - first run.",
+      "Open the dev shop - what's shipping this week?",
+      "Ship a feature: [name] with the team."
+    ],
+    "category": "build",
+    "kind": "team",
+    "teammates": [
+      "smith",
+      "patch",
+      "verdict",
+      "sentry"
+    ],
+    "standing": true,
+    "rituals": [
+      {
+        "name": "weekly-standup",
+        "cadence": "weekly:monday:11:00"
+      }
+    ]
+  },
+  {
+    "id": "humanizer",
+    "name": "Humanizer",
+    "description": "Catches AI-tells in your drafts and rewrites them to read human. Diagnose first, then rewrite for rhythm and vocabulary. Plugs into your Voiceprint file so the result sounds like you, not a model.",
+    "avatar": "icons/humanizer.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/roles/humanizer.md",
+    "enabledSkills": [
+      "humanizer-tell-detector",
+      "humanizer-rewrite-pass",
+      "humanizer-voice-match"
+    ],
+    "prompts": [
+      "Scan this draft for AI tells - give me a score.",
+      "Humanize this so it doesn't read as AI slop.",
+      "Rewrite this in my voice - I have a voice profile."
+    ],
+    "category": "write",
+    "kind": "specialist"
+  }
+]

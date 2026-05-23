@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -24,6 +24,14 @@ import { useMultiAgentDetection } from '@renderer/hooks/agent/useMultiAgentDetec
 import { processCustomCss } from '@renderer/utils/theme/customCssProcessor';
 import { cleanupSiderTooltips } from '@renderer/utils/ui/siderTooltip';
 import { useConversationShortcuts } from '@renderer/hooks/ui/useConversationShortcuts';
+import { useGlobalKeybind } from '@renderer/hooks/settings/useGlobalKeybind';
+import { CommandPalette } from '@renderer/components/cmdk';
+import type {
+  PaletteAssistant,
+  PaletteStarterPrompt,
+} from '@renderer/components/cmdk';
+import { getAgentKey } from '@renderer/pages/guid/hooks/agentSelectionUtils';
+import type { AcpBackend } from '@/common/types/acpTypes';
 import { isElectronDesktop } from '@renderer/utils/platform';
 import { computeCssSyncDecision, resolveCssByActiveTheme } from '@renderer/utils/theme/themeCssSync';
 import '@renderer/styles/layout.css';
@@ -101,6 +109,60 @@ const Layout: React.FC<{
   useNotificationClick();
   const navigate = useNavigate();
   useConversationShortcuts({ navigate });
+
+  // --- ⌘K command palette (global) ---
+  // Owned at the layout level so the keybind works on every authenticated
+  // route, and so the palette can reach `useNavigate` for launch /
+  // resume / fill-prompt routing.
+  const [paletteOpen, setPaletteOpen] = useState(false);
+
+  // Toggle the palette; cmdk auto-focuses the input on mount, so a fresh
+  // open always lands with the cursor in the search field.
+  const togglePalette = useCallback(() => {
+    setPaletteOpen((prev) => !prev);
+  }, []);
+
+  // ⌘K on macOS / Ctrl+K on Linux+Windows. `useGlobalKeybind` already
+  // skips presses inside inputs/textareas and contenteditable, which is
+  // what we want — typing "k" in the chat input should not steal focus
+  // into the palette.
+  useGlobalKeybind('k', togglePalette, { meta: true });
+
+  const handlePaletteClose = useCallback(() => setPaletteOpen(false), []);
+
+  // Launch a chat with the selected preset assistant. Persists the agent
+  // key to ConfigStorage under the same key `useGuidAgentSelection` reads
+  // on mount (and on every locationKey change), then navigates to /guid.
+  // The hook's restore-on-locationKey effect picks up the saved value and
+  // selects it via the standard "custom:<id>" / "remote:<id>" / backend
+  // path — which means the Phase 1 Rory rule applies automatically.
+  const handleLaunchPreset = useCallback(
+    (preset: PaletteAssistant) => {
+      const backend = (preset.presetAgentType ?? 'gemini') as AcpBackend;
+      const agentKey = getAgentKey({ backend, customAgentId: preset.id });
+      ConfigStorage.set('guid.lastSelectedAgent', agentKey)
+        .catch((error) => console.error('Failed to persist palette-selected agent:', error))
+        .finally(() => {
+          void navigate('/guid', { state: {} });
+        });
+    },
+    [navigate]
+  );
+
+  const handleResumeChat = useCallback(
+    (conversationId: string) => {
+      void navigate(`/conversation/${conversationId}`);
+    },
+    [navigate]
+  );
+
+  const handleFillPrompt = useCallback(
+    (prompt: PaletteStarterPrompt) => {
+      void navigate('/guid', { state: { paletteInitialPrompt: prompt.text } });
+    },
+    [navigate]
+  );
+
   const location = useLocation();
   const workspaceAvailable =
     location.pathname.startsWith('/conversation/') || (TEAM_MODE_ENABLED && location.pathname.startsWith('/team/'));
@@ -547,6 +609,13 @@ const Layout: React.FC<{
               <Suspense fallback={null}>
                 <UpdateModal />
               </Suspense>
+              <CommandPalette
+                open={paletteOpen}
+                onClose={handlePaletteClose}
+                onLaunchPreset={handleLaunchPreset}
+                onResumeChat={handleResumeChat}
+                onFillPrompt={handleFillPrompt}
+              />
             </ArcoLayout.Content>
           </ArcoLayout>
         </div>

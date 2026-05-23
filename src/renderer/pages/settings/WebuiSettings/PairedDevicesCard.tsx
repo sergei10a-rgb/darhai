@@ -31,7 +31,7 @@ const PairedDevicesCard: React.FC = () => {
   };
 
   return (
-    <div className="px-[12px] md:px-[28px] py-14px bg-2 rd-16px">
+    <div className="px-[12px] md:px-[28px] py-14px bg-[var(--color-bg-2)] border border-solid border-[var(--color-border-2)] rd-12px">
       <div className="text-14px font-500 mb-12px text-t-primary">
         {t('settings.webui.pairedDevices.title')}
       </div>

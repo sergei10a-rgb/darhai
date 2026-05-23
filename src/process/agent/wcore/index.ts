@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -615,7 +615,7 @@ export class WCoreAgent {
   }
 
   /**
-   * Map wcore tool_request to AionUi confirmation details format.
+   * Map wcore tool_request to wayland confirmation details format.
    */
   private mapConfirmationDetails(event: WCoreEvent & { type: 'tool_request' }) {
     const { tool } = event;

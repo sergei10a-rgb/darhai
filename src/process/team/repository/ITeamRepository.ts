@@ -1,5 +1,5 @@
 // src/process/team/repository/ITeamRepository.ts
-import type { MailboxMessage, TeamTask, TTeam } from '../types';
+import type { MailboxMessage, TeamEvent, TeamEventType, TeamTask, TTeam } from '../types';
 
 /** Team CRUD + cascade-delete operations */
 export interface ITeamCrudRepository {
@@ -36,8 +36,24 @@ export interface ITaskRepository {
   removeFromBlockedBy(taskId: string, unblockedId: string): Promise<TeamTask>;
 }
 
+/** Append-only team event log persistence (W1e) */
+export interface ITeamEventRepository {
+  /** Persist a single event row. Append-only — no update or delete API. */
+  appendEvent(event: TeamEvent): Promise<void>;
+  /**
+   * List events for a team, newest first.
+   * @param since   When provided, returns only events strictly newer than this `createdAt` (ms epoch).
+   * @param limit   When provided, caps the result set (default 100).
+   * @param eventType Optional filter for a single event type (used by the W2d cost meter).
+   */
+  listEvents(
+    teamId: string,
+    options?: { since?: number; limit?: number; eventType?: TeamEventType }
+  ): Promise<TeamEvent[]>;
+}
+
 /**
  * Combined repository interface for backward compatibility.
  * New code should prefer the focused sub-interfaces above.
  */
-export type ITeamRepository = ITeamCrudRepository & IMailboxRepository & ITaskRepository;
+export type ITeamRepository = ITeamCrudRepository & IMailboxRepository & ITaskRepository & ITeamEventRepository;

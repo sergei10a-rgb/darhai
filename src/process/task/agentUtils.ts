@@ -1,13 +1,38 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import { getSkillsDir, getBuiltinSkillsCopyDir, loadSkillsContent } from '@process/utils/initStorage';
 import { AcpSkillManager, buildSkillsIndexText, type SkillIndex } from './AcpSkillManager';
+import { SkillLibrary } from '@process/services/skills/SkillLibrary';
 import { getTeamGuidePrompt } from '@process/team/prompts/teamGuidePrompt.ts';
 import { resolveLeaderAssistantLabel } from '@process/team/prompts/teamGuideAssistant.ts';
+import { composePrompt } from '@process/services/constitution/composePrompt';
+
+/**
+ * One-line advertisement for the wayland_search_skills MCP tool.
+ * Injected into every backend's system prompt when the skill library is non-empty.
+ * Single source of truth — do not copy-paste into individual managers.
+ */
+export function searchSkillsAdvertText(): string {
+  return 'Use the `wayland_search_skills` tool to discover skills from the full library on demand.';
+}
+
+/**
+ * Returns true when the SkillLibrary singleton has at least one entry loaded.
+ * Checks the in-memory state only (no I/O) — safe to call on every message.
+ */
+async function libraryIsNonEmpty(): Promise<boolean> {
+  try {
+    const lib = SkillLibrary.getInstance();
+    const entries = await lib.list();
+    return entries.length > 0;
+  } catch {
+    return false;
+  }
+}
 
 /**
  * First message processing configuration
@@ -59,11 +84,13 @@ export async function buildSystemInstructions(config: FirstMessageConfig): Promi
     instructions.push(getTeamGuidePrompt({ backend: config.backend, leaderLabel }));
   }
 
-  if (instructions.length === 0) {
-    return undefined;
-  }
-
-  return instructions.join('\n\n');
+  const basePrompt = instructions.length === 0 ? '' : instructions.join('\n\n');
+  // Prepend Wayland Constitution + optional specialist overlay (stable across
+  // turns so Anthropic/OpenAI prompt caches hit). composePrompt returns ''
+  // when no Constitution file exists, so this is a no-op for fresh installs
+  // and we preserve the previous "return undefined" behaviour.
+  const composed = composePrompt({ assistantId: config.presetAssistantId, basePrompt }).text;
+  return composed.length === 0 ? undefined : composed;
 }
 
 /**
@@ -109,27 +136,29 @@ export async function prepareFirstMessageWithSkillsIndex(
     instructions.push(config.presetContext);
   }
 
-  // 2. Load skills INDEX (including builtin skills + optional skills)
+  // 2. Load skills INDEX (always-on set only: builtin + pinned + assistant enabledSkills)
   // Use singleton to avoid repeated filesystem scans
   const skillManager = AcpSkillManager.getInstance(config.enabledSkills);
   // discoverSkills auto-loads builtin skills first
   await skillManager.discoverSkills(config.enabledSkills, config.excludeBuiltinSkills);
 
-  // Only inject if there are any skills
-  if (skillManager.hasAnySkills()) {
+  const hasLib = await libraryIsNonEmpty();
+
+  // Only inject if there are any skills or a library advert is needed
+  if (skillManager.hasAnySkills() || hasLib) {
     const excludeSet = new Set(config.excludeBuiltinSkills ?? []);
     // Filter out excluded builtin skills — the singleton cache may not reflect excludeBuiltinSkills
     const skillsIndex = skillManager.getSkillsIndex().filter((s) => !excludeSet.has(s.name));
     loadedSkills = skillsIndex;
-    if (skillsIndex.length > 0) {
-      // getSkillsDir() already returns CLI-safe path (symlink on macOS)
-      const skillsDir = getSkillsDir();
-      const builtinSkillsCopyDir = getBuiltinSkillsCopyDir();
-      const builtinSkillsDir = builtinSkillsCopyDir + '/_builtin';
-      const indexText = buildSkillsIndexText(skillsIndex);
+    // getSkillsDir() already returns CLI-safe path (symlink on macOS)
+    const skillsDir = getSkillsDir();
+    const builtinSkillsCopyDir = getBuiltinSkillsCopyDir();
+    const builtinSkillsDir = builtinSkillsCopyDir + '/_builtin';
+    // Pass hasLib so the index text includes the wayland_search_skills discovery note
+    const indexText = buildSkillsIndexText(skillsIndex, hasLib);
 
-      // Tell Agent where skills files are located for on-demand reading
-      const skillsInstruction = `${indexText}
+    // Tell Agent where skills files are located for on-demand reading
+    const skillsInstruction = `${indexText}
 
 [Skills Location]
 Skills are stored in three locations:
@@ -144,8 +173,7 @@ For example:
 - Builtin "cron" skill: ${builtinSkillsDir}/cron/SKILL.md
 - Bundled "pptx" skill: ${builtinSkillsCopyDir}/pptx/SKILL.md`;
 
-      instructions.push(skillsInstruction);
-    }
+    instructions.push(skillsInstruction);
   }
 
   // 3. Inject Team Guide prompt when agent has team guide capability
@@ -154,11 +182,14 @@ For example:
     instructions.push(getTeamGuidePrompt({ backend: config.backend, leaderLabel }));
   }
 
-  if (instructions.length === 0) {
+  const basePrompt = instructions.length === 0 ? '' : instructions.join('\n\n');
+  // Prepend Wayland Constitution + optional specialist overlay above the
+  // existing rules content. Composer returns '' when no Constitution exists,
+  // preserving the previous "skip rules block entirely" behaviour.
+  const systemInstructions = composePrompt({ assistantId: config.presetAssistantId, basePrompt }).text;
+  if (systemInstructions.length === 0) {
     return { content, loadedSkills };
   }
-
-  const systemInstructions = instructions.join('\n\n');
   return {
     content: `[Assistant Rules - You MUST follow these instructions]\n${systemInstructions}\n\n[User Request]\n${content}`,
     loadedSkills,
@@ -183,15 +214,18 @@ export async function buildSystemInstructionsWithSkillsIndex(config: FirstMessag
     instructions.push(config.presetContext);
   }
 
-  // Load skills INDEX (including builtin skills + optional skills)
+  // Load skills INDEX (always-on set only: builtin + pinned + assistant enabledSkills)
   const skillManager = AcpSkillManager.getInstance(config.enabledSkills);
   await skillManager.discoverSkills(config.enabledSkills, config.excludeBuiltinSkills);
 
-  if (skillManager.hasAnySkills()) {
+  const hasLib = await libraryIsNonEmpty();
+
+  if (skillManager.hasAnySkills() || hasLib) {
     const excludeSet = new Set(config.excludeBuiltinSkills ?? []);
     const skillsIndex = skillManager.getSkillsIndex().filter((s) => !excludeSet.has(s.name));
-    if (skillsIndex.length > 0) {
-      const indexText = buildSkillsIndexText(skillsIndex);
+    // Pass hasLib so the index text includes the wayland_search_skills discovery note
+    const indexText = buildSkillsIndexText(skillsIndex, hasLib);
+    if (indexText.length > 0) {
       instructions.push(indexText);
     }
   }
@@ -202,9 +236,10 @@ export async function buildSystemInstructionsWithSkillsIndex(config: FirstMessag
     instructions.push(getTeamGuidePrompt({ backend: config.backend, leaderLabel }));
   }
 
-  if (instructions.length === 0) {
-    return undefined;
-  }
-
-  return instructions.join('\n\n');
+  const basePrompt = instructions.length === 0 ? '' : instructions.join('\n\n');
+  // Prepend Wayland Constitution + optional specialist overlay (stable
+  // turn-to-turn for prompt-cache reuse). Returns '' when no Constitution
+  // is configured, preserving the previous "return undefined" behaviour.
+  const composed = composePrompt({ assistantId: config.presetAssistantId, basePrompt }).text;
+  return composed.length === 0 ? undefined : composed;
 }

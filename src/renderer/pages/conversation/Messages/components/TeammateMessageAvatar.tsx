@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -8,6 +8,7 @@ import React from 'react';
 import useSWR from 'swr';
 import { ipcBridge } from '@/common';
 import { usePresetAssistantInfo } from '@renderer/hooks/agent/usePresetAssistantInfo';
+import { getLucideIcon } from '@renderer/utils/lucideAvatar';
 
 type Props = {
   senderName: string;
@@ -31,6 +32,14 @@ const TeammateMessageAvatar: React.FC<Props> = ({ senderName, senderConversation
   const { info: presetInfo } = usePresetAssistantInfo(conversation ?? undefined);
 
   if (presetInfo) {
+    const LucideIconComponent = getLucideIcon(presetInfo.lucideIcon);
+    if (LucideIconComponent) {
+      return (
+        <span className='w-20px h-20px rounded-full flex items-center justify-center bg-fill-2'>
+          <LucideIconComponent size={12} className='text-[var(--color-text-2)]' />
+        </span>
+      );
+    }
     if (presetInfo.isEmoji) {
       return (
         <span className='w-20px h-20px rounded-full flex items-center justify-center text-14px leading-none bg-fill-2'>

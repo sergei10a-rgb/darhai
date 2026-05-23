@@ -1,7 +1,23 @@
+// B17 persona curation pending — run `node scripts/convert-team-bundle.mjs personas` against the
+// wayland-teams + FoundrySkills bundles to populate out/team-personas/assistants.staged.json (39
+// entries) and out/team-personas/agent-profiles.staged.json (25 entries), then re-run B17 to
+// evaluate each staged persona against ASSISTANT_PRESETS below for MERGE / DIFFERENTIATE / DROP.
+
+/**
+ * Category used to filter assistants in the chat surface picker.
+ * Phase 1 (chat-redesign) data shape; UI routing follows in later phases.
+ */
+export type AssistantCategory = 'sell' | 'write' | 'research' | 'build' | 'run' | 'office' | 'general';
+
 export type AssistantPreset = {
   id: string;
   avatar: string;
   presetAgentType?: string;
+  /**
+   * Dominant action the assistant performs. Phase 1 maps every built-in to one
+   * of seven categories so Phase 2/3 can filter and group without re-deriving.
+   */
+  category: AssistantCategory;
   /**
    * Directory containing all resources for this preset (relative to project root).
    * If set, both ruleFiles and skillFiles will be resolved from this directory.
@@ -23,8 +39,9 @@ export type AssistantPreset = {
 export const ASSISTANT_PRESETS: AssistantPreset[] = [
   {
     id: 'word-creator',
-    avatar: '📝',
+    avatar: 'lucide:FileText',
     presetAgentType: 'gemini',
+    category: 'office',
     resourceDir: 'src/process/resources/assistant/word-creator',
     ruleFiles: {
       'en-US': 'word-creator.md',
@@ -72,8 +89,9 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   },
   {
     id: 'ppt-creator',
-    avatar: '📊',
+    avatar: 'lucide:Presentation',
     presetAgentType: 'gemini',
+    category: 'office',
     resourceDir: 'src/process/resources/assistant/ppt-creator',
     ruleFiles: {
       'en-US': 'ppt-creator.md',
@@ -120,8 +138,9 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   },
   {
     id: 'excel-creator',
-    avatar: '📈',
+    avatar: 'lucide:Sheet',
     presetAgentType: 'gemini',
+    category: 'office',
     resourceDir: 'src/process/resources/assistant/excel-creator',
     ruleFiles: {
       'en-US': 'excel-creator.md',
@@ -168,8 +187,9 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   },
   {
     id: 'morph-ppt',
-    avatar: '✨',
+    avatar: 'lucide:Sparkles',
     presetAgentType: 'gemini',
+    category: 'office',
     resourceDir: 'src/process/resources/assistant/morph-ppt',
     ruleFiles: {
       'en-US': 'morph-ppt.md',
@@ -216,8 +236,9 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   },
   {
     id: 'morph-ppt-3d',
-    avatar: '🎬',
+    avatar: 'lucide:Clapperboard',
     presetAgentType: 'gemini',
+    category: 'office',
     resourceDir: 'src/process/resources/assistant/morph-ppt-3d',
     ruleFiles: {
       'en-US': 'morph-ppt-3d.md',
@@ -249,8 +270,9 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   },
   {
     id: 'word-form-creator',
-    avatar: '📋',
+    avatar: 'lucide:ClipboardList',
     presetAgentType: 'gemini',
+    category: 'office',
     resourceDir: 'src/process/resources/assistant/word-form-creator',
     ruleFiles: {
       'en-US': 'word-form-creator.md',
@@ -299,8 +321,9 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   },
   {
     id: 'pitch-deck-creator',
-    avatar: '🎯',
+    avatar: 'lucide:Target',
     presetAgentType: 'gemini',
+    category: 'sell',
     resourceDir: 'src/process/resources/assistant/pitch-deck-creator',
     ruleFiles: {
       'en-US': 'pitch-deck-creator.md',
@@ -348,8 +371,9 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   },
   {
     id: 'dashboard-creator',
-    avatar: '📊',
+    avatar: 'lucide:LayoutDashboard',
     presetAgentType: 'gemini',
+    category: 'office',
     resourceDir: 'src/process/resources/assistant/dashboard-creator',
     ruleFiles: {
       'en-US': 'dashboard-creator.md',
@@ -397,8 +421,9 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   },
   {
     id: 'academic-paper',
-    avatar: '📚',
+    avatar: 'lucide:GraduationCap',
     presetAgentType: 'gemini',
+    category: 'research',
     resourceDir: 'src/process/resources/assistant/academic-paper',
     ruleFiles: {
       'en-US': 'academic-paper.md',
@@ -446,8 +471,9 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   },
   {
     id: 'financial-model-creator',
-    avatar: '💰',
+    avatar: 'lucide:Calculator',
     presetAgentType: 'gemini',
+    category: 'office',
     resourceDir: 'src/process/resources/assistant/financial-model-creator',
     ruleFiles: {
       'en-US': 'financial-model-creator.md',
@@ -495,8 +521,9 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   },
   {
     id: 'star-office-helper',
-    avatar: '📺',
+    avatar: 'lucide:Star',
     presetAgentType: 'gemini',
+    category: 'run',
     resourceDir: 'src/process/resources/assistant/star-office-helper',
     ruleFiles: {
       'en-US': 'star-office-helper.md',
@@ -538,8 +565,9 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   },
   {
     id: 'openclaw-setup',
-    avatar: '🦞',
+    avatar: 'lucide:Wrench',
     presetAgentType: 'gemini',
+    category: 'run',
     resourceDir: 'src/process/resources/assistant/openclaw-setup',
     ruleFiles: {
       'en-US': 'openclaw-setup.md',
@@ -584,6 +612,7 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
     id: 'cowork',
     avatar: 'cowork.svg',
     presetAgentType: 'gemini',
+    category: 'general',
     resourceDir: 'src/process/resources/assistant/cowork',
     ruleFiles: {
       'en-US': 'cowork.md',
@@ -688,8 +717,9 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   // },
   {
     id: 'game-3d',
-    avatar: '🎮',
+    avatar: 'lucide:Gamepad2',
     presetAgentType: 'gemini',
+    category: 'build',
     resourceDir: 'src/process/resources/assistant/game-3d',
     ruleFiles: {
       'en-US': 'game-3d.md',
@@ -728,8 +758,9 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   },
   {
     id: 'ui-ux-pro-max',
-    avatar: '🎨',
+    avatar: 'lucide:Palette',
     presetAgentType: 'gemini',
+    category: 'build',
     resourceDir: 'src/process/resources/assistant/ui-ux-pro-max',
     ruleFiles: {
       'en-US': 'ui-ux-pro-max.md',
@@ -771,8 +802,9 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   },
   {
     id: 'planning-with-files',
-    avatar: '📋',
+    avatar: 'lucide:ListChecks',
     presetAgentType: 'gemini',
+    category: 'run',
     resourceDir: 'src/process/resources/assistant/planning-with-files',
     ruleFiles: {
       'en-US': 'planning-with-files.md',
@@ -814,8 +846,9 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   },
   {
     id: 'human-3-coach',
-    avatar: '🧭',
+    avatar: 'lucide:Compass',
     presetAgentType: 'gemini',
+    category: 'run',
     resourceDir: 'src/process/resources/assistant/human-3-coach',
     ruleFiles: {
       'en-US': 'human-3-coach.md',
@@ -860,61 +893,10 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
     },
   },
   {
-    id: 'social-job-publisher',
-    avatar: '📣',
-    presetAgentType: 'gemini',
-    resourceDir: 'src/process/resources/assistant/social-job-publisher',
-    ruleFiles: {
-      'en-US': 'social-job-publisher.md',
-      'zh-CN': 'social-job-publisher.zh-CN.md',
-    },
-    skillFiles: {
-      'en-US': 'social-job-publisher-skills.md',
-      'zh-CN': 'social-job-publisher-skills.zh-CN.md',
-      'ru-RU': 'social-job-publisher-skills.ru-RU.md',
-    },
-    defaultEnabledSkills: ['xiaohongshu-recruiter', 'x-recruiter'],
-    nameI18n: {
-      'en-US': 'Social Job Publisher',
-      'zh-CN': '社交招聘发布助手',
-      'ru-RU': 'Публикатор вакансий в соцсетях',
-      'uk-UA': 'Публікатор вакансій',
-    },
-    descriptionI18n: {
-      'en-US': 'Expand hiring requests into a full JD, images, and publish to social platforms via connectors.',
-      'zh-CN': '扩写招聘需求为完整 JD 与图片，并通过 connector 发布到社交平台。',
-      'ru-RU':
-        'Разворачивает запрос на найм в полноценное описание вакансии и изображения, а затем публикует это в соцсетях через коннекторы.',
-      'uk-UA':
-        'Розгортає запит на найм у повноцінний опис вакансії та зображення, а потім публікує це в соцмережах через конектори.',
-    },
-    promptsI18n: {
-      'en-US': [
-        'Create a comprehensive job post for Senior Full-Stack Engineer',
-        'Draft an engaging hiring tweet for social media',
-        'Create a multi-platform job posting (LinkedIn, X, Redbook)',
-      ],
-      'zh-CN': [
-        '创建一份高级全栈工程师的完整招聘启事',
-        '起草一条适合社交媒体的招聘推文',
-        '创建多平台职位发布（LinkedIn、X、小红书）',
-      ],
-      'ru-RU': [
-        'Создай развёрнутую вакансию на позицию Senior Full-Stack Engineer',
-        'Составь привлекательный твит о найме для соцсетей',
-        'Создай публикацию вакансии для нескольких платформ (LinkedIn, X, Xiaohongshu)',
-      ],
-      'uk-UA': [
-        'Створити повний опис вакансії Senior Full-Stack інженера',
-        'Написати цікавий пост про найм для соцмереж',
-        'Створити пост про вакансію для кількох платформ (LinkedIn, X)',
-      ],
-    },
-  },
-  {
     id: 'moltbook',
-    avatar: '🦞',
+    avatar: 'lucide:Users',
     presetAgentType: 'gemini',
+    category: 'general',
     resourceDir: 'src/process/resources/assistant/moltbook',
     ruleFiles: {
       'en-US': 'moltbook.md',
@@ -959,8 +941,9 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   },
   {
     id: 'beautiful-mermaid',
-    avatar: '📈',
+    avatar: 'lucide:GitBranch',
     presetAgentType: 'gemini',
+    category: 'build',
     resourceDir: 'src/process/resources/assistant/beautiful-mermaid',
     ruleFiles: {
       'en-US': 'beautiful-mermaid.md',
@@ -1002,8 +985,9 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   },
   {
     id: 'story-roleplay',
-    avatar: '📖',
+    avatar: 'lucide:BookOpen',
     presetAgentType: 'gemini',
+    category: 'write',
     resourceDir: 'src/process/resources/assistant/story-roleplay',
     ruleFiles: {
       'en-US': 'story-roleplay.md',

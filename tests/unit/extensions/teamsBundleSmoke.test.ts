@@ -120,18 +120,22 @@ describeIfMounted('waylandteams bundle — live load + resolve', () => {
       }
     }
 
-    // Known content drift (Wave G item, recorded 2026-05-18 during T4):
-    // Four presets reference a `cron` mode skill that hasn't been authored
-    // into contributes/skills.json yet. Wayland gracefully warns at runtime
-    // on missing skill references — these launchers still load, they just
-    // load with three of four declared skills. Tracked separately for the
-    // next waylandteams authoring session. Document the known set here so
-    // any NEW miss surfaces immediately but the existing four don't gate.
+    // Known content drift (Wave G item, recorded 2026-05-18 during T4 +
+    // extended 2026-05-18 evening when dev-shop joined the Standing
+    // Companies group per COMPANIES-HANDOFF.md):
+    // All five Standing Companies reference a `cron` mode skill that
+    // hasn't been authored into contributes/skills.json yet. Wayland
+    // gracefully warns at runtime on missing skill references — these
+    // launchers still load, they just load with one fewer declared
+    // skill. Tracked separately for the next waylandteams authoring
+    // session. Document the known set here so any NEW miss surfaces
+    // immediately but the existing five don't gate.
     const allowedMisses = new Set([
       'marketing-agency -> cron',
       'sales-org -> cron',
       'customer-success-org -> cron',
       'editorial-newsroom -> cron',
+      'dev-shop -> cron',
     ]);
     const unexpected = missing.filter((m) => !allowedMisses.has(m));
     expect(unexpected, `Unexpected enabledSkills misses: ${unexpected.join(', ')}`).toEqual([]);

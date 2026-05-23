@@ -446,6 +446,26 @@
   "speechToTextSmartFormat": "스마트 포맷",
   "speechToTextRequired": "필수",
   "speechToTextOptional": "선택",
+  "speechToTextProviderWhisperLocal": "Whisper (로컬)",
+  "speechToTextWhisperModel": "Whisper 모델",
+  "speechToTextDownloadModel": "모델 다운로드",
+  "speechToTextDownloading": "다운로드 중...",
+  "speechToTextDownloadSuccess": "모델 다운로드 완료",
+  "speechToTextDownloadError": "다운로드 실패",
+  "speechToTextCancelDownload": "취소",
+  "textToSpeech": "텍스트 음성 변환",
+  "textToSpeechDescription": "로컬 또는 시스템 음성 엔진으로 AI 응답을 읽어드립니다.",
+  "textToSpeechProvider": "공급자",
+  "textToSpeechProviderKokoroLocal": "Kokoro (로컬)",
+  "textToSpeechProviderSystemNative": "시스템 기본",
+  "textToSpeechVoice": "목소리",
+  "textToSpeechSpeed": "속도",
+  "textToSpeechAutoRead": "응답 자동 읽기",
+  "textToSpeechDownloadModel": "모델 다운로드",
+  "textToSpeechDownloading": "다운로드 중...",
+  "textToSpeechDownloadSuccess": "모델 다운로드 완료",
+  "textToSpeechDownloadError": "다운로드 실패",
+  "textToSpeechCancelDownload": "취소",
   "mcp": "MCP 통합",
   "imageGenerationModel": "이미지 모델",
   "imageGenerationGuide": "이미지 모델 설정 가이드",
@@ -942,6 +962,7 @@
     "groupAppearance": "외관",
     "groupSystem": "시스템",
     "groupAbout": "정보",
+    "models": "모델",
     "providers": "제공업체",
     "channels": "채널",
     "mcp": "MCP 서버",
@@ -951,7 +972,8 @@
     "notifications": "알림",
     "storage": "저장소",
     "skills": "스킬 및 도구",
-    "agents": "에이전트"
+    "agents": "에이전트",
+    "constitution": "헌장"
   },
   "channelsIndex": {
     "title": "채널",
@@ -971,11 +993,215 @@
     "browseExtensions": "확장 프로그램 보기 →",
     "channelsMovedHint": "채널이 통합으로 이동되었습니다 →"
   },
-  "providersPage": {
-    "title": "제공업체"
+  "modelsPage": {
+    "title": "모델",
+    "subtitle": "키 또는 Google 로그인으로 제공자를 연결하면 모델이 자동으로 나타납니다.",
+    "crumbAiModels": "AI 모델",
+    "connectedLabel": "연결됨",
+    "loadError": "연결된 제공자를 불러올 수 없습니다. 잠시 후 다시 시도하세요.",
+    "connect": {
+      "title": "제공자 연결",
+      "keyLabel": "API 키 붙여넣기",
+      "keyPlaceholder": "아무 제공자의 키를 붙여넣으세요…",
+      "connect": "연결",
+      "hintDefault": "Wayland가 제공자를 자동으로 인식합니다——선택할 필요가 없습니다.",
+      "hintAmbiguous": "OpenAI 형식의 키 같습니다——연결하여 제공자를 확인하세요.",
+      "recognized": "인식됨:",
+      "cloudHint": "이 제공자는 '둘러보기'의 자격 증명 양식이 필요합니다.",
+      "unrecognizedPrefix": "인식되지 않는 키 형식입니다——",
+      "unrecognizedBrowse": "'둘러보기'에서 제공자를 선택하세요",
+      "or": "또는",
+      "google": "Google로 계속",
+      "googleSuccess": "{{account}} 계정으로 Google에 로그인했습니다.",
+      "googleFailed": "Google 로그인에 실패했습니다. 다시 시도하세요.",
+      "browse": "30개 이상의 모든 제공자 둘러보기 →",
+      "thatProvider": "해당 제공자",
+      "errorUnauthorized": "해당 {{provider}} 키가 거부되었습니다——권한이 없습니다. 키를 확인하고 다시 시도하세요.",
+      "errorNoCredit": "연결되었지만 해당 {{provider}} 키에 사용 가능한 크레딧이 없습니다. 모델을 실행하려면 결제를 추가하세요.",
+      "errorOffline": "{{provider}}에 연결할 수 없습니다——오프라인 상태인 것 같습니다. 연결을 확인하고 다시 시도하세요.",
+      "errorUnrecognized": "해당 키가 인식되지 않았습니다. '둘러보기'를 열고 제공자를 선택하세요.",
+      "errorCloud": "{{provider}}를 인식했습니다 — 이 제공자는 여러 필드가 필요합니다. '둘러보기'를 열어 전체 자격 증명을 입력하세요.",
+      "errorAmbiguous": "이 키가 어느 제공자의 것인지 확인할 수 없습니다. '둘러보기'를 열고 제공자를 선택하세요.",
+      "errorNoModels": "{{provider}}가 연결되었지만 모델을 반환하지 않았습니다. '관리'에서 새로 고침해 보세요.",
+      "errorUnknown": "{{provider}}에 연결할 수 없습니다. 다시 시도하세요.",
+      "undecryptableHint": "Your saved key for this provider is unreadable. Please re-enter it.",
+      "fromDeepLink": "딥링크에서"
+    },
+    "detected": {
+      "found": "이 컴퓨터에서 {{provider}} API 키를 찾았습니다. 사용하시겠습니까?",
+      "use": "사용",
+      "ignore": "무시"
+    },
+    "row": {
+      "connected": "연결됨",
+      "testing": "테스트 중…",
+      "manage": "관리",
+      "fix": "수정",
+      "modelCount": "모델 {{count}}개",
+      "noModelsHint": "모델 없음——'관리'에서 새로 고침",
+      "actionNeeded": "조치 필요——{{reason}}",
+      "errorUnauthorized": "키 거부됨",
+      "errorNoCredit": "사용 가능한 크레딧 없음",
+      "errorOffline": "제공자에 연결할 수 없음",
+      "errorUnrecognized": "키가 인식되지 않음",
+      "errorNoModels": "모델이 반환되지 않음",
+      "errorUnknown": "연결 문제",
+      "via": {
+        "apiKey": "API 키",
+        "autoDiscovered": "자동 검색된 키",
+        "cloudCredentials": "클라우드 자격 증명"
+      }
+    },
+    "empty": {
+      "note": "아직 연결된 제공자가 없습니다. 위에서 하나 연결하세요——가장 빠른 시작은 <1>Google로 계속</1>입니다."
+    },
+    "manage": {
+      "statusConnected": "연결됨",
+      "statusError": "조치 필요",
+      "refresh": "새로 고침",
+      "rekey": "키 변경",
+      "disconnect": "연결 끊기",
+      "cancel": "취소",
+      "retry": "다시 시도",
+      "statusLine": "{{via}} · 카탈로그에 모델 {{count}}개 · 자동 업데이트",
+      "sectionLabel": "이 제공업체의 모델",
+      "sectionExplain": "추천 모델은 기본적으로 켜져 있습니다——최신 세대와 한 세대 전. 아무 모델이나 끄거나, 이전·이미지·오디오 모델을 켤 수 있습니다. 전체 카탈로그를 검색할 수 있습니다.",
+      "searchPlaceholder": "이 제공업체의 모델 검색…",
+      "loading": "이 제공업체의 카탈로그를 불러오는 중…",
+      "loadError": "이 제공업체의 모델을 불러올 수 없습니다. 다시 시도하세요.",
+      "empty": "이 제공업체가 모델을 반환하지 않았습니다. 새로 고침 후 다시 시도하세요.",
+      "noMatch": "\"{{query}}\"와 일치하는 모델이 없습니다",
+      "recommendedHead": "추천——기본 켜짐",
+      "moreHead": "카탈로그의 다른 모델",
+      "recommended": "추천",
+      "roleFlagship": "가장 강력함",
+      "roleFast": "가장 빠름",
+      "rolePrevious": "추천",
+      "capImage": "이미지",
+      "capAudio": "오디오",
+      "capEmbedding": "임베딩",
+      "capOther": "기타",
+      "tagChat": "채팅",
+      "tagVision": "비전",
+      "tagImage": "이미지",
+      "tagAudio": "오디오",
+      "tagEmbeddings": "임베딩",
+      "tagReasoning": "추론",
+      "tagTools": "도구",
+      "tagResearch": "리서치",
+      "contextWindow": "{{count}}K 컨텍스트",
+      "cost": "100만당 ${{in}} / ${{out}}",
+      "toggleAria": "{{model}} 사용",
+      "toggleFailed": "해당 모델을 변경할 수 없습니다. 다시 시도하세요.",
+      "refreshDone": "카탈로그가 최신 상태입니다.",
+      "refreshFailed": "이 제공업체를 새로 고칠 수 없습니다. 다시 시도하세요.",
+      "disconnectTitle": "이 제공업체의 연결을 끊을까요?",
+      "disconnectBody": "{{provider}} 연결을 끊으면 해당 모델도 제거됩니다. 나중에 키로 다시 연결할 수 있습니다.",
+      "disconnectConfirm": "연결 끊기",
+      "disconnectFailed": "이 제공업체의 연결을 끊을 수 없습니다. 다시 시도하세요.",
+      "rekeyTitle": "{{provider}} 키 변경",
+      "rekeyBody": "이 제공업체의 새 API 키를 붙여넣으세요. 현재 자격 증명을 대체하고 연결 테스트를 실행합니다.",
+      "rekeyPlaceholder": "새 API 키 붙여넣기…",
+      "rekeyConfirm": "키 업데이트",
+      "rekeyDone": "제공업체 자격 증명이 업데이트되었습니다.",
+      "rekeyCloudDisabled": "클라우드 자격 증명은 여기가 아니라 클라우드 연결 양식에서 다시 설정합니다.",
+      "errorUnauthorized": "해당 {{provider}} 키가 거부되었습니다——권한 없음. 키를 확인하고 다시 시도하세요.",
+      "errorNoCredit": "해당 {{provider}} 키에 사용 가능한 크레딧이 없습니다. 모델을 실행하려면 결제를 추가하세요.",
+      "errorOffline": "{{provider}}에 연결할 수 없습니다——오프라인 상태인 것 같습니다. 연결을 확인하고 다시 시도하세요.",
+      "errorUnrecognized": "해당 키가 {{provider}}로 인식되지 않았습니다.",
+      "errorNoModels": "{{provider}}가 키를 수락했지만 모델을 반환하지 않았습니다. 새로 고침해 보세요.",
+      "errorUnknown": "{{provider}}를 업데이트할 수 없습니다. 다시 시도하세요."
+    },
+    "browse": {
+      "title": "모든 제공업체",
+      "subtitle": "연결할 제공업체를 선택하세요. 대부분 키만 필요하며, 클라우드 제공업체는 간단한 자격 증명 양식이 필요합니다.",
+      "searchPlaceholder": "30개 이상의 제공업체 검색…",
+      "noMatch": "“{{query}}”와 일치하는 제공업체가 없습니다",
+      "back": "모든 제공업체",
+      "connected": "연결됨",
+      "connectAria": "{{provider}} 연결",
+      "cloudTag": "자격 증명 양식",
+      "group": {
+        "frontier": "프런티어",
+        "cloud": "클라우드 — 자격 증명 양식",
+        "open": "오픈 추론",
+        "chinese": "중국 프런티어",
+        "voice": "음성 및 전사"
+      },
+      "keySubtitle": "{{provider}}의 API 키를 붙여넣어 연결하세요.",
+      "keyLabel": "API 키",
+      "keyPlaceholder": "API 키 붙여넣기…",
+      "connect": "연결 및 테스트",
+      "errorUnauthorized": "해당 {{provider}} 키가 거부되었습니다 — 권한 없음. 키를 확인하고 다시 시도하세요.",
+      "errorNoCredit": "연결되었지만 해당 {{provider}} 키에 사용 가능한 크레딧이 없습니다. 모델을 실행하려면 결제 정보를 추가하세요.",
+      "errorOffline": "{{provider}}에 연결할 수 없습니다 — 오프라인 상태인 것 같습니다. 연결을 확인하고 다시 시도하세요.",
+      "errorUnrecognized": "해당 키가 {{provider}}에서 인식되지 않았습니다. 키를 확인하고 다시 시도하세요.",
+      "errorNoModels": "{{provider}}가 연결되었지만 모델을 반환하지 않았습니다. 관리에서 새로 고침해 보세요.",
+      "errorUnknown": "{{provider}}에 연결할 수 없습니다. 다시 시도하세요.",
+      "baseUrlLabel": "기본 URL(선택 사항)",
+      "baseUrlPlaceholder": "https://your-endpoint.example/v1"
+    },
+    "cloud": {
+      "subtitle": {
+        "aws-bedrock": "Bedrock에는 IAM 자격 증명과 리전이 필요합니다.",
+        "vertex": "Vertex에는 프로젝트, 리전, 서비스 계정 키가 필요합니다.",
+        "azure": "Azure OpenAI에는 리소스 엔드포인트와 API 키가 필요합니다."
+      },
+      "fields": {
+        "accessKeyId": {
+          "label": "액세스 키 ID",
+          "placeholder": "AKIA…"
+        },
+        "secretAccessKey": {
+          "label": "비밀 액세스 키",
+          "placeholder": "비밀 액세스 키 붙여넣기…"
+        },
+        "region": {
+          "label": "리전",
+          "placeholder": "us-east-1"
+        },
+        "projectId": {
+          "label": "프로젝트 ID",
+          "placeholder": "my-gcp-project"
+        },
+        "serviceAccountJson": {
+          "label": "서비스 계정 키 (JSON)",
+          "placeholder": "서비스 계정 JSON 붙여넣기…"
+        },
+        "endpoint": {
+          "label": "엔드포인트",
+          "placeholder": "https://my-resource.openai.azure.com"
+        },
+        "apiKey": {
+          "label": "API 키",
+          "placeholder": "API 키 붙여넣기…"
+        }
+      },
+      "submitConnect": "연결 및 테스트",
+      "submitRekey": "자격 증명 업데이트",
+      "errorUnauthorized": "해당 {{provider}} 자격 증명이 거부되었습니다 — 권한 없음. 확인하고 다시 시도하세요.",
+      "errorNoCredit": "연결되었지만 {{provider}}에 사용 가능한 크레딧이 없습니다. 모델을 실행하려면 결제 정보를 추가하세요.",
+      "errorOffline": "{{provider}}에 연결할 수 없습니다 — 오프라인 상태인 것 같습니다. 연결을 확인하고 다시 시도하세요.",
+      "errorUnrecognized": "이 자격 증명이 불완전하거나 {{provider}}에서 허용되지 않았습니다. 모든 필드를 확인하세요.",
+      "errorNoModels": "{{provider}}가 연결되었지만 모델을 반환하지 않았습니다. 관리에서 새로 고침해 보세요.",
+      "errorUnknown": "{{provider}}에 연결할 수 없습니다. 다시 시도하세요."
+    },
+    "homePicker": {
+      "empty": "이 에이전트에 사용할 수 있는 모델이 아직 없습니다. 공급자를 연결하여 추가하세요.",
+      "priceTierAria": "가격 등급 {{tier}}"
+    }
   },
   "mcpPage": {
     "title": "MCP 서버"
+  },
+  "imageGenPage": {
+    "title": "이미지 생성",
+    "subtitle": "내장 이미지 생성 도구를 구성합니다. 기본 모델을 선택하고 MCP 서버를 활성화하거나 비활성화하세요.",
+    "mcpToggleLabel": "이미지 생성 도구 활성화",
+    "mcpToggleDescription": "활성화하면 에이전트가 설정된 모델을 사용하여 이미지를 생성하고 편집할 수 있습니다.",
+    "defaultModelLabel": "기본 이미지 모델",
+    "noModels": "이미지 생성 가능한 모델이 설정되지 않았습니다.",
+    "toggleError": "이미지 생성 전환에 실패했습니다. 다시 시도해 주세요."
   },
   "generalPage": {
     "title": "일반"
@@ -993,85 +1219,69 @@
   "skillsPage": {
     "title": "스킬 및 도구"
   },
-  "agentsPage": {
-    "title": "에이전트"
+  "constitutionPage": {
+    "subtitle": "Wayland의 규칙. 매 턴마다 새로 로드되며 편집 사항은 재시작 없이 즉시 적용됩니다. 재정의 작동 방식은 §11을 참조하세요.",
+    "tocTitle": "섹션",
+    "tocEmpty": "아직 섹션이 없습니다",
+    "reset": "초기화",
+    "resetTooltip": "기본 헌장으로 초기화",
+    "resetConfirmTitle": "헌장을 초기화하시겠습니까?",
+    "resetConfirmBody": "현재 편집 내용이 사라집니다. 기본 헌장이 복원됩니다.",
+    "resetCancel": "취소",
+    "loading": "로딩 중…",
+    "tokenCount": "{{value}} 토큰",
+    "tokenWarning": "준수 한도(~2,000 토큰)에 근접하고 있습니다. 전문 오버레이로 분할하는 것을 고려하세요.",
+    "tokenError": "준수 한도를 초과했습니다. 섹션을 ~/.wayland/specialists/<id>.md의 전문 오버레이로 이동하세요."
   },
-  "providers": {
-    "heroTitle": "Connect a provider",
-    "heroPlaceholder": "Paste an API key...",
-    "detectButton": "Detect & connect",
-    "browseButton": "Browse 24+ providers",
-    "connected": "Connected",
-    "refreshed": "Refreshed {{n}}h ago",
-    "refreshNow": "Refresh now",
-    "disconnect": "Disconnect",
-    "configure": "Configure",
-    "deprecationBanner": "Some models in this provider’s catalog have been removed",
-    "defaultsTitle": "Default models",
-    "defaultChat": "Default chat model",
-    "defaultCoding": "Default coding model",
-    "defaultVision": "Default vision model",
-    "defaultImage": "Default image model",
-    "defaultAudio": "Default audio model",
-    "noDefault": "No default set",
-    "connect": {
-      "entryTitle": "Connect a provider",
-      "placeholder": "Paste your API key here...",
-      "detectButton": "Detect & connect",
-      "browseButton": "Browse 24+ providers",
-      "detectingProvider": "Detecting provider…",
-      "verifyingKey": "Verifying key…",
-      "fetchingCatalog": "Fetching model catalog…",
-      "moreInfoTitle": "Additional details required",
-      "pickerTitle": "Choose a provider",
-      "pickerSearch": "Search providers…",
-      "resultsTitle": "Select models to enable",
-      "resultsSelectAll": "Select all",
-      "resultsDeselectAll": "Deselect all",
-      "connectButton": "Connect",
-      "cancel": "Cancel",
-      "retry": "Try again",
-      "editKey": "Edit key",
-      "openConsole": "Open provider console",
-      "errorTitle": "Connection failed",
-      "errorNetwork": "Could not reach the provider. Check your network connection.",
-      "errorUnauthorized": "Invalid API key. Check your key and try again.",
-      "errorForbidden": "This key does not have the required permissions.",
-      "errorRateLimit": "Rate limit hit. Wait a moment and try again.",
-      "errorUnknown": "An unexpected error occurred.",
-      "fieldRegion": "AWS Region",
-      "fieldSecretKey": "Secret Access Key",
-      "fieldAccessKeyId": "Access Key ID",
-      "fieldEndpoint": "Endpoint URL",
-      "fieldDeployment": "Deployment Name",
-      "fieldApiVersion": "API Version",
-      "fieldProjectId": "Google Cloud Project ID",
-      "fieldServiceAccount": "Service Account JSON",
-      "browseServiceAccount": "Browse…"
+  "constitutionSpecialists": {
+    "title": "전문 오버레이",
+    "description": "오버레이는 헌장 위에 어시스턴트별 규칙을 추가합니다. 어시스턴트 ID별로 옵트인 방식으로 적용되며 해당 어시스턴트의 프롬프트에 결합됩니다.",
+    "addButton": "오버레이 추가",
+    "idLabel": "어시스턴트 ID",
+    "idPlaceholder": "예: copy, spark, humanizer",
+    "idInvalid": "영문자, 숫자, 하이픈, 밑줄만 사용할 수 있습니다.",
+    "idDuplicate": "해당 ID의 오버레이가 이미 존재합니다.",
+    "create": "만들기",
+    "edit": "편집",
+    "delete": "삭제",
+    "deleteConfirmTitle": "오버레이를 삭제하시겠습니까?",
+    "deleteConfirmBody": "\"{{value}}\"의 오버레이가 영구적으로 삭제됩니다.",
+    "cancel": "취소",
+    "empty": "아직 전문 오버레이가 없습니다. 추가하면 특정 어시스턴트에 추가 규칙을 부여할 수 있습니다.",
+    "close": "닫기",
+    "tokenCount": "{{value}} 토큰"
+  },
+  "agentsPage": {
+    "title": "에이전트",
+    "subtitle": "대화하는 어시스턴트입니다. 각 에이전트는 특정 모델 세트에서 실행됩니다.",
+    "yourAgents": "내 에이전트",
+    "moreDetected": "추가 감지됨 · {{count}}",
+    "remoteAgents": "원격 에이전트",
+    "roadmap": "로드맵",
+    "empty": "아직 감지된 에이전트가 없습니다. 모델을 연결하면 Wayland Core는 항상 사용할 수 있습니다.",
+    "loadErrorsTitle": "일부 에이전트를 불러오지 못했습니다",
+    "badge": {
+      "active": "활성",
+      "detected": "감지됨"
     },
-    "tiers": {
-      "flagship": "Flagship",
-      "everyday": "Everyday",
-      "fast": "Fast",
-      "reasoning": "Reasoning",
-      "legacy": "Legacy"
+    "scope": {
+      "any": "연결한 모든 모델을 실행",
+      "claude": "Claude 모델을 실행",
+      "gpt": "GPT 모델을 실행",
+      "gemini": "Gemini 모델을 실행",
+      "qwen": "Qwen 모델을 실행",
+      "kimi": "Kimi 모델을 실행",
+      "mistral": "Mistral 모델을 실행"
     },
-    "capabilities": {
-      "chat": "Chat",
-      "vision": "Vision",
-      "image": "Image generation",
-      "audio": "Audio",
-      "embeddings": "Embeddings",
-      "reasoning": "Reasoning"
+    "about": {
+      "wcore": "Wayland 자체 엔진입니다. 「모델」 페이지의 모든 제공업체를 활용합니다.",
+      "claude": "Anthropic의 코딩 에이전트입니다. 자체 계정으로 로그인합니다 — GPT나 Gemini는 실행할 수 없습니다.",
+      "codex": "OpenAI의 코딩 에이전트입니다. 자체 계정으로 로그인합니다 — Claude나 Gemini는 실행할 수 없습니다."
     },
-    "categories": {
-      "frontier": "Frontier",
-      "openInference": "Open inference",
-      "cloud": "Cloud",
-      "chineseFrontier": "Chinese frontier",
-      "specialised": "Specialised",
-      "voice": "Voice",
-      "custom": "Custom"
+    "flux": {
+      "title": "Flux Router",
+      "soon": "공개 예정",
+      "desc": "어떤 에이전트든 자신의 것뿐만 아니라 연결한 모든 모델과 제공업체로 라우팅할 수 있게 합니다."
     }
   }
 }

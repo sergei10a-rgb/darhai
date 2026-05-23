@@ -56,7 +56,7 @@ const ActivityLogCard: React.FC = () => {
   const visible = expanded ? events : events.slice(0, PREVIEW_COUNT);
 
   return (
-    <div className="px-[12px] md:px-[28px] py-14px bg-2 rd-16px">
+    <div className="px-[12px] md:px-[28px] py-14px bg-[var(--color-bg-2)] border border-solid border-[var(--color-border-2)] rd-12px">
       <div className="flex items-center justify-between mb-12px">
         <div className="text-14px font-500 text-t-primary">{t('settings.webui.activityLog.title')}</div>
         <Button type="text" size="small" onClick={load}>

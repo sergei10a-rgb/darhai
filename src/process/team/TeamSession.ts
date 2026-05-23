@@ -6,6 +6,7 @@ import type { IWorkerTaskManager } from '@process/task/IWorkerTaskManager';
 import { addMessage } from '@process/utils/message';
 import type { ITeamRepository } from './repository/ITeamRepository';
 import type { TTeam, TeamAgent } from './types';
+import { EventLogger } from './EventLogger';
 import { Mailbox } from './Mailbox';
 import { TaskManager } from './TaskManager';
 import { TeammateManager } from './TeammateManager';
@@ -34,29 +35,54 @@ export class TeamSession extends EventEmitter {
   private readonly mcpServer: TeamMcpServer;
   private mcpStdioConfig: StdioMcpConfig | null = null;
 
-  constructor(team: TTeam, repo: ITeamRepository, workerTaskManager: IWorkerTaskManager, spawnAgent?: SpawnAgentFn) {
+  constructor(
+    team: TTeam,
+    repo: ITeamRepository,
+    workerTaskManager: IWorkerTaskManager,
+    spawnAgent?: SpawnAgentFn,
+    /**
+     * W1e — optional team_event_log writer. When provided, Mailbox + TaskManager
+     * + TeammateManager all receive it so mailbox/task/wake/token_usage rows
+     * land in `team_event_log`. Defaults to a fresh logger over `repo` so this
+     * session works standalone (and existing tests don't have to pass it in).
+     */
+    eventLogger?: EventLogger
+  ) {
     super();
     this.team = team;
     this.teamId = team.id;
     this.repo = repo;
     this.workerTaskManager = workerTaskManager;
-    this.mailbox = new Mailbox(repo);
-    this.taskManager = new TaskManager(repo);
+    const logger = eventLogger ?? new EventLogger(repo);
+    this.mailbox = new Mailbox(repo, logger);
+    // TaskManager validates task owners against the *current* team roster.
+    // Pass a thunk (not a snapshot) so spawned/removed agents are reflected
+    // on the next call without needing to rebuild TaskManager.
+    this.taskManager = new TaskManager(repo, () => this.teammateManager.getAgents(), logger);
     this.teammateManager = new TeammateManager({
       teamId: team.id,
       agents: team.agents,
       mailbox: this.mailbox,
       workerTaskManager,
       teamWorkspace: team.workspace || undefined,
+      isSandboxed: team.isSandboxed === true,
+      // W4 audit CRIT-1 (2026-05-19): wire imported-team context so the
+      // ACP file-op gate can resolve per-cap grants for sandboxed agents.
+      isImported: team.importedFrom != null,
+      getTeamSnapshot: () => this.repo.findById(team.id),
       onAgentRemoved: (teamId, agents) => {
         void this.repo.update(teamId, { agents, updatedAt: Date.now() });
       },
+      eventLogger: logger,
     });
 
     // Create MCP server for team coordination tools
     this.mcpServer = new TeamMcpServer({
       teamId: team.id,
       getAgents: () => this.teammateManager.getAgents(),
+      // W4b — expose the team snapshot so MCP tool dispatch can consult
+      // sandbox/capability state without re-querying the repo.
+      getTeam: () => this.team,
       mailbox: this.mailbox,
       taskManager: this.taskManager,
       spawnAgent,
@@ -208,6 +234,20 @@ export class TeamSession extends EventEmitter {
   /** Remove an agent from the team at runtime and clean up its state */
   removeAgent(slotId: string): void {
     this.teammateManager.removeAgent(slotId);
+  }
+
+  /**
+   * Kill the CLI process for an agent slot without removing it from the roster.
+   * Used by `TeamSessionService.restartAgent` so the next `wake()` rebuilds the
+   * worker from a clean state.
+   */
+  killAgentProcess(slotId: string): void {
+    this.teammateManager.killAgentProcess(slotId);
+  }
+
+  /** True when the named agent currently has a wake in flight. */
+  isWakeActive(slotId: string): boolean {
+    return this.teammateManager.isWakeActive(slotId);
   }
 
   /** Get current agent states */

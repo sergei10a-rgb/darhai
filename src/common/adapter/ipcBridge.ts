@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -25,6 +25,25 @@ import type {
 } from '../update/updateTypes';
 import type { ProtocolDetectionRequest, ProtocolDetectionResponse } from '../utils/protocolDetector';
 import type { SpeechToTextRequest, SpeechToTextResult } from '../types/speech';
+import type { DownloadResult, VoiceAsset } from '../types/voiceAsset';
+import type { SkillSecurityReport, SkillIndexEntry, SkillSource, SkillVerdict } from '../types/skillTypes';
+import type { ImportResult } from '../../process/services/skills/SkillImport';
+import type {
+  ProviderId,
+  CatalogModel,
+  CuratedModel,
+  ProviderConnState,
+  ConnectError,
+} from '../../process/providers/types';
+
+export type SkillStats = {
+  total: number;
+  bySource: Record<SkillSource, number>;
+  pinned: number;
+  flagged: number;
+  /** Count of entries with `security.verdict === 'clean'` (verified safe). */
+  verified: number;
+};
 
 export const shell = {
   openFile: buildProvider<void, string>('open-file'), // Open file with the system default program
@@ -56,10 +75,9 @@ export const conversation = {
   warmup: buildProvider<void, { conversation_id: string }>('conversation.warmup'), // Warm up conversation (bootstrap)
   stop: buildProvider<IBridgeResponse<{}>, { conversation_id: string }>('chat.stop.stream'), // Stop conversation
   sendMessage: buildProvider<IBridgeResponse<{}>, ISendMessageParams>('chat.send.message'), // Send message (unified interface)
-  getSlashCommands: buildProvider<
-    IBridgeResponse<{ commands: SlashCommandItem[] }>,
-    { conversation_id: string }
-  >('conversation.get-slash-commands'),
+  getSlashCommands: buildProvider<IBridgeResponse<{ commands: SlashCommandItem[] }>, { conversation_id: string }>(
+    'conversation.get-slash-commands'
+  ),
   askSideQuestion: buildProvider<
     IBridgeResponse<ConversationSideQuestionResult>,
     { conversation_id: string; question: string }
@@ -86,19 +104,16 @@ export const conversation = {
   confirmation: {
     add: buildEmitter<IConfirmation<any> & { conversation_id: string }>('confirmation.add'),
     update: buildEmitter<IConfirmation<any> & { conversation_id: string }>('confirmation.update'),
-    confirm: buildProvider<
-      IBridgeResponse,
-      { conversation_id: string; msg_id: string; data: any; callId: string }
-    >('confirmation.confirm'),
+    confirm: buildProvider<IBridgeResponse, { conversation_id: string; msg_id: string; data: any; callId: string }>(
+      'confirmation.confirm'
+    ),
     list: buildProvider<IConfirmation<any>[], { conversation_id: string }>('confirmation.list'),
     remove: buildEmitter<{ conversation_id: string; id: string }>('confirmation.remove'),
   },
   // Session-level approval memory for "always allow" decisions
   approval: {
     // Check if action is approved (keys are parsed from action+commandType in backend)
-    check: buildProvider<boolean, { conversation_id: string; action: string; commandType?: string }>(
-      'approval.check'
-    ),
+    check: buildProvider<boolean, { conversation_id: string; action: string; commandType?: string }>('approval.check'),
   },
 };
 
@@ -155,7 +170,7 @@ export const application = {
   openDevTools: buildProvider<boolean, void>('open-dev-tools'), // Open/close DevTools, returns the resulting state
   isDevToolsOpened: buildProvider<boolean, void>('is-dev-tools-opened'), // Get current DevTools state
   systemInfo: buildProvider<
-    { cacheDir: string; workDir: string; logDir: string; platform: string; arch: string },
+    { cacheDir: string; workDir: string; logDir: string; platform: string; arch: string; userName: string },
     void
   >('system.info'), // Get system info
   getPath: buildProvider<string, { name: 'desktop' | 'home' | 'downloads' }>('app.get-path'), // Get system path
@@ -167,9 +182,7 @@ export const application = {
   updateCdpConfig: buildProvider<IBridgeResponse<ICdpConfig>, Partial<ICdpConfig>>('app.update-cdp-config'), // Update CDP config
   // Start on boot management
   getStartOnBootStatus: buildProvider<IBridgeResponse<IStartOnBootStatus>, void>('app.get-start-on-boot-status'), // Get start-on-boot status
-  setStartOnBoot: buildProvider<IBridgeResponse<IStartOnBootStatus>, { enabled: boolean }>(
-    'app.set-start-on-boot'
-  ), // Set start-on-boot
+  setStartOnBoot: buildProvider<IBridgeResponse<IStartOnBootStatus>, { enabled: boolean }>('app.set-start-on-boot'), // Set start-on-boot
   // Bridge Main Process logs to Renderer F12 Console
   logStream: buildEmitter<{ level: 'log' | 'warn' | 'error'; tag: string; message: string; data?: unknown }>(
     'app.log-stream'
@@ -258,9 +271,7 @@ export const fs = {
     { filePaths: string[]; workspace: string; sourceRoot?: string }
   >('copy-files-to-workspace'), // Copy files into workspace
   removeEntry: buildProvider<IBridgeResponse, { path: string }>('remove-entry'), // Delete file or folder
-  renameEntry: buildProvider<IBridgeResponse<{ newPath: string }>, { path: string; newName: string }>(
-    'rename-entry'
-  ), // Rename file or folder
+  renameEntry: buildProvider<IBridgeResponse<{ newPath: string }>, { path: string; newName: string }>('rename-entry'), // Rename file or folder
   readBuiltinRule: buildProvider<string, { fileName: string }>('read-builtin-rule'), // Read builtin rules file
   readBuiltinSkill: buildProvider<string, { fileName: string }>('read-builtin-skill'), // Read builtin skills file
   // Assistant rule file operations
@@ -287,9 +298,7 @@ export const fs = {
     void
   >('list-available-skills'),
   // List builtin auto-injected skills from _builtin directory
-  listBuiltinAutoSkills: buildProvider<Array<{ name: string; description: string }>, void>(
-    'list-builtin-auto-skills'
-  ),
+  listBuiltinAutoSkills: buildProvider<Array<{ name: string; description: string }>, void>('list-builtin-auto-skills'),
   // Read skill info without importing
   readSkillInfo: buildProvider<IBridgeResponse<{ name: string; description: string }>, { skillPath: string }>(
     'read-skill-info'
@@ -330,20 +339,88 @@ export const fs = {
     'export-skill-with-symlink'
   ),
   // Custom external skill paths management
-  getCustomExternalPaths: buildProvider<Array<{ name: string; path: string }>, void>(
-    'get-custom-external-paths'
-  ),
-  addCustomExternalPath: buildProvider<IBridgeResponse, { name: string; path: string }>(
-    'add-custom-external-path'
-  ),
+  getCustomExternalPaths: buildProvider<Array<{ name: string; path: string }>, void>('get-custom-external-paths'),
+  addCustomExternalPath: buildProvider<IBridgeResponse, { name: string; path: string }>('add-custom-external-path'),
   removeCustomExternalPath: buildProvider<IBridgeResponse, { path: string }>('remove-custom-external-path'),
-  // Skills Market: inject/remove the wayland-skills builtin skill
-  enableSkillsMarket: buildProvider<IBridgeResponse, void>('enable-skills-market'),
-  disableSkillsMarket: buildProvider<IBridgeResponse, void>('disable-skills-market'),
 };
 
 export const speechToText = {
   transcribe: buildProvider<SpeechToTextResult, SpeechToTextRequest>('speech-to-text.transcribe'),
+};
+
+export const voiceSynth = {
+  speak: buildProvider<{ data: number[]; mimeType: string }, { text: string }>('voice-synth.speak'),
+  stop: buildProvider<Record<string, never>, void>('voice-synth.stop'),
+};
+
+export const skills = {
+  scan: buildProvider<SkillSecurityReport | null, { name: string }>('skills.scan'),
+  getReport: buildProvider<SkillSecurityReport | null, { name: string }>('skills.get-report'),
+  rescanAll: buildProvider<{ rescanned: number }, void>('skills.rescan-all'),
+  import: {
+    /** Import a skill from a local folder path. */
+    folder: buildProvider<ImportResult, { srcPath: string }>('skills.import.folder'),
+    /** Clone a git URL and import the resulting skill folder. */
+    git: buildProvider<ImportResult, { url: string }>('skills.import.git'),
+    /** Extract a zip archive and import contained skills. */
+    zip: buildProvider<ImportResult, { zipPath: string }>('skills.import.zip'),
+    /** Import a single SKILL.md file. */
+    singleSkillMd: buildProvider<ImportResult, { srcPath: string }>('skills.import.single-skill-md'),
+  },
+  /**
+   * Return entries from the SkillLibrary index. Defaults to `type: 'skill'`
+   * so the Skills page contract is preserved; pass `{ type: 'workflow' }`
+   * to feed the Workflows page or `{ type: 'agent-profile' }` if a third
+   * caller ever needs them.
+   */
+  list: buildProvider<SkillIndexEntry[], { type?: SkillIndexEntry['type'] } | undefined>('skills.list'),
+  /** Return aggregate library statistics. */
+  stats: buildProvider<SkillStats, void>('skills.stats'),
+  /**
+   * Load the body (markdown content) of a skill or workflow by name.
+   * Used by the Workflows → Schedule flow to pre-fill the scheduled
+   * task prompt with the chosen workflow's full SKILL.md body. Returns
+   * null for unknown names or blocked (quarantined) entries.
+   */
+  getBody: buildProvider<string | null, { name: string }>('skills.get-body'),
+  /** Pin or unpin a skill by name. */
+  setPinned: buildProvider<void, { name: string; pinned: boolean }>('skills.set-pinned'),
+  /**
+   * Read / write the opt-in flag for CLI skill discovery
+   * (`skills.cliDiscovery.enabled`). Toggling takes effect on the next
+   * app restart — there's no live re-scan yet, so the renderer surfaces
+   * a restart-required hint when the user flips it.
+   */
+  getCliDiscoveryEnabled: buildProvider<boolean, void>('skills.cli-discovery.get'),
+  setCliDiscoveryEnabled: buildProvider<void, { enabled: boolean }>('skills.cli-discovery.set'),
+  build: {
+    /**
+     * Draft a SKILL.md from a plain-text description.
+     * TODO: wire to real model call; currently returns a deterministic template.
+     */
+    draft: buildProvider<{ skillMd: string }, { description: string }>('skills.build.draft'),
+  },
+  /**
+   * Write a new SKILL.md to ~/.wayland/skills/<kebab-name>/SKILL.md,
+   * scan it via SkillGuard, register in SkillLibrary, and return the verdict.
+   */
+  save: buildProvider<
+    { name: string; verdict: SkillVerdict; quarantinedAt?: string },
+    { name: string; description: string; category: string; tags: string[]; body: string }
+  >('skills.save'),
+};
+
+export const voiceAsset = {
+  download: buildProvider<DownloadResult, VoiceAsset>('voice-asset.download'),
+  cancel: buildProvider<{ cancelled: boolean }, { assetId: string }>('voice-asset.cancel'),
+  // Resolve the install state for a known asset. The renderer uses this to
+  // suppress the Download button when the model is already on disk (no more
+  // "Download Model" alongside an already-installed model).
+  exists: buildProvider<{ installed: boolean; destPath: string | null }, { id: string }>('voice-asset.exists'),
+  // wayland-asset:// URL base for the bundled voice-models directory. The
+  // renderer's transformers.js STT worker uses this as env.localModelPath
+  // so it can fetch the bundled Whisper-tiny ONNX files offline.
+  localModelBase: buildProvider<{ url: string }, void>('voice-asset.local-model-base'),
 };
 
 export const fileWatch = {
@@ -371,15 +448,11 @@ export const fileStream = {
 
 // File snapshot providers for tracking file changes
 export const fileSnapshot = {
-  init: buildProvider<import('@/common/types/fileSnapshot').SnapshotInfo, { workspace: string }>(
-    'file-snapshot-init'
-  ),
+  init: buildProvider<import('@/common/types/fileSnapshot').SnapshotInfo, { workspace: string }>('file-snapshot-init'),
   compare: buildProvider<import('@/common/types/fileSnapshot').CompareResult, { workspace: string }>(
     'file-snapshot-compare'
   ),
-  getBaselineContent: buildProvider<string | null, { workspace: string; filePath: string }>(
-    'file-snapshot-baseline'
-  ),
+  getBaselineContent: buildProvider<string | null, { workspace: string; filePath: string }>('file-snapshot-baseline'),
   getInfo: buildProvider<import('@/common/types/fileSnapshot').SnapshotInfo, { workspace: string }>(
     'file-snapshot-info'
   ),
@@ -491,9 +564,7 @@ export const acpConversation = {
     { backend: AgentBackend }
   >('acp.check-agent-health'),
   // Set session mode for ACP agents (claude, qwen, etc.)
-  setMode: buildProvider<IBridgeResponse<{ mode: string }>, { conversationId: string; mode: string }>(
-    'acp.set-mode'
-  ),
+  setMode: buildProvider<IBridgeResponse<{ mode: string }>, { conversationId: string; mode: string }>('acp.set-mode'),
   // Get current session mode for ACP agents
   getMode: buildProvider<IBridgeResponse<{ mode: string; initialized: boolean }>, { conversationId: string }>(
     'acp.get-mode'
@@ -637,9 +708,7 @@ export const database = {
 
 export const previewHistory = {
   list: buildProvider<PreviewSnapshotInfo[], { target: PreviewHistoryTarget }>('preview-history.list'),
-  save: buildProvider<PreviewSnapshotInfo, { target: PreviewHistoryTarget; content: string }>(
-    'preview-history.save'
-  ),
+  save: buildProvider<PreviewSnapshotInfo, { target: PreviewHistoryTarget; content: string }>('preview-history.save'),
   getContent: buildProvider<
     { snapshot: PreviewSnapshotInfo; content: string } | null,
     { target: PreviewHistoryTarget; snapshotId: string }
@@ -734,13 +803,9 @@ export const systemSettings = {
   // Broadcast language change to all renderers (desktop + WebUI) for real-time sync
   languageChanged: buildEmitter<{ language: string }>('system-settings:language-changed'),
   getSaveUploadToWorkspace: buildProvider<boolean, void>('system-settings:get-save-upload-to-workspace'),
-  setSaveUploadToWorkspace: buildProvider<void, { enabled: boolean }>(
-    'system-settings:set-save-upload-to-workspace'
-  ),
+  setSaveUploadToWorkspace: buildProvider<void, { enabled: boolean }>('system-settings:set-save-upload-to-workspace'),
   getAutoPreviewOfficeFiles: buildProvider<boolean, void>('system-settings:get-auto-preview-office-files'),
-  setAutoPreviewOfficeFiles: buildProvider<void, { enabled: boolean }>(
-    'system-settings:set-auto-preview-office-files'
-  ),
+  setAutoPreviewOfficeFiles: buildProvider<void, { enabled: boolean }>('system-settings:set-auto-preview-office-files'),
 };
 
 // Ambient Mode — M1 bubble window (AC-M1-5 / AC-M1-10 / AC-M1-11 / AC-M1-13)
@@ -850,9 +915,7 @@ export const webui = {
 export const cron = {
   // Query
   listJobs: buildProvider<ICronJob[], void>('cron.list-jobs'),
-  listJobsByConversation: buildProvider<ICronJob[], { conversationId: string }>(
-    'cron.list-jobs-by-conversation'
-  ),
+  listJobsByConversation: buildProvider<ICronJob[], { conversationId: string }>('cron.list-jobs-by-conversation'),
   getJob: buildProvider<ICronJob | null, { jobId: string }>('cron.get-job'),
   // CRUD
   addJob: buildProvider<ICronJob, ICreateCronJobParams>('cron.add-job'),
@@ -1216,17 +1279,13 @@ export const extensions = {
   /** Get all extension-contributed settings tabs */
   getSettingsTabs: buildProvider<IExtensionSettingsTab[], void>('extensions.get-settings-tabs'),
   /** Get extension-contributed webui routes/assets metadata */
-  getWebuiContributions: buildProvider<IExtensionWebuiContribution[], void>(
-    'extensions.get-webui-contributions'
-  ),
+  getWebuiContributions: buildProvider<IExtensionWebuiContribution[], void>('extensions.get-webui-contributions'),
   /** Snapshot of all agent activities, for extension settings tabs */
   getAgentActivitySnapshot: buildProvider<IExtensionAgentActivitySnapshot, void>(
     'extensions.get-agent-activity-snapshot'
   ),
   /** Get merged extension i18n translations for a specific locale (falls back to en-US) */
-  getExtI18nForLocale: buildProvider<Record<string, unknown>, { locale: string }>(
-    'extensions.get-ext-i18n-for-locale'
-  ),
+  getExtI18nForLocale: buildProvider<Record<string, unknown>, { locale: string }>('extensions.get-ext-i18n-for-locale'),
 
   // --- Extension Management API (NocoBase-inspired) ---
   /** Enable a disabled extension */
@@ -1259,13 +1318,15 @@ export const channel = {
   disablePlugin: buildProvider<IBridgeResponse, { pluginId: string }>('channel.disable-plugin'),
   testPlugin: buildProvider<
     IBridgeResponse<{ success: boolean; botUsername?: string; error?: string }>,
-    { pluginId: string; token: string; extraConfig?: { appId?: string; appSecret?: string; domain?: 'feishu' | 'lark' } }
+    {
+      pluginId: string;
+      token: string;
+      extraConfig?: { appId?: string; appSecret?: string; domain?: 'feishu' | 'lark' };
+    }
   >('channel.test-plugin'),
 
   // Pairing Management
-  getPendingPairings: buildProvider<IBridgeResponse<IChannelPairingRequest[]>, void>(
-    'channel.get-pending-pairings'
-  ),
+  getPendingPairings: buildProvider<IBridgeResponse<IChannelPairingRequest[]>, void>('channel.get-pending-pairings'),
   approvePairing: buildProvider<IBridgeResponse, { code: string }>('channel.approve-pairing'),
   rejectPairing: buildProvider<IBridgeResponse, { code: string }>('channel.reject-pairing'),
 
@@ -1319,65 +1380,162 @@ export const hub = {
   // Update extension
   update: buildProvider<IBridgeResponse, { name: string }>('hub.update'),
   // State changed event for extension (install/uninstall status changes)
-  onStateChanged: buildEmitter<{ name: string; status: HubExtensionStatus; error?: string }>(
-    'hub.state-changed'
-  ),
+  onStateChanged: buildEmitter<{ name: string; status: HubExtensionStatus; error?: string }>('hub.state-changed'),
 };
-// Provider catalog API
-export type IProviderErrorKind = 'network' | 'unauthorized' | 'forbidden' | 'rate-limit' | 'unknown';
+// --- Models & Providers redesign (Wave 0 contract) ------------------------
+// New two-tier model registry. Distinct from the legacy `providers` namespace
+// above (which is removed in a later wave) — uses `modelRegistry.*` channel
+// strings so there is no runtime collision with `providers.*`.
 
-export type IProviderError = {
-  kind: IProviderErrorKind;
-  message: string;
+/** Result of a connect / re-key attempt against a provider. */
+export type IModelRegistryConnectResult = {
+  ok: boolean;
+  error?: ConnectError;
 };
 
-export type IConnectedProviderView = {
+/** Result of a connectivity test against an already-connected provider. */
+export type IModelRegistryTestResult = {
+  ok: boolean;
+  error?: ConnectError;
+};
+
+/** A provider key discovered from the environment / known credential stores. */
+export type IModelRegistryDetectedKey = {
+  providerId: ProviderId;
+  source: string;
+};
+
+/** Live summary row for a connected provider in the registry. */
+export type IModelRegistryProviderView = {
+  providerId: ProviderId;
+  connectedVia: string;
+  state: ProviderConnState;
+  modelCount: number;
+  error?: ConnectError;
+};
+
+/** Full catalog + curated view for a single provider. */
+export type IModelRegistryCatalogView = {
+  catalog: CatalogModel[];
+  curated: CuratedModel[];
+};
+
+/**
+ * Credentials for connect / re-key — a bare API key, per-field cloud creds,
+ * `useDiscovered` to resolve an auto-discovered key from the main process
+ * (the renderer never sees auto-discovered key values), or `useGoogleAuth` for
+ * a Gemini provider whose credentials live in the main-process Google OAuth
+ * token store (Wave 3 Fix 6).
+ */
+export type IModelRegistryCreds =
+  | { key: string; baseUrl?: string }
+  | { fields: Record<string, string> }
+  | { useDiscovered: true }
+  | { useGoogleAuth: true };
+
+/**
+ * The chat-start dispatch payload for a curated/catalog model. Built main-side
+ * from the model registry so the home picker no longer needs to look the
+ * provider up in the legacy `model.config`. Carries the credential material
+ * the conversation-create path passes to wcore / Gemini / ACP main-process
+ * managers (`apiKey` / `baseUrl` / cloud `bedrockConfig`).
+ *
+ * Renderer note: the IPC surface returning this DOES include the decrypted
+ * `apiKey` — the legacy `mode.getModelConfig` shape exposes it the same way,
+ * and the chat-start dispatch needs to pass it forward to spawn the backend.
+ * The plaintext never crosses process boundaries except into this payload.
+ */
+export type IModelRegistryChatStartPayload = {
+  /** A canonical, stable id for this provider (always equal to `providerId`). */
   id: string;
-  providerId: string;
-  displayName: string | null;
-  status: 'connected' | 'error' | 'refreshing';
-  lastRefreshedAt: number | null;
-  models: Array<{
-    id: string;
-    displayName: string;
-    tier: string;
-    capabilities: string[];
-    enabled: boolean;
-    deprecated: boolean;
-    deprecatedAt?: number;
-    contextWindow?: number;
-  }>;
-};
-
-export type IDefaultModelView = {
-  scope: 'chat' | 'coding' | 'vision' | 'image' | 'audio';
-  catalogId: string;
+  providerId: ProviderId;
+  /** Short human label, e.g. `'OpenAI'`. */
+  name: string;
+  /**
+   * Legacy `IProvider.platform` string the main-process dispatch expects (e.g.
+   * `'openai'`, `'anthropic'`, `'gemini'`, `'bedrock'`, `'gemini-with-google-auth'`).
+   * Severs the chat-start dependency on the legacy `model.config` lookup without
+   * changing the wcore envBuilder / Gemini-manager signatures.
+   */
+  platform: string;
+  /** The model id the user picked — written verbatim into `useModel`. */
   modelId: string;
+  /** API base URL — empty string when the provider uses its canonical default. */
+  baseUrl: string;
+  /** Decrypted API key (empty string for cloud / google-auth providers). */
+  apiKey: string;
+  /**
+   * AWS Bedrock-specific block — present only when `providerId === 'aws-bedrock'`.
+   * Covers both `accessKey` and `profile` auth shapes.
+   */
+  bedrockConfig?:
+    | {
+        authMethod: 'accessKey';
+        region: string;
+        accessKeyId: string;
+        secretAccessKey: string;
+      }
+    | {
+        authMethod: 'profile';
+        region: string;
+        profile: string;
+      };
+  /**
+   * Vertex / Azure cloud-credential fields (Wave 3 Fix 8). Carries the
+   * `{ projectId, region, serviceAccountJson }` (Vertex) or `{ endpoint, apiKey }`
+   * (Azure) creds the dispatcher arm needs verbatim. Empty / absent for
+   * non-cloud providers.
+   */
+  cloudFields?: Record<string, string>;
+  /**
+   * Per-model protocol overrides for multi-protocol gateways (OneAPI etc.).
+   * Mirrors the legacy `IProvider.modelProtocols` map verbatim.
+   */
+  modelProtocols?: Record<string, string>;
 };
 
-export const providers = {
-  list: buildProvider<IBridgeResponse<{ providers: IConnectedProviderView[]; defaults: IDefaultModelView[] }>, void>(
-    'providers.list'
+/** Result of resolving a curated/catalog model for chat-start. */
+export type IModelRegistryResolveForChatStartResult =
+  | { ok: true; provider: IModelRegistryChatStartPayload }
+  | { ok: false; error: 'not-connected' | 'undecryptable' | 'unsupported' | 'unknown' };
+
+export const modelRegistry = {
+  // Auto-discover provider keys from the environment / credential stores.
+  detectKeys: buildProvider<IModelRegistryDetectedKey[], void>('modelRegistry.detectKeys'),
+  // Connect a provider (explicit providerId) via a bare key or per-field credentials.
+  connect: buildProvider<IModelRegistryConnectResult, { providerId: ProviderId; creds: IModelRegistryCreds }>(
+    'modelRegistry.connect'
   ),
-  connect: buildProvider<
-    IBridgeResponse<{ provider: IConnectedProviderView }>,
-    { key: string; additionalFields?: Record<string, string> }
-  >('providers.connect'),
-  refresh: buildProvider<IBridgeResponse<{ provider: IConnectedProviderView }>, { catalogId: string }>(
-    'providers.refresh'
+  // Test connectivity of an already-connected provider.
+  testConnection: buildProvider<IModelRegistryTestResult, { providerId: ProviderId }>('modelRegistry.testConnection'),
+  // List all connected providers with live state + model counts.
+  list: buildProvider<IModelRegistryProviderView[], void>('modelRegistry.list'),
+  // Get the enriched catalog + curated view for a provider.
+  getCatalog: buildProvider<IModelRegistryCatalogView, { providerId: ProviderId }>('modelRegistry.getCatalog'),
+  // Enable / disable a single model within a provider's catalog.
+  toggleModel: buildProvider<{ ok: boolean }, { providerId: ProviderId; modelId: string; enabled: boolean }>(
+    'modelRegistry.toggleModel'
   ),
-  disconnect: buildProvider<IBridgeResponse, { catalogId: string }>('providers.disconnect'),
-  toggleModel: buildProvider<IBridgeResponse, { catalogId: string; modelId: string; enabled: boolean }>(
-    'providers.toggleModel'
+  // Re-fetch a provider's model list + re-enrich.
+  refresh: buildProvider<{ ok: boolean }, { providerId: ProviderId }>('modelRegistry.refresh'),
+  // Disconnect a provider and drop its persisted catalog.
+  disconnect: buildProvider<{ ok: boolean }, { providerId: ProviderId }>('modelRegistry.disconnect'),
+  // Replace a connected provider's credentials.
+  rekey: buildProvider<IModelRegistryConnectResult, { providerId: ProviderId; creds: IModelRegistryCreds }>(
+    'modelRegistry.rekey'
   ),
-  setDisplayName: buildProvider<IBridgeResponse, { catalogId: string; displayName: string }>(
-    'providers.setDisplayName'
-  ),
-  setDefault: buildProvider<
-    IBridgeResponse,
-    { scope: 'chat' | 'coding' | 'vision' | 'image' | 'audio'; catalogId: string; modelId: string }
-  >('providers.setDefault'),
-  catalogUpdated: buildEmitter<{ catalogId: string }>('providers.catalogUpdated'),
+  // Curated model list for a given CLI agent / backend key.
+  curatedForAgent: buildProvider<CuratedModel[], { agentKey: string }>('modelRegistry.curatedForAgent'),
+  /**
+   * Resolve a curated/catalog model into the chat-start payload (decrypted
+   * key / baseUrl / platform). Used by the home model picker after the user
+   * selects a model — replaces the legacy `model.config` row lookup the
+   * Wave 3A bridge mirror existed to support.
+   */
+  resolveForChatStart: buildProvider<
+    IModelRegistryResolveForChatStartResult,
+    { providerId: ProviderId; modelId: string }
+  >('modelRegistry.resolveForChatStart'),
 };
 
 // Team Mode API
@@ -1387,6 +1545,7 @@ export type ICreateTeamParams = {
   workspace: string;
   workspaceMode: 'shared' | 'isolated';
   agents: import('@process/team/types').TeamAgent[];
+  sourceLauncherId?: string;
 };
 
 export type IAddTeamAgentParams = {
@@ -1401,6 +1560,7 @@ export const team = {
   remove: buildProvider<void, { id: string }>('team.remove'),
   addAgent: buildProvider<import('@process/team/types').TeamAgent, IAddTeamAgentParams>('team.add-agent'),
   removeAgent: buildProvider<void, { teamId: string; slotId: string }>('team.remove-agent'),
+  restartAgent: buildProvider<void, { teamId: string; slotId: string }>('team.restart-agent'),
   sendMessage: buildProvider<void, { teamId: string; content: string; files?: string[] }>('team.send-message'),
   sendMessageToAgent: buildProvider<void, { teamId: string; slotId: string; content: string; files?: string[] }>(
     'team.send-message-to-agent'
@@ -1408,9 +1568,86 @@ export const team = {
   stop: buildProvider<void, { teamId: string }>('team.stop'),
   ensureSession: buildProvider<void, { teamId: string }>('team.ensure-session'),
   renameAgent: buildProvider<void, { teamId: string; slotId: string; newName: string }>('team.rename-agent'),
+  /**
+   * Live-smoke fix #4b (2026-05-19) — swap a teammate's backend CLI
+   * without recreating the team. Same-conversationType swaps only
+   * (Claude ↔ Codex; not Gemini ↔ Claude — those would destroy the
+   * conversation history). The service rejects cross-type swaps with
+   * a descriptive error the renderer surfaces via Message.error.
+   */
+  changeAgentBackend: buildProvider<void, { teamId: string; slotId: string; newBackend: string; newModel?: string }>(
+    'team.change-agent-backend'
+  ),
   renameTeam: buildProvider<void, { id: string; name: string }>('team.rename'),
   setSessionMode: buildProvider<void, { teamId: string; sessionMode: string }>('team.set-session-mode'),
   updateWorkspace: buildProvider<void, { teamId: string; workspace: string }>('team.update-workspace'),
+  /** W3b — promote a user-spawned team to Standing Company status. Idempotent. */
+  promoteToStanding: buildProvider<void, { teamId: string }>('team.promote-to-standing'),
+  /** W3b — reverse a previous promotion. Idempotent. */
+  demoteFromStanding: buildProvider<void, { teamId: string }>('team.demote-from-standing'),
+  /**
+   * W1e — list rows from `team_event_log`, newest-first. Paged via `limit`
+   * (default 100) and `since` (only events with `createdAt > since`).
+   * Optional `eventType` filter is used by the W2d cost meter to read only
+   * `token_usage` rows.
+   */
+  listEvents: buildProvider<
+    import('@process/team/types').TeamEvent[],
+    {
+      teamId: string;
+      since?: number;
+      limit?: number;
+      eventType?: import('@process/team/types').TeamEventType;
+    }
+  >('team.list-events'),
+  /**
+   * W3c — Build-my-own AI-suggest. Pure server-side suggester scores the
+   * provided specialist pool against the user's goal text and returns a
+   * pre-fill roster (leader + 4-5 teammates).
+   */
+  suggestRoster: buildProvider<
+    import('@process/team/suggestRoster').SuggestRosterResult,
+    {
+      goalText: string;
+      specialists: import('@process/team/suggestRoster').SuggestSpecialist[];
+      detectedBackends: string[];
+      targetSize?: number;
+    }
+  >('team.suggest-roster'),
+  /**
+   * W4 (T4.1) — Build the whitelist-only v1 JSON export for a team.
+   * Returns a pretty-printed JSON string for the user to review + save.
+   */
+  export: buildProvider<string, { teamId: string }>('team.export'),
+  /**
+   * W4 (T4.2 + T4.6) — Validate an import payload + surface missing
+   * specialists without persisting. Throws TeamImportError on guard
+   * failure or TeamImportBusyError when the parse queue is saturated.
+   */
+  importPreview: buildProvider<
+    {
+      parsed: import('@process/team/importExport/TeamExportSchema').TeamExport;
+      specialistsAvailable: boolean;
+      missingSpecialists: string[];
+    },
+    { jsonText: string }
+  >('team.import-preview'),
+  /**
+   * W4 (T4.5 + T4.6) — Persist an imported team with origin tracking +
+   * sandbox-flag derived from the caller-supplied capability grants.
+   * The W4b capability-review UI is the only caller that should pass
+   * non-empty grants; until W4b ships, the renderer must pass an
+   * empty (all-false) grants map.
+   */
+  importAccept: buildProvider<
+    import('@process/team/types').TTeam,
+    {
+      userId: string;
+      parsed: import('@process/team/importExport/TeamExportSchema').TeamExport;
+      capabilityGrants: Record<string, boolean>;
+      source: string;
+    }
+  >('team.import-accept'),
   agentStatusChanged: buildEmitter<import('@process/team/types').ITeamAgentStatusEvent>('team.agent.status'),
   agentSpawned: buildEmitter<import('@/common/types/teamTypes').ITeamAgentSpawnedEvent>('team.agent.spawned'),
   agentRemoved: buildEmitter<import('@/common/types/teamTypes').ITeamAgentRemovedEvent>('team.agent.removed'),

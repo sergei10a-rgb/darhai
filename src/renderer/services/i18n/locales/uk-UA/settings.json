@@ -442,6 +442,26 @@
   "speechToTextSmartFormat": "Розумне форматування",
   "speechToTextRequired": "Обов'язково",
   "speechToTextOptional": "Опціонально",
+  "speechToTextProviderWhisperLocal": "Whisper (локально)",
+  "speechToTextWhisperModel": "Модель Whisper",
+  "speechToTextDownloadModel": "Завантажити модель",
+  "speechToTextDownloading": "Завантаження...",
+  "speechToTextDownloadSuccess": "Модель успішно завантажена",
+  "speechToTextDownloadError": "Помилка завантаження",
+  "speechToTextCancelDownload": "Скасувати",
+  "textToSpeech": "Синтез мовлення",
+  "textToSpeechDescription": "Читати відповіді ШІ вголос за допомогою локального або системного рушія синтезу мовлення.",
+  "textToSpeechProvider": "Провайдер",
+  "textToSpeechProviderKokoroLocal": "Kokoro (локально)",
+  "textToSpeechProviderSystemNative": "Системний",
+  "textToSpeechVoice": "Голос",
+  "textToSpeechSpeed": "Швидкість",
+  "textToSpeechAutoRead": "Автоматично читати відповіді",
+  "textToSpeechDownloadModel": "Завантажити модель",
+  "textToSpeechDownloading": "Завантаження...",
+  "textToSpeechDownloadSuccess": "Модель успішно завантажена",
+  "textToSpeechDownloadError": "Помилка завантаження",
+  "textToSpeechCancelDownload": "Скасувати",
   "mcp": "Інтеграція MCP",
   "imageGenerationModel": "Модель для зображень",
   "imageGenerationGuide": "Посібник з налаштування моделі зображень",
@@ -905,6 +925,7 @@
     "groupAppearance": "ЗОВНІШНІЙ ВИГЛЯД",
     "groupSystem": "СИСТЕМА",
     "groupAbout": "ПРО ПРОГРАМУ",
+    "models": "Моделі",
     "providers": "Провайдери",
     "channels": "Канали",
     "mcp": "MCP сервери",
@@ -914,7 +935,8 @@
     "notifications": "Сповіщення",
     "storage": "Сховище",
     "skills": "Навички та інструменти",
-    "agents": "Агенти"
+    "agents": "Агенти",
+    "constitution": "Конституція"
   },
   "channelsIndex": {
     "title": "Канали",
@@ -934,11 +956,215 @@
     "browseExtensions": "Переглянути розширення →",
     "channelsMovedHint": "Канали переміщено до розділу Інтеграції →"
   },
-  "providersPage": {
-    "title": "Провайдери"
+  "modelsPage": {
+    "title": "Моделі",
+    "subtitle": "Підключіть провайдера за допомогою ключа або входу через Google — ваші моделі з'являться автоматично.",
+    "crumbAiModels": "Моделі ШІ",
+    "connectedLabel": "Підключено",
+    "loadError": "Не вдалося завантажити підключених провайдерів. Спробуйте трохи згодом.",
+    "connect": {
+      "title": "Підключити провайдера",
+      "keyLabel": "Вставте API-ключ",
+      "keyPlaceholder": "Вставте ключ від будь-якого провайдера…",
+      "connect": "Підключити",
+      "hintDefault": "Wayland сам розпізнає провайдера — обирати не потрібно.",
+      "hintAmbiguous": "Схоже на ключ у форматі OpenAI — підключіться, щоб підтвердити провайдера.",
+      "recognized": "Розпізнано:",
+      "cloudHint": "цьому провайдеру потрібна форма облікових даних з «Огляду».",
+      "unrecognizedPrefix": "Нерозпізнаний формат ключа —",
+      "unrecognizedBrowse": "оберіть провайдера в «Огляді»",
+      "or": "або",
+      "google": "Продовжити з Google",
+      "googleSuccess": "Виконано вхід у Google як {{account}}.",
+      "googleFailed": "Не вдалося увійти через Google. Спробуйте ще раз.",
+      "browse": "Огляд усіх 30+ провайдерів →",
+      "thatProvider": "цей провайдер",
+      "errorUnauthorized": "Ключ {{provider}} відхилено — не авторизовано. Перевірте ключ і спробуйте ще раз.",
+      "errorNoCredit": "Підключено, але ключ {{provider}} не має доступних коштів. Додайте оплату, щоб запускати моделі.",
+      "errorOffline": "Не вдалося зв'язатися з {{provider}} — схоже, ви офлайн. Перевірте підключення і спробуйте ще раз.",
+      "errorUnrecognized": "Ключ не розпізнано. Відкрийте «Огляд» і оберіть провайдера.",
+      "errorCloud": "Розпізнано {{provider}} — цьому провайдеру потрібно більше одного поля. Відкрийте «Огляд», щоб ввести повні облікові дані.",
+      "errorAmbiguous": "Не вдалося визначити, якому провайдеру належить цей ключ. Відкрийте «Огляд» і оберіть провайдера.",
+      "errorNoModels": "{{provider}} підключено, але він не повернув моделей. Спробуйте оновити його в «Керуванні».",
+      "errorUnknown": "Не вдалося підключитися до {{provider}}. Спробуйте ще раз.",
+      "undecryptableHint": "Your saved key for this provider is unreadable. Please re-enter it.",
+      "fromDeepLink": "З deep-link"
+    },
+    "detected": {
+      "found": "На цьому комп'ютері знайдено API-ключ {{provider}}. Використати його?",
+      "use": "Використати",
+      "ignore": "Ігнорувати"
+    },
+    "row": {
+      "connected": "Підключено",
+      "testing": "Перевірка…",
+      "manage": "Керувати",
+      "fix": "Виправити",
+      "modelCount": "Моделей: {{count}}",
+      "noModelsHint": "Немає моделей — оновіть у «Керуванні»",
+      "actionNeeded": "Потрібна дія — {{reason}}",
+      "errorUnauthorized": "ключ відхилено",
+      "errorNoCredit": "немає доступних коштів",
+      "errorOffline": "немає зв'язку з провайдером",
+      "errorUnrecognized": "ключ не розпізнано",
+      "errorNoModels": "моделі не повернуто",
+      "errorUnknown": "проблема підключення",
+      "via": {
+        "apiKey": "API-ключ",
+        "autoDiscovered": "Автоматично знайдений ключ",
+        "cloudCredentials": "Хмарні облікові дані"
+      }
+    },
+    "empty": {
+      "note": "Поки немає підключених провайдерів. Підключіть одного вище — найшвидше почати з <1>Продовжити з Google</1>."
+    },
+    "manage": {
+      "statusConnected": "Підключено",
+      "statusError": "Потрібна дія",
+      "refresh": "Оновити",
+      "rekey": "Змінити ключ",
+      "disconnect": "Відключити",
+      "cancel": "Скасувати",
+      "retry": "Повторити",
+      "statusLine": "{{via}} · моделей у каталозі: {{count}} · оновлюється автоматично",
+      "sectionLabel": "Моделі цього провайдера",
+      "sectionExplain": "Рекомендовані моделі ввімкнені за замовчуванням — останнє покоління та одне попереднє. Вимкніть будь-яку або ввімкніть старішу, графічну чи аудіомодель. Пошук по всьому каталогу.",
+      "searchPlaceholder": "Пошук моделей цього провайдера…",
+      "loading": "Завантаження каталогу цього провайдера…",
+      "loadError": "Не вдалося завантажити моделі цього провайдера. Повторіть спробу.",
+      "empty": "Цей провайдер не повернув моделей. Оновіть і повторіть спробу.",
+      "noMatch": "Немає моделей за запитом «{{query}}»",
+      "recommendedHead": "Рекомендовані — ввімкнені за замовчуванням",
+      "moreHead": "Інші моделі каталогу",
+      "recommended": "Рекомендовано",
+      "roleFlagship": "Найпотужніша",
+      "roleFast": "Найшвидша",
+      "rolePrevious": "Рекомендовано",
+      "capImage": "Зображення",
+      "capAudio": "Аудіо",
+      "capEmbedding": "Ембединги",
+      "capOther": "Інше",
+      "tagChat": "Чат",
+      "tagVision": "Vision",
+      "tagImage": "Зображення",
+      "tagAudio": "Аудіо",
+      "tagEmbeddings": "Ембединги",
+      "tagReasoning": "Міркування",
+      "tagTools": "Інструменти",
+      "tagResearch": "Дослідження",
+      "contextWindow": "Контекст {{count}}K",
+      "cost": "${{in}} / ${{out}} за млн",
+      "toggleAria": "Увімкнути {{model}}",
+      "toggleFailed": "Не вдалося змінити цю модель. Повторіть спробу.",
+      "refreshDone": "Каталог оновлено.",
+      "refreshFailed": "Не вдалося оновити цього провайдера. Повторіть спробу.",
+      "disconnectTitle": "Відключити цього провайдера?",
+      "disconnectBody": "Відключення {{provider}} видалить його та його моделі. Пізніше ви зможете знову підключитися з ключем.",
+      "disconnectConfirm": "Відключити",
+      "disconnectFailed": "Не вдалося відключити цього провайдера. Повторіть спробу.",
+      "rekeyTitle": "Змінити ключ {{provider}}",
+      "rekeyBody": "Вставте новий API-ключ для цього провайдера. Він замінить поточні облікові дані та запустить перевірку підключення.",
+      "rekeyPlaceholder": "Вставте новий API-ключ…",
+      "rekeyConfirm": "Оновити ключ",
+      "rekeyDone": "Облікові дані провайдера оновлено.",
+      "rekeyCloudDisabled": "Хмарні облікові дані оновлюються у формі хмарного підключення, а не тут.",
+      "errorUnauthorized": "Ключ {{provider}} відхилено — не авторизовано. Перевірте ключ і повторіть спробу.",
+      "errorNoCredit": "У ключа {{provider}} немає доступних коштів. Додайте оплату, щоб запускати моделі.",
+      "errorOffline": "Не вдалося звʼязатися з {{provider}} — схоже, ви офлайн. Перевірте зʼєднання і повторіть спробу.",
+      "errorUnrecognized": "Цей ключ не розпізнано для {{provider}}.",
+      "errorNoModels": "{{provider}} прийняв ключ, але не повернув моделей. Спробуйте оновити.",
+      "errorUnknown": "Не вдалося оновити {{provider}}. Повторіть спробу."
+    },
+    "browse": {
+      "title": "Усі провайдери",
+      "subtitle": "Виберіть провайдера для підключення. Більшості потрібен ключ; хмарним провайдерам — коротка форма облікових даних.",
+      "searchPlaceholder": "Пошук серед 30+ провайдерів…",
+      "noMatch": "Немає провайдерів, що відповідають «{{query}}»",
+      "back": "Усі провайдери",
+      "connected": "Підключено",
+      "connectAria": "Підключити {{provider}}",
+      "cloudTag": "форма облікових даних",
+      "group": {
+        "frontier": "Передові",
+        "cloud": "Хмарні — форма облікових даних",
+        "open": "Відкритий висновок",
+        "chinese": "Передові з Китаю",
+        "voice": "Голос і транскрипція"
+      },
+      "keySubtitle": "Вставте API-ключ для {{provider}}, щоб підключитися.",
+      "keyLabel": "API-ключ",
+      "keyPlaceholder": "Вставте ваш API-ключ…",
+      "connect": "Підключити та перевірити",
+      "errorUnauthorized": "Ключ {{provider}} відхилено — не авторизовано. Перевірте ключ і повторіть спробу.",
+      "errorNoCredit": "Підключено, але ключ {{provider}} не має доступного балансу. Додайте оплату, щоб запускати моделі.",
+      "errorOffline": "Не вдалося звʼязатися з {{provider}} — схоже, ви не в мережі. Перевірте підключення та повторіть спробу.",
+      "errorUnrecognized": "Цей ключ не розпізнано для {{provider}}. Перевірте ключ і повторіть спробу.",
+      "errorNoModels": "{{provider}} підключено, але він не повернув моделей. Спробуйте оновити його на сторінці керування.",
+      "errorUnknown": "Не вдалося підключитися до {{provider}}. Повторіть спробу.",
+      "baseUrlLabel": "Базовий URL (необовʼязково)",
+      "baseUrlPlaceholder": "https://your-endpoint.example/v1"
+    },
+    "cloud": {
+      "subtitle": {
+        "aws-bedrock": "Bedrock потребує облікові дані IAM і регіон.",
+        "vertex": "Vertex потребує проєкт, регіон і ключ сервісного облікового запису.",
+        "azure": "Azure OpenAI потребує кінцеву точку ресурсу та API-ключ."
+      },
+      "fields": {
+        "accessKeyId": {
+          "label": "Ідентифікатор ключа доступу",
+          "placeholder": "AKIA…"
+        },
+        "secretAccessKey": {
+          "label": "Секретний ключ доступу",
+          "placeholder": "Вставте секретний ключ доступу…"
+        },
+        "region": {
+          "label": "Регіон",
+          "placeholder": "us-east-1"
+        },
+        "projectId": {
+          "label": "Ідентифікатор проєкту",
+          "placeholder": "my-gcp-project"
+        },
+        "serviceAccountJson": {
+          "label": "Ключ сервісного облікового запису (JSON)",
+          "placeholder": "Вставте JSON сервісного облікового запису…"
+        },
+        "endpoint": {
+          "label": "Кінцева точка",
+          "placeholder": "https://my-resource.openai.azure.com"
+        },
+        "apiKey": {
+          "label": "API-ключ",
+          "placeholder": "Вставте ваш API-ключ…"
+        }
+      },
+      "submitConnect": "Підключити та перевірити",
+      "submitRekey": "Оновити облікові дані",
+      "errorUnauthorized": "Облікові дані {{provider}} відхилено — не авторизовано. Перевірте їх і повторіть спробу.",
+      "errorNoCredit": "Підключено, але {{provider}} не має доступного балансу. Додайте оплату, щоб запускати моделі.",
+      "errorOffline": "Не вдалося звʼязатися з {{provider}} — схоже, ви не в мережі. Перевірте підключення та повторіть спробу.",
+      "errorUnrecognized": "Ці облікові дані неповні або не прийняті {{provider}}. Перевірте кожне поле.",
+      "errorNoModels": "{{provider}} підключено, але він не повернув моделей. Спробуйте оновити його на сторінці керування.",
+      "errorUnknown": "Не вдалося підключитися до {{provider}}. Повторіть спробу."
+    },
+    "homePicker": {
+      "empty": "Для цього агента ще немає доступних моделей. Підключіть постачальника, щоб додати модель.",
+      "priceTierAria": "Цінова категорія {{tier}}"
+    }
   },
   "mcpPage": {
     "title": "MCP сервери"
+  },
+  "imageGenPage": {
+    "title": "Генерація зображень",
+    "subtitle": "Налаштуйте вбудований інструмент генерації зображень: виберіть модель за замовчуванням і увімкніть або вимкніть MCP-сервер.",
+    "mcpToggleLabel": "Увімкнути інструмент генерації зображень",
+    "mcpToggleDescription": "Після увімкнення агенти зможуть створювати та редагувати зображення за допомогою налаштованої моделі.",
+    "defaultModelLabel": "Модель зображень за замовчуванням",
+    "noModels": "Не налаштовано моделей із підтримкою генерації зображень.",
+    "toggleError": "Не вдалося перемкнути генерацію зображень. Спробуйте ще раз."
   },
   "generalPage": {
     "title": "Загальні"
@@ -956,85 +1182,69 @@
   "skillsPage": {
     "title": "Навички та інструменти"
   },
-  "agentsPage": {
-    "title": "Агенти"
+  "constitutionPage": {
+    "subtitle": "Правила Wayland. Завантажуються заново на кожному ході — зміни застосовуються одразу, без перезапуску. Див. §11 про те, як працюють перевизначення.",
+    "tocTitle": "Розділи",
+    "tocEmpty": "Розділів поки немає",
+    "reset": "Скинути",
+    "resetTooltip": "Скинути до Конституції за замовчуванням",
+    "resetConfirmTitle": "Скинути Конституцію?",
+    "resetConfirmBody": "Поточні зміни буде втрачено. Буде відновлено Конституцію за замовчуванням.",
+    "resetCancel": "Скасувати",
+    "loading": "Завантаження…",
+    "tokenCount": "{{value}} токенів",
+    "tokenWarning": "Наближається межа дотримання (~2,000 токенів). Розгляньте розділення на спеціалізовані оверлеї.",
+    "tokenError": "Перевищено межу дотримання. Перемістіть розділи до спеціалізованих оверлеїв у ~/.wayland/specialists/<id>.md."
   },
-  "providers": {
-    "heroTitle": "Connect a provider",
-    "heroPlaceholder": "Paste an API key...",
-    "detectButton": "Detect & connect",
-    "browseButton": "Browse 24+ providers",
-    "connected": "Connected",
-    "refreshed": "Refreshed {{n}}h ago",
-    "refreshNow": "Refresh now",
-    "disconnect": "Disconnect",
-    "configure": "Configure",
-    "deprecationBanner": "Some models in this provider’s catalog have been removed",
-    "defaultsTitle": "Default models",
-    "defaultChat": "Default chat model",
-    "defaultCoding": "Default coding model",
-    "defaultVision": "Default vision model",
-    "defaultImage": "Default image model",
-    "defaultAudio": "Default audio model",
-    "noDefault": "No default set",
-    "connect": {
-      "entryTitle": "Connect a provider",
-      "placeholder": "Paste your API key here...",
-      "detectButton": "Detect & connect",
-      "browseButton": "Browse 24+ providers",
-      "detectingProvider": "Detecting provider…",
-      "verifyingKey": "Verifying key…",
-      "fetchingCatalog": "Fetching model catalog…",
-      "moreInfoTitle": "Additional details required",
-      "pickerTitle": "Choose a provider",
-      "pickerSearch": "Search providers…",
-      "resultsTitle": "Select models to enable",
-      "resultsSelectAll": "Select all",
-      "resultsDeselectAll": "Deselect all",
-      "connectButton": "Connect",
-      "cancel": "Cancel",
-      "retry": "Try again",
-      "editKey": "Edit key",
-      "openConsole": "Open provider console",
-      "errorTitle": "Connection failed",
-      "errorNetwork": "Could not reach the provider. Check your network connection.",
-      "errorUnauthorized": "Invalid API key. Check your key and try again.",
-      "errorForbidden": "This key does not have the required permissions.",
-      "errorRateLimit": "Rate limit hit. Wait a moment and try again.",
-      "errorUnknown": "An unexpected error occurred.",
-      "fieldRegion": "AWS Region",
-      "fieldSecretKey": "Secret Access Key",
-      "fieldAccessKeyId": "Access Key ID",
-      "fieldEndpoint": "Endpoint URL",
-      "fieldDeployment": "Deployment Name",
-      "fieldApiVersion": "API Version",
-      "fieldProjectId": "Google Cloud Project ID",
-      "fieldServiceAccount": "Service Account JSON",
-      "browseServiceAccount": "Browse…"
+  "constitutionSpecialists": {
+    "title": "Спеціалізовані оверлеї",
+    "description": "Оверлеї додають правила, специфічні для асистента, поверх Конституції. Вони підключаються за ідентифікатором асистента та вбудовуються в його запит.",
+    "addButton": "Додати оверлей",
+    "idLabel": "Ідентифікатор асистента",
+    "idPlaceholder": "напр. copy, spark, humanizer",
+    "idInvalid": "Використовуйте лише літери, цифри, дефіси та підкреслення.",
+    "idDuplicate": "Оверлей із таким ідентифікатором уже існує.",
+    "create": "Створити",
+    "edit": "Редагувати",
+    "delete": "Видалити",
+    "deleteConfirmTitle": "Видалити оверлей?",
+    "deleteConfirmBody": "Оверлей для «{{value}}» буде остаточно видалено.",
+    "cancel": "Скасувати",
+    "empty": "Спеціалізованих оверлеїв поки немає. Додайте один, щоб задати додаткові правила для конкретного асистента.",
+    "close": "Закрити",
+    "tokenCount": "{{value}} токенів"
+  },
+  "agentsPage": {
+    "title": "Агенти",
+    "subtitle": "Асистенти, з якими ви спілкуєтеся. Кожен працює на наборі моделей.",
+    "yourAgents": "Ваші агенти",
+    "moreDetected": "Ще виявлено · {{count}}",
+    "remoteAgents": "Віддалені агенти",
+    "roadmap": "У планах",
+    "empty": "Агентів ще не виявлено. Після підключення моделі Wayland Core завжди доступний.",
+    "loadErrorsTitle": "Не вдалося завантажити деяких агентів",
+    "badge": {
+      "active": "Активний",
+      "detected": "Виявлено"
     },
-    "tiers": {
-      "flagship": "Flagship",
-      "everyday": "Everyday",
-      "fast": "Fast",
-      "reasoning": "Reasoning",
-      "legacy": "Legacy"
+    "scope": {
+      "any": "Запускає будь-яку підключену модель",
+      "claude": "Запускає моделі Claude",
+      "gpt": "Запускає моделі GPT",
+      "gemini": "Запускає моделі Gemini",
+      "qwen": "Запускає моделі Qwen",
+      "kimi": "Запускає моделі Kimi",
+      "mistral": "Запускає моделі Mistral"
     },
-    "capabilities": {
-      "chat": "Chat",
-      "vision": "Vision",
-      "image": "Image generation",
-      "audio": "Audio",
-      "embeddings": "Embeddings",
-      "reasoning": "Reasoning"
+    "about": {
+      "wcore": "Власний рушій Wayland. Використовує кожного постачальника на сторінці «Моделі».",
+      "claude": "Кодинг-агент Anthropic. Входить через власний обліковий запис — не може запускати GPT або Gemini.",
+      "codex": "Кодинг-агент OpenAI. Входить через власний обліковий запис — не може запускати Claude або Gemini."
     },
-    "categories": {
-      "frontier": "Frontier",
-      "openInference": "Open inference",
-      "cloud": "Cloud",
-      "chineseFrontier": "Chinese frontier",
-      "specialised": "Specialised",
-      "voice": "Voice",
-      "custom": "Custom"
+    "flux": {
+      "title": "Flux Router",
+      "soon": "Незабаром",
+      "desc": "Дозволяє будь-якому агенту маршрутизувати запити по всіх підключених моделях і постачальниках, а не лише своїх."
     }
   }
 }

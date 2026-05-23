@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -241,19 +241,23 @@ export class GeminiAgentManager extends BaseAgentManager<
         }
         const effectiveYoloMode = this.forceYoloMode ?? this.currentMode === 'yolo';
 
-        // Inject the solo/team decision guide for solo Gemini agents.
-        // ACP agents get this via AcpAgentManager; Gemini needs it appended to presetRules
-        // so it goes into GEMINI.md and the agent knows when to stay solo vs discuss Team mode.
-        let effectivePresetRules = this.presetRules;
-        if (!this.teamMcpStdioConfig) {
-          const [{ getTeamGuidePrompt }, { resolveLeaderAssistantLabel }] = await Promise.all([
-            import('@process/team/prompts/teamGuidePrompt.ts'),
-            import('@process/team/prompts/teamGuideAssistant.ts'),
-          ]);
-          const leaderLabel = await resolveLeaderAssistantLabel(this.presetAssistantId);
-          const teamGuide = getTeamGuidePrompt({ backend: 'gemini', leaderLabel });
-          effectivePresetRules = effectivePresetRules ? `${effectivePresetRules}\n\n${teamGuide}` : teamGuide;
-        }
+        // Build the full system prompt: presetRules + skills index + the
+        // `wayland_search_skills` MCP advert + (when solo) the team-guide
+        // prompt, all prepended with the Wayland Constitution and optional
+        // specialist overlay. The helper returns undefined when there is
+        // nothing to inject — in that case we keep the prior "no presetRules"
+        // behaviour for fresh installs. Byte-identical turn-to-turn for
+        // prompt-cache stability. (H2: GeminiAgentManager advertise the
+        // second channel of the two-channel skill architecture.)
+        const systemInstructions = await buildSystemInstructionsWithSkillsIndex({
+          presetContext: this.presetRules,
+          enabledSkills: this.enabledSkills,
+          excludeBuiltinSkills: this.excludeBuiltinSkills,
+          enableTeamGuide: !this.teamMcpStdioConfig,
+          backend: 'gemini',
+          presetAssistantId: this.presetAssistantId,
+        });
+        const effectivePresetRules = systemInstructions ?? this.presetRules;
 
         return this.start({
           ...config,

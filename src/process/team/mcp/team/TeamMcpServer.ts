@@ -13,7 +13,7 @@ import * as path from 'node:path';
 import { ipcBridge } from '@/common';
 import type { Mailbox } from '../../Mailbox.ts';
 import type { TaskManager } from '../../TaskManager.ts';
-import type { TeamAgent } from '../../types.ts';
+import type { TeamAgent, TTeam } from '../../types.ts';
 import { isTeamCapableBackend, getTeamCapableBackends } from '@/common/types/teamTypes.ts';
 import { ProcessConfig } from '@process/utils/initStorage.ts';
 import { agentRegistry } from '@process/agent/AgentRegistry';
@@ -22,6 +22,7 @@ import { resolveLocaleKey } from '@/common/utils';
 import { handleListModels } from '../modelListHandler.ts';
 import { notifyMcpReady } from '../../mcpReadiness.ts';
 import { writeTcpMessage, createTcpMessageReader, resolveMcpScriptDir } from '../tcpHelpers.ts';
+import { assertCapGranted } from '../../sandbox/capabilityCheck.ts';
 
 type SpawnAgentFn = (
   agentName: string,
@@ -33,6 +34,13 @@ type SpawnAgentFn = (
 type TeamMcpServerParams = {
   teamId: string;
   getAgents: () => TeamAgent[];
+  /**
+   * W4b — current team snapshot for sandbox/capability checks. Returns
+   * `undefined` only in legacy callers (older tests) that did not wire
+   * this in; the dispatch path treats `undefined` as "non-sandboxed" so
+   * existing fixtures keep passing.
+   */
+  getTeam?: () => TTeam | undefined;
   mailbox: Mailbox;
   taskManager: TaskManager;
   spawnAgent?: SpawnAgentFn;
@@ -243,8 +251,21 @@ export class TeamMcpServer {
 
   private async handleToolCall(toolName: string, args: Record<string, unknown>, fromSlotId?: string): Promise<string> {
     switch (toolName) {
-      case 'team_send_message':
+      case 'team_send_message': {
+        // W4b sandbox gate — cross-team sends require canCrossTeamMessage.
+        // Same-team sends (no team_id arg, or team_id matching ours) bypass
+        // the check. The current send path only delivers within the team, so
+        // this gate is structurally forward-compat for a future cross-team
+        // routing tool.
+        const team = this.params.getTeam?.();
+        if (team) {
+          const targetTeamId = typeof args.team_id === 'string' ? args.team_id : undefined;
+          if (targetTeamId && targetTeamId !== team.id) {
+            assertCapGranted(team, 'canCrossTeamMessage');
+          }
+        }
         return this.handleSendMessage(args, fromSlotId);
+      }
       case 'team_spawn_agent': {
         const agents = this.params.getAgents();
         const caller = fromSlotId ? agents.find((a) => a.slotId === fromSlotId) : undefined;
@@ -253,6 +274,9 @@ export class TeamMcpServer {
             'Only the team leader can spawn new agents. Send a message to the leader via team_send_message and ask them to create the agent you need.'
           );
         }
+        // W4b sandbox gate — spawning new agents requires canSpawnAgents.
+        const team = this.params.getTeam?.();
+        if (team) assertCapGranted(team, 'canSpawnAgents');
         return this.handleSpawnAgent(args, fromSlotId);
       }
       case 'team_task_create':
@@ -260,7 +284,7 @@ export class TeamMcpServer {
       case 'team_task_update':
         return this.handleTaskUpdate(args);
       case 'team_task_list':
-        return this.handleTaskList();
+        return this.handleTaskList(args);
       case 'team_members':
         return this.handleTeamMembers();
       case 'team_rename_agent':
@@ -487,16 +511,22 @@ export class TeamMcpServer {
     return `Task ${taskId.slice(0, 8)} updated.${status ? ` Status: ${status}.` : ''}${owner ? ` Owner: ${owner}.` : ''}`;
   }
 
-  private async handleTaskList(): Promise<string> {
+  private async handleTaskList(args: Record<string, unknown>): Promise<string> {
     const { teamId, taskManager } = this.params;
-    const tasks = await taskManager.list(teamId);
+    const ownerSlotId = typeof args?.owner_slot_id === 'string' && args.owner_slot_id ? args.owner_slot_id : undefined;
+    const tasks = ownerSlotId
+      ? await taskManager.getByOwner(teamId, ownerSlotId)
+      : await taskManager.list(teamId);
     if (tasks.length === 0) {
-      return 'No tasks on the board yet.';
+      return ownerSlotId
+        ? `No tasks owned by ${ownerSlotId} on this team.`
+        : 'No tasks on the board yet.';
     }
     const lines = tasks.map(
       (t) => `- [${t.id.slice(0, 8)}] ${t.subject} (${t.status}${t.owner ? `, owner: ${t.owner}` : ', unassigned'})`
     );
-    return `## Team Tasks\n${lines.join('\n')}`;
+    const header = ownerSlotId ? `## Team Tasks (owner: ${ownerSlotId})` : '## Team Tasks';
+    return `${header}\n${lines.join('\n')}`;
   }
 
   private async handleTeamMembers(): Promise<string> {

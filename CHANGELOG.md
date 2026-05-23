@@ -2,6 +2,44 @@
 
 All notable changes to the Wayland Electron app are documented in this file. Format follows [Keep a Changelog](https://keepachangelog.com/). Versions track the `v0.1.x-wayland-*` tag series on TradeCanyon/wayland.
 
+## [Unreleased]
+
+### Constitution wiring (`feat/constitution-wiring`)
+
+- Wire the user Constitution (`~/.wayland/CONSTITUTION.md`) into every chat-send
+  path across all backends. Composed at send time via a single `composePrompt()`
+  helper (`src/process/services/constitution/composePrompt.ts`) so the
+  Constitution is prepended, in a fixed order, to every backend's system prompt:
+  - ACP backends (Claude Code, Codex, Qwen, Kimi, OpenCode, Gemini CLI) via
+    `agentUtils` + `AcpAgentManager`.
+  - Gemini in-process backend via `GeminiAgentManager`.
+  - wcore subprocess via `WCoreManager` (`init_history` system-rules channel).
+  - Team role prompts (leaders + teammates) via `buildRolePrompt`.
+- Optional per-specialist overlay at `~/.wayland/specialists/<assistantId>.md`,
+  opt-in by file existence — prepended after the Constitution, before the
+  backend's base prompt. `assistantId` is restricted to `[A-Za-z0-9_-]` to
+  prevent path traversal.
+- Anthropic prompt caching: the full system prefix is wrapped in a single
+  `cache_control: { type: 'ephemeral' }` block (`OpenAI2AnthropicConverter` +
+  defensive `AnthropicRotatingClient.createMessage`). The system prefix bills
+  at the cached rate (~0.1x base) from the second turn onward. OpenAI
+  auto-caches at >=1,024 tokens; Gemini uses implicit `systemInstruction`
+  caching — no extra wiring needed for those.
+- The composed prefix is byte-identical turn-to-turn (no per-turn variables),
+  which is what unlocks the provider prompt-cache discount.
+- Settings -> Constitution: a token counter under the editor with
+  adherence-ceiling warnings — muted under 2K tokens, yellow at 2K-3K
+  (suggests splitting into specialist overlays), red at 3K+.
+- Fresh installs with no Constitution file behave exactly as before — every
+  injection site falls back to its original prompt when the composer returns
+  an empty string.
+- Tests: 18 unit tests (composer, bridge overlay loading incl. path-traversal,
+  ACP system-prompt composition) plus a Playwright-Electron e2e spec
+  (clean boot, Settings page render, `constitution:readWithOverlay` IPC
+  roundtrip). A cross-audit pass verified 10/10 wiring invariants.
+- Cross-CLI sync (writing the Constitution into `~/.claude/CLAUDE.md`,
+  `~/.codex/AGENTS.md`, etc.) is intentionally out of scope for this change.
+
 ## [0.1.2] — unreleased
 
 Audit-hardening release. Closes 80 of 81 findings from the W1–W4 multi-wave security audit plus the post-W4 production-audit Phase 1 follow-up. Tag candidate: `v0.1.2-wayland-base`.

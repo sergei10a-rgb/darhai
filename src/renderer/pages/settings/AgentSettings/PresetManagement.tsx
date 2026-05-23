@@ -113,7 +113,7 @@ const PresetManagement: React.FC<PresetManagementProps> = ({ message }) => {
                 <div key={preset.id} className='p-4 bg-fill-2 rounded-lg'>
                   <div className='flex items-center justify-between'>
                     <div className='flex items-center gap-2'>
-                      <Zap color='var(--color-primary-6)' />
+                      <Zap color='var(--brand)' />
                       <div className='font-medium'>{preset.name}</div>
                     </div>
                     <div className='flex gap-2'>

@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -31,7 +31,7 @@ export type GuidInputResult = {
 };
 
 type UseGuidInputOptions = {
-  locationState: { workspace?: string } | null;
+  locationState: { workspace?: string; paletteInitialPrompt?: string } | null;
 };
 
 /**
@@ -48,6 +48,15 @@ export const useGuidInput = ({ locationState }: UseGuidInputOptions): GuidInputR
   useEffect(() => {
     if (locationState?.workspace) {
       setDir(locationState.workspace);
+    }
+  }, [locationState]);
+
+  // Read starter prompt from location.state (passed from the ⌘K command
+  // palette). Pre-fills the chat input so the user lands on /guid with the
+  // prompt scaffold already in place and can continue typing immediately.
+  useEffect(() => {
+    if (locationState?.paletteInitialPrompt) {
+      setInput(locationState.paletteInitialPrompt);
     }
   }, [locationState]);
 

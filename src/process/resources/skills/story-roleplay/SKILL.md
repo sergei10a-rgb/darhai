@@ -89,7 +89,7 @@ node parse-character-card.js <image-path> <output-json-path> --world-info
 
 ```bash
 node parse-character-card.js character.png character.json
-node parse-character-card.js "薇娜丽丝.png" character.json
+node parse-character-card.js "Vinaris.png" character.json
 node parse-character-card.js world-info.png world-info.json --world-info
 ```
 
@@ -118,7 +118,7 @@ If all above methods fail (possibly due to system permission issues), creating s
 
 ## Character Card Parser
 
-**Triggers**: character card, 角色卡, load character, 加载角色, parse character, 解析角色卡
+**Triggers**: character card, load character, parse character
 
 **Description**: Parse character card files in multiple formats, including PNG, WebP image formats and JSON file format.
 
@@ -192,7 +192,7 @@ If all above methods fail (possibly due to system permission issues), creating s
 
 ## World Info Parser
 
-**Triggers**: world info, 世界信息, world tree, 世界树, load world info, 加载世界信息
+**Triggers**: world info, world tree, load world info
 
 **Description**: Parse and apply world info files, implementing keyword trigger mechanism. Supports JSON files and PNG/WebP image formats (with embedded world info data).
 
@@ -269,7 +269,7 @@ If all above methods fail (possibly due to system permission issues), creating s
 
 ## Character Book Handler
 
-**Triggers**: character book, 角色知识库, character entry, 角色条目
+**Triggers**: character book, character entry
 
 **Description**: Handle character_book (character knowledge base) in character cards, similar to world info but bound to specific character.
 

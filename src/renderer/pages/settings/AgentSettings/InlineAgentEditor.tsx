@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -9,6 +9,7 @@ import type { AcpBackendConfig } from '@/common/types/acpTypes';
 import { acpConversation } from '@/common/adapter/ipcBridge';
 import { Alert, Avatar, Button, Collapse, Input, Typography } from '@arco-design/web-react';
 import EmojiPicker from '@/renderer/components/chat/EmojiPicker';
+import { getLucideIcon } from '@/renderer/utils/lucideAvatar';
 import CodeMirror from '@uiw/react-codemirror';
 import { json } from '@codemirror/lang-json';
 import { useThemeContext } from '@/renderer/hooks/context/ThemeContext';
@@ -234,7 +235,10 @@ const InlineAgentEditor: React.FC<InlineAgentEditorProps> = ({ agent, onSave, on
               shape='square'
               style={{ backgroundColor: 'var(--color-fill-3)', fontSize: 24, borderRadius: 12 }}
             >
-              {avatar}
+              {(() => {
+                const Icon = getLucideIcon(avatar);
+                return Icon ? <Icon size={28} className='text-[var(--color-text-2)]' /> : avatar;
+              })()}
             </Avatar>
           </div>
         </EmojiPicker>

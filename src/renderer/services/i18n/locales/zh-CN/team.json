@@ -10,6 +10,11 @@
     "renamePlaceholder": "团队名称",
     "deleteConfirm": "删除此团队？",
     "deleteConfirmContent": "此操作不可撤销。",
+    "deleteConfirmTitle": "[TODO:translate] Delete team?",
+    "deleteConfirmBody": "[TODO:translate] This will permanently delete {{teamName}} and its conversation history. Type \"delete\" below to confirm.",
+    "deleteConfirmCta": "[TODO:translate] Delete team",
+    "deleteConfirmCancelCta": "[TODO:translate] Cancel",
+    "deleteConfirmInputPlaceholder": "[TODO:translate] delete",
     "deleteOk": "删除",
     "deleteCancel": "取消",
     "renameOk": "保存",
@@ -56,5 +61,16 @@
       "interview": "策划一场深度访谈",
       "expert_review": "多位专家会诊同一个问题"
     }
+  },
+  "errors": {
+    "loadFailed": {
+      "title": "[TODO:translate] This team could not be loaded",
+      "body": "[TODO:translate] It may have been deleted, or its data is no longer available. Head back to the Teams library to pick another team or start a new one.",
+      "backCta": "[TODO:translate] Back to Teams"
+    }
+  },
+  "agentBackendSwap": {
+    "success": "[TODO:translate] Agent backend changed",
+    "error": "[TODO:translate] Failed to change agent backend"
   }
 }

@@ -3,6 +3,7 @@ import useSWR from 'swr';
 import { ipcBridge } from '@/common';
 import { getAgentLogo } from '@renderer/utils/model/agentLogo';
 import { usePresetAssistantInfo } from '@renderer/hooks/agent/usePresetAssistantInfo';
+import { getLucideIcon } from '@renderer/utils/lucideAvatar';
 
 type Props = {
   agentName: string;
@@ -44,6 +45,14 @@ const TeamAgentIdentity: React.FC<Props> = ({
 
   const renderAvatar = () => {
     if (presetInfo) {
+      const LucideIconComponent = getLucideIcon(presetInfo.lucideIcon);
+      if (LucideIconComponent) {
+        return (
+          <span className={resolvedAvatarClassName}>
+            <LucideIconComponent size={12} className='text-[var(--color-text-2)]' />
+          </span>
+        );
+      }
       if (presetInfo.isEmoji) {
         return <span className={resolvedAvatarClassName}>{presetInfo.logo}</span>;
       }

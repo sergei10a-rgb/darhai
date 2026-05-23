@@ -36,7 +36,12 @@ const AddCustomPathModal: React.FC<AddCustomPathModalProps> = ({
       onOk={onOk}
       okText={t('common.confirm', { defaultValue: 'Confirm' })}
       cancelText={t('common.cancel', { defaultValue: 'Cancel' })}
-      okButtonProps={{ disabled: !customPathName.trim() || !customPathValue.trim() }}
+      okButtonProps={{
+        disabled: !customPathName.trim() || !customPathValue.trim(),
+        className: '',
+      }}
+      cancelButtonProps={{ style: { borderRadius: 8 }, className: 'px-16px' }}
+      style={{ width: 640 }}
       autoFocus={false}
       focusLock
       wrapStyle={{ zIndex: 10000 }}

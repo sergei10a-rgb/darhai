@@ -51,8 +51,14 @@ function getBinaryName(platform) {
   return platform === 'win32' ? 'wayland-core.exe' : 'wayland-core';
 }
 
+// Pinned default tag. The engine release stream lives at
+// TradeCanyon/wayland-core; Desktop integrates against a specific tag rather
+// than tracking `latest` so version drift can't sneak in via a release made
+// while a CI build is mid-flight. Override with WCORE_VERSION=... when bumping.
+const DEFAULT_WCORE_VERSION = 'v0.6.5-wayland-base';
+
 function getVersion() {
-  return (process.env.WCORE_VERSION || 'latest').trim();
+  return (process.env.WCORE_VERSION || DEFAULT_WCORE_VERSION).trim();
 }
 
 // ---------------------------------------------------------------------------
@@ -112,8 +118,41 @@ function getDownloadUrl(assetName, tag) {
   return `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/releases/download/${tag}/${assetName}`;
 }
 
+/**
+ * Try downloading via authed `gh release download` first when the URL looks
+ * like a GitHub release asset. This handles private repos (where anonymous
+ * curl gets a 404) without requiring users to plumb GITHUB_TOKEN manually.
+ * Returns true on success; false to signal the caller should fall through.
+ */
+function tryGhRelease(url, outputPath) {
+  const ghMatch = /^https:\/\/github\.com\/([^/]+)\/([^/]+)\/releases\/download\/([^/]+)\/([^/]+)$/.exec(url);
+  if (!ghMatch) return false;
+  const [, owner, repo, tag, asset] = ghMatch;
+  try {
+    execFileSync('gh', ['--version'], { stdio: 'ignore', timeout: 5000 });
+  } catch {
+    return false;
+  }
+  try {
+    const tmpDir = path.dirname(outputPath);
+    execFileSync(
+      'gh',
+      ['release', 'download', tag, '--repo', `${owner}/${repo}`, '--pattern', asset, '--dir', tmpDir, '--clobber'],
+      { timeout: 120000, stdio: ['ignore', 'pipe', 'pipe'] }
+    );
+    const ghOut = path.join(tmpDir, asset);
+    if (ghOut !== outputPath && fs.existsSync(ghOut)) {
+      fs.renameSync(ghOut, outputPath);
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function downloadFile(url, outputPath) {
   console.log(`  Downloading wayland-core from ${url}`);
+  if (tryGhRelease(url, outputPath)) return;
   if (process.platform === 'win32') {
     const ps = `$ProgressPreference='SilentlyContinue'; Invoke-WebRequest -Uri '${url}' -OutFile '${outputPath.replace(/'/g, "''")}'`;
     execFileSync('powershell', ['-NoProfile', '-NonInteractive', '-Command', ps], { timeout: 120000 });

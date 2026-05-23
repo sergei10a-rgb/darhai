@@ -23,17 +23,17 @@
     height: 36px;
     padding: 0 12px;
     border-radius: 999px;
-    border: 1px solid var(--border-base);
-    background: var(--bg-1);
-    color: var(--text-secondary);
+    border: 1px solid var(--color-border-2);
+    background: var(--color-bg-2);
+    color: var(--color-text-2);
     font-size: 14px;
     line-height: 20px;
   }
 
   .settings-mobile-top-nav__item--active {
     background: var(--bg-active);
-    color: var(--text-primary);
-    border-color: var(--border-base);
+    color: var(--color-text-1);
+    border-color: var(--color-border-2);
   }
 
   .settings-mobile-top-nav__icon {

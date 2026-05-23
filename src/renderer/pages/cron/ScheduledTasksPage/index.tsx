@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -8,7 +8,7 @@ import { Plus } from 'lucide-react';
 import classNames from 'classnames';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button, Switch, Message, Empty, Spin, Tooltip } from '@arco-design/web-react';
 import { useLayoutContext } from '@renderer/hooks/context/LayoutContext';
 import { useAllCronJobs } from '@renderer/pages/cron/useCronJobs';
@@ -44,7 +44,23 @@ const ScheduledTasksPage: React.FC = () => {
   const navigate = useNavigate();
   const { jobs, loading, pauseJob, resumeJob } = useAllCronJobs();
   const [createDialogVisible, setCreateDialogVisible] = useState(false);
+  const [createInitialWorkflowSlug, setCreateInitialWorkflowSlug] = useState<string | undefined>(undefined);
   const [keepAwake, setKeepAwake] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Open the Create dialog pre-filled with a workflow when navigated to
+  // via `/scheduled?workflow=<slug>` (Workflows page → Schedule button).
+  // The URL param is cleared on open so a manual reload doesn't re-fire
+  // the dialog.
+  useEffect(() => {
+    const slug = searchParams.get('workflow');
+    if (!slug) return;
+    setCreateInitialWorkflowSlug(slug);
+    setCreateDialogVisible(true);
+    const next = new URLSearchParams(searchParams);
+    next.delete('workflow');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     systemSettings.getKeepAwake
@@ -111,7 +127,6 @@ const ScheduledTasksPage: React.FC = () => {
             </h1>
             <Button
               type='primary'
-              shape='round'
               className='shrink-0'
               icon={<Plus size={14} />}
               onClick={() => setCreateDialogVisible(true)}
@@ -243,7 +258,14 @@ const ScheduledTasksPage: React.FC = () => {
           </div>
         )}
 
-        <CreateTaskDialog visible={createDialogVisible} onClose={() => setCreateDialogVisible(false)} />
+        <CreateTaskDialog
+          visible={createDialogVisible}
+          onClose={() => {
+            setCreateDialogVisible(false);
+            setCreateInitialWorkflowSlug(undefined);
+          }}
+          initialWorkflowSlug={createInitialWorkflowSlug}
+        />
       </div>
     </div>
   );

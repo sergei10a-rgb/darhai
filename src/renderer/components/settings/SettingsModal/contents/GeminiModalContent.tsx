@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -155,7 +155,7 @@ const GeminiModalContent: React.FC = () => {
       {/* Content Area */}
       <WaylandScrollArea className='flex-1 min-h-0' disableOverflow={isPageMode}>
         <div className='space-y-16px'>
-          <div className='px-[12px] py-[24px] md:px-[32px] bg-2 rd-12px md:rd-16px border border-border-2'>
+          <div className='px-[12px] py-[24px] md:px-[32px] bg-[var(--color-bg-2)] rd-12px border-2 border-solid border-[var(--color-border-2)]'>
             <Form
               form={form}
               layout='horizontal'
@@ -176,7 +176,7 @@ const GeminiModalContent: React.FC = () => {
                         <span className='text-14px text-t-primary'>{props.googleAccount}</span>
                         <Button
                           size='small'
-                          className='rd-100px border-1 border-[#86909C]'
+                          className='rd-100px border-1 border-[var(--color-text-3)]'
                           shape='round'
                           type='outline'
                           onClick={() => {

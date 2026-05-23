@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -152,7 +152,7 @@ const DevSettings: React.FC = () => {
   return (
     <div className='space-y-12px'>
       {/* DevTools toggle */}
-      <div className='px-[12px] md:px-[32px] py-16px bg-2 rd-16px'>
+      <div className='px-[12px] md:px-[32px] py-16px bg-[var(--color-bg-2)] border-2 border-solid border-[var(--color-border-2)] rd-12px'>
         <PreferenceRow label={t('settings.devTools')}>
           <Button
             size='small'
@@ -166,7 +166,7 @@ const DevSettings: React.FC = () => {
       </div>
 
       {/* CDP section */}
-      <div className='px-[12px] md:px-[32px] py-16px bg-2 rd-16px space-y-12px'>
+      <div className='px-[12px] md:px-[32px] py-16px bg-[var(--color-bg-2)] border-2 border-solid border-[var(--color-border-2)] rd-12px space-y-12px'>
         <div className='text-14px font-medium text-t-primary mb-8px'>{t('settings.cdp.title')}</div>
         <div className='space-y-12px'>
           {/* CDP remote debugging toggle */}
@@ -193,7 +193,7 @@ const DevSettings: React.FC = () => {
                 <Collapse
                   bordered={false}
                   onChange={(_, keys) => setExpandedMcpKeys(keys as string[])}
-                  className='[&_.arco-collapse-item]:!border-none [&_.arco-collapse-item]:bg-[var(--fill-1)] [&_.arco-collapse-item]:rounded-8px [&_.arco-collapse-item]:mb-6px [&_.arco-collapse-item-header]:!px-12px [&_.arco-collapse-item-header]:!py-8px [&_.arco-collapse-item-header-title]:!flex-1 [&_.arco-collapse-item-content-box]:!px-12px [&_.arco-collapse-item-content-box]:!pt-0 [&_.arco-collapse-item-content-box]:!pb-8px'
+                  className='[&_.arco-collapse-item]:!border-none [&_.arco-collapse-item]:bg-[var(--color-fill-1)] [&_.arco-collapse-item]:rounded-8px [&_.arco-collapse-item]:mb-6px [&_.arco-collapse-item-header]:!px-12px [&_.arco-collapse-item-header]:!py-8px [&_.arco-collapse-item-header-title]:!flex-1 [&_.arco-collapse-item-content-box]:!px-12px [&_.arco-collapse-item-content-box]:!pt-0 [&_.arco-collapse-item-content-box]:!pb-8px'
                 >
                   <Collapse.Item
                     name='chrome-devtools'
@@ -221,7 +221,7 @@ const DevSettings: React.FC = () => {
                       </div>
                     }
                   >
-                    <pre className='text-11px text-t-secondary font-mono overflow-x-auto whitespace-pre-wrap break-all m-0 leading-relaxed py-4px px-8px bg-[var(--fill-2)] rounded-6px'>
+                    <pre className='text-11px text-t-secondary font-mono overflow-x-auto whitespace-pre-wrap break-all m-0 leading-relaxed py-4px px-8px bg-[var(--color-fill-2)] rounded-6px'>
                       {`{
   "mcpServers": {
     "chrome-devtools": {
@@ -264,7 +264,7 @@ const DevSettings: React.FC = () => {
                       </div>
                     }
                   >
-                    <pre className='text-11px text-t-secondary font-mono overflow-x-auto whitespace-pre-wrap break-all m-0 leading-relaxed py-4px px-8px bg-[var(--fill-2)] rounded-6px'>
+                    <pre className='text-11px text-t-secondary font-mono overflow-x-auto whitespace-pre-wrap break-all m-0 leading-relaxed py-4px px-8px bg-[var(--color-fill-2)] rounded-6px'>
                       {`{
   "mcpServers": {
     "playwright": {

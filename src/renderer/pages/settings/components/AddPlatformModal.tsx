@@ -373,7 +373,7 @@ const AddPlatformModal = ModalHOC<{
       visible={modalProps.visible}
       onCancel={modalCtrl.close}
       header={{ title: t('settings.addModel'), showClose: true }}
-      style={{ maxWidth: '92vw', borderRadius: 16 }}
+      style={{ width: 720, maxWidth: '92vw', borderRadius: 16 }}
       contentStyle={{
         background: 'var(--dialog-fill-0)',
         borderRadius: 16,

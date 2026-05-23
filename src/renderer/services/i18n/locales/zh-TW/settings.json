@@ -446,6 +446,26 @@
   "speechToTextSmartFormat": "智慧格式化",
   "speechToTextRequired": "必填",
   "speechToTextOptional": "選填",
+  "speechToTextProviderWhisperLocal": "Whisper（本地）",
+  "speechToTextWhisperModel": "Whisper 模型",
+  "speechToTextDownloadModel": "下載模型",
+  "speechToTextDownloading": "下載中...",
+  "speechToTextDownloadSuccess": "模型下載成功",
+  "speechToTextDownloadError": "下載失敗",
+  "speechToTextCancelDownload": "取消",
+  "textToSpeech": "文字轉語音",
+  "textToSpeechDescription": "使用本地或系統語音引擎朗讀 AI 回覆。",
+  "textToSpeechProvider": "供應商",
+  "textToSpeechProviderKokoroLocal": "Kokoro（本地）",
+  "textToSpeechProviderSystemNative": "系統原生",
+  "textToSpeechVoice": "音色",
+  "textToSpeechSpeed": "語速",
+  "textToSpeechAutoRead": "自動朗讀回覆",
+  "textToSpeechDownloadModel": "下載模型",
+  "textToSpeechDownloading": "下載中...",
+  "textToSpeechDownloadSuccess": "模型下載成功",
+  "textToSpeechDownloadError": "下載失敗",
+  "textToSpeechCancelDownload": "取消",
   "mcp": "MCP 集成",
   "imageGenerationModel": "圖像模型",
   "imageGenerationGuide": "圖像模型配置指南",
@@ -942,6 +962,7 @@
     "groupAppearance": "外觀",
     "groupSystem": "系統",
     "groupAbout": "關於",
+    "models": "模型",
     "providers": "模型提供商",
     "channels": "訊息渠道",
     "mcp": "MCP 伺服器",
@@ -951,7 +972,8 @@
     "notifications": "通知",
     "storage": "儲存",
     "skills": "技能與工具",
-    "agents": "智能體"
+    "agents": "智能體",
+    "constitution": "章程"
   },
   "channelsIndex": {
     "title": "訊息渠道",
@@ -971,11 +993,215 @@
     "browseExtensions": "瀏覽擴充套件 →",
     "channelsMovedHint": "訊息渠道已移至整合 →"
   },
-  "providersPage": {
-    "title": "模型提供商"
+  "modelsPage": {
+    "title": "模型",
+    "subtitle": "用金鑰或 Google 登入連接提供商，你的模型會自動出現。",
+    "crumbAiModels": "AI 模型",
+    "connectedLabel": "已連接",
+    "loadError": "無法載入已連接的提供商，請稍後重試。",
+    "connect": {
+      "title": "連接提供商",
+      "keyLabel": "貼上 API 金鑰",
+      "keyPlaceholder": "貼上任何提供商的金鑰…",
+      "connect": "連接",
+      "hintDefault": "Wayland 會自動辨識提供商——無需手動選擇。",
+      "hintAmbiguous": "看起來是 OpenAI 風格的金鑰——連接後確認提供商。",
+      "recognized": "已辨識：",
+      "cloudHint": "此提供商需要在「瀏覽」中填寫憑證表單。",
+      "unrecognizedPrefix": "無法辨識的金鑰格式——",
+      "unrecognizedBrowse": "請在「瀏覽」中選擇你的提供商",
+      "or": "或",
+      "google": "使用 Google 繼續",
+      "googleSuccess": "已以 {{account}} 登入 Google。",
+      "googleFailed": "Google 登入失敗，請重試。",
+      "browse": "瀏覽全部 30+ 提供商 →",
+      "thatProvider": "該提供商",
+      "errorUnauthorized": "該 {{provider}} 金鑰被拒絕——未授權。請檢查金鑰後重試。",
+      "errorNoCredit": "已連接，但該 {{provider}} 金鑰沒有可用額度。請新增帳單以執行模型。",
+      "errorOffline": "無法連接到 {{provider}}——你似乎已離線。請檢查網路後重試。",
+      "errorUnrecognized": "無法辨識該金鑰。請開啟「瀏覽」並選擇你的提供商。",
+      "errorCloud": "已辨識 {{provider}} — 該提供商需要多個欄位。請開啟「瀏覽」輸入完整憑證。",
+      "errorAmbiguous": "無法判斷此金鑰屬於哪個提供商。請開啟「瀏覽」並選擇你的提供商。",
+      "errorNoModels": "{{provider}} 已連接但未回傳任何模型。請在「管理」中嘗試重新整理。",
+      "errorUnknown": "無法連接到 {{provider}}，請重試。",
+      "undecryptableHint": "Your saved key for this provider is unreadable. Please re-enter it.",
+      "fromDeepLink": "來自深層連結"
+    },
+    "detected": {
+      "found": "在本機上發現一個 {{provider}} API 金鑰。使用它嗎？",
+      "use": "使用",
+      "ignore": "忽略"
+    },
+    "row": {
+      "connected": "已連接",
+      "testing": "測試中…",
+      "manage": "管理",
+      "fix": "修復",
+      "modelCount": "{{count}} 個模型",
+      "noModelsHint": "無模型——請在「管理」中重新整理",
+      "actionNeeded": "需要處理——{{reason}}",
+      "errorUnauthorized": "金鑰被拒絕",
+      "errorNoCredit": "無可用額度",
+      "errorOffline": "無法連接提供商",
+      "errorUnrecognized": "金鑰無法辨識",
+      "errorNoModels": "未回傳模型",
+      "errorUnknown": "連接問題",
+      "via": {
+        "apiKey": "API 金鑰",
+        "autoDiscovered": "自動探索的金鑰",
+        "cloudCredentials": "雲端憑證"
+      }
+    },
+    "empty": {
+      "note": "還沒有連接任何提供商。在上方連接一個——最快的開始方式是 <1>使用 Google 繼續</1>。"
+    },
+    "manage": {
+      "statusConnected": "已連線",
+      "statusError": "需要處理",
+      "refresh": "重新整理",
+      "rekey": "更換金鑰",
+      "disconnect": "中斷連線",
+      "cancel": "取消",
+      "retry": "重試",
+      "statusLine": "{{via}} · 目錄中有 {{count}} 個模型 · 自動更新",
+      "sectionLabel": "該供應商的模型",
+      "sectionExplain": "推薦模型預設開啟——最新一代加上一代。可關閉任意模型，或開啟較舊、影像或音訊模型。可搜尋整個目錄。",
+      "searchPlaceholder": "搜尋該供應商的模型…",
+      "loading": "正在載入該供應商的目錄…",
+      "loadError": "無法載入該供應商的模型，請重試。",
+      "empty": "該供應商未傳回任何模型。重新整理後重試。",
+      "noMatch": "沒有符合「{{query}}」的模型",
+      "recommendedHead": "推薦——預設開啟",
+      "moreHead": "目錄中的更多模型",
+      "recommended": "推薦",
+      "roleFlagship": "最強能力",
+      "roleFast": "最快",
+      "rolePrevious": "推薦",
+      "capImage": "影像",
+      "capAudio": "音訊",
+      "capEmbedding": "嵌入",
+      "capOther": "其他",
+      "tagChat": "對話",
+      "tagVision": "視覺",
+      "tagImage": "影像",
+      "tagAudio": "音訊",
+      "tagEmbeddings": "嵌入",
+      "tagReasoning": "推理",
+      "tagTools": "工具",
+      "tagResearch": "研究",
+      "contextWindow": "{{count}}K 上下文",
+      "cost": "每百萬 ${{in}} / ${{out}}",
+      "toggleAria": "啟用 {{model}}",
+      "toggleFailed": "無法變更該模型，請重試。",
+      "refreshDone": "目錄已是最新。",
+      "refreshFailed": "無法重新整理該供應商，請重試。",
+      "disconnectTitle": "中斷該供應商的連線？",
+      "disconnectBody": "中斷 {{provider}} 將移除它及其模型。你之後可以用金鑰重新連線。",
+      "disconnectConfirm": "中斷連線",
+      "disconnectFailed": "無法中斷該供應商的連線，請重試。",
+      "rekeyTitle": "更換 {{provider}} 的金鑰",
+      "rekeyBody": "為該供應商貼上新的 API 金鑰。它將取代目前的憑證並執行連線測試。",
+      "rekeyPlaceholder": "貼上新的 API 金鑰…",
+      "rekeyConfirm": "更新金鑰",
+      "rekeyDone": "供應商憑證已更新。",
+      "rekeyCloudDisabled": "雲端憑證需在雲端連接表單中重新設定，而非此處。",
+      "errorUnauthorized": "{{provider}} 金鑰被拒絕——未授權。請檢查金鑰後重試。",
+      "errorNoCredit": "{{provider}} 金鑰沒有可用額度。請新增帳單以執行模型。",
+      "errorOffline": "無法連線 {{provider}}——你似乎處於離線狀態。請檢查網路後重試。",
+      "errorUnrecognized": "無法為 {{provider}} 辨識該金鑰。",
+      "errorNoModels": "{{provider}} 接受了金鑰但未傳回任何模型。請嘗試重新整理。",
+      "errorUnknown": "無法更新 {{provider}}，請重試。"
+    },
+    "browse": {
+      "title": "所有供應商",
+      "subtitle": "選擇一個進行連接。大多數只需金鑰；雲端供應商需要填寫簡短的憑證表單。",
+      "searchPlaceholder": "搜尋 30+ 個供應商…",
+      "noMatch": "沒有符合「{{query}}」的供應商",
+      "back": "所有供應商",
+      "connected": "已連接",
+      "connectAria": "連接 {{provider}}",
+      "cloudTag": "憑證表單",
+      "group": {
+        "frontier": "前沿",
+        "cloud": "雲端 — 憑證表單",
+        "open": "開放推理",
+        "chinese": "中國前沿",
+        "voice": "語音與轉錄"
+      },
+      "keySubtitle": "貼上 {{provider}} 的 API 金鑰以進行連接。",
+      "keyLabel": "API 金鑰",
+      "keyPlaceholder": "貼上你的 API 金鑰…",
+      "connect": "連接並測試",
+      "errorUnauthorized": "該 {{provider}} 金鑰遭拒——未授權。請檢查金鑰後重試。",
+      "errorNoCredit": "已連接，但該 {{provider}} 金鑰沒有可用額度。請新增帳單以執行模型。",
+      "errorOffline": "無法連接 {{provider}}——你似乎處於離線狀態。請檢查網路連接後重試。",
+      "errorUnrecognized": "該金鑰未被 {{provider}} 識別。請檢查金鑰後重試。",
+      "errorNoModels": "{{provider}} 已連接，但未傳回任何模型。請在「管理」中嘗試重新整理。",
+      "errorUnknown": "無法連接到 {{provider}}。請重試。",
+      "baseUrlLabel": "基礎 URL（選填）",
+      "baseUrlPlaceholder": "https://your-endpoint.example/v1"
+    },
+    "cloud": {
+      "subtitle": {
+        "aws-bedrock": "Bedrock 需要 IAM 憑證和一個區域。",
+        "vertex": "Vertex 需要一個專案、一個區域和一個服務帳戶金鑰。",
+        "azure": "Azure OpenAI 需要你的資源端點和一個 API 金鑰。"
+      },
+      "fields": {
+        "accessKeyId": {
+          "label": "存取金鑰 ID",
+          "placeholder": "AKIA…"
+        },
+        "secretAccessKey": {
+          "label": "私密存取金鑰",
+          "placeholder": "貼上你的私密存取金鑰…"
+        },
+        "region": {
+          "label": "區域",
+          "placeholder": "us-east-1"
+        },
+        "projectId": {
+          "label": "專案 ID",
+          "placeholder": "my-gcp-project"
+        },
+        "serviceAccountJson": {
+          "label": "服務帳戶金鑰 (JSON)",
+          "placeholder": "貼上服務帳戶 JSON…"
+        },
+        "endpoint": {
+          "label": "端點",
+          "placeholder": "https://my-resource.openai.azure.com"
+        },
+        "apiKey": {
+          "label": "API 金鑰",
+          "placeholder": "貼上你的 API 金鑰…"
+        }
+      },
+      "submitConnect": "連接並測試",
+      "submitRekey": "更新憑證",
+      "errorUnauthorized": "該 {{provider}} 憑證遭拒——未授權。請檢查後重試。",
+      "errorNoCredit": "已連接，但 {{provider}} 沒有可用額度。請新增帳單以執行模型。",
+      "errorOffline": "無法連接 {{provider}}——你似乎處於離線狀態。請檢查網路連接後重試。",
+      "errorUnrecognized": "這些憑證不完整或未被 {{provider}} 接受。請檢查每個欄位。",
+      "errorNoModels": "{{provider}} 已連接，但未傳回任何模型。請在「管理」中嘗試重新整理。",
+      "errorUnknown": "無法連接到 {{provider}}。請重試。"
+    },
+    "homePicker": {
+      "empty": "此代理目前沒有可用的模型。請連接供應商以新增模型。",
+      "priceTierAria": "價格等級 {{tier}}"
+    }
   },
   "mcpPage": {
     "title": "MCP 伺服器"
+  },
+  "imageGenPage": {
+    "title": "圖像生成",
+    "subtitle": "設定內建圖像生成工具：選擇預設模型並啟用或停用 MCP 伺服器。",
+    "mcpToggleLabel": "啟用圖像生成工具",
+    "mcpToggleDescription": "啟用後，智能體可使用所設定的模型生成和編輯圖像。",
+    "defaultModelLabel": "預設圖像模型",
+    "noModels": "尚未設定支援圖像生成的模型。",
+    "toggleError": "切換圖像生成失敗，請重試。"
   },
   "generalPage": {
     "title": "一般"
@@ -993,85 +1219,69 @@
   "skillsPage": {
     "title": "技能與工具"
   },
-  "agentsPage": {
-    "title": "智能體"
+  "constitutionPage": {
+    "subtitle": "Wayland 的規則。每輪對話都會重新載入——編輯即時生效，無需重新啟動。覆寫機制的運作方式請參見 §11。",
+    "tocTitle": "章節",
+    "tocEmpty": "尚無章節",
+    "reset": "重設",
+    "resetTooltip": "重設為預設章程",
+    "resetConfirmTitle": "重設章程？",
+    "resetConfirmBody": "目前的編輯內容將遺失。系統將還原預設章程。",
+    "resetCancel": "取消",
+    "loading": "載入中…",
+    "tokenCount": "{{value}} 個權杖",
+    "tokenWarning": "即將達到遵循上限（約 2,000 個權杖）。請考慮拆分為專家疊加層。",
+    "tokenError": "已超過遵循上限。請將章節移至 ~/.wayland/specialists/<id>.md 中的專家疊加層。"
   },
-  "providers": {
-    "heroTitle": "Connect a provider",
-    "heroPlaceholder": "Paste an API key...",
-    "detectButton": "Detect & connect",
-    "browseButton": "Browse 24+ providers",
-    "connected": "Connected",
-    "refreshed": "Refreshed {{n}}h ago",
-    "refreshNow": "Refresh now",
-    "disconnect": "Disconnect",
-    "configure": "Configure",
-    "deprecationBanner": "Some models in this provider’s catalog have been removed",
-    "defaultsTitle": "Default models",
-    "defaultChat": "Default chat model",
-    "defaultCoding": "Default coding model",
-    "defaultVision": "Default vision model",
-    "defaultImage": "Default image model",
-    "defaultAudio": "Default audio model",
-    "noDefault": "No default set",
-    "connect": {
-      "entryTitle": "Connect a provider",
-      "placeholder": "Paste your API key here...",
-      "detectButton": "Detect & connect",
-      "browseButton": "Browse 24+ providers",
-      "detectingProvider": "Detecting provider…",
-      "verifyingKey": "Verifying key…",
-      "fetchingCatalog": "Fetching model catalog…",
-      "moreInfoTitle": "Additional details required",
-      "pickerTitle": "Choose a provider",
-      "pickerSearch": "Search providers…",
-      "resultsTitle": "Select models to enable",
-      "resultsSelectAll": "Select all",
-      "resultsDeselectAll": "Deselect all",
-      "connectButton": "Connect",
-      "cancel": "Cancel",
-      "retry": "Try again",
-      "editKey": "Edit key",
-      "openConsole": "Open provider console",
-      "errorTitle": "Connection failed",
-      "errorNetwork": "Could not reach the provider. Check your network connection.",
-      "errorUnauthorized": "Invalid API key. Check your key and try again.",
-      "errorForbidden": "This key does not have the required permissions.",
-      "errorRateLimit": "Rate limit hit. Wait a moment and try again.",
-      "errorUnknown": "An unexpected error occurred.",
-      "fieldRegion": "AWS Region",
-      "fieldSecretKey": "Secret Access Key",
-      "fieldAccessKeyId": "Access Key ID",
-      "fieldEndpoint": "Endpoint URL",
-      "fieldDeployment": "Deployment Name",
-      "fieldApiVersion": "API Version",
-      "fieldProjectId": "Google Cloud Project ID",
-      "fieldServiceAccount": "Service Account JSON",
-      "browseServiceAccount": "Browse…"
+  "constitutionSpecialists": {
+    "title": "專家疊加層",
+    "description": "疊加層在章程之上新增特定智慧型代理的規則。它們依智慧型代理 ID 選擇性啟用，並整合進該智慧型代理的提示詞。",
+    "addButton": "新增疊加層",
+    "idLabel": "智慧型代理 ID",
+    "idPlaceholder": "例如 copy、spark、humanizer",
+    "idInvalid": "只能使用字母、數字、連字號和底線。",
+    "idDuplicate": "該 ID 的疊加層已存在。",
+    "create": "建立",
+    "edit": "編輯",
+    "delete": "刪除",
+    "deleteConfirmTitle": "刪除疊加層？",
+    "deleteConfirmBody": "「{{value}}」的疊加層將被永久刪除。",
+    "cancel": "取消",
+    "empty": "尚無專家疊加層。新增一個即可為特定智慧型代理提供額外規則。",
+    "close": "關閉",
+    "tokenCount": "{{value}} 個權杖"
+  },
+  "agentsPage": {
+    "title": "智能體",
+    "subtitle": "你對話的助手。每個智能體都運行在一組模型上。",
+    "yourAgents": "你的智能體",
+    "moreDetected": "更多已偵測 · {{count}}",
+    "remoteAgents": "遠程智能體",
+    "roadmap": "路線圖",
+    "empty": "尚未偵測到智能體。連接模型後，Wayland Core 始終可用。",
+    "loadErrorsTitle": "部分智能體載入失敗",
+    "badge": {
+      "active": "運行中",
+      "detected": "已偵測"
     },
-    "tiers": {
-      "flagship": "Flagship",
-      "everyday": "Everyday",
-      "fast": "Fast",
-      "reasoning": "Reasoning",
-      "legacy": "Legacy"
+    "scope": {
+      "any": "運行你連接的任何模型",
+      "claude": "運行 Claude 模型",
+      "gpt": "運行 GPT 模型",
+      "gemini": "運行 Gemini 模型",
+      "qwen": "運行通義千問模型",
+      "kimi": "運行 Kimi 模型",
+      "mistral": "運行 Mistral 模型"
     },
-    "capabilities": {
-      "chat": "Chat",
-      "vision": "Vision",
-      "image": "Image generation",
-      "audio": "Audio",
-      "embeddings": "Embeddings",
-      "reasoning": "Reasoning"
+    "about": {
+      "wcore": "Wayland 自研引擎。調用你「模型」頁面上的每個提供商。",
+      "claude": "Anthropic 的編程智能體。使用自己的帳號登入，無法運行 GPT 或 Gemini。",
+      "codex": "OpenAI 的編程智能體。使用自己的帳號登入，無法運行 Claude 或 Gemini。"
     },
-    "categories": {
-      "frontier": "Frontier",
-      "openInference": "Open inference",
-      "cloud": "Cloud",
-      "chineseFrontier": "Chinese frontier",
-      "specialised": "Specialised",
-      "voice": "Voice",
-      "custom": "Custom"
+    "flux": {
+      "title": "Flux Router",
+      "soon": "即將推出",
+      "desc": "讓任何智能體都能跨你已連接的所有模型和提供商進行路由，而不只是它自己的。"
     }
   }
 }

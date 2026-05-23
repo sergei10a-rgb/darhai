@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -84,6 +84,15 @@ export function initSchema(db: ISqliteDriver): void {
     workspace_mode TEXT NOT NULL DEFAULT 'shared',
     lead_agent_id TEXT NOT NULL DEFAULT '',
     agents TEXT NOT NULL DEFAULT '[]',
+    source_launcher_id TEXT,
+    promoted_to_standing INTEGER NOT NULL DEFAULT 0,
+    session_count INTEGER NOT NULL DEFAULT 0,
+    first_active_at INTEGER,
+    imported_from TEXT,
+    imported_at INTEGER,
+    imported_signature_status TEXT,
+    import_capability_grants TEXT,
+    is_sandboxed INTEGER NOT NULL DEFAULT 0,
     created_at INTEGER NOT NULL,
     updated_at INTEGER NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -135,6 +144,22 @@ export function initSchema(db: ISqliteDriver): void {
   )`);
   db.exec('CREATE INDEX IF NOT EXISTS idx_tasks_team ON team_tasks(team_id, status)');
 
+  // Team event log (W1e — append-only audit trail backing Activity tab + cost meter)
+  db.exec(`CREATE TABLE IF NOT EXISTS team_event_log (
+    id TEXT PRIMARY KEY,
+    team_id TEXT NOT NULL,
+    event_type TEXT NOT NULL,
+    actor_slot_id TEXT,
+    target_slot_id TEXT,
+    payload TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE
+  )`);
+  db.exec('CREATE INDEX IF NOT EXISTS idx_team_event_log_team_created ON team_event_log(team_id, created_at)');
+  db.exec(
+    'CREATE INDEX IF NOT EXISTS idx_team_event_log_team_type_created ON team_event_log(team_id, event_type, created_at)'
+  );
+
   console.log('[Database] Schema initialized successfully');
 }
 
@@ -163,4 +188,4 @@ export function setDatabaseVersion(db: ISqliteDriver, version: number): void {
  * Current database schema version
  * Update this when adding new migrations in migrations.ts
  */
-export const CURRENT_DB_VERSION = 34;
+export const CURRENT_DB_VERSION = 39;

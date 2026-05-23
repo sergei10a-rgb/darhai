@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -367,7 +367,9 @@ const migration_v11: IMigration = {
     // so DROP TABLE will NOT trigger ON DELETE CASCADE on the messages table.
 
     // Clean up any invalid source values before copying
-    db.exec(`UPDATE conversations SET source = NULL WHERE source IS NOT NULL AND source NOT IN ('wayland', 'telegram')`);
+    db.exec(
+      `UPDATE conversations SET source = NULL WHERE source IS NOT NULL AND source NOT IN ('wayland', 'telegram')`
+    );
 
     db.exec(`CREATE TABLE IF NOT EXISTS conversations_new (
         id TEXT PRIMARY KEY,
@@ -1440,15 +1442,13 @@ const migration_v32: IMigration = {
   up: (db) => {
     const r = db
       .prepare(
-        "DELETE FROM messages " +
+        'DELETE FROM messages ' +
           "WHERE type = 'tips' " +
           "AND (content LIKE '%Invalid response stream detected%' " +
           "OR content LIKE '%Request is being retried after a temporary failure%')"
       )
       .run();
-    console.log(
-      `[Migration v32] Purged Gemini retry-noise tips: ${r.changes} rows removed`
-    );
+    console.log(`[Migration v32] Purged Gemini retry-noise tips: ${r.changes} rows removed`);
   },
   down: (_db) => {
     console.log('[Migration v32] No rollback — deleted rows were never useful information');
@@ -1496,7 +1496,9 @@ const migration_v33: IMigration = {
       FOREIGN KEY (catalog_id) REFERENCES provider_catalogs(id) ON DELETE CASCADE
     )`);
     db.exec('CREATE INDEX IF NOT EXISTS idx_provider_models_catalog_id ON provider_models(catalog_id)');
-    db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_provider_models_catalog_model ON provider_models(catalog_id, model_id)');
+    db.exec(
+      'CREATE UNIQUE INDEX IF NOT EXISTS idx_provider_models_catalog_model ON provider_models(catalog_id, model_id)'
+    );
 
     db.exec(`CREATE TABLE IF NOT EXISTS default_models (
       scope TEXT PRIMARY KEY,
@@ -1539,6 +1541,187 @@ const migration_v34: IMigration = {
 };
 
 /**
+ * Migration v34 -> v35: Add team_event_log table (W1e).
+ *
+ * Append-only event log for every team mutation (mailbox write, task
+ * create/update, agent spawn, wake, token usage). Foundation for the W2c
+ * Activity tab and the W2d cost meter.
+ *
+ * Two indexes are created to serve the two known consumer queries:
+ *   - `(team_id, created_at)`              — Activity tab newest-first scan
+ *   - `(team_id, event_type, created_at)`  — cost meter token_usage filter
+ */
+const migration_v35: IMigration = {
+  version: 35,
+  name: 'Add team_event_log table',
+  up: (db) => {
+    db.exec(`CREATE TABLE IF NOT EXISTS team_event_log (
+      id TEXT PRIMARY KEY,
+      team_id TEXT NOT NULL,
+      event_type TEXT NOT NULL,
+      actor_slot_id TEXT,
+      target_slot_id TEXT,
+      payload TEXT NOT NULL,
+      created_at INTEGER NOT NULL,
+      FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE
+    )`);
+    db.exec('CREATE INDEX IF NOT EXISTS idx_team_event_log_team_created ON team_event_log(team_id, created_at)');
+    db.exec(
+      'CREATE INDEX IF NOT EXISTS idx_team_event_log_team_type_created ON team_event_log(team_id, event_type, created_at)'
+    );
+    console.log('[Migration v35] Added team_event_log table');
+  },
+  down: (db) => {
+    db.exec('DROP INDEX IF EXISTS idx_team_event_log_team_type_created');
+    db.exec('DROP INDEX IF EXISTS idx_team_event_log_team_created');
+    db.exec('DROP TABLE IF EXISTS team_event_log');
+    console.log('[Migration v35] Rolled back: Removed team_event_log table');
+  },
+};
+
+/**
+ * Migration v35 -> v36: Add source_launcher_id to teams table.
+ *
+ * Persists the bundle launcher id a team was spawned from so the renderer
+ * can resolve rituals / Standing badge after a rename. Nullable for teams
+ * created before v36 and for the build-my-own path.
+ */
+const migration_v36: IMigration = {
+  version: 36,
+  name: 'Add source_launcher_id to teams table',
+  up: (db) => {
+    const columns = new Set((db.pragma('table_info(teams)') as Array<{ name: string }>).map((c) => c.name));
+    if (!columns.has('source_launcher_id')) {
+      db.exec('ALTER TABLE teams ADD COLUMN source_launcher_id TEXT');
+    }
+    console.log('[Migration v36] Added source_launcher_id column to teams table');
+  },
+  down: (_db) => {
+    // SQLite does not support DROP COLUMN before 3.35.0; skip rollback to prevent data loss.
+    console.warn('[Migration v36] Rollback skipped: cannot drop columns safely.');
+  },
+};
+
+const migration_v37: IMigration = {
+  version: 37,
+  name: 'Add promote-to-Standing tracking columns to teams table',
+  up: (db) => {
+    const cols = new Set((db.pragma('table_info(teams)') as Array<{ name: string }>).map((c) => c.name));
+    if (!cols.has('promoted_to_standing')) {
+      db.exec('ALTER TABLE teams ADD COLUMN promoted_to_standing INTEGER NOT NULL DEFAULT 0');
+    }
+    if (!cols.has('session_count')) {
+      db.exec('ALTER TABLE teams ADD COLUMN session_count INTEGER NOT NULL DEFAULT 0');
+    }
+    if (!cols.has('first_active_at')) {
+      db.exec('ALTER TABLE teams ADD COLUMN first_active_at INTEGER');
+    }
+    console.log('[Migration v37] Added promote-to-Standing tracking columns to teams table');
+  },
+  down: (_db) => {
+    // SQLite cannot DROP COLUMN cleanly without table rebuild; tracking-only columns are safe to leave.
+    console.log('[Migration v37] No-op rollback (columns are tracking-only)');
+  },
+};
+
+/**
+ * Migration v37 -> v38: Origin tracking + sandbox flag for imported teams.
+ *
+ * W4a (D7 #5) — every imported team carries a permanent provenance trail
+ * (filename or URL the JSON came from, timestamp, signature status) plus
+ * the per-capability grant map the user accepted at import time. The
+ * `is_sandboxed` flag drives the W4b runtime enforcement matrix: when
+ * true, every workspace FS op + cross-team mailbox write is gated by the
+ * matching capability grant. Existing teams default to `is_sandboxed=0`
+ * (they pre-date the sandbox model and were created directly by the user).
+ */
+const migration_v38: IMigration = {
+  version: 38,
+  name: 'Add origin tracking + sandbox flag to teams table',
+  up: (db) => {
+    const cols = new Set((db.pragma('table_info(teams)') as Array<{ name: string }>).map((c) => c.name));
+    if (!cols.has('imported_from')) {
+      db.exec('ALTER TABLE teams ADD COLUMN imported_from TEXT');
+    }
+    if (!cols.has('imported_at')) {
+      db.exec('ALTER TABLE teams ADD COLUMN imported_at INTEGER');
+    }
+    if (!cols.has('imported_signature_status')) {
+      db.exec('ALTER TABLE teams ADD COLUMN imported_signature_status TEXT');
+    }
+    if (!cols.has('import_capability_grants')) {
+      db.exec('ALTER TABLE teams ADD COLUMN import_capability_grants TEXT');
+    }
+    if (!cols.has('is_sandboxed')) {
+      db.exec('ALTER TABLE teams ADD COLUMN is_sandboxed INTEGER NOT NULL DEFAULT 0');
+    }
+    console.log('[Migration v38] Added import-origin + sandbox-flag columns to teams table');
+  },
+  down: (_db) => {
+    // SQLite cannot DROP COLUMN cleanly without table rebuild; provenance columns are safe to leave.
+    console.log('[Migration v38] No-op rollback (columns are origin-tracking only)');
+  },
+};
+
+/**
+ * Migration v38 -> v39: Add the model-registry tables for the two-tier model store.
+ *
+ * The Models & Providers redesign (Wave 1) stores connected providers, their
+ * enriched catalogs, and per-model enable/disable overrides separately from the
+ * legacy `provider_catalogs` / `provider_models` tables (those are removed in a
+ * later wave). Distinct table names avoid any collision while both schemas
+ * coexist.
+ *
+ * model_registry_providers — one row per connected provider, keyed by the
+ *   `ProviderId`. Holds the encrypted credentials, connect method, live state.
+ * model_registry_catalog   — one row per (provider, model). Stores the full
+ *   enriched `CatalogModel` as JSON; the curated view is derived on read.
+ * model_registry_overrides — one row per (provider, model) the user has
+ *   explicitly toggled; absence means "use the curated default".
+ */
+const migration_v39: IMigration = {
+  version: 39,
+  name: 'Add model_registry tables for the two-tier model store',
+  up: (db) => {
+    db.exec(`CREATE TABLE IF NOT EXISTS model_registry_providers (
+      provider_id TEXT PRIMARY KEY,
+      connected_via TEXT NOT NULL,
+      state TEXT NOT NULL DEFAULT 'connected',
+      error TEXT,
+      creds_encrypted TEXT NOT NULL,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    )`);
+
+    db.exec(`CREATE TABLE IF NOT EXISTS model_registry_catalog (
+      provider_id TEXT NOT NULL,
+      model_id TEXT NOT NULL,
+      model_json TEXT NOT NULL,
+      updated_at INTEGER NOT NULL,
+      PRIMARY KEY (provider_id, model_id),
+      FOREIGN KEY (provider_id) REFERENCES model_registry_providers(provider_id) ON DELETE CASCADE
+    )`);
+
+    db.exec(`CREATE TABLE IF NOT EXISTS model_registry_overrides (
+      provider_id TEXT NOT NULL,
+      model_id TEXT NOT NULL,
+      enabled INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL,
+      PRIMARY KEY (provider_id, model_id),
+      FOREIGN KEY (provider_id) REFERENCES model_registry_providers(provider_id) ON DELETE CASCADE
+    )`);
+
+    console.log('[Migration v39] Added model_registry_providers, model_registry_catalog, model_registry_overrides');
+  },
+  down: (db) => {
+    db.exec('DROP TABLE IF EXISTS model_registry_overrides');
+    db.exec('DROP TABLE IF EXISTS model_registry_catalog');
+    db.exec('DROP TABLE IF EXISTS model_registry_providers');
+    console.log('[Migration v39] Rolled back: Removed model_registry tables');
+  },
+};
+
+/**
  * All migrations in order
  */
 // prettier-ignore
@@ -1548,7 +1731,8 @@ export const ALL_MIGRATIONS: IMigration[] = [
   migration_v13, migration_v14, migration_v15, migration_v16, migration_v17, migration_v18,
   migration_v19, migration_v20, migration_v21, migration_v22, migration_v23, migration_v24,
   migration_v25, migration_v26, migration_v27, migration_v28, migration_v29, migration_v30,
-  migration_v31, migration_v32, migration_v33, migration_v34,
+  migration_v31, migration_v32, migration_v33, migration_v34, migration_v35, migration_v36,
+  migration_v37, migration_v38, migration_v39,
 ];
 
 /**

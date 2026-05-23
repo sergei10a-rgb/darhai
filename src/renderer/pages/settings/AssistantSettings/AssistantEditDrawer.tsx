@@ -4,7 +4,11 @@
  */
 import { Bot, Plus, Trash2, X } from 'lucide-react';
 import type { AssistantListItem, BuiltinAutoSkill, SkillInfo } from './types';
-import type { AvailableBackend } from '@/renderer/hooks/assistant';
+import type {
+  AvailableBackend,
+  UseAssistantEditorReturn,
+  UseAssistantListReturn,
+} from '@/renderer/hooks/assistant';
 import { hasBuiltinSkills } from './assistantUtils';
 import EmojiPicker from '@/renderer/components/chat/EmojiPicker';
 import MarkdownView from '@/renderer/components/Markdown';
@@ -12,92 +16,65 @@ import { Avatar, Button, Checkbox, Collapse, Drawer, Input, Select, Tag, Typogra
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+/**
+ * Slice of useAssistantList the drawer needs. The host page picks these
+ * fields off useAssistantList()'s return so the drawer can mount from
+ * any page that owns an assistant list (Settings today, the new
+ * /assistants library page next).
+ */
+export type AssistantEditDrawerListContext = Pick<
+  UseAssistantListReturn,
+  'activeAssistant' | 'activeAssistantId' | 'isExtensionAssistant'
+>;
+
 type AssistantEditDrawerProps = {
-  // Drawer visibility
-  editVisible: boolean;
-  setEditVisible: (v: boolean) => void;
-  isCreating: boolean;
-
-  // Identity fields
-  editName: string;
-  setEditName: (v: string) => void;
-  editDescription: string;
-  setEditDescription: (v: string) => void;
-  editAvatar: string;
-  setEditAvatar: (v: string) => void;
-  editAvatarImage: string | undefined;
-  editAgent: string;
-  setEditAgent: (v: string) => void;
-
-  // Rules / prompt
-  editContext: string;
-  setEditContext: (v: string) => void;
-  promptViewMode: 'edit' | 'preview';
-  setPromptViewMode: (v: 'edit' | 'preview') => void;
-
-  // Skills state
-  availableSkills: SkillInfo[];
-  selectedSkills: string[];
-  setSelectedSkills: (v: string[]) => void;
-  pendingSkills: Array<{ name: string; description: string }>;
-  customSkills: string[];
-  setDeletePendingSkillName: (v: string | null) => void;
-  setDeleteCustomSkillName: (v: string | null) => void;
-  setSkillsModalVisible: (v: boolean) => void;
-
-  // Builtin auto-injected skills
-  builtinAutoSkills: BuiltinAutoSkill[];
-  disabledBuiltinSkills: string[];
-  setDisabledBuiltinSkills: (v: string[]) => void;
-
-  // Active assistant info
-  activeAssistant: AssistantListItem | null;
-  activeAssistantId: string | null;
-  isExtensionAssistant: (assistant: AssistantListItem | null | undefined) => boolean;
-
-  // Agent backend options
+  /** Full state + handlers from useAssistantEditor(). */
+  editor: UseAssistantEditorReturn;
+  /** Active-assistant context from useAssistantList(). */
+  list: AssistantEditDrawerListContext;
+  /** Backend options from useDetectedAgents(). */
   availableBackends: AvailableBackend[];
-
-  // Handlers
-  handleSave: () => void;
-  handleDeleteClick: () => void;
+  /** Pre-resolved avatar image URL (page derives from editor.editAvatar). */
+  editAvatarImage: string | undefined;
 };
 
 const AssistantEditDrawer: React.FC<AssistantEditDrawerProps> = ({
-  editVisible,
-  setEditVisible,
-  isCreating,
-  editName,
-  setEditName,
-  editDescription,
-  setEditDescription,
-  editAvatar,
-  setEditAvatar,
-  editAvatarImage,
-  editAgent,
-  setEditAgent,
-  editContext,
-  setEditContext,
-  promptViewMode,
-  setPromptViewMode,
-  availableSkills,
-  selectedSkills,
-  setSelectedSkills,
-  pendingSkills,
-  customSkills: _customSkills,
-  setDeletePendingSkillName,
-  setDeleteCustomSkillName,
-  setSkillsModalVisible,
-  builtinAutoSkills,
-  disabledBuiltinSkills,
-  setDisabledBuiltinSkills,
-  activeAssistant,
-  activeAssistantId,
-  isExtensionAssistant,
+  editor,
+  list,
   availableBackends,
-  handleSave,
-  handleDeleteClick,
+  editAvatarImage,
 }) => {
+  const {
+    editVisible,
+    setEditVisible,
+    isCreating,
+    editName,
+    setEditName,
+    editDescription,
+    setEditDescription,
+    editAvatar,
+    setEditAvatar,
+    editAgent,
+    setEditAgent,
+    editContext,
+    setEditContext,
+    promptViewMode,
+    setPromptViewMode,
+    availableSkills,
+    selectedSkills,
+    setSelectedSkills,
+    pendingSkills,
+    customSkills: _customSkills,
+    setDeletePendingSkillName,
+    setDeleteCustomSkillName,
+    setSkillsModalVisible,
+    builtinAutoSkills,
+    disabledBuiltinSkills,
+    setDisabledBuiltinSkills,
+    handleSave,
+    handleDeleteClick,
+  } = editor;
+  const { activeAssistant, activeAssistantId, isExtensionAssistant } = list;
   const { t } = useTranslation();
   const textareaWrapperRef = useRef<HTMLDivElement>(null);
   const [drawerWidth, setDrawerWidth] = useState(500);

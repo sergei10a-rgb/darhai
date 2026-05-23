@@ -26,11 +26,11 @@ const ShortcutsOverlay: React.FC<ShortcutsOverlayProps> = ({ open, onClose }) =>
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className='flex items-center justify-between px-20px py-14px border-b border-[var(--bg-3)]'>
-          <span className='text-15px font-semibold text-[var(--text-primary)]'>
+        <div className='flex items-center justify-between px-20px py-14px border-b border-[var(--color-border-1)]'>
+          <span className='text-15px font-semibold text-[var(--color-text-1)]'>
             {t('settings.shortcuts.title')}
           </span>
-          <kbd className='text-11px text-[var(--text-muted)] bg-[var(--bg-3)] rounded-4px px-6px py-2px'>Esc</kbd>
+          <kbd className='text-11px text-[var(--color-text-3)] bg-[var(--color-bg-4)] rounded-4px px-6px py-2px'>Esc</kbd>
         </div>
 
         {/* Shortcut rows */}
@@ -40,12 +40,12 @@ const ShortcutsOverlay: React.FC<ShortcutsOverlayProps> = ({ open, onClose }) =>
               key={s.i18nKey}
               className='flex items-center justify-between px-20px py-10px'
             >
-              <span className='text-14px text-[var(--text-primary)]'>{t(s.i18nKey)}</span>
+              <span className='text-14px text-[var(--color-text-1)]'>{t(s.i18nKey)}</span>
               <div className='flex items-center gap-4px'>
                 {s.keys.map((k) => (
                   <kbd
                     key={k}
-                    className='text-12px text-[var(--text-muted)] bg-[var(--bg-3)] rounded-4px px-8px py-2px font-mono'
+                    className='text-12px text-[var(--color-text-3)] bg-[var(--color-bg-4)] rounded-4px px-8px py-2px font-mono'
                   >
                     {k}
                   </kbd>

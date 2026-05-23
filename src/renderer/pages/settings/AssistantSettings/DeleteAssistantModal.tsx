@@ -30,7 +30,11 @@ const DeleteAssistantModal: React.FC<DeleteAssistantModalProps> = ({
       visible={visible}
       onCancel={onCancel}
       onOk={onConfirm}
-      okButtonProps={{ status: 'danger' }}
+      okButtonProps={{
+        status: 'danger',
+        className: '',
+      }}
+      cancelButtonProps={{ style: { borderRadius: 8 }, className: 'px-16px' }}
       wrapClassName='delete-assistant-modal'
       data-testid='modal-delete-assistant'
       okText={t('common.delete', { defaultValue: 'Delete' })}

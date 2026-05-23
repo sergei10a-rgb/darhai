@@ -8,37 +8,11 @@ import { resolve } from 'path';
 import UnoCSS from 'unocss/vite';
 import unoConfig from './uno.config.ts';
 
-// Icon Park transform plugin (mirrors electron.vite.config.ts)
-function iconParkPlugin() {
-  return {
-    name: 'vite-plugin-icon-park',
-    enforce: 'pre' as const,
-    transform(source: string, id: string) {
-      if (!id.endsWith('.tsx') || id.includes('node_modules')) return null;
-      if (!source.includes('@icon-park/react')) return null;
-      const transformedSource = source.replace(
-        /import\s+\{\s+([a-zA-Z, ]*)\s+\}\s+from\s+['"]@icon-park\/react['"](;?)/g,
-        function (str, match) {
-          if (!match) return str;
-          const components = match.split(',');
-          const importComponent = str.replace(
-            match,
-            components.map((key: string) => `${key} as _${key.trim()}`).join(', ')
-          );
-          const hoc = `import IconParkHOC from '@renderer/components/IconParkHOC';
-          ${components.map((key: string) => `const ${key.trim()} = IconParkHOC(_${key.trim()})`).join(';\n')}`;
-          return importComponent + ';' + hoc;
-        }
-      );
-      if (transformedSource !== source)
-        return { code: transformedSource, map: null } as {
-          code: string;
-          map: null;
-        };
-      return null;
-    },
-  };
-}
+// Icon Park transform plugin REMOVED in Wave 4B.
+// See electron.vite.config.ts for context — `IconParkHOC` no longer exists,
+// the plugin's transform target became dead, and any `@icon-park/react`
+// import in source silently broke Vite import-analysis. New code uses
+// lucide-react.
 
 export default defineConfig({
   base: './',
@@ -56,7 +30,7 @@ export default defineConfig({
     extensions: ['.ts', '.tsx', '.js', '.jsx', '.css'],
     dedupe: ['react', 'react-dom', 'react-router-dom'],
   },
-  plugins: [UnoCSS(unoConfig), iconParkPlugin()],
+  plugins: [UnoCSS(unoConfig)],
   build: {
     outDir: resolve('out/renderer'),
     emptyOutDir: true,

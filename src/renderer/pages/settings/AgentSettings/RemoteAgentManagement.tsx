@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -9,6 +9,7 @@ import { ipcBridge } from '@/common';
 import type { RemoteAgentConfig, RemoteAgentInput } from '@process/agent/remote/types';
 import EmojiPicker from '@/renderer/components/chat/EmojiPicker';
 import { openExternalUrl } from '@/renderer/utils/platform';
+import { getLucideIcon } from '@/renderer/utils/lucideAvatar';
 import {
   Avatar,
   Button,
@@ -487,68 +488,75 @@ const RemoteAgentManagement: React.FC = () => {
         </div>
       ) : (
         <div className='grid grid-cols-1 gap-12px px-16px md:grid-cols-2 xl:grid-cols-3'>
-          {agents.map((agent) => (
-            <div
-              key={agent.id}
-              className='flex min-h-[214px] flex-col rounded-12px border border-solid border-[var(--color-border-2)] bg-[var(--color-bg-2)] p-14px transition-colors hover:border-[var(--color-border-3)]'
-            >
-              <div className='mb-12px flex justify-center'>
-                <Avatar
-                  size={48}
-                  shape='square'
-                  style={{ backgroundColor: 'var(--color-fill-2)', fontSize: 24, flexShrink: 0 }}
-                >
-                  {agent.avatar || <Bot size={18} />}
-                </Avatar>
-              </div>
-
-              <div className='mb-10px text-center'>
-                <Typography.Text className='block text-14px font-medium leading-20px line-clamp-2'>
-                  {agent.name}
-                </Typography.Text>
-              </div>
-
-              <div className='mb-10px flex min-h-[24px] flex-wrap items-center justify-center gap-6px'>
-                {agent.status && agent.status !== 'unknown' && (
-                  <Tag size='small' color={statusColor(agent.status)}>
-                    {agent.status}
-                  </Tag>
-                )}
-                <Tag size='small' color='arcoblue'>
-                  {agent.protocol}
-                </Tag>
-              </div>
-
-              <Typography.Text
-                type='secondary'
-                className='mb-14px block min-h-[36px] text-center text-12px line-clamp-2'
+          {agents.map((agent) => {
+            const RemoteLucideIcon = getLucideIcon(agent.avatar);
+            return (
+              <div
+                key={agent.id}
+                className='flex min-h-[214px] flex-col rounded-12px border border-solid border-[var(--color-border-2)] bg-[var(--color-bg-2)] p-14px transition-colors hover:border-[var(--color-border-3)]'
               >
-                {agent.url}
-              </Typography.Text>
+                <div className='mb-12px flex justify-center'>
+                  <Avatar
+                    size={48}
+                    shape='square'
+                    style={{ backgroundColor: 'var(--color-fill-2)', fontSize: 24, flexShrink: 0 }}
+                  >
+                    {RemoteLucideIcon ? (
+                      <RemoteLucideIcon size={26} className='text-[var(--color-text-2)]' />
+                    ) : (
+                      agent.avatar || <Bot size={18} />
+                    )}
+                  </Avatar>
+                </div>
 
-              <div className='mt-auto grid grid-cols-2 gap-8px'>
-                <Button
-                  size='small'
+                <div className='mb-10px text-center'>
+                  <Typography.Text className='block text-14px font-medium leading-20px line-clamp-2'>
+                    {agent.name}
+                  </Typography.Text>
+                </div>
+
+                <div className='mb-10px flex min-h-[24px] flex-wrap items-center justify-center gap-6px'>
+                  {agent.status && agent.status !== 'unknown' && (
+                    <Tag size='small' color={statusColor(agent.status)}>
+                      {agent.status}
+                    </Tag>
+                  )}
+                  <Tag size='small' color='arcoblue'>
+                    {agent.protocol}
+                  </Tag>
+                </div>
+
+                <Typography.Text
                   type='secondary'
-                  icon={<Pencil size={14} />}
-                  className={remoteActionButtonClassName}
-                  onClick={() => handleEdit(agent)}
+                  className='mb-14px block min-h-[36px] text-center text-12px line-clamp-2'
                 >
-                  {t('common.edit', { defaultValue: 'Edit' })}
-                </Button>
-                <Button
-                  size='small'
-                  type='secondary'
-                  status='danger'
-                  icon={<Minus size={14} />}
-                  className={remoteActionButtonClassName}
-                  onClick={() => void handleDelete(agent)}
-                >
-                  {t('common.delete', { defaultValue: 'Delete' })}
-                </Button>
+                  {agent.url}
+                </Typography.Text>
+
+                <div className='mt-auto grid grid-cols-2 gap-8px'>
+                  <Button
+                    size='small'
+                    type='secondary'
+                    icon={<Pencil size={14} />}
+                    className={remoteActionButtonClassName}
+                    onClick={() => handleEdit(agent)}
+                  >
+                    {t('common.edit', { defaultValue: 'Edit' })}
+                  </Button>
+                  <Button
+                    size='small'
+                    type='secondary'
+                    status='danger'
+                    icon={<Minus size={14} />}
+                    className={remoteActionButtonClassName}
+                    onClick={() => void handleDelete(agent)}
+                  >
+                    {t('common.delete', { defaultValue: 'Delete' })}
+                  </Button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

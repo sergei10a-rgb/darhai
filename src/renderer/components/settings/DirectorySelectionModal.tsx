@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -138,9 +138,16 @@ const DirectorySelectionModal: React.FC<DirectorySelectionModalProps> = ({
               currentPath ||
               (isFileMode ? t('fileSelection.pleaseSelectFile') : t('fileSelection.pleaseSelectDirectory'))}
           </div>
-          <div className='flex gap-10px'>
-            <Button onClick={onCancel}>{t('common.cancel')}</Button>
-            <Button type='primary' onClick={handleConfirm} disabled={!selectedPath}>
+          <div className='flex gap-12px'>
+            <Button onClick={onCancel} style={{ borderRadius: 8 }} className='px-16px'>
+              {t('common.cancel')}
+            </Button>
+            <Button
+              type='primary'
+              onClick={handleConfirm}
+              disabled={!selectedPath}
+              className=''
+            >
               {t('common.confirm')}
             </Button>
           </div>

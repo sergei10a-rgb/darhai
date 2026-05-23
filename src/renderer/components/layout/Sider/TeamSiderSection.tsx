@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -20,6 +20,10 @@ import TeamCreateModal from '@renderer/pages/team/components/TeamCreateModal';
 import { ipcBridge } from '@/common';
 import SiderItem from './SiderItem';
 import type { SiderMenuItem } from './SiderItem';
+import ActiveTeamGroup from './ActiveTeamGroup';
+import DeleteTeamConfirmModal from './DeleteTeamConfirmModal';
+import { useTeamGroupPersistence } from './useTeamGroupPersistence';
+import type { TeamAgent } from '@/common/types/teamTypes';
 
 const TEAM_PINNED_KEY = 'team-pinned-ids';
 
@@ -43,6 +47,7 @@ const TeamSiderSection: React.FC<TeamSiderSectionProps> = ({
   const { teams, mutate: refreshTeams, removeTeam } = useTeamList();
   const teamBadgeCounts = useSiderTeamBadges(teams);
   const { mutate: globalMutate } = useSWRConfig();
+  const { isExpanded, toggle: toggleGroup } = useTeamGroupPersistence();
 
   const [createTeamVisible, setCreateTeamVisible] = useState(false);
 
@@ -66,6 +71,41 @@ const TeamSiderSection: React.FC<TeamSiderSectionProps> = ({
   const [renameId, setRenameId] = useState<string | null>(null);
   const [renameName, setRenameName] = useState('');
   const [renameLoading, setRenameLoading] = useState(false);
+
+  // Live-smoke fix #3 (2026-05-19): Arco Modal.confirm is one-shot and
+  // cannot gate its OK button on input state, so we drive the
+  // destructive delete with a stateful WaylandModal instead. The pending
+  // team-id captures which row to delete on confirm.
+  const [deleteVisible, setDeleteVisible] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const handleDeleteCancel = useCallback(() => {
+    setDeleteVisible(false);
+    setDeleteTarget(null);
+    setDeleteLoading(false);
+  }, []);
+
+  const handleDeleteConfirm = useCallback(async () => {
+    if (!deleteTarget) return;
+    setDeleteLoading(true);
+    const targetId = deleteTarget.id;
+    try {
+      await removeTeam(targetId);
+      Message.success(t('team.sider.deleteSuccess'));
+      if (pathname.startsWith(`/team/${targetId}`)) {
+        // intentional fire-and-forget; failure is non-actionable
+        Promise.resolve(navigate('/')).catch(() => {});
+      }
+      setDeleteVisible(false);
+      setDeleteTarget(null);
+    } catch (err) {
+      console.error('Failed to delete team:', err);
+      Message.error(t('team.sider.delete'));
+    } finally {
+      setDeleteLoading(false);
+    }
+  }, [deleteTarget, navigate, pathname, removeTeam, t]);
 
   const handleRenameConfirm = useCallback(async () => {
     if (!renameId || !renameName.trim()) return;
@@ -102,6 +142,24 @@ const TeamSiderSection: React.FC<TeamSiderSectionProps> = ({
     [navigate, onSessionClick]
   );
 
+  const handleTeammateClick = useCallback(
+    (teamId: string, teammate: TeamAgent) => {
+      cleanupSiderTooltips();
+      blurActiveElement();
+      // Persist the chosen slot so TeamTabsContext picks it up as the initial active tab.
+      // The storage key mirrors `team-active-slot-${teamId}` from TeamTabsContext.
+      try {
+        localStorage.setItem(`team-active-slot-${teamId}`, teammate.slotId);
+      } catch {
+        // localStorage failures (private mode, quota) are non-actionable here;
+        // the user lands on the team's last-known tab instead.
+      }
+      Promise.resolve(navigate(`/team/${teamId}`)).catch(console.error);
+      if (onSessionClick) onSessionClick();
+    },
+    [navigate, onSessionClick]
+  );
+
   return (
     <>
       {collapsed ? (
@@ -127,7 +185,7 @@ const TeamSiderSection: React.FC<TeamSiderSectionProps> = ({
                     {(teamBadgeCounts.get(team.id) ?? 0) > 0 && (
                       <span
                         className='absolute top-4px right-4px w-18px h-18px rounded-full text-10px font-bold flex items-center justify-center leading-none'
-                        style={{ backgroundColor: '#F53F3F', color: '#fff', lineHeight: 1 }}
+                        style={{ backgroundColor: 'rgb(var(--danger-6))', color: 'var(--text-white)', lineHeight: 1 }}
                       >
                         {(teamBadgeCounts.get(team.id) ?? 0) > 99 ? '99+' : teamBadgeCounts.get(team.id)}
                       </span>
@@ -171,8 +229,8 @@ const TeamSiderSection: React.FC<TeamSiderSectionProps> = ({
                 },
               ];
               const teamBadge = teamBadgeCounts.get(team.id) ?? 0;
-              return (
-                <div key={team.id} className='relative group'>
+              const header = (
+                <div className='relative group flex-1 min-w-0'>
                   <SiderItem
                     icon={<Users size={20} color={iconColors.primary} style={{ lineHeight: 0 }} />}
                     name={team.name}
@@ -187,37 +245,31 @@ const TeamSiderSection: React.FC<TeamSiderSectionProps> = ({
                         setRenameName(team.name);
                         setRenameVisible(true);
                       } else if (key === 'delete') {
-                        Modal.confirm({
-                          title: t('team.sider.deleteConfirm'),
-                          content: t('team.sider.deleteConfirmContent'),
-                          okText: t('team.sider.deleteOk'),
-                          cancelText: t('team.sider.deleteCancel'),
-                          okButtonProps: { status: 'warning' },
-                          onOk: async () => {
-                            await removeTeam(team.id);
-                            Message.success(t('team.sider.deleteSuccess'));
-                            if (pathname.startsWith(`/team/${team.id}`)) {
-                              // intentional fire-and-forget; failure is non-actionable
-                              Promise.resolve(navigate('/')).catch(() => {});
-                            }
-                          },
-                          style: { borderRadius: '12px' },
-                          alignCenter: true,
-                          getPopupContainer: () => document.body,
-                        });
+                        setDeleteTarget({ id: team.id, name: team.name });
+                        setDeleteVisible(true);
                       }
                     }}
                     onClick={() => handleTeamClick(team.id)}
                   />
                   {teamBadge > 0 && (
                     <span
-                      className='absolute right-11px top-1/2 -translate-y-1/2 w-18px h-18px rounded-full text-10px font-bold flex items-center justify-center pointer-events-none z-10 group-hover:hidden'
-                      style={{ backgroundColor: '#F53F3F', color: '#fff', lineHeight: 1 }}
+                      className='absolute right-11px top-1/2 -translate-y-1/2 min-w-18px h-18px px-5px rounded-full text-10px font-bold flex items-center justify-center pointer-events-none z-10 group-hover:hidden'
+                      style={{ backgroundColor: 'rgb(var(--danger-6))', color: 'var(--text-white)', lineHeight: 1 }}
                     >
                       {teamBadge > 99 ? '99+' : teamBadge}
                     </span>
                   )}
                 </div>
+              );
+              return (
+                <ActiveTeamGroup
+                  key={team.id}
+                  team={team}
+                  expanded={isExpanded(team.id)}
+                  onToggle={() => toggleGroup(team.id)}
+                  header={header}
+                  onTeammateClick={(teammate) => handleTeammateClick(team.id, teammate)}
+                />
               );
             })}
         </div>
@@ -229,6 +281,13 @@ const TeamSiderSection: React.FC<TeamSiderSectionProps> = ({
           void refreshTeams();
           Promise.resolve(navigate(`/team/${team.id}`)).catch(console.error);
         }}
+      />
+      <DeleteTeamConfirmModal
+        visible={deleteVisible}
+        teamName={deleteTarget?.name ?? ''}
+        loading={deleteLoading}
+        onConfirm={() => void handleDeleteConfirm()}
+        onCancel={handleDeleteCancel}
       />
       <Modal
         title={t('team.sider.renameTitle')}

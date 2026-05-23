@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -29,9 +29,13 @@ import { initPreviewHistoryBridge } from './previewHistoryBridge';
 import { initShellBridge } from './shellBridge';
 import { initStarOfficeBridge } from './starOfficeBridge';
 import { initSpeechToTextBridge } from './speechToTextBridge';
+import { initVoiceAssetBridge } from './voiceAssetBridge';
+import { initVoiceSynthBridge } from './voiceSynthBridge';
+import { initSkillsBridge } from './skillsBridge';
 import { initTaskBridge } from './taskBridge';
 import { initUpdateBridge } from './updateBridge';
 import { initWebuiBridge } from './webuiBridge';
+import { initConstitutionBridge } from './constitutionBridge';
 import { initSystemSettingsBridge } from './systemSettingsBridge';
 import { initAmbientBridge } from './ambientBridge';
 import { initWindowControlsBridge } from './windowControlsBridge';
@@ -48,7 +52,7 @@ import { initStorageBridge } from '@process/storage/storageIpc';
 import { initNicknamesBridge } from '@process/storage/nicknamesIpc';
 import { initSyncIpc } from '@process/sync/syncIpc';
 import type { TeamSessionService } from '@process/team/TeamSessionService';
-import { initProvidersIpc } from '@process/providers/ipc/providersIpc';
+import { initModelRegistryIpc } from '@process/providers/ipc/modelRegistryIpc';
 
 export interface BridgeDependencies {
   conversationService: IConversationService;
@@ -93,15 +97,24 @@ export function initAllBridges(deps: BridgeDependencies): void {
   initTaskBridge(deps.workerTaskManager);
   initStarOfficeBridge();
   initSpeechToTextBridge();
+  initVoiceAssetBridge();
+  initVoiceSynthBridge();
+  initSkillsBridge();
   initWeixinLoginBridge();
   initWorkspaceSnapshotBridge();
   initRemoteAgentBridge();
   initHubBridge();
   initTeamBridge(deps.teamSessionService);
-  void initProvidersIpc();
+  // A DB / migration failure during registration would otherwise become an
+  // unhandled rejection and the `modelRegistry` namespace would silently never
+  // register — log it so the failure is at least visible.
+  void initModelRegistryIpc().catch((error) => {
+    console.error('[modelRegistry] Failed to initialize IPC:', error);
+  });
   initStorageBridge();
   initNicknamesBridge();
   initSyncIpc();
+  initConstitutionBridge();
 }
 
 /**
@@ -140,12 +153,16 @@ export {
   initPreviewHistoryBridge,
   initShellBridge,
   initSpeechToTextBridge,
+  initVoiceAssetBridge,
+  initVoiceSynthBridge,
+  initSkillsBridge,
   initStarOfficeBridge,
   initSystemSettingsBridge,
   initAmbientBridge,
   initTaskBridge,
   initUpdateBridge,
   initWebuiBridge,
+  initConstitutionBridge,
   initRemoteAgentBridge,
   initHubBridge,
   initTeamBridge,
@@ -153,7 +170,7 @@ export {
   initWeixinLoginBridge,
   initWorkspaceSnapshotBridge,
 };
-export { initProvidersIpc } from '@process/providers/ipc/providersIpc';
+export { initModelRegistryIpc } from '@process/providers/ipc/modelRegistryIpc';
 export { disposeAllSnapshots } from './workspaceSnapshotBridge';
 export { disposeAllTeamSessions } from './teamBridge';
 // Export window-control utility functions

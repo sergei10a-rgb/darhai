@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -81,9 +81,9 @@ const SiderItem: React.FC<SiderItemProps> = ({
               top: 6,
               bottom: 6,
               width: 2,
-              background: '#ff6b35',
+              background: 'var(--brand)',
               borderRadius: 2,
-              boxShadow: '0 0 12px rgba(255, 107, 53, 0.7)',
+              boxShadow: '0 0 12px rgb(var(--primary-6) / 0.7)',
               pointerEvents: 'none',
             }}
           />

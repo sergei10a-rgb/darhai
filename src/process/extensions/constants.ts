@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -64,6 +64,19 @@ export function getHubResourcesDir(): string {
     ? process.resourcesPath
     : path.join(process.cwd(), 'resources');
   return path.join(resourcesPath, 'hub');
+}
+
+/**
+ * Path to the bundled voice-models directory (Whisper-tiny STT model etc.).
+ * Packaged: <resourcesPath>/voice-models. Dev: <cwd>/resources/voice-models.
+ * The renderer reaches these files through the wayland-asset:// protocol, so
+ * this dir is added to the asset allowlist.
+ */
+export function getVoiceModelsDir(): string {
+  const resourcesPath = getPlatformServices().paths.isPackaged()
+    ? process.resourcesPath
+    : path.join(process.cwd(), 'resources');
+  return path.join(resourcesPath, 'voice-models');
 }
 
 export type ExtensionScanSource = { dir: string; source: ExtensionSource };
