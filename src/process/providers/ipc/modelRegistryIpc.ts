@@ -311,6 +311,41 @@ export function createModelRegistryHandlers(deps: ModelRegistryDeps): ModelRegis
     }
   }
 
+  /**
+   * Best-effort recovery for a provider row whose stored creds are
+   * `undecryptable`. The most common cause is a safeStorage key rotation
+   * (dev-mode launches in particular get a fresh keychain on every boot),
+   * which leaves the row's ciphertext intact but unreadable.
+   *
+   * Scans `KeyDiscovery` for an env key that targets this provider; if found,
+   * overwrites the unreadable ciphertext with the discovered key and flips
+   * state back to `connected`. Returns `true` only when both the read and
+   * the rewrite succeeded — the caller can then re-read creds and proceed.
+   *
+   * Cloud providers are skipped: their creds are multi-field structures the
+   * KeyDiscovery flat-string path cannot rebuild — those legitimately need a
+   * manual re-key.
+   */
+  async function tryRecoverFromDiscoveredKey(providerId: ProviderId): Promise<boolean> {
+    if (CLOUD_PROVIDERS.has(providerId)) return false;
+    try {
+      const found = await keyDiscovery.scan();
+      const match = found.find((d) => d.providerId === providerId);
+      if (!match) return false;
+      const value = keyDiscovery.readValue(match);
+      if (!value) return false;
+      repo.updateRegistryProviderCreds(providerId, { key: value });
+      repo.updateRegistryProviderState(providerId, 'connected');
+      // Refresh the legacy v2 bridge so legacy consumers see the recovered
+      // key on the same boot (matches what `connect`/`rekey`/`refresh`
+      // wrappers do via `mirrorConnectOrRekey` in `initModelRegistryIpc`).
+      if (_repo) void mirrorConnectOrRekey(_repo, providerId);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   /** Apply the user's per-model overrides on top of the curated view. */
   function applyOverrides(providerId: ProviderId, curated: CuratedModel[]): CuratedModel[] {
     const overrides = repo.listRegistryOverrides(providerId);
@@ -455,14 +490,19 @@ export function createModelRegistryHandlers(deps: ModelRegistryDeps): ModelRegis
 
     async testConnection({ providerId }): Promise<IModelRegistryTestResult> {
       try {
-        const stored = repo.getRegistryProviderCreds(providerId);
-        // `undecryptable` (a provider row exists but its ciphertext is
-        // unreadable) is distinct from `not-found` (no row at all): persist the
-        // provider's state as `'error'` so `list()` surfaces it and the UI can
-        // prompt a re-key, then report the failure.
+        let stored = repo.getRegistryProviderCreds(providerId);
+        // `undecryptable` — typically the runtime safeStorage key rotated
+        // (common in dev mode across launches). Before stamping an error,
+        // try to silently re-import from an env key the OS still has — if
+        // that succeeds the row is back to `connected` with fresh ciphertext.
         if (stored.status === 'undecryptable') {
-          repo.updateRegistryProviderState(providerId, 'error', 'unrecognized');
-          return { ok: false, error: 'unrecognized' };
+          const recovered = await tryRecoverFromDiscoveredKey(providerId);
+          if (recovered) {
+            stored = repo.getRegistryProviderCreds(providerId);
+          } else {
+            repo.updateRegistryProviderState(providerId, 'error', 'unrecognized');
+            return { ok: false, error: 'unrecognized' };
+          }
         }
         // `not-found` — no row to test.
         if (stored.status !== 'ok') return { ok: false, error: 'unrecognized' };
@@ -528,12 +568,20 @@ export function createModelRegistryHandlers(deps: ModelRegistryDeps): ModelRegis
 
     async refresh({ providerId }): Promise<{ ok: boolean }> {
       try {
-        const stored = repo.getRegistryProviderCreds(providerId);
-        // `undecryptable` — the row exists but its creds cannot be read.
-        // Persist `'error'` so the UI can prompt a re-key, then fail.
+        let stored = repo.getRegistryProviderCreds(providerId);
+        // `undecryptable` — typically the runtime safeStorage key rotated
+        // (common in dev mode across launches). Before stamping an error,
+        // try to silently re-import from an env key the OS still has so the
+        // post-upgrade refresh sweep doesn't blast every connected provider
+        // into `error/unrecognized` on a stale-keychain boot.
         if (stored.status === 'undecryptable') {
-          repo.updateRegistryProviderState(providerId, 'error', 'unrecognized');
-          return { ok: false };
+          const recovered = await tryRecoverFromDiscoveredKey(providerId);
+          if (recovered) {
+            stored = repo.getRegistryProviderCreds(providerId);
+          } else {
+            repo.updateRegistryProviderState(providerId, 'error', 'unrecognized');
+            return { ok: false };
+          }
         }
         // `not-found` — nothing to refresh.
         if (stored.status !== 'ok') return { ok: false };
@@ -1150,9 +1198,21 @@ export async function _runPostUpgradeCatalogRefresh(
   }
 ): Promise<void> {
   const persisted = (await cursor.get().catch((): number | undefined => undefined)) ?? 0;
-  if (persisted >= CATALOG_DATA_VERSION) return;
+  const allProviders = repo.listRegistryProviders();
 
-  const providers = repo.listRegistryProviders();
+  // Two reasons to sweep on this boot:
+  //  1. Cursor below CATALOG_DATA_VERSION — one-time post-upgrade rebuild.
+  //  2. Any provider sits in `error/unrecognized` — typically the runtime
+  //     safeStorage key rotated since last boot (dev-mode), leaving every
+  //     decrypt failing and the row stamped error on the prior sweep. Re-
+  //     running refresh now lets `tryRecoverFromDiscoveredKey` silently
+  //     re-import from an env key the OS still exposes, so the user doesn't
+  //     have to click Fix on every connected provider.
+  const needsUpgrade = persisted < CATALOG_DATA_VERSION;
+  const staleErrored = allProviders.filter((p) => p.state === 'error' && p.error === 'unrecognized');
+  if (!needsUpgrade && staleErrored.length === 0) return;
+
+  const providers = needsUpgrade ? allProviders : staleErrored;
   for (const provider of providers) {
     try {
       await handlers.refresh({ providerId: provider.providerId });
@@ -1163,12 +1223,17 @@ export async function _runPostUpgradeCatalogRefresh(
     }
   }
 
-  try {
-    await cursor.set(CATALOG_DATA_VERSION);
-  } catch (error) {
-    // Failing to persist the cursor means the next boot will re-run the
-    // refresh — that's wasteful but never wrong. Log and move on.
-    console.warn('[modelRegistry] Failed to persist catalog data-version cursor:', error);
+  // Only advance the cursor on a real upgrade pass. A stale-error sweep is
+  // recovery work that doesn't reflect a data-version change — leaving the
+  // cursor where it was keeps the version bookkeeping honest.
+  if (needsUpgrade) {
+    try {
+      await cursor.set(CATALOG_DATA_VERSION);
+    } catch (error) {
+      // Failing to persist the cursor means the next boot will re-run the
+      // refresh — that's wasteful but never wrong. Log and move on.
+      console.warn('[modelRegistry] Failed to persist catalog data-version cursor:', error);
+    }
   }
 }
 

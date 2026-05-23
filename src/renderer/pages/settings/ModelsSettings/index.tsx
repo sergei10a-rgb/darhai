@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import type { IModelRegistryDetectedKey, IModelRegistryProviderView } from '@/common/adapter/ipcBridge';
 import type { ProviderId } from '@process/providers/types';
 import SettingsPageShell from '@renderer/pages/settings/components/SettingsPageShell';
+import SettingsPageWrapper from '@renderer/pages/settings/components/SettingsPageWrapper';
 import { ModelRegistryProvider, useModelRegistry } from '@renderer/hooks/useModelRegistry';
 import { consumePendingDeepLink } from '@renderer/hooks/system/useDeepLink';
 import BrowseModal from './BrowseModal';
@@ -207,8 +208,18 @@ const ModelsSettingsInner: React.FC = () => {
   const showEmptyState = !loading && providers.length === 0 && visibleDetected.length === 0;
 
   if (managedProvider) {
+    // ManageProvider carries its own back-link + header, so wrap in the
+    // lower-level SettingsPageWrapper (NOT SettingsPageShell, which would
+    // duplicate the page header). This restores the same horizontal/vertical
+    // padding the Models index gets via SettingsPageShell.
     return (
-      <ManageProvider provider={managedProvider} onBack={handleManageBack} onDisconnected={handleManageDisconnected} />
+      <SettingsPageWrapper>
+        <ManageProvider
+          provider={managedProvider}
+          onBack={handleManageBack}
+          onDisconnected={handleManageDisconnected}
+        />
+      </SettingsPageWrapper>
     );
   }
 
