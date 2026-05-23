@@ -190,17 +190,31 @@ export function sendTcpRequest<T = { result?: string; error?: string }>(
  * In packaged:  app.asar.unpacked/out/main/  (asarUnpack makes it a real file)
  */
 export function resolveMcpScriptDir(): string {
-  const mainModuleDir =
-    typeof require !== 'undefined' && require.main?.filename ? path.dirname(require.main.filename) : __dirname;
-  const baseDir = path.basename(mainModuleDir) === 'chunks' ? path.dirname(mainModuleDir) : mainModuleDir;
+  // Strategy: try Electron's app.getAppPath() first — it's reliable in both
+  // dev and packaged modes and always returns an absolute path. The bundled
+  // MCP stdio scripts live at <appPath>/out/main/. Without an absolute path,
+  // Claude Code (which spawns these as MCP children with cwd = team workspace)
+  // gets `node team-mcp-stdio.js` from a directory that doesn't have the
+  // script, MODULE_NOT_FOUND is thrown, and `team_*` tools silently never
+  // register on the role's session.
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { app } = require('electron');
+    const appPath = app.getAppPath();
     if (app.isPackaged) {
-      return baseDir.replace('app.asar', 'app.asar.unpacked');
+      // Packaged: appPath is .../app.asar; scripts are at app.asar.unpacked/out/main/.
+      return path.join(appPath.replace('app.asar', 'app.asar.unpacked'), 'out', 'main');
     }
+    // Dev: appPath is the project root containing package.json; scripts are at out/main/.
+    return path.join(appPath, 'out', 'main');
   } catch {
-    // Not in Electron (unit tests / CLI mode) — use baseDir as-is
+    // Not in Electron (unit tests / CLI mode) — fall back to require.main / __dirname.
   }
-  return baseDir;
+
+  const mainModuleDir =
+    typeof require !== 'undefined' && require.main?.filename ? path.dirname(require.main.filename) : __dirname;
+  const baseDir = path.basename(mainModuleDir) === 'chunks' ? path.dirname(mainModuleDir) : mainModuleDir;
+  // Ensure absolute — if baseDir is still relative (e.g. bundler set __dirname='.'),
+  // resolve against process.cwd() so we never hand Claude a relative path.
+  return path.isAbsolute(baseDir) ? baseDir : path.resolve(process.cwd(), baseDir);
 }
