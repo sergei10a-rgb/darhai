@@ -83,6 +83,21 @@ describe('cadenceToCronExpr', () => {
     ['weekly:MONDAY:09:00', '0 9 * * 1'], // case-insensitive
     ['daily:07:30', '30 7 * * *'],
     ['daily', '0 9 * * *'],
+    // Monthly: <dom>:<HH>:<MM>
+    ['monthly:1:09:00', '0 9 1 * *'],
+    ['monthly:15:14:30', '30 14 15 * *'],
+    ['monthly:31:23:59', '59 23 31 * *'],
+    // Quarterly: defaults to 1st of Jan/Apr/Jul/Oct
+    ['quarterly:09:00', '0 9 1 1,4,7,10 *'],
+    ['quarterly:14:30', '30 14 1 1,4,7,10 *'],
+    // Quarterly with explicit day-of-month
+    ['quarterly:15:09:00', '0 9 15 1,4,7,10 *'],
+    // Annual: <month>:<dom>:<HH>:<MM>
+    ['annual:1:1:10:00', '0 10 1 1 *'],
+    ['annual:january:1:10:00', '0 10 1 1 *'],
+    ['annual:JAN:1:10:00', '0 10 1 1 *'],
+    ['annual:december:31:23:59', '59 23 31 12 *'],
+    ['annual:july:4:09:00', '0 9 4 7 *'],
   ])('parses %s → %s', (cadence, expected) => {
     expect(cadenceToCronExpr(cadence)).toBe(expected);
   });
@@ -98,6 +113,26 @@ describe('cadenceToCronExpr', () => {
     'daily:08:99',
     '',
     'nonsense',
+    // Monthly malformed
+    'monthly:0:09:00',
+    'monthly:32:09:00',
+    'monthly:abc:09:00',
+    'monthly:1:25:00',
+    'monthly:1:09',
+    // Quarterly malformed
+    'quarterly',
+    'quarterly:25:00',
+    'quarterly:09:60',
+    'quarterly:0:09:00',
+    'quarterly:32:09:00',
+    // Annual malformed
+    'annual:0:1:09:00',
+    'annual:13:1:09:00',
+    'annual:funtember:1:09:00',
+    'annual:1:0:09:00',
+    'annual:1:32:09:00',
+    'annual:1:1:25:00',
+    'annual:1:1',
   ])('rejects malformed cadence %s', (cadence) => {
     expect(cadenceToCronExpr(cadence)).toBeNull();
   });

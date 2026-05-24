@@ -946,6 +946,225 @@
     ]
   },
   {
+    "id": "quiet-money-position-auditor",
+    "name": "Position Auditor",
+    "description": "Layer 1 specialist - extracts complete financial snapshot (income, spend, savings, debt, equity, insurance, jurisdiction) into quiet-money/position.md.",
+    "avatar": "icons/quiet-money-position-auditor.svg",
+    "presetAgentType": "claude",
+    "contextFile": "assistants/roles/quiet-money-position-auditor.md",
+    "enabledSkills": [],
+    "category": "office",
+    "kind": "specialist"
+  },
+  {
+    "id": "quiet-money-career-strategist",
+    "name": "Career Strategist",
+    "description": "Layer C specialist - trajectory check, market value calibration, skill stack, switching cost, negotiation reps. Salary as the highest-leverage financial instrument.",
+    "avatar": "icons/quiet-money-career-strategist.svg",
+    "presetAgentType": "claude",
+    "contextFile": "assistants/roles/quiet-money-career-strategist.md",
+    "enabledSkills": [],
+    "category": "office",
+    "kind": "specialist"
+  },
+  {
+    "id": "quiet-money-spending-auditor",
+    "name": "Spending Auditor",
+    "description": "Layer S specialist - 3-bucket spending (Foundations/Joy/Signal), lifestyle ratchet defense, annual Spending Audit, no-one-knows test.",
+    "avatar": "icons/quiet-money-spending-auditor.svg",
+    "presetAgentType": "claude",
+    "contextFile": "assistants/roles/quiet-money-spending-auditor.md",
+    "enabledSkills": [],
+    "category": "office",
+    "kind": "specialist"
+  },
+  {
+    "id": "quiet-money-windfall-navigator",
+    "name": "Windfall Navigator",
+    "description": "Layer W specialist - 5 protocols for sudden money, income shock, divorce, health shock, sudden expense. The 12-month rule for windfalls.",
+    "avatar": "icons/quiet-money-windfall-navigator.svg",
+    "presetAgentType": "claude",
+    "contextFile": "assistants/roles/quiet-money-windfall-navigator.md",
+    "enabledSkills": [],
+    "category": "office",
+    "kind": "specialist"
+  },
+  {
+    "id": "quiet-money-generational-planner",
+    "name": "Generational Planner",
+    "description": "Layer G specialist - term life + will + guardians + education vehicle + beneficiaries + disability. The will-and-guardian decision is non-deferrable.",
+    "avatar": "icons/quiet-money-generational-planner.svg",
+    "presetAgentType": "claude",
+    "contextFile": "assistants/roles/quiet-money-generational-planner.md",
+    "enabledSkills": [],
+    "category": "office",
+    "kind": "specialist"
+  },
+  {
+    "id": "quiet-money-time-coach",
+    "name": "Time Coach",
+    "description": "Layer T specialist - hourly cost, conversion test, weekly Friday question, annual deathbed audit. Wealth is time you control.",
+    "avatar": "icons/quiet-money-time-coach.svg",
+    "presetAgentType": "claude",
+    "contextFile": "assistants/roles/quiet-money-time-coach.md",
+    "enabledSkills": [],
+    "category": "office",
+    "kind": "specialist"
+  },
+  {
+    "id": "quiet-money-council",
+    "name": "The Quiet Money Council",
+    "description": "Team launcher - Position Auditor + Career Strategist + Spending Auditor + Windfall Navigator + Generational Planner + Time Coach assemble around your actual numbers. The leader orchestrates; the specialists run the layers.",
+    "avatar": "icons/quiet-money-council.svg",
+    "presetAgentType": "gemini",
+    "contextFile": "assistants/launchers/quiet-money-council.md",
+    "enabledSkills": [],
+    "prompts": [
+      "Assemble the Council - first session, run the intake and route.",
+      "Run my full Annual Spending Audit with the team.",
+      "I just got news that changes my financial picture."
+    ],
+    "category": "office",
+    "kind": "team",
+    "teammates": [
+      "quiet-money-position-auditor",
+      "quiet-money-career-strategist",
+      "quiet-money-spending-auditor",
+      "quiet-money-windfall-navigator",
+      "quiet-money-generational-planner",
+      "quiet-money-time-coach"
+    ],
+    "kickoffs": [
+      {
+        "id": "assemble-and-intake",
+        "text": "Want me to assemble the Council and run the 6-question intake?\nPosition Auditor leads. Others wake when their layer comes up.\n",
+        "prefill": "Assemble the Quiet Money Council. Spawn the Position Auditor first to run the 6-question intake and produce quiet-money/position.md. Don't spawn the other 5 specialists until their layer is actually needed. Summarize the intake back to me in one paragraph at the end.\n",
+        "scenario": "cold-start",
+        "timeBucket": "morning"
+      },
+      {
+        "id": "annual-spending-audit-interactive",
+        "text": "Want to run the full Annual Spending Audit with the team?\nSpending Auditor leads. Position Auditor reads the snapshot. ~30 min.\n",
+        "prefill": "Run the full Annual Spending Audit interactively. Spending Auditor leads. Position Auditor supplies the snapshot from quiet-money/position.md. Bucket every line into Foundations / Joy / Signal. Apply the no-one-knows test. Write the Annual Spending Map to quiet-money/spending/annual-<YEAR>.md. Summarize top 3 Signal items at the end.\n",
+        "scenario": "cold-start",
+        "timeBucket": "afternoon"
+      },
+      {
+        "id": "windfall-walkthrough",
+        "text": "Something just arrived - sudden money or sudden shock?\nWindfall Navigator runs the protocol. Others coordinate state updates.\n",
+        "prefill": "Activate the Windfall Navigator. Subtype: [sudden money / income shock / divorce / health shock / sudden expense]. Amount or magnitude: [if positive: $X; if negative: runway impact]. Run the appropriate protocol. After the Navigator finishes, route the position update to Position Auditor and any will/insurance update to Generational Planner.\n",
+        "scenario": "cold-start",
+        "timeBucket": "morning"
+      },
+      {
+        "id": "generational-deep-dive",
+        "text": "Ready for the full Generational planning pass?\nGenerational Planner leads. Term life + will + guardians + education + beneficiaries + disability. ~45 min.\n",
+        "prefill": "Activate the Generational Planner for the full G.1/G.2/G.3 pass. Read quiet-money/position.md for dependents + jurisdiction + current insurance state. Run the G.1 checklist (term life, will, guardians, education vehicle, beneficiaries, disability). Surface G.2 deeper questions. Open the G.3 aging-parent conversation. Write everything to quiet-money/generational.md.\n",
+        "scenario": "cold-start",
+        "timeBucket": "evening"
+      },
+      {
+        "id": "career-trajectory-deep",
+        "text": "Want the Career Strategist to run the full 5-question trajectory check?\nLayer C is the highest-leverage lever for most users in accumulation years.\n",
+        "prefill": "Activate the Career Strategist for the full Five Career Questions (trajectory check, market value calibration, skill stack, switching cost, negotiation reps). Read quiet-money/position.md for current income + equity comp + jurisdiction. Write findings + next-move target to quiet-money/career-trajectory.md.\n",
+        "scenario": "cold-start",
+        "timeBucket": "afternoon"
+      },
+      {
+        "id": "pickup-council-thread",
+        "text": "Want to pick up the Council's open thread?\nI'll surface TEAM_MEMORY.md from the last session and the one open decision.\n",
+        "prefill": "Read TEAM_MEMORY.md. Summarize the last 3 dated entries across all specialists. Surface the one open decision the user committed to but hasn't acted on. Propose which specialist to wake to close it out.\n",
+        "scenario": "continuation-friendly",
+        "timeBucket": "morning"
+      },
+      {
+        "id": "show-me-what-you-do",
+        "text": "First time? I'll show you 3 Council moves we can run in under 15 minutes.\nPick one and I'll spawn the right specialist.\n",
+        "prefill": "Show me 3 starter tasks the Council can run in under 15 minutes. For each: which specialist leads, what gets written to the quiet-money/ workspace, and what I'd need to provide.\n",
+        "scenario": "cold-start",
+        "timeBucket": "morning",
+        "beginnerSafe": true
+      }
+    ]
+  },
+  {
+    "id": "quiet-money-standing",
+    "name": "Quiet Money - Standing",
+    "description": "Standing Company - the Quiet Money coach running on a schedule. Weekly Friday rollup (Layer T), quarterly Enough Defense (Layer 2), annual Spending Audit (Layer S). Persists state in quiet-money/ workspace.",
+    "avatar": "icons/quiet-money-standing.svg",
+    "presetAgentType": "claude",
+    "contextFile": "assistants/launchers/quiet-money-standing.md",
+    "enabledSkills": ["cron"],
+    "prompts": [
+      "Set up my standing Quiet Money - first run + workspace bootstrap.",
+      "What did this week's Friday question say?",
+      "Run the quarterly Enough Defense now (preview)."
+    ],
+    "category": "office",
+    "kind": "team",
+    "teammates": ["quiet-money"],
+    "standing": true,
+    "rituals": [
+      { "name": "weekly-friday-question",   "cadence": "weekly:friday:17:00" },
+      { "name": "quarterly-enough-defense", "cadence": "quarterly:09:00" },
+      { "name": "annual-spending-audit",    "cadence": "annual:1:1:10:00" }
+    ],
+    "kickoffs": [
+      {
+        "id": "post-friday-question-rollup",
+        "text": "Your Friday-question ritual fired earlier.\nWant me to walk this week's answer + streak count?\n",
+        "prefill": "Read the latest entry in quiet-money/friday-log.md, show me the answer + the current streak. If the streak is 5+ negative, surface the framework's call (the system needs to change, not the goal) and route depth to the quiet-money specialist.\n",
+        "scenario": "post-fire-ritual",
+        "timeBucket": "morning",
+        "requiresRitualOutput": true
+      },
+      {
+        "id": "post-enough-defense-rollup",
+        "text": "Quarterly Enough Defense fired.\nWant me to walk what drifted (or didn't) this quarter?\n",
+        "prefill": "Read the latest entry in quiet-money/enough-defense-log.md, surface the spend delta vs prior quarter, the one category that drove it, and whether the Enough Number is still honest. Ask whether to update or hold.\n",
+        "scenario": "post-fire-ritual",
+        "timeBucket": "morning",
+        "requiresRitualOutput": true
+      },
+      {
+        "id": "bootstrap-workspace",
+        "text": "First standing session?\nLet me bootstrap your quiet-money/ workspace - position, enough-number, boring-path, friday-log files.\n",
+        "prefill": "Bootstrap the quiet-money/ workspace. Walk me through the 6-question intake from the Quiet Money specialist. Write the answers into position.md and enough-number.md. Set the initial Boring Path baseline in boring-path.md. Start friday-log.md with a streak of 0.\n",
+        "scenario": "cold-start",
+        "timeBucket": "morning"
+      },
+      {
+        "id": "show-me-the-state",
+        "text": "Want me to show you what's in your quiet-money/ workspace right now?\nI'll surface Boring Path %, Enough Number, last Friday answer, and any open Quiet Test decisions.\n",
+        "prefill": "List every file in the quiet-money/ workspace. For each, surface the most-recent entry. Specifically: Boring Path % from boring-path.md, current Enough Number from enough-number.md, last Friday-question answer + streak from friday-log.md, and any decisions/ files from the last 30 days.\n",
+        "scenario": "continuation-friendly",
+        "timeBucket": "morning"
+      },
+      {
+        "id": "preview-next-ritual",
+        "text": "Want to see what's coming up?\nI'll show you the next 4 ritual fires + what each one will read from the workspace.\n",
+        "prefill": "List the next 4 scheduled ritual fires (date + ritual name). For each, name what workspace file it will read, what question it will ask, and what file it will write back.\n",
+        "scenario": "cold-start",
+        "timeBucket": "afternoon"
+      },
+      {
+        "id": "promote-to-active",
+        "text": "Ready to make this a real standing relationship?\nClick the Standing badge on the team page to lock in the cron + enable post-fire kickoff cards.\n",
+        "prefill": "Walk me through promoting the Quiet Money Standing team. Explain the two-checkbox confirmation modal, what it commits to (cron persistence + post-fire kickoff cards), and what happens if I demote later (rituals stop firing; workspace files persist).\n",
+        "scenario": "cold-start",
+        "timeBucket": "afternoon"
+      },
+      {
+        "id": "show-me-what-you-do",
+        "text": "First time? I'll show you 3 things the Standing coach handles automatically.\nPick one and we'll set it up.\n",
+        "prefill": "Show me 3 starter tasks the Standing Quiet Money coach handles automatically (weekly Friday rollup, quarterly Enough Defense, annual Spending Audit). Plain-language description for each and what gets written to the workspace.\n",
+        "scenario": "cold-start",
+        "timeBucket": "morning",
+        "beginnerSafe": true
+      }
+    ]
+  },
+  {
     "id": "probe",
     "name": "Validator",
     "description": "Validator - quantitative validation, fake-door tests, MVP discipline via Eric Ries's build-measure-learn.",
