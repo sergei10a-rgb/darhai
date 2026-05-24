@@ -166,7 +166,7 @@ const GuidModelSelector: React.FC<GuidModelSelectorProps> = ({
   // `model.config` row. The resolver hands back the platform / apiKey /
   // baseUrl / bedrockConfig the main-process dispatch needs verbatim.
   const handlePickCurated = React.useCallback(
-    async (model: CuratedModel) => {
+    async (model: CuratedModel, opts?: { silent?: boolean }) => {
       const result = await ipcBridge.modelRegistry.resolveForChatStart
         .invoke({
           providerId: model.providerId,
@@ -178,6 +178,14 @@ const GuidModelSelector: React.FC<GuidModelSelectorProps> = ({
         });
 
       if (!result.ok) {
+        // `silent` callers (the stale-pin auto-fallback effect below) just
+        // wanted to repair their own state and must not yank the user off
+        // /guid. The user did not click anything; navigating them to
+        // /settings/models would interrupt whatever they were doing
+        // (e.g. starting a chat with a preset assistant whose backend
+        // happens to be unconfigured).
+        if (opts?.silent) return;
+
         // Wave 3 Fix 9 — differentiate `undecryptable` from `not-connected`.
         // `undecryptable` means the provider row exists but its ciphertext is
         // unreadable; the user needs to re-enter the key, not "connect a new
@@ -243,7 +251,10 @@ const GuidModelSelector: React.FC<GuidModelSelectorProps> = ({
     const guardKey = `${agentKey}:${selectedCuratedKey}`;
     if (fallbackFiredRef.current === guardKey) return;
     fallbackFiredRef.current = guardKey;
-    void handlePickCurated(curated[0]);
+    // silent: this fallback is internal repair. If the curated[0] provider
+    // is unconfigured, leaving the user on /guid is correct — they may have
+    // selected a preset assistant whose backend will be configured later.
+    void handlePickCurated(curated[0], { silent: true });
   }, [agentKey, curated, isGeminiMode, selectedCuratedKey, handlePickCurated]);
 
   // Resolve a price tier for an ACP model entry. CLI-agent options use short

@@ -78,7 +78,9 @@ const KickoffCard: React.FC<KickoffCardProps> = ({ text, onAccept, onRedirect, o
       >
         <X size={16} />
       </button>
-      <div className={styles.body}>{text}</div>
+      <div className={styles.body} data-testid='new-chat-kickoff-body'>
+        {text}
+      </div>
       <div className={styles.actions}>
         <Button type='primary' onClick={onAccept} data-testid='new-chat-kickoff-accept'>
           {t('guid.newChat.kickoff.accept', { defaultValue: "Yes, let's start" })}
