@@ -48,6 +48,7 @@ vi.mock('@/common', () => ({
       stop: mockProvider('team.stop'),
       ensureSession: mockProvider('team.ensureSession'),
       renameAgent: mockProvider('team.renameAgent'),
+      changeAgentBackend: mockProvider('team.changeAgentBackend'),
       renameTeam: mockProvider('team.renameTeam'),
       setSessionMode: mockProvider('team.setSessionMode'),
       updateWorkspace: mockProvider('team.updateWorkspace'),
