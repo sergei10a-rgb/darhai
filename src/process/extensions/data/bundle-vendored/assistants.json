@@ -1127,6 +1127,14 @@
         "requiresRitualOutput": true
       },
       {
+        "id": "post-annual-spending-audit-rollup",
+        "text": "Annual Spending Audit fired.\nWant me to walk this year's Foundations / Joy / Signal split + the one bucket that drove change?\n",
+        "prefill": "Read the latest annual audit file in quiet-money/spending/ (filename pattern annual-YYYY.md). Surface the three-bucket split (Foundations / Joy / Signal), the change vs last year per bucket, the single category that drove the biggest move, and whether the Enough Number still holds against this year's spend. Route any deeper category-by-category work to the Spending Auditor specialist via team_send_message.\n",
+        "scenario": "post-fire-ritual",
+        "timeBucket": "morning",
+        "requiresRitualOutput": true
+      },
+      {
         "id": "bootstrap-workspace",
         "text": "First standing session?\nLet me bootstrap your quiet-money/ workspace - position, enough-number, boring-path, friday-log files.\n",
         "prefill": "Bootstrap the quiet-money/ workspace. Walk me through the 6-question intake from the Quiet Money specialist. Write the answers into position.md and enough-number.md. Set the initial Boring Path baseline in boring-path.md. Start friday-log.md with a streak of 0.\n",
