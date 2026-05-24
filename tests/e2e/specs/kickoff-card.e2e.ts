@@ -49,6 +49,32 @@ test.describe('Kickoff card — new-chat empty state (v0.4.7.1)', () => {
     await page.locator(GUID_TEXTAREA).first().waitFor({ state: 'visible', timeout: 10_000 });
   });
 
+  test('DIAGNOSTIC: dump all data-testids on /guid', async ({ page }, testInfo) => {
+    const diag = await page.evaluate(() => {
+      const allTestids = Array.from(document.querySelectorAll('[data-testid]')).map((el) =>
+        el.getAttribute('data-testid')
+      );
+      // Look for assistant-pick affordances by class / text hints too
+      const interactives = Array.from(
+        document.querySelectorAll('button, [role="button"], [data-testid*="intent"], [data-testid*="recent"], [data-testid*="mention"]')
+      )
+        .map((el) => ({
+          testid: el.getAttribute('data-testid'),
+          text: (el.textContent || '').trim().slice(0, 40),
+        }))
+        .filter((x) => x.testid || x.text);
+      return {
+        url: window.location.href,
+        allTestids,
+        interactives: interactives.slice(0, 40),
+      };
+    });
+    // eslint-disable-next-line no-console
+    console.log('[DIAGNOSTIC]\n', JSON.stringify(diag, null, 2));
+    await page.screenshot({ path: testInfo.outputPath('guid-page.png'), fullPage: true });
+    expect(diag.allTestids.length).toBeGreaterThan(0);
+  });
+
   test('preset assistant selection surfaces the kickoff card below the input', async ({ page }) => {
     // Pick Helm (Coach) — it ships with morning/afternoon/evening cold-starts +
     // continuation + beginner-safe + post-fire-ritual. Cascade should hit
