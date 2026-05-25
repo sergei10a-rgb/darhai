@@ -12,14 +12,16 @@
  * lands somewhere.
  */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/common', () => {
   const providerFn = vi.fn();
+  const queryProviderFn = vi.fn();
   return {
     ipcBridge: {
       usage: {
         recordEvent: { provider: providerFn },
+        queryFrequentlyUsedModels: { provider: queryProviderFn },
       },
     },
   };
@@ -110,5 +112,58 @@ describe('usageBridge — startup race (Gemini-HIGH)', () => {
     initUsageBridge(logger);
     initUsageBridge(logger);
     expect(providerFn).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('usageBridge — eventType allowlist (MED-1)', () => {
+  let warnSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    __resetUsageBridgeForTests();
+    providerCallback = null;
+    providerFn.mockReset();
+    providerFn.mockImplementation((cb: (input: unknown) => unknown) => {
+      providerCallback = cb;
+    });
+    warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    warnSpy.mockRestore();
+  });
+
+  it('drops events with unknown eventType and logs a warning', async () => {
+    ensureUsageProviderRegistered();
+    const { logger, recorded } = makeLogger();
+    initUsageBridge(logger);
+
+    await providerCallback!({ eventType: 'attacker.injected_event', metadata: { evil: true } });
+    expect(recorded).toHaveLength(0);
+    expect(warnSpy).toHaveBeenCalledWith(
+      '[usage.recordEvent] dropped event with unknown type:',
+      'attacker.injected_event'
+    );
+  });
+
+  it('accepts events with a known eventType', async () => {
+    ensureUsageProviderRegistered();
+    const { logger, recorded } = makeLogger();
+    initUsageBridge(logger);
+
+    await providerCallback!({ eventType: 'guid.model_selected', metadata: { modelId: 'claude' } });
+    expect(recorded).toHaveLength(1);
+    expect(recorded[0].eventType).toBe('guid.model_selected');
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
+  it('drops unknown events that arrive before the logger is wired (does not buffer)', async () => {
+    ensureUsageProviderRegistered();
+    await providerCallback!({ eventType: 'bogus.event' });
+
+    const { logger, recorded } = makeLogger();
+    initUsageBridge(logger);
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(recorded).toHaveLength(0);
   });
 });

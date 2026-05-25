@@ -103,12 +103,24 @@ void initTeamGuideService(teamSessionService).catch((error) => {
 // wires the SQLite-backed logger (writes to the usage_events table from
 // migration v40). This closes the cross-audit Gemini-HIGH race.
 ensureUsageProviderRegistered();
+// Cross-audit MED-4: usage_events is append-only, so prune rows older than
+// the aggregator's lookback window on startup to keep the table bounded on
+// long-lived installs. Aggregator only queries the last 7 days; 90 days is
+// the retention floor.
+const USAGE_RETENTION_MS = 90 * 24 * 60 * 60 * 1000;
 void getDatabase()
   .then((db) => {
     const usageRepo = new SqliteUsageEventRepository(db.getDriver());
     const usageLogger = new UsageEventLogger(usageRepo);
     const frequentlyUsedAggregator = new FrequentlyUsedAggregator(usageRepo);
     initUsageBridge(usageLogger, frequentlyUsedAggregator);
+    const cutoff = Date.now() - USAGE_RETENTION_MS;
+    usageRepo
+      .prune(cutoff)
+      .then((pruned) => {
+        if (pruned > 0) console.log(`[usage] pruned ${pruned} events older than 90d`);
+      })
+      .catch((err) => console.warn('[usage] prune failed:', err));
   })
   .catch((error) => {
     console.error('[initBridge] Failed to initialize usage telemetry bridge:', error);

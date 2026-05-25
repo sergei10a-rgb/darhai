@@ -67,4 +67,14 @@ export class SqliteUsageEventRepository implements IUsageEventRepository {
       .all(eventType, sinceMs) as Row[];
     return rows.map(rowToEvent);
   }
+
+  /**
+   * Cross-audit MED-4: delete events older than `cutoffMs`. Called on app
+   * startup with a 90-day retention window so usage_events stays bounded on
+   * long-lived installs. Aggregator only ever queries the last 7 days.
+   */
+  async prune(cutoffMs: number): Promise<number> {
+    const result = this.db.prepare('DELETE FROM usage_events WHERE timestamp_ms < ?').run(cutoffMs);
+    return result.changes;
+  }
 }

@@ -37,4 +37,10 @@ export interface IUsageEventRepository {
   append(event: UsageEvent): Promise<void>;
   findSince(sinceMs: number): Promise<UsageEvent[]>;
   findByType(eventType: UsageEventType, sinceMs: number): Promise<UsageEvent[]>;
+  /**
+   * Delete events older than the supplied cutoff (epoch ms). Returns the
+   * number of rows removed. Cross-audit MED-4: bounded growth for
+   * long-lived installs — aggregator only queries the last 7 days.
+   */
+  prune(cutoffMs: number): Promise<number>;
 }

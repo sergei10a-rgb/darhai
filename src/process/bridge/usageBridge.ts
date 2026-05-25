@@ -17,6 +17,26 @@ type RecordInput = {
   metadata?: Record<string, unknown>;
 };
 
+// Cross-audit MED-1 fix: telemetry must reject unknown event types so a
+// buggy / compromised renderer cannot poison the aggregator with arbitrary
+// strings. Keep this set in sync with `UsageEventType` in
+// `src/process/services/usage/types.ts` — adding a new event type means
+// updating both unions or events of that type get silently dropped.
+const ALLOWED_EVENT_TYPES: ReadonlySet<UsageEventType> = new Set<UsageEventType>([
+  'launchpad.card_clicked',
+  'launchpad.view_all_clicked',
+  'launchpad.intent_pill_clicked',
+  'launchpad.intent_prompt_clicked',
+  'guid.assistant_selected',
+  'guid.cli_selected',
+  'guid.message_sent',
+  'guid.foreground',
+  'guid.model_selected',
+  'dashboard.opened',
+  'dashboard.widget_clicked',
+  'dashboard.summary_requested',
+]);
+
 // Cross-audit Gemini-HIGH fix: the IPC channel is registered eagerly so the
 // first renderer-side `guid.foreground` (fired in a `useEffect` on mount) is
 // never dropped on cold start. The logger resolves asynchronously after
@@ -40,6 +60,13 @@ function forwardToLogger(input: RecordInput): Promise<void> {
 }
 
 function recordOrBuffer(input: RecordInput): Promise<void> {
+  // Cross-audit MED-1: drop events with unknown eventType so a buggy or
+  // compromised renderer cannot poison the aggregator. Logged once at warn
+  // level for diagnostics; never thrown — telemetry must not break callers.
+  if (!ALLOWED_EVENT_TYPES.has(input.eventType as UsageEventType)) {
+    console.warn('[usage.recordEvent] dropped event with unknown type:', input.eventType);
+    return Promise.resolve();
+  }
   if (liveLogger) {
     return forwardToLogger(input);
   }

@@ -67,4 +67,23 @@ describeOrSkip('SqliteUsageEventRepository', () => {
     const [evt] = await repo.findSince(0);
     expect(evt.metadata).toBeUndefined();
   });
+
+  it('prune removes events older than the cutoff and returns the deleted count (MED-4)', async () => {
+    await repo.append({ id: 'old1', timestampMs: 100, eventType: 'launchpad.card_clicked' });
+    await repo.append({ id: 'old2', timestampMs: 200, eventType: 'launchpad.card_clicked' });
+    await repo.append({ id: 'keep1', timestampMs: 500, eventType: 'launchpad.card_clicked' });
+    await repo.append({ id: 'keep2', timestampMs: 1_000, eventType: 'launchpad.card_clicked' });
+
+    const removed = await repo.prune(500);
+
+    expect(removed).toBe(2);
+    const remaining = await repo.findSince(0);
+    expect(remaining.map((e) => e.id).sort()).toEqual(['keep1', 'keep2']);
+  });
+
+  it('prune returns 0 when no events are old enough', async () => {
+    await repo.append({ id: 'a', timestampMs: 1_000, eventType: 'launchpad.card_clicked' });
+    expect(await repo.prune(500)).toBe(0);
+    expect((await repo.findSince(0)).map((e) => e.id)).toEqual(['a']);
+  });
 });

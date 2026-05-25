@@ -14,6 +14,7 @@ const makeRepo = (events: UsageEvent[]): IUsageEventRepository => ({
   findByType: vi.fn(async (_type, sinceMs: number) =>
     events.filter((e) => e.eventType === 'guid.model_selected' && e.timestampMs >= sinceMs)
   ),
+  prune: vi.fn(async () => 0),
 });
 
 const ev = (id: string, modelId: string | undefined, timestampMs: number): UsageEvent => ({

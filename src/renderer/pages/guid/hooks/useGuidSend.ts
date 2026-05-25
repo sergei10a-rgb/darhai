@@ -69,8 +69,22 @@ export type GuidSendDeps = {
 };
 
 export type GuidSendResult = {
-  handleSend: () => Promise<void>;
-  sendMessageHandler: () => void;
+  /**
+   * Resolves to `true` when the send completed successfully (conversation
+   * created + navigated), `false` when validation rejected the send (e.g.
+   * no model configured, missing conversation id). Rejects only when the
+   * underlying create/IPC call throws. Cross-audit MED-3 fix: callers use
+   * the boolean to gate `guid.message_sent` telemetry so failed/early-
+   * returned sends are not counted.
+   */
+  handleSend: () => Promise<boolean>;
+  /**
+   * Fire-and-forget wrapper around `handleSend` that manages loading/input
+   * state. Optional `onSent` callback runs only when the send was
+   * successful (handleSend resolved `true`) so telemetry like
+   * `guid.message_sent` is not recorded for validation-failed sends.
+   */
+  sendMessageHandler: (opts?: { onSent?: () => void }) => void;
   isButtonDisabled: boolean;
 };
 
@@ -115,7 +129,7 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
   } = deps;
   const sendingRef = useRef(false);
 
-  const handleSend = useCallback(async () => {
+  const handleSend = useCallback(async (): Promise<boolean> => {
     const isCustomWorkspace = !!dir;
     const finalWorkspace = dir || '';
 
@@ -138,7 +152,7 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
       // it fabricates a logged-out auth type and the chat page fails to load.
       if (!currentModel && !isGoogleAuth) {
         Message.warning(t('conversation.noModelConfigured'));
-        return;
+        return false;
       }
       const placeholderModel = currentModel || {
         id: 'gemini-placeholder',
@@ -206,7 +220,7 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
         console.error('Failed to create Gemini conversation:', error);
         throw error;
       }
-      return;
+      return true;
     }
 
     // OpenClaw Gateway path
@@ -242,7 +256,7 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
 
         if (!conversation || !conversation.id) {
           alert('Failed to create OpenClaw conversation. Please ensure the OpenClaw Gateway is running.');
-          return;
+          return false;
         }
 
         if (isCustomWorkspace) {
@@ -265,7 +279,7 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
         alert(`Failed to create OpenClaw conversation: ${errorMessage}`);
         throw error;
       }
-      return;
+      return true;
     }
 
     // Nanobot path
@@ -292,7 +306,7 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
 
         if (!conversation || !conversation.id) {
           alert('Failed to create Nanobot conversation. Please ensure nanobot is installed.');
-          return;
+          return false;
         }
 
         if (isCustomWorkspace) {
@@ -315,14 +329,14 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
         alert(`Failed to create Nanobot conversation: ${errorMessage}`);
         throw error;
       }
-      return;
+      return true;
     }
 
     // Wayland Core path (direct selection or preset assistant with wcore as main agent)
     if (selectedAgent === 'wcore' || (isPreset && finalEffectiveAgentType === 'wcore')) {
       if (!currentModel) {
         Message.warning(t('conversation.noModelConfigured'));
-        return;
+        return false;
       }
       try {
         const conversation = await ipcBridge.conversation.create.invoke({
@@ -343,7 +357,7 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
 
         if (!conversation || !conversation.id) {
           alert('Failed to create Wayland Core conversation. Please ensure wcore is installed.');
-          return;
+          return false;
         }
 
         if (isCustomWorkspace) {
@@ -366,7 +380,7 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
         alert(`Failed to create Wayland Core conversation: ${errorMessage}`);
         throw error;
       }
-      return;
+      return true;
     }
 
     // Remaining agent path (ACP/remote/custom, including preset fallbacks)
@@ -443,7 +457,7 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
         const conversation = await ipcBridge.conversation.create.invoke(agentConversationParams);
         if (!conversation || !conversation.id) {
           console.error('Failed to create ACP conversation - conversation object is null or missing id');
-          return;
+          return false;
         }
 
         if (isCustomWorkspace) {
@@ -465,6 +479,7 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
         console.error('Failed to create ACP conversation:', error);
         throw error;
       }
+      return true;
     }
   }, [
     input,
@@ -491,12 +506,12 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
     t,
   ]);
 
-  const sendMessageHandler = useCallback(() => {
+  const sendMessageHandler = useCallback((opts?: { onSent?: () => void }) => {
     if (loading || sendingRef.current) return;
     sendingRef.current = true;
     setLoading(true);
     handleSend()
-      .then(() => {
+      .then((ok) => {
         setInput('');
         setMentionOpen(false);
         setMentionQuery(null);
@@ -504,6 +519,9 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
         setMentionActiveIndex(0);
         setFiles([]);
         setDir('');
+        // Cross-audit MED-3: only fire onSent (telemetry) when the send
+        // actually succeeded — validation early-returns resolve to false.
+        if (ok) opts?.onSent?.();
       })
       .catch((error) => {
         console.error('Failed to send message:', error);

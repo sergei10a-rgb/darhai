@@ -200,9 +200,10 @@ const GuidPage: React.FC = () => {
     recordTelemetry({ eventType: 'guid.foreground' });
   }, [recordTelemetry]);
 
-  // Fire-and-forget 'guid.message_sent' helper. Recorded synchronously at the
-  // same call site as `send.sendMessageHandler` / `send.handleSend` so the
-  // event is captured before any async work clears the input/files.
+  // Fire-and-forget 'guid.message_sent' helper. Cross-audit MED-3 fix:
+  // recorded only AFTER the send handler reports success — failed sends
+  // and validation early-returns are not counted. Captured against the
+  // snapshot of agent/files at call time (not after state-clearing).
   const recordMessageSent = useCallback(() => {
     recordTelemetry({
       eventType: 'guid.message_sent',
@@ -303,8 +304,9 @@ const GuidPage: React.FC = () => {
       if (event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault();
         if (!guidInput.input.trim()) return;
-        recordMessageSent();
-        send.sendMessageHandler();
+        // MED-3: telemetry fires inside onSent so validation-rejected sends
+        // (no model, missing conversation id) are not counted as "sent."
+        send.sendMessageHandler({ onSent: recordMessageSent });
       }
     },
     [mention, guidInput.input, send.sendMessageHandler, recordMessageSent]
@@ -777,10 +779,17 @@ const GuidPage: React.FC = () => {
         <SpeechInputButton variant='prominent' locale={i18n.language} onTranscript={handleSpeechTranscript} />
       }
       onSend={() => {
-        recordMessageSent();
-        send.handleSend().catch((error) => {
-          console.error('Failed to send message:', error);
-        });
+        // MED-3: only record telemetry on successful send. handleSend
+        // resolves false on validation early-returns and rejects on
+        // create-call failure; both must skip recordMessageSent.
+        send
+          .handleSend()
+          .then((ok) => {
+            if (ok) recordMessageSent();
+          })
+          .catch((error) => {
+            console.error('Failed to send message:', error);
+          });
       }}
     />
   );
