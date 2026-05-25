@@ -2,6 +2,7 @@ import { Activity, Pencil, X } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TeammateStatus } from '@/common/types/teamTypes';
+import type { PaletteKey } from '@/renderer/pages/guid/components/AssistantIconTile';
 import AgentStatusBadge from './AgentStatusBadge';
 import TeamAgentIdentity from './TeamAgentIdentity';
 import { useTeamTabs } from '../hooks/TeamTabsContext';
@@ -20,6 +21,8 @@ type TeamTabViewProps = {
   isLeader: boolean;
   /** Number of pending permission confirmations for this agent */
   pendingCount?: number;
+  /** Pre-resolved palette for the tab's specialist tile so the per-role hue stays consistent across launchpad, tabs, pane header, and right-rail. */
+  palette?: PaletteKey;
   onSwitch: (slotId: string) => void;
   onRename?: (slotId: string, newName: string) => void;
   onRemove?: (slotId: string) => void;
@@ -38,6 +41,7 @@ const TeamTabView: React.FC<TeamTabViewProps> = ({
   status,
   isLeader,
   pendingCount = 0,
+  palette,
   onSwitch,
   onRename,
   onRemove,
@@ -144,6 +148,7 @@ const TeamTabView: React.FC<TeamTabViewProps> = ({
             logoClassName={`w-14px h-14px object-contain rounded-2px ${isActive ? 'opacity-100' : 'opacity-90'}`}
             avatarClassName={`w-14px h-14px rounded-2px flex items-center justify-center text-11px leading-none bg-fill-2 shrink-0 ${isActive ? 'opacity-100' : 'opacity-95'}`}
             nameClassName='text-15px whitespace-nowrap overflow-hidden text-ellipsis select-none'
+            paletteKey={palette}
           />
         </div>
       )}
@@ -175,6 +180,8 @@ type TeamTabsProps = {
   onTabClick?: (slotId: string) => void;
   /** Pending permission confirmation counts per slot ID */
   pendingCounts?: Map<string, number>;
+  /** Per-slot palette so each tab's avatar tile keeps the same hue as the launchpad/pane-header/right-rail rendering. */
+  paletteBySlotId?: Map<string, PaletteKey>;
   /** W2c — when true, the Activity tab is rendered as a sibling tab. */
   showActivityTab?: boolean;
   /** W2c — whether Activity is the currently active view (mutually exclusive with agent slots). */
@@ -190,6 +197,7 @@ type TeamTabsProps = {
 const TeamTabs: React.FC<TeamTabsProps> = ({
   onTabClick,
   pendingCounts,
+  paletteBySlotId,
   showActivityTab = false,
   activityActive = false,
   onActivityClick,
@@ -272,6 +280,7 @@ const TeamTabs: React.FC<TeamTabsProps> = ({
                 status={statusInfo?.status ?? agent.status}
                 isLeader={agent.role === 'leader'}
                 pendingCount={pendingCounts?.get(agent.slotId) ?? 0}
+                palette={paletteBySlotId?.get(agent.slotId)}
                 onSwitch={(slotId) => {
                   switchTab(slotId);
                   onTabClick?.(slotId);

@@ -283,8 +283,7 @@ const TeamPageContent: React.FC<TeamPageContentProps> = ({ team, onRenameTeam })
       const agentType =
         ('presetAgentType' in specialist && (specialist as { presetAgentType?: string }).presetAgentType) ||
         leaderAgentType;
-      const agentName =
-        specialist.nameI18n?.['en-US'] || specialist.name || specialist.id;
+      const agentName = specialist.nameI18n?.['en-US'] || specialist.name || specialist.id;
       try {
         const result = (await ipcBridge.team.addAgent.invoke({
           teamId: team.id,
@@ -453,12 +452,13 @@ const TeamPageContent: React.FC<TeamPageContentProps> = ({ team, onRenameTeam })
       <TeamTabs
         onTabClick={handleTabClick}
         pendingCounts={slotPendingCounts}
+        paletteBySlotId={paletteBySlotId}
         showActivityTab
         activityActive={viewMode === 'activity'}
         onActivityClick={() => setViewMode('activity')}
       />
     ),
-    [handleTabClick, slotPendingCounts, viewMode]
+    [handleTabClick, slotPendingCounts, paletteBySlotId, viewMode]
   );
 
   // W3b — Standing-promotion state: eligibility predicate + modal visibility +
@@ -475,9 +475,10 @@ const TeamPageContent: React.FC<TeamPageContentProps> = ({ team, onRenameTeam })
   const handlePromoteConfirm = useCallback(async () => {
     setPromoteLoading(true);
     try {
-      const result = (await ipcBridge.team.promoteToStanding.invoke({ teamId: team.id })) as
-        | void
-        | { __bridgeError: true; message?: string };
+      const result = (await ipcBridge.team.promoteToStanding.invoke({ teamId: team.id })) as void | {
+        __bridgeError: true;
+        message?: string;
+      };
       if (result && typeof result === 'object' && '__bridgeError' in result) {
         Message.error(result.message ?? t('teams.standing.promoteError', { defaultValue: 'Failed to promote team' }));
         return;
@@ -494,9 +495,10 @@ const TeamPageContent: React.FC<TeamPageContentProps> = ({ team, onRenameTeam })
 
   const handleDemote = useCallback(async () => {
     try {
-      const result = (await ipcBridge.team.demoteFromStanding.invoke({ teamId: team.id })) as
-        | void
-        | { __bridgeError: true; message?: string };
+      const result = (await ipcBridge.team.demoteFromStanding.invoke({ teamId: team.id })) as void | {
+        __bridgeError: true;
+        message?: string;
+      };
       if (result && typeof result === 'object' && '__bridgeError' in result) {
         Message.error(result.message ?? t('teams.standing.demoteError', { defaultValue: 'Failed to demote team' }));
         return;
@@ -573,75 +575,75 @@ const TeamPageContent: React.FC<TeamPageContentProps> = ({ team, onRenameTeam })
                 );
               })()
             ) : (
-            <>
-              {showLeftArrow && (
-                <div
-                  className='absolute left-0 top-0 bottom-0 w-48px z-20 flex items-center justify-center cursor-pointer opacity-80 hover:opacity-100 transition-opacity'
-                  style={{ background: 'linear-gradient(90deg, var(--color-bg-1) 40%, transparent)' }}
-                  onClick={scrollToPrev}
-                >
+              <>
+                {showLeftArrow && (
                   <div
-                    className='w-32px h-32px rd-full flex items-center justify-center'
-                    style={{ background: 'rgba(0,0,0,0.5)', lineHeight: 0 }}
+                    className='absolute left-0 top-0 bottom-0 w-48px z-20 flex items-center justify-center cursor-pointer opacity-80 hover:opacity-100 transition-opacity'
+                    style={{ background: 'linear-gradient(90deg, var(--color-bg-1) 40%, transparent)' }}
+                    onClick={scrollToPrev}
                   >
-                    <ChevronLeft size={24} color='#fff' />
-                  </div>
-                </div>
-              )}
-              <div
-                ref={scrollContainerRef}
-                className='flex h-full w-full overflow-x-auto overflow-y-hidden [scrollbar-width:none]'
-                style={{ scrollSnapType: 'x proximity' }}
-              >
-                {agents.map((agent) => {
-                  const isSingle = agents.length <= 2;
-                  const isLeaderSlot = agent.slotId === leadAgent?.slotId;
-                  return (
                     <div
-                      key={agent.slotId}
-                      ref={(el) => {
-                        agentRefs.current[agent.slotId] = el;
-                      }}
-                      className='relative h-full border-r border-solid border-[color:var(--border-base)]'
-                      style={{
-                        // Always flex-grow to fill available space; each slot starts at 400px
-                        // basis so the layout is stable, but spare room is distributed evenly
-                        // instead of leaving empty gaps to the right. When the team is wider
-                        // than the viewport we preserve the 400px floor (prevents shrinking
-                        // into unreadable cards) so horizontal scroll kicks in naturally.
-                        flex: '1 1 400px',
-                        minWidth: isSingle ? '240px' : '400px',
-                        scrollSnapAlign: 'start',
-                      }}
+                      className='w-32px h-32px rd-full flex items-center justify-center'
+                      style={{ background: 'rgba(0,0,0,0.5)', lineHeight: 0 }}
                     >
-                      <AgentChatSlot
-                        agent={agent}
-                        teamId={team.id}
-                        isLeader={isLeaderSlot}
-                        onToggleFullscreen={() => setFullscreenSlotId(agent.slotId)}
-                        onRemove={() => handleRemoveAgent(agent.slotId)}
-                        palette={paletteBySlotId.get(agent.slotId)}
-                      />
+                      <ChevronLeft size={24} color='#fff' />
                     </div>
-                  );
-                })}
-              </div>
-              {showRightArrow && (
-                <div
-                  className='absolute right-0 top-0 bottom-0 w-48px z-20 flex items-center justify-center cursor-pointer opacity-80 hover:opacity-100 transition-opacity'
-                  style={{ background: 'linear-gradient(270deg, var(--color-bg-1) 40%, transparent)' }}
-                  onClick={scrollToNext}
-                >
-                  <div
-                    className='w-32px h-32px rd-full flex items-center justify-center'
-                    style={{ background: 'rgba(0,0,0,0.5)', lineHeight: 0 }}
-                  >
-                    <ChevronRight size={24} color='#fff' />
                   </div>
+                )}
+                <div
+                  ref={scrollContainerRef}
+                  className='flex h-full w-full overflow-x-auto overflow-y-hidden [scrollbar-width:none]'
+                  style={{ scrollSnapType: 'x proximity' }}
+                >
+                  {agents.map((agent) => {
+                    const isSingle = agents.length <= 2;
+                    const isLeaderSlot = agent.slotId === leadAgent?.slotId;
+                    return (
+                      <div
+                        key={agent.slotId}
+                        ref={(el) => {
+                          agentRefs.current[agent.slotId] = el;
+                        }}
+                        className='relative h-full border-r border-solid border-[color:var(--border-base)]'
+                        style={{
+                          // Always flex-grow to fill available space; each slot starts at 400px
+                          // basis so the layout is stable, but spare room is distributed evenly
+                          // instead of leaving empty gaps to the right. When the team is wider
+                          // than the viewport we preserve the 400px floor (prevents shrinking
+                          // into unreadable cards) so horizontal scroll kicks in naturally.
+                          flex: '1 1 400px',
+                          minWidth: isSingle ? '240px' : '400px',
+                          scrollSnapAlign: 'start',
+                        }}
+                      >
+                        <AgentChatSlot
+                          agent={agent}
+                          teamId={team.id}
+                          isLeader={isLeaderSlot}
+                          onToggleFullscreen={() => setFullscreenSlotId(agent.slotId)}
+                          onRemove={() => handleRemoveAgent(agent.slotId)}
+                          palette={paletteBySlotId.get(agent.slotId)}
+                        />
+                      </div>
+                    );
+                  })}
                 </div>
-              )}
-            </>
-          )}
+                {showRightArrow && (
+                  <div
+                    className='absolute right-0 top-0 bottom-0 w-48px z-20 flex items-center justify-center cursor-pointer opacity-80 hover:opacity-100 transition-opacity'
+                    style={{ background: 'linear-gradient(270deg, var(--color-bg-1) 40%, transparent)' }}
+                    onClick={scrollToNext}
+                  >
+                    <div
+                      className='w-32px h-32px rd-full flex items-center justify-center'
+                      style={{ background: 'rgba(0,0,0,0.5)', lineHeight: 0 }}
+                    >
+                      <ChevronRight size={24} color='#fff' />
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </div>
           <TeamRightRail
             agents={agents}

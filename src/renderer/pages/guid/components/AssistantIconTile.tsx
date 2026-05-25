@@ -29,6 +29,10 @@ export type AssistantIconTileProps = {
   size?: 'sm' | 'md' | 'lg';
   /** Optional className passthrough for callers that need extra layout control. */
   className?: string;
+  /** Passthrough for test selectors (e.g. team-chat-empty-state-avatar). */
+  'data-testid'?: string;
+  /** Passthrough for variant tagging when multiple branches share the same testid. */
+  'data-variant'?: string;
 };
 
 const PALETTES: Record<PaletteKey, { bg: string; fg: string }> = {
@@ -70,13 +74,15 @@ const AssistantIconTile: React.FC<AssistantIconTileProps> = ({
   paletteKey,
   size = 'sm',
   className,
+  'data-testid': dataTestId,
+  'data-variant': dataVariant,
 }) => {
   const key = paletteKey ?? categoryToPaletteKey(category);
   const palette = key ? PALETTES[key] : null;
   const style: React.CSSProperties = palette ? { backgroundColor: palette.bg, color: palette.fg } : {};
   const composed = [styles.tile, styles[size], className].filter(Boolean).join(' ');
   return (
-    <span className={composed} style={style} aria-hidden='true'>
+    <span className={composed} style={style} aria-hidden='true' data-testid={dataTestId} data-variant={dataVariant}>
       {children}
     </span>
   );

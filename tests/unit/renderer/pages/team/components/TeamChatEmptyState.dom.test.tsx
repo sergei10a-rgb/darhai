@@ -11,6 +11,11 @@
 // to the same 48px box as the other branches AND uses the muted
 // background + tertiary text token instead of the prior fill-3 /
 // t-secondary combo that read as a "huge dark blob" in smoke.
+//
+// 2026-05-25 — the avatar is now wrapped in AssistantIconTile so the
+// per-role palette tints the frame. The 48px size pin lives on a
+// className override; the muted bg-fill-2 has been replaced by an inline
+// palette background (set by AssistantIconTile from resolveSpecialistPalette).
 
 import { render, screen } from '@testing-library/react';
 import React from 'react';
@@ -46,17 +51,15 @@ vi.mock('@renderer/utils/model/agentLogo', () => ({
 // All getSendBoxDraftHook factories return a noop mutate hook so the
 // component can mount in jsdom without the real draft store.
 vi.mock('@renderer/hooks/chat/useSendBoxDraft', () => ({
-  getSendBoxDraftHook:
-    (_kind: string, _seed: unknown) =>
-    (_id: string) => ({
-      mutate: vi.fn(),
-    }),
+  getSendBoxDraftHook: (_kind: string, _seed: unknown) => (_id: string) => ({
+    mutate: vi.fn(),
+  }),
 }));
 
 import TeamChatEmptyState from '@/renderer/pages/team/components/TeamChatEmptyState';
 
 describe('TeamChatEmptyState fallback avatar', () => {
-  it('renders the muted 48px fallback box when no preset + no backend logo are available', () => {
+  it('renders the 48px fallback tile with a per-role palette when no preset + no backend logo are available', () => {
     mockUseSWR.mockReturnValue({
       data: {
         id: 'conv-fallback',
@@ -69,16 +72,20 @@ describe('TeamChatEmptyState fallback avatar', () => {
 
     const avatar = screen.getByTestId('team-chat-empty-state-avatar');
     expect(avatar.getAttribute('data-variant')).toBe('fallback');
-    // The fix pins width + height + muted fill + tertiary text so the
-    // class list must carry exactly those tokens.
+    // Tile keeps the 48px size pin via className override so the avatar
+    // doesn't visually shift from the prior layout.
     const className = avatar.className ?? '';
-    expect(className).toContain('w-48px');
-    expect(className).toContain('h-48px');
-    expect(className).toContain('bg-fill-2');
-    expect(className).toContain('text-t-tertiary');
-    // The deprecated bg-fill-3 + text-t-secondary combo from before the
-    // fix must NOT be reintroduced.
+    expect(className).toContain('!w-48px');
+    expect(className).toContain('!h-48px');
+    // The deprecated bg-fill-3 + text-t-secondary combo from the
+    // pre-tile fix must NOT be reintroduced.
     expect(className).not.toContain('bg-fill-3');
     expect(className).not.toContain('text-t-secondary');
+    // AssistantIconTile applies the palette as an inline background style.
+    // 'Lead' is the agent name fallback — no role keyword hits, so the
+    // resolver returns the universal 'cowork' palette (orange tint).
+    const bg = (avatar as HTMLElement).style.backgroundColor;
+    expect(bg).toBeTruthy();
+    expect(bg).not.toBe('');
   });
 });

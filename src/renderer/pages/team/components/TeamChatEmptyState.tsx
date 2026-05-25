@@ -8,6 +8,8 @@ import { getSendBoxDraftHook } from '@renderer/hooks/chat/useSendBoxDraft';
 import { getAgentLogo } from '@renderer/utils/model/agentLogo';
 import { usePresetAssistantInfo } from '@renderer/hooks/agent/usePresetAssistantInfo';
 import { getLucideIcon } from '@renderer/utils/lucideAvatar';
+import AssistantIconTile from '@/renderer/pages/guid/components/AssistantIconTile';
+import { resolveSpecialistPalette } from '@/renderer/pages/teams/components/teamPalette';
 
 const useAcpDraft = getSendBoxDraftHook('acp', { _type: 'acp', atPath: [], content: '', uploadFile: [] });
 const useGeminiDraft = getSendBoxDraftHook('gemini', { _type: 'gemini', atPath: [], content: '', uploadFile: [] });
@@ -107,71 +109,99 @@ const TeamChatEmptyState: React.FC<Props> = ({ conversationId }) => {
   const agentType = resolveAgentTypeFromConversation(conversation);
   const agentName = resolveAgentName(conversation, presetInfo?.name ?? null);
   const backendLogo = getAgentLogo(agentType);
+  // customAgentId on the conversation extras points to the specialist's
+  // bundle id when this agent was spawned from a waylandteams launcher.
+  // We don't pull the full assistant list here (would add a hook dep on
+  // i18n that the rest of this component doesn't need); the resolver's
+  // heuristic on the agent name is enough for the Dev Shop roles (Code /
+  // Ops / Quality Gate / Counsel) and the id-based heuristics cover
+  // older specialists.
+  const customAgentId = (conversation.extra as { customAgentId?: string } | undefined)?.customAgentId;
+  const palette = resolveSpecialistPalette(undefined, customAgentId ?? agentName);
+  // 48px tile (matches the pre-fix container) lives between md (40) and
+  // lg (56). Override AssistantIconTile's preset size via className so the
+  // visual delta from the prior layout is zero — we only add the palette
+  // colour and replace the bg-fill-2 frame.
+  const tileSize = '!w-48px !h-48px !rd-8px';
 
   // Live-smoke fix #4a (2026-05-19): pin every avatar branch to the
   // same 48px box so the previous "huge dark blob" Sean reported on the
-  // fallback path can't visually dominate the empty state. The muted
-  // bg-fill-2 + text-t-tertiary container demotes the fallback to a
-  // background-weight glyph and matches the proportions of the preset
-  // and backend-logo branches above it.
+  // fallback path can't visually dominate the empty state.
+  //
+  // 2026-05-25 update: every branch is now wrapped in AssistantIconTile so
+  // the per-role palette (resolveSpecialistPalette) tints the frame
+  // instead of the neutral bg-fill-2. The testid stays on the tile so
+  // existing assertions continue to find the avatar.
   const renderAvatar = () => {
     if (presetInfo) {
       const LucideIconComponent = getLucideIcon(presetInfo.lucideIcon);
       if (LucideIconComponent) {
         return (
-          <span
+          <AssistantIconTile
+            paletteKey={palette}
+            size='md'
+            className={`${tileSize}`}
             data-testid='team-chat-empty-state-avatar'
             data-variant='lucide'
-            className='w-48px h-48px rounded-8px flex items-center justify-center bg-fill-2'
           >
-            <LucideIconComponent size={28} className='text-[var(--color-text-2)]' />
-          </span>
+            <LucideIconComponent size={28} />
+          </AssistantIconTile>
         );
       }
       if (presetInfo.isEmoji) {
         return (
-          <span
+          <AssistantIconTile
+            paletteKey={palette}
+            size='md'
+            className={`${tileSize} text-32px leading-none`}
             data-testid='team-chat-empty-state-avatar'
             data-variant='emoji'
-            className='w-48px h-48px rounded-8px flex items-center justify-center text-32px leading-none bg-fill-2'
           >
             {presetInfo.logo}
-          </span>
+          </AssistantIconTile>
         );
       }
       return (
-        <img
+        <AssistantIconTile
+          paletteKey={palette}
+          size='md'
+          className={tileSize}
           data-testid='team-chat-empty-state-avatar'
           data-variant='preset'
-          width={48}
-          height={48}
-          src={presetInfo.logo}
-          alt={presetInfo.name}
-          className='w-48px h-48px object-contain rounded-8px opacity-90'
-        />
+        >
+          <img
+            width={48}
+            height={48}
+            src={presetInfo.logo}
+            alt={presetInfo.name}
+            className='object-contain opacity-90'
+          />
+        </AssistantIconTile>
       );
     }
     if (backendLogo) {
       return (
-        <img
+        <AssistantIconTile
+          paletteKey={palette}
+          size='md'
+          className={tileSize}
           data-testid='team-chat-empty-state-avatar'
           data-variant='backend'
-          width={48}
-          height={48}
-          src={backendLogo}
-          alt={agentName}
-          className='w-48px h-48px object-contain rounded-8px opacity-80'
-        />
+        >
+          <img width={48} height={48} src={backendLogo} alt={agentName} className='object-contain opacity-80' />
+        </AssistantIconTile>
       );
     }
     return (
-      <div
+      <AssistantIconTile
+        paletteKey={palette}
+        size='md'
+        className={`${tileSize} text-18px font-medium`}
         data-testid='team-chat-empty-state-avatar'
         data-variant='fallback'
-        className='w-48px h-48px rounded-8px bg-fill-2 flex items-center justify-center text-18px font-medium text-t-tertiary'
       >
         {agentName.charAt(0).toUpperCase()}
-      </div>
+      </AssistantIconTile>
     );
   };
 
