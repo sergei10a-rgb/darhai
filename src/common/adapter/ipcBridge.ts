@@ -28,10 +28,7 @@ import type { SpeechToTextRequest, SpeechToTextResult } from '../types/speech';
 import type { DownloadResult, VoiceAsset } from '../types/voiceAsset';
 import type { SkillSecurityReport, SkillIndexEntry, SkillSource, SkillVerdict } from '../types/skillTypes';
 import type { ImportResult } from '../../process/services/skills/SkillImport';
-import type {
-  KickoffResult,
-  KickoffTelemetryEvent,
-} from '../../process/services/kickoff/types';
+import type { KickoffResult, KickoffTelemetryEvent } from '../../process/services/kickoff/types';
 import type {
   ProviderId,
   CatalogModel,
@@ -1727,4 +1724,11 @@ export const usage = {
       metadata?: Record<string, unknown>;
     }
   >('usage.recordEvent'),
+  // Top-N most-used models within a lookback window. Backs the
+  // "Frequently used" zone of the GUID model selector. Defaults
+  // (7-day window, limit 5) live in the main-process aggregator.
+  queryFrequentlyUsedModels: buildProvider<
+    Array<{ modelId: string; useCount: number; lastUsedMs: number }>,
+    { windowMs?: number; limit?: number }
+  >('usage.queryFrequentlyUsedModels'),
 };

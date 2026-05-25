@@ -15,6 +15,7 @@ export type UsageTelemetryInput = {
     | 'launchpad.intent_prompt_clicked'
     | 'guid.assistant_selected'
     | 'guid.cli_selected'
+    | 'guid.model_selected'
     | 'guid.message_sent'
     | 'guid.foreground'
     | 'dashboard.opened'

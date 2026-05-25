@@ -1188,7 +1188,21 @@
     },
     "homePicker": {
       "empty": "このエージェントで利用できるモデルはまだありません。プロバイダーを接続して追加してください。",
-      "priceTierAria": "価格帯 {{tier}}"
+      "priceTierAria": "価格帯 {{tier}}",
+      "searchPlaceholder": "モデルを検索 — 名前またはプロバイダーで",
+      "searchMatches": "{{count}} 件一致",
+      "searchNoMatches": "一致するモデルが見つかりません。",
+      "sectionRecommended": "おすすめ",
+      "sectionRecommendedSubtitle": "プロバイダーごとのフラッグシップ",
+      "sectionFrequentlyUsed": "よく使うモデル",
+      "sectionFrequentlyUsedSubtitle": "使用状況から学習",
+      "sectionAllProvider": "{{provider}} のすべてのモデル",
+      "frequentlyUsedEmptyTitle": "まだ何もありません。",
+      "frequentlyUsedEmptyBody": "モデルを選ぶと、ここにお気に入りが表示されます — 上位 5 件、毎週更新。",
+      "useCountBadge": "{{count}} 回使用",
+      "badgeFlagship": "フラッグシップ",
+      "badgePreview": "プレビュー",
+      "badgeLegacy": "レガシー"
     }
   },
   "mcpPage": {

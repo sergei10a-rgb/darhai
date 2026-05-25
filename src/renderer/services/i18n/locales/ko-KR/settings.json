@@ -1188,7 +1188,21 @@
     },
     "homePicker": {
       "empty": "이 에이전트에 사용할 수 있는 모델이 아직 없습니다. 공급자를 연결하여 추가하세요.",
-      "priceTierAria": "가격 등급 {{tier}}"
+      "priceTierAria": "가격 등급 {{tier}}",
+      "searchPlaceholder": "모델 검색 — 이름 또는 공급자별",
+      "searchMatches": "{{count}}개 일치",
+      "searchNoMatches": "검색과 일치하는 모델이 없습니다.",
+      "sectionRecommended": "추천",
+      "sectionRecommendedSubtitle": "공급자별 플래그십",
+      "sectionFrequentlyUsed": "자주 사용",
+      "sectionFrequentlyUsedSubtitle": "사용 기록 기반",
+      "sectionAllProvider": "모든 {{provider}} 모델",
+      "frequentlyUsedEmptyTitle": "아직 항목이 없습니다.",
+      "frequentlyUsedEmptyBody": "모델을 선택하면 즐겨찾기가 여기에 표시됩니다 — 최근 사용 상위 5개, 매주 갱신.",
+      "useCountBadge": "{{count}}회 사용",
+      "badgeFlagship": "플래그십",
+      "badgePreview": "프리뷰",
+      "badgeLegacy": "레거시"
     }
   },
   "mcpPage": {

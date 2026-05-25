@@ -1188,7 +1188,21 @@
     },
     "homePicker": {
       "empty": "此代理目前沒有可用的模型。請連接供應商以新增模型。",
-      "priceTierAria": "價格等級 {{tier}}"
+      "priceTierAria": "價格等級 {{tier}}",
+      "searchPlaceholder": "搜尋模型 — 依名稱或供應商",
+      "searchMatches": "{{count}} 筆符合",
+      "searchNoMatches": "沒有符合的模型。",
+      "sectionRecommended": "推薦",
+      "sectionRecommendedSubtitle": "各供應商旗艦",
+      "sectionFrequentlyUsed": "常用",
+      "sectionFrequentlyUsedSubtitle": "根據您的使用習慣",
+      "sectionAllProvider": "{{provider}} 全部模型",
+      "frequentlyUsedEmptyTitle": "目前還沒有任何項目。",
+      "frequentlyUsedEmptyBody": "選擇一個模型,這裡會依最近使用排前 5,每週更新。",
+      "useCountBadge": "{{count}} 次使用",
+      "badgeFlagship": "旗艦",
+      "badgePreview": "預覽",
+      "badgeLegacy": "舊版"
     }
   },
   "mcpPage": {

@@ -1187,7 +1187,21 @@
     },
     "homePicker": {
       "empty": "该智能体暂无可用模型。请连接一个供应商来添加模型。",
-      "priceTierAria": "价格等级 {{tier}}"
+      "priceTierAria": "价格等级 {{tier}}",
+      "searchPlaceholder": "搜索模型 — 按名称或供应商",
+      "searchMatches": "{{count}} 条匹配",
+      "searchNoMatches": "没有匹配的模型。",
+      "sectionRecommended": "推荐",
+      "sectionRecommendedSubtitle": "各供应商的旗舰",
+      "sectionFrequentlyUsed": "常用",
+      "sectionFrequentlyUsedSubtitle": "基于您的使用习惯",
+      "sectionAllProvider": "{{provider}} 全部模型",
+      "frequentlyUsedEmptyTitle": "暂无记录。",
+      "frequentlyUsedEmptyBody": "选择一个模型,这里会按最近使用排前 5,每周刷新一次。",
+      "useCountBadge": "{{count}} 次使用",
+      "badgeFlagship": "旗舰",
+      "badgePreview": "预览",
+      "badgeLegacy": "旧版"
     }
   },
   "mcpPage": {

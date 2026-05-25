@@ -5,6 +5,7 @@
  */
 
 import { ipcBridge } from '@/common';
+import type { FrequentlyUsedAggregator, FrequentlyUsedModel } from '@process/services/usage/FrequentlyUsedAggregator';
 import type { UsageEventLogger } from '@process/services/usage/UsageEventLogger';
 import type { UsageEventType } from '@process/services/usage/types';
 
@@ -24,6 +25,7 @@ type RecordInput = {
 const PENDING_LIMIT = 256;
 const pending: RecordInput[] = [];
 let liveLogger: UsageEventLogger | null = null;
+let liveAggregator: FrequentlyUsedAggregator | null = null;
 let providerInstalled = false;
 
 function forwardToLogger(input: RecordInput): Promise<void> {
@@ -59,6 +61,15 @@ export function ensureUsageProviderRegistered(): void {
   if (providerInstalled) return;
   providerInstalled = true;
   ipcBridge.usage.recordEvent.provider((input) => recordOrBuffer(input));
+  // Query providers don't buffer — pre-aggregator callers just get an empty
+  // list (the picker's "Nothing here yet" empty state). Once the SQLite
+  // logger lands and a few events are recorded, subsequent calls succeed.
+  ipcBridge.usage.queryFrequentlyUsedModels.provider(
+    async (input: { windowMs?: number; limit?: number }): Promise<FrequentlyUsedModel[]> => {
+      if (!liveAggregator) return [];
+      return liveAggregator.queryFrequentlyUsedModels(input ?? {});
+    }
+  );
 }
 
 /**
@@ -68,8 +79,9 @@ export function ensureUsageProviderRegistered(): void {
  * `ensureUsageProviderRegistered`; calling this function more than once
  * replaces the logger and re-drains the buffer.
  */
-export function initUsageBridge(logger: UsageEventLogger): void {
+export function initUsageBridge(logger: UsageEventLogger, aggregator?: FrequentlyUsedAggregator): void {
   liveLogger = logger;
+  if (aggregator) liveAggregator = aggregator;
   ensureUsageProviderRegistered();
   const drained = pending.splice(0);
   for (const input of drained) {
@@ -84,5 +96,6 @@ export function initUsageBridge(logger: UsageEventLogger): void {
 export function __resetUsageBridgeForTests(): void {
   pending.length = 0;
   liveLogger = null;
+  liveAggregator = null;
   providerInstalled = false;
 }

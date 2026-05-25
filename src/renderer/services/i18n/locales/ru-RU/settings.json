@@ -1188,7 +1188,21 @@
     },
     "homePicker": {
       "empty": "Для этого агента пока нет доступных моделей. Подключите провайдера, чтобы добавить модель.",
-      "priceTierAria": "Ценовая категория {{tier}}"
+      "priceTierAria": "Ценовая категория {{tier}}",
+      "searchPlaceholder": "Поиск моделей — по имени или провайдеру",
+      "searchMatches": "Совпадений: {{count}}",
+      "searchNoMatches": "Нет моделей, соответствующих поиску.",
+      "sectionRecommended": "Рекомендуемые",
+      "sectionRecommendedSubtitle": "флагман у каждого провайдера",
+      "sectionFrequentlyUsed": "Часто используемые",
+      "sectionFrequentlyUsedSubtitle": "по вашей истории",
+      "sectionAllProvider": "Все модели {{provider}}",
+      "frequentlyUsedEmptyTitle": "Здесь пока пусто.",
+      "frequentlyUsedEmptyBody": "Выберите модель — и ваши любимые появятся здесь: топ-5 по недавнему использованию, обновление еженедельно.",
+      "useCountBadge": "{{count}} раз",
+      "badgeFlagship": "флагман",
+      "badgePreview": "предпросмотр",
+      "badgeLegacy": "устаревшая"
     }
   },
   "mcpPage": {

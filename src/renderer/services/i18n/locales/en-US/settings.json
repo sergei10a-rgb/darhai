@@ -1850,7 +1850,21 @@
     },
     "homePicker": {
       "empty": "No models available for this agent yet. Connect a provider to add one.",
-      "priceTierAria": "Price tier {{tier}}"
+      "priceTierAria": "Price tier {{tier}}",
+      "searchPlaceholder": "Search models — by name or provider",
+      "searchMatches": "{{count}} matches",
+      "searchNoMatches": "No models match your search.",
+      "sectionRecommended": "Recommended",
+      "sectionRecommendedSubtitle": "flagships per provider",
+      "sectionFrequentlyUsed": "Frequently used",
+      "sectionFrequentlyUsedSubtitle": "learned from your use",
+      "sectionAllProvider": "All {{provider}} models",
+      "frequentlyUsedEmptyTitle": "Nothing here yet.",
+      "frequentlyUsedEmptyBody": "Pick a model and we'll surface your favorites here as you go — top 5 by recent use, refreshed weekly.",
+      "useCountBadge": "{{count}} uses",
+      "badgeFlagship": "flagship",
+      "badgePreview": "preview",
+      "badgeLegacy": "legacy"
     }
   },
   "mcpPage": {

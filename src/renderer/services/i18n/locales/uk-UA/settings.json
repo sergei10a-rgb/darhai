@@ -1151,7 +1151,21 @@
     },
     "homePicker": {
       "empty": "Для цього агента ще немає доступних моделей. Підключіть постачальника, щоб додати модель.",
-      "priceTierAria": "Цінова категорія {{tier}}"
+      "priceTierAria": "Цінова категорія {{tier}}",
+      "searchPlaceholder": "Пошук моделей — за назвою або постачальником",
+      "searchMatches": "Збігів: {{count}}",
+      "searchNoMatches": "Немає моделей, що відповідають пошуку.",
+      "sectionRecommended": "Рекомендовані",
+      "sectionRecommendedSubtitle": "флагмани кожного постачальника",
+      "sectionFrequentlyUsed": "Часто використовувані",
+      "sectionFrequentlyUsedSubtitle": "за вашою історією",
+      "sectionAllProvider": "Усі моделі {{provider}}",
+      "frequentlyUsedEmptyTitle": "Тут поки нічого немає.",
+      "frequentlyUsedEmptyBody": "Оберіть модель — і ваші улюблені з'являться тут: топ-5 за нещодавнім використанням, оновлюється щотижня.",
+      "useCountBadge": "{{count}} викор.",
+      "badgeFlagship": "флагман",
+      "badgePreview": "попередній перегляд",
+      "badgeLegacy": "застаріла"
     }
   },
   "mcpPage": {

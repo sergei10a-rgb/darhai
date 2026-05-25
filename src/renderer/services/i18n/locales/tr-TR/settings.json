@@ -1186,7 +1186,21 @@
     },
     "homePicker": {
       "empty": "Bu aracı için henüz model yok. Bir model eklemek için bir sağlayıcı bağlayın.",
-      "priceTierAria": "Fiyat kademesi {{tier}}"
+      "priceTierAria": "Fiyat kademesi {{tier}}",
+      "searchPlaceholder": "Modelleri ara — ad veya sağlayıcıya göre",
+      "searchMatches": "{{count}} eşleşme",
+      "searchNoMatches": "Aramanızla eşleşen model yok.",
+      "sectionRecommended": "Önerilen",
+      "sectionRecommendedSubtitle": "sağlayıcı başına amiral gemisi",
+      "sectionFrequentlyUsed": "Sık kullanılan",
+      "sectionFrequentlyUsedSubtitle": "kullanımınızdan öğrenildi",
+      "sectionAllProvider": "Tüm {{provider}} modelleri",
+      "frequentlyUsedEmptyTitle": "Henüz bir şey yok.",
+      "frequentlyUsedEmptyBody": "Bir model seçin; favorileriniz burada görünecek — son kullanıma göre ilk 5, haftalık yenilenir.",
+      "useCountBadge": "{{count}} kullanım",
+      "badgeFlagship": "amiral gemisi",
+      "badgePreview": "önizleme",
+      "badgeLegacy": "eski"
     }
   },
   "mcpPage": {

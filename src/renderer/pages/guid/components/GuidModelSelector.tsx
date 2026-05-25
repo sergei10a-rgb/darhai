@@ -4,21 +4,23 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Brain, ChevronDown, Plus } from 'lucide-react';
-import { Message } from '@arco-design/web-react';
+import { Brain, ChevronDown, ChevronRight, Plus, Search } from 'lucide-react';
+import { Button, Dropdown, Input, Menu, Message, Tooltip } from '@arco-design/web-react';
 import { ipcBridge } from '@/common';
 import type { IProvider, TProviderWithModel } from '@/common/config/storage';
-import type { CuratedModel } from '@process/providers/types';
+import type { CuratedModel, ProviderId } from '@process/providers/types';
 import { useModelRegistry } from '@/renderer/hooks/useModelRegistry';
+import { useUsageTelemetry } from '@/renderer/hooks/usage/useUsageTelemetry';
+import { useFrequentlyUsedModels, type FrequentlyUsedModel } from '@/renderer/hooks/usage/useFrequentlyUsedModels';
 import { resolveAgentScope } from '@/renderer/pages/settings/AgentSettings/agentScopes';
 import { iconColors } from '@/renderer/styles/colors';
 import { getModelDisplayLabel } from '@/renderer/utils/model/agentLogo';
 import { formatAcpModelDisplayLabel, getAcpModelSourceLabel } from '@/renderer/utils/model/modelSource';
 import type { AcpModelInfo } from '../types';
-import { Button, Dropdown, Menu, Tooltip } from '@arco-design/web-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import styles from './GuidModelSelector.module.css';
 
 type GuidModelSelectorProps = {
   // Provider-based agent model state (Gemini / Wayland Core)
@@ -62,6 +64,121 @@ export function costToPriceTier(
   return '$$$';
 }
 
+// Per-provider dot color in the Recommended section. Matches the mockup
+// palette so providers visually anchor their group; unknown providers fall
+// back to a neutral gray.
+const PROVIDER_DOT_COLOR: Partial<Record<ProviderId, string>> = {
+  anthropic: 'rgba(244, 114, 182, 0.7)',
+  'google-gemini': 'rgba(56, 189, 248, 0.7)',
+  openai: 'rgba(16, 185, 129, 0.7)',
+  deepseek: 'rgba(139, 92, 246, 0.7)',
+  // Wayland Core models surface under their underlying provider id; the
+  // built-in fallback dot uses the brand orange via the .providerDot inline
+  // style override.
+};
+
+const PROVIDER_DISPLAY_NAME: Partial<Record<ProviderId, string>> = {
+  anthropic: 'Anthropic',
+  'google-gemini': 'Google',
+  openai: 'OpenAI',
+  'aws-bedrock': 'AWS Bedrock',
+  vertex: 'Vertex',
+  openrouter: 'OpenRouter',
+  groq: 'Groq',
+  xai: 'xAI',
+  mistral: 'Mistral',
+  cohere: 'Cohere',
+  perplexity: 'Perplexity',
+  together: 'Together',
+  fireworks: 'Fireworks',
+  cerebras: 'Cerebras',
+  replicate: 'Replicate',
+  huggingface: 'Hugging Face',
+  nvidia: 'NVIDIA',
+  anyscale: 'Anyscale',
+  deepseek: 'DeepSeek',
+  moonshot: 'Moonshot',
+  qwen: 'Qwen',
+  baichuan: 'Baichuan',
+  lingyiwanwu: 'Yi (01.AI)',
+  'zhipu-glm': 'Zhipu GLM',
+  minimax: 'MiniMax',
+  stability: 'Stability',
+  deepgram: 'Deepgram',
+  assemblyai: 'AssemblyAI',
+  elevenlabs: 'ElevenLabs',
+  azure: 'Azure',
+  'openai-compatible': 'OpenAI-Compatible',
+};
+
+function providerDisplayName(id: ProviderId): string {
+  return PROVIDER_DISPLAY_NAME[id] ?? id;
+}
+
+/**
+ * Group models by provider, preserving each provider's first-seen order.
+ * Used both for the Recommended zone (`recommended === true` subset) and the
+ * collapsible "All [Provider]" sections (full set).
+ */
+function groupByProvider(models: CuratedModel[]): Array<{ providerId: ProviderId; models: CuratedModel[] }> {
+  const groups: Array<{ providerId: ProviderId; models: CuratedModel[] }> = [];
+  const index = new Map<ProviderId, number>();
+  for (const model of models) {
+    let pos = index.get(model.providerId);
+    if (pos === undefined) {
+      pos = groups.length;
+      index.set(model.providerId, pos);
+      groups.push({ providerId: model.providerId, models: [] });
+    }
+    groups[pos].models.push(model);
+  }
+  return groups;
+}
+
+/**
+ * Highlight every occurrence of `query` (case-insensitive) inside `text`.
+ * Returns the original string when `query` is empty.
+ */
+function highlightMatch(text: string, query: string): React.ReactNode {
+  if (!query) return text;
+  const q = query.trim();
+  if (!q) return text;
+  const lowerText = text.toLowerCase();
+  const lowerQuery = q.toLowerCase();
+  const parts: React.ReactNode[] = [];
+  let cursor = 0;
+  while (cursor < text.length) {
+    const found = lowerText.indexOf(lowerQuery, cursor);
+    if (found === -1) {
+      parts.push(text.slice(cursor));
+      break;
+    }
+    if (found > cursor) parts.push(text.slice(cursor, found));
+    parts.push(
+      <span key={`hl-${found}`} className={styles.highlight}>
+        {text.slice(found, found + q.length)}
+      </span>
+    );
+    cursor = found + q.length;
+  }
+  return <>{parts}</>;
+}
+
+/**
+ * True when the model matches the user's search query — checked against the
+ * display name, the bare id, the family, and the provider display name so a
+ * search for "google" finds every Gemini model.
+ */
+function matchesQuery(model: CuratedModel, query: string): boolean {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  if (model.displayName.toLowerCase().includes(q)) return true;
+  if (model.id.toLowerCase().includes(q)) return true;
+  if (model.family.toLowerCase().includes(q)) return true;
+  if (providerDisplayName(model.providerId).toLowerCase().includes(q)) return true;
+  return false;
+}
+
 const GuidModelSelector: React.FC<GuidModelSelectorProps> = ({
   isGeminiMode,
   modelList,
@@ -75,7 +192,12 @@ const GuidModelSelector: React.FC<GuidModelSelectorProps> = ({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { curatedForAgent } = useModelRegistry();
+  const recordTelemetry = useUsageTelemetry();
   const defaultModelLabel = t('common.defaultModel');
+
+  // Open state — exposed so the frequently-used hook can defer its IPC until
+  // the panel is actually visible.
+  const [panelOpen, setPanelOpen] = React.useState(false);
 
   // Plain-language scope sentence for the selected agent. Reuses the same
   // copy as the Agents settings page so the explanation lives at the point
@@ -84,15 +206,6 @@ const GuidModelSelector: React.FC<GuidModelSelectorProps> = ({
     const scope = resolveAgentScope(agentKey);
     return t(`settings.agentsPage.scope.${scope.scopeKey}`);
   }, [agentKey, t]);
-
-  // Render the scope caption as a disabled `Menu.Item` so it lives inside
-  // the Arco `<Menu>` legally (raw `<div>` children break keyboard arrow-nav)
-  // while still reading as a non-selectable header.
-  const scopeCaptionItem = (
-    <Menu.Item key='scope-caption' disabled className='px-12px pt-8px pb-6px text-11px text-t-tertiary leading-snug'>
-      {scopeCaption}
-    </Menu.Item>
-  );
 
   // ── Curated set, scoped to the selected agent ────────────────────────────
   // Re-fetched whenever the agent changes (`agentKey` in the deps). May
@@ -113,25 +226,6 @@ const GuidModelSelector: React.FC<GuidModelSelectorProps> = ({
     };
   }, [agentKey, curatedForAgent]);
 
-  // Group the curated set by family for the droplist, preserving the order
-  // `curatedForAgent` returned (already release-date sorted by the Curator).
-  const curatedGroups = React.useMemo(() => {
-    if (!curated) return [];
-    const groups: Array<{ family: string; models: CuratedModel[] }> = [];
-    const index = new Map<string, number>();
-    for (const model of curated) {
-      const family = model.family || model.displayName;
-      let pos = index.get(family);
-      if (pos === undefined) {
-        pos = groups.length;
-        index.set(family, pos);
-        groups.push({ family, models: [] });
-      }
-      groups[pos].models.push(model);
-    }
-    return groups;
-  }, [curated]);
-
   // Resolve the currently-selected curated model so its row is highlighted
   // and its label shown on the button.
   //
@@ -145,21 +239,20 @@ const GuidModelSelector: React.FC<GuidModelSelectorProps> = ({
     return currentModel.useModel;
   }, [currentModel?.platform, currentModel?.useModel]);
 
+  const selectedCuratedModel = React.useMemo(() => {
+    if (!curated || !selectedCuratedKey) return null;
+    return curated.find((m) => `${m.providerId}:${m.id}` === selectedCuratedKey || m.id === selectedCuratedKey) ?? null;
+  }, [curated, selectedCuratedKey]);
+
   const curatedButtonLabel = React.useMemo(() => {
     if (!curated || curated.length === 0) return defaultModelLabel;
-    const match = curated.find(
-      (m) =>
-        `${m.providerId}:${m.id}` === selectedCuratedKey ||
-        // Fallback for older state — a bare model id without a provider scope.
-        m.id === selectedCuratedKey
-    );
     return getModelDisplayLabel({
-      selectedValue: match?.id,
-      selectedLabel: match?.displayName,
+      selectedValue: selectedCuratedModel?.id,
+      selectedLabel: selectedCuratedModel?.displayName,
       defaultModelLabel,
       fallbackLabel: curated[0]?.displayName || defaultModelLabel,
     });
-  }, [curated, defaultModelLabel, selectedCuratedKey]);
+  }, [curated, defaultModelLabel, selectedCuratedModel]);
 
   // Pick a curated model: resolve its credentials through the modelRegistry
   // IPC (Packet 3B) so the chat-start flow no longer depends on the legacy
@@ -224,8 +317,22 @@ const GuidModelSelector: React.FC<GuidModelSelectorProps> = ({
       setCurrentModel(next).catch((error) => {
         console.error('Failed to set current model:', error);
       });
+
+      // Fire-and-forget telemetry on a user-driven selection. The silent
+      // auto-fallback effect below uses `opts.silent` and must NOT log a
+      // selection — that would skew the Frequently-used aggregation toward
+      // models the user never actively chose.
+      if (!opts?.silent) {
+        recordTelemetry({
+          eventType: 'guid.model_selected',
+          cliBackend: model.providerId,
+          metadata: { modelId: model.id, source: 'curated' },
+        });
+      }
+
+      setPanelOpen(false);
     },
-    [modelList, navigate, setCurrentModel]
+    [modelList, navigate, recordTelemetry, setCurrentModel, t]
   );
 
   // ── Graceful fallback for chats pinned to a dropped model ────────────────
@@ -326,82 +433,26 @@ const GuidModelSelector: React.FC<GuidModelSelectorProps> = ({
     [acpButtonLabel, acpSourceLabel]
   );
 
-  // ── Provider-based agents (Gemini / Wayland Core) — curated picker ────────
+  // ── Provider-based agents (Gemini / Wayland Core) — three-tier picker ────
   if (isGeminiMode) {
     return (
       <Dropdown
         trigger='click'
+        position='bl'
+        popupVisible={panelOpen}
+        onVisibleChange={setPanelOpen}
         droplist={
-          <Menu selectedKeys={selectedCuratedKey ? [selectedCuratedKey] : []} key='curated-menu'>
-            {scopeCaptionItem}
-            {curated === undefined
-              ? [
-                  <Menu.Item
-                    key='loading'
-                    className='px-12px py-12px text-t-secondary text-14px text-center flex justify-center items-center'
-                    disabled
-                  >
-                    {t('common.loading')}
-                  </Menu.Item>,
-                ]
-              : curated.length === 0
-                ? [
-                    <Menu.Item
-                      key='no-models'
-                      className='px-12px py-12px text-t-secondary text-14px text-center flex justify-center items-center'
-                      disabled
-                    >
-                      {t('settings.modelsPage.homePicker.empty')}
-                    </Menu.Item>,
-                    <Menu.Item
-                      key='add-model'
-                      className='text-12px text-t-secondary'
-                      onClick={() => navigate('/settings/models')}
-                    >
-                      <Plus size={12} />
-                      {t('settings.addModel')}
-                    </Menu.Item>,
-                  ]
-                : [
-                    ...curatedGroups.map((group) => (
-                      <Menu.ItemGroup title={group.family} key={group.family}>
-                        {group.models.map((model) => {
-                          const tier = costToPriceTier(model.costInPerM, model.costOutPerM);
-                          // Wave 3 Fix 15 — wcore unions models across providers,
-                          // so `model.id` alone isn't unique. Key by
-                          // `${providerId}:${id}` everywhere we group across
-                          // providers to prevent React key collisions.
-                          return (
-                            <Menu.Item
-                              key={`${model.providerId}:${model.id}`}
-                              onClick={() => void handlePickCurated(model)}
-                            >
-                              <div className='flex items-center gap-8px w-full'>
-                                <span className='flex-1 min-w-0 truncate'>{model.displayName}</span>
-                                {tier && (
-                                  <span
-                                    className='text-11px font-600 text-t-tertiary tracking-wider shrink-0'
-                                    aria-label={t('settings.modelsPage.homePicker.priceTierAria', { tier })}
-                                  >
-                                    {tier}
-                                  </span>
-                                )}
-                              </div>
-                            </Menu.Item>
-                          );
-                        })}
-                      </Menu.ItemGroup>
-                    )),
-                    <Menu.Item
-                      key='add-model'
-                      className='text-12px text-t-secondary'
-                      onClick={() => navigate('/settings/models')}
-                    >
-                      <Plus size={12} />
-                      {t('settings.addModel')}
-                    </Menu.Item>,
-                  ]}
-          </Menu>
+          <ModelSelectorPanel
+            agentKey={agentKey}
+            curated={curated}
+            selectedCuratedKey={selectedCuratedKey}
+            selectedProviderId={selectedCuratedModel?.providerId ?? null}
+            onPick={(model) => void handlePickCurated(model)}
+            onAddProvider={() => navigate('/settings/models')}
+            scopeCaption={scopeCaption}
+            panelOpen={panelOpen}
+            recordTelemetry={recordTelemetry}
+          />
         }
       >
         <Button className={'sendbox-model-btn guid-config-btn'} shape='round' size='small'>
@@ -418,6 +469,16 @@ const GuidModelSelector: React.FC<GuidModelSelectorProps> = ({
   // ── CLI agents — ACP cached model selector ───────────────────────────────
   if (currentAcpCachedModelInfo && currentAcpCachedModelInfo.availableModels?.length > 0) {
     if (currentAcpCachedModelInfo.canSwitch) {
+      // Inline scope caption — keeps the Arco Menu legal (no raw <div> kids).
+      const scopeCaptionItem = (
+        <Menu.Item
+          key='scope-caption'
+          disabled
+          className='px-12px pt-8px pb-6px text-11px text-t-tertiary leading-snug'
+        >
+          {scopeCaption}
+        </Menu.Item>
+      );
       return (
         <Dropdown
           trigger='click'
@@ -427,7 +488,17 @@ const GuidModelSelector: React.FC<GuidModelSelectorProps> = ({
               {currentAcpCachedModelInfo.availableModels.map((model) => {
                 const tier = acpTierFor(model.id, model.label);
                 return (
-                  <Menu.Item key={model.id} onClick={() => setSelectedAcpModel(model.id)}>
+                  <Menu.Item
+                    key={model.id}
+                    onClick={() => {
+                      setSelectedAcpModel(model.id);
+                      recordTelemetry({
+                        eventType: 'guid.model_selected',
+                        cliBackend: agentKey,
+                        metadata: { modelId: model.id, source: 'acp' },
+                      });
+                    }}
+                  >
                     <div className='flex items-center gap-8px w-full'>
                       <span className='flex-1 min-w-0 truncate'>{model.label}</span>
                       {tier && (
@@ -485,5 +556,378 @@ const GuidModelSelector: React.FC<GuidModelSelectorProps> = ({
     </Tooltip>
   );
 };
+
+// ───────────────────────────────────────────────────────────────────────────
+// ModelSelectorPanel — the three-tier custom dropdown panel rendered as the
+// Arco Dropdown's droplist for provider-agent (Gemini / Wayland Core) mode.
+// ───────────────────────────────────────────────────────────────────────────
+
+type ModelSelectorPanelProps = {
+  agentKey: string;
+  curated: CuratedModel[] | undefined;
+  selectedCuratedKey: string | null;
+  selectedProviderId: ProviderId | null;
+  onPick: (model: CuratedModel) => void;
+  onAddProvider: () => void;
+  scopeCaption: string;
+  panelOpen: boolean;
+  recordTelemetry: ReturnType<typeof useUsageTelemetry>;
+};
+
+export const ModelSelectorPanel: React.FC<ModelSelectorPanelProps> = ({
+  agentKey: _agentKey,
+  curated,
+  selectedCuratedKey,
+  selectedProviderId,
+  onPick,
+  onAddProvider,
+  scopeCaption,
+  panelOpen,
+  recordTelemetry: _recordTelemetry,
+}) => {
+  const { t } = useTranslation();
+  const [query, setQuery] = React.useState('');
+  // Wraps the search input — used to locate the underlying `<input>` for ⌘K
+  // focus without depending on Arco's internal ref shape.
+  const searchWrapRef = React.useRef<HTMLDivElement | null>(null);
+
+  // Fetch frequently-used only while the panel is open — avoids hammering the
+  // IPC on every renderer mount.
+  const { models: frequentlyUsed } = useFrequentlyUsedModels(panelOpen);
+
+  // ⌘K / Ctrl+K focuses the search input while the panel is open.
+  React.useEffect(() => {
+    if (!panelOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        const input = searchWrapRef.current?.querySelector<HTMLInputElement>('input');
+        input?.focus();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [panelOpen]);
+
+  // Reset query when the panel is closed so the next open is clean.
+  React.useEffect(() => {
+    if (!panelOpen) setQuery('');
+  }, [panelOpen]);
+
+  // Which "All [Provider]" sections are expanded. Default-expand the section
+  // containing the currently-selected model.
+  const [openProviders, setOpenProviders] = React.useState<Set<ProviderId>>(() => {
+    return selectedProviderId ? new Set([selectedProviderId]) : new Set();
+  });
+  // Re-seed when the selection's provider changes (e.g. user just picked a
+  // model from a different provider and re-opens the panel).
+  React.useEffect(() => {
+    if (!selectedProviderId) return;
+    setOpenProviders((prev) => {
+      if (prev.has(selectedProviderId)) return prev;
+      const next = new Set(prev);
+      next.add(selectedProviderId);
+      return next;
+    });
+  }, [selectedProviderId]);
+
+  const isSelected = React.useCallback(
+    (model: CuratedModel): boolean => {
+      if (!selectedCuratedKey) return false;
+      return `${model.providerId}:${model.id}` === selectedCuratedKey || model.id === selectedCuratedKey;
+    },
+    [selectedCuratedKey]
+  );
+
+  // Filtered set for search; empty query passes through.
+  const filtered = React.useMemo(() => {
+    if (!curated) return undefined;
+    if (!query.trim()) return curated;
+    return curated.filter((m) => matchesQuery(m, query));
+  }, [curated, query]);
+
+  const recommended = React.useMemo(() => {
+    if (!filtered) return [];
+    return filtered.filter((m) => m.recommended);
+  }, [filtered]);
+
+  const recommendedGroups = React.useMemo(() => groupByProvider(recommended), [recommended]);
+  const allByProvider = React.useMemo(() => {
+    if (!filtered) return [];
+    // Alpha-sort within each provider for the All section.
+    const grouped = groupByProvider(filtered);
+    return grouped.map((g) => ({
+      providerId: g.providerId,
+      models: g.models.toSorted((a, b) => a.displayName.localeCompare(b.displayName)),
+    }));
+  }, [filtered]);
+
+  // Resolve frequently-used into renderable rows: every frequently-used
+  // modelId is looked up against the full curated catalog so the row carries
+  // its display name + provider colors. Entries whose model no longer exists
+  // in the catalog are dropped silently.
+  const frequentlyUsedRows = React.useMemo(() => {
+    if (!curated || curated.length === 0) return [];
+    const idMap = new Map<string, CuratedModel>();
+    for (const m of curated) {
+      idMap.set(m.id, m);
+      idMap.set(`${m.providerId}:${m.id}`, m);
+    }
+    const rows: Array<{ model: CuratedModel; useCount: number; lastUsedMs: number }> = [];
+    for (const usage of frequentlyUsed) {
+      const model = idMap.get(usage.modelId);
+      if (!model) continue;
+      rows.push({ model, useCount: usage.useCount, lastUsedMs: usage.lastUsedMs });
+    }
+    return rows;
+  }, [curated, frequentlyUsed]);
+
+  const filteredFrequentlyUsed = React.useMemo(() => {
+    if (!query.trim()) return frequentlyUsedRows;
+    return frequentlyUsedRows.filter((r) => matchesQuery(r.model, query));
+  }, [frequentlyUsedRows, query]);
+
+  const totalMatches = filtered?.length ?? 0;
+  const searching = query.trim().length > 0;
+
+  const toggleProvider = (providerId: ProviderId) => {
+    setOpenProviders((prev) => {
+      const next = new Set(prev);
+      if (next.has(providerId)) next.delete(providerId);
+      else next.add(providerId);
+      return next;
+    });
+  };
+
+  // ── Loading state ──────────────────────────────────────────────────────
+  if (curated === undefined) {
+    return (
+      <div className={styles.panel}>
+        <div className={styles.loadingRow}>{t('common.loading')}</div>
+      </div>
+    );
+  }
+
+  // ── Empty curated set (no connected providers) ─────────────────────────
+  if (curated.length === 0) {
+    return (
+      <div className={styles.panel}>
+        <div className={styles.scopeCaption}>{scopeCaption}</div>
+        <div className={styles.loadingRow}>{t('settings.modelsPage.homePicker.empty')}</div>
+        <div className={styles.footerAction} onClick={onAddProvider}>
+          <Plus size={12} />
+          {t('settings.addModel')}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.panel} onClick={(e) => e.stopPropagation()}>
+      {/* Search header */}
+      <div className={styles.searchHeader}>
+        <Search size={14} className={styles.searchIcon} />
+        <div className={styles.searchInputWrap} ref={searchWrapRef}>
+          <Input
+            value={query}
+            onChange={setQuery}
+            placeholder={t('settings.modelsPage.homePicker.searchPlaceholder')}
+            allowClear
+            size='small'
+          />
+        </div>
+        {!searching && <span className={styles.kbdHint}>⌘K</span>}
+      </div>
+
+      <div className={styles.scrollArea}>
+        {/* Scope caption */}
+        <div className={styles.scopeCaption}>{scopeCaption}</div>
+
+        {searching ? (
+          /* Search-active layout: flat list, match count, no section groupings */
+          <div className={styles.section}>
+            <div className={styles.sectionHead}>
+              <span>{t('settings.modelsPage.homePicker.searchMatches', { count: totalMatches })}</span>
+            </div>
+            {totalMatches === 0 ? (
+              <div className={styles.empty}>
+                <span>{t('settings.modelsPage.homePicker.searchNoMatches')}</span>
+              </div>
+            ) : (
+              filtered?.map((model) => (
+                <ModelRow
+                  key={`flat-${model.providerId}:${model.id}`}
+                  model={model}
+                  selected={isSelected(model)}
+                  query={query}
+                  onPick={onPick}
+                />
+              ))
+            )}
+          </div>
+        ) : (
+          <>
+            {/* Zone 2 — Recommended */}
+            {recommendedGroups.length > 0 && (
+              <div className={styles.section}>
+                <div className={styles.sectionHead}>
+                  <span>★ {t('settings.modelsPage.homePicker.sectionRecommended')}</span>
+                  <span className={styles.sectionHeadMeta}>
+                    {t('settings.modelsPage.homePicker.sectionRecommendedSubtitle')}
+                  </span>
+                </div>
+                {recommendedGroups.map((group) => (
+                  <div key={`rec-${group.providerId}`} className={styles.providerGroup}>
+                    <div className={styles.providerHead}>
+                      <ProviderDot providerId={group.providerId} />
+                      {providerDisplayName(group.providerId)}
+                    </div>
+                    {group.models.map((model) => (
+                      <ModelRow
+                        key={`rec-${group.providerId}:${model.id}`}
+                        model={model}
+                        selected={isSelected(model)}
+                        query={query}
+                        onPick={onPick}
+                      />
+                    ))}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Zone 3 — Frequently used */}
+            <div className={styles.section}>
+              <div className={styles.sectionHead}>
+                <span>{t('settings.modelsPage.homePicker.sectionFrequentlyUsed')}</span>
+                <span className={styles.sectionHeadMeta}>
+                  {t('settings.modelsPage.homePicker.sectionFrequentlyUsedSubtitle')}
+                </span>
+              </div>
+              {filteredFrequentlyUsed.length === 0 ? (
+                <div className={styles.empty}>
+                  <span className={styles.emptyStrong}>
+                    {t('settings.modelsPage.homePicker.frequentlyUsedEmptyTitle')}
+                  </span>{' '}
+                  {t('settings.modelsPage.homePicker.frequentlyUsedEmptyBody')}
+                </div>
+              ) : (
+                filteredFrequentlyUsed.map(({ model, useCount }) => (
+                  <FrequentlyUsedRow
+                    key={`fu-${model.providerId}:${model.id}`}
+                    model={model}
+                    useCount={useCount}
+                    selected={isSelected(model)}
+                    onPick={onPick}
+                    t={t}
+                  />
+                ))
+              )}
+            </div>
+
+            {/* Zone 4 — All [Provider] sections */}
+            <div className={styles.section}>
+              {allByProvider.map((group) => {
+                const isOpen = openProviders.has(group.providerId);
+                return (
+                  <React.Fragment key={`all-${group.providerId}`}>
+                    <div className={styles.collapseHead} onClick={() => toggleProvider(group.providerId)}>
+                      <span>
+                        {t('settings.modelsPage.homePicker.sectionAllProvider', {
+                          provider: providerDisplayName(group.providerId),
+                        })}
+                      </span>
+                      <span className={styles.collapseHeadRight}>
+                        <span className={styles.collapseCount}>{group.models.length}</span>
+                        <ChevronRight size={12} className={styles.collapseChev} data-open={isOpen} />
+                      </span>
+                    </div>
+                    {isOpen &&
+                      group.models.map((model) => (
+                        <ModelRow
+                          key={`all-${group.providerId}:${model.id}`}
+                          model={model}
+                          selected={isSelected(model)}
+                          query={query}
+                          onPick={onPick}
+                        />
+                      ))}
+                  </React.Fragment>
+                );
+              })}
+            </div>
+          </>
+        )}
+      </div>
+
+      <div className={styles.footerAction} onClick={onAddProvider}>
+        <Plus size={12} />
+        {t('settings.addModel')}
+      </div>
+    </div>
+  );
+};
+
+// ─── Row primitives ────────────────────────────────────────────────────────
+
+const ProviderDot: React.FC<{ providerId: ProviderId }> = ({ providerId }) => {
+  const color = PROVIDER_DOT_COLOR[providerId] ?? 'var(--primary)';
+  return <span className={styles.providerDot} style={{ background: color }} aria-hidden />;
+};
+
+type ModelRowProps = {
+  model: CuratedModel;
+  selected: boolean;
+  query: string;
+  onPick: (model: CuratedModel) => void;
+};
+
+const ModelRow: React.FC<ModelRowProps> = ({ model, selected, query, onPick }) => {
+  const { t } = useTranslation();
+  const isFlagship = model.role === 'flagship';
+  const isPreview = model.status === 'preview';
+  const isLegacy = model.status === 'deprecated';
+  return (
+    <div className={styles.row} data-selected={selected} onClick={() => onPick(model)}>
+      <span className={styles.rowName} title={model.displayName}>
+        {highlightMatch(model.displayName, query)}
+      </span>
+      {isFlagship && (
+        <span className={`${styles.badge} ${styles.badgeTag}`}>
+          {t('settings.modelsPage.homePicker.badgeFlagship')}
+        </span>
+      )}
+      {isPreview && <span className={styles.badge}>{t('settings.modelsPage.homePicker.badgePreview')}</span>}
+      {isLegacy && <span className={styles.badge}>{t('settings.modelsPage.homePicker.badgeLegacy')}</span>}
+      {selected && <span className={styles.check}>✓</span>}
+    </div>
+  );
+};
+
+type FrequentlyUsedRowProps = {
+  model: CuratedModel;
+  useCount: number;
+  selected: boolean;
+  onPick: (model: CuratedModel) => void;
+  t: ReturnType<typeof useTranslation>['t'];
+};
+
+const FrequentlyUsedRow: React.FC<FrequentlyUsedRowProps> = ({ model, useCount, selected, onPick, t }) => {
+  return (
+    <div className={styles.row} data-selected={selected} onClick={() => onPick(model)}>
+      <span className={styles.rowName} title={model.displayName}>
+        {model.displayName}
+      </span>
+      <span className={`${styles.badge} ${styles.badgeUses}`}>
+        {t('settings.modelsPage.homePicker.useCountBadge', { count: useCount })}
+      </span>
+      {selected && <span className={styles.check}>✓</span>}
+    </div>
+  );
+};
+
+// Re-export for tests so they can mount the panel without the Arco Dropdown
+// shell.
+export type { ModelSelectorPanelProps, FrequentlyUsedModel };
 
 export default GuidModelSelector;

@@ -16,6 +16,7 @@ import { initTeamGuideService } from '@process/team/mcp/guide/teamGuideSingleton
 import { CronRitualScheduler, makeExtensionRegistryRitualsResolver } from '@process/team/ritualScheduler';
 import { prewarmProviderSdks } from '@process/utils/prewarmProviders';
 import { getDatabase } from '@process/services/database';
+import { FrequentlyUsedAggregator } from '@process/services/usage/FrequentlyUsedAggregator';
 import { SqliteUsageEventRepository } from '@process/services/usage/SqliteUsageEventRepository';
 import { UsageEventLogger } from '@process/services/usage/UsageEventLogger';
 import { ensureUsageProviderRegistered, initUsageBridge } from '@process/bridge/usageBridge';
@@ -106,7 +107,8 @@ void getDatabase()
   .then((db) => {
     const usageRepo = new SqliteUsageEventRepository(db.getDriver());
     const usageLogger = new UsageEventLogger(usageRepo);
-    initUsageBridge(usageLogger);
+    const frequentlyUsedAggregator = new FrequentlyUsedAggregator(usageRepo);
+    initUsageBridge(usageLogger, frequentlyUsedAggregator);
   })
   .catch((error) => {
     console.error('[initBridge] Failed to initialize usage telemetry bridge:', error);
