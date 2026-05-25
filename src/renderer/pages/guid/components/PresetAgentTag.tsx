@@ -96,7 +96,7 @@ const PresetAgentTag: React.FC<PresetAgentTagProps> = ({
   );
 
   return (
-    <div className={styles.presetAgentTag}>
+    <div className={styles.presetAgentTag} data-testid='preset-agent-tag'>
       {/* Left: agent logo | avatar + name + ▾ — whole area triggers agent switcher dropdown */}
       {hasSwitcher ? (
         <Dropdown trigger='click' position='bl' droplist={droplist}>

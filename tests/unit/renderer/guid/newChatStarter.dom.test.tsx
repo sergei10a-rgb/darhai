@@ -93,11 +93,17 @@ const TestHarness: React.FC<{
 
   const handleAnchorClick = useCallback(
     (anchor: QuickLaunchAnchor) => {
-      // Mirror Phase 1's selectPresetAssistant Rory rule: resolve the preset
-      // from ASSISTANT_PRESETS first, fall back to gemini for bundle ids.
-      const preset = ASSISTANT_PRESETS.find((p) => p.id === anchor.assistantId);
+      // Mirror GuidPage.handleQuickLaunchAnchor: built-in runtime ids carry the
+      // `builtin-` prefix (see initStorage.ts), but ASSISTANT_PRESETS keys by
+      // the bare id — strip the prefix for the preset lookup only, then pass
+      // the prefixed runtime id through to selectPresetAssistant so the
+      // customAgents registry lookup succeeds.
+      const bareId = anchor.assistantId.startsWith('builtin-')
+        ? anchor.assistantId.slice('builtin-'.length)
+        : anchor.assistantId;
+      const preset = ASSISTANT_PRESETS.find((p) => p.id === bareId);
       const backend = preset?.presetAgentType ?? 'gemini';
-      onAssistantSelected(`custom:${preset?.id ?? anchor.assistantId}@${backend}`);
+      onAssistantSelected(`custom:${anchor.assistantId}@${backend}`);
       onInputSet(anchor.prefill);
       setInput(anchor.prefill);
     },
@@ -153,9 +159,12 @@ describe('new-chat starter wiring', () => {
     const anchor = QUICK_LAUNCH_ANCHORS.find((a) => a.id === 'cowork');
     const preset = ASSISTANT_PRESETS.find((p) => p.id === 'cowork');
     expect(preset).toBeTruthy();
+    expect(anchor!.assistantId).toBe('builtin-cowork');
     expect(onInputSet).toHaveBeenCalledWith(anchor!.prefill);
     expect((screen.getByTestId('harness-input') as HTMLInputElement).value).toBe(anchor!.prefill);
-    expect(onAssistantSelected).toHaveBeenCalledWith(`custom:cowork@${preset!.presetAgentType ?? 'gemini'}`);
+    expect(onAssistantSelected).toHaveBeenCalledWith(
+      `custom:builtin-cowork@${preset!.presetAgentType ?? 'gemini'}`
+    );
   });
 
   it('routes ext-* bundle cards via the gemini fallback (Rory rule)', () => {

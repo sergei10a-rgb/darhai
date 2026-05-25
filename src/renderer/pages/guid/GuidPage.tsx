@@ -359,14 +359,18 @@ const GuidPage: React.FC = () => {
 
   const handleQuickLaunchAnchor = useCallback(
     (anchor: QuickLaunchAnchor) => {
-      // Mirror handleSelectIntentPrompt: built-in presets get presetAgentType,
-      // ext-* assistants fall through to selectPresetAssistant's gemini default.
-      const preset = ASSISTANT_PRESETS.find((p) => p.id === anchor.assistantId);
-      if (preset) {
-        agentSelection.selectPresetAssistant({ id: preset.id, presetAgentType: preset.presetAgentType });
-      } else {
-        agentSelection.selectPresetAssistant({ id: anchor.assistantId });
-      }
+      // Built-in preset runtime ids are `builtin-${preset.id}` (see initStorage.ts).
+      // ASSISTANT_PRESETS keys by the bare id, so strip the prefix for lookup only —
+      // selectPresetAssistant still needs the runtime id (with prefix) so the
+      // customAgents registry lookup in useGuidAgentSelection succeeds.
+      const bareId = anchor.assistantId.startsWith('builtin-')
+        ? anchor.assistantId.slice('builtin-'.length)
+        : anchor.assistantId;
+      const preset = ASSISTANT_PRESETS.find((p) => p.id === bareId);
+      agentSelection.selectPresetAssistant({
+        id: anchor.assistantId,
+        presetAgentType: preset?.presetAgentType,
+      });
       guidInput.setInput(anchor.prefill);
       guidInput.handleTextareaFocus();
       mention.setMentionOpen(false);

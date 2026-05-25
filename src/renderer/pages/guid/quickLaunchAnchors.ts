@@ -33,7 +33,7 @@ export type QuickLaunchAnchor = {
 };
 
 export const QUICK_LAUNCH_ANCHORS: readonly QuickLaunchAnchor[] = [
-  { id: 'cowork',      label: 'Cowork',       sub: 'Autonomous',         prefill: 'Cowork: ',                  assistantId: 'cowork',                 lucideIcon: 'zap' },
+  { id: 'cowork',      label: 'Cowork',       sub: 'Autonomous',         prefill: 'Cowork: ',                  assistantId: 'builtin-cowork',         lucideIcon: 'zap' },
   { id: 'write-copy',  label: 'Write copy',   sub: 'Email, ad, page',    prefill: 'Draft me ',                 assistantId: 'ext-copy',               lucideIcon: 'pen-line' },
   { id: 'close-deal',  label: 'Close a deal', sub: 'Outreach · follow',  prefill: 'Help me close ',            assistantId: 'ext-sales',              lucideIcon: 'handshake' },
   { id: 'launch-it',   label: 'Launch it',    sub: 'Product · promo',    prefill: 'Plan the launch for ',      assistantId: 'ext-product-launch',     lucideIcon: 'rocket' },
