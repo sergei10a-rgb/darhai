@@ -104,6 +104,24 @@ const GuidPage: React.FC = () => {
     locationKey: location.key,
   });
 
+  // Cold-boot launchpad gate (cross-audit smoke HIGH).
+  //
+  // `useGuidAgentSelection` rehydrates `guid.lastSelectedAgent` from storage
+  // on mount. A persisted preset key (e.g. `custom:builtin-cowork`) would
+  // otherwise drop the page directly into preset-hero mode and hide the
+  // 6-card launchpad — exactly the regression flagged by the live smoke.
+  // Treat the launchpad as the canonical cold-start surface: render it
+  // until the user actively interacts with agent selection in THIS page
+  // lifecycle (clicks a pill, picks an assistant, taps a quick-launch
+  // card), at which point the preset hero may mount as before. A sidebar
+  // "new chat" reset (`resetAssistant`) also forces the launchpad.
+  // Resets on every navigation via `location.key`.
+  const [hasInteractedWithAgentSelection, setHasInteractedWithAgentSelection] = useState(false);
+  useEffect(() => {
+    setHasInteractedWithAgentSelection(false);
+  }, [location.key]);
+  const showPresetHero = agentSelection.isPresetAgent && hasInteractedWithAgentSelection;
+
   // Sync providerAgentKey when selected agent changes
   useEffect(() => {
     const agent = agentSelection.selectedAgent;
@@ -290,6 +308,7 @@ const GuidPage: React.FC = () => {
 
   const handleSelectAgent = useCallback(
     (key: string) => {
+      setHasInteractedWithAgentSelection(true);
       agentSelection.setSelectedAgentKey(key);
       mention.setMentionOpen(false);
       mention.setMentionQuery(null);
@@ -309,6 +328,7 @@ const GuidPage: React.FC = () => {
 
   const handleSelectAssistant = useCallback(
     (assistantId: string) => {
+      setHasInteractedWithAgentSelection(true);
       agentSelection.setSelectedAgentKey(assistantId);
       mention.setMentionOpen(false);
       mention.setMentionQuery(null);
@@ -359,6 +379,7 @@ const GuidPage: React.FC = () => {
 
   const handleQuickLaunchAnchor = useCallback(
     (anchor: QuickLaunchAnchor) => {
+      setHasInteractedWithAgentSelection(true);
       // Built-in preset runtime ids are `builtin-${preset.id}` (see initStorage.ts).
       // ASSISTANT_PRESETS keys by the bare id, so strip the prefix for lookup only —
       // selectPresetAssistant still needs the runtime id (with prefix) so the
@@ -687,7 +708,7 @@ const GuidPage: React.FC = () => {
     <ConfigProvider getPopupContainer={() => guidContainerRef.current || document.body}>
       <div ref={guidContainerRef} className={styles.guidContainer}>
         <div className={styles.guidLayout}>
-          {agentSelection.isPresetAgent ? (
+          {showPresetHero ? (
             <div className={styles.heroHeader}>
               <div className={styles.heroHeaderControls}>
                 <div className={styles.heroHeaderLeft}>
@@ -802,7 +823,7 @@ const GuidPage: React.FC = () => {
             </div>
           ) : null}
 
-          {agentSelection.isPresetAgent && selectedAssistantDescription ? (
+          {showPresetHero && selectedAssistantDescription ? (
             <div
               className={`${styles.heroSubtitle} ${isDescriptionExpanded ? styles.heroSubtitleExpanded : ''}`}
               onClick={() => {
@@ -847,7 +868,7 @@ const GuidPage: React.FC = () => {
             />
           ) : null}
 
-          {!agentSelection.isPresetAgent ? <Greeting displayName={greetingDisplayName} /> : null}
+          {!showPresetHero ? <Greeting displayName={greetingDisplayName} /> : null}
 
           <GuidInputCard
             input={guidInput.input}
@@ -887,7 +908,7 @@ const GuidPage: React.FC = () => {
               so the primary `[Yes, let's start]` button never steals the
               first keystroke. Only renders for preset assistants — generic
               new-chat surfaces (no assistant yet) still use Greeting above. */}
-          {agentSelection.isPresetAgent && kickoff.visible && kickoff.currentText ? (
+          {showPresetHero && kickoff.visible && kickoff.currentText ? (
             <KickoffCard
               text={kickoff.currentText}
               onAccept={handleKickoffAccept}
@@ -896,7 +917,7 @@ const GuidPage: React.FC = () => {
             />
           ) : null}
 
-          {!agentSelection.isPresetAgent ? (
+          {!showPresetHero ? (
             <div className={styles.newChatStarter} data-testid='new-chat-starter'>
               <QuickLaunchRow onAnchorClick={handleQuickLaunchAnchor} onViewAll={handleQuickLaunchViewAll} />
               <RecentsStrip onSelect={handleSelectRecent} />

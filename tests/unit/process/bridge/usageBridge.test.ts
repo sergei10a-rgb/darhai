@@ -1,0 +1,114 @@
+/**
+ * @license
+ * Copyright 2026 Ferrox Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/**
+ * Regression for cross-audit Gemini-HIGH: telemetry events fired by the
+ * renderer before the SQLite logger is wired must be buffered and flushed
+ * in arrival order, not silently dropped. The IPC provider is registered
+ * eagerly so the renderer's first `usage.recordEvent` invocation always
+ * lands somewhere.
+ */
+
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+vi.mock('@/common', () => {
+  const providerFn = vi.fn();
+  return {
+    ipcBridge: {
+      usage: {
+        recordEvent: { provider: providerFn },
+      },
+    },
+  };
+});
+
+import { ipcBridge } from '@/common';
+import {
+  __resetUsageBridgeForTests,
+  ensureUsageProviderRegistered,
+  initUsageBridge,
+} from '@process/bridge/usageBridge';
+
+const providerFn = ipcBridge.usage.recordEvent.provider as unknown as ReturnType<typeof vi.fn>;
+let providerCallback: ((input: unknown) => unknown) | null = null;
+
+type RecordedEvent = {
+  eventType: string;
+  anchorId?: string;
+  assistantId?: string;
+  cliBackend?: string;
+  metadata?: Record<string, unknown>;
+};
+
+function makeLogger() {
+  const recorded: RecordedEvent[] = [];
+  const logger = {
+    record: vi.fn(async (event: RecordedEvent) => {
+      recorded.push(event);
+    }),
+  };
+  return { logger: logger as unknown as Parameters<typeof initUsageBridge>[0], recorded };
+}
+
+describe('usageBridge — startup race (Gemini-HIGH)', () => {
+  beforeEach(() => {
+    __resetUsageBridgeForTests();
+    providerCallback = null;
+    providerFn.mockReset();
+    providerFn.mockImplementation((cb: (input: unknown) => unknown) => {
+      providerCallback = cb;
+    });
+  });
+
+  it('buffers events fired before the logger is wired and flushes them in arrival order', async () => {
+    // Simulate `initBridge` registering the IPC channel eagerly during module
+    // load — before `getDatabase()` has resolved.
+    ensureUsageProviderRegistered();
+    expect(providerCallback).toBeTruthy();
+    expect(providerFn).toHaveBeenCalledTimes(1);
+
+    // Renderer fires the cold-boot foreground event (and a couple more)
+    // before the logger has been initialised.
+    await providerCallback!({ eventType: 'guid.foreground' });
+    await providerCallback!({ eventType: 'guid.cli_selected', cliBackend: 'wcore' });
+    await providerCallback!({ eventType: 'launchpad.card_clicked', anchorId: 'cowork' });
+
+    const { logger, recorded } = makeLogger();
+    expect(recorded).toHaveLength(0);
+
+    // Logger lands; buffered events flush in arrival order.
+    initUsageBridge(logger);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(recorded.map((e) => e.eventType)).toEqual([
+      'guid.foreground',
+      'guid.cli_selected',
+      'launchpad.card_clicked',
+    ]);
+    expect(recorded[1].cliBackend).toBe('wcore');
+    expect(recorded[2].anchorId).toBe('cowork');
+  });
+
+  it('forwards events synchronously to the logger once it is wired', async () => {
+    ensureUsageProviderRegistered();
+    const { logger, recorded } = makeLogger();
+    initUsageBridge(logger);
+
+    await providerCallback!({ eventType: 'guid.message_sent', cliBackend: 'gemini' });
+    expect(recorded).toEqual([
+      { eventType: 'guid.message_sent', cliBackend: 'gemini' },
+    ]);
+  });
+
+  it('installs the IPC provider exactly once across init calls', () => {
+    ensureUsageProviderRegistered();
+    const { logger } = makeLogger();
+    initUsageBridge(logger);
+    initUsageBridge(logger);
+    expect(providerFn).toHaveBeenCalledTimes(1);
+  });
+});

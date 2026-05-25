@@ -18,7 +18,7 @@ import { prewarmProviderSdks } from '@process/utils/prewarmProviders';
 import { getDatabase } from '@process/services/database';
 import { SqliteUsageEventRepository } from '@process/services/usage/SqliteUsageEventRepository';
 import { UsageEventLogger } from '@process/services/usage/UsageEventLogger';
-import { initUsageBridge } from '@process/bridge/usageBridge';
+import { ensureUsageProviderRegistered, initUsageBridge } from '@process/bridge/usageBridge';
 
 logger.config({ print: true });
 
@@ -94,13 +94,14 @@ void initTeamGuideService(teamSessionService).catch((error) => {
   console.error('[initBridge] Failed to initialize TeamGuideMcpServer:', error);
 });
 
-// Usage telemetry bridge. Wires the renderer-facing IPC provider for
-// `usage.recordEvent` to a SQLite-backed event logger (writes to the
-// usage_events table from migration v40). `getDatabase()` is async, so we
-// fire-and-forget the init — the IPC provider registers as soon as the
-// driver resolves. Telemetry calls before that resolution log a warn via
-// the renderer hook and are dropped, which matches the "telemetry must
-// never break a flow" contract.
+// Usage telemetry bridge. Register the IPC provider EAGERLY so the first
+// renderer-side telemetry call (e.g. `guid.foreground`, fired in a `useEffect`
+// on mount) is never dropped during the cold-start window where `getDatabase()`
+// is still resolving. Events that arrive before the logger lands are buffered
+// in arrival order inside `usageBridge.ts` and flushed once `initUsageBridge`
+// wires the SQLite-backed logger (writes to the usage_events table from
+// migration v40). This closes the cross-audit Gemini-HIGH race.
+ensureUsageProviderRegistered();
 void getDatabase()
   .then((db) => {
     const usageRepo = new SqliteUsageEventRepository(db.getDriver());
