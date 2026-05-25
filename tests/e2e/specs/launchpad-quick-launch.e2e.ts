@@ -1,7 +1,7 @@
 /**
  * E2E: Launchpad quick-launch cards (cold-start /guid).
  *
- * Validates the 6-card QuickLaunchRow surface end-to-end:
+ * Validates the 6-card LaunchpadBar surface end-to-end:
  *   1. Cold-start /guid renders exactly 6 cards with Cowork as the place-anchor.
  *   2. Clicking "Write copy" enters preset mode (hero header mounts + prefill).
  *   3. Clicking "Cowork" enters preset mode with the Cowork name in the hero.
@@ -17,7 +17,10 @@
  *   design is the hero. Asserting the hero is the truthful test.
  *
  * Selectors:
- *   - [data-quicklaunch-id="<id>"]      — card buttons (rendered by QuickLaunchCard)
+ *   - [data-quicklaunch-id="<assistantId>"] — card buttons (rendered by
+ *     LaunchpadBar; data-quicklaunch-id now carries the runtime assistantId,
+ *     e.g. 'builtin-cowork' or 'ext-copy' — same value the bar uses for its
+ *     sortable key and persists in app_config under `launchpad.barOrder`).
  *   - [class*="heroHeader"]             — preset-mode hero block (CSS module
  *     hash-suffixed; `*=` match survives renames of the source class)
  *   - [class*="heroTitle"]              — preset assistant name inside the hero
@@ -49,6 +52,9 @@ const GUID_TEXTAREA = 'textarea.arco-textarea';
 async function ensureColdStartGuid(page: import('@playwright/test').Page) {
   await navigateTo(page, ROUTES.guid);
   await invokeBridge(page, 'agent.config.storage.set', { key: 'guid.lastSelectedAgent', data: '' });
+  // Reset bar customisation so a prior test in this session can't influence
+  // the default-6 count assertion below.
+  await invokeBridge(page, 'agent.config.storage.set', { key: 'launchpad.barOrder', data: null });
   await page.reload();
 }
 
@@ -60,12 +66,12 @@ test.describe('Launchpad quick-launch row — cold-start /guid', () => {
     await expect(page.locator(QL_CARD)).toHaveCount(6);
 
     const first = page.locator(QL_CARD).first();
-    await expect(first).toHaveAttribute('data-quicklaunch-id', 'cowork');
+    await expect(first).toHaveAttribute('data-quicklaunch-id', 'builtin-cowork');
   });
 
   test('clicking "Write copy" card enters preset mode and prefills input', async ({ page }) => {
     await ensureColdStartGuid(page);
-    const card = page.locator('[data-quicklaunch-id="write-copy"]');
+    const card = page.locator('[data-quicklaunch-id="ext-copy"]');
     await card.waitFor({ state: 'visible', timeout: 10_000 });
     await card.click();
 
@@ -78,7 +84,7 @@ test.describe('Launchpad quick-launch row — cold-start /guid', () => {
 
   test('clicking "Cowork" card enters preset mode with Cowork in the hero', async ({ page }) => {
     await ensureColdStartGuid(page);
-    const card = page.locator('[data-quicklaunch-id="cowork"]');
+    const card = page.locator('[data-quicklaunch-id="builtin-cowork"]');
     await card.waitFor({ state: 'visible', timeout: 10_000 });
     await card.click();
 

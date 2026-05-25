@@ -24,7 +24,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Plus, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useAssistantList } from '@/renderer/hooks/assistant/useAssistantList';
+import { useAssistantList } from '@/renderer/hooks/assistant';
 import { useLaunchpadBar } from '@/renderer/hooks/launchpad/useLaunchpadBar';
 import AssistantIconTile from '@/renderer/pages/guid/components/AssistantIconTile';
 import type { QuickLaunchAnchor } from '@/renderer/pages/guid/quickLaunchAnchors';

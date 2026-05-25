@@ -22,7 +22,9 @@ vi.mock('@/common/config/storage', () => ({
 
 // useAssistantList depends on swr + ipcBridge — stub it to return a deterministic
 // catalogue so the picker / catalog resolution path is exercisable in isolation.
-vi.mock('@/renderer/hooks/assistant/useAssistantList', () => ({
+// Mocked on the barrel path so the LaunchpadBar's `from '@/renderer/hooks/assistant'`
+// import resolves here (and other consumers using the deep path stay unaffected).
+vi.mock('@/renderer/hooks/assistant', () => ({
   useAssistantList: () => ({
     assistants: [
       { id: 'ext-copy', name: 'Copywriter', nameI18n: { 'en-US': 'Copywriter' } },

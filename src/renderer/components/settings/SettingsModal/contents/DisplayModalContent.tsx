@@ -4,14 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { Switch, Slider, Radio, Input } from '@arco-design/web-react';
 import FontSizeControl from '@/renderer/components/settings/FontSizeControl';
 import { ThemeSwitcher } from '@/renderer/components/settings/ThemeSwitcher';
 import WaylandScrollArea from '@/renderer/components/base/WaylandScrollArea';
 import { useUserDisplayName } from '@/renderer/hooks/system/useUserDisplayName';
 import { useSettingsViewMode } from '../settingsViewContext';
+import LaunchpadBar from '@/renderer/pages/guid/components/newChatStarter/LaunchpadBar';
+import { launchAssistant } from '@/renderer/pages/assistants/utils/launchAssistant';
+import type { QuickLaunchAnchor } from '@/renderer/pages/guid/quickLaunchAnchors';
+import { ASSISTANT_PRESETS } from '@/common/config/presets/assistantPresets';
 
 const STORAGE_KEYS = {
   reduceMotion: 'wayland:reduce-motion',
@@ -60,6 +65,7 @@ const DisplayModalContent: React.FC = () => {
   const { t } = useTranslation();
   const viewMode = useSettingsViewMode();
   const isPageMode = viewMode === 'page';
+  const navigate = useNavigate();
 
   const { osName, configuredName, save: saveDisplayName, loaded: nameLoaded } = useUserDisplayName();
   const [nameDraft, setNameDraft] = useState('');
@@ -111,11 +117,43 @@ const DisplayModalContent: React.FC = () => {
     { key: 'fontSize', label: t('settings.fontSize'), component: <FontSizeControl /> },
   ];
 
+  const handleLaunchpadBarAnchor = useCallback(
+    (anchor: QuickLaunchAnchor) => {
+      // Clicking a card from Settings is a deliberate "launch this assistant now"
+      // intent — the same cross-page navigation /assistants uses.
+      const bareId = anchor.assistantId.startsWith('builtin-')
+        ? anchor.assistantId.slice('builtin-'.length)
+        : anchor.assistantId;
+      const preset = ASSISTANT_PRESETS.find((p) => p.id === bareId);
+      void launchAssistant({ id: bareId, presetAgentType: preset?.presetAgentType }, (path) => navigate(path));
+    },
+    [navigate]
+  );
+
   return (
     <div className='flex flex-col h-full w-full'>
       {/* Content Area */}
       <WaylandScrollArea className='flex-1 min-h-0 pb-16px' disableOverflow={isPageMode}>
         <div className='space-y-16px'>
+          {/* Launchpad bar customization — same widget as /assistants and the launchpad cold-start. */}
+          <div
+            className='px-16px md:px-24px lg:px-28px py-14px md:py-16px bg-[var(--color-bg-2)] border-2 border-solid border-[var(--color-border-2)] rd-12px'
+            data-testid='settings-launchpad-section'
+          >
+            <div className='mb-12px'>
+              <div className='text-14px font-600 text-[var(--color-text-1)]'>
+                {t('settings.displayPage.launchpadBar', { defaultValue: 'Launchpad bar' })}
+              </div>
+              <div className='text-12px text-[var(--color-text-3)] mt-2px'>
+                {t('settings.displayPage.launchpadHint', {
+                  defaultValue:
+                    'Drag to reorder, click × to remove, + to add. Shared with the launchpad and /assistants.',
+                })}
+              </div>
+            </div>
+            <LaunchpadBar mode='expanded' onAnchorClick={handleLaunchpadBarAnchor} />
+          </div>
+
           {/* Display Settings */}
           <div className='px-16px md:px-24px lg:px-28px py-14px md:py-16px bg-[var(--color-bg-2)] border-2 border-solid border-[var(--color-border-2)] rd-12px space-y-10px md:space-y-12px'>
             <div className='w-full flex flex-col divide-y divide-border-2'>

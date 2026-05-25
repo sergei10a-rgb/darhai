@@ -51,6 +51,9 @@ import {
   resolveAssistantCategory,
 } from './utils/assistantCategory';
 import { launchAssistant } from './utils/launchAssistant';
+import LaunchpadBar from '@/renderer/pages/guid/components/newChatStarter/LaunchpadBar';
+import type { QuickLaunchAnchor } from '@/renderer/pages/guid/quickLaunchAnchors';
+import { ASSISTANT_PRESETS } from '@/common/config/presets/assistantPresets';
 import styles from './AssistantsLibraryPage.module.css';
 
 type CardEntry = {
@@ -279,6 +282,30 @@ const AssistantsLibraryPage: React.FC = () => {
     void editor.handleCreate();
   }, [editor]);
 
+  // LaunchpadBar lives at the top of this page so the same widget that
+  // edits the bar on the launchpad is reachable from /assistants. Click
+  // semantics on this surface: route through launchAssistant (cross-page
+  // launch) so the chat opens the picked assistant — the same path
+  // AssistantCard takes. Strip the runtime 'builtin-' prefix when
+  // looking up the preset so the helper sees the bare id it expects.
+  const handleBarAnchorClick = useCallback(
+    (anchor: QuickLaunchAnchor) => {
+      const bareId = anchor.assistantId.startsWith('builtin-')
+        ? anchor.assistantId.slice('builtin-'.length)
+        : anchor.assistantId;
+      const preset = ASSISTANT_PRESETS.find((p) => p.id === bareId);
+      const found = assistants.find((a) => a.id === anchor.assistantId || a.id === bareId);
+      void launchAssistant(
+        {
+          id: bareId,
+          presetAgentType: found?.presetAgentType ?? preset?.presetAgentType,
+        },
+        (path) => navigate(path)
+      );
+    },
+    [assistants, navigate]
+  );
+
   const renderGroup = (
     label: string,
     entries: CardEntry[],
@@ -369,6 +396,19 @@ const AssistantsLibraryPage: React.FC = () => {
           hasActiveFilters={hasActiveFilters}
         />
         <div className={styles.scroll}>
+          <section className={styles.launchpadSection} data-testid='assistants-launchpad-section'>
+            <div className={styles.launchpadHead}>
+              <span className={styles.launchpadTitle}>
+                {t('assistants.launchpad.title', { defaultValue: 'Your launchpad bar' })}
+              </span>
+              <span className={styles.launchpadHint}>
+                {t('assistants.launchpad.hint', {
+                  defaultValue: 'drag to reorder, click × to remove. Cards below jump in.',
+                })}
+              </span>
+            </div>
+            <LaunchpadBar mode='expanded' onAnchorClick={handleBarAnchorClick} />
+          </section>
           {isFullyEmpty && !showBuildCardInBuiltins && (
             <div className={styles.emptyState} data-testid='assistants-empty-state'>
               {t('assistants.emptyState', { defaultValue: 'No assistants match your filters.' })}
