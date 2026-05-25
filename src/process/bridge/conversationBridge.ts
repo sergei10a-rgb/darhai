@@ -24,6 +24,8 @@ import type { GeminiAgentManager } from '../task/GeminiAgentManager';
 import { WCoreApprovalStore, type WCoreManager } from '../task/WCoreManager';
 import type OpenClawAgentManager from '../task/OpenClawAgentManager';
 import { prepareFirstMessage } from '../task/agentUtils';
+import { composeStepContext } from '@process/services/workflow/composeStepContext';
+import { getWorkflowSessionService } from '@process/services/workflow/workflowSessionServiceSingleton';
 import { refreshTrayMenu } from '@process/utils/tray';
 import { copyFilesToDirectory, readDirectoryRecursive } from '@process/utils';
 import { computeOpenClawIdentityHash } from '@process/utils/openclawUtils';
@@ -565,6 +567,35 @@ export function initConversationBridge(
       );
     }
 
+    // W4.4: Resolve workflow session id from the conversation extras up-front so we
+    // can both (a) prepend the per-turn WORKFLOW_STEP_CONTEXT block to the user
+    // channel (SPEC §7.2) and (b) wire it through to prepareFirstMessage so the
+    // static WORKFLOW_PROTOCOL system block (SPEC §7.1 / W4.3) is injected too.
+    const sendMessageConversation = await conversationService
+      .getConversation(conversation_id)
+      .catch((): undefined => undefined);
+    const sendMessageExtra = sendMessageConversation?.extra as unknown as
+      | { workflowSessionId?: string }
+      | undefined;
+    const workflowSessionId = sendMessageExtra?.workflowSessionId;
+    if (workflowSessionId) {
+      try {
+        const service = getWorkflowSessionService();
+        if (service !== null) {
+          const session = await service.findById(workflowSessionId);
+          if (session !== null) {
+            const stepContext = composeStepContext(session);
+            if (stepContext.length > 0) {
+              other.input = `${stepContext}\n\n${other.input}`;
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('[conversationBridge] failed to prepend WORKFLOW_STEP_CONTEXT:', err);
+        // Soft-fail: never break message send because workflow lookup failed
+      }
+    }
+
     // Precompute agent content with optional skill injection.
     // OpenClaw uses full-content mode: inject full skill text rather than index paths,
     // because the CLI may not proactively read SKILL.md files the way ACP agents do.
@@ -573,16 +604,15 @@ export function initConversationBridge(
       // Resolve assistantId from the conversation record so the Constitution
       // composer can apply the matching specialist overlay. Best-effort —
       // missing record falls back to "no overlay" (Constitution alone).
-      const conversation = await conversationService
-        .getConversation(conversation_id)
-        .catch((): undefined => undefined);
       const presetAssistantId =
-        (conversation?.extra as { presetAssistantId?: string; customAgentId?: string } | undefined)
+        (sendMessageConversation?.extra as { presetAssistantId?: string; customAgentId?: string } | undefined)
           ?.presetAssistantId ||
-        (conversation?.extra as { presetAssistantId?: string; customAgentId?: string } | undefined)?.customAgentId;
+        (sendMessageConversation?.extra as { presetAssistantId?: string; customAgentId?: string } | undefined)
+          ?.customAgentId;
       agentContent = await prepareFirstMessage(other.input, {
         enabledSkills: other.injectSkills,
         presetAssistantId,
+        workflowSessionId,
       });
       // Provide absolute skills directory so agent can resolve relative script paths
       // e.g. "skills/star-office-helper/scripts/..." → "${skillsDir}/star-office-helper/scripts/..."

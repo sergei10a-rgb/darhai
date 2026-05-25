@@ -27,6 +27,7 @@ const GeminiChat: React.FC<{
   agentSlotId?: string;
   sessionMode?: string;
   emptySlot?: React.ReactNode;
+  workflowSessionId?: string;
 }> = ({
   conversation_id,
   workspace,
@@ -37,6 +38,7 @@ const GeminiChat: React.FC<{
   agentSlotId,
   sessionMode,
   emptySlot,
+  workflowSessionId,
 }) => {
   useMessageLstCache(conversation_id);
   const updateLocalImage = LocalImageView.useUpdateLocalImage();
@@ -44,8 +46,8 @@ const GeminiChat: React.FC<{
     updateLocalImage({ root: workspace });
   }, [workspace]);
   const conversationValue = useMemo<ConversationContextValue>(() => {
-    return { conversationId: conversation_id, workspace, type: 'gemini', cronJobId, hideSendBox };
-  }, [conversation_id, workspace, cronJobId, hideSendBox]);
+    return { conversationId: conversation_id, workspace, type: 'gemini', cronJobId, hideSendBox, workflowSessionId };
+  }, [conversation_id, workspace, cronJobId, hideSendBox, workflowSessionId]);
 
   return (
     <ConversationProvider value={conversationValue}>

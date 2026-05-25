@@ -5,6 +5,7 @@
  */
 
 import { logger } from '@office-ai/platform';
+import { ipcBridge } from '@/common';
 import { initAllBridges } from '../bridge';
 import { SqliteChannelRepository } from '@process/services/database/SqliteChannelRepository';
 import { SqliteConversationRepository } from '@process/services/database/SqliteConversationRepository';
@@ -20,6 +21,15 @@ import { FrequentlyUsedAggregator } from '@process/services/usage/FrequentlyUsed
 import { SqliteUsageEventRepository } from '@process/services/usage/SqliteUsageEventRepository';
 import { UsageEventLogger } from '@process/services/usage/UsageEventLogger';
 import { ensureUsageProviderRegistered, initUsageBridge } from '@process/bridge/usageBridge';
+import { initWorkflowBridge, registerWorkflowBridge } from '@process/bridge/workflowBridge';
+import { WorkflowSessionRepository } from '@process/services/workflow/WorkflowSessionRepository';
+import { WorkflowSessionService, type DefaultModelProvider } from '@process/services/workflow/WorkflowSessionService';
+import { setWorkflowSessionService } from '@process/services/workflow/workflowSessionServiceSingleton';
+import { SkillLibrary } from '@process/services/skills/SkillLibrary';
+import { ProcessConfig } from '@process/utils/initStorage';
+import { agentRegistry } from '@process/agent/AgentRegistry';
+import { resolveDefaultLaunchTarget } from '@process/utils/workflowLaunchTargetResolver';
+import type { TProviderWithModel } from '@/common/config/storage';
 
 logger.config({ print: true });
 
@@ -103,6 +113,12 @@ void initTeamGuideService(teamSessionService).catch((error) => {
 // wires the SQLite-backed logger (writes to the usage_events table from
 // migration v40). This closes the cross-audit Gemini-HIGH race.
 ensureUsageProviderRegistered();
+
+// Workflow launch surface bridge (v0.6.0). Registers all 6 provider handlers
+// eagerly so the renderer-side adapter routing resolves on cold start. Each
+// handler currently throws "not yet implemented" — real implementations land
+// in W2 (state endpoints) and W5 (autonomous dispatch). See SPEC §6.
+registerWorkflowBridge();
 // Cross-audit MED-4: usage_events is append-only, so prune rows older than
 // the aggregator's lookback window on startup to keep the table bounded on
 // long-lived installs. Aggregator only queries the last 7 days; 90 days is
@@ -121,6 +137,103 @@ void getDatabase()
         if (pruned > 0) console.log(`[usage] pruned ${pruned} events older than 90d`);
       })
       .catch((err) => console.warn('[usage] prune failed:', err));
+
+    // Workflow Launch Surface (v0.6.0 / v0.6.1) — wire the live WorkflowSessionService
+    // into the bridge handlers registered eagerly above. Shares the SQLite
+    // driver + UsageEventLogger that landed in this `.then`, plus the
+    // SkillLibrary singleton + ConversationServiceImpl from the module scope.
+    //
+    // `defaultModelProvider.getDefaultLaunchTarget` reads guid.lastSelectedAgent
+    // + AgentRegistry to resolve a real backend + cliPath so the spawner can
+    // find the CLI binary. This replaces the v0.6.0 stub that hardcoded
+    // backend:'claude' and left cliPath undefined, causing
+    // "No CLI path for backend 'claude'" on every workflow launch.
+    const defaultModelProvider: DefaultModelProvider = {
+      getDefaultLaunchTarget: async () => resolveDefaultLaunchTarget(ProcessConfig, agentRegistry),
+      getDefaultModel: async (): Promise<TProviderWithModel> => {
+        const target = await resolveDefaultLaunchTarget(ProcessConfig, agentRegistry);
+        return target.model;
+      },
+    };
+
+    const workflowRepo = new WorkflowSessionRepository(db.getDriver());
+    const workflowService = new WorkflowSessionService(
+      workflowRepo,
+      SkillLibrary.getInstance(),
+      usageLogger,
+      conversationServiceImpl,
+      defaultModelProvider
+    );
+    initWorkflowBridge(workflowService, {
+      conversationService: conversationServiceImpl,
+      workerTaskManager,
+      telemetry: usageLogger,
+      getDefaultModel: () => defaultModelProvider.getDefaultModel(),
+    });
+    // Publish the same instance to the module-level singleton accessor so
+    // `agentUtils.buildSystemInstructions*` can compose WORKFLOW_PROTOCOL
+    // for any conversation that carries a `workflowSessionId` (SPEC §7.3).
+    setWorkflowSessionService(workflowService);
+
+    // W5 completion listener — when a child conversation spawned by
+    // `dispatchAutonomousStep` finishes its turn, read the back-pointer
+    // stored on the child's `extra.autonomousDispatch` field and flip the
+    // parent workflow step from `now` to `done` via a `source='worker'`
+    // monotonic transition (SPEC §11.1). Best-effort: any error is logged
+    // and swallowed so a malformed event can never break the parent chat.
+    ipcBridge.conversation?.turnCompleted?.on?.((event) => {
+      const childId = event.sessionId;
+      if (!childId) return;
+      void (async () => {
+        try {
+          const child = await conversationServiceImpl.getConversation(childId);
+          if (child === undefined) return;
+          const extra = (child.extra ?? {}) as Record<string, unknown>;
+          const dispatchRaw = extra.autonomousDispatch;
+          if (dispatchRaw === null || typeof dispatchRaw !== 'object' || Array.isArray(dispatchRaw)) {
+            return;
+          }
+          const dispatch = dispatchRaw as {
+            parentWorkflowSessionId?: unknown;
+            stepN?: unknown;
+            dispatchId?: unknown;
+          };
+          const parentId =
+            typeof dispatch.parentWorkflowSessionId === 'string' ? dispatch.parentWorkflowSessionId : null;
+          const stepN = typeof dispatch.stepN === 'number' ? dispatch.stepN : null;
+          const dispatchId = typeof dispatch.dispatchId === 'string' ? dispatch.dispatchId : null;
+          if (parentId === null || stepN === null || dispatchId === null) return;
+
+          // Only act on terminal turn states. `ai_waiting_input` is the
+          // canonical "the worker finished and is idle" event from the
+          // ConversationTurnCompletionService dedupe path.
+          const isTerminal = event.state === 'ai_waiting_input' || event.state === 'stopped' || event.state === 'error';
+          if (!isTerminal) return;
+          const success = event.state !== 'error';
+
+          await workflowService.recordAutonomousCompletion(parentId, stepN, success);
+          await workflowService.applyStepTransition(parentId, {
+            step_n: stepN,
+            status: success ? 'done' : 'errored',
+            source: 'worker',
+            dispatch_id: dispatchId,
+            timestamp: Date.now(),
+          });
+          await usageLogger.record({
+            eventType: 'workflow.autonomous_step_completed',
+            metadata: {
+              session_id: parentId,
+              step_n: stepN,
+              dispatch_id: dispatchId,
+              child_conversation_id: childId,
+              success,
+            },
+          });
+        } catch (err) {
+          console.warn('[initBridge] workflow autonomous-completion listener failed:', err);
+        }
+      })();
+    });
   })
   .catch((error) => {
     console.error('[initBridge] Failed to initialize usage telemetry bridge:', error);

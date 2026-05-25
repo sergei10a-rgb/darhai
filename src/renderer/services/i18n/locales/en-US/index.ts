@@ -25,6 +25,7 @@ import team from './team.json';
 import assistants from './assistants.json';
 import teams from './teams.json';
 import skills from './skills.json';
+import workflow from './workflow.json';
 
 export default {
   common,
@@ -49,4 +50,5 @@ export default {
   assistants,
   teams,
   skills,
+  workflow,
 };

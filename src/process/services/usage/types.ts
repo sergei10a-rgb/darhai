@@ -21,7 +21,21 @@ export type UsageEventType =
   | 'guid.foreground'
   | 'dashboard.opened'
   | 'dashboard.widget_clicked'
-  | 'dashboard.summary_requested';
+  | 'dashboard.summary_requested'
+  // Workflow Launch Surface (v0.6.0) — see spec §4.3, §8, §11.1, §9.
+  | 'workflow.session_started'
+  | 'workflow.step_marker'
+  | 'workflow.ask_emitted'
+  | 'workflow.ask_answered'
+  | 'workflow.session_completed'
+  | 'workflow.autonomous_step_dispatched'
+  | 'workflow.autonomous_step_completed'
+  | 'workflow.marker_invalid'
+  | 'workflow.marker_html_escaped'
+  | 'workflow.marker_false_strip'
+  | 'workflow.step_transition'
+  | 'workflow.regress_attempt'
+  | 'workflow.orphaned_ask';
 
 export type UsageEvent = {
   id: string;

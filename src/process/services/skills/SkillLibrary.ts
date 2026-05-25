@@ -304,11 +304,26 @@ export class SkillLibrary {
     // absolute paths because their SKILL.md lives outside the bundled
     // `resourceDir`. Honor those directly. Vendored entries keep relative
     // paths and continue to resolve against `resourceDir`.
-    const bodyPath = path.isAbsolute(entry.path) ? entry.path : path.join(this.resourceDir, entry.path);
+    //
+    // Vendored bodies live under `<resourceDir>/bodies/...` but index.json
+    // stores the path without the `bodies/` prefix. Try the literal path
+    // first (preserves any existing layout) and fall back to `bodies/` so the
+    // canonical vendored layout works without touching every index entry.
+    if (path.isAbsolute(entry.path)) {
+      try {
+        return await this.readFileFn(entry.path);
+      } catch {
+        return null;
+      }
+    }
     try {
-      return await this.readFileFn(bodyPath);
+      return await this.readFileFn(path.join(this.resourceDir, entry.path));
     } catch {
-      return null;
+      try {
+        return await this.readFileFn(path.join(this.resourceDir, 'bodies', entry.path));
+      } catch {
+        return null;
+      }
     }
   }
 

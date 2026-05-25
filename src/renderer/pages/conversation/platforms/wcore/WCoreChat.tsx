@@ -24,15 +24,25 @@ const WCoreChat: React.FC<{
   agentSlotId?: string;
   sessionMode?: string;
   emptySlot?: React.ReactNode;
-}> = ({ conversation_id, workspace, modelSelection, teamId, agentSlotId, sessionMode, emptySlot }) => {
+  workflowSessionId?: string;
+}> = ({
+  conversation_id,
+  workspace,
+  modelSelection,
+  teamId,
+  agentSlotId,
+  sessionMode,
+  emptySlot,
+  workflowSessionId,
+}) => {
   useMessageLstCache(conversation_id);
   const updateLocalImage = LocalImageView.useUpdateLocalImage();
   useEffect(() => {
     updateLocalImage({ root: workspace });
   }, [workspace]);
   const conversationValue = useMemo<ConversationContextValue>(() => {
-    return { conversationId: conversation_id, workspace, type: 'wcore' };
-  }, [conversation_id, workspace]);
+    return { conversationId: conversation_id, workspace, type: 'wcore', workflowSessionId };
+  }, [conversation_id, workspace, workflowSessionId]);
 
   return (
     <ConversationProvider value={conversationValue}>

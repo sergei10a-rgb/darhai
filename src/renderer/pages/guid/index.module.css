@@ -510,14 +510,23 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  /* NO `justify-content: center` — combined with `overflow-y: auto` it clips
+     the top of the layout when content exceeds the viewport (the top edge
+     becomes unreachable via scroll). Use `margin: auto 0` on the inner
+     layout instead, which centers when content fits AND collapses to 0
+     when content overflows, exposing the model bar at the top. */
   padding: 10px;
   position: relative;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
-/* Shift overall content slightly upward to reduce the bottom-heavy feel */
+/* Vertically center when content fits the viewport; flow normally and
+   become fully scrollable from the top when content overflows. */
 .guidContainer .guidLayout {
-  margin-top: -5vh;
+  margin-top: auto;
+  margin-bottom: auto;
 }
 
 /* When an Agent is selected: scale up then settle slightly larger (pop animation) */

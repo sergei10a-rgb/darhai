@@ -30,6 +30,13 @@ import type { SkillSecurityReport, SkillIndexEntry, SkillSource, SkillVerdict } 
 import type { ImportResult } from '../../process/services/skills/SkillImport';
 import type { KickoffResult, KickoffTelemetryEvent } from '../../process/services/kickoff/types';
 import type {
+  AskRecord,
+  ResolvedSkill,
+  StepStatus,
+  WorkflowSession,
+  WorkflowSessionStatus,
+} from '../types/workflowTypes';
+import type {
   ProviderId,
   CatalogModel,
   CuratedModel,
@@ -1707,6 +1714,97 @@ export const storage = {
 export const kickoff = {
   suggest: buildProvider<KickoffResult, { assistantId: string }>('kickoff.suggest'),
   telemetry: buildProvider<void, KickoffTelemetryEvent>('kickoff.telemetry'),
+};
+
+// v0.6.0 — Workflow launch surface. The renderer drives the workflow chrome
+// (right-rail step list, ask-card, autonomous-run badges) by calling these
+// endpoints; the main process owns the canonical WorkflowSession state and
+// the FleetDispatcher hand-off for "Run autonomously". See SPEC §6 in
+// `.planning/brainstorm/2026-05-25-workflow-launch-surface/SPEC.md`.
+export const workflow = {
+  // 6.1 — Creates a new workflow session for the given workflow_name. Loads
+  // the body via SkillLibrary, parses `## Step N` headers, resolves depends,
+  // composes the static WORKFLOW_PROTOCOL system prompt, and creates the
+  // backing conversation + workflow_sessions rows.
+  //
+  // Launch-target params (all required; the main process must not fall back to
+  // any hardcoded default — the renderer resolves the target before calling):
+  //   workflow_name      — slug of the workflow skill to launch
+  //   backend            — provider type: 'claude' | 'codex' | 'gemini' | 'wcore' | 'custom' | 'remote'
+  //   cliPath            — absolute path to the CLI binary; undefined for non-CLI backends
+  //   model              — full provider+model record from AgentRegistry/ModelCatalog
+  //   agentName          — display name of the preset assistant when launching via one (or undefined)
+  //   customAgentId      — custom agent id when launching via a custom agent (or undefined)
+  //   presetAssistantId  — preset assistant id when launching via a preset (or undefined)
+  //   sessionMode        — conversation permission mode: 'default' | 'bypassPermissions' | 'yolo' | etc.
+  start: buildProvider<
+    {
+      sessionId: string;
+      session: WorkflowSession;
+      systemPromptDirective: string;
+    },
+    {
+      workflow_name: string;
+      backend: string;
+      cliPath: string | undefined;
+      model: TProviderWithModel;
+      agentName: string | undefined;
+      customAgentId: string | undefined;
+      presetAssistantId: string | undefined;
+      sessionMode: string | undefined;
+    }
+  >('workflow.start'),
+  // 6.2 — Resolves a list of depends slugs to full skill entries so the
+  // detail modal can show them before launch. Unresolved slugs are returned
+  // separately so the UI can warn without blocking the launch.
+  resolveSkills: buildProvider<{ skills: ResolvedSkill[]; unresolved: string[] }, { slugs: string[] }>(
+    'workflow.resolveSkills'
+  ),
+  // 6.3 — Single most-recent non-complete session for this workflow. Used by
+  // WorkflowDetailModal to decide between launching a new session and
+  // surfacing the resume-prompt (when updated_at < 14 days).
+  findActive: buildProvider<{ session: WorkflowSession | null }, { workflow_name: string }>('workflow.findActive'),
+  // 6.3.1 — Cross-workflow in-flight sessions for the launchpad "In-flight
+  // workflows" strip (Codex finding #7). conversation_preview is the first
+  // ~80 chars of the most recent agent message in the underlying conversation.
+  findAllActive: buildProvider<
+    { sessions: Array<{ session: WorkflowSession; conversation_preview: string }> },
+    { limit?: number }
+  >('workflow.findAllActive'),
+  // 6.4 — Single mutation endpoint for renderer-driven state changes. Avoids
+  // five separate IPC channels for step-status / ask / status transitions.
+  updateSessionState: buildProvider<
+    { session: WorkflowSession },
+    { sessionId: string; patch: WorkflowUpdateSessionStatePatch }
+  >('workflow.updateSessionState'),
+  // 6.5 — Spawns a FleetDispatcher sub-agent scoped to a single step. The
+  // worker reports completion via AgentBus → WorkflowSessionService updates
+  // the session and posts the tagged agent message to the chat.
+  dispatchAutonomousStep: buildProvider<{ dispatchId: string }, { sessionId: string; stepN: number }>(
+    'workflow.dispatchAutonomousStep'
+  ),
+};
+
+// SPEC §6.4 patch shape — union of partial mutations the renderer can submit
+// via `workflow.updateSessionState`. Each field is optional; the service
+// applies all present mutations atomically. Reproduced verbatim from SPEC.
+//
+// `setBeginSent` carries the epoch-ms timestamp at which the renderer fired
+// the hidden "begin" auto-send. The main-side dispatcher ignores the value
+// and delegates to `WorkflowSessionService.markBeginSent` (which is
+// idempotent — a no-op when `begin_sent_at` is already set). The field acts
+// as a sentinel so the renderer can guarantee exactly-once begin semantics
+// across Strict Mode double-mount, refresh, and back-navigation.
+export type WorkflowUpdateSessionStatePatch = {
+  setStepStatus?: { n: number; status: StepStatus; completed_at?: number };
+  setCurrentStep?: number;
+  appendAsk?: AskRecord;
+  answerAsk?: { askId: string; answer: string; answered_at: number };
+  setSessionStatus?: WorkflowSessionStatus;
+  recordAutonomousDispatch?: { stepN: number; dispatchId: string };
+  recordAutonomousResult?: { stepN: number; success: boolean };
+  /** Epoch ms when the hidden begin auto-send fired. Idempotent — service no-ops if already set. */
+  setBeginSent?: number;
 };
 
 // Telemetry-driven Launchpad predictive widget. The renderer fires

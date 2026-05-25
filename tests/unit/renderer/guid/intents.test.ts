@@ -70,9 +70,9 @@ const PRESET_IDS = new Set(ASSISTANT_PRESETS.map((preset) => preset.id));
 const RESOLVABLE_IDS = new Set([...PRESET_IDS, ...KNOWN_EXTENSION_ASSISTANT_IDS]);
 
 describe('INTENTS map', () => {
-  it('exposes exactly 5 intent keys in stable order', () => {
-    expect(INTENT_KEYS).toEqual(['sell', 'write', 'research', 'build', 'run']);
-    expect(Object.keys(INTENTS)).toHaveLength(5);
+  it('exposes exactly 7 intent keys in stable order', () => {
+    expect(INTENT_KEYS).toEqual(['sell', 'write', 'research', 'plan', 'build', 'run', 'learn']);
+    expect(Object.keys(INTENTS)).toHaveLength(7);
   });
 
   it.each(INTENT_KEYS)('intent %s has exactly 5 prompts', (key: IntentKey) => {

@@ -44,6 +44,9 @@ import { useGuidMention } from './hooks/useGuidMention';
 import { useGuidModelSelection } from './hooks/useGuidModelSelection';
 import { useGuidSend } from './hooks/useGuidSend';
 import { useTypewriterPlaceholder } from './hooks/useTypewriterPlaceholder';
+import { useWorkflowSession } from '@/renderer/hooks/workflow/useWorkflowSession';
+import { InFlightWorkflowsStrip } from './components/workflow/InFlightWorkflowsStrip';
+import type { WorkflowSession } from '@/common/types/workflowTypes';
 import { ConfigStorage } from '@/common/config/storage';
 import { ACP_BACKENDS_ALL } from '@/common/types/acpTypes';
 import { getAgentLogo } from '@/renderer/utils/model/agentLogo';
@@ -66,6 +69,21 @@ const GuidPage: React.FC = () => {
 
   const localeKey = resolveLocaleKey(i18n.language);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+
+  // W4 — Workflow launch surface (SPEC §5.10). When the Workflows page (or
+  // the InFlightWorkflowsStrip below) navigates here with a workflowSessionId,
+  // the hook resolves the session and `WorkflowSurface` takes over the page.
+  // Hook is invoked unconditionally so React's hook order stays stable; the
+  // early-return check happens after every other hook in this component has
+  // run, just before the main JSX.
+  const workflowRouteState = location.state as {
+    workflowSessionId?: string;
+    initialWorkflowSession?: WorkflowSession;
+  } | null;
+  const workflowSession = useWorkflowSession(
+    workflowRouteState?.workflowSessionId,
+    workflowRouteState?.initialWorkflowSession
+  );
 
   // Open external link
   const openLink = useCallback(async (url: string) => {
@@ -211,12 +229,7 @@ const GuidPage: React.FC = () => {
       cliBackend: agentSelection.selectedAgent,
       metadata: { hasFiles: guidInput.files.length > 0 },
     });
-  }, [
-    recordTelemetry,
-    agentSelection.selectedAgentInfo,
-    agentSelection.selectedAgent,
-    guidInput.files,
-  ]);
+  }, [recordTelemetry, agentSelection.selectedAgentInfo, agentSelection.selectedAgent, guidInput.files]);
 
   // --- Coordinated handlers (depend on multiple hooks) ---
   const handleInputChange = useCallback(
@@ -356,9 +369,7 @@ const GuidPage: React.FC = () => {
 
   // v0.4.7 — Kickoff card. Only meaningful when a preset assistant is selected
   // (per-assistant suggestions; useKickoff returns visible:false otherwise).
-  const kickoffAssistantId = agentSelection.isPresetAgent
-    ? agentSelection.selectedAgentInfo?.customAgentId
-    : undefined;
+  const kickoffAssistantId = agentSelection.isPresetAgent ? agentSelection.selectedAgentInfo?.customAgentId : undefined;
   const kickoff = useKickoff(kickoffAssistantId);
   // Dismiss-on-type: protect the first keystroke. Once the input has any
   // content, the card silently dismisses for this session — keeps the
@@ -402,9 +413,7 @@ const GuidPage: React.FC = () => {
       const isUserOnBackendPill =
         !agentSelection.selectedAgentKey.startsWith('custom:') &&
         !agentSelection.selectedAgentKey.startsWith('remote:');
-      const effectiveBackend = isUserOnBackendPill
-        ? agentSelection.selectedAgent
-        : preset?.presetAgentType;
+      const effectiveBackend = isUserOnBackendPill ? agentSelection.selectedAgent : preset?.presetAgentType;
       agentSelection.selectPresetAssistant({
         id: anchor.assistantId,
         presetAgentType: effectiveBackend,
@@ -827,6 +836,26 @@ const GuidPage: React.FC = () => {
     />
   );
 
+  // W3 (v0.6.1): WorkflowSurface is now mounted on the conversation page
+  // (/conversation/:id) so the chrome wraps the live chat tape and input.
+  // If we somehow land here with a workflow route state (e.g. stale
+  // navigation), redirect to the conversation page so the chrome renders
+  // in the correct shell. This guard is a safety net only — the primary
+  // navigation path goes through WorkflowDetailModal → /conversation/:id.
+  if (workflowSession.isActive() && workflowRouteState?.workflowSessionId) {
+    const convId = workflowSession.data?.conversation_id;
+    if (convId) {
+      void navigate(`/conversation/${convId}`, {
+        replace: true,
+        state: {
+          workflowSessionId: workflowRouteState.workflowSessionId,
+          initialWorkflowSession: workflowRouteState.initialWorkflowSession,
+        },
+      });
+    }
+    return null;
+  }
+
   return (
     <ConfigProvider getPopupContainer={() => guidContainerRef.current || document.body}>
       <div ref={guidContainerRef} className={styles.guidContainer}>
@@ -1049,6 +1078,17 @@ const GuidPage: React.FC = () => {
                   onClose={handleCloseIntentPanel}
                 />
               ) : null}
+              {/* W4 (SPEC §5.9) — in-flight workflows row above "Jump back in". */}
+              <InFlightWorkflowsStrip
+                onResume={(session) => {
+                  void navigate(`/conversation/${session.conversation_id}`, {
+                    state: {
+                      workflowSessionId: session.id,
+                      initialWorkflowSession: session,
+                    },
+                  });
+                }}
+              />
               <RecentsStrip onSelect={handleSelectRecent} />
             </div>
           ) : null}

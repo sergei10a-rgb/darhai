@@ -13,7 +13,12 @@
     "launch": "Launch now",
     "schedule": "Schedule",
     "import": "Import workflow",
-    "build": "Build a workflow"
+    "build": "Build a workflow",
+    "runOn": "Run on"
+  },
+  "launchError": "Failed to launch workflow: {{msg}}",
+  "picker": {
+    "noAgent": "No backend selected"
   },
   "import": {
     "placeholder": "Import wiring lands next: folder / git URL / SKILL.md with type:workflow auto-detected via frontmatter, scanned by Skill Guard, and registered as source:imported."

@@ -34,6 +34,14 @@ export interface ConversationContextValue {
    * When true, platform chat components should hide the SendBox (e.g. sub-agents in team mode)
    */
   hideSendBox?: boolean;
+
+  /**
+   * Workflow session ID, present when this conversation is part of an active
+   * workflow launch surface. Used by MessageText to route assistant message
+   * bodies through WorkflowMessageBody so step markers are stripped and
+   * forwarded to the session rail.
+   */
+  workflowSessionId?: string;
 }
 
 /**

@@ -167,3 +167,53 @@ describe('usageBridge — eventType allowlist (MED-1)', () => {
     expect(recorded).toHaveLength(0);
   });
 });
+
+describe('usageBridge — workflow.* event types (Workflow Launch Surface v0.6.0)', () => {
+  // The Workflow Launch Surface adds 13 new event types. They must pass the
+  // allowlist or the right-rail progress + autonomous dispatch + parser
+  // diagnostics all go silently dark. Spec refs: §4.3, §8, §11.1, §9.
+  const WORKFLOW_EVENT_TYPES = [
+    'workflow.session_started',
+    'workflow.step_marker',
+    'workflow.ask_emitted',
+    'workflow.ask_answered',
+    'workflow.session_completed',
+    'workflow.autonomous_step_dispatched',
+    'workflow.autonomous_step_completed',
+    'workflow.marker_invalid',
+    'workflow.marker_html_escaped',
+    'workflow.marker_false_strip',
+    'workflow.step_transition',
+    'workflow.regress_attempt',
+    'workflow.orphaned_ask',
+  ] as const;
+
+  let warnSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    __resetUsageBridgeForTests();
+    providerCallback = null;
+    providerFn.mockReset();
+    providerFn.mockImplementation((cb: (input: unknown) => unknown) => {
+      providerCallback = cb;
+    });
+    warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    warnSpy.mockRestore();
+  });
+
+  it('forwards every workflow.* event type to the logger (allowlist accepts all 13)', async () => {
+    ensureUsageProviderRegistered();
+    const { logger, recorded } = makeLogger();
+    initUsageBridge(logger);
+
+    for (const eventType of WORKFLOW_EVENT_TYPES) {
+      await providerCallback!({ eventType });
+    }
+
+    expect(recorded.map((e) => e.eventType)).toEqual([...WORKFLOW_EVENT_TYPES]);
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+});

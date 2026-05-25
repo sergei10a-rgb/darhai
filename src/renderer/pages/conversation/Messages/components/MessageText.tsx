@@ -20,6 +20,37 @@ import HorizontalFileList from '@renderer/components/media/HorizontalFileList';
 import MarkdownView from '@renderer/components/Markdown';
 import { stripThinkTags, hasThinkTags } from '@renderer/utils/chat/thinkTagFilter';
 import { stripSkillSuggest, hasSkillSuggest } from '@renderer/utils/chat/skillSuggestParser';
+import { WorkflowMessageBody } from './WorkflowMessageBody';
+
+// SPEC §7.2 / §14: per-turn WORKFLOW_STEP_CONTEXT is prepended to user input by
+// conversationBridge so the static system prompt stays cache-stable. The
+// envelope MUST ride the user channel for cache safety, but rendering it
+// visibly in the chat tape looks awful and confuses users. Strip it on the
+// renderer side for workflow conversations. Mirrors composeStepContext.ts's
+// open/close tag format.
+//
+// Also strips the [workflow_answer ask_id=… step_n=…]<answer>…</answer>
+// [/workflow_answer] envelope WorkflowSurface wraps Ask responses in so the
+// user sees their actual answer text, not the machine-readable wrapper.
+const WORKFLOW_STEP_CONTEXT_RE = /\[workflow_step_context [^\]]*\][\s\S]*?\[\/workflow_step_context\]\s*/g;
+const WORKFLOW_ANSWER_RE = /\[workflow_answer [^\]]*\]\s*<answer>([\s\S]*?)<\/answer>\s*\[\/workflow_answer\]\s*/g;
+
+const stripWorkflowEnvelopes = (text: string): string => {
+  if (!text) return text;
+  let out = text.replace(WORKFLOW_STEP_CONTEXT_RE, '');
+  out = out.replace(WORKFLOW_ANSWER_RE, (_match, answer: string) => answer);
+  return out.trimStart();
+};
+
+// The hidden begin message WorkflowSurface fires to kick the agent.
+// After stripping the WORKFLOW_STEP_CONTEXT envelope, what remains is a
+// literal `begin <workflow-slug>` line. That looks ugly + cheesy in the
+// chat tape ("begin create-marketing-campaign" with hyphens + lowercase).
+// We hide the user-message bubble entirely when the cleaned text matches
+// this pattern — the agent's response is the meaningful surface, not the
+// machine-readable kickoff command.
+const BEGIN_COMMAND_RE = /^begin\s+[a-z0-9][a-z0-9-]*\s*$/i;
+const isWorkflowBeginCommand = (text: string): boolean => BEGIN_COMMAND_RE.test(text.trim());
 
 /**
  * Format a timestamp for message display.
@@ -124,6 +155,8 @@ const MessageText: React.FC<{ message: IMessageText }> = ({ message }) => {
     [conversationContext?.workspace, files]
   );
 
+  const workflowSessionId = conversationContext?.workflowSessionId;
+
   const hasVisibleContent =
     !!message.content.content && (typeof message.content.content !== 'string' || !!message.content.content.trim());
 
@@ -131,6 +164,17 @@ const MessageText: React.FC<{ message: IMessageText }> = ({ message }) => {
   // banner even when content is empty, e.g. Gemini Pro reasoning-token bug.)
   if (!hasVisibleContent && !isTruncated) {
     return null;
+  }
+
+  // For workflow conversations: if a user message is the hidden begin command
+  // (after stripping the WORKFLOW_STEP_CONTEXT envelope), hide the entire
+  // bubble. The chat tape should look like an agent monologue, not show the
+  // raw "begin foo-bar-baz" kickoff command.
+  if (workflowSessionId && isUserMessage) {
+    const cleanedForGate = stripWorkflowEnvelopes(text);
+    if (isWorkflowBeginCommand(cleanedForGate)) {
+      return null;
+    }
   }
 
   const handleCopy = () => {
@@ -217,7 +261,7 @@ const MessageText: React.FC<{ message: IMessageText }> = ({ message }) => {
           {hasVisibleContent &&
             (shouldRenderPlainText ? (
               <div className='whitespace-pre-wrap break-words' data-testid='message-text-content'>
-                {text}
+                {workflowSessionId ? stripWorkflowEnvelopes(text) : text}
               </div>
             ) : json ? (
               <CollapsibleContent maxHeight={200} defaultCollapsed={true}>
@@ -229,7 +273,9 @@ const MessageText: React.FC<{ message: IMessageText }> = ({ message }) => {
               </CollapsibleContent>
             ) : (
               <div data-testid='message-text-content'>
-                <MarkdownView codeStyle={CODE_STYLE}>{data}</MarkdownView>
+                <WorkflowMessageBody workflowSessionId={isUserMessage ? undefined : workflowSessionId} body={data}>
+                  {(cleanedBody) => <MarkdownView codeStyle={CODE_STYLE}>{cleanedBody}</MarkdownView>}
+                </WorkflowMessageBody>
               </div>
             ))}
           {isTruncated && (

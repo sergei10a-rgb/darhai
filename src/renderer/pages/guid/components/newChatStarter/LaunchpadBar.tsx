@@ -25,7 +25,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Plus, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAssistantList } from '@/renderer/hooks/assistant';
-import { useLaunchpadBar } from '@/renderer/hooks/launchpad/useLaunchpadBar';
+import { useLaunchpadBar, LAUNCHPAD_MAX_ENTRIES } from '@/renderer/hooks/launchpad/useLaunchpadBar';
 import AssistantIconTile from '@/renderer/pages/guid/components/AssistantIconTile';
 import type { QuickLaunchAnchor } from '@/renderer/pages/guid/quickLaunchAnchors';
 import { resolveBarEntry, type LaunchpadBarEntry } from './launchpadCatalog';
@@ -164,19 +164,21 @@ const LaunchpadBar: React.FC<LaunchpadBarProps> = ({ onAnchorClick, onViewAll, m
                 />
               ))
             )}
-            <button
-              type='button'
-              className={`${styles.addChip} ${pickerOpen ? styles.addOpen : ''}`}
-              onClick={togglePicker}
-              data-testid='launchpad-add-chip'
-              aria-expanded={pickerOpen}
-              aria-label={t('guid.launchpad.addAria', { defaultValue: 'Add an assistant to the bar' })}
-            >
-              <span className={styles.addPlus} aria-hidden='true'>
-                <Plus size={14} />
-              </span>
-              <span>{t('guid.launchpad.add', { defaultValue: 'Add' })}</span>
-            </button>
+            {entries.length < LAUNCHPAD_MAX_ENTRIES ? (
+              <button
+                type='button'
+                className={`${styles.addChip} ${pickerOpen ? styles.addOpen : ''}`}
+                onClick={togglePicker}
+                data-testid='launchpad-add-chip'
+                aria-expanded={pickerOpen}
+                aria-label={t('guid.launchpad.addAria', { defaultValue: 'Add an assistant to the bar' })}
+              >
+                <span className={styles.addPlus} aria-hidden='true'>
+                  <Plus size={14} />
+                </span>
+                <span>{t('guid.launchpad.add', { defaultValue: 'Add' })}</span>
+              </button>
+            ) : null}
           </div>
         </SortableContext>
       </DndContext>

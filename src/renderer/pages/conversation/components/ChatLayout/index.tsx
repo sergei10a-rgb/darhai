@@ -53,6 +53,12 @@ const ChatLayout: React.FC<{
   workspacePath?: string;
   /** Custom rename handler; when provided, replaces the default conversation.update rename flow */
   onRenameTitle?: (newName: string) => Promise<boolean>;
+  /**
+   * When true, suppresses the built-in header bar so a caller can inject its
+   * own header (e.g. WorkflowHeader on workflow conversations). The sider and
+   * workspace panel are unaffected.
+   */
+  hideHeader?: boolean;
 }> = (props) => {
   const { conversationId, workspacePath } = props;
   const { backend, presetAssistant, agentName, workspaceEnabled = true } = props;
@@ -248,7 +254,7 @@ const ChatLayout: React.FC<{
           /* Desktop with preview: header spans chat+preview, preview sits below header */
           <>
             <div className='flex flex-col flex-1 min-w-0'>
-              <div className='shrink-0 !bg-1'>{headerBlock}</div>
+              {!props.hideHeader && <div className='shrink-0 !bg-1'>{headerBlock}</div>}
               <div className='flex flex-1 min-h-0 relative'>
                 <div
                   className='flex flex-col relative'
@@ -307,7 +313,7 @@ const ChatLayout: React.FC<{
                   if (window.innerWidth < 768 && !rightSiderCollapsed) setRightSiderCollapsed(true);
                 }}
               >
-                {headerBlock}
+                {!props.hideHeader && headerBlock}
                 <ArcoLayout.Content className='flex flex-col flex-1 bg-1 overflow-hidden'>
                   {props.children}
                 </ArcoLayout.Content>

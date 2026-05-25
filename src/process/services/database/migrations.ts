@@ -1757,6 +1757,122 @@ const migration_v40: IMigration = {
 };
 
 /**
+ * Migration v40 -> v41: Add workflow_sessions table for Workflow Launch Surface
+ *
+ * Persists per-workflow chat session state so the right-rail workflow chrome
+ * can resume across windows, restarts, and process crashes. One row per active
+ * workflow run; `conversation_id` is a loose FK to conversations (no FOREIGN
+ * KEY clause — cross-audit Gemini §8 defended this so workflow rows survive
+ * conversation deletes for audit/resume). Status enum + monotonic-step CHECKs
+ * are enforced at the DB layer per SPEC §4.1 / §7.
+ */
+const migration_v41: IMigration = {
+  version: 41,
+  name: 'Add workflow_sessions table for Workflow Launch Surface',
+  up: (db) => {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS workflow_sessions (
+        id              TEXT PRIMARY KEY,
+        workflow_name   TEXT NOT NULL,
+        workflow_title  TEXT NOT NULL,
+        conversation_id TEXT NOT NULL,
+        current_step    INTEGER NOT NULL DEFAULT 1,
+        total_steps     INTEGER NOT NULL,
+        steps_json      TEXT NOT NULL,
+        skills_json     TEXT NOT NULL,
+        asks_json       TEXT NOT NULL,
+        status          TEXT NOT NULL DEFAULT 'active',
+        palette         TEXT NOT NULL,
+        category        TEXT NOT NULL,
+        created_at      INTEGER NOT NULL,
+        updated_at      INTEGER NOT NULL,
+        completed_at    INTEGER,
+        CHECK (status IN ('active', 'complete', 'errored', 'ended')),
+        CHECK (current_step >= 0),
+        CHECK (total_steps >= 0),
+        CHECK (current_step <= total_steps + 1)
+      )
+    `);
+    db.exec(
+      'CREATE INDEX IF NOT EXISTS idx_workflow_sessions_workflow_name_active ON workflow_sessions (workflow_name, status, updated_at DESC)'
+    );
+    db.exec('CREATE INDEX IF NOT EXISTS idx_workflow_sessions_conversation ON workflow_sessions (conversation_id)');
+    db.exec(
+      'CREATE INDEX IF NOT EXISTS idx_workflow_sessions_active_recency ON workflow_sessions (status, updated_at DESC)'
+    );
+    console.log('[Migration v41] Added workflow_sessions table');
+  },
+  down: (db) => {
+    db.exec('DROP TABLE IF EXISTS workflow_sessions');
+    console.log('[Migration v41] Rolled back: dropped workflow_sessions table');
+  },
+};
+
+/**
+ * Migration v41 -> v42: Add begin_sent_at column to workflow_sessions
+ *
+ * The Workflow Launch Surface auto-sends a hidden "begin {workflow_name}"
+ * message on first launch of a fresh session. Without a persisted flag,
+ * any remount of WorkflowSurface (Strict Mode double-mount, navigation
+ * back-and-forth, refresh) re-fires begin, producing a "Session failed to
+ * start" retry loop. This column gates the auto-send to fire exactly once
+ * per session lifetime. Default NULL = begin has not yet fired.
+ */
+const migration_v42: IMigration = {
+  version: 42,
+  name: 'Add begin_sent_at column to workflow_sessions',
+  up: (db) => {
+    // SQLite cannot ADD COLUMN inside a CHECK constraint table, but a plain
+    // nullable INTEGER add is supported on existing rows (NULL backfill).
+    db.exec(`ALTER TABLE workflow_sessions ADD COLUMN begin_sent_at INTEGER`);
+    console.log('[Migration v42] Added begin_sent_at column to workflow_sessions');
+  },
+  down: (db) => {
+    // SQLite has no DROP COLUMN before 3.35. Use the table-recreate idiom.
+    db.exec(`
+      CREATE TABLE workflow_sessions_v41 (
+        id              TEXT PRIMARY KEY,
+        workflow_name   TEXT NOT NULL,
+        workflow_title  TEXT NOT NULL,
+        conversation_id TEXT NOT NULL,
+        current_step    INTEGER NOT NULL DEFAULT 1,
+        total_steps     INTEGER NOT NULL,
+        steps_json      TEXT NOT NULL,
+        skills_json     TEXT NOT NULL,
+        asks_json       TEXT NOT NULL,
+        status          TEXT NOT NULL DEFAULT 'active',
+        palette         TEXT NOT NULL,
+        category        TEXT NOT NULL,
+        created_at      INTEGER NOT NULL,
+        updated_at      INTEGER NOT NULL,
+        completed_at    INTEGER,
+        CHECK (status IN ('active', 'complete', 'errored', 'ended')),
+        CHECK (current_step >= 0),
+        CHECK (total_steps >= 0),
+        CHECK (current_step <= total_steps + 1)
+      )
+    `);
+    db.exec(`
+      INSERT INTO workflow_sessions_v41
+      SELECT id, workflow_name, workflow_title, conversation_id, current_step,
+             total_steps, steps_json, skills_json, asks_json, status, palette,
+             category, created_at, updated_at, completed_at
+      FROM workflow_sessions
+    `);
+    db.exec('DROP TABLE workflow_sessions');
+    db.exec('ALTER TABLE workflow_sessions_v41 RENAME TO workflow_sessions');
+    db.exec(
+      'CREATE INDEX IF NOT EXISTS idx_workflow_sessions_workflow_name_active ON workflow_sessions (workflow_name, status, updated_at DESC)'
+    );
+    db.exec('CREATE INDEX IF NOT EXISTS idx_workflow_sessions_conversation ON workflow_sessions (conversation_id)');
+    db.exec(
+      'CREATE INDEX IF NOT EXISTS idx_workflow_sessions_active_recency ON workflow_sessions (status, updated_at DESC)'
+    );
+    console.log('[Migration v42] Rolled back: removed begin_sent_at column');
+  },
+};
+
+/**
  * All migrations in order
  */
 // prettier-ignore
@@ -1767,7 +1883,7 @@ export const ALL_MIGRATIONS: IMigration[] = [
   migration_v19, migration_v20, migration_v21, migration_v22, migration_v23, migration_v24,
   migration_v25, migration_v26, migration_v27, migration_v28, migration_v29, migration_v30,
   migration_v31, migration_v32, migration_v33, migration_v34, migration_v35, migration_v36,
-  migration_v37, migration_v38, migration_v39, migration_v40,
+  migration_v37, migration_v38, migration_v39, migration_v40, migration_v41, migration_v42,
 ];
 
 /**

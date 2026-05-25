@@ -5,9 +5,9 @@
  */
 
 import React, { useCallback } from 'react';
-import { Button } from '@arco-design/web-react';
 import { useTranslation } from 'react-i18next';
-import { INTENT_KEYS, INTENTS, type IntentKey } from '../../intents';
+import { DollarSign, PenLine, Microscope, Hammer, Play, Map, GraduationCap } from 'lucide-react';
+import { INTENT_KEYS, INTENTS, type IntentKey, type IntentDef } from '../../intents';
 import styles from './IntentPillBar.module.css';
 
 export type IntentPillBarProps = {
@@ -15,6 +15,16 @@ export type IntentPillBarProps = {
   activeIntent: IntentKey | null;
   /** Fires with the intent key on click, or null when the active pill is re-clicked (toggle off). */
   onSelect: (intent: IntentKey | null) => void;
+};
+
+const ICON_MAP: Record<IntentDef['icon'], React.ComponentType<{ size?: number; strokeWidth?: number }>> = {
+  'dollar-sign': DollarSign,
+  'pen-line': PenLine,
+  microscope: Microscope,
+  hammer: Hammer,
+  play: Play,
+  map: Map,
+  'graduation-cap': GraduationCap,
 };
 
 const IntentPillBar: React.FC<IntentPillBarProps> = ({ activeIntent, onSelect }) => {
@@ -38,12 +48,11 @@ const IntentPillBar: React.FC<IntentPillBarProps> = ({ activeIntent, onSelect })
         const intent = INTENTS[key];
         const isActive = activeIntent === key;
         const label = t(`guid.newChat.intent.${key}`, { defaultValue: intent.label });
+        const Icon = ICON_MAP[intent.icon];
         return (
-          <Button
+          <button
             key={key}
-            size='default'
-            shape='round'
-            type={isActive ? 'primary' : 'secondary'}
+            type='button'
             className={`${styles.pill} ${isActive ? styles.pillActive : ''}`}
             role='tab'
             aria-selected={isActive}
@@ -54,8 +63,9 @@ const IntentPillBar: React.FC<IntentPillBarProps> = ({ activeIntent, onSelect })
             data-intent={key}
             onClick={() => handleClick(key)}
           >
-            {label}
-          </Button>
+            <Icon size={14} strokeWidth={2} />
+            <span>{label}</span>
+          </button>
         );
       })}
     </div>

@@ -18,7 +18,7 @@
  * `tests/unit/renderer/guid/intents.test.ts` enforces shape + id integrity.
  */
 
-export type IntentKey = 'sell' | 'write' | 'research' | 'build' | 'run';
+export type IntentKey = 'sell' | 'write' | 'research' | 'build' | 'run' | 'plan' | 'learn';
 
 export type IntentPrompt = {
   /** Short user-facing title shown as the row heading. */
@@ -34,6 +34,8 @@ export type IntentDef = {
   key: IntentKey;
   /** Short user-facing label shown on the pill. */
   label: string;
+  /** Lucide icon name rendered alongside the label. Pill bar maps this to a component. */
+  icon: 'dollar-sign' | 'pen-line' | 'microscope' | 'hammer' | 'play' | 'map' | 'graduation-cap';
   /** Ordered list of starter prompts surfaced when the pill is active. */
   prompts: IntentPrompt[];
 };
@@ -42,6 +44,7 @@ export const INTENTS: Record<IntentKey, IntentDef> = {
   sell: {
     key: 'sell',
     label: 'Sell',
+    icon: 'dollar-sign',
     prompts: [
       {
         title: 'Cold outbound that books meetings',
@@ -73,6 +76,7 @@ export const INTENTS: Record<IntentKey, IntentDef> = {
   write: {
     key: 'write',
     label: 'Write',
+    icon: 'pen-line',
     prompts: [
       {
         title: 'Write sharp marketing copy',
@@ -104,6 +108,7 @@ export const INTENTS: Record<IntentKey, IntentDef> = {
   research: {
     key: 'research',
     label: 'Research',
+    icon: 'microscope',
     prompts: [
       {
         title: 'Run a deep research dive',
@@ -135,6 +140,7 @@ export const INTENTS: Record<IntentKey, IntentDef> = {
   build: {
     key: 'build',
     label: 'Build',
+    icon: 'hammer',
     prompts: [
       {
         title: 'Hand off to Smith',
@@ -166,6 +172,7 @@ export const INTENTS: Record<IntentKey, IntentDef> = {
   run: {
     key: 'run',
     label: 'Run',
+    icon: 'play',
     prompts: [
       {
         title: 'Patch a broken process',
@@ -194,7 +201,71 @@ export const INTENTS: Record<IntentKey, IntentDef> = {
       },
     ],
   },
+  plan: {
+    key: 'plan',
+    label: 'Plan',
+    icon: 'map',
+    prompts: [
+      {
+        title: 'Plan grounded in my files',
+        promptText: 'Read the files I attach and produce a written plan grounded in them.',
+        targetAssistantId: 'planning-with-files',
+      },
+      {
+        title: 'Set up the founder operating system',
+        promptText: 'Set up the founder operating system: cadence, tools, and decision logs.',
+        targetAssistantId: 'founder-setup',
+      },
+      {
+        title: 'Steer with Helm',
+        promptText: 'Helm me through the week: top 3 priorities, blockers, and a Friday checkpoint.',
+        targetAssistantId: 'helm',
+      },
+      {
+        title: 'Plan a fundraise',
+        promptText: 'Help me plan a 6-week seed fundraise: investor list, target check size, narrative.',
+        targetAssistantId: 'fundraise',
+      },
+      {
+        title: 'Plan a product launch',
+        promptText: 'Plan a 4-week product launch covering positioning, comms, and channel rollout.',
+        targetAssistantId: 'product-launch',
+      },
+    ],
+  },
+  learn: {
+    key: 'learn',
+    label: 'Learn',
+    icon: 'graduation-cap',
+    prompts: [
+      {
+        title: 'Read an academic paper',
+        promptText: 'Help me read and summarize an academic paper, then extract the actionable insights.',
+        targetAssistantId: 'academic-paper',
+      },
+      {
+        title: 'Probe a hard question',
+        promptText: 'Probe a hard strategic question, surface assumptions, and stress-test answers.',
+        targetAssistantId: 'probe',
+      },
+      {
+        title: 'Pull a market lens',
+        promptText: 'Pull a market lens: segments, players, momentum, and the open white space.',
+        targetAssistantId: 'lens',
+      },
+      {
+        title: 'Validate before you build',
+        promptText: 'Pressure-test my product idea against demand, ICP, and willingness to pay.',
+        targetAssistantId: 'validate-before-build',
+      },
+      {
+        title: 'Run a deep research dive',
+        promptText: 'Do a deep research dive on a topic of my choosing and summarize with citations.',
+        targetAssistantId: 'research',
+      },
+    ],
+  },
 };
 
 /** Ordered list used for stable iteration in UI (pill bar, suggestion panel). */
-export const INTENT_KEYS: IntentKey[] = ['sell', 'write', 'research', 'build', 'run'];
+export const INTENT_KEYS: IntentKey[] = ['sell', 'write', 'research', 'plan', 'build', 'run', 'learn'];

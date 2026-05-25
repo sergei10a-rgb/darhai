@@ -11,23 +11,39 @@
  * body so the user can see exactly what they're about to run. Two CTAs:
  *
  *   - **Launch** — start a new chat with the workflow loaded as the
- *     agent's first directive. Engine picker comes in a follow-up; for
- *     this first cut the button shows a placeholder explaining the wiring
- *     is in flight.
+ *     agent's first directive. Backed by a light "Run on" picker (backend
+ *     + model) that defaults to the user's last-selected agent and
+ *     persists the selection on launch.
  *   - **Schedule** — opens the existing Create Scheduled Task modal with
- *     this workflow pre-filled. Wired in step #6 of the split — until
- *     that lands the button shows a placeholder pointing at the
- *     Scheduled Tasks sidebar entry.
+ *     this workflow pre-filled.
  */
 
-import { Button, Modal, Spin } from '@arco-design/web-react';
+import { Button, Message, Modal, Select, Spin } from '@arco-design/web-react';
 import { Calendar, Rocket, Sparkles } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { ipcBridge } from '@/common';
+import { ConfigStorage } from '@/common/config/storage';
+import type { TProviderWithModel } from '@/common/config/storage';
 import type { SkillIndexEntry } from '@/common/types/skillTypes';
+import type { WorkflowSession } from '@/common/types/workflowTypes';
+import { WorkflowResumePrompt } from '@renderer/pages/guid/components/workflow/WorkflowResumePrompt';
 import { toDisplayName } from '@renderer/pages/settings/SkillsSettings/displayName';
+import { getAgentKey } from '@renderer/pages/guid/hooks/agentSelectionUtils';
+import { fetchDetectedAgents } from '@renderer/utils/model/agentTypes';
+import type { AvailableAgent } from '@renderer/utils/model/agentTypes';
+import type { AcpBackendAll } from '@/common/types/acpTypes';
+
+type LaunchTarget = {
+  backend: string;
+  cliPath: string | undefined;
+  model: TProviderWithModel;
+  agentName: string | undefined;
+  customAgentId: string | undefined;
+  presetAssistantId: string | undefined;
+  sessionMode: string | undefined;
+};
 
 interface WorkflowDetailModalProps {
   entry: SkillIndexEntry | null;
@@ -55,57 +71,338 @@ const WorkflowDetailModal: React.FC<WorkflowDetailModalProps> = ({ entry, onClos
   const navigate = useNavigate();
   const [body, setBody] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  // SPEC §5.7 / §10.2 — when a non-complete session exists within the
+  // 14-day window, swap the modal body for an inline resume prompt
+  // instead of immediately starting a new session.
+  const [resumeCandidate, setResumeCandidate] = useState<WorkflowSession | null>(null);
+  const [launching, setLaunching] = useState(false);
 
-  const depends = useMemo(
-    () => parseDepends(entry?.metadata?.depends),
-    [entry],
-  );
+  // Picker state — loaded on modal open from ConfigStorage + fetchDetectedAgents
+  const [availableAgents, setAvailableAgents] = useState<AvailableAgent[] | null>(null);
+  const [selectedAgentKey, setSelectedAgentKey] = useState<string>('claude');
+  const [modelOptions, setModelOptions] = useState<Array<{ id: string; label: string }>>([]);
+  const [selectedModelId, setSelectedModelId] = useState<string>('');
+
+  const depends = useMemo(() => parseDepends(entry?.metadata?.depends), [entry]);
 
   const handleSkillClick = (slug: string) => {
     onClose();
     void navigate(`/settings/skills?q=${encodeURIComponent(slug)}`);
   };
 
+  // Load model options for the given backend key from ConfigStorage
+  const loadModelOptionsForAgent = async (agentKey: string, agents: AvailableAgent[]): Promise<void> => {
+    const agent = agents.find((a) => getAgentKey(a) === agentKey);
+    const isPreset = Boolean(agent?.isPreset);
+    const backend = isPreset ? (agent?.presetAgentType ?? 'gemini') : (agent?.backend ?? agentKey);
+
+    try {
+      const [cachedModels, acpConfig] = await Promise.all([
+        ConfigStorage.get('acp.cachedModels'),
+        ConfigStorage.get('acp.config'),
+      ]);
+
+      const modelInfo = cachedModels?.[backend];
+      const models = modelInfo?.availableModels ?? [];
+      setModelOptions(models);
+
+      const backendConfig = acpConfig?.[backend as AcpBackendAll] as Record<string, unknown> | undefined;
+      const preferred = backendConfig?.preferredModelId as string | undefined;
+      const defaultModel = preferred ?? modelInfo?.currentModelId ?? models[0]?.id ?? '';
+      setSelectedModelId(defaultModel);
+    } catch {
+      setModelOptions([]);
+      setSelectedModelId('');
+    }
+  };
+
   useEffect(() => {
     if (!entry) {
       setBody(null);
+      setResumeCandidate(null);
+      setLaunching(false);
       return;
     }
+
+    // Stale-resolve guard: set cancelled = true in cleanup so async callbacks
+    // from a previous entry cannot clobber state for the current one.
+    let cancelled = false;
+
+    // New entry opened — clear any resume prompt left over from a
+    // previous workflow.
+    setResumeCandidate(null);
     setLoading(true);
-    // The Skills bridge already exposes a path-aware loader via the scan
-    // endpoint; reusing it would be heavier than needed. For the detail
-    // modal we lean on the report-style getter for now — it returns null
-    // when no body is on disk, which is a sensible empty state.
     void ipcBridge.skills.getReport
       .invoke({ name: entry.name })
       .then(() => {
-        // The report-only endpoint doesn't return the body. Until a body
-        // endpoint exists, surface the description and a hint that
-        // launch/schedule consume the body server-side.
+        if (cancelled) return;
         setBody(null);
       })
-      .finally(() => setLoading(false));
-  }, [entry]);
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    // SPEC §6.3 / acceptance #9: probe for an in-flight session so we can
+    // show the resume prompt instead of going straight to the picker. The
+    // findActive endpoint enforces the 14-day cutoff server-side, so any
+    // non-null result is a valid candidate.
+    void ipcBridge.workflow.findActive
+      .invoke({ workflow_name: entry.name })
+      .then((result) => {
+        if (cancelled) return;
+        if (result.session !== null) {
+          setResumeCandidate(result.session);
+        }
+      })
+      .catch((err: unknown) => {
+        // Best-effort — a probe failure must never block a fresh launch.
+        console.warn('[WorkflowDetailModal] findActive probe failed:', err);
+      });
+
+    // Load picker state: fetch detected agents + restore last selection
+    void (async () => {
+      try {
+        const agents = await fetchDetectedAgents();
+        if (cancelled) return;
+        setAvailableAgents(agents);
+
+        const savedKey = await ConfigStorage.get('guid.lastSelectedAgent');
+        if (cancelled) return;
+        let resolvedKey: string;
+
+        if (savedKey) {
+          const exists =
+            savedKey.startsWith('custom:') ||
+            savedKey.startsWith('remote:') ||
+            agents.some((a) => getAgentKey(a) === savedKey);
+          resolvedKey = exists ? savedKey : agents[0] ? getAgentKey(agents[0]) : 'claude';
+        } else {
+          resolvedKey = agents[0] ? getAgentKey(agents[0]) : 'claude';
+        }
+
+        setSelectedAgentKey(resolvedKey);
+        await loadModelOptionsForAgent(resolvedKey, agents);
+      } catch {
+        if (!cancelled) setAvailableAgents([]);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [entry]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // When the user changes backend, refresh the model list
+  const handleAgentChange = (key: string) => {
+    setSelectedAgentKey(key);
+    if (availableAgents) {
+      void loadModelOptionsForAgent(key, availableAgents);
+    }
+  };
+
+  /** Resolve the full launch target from current picker state. */
+  const buildLaunchTarget = async (): Promise<LaunchTarget | null> => {
+    const agents = availableAgents ?? [];
+    const agent = agents.find((a) => getAgentKey(a) === selectedAgentKey);
+    if (!agent) {
+      Message.error(t('picker.noAgent', 'No backend selected'));
+      return null;
+    }
+
+    const isPreset = Boolean(agent.isPreset);
+    const backend = isPreset ? (agent.presetAgentType ?? 'gemini') : agent.backend;
+    const cliPath = agent.cliPath;
+
+    // Resolve the model id. Race-safe re-resolution: if the picker hasn't
+    // populated selectedModelId yet (user clicked Start fresh from the
+    // resume prompt before loadModelOptionsForAgent completed), fall back
+    // to acp.cachedModels[backend].currentModelId. Literal 'auto' is NOT a
+    // valid model identifier — upstream providers reject it with
+    // model_not_found (live smoke caught this).
+    let resolvedModelId = selectedModelId;
+    if (!resolvedModelId) {
+      try {
+        const cachedModels = await ConfigStorage.get('acp.cachedModels');
+        const cachedFor = cachedModels?.[backend];
+        resolvedModelId = cachedFor?.currentModelId ?? cachedFor?.availableModels?.[0]?.id ?? '';
+      } catch {
+        // Cached models unavailable — fall through to provider list.
+      }
+    }
+
+    // Build the model record from model.config, falling back to a minimal object
+    let model: TProviderWithModel;
+    try {
+      const providers = await ConfigStorage.get('model.config');
+      const providerList = Array.isArray(providers) ? providers : [];
+      const match = providerList.find((p) => p.platform === backend || p.id === backend);
+      if (match) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { model: _modelArr, ...rest } = match;
+        // Final fallback chain: resolvedModelId (selectedModelId OR cached) →
+        // provider's first model → fail loudly (no synthetic 'auto').
+        const useModel = resolvedModelId || match.model[0] || '';
+        if (!useModel) {
+          Message.error(
+            t('picker.noModel', 'No model available for {{backend}} — pick one in Settings → Models', {
+              backend,
+            })
+          );
+          return null;
+        }
+        model = { ...rest, useModel };
+      } else {
+        // No provider configured for this backend at all.
+        if (!resolvedModelId) {
+          Message.error(
+            t('picker.noModel', 'No model available for {{backend}} — pick one in Settings → Models', {
+              backend,
+            })
+          );
+          return null;
+        }
+        model = {
+          id: `${backend}-fallback`,
+          name: backend,
+          platform: backend,
+          useModel: resolvedModelId,
+          baseUrl: '',
+          apiKey: '',
+        };
+      }
+    } catch (err) {
+      console.warn('[WorkflowDetailModal] model.config read failed:', err);
+      if (!resolvedModelId) {
+        Message.error(
+          t('picker.noModel', 'No model available for {{backend}} — pick one in Settings → Models', {
+            backend,
+          })
+        );
+        return null;
+      }
+      model = {
+        id: `${backend}-fallback`,
+        name: backend,
+        platform: backend,
+        useModel: resolvedModelId,
+        baseUrl: '',
+        apiKey: '',
+      };
+    }
+
+    // Read preferred session mode for this backend
+    let sessionMode: string | undefined;
+    try {
+      const acpConfig = await ConfigStorage.get('acp.config');
+      const backendConfig = acpConfig?.[backend as AcpBackendAll] as Record<string, unknown> | undefined;
+      sessionMode = backendConfig?.preferredMode as string | undefined;
+    } catch {
+      // sessionMode stays undefined — service defaults to whatever it picks
+    }
+
+    return {
+      backend,
+      cliPath,
+      model,
+      agentName: isPreset ? agent.name : undefined,
+      customAgentId: agent.customAgentId,
+      presetAssistantId: isPreset ? agent.customAgentId : undefined,
+      sessionMode,
+    };
+  };
 
   const handleLaunch = async () => {
-    if (!entry) return;
-    // Pull the workflow body from the SkillLibrary; fall back to the
-    // entry's description if the body file is missing (e.g. a
-    // cli-discovered workflow whose source vanished). Then route the
-    // user to /guid with the body pre-filled as a pendingPrompt.
-    // GuidPage's reset hook reads location.state.pendingPrompt and
-    // seeds the textarea with it instead of clearing the field. The
-    // user picks engine + send from there — no separate engine picker
-    // modal needed for this first cut.
-    let prompt: string | null = null;
+    if (!entry || launching) return;
+    setLaunching(true);
     try {
-      prompt = await ipcBridge.skills.getBody.invoke({ name: entry.name });
-    } catch {
-      prompt = null;
+      const target = await buildLaunchTarget();
+      if (!target) {
+        setLaunching(false);
+        return;
+      }
+      const startResult = await ipcBridge.workflow.start.invoke({
+        workflow_name: entry.name,
+        ...target,
+      });
+      if (!startResult?.sessionId || !startResult.session) {
+        throw new Error('workflow.start returned an empty payload');
+      }
+      // Persist the user's selection so the picker remembers next time
+      void ConfigStorage.set('guid.lastSelectedAgent', selectedAgentKey);
+      onClose();
+      void navigate(`/conversation/${startResult.session.conversation_id}`, {
+        state: {
+          workflowSessionId: startResult.sessionId,
+          initialWorkflowSession: startResult.session,
+        },
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      Message.error(t('launchError', 'Failed to launch workflow: {{msg}}', { msg }));
+      onClose();
+    } finally {
+      setLaunching(false);
     }
-    const pendingPrompt = prompt && prompt.length > 0 ? prompt : entry.description;
+  };
+
+  const handleResume = () => {
+    if (!resumeCandidate) return;
+    const sessionId = resumeCandidate.id;
+    const session = resumeCandidate;
     onClose();
-    void navigate('/guid', { state: { pendingPrompt } });
+    void navigate(`/conversation/${session.conversation_id}`, {
+      state: { workflowSessionId: sessionId, initialWorkflowSession: session },
+    });
+  };
+
+  const handleStartFresh = async () => {
+    if (!entry || !resumeCandidate || launching) return;
+    // Validate picker FIRST — before archiving the existing session — so the
+    // user doesn't lose their resume candidate to a failed launch.
+    if (!availableAgents || availableAgents.length === 0) {
+      Message.error(t('picker.notReady', 'Pick a backend before starting fresh'));
+      return;
+    }
+    if (!selectedModelId) {
+      Message.error(t('picker.notReady', 'Pick a model before starting fresh'));
+      return;
+    }
+    setLaunching(true);
+    try {
+      const target = await buildLaunchTarget();
+      if (!target) {
+        setLaunching(false);
+        return;
+      }
+      // Archive the existing session only AFTER the picker validated — this
+      // way a "no model selected" misclick doesn't blow away the resume
+      // candidate.
+      await ipcBridge.workflow.updateSessionState.invoke({
+        sessionId: resumeCandidate.id,
+        patch: { setSessionStatus: 'ended' },
+      });
+      const startResult = await ipcBridge.workflow.start.invoke({
+        workflow_name: entry.name,
+        ...target,
+      });
+      if (!startResult?.sessionId || !startResult.session) {
+        throw new Error('workflow.start returned an empty payload');
+      }
+      void ConfigStorage.set('guid.lastSelectedAgent', selectedAgentKey);
+      onClose();
+      void navigate(`/conversation/${startResult.session.conversation_id}`, {
+        state: {
+          workflowSessionId: startResult.sessionId,
+          initialWorkflowSession: startResult.session,
+        },
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      Message.error(t('launchError', 'Failed to launch workflow: {{msg}}', { msg }));
+      onClose();
+    } finally {
+      setLaunching(false);
+    }
   };
 
   const handleSchedule = () => {
@@ -118,6 +415,12 @@ const WorkflowDetailModal: React.FC<WorkflowDetailModalProps> = ({ entry, onClos
     void navigate(`/scheduled?workflow=${encodeURIComponent(entry.name)}`);
   };
 
+  // Build agent select options from detected agents
+  const agentOptions = useMemo(() => {
+    if (!availableAgents) return [];
+    return availableAgents.map((a) => ({ value: getAgentKey(a), label: a.name }));
+  }, [availableAgents]);
+
   return (
     <Modal
       visible={entry !== null}
@@ -129,10 +432,7 @@ const WorkflowDetailModal: React.FC<WorkflowDetailModalProps> = ({ entry, onClos
     >
       {entry ? (
         <div className='flex flex-col gap-16px'>
-          <p
-            className='text-13px m-0'
-            style={{ color: 'var(--text-secondary)' }}
-          >
+          <p className='text-13px m-0' style={{ color: 'var(--text-secondary)' }}>
             {entry.description || t('noDescription', 'No description provided.')}
           </p>
 
@@ -155,7 +455,7 @@ const WorkflowDetailModal: React.FC<WorkflowDetailModalProps> = ({ entry, onClos
                   ? body.slice(0, 600) + (body.length > 600 ? '…' : '')
                   : t(
                       'bodyFallback',
-                      'The agent loads this workflow as its first directive and walks you through it step by step. You can interrupt or change direction at any point.',
+                      'The agent loads this workflow as its first directive and walks you through it step by step. You can interrupt or change direction at any point.'
                     )}
               </>
             )}
@@ -173,9 +473,7 @@ const WorkflowDetailModal: React.FC<WorkflowDetailModalProps> = ({ entry, onClos
               >
                 <Sparkles size={12} />
                 <span>{t('depends.title', 'Uses these skills')}</span>
-                <span style={{ color: 'var(--color-text-3)', fontWeight: 400 }}>
-                  · {depends.length}
-                </span>
+                <span style={{ color: 'var(--color-text-3)', fontWeight: 400 }}>· {depends.length}</span>
               </div>
               <div className='flex flex-wrap gap-6px'>
                 {depends.map((slug) => (
@@ -198,23 +496,77 @@ const WorkflowDetailModal: React.FC<WorkflowDetailModalProps> = ({ entry, onClos
             </div>
           ) : null}
 
-          <div className='flex items-center justify-end gap-12px pt-8px'>
-            <Button
-              icon={<Calendar size={14} />}
-              onClick={handleSchedule}
-              style={{ borderRadius: 8 }}
-              className='px-16px'
-            >
-              {t('actions.schedule', 'Schedule')}
-            </Button>
-            <Button
-              type='primary'
-              icon={<Rocket size={14} />}
-              onClick={handleLaunch}
-              className=''
-            >
-              {t('actions.launch', 'Launch now')}
-            </Button>
+          {/* Backend + model picker — ALWAYS visible. Both fresh launches AND
+              resume/start-fresh paths use the picker target, so the user
+              always sees which backend + model the workflow will run on
+              before committing. */}
+          <div className='flex flex-col gap-8px pt-8px'>
+            <div className='flex items-center gap-8px flex-wrap'>
+              <span className='text-12px flex-shrink-0' style={{ color: 'var(--text-secondary)' }}>
+                {t('actions.runOn', 'Run on')}
+              </span>
+              <Select
+                value={selectedAgentKey}
+                onChange={handleAgentChange}
+                size='small'
+                style={{ minWidth: 160 }}
+                options={agentOptions}
+                disabled={!availableAgents || availableAgents.length === 0 || launching}
+                placeholder={t('picker.loading', 'Loading agents…')}
+                data-testid='workflow-backend-select'
+              />
+              {modelOptions.length > 0 ? (
+                <Select
+                  value={selectedModelId}
+                  onChange={(v) => setSelectedModelId(v as string)}
+                  size='small'
+                  style={{ minWidth: 180 }}
+                  options={modelOptions.map((m) => ({ value: m.id, label: m.label }))}
+                  disabled={launching}
+                  data-testid='workflow-model-select'
+                />
+              ) : (
+                <span className='text-12px italic' style={{ color: 'var(--color-text-3)' }}>
+                  {availableAgents === null
+                    ? t('picker.loadingModels', 'Loading models…')
+                    : t('picker.noModelsForBackend', 'No models cached — open this agent in /guid to populate')}
+                </span>
+              )}
+            </div>
+
+            {/* Action area — content depends on whether an in-flight session
+                exists. Both paths use the picker selection above. */}
+            {resumeCandidate ? (
+              <WorkflowResumePrompt
+                existingSession={resumeCandidate}
+                onResume={handleResume}
+                onStartFresh={() => {
+                  void handleStartFresh();
+                }}
+              />
+            ) : (
+              <div className='flex items-center justify-end gap-12px'>
+                <Button
+                  icon={<Calendar size={14} />}
+                  onClick={handleSchedule}
+                  style={{ borderRadius: 8 }}
+                  className='px-16px'
+                >
+                  {t('actions.schedule', 'Schedule')}
+                </Button>
+                <Button
+                  type='primary'
+                  icon={<Rocket size={14} />}
+                  onClick={() => {
+                    void handleLaunch();
+                  }}
+                  loading={launching || availableAgents === null}
+                  disabled={launching || availableAgents === null || !selectedModelId}
+                >
+                  {t('actions.launch', 'Launch now')}
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       ) : null}

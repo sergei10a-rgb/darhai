@@ -10,6 +10,8 @@ import { SkillLibrary } from '@process/services/skills/SkillLibrary';
 import { getTeamGuidePrompt } from '@process/team/prompts/teamGuidePrompt.ts';
 import { resolveLeaderAssistantLabel } from '@process/team/prompts/teamGuideAssistant.ts';
 import { composePrompt } from '@process/services/constitution/composePrompt';
+import { composeWorkflowSystemPrompt } from '@process/services/workflow/composeWorkflowSystemPrompt';
+import { getWorkflowSessionService } from '@process/services/workflow/workflowSessionServiceSingleton';
 
 /**
  * One-line advertisement for the wayland_search_skills MCP tool.
@@ -54,6 +56,42 @@ export interface FirstMessageConfig {
    * Leader row instead of the raw backend key.
    */
   presetAssistantId?: string;
+  /**
+   * Workflow Launch Surface (v0.6.0) — id of the live `WorkflowSession` this
+   * conversation is bound to. When set, the static `WORKFLOW_PROTOCOL` block
+   * (SPEC §7.1) is appended to the END of system instructions per the
+   * "primacy at the end" rule (SPEC §7.3). Soft-fails if the live service is
+   * unavailable or the session id no longer resolves.
+   */
+  workflowSessionId?: string;
+}
+
+/**
+ * Resolves the workflow session for `workflowSessionId` and returns the static
+ * `WORKFLOW_PROTOCOL` system block (SPEC §7.1). Returns `null` when:
+ *   - no id was provided,
+ *   - the singleton service is not yet wired (cold start race),
+ *   - no session exists for the id,
+ *   - any error is thrown during lookup (soft-fail — the first-message build
+ *     must never break because of workflow plumbing).
+ *
+ * Callers append the returned string to the END of the assembled instructions
+ * so it cannot be diluted by earlier preset/skill content.
+ */
+async function tryComposeWorkflowProtocol(
+  workflowSessionId: string | undefined
+): Promise<string | null> {
+  if (!workflowSessionId) return null;
+  try {
+    const service = getWorkflowSessionService();
+    if (service === null) return null;
+    const session = await service.findById(workflowSessionId);
+    if (session === null) return null;
+    return composeWorkflowSystemPrompt(session);
+  } catch (err) {
+    console.warn('[agentUtils] failed to inject WORKFLOW_PROTOCOL:', err);
+    return null;
+  }
 }
 
 /**
@@ -82,6 +120,13 @@ export async function buildSystemInstructions(config: FirstMessageConfig): Promi
   if (config.enableTeamGuide) {
     const leaderLabel = await resolveLeaderAssistantLabel(config.presetAssistantId);
     instructions.push(getTeamGuidePrompt({ backend: config.backend, leaderLabel }));
+  }
+
+  // Workflow Launch Surface — append WORKFLOW_PROTOCOL LAST so it sits at the
+  // end of the assembled system content (SPEC §7.3 "primacy at the end").
+  const workflowProtocol = await tryComposeWorkflowProtocol(config.workflowSessionId);
+  if (workflowProtocol !== null) {
+    instructions.push(workflowProtocol);
   }
 
   const basePrompt = instructions.length === 0 ? '' : instructions.join('\n\n');
@@ -182,6 +227,13 @@ For example:
     instructions.push(getTeamGuidePrompt({ backend: config.backend, leaderLabel }));
   }
 
+  // 4. Workflow Launch Surface — append WORKFLOW_PROTOCOL LAST so it sits at
+  // the end of the rules content (SPEC §7.3 "primacy at the end").
+  const workflowProtocol = await tryComposeWorkflowProtocol(config.workflowSessionId);
+  if (workflowProtocol !== null) {
+    instructions.push(workflowProtocol);
+  }
+
   const basePrompt = instructions.length === 0 ? '' : instructions.join('\n\n');
   // Prepend Wayland Constitution + optional specialist overlay above the
   // existing rules content. Composer returns '' when no Constitution exists,
@@ -234,6 +286,13 @@ export async function buildSystemInstructionsWithSkillsIndex(config: FirstMessag
   if (config.enableTeamGuide) {
     const leaderLabel = await resolveLeaderAssistantLabel(config.presetAssistantId);
     instructions.push(getTeamGuidePrompt({ backend: config.backend, leaderLabel }));
+  }
+
+  // Workflow Launch Surface — append WORKFLOW_PROTOCOL LAST so it sits at the
+  // end of the assembled system content (SPEC §7.3 "primacy at the end").
+  const workflowProtocol = await tryComposeWorkflowProtocol(config.workflowSessionId);
+  if (workflowProtocol !== null) {
+    instructions.push(workflowProtocol);
   }
 
   const basePrompt = instructions.length === 0 ? '' : instructions.join('\n\n');

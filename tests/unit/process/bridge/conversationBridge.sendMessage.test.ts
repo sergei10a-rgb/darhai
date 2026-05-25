@@ -87,6 +87,19 @@ vi.mock('@/process/task/agentUtils', () => ({
   prepareFirstMessage: vi.fn(async (input: string) => input),
 }));
 
+// W4.4: mocks for the workflow step-context prepend path
+const mockFindById = vi.fn();
+const mockGetWorkflowSessionService = vi.fn();
+const mockComposeStepContext = vi.fn();
+
+vi.mock('@process/services/workflow/workflowSessionServiceSingleton', () => ({
+  getWorkflowSessionService: () => mockGetWorkflowSessionService(),
+}));
+
+vi.mock('@process/services/workflow/composeStepContext', () => ({
+  composeStepContext: (session: unknown) => mockComposeStepContext(session),
+}));
+
 // Import after mocks
 const { initConversationBridge } = await import('@/process/bridge/conversationBridge');
 
@@ -94,6 +107,7 @@ describe('conversationBridge.sendMessage', () => {
   const mockConversationService = {
     create: vi.fn(),
     getById: vi.fn(),
+    getConversation: vi.fn(),
     remove: vi.fn(),
     update: vi.fn(),
     getAll: vi.fn(),
@@ -110,6 +124,11 @@ describe('conversationBridge.sendMessage', () => {
   beforeEach(() => {
     providerCallbacks.clear();
     vi.clearAllMocks();
+    // Default: no conversation record → no workflow context attached
+    mockConversationService.getConversation.mockResolvedValue(undefined);
+    mockGetWorkflowSessionService.mockReturnValue(null);
+    mockFindById.mockResolvedValue(null);
+    mockComposeStepContext.mockReturnValue('');
     initConversationBridge(mockConversationService, mockWorkerTaskManager);
   });
 
@@ -166,5 +185,124 @@ describe('conversationBridge.sendMessage', () => {
         agentContent: 'hello',
       })
     );
+  });
+
+  describe('workflow step-context prepend (W4.4, SPEC §7.2)', () => {
+    const STEP_CONTEXT_BLOCK =
+      '[workflow_step_context current_step="2" total_steps="3"]\nbody\n[/workflow_step_context]';
+
+    function buildTask() {
+      return {
+        type: 'acp',
+        workspace: '/mock/workspace',
+        sendMessage: vi.fn(async () => undefined),
+      };
+    }
+
+    it('leaves input unchanged when conversation has no workflowSessionId in extra', async () => {
+      const handler = providerCallbacks.get('conversation.sendMessage');
+      const task = buildTask();
+      mockWorkerTaskManager.getOrBuildTask.mockResolvedValue(task);
+      mockConversationService.getConversation.mockResolvedValue({
+        id: 'c1',
+        extra: { presetAssistantId: 'asst-1' },
+      });
+
+      await handler!({ conversation_id: 'c1', input: 'hi', msg_id: 'm1' });
+
+      expect(task.sendMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ content: 'hi', agentContent: 'hi' })
+      );
+      // composeStepContext must never run when there is no workflowSessionId
+      expect(mockComposeStepContext).not.toHaveBeenCalled();
+    });
+
+    it('prepends WORKFLOW_STEP_CONTEXT when conversation.extra.workflowSessionId resolves', async () => {
+      const handler = providerCallbacks.get('conversation.sendMessage');
+      const task = buildTask();
+      mockWorkerTaskManager.getOrBuildTask.mockResolvedValue(task);
+      const session = { id: 'ws-1', current_step: 2, total_steps: 3, steps: [] };
+      mockConversationService.getConversation.mockResolvedValue({
+        id: 'c1',
+        extra: { workflowSessionId: 'ws-1' },
+      });
+      mockGetWorkflowSessionService.mockReturnValue({ findById: mockFindById });
+      mockFindById.mockResolvedValue(session);
+      mockComposeStepContext.mockReturnValue(STEP_CONTEXT_BLOCK);
+
+      await handler!({ conversation_id: 'c1', input: 'do step 2', msg_id: 'm1' });
+
+      expect(mockFindById).toHaveBeenCalledWith('ws-1');
+      expect(mockComposeStepContext).toHaveBeenCalledWith(session);
+      expect(task.sendMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          content: `${STEP_CONTEXT_BLOCK}\n\ndo step 2`,
+          agentContent: `${STEP_CONTEXT_BLOCK}\n\ndo step 2`,
+        })
+      );
+    });
+
+    it('soft-fails (no prepend) when the workflow service singleton is not wired', async () => {
+      const handler = providerCallbacks.get('conversation.sendMessage');
+      const task = buildTask();
+      mockWorkerTaskManager.getOrBuildTask.mockResolvedValue(task);
+      mockConversationService.getConversation.mockResolvedValue({
+        id: 'c1',
+        extra: { workflowSessionId: 'ws-1' },
+      });
+      mockGetWorkflowSessionService.mockReturnValue(null);
+
+      await handler!({ conversation_id: 'c1', input: 'hi', msg_id: 'm1' });
+
+      expect(mockComposeStepContext).not.toHaveBeenCalled();
+      expect(task.sendMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ content: 'hi', agentContent: 'hi' })
+      );
+    });
+
+    it('does not prepend when composeStepContext returns empty (e.g. current_step === 0)', async () => {
+      const handler = providerCallbacks.get('conversation.sendMessage');
+      const task = buildTask();
+      mockWorkerTaskManager.getOrBuildTask.mockResolvedValue(task);
+      mockConversationService.getConversation.mockResolvedValue({
+        id: 'c1',
+        extra: { workflowSessionId: 'ws-1' },
+      });
+      mockGetWorkflowSessionService.mockReturnValue({ findById: mockFindById });
+      mockFindById.mockResolvedValue({ id: 'ws-1', current_step: 0, total_steps: 3, steps: [] });
+      mockComposeStepContext.mockReturnValue('');
+
+      await handler!({ conversation_id: 'c1', input: 'hi', msg_id: 'm1' });
+
+      expect(mockComposeStepContext).toHaveBeenCalled();
+      expect(task.sendMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ content: 'hi', agentContent: 'hi' })
+      );
+    });
+
+    it('soft-fails (no prepend, warn fired) when findById throws', async () => {
+      const handler = providerCallbacks.get('conversation.sendMessage');
+      const task = buildTask();
+      mockWorkerTaskManager.getOrBuildTask.mockResolvedValue(task);
+      mockConversationService.getConversation.mockResolvedValue({
+        id: 'c1',
+        extra: { workflowSessionId: 'ws-boom' },
+      });
+      mockGetWorkflowSessionService.mockReturnValue({ findById: mockFindById });
+      mockFindById.mockRejectedValue(new Error('db down'));
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const result = await handler!({ conversation_id: 'c1', input: 'hi', msg_id: 'm1' });
+
+      expect(result).toEqual({ success: true });
+      expect(task.sendMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ content: 'hi', agentContent: 'hi' })
+      );
+      expect(warnSpy).toHaveBeenCalledWith(
+        '[conversationBridge] failed to prepend WORKFLOW_STEP_CONTEXT:',
+        expect.any(Error)
+      );
+      warnSpy.mockRestore();
+    });
   });
 });

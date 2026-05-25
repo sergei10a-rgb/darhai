@@ -26,6 +26,7 @@ const AcpChat: React.FC<{
   teamId?: string;
   agentSlotId?: string;
   emptySlot?: React.ReactNode;
+  workflowSessionId?: string;
 }> = ({
   conversation_id,
   workspace,
@@ -38,11 +39,14 @@ const AcpChat: React.FC<{
   teamId,
   agentSlotId,
   emptySlot,
+  workflowSessionId,
 }) => {
   useMessageLstCache(conversation_id);
 
   return (
-    <ConversationProvider value={{ conversationId: conversation_id, workspace, type: 'acp', cronJobId, hideSendBox }}>
+    <ConversationProvider
+      value={{ conversationId: conversation_id, workspace, type: 'acp', cronJobId, hideSendBox, workflowSessionId }}
+    >
       <div className='flex-1 flex flex-col px-20px min-h-0'>
         <FlexFullContainer>
           <MessageList className='flex-1' emptySlot={emptySlot} />

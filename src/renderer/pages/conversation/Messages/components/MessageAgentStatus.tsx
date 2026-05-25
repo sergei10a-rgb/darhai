@@ -23,11 +23,14 @@ const MessageAgentStatus: React.FC<MessageAgentStatusProps> = ({ message }) => {
   const { t } = useTranslation();
   const { backend, status, agentName } = message.content;
 
-  // Resolve display name: agentName (extension/custom) > ACP_BACKENDS_ALL name > capitalized backend
+  // Resolve display name: agentName (extension/custom) > ACP_BACKENDS_ALL name > capitalized backend.
+  // Guard against missing backend strings (e.g. legacy / workflow-created session_failed events)
+  // so we never crash the render with `.charAt of undefined`.
+  const safeBackend = typeof backend === 'string' && backend.length > 0 ? backend : 'agent';
   const displayName =
     agentName ||
-    ACP_BACKENDS_ALL[backend as keyof typeof ACP_BACKENDS_ALL]?.name ||
-    backend.charAt(0).toUpperCase() + backend.slice(1);
+    ACP_BACKENDS_ALL[safeBackend as keyof typeof ACP_BACKENDS_ALL]?.name ||
+    safeBackend.charAt(0).toUpperCase() + safeBackend.slice(1);
 
   // Hide disconnected status from historical messages (no longer emitted but may exist in DB)
   if ((status as string) === 'disconnected') return null;

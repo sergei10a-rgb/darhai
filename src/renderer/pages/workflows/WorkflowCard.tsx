@@ -50,7 +50,13 @@ const WorkflowCard: React.FC<WorkflowCardProps> = ({ entry, onClick, featured = 
   const className = featured ? `${styles.card} ${styles.cardFeatured}` : styles.card;
 
   return (
-    <button type='button' onClick={handleClick} className={className}>
+    <button
+      type='button'
+      onClick={handleClick}
+      className={className}
+      data-testid='workflow-card'
+      data-workflow-name={entry.name}
+    >
       {/* Featured pill — mirrors the 'STANDING' badge on Standing
           Companies cards (Teams page), corner-anchored so the curated
           tier reads at a glance. */}

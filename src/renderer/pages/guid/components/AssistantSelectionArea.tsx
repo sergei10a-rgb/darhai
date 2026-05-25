@@ -238,35 +238,7 @@ const AssistantSelectionArea: React.FC<AssistantSelectionAreaProps> = ({
               </span>
             </div>
           )}
-          {/* Prompts Section */}
-          {(() => {
-            const agent = customAgents.find((a) => a.id === selectedAgentInfo.customAgentId);
-            const prompts = agent?.promptsI18n?.[localeKey] || agent?.promptsI18n?.['en-US'] || agent?.prompts;
-            if (prompts && prompts.length > 0) {
-              return (
-                <div className='mt-16px'>
-                  <div className={styles.assistantPromptHint}>
-                    {t('guid.promptExamplesHint', { defaultValue: 'Try these example prompts:' })}
-                  </div>
-                  <div className='flex flex-wrap gap-8px mt-12px'>
-                    {prompts.map((prompt: string, index: number) => (
-                      <div
-                        key={index}
-                        className={`${styles.assistantPromptChip} px-12px py-6px text-2 text-13px rd-16px cursor-pointer transition-colors shadow-sm`}
-                        onClick={() => {
-                          onSetInput(prompt);
-                          onFocusInput();
-                        }}
-                      >
-                        {prompt}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            }
-            return null;
-          })()}
+          {/* Per-assistant example prompts removed — intent pills above cover discovery. */}
         </div>
         {modalTree}
       </div>
