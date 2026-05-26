@@ -86,5 +86,82 @@
     "installing_notice": "IJFW is being installed. External CLIs (Claude Code, Codex, Gemini CLI) will pick it up after install completes.",
     "disabled_notice": "IJFW is disabled in Wayland Settings. Re-enable to share memory with external CLIs.",
     "failed_notice": "IJFW install failed. Visit the Memory page in Wayland to retry."
+  },
+  "home": {
+    "_comment": "TODO: i18n Wave 6 followup translate -- all memory.home.* keys land English-only in this commit",
+    "wiki_title": "Wiki",
+    "wiki_empty": "No wiki entries yet",
+    "links_title": "Recent links",
+    "links_empty": "No relationships yet",
+    "promote_title": "Ready to promote",
+    "promote_empty": "No candidates ready",
+    "promote_button": "Promote",
+    "promote_success": "Promoted to wiki"
+  },
+  "search": {
+    "_comment": "TODO: i18n Wave 6 followup translate -- all memory.search.* keys land English-only in this commit",
+    "placeholder": "Ask anything memory knows about your work",
+    "examples_title": "Try one of these to get started:",
+    "example_1": "What's the auth stack we settled on?",
+    "example_2": "What broke in the last deploy?",
+    "example_3": "Which assistant handles cron scheduling?",
+    "citation_stub": "Citation navigation coming in Wave 6"
+  },
+  "promotions": {
+    "_comment": "TODO: i18n Wave 6 followup translate -- all memory.promotions.* keys land English-only in this commit",
+    "title": "Pending promotion to wiki",
+    "refresh": "Refresh",
+    "empty": "Nothing waiting. New facts will appear here when they're ready to promote.",
+    "promote": "Promote",
+    "skip": "Skip",
+    "preview": "Preview",
+    "preview_hide": "Hide",
+    "queued_at": "Queued {{time}}",
+    "promote_success": "Promoted to wiki.",
+    "promote_error": "Couldn't promote that one. Try again.",
+    "skip_success": "Skipped.",
+    "skip_error": "Couldn't skip that one. Try again."
+  },
+  "conflicts": {
+    "_comment": "TODO: i18n Wave 6 followup translate -- all memory.conflicts.* keys land English-only in this commit",
+    "empty": "No conflicts detected. Memory is consistent.",
+    "keep_this": "Keep this",
+    "resolve_success": "Conflict resolved"
+  },
+  "wiki": {
+    "_comment": "TODO: i18n Wave 6 followup translate -- all memory.wiki.* keys land English-only in this commit",
+    "list_empty": "No wiki entries yet. Promote a memory to start.",
+    "select_prompt": "Select an entry to view its content.",
+    "promote": "Promote",
+    "export": "Export",
+    "share_readme": "Share README",
+    "promote_ok": "Promoted to wiki",
+    "promote_err": "Couldn't promote the entry",
+    "export_queued": "Export queued -- Wave 6 wires download",
+    "export_err": "Couldn't export the entry",
+    "share_ok": "README share queued",
+    "share_err": "Couldn't share README"
+  },
+  "crossProject": {
+    "_comment": "TODO: i18n Wave 6 followup translate -- all memory.crossProject.* keys land English-only in this commit",
+    "scope_label_app": "Searching: All projects (app scope)",
+    "scope_label_project": "Searching: {{project}} (project scope)",
+    "search_placeholder": "Search memories across projects",
+    "search_button": "Search",
+    "toggle_label": "Include other projects",
+    "prompt_empty": "Enter a query to search across project brains.",
+    "results_empty": "No matches across the searched scope.",
+    "navigation_stub": "Cross-project navigation coming in Wave 6"
+  },
+  "drop": {
+    "_comment": "TODO: i18n Wave 6 followup translate -- all memory.drop.* keys land English-only in this commit",
+    "zone_title": "Drop files here",
+    "zone_hint": "Markdown, text, JSON, YAML, CSV. Max 50MB. Max 20 files queued.",
+    "browse_button": "Browse",
+    "queue_title": "Queued files",
+    "queue_empty": "No files queued",
+    "quarantine_button": "Quarantine",
+    "ingest_success": "Queued {{name}}",
+    "quarantine_success": "Quarantined {{name}}"
   }
 }
