@@ -156,16 +156,42 @@ describe('ijfwBridge', () => {
       expect(result.errorReason).toBe('validation_failed');
     });
 
-    it('short-circuits with errorReason unavailable when mode is degraded', async () => {
-      mcpGetModeSpy.mockReturnValueOnce('degraded');
+    // Wave 7 H1: the bridge no longer short-circuits on degraded mode. It
+    // delegates to `ijfwMcpClient.invoke()`, which calls `ensureSpawned()` on
+    // every call and respawns the child when it has been nulled by a crash /
+    // decode-error / stdin-write-error path. Previously the bridge-level gate
+    // ran BEFORE invoke() could attempt a respawn, so one crash permanently
+    // trapped the client.
+    it('forwards invocation to ijfwMcpClient even when mode reads as degraded (H1)', async () => {
+      // Bridge must no longer consult getMode() before invoke(). Verify by
+      // never queueing a getMode response — if the bridge gate were still
+      // present it would call getMode() (default 'full') and pass, but we
+      // also assert getMode was NEVER called from the brainInvoke path.
+      mcpGetModeSpy.mockClear();
+      const handler = providers.get('brainInvoke')!;
+      const result = (await handler({ verb: 'think', args: { query: 'hi' } })) as {
+        ok: boolean;
+        errorReason?: string;
+      };
+      expect(result.ok).toBe(true);
+      expect(mcpInvokeSpy).toHaveBeenCalledWith('think', { query: 'hi' });
+      expect(mcpGetModeSpy).not.toHaveBeenCalled();
+    });
+
+    it('surfaces spawn_error from invoke when respawn fails (H1)', async () => {
+      mcpInvokeSpy.mockResolvedValueOnce({
+        ok: false,
+        error: 'entry not found',
+        errorReason: 'spawn_error' as const,
+      });
       const handler = providers.get('brainInvoke')!;
       const result = (await handler({ verb: 'think', args: { query: 'hi' } })) as {
         ok: boolean;
         errorReason?: string;
       };
       expect(result.ok).toBe(false);
-      expect(result.errorReason).toBe('unavailable');
-      expect(mcpInvokeSpy).not.toHaveBeenCalled();
+      expect(result.errorReason).toBe('spawn_error');
+      expect(mcpInvokeSpy).toHaveBeenCalledTimes(1);
     });
 
     it('rejects envelope with missing verb', async () => {

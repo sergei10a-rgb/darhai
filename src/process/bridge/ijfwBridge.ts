@@ -31,9 +31,13 @@ export function initIjfwBridge(): void {
     if (validation.ok === false) {
       return { ok: false, error: validation.reason, errorReason: 'validation_failed' };
     }
-    if (ijfwMcpClient.getMode() === 'degraded') {
-      return { ok: false, error: 'IJFW MCP client unavailable', errorReason: 'unavailable' };
-    }
+    // Wave 7 H1: do NOT short-circuit on `getMode() === 'degraded'` here.
+    // The prior gate trapped the client permanently after one crash because
+    // it ran BEFORE `invoke()` had a chance to call `ensureSpawned()` and
+    // attempt a respawn. `ijfwMcpClient.invoke()` now owns its own lifecycle:
+    // ensureSpawned() respawns when child is null, returns a structured
+    // {ok:false, errorReason:'spawn_error'} when respawn fails, and flips
+    // mode back to 'full' on success. The bridge stays a thin pass-through.
     return ijfwMcpClient.invoke(validation.verb, validation.args);
   });
 

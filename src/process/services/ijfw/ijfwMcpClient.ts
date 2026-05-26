@@ -26,6 +26,9 @@ import type { IjfwErrorReason, IjfwInvokeResult } from '@/common/types/ijfw';
 
 const DEFAULT_TIMEOUT_MS = 30_000;
 const SHUTDOWN_DEFAULT_MS = 5_000;
+// Wave 7 H1: respawn backoff. Prevents thrashing if entry resolution / fork
+// fail repeatedly (missing install, bad permissions, syntax error in entry).
+const RESPAWN_BACKOFF_MS = 5_000;
 
 type PendingHandler = {
   resolve: (value: IjfwInvokeResult) => void;
@@ -55,6 +58,10 @@ class IjfwMcpClient {
   // crash/exit, stdin write failure).
   private mode: RuntimeMode = 'full';
   private exitWaiters: Array<() => void> = [];
+  // Wave 7 H1: epoch-millis of the last failed spawn attempt. ensureSpawned()
+  // refuses to respawn within RESPAWN_BACKOFF_MS of this timestamp so a
+  // permanently-broken install doesn't fork a child on every invoke().
+  private lastSpawnFailureAt: number = 0;
 
   getMode(): RuntimeMode {
     return this.mode;
@@ -180,19 +187,33 @@ class IjfwMcpClient {
     this.childPromise = null;
     // Checkpoint B B1: reset to `full` (optimistic) — matches initial state.
     this.mode = 'full';
+    // Wave 7 H1: clear backoff so tests can attempt fresh spawns.
+    this.lastSpawnFailureAt = 0;
   }
 
   private async ensureSpawned(): Promise<ChildProcess | null> {
     if (this.child) return this.child;
     if (this.childPromise) return this.childPromise;
+    // Wave 7 H1: backoff. Don't refork within RESPAWN_BACKOFF_MS of the last
+    // failed spawn. Without this, a permanently-broken install would attempt
+    // a fresh spawn on every invoke() and burn CPU on resolveEntry()/spawn()
+    // until the user uninstalls.
+    const sinceLastFailure = Date.now() - this.lastSpawnFailureAt;
+    if (this.lastSpawnFailureAt > 0 && sinceLastFailure < RESPAWN_BACKOFF_MS) {
+      throw new Error(
+        `IJFW MCP respawn backoff active (${RESPAWN_BACKOFF_MS - sinceLastFailure}ms remaining)`,
+      );
+    }
     this.childPromise = this.spawnChild()
       .then((child) => {
         this.child = child;
         this.mode = child ? 'full' : 'degraded';
+        if (child) this.lastSpawnFailureAt = 0;
         return child;
       })
       .catch((err) => {
         this.mode = 'degraded';
+        this.lastSpawnFailureAt = Date.now();
         throw err;
       })
       .finally(() => {
