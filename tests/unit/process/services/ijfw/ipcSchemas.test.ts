@@ -27,7 +27,10 @@ import {
   MAX_ARGS_BYTES,
   jsonRpcResponseSchema,
   validateInvocation,
+  ijfwErrorReasonSchema,
+  brainInvokeArgsSchema,
 } from '@process/services/ijfw/ipcSchemas';
+import { IJFW_ERROR_REASONS } from '@/common/types/ijfw';
 
 describe('ijfw/ipcSchemas', () => {
   describe('verb allowlist', () => {
@@ -185,6 +188,35 @@ describe('ijfw/ipcSchemas', () => {
       expect(jsonRpcResponseSchema.safeParse({ jsonrpc: '1.0', id: 1, result: {} }).success).toBe(
         false,
       );
+    });
+  });
+
+  describe('ijfwErrorReasonSchema', () => {
+    it('accepts every IJFW_ERROR_REASONS entry', () => {
+      for (const reason of IJFW_ERROR_REASONS) {
+        expect(ijfwErrorReasonSchema.safeParse(reason).success).toBe(true);
+      }
+    });
+    it('rejects unknown reasons', () => {
+      expect(ijfwErrorReasonSchema.safeParse('nonsense').success).toBe(false);
+    });
+  });
+
+  describe('brainInvokeArgsSchema', () => {
+    it('accepts a valid invocation envelope', () => {
+      const parsed = brainInvokeArgsSchema.safeParse({ verb: 'think', args: { query: 'hi' } });
+      expect(parsed.success).toBe(true);
+    });
+    it('accepts a verb with no args', () => {
+      expect(brainInvokeArgsSchema.safeParse({ verb: 'wiki.shareReadme' }).success).toBe(true);
+    });
+    it('rejects empty verb', () => {
+      expect(brainInvokeArgsSchema.safeParse({ verb: '', args: {} }).success).toBe(false);
+    });
+    it('rejects extra top-level keys (strict)', () => {
+      expect(
+        brainInvokeArgsSchema.safeParse({ verb: 'think', args: {}, evil: true }).success,
+      ).toBe(false);
     });
   });
 });

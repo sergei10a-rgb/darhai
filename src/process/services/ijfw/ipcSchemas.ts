@@ -11,6 +11,7 @@
 import * as path from 'node:path';
 import { app } from 'electron';
 import { z } from 'zod';
+import { IJFW_ERROR_REASONS, type IjfwErrorReason } from '@/common/types/ijfw';
 
 export const ALLOWED_VERBS = [
   'think',
@@ -123,3 +124,19 @@ export const jsonRpcResponseSchema = z
   .strict();
 
 export type JsonRpcResponse = z.infer<typeof jsonRpcResponseSchema>;
+
+// Standardized errorReason enum (mirrors @/common/types/ijfw IjfwErrorReason).
+export const ijfwErrorReasonSchema = z.enum(
+  IJFW_ERROR_REASONS as unknown as readonly [IjfwErrorReason, ...IjfwErrorReason[]],
+);
+
+// Renderer → main argument schema for `brain.invoke`. Pre-flight only — the
+// real validation happens via `validateInvocation` against the per-verb schema.
+export const brainInvokeArgsSchema = z
+  .object({
+    verb: z.string().min(1).max(200),
+    args: z.record(z.string(), z.unknown()).optional(),
+  })
+  .strict();
+
+export type BrainInvokeArgs = z.infer<typeof brainInvokeArgsSchema>;

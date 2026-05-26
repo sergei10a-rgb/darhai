@@ -16,6 +16,11 @@ import type { SlashCommandItem } from '../chat/slash/types';
 import type { IMcpServer, IProvider, TChatConversation, TProviderWithModel, ICssTheme } from '../config/storage';
 import type { PreviewHistoryTarget, PreviewSnapshotInfo } from '../types/preview';
 import type {
+  IjfwErrorReason,
+  IjfwInvokeResult,
+  IjfwRuntimeModePublic,
+} from '../types/ijfw';
+import type {
   UpdateCheckRequest,
   UpdateCheckResult,
   UpdateDownloadProgressEvent,
@@ -1434,7 +1439,7 @@ export type IjfwStatusPayload = {
   status: IjfwLifecycleStatus;
   version?: string;
   reason?: string;
-  errorReason?: string;
+  errorReason?: IjfwErrorReason;
   stderr?: string;
   offline?: boolean;
 };
@@ -1442,6 +1447,23 @@ export type IjfwStatusPayload = {
 export const ijfw = {
   /** Lifecycle event for the local IJFW install (detection → install → activation). */
   onStatusChanged: buildEmitter<IjfwStatusPayload>('ijfw.status-changed'),
+  /** Invoke a memory verb on the local IJFW MCP server (Wave 2). */
+  brainInvoke: buildProvider<
+    IjfwInvokeResult,
+    { verb: string; args?: Record<string, unknown> }
+  >('ijfw.brain-invoke'),
+  /** Snapshot of the current lifecycle status. */
+  getStatus: buildProvider<IjfwStatusPayload, void>('ijfw.get-status'),
+  /** Refresh the version cache without installing. */
+  checkNow: buildProvider<{ ok: true; version: string | null } | { ok: false; error: string }, void>(
+    'ijfw.check-now'
+  ),
+  /** Fire bootstrap immediately — wired to the renderer "Install" button. */
+  triggerInstall: buildProvider<{ ok: true } | { ok: false; error: string }, void>('ijfw.trigger-install'),
+  /** Persist the Settings opt-out flag. */
+  skipSetup: buildProvider<{ ok: true }, { enabled: boolean }>('ijfw.skip-setup'),
+  /** Returns whether the MCP client is reachable (`full`) or short-circuiting (`degraded`). */
+  getRuntimeMode: buildProvider<IjfwRuntimeModePublic, void>('ijfw.get-runtime-mode'),
 };
 
 // --- Models & Providers redesign (Wave 0 contract) ------------------------
