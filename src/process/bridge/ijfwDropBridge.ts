@@ -51,18 +51,17 @@ function fail(reason: string, errorReason: IjfwErrorReason = 'validation_failed'
 }
 
 /**
- * Active project containment — Wave 2 uses cwd + home dir as the trust roots.
- * Wave 6 will extend this with the recent-workspaces store. The check uses
- * `path.relative` so a resolved path under one of the roots is accepted.
+ * Active project containment — Checkpoint B H2: narrowed to `process.cwd()`
+ * only for v0.6.3. The previous policy accepted any file under `$HOME` which
+ * exposed SSH keys, ~/.aws/credentials, browser cookie stores, etc.
+ *
+ * TODO v0.6.4: extend to the recent-workspaces store so users can drop files
+ * from any of their tracked projects, not just the current one.
  */
 function isUnderTrustedRoot(absPath: string): boolean {
-  const home = os.homedir();
   const projectRoot = process.cwd();
-  for (const root of [home, projectRoot]) {
-    const rel = path.relative(root, absPath);
-    if (rel !== '' && !rel.startsWith('..') && !path.isAbsolute(rel)) return true;
-  }
-  return false;
+  const rel = path.relative(projectRoot, absPath);
+  return rel !== '' && !rel.startsWith('..') && !path.isAbsolute(rel);
 }
 
 async function listImpl(): Promise<{ files: Array<{ name: string; size: number; mtimeMs: number }> }> {

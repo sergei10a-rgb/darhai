@@ -53,21 +53,35 @@ vi.mock('@/common', () => ({
 // eslint-disable-next-line import/first
 import { initIjfwDropBridge } from '@process/bridge/ijfwDropBridge';
 
+let originalCwd: string;
+let tmpCwd: string;
+
 beforeEach(() => {
-  tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), 'ijfw-drop-test-'));
+  // Use realpath so macOS `/var/folders` (a symlink to `/private/var/folders`)
+  // doesn't break the cwd-containment check inside the bridge.
+  tmpHome = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'ijfw-drop-test-')));
   // Checkpoint B B3: dump lives under `.ijfw/dump` (dot-prefix), not `ijfw/dump`.
   tmpDump = path.join(tmpHome, '.ijfw', 'dump');
   fs.mkdirSync(tmpDump, { recursive: true });
+  // Checkpoint B H2: trusted root narrowed to process.cwd(). The tests chdir
+  // into a project-shaped tmp dir so source files written via writeSource
+  // sit under cwd and pass the containment check.
+  originalCwd = process.cwd();
+  tmpCwd = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'ijfw-drop-cwd-')));
+  process.chdir(tmpCwd);
   providers.clear();
   initIjfwDropBridge();
 });
 
 afterEach(() => {
+  process.chdir(originalCwd);
   fs.rmSync(tmpHome, { recursive: true, force: true });
+  fs.rmSync(tmpCwd, { recursive: true, force: true });
 });
 
 function writeSource(name: string, body: string): string {
-  const p = path.join(tmpHome, name);
+  // Sources land under cwd (the trusted root) so they pass H2 containment.
+  const p = path.join(tmpCwd, name);
   fs.writeFileSync(p, body);
   return p;
 }
@@ -130,7 +144,7 @@ describe('ijfwDropBridge', () => {
 
     it('rejects symlinks', async () => {
       const real = writeSource('real.md', 'hi');
-      const linkPath = path.join(tmpHome, 'link.md');
+      const linkPath = path.join(tmpCwd, 'link.md');
       fs.symlinkSync(real, linkPath);
       const handler = providers.get('dropIngest')!;
       const result = (await handler({ path: linkPath })) as {
@@ -142,7 +156,7 @@ describe('ijfwDropBridge', () => {
     });
 
     it('rejects files larger than 50MB', async () => {
-      const huge = path.join(tmpHome, 'huge.json');
+      const huge = path.join(tmpCwd, 'huge.json');
       // Pretend the file is too large by writing a smaller file, then mocking
       // via stat… easier: write a 51MB sparse file via truncate.
       const fd = fs.openSync(huge, 'w');
@@ -179,9 +193,25 @@ describe('ijfwDropBridge', () => {
       expect(result.errorReason).toBe('validation_failed');
     });
 
+    it('Checkpoint B H2: rejects file under $HOME that is not under cwd', async () => {
+      // Pre-H2 this would have been accepted (HOME was a trusted root). The
+      // narrowed policy must reject it. We use the mocked-home tmpHome.
+      const homeFile = path.join(tmpHome, 'secret.md');
+      fs.writeFileSync(homeFile, 'sensitive');
+      const handler = providers.get('dropIngest')!;
+      const result = (await handler({ path: homeFile })) as {
+        ok: boolean;
+        errorReason?: string;
+        error?: string;
+      };
+      expect(result.ok).toBe(false);
+      expect(result.errorReason).toBe('validation_failed');
+      expect(result.error).toMatch(/outside trusted roots/);
+    });
+
     it('rejects nonexistent file', async () => {
       const handler = providers.get('dropIngest')!;
-      const result = (await handler({ path: path.join(tmpHome, 'missing.md') })) as {
+      const result = (await handler({ path: path.join(tmpCwd, 'missing.md') })) as {
         ok: boolean;
         errorReason?: string;
       };
