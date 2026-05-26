@@ -151,6 +151,18 @@ describe('ijfw/ipcSchemas', () => {
     });
   });
 
+  describe('Wave 7 B2: wiki.get accepts list-mode invocation', () => {
+    it('accepts {} (list-mode used by HomeTab + WikiTab)', () => {
+      expect(validateInvocation('wiki.get', {}).ok).toBe(true);
+    });
+    it('still accepts {slug} (detail-mode)', () => {
+      expect(validateInvocation('wiki.get', { slug: 'memory' }).ok).toBe(true);
+    });
+    it('rejects malformed slug even when optional', () => {
+      expect(validateInvocation('wiki.get', { slug: 'BadSlug' }).ok).toBe(false);
+    });
+  });
+
   describe('Wave 7 B1: conflict.resolve accepts ConflictsTab arg shape', () => {
     it('accepts {conflictId, winnerVariantId}', () => {
       const result = validateInvocation('conflict.resolve', {

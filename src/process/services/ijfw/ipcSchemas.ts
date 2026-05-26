@@ -81,7 +81,10 @@ const memoryStoreContentSchema = z
 export const verbSchemas: Record<IjfwVerb, z.ZodTypeAny> = {
   think: z.object({ query: queryStringSchema, k: z.number().int().min(1).max(50).optional() }).passthrough(),
   links: z.object({ of: slugSchema }),
-  'wiki.get': z.object({ slug: slugSchema }),
+  // Wave 7 B2: slug is optional — HomeTab + WikiTab call wiki.get with `{}`
+  // to fetch the entry list. Detail-mode (with slug) still works for
+  // single-entry compile reads.
+  'wiki.get': z.object({ slug: slugSchema.optional() }).passthrough(),
   'wiki.compile': z.object({
     subject: z.string().min(1).max(500),
     type: z.enum(COMPILE_TYPES).optional(),
