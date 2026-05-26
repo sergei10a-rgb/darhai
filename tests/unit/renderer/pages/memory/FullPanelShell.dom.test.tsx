@@ -121,28 +121,14 @@ describe('FullPanelShell', () => {
     expect(screen.getByTestId('memory-tab-drop')).toBeTruthy();
   });
 
-  it('each stub tab renders its translated label as placeholder copy when active', () => {
-    // Arco Tabs lazyloads by default -- only the active pane's children
-    // mount, so we hop through each tab via the URL and assert the stub
-    // content matches its tab label.
-    const cases: Array<{ tab: string; testId: string; label: string }> = [
-      { tab: 'home', testId: 'memory-tab-home', label: 'memory.panel.tab_home' },
-      { tab: 'search', testId: 'memory-tab-search', label: 'memory.panel.tab_search' },
-      { tab: 'wiki', testId: 'memory-tab-wiki', label: 'memory.panel.tab_wiki' },
-      { tab: 'promotions', testId: 'memory-tab-promotions', label: 'memory.panel.tab_promotions' },
-      { tab: 'drop', testId: 'memory-tab-drop', label: 'memory.panel.tab_drop' },
-      { tab: 'conflicts', testId: 'memory-tab-conflicts', label: 'memory.panel.tab_conflicts' },
-      { tab: 'cross_project', testId: 'memory-tab-cross-project', label: 'memory.panel.tab_cross_project' },
-    ];
-    for (const c of cases) {
-      const { unmount } = renderShell([`/memory?tab=${c.tab}`]);
-      const stub = screen.getByTestId(c.testId);
-      expect(stub.textContent).toContain(c.label);
-      unmount();
-    }
-  });
+  // OBSOLETE — Wave 5 replaced the Wave 4e tab stubs with real production
+  // components (HomeTab, SearchTab, WikiTab, PromotionsTab, DropTab,
+  // ConflictsTab, CrossProjectTab). Each has its own dedicated dom test
+  // suite in this directory. The FullPanelShell still verifies tab routing
+  // via the test cases above and below; per-tab content is verified by
+  // each tab's own *.dom.test.tsx.
 
-  it('fires a Message.info stub when the header History button is clicked', () => {
+it('fires a Message.info stub when the header History button is clicked', () => {
     renderShell();
     fireEvent.click(screen.getByTestId('memory-full-panel-button-history'));
     expect(messageInfoSpy).toHaveBeenCalledTimes(1);
