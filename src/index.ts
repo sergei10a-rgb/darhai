@@ -444,6 +444,36 @@ const createWindow = ({ showOnReady = true }: { showOnReady?: boolean } = {}): v
     console.log('[Wayland] Auto-updater disabled via env/CI guard');
   }
 
+  // Initialize IJFW system service (skip when disabled via env, e.g. E2E / CI / explicit opt-out)
+  // 初始化 IJFW 系统服务（环境变量禁用时跳过）
+  const disableIjfw =
+    isCiRuntime ||
+    process.env.WAYLAND_DISABLE_IJFW === '1' ||
+    process.env.WAYLAND_E2E_TEST === '1';
+  if (!disableIjfw) {
+    import('./process/services/ijfwSystemService')
+      .then(async ({ ijfwSystemService }) => {
+        // Activate any .pending tree from a previous boot BEFORE bootstrap, so a
+        // staged upgrade lands first and the live mcp-server is current.
+        try {
+          await ijfwSystemService.applyPendingUpgrade();
+        } catch (err) {
+          console.error('[Wayland] ijfw applyPendingUpgrade failed:', err);
+        }
+        // Defer bootstrap by 5s so first-paint is not blocked by npm view.
+        setTimeout(() => {
+          void ijfwSystemService.bootstrap().catch((err) => {
+            console.error('[Wayland] ijfw bootstrap failed:', err);
+          });
+        }, 5000);
+      })
+      .catch((error) => {
+        console.error('[Wayland] Failed to initialize ijfwSystemService:', error);
+      });
+  } else {
+    console.log('[Wayland] IJFW system service disabled via env/CI guard');
+  }
+
   // Load the renderer: dev server URL in development, built HTML file in production
   const rendererUrl = process.env['ELECTRON_RENDERER_URL'];
   const fallbackFile = path.join(__dirname, '../renderer/index.html');
