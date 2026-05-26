@@ -203,7 +203,9 @@ describe('ijfwMcpClient', () => {
 
   it('child crash flips mode to degraded and rejects pending requests', async () => {
     const { ijfwMcpClient } = await loadClient();
-    expect(ijfwMcpClient.getMode()).toBe('degraded'); // no spawn yet
+    // Checkpoint B B1: initial mode is `full` (optimistic) — only flips to
+    // `degraded` after a real failure.
+    expect(ijfwMcpClient.getMode()).toBe('full');
 
     const promise = ijfwMcpClient.invoke('memory_recall', {});
     await new Promise((r) => setImmediate(r));
@@ -216,6 +218,27 @@ describe('ijfwMcpClient', () => {
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.errorReason).toBe('mcp_crashed');
     expect(ijfwMcpClient.getMode()).toBe('degraded');
+  });
+
+  it('initial mode is `full` so brain.invoke is not dead-on-arrival (Checkpoint B B1)', async () => {
+    // Regression test for the B1 BLOCKER: prior behavior initialized mode to
+    // `degraded`, causing the bridge gate to short-circuit every first call
+    // before ensureSpawned() ran. Initial state must now be `full` so the
+    // gate does not block fresh installs.
+    const { ijfwMcpClient } = await loadClient();
+    expect(ijfwMcpClient.getMode()).toBe('full');
+
+    // And after a successful invoke, it remains `full`.
+    const promise = ijfwMcpClient.invoke('memory_recall', { q: 'hi' });
+    await new Promise((r) => setImmediate(r));
+    const written = JSON.parse(currentChild!.writes[0]!.toString().trim());
+    currentChild!.stdout.emit(
+      'data',
+      Buffer.from(encodeNewline({ jsonrpc: '2.0', id: written.id, result: { ok: true } })),
+    );
+    const result = await promise;
+    expect(result.ok).toBe(true);
+    expect(ijfwMcpClient.getMode()).toBe('full');
   });
 
   it('shutdown sends SIGTERM and waits for exit', async () => {

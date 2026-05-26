@@ -48,7 +48,12 @@ class IjfwMcpClient {
   private writeQueue: WriteQueueItem[] = [];
   private writing = false;
   private nextId = 1;
-  private mode: RuntimeMode = 'degraded';
+  // Checkpoint B B1: initial mode is `full` (optimistic). The previous
+  // `degraded` default made every first `brain.invoke` short-circuit at the
+  // bridge gate before `ensureSpawned()` ever ran — dead on arrival. We only
+  // flip to `degraded` on a real failure (spawn error, decode error, child
+  // crash/exit, stdin write failure).
+  private mode: RuntimeMode = 'full';
   private exitWaiters: Array<() => void> = [];
 
   getMode(): RuntimeMode {
@@ -159,7 +164,8 @@ class IjfwMcpClient {
     }
     this.child = null;
     this.childPromise = null;
-    this.mode = 'degraded';
+    // Checkpoint B B1: reset to `full` (optimistic) — matches initial state.
+    this.mode = 'full';
   }
 
   private async ensureSpawned(): Promise<ChildProcess | null> {
