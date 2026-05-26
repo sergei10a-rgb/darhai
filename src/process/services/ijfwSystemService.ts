@@ -510,7 +510,16 @@ async function spawnTestVerify(mcpServerDir: string): Promise<boolean> {
             return;
           }
           const result = parsed.data.result as { tools?: Array<{ name?: string }> } | undefined;
-          if (result && Array.isArray(result.tools) && result.tools.some((t) => t.name === 'ijfw_brain')) {
+          // Verify the spawned MCP server identifies as IJFW by exposing at least
+          // one tool in the `ijfw_` namespace. Live verification against IJFW v1.5.0
+          // showed the install exposes 13 tools (ijfw_memory_recall, ijfw_run, ijfw_state, …)
+          // and no single canonical tool we could hard-pin to. Checking for the
+          // namespace prefix is robust to tool inventory drift across IJFW versions.
+          if (
+            result &&
+            Array.isArray(result.tools) &&
+            result.tools.some((t) => typeof t.name === 'string' && t.name.startsWith('ijfw_'))
+          ) {
             settle(true);
             return;
           }

@@ -60,7 +60,11 @@ vi.mock('node:child_process', async () => {
   };
 });
 
-/** Build a fake child that emits a tools/list response containing ijfw_brain. */
+/**
+ * Build a fake child that emits a tools/list response containing a tool in the
+ * `ijfw_` namespace. Real IJFW v1.5.0 exposes 13 tools — we verify by namespace
+ * prefix rather than hard-coded canonical tool name (see spawnTestVerify).
+ */
 function makeSpawnTestSuccessChild() {
   const child = new EventEmitter() as EventEmitter & {
     stdout: EventEmitter;
@@ -77,7 +81,7 @@ function makeSpawnTestSuccessChild() {
         const response = {
           jsonrpc: '2.0',
           id: 1,
-          result: { tools: [{ name: 'ijfw_brain' }, { name: 'other' }] },
+          result: { tools: [{ name: 'ijfw_memory_recall' }, { name: 'ijfw_state' }, { name: 'other' }] },
         };
         child.stdout.emit('data', Buffer.from(JSON.stringify(response) + '\n'));
       });
