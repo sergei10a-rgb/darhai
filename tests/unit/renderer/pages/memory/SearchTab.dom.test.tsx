@@ -186,4 +186,19 @@ describe('SearchTab', () => {
     expect(messageInfoSpy).toHaveBeenCalledTimes(1);
     expect(messageInfoSpy).toHaveBeenCalledWith('memory.search.citation_stub');
   });
+
+  // Wave 7 H3: enforce AGENTS.md UI library convention — no raw interactive
+  // HTML (<button>, <input>, <select>, ...) in renderer components. Wrap
+  // every interactive control in @arco-design/web-react. Arco's <Button>
+  // renders a <button class="arco-btn ..."> so the regression test asserts
+  // every <button> in this tab carries the arco class prefix.
+  it('Wave 7 H3: every example chip is an Arco Button (no raw <button>)', () => {
+    brainInvokeMock.mockReturnValue(new Promise(() => {}));
+    render(<SearchTab />);
+    const buttons = document.querySelectorAll('button');
+    expect(buttons.length).toBeGreaterThan(0);
+    for (const btn of Array.from(buttons)) {
+      expect(btn.className).toMatch(/arco-btn/);
+    }
+  });
 });

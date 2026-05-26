@@ -258,4 +258,32 @@ describe('WikiTab', () => {
       expect(calls).toContain('wiki.export');
     });
   });
+
+  // Wave 7 H3: AGENTS.md UI library convention — wiki entry rows must be
+  // Arco Buttons, not raw <button>. Arco renders <button class="arco-btn ...">.
+  it('Wave 7 H3: wiki entry rows are Arco Buttons (no raw <button>)', async () => {
+    brainInvokeMock.mockImplementation(async ({ verb }) => {
+      if (verb === 'wiki.get') {
+        return {
+          ok: true,
+          data: {
+            entries: [
+              { slug: 'auth-stack', title: 'Auth stack decision', updatedAt: 1 },
+            ],
+          },
+        };
+      }
+      return { ok: true, data: { markdown: '', meta: { compiled: true, promotedAt: 0 } } };
+    });
+
+    renderTab();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('wiki-list-row-auth-stack')).toBeTruthy();
+    });
+
+    const row = screen.getByTestId('wiki-list-row-auth-stack');
+    expect(row.tagName.toLowerCase()).toBe('button');
+    expect(row.className).toMatch(/arco-btn/);
+  });
 });

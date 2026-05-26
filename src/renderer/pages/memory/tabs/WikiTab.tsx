@@ -273,8 +273,9 @@ const WikiTab: React.FC = () => {
               {data.entries.map((entry) => {
                 const isActive = entry.slug === activeSlug;
                 return (
-                  <button
-                    type='button'
+                  <Button
+                    type='text'
+                    size='mini'
                     key={entry.slug}
                     onClick={() => selectEntry(entry.slug)}
                     className={`${styles.listRow} ${isActive === true ? styles.listRowActive : ''}`}
@@ -285,7 +286,7 @@ const WikiTab: React.FC = () => {
                       <BookOpen size={12} aria-hidden style={{ marginRight: 6, verticalAlign: 'middle' }} />
                       {entry.title}
                     </span>
-                  </button>
+                  </Button>
                 );
               })}
             </>

@@ -15,7 +15,7 @@
  */
 
 import React, { useState } from 'react';
-import { Input, Message } from '@arco-design/web-react';
+import { Button, Input, Message } from '@arco-design/web-react';
 import { Link as LinkIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useIjfwBrain } from '../hooks/useIjfwBrain';
@@ -52,8 +52,9 @@ const SearchResultPanel: React.FC<SearchResultPanelProps> = ({ query, onCitation
           {data.citations.length > 0 ? (
             <div className={styles.citations} data-testid='memory-search-citations'>
               {data.citations.map((citation, idx) => (
-                <button
-                  type='button'
+                <Button
+                  type='text'
+                  size='mini'
                   key={`${citation.source}-${idx}`}
                   data-testid='memory-search-citation'
                   className={styles.citationBadge}
@@ -63,7 +64,7 @@ const SearchResultPanel: React.FC<SearchResultPanelProps> = ({ query, onCitation
                 >
                   <LinkIcon size={12} aria-hidden />
                   <span className={styles.citationText}>{citation.source}</span>
-                </button>
+                </Button>
               ))}
             </div>
           ) : null}
@@ -115,15 +116,16 @@ const SearchTab: React.FC = () => {
             {EXAMPLE_KEYS.map((key) => {
               const text = t(`memory.search.${key}`);
               return (
-                <button
-                  type='button'
+                <Button
+                  type='text'
+                  size='mini'
                   key={key}
                   data-testid={`memory-search-example-${key}`}
                   className={styles.exampleChip}
                   onClick={() => handleExampleClick(text)}
                 >
                   {text}
-                </button>
+                </Button>
               );
             })}
           </div>
