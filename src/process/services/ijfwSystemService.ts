@@ -29,6 +29,7 @@ import log from 'electron-log';
 import { app } from 'electron';
 import { ipcBridge } from '@/common';
 import type { IjfwLifecycleStatus, IjfwStatusPayload } from '@/common/adapter/ipcBridge';
+import type { IjfwErrorReason } from '@/common/types/ijfw';
 import { buildChildEnv } from '@process/services/ijfw/envAllowlist';
 import { safeSpawn } from '@process/services/ijfw/safeSpawn';
 import { writeAtomic, moveWithExdevFallback, ijfwCacheKey } from '@process/services/ijfw/atomicFile';
@@ -568,6 +569,22 @@ async function applyPendingUpgradeImpl(): Promise<void> {
   const pending = path.join(home, '.ijfw', 'mcp-server.pending');
   const previous = path.join(home, '.ijfw', 'mcp-server.prev');
 
+  // Wave 7 H2: every install_failed exit MUST sync the prelude so the on-disk
+  // `~/.ijfw/PRELUDE` marker matches the emitted status. Without this, the
+  // prelude stays in `installing` / `upgrading` state after a failed upgrade
+  // and the next boot reads a stale optimistic state. Helper centralizes the
+  // emit+sync so it can't be forgotten at any failure exit.
+  const failWithReason = async (
+    errorReason: IjfwErrorReason,
+    stderr?: string,
+  ): Promise<void> => {
+    const payload: IjfwStatusPayload = stderr
+      ? { status: 'install_failed', errorReason, stderr }
+      : { status: 'install_failed', errorReason };
+    emitStatus(payload);
+    await syncPrelude('install_failed');
+  };
+
   try {
     await fs.promises.stat(pending);
   } catch {
@@ -588,7 +605,7 @@ async function applyPendingUpgradeImpl(): Promise<void> {
     // SEC-010: ownership check before activation.
     if (!(await isSafelyOwned(pending)) || !(await isSafelyOwned(path.dirname(pending)))) {
       log.error('[ijfw] pending tree not safely owned — refusing to activate');
-      emitStatus({ status: 'install_failed', errorReason: 'unsafe_ownership' });
+      await failWithReason('unsafe_ownership');
       return;
     }
 
@@ -620,11 +637,7 @@ async function applyPendingUpgradeImpl(): Promise<void> {
       });
     } catch (err) {
       log.error('[ijfw] staged swap failed', { err });
-      emitStatus({
-        status: 'install_failed',
-        errorReason: 'stage_swap_failed',
-        stderr: err instanceof Error ? err.message : String(err),
-      });
+      await failWithReason('stage_swap_failed', err instanceof Error ? err.message : String(err));
       return;
     }
 
@@ -653,7 +666,7 @@ async function applyPendingUpgradeImpl(): Promise<void> {
           err,
         });
       }
-      emitStatus({ status: 'install_failed', errorReason: 'unsafe_ownership' });
+      await failWithReason('unsafe_ownership');
       return;
     }
 
@@ -682,19 +695,18 @@ async function applyPendingUpgradeImpl(): Promise<void> {
         }
       });
     } catch (err) {
-      emitStatus({
-        status: 'install_failed',
-        errorReason: 'upgrade_failed_no_rollback',
-        stderr: err instanceof Error ? err.message : String(err),
-      });
+      await failWithReason(
+        'upgrade_failed_no_rollback',
+        err instanceof Error ? err.message : String(err),
+      );
       return;
     }
 
     const rollbackOk = await spawnTestVerify(current);
     if (!rollbackOk) {
-      emitStatus({ status: 'install_failed', errorReason: 'rollback_also_failed' });
+      await failWithReason('rollback_also_failed');
     } else {
-      emitStatus({ status: 'install_failed', errorReason: 'upgrade_failed_rolled_back' });
+      await failWithReason('upgrade_failed_rolled_back');
     }
   } finally {
     await releaseLock(lockHandle);

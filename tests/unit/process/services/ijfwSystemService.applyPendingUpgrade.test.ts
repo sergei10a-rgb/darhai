@@ -290,6 +290,45 @@ describe('ijfwSystemService.applyPendingUpgrade', () => {
     expect(spawnSpy).not.toHaveBeenCalled();
   });
 
+  // Wave 7 H2: every install_failed exit MUST also sync the prelude. Without
+  // this the on-disk PRELUDE stays in an optimistic `installing` / `upgrading`
+  // state after a failed upgrade and the next boot reads stale state.
+  it('Wave 7 H2: syncs prelude on unsafe_ownership exit', async () => {
+    const realDir = path.join(tmpHome, 'evil');
+    fs.mkdirSync(realDir, { recursive: true });
+    fs.mkdirSync(path.join(tmpHome, '.ijfw'), { recursive: true });
+    fs.symlinkSync(realDir, path.join(tmpHome, '.ijfw', 'mcp-server.pending'));
+
+    await ijfwSystemService.applyPendingUpgrade();
+
+    // emit + prelude must both fire.
+    expect(emitSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 'install_failed', errorReason: 'unsafe_ownership' }),
+    );
+    expect(applyPreludeForStatusSpy).toHaveBeenCalledWith('install_failed', expect.anything());
+  });
+
+  it('Wave 7 H2: syncs prelude when spawn-test fails after rollback', async () => {
+    const current = path.join(tmpHome, '.ijfw', 'mcp-server');
+    fs.mkdirSync(current, { recursive: true });
+    fs.writeFileSync(
+      path.join(current, 'package.json'),
+      JSON.stringify({ version: '1.4.0', bin: { 'ijfw-mcp': 'src/server.js' } }),
+    );
+    fs.mkdirSync(path.join(current, 'src'), { recursive: true });
+    fs.writeFileSync(path.join(current, 'src', 'server.js'), '// old\n');
+    writePendingDir();
+    spawnSpy.mockImplementation(() => makeSpawnTestFailureChild());
+
+    await ijfwSystemService.applyPendingUpgrade();
+    for (let i = 0; i < 12; i++) await flush();
+
+    expect(emitSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 'install_failed' }),
+    );
+    expect(applyPreludeForStatusSpy).toHaveBeenCalledWith('install_failed', expect.anything());
+  });
+
   it('rolls back to .prev and emits install_failed when spawn-test fails', async () => {
     // Existing current install we will preserve.
     const current = path.join(tmpHome, '.ijfw', 'mcp-server');
