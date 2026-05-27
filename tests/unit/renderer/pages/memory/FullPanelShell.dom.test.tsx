@@ -78,6 +78,12 @@ describe('FullPanelShell', () => {
     expect(screen.getByTestId('memory-full-panel-button-add')).toBeTruthy();
   });
 
+  it('renders the IJFW + Ferrox Labs brand tagline in the header (v0.6.3 disclosure)', () => {
+    renderShell();
+    const tagline = screen.getByTestId('memory-full-panel-brand-tagline');
+    expect(tagline.textContent).toBe('memory.brand.tagline');
+  });
+
   it('renders all 7 tab labels in the tab bar', () => {
     renderShell();
     const titles = getTabTitles().map((el) => el.textContent);

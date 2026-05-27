@@ -15,11 +15,13 @@
  * "IJFW Memory".
  */
 
-import { Message, Switch, Typography } from '@arco-design/web-react';
+import { Button, Message, Switch, Typography } from '@arco-design/web-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ipcBridge } from '@/common';
 import SettingsPageWrapper from './components/SettingsPageWrapper';
+
+const IJFW_GITHUB_URL = 'https://github.com/FerroxLabs/ijfw';
 
 const IjfwSettingsPanel: React.FC = () => {
   const { t } = useTranslation();
@@ -42,6 +44,12 @@ const IjfwSettingsPanel: React.FC = () => {
     return () => {
       disposed = true;
     };
+  }, []);
+
+  const handleOpenGithub = useCallback(() => {
+    void ipcBridge.shell.openExternal.invoke(IJFW_GITHUB_URL).catch((err: unknown) => {
+      console.error('[IjfwSettingsPanel] openExternal failed:', err);
+    });
   }, []);
 
   const handleToggle = useCallback(
@@ -82,10 +90,10 @@ const IjfwSettingsPanel: React.FC = () => {
         className='flex flex-col gap-16px'
         data-testid='ijfw-settings-panel'
         role='region'
-        aria-label={t('memory.settings.panel_title', { defaultValue: 'IJFW Memory' })}
+        aria-label={t('memory.settings.panel_title', { defaultValue: 'IJFW Memory (Ferrox Labs)' })}
       >
         <Typography.Title heading={5} className='!mb-0'>
-          {t('memory.settings.panel_title', { defaultValue: 'IJFW Memory' })}
+          {t('memory.settings.panel_title', { defaultValue: 'IJFW Memory (Ferrox Labs)' })}
         </Typography.Title>
 
         <div className='flex flex-col gap-12px p-16px rd-12px bg-aou-1'>
@@ -122,6 +130,29 @@ const IjfwSettingsPanel: React.FC = () => {
           >
             npx -y @ijfw/install@latest
           </code>
+        </div>
+
+        <div
+          className='flex flex-col gap-6px p-16px rd-12px bg-aou-1'
+          data-testid='ijfw-settings-about'
+        >
+          <Typography.Text className='text-14px font-semibold'>
+            {t('memory.settings.about_title', { defaultValue: 'IJFW Memory' })}
+          </Typography.Text>
+          <Typography.Text type='secondary' className='text-12px'>
+            {t('memory.settings.about_body', {
+              defaultValue: 'An open-source persistent memory engine by Ferrox Labs.',
+            })}
+          </Typography.Text>
+          <Button
+            type='text'
+            size='small'
+            onClick={handleOpenGithub}
+            data-testid='ijfw-settings-github-link'
+            className='self-start !p-0'
+          >
+            {t('memory.brand.github_link', { defaultValue: 'github.com/FerroxLabs/ijfw' })}
+          </Button>
         </div>
       </div>
     </SettingsPageWrapper>

@@ -99,9 +99,17 @@ const FullPanelShell: React.FC = () => {
   return (
     <div className={styles.shell} data-testid='memory-full-panel' role='region' aria-label={t('memory.panel.header_breadcrumb')}>
       <header className={styles.header}>
-        <h2 className={styles.breadcrumb} data-testid='memory-full-panel-breadcrumb'>
-          {t('memory.panel.header_breadcrumb')}
-        </h2>
+        <div className={styles.headerLeft}>
+          <h2 className={styles.breadcrumb} data-testid='memory-full-panel-breadcrumb'>
+            {t('memory.panel.header_breadcrumb')}
+          </h2>
+          <span
+            className='text-12px text-t-tertiary leading-18px'
+            data-testid='memory-full-panel-brand-tagline'
+          >
+            {t('memory.brand.tagline')}
+          </span>
+        </div>
         <div className={styles.headerActions}>
           <Button
             type='text'
@@ -132,6 +140,7 @@ const FullPanelShell: React.FC = () => {
           </Button>
         </div>
       </header>
+
       <div className={styles.tabsHost}>
         <Tabs activeTab={activeTab} onChange={handleTabChange} type='line'>
           <Tabs.TabPane key='home' title={t('memory.panel.tab_home')}>

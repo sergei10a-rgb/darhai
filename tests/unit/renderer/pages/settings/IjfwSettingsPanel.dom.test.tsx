@@ -22,12 +22,14 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { IjfwStatusPayload } from '@/common/adapter/ipcBridge';
 
-const { getStatusInvoke, skipSetupInvoke, messageSuccess, messageError } = vi.hoisted(() => ({
-  getStatusInvoke: vi.fn<() => Promise<IjfwStatusPayload | undefined>>(),
-  skipSetupInvoke: vi.fn<(args: { enabled: boolean }) => Promise<{ ok: true }>>(),
-  messageSuccess: vi.fn<(msg: string) => void>(),
-  messageError: vi.fn<(msg: string) => void>(),
-}));
+const { getStatusInvoke, skipSetupInvoke, openExternalInvoke, messageSuccess, messageError } =
+  vi.hoisted(() => ({
+    getStatusInvoke: vi.fn<() => Promise<IjfwStatusPayload | undefined>>(),
+    skipSetupInvoke: vi.fn<(args: { enabled: boolean }) => Promise<{ ok: true }>>(),
+    openExternalInvoke: vi.fn<(url: string) => Promise<void>>(),
+    messageSuccess: vi.fn<(msg: string) => void>(),
+    messageError: vi.fn<(msg: string) => void>(),
+  }));
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -40,6 +42,9 @@ vi.mock('@/common', () => ({
     ijfw: {
       getStatus: { invoke: getStatusInvoke },
       skipSetup: { invoke: skipSetupInvoke },
+    },
+    shell: {
+      openExternal: { invoke: openExternalInvoke },
     },
   },
 }));
@@ -64,10 +69,12 @@ import IjfwSettingsPanel from '@renderer/pages/settings/IjfwSettingsPanel';
 beforeEach(() => {
   getStatusInvoke.mockReset();
   skipSetupInvoke.mockReset();
+  openExternalInvoke.mockReset();
   messageSuccess.mockReset();
   messageError.mockReset();
   getStatusInvoke.mockResolvedValue({ status: 'installed_current' });
   skipSetupInvoke.mockResolvedValue({ ok: true });
+  openExternalInvoke.mockResolvedValue(undefined);
 });
 
 afterEach(() => {
@@ -95,7 +102,7 @@ describe('IjfwSettingsPanel', () => {
   it('renders the title, switch, description, and manual install hint', async () => {
     render(<IjfwSettingsPanel />);
     await flushAsync();
-    expect(screen.getByText('IJFW Memory')).toBeTruthy();
+    expect(screen.getByText('IJFW Memory (Ferrox Labs)')).toBeTruthy();
     expect(screen.getByText('Skip IJFW automatic setup')).toBeTruthy();
     expect(
       screen.getByText(
@@ -156,5 +163,26 @@ describe('IjfwSettingsPanel', () => {
     await flushAsync();
     expect(messageError).toHaveBeenCalledTimes(1);
     expect(isSwitchOn()).toBe(false);
+  });
+
+  it('renders the IJFW + Ferrox Labs About section with GitHub link (v0.6.3 disclosure)', async () => {
+    render(<IjfwSettingsPanel />);
+    await flushAsync();
+    expect(screen.getByTestId('ijfw-settings-about')).toBeTruthy();
+    expect(screen.getByText('An open-source persistent memory engine by Ferrox Labs.')).toBeTruthy();
+    expect(screen.getByTestId('ijfw-settings-github-link').textContent).toContain(
+      'github.com/FerroxLabs/ijfw'
+    );
+  });
+
+  it('opens the IJFW GitHub URL via ipcBridge.shell.openExternal when the link is clicked', async () => {
+    render(<IjfwSettingsPanel />);
+    await flushAsync();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('ijfw-settings-github-link'));
+    });
+    await flushAsync();
+    expect(openExternalInvoke).toHaveBeenCalledTimes(1);
+    expect(openExternalInvoke).toHaveBeenCalledWith('https://github.com/FerroxLabs/ijfw');
   });
 });

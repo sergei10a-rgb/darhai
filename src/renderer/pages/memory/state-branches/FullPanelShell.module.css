@@ -19,6 +19,13 @@
   border-bottom: 1px solid var(--color-border-2);
 }
 
+.headerLeft {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
 .breadcrumb {
   font-size: 14px;
   font-weight: 600;
