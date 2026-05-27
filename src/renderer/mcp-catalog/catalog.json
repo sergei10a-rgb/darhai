@@ -1,7 +1,7 @@
 {
   "$schema": "./schema/catalog.schema.json",
   "version": "1.0.0",
-  "publishedAt": "2026-05-27T08:45:02.717Z",
+  "publishedAt": "2026-05-27T08:50:35.010Z",
   "entries": [
     {
       "id": "io.github.taylorwilsdon/google-workspace-mcp",
@@ -211,6 +211,312 @@
       "installRate": 0.3,
       "entryUrl": "entries/com.marcelmarais-spotify-mcp-server.json",
       "guideUrl": "guides/com.marcelmarais-spotify-mcp-server.md"
+    },
+    {
+      "id": "com.linear/linear-mcp",
+      "name": "Linear",
+      "shortDescription": "Issues, projects, cycles, and roadmaps — Linear's official hosted MCP with OAuth.",
+      "iconUrl": "icons/linear.svg",
+      "tier": "worker",
+      "categories": [
+        "productivity",
+        "tasks",
+        "developer"
+      ],
+      "maintainerType": "official",
+      "verifiedByWayland": "2026-05-12",
+      "popularityRank": 15,
+      "installRate": 0.38,
+      "entryUrl": "entries/com.linear-linear-mcp.json",
+      "guideUrl": "guides/com.linear-linear-mcp.md"
+    },
+    {
+      "id": "com.atlassian/atlassian-mcp",
+      "name": "Atlassian (Jira + Confluence)",
+      "shortDescription": "Jira issues, sprints, and Confluence pages — Atlassian's official hosted MCP with OAuth.",
+      "iconUrl": "icons/atlassian.svg",
+      "tier": "worker",
+      "categories": [
+        "productivity",
+        "tasks",
+        "knowledge"
+      ],
+      "maintainerType": "official",
+      "verifiedByWayland": "2026-05-12",
+      "popularityRank": 16,
+      "installRate": 0.36,
+      "entryUrl": "entries/com.atlassian-atlassian-mcp.json",
+      "guideUrl": "guides/com.atlassian-atlassian-mcp.md"
+    },
+    {
+      "id": "com.asana/asana-mcp",
+      "name": "Asana",
+      "shortDescription": "Tasks, projects, sections, and goals — Asana's official hosted MCP with OAuth.",
+      "iconUrl": "icons/asana.svg",
+      "tier": "worker",
+      "categories": [
+        "productivity",
+        "tasks"
+      ],
+      "maintainerType": "official",
+      "verifiedByWayland": "2026-05-12",
+      "popularityRank": 17,
+      "installRate": 0.34,
+      "entryUrl": "entries/com.asana-asana-mcp.json",
+      "guideUrl": "guides/com.asana-asana-mcp.md"
+    },
+    {
+      "id": "com.clickup/clickup-mcp",
+      "name": "ClickUp",
+      "shortDescription": "Tasks, lists, docs, and goals — ClickUp's official hosted MCP with OAuth.",
+      "iconUrl": "icons/clickup.svg",
+      "tier": "worker",
+      "categories": [
+        "productivity",
+        "tasks"
+      ],
+      "maintainerType": "official",
+      "verifiedByWayland": "2026-05-12",
+      "popularityRank": 18,
+      "installRate": 0.27,
+      "entryUrl": "entries/com.clickup-clickup-mcp.json",
+      "guideUrl": "guides/com.clickup-clickup-mcp.md"
+    },
+    {
+      "id": "com.microsoft/teams-mcp",
+      "name": "Microsoft Teams",
+      "shortDescription": "Channel messages, chats, meetings, and presence — Microsoft Teams via Graph.",
+      "iconUrl": "icons/teams.svg",
+      "tier": "worker",
+      "categories": [
+        "communication",
+        "productivity"
+      ],
+      "maintainerType": "official",
+      "verifiedByWayland": "2026-05-12",
+      "popularityRank": 19,
+      "installRate": 0.25,
+      "entryUrl": "entries/com.microsoft-teams-mcp.json",
+      "guideUrl": "guides/com.microsoft-teams-mcp.md"
+    },
+    {
+      "id": "com.saseq/discord-mcp",
+      "name": "Discord",
+      "shortDescription": "Read channel history, send messages, manage roles, and run guild operations via a Discord bot.",
+      "iconUrl": "icons/discord.svg",
+      "tier": "worker",
+      "categories": [
+        "communication"
+      ],
+      "maintainerType": "community",
+      "verifiedByWayland": "2026-05-12",
+      "popularityRank": 20,
+      "installRate": 0.22,
+      "entryUrl": "entries/com.saseq-discord-mcp.json",
+      "guideUrl": "guides/com.saseq-discord-mcp.md"
+    },
+    {
+      "id": "com.chaindead/telegram-mcp",
+      "name": "Telegram",
+      "shortDescription": "Send and read messages across chats, channels, and groups using your Telegram user account.",
+      "iconUrl": "icons/telegram.svg",
+      "tier": "worker",
+      "categories": [
+        "communication"
+      ],
+      "maintainerType": "community",
+      "verifiedByWayland": "2026-05-12",
+      "popularityRank": 21,
+      "installRate": 0.2,
+      "entryUrl": "entries/com.chaindead-telegram-mcp.json",
+      "guideUrl": "guides/com.chaindead-telegram-mcp.md"
+    },
+    {
+      "id": "com.zoom/zoom-mcp",
+      "name": "Zoom",
+      "shortDescription": "Schedule meetings, list recordings, manage chat, and read your calendar — Zoom's official hosted MCP.",
+      "iconUrl": "icons/zoom.svg",
+      "tier": "worker",
+      "categories": [
+        "communication",
+        "calendar"
+      ],
+      "maintainerType": "official",
+      "verifiedByWayland": "2026-05-12",
+      "popularityRank": 22,
+      "installRate": 0.19,
+      "entryUrl": "entries/com.zoom-zoom-mcp.json",
+      "guideUrl": "guides/com.zoom-zoom-mcp.md"
+    },
+    {
+      "id": "com.cisco/webex-mcp",
+      "name": "Webex",
+      "shortDescription": "Send messages, schedule meetings, and manage spaces in Cisco Webex.",
+      "iconUrl": "icons/webex.svg",
+      "tier": "worker",
+      "categories": [
+        "communication",
+        "calendar"
+      ],
+      "maintainerType": "official",
+      "verifiedByWayland": "2026-05-12",
+      "popularityRank": 23,
+      "installRate": 0.14,
+      "entryUrl": "entries/com.cisco-webex-mcp.json",
+      "guideUrl": "guides/com.cisco-webex-mcp.md"
+    },
+    {
+      "id": "com.calendly/calendly-mcp",
+      "name": "Calendly",
+      "shortDescription": "List event types, scheduled events, and invitees — Calendly's official hosted MCP with OAuth.",
+      "iconUrl": "icons/calendly.svg",
+      "tier": "worker",
+      "categories": [
+        "calendar",
+        "productivity"
+      ],
+      "maintainerType": "official",
+      "verifiedByWayland": "2026-05-12",
+      "popularityRank": 24,
+      "installRate": 0.18,
+      "entryUrl": "entries/com.calendly-calendly-mcp.json",
+      "guideUrl": "guides/com.calendly-calendly-mcp.md"
+    },
+    {
+      "id": "com.wayland/cal-com-mcp",
+      "name": "Cal.com Scheduling",
+      "shortDescription": "Open-source scheduling — bookings, event types, and availability via Cal.com's API.",
+      "iconUrl": "icons/cal-com.svg",
+      "tier": "worker",
+      "categories": [
+        "calendar",
+        "productivity"
+      ],
+      "maintainerType": "wayland",
+      "verifiedByWayland": "2026-05-27",
+      "popularityRank": 25,
+      "installRate": 0.16,
+      "entryUrl": "entries/com.wayland-cal-com-mcp.json",
+      "guideUrl": "guides/com.wayland-cal-com-mcp.md"
+    },
+    {
+      "id": "com.hubspot/hubspot-mcp",
+      "name": "HubSpot",
+      "shortDescription": "Contacts, companies, deals, and tickets — HubSpot's official hosted MCP with OAuth.",
+      "iconUrl": "icons/hubspot.svg",
+      "tier": "worker",
+      "categories": [
+        "sales",
+        "crm"
+      ],
+      "maintainerType": "official",
+      "verifiedByWayland": "2026-05-12",
+      "popularityRank": 26,
+      "installRate": 0.17,
+      "entryUrl": "entries/com.hubspot-hubspot-mcp.json",
+      "guideUrl": "guides/com.hubspot-hubspot-mcp.md"
+    },
+    {
+      "id": "com.salesforce/salesforce-mcp",
+      "name": "Salesforce",
+      "shortDescription": "Accounts, opportunities, leads, and SOQL queries — Salesforce's official hosted MCP with OAuth.",
+      "iconUrl": "icons/salesforce.svg",
+      "tier": "worker",
+      "categories": [
+        "sales",
+        "crm"
+      ],
+      "maintainerType": "official",
+      "verifiedByWayland": "2026-05-12",
+      "popularityRank": 27,
+      "installRate": 0.16,
+      "entryUrl": "entries/com.salesforce-salesforce-mcp.json",
+      "guideUrl": "guides/com.salesforce-salesforce-mcp.md"
+    },
+    {
+      "id": "com.kesslerio/attio-mcp",
+      "name": "Attio",
+      "shortDescription": "People, companies, deals, and lists in the Attio CRM via API token.",
+      "iconUrl": "icons/attio.svg",
+      "tier": "worker",
+      "categories": [
+        "sales",
+        "crm"
+      ],
+      "maintainerType": "community",
+      "verifiedByWayland": "2026-05-12",
+      "popularityRank": 28,
+      "installRate": 0.13,
+      "entryUrl": "entries/com.kesslerio-attio-mcp.json",
+      "guideUrl": "guides/com.kesslerio-attio-mcp.md"
+    },
+    {
+      "id": "com.wirasm/pipedrive-mcp",
+      "name": "Pipedrive",
+      "shortDescription": "Deals, persons, organizations, and activities in Pipedrive CRM via API token.",
+      "iconUrl": "icons/pipedrive.svg",
+      "tier": "worker",
+      "categories": [
+        "sales",
+        "crm"
+      ],
+      "maintainerType": "community",
+      "verifiedByWayland": "2026-05-12",
+      "popularityRank": 29,
+      "installRate": 0.11,
+      "entryUrl": "entries/com.wirasm-pipedrive-mcp.json",
+      "guideUrl": "guides/com.wirasm-pipedrive-mcp.md"
+    },
+    {
+      "id": "com.bitbonsai/mcpvault",
+      "name": "Obsidian Vault",
+      "shortDescription": "Read, write, search, and back-link notes in any local Obsidian vault — no plugin required.",
+      "iconUrl": "icons/obsidian.svg",
+      "tier": "worker",
+      "categories": [
+        "knowledge",
+        "files-and-docs"
+      ],
+      "maintainerType": "community",
+      "verifiedByWayland": "2026-05-12",
+      "popularityRank": 30,
+      "installRate": 0.21,
+      "entryUrl": "entries/com.bitbonsai-mcpvault.json",
+      "guideUrl": "guides/com.bitbonsai-mcpvault.md"
+    },
+    {
+      "id": "com.readwise/readwise-mcp",
+      "name": "Readwise + Reader",
+      "shortDescription": "Highlights, books, articles, and your Reader inbox — Readwise's official hosted MCP.",
+      "iconUrl": "icons/readwise.svg",
+      "tier": "worker",
+      "categories": [
+        "knowledge",
+        "research"
+      ],
+      "maintainerType": "official",
+      "verifiedByWayland": "2026-05-12",
+      "popularityRank": 31,
+      "installRate": 0.14,
+      "entryUrl": "entries/com.readwise-readwise-mcp.json",
+      "guideUrl": "guides/com.readwise-readwise-mcp.md"
+    },
+    {
+      "id": "com.raindrop/raindrop-mcp",
+      "name": "Raindrop",
+      "shortDescription": "Bookmarks, collections, and tags — Raindrop.io's official hosted MCP with OAuth.",
+      "iconUrl": "icons/raindrop.svg",
+      "tier": "worker",
+      "categories": [
+        "knowledge",
+        "research"
+      ],
+      "maintainerType": "official",
+      "verifiedByWayland": "2026-05-12",
+      "popularityRank": 32,
+      "installRate": 0.1,
+      "entryUrl": "entries/com.raindrop-raindrop-mcp.json",
+      "guideUrl": "guides/com.raindrop-raindrop-mcp.md"
     }
   ]
 }
