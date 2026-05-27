@@ -126,33 +126,35 @@ const MemoryPage: React.FC = () => {
       setStatus({ status: 'not_installed' });
     };
 
-    // Initial snapshot. The bridge's `getStatus` provider falls back to
-    // `{status:'not_installed'}` when `__lastStatus` is null — but if the
-    // invoke fails for any reason (IPC race, channel rejection, serialization
-    // error), we MUST NOT silently wedge the page on the loading state. In
-    // `not_installed` steady state, `bootstrap()` does not spontaneously emit,
-    // so the emitter path alone cannot rescue a stuck render.
-    const getStatusProvider = ipcBridge.ijfw.getStatus;
-    if (getStatusProvider && typeof getStatusProvider.invoke === 'function') {
-      Promise.resolve(getStatusProvider.invoke())
-        .then((payload) => {
-          if (cancelled) return;
-          if (payload && typeof payload === 'object') {
-            snapshotArrived = true;
-            setStatus(payload as IjfwStatusPayload);
-          } else {
-            fallbackToNotInstalled();
-          }
-        })
-        .catch(() => {
-          // Invoke rejected (no handler, IPC race, serialization). Fall back
-          // so the user sees the install pitch instead of an infinite spinner.
+    // Gemini H2: prior `Promise.resolve(invoke()).then(...).catch(...)` chain
+    // did NOT catch SYNCHRONOUS throws from `invoke()`. The IPC dispatcher can
+    // throw synchronously before returning a promise (not yet hydrated,
+    // serialization error on `void` params, channel uninitialized). Such a
+    // throw escaped the Promise chain entirely and left the page stuck on the
+    // initial loading state. The async IIFE + try/catch wraps both sync and
+    // async failures in a single guard.
+    const initialSnapshot = async (): Promise<void> => {
+      const getStatusProvider = ipcBridge.ijfw.getStatus;
+      if (!getStatusProvider || typeof getStatusProvider.invoke !== 'function') {
+        fallbackToNotInstalled();
+        return;
+      }
+      try {
+        const payload = await getStatusProvider.invoke();
+        if (cancelled) return;
+        if (payload && typeof payload === 'object') {
+          snapshotArrived = true;
+          setStatus(payload as IjfwStatusPayload);
+        } else {
           fallbackToNotInstalled();
-        });
-    } else {
-      // Provider not even exposed on this build — fall back immediately.
-      fallbackToNotInstalled();
-    }
+        }
+      } catch {
+        // Sync throw or rejected promise — both routed here. Fall back so the
+        // user sees the install pitch instead of an infinite spinner.
+        fallbackToNotInstalled();
+      }
+    };
+    void initialSnapshot();
 
     // Safety net: if neither invoke nor an early emit settles within 1.5s,
     // assume not_installed. Real status changes still update the UI via the

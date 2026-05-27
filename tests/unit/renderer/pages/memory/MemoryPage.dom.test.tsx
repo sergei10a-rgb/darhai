@@ -185,4 +185,21 @@ describe('MemoryPage', () => {
     unmount();
     expect(listeners.size).toBe(0);
   });
+
+  it('Gemini H2: falls back to not_installed when getStatus.invoke throws synchronously', async () => {
+    // Regression for the H2 BLOCKER. The prior Promise.resolve(invoke()) chain
+    // did not catch synchronous throws (IPC dispatcher not yet hydrated,
+    // serialization error). The async-IIFE try/catch must trap both sync and
+    // async failures.
+    getStatusInvoke.mockImplementationOnce(() => {
+      throw new Error('sync IPC dispatcher not initialized');
+    });
+    render(<MemoryPage />);
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('branch-installer-pitch')).toBeTruthy();
+      },
+      { timeout: 2000 },
+    );
+  });
 });
