@@ -173,7 +173,7 @@ class IjfwMcpClient {
     // Codex B1: resolve renderer verb to the actual MCP tool name BEFORE we
     // pay the spawn cost. Unknown verbs return validation_failed.
     const resolved = resolveToolCall(verb, args);
-    if (!resolved.ok) {
+    if (resolved.ok === false) {
       return { ok: false, error: resolved.reason, errorReason: 'validation_failed' };
     }
 
