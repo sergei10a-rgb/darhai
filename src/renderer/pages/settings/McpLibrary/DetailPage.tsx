@@ -10,6 +10,7 @@ import {
   useMcpOAuth,
   useMcpServerCRUD,
 } from '@renderer/hooks/mcp';
+import { openExternalUrl } from '@renderer/utils/platform';
 import type { IMcpServer, IMcpServerTransport } from '@/common/config/storage';
 import { useMcpLibrary } from './hooks/useMcpLibrary';
 import { SetupGuide } from './components/SetupGuide';
@@ -214,9 +215,16 @@ export function DetailPage() {
           )}
           <div className="mcp-detail-pub">
             {safeUrl(entry.websiteUrl) ? (
-              <a href={safeUrl(entry.websiteUrl)} target="_blank" rel="noreferrer">
+              <button
+                type="button"
+                className="mcp-link-button"
+                onClick={() => {
+                  const u = safeUrl(entry.websiteUrl);
+                  if (u) void openExternalUrl(u);
+                }}
+              >
                 {entry.name}
-              </a>
+              </button>
             ) : (
               <span>{entry.name}</span>
             )}{' '}
@@ -233,14 +241,16 @@ export function DetailPage() {
             {installLabel}
           </button>
           {safeUrl(entry.websiteUrl) && (
-            <a
+            <button
+              type="button"
               className="mcp-btn"
-              href={safeUrl(entry.websiteUrl)}
-              target="_blank"
-              rel="noreferrer"
+              onClick={() => {
+                const u = safeUrl(entry.websiteUrl);
+                if (u) void openExternalUrl(u);
+              }}
             >
               <ExternalLink size={12} /> View source
-            </a>
+            </button>
           )}
         </div>
       </header>

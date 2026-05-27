@@ -1,5 +1,6 @@
 import React from 'react';
 import { Check, ExternalLink } from 'lucide-react';
+import { openExternalUrl } from '@renderer/utils/platform';
 import type { SetupGuide as GuideT, SetupStep } from '../types';
 
 interface Props {
@@ -33,9 +34,9 @@ function StepCard({
         {step.externalAction && (
           <button
             className="mcp-open-link"
-            onClick={() =>
-              window.open(step.externalAction!.url, '_blank', 'noopener,noreferrer')
-            }
+            onClick={() => {
+              void openExternalUrl(step.externalAction!.url);
+            }}
           >
             <ExternalLink size={12} /> {step.externalAction.label}
           </button>
