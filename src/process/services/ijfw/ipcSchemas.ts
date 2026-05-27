@@ -149,11 +149,14 @@ export const verbSchemas: Record<IjfwVerb, z.ZodTypeAny> = {
   update_apply: z.object({ version: z.string().min(1).max(64).optional() }).passthrough(),
   // Wave 7 B1: cross-project verbs. CrossProjectTab passes `{query, scope, path}`.
   cross_audit_converge: z.object({ findings: z.array(z.unknown()).optional() }).passthrough(),
+  // Real `ijfw_cross_project_search` schema: `{ pattern, limit? }`. Older
+  // versions validated `{ query, scope, path }` — never what the server
+  // accepted — so every call failed at the validation layer before reaching
+  // MCP. The renderer now sends `{ pattern, limit }`; the schema mirrors that.
   cross_project_search: z
     .object({
-      query: queryStringSchema,
-      scope: z.enum(['project', 'app']).optional(),
-      path: z.string().min(1).max(4096).optional(),
+      pattern: queryStringSchema,
+      limit: z.number().int().min(1).max(50).optional(),
     })
     .passthrough(),
 };

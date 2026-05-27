@@ -5,167 +5,540 @@
  */
 
 /**
- * FullPanelShell -- Wave 4 multi-tab chrome that wraps 7 stub tabs. This is
- * the "IJFW is fully active and has memories" surface. Wave 5 replaces the
- * stub tab contents with the real per-tab UIs.
+ * FullPanelShell — v0.6.4 Mail-style Memory Archive chrome.
  *
- * Layout:
- *   - Top header bar with breadcrumb (left) and 3 icon buttons (right):
- *     Drop, History, Add memory.
- *   - Arco Tabs row below with: Home, Search, Wiki, Promotions, Drop,
- *     Conflicts, Cross-project.
+ * Layout (CSS Grid, 4 rows):
+ *   1. topbar    — 56px: breadcrumb + TopbarChips + StreakPill + Import + QuickAdd + settings
+ *   2. filterbar — 48px: search input + ProjectDropdown + TimeDropdown + TypeDropdown + result count
+ *   3. main      — 1fr: horizontal flex { MemoryList (1fr) | RightDrawer (480px push-content) }
+ *   4. statusbar — 28px: MemoryStatusBar
  *
- * The header Drop button is a shortcut into the Drop tab. History and
- * Add memory are stub buttons until Wave 5 wires them.
+ * Keyboard:
+ *   ⌘K / "/" — focus search
+ *   Esc       — close drawer (handled by useSelectedEntry + RightDrawer)
+ *   J / K     — navigate rows via MemoryList keyboard handler
+ *   ⌘N        — open quick-add
  *
- * The active tab is mirrored to the URL via `?tab=<key>` so direct links
- * and browser back/forward survive a refresh.
+ * Empty states:
+ *   - Zero entries + no active filters → EmptyStateHero fills main area
+ *   - Zero entries + filters active   → in-list zero state (K6)
+ *
+ * Drawer: push-content via CSS transition on width (NOT overlay).
+ * List column margin-right transitions in sync with drawer opening.
  */
 
-import { Button, Message, Tabs } from '@arco-design/web-react';
-import { Clock, Plus, Upload } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { Button, Input, Message } from '@arco-design/web-react';
+import type { RefInputType } from '@arco-design/web-react/es/Input/interface';
+import { Search, Import as ImportIcon, Settings2, Plus } from 'lucide-react';
+import { ipcBridge } from '@/common';
+import { memory as memoryBridge, ijfw as ijfwBridge } from '@/common/adapter/ipcBridge';
+import type { IjfwStatusPayload } from '@/common/adapter/ipcBridge';
+import type { LastDream, ListFilter, MemoryType } from '@/common/types/memory';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
-import HomeTab from '../tabs/HomeTab';
-import SearchTab from '../tabs/SearchTab';
-import WikiTab from '../tabs/WikiTab';
-import PromotionsTab from '../tabs/PromotionsTab';
-import DropTab from '../tabs/DropTab';
-import ConflictsTab from '../tabs/ConflictsTab';
-import CrossProjectTab from '../tabs/CrossProjectTab';
+import MemoryList from '../components/MemoryList';
+import RightDrawer from '../components/RightDrawer';
+import TopbarChips from '../components/TopbarChips';
+import StreakPill from '../components/StreakPill';
+import ProjectDropdown from '../components/ProjectDropdown';
+import TimeDropdown from '../components/TimeDropdown';
+import TypeDropdown from '../components/TypeDropdown';
+import EmptyStateHero from '../components/EmptyStateHero';
+import MemoryStatusBar from '../components/MemoryStatusBar';
+import ImportDrawer from '../components/ImportDrawer';
+import ComposerModal from '../components/ComposerModal';
+import { useMemoryIndex } from '../hooks/useMemoryIndex';
+import { useSelectedEntry } from '../hooks/useSelectedEntry';
+import type { TimeWindow } from '../components/TimeDropdown';
 import styles from './FullPanelShell.module.css';
 
-type MemoryTabKey = 'home' | 'search' | 'wiki' | 'promotions' | 'drop' | 'conflicts' | 'cross_project';
+// ---------------------------------------------------------------------------
+// Lazy-load PromotionThresholdModal
+// ---------------------------------------------------------------------------
 
-const TAB_KEYS: readonly MemoryTabKey[] = [
-  'home',
-  'search',
-  'wiki',
-  'promotions',
-  'drop',
-  'conflicts',
-  'cross_project',
-];
+type PromotionThresholdModalModule = { default: React.ComponentType<{ onClose: () => void }> };
 
-const isMemoryTabKey = (value: string | null): value is MemoryTabKey =>
-  value !== null && (TAB_KEYS as readonly string[]).includes(value);
+const PromotionThresholdModalLazy = lazy(
+  () =>
+    import('../components/PromotionThresholdModal').catch(
+      (): PromotionThresholdModalModule => ({
+        default: () => null,
+      }),
+    ) as Promise<PromotionThresholdModalModule>,
+);
+
+// ---------------------------------------------------------------------------
+// Helpers — map TimeWindow → ListFilter.timeWindow
+// ---------------------------------------------------------------------------
+
+function timeWindowToFilter(tw: TimeWindow): ListFilter['timeWindow'] {
+  if (typeof tw === 'object') return 'all'; // custom range — server doesn't support yet
+  if (tw === 'today') return 'today';
+  if (tw === '7d') return '7d';
+  if (tw === '30d') return '30d';
+  return 'all';
+}
+
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+const DEFAULT_FILTER: ListFilter = {
+  project: 'all',
+  types: [],
+  tags: [],
+  timeWindow: 'all',
+  search: '',
+  sort: 'recent',
+  offset: 0,
+  limit: 50,
+};
+
+const DEFAULT_THRESHOLD = 90;
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
 
 const FullPanelShell: React.FC = () => {
-  const { t } = useTranslation();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const { t } = useTranslation('memory');
 
-  // Initialize from URL synchronously to avoid a flash of the default tab.
-  const [activeTab, setActiveTab] = useState<MemoryTabKey>(() => {
-    const tabParam = searchParams.get('tab');
-    return isMemoryTabKey(tabParam) ? tabParam : 'home';
-  });
+  const [filter, setFilter] = useState<ListFilter>(DEFAULT_FILTER);
+  const [timeWindow, setTimeWindow] = useState<TimeWindow>('all');
 
-  // Re-sync if the URL changes externally (browser back/forward). Narrow the
-  // dep to the specific `tab` query param so unrelated param mutations (slug
-  // changes in WikiTab, etc.) don't refire this effect and cause render churn.
-  const tabParam = searchParams.get('tab');
+  const { stats, entries, projects, total, isLoading, reload } = useMemoryIndex(filter);
+  const { selectedId, selected, selectEntry, clearSelection } = useSelectedEntry();
+
+  // cliCount from IjfwStatusPayload (no-deferment #3)
+  const [cliCount, setCliCount] = useState(0);
+  const [lastDream, setLastDream] = useState<LastDream | undefined>(undefined);
+  const [promotionThreshold, setPromotionThreshold] = useState(DEFAULT_THRESHOLD);
+  const [showThresholdModal, setShowThresholdModal] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [composerOpen, setComposerOpen] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+
+  const searchRef = useRef<RefInputType>(null);
+  const shellRef = useRef<HTMLDivElement>(null);
+
+  // Fetch cliCount from ijfw status
   useEffect(() => {
-    if (isMemoryTabKey(tabParam) && tabParam !== activeTab) {
-      setActiveTab(tabParam);
-    }
-  }, [tabParam, activeTab]);
+    let cancelled = false;
+    const fetchStatus = async (): Promise<void> => {
+      try {
+        const status: IjfwStatusPayload = await ijfwBridge.getStatus.invoke();
+        if (!cancelled) setCliCount(status.cliCount ?? 0);
+      } catch {
+        // Non-fatal
+      }
+    };
+    void fetchStatus();
+    const unsub = ijfwBridge.onStatusChanged.on((payload: IjfwStatusPayload) => {
+      if (!cancelled) setCliCount(payload.cliCount ?? 0);
+    });
+    return () => {
+      cancelled = true;
+      unsub();
+    };
+  }, []);
 
-  const handleTabChange = useCallback(
-    (key: string) => {
-      if (!isMemoryTabKey(key)) return;
-      setActiveTab(key);
-      const next = new URLSearchParams(searchParams);
-      next.set('tab', key);
-      setSearchParams(next, { replace: true });
+  // Fetch promotion candidates + lastDream (no-deferment #4)
+  useEffect(() => {
+    let cancelled = false;
+    const fetchCandidates = async (): Promise<void> => {
+      try {
+        const result = await memoryBridge.getPromotionCandidates.invoke();
+        if (cancelled) return;
+        setPromotionThreshold(result.threshold);
+        if (result.lastDream) setLastDream(result.lastDream);
+      } catch {
+        // Non-fatal
+      }
+    };
+    void fetchCandidates();
+    const unsub = memoryBridge.onIndexChanged.on(() => {
+      if (!cancelled) void fetchCandidates();
+    });
+    return () => {
+      cancelled = true;
+      unsub();
+    };
+  }, []);
+
+  // Keyboard: ⌘K / "/" focus search; ⌘N open quick-add
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent): void => {
+      // "/" focuses search (not in input)
+      if (e.key === '/') {
+        const active = document.activeElement;
+        const isInput =
+          active instanceof HTMLInputElement ||
+          active instanceof HTMLTextAreaElement ||
+          (active instanceof HTMLElement && active.isContentEditable);
+        if (!isInput) {
+          e.preventDefault();
+          searchRef.current?.focus();
+        }
+        return;
+      }
+      // ⌘K focuses search
+      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        searchRef.current?.focus();
+        return;
+      }
+      // ⌘N opens composer modal
+      if (e.key === 'n' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setComposerOpen(true);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // TopbarChips type filter
+  const [activeChipType, setActiveChipType] = useState<MemoryType | null>(null);
+  const handleChipFilter = useCallback((type: MemoryType | null) => {
+    setActiveChipType(type);
+    setFilter((prev) => ({
+      ...prev,
+      types: type ? [type] : [],
+    }));
+  }, []);
+
+  // Project dropdown
+  const handleProjectSelect = useCallback((projectId: string | null) => {
+    setFilter((prev) => ({
+      ...prev,
+      project: projectId ?? 'all',
+    }));
+  }, []);
+
+  // Time dropdown
+  const handleTimeSelect = useCallback((tw: TimeWindow) => {
+    setTimeWindow(tw);
+    setFilter((prev) => ({
+      ...prev,
+      timeWindow: timeWindowToFilter(tw),
+    }));
+  }, []);
+
+  // Type dropdown (multi-select — overrides chip single-select)
+  const handleTypeFilter = useCallback((types: MemoryType[]) => {
+    setActiveChipType(types.length === 1 ? (types[0] ?? null) : null);
+    setFilter((prev) => ({ ...prev, types }));
+  }, []);
+
+  // Search
+  const handleSearchChange = useCallback((val: string) => {
+    setFilter((prev) => ({ ...prev, search: val, offset: 0 }));
+  }, []);
+
+  // Row select: click same row → deselect
+  const handleSelectRow = useCallback(
+    (id: string) => {
+      if (id === selectedId) {
+        clearSelection();
+      } else {
+        selectEntry(id);
+      }
     },
-    [searchParams, setSearchParams]
+    [selectedId, clearSelection, selectEntry],
   );
 
-  const handleDropClick = useCallback(() => {
-    handleTabChange('drop');
-  }, [handleTabChange]);
+  // Promote entry
+  const handlePromote = useCallback(
+    async (id: string) => {
+      const result = await memoryBridge.promote.invoke({ id });
+      if (!result.ok) {
+        const errMsg = 'error' in result ? result.error : 'Promotion failed';
+        Message.error(errMsg);
+      } else {
+        Message.success(t('archive.toast.promoted', 'Promoted to wiki'));
+        reload();
+      }
+    },
+    [reload, t],
+  );
 
-  const handleHistoryClick = useCallback(() => {
-    // Wave 5 wires this to the history pane. Stub for now so the button has
-    // a tangible behavior the user can observe (and tests can assert).
-    Message.info(t('memory.panel.button_history'));
+  // Open source file
+  const handleOpenSource = useCallback((path: string, _line: number) => {
+    ipcBridge.shell.openFile
+      .invoke(path)
+      .catch(() => {
+        void navigator.clipboard.writeText(path);
+        Message.success(t('archive.toast.pathCopied', 'Path copied'));
+      });
   }, [t]);
 
-  const handleAddClick = useCallback(() => {
-    Message.info(t('memory.panel.button_add'));
+  const handleCopy = useCallback((text: string) => {
+    void navigator.clipboard.writeText(text);
+    Message.success(t('archive.toast.copied', 'Copied'));
   }, [t]);
+
+  // Cursor pagination (no-deferment #5)
+  const handleEndReached = useCallback(() => {
+    if (entries.length < total) {
+      setFilter((prev) => ({ ...prev, offset: entries.length }));
+    }
+  }, [entries.length, total]);
+
+  // Determine empty state
+  const hasActiveFilters =
+    (filter.types?.length ?? 0) > 0 ||
+    (filter.search?.length ?? 0) > 0 ||
+    filter.project !== 'all' ||
+    filter.timeWindow !== 'all';
+
+  const showEmptyHero = entries.length === 0 && !isLoading && !hasActiveFilters;
+
+  // Result count for filter bar
+  const resultCountLabel =
+    isLoading
+      ? ''
+      : `${total.toLocaleString()} ${t('archive.filter.results', 'results')}`;
+
+  const projectSelected = filter.project !== 'all' ? filter.project : null;
+  const typeCounts = stats?.typeCounts ?? {
+    decision: 0, pattern: 0, session: 0, observation: 0, wiki: 0, preference: 0,
+  };
+
+  // ── Drag-drop handlers ──────────────────────────────────────────────────────
+  const handleDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    if (!Array.from(e.dataTransfer.types).includes('Files')) return;
+    e.preventDefault();
+    setDragOver(true);
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    if (!Array.from(e.dataTransfer.types).includes('Files')) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    // Only reset if the pointer leaves the shell root entirely (not into a child).
+    const related = e.relatedTarget as Node | null;
+    if (shellRef.current && related && shellRef.current.contains(related)) return;
+    setDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback(
+    async (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      setDragOver(false);
+
+      const ALLOWED = new Set(['.md', '.markdown', '.txt', '.json']);
+      const files = Array.from(e.dataTransfer.files).filter((f) => {
+        const ext = f.name.slice(f.name.lastIndexOf('.')).toLowerCase();
+        return ALLOWED.has(ext);
+      });
+
+      if (files.length === 0) return;
+
+      try {
+        const filePayloads = await Promise.all(
+          files.map(async (f) => ({ name: f.name, content: await f.text() })),
+        );
+        const result = await memoryBridge.ingestFiles.invoke({ files: filePayloads });
+        if (result.ingested > 0) {
+          Message.success(
+            t('archive.dragDrop.toastIngested', `Ingested ${result.ingested} file${result.ingested === 1 ? '' : 's'}`),
+          );
+          reload();
+        } else {
+          Message.warning(t('archive.dragDrop.toastNoFiles', 'No files were ingested'));
+        }
+      } catch (err) {
+        Message.error(t('archive.dragDrop.toastError', 'Drop ingest failed'));
+        console.error('[FullPanelShell] drag-drop ingest error', err);
+      }
+    },
+    [reload, t],
+  );
 
   return (
-    <div className={styles.shell} data-testid='memory-full-panel' role='region' aria-label={t('memory.panel.header_breadcrumb')}>
-      <header className={styles.header}>
-        <div className={styles.headerLeft}>
-          <h2 className={styles.breadcrumb} data-testid='memory-full-panel-breadcrumb'>
-            {t('memory.panel.header_breadcrumb')}
-          </h2>
-          <span
-            className='text-12px text-t-tertiary leading-18px'
-            data-testid='memory-full-panel-brand-tagline'
-          >
-            {t('memory.brand.tagline')}
-          </span>
+    <div
+      ref={shellRef}
+      className={styles.shell}
+      data-testid='memory-full-panel'
+      role='region'
+      aria-label='Memory Archive'
+      onDragEnter={handleDragEnter}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={(e) => { void handleDrop(e); }}
+    >
+      {/* ---- Drag-drop overlay ---- */}
+      {dragOver && (
+        <div className={styles.dragOverlay} aria-hidden>
+          <span className={styles.dragOverlayLabel}>📥 Drop to ingest</span>
         </div>
-        <div className={styles.headerActions}>
+      )}
+      {/* ---- Topbar (56px) ---- */}
+      <header className={styles.topbar}>
+        <div className={styles.topbarLeft}>
+          {/* Breadcrumb */}
+          <span className={styles.breadcrumb} data-testid='memory-full-panel-heading'>
+            <span className={styles.breadcrumbPrimary}>
+              {t('archive.topbar.archive', 'Archive')}
+            </span>
+            <span className={styles.breadcrumbSep} aria-hidden>·</span>
+            <span className={styles.breadcrumbProject}>
+              {projects[0]?.basename ?? t('archive.topbar.allProjects', 'All projects')}
+            </span>
+          </span>
+
+          {/* Type chips (no-deferment #1) */}
+          <TopbarChips
+            typeCounts={typeCounts}
+            activeType={activeChipType}
+            onFilterChange={handleChipFilter}
+          />
+
+          {/* Streak pill (no-deferment #2) */}
+          {stats?.streak && (
+            <StreakPill
+              sessions={stats.streak.sessions}
+              longestDays={stats.streak.longestDays}
+            />
+          )}
+        </div>
+
+        <div className={styles.topbarActions}>
+          {/* Import button */}
           <Button
             type='text'
             size='small'
-            icon={<Upload size={16} aria-hidden />}
-            onClick={handleDropClick}
-            data-testid='memory-full-panel-button-drop'
+            icon={<ImportIcon size={15} aria-hidden />}
+            onClick={() => setImportOpen(true)}
+            data-testid='memory-btn-import'
+            className={styles.iconBtn}
+          />
+          {/* Quick-add → opens ComposerModal */}
+          <Button
+            type='primary'
+            size='small'
+            icon={<Plus size={13} aria-hidden />}
+            onClick={() => setComposerOpen(true)}
+            data-testid='memory-btn-quickadd'
+            className={styles.addBtn}
           >
-            {t('memory.panel.button_drop')}
+            {t('archive.topbar.add', 'Add')}
           </Button>
+          {/* Settings cog */}
           <Button
             type='text'
             size='small'
-            icon={<Clock size={16} aria-hidden />}
-            onClick={handleHistoryClick}
-            data-testid='memory-full-panel-button-history'
-          >
-            {t('memory.panel.button_history')}
-          </Button>
-          <Button
-            type='text'
-            size='small'
-            icon={<Plus size={16} aria-hidden />}
-            onClick={handleAddClick}
-            data-testid='memory-full-panel-button-add'
-          >
-            {t('memory.panel.button_add')}
-          </Button>
+            icon={<Settings2 size={15} aria-hidden />}
+            onClick={() => setShowThresholdModal(true)}
+            data-testid='memory-btn-settings'
+            className={styles.iconBtn}
+          />
         </div>
       </header>
 
-      <div className={styles.tabsHost}>
-        <Tabs activeTab={activeTab} onChange={handleTabChange} type='line'>
-          <Tabs.TabPane key='home' title={t('memory.panel.tab_home')}>
-            <HomeTab />
-          </Tabs.TabPane>
-          <Tabs.TabPane key='search' title={t('memory.panel.tab_search')}>
-            <SearchTab />
-          </Tabs.TabPane>
-          <Tabs.TabPane key='wiki' title={t('memory.panel.tab_wiki')}>
-            <WikiTab />
-          </Tabs.TabPane>
-          <Tabs.TabPane key='promotions' title={t('memory.panel.tab_promotions')}>
-            <PromotionsTab />
-          </Tabs.TabPane>
-          <Tabs.TabPane key='drop' title={t('memory.panel.tab_drop')}>
-            <DropTab />
-          </Tabs.TabPane>
-          <Tabs.TabPane key='conflicts' title={t('memory.panel.tab_conflicts')}>
-            <ConflictsTab />
-          </Tabs.TabPane>
-          <Tabs.TabPane key='cross_project' title={t('memory.panel.tab_cross_project')}>
-            <CrossProjectTab />
-          </Tabs.TabPane>
-        </Tabs>
+      {/* ---- Filter bar (48px) ---- */}
+      <div className={styles.filterBar} data-testid='memory-filter-bar'>
+        <div className={styles.filterLeft}>
+          <Input
+            ref={searchRef}
+            className={styles.searchInput}
+            prefix={<Search size={14} />}
+            suffix={
+              <kbd className={styles.searchKbd} data-testid='memory-search-kbd'>
+                ⌘K
+              </kbd>
+            }
+            placeholder={t('archive.filter.searchPlaceholder', 'Search memories… (type:decision tag:design)')}
+            value={filter.search ?? ''}
+            onChange={handleSearchChange}
+            allowClear
+            data-testid='memory-search-input'
+          />
+        </div>
+        <div className={styles.filterDropdowns}>
+          <ProjectDropdown
+            projects={projects}
+            selected={projectSelected}
+            onSelect={handleProjectSelect}
+          />
+          <TimeDropdown
+            selected={timeWindow}
+            onSelect={handleTimeSelect}
+          />
+          <TypeDropdown
+            typeCounts={typeCounts}
+            selected={filter.types ?? []}
+            onFilterChange={handleTypeFilter}
+          />
+        </div>
+        <div className={styles.resultCount} data-testid='memory-result-count'>
+          {resultCountLabel}
+        </div>
       </div>
+
+      {/* ---- Main area (1fr) ---- */}
+      <div className={styles.main} data-testid='memory-body'>
+        {showEmptyHero ? (
+          <EmptyStateHero
+            onImportComplete={reload}
+            onSearchChange={handleSearchChange}
+          />
+        ) : (
+          <>
+            {/* List column — shrinks when drawer opens (push-content) */}
+            <div
+              className={`${styles.listCol}${selectedId ? ` ${styles.listColDrawerOpen}` : ''}`}
+              data-testid='memory-list-col'
+            >
+              <MemoryList
+                entries={entries}
+                total={total}
+                selectedId={selectedId ?? undefined}
+                onSelect={handleSelectRow}
+                search={filter.search ?? ''}
+                onSearchChange={handleSearchChange}
+                typeFilter={filter.types ?? []}
+                onTypeFilterChange={handleTypeFilter}
+                typeCounts={typeCounts}
+                onEndReached={handleEndReached}
+              />
+            </div>
+
+            {/* Right drawer — push-content, 480px */}
+            <RightDrawer
+              entry={selected}
+              promotionThreshold={promotionThreshold}
+              onClose={clearSelection}
+              onPromote={handlePromote}
+              onOpenSource={handleOpenSource}
+              onCopy={handleCopy}
+            />
+          </>
+        )}
+      </div>
+
+      {/* ---- Status bar (28px) ---- */}
+      <MemoryStatusBar
+        brainLive={!isLoading && stats !== null}
+        cliCount={cliCount}
+        lastDream={lastDream}
+      />
+
+      {/* ---- Import drawer ---- */}
+      <ImportDrawer open={importOpen} onClose={() => setImportOpen(false)} />
+
+      {/* ---- Composer modal ---- */}
+      <ComposerModal open={composerOpen} onClose={() => setComposerOpen(false)} />
+
+      {/* ---- Threshold modal ---- */}
+      {showThresholdModal && (
+        <Suspense fallback={null}>
+          <PromotionThresholdModalLazy onClose={() => setShowThresholdModal(false)} />
+        </Suspense>
+      )}
     </div>
   );
 };

@@ -335,12 +335,23 @@ async function syncPrelude(status: IjfwLifecycleStatus): Promise<void> {
 
 let __lastStatus: IjfwStatusPayload | null = null;
 
+/**
+ * Returns the count of detected CLIs known to IJFW, excluding Wayland Core
+ * itself (id 'wcore'). The registry may not be initialized on first cold boot;
+ * in that case `getDetectedAgents()` returns an empty array and we return 0.
+ */
+function getDetectedCliCount(): number {
+  const agents = agentRegistry.getDetectedAgents();
+  return Math.max(0, agents.filter((a) => a.id !== 'wcore').length);
+}
+
 function emitStatus(payload: IjfwStatusPayload): void {
-  __lastStatus = payload;
+  const enriched: IjfwStatusPayload = { ...payload, cliCount: getDetectedCliCount() };
+  __lastStatus = enriched;
   try {
-    ipcBridge.ijfw.onStatusChanged.emit(payload);
+    ipcBridge.ijfw.onStatusChanged.emit(enriched);
   } catch (err) {
-    log.warn('[ijfw] status emit failed', { payload, err });
+    log.warn('[ijfw] status emit failed', { payload: enriched, err });
   }
 }
 

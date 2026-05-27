@@ -53,7 +53,10 @@ vi.mock('@process/services/ijfw/preludeManager', () => ({
 
 const refreshAllSpy = vi.fn().mockResolvedValue(undefined);
 vi.mock('@process/agent/AgentRegistry', () => ({
-  agentRegistry: { refreshAll: () => refreshAllSpy() },
+  agentRegistry: {
+    refreshAll: () => refreshAllSpy(),
+    getDetectedAgents: () => [],
+  },
 }));
 
 const processConfigGetSpy = vi.fn();

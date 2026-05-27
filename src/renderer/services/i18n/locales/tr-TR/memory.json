@@ -177,5 +177,225 @@
     "ingest_success": "{{name}} sıraya eklendi",
     "quarantine_success": "{{name}} karantinaya alındı",
     "path_unavailable": "Dosya yolu okunamadı. Bunun yerine Gözat düğmesini kullanın."
+  },
+  "wiki": {
+    "home": {
+      "title": "Wiki",
+      "conceptCount": "{{memories}} anıdan {{count}} kavram sentezlendi",
+      "viewList": "Liste",
+      "viewGraph": "Grafik",
+      "newConcept": "+ Yeni kavram",
+      "settings": "Ayarlar",
+      "search": {
+        "placeholder": "Kavram ara…"
+      },
+      "columns": {
+        "byTopic": "Konuya Göre",
+        "updatedThisWeek": "Bu hafta güncellendi",
+        "emerging": "Gelişen — kavram sayfası olmalı"
+      },
+      "mostReferenced": "En Çok Başvurulan",
+      "references": "başvuru",
+      "empty": "Wiki boş. Bir anıyı yükseltin veya otomatik senkronizasyonu bekleyin.",
+      "status": {
+        "concepts": "{{count}} kavram",
+        "memoriesSynthesized": "{{count}} anı sentezlendi",
+        "autoSync": "30 dakikada bir otomatik senkronizasyon",
+        "lastSync": "son senkronizasyon {{when}} önce"
+      },
+      "emergingLabel": "Gelişen"
+    },
+    "orphan": {
+      "references": "{{count}} başvuru",
+      "projects": "{{count}} proje",
+      "projectsSingular": "{{count}} proje",
+      "synthesize": "Sayfa sentezle →",
+      "noPageYet": "Henüz sayfa yok"
+    },
+    "concept": {
+      "synthesizedFrom": "{{count}} anıdan sentezlendi"
+    },
+    "detail": {
+      "back": "← Wiki",
+      "edit": "Düzenle",
+      "updateFromSources": "Kaynaklardan güncelle",
+      "settings": "Ayarlar",
+      "updatedAgo": "{{when}} güncellendi",
+      "synthesizedFromMem": "{{count}} anıdan sentezlendi",
+      "freshness": {
+        "fresh": "Taze",
+        "stale": "Bayat",
+        "neverReviewed": "Hiç incelenmedi"
+      },
+      "tldr": "Özet",
+      "sources": "Kaynaklar",
+      "linkedFrom": "Bağlantı kaynağı",
+      "relatedConcepts": "İlgili kavramlar",
+      "openMemory": "Anıyı aç →",
+      "showAll": "Tümünü göster {{count}} ↓",
+      "hiddenSourcesOne": "{{count}} kaynak anı daha",
+      "hiddenSourcesOther": "{{count}} kaynak anı daha",
+      "autoSynthesized": "Otomatik sentezlendi",
+      "lastReviewedNever": "Son inceleme: hiç",
+      "lastSynthesized": "Son sentez: {{when}}",
+      "markAsReviewed": "İncelendi olarak işaretle",
+      "editThisPage": "Bu sayfayı düzenle",
+      "reSynthesizeFromSources": "Kaynaklardan yeniden sentezle",
+      "statusTotalConcepts": "Toplam {{count}} kavram",
+      "statusNotReviewedYet": "Henüz incelenmedi",
+      "statusLastSync": "son senkronizasyon {{when}} önce",
+      "loading": "Yükleniyor…",
+      "notFound": "Kavram bulunamadı.",
+      "notFoundBack": "← Wiki'ye dön"
+    }
+  },
+  "archive": {
+    "topbar": {
+      "title": "Bellek",
+      "subtitle": "IJFW · Ferrox Labs",
+      "streak_pill": "{{sessions}} oturum · en uzun {{longestDays}} günlük seri",
+      "streak_empty": "Henüz oturum yok",
+      "import_btn": "İçe aktar…",
+      "settings_btn": "Ayarlar"
+    },
+    "stats": {
+      "memories": "Anılar",
+      "banked": "Tasarruf",
+      "decisions": "Kararlar",
+      "wiki": "Wiki",
+      "sessions": "Oturumlar",
+      "projects": "Projeler",
+      "delta_today": "Bugün {{count}}",
+      "delta_week": "Bu hafta {{count}}",
+      "delta_none": "değişiklik yok",
+      "banked_tooltip": "Tahmini tasarruf edilen çıkarım değeri: referans × $0,15 + karar × $0,50 + wiki × $2,00",
+      "no_data": "0"
+    },
+    "banner": {
+      "candidates_ready": "{{count}} aday otomatik yükseltmeye hazır",
+      "threshold": "eşik ≥ {{value}}",
+      "next_sweep": "{{time}} içinde otomatik yükseltme",
+      "last_dream": "Son döngü: {{facts}} gerçek · {{promoted}} yükseltildi · {{ago}} önce",
+      "no_dream": "Son zamanlarda döngü yok",
+      "tune_btn": "Ayarla",
+      "review_btn": "{{count}} öğeyi incele →",
+      "review_btn_zero": "İncele"
+    },
+    "filters": {
+      "projects_title": "Projeler",
+      "all_projects": "Tüm projeler",
+      "this_project": "Bu proje",
+      "global": "Genel",
+      "time_title": "Zaman",
+      "time_all": "Tümü",
+      "time_today": "Bugün",
+      "time_7d": "7 gün",
+      "time_30d": "30 gün",
+      "time_custom": "Özel…",
+      "tags_title": "Etiketler",
+      "tags_clear": "Etiketleri temizle",
+      "autopromo_title": "Otomatik yükseltme",
+      "candidates_only": "Yalnızca yükseltme adayları",
+      "hide_promoted": "Zaten yükseltilenleri gizle",
+      "candidates_subline": "{{count}} hazır · eşik ≥ {{value}}",
+      "section_collapse": "Daralt",
+      "section_expand": "Genişlet"
+    },
+    "list": {
+      "search_placeholder": "Anılarda ara…",
+      "search_kbd_hint": "/",
+      "chip_all": "Tümü",
+      "chip_decision": "Kararlar",
+      "chip_pattern": "Kalıplar",
+      "chip_session": "Oturumlar",
+      "chip_wiki": "Wiki",
+      "chip_observation": "Gözlemler",
+      "chip_preference": "Tercihler",
+      "chip_count": "({{count}})",
+      "empty_title": "Eşleşme yok",
+      "empty_subtitle": "Bir filtre kaldırmayı veya aramayı temizlemeyi deneyin.",
+      "empty_clear_btn": "Filtreleri temizle",
+      "footer": "{{total}} öğenin 1–{{shown}} arası gösteriliyor · daha fazlası için kaydırın",
+      "footer_all_loaded": "{{total}} öğenin tamamı yüklendi",
+      "loading_more": "Daha fazla yükleniyor…"
+    },
+    "row": {
+      "used_pill": "Bu hafta {{count}} kez kullanıldı",
+      "type_decision": "Karar",
+      "type_pattern": "Kalıp",
+      "type_observation": "Gözlem",
+      "type_session": "Oturum",
+      "type_wiki": "Wiki",
+      "type_preference": "Tercih"
+    },
+    "inspector": {
+      "empty_title": "İncelemek için bir anı seçin",
+      "kbd_navigate": "↑/↓ gezin",
+      "kbd_select": "Enter seçin",
+      "kbd_close": "Esc kapatın",
+      "close_btn": "Kapat",
+      "promote_btn": "Wiki'ye yükselt",
+      "promote_disabled": "Zaten yükseltildi ✓",
+      "open_btn": "Dosyayı aç",
+      "copy_btn": "Kopyala",
+      "score_label": "Yükseltme puanı {{score}}/100",
+      "score_threshold": "{{threshold}} değerinde otomatik yükseltilir",
+      "score_help": "Bu nasıl hesaplanıyor?",
+      "summary_title": "Özet",
+      "why_title": "Neden",
+      "why_empty": "\"Neden\" kaydedilmemiş",
+      "how_title": "Nasıl uygulanır",
+      "how_empty": "\"Nasıl uygulanır\" kaydedilmemiş",
+      "derefs_title": "Gerçek dünyada kullanım",
+      "derefs_subtitle": "Bu hafta {{count}} kez kullanıldı",
+      "tags_title": "Etiketler",
+      "source_label": "Kaynak",
+      "source_copied": "Kaynak yolu kopyalandı",
+      "promote_success": "Wiki'ye yükseltildi",
+      "promote_error": "Yükseltilemedi. Yeniden deneyin.",
+      "score_tooltip": "+30 karar/kalıp · +10 proje çapraz referans başına · +5 geri referans başına · +20 yükseltilmiş etiket · +15 yakınlık (30 günde doğrusal azalır)"
+    },
+    "quickadd": {
+      "placeholder": "Her şeyi hatırla…",
+      "scope_project": "proje",
+      "scope_global": "genel",
+      "submit_btn": "Hatırla →",
+      "submitting": "Kaydediliyor…",
+      "success": "Kaydedildi",
+      "error": "Kaydedilemedi. Yeniden deneyin."
+    },
+    "statusbar": {
+      "brain_live": "Beyin aktif",
+      "brain_offline": "Beyin çevrimdışı",
+      "cli_count": "{{count}} CLI",
+      "cli_count_none": "CLI algılanmadı",
+      "last_dream": "Son döngü: {{facts}} gerçek · {{promoted}} yükseltildi · {{ago}} önce",
+      "no_dream": "İlk döngü bekleniyor",
+      "kbd_capture": "hızlı yakalama",
+      "kbd_search": "ara",
+      "kbd_close": "denetçiyi kapat",
+      "spend_today": "Bugün ${{usd}}"
+    },
+    "threshold_modal": {
+      "title": "Otomatik yükseltmeyi ayarla",
+      "threshold_label": "Yükseltme eşiği",
+      "autopromo_label": "Zamanlamaya göre otomatik yükselt",
+      "autopromo_help": "Açık olduğunda, eşiği aşan ve 10 dakikalık kuyruğu geçen adaylar otomatik olarak wiki'ye yazılır.",
+      "live_preview": "Eşik {{value}}'da {{count}} aday",
+      "score_formula_title": "Puan formülü",
+      "formula_decision": "+30 tür karar veya kalıpsa",
+      "formula_refs": "+10 bu girdiyi referans alan proje başına",
+      "formula_referenced": "+5 geri referans isabeti başına",
+      "formula_tag": "+20 karar, kalıp, genel, tasarım veya mimari etiketliyse",
+      "formula_recency": "+15 depolanma süresi 24 saatten azsa (30 günde doğrusal azalır)",
+      "save_btn": "Kaydet",
+      "cancel_btn": "İptal",
+      "save_success": "Kaydedildi"
+    },
+    "errors": {
+      "load_failed": "Bellek yüklenemedi. {{reason}}",
+      "missing_api": "Bellek API'si henüz hazır değil. Bir an sonra tekrar deneyin.",
+      "promote_failed": "Yükseltilemedi. {{reason}}"
+    }
   }
 }

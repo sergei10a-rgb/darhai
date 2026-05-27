@@ -177,5 +177,225 @@
     "ingest_success": "已将 {{name}} 加入队列",
     "quarantine_success": "已隔离 {{name}}",
     "path_unavailable": "无法读取文件路径。请改用浏览按钮。"
+  },
+  "wiki": {
+    "home": {
+      "title": "Wiki",
+      "conceptCount": "{{count}} 个概念来自 {{memories}} 条记忆",
+      "viewList": "列表",
+      "viewGraph": "图谱",
+      "newConcept": "+ 新概念",
+      "settings": "设置",
+      "search": {
+        "placeholder": "搜索概念…"
+      },
+      "columns": {
+        "byTopic": "按主题",
+        "updatedThisWeek": "本周更新",
+        "emerging": "新兴 — 应创建概念页"
+      },
+      "mostReferenced": "最多引用",
+      "references": "次引用",
+      "empty": "Wiki 为空。升级一条记忆或等待自动同步。",
+      "status": {
+        "concepts": "{{count}} 个概念",
+        "memoriesSynthesized": "{{count}} 条记忆已合成",
+        "autoSync": "每 30 分钟自动同步",
+        "lastSync": "上次同步 {{when}} 前"
+      },
+      "emergingLabel": "新兴"
+    },
+    "orphan": {
+      "references": "{{count}} 次引用",
+      "projects": "{{count}} 个项目",
+      "projectsSingular": "{{count}} 个项目",
+      "synthesize": "合成页面 →",
+      "noPageYet": "暂无页面"
+    },
+    "concept": {
+      "synthesizedFrom": "来自 {{count}} 条记忆"
+    },
+    "detail": {
+      "back": "← Wiki",
+      "edit": "编辑",
+      "updateFromSources": "从来源更新",
+      "settings": "设置",
+      "updatedAgo": "更新于 {{when}}",
+      "synthesizedFromMem": "来自 {{count}} 条记忆",
+      "freshness": {
+        "fresh": "新鲜",
+        "stale": "已过时",
+        "neverReviewed": "从未审阅"
+      },
+      "tldr": "摘要",
+      "sources": "来源",
+      "linkedFrom": "被引用自",
+      "relatedConcepts": "相关概念",
+      "openMemory": "打开记忆 →",
+      "showAll": "显示全部 {{count}} 条 ↓",
+      "hiddenSourcesOne": "还有 {{count}} 条来源记忆",
+      "hiddenSourcesOther": "还有 {{count}} 条来源记忆",
+      "autoSynthesized": "自动合成",
+      "lastReviewedNever": "最后审阅：从未",
+      "lastSynthesized": "上次合成：{{when}}",
+      "markAsReviewed": "标记为已审阅",
+      "editThisPage": "编辑此页",
+      "reSynthesizeFromSources": "从来源重新合成",
+      "statusTotalConcepts": "共 {{count}} 个概念",
+      "statusNotReviewedYet": "尚未审阅",
+      "statusLastSync": "上次同步 {{when}} 前",
+      "loading": "加载中…",
+      "notFound": "未找到该概念。",
+      "notFoundBack": "← 返回 Wiki"
+    }
+  },
+  "archive": {
+    "topbar": {
+      "title": "记忆",
+      "subtitle": "IJFW · Ferrox Labs",
+      "streak_pill": "{{sessions}} 次会话 · 最长连续 {{longestDays}} 天",
+      "streak_empty": "暂无会话记录",
+      "import_btn": "导入…",
+      "settings_btn": "设置"
+    },
+    "stats": {
+      "memories": "记忆",
+      "banked": "已节省",
+      "decisions": "决策",
+      "wiki": "Wiki",
+      "sessions": "会话",
+      "projects": "项目",
+      "delta_today": "今天 {{count}} 条",
+      "delta_week": "本周 {{count}} 条",
+      "delta_none": "无变化",
+      "banked_tooltip": "预估节省的推理价值：引用次数 × $0.15 + 决策次数 × $0.50 + Wiki 条目 × $2.00",
+      "no_data": "0"
+    },
+    "banner": {
+      "candidates_ready": "{{count}} 个候选项已准备好自动升级",
+      "threshold": "阈值 ≥ {{value}}",
+      "next_sweep": "将在 {{time}} 后自动升级",
+      "last_dream": "上次整理：{{facts}} 条事实 · {{promoted}} 条已升级 · {{ago}} 前",
+      "no_dream": "最近没有整理周期",
+      "tune_btn": "调整",
+      "review_btn": "审阅 {{count}} 条 →",
+      "review_btn_zero": "审阅"
+    },
+    "filters": {
+      "projects_title": "项目",
+      "all_projects": "所有项目",
+      "this_project": "本项目",
+      "global": "全局",
+      "time_title": "时间",
+      "time_all": "全部",
+      "time_today": "今天",
+      "time_7d": "7 天",
+      "time_30d": "30 天",
+      "time_custom": "自定义…",
+      "tags_title": "标签",
+      "tags_clear": "清除标签",
+      "autopromo_title": "自动升级",
+      "candidates_only": "仅显示升级候选",
+      "hide_promoted": "隐藏已升级的条目",
+      "candidates_subline": "{{count}} 条已就绪 · 阈值 ≥ {{value}}",
+      "section_collapse": "收起",
+      "section_expand": "展开"
+    },
+    "list": {
+      "search_placeholder": "搜索记忆…",
+      "search_kbd_hint": "/",
+      "chip_all": "全部",
+      "chip_decision": "决策",
+      "chip_pattern": "模式",
+      "chip_session": "会话",
+      "chip_wiki": "Wiki",
+      "chip_observation": "观察",
+      "chip_preference": "偏好",
+      "chip_count": "({{count}})",
+      "empty_title": "无匹配",
+      "empty_subtitle": "尝试移除过滤条件或清除搜索。",
+      "empty_clear_btn": "清除过滤",
+      "footer": "显示第 1–{{shown}} 条，共 {{total}} 条 · 滚动查看更多",
+      "footer_all_loaded": "已加载全部 {{total}} 条",
+      "loading_more": "加载更多…"
+    },
+    "row": {
+      "used_pill": "本周使用 {{count}} 次",
+      "type_decision": "决策",
+      "type_pattern": "模式",
+      "type_observation": "观察",
+      "type_session": "会话",
+      "type_wiki": "Wiki",
+      "type_preference": "偏好"
+    },
+    "inspector": {
+      "empty_title": "选择一条记忆以查看详情",
+      "kbd_navigate": "↑/↓ 导航",
+      "kbd_select": "Enter 选择",
+      "kbd_close": "Esc 关闭",
+      "close_btn": "关闭",
+      "promote_btn": "升级至 Wiki",
+      "promote_disabled": "已升级 ✓",
+      "open_btn": "打开文件",
+      "copy_btn": "复制",
+      "score_label": "升级评分 {{score}}/100",
+      "score_threshold": "达到 {{threshold}} 自动升级",
+      "score_help": "这是怎么计算的？",
+      "summary_title": "摘要",
+      "why_title": "原因",
+      "why_empty": "未记录「原因」",
+      "how_title": "如何应用",
+      "how_empty": "未记录「如何应用」",
+      "derefs_title": "实际使用情况",
+      "derefs_subtitle": "本周使用 {{count}} 次",
+      "tags_title": "标签",
+      "source_label": "来源",
+      "source_copied": "已复制来源路径",
+      "promote_success": "已升级至 Wiki",
+      "promote_error": "无法升级，请重试。",
+      "score_tooltip": "+30 决策/模式 · +10 每个跨项目引用 · +5 每次解引用 · +20 已升级标签 · +15 近期（30 天内线性衰减）"
+    },
+    "quickadd": {
+      "placeholder": "记录任何内容…",
+      "scope_project": "项目",
+      "scope_global": "全局",
+      "submit_btn": "记住 →",
+      "submitting": "保存中…",
+      "success": "已保存",
+      "error": "无法保存，请重试。"
+    },
+    "statusbar": {
+      "brain_live": "记忆在线",
+      "brain_offline": "记忆离线",
+      "cli_count": "{{count}} 个 CLI",
+      "cli_count_none": "未检测到 CLI",
+      "last_dream": "上次整理：{{facts}} 条事实 · {{promoted}} 条已升级 · {{ago}} 前",
+      "no_dream": "等待首次整理",
+      "kbd_capture": "快速记录",
+      "kbd_search": "搜索",
+      "kbd_close": "关闭检视",
+      "spend_today": "今日花费 ${{usd}}"
+    },
+    "threshold_modal": {
+      "title": "调整自动升级",
+      "threshold_label": "升级阈值",
+      "autopromo_label": "按计划自动升级",
+      "autopromo_help": "开启后，超过阈值且通过 10 分钟等待队列的候选项将自动写入 Wiki。",
+      "live_preview": "阈值 {{value}} 下共有 {{count}} 个候选",
+      "score_formula_title": "评分公式",
+      "formula_decision": "+30 类型为决策或模式",
+      "formula_refs": "+10 每个引用该条目的项目",
+      "formula_referenced": "+5 每次解引用命中",
+      "formula_tag": "+20 标签为决策、模式、全局、设计或架构",
+      "formula_recency": "+15 存储时间不足 24 小时（30 天内线性衰减）",
+      "save_btn": "保存",
+      "cancel_btn": "取消",
+      "save_success": "已保存"
+    },
+    "errors": {
+      "load_failed": "无法加载记忆。{{reason}}",
+      "missing_api": "记忆 API 尚未就绪，请稍后再试。",
+      "promote_failed": "无法升级。{{reason}}"
+    }
   }
 }

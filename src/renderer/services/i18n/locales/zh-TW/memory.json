@@ -177,5 +177,225 @@
     "ingest_success": "已將 {{name}} 加入佇列",
     "quarantine_success": "已隔離 {{name}}",
     "path_unavailable": "無法讀取檔案路徑。請改用瀏覽按鈕。"
+  },
+  "wiki": {
+    "home": {
+      "title": "Wiki",
+      "conceptCount": "{{count}} 個概念來自 {{memories}} 條記憶",
+      "viewList": "列表",
+      "viewGraph": "圖譜",
+      "newConcept": "+ 新概念",
+      "settings": "設定",
+      "search": {
+        "placeholder": "搜尋概念…"
+      },
+      "columns": {
+        "byTopic": "按主題",
+        "updatedThisWeek": "本週更新",
+        "emerging": "新興 — 應建立概念頁"
+      },
+      "mostReferenced": "最多引用",
+      "references": "次引用",
+      "empty": "Wiki 為空。升級一條記憶或等待自動同步。",
+      "status": {
+        "concepts": "{{count}} 個概念",
+        "memoriesSynthesized": "{{count}} 條記憶已合成",
+        "autoSync": "每 30 分鐘自動同步",
+        "lastSync": "上次同步 {{when}} 前"
+      },
+      "emergingLabel": "新興"
+    },
+    "orphan": {
+      "references": "{{count}} 次引用",
+      "projects": "{{count}} 個專案",
+      "projectsSingular": "{{count}} 個專案",
+      "synthesize": "合成頁面 →",
+      "noPageYet": "尚無頁面"
+    },
+    "concept": {
+      "synthesizedFrom": "來自 {{count}} 條記憶"
+    },
+    "detail": {
+      "back": "← Wiki",
+      "edit": "編輯",
+      "updateFromSources": "從來源更新",
+      "settings": "設定",
+      "updatedAgo": "更新於 {{when}}",
+      "synthesizedFromMem": "來自 {{count}} 條記憶",
+      "freshness": {
+        "fresh": "新鮮",
+        "stale": "已過時",
+        "neverReviewed": "從未審閱"
+      },
+      "tldr": "摘要",
+      "sources": "來源",
+      "linkedFrom": "被引用自",
+      "relatedConcepts": "相關概念",
+      "openMemory": "開啟記憶 →",
+      "showAll": "顯示全部 {{count}} 條 ↓",
+      "hiddenSourcesOne": "還有 {{count}} 條來源記憶",
+      "hiddenSourcesOther": "還有 {{count}} 條來源記憶",
+      "autoSynthesized": "自動合成",
+      "lastReviewedNever": "最後審閱：從未",
+      "lastSynthesized": "上次合成：{{when}}",
+      "markAsReviewed": "標記為已審閱",
+      "editThisPage": "編輯此頁",
+      "reSynthesizeFromSources": "從來源重新合成",
+      "statusTotalConcepts": "共 {{count}} 個概念",
+      "statusNotReviewedYet": "尚未審閱",
+      "statusLastSync": "上次同步 {{when}} 前",
+      "loading": "載入中…",
+      "notFound": "找不到該概念。",
+      "notFoundBack": "← 返回 Wiki"
+    }
+  },
+  "archive": {
+    "topbar": {
+      "title": "記憶",
+      "subtitle": "IJFW · Ferrox Labs",
+      "streak_pill": "{{sessions}} 次工作階段 · 最長連續 {{longestDays}} 天",
+      "streak_empty": "尚無工作階段記錄",
+      "import_btn": "匯入…",
+      "settings_btn": "設定"
+    },
+    "stats": {
+      "memories": "記憶",
+      "banked": "已節省",
+      "decisions": "決策",
+      "wiki": "Wiki",
+      "sessions": "工作階段",
+      "projects": "專案",
+      "delta_today": "今天 {{count}} 條",
+      "delta_week": "本週 {{count}} 條",
+      "delta_none": "無變化",
+      "banked_tooltip": "預估節省的推論價值：引用次數 × $0.15 + 決策次數 × $0.50 + Wiki 條目 × $2.00",
+      "no_data": "0"
+    },
+    "banner": {
+      "candidates_ready": "{{count}} 個候選項已準備好自動升級",
+      "threshold": "閾值 ≥ {{value}}",
+      "next_sweep": "將在 {{time}} 後自動升級",
+      "last_dream": "上次整理：{{facts}} 條事實 · {{promoted}} 條已升級 · {{ago}} 前",
+      "no_dream": "最近沒有整理週期",
+      "tune_btn": "調整",
+      "review_btn": "審閱 {{count}} 條 →",
+      "review_btn_zero": "審閱"
+    },
+    "filters": {
+      "projects_title": "專案",
+      "all_projects": "所有專案",
+      "this_project": "本專案",
+      "global": "全域",
+      "time_title": "時間",
+      "time_all": "全部",
+      "time_today": "今天",
+      "time_7d": "7 天",
+      "time_30d": "30 天",
+      "time_custom": "自訂…",
+      "tags_title": "標籤",
+      "tags_clear": "清除標籤",
+      "autopromo_title": "自動升級",
+      "candidates_only": "僅顯示升級候選",
+      "hide_promoted": "隱藏已升級的條目",
+      "candidates_subline": "{{count}} 條已就緒 · 閾值 ≥ {{value}}",
+      "section_collapse": "收合",
+      "section_expand": "展開"
+    },
+    "list": {
+      "search_placeholder": "搜尋記憶…",
+      "search_kbd_hint": "/",
+      "chip_all": "全部",
+      "chip_decision": "決策",
+      "chip_pattern": "模式",
+      "chip_session": "工作階段",
+      "chip_wiki": "Wiki",
+      "chip_observation": "觀察",
+      "chip_preference": "偏好",
+      "chip_count": "({{count}})",
+      "empty_title": "無符合項目",
+      "empty_subtitle": "請嘗試移除過濾條件或清除搜尋。",
+      "empty_clear_btn": "清除過濾",
+      "footer": "顯示第 1–{{shown}} 條，共 {{total}} 條 · 捲動查看更多",
+      "footer_all_loaded": "已載入全部 {{total}} 條",
+      "loading_more": "載入更多…"
+    },
+    "row": {
+      "used_pill": "本週使用 {{count}} 次",
+      "type_decision": "決策",
+      "type_pattern": "模式",
+      "type_observation": "觀察",
+      "type_session": "工作階段",
+      "type_wiki": "Wiki",
+      "type_preference": "偏好"
+    },
+    "inspector": {
+      "empty_title": "選擇一條記憶以查看詳情",
+      "kbd_navigate": "↑/↓ 導覽",
+      "kbd_select": "Enter 選擇",
+      "kbd_close": "Esc 關閉",
+      "close_btn": "關閉",
+      "promote_btn": "升級至 Wiki",
+      "promote_disabled": "已升級 ✓",
+      "open_btn": "開啟檔案",
+      "copy_btn": "複製",
+      "score_label": "升級評分 {{score}}/100",
+      "score_threshold": "達到 {{threshold}} 自動升級",
+      "score_help": "這是如何計算的？",
+      "summary_title": "摘要",
+      "why_title": "原因",
+      "why_empty": "未記錄「原因」",
+      "how_title": "如何應用",
+      "how_empty": "未記錄「如何應用」",
+      "derefs_title": "實際使用情況",
+      "derefs_subtitle": "本週使用 {{count}} 次",
+      "tags_title": "標籤",
+      "source_label": "來源",
+      "source_copied": "已複製來源路徑",
+      "promote_success": "已升級至 Wiki",
+      "promote_error": "無法升級，請重試。",
+      "score_tooltip": "+30 決策/模式 · +10 每個跨專案引用 · +5 每次解引用 · +20 已升級標籤 · +15 近期（30 天內線性衰減）"
+    },
+    "quickadd": {
+      "placeholder": "記錄任何內容…",
+      "scope_project": "專案",
+      "scope_global": "全域",
+      "submit_btn": "記住 →",
+      "submitting": "儲存中…",
+      "success": "已儲存",
+      "error": "無法儲存，請重試。"
+    },
+    "statusbar": {
+      "brain_live": "記憶上線",
+      "brain_offline": "記憶離線",
+      "cli_count": "{{count}} 個 CLI",
+      "cli_count_none": "未偵測到 CLI",
+      "last_dream": "上次整理：{{facts}} 條事實 · {{promoted}} 條已升級 · {{ago}} 前",
+      "no_dream": "等待首次整理",
+      "kbd_capture": "快速記錄",
+      "kbd_search": "搜尋",
+      "kbd_close": "關閉檢視",
+      "spend_today": "今日花費 ${{usd}}"
+    },
+    "threshold_modal": {
+      "title": "調整自動升級",
+      "threshold_label": "升級閾值",
+      "autopromo_label": "依排程自動升級",
+      "autopromo_help": "開啟後，超過閾值且通過 10 分鐘等待佇列的候選項將自動寫入 Wiki。",
+      "live_preview": "閾值 {{value}} 下共有 {{count}} 個候選",
+      "score_formula_title": "評分公式",
+      "formula_decision": "+30 類型為決策或模式",
+      "formula_refs": "+10 每個引用該條目的專案",
+      "formula_referenced": "+5 每次解引用命中",
+      "formula_tag": "+20 標籤為決策、模式、全域、設計或架構",
+      "formula_recency": "+15 儲存時間不足 24 小時（30 天內線性衰減）",
+      "save_btn": "儲存",
+      "cancel_btn": "取消",
+      "save_success": "已儲存"
+    },
+    "errors": {
+      "load_failed": "無法載入記憶。{{reason}}",
+      "missing_api": "記憶 API 尚未就緒，請稍後再試。",
+      "promote_failed": "無法升級。{{reason}}"
+    }
   }
 }

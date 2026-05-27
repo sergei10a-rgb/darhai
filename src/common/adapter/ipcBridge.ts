@@ -66,6 +66,9 @@ export const shell = {
   openFolderWith: buildProvider<void, { folderPath: string; tool: 'vscode' | 'terminal' | 'explorer' }>(
     'shell.open-folder-with'
   ), // Open a folder with the specified tool
+  /** Open a filesystem path (file or directory) via the OS default handler.
+   *  Only `~`-expansion is applied — no `..` traversal is allowed. */
+  openPath: buildProvider<{ ok: boolean; error?: string }, { path: string }>('shell.open-path'),
 };
 
 // Generic conversation capabilities
@@ -1442,6 +1445,8 @@ export type IjfwStatusPayload = {
   errorReason?: IjfwErrorReason;
   stderr?: string;
   offline?: boolean;
+  /** Count of detected CLIs IJFW knows about, excluding Wayland Core itself. */
+  cliCount?: number;
 };
 
 export const ijfw = {
@@ -1937,4 +1942,107 @@ export const usage = {
     Array<{ modelId: string; useCount: number; lastUsedMs: number }>,
     { windowMs?: number; limit?: number }
   >('usage.queryFrequentlyUsedModels'),
+};
+
+// ==================== Memory Archive (v0.6.4) ====================
+// Direct filesystem access to .ijfw/memory/*.md files — does NOT go through
+// the MCP server. The MCP server stays as the write/orchestrate layer.
+
+import type {
+  MemoryEntry,
+  MemoryStats,
+  ListFilter,
+  ProjectSummary,
+  TagCount,
+  IndexStats,
+  PromotionCandidates,
+  GetStatsResult,
+  WikiConcept,
+  WikiState,
+  WikiTopicTag,
+  WikiFreshness,
+} from '@/common/types/memory';
+
+export const memory = {
+  /** Aggregated stats from the in-memory index (counts, deltas, sparkline). */
+  getStats: buildProvider<GetStatsResult, void>('memory.get-stats'),
+  /** Filtered + sorted list of entries. */
+  listEntries: buildProvider<{ entries: MemoryEntry[]; total: number }, ListFilter | void>('memory.list-entries'),
+  /** Full entry including body text (read from disk on demand). */
+  getEntry: buildProvider<(MemoryEntry & { body: string }) | null, { id: string }>('memory.get-entry'),
+  /** Ranked list of projects by entry count + last-active time. */
+  getProjects: buildProvider<ProjectSummary[], void>('memory.get-projects'),
+  /** Top-20 tags, optionally scoped to a project. */
+  getTags: buildProvider<TagCount[], { project?: string } | void>('memory.get-tags'),
+  /** Promote a memory entry to the project's .ijfw/wiki/ directory. */
+  promote: buildProvider<{ ok: boolean; wikiPath?: string } | { ok: false; error: string }, { id: string }>('memory.promote'),
+  /** Quick-add a new memory from the renderer input. */
+  setQuickAdd: buildProvider<{ ok: boolean; error?: string }, { content: string; scope: 'project' | 'global'; type?: string }>('memory.set-quick-add'),
+  /** Entries whose promotionScore meets the threshold. */
+  getPromotionCandidates: buildProvider<PromotionCandidates, void>('memory.get-promotion-candidates'),
+  /** Persist the promotion threshold (0–100). */
+  setPromotionThreshold: buildProvider<void, { threshold: number }>('memory.set-promotion-threshold'),
+  /** Enable or disable auto-promotion on schedule (added W3). */
+  setAutoPromoteEnabled: buildProvider<void, { enabled: boolean }>('memory.set-auto-promote-enabled'),
+  /** Undo a recent promotion within the 24h grace window (added W3). */
+  undoPromotion: buildProvider<{ ok: boolean; error?: string }, { id: string }>('memory.undo-promotion'),
+  /** Trigger an immediate promotion sweep (added W3). */
+  forceSweep: buildProvider<void, void>('memory.force-sweep'),
+  /** Read a windowed slice of a source file centred on `line` for inline display. */
+  readSourceContext: buildProvider<
+    | { ok: true; before: string; anchor: string; after: string; totalLines: number }
+    | { ok: false; error: string },
+    { path: string; line: number; contextLines?: number }
+  >('memory.read-source-context'),
+  /** Fired when the file watcher triggers a re-index. */
+  onIndexChanged: buildEmitter<IndexStats>('memory.index-changed'),
+  /** Import verbs — stubs until W1a wires the actual importers. */
+  import: {
+    claudeMem: buildProvider<{ count: number; errors: string[] }, void>('memory.import.claude-mem'),
+    obsidianVault: buildProvider<{ count: number; errors: string[] }, { vaultPath: string }>('memory.import.obsidian-vault'),
+    scanDevDir: buildProvider<{ count: number; projectsFound: number; errors: string[] }, void>('memory.import.scan-dev-dir'),
+    processDropFolder: buildProvider<{ count: number; errors: string[] }, void>('memory.import.process-drop-folder'),
+    /** Return live status of the drop folder watcher for the status bar chip. */
+    getDropFolderStatus: buildProvider<{ path: string; watching: boolean; ingestedToday: number }, void>('memory.import.get-drop-folder-status'),
+  },
+  /** Ingest raw file contents (from drag-drop) directly into the memory dir. */
+  ingestFiles: buildProvider<
+    { ok: boolean; ingested: number; errors: string[] },
+    { files: { name: string; content: string; scope?: 'project' | 'global' }[] }
+  >('memory.ingest-files'),
+};
+
+// ==================== Wiki (v0.6.4) ====================
+// Synthesized concept pages built from MemoryEntry records.
+// Stored in <project>/.ijfw/wiki/*.md (Obsidian-compatible).
+// Sidecar index at <project>/.ijfw/wiki-state/index.json.
+
+export const wiki = {
+  /** List concepts with optional topic/search/freshness/sort filter. */
+  listConcepts: buildProvider<
+    { concepts: WikiConcept[]; total: number },
+    { topicTag?: WikiTopicTag; search?: string; freshness?: WikiFreshness; sort?: 'recent' | 'most-referenced' | 'alphabetical' } | void
+  >('wiki.list-concepts'),
+  /** Get a single concept by slug. */
+  getConcept: buildProvider<WikiConcept | null, { slug: string }>('wiki.get-concept'),
+  /** Synthesize a new concept page from orphan memory IDs. */
+  synthesizeOrphan: buildProvider<
+    { ok: boolean; slug?: string; error?: string },
+    { memoryIds: string[] }
+  >('wiki.synthesize-orphan'),
+  /** Re-synthesize an existing concept from its source memories. */
+  reSynthesize: buildProvider<
+    { ok: boolean; lastSynthesizedAt?: number; error?: string },
+    { slug: string }
+  >('wiki.re-synthesize'),
+  /** Resolve a raw wikilink text to a concept slug. */
+  resolveBacklink: buildProvider<{ slug: string | null; name: string | null }, { wikilinkText: string }>('wiki.resolve-backlink'),
+  /** Full backlink graph: slug → list of slugs that link to it. */
+  getBacklinkGraph: buildProvider<Record<string, string[]>, void>('wiki.get-backlink-graph'),
+  /** Full wiki state (concepts + backlinkGraph + orphanCandidates) — used on cold load. */
+  getState: buildProvider<WikiState, void>('wiki.get-state'),
+  /** Fired when the wiki state mutates (synthesize / re-synthesize). */
+  stateChanged: buildEmitter<WikiState>('wiki.state-changed'),
+  /** Trigger a full synthesis sweep immediately and return count of new concepts. */
+  synthesizeNow: buildProvider<{ ok: boolean; newConcepts: number; error?: string }, void>('wiki.synthesize-now'),
 };

@@ -248,10 +248,9 @@ const Sider: React.FC<SiderProps> = ({ onSessionClick, collapsed = false }) => {
         />
         <SiderMemoryEntry
           isMobile={isMobile}
-          isActive={pathname.startsWith('/memory')}
+          isActive={pathname.startsWith('/memory') || pathname.startsWith('/wiki')}
           collapsed={collapsed}
           siderTooltipProps={siderTooltipProps}
-          onClick={() => handleTopZoneNav('/memory')}
         />
       </div>
 

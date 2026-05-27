@@ -39,6 +39,10 @@ import { initWebuiBridge } from './webuiBridge';
 import { initConstitutionBridge } from './constitutionBridge';
 import { initIjfwBridge } from './ijfwBridge';
 import { initIjfwDropBridge } from './ijfwDropBridge';
+import { initMemoryArchiveBridge, initPromotionSweep } from './memoryArchiveBridge';
+import { initWikiBridge } from './wikiBridge';
+import { startWikiAutoSync } from '@process/services/wiki/wikiAutoSync';
+import { initImportBridge } from './importBridge';
 import { initSystemSettingsBridge } from './systemSettingsBridge';
 import { initAmbientBridge } from './ambientBridge';
 import { initWindowControlsBridge } from './windowControlsBridge';
@@ -98,6 +102,11 @@ export function initAllBridges(deps: BridgeDependencies): void {
   initSystemSettingsBridge();
   initIjfwBridge();
   initIjfwDropBridge();
+  initMemoryArchiveBridge();
+  initPromotionSweep();
+  initWikiBridge();
+  startWikiAutoSync();
+  initImportBridge();
   initAmbientBridge();
   initNotificationBridge();
   initTaskBridge(deps.workerTaskManager);
@@ -137,6 +146,8 @@ export async function initializeAcpDetector(): Promise<void> {
 // Export individual init functions for standalone use
 
 export {
+  initMemoryArchiveBridge,
+  initPromotionSweep,
   initAcpConversationBridge,
   initApplicationBridge,
   initAuthBridge,
@@ -178,6 +189,8 @@ export {
   initWorkspaceSnapshotBridge,
   initIjfwBridge,
   initIjfwDropBridge,
+  initWikiBridge,
+  initImportBridge,
 };
 export { initModelRegistryIpc } from '@process/providers/ipc/modelRegistryIpc';
 export { disposeAllSnapshots } from './workspaceSnapshotBridge';

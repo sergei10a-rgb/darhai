@@ -23,15 +23,10 @@ import type { IjfwStatusPayload } from '@/common/adapter/ipcBridge';
 
 type Listener = (payload: IjfwStatusPayload) => void;
 
-const { listeners, unsubscribeSpy, getStatusInvoke, brainInvokeMock } = vi.hoisted(() => ({
+const { listeners, unsubscribeSpy, getStatusInvoke } = vi.hoisted(() => ({
   listeners: new Set<Listener>(),
   unsubscribeSpy: vi.fn(),
   getStatusInvoke: vi.fn<() => Promise<IjfwStatusPayload | undefined>>(),
-  brainInvokeMock: vi.fn<
-    (args: { verb: string; args?: Record<string, unknown> }) => Promise<
-      { ok: true; data: unknown } | { ok: false; errorReason?: string }
-    >
-  >(),
 }));
 
 vi.mock('@/common', () => ({
@@ -47,7 +42,6 @@ vi.mock('@/common', () => ({
         },
       },
       getStatus: { invoke: getStatusInvoke },
-      brainInvoke: { invoke: brainInvokeMock },
     },
   },
 }));
@@ -72,10 +66,6 @@ vi.mock('@renderer/pages/memory/state-branches/InstallFailedCard', () => ({
   ),
 }));
 
-vi.mock('@renderer/pages/memory/state-branches/OnboardingEmptyState', () => ({
-  default: () => <div data-testid='branch-onboarding-empty' />,
-}));
-
 vi.mock('@renderer/pages/memory/state-branches/FullPanelShell', () => ({
   default: () => <div data-testid='branch-full-panel-shell' />,
 }));
@@ -93,8 +83,6 @@ beforeEach(() => {
   unsubscribeSpy.mockReset();
   getStatusInvoke.mockReset();
   getStatusInvoke.mockResolvedValue(undefined);
-  brainInvokeMock.mockReset();
-  brainInvokeMock.mockResolvedValue({ ok: true, data: { facts: [] } });
 });
 
 afterEach(() => {
@@ -154,38 +142,16 @@ describe('MemoryPage', () => {
     expect(card.getAttribute('data-stderr')).toBe('ENOENT npm');
   });
 
-  it('renders OnboardingEmptyState when status is installed_current and memory_facts is empty', async () => {
-    brainInvokeMock.mockResolvedValueOnce({ ok: true, data: { facts: [] } });
+  it('renders FullPanelShell directly when status is installed_current (no memory_facts gate)', () => {
+    // Prior behavior routed through `memory_facts({any:true})` which is a
+    // hallucinated arg shape (real schema requires {subject, predicate}). When
+    // the server returned empty facts, users with hundreds of memories were
+    // wedged on OnboardingEmptyState. Now the route is direct: any
+    // installed_current emission immediately surfaces the full tab shell, and
+    // each tab handles its own empty/error states locally.
     render(<MemoryPage />);
     emit({ status: 'installed_current', version: '1.0.0' });
-    await waitFor(() => {
-      expect(screen.getByTestId('branch-onboarding-empty')).toBeTruthy();
-    });
-    expect(brainInvokeMock).toHaveBeenCalledWith({
-      verb: 'memory_facts',
-      args: { any: true },
-    });
-  });
-
-  it('renders FullPanelShell when status is installed_current and memory_facts has results', async () => {
-    brainInvokeMock.mockResolvedValueOnce({
-      ok: true,
-      data: { facts: [{ id: 'f1' }] },
-    });
-    render(<MemoryPage />);
-    emit({ status: 'installed_current', version: '1.0.0' });
-    await waitFor(() => {
-      expect(screen.getByTestId('branch-full-panel-shell')).toBeTruthy();
-    });
-  });
-
-  it('renders FullPanelShell (degraded) when status is installed_current and memory_facts errors', async () => {
-    brainInvokeMock.mockResolvedValueOnce({ ok: false, errorReason: 'mcp_error' });
-    render(<MemoryPage />);
-    emit({ status: 'installed_current', version: '1.0.0' });
-    await waitFor(() => {
-      expect(screen.getByTestId('branch-full-panel-shell')).toBeTruthy();
-    });
+    expect(screen.getByTestId('branch-full-panel-shell')).toBeTruthy();
   });
 
   it('does not duplicate subscriptions under React strict-mode double-mount', () => {

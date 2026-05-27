@@ -177,5 +177,225 @@
     "ingest_success": "{{name}}을(를) 대기열에 추가했습니다",
     "quarantine_success": "{{name}}을(를) 격리했습니다",
     "path_unavailable": "파일 경로를 읽을 수 없습니다. 대신 찾아보기 버튼을 사용하세요."
+  },
+  "wiki": {
+    "home": {
+      "title": "Wiki",
+      "conceptCount": "{{memories}}개의 메모리에서 {{count}}개의 개념 합성",
+      "viewList": "목록",
+      "viewGraph": "그래프",
+      "newConcept": "+ 새 개념",
+      "settings": "설정",
+      "search": {
+        "placeholder": "개념 검색…"
+      },
+      "columns": {
+        "byTopic": "주제별",
+        "updatedThisWeek": "이번 주 업데이트",
+        "emerging": "신흥 — 개념 페이지 생성 권장"
+      },
+      "mostReferenced": "가장 많이 참조됨",
+      "references": "참조",
+      "empty": "Wiki가 비어 있습니다. 메모리를 승격하거나 자동 동기화를 기다리세요.",
+      "status": {
+        "concepts": "{{count}}개 개념",
+        "memoriesSynthesized": "{{count}}개 메모리 합성됨",
+        "autoSync": "30분마다 자동 동기화",
+        "lastSync": "마지막 동기화 {{when}} 전"
+      },
+      "emergingLabel": "신흥"
+    },
+    "orphan": {
+      "references": "{{count}}개 참조",
+      "projects": "{{count}}개 프로젝트",
+      "projectsSingular": "{{count}}개 프로젝트",
+      "synthesize": "페이지 합성 →",
+      "noPageYet": "페이지 없음"
+    },
+    "concept": {
+      "synthesizedFrom": "{{count}}개 메모리에서 합성"
+    },
+    "detail": {
+      "back": "← Wiki",
+      "edit": "편집",
+      "updateFromSources": "소스에서 업데이트",
+      "settings": "설정",
+      "updatedAgo": "{{when}} 업데이트",
+      "synthesizedFromMem": "{{count}}개 메모리에서 합성",
+      "freshness": {
+        "fresh": "최신",
+        "stale": "오래됨",
+        "neverReviewed": "검토 안 됨"
+      },
+      "tldr": "요약",
+      "sources": "소스",
+      "linkedFrom": "링크 출처",
+      "relatedConcepts": "관련 개념",
+      "openMemory": "메모리 열기 →",
+      "showAll": "전체 {{count}}개 보기 ↓",
+      "hiddenSourcesOne": "소스 메모리 {{count}}개 더",
+      "hiddenSourcesOther": "소스 메모리 {{count}}개 더",
+      "autoSynthesized": "자동 합성",
+      "lastReviewedNever": "마지막 검토: 없음",
+      "lastSynthesized": "마지막 합성: {{when}}",
+      "markAsReviewed": "검토됨으로 표시",
+      "editThisPage": "이 페이지 편집",
+      "reSynthesizeFromSources": "소스에서 재합성",
+      "statusTotalConcepts": "총 {{count}}개 개념",
+      "statusNotReviewedYet": "아직 검토되지 않음",
+      "statusLastSync": "마지막 동기화 {{when}} 전",
+      "loading": "로딩 중…",
+      "notFound": "개념을 찾을 수 없습니다.",
+      "notFoundBack": "← Wiki로 돌아가기"
+    }
+  },
+  "archive": {
+    "topbar": {
+      "title": "메모리",
+      "subtitle": "IJFW · Ferrox Labs",
+      "streak_pill": "{{sessions}}회 세션 · 최장 {{longestDays}}일 연속",
+      "streak_empty": "아직 세션이 없습니다",
+      "import_btn": "가져오기…",
+      "settings_btn": "설정"
+    },
+    "stats": {
+      "memories": "메모리",
+      "banked": "절감액",
+      "decisions": "결정",
+      "wiki": "Wiki",
+      "sessions": "세션",
+      "projects": "프로젝트",
+      "delta_today": "오늘 {{count}}개",
+      "delta_week": "이번 주 {{count}}개",
+      "delta_none": "변화 없음",
+      "banked_tooltip": "추정 절감 추론 비용: 참조 × $0.15 + 결정 × $0.50 + Wiki × $2.00",
+      "no_data": "0"
+    },
+    "banner": {
+      "candidates_ready": "{{count}}개 후보가 자동 승격 준비 완료",
+      "threshold": "임계값 ≥ {{value}}",
+      "next_sweep": "{{time}} 후 자동 승격",
+      "last_dream": "마지막 정리: {{facts}}개 사실 · {{promoted}}개 승격 · {{ago}} 전",
+      "no_dream": "최근 정리 주기 없음",
+      "tune_btn": "조정",
+      "review_btn": "{{count}}개 검토 →",
+      "review_btn_zero": "검토"
+    },
+    "filters": {
+      "projects_title": "프로젝트",
+      "all_projects": "모든 프로젝트",
+      "this_project": "이 프로젝트",
+      "global": "전역",
+      "time_title": "기간",
+      "time_all": "전체",
+      "time_today": "오늘",
+      "time_7d": "7일",
+      "time_30d": "30일",
+      "time_custom": "사용자 정의…",
+      "tags_title": "태그",
+      "tags_clear": "태그 지우기",
+      "autopromo_title": "자동 승격",
+      "candidates_only": "승격 후보만 표시",
+      "hide_promoted": "이미 승격된 항목 숨기기",
+      "candidates_subline": "{{count}}개 준비 완료 · 임계값 ≥ {{value}}",
+      "section_collapse": "접기",
+      "section_expand": "펼치기"
+    },
+    "list": {
+      "search_placeholder": "메모리 검색…",
+      "search_kbd_hint": "/",
+      "chip_all": "전체",
+      "chip_decision": "결정",
+      "chip_pattern": "패턴",
+      "chip_session": "세션",
+      "chip_wiki": "Wiki",
+      "chip_observation": "관찰",
+      "chip_preference": "기본 설정",
+      "chip_count": "({{count}})",
+      "empty_title": "일치하는 항목 없음",
+      "empty_subtitle": "필터를 제거하거나 검색어를 지워 보세요.",
+      "empty_clear_btn": "필터 지우기",
+      "footer": "1–{{shown}}번째 표시 중 / 전체 {{total}}개 · 스크롤하여 더 보기",
+      "footer_all_loaded": "전체 {{total}}개 로드 완료",
+      "loading_more": "더 불러오는 중…"
+    },
+    "row": {
+      "used_pill": "이번 주 {{count}}회 사용",
+      "type_decision": "결정",
+      "type_pattern": "패턴",
+      "type_observation": "관찰",
+      "type_session": "세션",
+      "type_wiki": "Wiki",
+      "type_preference": "기본 설정"
+    },
+    "inspector": {
+      "empty_title": "메모리를 선택하여 검사하세요",
+      "kbd_navigate": "↑/↓ 탐색",
+      "kbd_select": "Enter 선택",
+      "kbd_close": "Esc 닫기",
+      "close_btn": "닫기",
+      "promote_btn": "Wiki로 승격",
+      "promote_disabled": "이미 승격됨 ✓",
+      "open_btn": "파일 열기",
+      "copy_btn": "복사",
+      "score_label": "승격 점수 {{score}}/100",
+      "score_threshold": "{{threshold}} 도달 시 자동 승격",
+      "score_help": "어떻게 계산되나요?",
+      "summary_title": "요약",
+      "why_title": "이유",
+      "why_empty": "\"이유\"가 기록되지 않았습니다",
+      "how_title": "적용 방법",
+      "how_empty": "\"적용 방법\"이 기록되지 않았습니다",
+      "derefs_title": "실제 사용 현황",
+      "derefs_subtitle": "이번 주 {{count}}회 사용",
+      "tags_title": "태그",
+      "source_label": "소스",
+      "source_copied": "소스 경로를 복사했습니다",
+      "promote_success": "Wiki로 승격되었습니다",
+      "promote_error": "승격할 수 없습니다. 다시 시도하세요.",
+      "score_tooltip": "+30 결정/패턴 · +10 크로스 프로젝트 참조당 · +5 역참조당 · +20 승격된 태그 · +15 최근성(30일에 걸쳐 선형 감소)"
+    },
+    "quickadd": {
+      "placeholder": "무엇이든 기록하세요…",
+      "scope_project": "프로젝트",
+      "scope_global": "전역",
+      "submit_btn": "기억하기 →",
+      "submitting": "저장 중…",
+      "success": "저장됨",
+      "error": "저장할 수 없습니다. 다시 시도하세요."
+    },
+    "statusbar": {
+      "brain_live": "브레인 활성화",
+      "brain_offline": "브레인 오프라인",
+      "cli_count": "{{count}}개 CLI",
+      "cli_count_none": "CLI가 감지되지 않았습니다",
+      "last_dream": "마지막 정리: {{facts}}개 사실 · {{promoted}}개 승격 · {{ago}} 전",
+      "no_dream": "첫 번째 정리를 기다리는 중",
+      "kbd_capture": "빠른 캡처",
+      "kbd_search": "검색",
+      "kbd_close": "검사 창 닫기",
+      "spend_today": "오늘 ${{usd}}"
+    },
+    "threshold_modal": {
+      "title": "자동 승격 조정",
+      "threshold_label": "승격 임계값",
+      "autopromo_label": "일정에 따라 자동 승격",
+      "autopromo_help": "활성화하면 임계값을 초과하고 10분 대기열을 통과한 후보가 자동으로 Wiki에 기록됩니다.",
+      "live_preview": "임계값 {{value}}에서 {{count}}개 후보",
+      "score_formula_title": "점수 계산식",
+      "formula_decision": "+30 결정 또는 패턴 유형인 경우",
+      "formula_refs": "+10 이 항목을 참조하는 프로젝트당",
+      "formula_referenced": "+5 역참조 히트당",
+      "formula_tag": "+20 결정, 패턴, 전역, 디자인 또는 아키텍처 태그가 있는 경우",
+      "formula_recency": "+15 저장된 지 24시간 미만인 경우(30일에 걸쳐 선형 감소)",
+      "save_btn": "저장",
+      "cancel_btn": "취소",
+      "save_success": "저장됨"
+    },
+    "errors": {
+      "load_failed": "메모리를 로드할 수 없습니다. {{reason}}",
+      "missing_api": "메모리 API가 아직 준비되지 않았습니다. 잠시 후 다시 시도하세요.",
+      "promote_failed": "승격할 수 없습니다. {{reason}}"
+    }
   }
 }

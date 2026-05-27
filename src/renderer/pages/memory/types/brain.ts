@@ -36,8 +36,4 @@ export type IjfwVerb =
   | 'cross_audit_converge'
   | 'cross_project_search';
 
-/**
- * Re-exported state shape from `useIjfwBrain`. Lives here so tabs can import
- * the verb union and the state shape from a single types module.
- */
-export type { VerbState } from '../hooks/useIjfwBrain';
+// VerbState re-export removed — useIjfwBrain deleted in v0.6.4 (tabs replaced by 3-pane archive).

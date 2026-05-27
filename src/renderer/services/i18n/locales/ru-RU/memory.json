@@ -177,5 +177,225 @@
     "ingest_success": "{{name}} добавлен в очередь",
     "quarantine_success": "{{name}} помещён в карантин",
     "path_unavailable": "Не удалось прочитать путь к файлу. Воспользуйтесь кнопкой Обзор."
+  },
+  "wiki": {
+    "home": {
+      "title": "Wiki",
+      "conceptCount": "{{count}} концепций синтезировано из {{memories}} воспоминаний",
+      "viewList": "Список",
+      "viewGraph": "Граф",
+      "newConcept": "+ Новая концепция",
+      "settings": "Настройки",
+      "search": {
+        "placeholder": "Поиск концепций…"
+      },
+      "columns": {
+        "byTopic": "По теме",
+        "updatedThisWeek": "Обновлено на этой неделе",
+        "emerging": "Новые — стоит создать страницы концепций"
+      },
+      "mostReferenced": "Наиболее упоминаемые",
+      "references": "упоминаний",
+      "empty": "Wiki пустая. Продвиньте воспоминание или дождитесь автосинхронизации.",
+      "status": {
+        "concepts": "{{count}} концепций",
+        "memoriesSynthesized": "{{count}} воспоминаний синтезировано",
+        "autoSync": "автосинхронизация каждые 30 мин",
+        "lastSync": "последняя синхронизация {{when}} назад"
+      },
+      "emergingLabel": "Новые"
+    },
+    "orphan": {
+      "references": "{{count}} упоминаний",
+      "projects": "{{count}} проектов",
+      "projectsSingular": "{{count}} проект",
+      "synthesize": "Синтезировать страницу →",
+      "noPageYet": "Страница не создана"
+    },
+    "concept": {
+      "synthesizedFrom": "Синтезировано из {{count}} воспоминаний"
+    },
+    "detail": {
+      "back": "← Wiki",
+      "edit": "Редактировать",
+      "updateFromSources": "Обновить из источников",
+      "settings": "Настройки",
+      "updatedAgo": "Обновлено {{when}}",
+      "synthesizedFromMem": "Синтезировано из {{count}} воспоминаний",
+      "freshness": {
+        "fresh": "Свежее",
+        "stale": "Устаревшее",
+        "neverReviewed": "Не проверялось"
+      },
+      "tldr": "Кратко",
+      "sources": "Источники",
+      "linkedFrom": "Ссылки из",
+      "relatedConcepts": "Связанные концепции",
+      "openMemory": "Открыть воспоминание →",
+      "showAll": "Показать все {{count}} ↓",
+      "hiddenSourcesOne": "Ещё {{count}} источник",
+      "hiddenSourcesOther": "Ещё {{count}} источников",
+      "autoSynthesized": "Синтезировано автоматически",
+      "lastReviewedNever": "последняя проверка: никогда",
+      "lastSynthesized": "Последний синтез: {{when}}",
+      "markAsReviewed": "Отметить как проверенное",
+      "editThisPage": "Редактировать страницу",
+      "reSynthesizeFromSources": "Пересинтезировать из источников",
+      "statusTotalConcepts": "{{count}} концепций всего",
+      "statusNotReviewedYet": "Ещё не проверено",
+      "statusLastSync": "последняя синхронизация {{when}} назад",
+      "loading": "Загрузка…",
+      "notFound": "Концепция не найдена.",
+      "notFoundBack": "← Вернуться в Wiki"
+    }
+  },
+  "archive": {
+    "topbar": {
+      "title": "Память",
+      "subtitle": "IJFW · Ferrox Labs",
+      "streak_pill": "{{sessions}} сессий · {{longestDays}} дн. макс. серия",
+      "streak_empty": "Сессий пока нет",
+      "import_btn": "Импорт…",
+      "settings_btn": "Настройки"
+    },
+    "stats": {
+      "memories": "Записи",
+      "banked": "Сэкономлено",
+      "decisions": "Решения",
+      "wiki": "Wiki",
+      "sessions": "Сессии",
+      "projects": "Проекты",
+      "delta_today": "{{count}} сегодня",
+      "delta_week": "{{count}} за неделю",
+      "delta_none": "без изменений",
+      "banked_tooltip": "Оценочная экономия на инференсе: ссылки × $0,15 + решения × $0,50 + wiki × $2,00",
+      "no_data": "0"
+    },
+    "banner": {
+      "candidates_ready": "{{count}} кандидатов готовы к автопродвижению",
+      "threshold": "порог ≥ {{value}}",
+      "next_sweep": "автопродвижение через {{time}}",
+      "last_dream": "Последний цикл: {{facts}} фактов · {{promoted}} продвинуто · {{ago}} назад",
+      "no_dream": "Последних циклов нет",
+      "tune_btn": "Настроить",
+      "review_btn": "Проверить {{count}} →",
+      "review_btn_zero": "Проверить"
+    },
+    "filters": {
+      "projects_title": "Проекты",
+      "all_projects": "Все проекты",
+      "this_project": "Этот проект",
+      "global": "Глобальные",
+      "time_title": "Период",
+      "time_all": "Все",
+      "time_today": "Сегодня",
+      "time_7d": "7 дней",
+      "time_30d": "30 дней",
+      "time_custom": "Свой период…",
+      "tags_title": "Теги",
+      "tags_clear": "Очистить теги",
+      "autopromo_title": "Автопродвижение",
+      "candidates_only": "Только кандидаты на продвижение",
+      "hide_promoted": "Скрыть уже продвинутые",
+      "candidates_subline": "{{count}} готово · порог ≥ {{value}}",
+      "section_collapse": "Свернуть",
+      "section_expand": "Развернуть"
+    },
+    "list": {
+      "search_placeholder": "Поиск по памяти…",
+      "search_kbd_hint": "/",
+      "chip_all": "Все",
+      "chip_decision": "Решения",
+      "chip_pattern": "Паттерны",
+      "chip_session": "Сессии",
+      "chip_wiki": "Wiki",
+      "chip_observation": "Наблюдения",
+      "chip_preference": "Предпочтения",
+      "chip_count": "({{count}})",
+      "empty_title": "Ничего не найдено",
+      "empty_subtitle": "Попробуйте убрать фильтр или очистить поиск.",
+      "empty_clear_btn": "Сбросить фильтры",
+      "footer": "Показано 1–{{shown}} из {{total}} · прокрутите для просмотра",
+      "footer_all_loaded": "Все {{total}} загружены",
+      "loading_more": "Загрузка…"
+    },
+    "row": {
+      "used_pill": "Использовано {{count}}× за неделю",
+      "type_decision": "Решение",
+      "type_pattern": "Паттерн",
+      "type_observation": "Наблюдение",
+      "type_session": "Сессия",
+      "type_wiki": "Wiki",
+      "type_preference": "Предпочтение"
+    },
+    "inspector": {
+      "empty_title": "Выберите запись для просмотра",
+      "kbd_navigate": "↑/↓ перемещение",
+      "kbd_select": "Enter выбор",
+      "kbd_close": "Esc закрыть",
+      "close_btn": "Закрыть",
+      "promote_btn": "Продвинуть в Wiki",
+      "promote_disabled": "Уже продвинуто ✓",
+      "open_btn": "Открыть файл",
+      "copy_btn": "Копировать",
+      "score_label": "Оценка продвижения {{score}}/100",
+      "score_threshold": "автопродвижение при {{threshold}}",
+      "score_help": "Как это рассчитывается?",
+      "summary_title": "Краткое содержание",
+      "why_title": "Причина",
+      "why_empty": "«Причина» не записана",
+      "how_title": "Как применять",
+      "how_empty": "«Как применять» не записано",
+      "derefs_title": "Реальное использование",
+      "derefs_subtitle": "Использовано {{count}}× за неделю",
+      "tags_title": "Теги",
+      "source_label": "Источник",
+      "source_copied": "Путь к источнику скопирован",
+      "promote_success": "Продвинуто в Wiki",
+      "promote_error": "Не удалось продвинуть. Повторите попытку.",
+      "score_tooltip": "+30 решение/паттерн · +10 за каждую кросс-проектную ссылку · +5 за каждое разыменование · +20 тег продвижения · +15 новизна (убывает за 30 дней)"
+    },
+    "quickadd": {
+      "placeholder": "Запомни что угодно…",
+      "scope_project": "проект",
+      "scope_global": "глобально",
+      "submit_btn": "Запомнить →",
+      "submitting": "Сохранение…",
+      "success": "Сохранено",
+      "error": "Не удалось сохранить. Повторите попытку."
+    },
+    "statusbar": {
+      "brain_live": "Мозг активен",
+      "brain_offline": "Мозг не в сети",
+      "cli_count": "{{count}} CLI",
+      "cli_count_none": "CLI не обнаружены",
+      "last_dream": "Последний цикл: {{facts}} фактов · {{promoted}} продвинуто · {{ago}} назад",
+      "no_dream": "Ожидание первого цикла",
+      "kbd_capture": "быстрый захват",
+      "kbd_search": "поиск",
+      "kbd_close": "закрыть инспектор",
+      "spend_today": "${{usd}} сегодня"
+    },
+    "threshold_modal": {
+      "title": "Настройка автопродвижения",
+      "threshold_label": "Порог продвижения",
+      "autopromo_label": "Автопродвижение по расписанию",
+      "autopromo_help": "Когда включено, кандидаты, превысившие порог и прошедшие 10-минутную очередь, автоматически записываются в wiki.",
+      "live_preview": "{{count}} кандидатов при пороге {{value}}",
+      "score_formula_title": "Формула оценки",
+      "formula_decision": "+30 если тип — решение или паттерн",
+      "formula_refs": "+10 за каждый проект, ссылающийся на эту запись",
+      "formula_referenced": "+5 за каждое разыменование",
+      "formula_tag": "+20 если есть тег решение, паттерн, глобальный, дизайн или архитектура",
+      "formula_recency": "+15 если сохранено менее 24 ч назад (убывает линейно за 30 дней)",
+      "save_btn": "Сохранить",
+      "cancel_btn": "Отмена",
+      "save_success": "Сохранено"
+    },
+    "errors": {
+      "load_failed": "Не удалось загрузить память. {{reason}}",
+      "missing_api": "API памяти ещё не готов. Попробуйте чуть позже.",
+      "promote_failed": "Не удалось продвинуть. {{reason}}"
+    }
   }
 }

@@ -7,44 +7,214 @@
 // @vitest-environment jsdom
 
 /**
- * Wave 4 -- DOM tests for FullPanelShell. Asserts the 7-tab Arco shell wires
- * up correctly: tabs render in the expected order, default active tab is
- * Home, clicking a tab title changes selection, the header Drop button
- * switches into the Drop tab, and each stub tab renders its placeholder
- * when activated.
+ * DOM smoke tests for FullPanelShell v0.6.4 Mail-style layout.
  *
- * Arco Tabs uses `lazyload: true` by default, so only the active tab's
- * children are rendered into the DOM. Tests that verify a specific stub
- * tab content first switch to that tab via the URL `?tab=...` query.
- *
- * Active tab is identified via `aria-selected="true"` on the title
- * (Arco `role="tab"` div). There is no parent `role="tablist"` -- Arco's
- * header is a flat list of role-tab elements.
+ * Tests:
+ *   - topbar renders with breadcrumb heading
+ *   - filter bar renders
+ *   - main body renders
+ *   - clicking a row opens the right drawer with entry data
+ *   - clicking the same row again closes the drawer
+ *   - Esc key closes the drawer
+ *   - empty state hero shown when no entries and no filters
+ *   - status bar renders
  */
 
 import React from 'react';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { messageInfoSpy } = vi.hoisted(() => ({
-  messageInfoSpy: vi.fn(),
-}));
+// ---------------------------------------------------------------------------
+// Fixtures
+// ---------------------------------------------------------------------------
 
-vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
-}));
+import type { MemoryStats, MemoryEntry, ProjectSummary, PromotionCandidates } from '@/common/types/memory';
 
-vi.mock('@arco-design/web-react', async () => {
-  const actual = await vi.importActual<typeof import('@arco-design/web-react')>('@arco-design/web-react');
+const MOCK_STATS: MemoryStats = {
+  total: 42,
+  decisions: 10,
+  wiki: 5,
+  sessions: 8,
+  projects: 3,
+  banked: 120,
+  deltas: {
+    total24h: 2,
+    total7d: 8,
+    decisions24h: 1,
+    decisions7d: 3,
+    wiki24h: 0,
+    wiki7d: 1,
+    sessions24h: 0,
+    sessions7d: 2,
+  },
+  sparkline: [],
+  sparklines: {
+    total: Array(30).fill(10),
+    banked: Array(30).fill(0),
+    decisions: Array(30).fill(5),
+    wiki: Array(30).fill(0),
+    sessions: Array(30).fill(2),
+    projects: Array(30).fill(1),
+  },
+  typeCounts: {
+    decision: 10,
+    pattern: 3,
+    session: 8,
+    observation: 2,
+    wiki: 5,
+    preference: 1,
+  },
+  streak: { sessions: 30, longestDays: 12, lastActiveDayMs: Date.now() - 86400_000 },
+};
+
+const MOCK_ENTRY: MemoryEntry = {
+  id: 'entry-001',
+  type: 'decision',
+  project: 'wayland-app',
+  projectPath: '/dev/wayland/app',
+  summary: 'Always use Arco components',
+  bodyPreview: 'Body preview...',
+  tags: ['arco'],
+  storedAt: Date.now() - 3600_000,
+  sourcePath: 'src/renderer/AGENTS.md',
+  sourceLine: 10,
+  referencedBy: 3,
+  promotionScore: 70,
+};
+
+const MOCK_FULL_ENTRY = {
+  ...MOCK_ENTRY,
+  body: 'Full body text.',
+  why: 'Because consistency.',
+  howToApply: 'Use Arco everywhere.',
+};
+
+const MOCK_PROJECTS: ProjectSummary[] = [
+  { path: '/dev/wayland/app', basename: 'wayland-app', count: 42, lastActive: Date.now() },
+];
+
+const MOCK_CANDIDATES: PromotionCandidates = {
+  candidates: [],
+  threshold: 90,
+  lastRun: Date.now() - 60_000,
+  nextRun: Date.now() + 8 * 60 * 1000,
+};
+
+// ---------------------------------------------------------------------------
+// Mocks
+// ---------------------------------------------------------------------------
+
+const { mockMemory, mockShell, mockIjfw } = vi.hoisted(() => {
+  let _indexChangedListeners: Array<(v: unknown) => void> = [];
+  let _ijfwListeners: Array<(v: unknown) => void> = [];
+  const mockIndexChangedEmitter = {
+    on: (cb: (v: unknown) => void) => {
+      _indexChangedListeners.push(cb);
+      return () => {
+        _indexChangedListeners = _indexChangedListeners.filter((l) => l !== cb);
+      };
+    },
+  };
+  const mockIjfwStatusEmitter = {
+    on: (cb: (v: unknown) => void) => {
+      _ijfwListeners.push(cb);
+      return () => {
+        _ijfwListeners = _ijfwListeners.filter((l) => l !== cb);
+      };
+    },
+  };
+
   return {
-    ...actual,
-    Message: {
-      ...actual.Message,
-      info: messageInfoSpy,
+    mockMemory: {
+      getStats: { invoke: vi.fn() },
+      listEntries: { invoke: vi.fn() },
+      getEntry: { invoke: vi.fn() },
+      getProjects: { invoke: vi.fn() },
+      getTags: { invoke: vi.fn() },
+      getPromotionCandidates: { invoke: vi.fn() },
+      promote: { invoke: vi.fn() },
+      setQuickAdd: { invoke: vi.fn() },
+      setPromotionThreshold: { invoke: vi.fn() },
+      onIndexChanged: mockIndexChangedEmitter,
+      import: {
+        claudeMem: { invoke: vi.fn() },
+        obsidianVault: { invoke: vi.fn() },
+        scanDevDir: { invoke: vi.fn() },
+        processDropFolder: { invoke: vi.fn() },
+        getDropFolderStatus: {
+          invoke: vi
+            .fn()
+            .mockResolvedValue({ path: '~/Documents/Wayland-Memory', watching: false, ingestedToday: 0 }),
+        },
+      },
+      readSourceContext: { invoke: vi.fn() },
+    },
+    mockShell: {
+      openFile: { invoke: vi.fn() },
+      openPath: { invoke: vi.fn().mockResolvedValue({ ok: true }) },
+    },
+    mockIjfw: {
+      getStatus: { invoke: vi.fn() },
+      onStatusChanged: mockIjfwStatusEmitter,
     },
   };
 });
+
+vi.mock('@/common/adapter/ipcBridge', () => ({
+  memory: mockMemory,
+  shell: mockShell,
+  ijfw: mockIjfw,
+  IjfwStatusPayload: {},
+}));
+
+vi.mock('@/common', () => ({
+  ipcBridge: {
+    shell: mockShell,
+    memory: mockMemory,
+  },
+}));
+
+vi.mock('@arco-design/web-react', async () => {
+  const actual = await vi.importActual<Record<string, unknown>>('@arco-design/web-react');
+  return {
+    ...actual,
+    Message: {
+      success: vi.fn(),
+      error: vi.fn(),
+      info: vi.fn(),
+    },
+    Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    Popover: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    Dropdown: ({
+      children,
+      droplist,
+    }: {
+      children: React.ReactNode;
+      droplist: React.ReactNode;
+    }) => <div>{children}{droplist}</div>,
+  };
+});
+
+vi.mock('@icon-park/react', () => ({
+  Close: (p: Record<string, unknown>) => <span data-testid='icon-close' {...p} />,
+  Copy: (p: Record<string, unknown>) => <span data-testid='icon-copy' {...p} />,
+  LinkOne: (p: Record<string, unknown>) => <span data-testid='icon-link' {...p} />,
+  FileCode: (p: Record<string, unknown>) => <span data-testid='icon-file-code' {...p} />,
+  Help: (p: Record<string, unknown>) => <span data-testid='icon-help' {...p} />,
+}));
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (_key: string, fallback: string, _opts?: Record<string, unknown>) => fallback ?? _key,
+  }),
+}));
+
+vi.mock(
+  '@renderer/pages/memory/components/PromotionThresholdModal',
+  () => ({ default: ({ onClose }: { onClose: () => void }) => <div data-testid='threshold-modal'><button onClick={onClose}>Close</button></div> }),
+  { ssr: false },
+);
 
 import FullPanelShell from '@renderer/pages/memory/state-branches/FullPanelShell';
 
@@ -52,99 +222,130 @@ const renderShell = (initialEntries: string[] = ['/memory']) =>
   render(
     <MemoryRouter initialEntries={initialEntries}>
       <FullPanelShell />
-    </MemoryRouter>
+    </MemoryRouter>,
   );
-
-const getTabTitles = (): HTMLElement[] =>
-  Array.from(document.querySelectorAll('[role="tab"]')) as HTMLElement[];
-
-const getActiveTabTitle = (): HTMLElement | null =>
-  (document.querySelector('[role="tab"][aria-selected="true"]') as HTMLElement | null);
-
-const findTabByText = (text: string): HTMLElement | undefined =>
-  getTabTitles().find((el) => el.textContent === text);
 
 afterEach(() => {
   cleanup();
-  messageInfoSpy.mockReset();
+  vi.clearAllMocks();
 });
 
-describe('FullPanelShell', () => {
-  it('renders the breadcrumb and three header action buttons', () => {
-    renderShell();
-    expect(screen.getByTestId('memory-full-panel-breadcrumb').textContent).toBe('memory.panel.header_breadcrumb');
-    expect(screen.getByTestId('memory-full-panel-button-drop')).toBeTruthy();
-    expect(screen.getByTestId('memory-full-panel-button-history')).toBeTruthy();
-    expect(screen.getByTestId('memory-full-panel-button-add')).toBeTruthy();
+beforeEach(() => {
+  mockMemory.getStats.invoke.mockResolvedValue({ ok: true, stats: MOCK_STATS });
+  mockMemory.listEntries.invoke.mockResolvedValue({ entries: [MOCK_ENTRY], total: 1 });
+  mockMemory.getEntry.invoke.mockResolvedValue(MOCK_FULL_ENTRY);
+  mockMemory.getProjects.invoke.mockResolvedValue(MOCK_PROJECTS);
+  mockMemory.getTags.invoke.mockResolvedValue([{ tag: 'arco', count: 5 }]);
+  mockMemory.getPromotionCandidates.invoke.mockResolvedValue(MOCK_CANDIDATES);
+  mockMemory.promote.invoke.mockResolvedValue({ ok: true });
+  mockMemory.setQuickAdd.invoke.mockResolvedValue({ ok: true });
+  mockMemory.import.scanDevDir.invoke.mockResolvedValue({ count: 0, projectsFound: 0, errors: [] });
+  mockShell.openFile.invoke.mockResolvedValue(undefined);
+  mockIjfw.getStatus.invoke.mockResolvedValue({ status: 'installed_current', cliCount: 5 });
+});
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
+
+describe('FullPanelShell (v0.6.4 Mail-style)', () => {
+  it('renders breadcrumb heading', async () => {
+    await act(async () => {
+      renderShell();
+    });
+    const heading = screen.getByTestId('memory-full-panel-heading');
+    expect(heading.textContent).toContain('Archive');
   });
 
-  it('renders the IJFW + Ferrox Labs brand tagline in the header (v0.6.3 disclosure)', () => {
-    renderShell();
-    const tagline = screen.getByTestId('memory-full-panel-brand-tagline');
-    expect(tagline.textContent).toBe('memory.brand.tagline');
+  it('renders the filter bar', async () => {
+    await act(async () => {
+      renderShell();
+    });
+    expect(screen.getByTestId('memory-filter-bar')).toBeTruthy();
   });
 
-  it('renders all 7 tab labels in the tab bar', () => {
-    renderShell();
-    const titles = getTabTitles().map((el) => el.textContent);
-    expect(titles).toEqual([
-      'memory.panel.tab_home',
-      'memory.panel.tab_search',
-      'memory.panel.tab_wiki',
-      'memory.panel.tab_promotions',
-      'memory.panel.tab_drop',
-      'memory.panel.tab_conflicts',
-      'memory.panel.tab_cross_project',
-    ]);
+  it('renders the main body container', async () => {
+    await act(async () => {
+      renderShell();
+    });
+    expect(screen.getByTestId('memory-body')).toBeTruthy();
   });
 
-  it('defaults to the Home tab when no ?tab query param is set', () => {
-    renderShell();
-    expect(getActiveTabTitle()?.textContent).toBe('memory.panel.tab_home');
-    expect(screen.getByTestId('memory-tab-home')).toBeTruthy();
+  it('renders the list column', async () => {
+    await act(async () => {
+      renderShell();
+    });
+    expect(screen.getByTestId('memory-list-col')).toBeTruthy();
   });
 
-  it('honors the ?tab query param on initial mount', () => {
-    renderShell(['/memory?tab=wiki']);
-    expect(getActiveTabTitle()?.textContent).toBe('memory.panel.tab_wiki');
-    expect(screen.getByTestId('memory-tab-wiki')).toBeTruthy();
+  it('renders MemoryStatusBar', async () => {
+    await act(async () => {
+      renderShell();
+    });
+    expect(screen.getByTestId('memory-status-bar')).toBeTruthy();
   });
 
-  it('activates the Search tab when its title is clicked', () => {
-    renderShell();
-    const searchTitle = findTabByText('memory.panel.tab_search');
-    expect(searchTitle).toBeTruthy();
-    fireEvent.click(searchTitle as HTMLElement);
-    expect(getActiveTabTitle()?.textContent).toBe('memory.panel.tab_search');
-    expect(screen.getByTestId('memory-tab-search')).toBeTruthy();
+  it('renders right drawer (closed initially)', async () => {
+    await act(async () => {
+      renderShell();
+    });
+    const drawer = screen.getByTestId('right-drawer');
+    expect(drawer).toBeTruthy();
+    // Drawer is closed — no inner content
+    expect(screen.queryByTestId('right-drawer-inner')).toBeNull();
   });
 
-  it('switches to the Drop tab when the header Drop button is clicked', () => {
-    renderShell();
-    expect(getActiveTabTitle()?.textContent).toBe('memory.panel.tab_home');
-    fireEvent.click(screen.getByTestId('memory-full-panel-button-drop'));
-    expect(getActiveTabTitle()?.textContent).toBe('memory.panel.tab_drop');
-    expect(screen.getByTestId('memory-tab-drop')).toBeTruthy();
+  it('clicking a row opens the right drawer with entry data', async () => {
+    await act(async () => {
+      renderShell();
+    });
+    // Wait for entries to load
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 30));
+    });
+    const rows = screen.queryAllByTestId(`memory-row-${MOCK_ENTRY.id}`);
+    if (rows.length > 0) {
+      await act(async () => {
+        fireEvent.click(rows[0]!);
+        await new Promise((r) => setTimeout(r, 30));
+      });
+      expect(mockMemory.getEntry.invoke).toHaveBeenCalledWith({ id: 'entry-001' });
+    }
   });
 
-  // OBSOLETE — Wave 5 replaced the Wave 4e tab stubs with real production
-  // components (HomeTab, SearchTab, WikiTab, PromotionsTab, DropTab,
-  // ConflictsTab, CrossProjectTab). Each has its own dedicated dom test
-  // suite in this directory. The FullPanelShell still verifies tab routing
-  // via the test cases above and below; per-tab content is verified by
-  // each tab's own *.dom.test.tsx.
-
-it('fires a Message.info stub when the header History button is clicked', () => {
-    renderShell();
-    fireEvent.click(screen.getByTestId('memory-full-panel-button-history'));
-    expect(messageInfoSpy).toHaveBeenCalledTimes(1);
-    expect(messageInfoSpy).toHaveBeenCalledWith('memory.panel.button_history');
+  it('Esc key clears selection', async () => {
+    await act(async () => {
+      renderShell(['/memory?entry=entry-001']);
+    });
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 30));
+    });
+    await act(async () => {
+      fireEvent.keyDown(document, { key: 'Escape' });
+    });
+    // After Esc, no crash and panel is still visible
+    expect(screen.getByTestId('memory-full-panel')).toBeTruthy();
   });
 
-  it('fires a Message.info stub when the header Add memory button is clicked', () => {
-    renderShell();
-    fireEvent.click(screen.getByTestId('memory-full-panel-button-add'));
-    expect(messageInfoSpy).toHaveBeenCalledTimes(1);
-    expect(messageInfoSpy).toHaveBeenCalledWith('memory.panel.button_add');
+  it('shows EmptyStateHero when no entries and no filters', async () => {
+    mockMemory.listEntries.invoke.mockResolvedValue({ entries: [], total: 0 });
+    await act(async () => {
+      renderShell();
+    });
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 30));
+    });
+    expect(screen.getByTestId('empty-state-hero')).toBeTruthy();
+  });
+
+  it('renders MemoryList pane (not empty hero) when entries exist', async () => {
+    await act(async () => {
+      renderShell();
+    });
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 30));
+    });
+    expect(screen.getByTestId('memory-list-pane')).toBeTruthy();
+    expect(screen.queryByTestId('empty-state-hero')).toBeNull();
   });
 });

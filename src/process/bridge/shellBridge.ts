@@ -9,6 +9,7 @@ import { ipcBridge } from '@/common';
 import { exec, spawn } from 'child_process';
 import { promisify } from 'util';
 import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
 
 const execAsync = promisify(exec);
@@ -277,6 +278,33 @@ export function initShellBridge(): void {
       console.error(`[shellBridge] Failed to open folder with ${tool}:`, error);
       // Fallback to default shell open
       await shell.openPath(folderPath);
+    }
+  });
+
+  // Open a filesystem path via OS default handler.
+  // Only `~` expansion is applied; `..` traversal is blocked.
+  ipcBridge.shell.openPath.provider(async ({ path: inputPath }) => {
+    if (typeof inputPath !== 'string' || inputPath.length === 0) {
+      return { ok: false, error: 'empty path' };
+    }
+    // Reject any path containing `..` segments to prevent directory traversal.
+    if (inputPath.includes('..')) {
+      return { ok: false, error: 'path traversal not allowed' };
+    }
+    // Expand leading `~` to the home directory.
+    let resolved = inputPath;
+    if (resolved === '~' || resolved.startsWith('~/') || resolved.startsWith('~' + path.sep)) {
+      resolved = os.homedir() + resolved.slice(1);
+    }
+    resolved = path.resolve(resolved);
+    try {
+      const errorMessage = await shell.openPath(resolved);
+      if (errorMessage) {
+        return { ok: false, error: errorMessage };
+      }
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, error: (err as Error).message };
     }
   });
 }
