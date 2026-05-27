@@ -35,3 +35,12 @@ test('getGuide parses frontmatter steps', () => {
   expect(guide.steps[0].id).toBe('install');
   expect(guide.steps[2].inputs?.[0].name).toBe('GOOGLE_OAUTH_CLIENT_ID');
 });
+
+test('iconUrl is resolved through Vite, not left as a literal "icons/*.svg" path', () => {
+  const { result } = renderHook(() => useMcpLibrary());
+  for (const e of result.current.entries) {
+    expect(e.iconUrl.startsWith('icons/')).toBe(false);
+  }
+  const detail = result.current.getEntry('io.github.taylorwilsdon/google-workspace-mcp');
+  expect(detail?.['x-wayland'].iconUrl.startsWith('icons/')).toBe(false);
+});

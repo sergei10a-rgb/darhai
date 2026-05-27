@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Switch } from '@arco-design/web-react';
-import { Settings, Trash2, FileText, LogIn } from 'lucide-react';
+import { Settings, Trash2, FileText, LogIn, Server } from 'lucide-react';
 import type { McpOAuthStatus } from '@renderer/hooks/mcp/useMcpOAuth';
 
 export type UIStatus = 'running' | 'warn' | 'error' | 'stopped';
@@ -49,7 +49,13 @@ export function ServerRow({
   const toggleLabel = t('mcpLibrary.installed.actionToggle', 'Enable / disable');
   return (
     <div className={`mcp-server-row mcp-server-${server.status}`}>
-      <img className="mcp-server-logo" src={iconUrl ?? 'icons/generic.svg'} alt="" />
+      {iconUrl ? (
+        <img className="mcp-server-logo" src={iconUrl} alt="" />
+      ) : (
+        <span className="mcp-server-logo mcp-server-logo-fallback" aria-hidden="true">
+          <Server size={18} />
+        </span>
+      )}
       <div className="mcp-server-main">
         <div className="mcp-server-name">{server.name ?? server.id}</div>
         <div className="mcp-server-pub">{server.publisher ?? ''}</div>

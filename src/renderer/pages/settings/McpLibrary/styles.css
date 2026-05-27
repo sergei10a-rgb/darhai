@@ -731,6 +731,12 @@
   border: 1px solid var(--mcp-border-bright);
   object-fit: contain;
 }
+.mcp-server-logo-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mcp-text-muted);
+}
 .mcp-server-main {
   min-width: 0;
 }

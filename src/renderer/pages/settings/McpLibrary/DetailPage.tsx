@@ -25,6 +25,9 @@ type Tab = 'overview' | 'setup-guide' | 'tools' | 'permissions' | 'changelog';
 function safeUrl(u: string | undefined): string | undefined {
   if (!u) return undefined;
   if (/^https?:\/\//i.test(u)) return u;
+  // Vite-resolved bundled assets: absolute path or inlined SVG data URL.
+  if (u.startsWith('/')) return u;
+  if (u.startsWith('data:image/svg+xml')) return u;
   if (u.startsWith('icons/')) return u;
   return undefined;
 }
