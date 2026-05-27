@@ -260,12 +260,68 @@ function mapToPreludeStatus(status: IjfwLifecycleStatus): PreludeStatus {
   }
 }
 
-function getActiveProjectDirs(): string[] {
-  // Wave 1 baseline: only the current working directory. Wave 6 will hook
+// Gemini B2: when the Wayland app is launched from a macOS GUI Dock click,
+// `process.cwd()` is `/`. The previous baseline (`return [process.cwd()]`)
+// fed `/` into `discoverTargets()` which recursively walks the tree looking
+// for marker files — guaranteed OOM / hang on the root filesystem.
+//
+// Hard guard: refuse any path that is the filesystem root, the user's bare
+// HOME directory, or a well-known system path. The empty list is a safe
+// no-op for preludeManager (it just won't manage any files this session).
+// Wave 6.4 will wire the recent-workspaces store so users see managed files
+// for every tracked project, not just whatever cwd happens to be.
+const UNSAFE_PROJECT_ROOTS: readonly string[] = [
+  '/',
+  '/etc',
+  '/var',
+  '/usr',
+  '/bin',
+  '/sbin',
+  '/opt',
+  '/private',
+  '/System',
+  '/Library',
+  '/Applications',
+  '/tmp',
+  '/dev',
+  '/proc',
+  '/sys',
+  // Windows roots — normalized to lowercase below for cross-platform compare.
+  'c:\\',
+  'c:\\windows',
+  'c:\\program files',
+  'c:\\program files (x86)',
+];
+
+function isUnsafeProjectRoot(dir: string): boolean {
+  if (!dir) return true;
+  // Filesystem root on POSIX.
+  if (dir === '/' || dir === path.parse(dir).root) return true;
+  // Bare HOME — too broad; would walk every dotfile dir.
+  const home = process.env.HOME ?? process.env.USERPROFILE ?? '';
+  if (home && dir === home) return true;
+  // Hard-coded system paths.
+  const norm = process.platform === 'win32' ? dir.toLowerCase() : dir;
+  for (const unsafe of UNSAFE_PROJECT_ROOTS) {
+    const target = process.platform === 'win32' ? unsafe.toLowerCase() : unsafe;
+    if (norm === target) return true;
+  }
+  return false;
+}
+
+export function getActiveProjectDirs(): string[] {
+  // Wave 1 baseline: only the current working directory. Wave 6.4 will hook
   // into the recent-workspaces store. We never inject markers into foreign
   // files, so this is safe even if the cwd is unrelated (preludeManager
-  // returns early for files without the IJFW-PRELUDE-START sentinel).
-  return [process.cwd()];
+  // returns early for files without the IJFW-PRELUDE-START sentinel) —
+  // BUT discoverTargets() still has to walk the tree before that filter runs,
+  // so we must never hand it `/` or `$HOME`. See Gemini B2.
+  const cwd = process.cwd();
+  if (isUnsafeProjectRoot(cwd)) {
+    log.warn('[ijfw] cwd is unsafe project root — refusing to scan', { cwd });
+    return [];
+  }
+  return [cwd];
 }
 
 async function syncPrelude(status: IjfwLifecycleStatus): Promise<void> {

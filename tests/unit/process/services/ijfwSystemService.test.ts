@@ -7,7 +7,7 @@
  * five Wave 1 methods and the result/runtime-mode types.
  */
 
-import { describe, it, expect, vi } from 'vitest';
+import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 
 vi.mock('electron', () => ({
   app: {
@@ -17,7 +17,7 @@ vi.mock('electron', () => ({
 }));
 
 // eslint-disable-next-line import/first
-import { ijfwSystemService } from '@process/services/ijfwSystemService';
+import { ijfwSystemService, getActiveProjectDirs } from '@process/services/ijfwSystemService';
 
 describe('ijfwSystemService — contract', () => {
   it('exposes detectLocalInstall', () => {
@@ -47,5 +47,48 @@ describe('ijfwSystemService — contract', () => {
 
   it('exposes startHealthWatcher', () => {
     expect(typeof ijfwSystemService.startHealthWatcher).toBe('function');
+  });
+});
+
+describe('getActiveProjectDirs — Gemini B2 unsafe-root guard', () => {
+  const originalCwd = process.cwd();
+  const originalHome = process.env.HOME;
+
+  beforeEach(() => {
+    vi.spyOn(process, 'cwd');
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    process.env.HOME = originalHome;
+    // Ensure no test stays in a chdir state.
+    try {
+      process.chdir(originalCwd);
+    } catch {
+      /* ignore */
+    }
+  });
+
+  it('returns [] when cwd is "/" (macOS GUI Dock launch)', () => {
+    (process.cwd as ReturnType<typeof vi.fn>).mockReturnValue('/');
+    expect(getActiveProjectDirs()).toEqual([]);
+  });
+
+  it('returns [] when cwd is the bare HOME directory', () => {
+    process.env.HOME = '/Users/test-user';
+    (process.cwd as ReturnType<typeof vi.fn>).mockReturnValue('/Users/test-user');
+    expect(getActiveProjectDirs()).toEqual([]);
+  });
+
+  it('returns [] for system paths like /etc, /var, /System', () => {
+    for (const sys of ['/etc', '/var', '/System', '/Library', '/Applications']) {
+      (process.cwd as ReturnType<typeof vi.fn>).mockReturnValue(sys);
+      expect(getActiveProjectDirs()).toEqual([]);
+    }
+  });
+
+  it('returns [cwd] for a normal project directory', () => {
+    (process.cwd as ReturnType<typeof vi.fn>).mockReturnValue('/Users/test-user/dev/myproject');
+    expect(getActiveProjectDirs()).toEqual(['/Users/test-user/dev/myproject']);
   });
 });
