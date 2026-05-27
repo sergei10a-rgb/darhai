@@ -1,0 +1,62 @@
+{
+  "$schema": "./schema/catalog.schema.json",
+  "version": "1.0.0",
+  "publishedAt": "2026-05-27T08:32:58.345Z",
+  "entries": [
+    {
+      "id": "io.github.taylorwilsdon/google-workspace-mcp",
+      "name": "Google Workspace",
+      "shortDescription": "Gmail, Calendar, Drive, Docs, Sheets, Slides, Chat, Forms, Tasks — every Google service in one MCP.",
+      "iconUrl": "icons/google.svg",
+      "tier": "core",
+      "categories": [
+        "communication",
+        "files-and-docs",
+        "calendar"
+      ],
+      "maintainerType": "community",
+      "verifiedByWayland": "2026-05-12",
+      "popularityRank": 1,
+      "installRate": 0.87,
+      "entryUrl": "entries/io.github.taylorwilsdon-google-workspace-mcp.json",
+      "guideUrl": "guides/io.github.taylorwilsdon-google-workspace-mcp.md"
+    },
+    {
+      "id": "com.wayland/apple-mcp",
+      "name": "Apple Ecosystem",
+      "shortDescription": "Notes, Reminders, Mail, Calendar, Maps, Photos via EventKit and AppleScript. macOS only.",
+      "iconUrl": "icons/apple.svg",
+      "tier": "core",
+      "categories": [
+        "personal",
+        "communication",
+        "calendar",
+        "files-and-docs"
+      ],
+      "maintainerType": "wayland",
+      "verifiedByWayland": "2026-05-27",
+      "popularityRank": 2,
+      "installRate": 0.71,
+      "entryUrl": "entries/com.wayland-apple-mcp.json",
+      "guideUrl": "guides/com.wayland-apple-mcp.md"
+    },
+    {
+      "id": "com.softeria/ms-365-mcp-server",
+      "name": "Microsoft 365",
+      "shortDescription": "Outlook, Teams, OneDrive, Excel, To Do, OneNote, Calendar — all of Microsoft Graph in one MCP.",
+      "iconUrl": "icons/microsoft.svg",
+      "tier": "core",
+      "categories": [
+        "communication",
+        "files-and-docs",
+        "calendar"
+      ],
+      "maintainerType": "community",
+      "verifiedByWayland": "2026-05-12",
+      "popularityRank": 6,
+      "installRate": 0.41,
+      "entryUrl": "entries/com.softeria-ms-365-mcp-server.json",
+      "guideUrl": "guides/com.softeria-ms-365-mcp-server.md"
+    }
+  ]
+}
