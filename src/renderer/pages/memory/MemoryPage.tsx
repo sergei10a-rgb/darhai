@@ -27,6 +27,7 @@ import { Spin } from '@arco-design/web-react';
 import React, { useEffect, useState } from 'react';
 import { ipcBridge } from '@/common';
 import type { IjfwStatusPayload } from '@/common/adapter/ipcBridge';
+import AutoSettingUpCard from './state-branches/AutoSettingUpCard';
 import InstallerPitchCard from './state-branches/InstallerPitchCard';
 import InstallingCard from './state-branches/InstallingCard';
 import InstallFailedCard from './state-branches/InstallFailedCard';
@@ -96,7 +97,15 @@ const renderStateBranch = (status: IjfwStatusPayload | null): React.ReactElement
   }
   switch (status.status) {
     case 'not_installed':
-      return <InstallerPitchCard />;
+      // v0.6.3 disclosure / auto-install UX flip: bootstrap auto-installs at
+      // +5s on app boot, so the default `not_installed` view is the silent
+      // "Setting up Memory" surface. The InstallerPitchCard is now exclusively
+      // the OPT-OUT re-enable surface -- shown only when the user explicitly
+      // disabled IJFW via Settings (`reason === 'opt_out'`).
+      if (status.reason === 'opt_out') {
+        return <InstallerPitchCard />;
+      }
+      return <AutoSettingUpCard />;
     case 'installing':
       return <InstallingCard version={status.version} />;
     case 'upgrading':

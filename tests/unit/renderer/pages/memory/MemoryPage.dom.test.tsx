@@ -56,6 +56,10 @@ vi.mock('@renderer/pages/memory/state-branches/InstallerPitchCard', () => ({
   default: () => <div data-testid='branch-installer-pitch' />,
 }));
 
+vi.mock('@renderer/pages/memory/state-branches/AutoSettingUpCard', () => ({
+  default: () => <div data-testid='branch-auto-setting-up' />,
+}));
+
 vi.mock('@renderer/pages/memory/state-branches/InstallingCard', () => ({
   default: ({ version }: { version?: string }) => (
     <div data-testid='branch-installing' data-version={version ?? ''} />
@@ -106,9 +110,18 @@ describe('MemoryPage', () => {
     expect(unsubscribeSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('renders InstallerPitchCard when status is not_installed', () => {
+  it('renders AutoSettingUpCard (silent auto-install) when status is not_installed with no reason', () => {
+    // v0.6.3 disclosure flip: default not_installed view is the silent
+    // background-install surface. Bootstrap auto-installs at app boot, so
+    // the default UX is "Setting up Memory" -- NOT the manual pitch.
     render(<MemoryPage />);
     emit({ status: 'not_installed' });
+    expect(screen.getByTestId('branch-auto-setting-up')).toBeTruthy();
+  });
+
+  it('renders InstallerPitchCard (opt-out re-enable surface) when status is not_installed AND reason is opt_out', () => {
+    render(<MemoryPage />);
+    emit({ status: 'not_installed', reason: 'opt_out' });
     expect(screen.getByTestId('branch-installer-pitch')).toBeTruthy();
   });
 
@@ -190,14 +203,15 @@ describe('MemoryPage', () => {
     // Regression for the H2 BLOCKER. The prior Promise.resolve(invoke()) chain
     // did not catch synchronous throws (IPC dispatcher not yet hydrated,
     // serialization error). The async-IIFE try/catch must trap both sync and
-    // async failures.
+    // async failures. The fallback emits `{ status: 'not_installed' }` with
+    // no reason -- v0.6.3 routes this to the silent AutoSettingUpCard.
     getStatusInvoke.mockImplementationOnce(() => {
       throw new Error('sync IPC dispatcher not initialized');
     });
     render(<MemoryPage />);
     await waitFor(
       () => {
-        expect(screen.getByTestId('branch-installer-pitch')).toBeTruthy();
+        expect(screen.getByTestId('branch-auto-setting-up')).toBeTruthy();
       },
       { timeout: 2000 },
     );
