@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import { useMemo } from 'react';
 import yaml from 'js-yaml';
 import { z } from 'zod';
@@ -97,7 +98,14 @@ function getGuideByPath(path: string): SetupGuide {
   const parsed = yaml.load(match[1], { schema: yaml.FAILSAFE_SCHEMA });
 
   // Validate shape before trusting. Throws on any unexpected field.
-  const frontmatter = GuideFrontmatterSchema.parse(parsed);
+  // Cast through unknown to a strict SetupGuide-compatible shape — zod's
+  // inferred type in this version surfaces fields as optional in some
+  // module resolutions, even though .parse() guarantees them.
+  const frontmatter = GuideFrontmatterSchema.parse(parsed) as unknown as {
+    guideVersion: string;
+    estimatedMinutes: number;
+    steps: SetupGuide['steps'];
+  };
 
   return { ...frontmatter, body: match[2] };
 }
