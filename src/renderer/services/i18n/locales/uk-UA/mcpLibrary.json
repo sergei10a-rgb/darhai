@@ -26,6 +26,7 @@
     "actionLogs": "Переглянути журнали",
     "actionRemove": "Видалити",
     "removeConfirm": "Видалити {{name}} з бібліотеки? Це також видалить його з усіх CLI-агентів.",
+    "confirmCancel": "Скасувати",
     "statusRunning": "Працює",
     "statusWarn": "Потрібна повторна авторизація",
     "statusError": "Помилка",

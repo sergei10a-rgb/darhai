@@ -26,6 +26,7 @@
     "actionLogs": "檢視日誌",
     "actionRemove": "移除",
     "removeConfirm": "從資料庫中移除 {{name}}？這也會將其從所有 CLI 代理中解除安裝。",
+    "confirmCancel": "取消",
     "statusRunning": "執行中",
     "statusWarn": "需要重新授權",
     "statusError": "錯誤",

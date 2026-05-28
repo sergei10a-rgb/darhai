@@ -26,6 +26,7 @@
     "actionLogs": "로그 보기",
     "actionRemove": "제거",
     "removeConfirm": "라이브러리에서 {{name}}을(를) 제거할까요? 모든 CLI 에이전트에서도 제거됩니다.",
+    "confirmCancel": "취소",
     "statusRunning": "실행 중",
     "statusWarn": "재인증 필요",
     "statusError": "오류",

@@ -26,6 +26,7 @@
     "actionLogs": "查看日志",
     "actionRemove": "移除",
     "removeConfirm": "从库中移除 {{name}}？这也会将其从所有 CLI 代理中卸载。",
+    "confirmCancel": "取消",
     "statusRunning": "运行中",
     "statusWarn": "需要重新授权",
     "statusError": "错误",

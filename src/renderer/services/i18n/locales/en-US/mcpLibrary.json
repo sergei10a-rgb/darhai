@@ -26,6 +26,7 @@
     "actionLogs": "View logs",
     "actionRemove": "Remove",
     "removeConfirm": "Remove {{name}} from your library? This will also uninstall it from all CLI agents.",
+    "confirmCancel": "Cancel",
     "statusRunning": "Running",
     "statusWarn": "Needs re-authorization",
     "statusError": "Error",

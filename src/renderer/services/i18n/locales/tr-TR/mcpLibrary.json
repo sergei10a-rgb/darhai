@@ -26,6 +26,7 @@
     "actionLogs": "Günlükleri görüntüle",
     "actionRemove": "Kaldır",
     "removeConfirm": "{{name}} kütüphanenizden kaldırılsın mı? Bu, tüm CLI ajanlarından da kaldıracaktır.",
+    "confirmCancel": "İptal",
     "statusRunning": "Çalışıyor",
     "statusWarn": "Yeniden yetkilendirme gerekli",
     "statusError": "Hata",

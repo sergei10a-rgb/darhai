@@ -122,6 +122,8 @@ export function InstalledPage() {
           'Remove {{name}} from your library? This will also uninstall it from all CLI agents.',
           { name: s.name },
         ),
+        okText: t('mcpLibrary.installed.actionRemove', 'Remove'),
+        cancelText: t('mcpLibrary.installed.confirmCancel', 'Cancel'),
         okButtonProps: { status: 'danger' },
         onOk: async () => {
           await crud.handleDeleteMcpServer(s.id);
