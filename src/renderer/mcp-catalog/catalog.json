@@ -1,7 +1,7 @@
 {
   "$schema": "./schema/catalog.schema.json",
   "version": "1.0.0",
-  "publishedAt": "2026-05-28T02:13:29.870Z",
+  "publishedAt": "2026-05-28T06:23:16.505Z",
   "entries": [
     {
       "id": "io.github.taylorwilsdon/google-workspace-mcp",
@@ -196,40 +196,6 @@
       "guideUrl": "guides/com.wayland-news-mcp.md"
     },
     {
-      "id": "io.home-assistant/mcp-server",
-      "name": "Home Assistant",
-      "shortDescription": "Smart-home control — lights, climate, locks, scenes, automations — via your Home Assistant instance.",
-      "iconUrl": "icons/home-assistant.svg",
-      "tier": "core",
-      "categories": [
-        "home-automation",
-        "iot"
-      ],
-      "maintainerType": "official",
-      "verifiedByWayland": "2026-05-12",
-      "popularityRank": 13,
-      "installRate": 0.22,
-      "entryUrl": "entries/io.home-assistant-mcp-server.json",
-      "guideUrl": "guides/io.home-assistant-mcp-server.md"
-    },
-    {
-      "id": "com.marcelmarais/spotify-mcp-server",
-      "name": "Spotify",
-      "shortDescription": "Search tracks, control playback across devices, and manage your playlists — Spotify Web API via OAuth.",
-      "iconUrl": "icons/spotify.svg",
-      "tier": "core",
-      "categories": [
-        "personal",
-        "media"
-      ],
-      "maintainerType": "community",
-      "verifiedByWayland": "2026-05-12",
-      "popularityRank": 14,
-      "installRate": 0.3,
-      "entryUrl": "entries/com.marcelmarais-spotify-mcp-server.json",
-      "guideUrl": "guides/com.marcelmarais-spotify-mcp-server.md"
-    },
-    {
       "id": "com.linear/linear-mcp",
       "name": "Linear",
       "shortDescription": "Issues, projects, cycles, and roadmaps — Linear's official hosted MCP with OAuth.",
@@ -315,22 +281,6 @@
       "installRate": 0.25,
       "entryUrl": "entries/com.microsoft-teams-mcp.json",
       "guideUrl": "guides/com.microsoft-teams-mcp.md"
-    },
-    {
-      "id": "com.saseq/discord-mcp",
-      "name": "Discord",
-      "shortDescription": "Read channel history, send messages, manage roles, and run guild operations via a Discord bot.",
-      "iconUrl": "icons/discord.svg",
-      "tier": "worker",
-      "categories": [
-        "communication"
-      ],
-      "maintainerType": "community",
-      "verifiedByWayland": "2026-05-12",
-      "popularityRank": 20,
-      "installRate": 0.22,
-      "entryUrl": "entries/com.saseq-discord-mcp.json",
-      "guideUrl": "guides/com.saseq-discord-mcp.md"
     },
     {
       "id": "com.chaindead/telegram-mcp",
@@ -432,23 +382,6 @@
       "installRate": 0.13,
       "entryUrl": "entries/com.kesslerio-attio-mcp.json",
       "guideUrl": "guides/com.kesslerio-attio-mcp.md"
-    },
-    {
-      "id": "com.wirasm/pipedrive-mcp",
-      "name": "Pipedrive",
-      "shortDescription": "Deals, persons, organizations, and activities in Pipedrive CRM via API token.",
-      "iconUrl": "icons/pipedrive.svg",
-      "tier": "worker",
-      "categories": [
-        "sales",
-        "crm"
-      ],
-      "maintainerType": "community",
-      "verifiedByWayland": "2026-05-12",
-      "popularityRank": 29,
-      "installRate": 0.11,
-      "entryUrl": "entries/com.wirasm-pipedrive-mcp.json",
-      "guideUrl": "guides/com.wirasm-pipedrive-mcp.md"
     },
     {
       "id": "com.bitbonsai/mcpvault",

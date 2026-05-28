@@ -2,9 +2,9 @@ import { test, expect } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useMcpLibrary } from '@renderer/pages/settings/McpLibrary/hooks/useMcpLibrary';
 
-test('returns 60 entries sorted by popularityRank', () => {
+test('returns 56 entries sorted by popularityRank', () => {
   const { result } = renderHook(() => useMcpLibrary());
-  expect(result.current.entries.length).toBe(60);
+  expect(result.current.entries.length).toBe(56);
   expect(result.current.entries[0].popularityRank).toBeLessThanOrEqual(result.current.entries[1].popularityRank);
 });
 
@@ -16,8 +16,8 @@ test('recommended returns first 6 by rank', () => {
 
 test('byTier groups correctly', () => {
   const { result } = renderHook(() => useMcpLibrary());
-  expect(result.current.byTier.core.length).toBe(13);
-  expect(result.current.byTier.worker.length).toBe(23);
+  expect(result.current.byTier.core.length).toBe(11);
+  expect(result.current.byTier.worker.length).toBe(21);
   expect(result.current.byTier.builder.length).toBe(24);
 });
 
