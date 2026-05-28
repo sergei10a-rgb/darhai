@@ -12,30 +12,47 @@ import { coreEvents, CoreEvent } from '@office-ai/aioncli-core/dist/src/utils/ev
 import { EventEmitter } from 'node:events';
 import type { IMcpServer } from '@/common/config/storage';
 
-// Upstream OAuthUtils.buildResourceParameter uses `new URL(endpointUrl).pathname`
-// which the WHATWG URL parser normalizes to '/' for root-only URLs. Most MCP
-// servers (Slack, Asana, Box, Stripe, Vercel, etc.) return their RFC 9728
-// `resource` field without that trailing slash, which makes the strict `!==`
-// comparison inside discoverOAuthConfig throw ResourceMismatchError:
-//   "Protected resource https://mcp.slack.com does not match expected
-//    https://mcp.slack.com/"
-// Patch the static method to strip the trailing slash for root-only URLs so
-// the comparison matches the canonical form servers actually return. 20 of
-// the 29 hosted-OAuth catalog entries depend on this fix.
-const originalBuildResourceParameter = OAuthUtils.buildResourceParameter.bind(OAuthUtils);
-(OAuthUtils as unknown as { buildResourceParameter: (url: string) => string }).buildResourceParameter = (
-  endpointUrl: string,
-): string => {
-  const result = originalBuildResourceParameter(endpointUrl);
+// RFC 9728 §7.3 strict `===` comparison vs vendor-deployed inconsistency on
+// trailing slashes:
+//   - Slack returns resource="https://mcp.slack.com" (no slash)
+//   - Box / Calendly / Miro / Vercel return resource="https://mcp.box.com/" (slash)
+//   - WHATWG URL parser normalizes empty pathname to "/", so the upstream
+//     buildResourceParameter always produces the slashy form
+// Canonicalize BOTH sides to no-trailing-slash for root-only URLs so neither
+// vendor deployment style trips the mismatch error. 20 of the 29 hosted-OAuth
+// catalog entries depend on this normalization.
+function canonicalizeRootResource(value: string): string {
   try {
-    const u = new URL(endpointUrl);
-    if ((u.pathname === '/' || u.pathname === '') && result.endsWith('/')) {
-      return result.slice(0, -1);
+    const u = new URL(value);
+    if ((u.pathname === '/' || u.pathname === '') && value.endsWith('/')) {
+      return value.slice(0, -1);
     }
   } catch {
     /* fall through */
   }
-  return result;
+  return value;
+}
+
+const originalBuildResourceParameter = OAuthUtils.buildResourceParameter.bind(OAuthUtils);
+(OAuthUtils as unknown as { buildResourceParameter: (url: string) => string }).buildResourceParameter = (
+  endpointUrl: string,
+): string => canonicalizeRootResource(originalBuildResourceParameter(endpointUrl));
+
+// Mirror the canonicalization on the inbound side. discoverOAuthConfig compares
+// `resourceMetadata.resource !== expectedResource` with strict equality — both
+// sides must be canonicalized for the slash variants to match.
+const originalFetchProtectedResourceMetadata =
+  OAuthUtils.fetchProtectedResourceMetadata.bind(OAuthUtils);
+(
+  OAuthUtils as unknown as {
+    fetchProtectedResourceMetadata: (url: string) => Promise<{ resource?: string } | null>;
+  }
+).fetchProtectedResourceMetadata = async (url: string) => {
+  const metadata = await originalFetchProtectedResourceMetadata(url);
+  if (metadata && typeof metadata.resource === 'string') {
+    metadata.resource = canonicalizeRootResource(metadata.resource);
+  }
+  return metadata;
 };
 
 export interface OAuthStatus {
