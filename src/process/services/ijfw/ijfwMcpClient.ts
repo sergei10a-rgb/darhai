@@ -71,10 +71,7 @@ type ResolvedToolCall =
   | { ok: true; toolName: string; toolArgs: Record<string, unknown> }
   | { ok: false; reason: string };
 
-function resolveToolCall(
-  verb: string,
-  args: Record<string, unknown>,
-): ResolvedToolCall {
+function resolveToolCall(verb: string, args: Record<string, unknown>): ResolvedToolCall {
   if (Object.prototype.hasOwnProperty.call(DIRECT_TOOL_MAP, verb)) {
     return { ok: true, toolName: DIRECT_TOOL_MAP[verb]!, toolArgs: args };
   }
@@ -167,7 +164,7 @@ class IjfwMcpClient {
   async invoke(
     verb: string,
     args: Record<string, unknown> = {},
-    opts: { timeoutMs?: number } = {},
+    opts: { timeoutMs?: number } = {}
   ): Promise<IjfwInvokeResult> {
     const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
 
@@ -300,9 +297,7 @@ class IjfwMcpClient {
     // until the user uninstalls.
     const sinceLastFailure = Date.now() - this.lastSpawnFailureAt;
     if (this.lastSpawnFailureAt > 0 && sinceLastFailure < RESPAWN_BACKOFF_MS) {
-      throw new Error(
-        `IJFW MCP respawn backoff active (${RESPAWN_BACKOFF_MS - sinceLastFailure}ms remaining)`,
-      );
+      throw new Error(`IJFW MCP respawn backoff active (${RESPAWN_BACKOFF_MS - sinceLastFailure}ms remaining)`);
     }
     this.childPromise = this.spawnChild()
       .then((child) => {

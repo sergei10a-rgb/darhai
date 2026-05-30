@@ -117,9 +117,11 @@ async function sendImage(plugin: WhatsAppPlugin, mediaUrl: string): Promise<stri
     fileName: 'x.jpg',
   } as unknown as IUnifiedOutgoingMessage;
   // Reach into private downloadMediaToTemp via a thin wrapper.
-  const dl = (plugin as unknown as {
-    downloadMediaToTemp: (u: string, t: string, f?: string) => Promise<string>;
-  }).downloadMediaToTemp.bind(plugin);
+  const dl = (
+    plugin as unknown as {
+      downloadMediaToTemp: (u: string, t: string, f?: string) => Promise<string>;
+    }
+  ).downloadMediaToTemp.bind(plugin);
   return dl(msg.mediaUrl as string, 'image', 'x.jpg');
 }
 

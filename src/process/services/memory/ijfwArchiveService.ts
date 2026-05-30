@@ -29,19 +29,12 @@ import type {
 } from '@/common/types/memory';
 
 // Memory files to read per project root.
-const MEMORY_FILES = [
-  'knowledge.md',
-  'journal.md',
-  'handoff.md',
-  'plan.md',
-  'brief.md',
-  'project-journal.md',
-] as const;
+const MEMORY_FILES = ['knowledge.md', 'journal.md', 'handoff.md', 'plan.md', 'brief.md', 'project-journal.md'] as const;
 
 type WatcherFactory = (
   filePath: string,
   opts: { persistent: boolean },
-  callback: (event: string, filename: string | null) => void,
+  callback: (event: string, filename: string | null) => void
 ) => { close(): void };
 
 // ===== Index data structures =====
@@ -85,9 +78,7 @@ function parseDateToMs(stored: string): number {
 function toMemoryType(raw: string): MemoryEntry['type'] {
   const lower = raw?.toLowerCase?.() ?? '';
   const valid = ['decision', 'pattern', 'observation', 'session', 'wiki', 'preference'] as const;
-  return (valid as readonly string[]).includes(lower)
-    ? (lower as MemoryEntry['type'])
-    : 'observation';
+  return (valid as readonly string[]).includes(lower) ? (lower as MemoryEntry['type']) : 'observation';
 }
 
 // ===== Registry reader =====
@@ -137,11 +128,7 @@ async function fallbackScanForProjects(): Promise<RegistryEntry[]> {
 
 // ===== Entry parser =====
 
-function parseEntriesFromFile(
-  filePath: string,
-  projectPath: string,
-  projectName: string,
-): MemoryEntry[] {
+function parseEntriesFromFile(filePath: string, projectPath: string, projectName: string): MemoryEntry[] {
   let content: string;
   try {
     content = fs.readFileSync(filePath, 'utf8');
@@ -165,11 +152,7 @@ function parseEntriesFromFile(
     const storedAt = parseDateToMs(storedStr) || Date.now();
 
     const rawTags = fm['tags'];
-    const tags: string[] = Array.isArray(rawTags)
-      ? rawTags
-      : typeof rawTags === 'string' && rawTags
-        ? [rawTags]
-        : [];
+    const tags: string[] = Array.isArray(rawTags) ? rawTags : typeof rawTags === 'string' && rawTags ? [rawTags] : [];
 
     const id = makeId(filePath, storedStr || String(storedAt), summary);
     const bodyPreview = stripMarkdown(block.body).slice(0, 200);
@@ -228,7 +211,7 @@ const REFS_TTL_MS = 5 * 60 * 1000; // 5 minutes
 function buildRefsMap(allEntries: MemoryEntry[]): Map<string, number> {
   const refs = new Map<string, number>();
   const journalEntries = allEntries.filter(
-    (e) => e.sourcePath.endsWith('journal.md') || e.sourcePath.endsWith('project-journal.md'),
+    (e) => e.sourcePath.endsWith('journal.md') || e.sourcePath.endsWith('project-journal.md')
   );
   const journalBodies = journalEntries.map((e) => e.bodyPreview + (e.body ?? ''));
 
@@ -424,17 +407,23 @@ class IjfwArchiveService {
         for (const cb of this.changeCallbacks) cb(stats);
       })();
       this.activeRebuild = rebuild;
-      rebuild.catch((err) => {
-        log.error('[memory-archive] reindex failed', { err });
-      }).finally(() => {
-        if (this.activeRebuild === rebuild) this.activeRebuild = null;
-      });
+      rebuild
+        .catch((err) => {
+          log.error('[memory-archive] reindex failed', { err });
+        })
+        .finally(() => {
+          if (this.activeRebuild === rebuild) this.activeRebuild = null;
+        });
     }, 500);
   }
 
   private closeWatchers(): void {
     for (const w of this.watchers) {
-      try { w.close(); } catch { /* ignore */ }
+      try {
+        w.close();
+      } catch {
+        /* ignore */
+      }
     }
     this.watchers = [];
   }
@@ -468,8 +457,7 @@ class IjfwArchiveService {
 
     const since24h = now - DAY;
     const since7d = now - WEEK;
-    const countSince = (entries: MemoryEntry[], since: number) =>
-      entries.filter((e) => e.storedAt >= since).length;
+    const countSince = (entries: MemoryEntry[], since: number) => entries.filter((e) => e.storedAt >= since).length;
 
     const decisionEntries = idx.byType.get('decision') ?? [];
     const wikiEntries = idx.byType.get('wiki') ?? [];
@@ -589,11 +577,7 @@ class IjfwArchiveService {
       const now = Date.now();
       const DAY = 24 * 60 * 60 * 1000;
       const cutoff =
-        filter.timeWindow === 'today'
-          ? now - DAY
-          : filter.timeWindow === '7d'
-            ? now - 7 * DAY
-            : now - 30 * DAY;
+        filter.timeWindow === 'today' ? now - DAY : filter.timeWindow === '7d' ? now - 7 * DAY : now - 30 * DAY;
       entries = entries.filter((e) => e.storedAt >= cutoff);
     }
 
@@ -604,7 +588,7 @@ class IjfwArchiveService {
         (e) =>
           e.summary.toLowerCase().includes(q) ||
           e.bodyPreview.toLowerCase().includes(q) ||
-          e.tags.some((t) => t.toLowerCase().includes(q)),
+          e.tags.some((t) => t.toLowerCase().includes(q))
       );
     }
 
@@ -642,7 +626,7 @@ class IjfwArchiveService {
         const match = blocks.find(
           (b) =>
             typeof b.frontmatter['summary'] === 'string' &&
-            (b.frontmatter['summary'] as string).slice(0, 80) === entry.summary.slice(0, 80),
+            (b.frontmatter['summary'] as string).slice(0, 80) === entry.summary.slice(0, 80)
         );
         if (match) body = match.body;
       } catch {
@@ -660,9 +644,7 @@ class IjfwArchiveService {
 
   async getTags(project?: string): Promise<TagCount[]> {
     await this.init();
-    const entries = project
-      ? this.index.all.filter((e) => e.project === project)
-      : this.index.all;
+    const entries = project ? this.index.all.filter((e) => e.project === project) : this.index.all;
 
     const counts = new Map<string, number>();
     for (const entry of entries) {
@@ -770,7 +752,7 @@ function groupByTags(items: MemoryEntry[]): Map<string, MemoryEntry[]> {
 function defaultWatcherFactory(
   filePath: string,
   opts: { persistent: boolean },
-  callback: (event: string, filename: string | null) => void,
+  callback: (event: string, filename: string | null) => void
 ): { close(): void } {
   return fs.watch(filePath, opts, callback);
 }

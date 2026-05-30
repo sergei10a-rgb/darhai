@@ -247,8 +247,8 @@ describe('WhatsAppPlugin — bridge JSON-RPC plumbing', () => {
   it('throws on editMessage — WhatsApp has no edit primitive on any backend', async () => {
     const plugin = new WhatsAppPlugin();
     await plugin.initialize(configFor('baileys'));
-    await expect(
-      plugin.editMessage('chat@x', 'WA_001', { type: 'text', text: 'edited' }),
-    ).rejects.toThrow(/does not support editing/);
+    await expect(plugin.editMessage('chat@x', 'WA_001', { type: 'text', text: 'edited' })).rejects.toThrow(
+      /does not support editing/
+    );
   });
 });

@@ -103,9 +103,7 @@ describe('useKickoff', () => {
       prefill = result.current.accept();
     });
     expect(prefill).toBe('Prep 1:1 agendas.');
-    expect(telemetryMock).toHaveBeenCalledWith(
-      expect.objectContaining({ event: 'accepted', kickoffId: 'alt-1' })
-    );
+    expect(telemetryMock).toHaveBeenCalledWith(expect.objectContaining({ event: 'accepted', kickoffId: 'alt-1' }));
   });
 
   it('dismissByInteraction fires dismissed telemetry and hides the card', async () => {
