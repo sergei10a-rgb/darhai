@@ -260,7 +260,7 @@ async function countWikiFiles(projectPath: string): Promise<number> {
 
 function buildSparkline(entries: MemoryEntry[], days = 30): number[] {
   const now = Date.now();
-  const buckets = new Array<number>(days).fill(0);
+  const buckets: number[] = Array.from({ length: days }, () => 0);
   for (const e of entries) {
     const dayAgo = Math.floor((now - e.storedAt) / (24 * 60 * 60 * 1000));
     if (dayAgo >= 0 && dayAgo < days) {
@@ -376,7 +376,7 @@ class IjfwArchiveService {
       byType: groupBy(allEntries, (e) => e.type),
       byTag: groupByTags(allEntries),
       all: allEntries,
-      projects: projectSummaries.sort((a, b) => b.lastActive - a.lastActive),
+      projects: projectSummaries.toSorted((a, b) => b.lastActive - a.lastActive),
       wikiCounts,
       refsReady: false,
       refsExpiry: 0,
@@ -497,7 +497,7 @@ class IjfwArchiveService {
       const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
       daySet.add(key);
     }
-    const sortedDays = [...daySet].sort();
+    const sortedDays = [...daySet].toSorted();
     let longestDays = 0;
     let currentRun = 0;
     let prevDayMs = 0;
@@ -611,11 +611,11 @@ class IjfwArchiveService {
     // Sort.
     const sort = filter.sort ?? 'recent';
     if (sort === 'recent') {
-      entries = [...entries].sort((a, b) => b.storedAt - a.storedAt);
+      entries = [...entries].toSorted((a, b) => b.storedAt - a.storedAt);
     } else if (sort === 'most-referenced') {
-      entries = [...entries].sort((a, b) => b.referencedBy - a.referencedBy);
+      entries = [...entries].toSorted((a, b) => b.referencedBy - a.referencedBy);
     } else {
-      entries = [...entries].sort((a, b) => b.promotionScore - a.promotionScore);
+      entries = [...entries].toSorted((a, b) => b.promotionScore - a.promotionScore);
     }
 
     const total = entries.length;
@@ -674,7 +674,7 @@ class IjfwArchiveService {
 
     return [...counts.entries()]
       .map(([tag, count]) => ({ tag, count }))
-      .sort((a, b) => b.count - a.count)
+      .toSorted((a, b) => b.count - a.count)
       .slice(0, 20);
   }
 
@@ -685,7 +685,7 @@ class IjfwArchiveService {
     const candidates = this.index.all
       .filter((e) => e.promotionScore >= threshold)
       .map((e) => ({ id: e.id, score: e.promotionScore }))
-      .sort((a, b) => b.score - a.score);
+      .toSorted((a, b) => b.score - a.score);
     return {
       candidates,
       threshold,

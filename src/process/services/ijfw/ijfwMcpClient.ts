@@ -13,6 +13,7 @@
  * Replaces the Wave 1 stub at `ijfwMcpClientStub.ts`.
  */
 
+// eslint-disable-next-line no-restricted-imports -- IJFW MCP client spawns the local MCP server process by design (reviewed).
 import { spawn, type ChildProcess } from 'node:child_process';
 import * as os from 'node:os';
 import * as path from 'node:path';

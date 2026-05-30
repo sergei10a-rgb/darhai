@@ -46,7 +46,7 @@ describe('WebhookPlugin.sendMessage', () => {
     expect(fetch).toHaveBeenCalledOnce();
     const [url, init] = vi.mocked(fetch).mock.calls[0];
     expect(url).toBe('https://example.com/hook');
-    expect((init?.headers as Record<string, string>)['content-type']).toBe('application/json');
+    expect(((init?.headers ?? {}) as Record<string, string>)['content-type']).toBe('application/json');
 
     const body = JSON.parse(init?.body as string) as { chatId: string; message: string };
     expect(body.chatId).toBe('chat-1');

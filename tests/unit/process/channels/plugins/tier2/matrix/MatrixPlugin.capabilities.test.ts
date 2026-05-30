@@ -42,7 +42,7 @@ const { createClientSpy, fakeClient, emitSync } = vi.hoisted(() => {
     emitSync(state: string) {
       const arr = listeners['sync'];
       if (!arr) return;
-      for (const cb of [...arr]) cb(state);
+      for (const cb of arr.slice()) cb(state);
     },
   };
 });

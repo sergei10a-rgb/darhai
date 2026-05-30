@@ -48,7 +48,7 @@ const { forkSpy, fakeChild, dnsLookupMock, axiosGetMock } = vi.hoisted(() => {
       emit(event, ...args) {
         const arr = listeners[event];
         if (!arr || arr.length === 0) return false;
-        for (const cb of [...arr]) cb(...args);
+        for (const cb of arr.slice()) cb(...args);
         return true;
       },
     };

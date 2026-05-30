@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { findAssistantInRegistry, SignalCollector } from './SignalCollector';
+import type { SignalCollector } from './SignalCollector';
+import { findAssistantInRegistry } from './SignalCollector';
 import { dateKey, hashSeed, seededShuffle } from './seededShuffle';
 import {
   THREAD_MIN_DURATION_MS,

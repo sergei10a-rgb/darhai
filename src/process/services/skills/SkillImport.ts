@@ -129,7 +129,7 @@ export type ImportResult = {
 // GitHub/GitLab SSH use cases. (H5 fix.)
 const GIT_ALLOWLIST = [
   /^https:\/\//,
-  /^git@[a-zA-Z0-9.\-]+:/,
+  /^git@[a-zA-Z0-9.-]+:/,
 ];
 
 function isAllowedGitUrl(url: string): boolean {

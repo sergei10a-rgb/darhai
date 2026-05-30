@@ -56,7 +56,7 @@ export const SKILL_GUARD_RULES: SkillGuardRule[] = [
     test: (input) =>
       scanText(
         input,
-        /~\/\.ssh\/|AKIA[0-9A-Z]{16}|Bearer\s+[A-Za-z0-9_\-]{20,}|\.env\b|\bid_rsa\b/i,
+        /~\/\.ssh\/|AKIA[0-9A-Z]{16}|Bearer\s+[A-Za-z0-9_-]{20,}|\.env\b|\bid_rsa\b/i,
         'credential-access',
         'critical',
         'reference to a credential store or token'

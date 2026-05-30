@@ -124,7 +124,7 @@ export async function runClaudeMemImport(opts?: {
           continue;
         }
         // Sanitize to prevent path traversal via malformed row IDs.
-        const id = rawId.replace(/[^a-zA-Z0-9_\-]/g, '_').slice(0, 64);
+        const id = rawId.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 64);
 
         const destFile = path.join(memDir, `observation-${id}.md`);
         // Guard: assert the resolved path stays within memDir.
