@@ -8,6 +8,7 @@ import React from 'react';
 import { CUSTOM_AVATAR_IMAGE_MAP } from '@/renderer/pages/guid/constants';
 import { resolveExtensionAssetUrl } from '@/renderer/utils/platform';
 import { isImageAvatar } from '@/renderer/utils/avatar';
+import { getLucideIcon } from '@/renderer/utils/lucideAvatar';
 
 export type AvatarProps = {
   /** Raw avatar value from the source record (image key, URL, or emoji glyph). */
@@ -27,6 +28,10 @@ const initialsFor = (name: string): string => {
 
 const Avatar: React.FC<AvatarProps> = ({ avatar, name, alt = '' }) => {
   const avatarValue = avatar?.trim();
+  // A `lucide:IconName` reference resolves to a Lucide component. `currentColor`
+  // keeps it visible on both themes (the raw string must never render as text).
+  const LucideIcon = getLucideIcon(avatarValue);
+  if (LucideIcon) return <LucideIcon size={18} className='text-current' />;
   const mapped = avatarValue ? CUSTOM_AVATAR_IMAGE_MAP[avatarValue] : undefined;
   const resolved = avatarValue ? mapped || resolveExtensionAssetUrl(avatarValue) || avatarValue : undefined;
   const showImage = resolved ? isImageAvatar(resolved) : false;

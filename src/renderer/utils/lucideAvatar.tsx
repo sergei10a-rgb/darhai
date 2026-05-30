@@ -44,6 +44,7 @@ export const LUCIDE_AVATAR_PREFIX = 'lucide:';
 
 const LUCIDE_ICONS: Record<string, LucideIcon> = {
   BookOpen,
+  Bot,
   Calculator,
   Clapperboard,
   ClipboardList,
