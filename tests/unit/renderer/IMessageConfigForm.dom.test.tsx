@@ -77,7 +77,8 @@ vi.mock('@arco-design/web-react', () => ({
   Message: { error: vi.fn(), success: vi.fn() },
 }));
 
-vi.mock('lucide-react', () => ({
+vi.mock('lucide-react', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('lucide-react')>()),
   AlertTriangle: () => <span data-testid='alert-icon' />,
 }));
 

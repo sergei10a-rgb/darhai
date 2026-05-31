@@ -59,7 +59,8 @@ vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
 }));
 
-vi.mock('lucide-react', () => ({
+vi.mock('lucide-react', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('lucide-react')>()),
   Brain: () => <span>Brain</span>,
   ChevronDown: () => <span>ChevronDown</span>,
   ChevronRight: () => <span>ChevronRight</span>,
