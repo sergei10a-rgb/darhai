@@ -127,7 +127,9 @@ describe('WhatsAppPlugin — bridge JSON-RPC plumbing', () => {
     await plugin.initialize(configFor('baileys'));
     expect(forkSpy).toHaveBeenCalledTimes(1);
     const [entry, args] = forkSpy.mock.calls[0]!;
-    expect(String(entry)).toMatch(/whatsapp-bridge\/bridge\.js$/);
+    // Normalize separators: prod builds the entry with path.join, which emits
+    // backslashes on win32, so match on the posix-normalized tail.
+    expect(String(entry).replace(/\\/g, '/')).toMatch(/whatsapp-bridge\/bridge\.js$/);
     expect(args).toEqual(['--backend', 'baileys']);
   });
 
