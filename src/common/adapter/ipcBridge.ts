@@ -1125,6 +1125,8 @@ export interface ICreateConversationParams {
     excludeBuiltinSkills?: string[];
     /** Team ownership — conversations with teamId are hidden from the sidebar */
     teamId?: string;
+    /** Project ownership — stamps extra.projectId so the conversation lives under a project umbrella. */
+    projectId?: string;
   };
 }
 interface IResetConversationParams {
@@ -2068,4 +2070,33 @@ export const wiki = {
   stateChanged: buildEmitter<WikiState>('wiki.state-changed'),
   /** Trigger a full synthesis sweep immediately and return count of new concepts. */
   synthesizeNow: buildProvider<{ ok: boolean; newConcepts: number; error?: string }, void>('wiki.synthesize-now'),
+};
+
+/**
+ * Projects — an umbrella that owns conversations. A conversation keeps full
+ * backend/model/assistant freedom; the project only stamps `extra.projectId`.
+ * No execution lock — `getConversations` may return any number of concurrently
+ * running chats. `assignConversation` / `removeConversation` re-parent an
+ * existing chat by mutating `extra.projectId`.
+ */
+export const project = {
+  create: buildProvider<import('@/common/types/project').IProject, import('@/common/types/project').ICreateProjectParams>(
+    'project.create'
+  ),
+  get: buildProvider<import('@/common/types/project').IProject | null, { id: string }>('project.get'),
+  list: buildProvider<import('@/common/types/project').IProject[], void>('project.list'),
+  update: buildProvider<void, { id: string; updates: import('@/common/types/project').IUpdateProjectParams }>(
+    'project.update'
+  ),
+  remove: buildProvider<void, { id: string }>('project.remove'),
+  /** Conversations owned by a project, newest-first. */
+  getConversations: buildProvider<import('@/common/config/storage').TChatConversation[], { projectId: string }>(
+    'project.get-conversations'
+  ),
+  /** Re-parent an existing conversation into a project (sets extra.projectId). */
+  assignConversation: buildProvider<void, { conversationId: string; projectId: string }>('project.assign-conversation'),
+  /** Detach a conversation from its project (clears extra.projectId). */
+  removeConversation: buildProvider<void, { conversationId: string }>('project.remove-conversation'),
+  /** Fired whenever the project list or a project's membership changes. */
+  changed: buildEmitter<void>('project.changed'),
 };

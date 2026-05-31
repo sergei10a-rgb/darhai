@@ -89,7 +89,12 @@ const GuidPage: React.FC = () => {
   const workflowRouteState = location.state as {
     workflowSessionId?: string;
     initialWorkflowSession?: WorkflowSession;
+    /** Set when the composer is opened from a project workspace — every chat created here is stamped with it. */
+    projectId?: string;
   } | null;
+  // Project scoping: when present, useGuidSend stamps extra.projectId on the new
+  // conversation. Backend / model / assistant pickers stay fully free.
+  const projectId = workflowRouteState?.projectId;
   const workflowSession = useWorkflowSession(
     workflowRouteState?.workflowSessionId,
     workflowRouteState?.initialWorkflowSession
@@ -216,6 +221,9 @@ const GuidPage: React.FC = () => {
     closeAllTabs,
     openTab,
     t,
+
+    // Project scoping (undefined on the normal new-chat surface)
+    projectId,
   });
 
   const recordTelemetry = useUsageTelemetry();

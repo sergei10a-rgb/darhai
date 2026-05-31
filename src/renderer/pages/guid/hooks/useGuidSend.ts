@@ -66,6 +66,14 @@ export type GuidSendDeps = {
   closeAllTabs: () => void;
   openTab: (conversation: TChatConversation) => void;
   t: TFunction;
+
+  /**
+   * When the composer is opened inside a project, every conversation it creates
+   * is stamped with this projectId (extra.projectId) so it lives under the
+   * project umbrella. Undefined for the normal new-chat surface. The backend /
+   * model / assistant pickers stay fully free — the project does not constrain them.
+   */
+  projectId?: string;
 };
 
 export type GuidSendResult = {
@@ -126,12 +134,16 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
     closeAllTabs,
     openTab,
     t,
+    projectId,
   } = deps;
   const sendingRef = useRef(false);
 
   const handleSend = useCallback(async (): Promise<boolean> => {
     const isCustomWorkspace = !!dir;
     const finalWorkspace = dir || '';
+    // Stamped into every create path's extra when the composer runs inside a
+    // project. Omitted from extra when undefined so it never pollutes a normal chat.
+    const projectExtra = projectId ? { projectId } : {};
 
     const agentInfo = selectedAgentInfo;
     const isPreset = isPresetAgent;
@@ -184,6 +196,7 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
           sessionMode: selectedMode,
           extra: {
             defaultFiles: files,
+            ...projectExtra,
             excludeBuiltinSkills,
             webSearchEngine:
               placeholderModel.platform === 'gemini-with-google-auth' ||
@@ -238,6 +251,7 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
         customWorkspace: isCustomWorkspace,
         extra: {
           defaultFiles: files,
+          ...projectExtra,
           runtimeValidation: {
             expectedWorkspace: finalWorkspace,
             expectedBackend: openclawAgentInfo?.backend,
@@ -296,6 +310,7 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
         customWorkspace: isCustomWorkspace,
         extra: {
           defaultFiles: files,
+          ...projectExtra,
           enabledSkills: isPreset ? enabledSkills : undefined,
           excludeBuiltinSkills,
         },
@@ -345,6 +360,7 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
           model: currentModel,
           extra: {
             defaultFiles: files,
+            ...projectExtra,
             workspace: finalWorkspace,
             customWorkspace: isCustomWorkspace,
             presetRules: isPreset ? presetRules : undefined,
@@ -427,6 +443,7 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
         currentModelId: selectedAcpModel || undefined,
         extra: {
           defaultFiles: files,
+          ...projectExtra,
           excludeBuiltinSkills,
         },
       });
@@ -504,6 +521,7 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
     closeAllTabs,
     openTab,
     t,
+    projectId,
   ]);
 
   const sendMessageHandler = useCallback((opts?: { onSent?: () => void }) => {

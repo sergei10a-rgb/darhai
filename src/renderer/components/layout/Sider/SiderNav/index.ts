@@ -2,6 +2,7 @@ export { default as SiderActiveTeams } from './SiderActiveTeams';
 export { default as SiderAssistantsEntry } from './SiderAssistantsEntry';
 export { default as SiderFluxRouterEntry } from './SiderFluxRouterEntry';
 export { default as SiderMemoryEntry } from './SiderMemoryEntry';
+export { default as SiderProjectsEntry } from './SiderProjectsEntry';
 export { default as SiderScheduledEntry } from './SiderScheduledEntry';
 export { default as SiderSearchEntry } from './SiderSearchEntry';
 export { default as SiderTeamsEntry } from './SiderTeamsEntry';

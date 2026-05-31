@@ -11,6 +11,7 @@ import {
   SiderAssistantsEntry,
   SiderFluxRouterEntry,
   SiderMemoryEntry,
+  SiderProjectsEntry,
   SiderScheduledEntry,
   SiderSearchEntry,
   SiderTeamsEntry,
@@ -252,6 +253,13 @@ const Sider: React.FC<SiderProps> = ({ onSessionClick, collapsed = false }) => {
           collapsed={collapsed}
           siderTooltipProps={siderTooltipProps}
           onClick={() => handleTopZoneNav('/teams')}
+        />
+        <SiderProjectsEntry
+          isMobile={isMobile}
+          isActive={pathname.startsWith('/project')}
+          collapsed={collapsed}
+          siderTooltipProps={siderTooltipProps}
+          onClick={() => handleTopZoneNav('/projects')}
         />
         <SiderMemoryEntry
           isMobile={isMobile}

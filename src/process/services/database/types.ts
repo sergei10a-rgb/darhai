@@ -7,6 +7,7 @@
 // Reuse existing business type definitions
 import type { ConversationSource, TChatConversation, IConfigStorageRefer } from '@/common/config/storage';
 import type { TMessage } from '@/common/chat/chatLib';
+import type { IProject } from '@/common/types/project';
 
 /**
  * ======================
@@ -245,6 +246,61 @@ export function rowToMessage(row: IMessageRow): TMessage {
     hidden: row.hidden === 1 ? true : undefined,
     createdAt: row.created_at,
   } as TMessage;
+}
+
+/**
+ * Project stored in database (serialized form). Mirrors the projects table
+ * created in migration_v43.
+ */
+export interface IProjectRow {
+  id: string;
+  user_id: string;
+  name: string;
+  description?: string | null;
+  workspace?: string | null;
+  icon?: string | null;
+  icon_color?: string | null;
+  pinned: number; // 0 | 1
+  pinned_at?: number | null;
+  created_at: number;
+  updated_at: number;
+}
+
+/**
+ * Convert IProject to database row.
+ */
+export function projectToRow(project: IProject, userId: string): IProjectRow {
+  return {
+    id: project.id,
+    user_id: userId,
+    name: project.name,
+    description: project.description ?? null,
+    workspace: project.workspace ?? null,
+    icon: project.icon ?? null,
+    icon_color: project.iconColor ?? null,
+    pinned: project.pinned ? 1 : 0,
+    pinned_at: project.pinnedAt ?? null,
+    created_at: project.createTime,
+    updated_at: project.modifyTime,
+  };
+}
+
+/**
+ * Convert database row to IProject.
+ */
+export function rowToProject(row: IProjectRow): IProject {
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description ?? undefined,
+    workspace: row.workspace ?? undefined,
+    icon: row.icon ?? undefined,
+    iconColor: row.icon_color ?? undefined,
+    pinned: row.pinned === 1,
+    pinnedAt: row.pinned_at ?? undefined,
+    createTime: row.created_at,
+    modifyTime: row.updated_at,
+  };
 }
 
 /**

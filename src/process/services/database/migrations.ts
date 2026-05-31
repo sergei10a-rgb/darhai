@@ -1880,6 +1880,47 @@ const migration_v42: IMigration = {
 };
 
 /**
+ * Migration v42 -> v43: Add projects table (umbrella scoping for conversations)
+ *
+ * A Project owns conversations as an umbrella: a workspace dir + optional
+ * `.wayland/` knowledge + a name. Conversations are linked via `extra.projectId`
+ * (json_extract), NOT a dedicated column — mirroring the proven cronJobId /
+ * presetAssistantId pattern — so this migration only needs to create the
+ * project entity table. Deliberately omits Foundry's per-project execution
+ * lock (`active_conversation_id`) so multiple chats run concurrently.
+ */
+const migration_v43: IMigration = {
+  version: 43,
+  name: 'Add projects table for umbrella scoping',
+  up: (db) => {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS projects (
+        id          TEXT PRIMARY KEY,
+        user_id     TEXT NOT NULL,
+        name        TEXT NOT NULL,
+        description TEXT,
+        workspace   TEXT,
+        icon        TEXT,
+        icon_color  TEXT,
+        pinned      INTEGER NOT NULL DEFAULT 0,
+        pinned_at   INTEGER,
+        created_at  INTEGER NOT NULL,
+        updated_at  INTEGER NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+    db.exec('CREATE INDEX IF NOT EXISTS idx_projects_user_id ON projects(user_id)');
+    db.exec('CREATE INDEX IF NOT EXISTS idx_projects_pinned ON projects(pinned, pinned_at DESC)');
+    db.exec('CREATE INDEX IF NOT EXISTS idx_projects_updated_at ON projects(updated_at DESC)');
+    console.log('[Migration v43] Added projects table');
+  },
+  down: (db) => {
+    db.exec('DROP TABLE IF EXISTS projects');
+    console.log('[Migration v43] Rolled back: dropped projects table');
+  },
+};
+
+/**
  * All migrations in order
  */
 // prettier-ignore
@@ -1891,6 +1932,7 @@ export const ALL_MIGRATIONS: IMigration[] = [
   migration_v25, migration_v26, migration_v27, migration_v28, migration_v29, migration_v30,
   migration_v31, migration_v32, migration_v33, migration_v34, migration_v35, migration_v36,
   migration_v37, migration_v38, migration_v39, migration_v40, migration_v41, migration_v42,
+  migration_v43,
 ];
 
 /**

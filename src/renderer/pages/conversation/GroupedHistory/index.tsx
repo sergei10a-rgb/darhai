@@ -5,8 +5,10 @@
  */
 
 import { ChevronDown, ChevronRight, FolderOpen } from 'lucide-react';
+import { ipcBridge } from '@/common';
 import type { TChatConversation } from '@/common/config/storage';
 import DirectorySelectionModal from '@/renderer/components/settings/DirectorySelectionModal';
+import AssignToProjectModal from '@/renderer/pages/projects/components/AssignToProjectModal';
 import { CronJobIndicator, useCronJobsMap } from '@/renderer/pages/cron';
 import { DndContext, DragOverlay, closestCenter } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -149,6 +151,22 @@ const WorkspaceGroupedHistory: React.FC<WorkspaceGroupedHistoryProps> = ({
     [id, navigate]
   );
 
+  // Projects — file an existing chat into a project (or detach it). Assignment
+  // persists immediately; the project surfaces refresh via `project.changed`.
+  const [assignProjectCtrl, assignProjectNode] = AssignToProjectModal.useModal({ conversationId: undefined });
+  const handleAssignToProject = useCallback(
+    (conversation: TChatConversation) => {
+      assignProjectCtrl.open({ conversationId: conversation.id });
+    },
+    [assignProjectCtrl]
+  );
+  const handleRemoveFromProject = useCallback((conversation: TChatConversation) => {
+    void ipcBridge.project.removeConversation
+      .invoke({ conversationId: conversation.id })
+      .then(() => emitter.emit('chat.history.refresh'))
+      .catch((err) => console.error('[GroupedHistory] removeConversation failed:', err));
+  }, []);
+
   const getConversationRowProps = useCallback(
     (conversation: TChatConversation): ConversationRowProps => ({
       conversation,
@@ -169,6 +187,8 @@ const WorkspaceGroupedHistory: React.FC<WorkspaceGroupedHistoryProps> = ({
       onExport: handleExportConversation,
       onTogglePin: handleTogglePin,
       onScheduleChat: handleScheduleChat,
+      onAssignToProject: handleAssignToProject,
+      onRemoveFromProject: handleRemoveFromProject,
       getJobStatus,
     }),
     [
@@ -189,6 +209,8 @@ const WorkspaceGroupedHistory: React.FC<WorkspaceGroupedHistoryProps> = ({
       handleExportConversation,
       handleTogglePin,
       handleScheduleChat,
+      handleAssignToProject,
+      handleRemoveFromProject,
       getJobStatus,
     ]
   );
@@ -332,6 +354,7 @@ const WorkspaceGroupedHistory: React.FC<WorkspaceGroupedHistoryProps> = ({
         onConfirm={handleSelectExportDirectoryFromModal}
         onCancel={() => setShowExportDirectorySelector(false)}
       />
+      {assignProjectNode}
 
       {batchMode && !collapsed && (
         <div className='px-12px pb-8px'>

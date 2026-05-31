@@ -64,6 +64,10 @@ export type ConversationRowProps = {
    * handles navigation + modal open via emitter event.
    */
   onScheduleChat?: (conversation: TChatConversation) => void;
+  /** Add an existing chat to a project (opens the project picker). Shown only when the chat is not already in a project. */
+  onAssignToProject?: (conversation: TChatConversation) => void;
+  /** Detach a chat from its project. Shown only when the chat already belongs to one. */
+  onRemoveFromProject?: (conversation: TChatConversation) => void;
   getJobStatus: (conversationId: string) => 'none' | 'active' | 'paused' | 'error' | 'unread';
 };
 

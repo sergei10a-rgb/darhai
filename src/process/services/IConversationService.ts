@@ -33,6 +33,8 @@ export interface CreateConversationParams {
     presetAssistantId?: string;
     sessionMode?: string;
     isHealthCheck?: boolean;
+    /** Project ownership — persisted as extra.projectId for umbrella scoping. */
+    projectId?: string;
     [key: string]: unknown;
   };
 }

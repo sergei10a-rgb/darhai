@@ -365,6 +365,8 @@ export type TChatConversation =
         isHealthCheck?: boolean;
         /** Cron job ID that spawned this conversation */
         cronJobId?: string;
+        /** Project ID this conversation belongs to (umbrella scoping). Mirrors cronJobId — read via json_extract(extra,'$.projectId'). */
+        projectId?: string;
       }
     >
   | Omit<
@@ -419,6 +421,8 @@ export type TChatConversation =
           isHealthCheck?: boolean;
           /** Cron job ID that spawned this conversation */
           cronJobId?: string;
+          /** Project ID this conversation belongs to (umbrella scoping). Mirrors cronJobId — read via json_extract(extra,'$.projectId'). */
+          projectId?: string;
         }
       >,
       'model'
@@ -450,6 +454,8 @@ export type TChatConversation =
           isHealthCheck?: boolean;
           /** Cron job ID that spawned this conversation */
           cronJobId?: string;
+          /** Project ID this conversation belongs to (umbrella scoping). Mirrors cronJobId — read via json_extract(extra,'$.projectId'). */
+          projectId?: string;
         }
       >,
       'model'
@@ -497,6 +503,8 @@ export type TChatConversation =
           isHealthCheck?: boolean;
           /** Cron job ID that spawned this conversation */
           cronJobId?: string;
+          /** Project ID this conversation belongs to (umbrella scoping). Mirrors cronJobId — read via json_extract(extra,'$.projectId'). */
+          projectId?: string;
         }
       >,
       'model'
@@ -521,6 +529,8 @@ export type TChatConversation =
           isHealthCheck?: boolean;
           /** Cron job ID that spawned this conversation */
           cronJobId?: string;
+          /** Project ID this conversation belongs to (umbrella scoping). Mirrors cronJobId — read via json_extract(extra,'$.projectId'). */
+          projectId?: string;
         }
       >,
       'model'
@@ -549,6 +559,8 @@ export type TChatConversation =
           isHealthCheck?: boolean;
           /** Cron job ID that spawned this conversation */
           cronJobId?: string;
+          /** Project ID this conversation belongs to (umbrella scoping). Mirrors cronJobId — read via json_extract(extra,'$.projectId'). */
+          projectId?: string;
         }
       >,
       'model'
@@ -584,6 +596,8 @@ export type TChatConversation =
         lastTokenUsage?: TokenUsageData;
         /** Cron job ID that spawned this conversation */
         cronJobId?: string;
+        /** Project ID this conversation belongs to (umbrella scoping). Mirrors cronJobId — read via json_extract(extra,'$.projectId'). */
+        projectId?: string;
       }
     >;
 

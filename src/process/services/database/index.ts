@@ -15,12 +15,14 @@ import type {
   IConversationRow,
   IMessageRow,
   IPaginatedResult,
+  IProjectRow,
   IQueryResult,
   IUser,
   TChatConversation,
   TMessage,
 } from './types';
-import { conversationToRow, messageToRow, rowToConversation, rowToMessage } from './types';
+import { conversationToRow, messageToRow, projectToRow, rowToConversation, rowToMessage, rowToProject } from './types';
+import type { IProject } from '@/common/types/project';
 import type { IMessageSearchItem, IMessageSearchResponse } from '@/common/types/database';
 import type {
   IChannelPluginConfig,
@@ -754,6 +756,135 @@ export class WaylandUIDatabase {
       }
     }
     return result;
+  }
+
+  /**
+   * List conversations belonging to a project, newest-first. Uses
+   * `json_extract(extra,'$.projectId')` — the same pattern as
+   * `getConversationsByCronJobId` / `getConversationsByPresetAssistantId`.
+   * A project is an umbrella; there is no execution lock, so this can return
+   * any number of concurrently-running conversations.
+   */
+  getConversationsByProjectId(projectId: string): TChatConversation[] {
+    const rows = this.db
+      .prepare(`SELECT * FROM conversations WHERE json_extract(extra, '$.projectId') = ? ORDER BY updated_at DESC`)
+      .all(projectId) as IConversationRow[];
+    const result: TChatConversation[] = [];
+    for (const row of rows) {
+      try {
+        result.push(rowToConversation(row));
+      } catch (e) {
+        console.warn('[Database] Skipping conversation row with unknown type:', row.type, row.id);
+      }
+    }
+    return result;
+  }
+
+  /**
+   * ==================
+   * Project operations (umbrella scoping — migration_v43)
+   * ==================
+   */
+
+  createProject(project: IProject, userId?: string): IQueryResult<IProject> {
+    try {
+      const row = projectToRow(project, userId || this.defaultUserId);
+      const stmt = this.db.prepare(`
+        INSERT INTO projects (id, user_id, name, description, workspace, icon, icon_color, pinned, pinned_at, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      stmt.run(
+        row.id,
+        row.user_id,
+        row.name,
+        row.description ?? null,
+        row.workspace ?? null,
+        row.icon ?? null,
+        row.icon_color ?? null,
+        row.pinned,
+        row.pinned_at ?? null,
+        row.created_at,
+        row.updated_at
+      );
+      return { success: true, data: project };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  getProject(projectId: string): IQueryResult<IProject | null> {
+    try {
+      const row = this.db.prepare('SELECT * FROM projects WHERE id = ?').get(projectId) as IProjectRow | undefined;
+      return { success: true, data: row ? rowToProject(row) : null };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  listProjects(userId?: string): IQueryResult<IProject[]> {
+    try {
+      const finalUserId = userId || this.defaultUserId;
+      const rows = this.db
+        .prepare(
+          `SELECT * FROM projects WHERE user_id = ? ORDER BY pinned DESC, pinned_at DESC, updated_at DESC`
+        )
+        .all(finalUserId) as IProjectRow[];
+      return { success: true, data: rows.map(rowToProject) };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  updateProject(projectId: string, updates: Partial<IProject>): IQueryResult<boolean> {
+    try {
+      const existing = this.getProject(projectId);
+      if (!existing.success || !existing.data) {
+        return { success: false, error: 'Project not found' };
+      }
+      const merged: IProject = { ...existing.data, ...updates, modifyTime: Date.now() };
+      const row = projectToRow(merged, this.defaultUserId);
+      const stmt = this.db.prepare(`
+        UPDATE projects
+        SET name = ?, description = ?, workspace = ?, icon = ?, icon_color = ?, pinned = ?, pinned_at = ?, updated_at = ?
+        WHERE id = ?
+      `);
+      stmt.run(
+        row.name,
+        row.description ?? null,
+        row.workspace ?? null,
+        row.icon ?? null,
+        row.icon_color ?? null,
+        row.pinned,
+        row.pinned_at ?? null,
+        row.updated_at,
+        projectId
+      );
+      return { success: true, data: true };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Delete a project. First detaches every owned conversation by clearing its
+   * `extra.projectId` (json_set) so chats survive as standalone — deleting a
+   * project must never destroy a user's conversations. Then removes the row.
+   */
+  removeProject(projectId: string): IQueryResult<boolean> {
+    try {
+      const detach = this.db.transaction(() => {
+        this.db
+          .prepare(
+            `UPDATE conversations SET extra = json_remove(extra, '$.projectId') WHERE json_extract(extra, '$.projectId') = ?`
+          )
+          .run(projectId);
+        this.db.prepare('DELETE FROM projects WHERE id = ?').run(projectId);
+      });
+      detach();
+      return { success: true, data: true };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
   }
 
   updateConversation(conversationId: string, updates: Partial<TChatConversation>): IQueryResult<boolean> {

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Clock, MessageSquare, Pencil, Pin, Trash2, Upload } from 'lucide-react';
+import { Clock, FolderMinus, FolderPlus, MessageSquare, Pencil, Pin, Trash2, Upload } from 'lucide-react';
 import { getAgentLogo } from '@/renderer/utils/model/agentLogo';
 import FlexFullContainer from '@/renderer/components/layout/FlexFullContainer';
 import siderStyles from '@/renderer/components/layout/Sider/Sider.module.css';
@@ -46,8 +46,11 @@ const ConversationRow: React.FC<ConversationRowProps> = (props) => {
     onExport,
     onTogglePin,
     onScheduleChat,
+    onAssignToProject,
+    onRemoveFromProject,
     getJobStatus,
   } = props;
+  const conversationProjectId = (conversation.extra as { projectId?: string } | undefined)?.projectId;
   const { t } = useTranslation();
   const { info: assistantInfo } = usePresetAssistantInfo(conversation);
   const isPinned = isConversationPinned(conversation);
@@ -221,6 +224,14 @@ const ConversationRow: React.FC<ConversationRowProps> = (props) => {
                       onExport?.(conversation);
                       return;
                     }
+                    if (key === 'assignProject') {
+                      onAssignToProject?.(conversation);
+                      return;
+                    }
+                    if (key === 'removeProject') {
+                      onRemoveFromProject?.(conversation);
+                      return;
+                    }
                     if (key === 'delete') {
                       onDelete(conversation.id);
                     }
@@ -255,6 +266,22 @@ const ConversationRow: React.FC<ConversationRowProps> = (props) => {
                       <div className='flex items-center gap-8px'>
                         <Upload size={14} />
                         <span>{t('conversation.history.export')}</span>
+                      </div>
+                    </Menu.Item>
+                  )}
+                  {onAssignToProject && !conversationProjectId && (
+                    <Menu.Item key='assignProject'>
+                      <div className='flex items-center gap-8px'>
+                        <FolderPlus size={14} />
+                        <span>{t('conversation.history.addToProject')}</span>
+                      </div>
+                    </Menu.Item>
+                  )}
+                  {onRemoveFromProject && conversationProjectId && (
+                    <Menu.Item key='removeProject'>
+                      <div className='flex items-center gap-8px'>
+                        <FolderMinus size={14} />
+                        <span>{t('conversation.history.removeFromProject')}</span>
                       </div>
                     </Menu.Item>
                   )}
