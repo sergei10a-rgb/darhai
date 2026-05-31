@@ -183,6 +183,29 @@ function matchesQuery(model: CuratedModel, query: string): boolean {
   return false;
 }
 
+/**
+ * Models nobody should be silently dropped onto as a default: previews /
+ * experimental / dated betas. `antigravity` is named explicitly because its
+ * model id does not always carry "preview", and Google now lists a dead
+ * `antigravity-preview` (enabled:false) FIRST in its Gemini set, so `curated[0]`
+ * is no longer a safe fallback.
+ */
+const EXPERIMENTAL_CURATED_PATTERN = /\b(preview|experimental|exp|nightly|alpha|beta|antigravity)\b/i;
+const isExperimentalCurated = (m: CuratedModel): boolean =>
+  EXPERIMENTAL_CURATED_PATTERN.test(m.id) || EXPERIMENTAL_CURATED_PATTERN.test(m.displayName);
+
+/**
+ * The first curated model safe to silently fall a chat back onto: an enabled,
+ * non-experimental model (recommended first). Returns undefined when only
+ * preview/experimental models exist — callers must then leave the user's pin
+ * and label untouched rather than surface a preview they never chose. This is
+ * the guard that stops the picker booting to "Antigravity Preview".
+ */
+const firstSafeCuratedModel = (list: CuratedModel[]): CuratedModel | undefined =>
+  list.find((m) => m.recommended && m.enabled && !isExperimentalCurated(m)) ??
+  list.find((m) => m.enabled && !isExperimentalCurated(m)) ??
+  list.find((m) => !isExperimentalCurated(m));
+
 const GuidModelSelector: React.FC<GuidModelSelectorProps> = ({
   isGeminiMode,
   modelList,
@@ -263,9 +286,13 @@ const GuidModelSelector: React.FC<GuidModelSelectorProps> = ({
       selectedValue: selectedCuratedModel?.id,
       selectedLabel: selectedCuratedModel?.displayName,
       defaultModelLabel,
-      fallbackLabel: curated[0]?.displayName || defaultModelLabel,
+      // When the pinned model isn't in this agent's curated subset, show the
+      // model that will actually run (e.g. a user-set `gpt-5.5`), then the
+      // first safe curated model — NEVER curated[0], which is now Google's
+      // dead antigravity preview.
+      fallbackLabel: currentModel?.useModel || firstSafeCuratedModel(curated)?.displayName || defaultModelLabel,
     });
-  }, [curated, defaultModelLabel, selectedCuratedModel]);
+  }, [curated, defaultModelLabel, selectedCuratedModel, currentModel?.useModel]);
 
   // Pick a curated model: resolve its credentials through the modelRegistry
   // IPC (Packet 3B) so the chat-start flow no longer depends on the legacy
@@ -366,16 +393,23 @@ const GuidModelSelector: React.FC<GuidModelSelectorProps> = ({
       (m) => `${m.providerId}:${m.id}` === selectedCuratedKey || m.id === selectedCuratedKey
     );
     if (stillAvailable) return;
+    // The pin may be a real, configured model that simply isn't in THIS agent's
+    // curated subset (e.g. a user-set `wcore.defaultModel = gpt-5.5`). That is
+    // not a dropped pin — keep the user's deliberate choice rather than repair
+    // it onto a curated model. Only genuinely-missing models fall through.
+    if (currentModel?.useModel && modelList.some((p) => p.model?.includes(currentModel.useModel))) return;
     // Guard against re-firing on every render. Keyed by the pair so a
     // new agent or new pinned-model retries the fallback decision once.
     const guardKey = `${agentKey}:${selectedCuratedKey}`;
     if (fallbackFiredRef.current === guardKey) return;
     fallbackFiredRef.current = guardKey;
-    // silent: this fallback is internal repair. If the curated[0] provider
-    // is unconfigured, leaving the user on /guid is correct — they may have
-    // selected a preset assistant whose backend will be configured later.
-    void handlePickCurated(curated[0], { silent: true });
-  }, [agentKey, curated, isGeminiMode, selectedCuratedKey, handlePickCurated]);
+    // Repair the dropped pin onto the first SAFE curated model (enabled,
+    // non-experimental) — never curated[0], which is now Google's dead
+    // antigravity preview. If every curated entry is a preview, leave the
+    // user's pin untouched rather than silently switch them onto a preview.
+    const safe = firstSafeCuratedModel(curated);
+    if (safe) void handlePickCurated(safe, { silent: true });
+  }, [agentKey, curated, isGeminiMode, selectedCuratedKey, handlePickCurated, currentModel?.useModel, modelList]);
 
   // Resolve a price tier for an ACP model entry. CLI-agent options use short
   // ids/labels (`sonnet`, `haiku`, `Sonnet (1M context)`) that almost never
@@ -614,10 +648,7 @@ export const ModelSelectorPanel: React.FC<ModelSelectorPanelProps> = ({
     (model: CuratedModel) => togglePinKey(pinKey(model.providerId, model.id)),
     [togglePinKey]
   );
-  const isPinned = React.useCallback(
-    (model: CuratedModel) => pinned.has(pinKey(model.providerId, model.id)),
-    [pinned]
-  );
+  const isPinned = React.useCallback((model: CuratedModel) => pinned.has(pinKey(model.providerId, model.id)), [pinned]);
 
   // ⌘K / Ctrl+K focuses the search input while the panel is open.
   React.useEffect(() => {
@@ -1025,7 +1056,9 @@ const ModelRow: React.FC<ModelRowProps> = ({ model, selected, query, onPick, pin
           className={styles.pinButton}
           data-pinned={pinned}
           title={t(pinned ? 'settings.modelsPage.homePicker.unpinModel' : 'settings.modelsPage.homePicker.pinModel')}
-          aria-label={t(pinned ? 'settings.modelsPage.homePicker.unpinModel' : 'settings.modelsPage.homePicker.pinModel')}
+          aria-label={t(
+            pinned ? 'settings.modelsPage.homePicker.unpinModel' : 'settings.modelsPage.homePicker.pinModel'
+          )}
           aria-pressed={pinned}
           onClick={(e) => {
             e.stopPropagation();

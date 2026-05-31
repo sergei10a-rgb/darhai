@@ -5,11 +5,11 @@
  */
 
 import { ipcBridge } from '@/common';
-import Markdown from '@/renderer/components/Markdown';
-import { Button, Drawer, Input, Message, Radio } from '@arco-design/web-react';
+import { Button, Drawer, Input, Message } from '@arco-design/web-react';
 import { Sparkles } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import TipTapMarkdownEditor from '@/renderer/pages/conversation/Preview/components/editors/TipTapMarkdownEditor';
 
 export type KnowledgeKind = 'context' | 'rules' | 'decisions';
 
@@ -30,7 +30,6 @@ const KnowledgeEditDrawer: React.FC<{
   const { t } = useTranslation();
   const [body, setBody] = useState('');
   const [summary, setSummary] = useState('');
-  const [mode, setMode] = useState<'edit' | 'preview'>('edit');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -38,7 +37,6 @@ const KnowledgeEditDrawer: React.FC<{
   useEffect(() => {
     if (!visible) return;
     setLoading(true);
-    setMode('edit');
     void (async () => {
       try {
         const [knowledge, summaries] = await Promise.all([
@@ -131,31 +129,11 @@ const KnowledgeEditDrawer: React.FC<{
             {!canGenerate && <span className='text-11px text-t-tertiary'>{t('projects.knowledge.noModelHint')}</span>}
           </div>
 
-          {/* Body: edit / preview */}
-          <div className='flex items-center justify-between'>
-            <span className='text-12px font-600 text-t-secondary'>{t('projects.knowledge.bodyLabel')}</span>
-            <Radio.Group type='button' size='small' value={mode} onChange={(v) => setMode(v as 'edit' | 'preview')}>
-              <Radio value='edit'>{t('projects.knowledge.edit')}</Radio>
-              <Radio value='preview'>{t('projects.knowledge.preview')}</Radio>
-            </Radio.Group>
+          {/* Body — TipTap WYSIWYG markdown editor (keyed by kind so it remounts per doc) */}
+          <span className='text-12px font-600 text-t-secondary'>{t('projects.knowledge.bodyLabel')}</span>
+          <div className='flex-1 overflow-auto rd-8px border border-solid border-border-2 min-h-320px'>
+            <TipTapMarkdownEditor key={kind} value={body} onChange={setBody} />
           </div>
-          {mode === 'edit' ? (
-            <Input.TextArea
-              value={body}
-              placeholder={t(`projects.knowledge.${kind}.placeholder`)}
-              onChange={setBody}
-              autoSize={{ minRows: 14, maxRows: 30 }}
-              style={{ fontFamily: 'var(--font-mono, monospace)', fontSize: 13, lineHeight: 1.6 }}
-            />
-          ) : (
-            <div className='flex-1 overflow-auto rd-8px border border-solid border-border-2 px-16px py-12px min-h-280px'>
-              {body.trim() ? (
-                <Markdown>{body}</Markdown>
-              ) : (
-                <span className='text-13px text-t-tertiary'>{t('projects.knowledge.previewEmpty')}</span>
-              )}
-            </div>
-          )}
         </div>
       )}
     </Drawer>
