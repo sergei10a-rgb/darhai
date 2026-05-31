@@ -437,14 +437,21 @@ jobs:
       # electron's (trusted) install script. Then run install.js explicitly as a
       # belt-and-suspenders, and verify require('electron') resolves so a bad
       # install fails HERE (with `set -x` diagnostics) instead of mid-spec.
+      # electron's default CDN (github.com/electron/electron releases) truncates
+      # the binary zip on this runner, leaving a ~688KB partial dist with no
+      # path.txt. Use the npmmirror mirror, request remote checksums (so a partial
+      # is rejected, not silently accepted), and clear every cache so the download
+      # is genuinely fresh. Assert path.txt + the binary so a bad install fails HERE.
       - name: Ensure Electron binary is installed
+        env:
+          ELECTRON_MIRROR: https://npmmirror.com/mirrors/electron/
+          electron_use_remote_checksums: '1'
         run: |
           set -ex
-          node -e "console.log('@electron/get at', require.resolve('@electron/get'))"
-          rm -rf node_modules/electron/dist node_modules/electron/path.txt
+          rm -rf node_modules/electron/dist node_modules/electron/path.txt ~/.cache/electron
           force_no_cache=true node node_modules/electron/install.js
-          ls -la node_modules/electron/dist | head -10
-          cat node_modules/electron/path.txt
+          ls -la node_modules/electron/dist | head -12
+          test -s node_modules/electron/path.txt
           node -e "const p=require('electron'); require('node:fs').accessSync(p); console.log('electron binary OK:', p)"
 
       # This spec drives the BUILT Electron app via Playwright's _electron API
