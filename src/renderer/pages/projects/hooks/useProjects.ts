@@ -51,7 +51,18 @@ export function useProjects() {
   useEffect(() => {
     aliveRef.current = true;
     void refresh();
-    const unsub = ipcBridge.project.changed.on(() => void refresh());
+    // PERF-IPC-01: a targeted payload ({ id, count }) means only one project's
+    // chat count changed — patch that single row instead of re-listing every
+    // project and re-fanning out the per-project count queries. A payload-less
+    // signal (structural change) still triggers the full refresh.
+    const unsub = ipcBridge.project.changed.on((payload) => {
+      if (payload && payload.id && typeof payload.count === 'number') {
+        const { id, count } = payload;
+        setCounts((prev) => ({ ...prev, [id]: count }));
+        return;
+      }
+      void refresh();
+    });
     return () => {
       aliveRef.current = false;
       unsub();

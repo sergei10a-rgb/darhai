@@ -1098,6 +1098,10 @@ type CleanupModules = {
   webserverAdapter: typeof import('@process/webserver/adapter');
   officeWatch: typeof import('@process/bridge/officeWatchBridge');
   pptPreview: typeof import('@process/bridge/pptPreviewBridge');
+  // REL-WATCH-01: drain leaked fs.watch handles (renderer-initiated file
+  // watchers) deterministically on quit so they don't outlive the process and
+  // accumulate against inotify max_user_watches / EMFILE.
+  fileWatch: typeof import('@process/bridge/fileWatchBridge');
   // L15 (AUDIT-05 F17): close SQLite handle from before-quit so the DB file
   // is flushed/unlocked before process exit.
   database: typeof import('@process/services/database/export');
@@ -1117,7 +1121,8 @@ const prefetchCleanupModules = (): Promise<CleanupModules> => {
     import('@process/bridge/pptPreviewBridge'),
     import('@process/services/database/export'),
     import('@process/services/cron/cronServiceSingleton'),
-  ]).then(([ambient, channels, webuiBridge, webserverAdapter, officeWatch, pptPreview, database, cron]) => ({
+    import('@process/bridge/fileWatchBridge'),
+  ]).then(([ambient, channels, webuiBridge, webserverAdapter, officeWatch, pptPreview, database, cron, fileWatch]) => ({
     ambient,
     channels,
     webuiBridge,
@@ -1126,6 +1131,7 @@ const prefetchCleanupModules = (): Promise<CleanupModules> => {
     pptPreview,
     database,
     cron,
+    fileWatch,
   }));
 };
 
@@ -1259,6 +1265,7 @@ app.on('before-quit', async () => {
       safeImport('pptPreview', () => import('@process/bridge/pptPreviewBridge')),
       safeImport('database', () => import('@process/services/database/export')),
       safeImport('cron', () => import('@process/services/cron/cronServiceSingleton')),
+      safeImport('fileWatch', () => import('@process/bridge/fileWatchBridge')),
     ]);
     const out: Partial<CleanupModules> = {};
     for (const [k, v] of entries) {
@@ -1363,6 +1370,17 @@ app.on('before-quit', async () => {
       PER_STEP_TIMEOUT_MS
     );
 
+    // REL-WATCH-01: drain renderer-initiated fs.watch handles so they are
+    // released deterministically on quit rather than abandoned on Cmd+Q/crash.
+    const fileWatchStep = withTimeout(
+      'stopAllFileWatchers',
+      (async () => {
+        if (!mods.fileWatch) return;
+        mods.fileWatch.stopAllFileWatchers();
+      })(),
+      PER_STEP_TIMEOUT_MS
+    );
+
     // Run all steps concurrently; allSettled so one slow step can't starve
     // the rest. Each step has its own 2s budget via withTimeout above.
     // Listed in the documented top-down ordering above for readability.
@@ -1376,6 +1394,7 @@ app.on('before-quit', async () => {
       webServerStep,
       officeWatchStep,
       pptPreviewStep,
+      fileWatchStep,
     ]);
   };
 

@@ -2160,6 +2160,15 @@ export const project = {
     { available: boolean; files: Array<{ name: string; content: string }> },
     { id: string }
   >('project.read-ijfw-memory'),
-  /** Fired whenever the project list or a project's membership changes. */
-  changed: buildEmitter<void>('project.changed'),
+  /**
+   * Fired whenever the project list or a project's membership changes.
+   *
+   * PERF-IPC-01: carries an optional targeted payload so the renderer can patch
+   * a single row (e.g. update one project's chat count) instead of re-listing
+   * every project and recomputing all counts. The payload is optional and the
+   * broad (payload-less) signal is still emitted for structural changes
+   * (create/remove/update) where a full refresh is the correct response, so all
+   * existing `changed.on(() => refresh())` listeners remain valid.
+   */
+  changed: buildEmitter<{ id?: string; count?: number } | undefined>('project.changed'),
 };

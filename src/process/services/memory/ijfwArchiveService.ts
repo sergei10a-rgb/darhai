@@ -208,6 +208,18 @@ function parseEntriesFromFile(filePath: string, projectPath: string, projectName
 
 const REFS_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
+/**
+ * PERF-MEM-01: resident cap on the in-process memory index. `all[]` previously
+ * grew with the user's entire accumulated corpus and was rebuilt in place, so a
+ * multi-day main-process session kept an ever-larger array resident. We keep
+ * only the most-recent N entries (by storedAt) resident; older entries stay on
+ * disk and remain reachable on demand via getEntry (which reads the body from
+ * sourcePath). Per-project counts are computed from the full scan before the cap
+ * so list/stats totals are unaffected. Set generously so normal corpora are
+ * fully resident and only pathological histories are trimmed.
+ */
+const RESIDENT_ENTRY_CAP = 5000;
+
 function buildRefsMap(allEntries: MemoryEntry[]): Map<string, number> {
   const refs = new Map<string, number>();
   const journalEntries = allEntries.filter(
@@ -353,12 +365,22 @@ class IjfwArchiveService {
       });
     }
 
+    // PERF-MEM-01: cap the resident working set. projectSummaries.count above is
+    // computed from the full per-project scan, so list/stats project totals stay
+    // accurate; only the in-memory `all[]` (and the maps derived from it) is
+    // trimmed to the most-recent N entries. Older entries remain on disk and are
+    // still reachable via getEntry, which reads the body from sourcePath.
+    const resident =
+      allEntries.length > RESIDENT_ENTRY_CAP
+        ? allEntries.toSorted((a, b) => b.storedAt - a.storedAt).slice(0, RESIDENT_ENTRY_CAP)
+        : allEntries;
+
     this.index = {
-      byId: new Map(allEntries.map((e) => [e.id, e])),
-      byProject: groupBy(allEntries, (e) => e.project),
-      byType: groupBy(allEntries, (e) => e.type),
-      byTag: groupByTags(allEntries),
-      all: allEntries,
+      byId: new Map(resident.map((e) => [e.id, e])),
+      byProject: groupBy(resident, (e) => e.project),
+      byType: groupBy(resident, (e) => e.type),
+      byTag: groupByTags(resident),
+      all: resident,
       projects: projectSummaries.toSorted((a, b) => b.lastActive - a.lastActive),
       wikiCounts,
       refsReady: false,

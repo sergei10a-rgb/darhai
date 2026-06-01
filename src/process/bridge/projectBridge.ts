@@ -72,10 +72,19 @@ function buildDraftPrompt(params: {
   if (audience) lines.push(`Audience: ${audience}`);
   if (constraints) lines.push(`Must always keep in mind: ${constraints}`);
   if (relatedKnowledge && relatedKnowledge.trim())
-    lines.push('', "The project's existing instructions and decisions (use these to infer intent):", relatedKnowledge.trim());
+    lines.push(
+      '',
+      "The project's existing instructions and decisions (use these to infer intent):",
+      relatedKnowledge.trim()
+    );
   if (sourceText && sourceText.trim()) lines.push('', 'What the user said about the project:', sourceText.trim());
   if (sourceFiles && sourceFiles.trim()) lines.push('', 'Reference material the user provided:', sourceFiles.trim());
-  lines.push('', guidance, '', 'Output ONLY the document as clean markdown. No preamble, no closing remarks, no code fences.');
+  lines.push(
+    '',
+    guidance,
+    '',
+    'Output ONLY the document as clean markdown. No preamble, no closing remarks, no code fences.'
+  );
   return lines.join('\n');
 }
 
@@ -95,7 +104,7 @@ async function requireWorkspace(id: string): Promise<string> {
 export function initProjectBridge(): void {
   ipcBridge.project.create.provider(async (params) => {
     const project = await projectService.createProject(params);
-    ipcBridge.project.changed.emit();
+    ipcBridge.project.changed.emit(undefined);
     return project;
   });
 
@@ -109,12 +118,12 @@ export function initProjectBridge(): void {
 
   ipcBridge.project.update.provider(async ({ id, updates }) => {
     await projectService.updateProject(id, updates);
-    ipcBridge.project.changed.emit();
+    ipcBridge.project.changed.emit(undefined);
   });
 
   ipcBridge.project.remove.provider(async ({ id }) => {
     await projectService.removeProject(id);
-    ipcBridge.project.changed.emit();
+    ipcBridge.project.changed.emit(undefined);
   });
 
   ipcBridge.project.getConversations.provider(async ({ projectId }) => {
@@ -123,12 +132,19 @@ export function initProjectBridge(): void {
 
   ipcBridge.project.assignConversation.provider(async ({ conversationId, projectId }) => {
     await projectService.assignConversation(conversationId, projectId);
-    ipcBridge.project.changed.emit();
+    // PERF-IPC-01: only one project's chat count changed — emit a targeted
+    // payload so the renderer can patch that single row instead of re-listing.
+    const count = (await projectService.getProjectConversations(projectId)).length;
+    ipcBridge.project.changed.emit({ id: projectId, count });
   });
 
   ipcBridge.project.removeConversation.provider(async ({ conversationId }) => {
     await projectService.removeConversationFromProject(conversationId);
-    ipcBridge.project.changed.emit();
+    // The service detaches without reporting which project lost the conversation,
+    // so we can't cheaply target one row here — emit the broad refresh signal
+    // (unchanged behavior). assignConversation above carries the targeted payload
+    // since it already knows the destination projectId (PERF-IPC-01).
+    ipcBridge.project.changed.emit(undefined);
   });
 
   ipcBridge.project.readKnowledge.provider(async ({ id }) => {
@@ -206,7 +222,16 @@ export function initProjectBridge(): void {
         const model = await pickBestModel();
         if (!model) return { draft: '', error: 'no-model' };
         const sourceFiles = filePaths && filePaths.length > 0 ? await readSourceFiles(filePaths) : '';
-        const prompt = buildDraftPrompt({ name, description, kind, sourceText, sourceFiles, relatedKnowledge, audience, constraints });
+        const prompt = buildDraftPrompt({
+          name,
+          description,
+          kind,
+          sourceText,
+          sourceFiles,
+          relatedKnowledge,
+          audience,
+          constraints,
+        });
         // A 1200-token draft from a flagship/reasoning model can take well over the
         // cheap-summary timeout; give it room so it doesn't abort mid-generation.
         const raw = await oneShotComplete(prompt, { model, maxTokens: 1200, timeoutMs: 90_000 });
