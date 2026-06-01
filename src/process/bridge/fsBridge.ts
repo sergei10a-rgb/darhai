@@ -25,6 +25,7 @@ import { readDirectoryRecursive } from '@process/utils';
 import { writeFileAtomic } from '@process/utils/atomicWrite';
 import { getDatabase } from '@process/services/database';
 import { ExtensionRegistry } from '@process/extensions/ExtensionRegistry';
+import { confinePath, registerAuthorizedRoot } from './pathConfinement';
 import type { IWorkspaceFlatFile } from '@/common/adapter/ipcBridge';
 
 // ============================================================================
@@ -576,6 +577,9 @@ export function initFsBridge(): void {
           }
 
           const resolvedWorkspace = path.resolve(conversationWorkspace);
+          // Authorize this workspace root so the renderer's follow-up
+          // fs.writeFile to the returned upload path passes confinement.
+          registerAuthorizedRoot(resolvedWorkspace);
           uploadDir = path.join(resolvedWorkspace, 'uploads');
           await fs.mkdir(uploadDir, { recursive: true });
         } catch (error) {
@@ -637,12 +641,17 @@ export function initFsBridge(): void {
 
   ipcBridge.fs.readFile.provider(async ({ path: filePath }) => {
     try {
-      const stat = await fs.stat(filePath);
+      // Confine to authorized roots: reject arbitrary absolute reads
+      // (e.g. ~/.ssh/id_rsa, the app's .env) from a compromised renderer or
+      // an authenticated remote WebUI client. See SEC-IPC-02.
+      const safePath = await confinePath(filePath);
+      if (safePath === null) return null;
+      const stat = await fs.stat(safePath);
       if (stat.size > MAX_READ_FILE_SIZE) {
-        console.warn(`[fsBridge] File too large to read as text (${stat.size} bytes): ${filePath}`);
+        console.warn(`[fsBridge] File too large to read as text (${stat.size} bytes): ${safePath}`);
         return null;
       }
-      const content = await fs.readFile(filePath, 'utf-8');
+      const content = await fs.readFile(safePath, 'utf-8');
       return content;
     } catch (error) {
       const code = (error as NodeJS.ErrnoException).code;
@@ -658,13 +667,16 @@ export function initFsBridge(): void {
   // Read binary file as ArrayBuffer
   ipcBridge.fs.readFileBuffer.provider(async ({ path: filePath }) => {
     try {
+      // Confine to authorized roots (SEC-IPC-02): block arbitrary binary reads.
+      const safePath = await confinePath(filePath);
+      if (safePath === null) return null;
       // Cap binary reads to prevent main-process OOM on attacker-controlled paths (M6)
-      const stat = await fs.stat(filePath);
+      const stat = await fs.stat(safePath);
       if (stat.size > MAX_READ_FILE_BUFFER_SIZE) {
-        console.warn(`[fsBridge] File too large to read as buffer (${stat.size} bytes): ${filePath}`);
+        console.warn(`[fsBridge] File too large to read as buffer (${stat.size} bytes): ${safePath}`);
         return null;
       }
-      const buffer = await fs.readFile(filePath);
+      const buffer = await fs.readFile(safePath);
       // Convert Node.js Buffer to ArrayBuffer
       return buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
     } catch (error) {
@@ -680,18 +692,24 @@ export function initFsBridge(): void {
   // Write file
   ipcBridge.fs.writeFile.provider(async ({ path: filePath, data }) => {
     try {
+      // Confine to authorized roots (SEC-IPC-01): block arbitrary writes
+      // (e.g. overwriting ~/.zshrc or planting a startup item) from a
+      // compromised renderer or an authenticated remote WebUI client.
+      const safePath = await confinePath(filePath);
+      if (safePath === null) return false;
+
       // Handle string type
       if (typeof data === 'string') {
-        await fs.writeFile(filePath, data, 'utf-8');
+        await fs.writeFile(safePath, data, 'utf-8');
 
         // Send streaming content update to preview panel (for real-time updates)
         try {
-          const pathSegments = filePath.split(path.sep);
+          const pathSegments = safePath.split(path.sep);
           const fileName = pathSegments[pathSegments.length - 1];
           const workspace = pathSegments.slice(0, -1).join(path.sep);
 
           const eventData = {
-            filePath: filePath,
+            filePath: safePath,
             content: data,
             workspace: workspace,
             relativePath: fileName,
@@ -703,7 +721,7 @@ export function initFsBridge(): void {
           console.error('[fsBridge] ❌ Failed to emit file stream update:', emitError);
         }
 
-        invalidateWorkspaceFileListCacheByPath(filePath);
+        invalidateWorkspaceFileListCacheByPath(safePath);
         return true;
       }
 
@@ -731,8 +749,8 @@ export function initFsBridge(): void {
         bufferData = data;
       }
 
-      await fs.writeFile(filePath, bufferData);
-      invalidateWorkspaceFileListCacheByPath(filePath);
+      await fs.writeFile(safePath, bufferData);
+      invalidateWorkspaceFileListCacheByPath(safePath);
       return true;
     } catch (error) {
       console.error('Failed to write file:', error);
@@ -970,21 +988,27 @@ export function initFsBridge(): void {
   // Delete file or directory on disk
   ipcBridge.fs.removeEntry.provider(async ({ path: targetPath }) => {
     try {
-      const stats = await fs.lstat(targetPath);
+      // Confine to authorized roots (SEC-IPC-01): block deleting arbitrary
+      // paths — recursive force-delete of any directory is catastrophic.
+      const safePath = await confinePath(targetPath);
+      if (safePath === null) {
+        return { success: false, msg: 'Path is outside the allowed workspace roots' };
+      }
+      const stats = await fs.lstat(safePath);
       if (stats.isDirectory()) {
-        await fs.rm(targetPath, { recursive: true, force: true });
-        invalidateWorkspaceFileListCacheByPath(targetPath);
+        await fs.rm(safePath, { recursive: true, force: true });
+        invalidateWorkspaceFileListCacheByPath(safePath);
       } else {
-        await fs.unlink(targetPath);
+        await fs.unlink(safePath);
 
         // Send streaming delete event to preview panel (to close preview)
         try {
-          const pathSegments = targetPath.split(path.sep);
+          const pathSegments = safePath.split(path.sep);
           const fileName = pathSegments[pathSegments.length - 1];
           const workspace = pathSegments.slice(0, -1).join(path.sep);
 
           ipcBridge.fileStream.contentUpdate.emit({
-            filePath: targetPath,
+            filePath: safePath,
             content: '',
             workspace: workspace,
             relativePath: fileName,
@@ -994,7 +1018,7 @@ export function initFsBridge(): void {
           console.error('[fsBridge] Failed to emit file stream delete:', emitError);
         }
 
-        invalidateWorkspaceFileListCacheByPath(targetPath);
+        invalidateWorkspaceFileListCacheByPath(safePath);
       }
       return { success: true };
     } catch (error) {
@@ -1009,10 +1033,22 @@ export function initFsBridge(): void {
   // Rename file or directory and return new path
   ipcBridge.fs.renameEntry.provider(async ({ path: targetPath, newName }) => {
     try {
-      const directory = path.dirname(targetPath);
-      const newPath = path.join(directory, newName);
+      // Confine the source to authorized roots (SEC-IPC-01).
+      const safeTarget = await confinePath(targetPath);
+      if (safeTarget === null) {
+        return { success: false, msg: 'Path is outside the allowed workspace roots' };
+      }
 
-      if (newPath === targetPath) {
+      const directory = path.dirname(safeTarget);
+      // newName may contain traversal (e.g. `../../etc/cron.d/x`); confine the
+      // resulting destination as well so a rename cannot escape the root.
+      const candidateNewPath = path.join(directory, newName);
+      const newPath = await confinePath(candidateNewPath);
+      if (newPath === null) {
+        return { success: false, msg: 'Target name is outside the allowed workspace roots' };
+      }
+
+      if (newPath === safeTarget) {
         // Skip when the new name equals the original path
         return { success: true, data: { newPath } };
       }
@@ -1027,8 +1063,8 @@ export function initFsBridge(): void {
         return { success: false, msg: 'Target path already exists' };
       }
 
-      await fs.rename(targetPath, newPath);
-      invalidateWorkspaceFileListCacheByPath(targetPath);
+      await fs.rename(safeTarget, newPath);
+      invalidateWorkspaceFileListCacheByPath(safeTarget);
       invalidateWorkspaceFileListCacheByPath(newPath);
       return { success: true, data: { newPath } };
     } catch (error) {
@@ -1852,5 +1888,4 @@ export function initFsBridge(): void {
       };
     }
   });
-
 }
