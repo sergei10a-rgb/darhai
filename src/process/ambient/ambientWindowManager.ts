@@ -421,10 +421,21 @@ async function persistPosition(x: number, y: number, displayId: number): Promise
 export async function setBubblePosition(pos: { x: number; y: number; displayId: number }): Promise<void> {
   const win = getBubbleWindow();
   if (!win) return;
+  // Defense-in-depth: the renderer supplies {x,y}; clamp into the target
+  // display's visible workArea before applying so a malicious/buggy renderer
+  // cannot park the always-on-top bubble off-screen or over another display.
+  // Resolve the display by id when still attached, otherwise fall back to the
+  // display nearest the requested point (handles a since-detached displayId).
+  const display =
+    screen.getAllDisplays().find((d) => d.id === pos.displayId) ??
+    screen.getDisplayNearestPoint({ x: Math.round(pos.x), y: Math.round(pos.y) });
+  const { workArea } = display;
+  const clampedX = clamp(pos.x, workArea.x, workArea.x + workArea.width - BUBBLE_SIZE);
+  const clampedY = clamp(pos.y, workArea.y, workArea.y + workArea.height - BUBBLE_SIZE);
   suppressExternalMoveHandler = true;
-  win.setPosition(pos.x, pos.y, false);
+  win.setPosition(clampedX, clampedY, false);
   suppressExternalMoveHandler = false;
-  await persistPosition(pos.x, pos.y, pos.displayId);
+  await persistPosition(clampedX, clampedY, display.id);
 }
 
 /**
