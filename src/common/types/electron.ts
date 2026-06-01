@@ -57,7 +57,8 @@ export interface ElectronBridgeAPI {
   webuiGetStatus?: () => Promise<WebUIGetStatusResult>;
   // 修改密码（需要当前密码 + 主进程确认）/ Change password (requires current password + main-process confirmation)
   webuiChangePassword?: (newPassword: string, currentPassword: string) => Promise<WebUIChangePasswordResult>;
-  webuiChangeUsername?: (newUsername: string) => Promise<WebUIChangeUsernameResult>;
+  // 修改用户名需要当前密码 + 主进程确认 / Change username requires current password + main-process confirmation
+  webuiChangeUsername?: (newUsername: string, currentPassword: string) => Promise<WebUIChangeUsernameResult>;
   // 生成二维��� token / Generate QR token
   webuiGenerateQRToken?: () => Promise<WebUIGenerateQRTokenResult>;
   // WeChat QR-code login / 微信二维码登录

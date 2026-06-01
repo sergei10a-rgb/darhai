@@ -42,7 +42,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 修改密码需要当前密码 + 主进程确认 / Change password requires current password + main-process confirmation
   webuiChangePassword: (newPassword: string, currentPassword: string) =>
     ipcRenderer.invoke('webui-direct-change-password', { newPassword, currentPassword }),
-  webuiChangeUsername: (newUsername: string) => ipcRenderer.invoke('webui-direct-change-username', { newUsername }),
+  // 修改用户名需要当前密码 + 主进程确认 / Change username requires current password + main-process confirmation
+  webuiChangeUsername: (newUsername: string, currentPassword: string) =>
+    ipcRenderer.invoke('webui-direct-change-username', { newUsername, currentPassword }),
   // Feedback: collect and compress recent log files
   collectFeedbackLogs: () => ipcRenderer.invoke('feedback:collect-logs'),
   // Wayland Constitution: agent behavioral spec stored at ~/.wayland/CONSTITUTION.md
@@ -54,8 +56,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Per-specialist Constitution overlays at ~/.wayland/specialists/<id>.md
   listConstitutionSpecialists: (): Promise<{ id: string; bytes: number }[]> =>
     ipcRenderer.invoke('constitution:listSpecialists'),
-  readConstitutionSpecialist: (id: string): Promise<string> =>
-    ipcRenderer.invoke('constitution:readSpecialist', id),
+  readConstitutionSpecialist: (id: string): Promise<string> => ipcRenderer.invoke('constitution:readSpecialist', id),
   writeConstitutionSpecialist: (id: string, content: string): Promise<boolean> =>
     ipcRenderer.invoke('constitution:writeSpecialist', id, content),
   deleteConstitutionSpecialist: (id: string): Promise<boolean> =>

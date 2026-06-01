@@ -441,6 +441,8 @@ const WebuiModalContent: React.FC = () => {
   };
 
   const handleResetUsername = () => {
+    // Clear any stale current-password entry before re-opening the modal.
+    usernameForm.resetFields();
     usernameForm.setFieldsValue({
       newUsername: status?.adminUsername || 'admin',
     });
@@ -506,7 +508,9 @@ const WebuiModalContent: React.FC = () => {
       let result: { success: boolean; msg?: string; data?: { username: string } };
 
       if (window.electronAPI?.webuiChangeUsername) {
-        result = await window.electronAPI.webuiChangeUsername(values.newUsername);
+        // Direct IPC requires the current password and shows a native
+        // main-process confirmation dialog before applying the change.
+        result = await window.electronAPI.webuiChangeUsername(values.newUsername, values.currentPassword);
       } else {
         result = await webui.changeUsername.invoke({
           newUsername: values.newUsername,
@@ -879,6 +883,13 @@ const WebuiModalContent: React.FC = () => {
         size='small'
       >
         <Form form={usernameForm} layout='vertical' className='pt-16px'>
+          <Form.Item
+            label={t('settings.webui.currentPassword')}
+            field='currentPassword'
+            rules={[{ required: true, message: t('settings.webui.currentPasswordRequired') }]}
+          >
+            <Input.Password placeholder={t('settings.webui.currentPasswordPlaceholder')} />
+          </Form.Item>
           <Form.Item
             label={t('settings.webui.newUsername')}
             field='newUsername'
