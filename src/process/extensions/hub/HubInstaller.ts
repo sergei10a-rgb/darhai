@@ -17,6 +17,7 @@ import { ExtensionRegistry } from '@process/extensions/ExtensionRegistry';
 import { markExtensionForReinstall } from '@process/extensions/lifecycle/statePersistence';
 import { hubIndexManager } from '@process/extensions/hub/HubIndexManager';
 import { hubStateManager } from '@process/extensions/hub/HubStateManager';
+import { requireConfirmation } from '@process/bridge/webuiDirectAuth';
 import type { IHubExtension, HubContributes } from '@/common/types/hub';
 
 const execAsync = promisify(exec);
@@ -94,13 +95,46 @@ export class HubInstallerImpl {
     return path.join(getInstallTargetDir(), '.tmp');
   }
 
-  public async install(name: string): Promise<void> {
+  /**
+   * Install an extension by name.
+   *
+   * SECURITY: Installing an extension is a code-execution event — the extension
+   * entry point and its `onInstall`/`onActivate` lifecycle hooks run with full
+   * Node privileges (see lifecycleRunner.ts / sandboxWorker.ts). Because the
+   * `hub.install` IPC provider is reachable from a compromised renderer AND from
+   * an authenticated remote WebUI/WebSocket client (token-gated only), a remote
+   * token alone must NOT be able to drive an install. We therefore gate every
+   * install behind {@link requireConfirmation} — a native main-process dialog
+   * that the renderer/remote caller cannot spoof. The internal `skipConfirm`
+   * flag is used ONLY for the `retryInstall` → `install` re-entry path, which
+   * has already shown the dialog; it is never plumbed through from IPC params.
+   */
+  public async install(name: string, options?: { skipConfirm?: boolean }): Promise<void> {
     try {
       hubStateManager.setTransientState(name, 'installing');
 
       const extInfo = hubIndexManager.getExtension(name);
       if (!extInfo) {
         throw new Error(`Extension ${name} not found in Hub Index`);
+      }
+
+      // Reachability cut: require an explicit local-user confirmation before any
+      // extraction / hotReload / onInstall runs. A remote token cannot satisfy
+      // this — the user must click "Install" in a native dialog on the host.
+      if (!options?.skipConfirm) {
+        const confirmed = await requireConfirmation({
+          title: 'Install extension',
+          message: `Install "${extInfo.displayName || name}"?`,
+          detail:
+            `Extension "${extInfo.displayName || name}" by ${extInfo.author || 'unknown author'} runs code with full ` +
+            `system access during installation and while active. Only install extensions you trust.`,
+          confirmLabel: 'Install',
+        });
+        if (!confirmed) {
+          // Surfaced to the caller as a failed install with a clear reason
+          // (the catch block sets install_failed); the install does not proceed.
+          throw new Error('Extension install cancelled by user');
+        }
       }
 
       const tempDir = path.join(this.getTempDir(), name);
@@ -116,14 +150,19 @@ export class HubInstallerImpl {
       fs.mkdirSync(this.getTempDir(), { recursive: true });
 
       // Step 1: Resolve zip path — try bundled resources first, fallback to remote download
+      const remoteCachePath = path.join(this.getCacheDir(), `${name}.zip`);
       const zipPath = await this.resolveZipPath(name, extInfo.dist.tarball, extInfo.bundled);
 
       // Step 2: Verify Integrity (SHA-512 SRI) against the hash declared in
-      // the hub index. Required for remote downloads so a tampered mirror
-      // cannot ship a malicious payload. Bundled archives shipped inside the
-      // app bundle are already covered by code signing, so a missing
-      // integrity field there is tolerated by verifyIntegrity itself.
-      await this.verifyIntegrity(zipPath, extInfo.dist.integrity);
+      // the hub index. For anything resolved from a remote mirror a
+      // missing/empty integrity hash is a HARD FAILURE so a tampered mirror
+      // cannot ship an unverified payload; bundled archives shipped inside the
+      // code-signed app bundle tolerate a missing hash. An archive that did NOT
+      // come from the remote cache path was resolved from bundled app
+      // resources, regardless of the `bundled` flag (which can fall back to
+      // remote on a cache miss).
+      const isBundledArchive = zipPath !== remoteCachePath;
+      await this.verifyIntegrity(zipPath, extInfo.dist.integrity, isBundledArchive);
 
       // Step 3: Extract (.zip)
       fs.mkdirSync(tempDir, { recursive: true });
@@ -205,6 +244,22 @@ export class HubInstallerImpl {
         throw new Error('Extension manifest missing, please reinstall from scratch.');
       }
 
+      // Re-running onInstall is a code-execution event (see install()); gate it
+      // behind the same native local-user confirmation so a remote token alone
+      // cannot trigger a lifecycle re-run.
+      const retryExtInfo = hubIndexManager.getExtension(name);
+      const confirmed = await requireConfirmation({
+        title: 'Reinstall extension',
+        message: `Reinstall "${retryExtInfo?.displayName || name}"?`,
+        detail:
+          `Reinstalling re-runs the extension's install hooks, which execute code with full system access. ` +
+          `Only reinstall extensions you trust.`,
+        confirmLabel: 'Reinstall',
+      });
+      if (!confirmed) {
+        throw new Error('Extension reinstall cancelled by user');
+      }
+
       // Reload registry — clear persisted state to force onInstall re-run
       await markExtensionForReinstall(name);
       await ExtensionRegistry.hotReload();
@@ -273,14 +328,29 @@ export class HubInstallerImpl {
     fs.writeFileSync(dest, Buffer.from(arrayBuffer));
   }
 
-  private async verifyIntegrity(filePath: string, expectedSri: string): Promise<void> {
-    // Tolerate a missing/empty integrity field with a loud warning. The hub
-    // type declares `integrity: string`, but older index entries published
-    // before integrity hashes were required may still ship an empty value,
-    // and we want to surface (not crash on) that gap.
+  /**
+   * Verify the on-disk archive against the declared SHA-512 SRI hash.
+   *
+   * SECURITY: a missing/empty integrity value is a HARD FAILURE for archives
+   * resolved from a remote mirror — a tampered or compromised mirror must never
+   * be able to ship an unverified payload by simply omitting the hash. A missing
+   * value is tolerated ONLY for `bundled` archives shipped inside the app
+   * bundle, whose authenticity is already guaranteed by code signing.
+   */
+  private async verifyIntegrity(filePath: string, expectedSri: string, bundled: boolean): Promise<void> {
     if (!expectedSri || expectedSri.length === 0) {
-      console.warn(`[HubInstaller] No integrity hash declared for ${filePath}; install will proceed unverified.`);
-      return;
+      if (bundled) {
+        // Code signing already covers bundled archives; tolerate a missing hash.
+        console.warn(
+          `[HubInstaller] No integrity hash declared for bundled archive ${filePath}; proceeding (covered by code signing).`
+        );
+        return;
+      }
+      // Remote download with no declared integrity — refuse to install.
+      throw new Error(
+        `No integrity hash declared for remotely-downloaded extension archive ${path.basename(filePath)}; ` +
+          `refusing to install an unverified payload.`
+      );
     }
 
     if (!expectedSri.startsWith('sha512-')) {
