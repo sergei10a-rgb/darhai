@@ -273,6 +273,7 @@
     "electron-winstaller": "^5.4.0"
   },
   "resolutions": {
+    "@protobufjs/utf8": "^1.1.1",
     "@xmldom/xmldom": "^0.8.13",
     "axios": ">=1.16.0",
     "body-parser": "^2.2.1",
@@ -281,11 +282,13 @@
     "lodash-es": "^4.17.23",
     "mdast-util-to-hast": "^13.2.1",
     "node-forge": "^1.4.0",
+    "protobufjs": "^8.2.0",
     "tar": "^7.5.7",
     "tmp": "^0.2.5",
     "ws": "^8.20.1"
   },
   "overrides": {
+    "@protobufjs/utf8": "^1.1.1",
     "@xmldom/xmldom": "^0.8.13",
     "axios": ">=1.16.0",
     "body-parser": "^2.2.1",
@@ -294,6 +297,7 @@
     "lodash-es": "^4.17.23",
     "mdast-util-to-hast": "^13.2.1",
     "node-forge": "^1.4.0",
+    "protobufjs": "^8.2.0",
     "tar": "^7.5.7",
     "tmp": "^0.2.5",
     "ws": "^8.20.1"
