@@ -29,6 +29,7 @@ import type {
   BedrockClient as BedrockClientType,
   ListInferenceProfilesCommand as ListInferenceProfilesCommandType,
 } from '@aws-sdk/client-bedrock';
+import { promises as dns } from 'node:dns';
 
 // Single-flight Promise caches for the AI SDK modules used here.
 // Defer evaluation of the openai + @aws-sdk/client-bedrock packages
@@ -112,6 +113,237 @@ const BEDROCK_MODEL_NAMES: Record<string, string> = {
  */
 function getBedrockModelDisplayName(modelId: string): string {
   return BEDROCK_MODEL_NAMES[modelId] || modelId;
+}
+
+/**
+ * Error thrown when a renderer-supplied base URL is rejected by the SSRF guard.
+ * Callers catch this and surface a clear message instead of fetching.
+ */
+class UnsafeBaseUrlError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'UnsafeBaseUrlError';
+  }
+}
+
+/**
+ * Cloud-metadata / internal-discovery hostnames that must never be reachable
+ * via a renderer-supplied base URL. Covers AWS / GCP / Azure metadata services.
+ * Compared case-insensitively against the parsed URL hostname.
+ */
+const BLOCKED_METADATA_HOSTNAMES = new Set(['metadata.google.internal', 'metadata.goog', 'metadata']);
+
+/**
+ * Strip IPv6 zone id and surrounding brackets so the address can be inspected.
+ * `[fe80::1%25eth0]` -> `fe80::1`.
+ */
+function normalizeIpv6Host(hostname: string): string {
+  let host = hostname;
+  if (host.startsWith('[') && host.endsWith(']')) {
+    host = host.slice(1, -1);
+  }
+  const zoneIdx = host.indexOf('%');
+  if (zoneIdx !== -1) {
+    host = host.slice(0, zoneIdx);
+  }
+  return host.toLowerCase();
+}
+
+/**
+ * Return true if a bare IPv4 dotted-quad string is in a blocked metadata /
+ * link-local range. This is the canonical IPv4 check, reused both for literal
+ * IPv4 hosts, IPv4 embedded in IPv6 (IPv4-mapped / NAT64), and addresses
+ * returned by DNS resolution. Mirrors the deny-list documented on
+ * {@link assertSafeBaseUrl}: only `169.254.0.0/16` is rejected (loopback /
+ * RFC1918 / public stay allowed so local models keep working).
+ */
+function isBlockedIpv4(addr: string): boolean {
+  return /^169\.254\.\d{1,3}\.\d{1,3}$/.test(addr);
+}
+
+/**
+ * Detect IPv6 forms that embed/translate an IPv4 address, and decode the
+ * embedded IPv4 if present. Node's URL parser normalizes the dotted-quad tail
+ * to hex (`[::ffff:169.254.169.254]` -> `::ffff:a9fe:a9fe`), so we work on the
+ * normalized hex form.
+ *
+ * Recognized prefixes (the only ones that carry a routable embedded IPv4):
+ *  - `::ffff:`            IPv4-mapped IPv6 `::ffff:0:0/96`
+ *  - `64:ff9b::`          NAT64 well-known prefix `64:ff9b::/96`
+ *  - `64:ff9b:1::`        NAT64 local-use prefix `64:ff9b:1::/48`
+ *
+ * These literal bracketed forms are NEVER produced when a user configures a
+ * legitimate local model (they type `localhost` / `127.0.0.1` / `192.168.x` /
+ * a hostname), so the presence of such a mapping is itself a strong SSRF
+ * signal. The caller rejects the mapping outright AND decodes the embedded
+ * IPv4 to run it through {@link isBlockedIpv4} (defense in depth).
+ *
+ * @returns the embedded IPv4 dotted-quad if one could be decoded, the literal
+ *   `'mapped'` marker if a mapping prefix was present but the tail couldn't be
+ *   decoded, or `null` if the address is an ordinary IPv6 host.
+ */
+function decodeEmbeddedIpv4(ipv6: string): string | 'mapped' | null {
+  let tail: string | null = null;
+  if (ipv6.startsWith('::ffff:')) {
+    tail = ipv6.slice('::ffff:'.length);
+  } else if (ipv6.startsWith('64:ff9b:1::')) {
+    tail = ipv6.slice('64:ff9b:1::'.length);
+  } else if (ipv6.startsWith('64:ff9b::')) {
+    tail = ipv6.slice('64:ff9b::'.length);
+  } else {
+    return null;
+  }
+
+  // The tail may be a dotted-quad (`169.254.169.254`) or two hex hextets
+  // (`a9fe:a9fe`). Decode both into a dotted-quad for the IPv4 range check.
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(tail)) {
+    return tail;
+  }
+  const hextets = tail.split(':');
+  if (hextets.length === 2 && hextets.every((h) => /^[0-9a-f]{1,4}$/.test(h))) {
+    const hi = parseInt(hextets[0], 16);
+    const lo = parseInt(hextets[1], 16);
+    return `${(hi >> 8) & 0xff}.${hi & 0xff}.${(lo >> 8) & 0xff}.${lo & 0xff}`;
+  }
+  // Mapping prefix was present but tail isn't a recognizable IPv4 — still a
+  // mapped/translated form, reject on the prefix alone.
+  return 'mapped';
+}
+
+/**
+ * SSRF guard for renderer-supplied base URLs.
+ *
+ * This is deliberately a *narrow* deny-list, NOT a private-network blanket
+ * block: local / self-hosted inference backends (Ollama on
+ * `http://localhost:11434`, LM Studio on `http://127.0.0.1:1234`, LAN boxes on
+ * `192.168.x.x`, etc.) are a core feature and MUST keep working. We only reject:
+ *
+ *  - non-http(s) schemes (`file:`, `gopher:`, `ftp:`, `data:`, ...), which can
+ *    read local resources or pivot protocols;
+ *  - the cloud-metadata SSRF targets specifically: IPv4 link-local
+ *    `169.254.0.0/16` (incl. `169.254.169.254`), IPv6 link-local `fe80::/10`,
+ *    the EC2 IMDSv6 address `fd00:ec2::254`, and the metadata discovery
+ *    hostnames (`metadata`, `metadata.google.internal`, `metadata.goog`);
+ *  - malformed / unparseable URLs;
+ *  - IPv6 forms that embed/translate the above IPv4 targets (IPv4-mapped
+ *    `::ffff:169.254.169.254`, NAT64 `64:ff9b::169.254.169.254`), which all
+ *    reach the metadata IP but slip past the plain string checks — GAP 1;
+ *  - hostnames that *resolve* (DNS) to any blocked metadata / link-local
+ *    address — DNS-rebinding to metadata, GAP 2.
+ *
+ * Everything else — including loopback and RFC1918/LAN ranges, and hostnames
+ * that resolve to them — is allowed.
+ *
+ * Async because GAP 2 performs a DNS lookup for hostnames that are not IP
+ * literals (skipped for `localhost`, which resolves locally / loopback). A
+ * resolution failure is surfaced as an UnsafeBaseUrlError so the caller fails
+ * the operation the same way a fetch failure would, rather than crashing.
+ *
+ * @throws {UnsafeBaseUrlError} when the URL is rejected.
+ */
+async function assertSafeBaseUrl(rawUrl: string | undefined | null): Promise<void> {
+  if (!rawUrl || typeof rawUrl !== 'string' || rawUrl.trim() === '') {
+    throw new UnsafeBaseUrlError('Base URL is required.');
+  }
+
+  let url: URL;
+  try {
+    url = new URL(rawUrl);
+  } catch {
+    throw new UnsafeBaseUrlError(`Invalid base URL: ${rawUrl}`);
+  }
+
+  const protocol = url.protocol.toLowerCase();
+  if (protocol !== 'http:' && protocol !== 'https:') {
+    throw new UnsafeBaseUrlError(`Unsupported URL scheme "${url.protocol}". Only http and https are allowed.`);
+  }
+
+  const hostname = url.hostname.toLowerCase();
+
+  // Block cloud-metadata discovery hostnames.
+  if (BLOCKED_METADATA_HOSTNAMES.has(hostname)) {
+    throw new UnsafeBaseUrlError(`Base URL host "${url.hostname}" is blocked (cloud metadata endpoint).`);
+  }
+
+  // Block IPv4 link-local 169.254.0.0/16 (cloud metadata: 169.254.169.254).
+  if (isBlockedIpv4(hostname)) {
+    throw new UnsafeBaseUrlError(`Base URL host "${url.hostname}" is blocked (link-local metadata range).`);
+  }
+
+  // IPv6 literal: block link-local, the EC2 IMDSv6 address, and IPv4-mapped /
+  // NAT64 forms that translate to a blocked IPv4 (GAP 1).
+  const ipv6 = normalizeIpv6Host(url.hostname);
+  const isIpv6Literal = ipv6.includes(':');
+  if (isIpv6Literal) {
+    // fe80::/10 -> first hextet in [fe80, febf] (always 4 hex digits).
+    const firstHextet = ipv6.split(':')[0];
+    if (/^fe[89ab][0-9a-f]$/.test(firstHextet)) {
+      throw new UnsafeBaseUrlError(`Base URL host "${url.hostname}" is blocked (IPv6 link-local range).`);
+    }
+    // EC2 IMDSv6 endpoint fd00:ec2::254.
+    if (ipv6 === 'fd00:ec2::254') {
+      throw new UnsafeBaseUrlError(`Base URL host "${url.hostname}" is blocked (IPv6 metadata endpoint).`);
+    }
+    // GAP 1: IPv4-mapped (`::ffff:0:0/96`) and NAT64 (`64:ff9b::/96`,
+    // `64:ff9b:1::/48`) forms reach the embedded IPv4 (e.g. 169.254.169.254)
+    // but are never used for legitimate local-model endpoints. Reject the
+    // mapping outright, and additionally decode the embedded IPv4 and run it
+    // through the metadata check (defense in depth).
+    const embedded = decodeEmbeddedIpv4(ipv6);
+    if (embedded !== null) {
+      if (embedded !== 'mapped' && isBlockedIpv4(embedded)) {
+        throw new UnsafeBaseUrlError(
+          `Base URL host "${url.hostname}" is blocked (IPv4-mapped/NAT64 metadata address ${embedded}).`
+        );
+      }
+      throw new UnsafeBaseUrlError(`Base URL host "${url.hostname}" is blocked (IPv4-mapped/translated IPv6 address).`);
+    }
+  }
+
+  // GAP 2: DNS-rebinding to metadata. For hostnames that are not IP literals
+  // (and not `localhost`, which resolves to loopback locally), resolve and
+  // reject if ANY resolved address is in the blocked set. Hosts resolving to
+  // loopback / RFC1918 / public stay allowed so local models keep working.
+  const isIpv4Literal = /^\d{1,3}(\.\d{1,3}){3}$/.test(hostname);
+  if (!isIpv4Literal && !isIpv6Literal && hostname !== 'localhost') {
+    let resolved: Array<{ address: string; family: number }>;
+    try {
+      resolved = await dns.lookup(hostname, { all: true });
+    } catch {
+      throw new UnsafeBaseUrlError(`Base URL host "${url.hostname}" could not be resolved.`);
+    }
+    for (const { address } of resolved) {
+      const normalized = normalizeIpv6Host(address);
+      if (isBlockedIpv4(normalized)) {
+        throw new UnsafeBaseUrlError(`Base URL host "${url.hostname}" resolves to a blocked metadata address.`);
+      }
+      if (normalized.includes(':')) {
+        const firstHextet = normalized.split(':')[0];
+        if (/^fe[89ab][0-9a-f]$/.test(firstHextet) || normalized === 'fd00:ec2::254') {
+          throw new UnsafeBaseUrlError(`Base URL host "${url.hostname}" resolves to a blocked metadata address.`);
+        }
+        const embedded = decodeEmbeddedIpv4(normalized);
+        if (embedded !== null && embedded !== 'mapped' && isBlockedIpv4(embedded)) {
+          throw new UnsafeBaseUrlError(`Base URL host "${url.hostname}" resolves to a blocked metadata address.`);
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Variant of {@link assertSafeBaseUrl} for the optional base URLs that fall back
+ * to an official provider endpoint when empty. An empty / missing value is
+ * allowed (the caller substitutes the official host); a *provided* value is
+ * validated. Returns the URL unchanged so callers can keep using it inline.
+ *
+ * @throws {UnsafeBaseUrlError} when a provided URL is rejected.
+ */
+async function assertSafeOptionalBaseUrl(rawUrl: string | undefined | null): Promise<void> {
+  if (!rawUrl || (typeof rawUrl === 'string' && rawUrl.trim() === '')) {
+    return;
+  }
+  await assertSafeBaseUrl(rawUrl);
 }
 
 /**
@@ -234,6 +466,11 @@ export function initModelBridge(): void {
       // Validate the API key by probing the chat/completions endpoint
       if (actualApiKey) {
         try {
+          await assertSafeBaseUrl(base_url);
+        } catch (e) {
+          return { success: false, msg: e instanceof Error ? e.message : String(e) };
+        }
+        try {
           const probeUrl = `${base_url.replace(/\/+$/, '')}/chat/completions`;
           const probeResponse = await fetch(probeUrl, {
             method: 'POST',
@@ -259,6 +496,11 @@ export function initModelBridge(): void {
 
     // For Anthropic/Claude platform, use Anthropic API to fetch models
     if (platform?.includes('anthropic') || platform?.includes('claude')) {
+      try {
+        await assertSafeOptionalBaseUrl(base_url);
+      } catch (e) {
+        return { success: false, msg: e instanceof Error ? e.message : String(e) };
+      }
       try {
         const anthropicUrl = base_url ? `${base_url}/v1/models` : 'https://api.anthropic.com/v1/models';
 
@@ -312,6 +554,12 @@ export function initModelBridge(): void {
       }
 
       try {
+        await assertSafeBaseUrl(openaiBaseUrl);
+      } catch (e) {
+        return { success: false, msg: e instanceof Error ? e.message : String(e) };
+      }
+
+      try {
         const OpenAICtor = await loadOpenAI();
         const openai = new OpenAICtor({
           baseURL: openaiBaseUrl,
@@ -358,7 +606,8 @@ export function initModelBridge(): void {
           process.env.AWS_REGION = region;
 
           // Create Bedrock client (SDK module loaded lazily)
-          const { BedrockClient: BedrockCtor, ListInferenceProfilesCommand: ListInferenceProfilesCmd } = await loadAwsBedrock();
+          const { BedrockClient: BedrockCtor, ListInferenceProfilesCommand: ListInferenceProfilesCmd } =
+            await loadAwsBedrock();
           const bedrockClient = new BedrockCtor({ region });
 
           // List inference profiles (cross-region inference endpoints)
@@ -420,6 +669,11 @@ export function initModelBridge(): void {
     // For Gemini platform, use Gemini API protocol
     if (platform?.includes('gemini')) {
       try {
+        await assertSafeOptionalBaseUrl(base_url);
+      } catch (e) {
+        return { success: false, msg: e instanceof Error ? e.message : String(e) };
+      }
+      try {
         // Use custom base_url or default Gemini endpoint
         const geminiBaseUrlRaw = base_url?.replace(/\/+$/, '') || 'https://generativelanguage.googleapis.com';
         const geminiBaseUrl = geminiBaseUrlRaw.replace(/\/(v1beta|v1)$/, '');
@@ -458,6 +712,12 @@ export function initModelBridge(): void {
     // Validate API key before creating OpenAI client to avoid unhandled 'Missing credentials' error
     if (!actualApiKey) {
       return { success: false, msg: 'API key is required. Please configure your API key in settings.' };
+    }
+
+    try {
+      await assertSafeBaseUrl(base_url);
+    } catch (e) {
+      return { success: false, msg: e instanceof Error ? e.message : String(e) };
     }
 
     try {
@@ -757,6 +1017,13 @@ async function testProtocol(
   models?: string[];
   fixedBaseUrl?: string;
 }> {
+  // SSRF guard: reject metadata / link-local / non-http base URLs before any fetch.
+  try {
+    await assertSafeBaseUrl(baseUrl);
+  } catch (e) {
+    return { success: false, confidence: 0, error: e instanceof Error ? e.message : String(e) };
+  }
+
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
 
@@ -913,7 +1180,11 @@ async function testOpenAIProtocol(
           'Content-Type': 'application/json',
           Authorization: `Bearer ${apiKey}`,
         },
-        body: JSON.stringify({ model: '_probe', messages: [{ role: 'user', content: '' }], max_tokens: PROBE_MAX_TOKENS }),
+        body: JSON.stringify({
+          model: '_probe',
+          messages: [{ role: 'user', content: '' }],
+          max_tokens: PROBE_MAX_TOKENS,
+        }),
       });
 
       if (response.status === 401) {

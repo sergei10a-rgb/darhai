@@ -8,7 +8,7 @@ import { describe, it, expect, afterEach } from 'vitest';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import { detectVaults, runObsidianImport } from '@process/services/import/obsidianImporter';
+import { detectVaults, runObsidianImport, readConfinedVaultFile } from '@process/services/import/obsidianImporter';
 
 function makeTmp(): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'wayland-obsidian-test-'));
@@ -118,6 +118,89 @@ describe('runObsidianImport', () => {
 
     const result = await runObsidianImport(vaultPath, { ijfwMemoryDir: memDir });
     expect(result.imported).toBe(1); // Only Real.md.
+  });
+
+  it('does not read a vault .md that resolves (via symlink) outside the vault root (TOCTOU RT-B5-01)', async () => {
+    const baseDir = makeTmp();
+    tmpDirs.push(baseDir);
+    const memDir = makeTmp();
+    tmpDirs.push(memDir);
+    const secretDir = makeTmp();
+    tmpDirs.push(secretDir);
+
+    // A sensitive file living OUTSIDE the vault.
+    const secretPath = path.join(secretDir, 'id_rsa');
+    const secretContent = 'SECRET-PRIVATE-KEY-DO-NOT-LEAK';
+    fs.writeFileSync(secretPath, secretContent, 'utf8');
+
+    // Build a vault with one legitimate note.
+    const vaultPath = makeVault(baseDir, 'TestVault', {
+      'Real.md': '# Real note\nLegit body.',
+    });
+
+    // Plant a vault .md that is actually a symlink pointing OUT of the vault to
+    // the secret. This simulates the TOCTOU swap: a `.md` entry whose realpath
+    // escapes the vault root.
+    const evilPath = path.join(vaultPath, 'Evil.md');
+    try {
+      fs.symlinkSync(secretPath, evilPath);
+    } catch {
+      // Platform cannot create symlinks (e.g. Windows without privilege) —
+      // the guard is irrelevant there; skip without failing.
+      return;
+    }
+
+    const result = await runObsidianImport(vaultPath, { ijfwMemoryDir: memDir });
+
+    // The legitimate note imports; the escaping symlink does not.
+    expect(result.imported).toBe(1);
+
+    // No imported file may contain the secret content.
+    const importedFiles = fs.readdirSync(memDir);
+    for (const f of importedFiles) {
+      const content = fs.readFileSync(path.join(memDir, f), 'utf8');
+      expect(content).not.toContain(secretContent);
+    }
+  });
+
+  it('read-time guard refuses a file that was swapped to an out-of-vault symlink (the TOCTOU race)', async () => {
+    const baseDir = makeTmp();
+    tmpDirs.push(baseDir);
+    const secretDir = makeTmp();
+    tmpDirs.push(secretDir);
+
+    const vaultPath = path.join(baseDir, 'TestVault');
+    fs.mkdirSync(vaultPath, { recursive: true });
+
+    const secretPath = path.join(secretDir, 'id_rsa');
+    const secretContent = 'SECRET-PRIVATE-KEY-DO-NOT-LEAK';
+    fs.writeFileSync(secretPath, secretContent, 'utf8');
+
+    // The walker handed us this path while it was a regular .md; by read time
+    // it is now a symlink pointing OUTSIDE the vault. This is the precise race
+    // that readConfinedVaultFile must refuse.
+    const racedPath = path.join(vaultPath, 'Note.md');
+    try {
+      fs.symlinkSync(secretPath, racedPath);
+    } catch {
+      return; // No symlink privilege on this platform — guard is moot.
+    }
+
+    const content = await readConfinedVaultFile(racedPath, path.resolve(vaultPath));
+    expect(content).toBeNull();
+  });
+
+  it('read-time guard reads a normal in-vault .md normally', async () => {
+    const baseDir = makeTmp();
+    tmpDirs.push(baseDir);
+
+    const vaultPath = path.join(baseDir, 'TestVault');
+    fs.mkdirSync(vaultPath, { recursive: true });
+    const filePath = path.join(vaultPath, 'Note.md');
+    fs.writeFileSync(filePath, '# Hello\nbody', 'utf8');
+
+    const content = await readConfinedVaultFile(filePath, path.resolve(vaultPath));
+    expect(content).toBe('# Hello\nbody');
   });
 
   it('parses frontmatter tags from vault files', async () => {

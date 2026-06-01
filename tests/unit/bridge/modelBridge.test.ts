@@ -21,10 +21,11 @@ type FetchModelListResponse = {
   data?: { mode: Array<string | { id: string; name: string }>; fix_base_url?: string };
 };
 
-const { handlers, mockModelsList } = vi.hoisted(() => {
+const { handlers, mockModelsList, mockDnsLookup } = vi.hoisted(() => {
   return {
     handlers: {} as Record<string, Handler>,
     mockModelsList: vi.fn(),
+    mockDnsLookup: vi.fn(),
   };
 });
 
@@ -87,6 +88,14 @@ vi.mock('@aws-sdk/client-bedrock', () => ({
   ListInferenceProfilesCommand: function MockListInferenceProfilesCommand() {},
 }));
 
+// The SSRF guard resolves non-literal hostnames (DNS-rebinding defense). Mock
+// it so these tests never hit the network; default to a benign public address.
+vi.mock('node:dns', () => ({
+  promises: {
+    lookup: mockDnsLookup,
+  },
+}));
+
 import { initModelBridge } from '../../../src/process/bridge/modelBridge';
 
 function getFetchModelListHandler() {
@@ -99,6 +108,7 @@ describe('modelBridge fetchModelList', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockModelsList.mockReset();
+    mockDnsLookup.mockResolvedValue([{ address: '93.184.216.34', family: 4 }]);
     initModelBridge();
   });
 

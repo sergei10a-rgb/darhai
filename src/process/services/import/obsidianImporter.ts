@@ -156,6 +156,82 @@ function buildFrontmatter(fields: Record<string, string | string[] | number>): s
   return lines.join('\n');
 }
 
+/**
+ * True when `child` resolves to `root` itself or a path nested beneath it.
+ * Separator-aware via `path.relative` so it does not false-match a sibling
+ * directory that shares a name prefix (e.g. `/vault` vs `/vault-evil`).
+ */
+function isInsideRoot(root: string, child: string): boolean {
+  const rel = path.relative(root, child);
+  return rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel));
+}
+
+/**
+ * Read a vault `.md` file while closing the TOCTOU window between the walk-time
+ * symlink check and this read. An attacker who controls the vault dir can swap a
+ * regular `.md` for a symlink in the race window; a naive `readFile` would
+ * follow it out of the vault (e.g. to `~/.ssh/id_rsa`).
+ *
+ * Defenses, applied at read time against the live filesystem:
+ *  1. Open with `O_NOFOLLOW` (where supported) so a symlink swapped in for the
+ *     final component is refused atomically at `open()` (ELOOP), no follow.
+ *  2. Re-resolve `fs.realpath` and assert the result is still inside the vault
+ *     root — this also catches a symlinked *intermediate* directory component
+ *     that `O_NOFOLLOW` (final-component only) would miss.
+ *  3. `fstat` the opened descriptor and require a regular file, so a fifo/device
+ *     swapped in is refused.
+ *
+ * Returns the file content, or `null` (with a warning) if any guard trips.
+ */
+export async function readConfinedVaultFile(filePath: string, vaultRoot: string): Promise<string | null> {
+  // O_NOFOLLOW is POSIX-only; it is `undefined` on Windows. When absent we omit
+  // it and rely on the realpath + fstat guards below, which are cross-platform.
+  const noFollow = fs.constants.O_NOFOLLOW ?? 0;
+
+  // Canonicalize the vault root for the comparison so platforms whose tmp/home
+  // dirs are themselves symlinks (e.g. macOS `/var` -> `/private/var`) do not
+  // false-reject legitimate in-vault files. If the root cannot be resolved
+  // (does not exist), fall back to its lexical form.
+  let canonicalRoot = vaultRoot;
+  try {
+    canonicalRoot = await fs.promises.realpath(vaultRoot);
+  } catch {
+    // keep the lexical root
+  }
+
+  let fd: fs.promises.FileHandle | undefined;
+  try {
+    fd = await fs.promises.open(filePath, fs.constants.O_RDONLY | noFollow);
+
+    // Re-resolve the real path now (after open) and confirm it is still inside
+    // the vault root. Catches a symlinked intermediate directory component.
+    const real = await fs.promises.realpath(filePath);
+    if (!isInsideRoot(canonicalRoot, real)) {
+      log.warn('[obsidianImporter] skipping file that resolves outside vault root', {
+        filePath,
+        real,
+        vaultRoot,
+      });
+      return null;
+    }
+
+    const st = await fd.stat();
+    if (!st.isFile()) {
+      log.warn('[obsidianImporter] skipping non-regular vault entry', { filePath });
+      return null;
+    }
+
+    return await fd.readFile('utf8');
+  } catch (err) {
+    // ELOOP here means a symlink was swapped in for the final component and
+    // O_NOFOLLOW refused to follow it — the TOCTOU attack, blocked.
+    log.warn('[obsidianImporter] refused to read vault file', { filePath, err });
+    return null;
+  } finally {
+    await fd?.close().catch(() => {});
+  }
+}
+
 async function walkMdFiles(dir: string, skip: string[]): Promise<string[]> {
   const files: string[] = [];
   try {
@@ -245,7 +321,13 @@ export async function runObsidianImport(
         // File does not exist — proceed.
       }
 
-      const rawContent = await fs.promises.readFile(filePath, 'utf8');
+      // Re-validate the file against the vault root at read time to close the
+      // TOCTOU window between the walk-time lstat and this read (RT-B5-01).
+      const rawContent = await readConfinedVaultFile(filePath, vaultPath);
+      if (rawContent === null) {
+        result.skipped++;
+        continue;
+      }
       const tags = parseFrontmatterTags(rawContent);
       const bodyOnly = stripFrontmatter(rawContent);
       const h1 = extractH1(bodyOnly);
