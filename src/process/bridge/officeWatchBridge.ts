@@ -14,10 +14,10 @@
 
 import { ipcBridge } from '@/common';
 import { spawn, type ChildProcess } from 'node:child_process';
-import fs from 'node:fs';
 import net from 'node:net';
 import { getEnhancedEnv } from '@process/utils/shellEnv';
 import { installOfficecli } from './officecliInstaller';
+import { confinePath } from './pathConfinement';
 
 type OfficeDocType = 'word' | 'excel';
 
@@ -113,12 +113,17 @@ async function startWatch(
   emitStatus: StatusEmitter,
   retry = false
 ): Promise<string> {
-  // Resolve symlinks so the pipe name matches what officecli commands compute
-  try {
-    filePath = fs.realpathSync(filePath);
-  } catch {
-    // If realpath fails, use original path
+  // Confine the renderer-supplied path to the app's authorized roots
+  // (workspace/temp/appData/downloads/desktop/documents) before spawning
+  // officecli against it. confinePath also collapses symlinks so the pipe name
+  // matches what officecli computes, and rejects traversal/UNC/ADS/out-of-root
+  // paths — preventing the renderer from driving officecli to open arbitrary
+  // documents (SEC-IPC-07).
+  const confined = await confinePath(filePath);
+  if (!confined) {
+    throw new Error('Refused to preview a file outside the allowed directories');
   }
+  filePath = confined;
 
   const sessions = getSessionMap(docType);
   const pendingKills = getPendingKillsMap(docType);
@@ -275,15 +280,17 @@ export function initOfficeWatchBridge(): void {
   });
 
   ipcBridge.wordPreview.stop.provider(async ({ filePath }) => {
-    try {
-      filePath = fs.realpathSync(filePath);
-    } catch {}
+    // Resolve to the same confined real path used as the session key on start.
+    // Out-of-root paths never had a session, so nothing to stop.
+    const confined = await confinePath(filePath);
+    if (!confined) return;
+    const key = confined;
     // Delay kill to allow Strict Mode re-mount to reuse the session
     const timer = setTimeout(() => {
-      wordPendingKills.delete(filePath);
-      killSession(filePath, wordSessions);
+      wordPendingKills.delete(key);
+      killSession(key, wordSessions);
     }, 500);
-    wordPendingKills.set(filePath, timer);
+    wordPendingKills.set(key, timer);
   });
 
   // Excel preview handlers
@@ -298,14 +305,16 @@ export function initOfficeWatchBridge(): void {
   });
 
   ipcBridge.excelPreview.stop.provider(async ({ filePath }) => {
-    try {
-      filePath = fs.realpathSync(filePath);
-    } catch {}
+    // Resolve to the same confined real path used as the session key on start.
+    // Out-of-root paths never had a session, so nothing to stop.
+    const confined = await confinePath(filePath);
+    if (!confined) return;
+    const key = confined;
     // Delay kill to allow Strict Mode re-mount to reuse the session
     const timer = setTimeout(() => {
-      excelPendingKills.delete(filePath);
-      killSession(filePath, excelSessions);
+      excelPendingKills.delete(key);
+      killSession(key, excelSessions);
     }, 500);
-    excelPendingKills.set(filePath, timer);
+    excelPendingKills.set(key, timer);
   });
 }
