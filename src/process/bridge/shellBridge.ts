@@ -7,6 +7,7 @@
 import { shell } from 'electron';
 import { ipcBridge } from '@/common';
 import { isAllowedExternalUrl } from '@/common/utils/urlValidation';
+import { confinePath } from './pathConfinement';
 import { exec, spawn } from 'child_process';
 import { promisify } from 'util';
 import * as fs from 'fs';
@@ -284,21 +285,30 @@ export function initShellBridge(): void {
   });
 
   // Open a filesystem path via OS default handler.
-  // Only `~` expansion is applied; `..` traversal is blocked.
+  //
+  // The only renderer caller passes a main-mediated app directory (the memory
+  // drop folder, which lives under the config/data/Documents app roots), never a
+  // dialog-picked arbitrary path. `path.resolve` alone neither collapses
+  // pre-existing symlinks nor restricts the target to those roots, so a
+  // symlinked app dir (e.g. `~/.config -> /etc`) could redirect the OS file
+  // manager to a sensitive location. Route the path through `confinePath`, which
+  // realpath-collapses the existing prefix and fails closed on anything that
+  // escapes every authorized root (RT-R4-02).
   ipcBridge.shell.openPath.provider(async ({ path: inputPath }) => {
     if (typeof inputPath !== 'string' || inputPath.length === 0) {
       return { ok: false, error: 'empty path' };
     }
-    // Reject any path containing `..` segments to prevent directory traversal.
-    if (inputPath.includes('..')) {
-      return { ok: false, error: 'path traversal not allowed' };
+    // Expand leading `~` to the home directory before confinement.
+    let expanded = inputPath;
+    if (expanded === '~' || expanded.startsWith('~/') || expanded.startsWith('~' + path.sep)) {
+      expanded = os.homedir() + expanded.slice(1);
     }
-    // Expand leading `~` to the home directory.
-    let resolved = inputPath;
-    if (resolved === '~' || resolved.startsWith('~/') || resolved.startsWith('~' + path.sep)) {
-      resolved = os.homedir() + resolved.slice(1);
+    // Confine to authorized app roots with symlink collapse; fail closed on a
+    // resolved path that escapes (also rejects `..`, UNC/device/ADS forms).
+    const resolved = await confinePath(expanded);
+    if (resolved === null) {
+      return { ok: false, error: 'path not allowed' };
     }
-    resolved = path.resolve(resolved);
     try {
       const errorMessage = await shell.openPath(resolved);
       if (errorMessage) {

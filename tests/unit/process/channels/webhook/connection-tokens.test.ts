@@ -89,6 +89,25 @@ describe('ConnectionTokenStore', () => {
       const resolved = fresh.resolve(persisted.token);
       expect(resolved?.secret).toBe(secret);
     });
+
+    it('RT-S2: throws rather than emitting a plaintext secret when encryption is unavailable', () => {
+      mockSafeStorage.isEncryptionAvailable.mockReturnValueOnce(false);
+      store.register('slack', 'plugin-1', 'agent-1', 'plaintext-signing-secret');
+
+      // serialize() must fail loudly so the caller's persist path surfaces the
+      // error instead of writing a plaintext secret into the config store.
+      expect(() => store.serialize()).toThrow(/RT-S2/);
+    });
+
+    it('RT-S2: still serializes empty secrets when encryption is unavailable (nothing to leak)', () => {
+      mockSafeStorage.isEncryptionAvailable.mockReturnValueOnce(false);
+      const record = store.register('discord', 'p', 'a', '');
+
+      const snapshot = store.serialize();
+      const [persisted] = snapshot;
+      expect(persisted.token).toBe(record.token);
+      expect(persisted.secret).toBe('');
+    });
   });
 
   describe('revoke', () => {

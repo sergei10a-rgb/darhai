@@ -5,19 +5,30 @@
  */
 
 import { randomBytes } from 'node:crypto';
-import { CIPHER_PREFIX, decryptString, encryptString } from '@process/secrets';
+import { CIPHER_PREFIX, decryptString, encryptString, isEncryptionAvailable } from '@process/secrets';
 import type { ConnectionTokenRecord } from './types';
 
 /**
- * Encrypt a webhook secret for at-rest persistence (SEC-DATA-03).
+ * Encrypt a webhook secret for at-rest persistence (SEC-DATA-03 / RT-S2).
  *
  * Empty secrets and already-encrypted values are returned untouched so the
- * call is idempotent. Throws if OS credential encryption is unavailable
- * (matching the secrets-module contract) rather than silently persisting
- * plaintext — the caller's persist path will surface and log the error.
+ * call is idempotent. For a non-empty plaintext secret we require OS
+ * credential encryption to be available and throw otherwise — this makes the
+ * snapshot fail loudly rather than silently emitting a plaintext secret into
+ * the persisted (only base64-encoded) config. The caller's persist path
+ * surfaces and logs the thrown error, and `serialize()` aborts atomically so
+ * no partial plaintext residue is written.
  */
 function encryptSecret(secret: string): string {
   if (!secret || secret.startsWith(CIPHER_PREFIX)) return secret;
+  if (!isEncryptionAvailable()) {
+    throw new Error(
+      '[ConnectionTokenStore] RT-S2: refusing to persist a plaintext webhook secret — ' +
+        'OS credential encryption is unavailable. The webhook works for this session but ' +
+        'will NOT survive a restart until secure storage is available. On Linux, install/run ' +
+        'a keyring (gnome-keyring / libsecret, e.g. launch via dbus-launch) to enable persistence.'
+    );
+  }
   return encryptString(secret);
 }
 

@@ -12,6 +12,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const CIPHER_PREFIX = 'enc:v1:';
 vi.mock('@process/secrets', () => ({
   CIPHER_PREFIX,
+  isEncryptionAvailable: () => true,
   encryptString: (plaintext: string) => `${CIPHER_PREFIX}${Buffer.from(plaintext, 'utf-8').toString('base64')}`,
   decryptString: (encoded: string) => {
     if (!encoded.startsWith(CIPHER_PREFIX)) throw new Error('missing prefix');

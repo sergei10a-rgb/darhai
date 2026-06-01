@@ -210,27 +210,45 @@ async function startWatch(
       if (err) reject(err);
     };
 
-    // Poll the port directly after spawn instead of parsing stdout.
-    // When spawned as a child process stdout is fully-buffered (non-TTY), so
-    // "Watch:" may never flush within our timeout window. Port polling is
-    // reliable regardless of output buffering.
+    // Identity handshake (RT-F5-04): require the "Watch:" marker on OUR child's
+    // stdout pipe before trusting whatever bound the port. findFreePort() returns
+    // the port after its probe socket closes, so there is a TOCTOU window in which
+    // a local attacker could race to bind the port and serve content to the
+    // webview. Only the process we spawned can write to its own stdout pipe, so a
+    // racing imposter that answers TCP on the port cannot forge the marker. We
+    // confirm the marker first (identity), then poll the port (readiness) before
+    // resolving the URL the webview loads. The PPT preview path uses the same
+    // marker; the prior port-only check trusted any responder.
     const url = `http://localhost:${port}`;
-    waitForPort(port, 150, 100)
-      .then(() => {
-        if (session.aborted) {
-          settle(new Error('Watch session was aborted'));
-          return;
-        }
-        if (!settled) {
-          settled = true;
-          clearTimeout(timeout);
-          resolve(url);
-        }
-      })
-      .catch(() => {
-        settle(new Error('officecli watch server did not become ready'));
-        killSession(sessionKey, sessions);
-      });
+
+    const onPortReady = () => {
+      if (session.aborted) {
+        settle(new Error('Watch session was aborted'));
+        return;
+      }
+      if (!settled) {
+        settled = true;
+        clearTimeout(timeout);
+        resolve(url);
+      }
+    };
+
+    child.stdout?.on('data', (data: Buffer) => {
+      const text = data.toString();
+      if (settled || !text.includes('Watch:')) return;
+      // Marker seen on our spawned child's stdout — the server on this port is
+      // ours, not a port-race imposter. Now confirm it is actually listening.
+      if (session.aborted) {
+        settle(new Error('Watch session was aborted'));
+        return;
+      }
+      waitForPort(port, 150, 100)
+        .then(onPortReady)
+        .catch(() => {
+          settle(new Error('officecli watch server did not become ready'));
+          killSession(sessionKey, sessions);
+        });
+    });
 
     child.stderr?.on('data', (data: Buffer) => {
       console.error(`[officeWatch] officecli stderr (${docType}):`, data.toString().trim());

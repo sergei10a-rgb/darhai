@@ -61,4 +61,32 @@ describe('verifyQRTokenDirect', () => {
     const second = await verifyQRTokenDirect(token, '127.0.0.1');
     expect(second.success).toBe(false);
   });
+
+  // RT-B3-05: local-only tokens must fail closed when clientIP is absent/empty.
+  it('rejects a local-only token when clientIP is undefined (explicit fail-closed)', async () => {
+    const { qrUrl } = generateQRLoginUrlDirect(3000, false);
+    const token = new URL(qrUrl).searchParams.get('token')!;
+    const result = await verifyQRTokenDirect(token);
+    expect(result.success).toBe(false);
+    expect(result.msg).toContain('local network address');
+    // Token must remain unused so issuance never happened.
+    const retry = await verifyQRTokenDirect(token, '127.0.0.1');
+    expect(retry.success).toBe(true);
+  });
+
+  it('rejects a local-only token when clientIP is empty/whitespace (explicit fail-closed)', async () => {
+    const { qrUrl } = generateQRLoginUrlDirect(3000, false);
+    const token = new URL(qrUrl).searchParams.get('token')!;
+    const result = await verifyQRTokenDirect(token, '   ');
+    expect(result.success).toBe(false);
+    expect(result.msg).toContain('local network address');
+  });
+
+  it('accepts a local-only token from a valid local IP', async () => {
+    const { qrUrl } = generateQRLoginUrlDirect(3000, false);
+    const token = new URL(qrUrl).searchParams.get('token')!;
+    const result = await verifyQRTokenDirect(token, '192.168.1.50');
+    expect(result.success).toBe(true);
+    expect(result.data?.sessionToken).toBeTruthy();
+  });
 });

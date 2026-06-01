@@ -174,12 +174,17 @@ async function waitForSpawn(target: number) {
 }
 
 /**
- * The office watch bridge resolves by polling the port (not by parsing stdout),
- * so once spawn has happened the mocked net.connect drives resolution. Wait for
- * the spawn and let the port-poll resolve.
+ * The office watch bridge requires an identity handshake (RT-F5-04): the "Watch:"
+ * marker must arrive on OUR spawned child's stdout pipe before it trusts whatever
+ * answers the port. A port-race imposter can answer TCP but cannot forge the
+ * marker on our child's stdout. After the marker, the mocked net.connect drives
+ * port-readiness resolution. Wait for spawn, emit the marker, then let the
+ * port-poll resolve.
  */
-async function emitWatchReady(_child: ReturnType<typeof createMockChildProcess>, spawnTarget = 1) {
+async function emitWatchReady(child: ReturnType<typeof createMockChildProcess>, spawnTarget = 1) {
   await waitForSpawn(spawnTarget);
+  // Emit the identity marker on the child's stdout (proof the server is ours).
+  child.stdout.emit('data', Buffer.from('Watch: http://localhost:55555\n'));
   // Let waitForPort's net.connect 'connect' event resolve.
   await flush();
 }
@@ -262,6 +267,7 @@ describe('officeWatchBridge', () => {
         expect.objectContaining({ stdio: ['ignore', 'pipe', 'pipe'] })
       );
 
+      child.stdout.emit('data', Buffer.from('Watch: http://localhost:55555\n'));
       await flush();
       await promise;
     });
@@ -324,6 +330,7 @@ describe('officeWatchBridge', () => {
         expect.objectContaining({ stdio: ['ignore', 'pipe', 'pipe'] })
       );
 
+      child.stdout.emit('data', Buffer.from('Watch: http://localhost:55555\n'));
       await flush();
       await promise;
     });
@@ -507,6 +514,83 @@ describe('officeWatchBridge', () => {
       await new Promise<void>((r) => setTimeout(r, 600));
 
       expect(isActiveOfficeWatchPort(55555)).toBe(false);
+    });
+  });
+
+  describe('identity handshake (RT-F5-04 — port-race TOCTOU)', () => {
+    it('does NOT resolve from a responding port alone — requires the Watch: marker (word)', async () => {
+      // Simulates a port-race imposter: something answers TCP on the port
+      // (portConnectSucceeds=true) but our spawned child never emits the
+      // "Watch:" marker on its stdout. The start must NOT resolve, because a
+      // responding-but-unverified server could be an attacker who won the
+      // findFreePort() bind race, not our officecli.
+      initOfficeWatchBridge();
+      const child = createMockChildProcess();
+      spawnMock.mockReturnValue(child);
+
+      let settled = false;
+      const promise = wordStartHandler.fn!({ filePath: F('file.docx') }).then((r: unknown) => {
+        settled = true;
+        return r;
+      });
+
+      await waitForSpawn(1);
+      // Let many turns elapse with the port "responding" but NO marker emitted.
+      for (let i = 0; i < 10; i++) await flush();
+
+      expect(settled).toBe(false);
+
+      // Now the real child proves identity with the marker → start completes.
+      child.stdout.emit('data', Buffer.from('Watch: http://localhost:55555\n'));
+      await flush();
+      const result = await promise;
+      expect(result).toEqual({ url: 'http://localhost:55555' });
+    });
+
+    it('does NOT resolve from a responding port alone — requires the Watch: marker (excel)', async () => {
+      initOfficeWatchBridge();
+      const child = createMockChildProcess();
+      spawnMock.mockReturnValue(child);
+
+      let settled = false;
+      const promise = excelStartHandler.fn!({ filePath: F('file.xlsx') }).then((r: unknown) => {
+        settled = true;
+        return r;
+      });
+
+      await waitForSpawn(1);
+      for (let i = 0; i < 10; i++) await flush();
+      expect(settled).toBe(false);
+
+      child.stdout.emit('data', Buffer.from('Watch: http://localhost:55555\n'));
+      await flush();
+      const result = await promise;
+      expect(result).toEqual({ url: 'http://localhost:55555' });
+    });
+
+    it('ignores non-marker stdout chatter from the port responder (word)', async () => {
+      // A responder that emits arbitrary stdout WITHOUT the "Watch:" marker must
+      // not satisfy the handshake — only the exact identity marker counts.
+      initOfficeWatchBridge();
+      const child = createMockChildProcess();
+      spawnMock.mockReturnValue(child);
+
+      let settled = false;
+      const promise = wordStartHandler.fn!({ filePath: F('file.docx') }).then((r: unknown) => {
+        settled = true;
+        return r;
+      });
+
+      await waitForSpawn(1);
+      child.stdout.emit('data', Buffer.from('Listening on some port\n'));
+      child.stdout.emit('data', Buffer.from('Ready.\n'));
+      for (let i = 0; i < 5; i++) await flush();
+      expect(settled).toBe(false);
+
+      child.stdout.emit('data', Buffer.from('Watch: http://localhost:55555\n'));
+      await flush();
+      const result = await promise;
+      expect(result).toEqual({ url: 'http://localhost:55555' });
     });
   });
 

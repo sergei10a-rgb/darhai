@@ -253,6 +253,40 @@ export class AuthService {
   }
 
   /**
+   * Overwrite a legacy plaintext `users.jwt_secret` with its safeStorage
+   * ciphertext and verify no plaintext residue survives the write (RT-S2).
+   *
+   * The encrypted value replaces the plaintext in the same column, so a
+   * successful write removes the plaintext. We then re-read the row and assert
+   * the persisted value carries {@link CIPHER_PREFIX}; if it does not (write
+   * dropped, partially applied, or the row was concurrently rewritten in the
+   * clear) we surface the failure instead of silently leaving plaintext at
+   * rest. The in-memory secret is already live, so verification failure does
+   * not break the current process — it only flags that the at-rest purge did
+   * not take.
+   */
+  private static async purgePlaintextJwtSecret(userId: string, plaintextSecret: string): Promise<void> {
+    try {
+      await UserRepository.updateJwtSecret(userId, this.encryptJwtSecret(plaintextSecret));
+
+      // Confirm the overwrite landed as ciphertext — no plaintext residue.
+      const reread = await UserRepository.getPrimaryWebUIUser();
+      const persisted = reread?.jwt_secret ?? null;
+      if (!persisted || !persisted.startsWith(CIPHER_PREFIX)) {
+        throw new Error('post-migration JWT secret is not encrypted at rest');
+      }
+    } catch (migrationError) {
+      // Fail loud: plaintext may still be on disk. Surfacing this lets an
+      // operator (or the security E2E gate) catch a stuck migration rather
+      // than trusting a swallowed best-effort write.
+      console.error(
+        '[AuthService] RT-S2: failed to purge legacy plaintext JWT secret at rest — plaintext may persist:',
+        migrationError
+      );
+    }
+  }
+
+  /**
    * Load or create the JWT secret and cache it in memory
    *
    * JWT secret is stored in the admin user's row in users table
@@ -275,15 +309,16 @@ export class AuthService {
         const stored = systemUser.jwt_secret;
         this.jwtSecret = this.decryptJwtSecret(stored);
 
-        // Lazy migration: an existing plaintext secret keeps working but is
-        // re-persisted as ciphertext so the SQLite file no longer holds it in
-        // the clear. Best-effort — the in-memory secret above is already live.
+        // Lazy migration (RT-S2): an existing plaintext secret keeps working
+        // but is re-persisted as ciphertext so the SQLite file no longer holds
+        // it in the clear. The UPDATE overwrites the same `users.jwt_secret`
+        // column, so a successful write IS the purge — there is no separate
+        // plaintext copy left behind. The risk is a write that fails (or
+        // partially encrypts) silently leaving plaintext at rest, so we
+        // confirm the persisted value is ciphertext before treating the
+        // migration as done.
         if (!stored.startsWith(CIPHER_PREFIX)) {
-          try {
-            await UserRepository.updateJwtSecret(systemUser.id, this.encryptJwtSecret(this.jwtSecret));
-          } catch (migrationError) {
-            console.error('[AuthService] Failed to encrypt legacy JWT secret at rest:', migrationError);
-          }
+          await this.purgePlaintextJwtSecret(systemUser.id, this.jwtSecret);
         }
 
         return this.jwtSecret;
@@ -737,15 +772,16 @@ export class AuthService {
     // Ensure constant-time comparison routine
     const start = process.hrtime.bigint();
 
-    let result: boolean;
-    if (hashProvided) {
-      result = await comparePasswordAsync(provided, expected);
-    } else {
-      result = crypto.timingSafeEqual(
-        Buffer.from(provided.padEnd(expected.length, '0')),
-        Buffer.from(expected.padEnd(provided.length, '0'))
-      );
+    if (!hashProvided) {
+      // The plaintext-comparison branch is unsupported: it had no production
+      // callers and its padEnd-then-timingSafeEqual approach was latently
+      // false-accepting (padding two unequal-length inputs to a common length
+      // can make distinct values compare equal). Every real caller passes
+      // hashProvided=true (bcrypt). Reject loudly instead of comparing wrong.
+      throw new Error('constantTimeVerify: plaintext comparison (hashProvided=false) is unsupported');
     }
+
+    const result = await comparePasswordAsync(provided, expected);
 
     // Add minimum delay to prevent timing attacks
     const elapsed = process.hrtime.bigint() - start;

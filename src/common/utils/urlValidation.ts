@@ -91,14 +91,6 @@ export function isOpenAIHost(urlString: string): boolean {
 }
 
 /**
- * 验证 URL 是否为 Anthropic 官方主机
- * Validate if URL is an official Anthropic host
- */
-export function isAnthropicHost(urlString: string): boolean {
-  return isOfficialHost(urlString, Object.values(API_HOST_CONFIG.anthropic));
-}
-
-/**
  * Schemes allowed to be handed to the OS via shell.openExternal.
  *
  * Only web/mail and the app's own deep-link scheme (`wayland:`, see
