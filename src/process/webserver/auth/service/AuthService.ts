@@ -8,6 +8,7 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import zxcvbn from 'zxcvbn';
+import { CIPHER_PREFIX, decryptString, encryptString } from '@process/secrets';
 import type { AuthUser } from '../repository/UserRepository';
 import { UserRepository } from '../repository/UserRepository';
 import { TokenFamilyRepository } from '../repository/TokenFamilyRepository';
@@ -223,6 +224,35 @@ export class AuthService {
   }
 
   /**
+   * Encrypt a JWT secret for at-rest storage in `users.jwt_secret` using
+   * OS-keychain-backed safeStorage (macOS Keychain / Windows DPAPI / Linux
+   * libsecret). The plaintext signing secret must never touch the SQLite file.
+   *
+   * Throws when safeStorage is unavailable on the host — callers must treat
+   * that as "cannot persist" and fall back to an in-memory secret rather than
+   * writing plaintext (fail closed at rest).
+   */
+  private static encryptJwtSecret(plaintext: string): string {
+    return encryptString(plaintext);
+  }
+
+  /**
+   * Decrypt a stored `users.jwt_secret` value with passthrough migration for
+   * existing installs.
+   *
+   * - Values carrying {@link CIPHER_PREFIX} are decrypted via safeStorage.
+   * - Legacy plaintext secrets (written before this column was encrypted) are
+   *   returned as-is so existing sessions keep verifying. They are upgraded to
+   *   ciphertext lazily by {@link getJwtSecret}.
+   */
+  private static decryptJwtSecret(stored: string): string {
+    if (stored.startsWith(CIPHER_PREFIX)) {
+      return decryptString(stored);
+    }
+    return stored;
+  }
+
+  /**
    * Load or create the JWT secret and cache it in memory
    *
    * JWT secret is stored in the admin user's row in users table
@@ -242,14 +272,27 @@ export class AuthService {
       // Read jwt_secret from admin user in database
       const systemUser = await UserRepository.getPrimaryWebUIUser();
       if (systemUser && systemUser.jwt_secret) {
-        this.jwtSecret = systemUser.jwt_secret;
+        const stored = systemUser.jwt_secret;
+        this.jwtSecret = this.decryptJwtSecret(stored);
+
+        // Lazy migration: an existing plaintext secret keeps working but is
+        // re-persisted as ciphertext so the SQLite file no longer holds it in
+        // the clear. Best-effort — the in-memory secret above is already live.
+        if (!stored.startsWith(CIPHER_PREFIX)) {
+          try {
+            await UserRepository.updateJwtSecret(systemUser.id, this.encryptJwtSecret(this.jwtSecret));
+          } catch (migrationError) {
+            console.error('[AuthService] Failed to encrypt legacy JWT secret at rest:', migrationError);
+          }
+        }
+
         return this.jwtSecret;
       }
 
       // Generate new secret and save to admin user
       if (systemUser) {
         const newSecret = this.generateSecretKey();
-        await UserRepository.updateJwtSecret(systemUser.id, newSecret);
+        await UserRepository.updateJwtSecret(systemUser.id, this.encryptJwtSecret(newSecret));
         this.jwtSecret = newSecret;
         return this.jwtSecret;
       }
@@ -277,7 +320,7 @@ export class AuthService {
       }
 
       const newSecret = this.generateSecretKey();
-      await UserRepository.updateJwtSecret(systemUser.id, newSecret);
+      await UserRepository.updateJwtSecret(systemUser.id, this.encryptJwtSecret(newSecret));
       this.jwtSecret = newSecret;
     } catch (error) {
       console.error('Failed to invalidate tokens:', error);
@@ -306,10 +349,7 @@ export class AuthService {
    * passed, the new token reuses the existing family so refresh stays
    * inside the bounded sliding window (H5).
    */
-  public static async generateToken(
-    user: Pick<AuthUser, 'id' | 'username'>,
-    familyId?: string
-  ): Promise<string> {
+  public static async generateToken(user: Pick<AuthUser, 'id' | 'username'>, familyId?: string): Promise<string> {
     const family = familyId ?? crypto.randomUUID();
     if (!familyId) {
       // First-issue path — record the family so revoke is meaningful.

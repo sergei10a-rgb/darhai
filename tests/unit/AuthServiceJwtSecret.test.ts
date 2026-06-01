@@ -29,14 +29,29 @@ function makeUser(overrides: Partial<AuthUser> = {}): AuthUser {
   };
 }
 
+// Fake safeStorage boundary: ciphertext is the plaintext wrapped in the
+// version-pinned prefix so the round-trip is deterministic and assertable.
+const CIPHER_PREFIX = 'enc:v1:';
+
+function mockSecrets() {
+  vi.doMock('@process/secrets', () => ({
+    CIPHER_PREFIX,
+    encryptString: (plaintext: string) => `${CIPHER_PREFIX}${plaintext}`,
+    decryptString: (encoded: string) => encoded.slice(CIPHER_PREFIX.length),
+  }));
+}
+
 describe('AuthService primary WebUI user JWT handling', () => {
   beforeEach(() => {
     vi.resetModules();
     delete process.env.JWT_SECRET;
+    mockSecrets();
   });
 
-  it('reads the JWT secret from the primary WebUI user', async () => {
-    const getPrimaryWebUIUserMock = vi.fn(async () => makeUser({ username: 'alice', jwt_secret: 'db-secret' }));
+  it('decrypts an encrypted JWT secret from the primary WebUI user', async () => {
+    const getPrimaryWebUIUserMock = vi.fn(async () =>
+      makeUser({ username: 'alice', jwt_secret: `${CIPHER_PREFIX}db-secret` })
+    );
     const updateJwtSecretMock = vi.fn();
 
     vi.doMock('@process/webserver/auth/repository/UserRepository', () => ({
@@ -51,10 +66,54 @@ describe('AuthService primary WebUI user JWT handling', () => {
 
     expect(jwtSecret).toBe('db-secret');
     expect(getPrimaryWebUIUserMock).toHaveBeenCalledOnce();
+    // Already encrypted at rest — no re-write on read.
     expect(updateJwtSecretMock).not.toHaveBeenCalled();
   });
 
-  it('rotates the JWT secret for the primary WebUI user when invalidating tokens', async () => {
+  it('passes through a legacy plaintext secret and re-encrypts it at rest', async () => {
+    const getPrimaryWebUIUserMock = vi.fn(async () =>
+      makeUser({ id: 'legacy-admin', username: 'alice', jwt_secret: 'db-secret' })
+    );
+    const updateJwtSecretMock = vi.fn(async () => undefined);
+
+    vi.doMock('@process/webserver/auth/repository/UserRepository', () => ({
+      UserRepository: {
+        getPrimaryWebUIUser: getPrimaryWebUIUserMock,
+        updateJwtSecret: updateJwtSecretMock,
+      },
+    }));
+
+    const { AuthService } = await import('@process/webserver/auth/service/AuthService');
+    const jwtSecret = await AuthService.getJwtSecret();
+
+    // Existing installs keep working: the plaintext secret still verifies.
+    expect(jwtSecret).toBe('db-secret');
+    // Lazy migration: the plaintext value is re-persisted as ciphertext.
+    expect(updateJwtSecretMock).toHaveBeenCalledWith('legacy-admin', `${CIPHER_PREFIX}db-secret`);
+  });
+
+  it('encrypts a newly generated JWT secret before persisting it', async () => {
+    const getPrimaryWebUIUserMock = vi.fn(async () => makeUser({ id: 'fresh-admin', username: 'alice' }));
+    const updateJwtSecretMock = vi.fn(async () => undefined);
+
+    vi.doMock('@process/webserver/auth/repository/UserRepository', () => ({
+      UserRepository: {
+        getPrimaryWebUIUser: getPrimaryWebUIUserMock,
+        updateJwtSecret: updateJwtSecretMock,
+      },
+    }));
+
+    const { AuthService } = await import('@process/webserver/auth/service/AuthService');
+    const jwtSecret = await AuthService.getJwtSecret();
+
+    expect(updateJwtSecretMock).toHaveBeenCalledOnce();
+    const [persistedId, persistedValue] = updateJwtSecretMock.mock.calls[0] as [string, string];
+    expect(persistedId).toBe('fresh-admin');
+    // Stored value is ciphertext; the in-memory secret is the decrypted form.
+    expect(persistedValue).toBe(`${CIPHER_PREFIX}${jwtSecret}`);
+  });
+
+  it('rotates the JWT secret encrypted at rest when invalidating tokens', async () => {
     const getPrimaryWebUIUserMock = vi.fn(async () => makeUser({ id: 'legacy-admin', username: 'alice' }));
     const updateJwtSecretMock = vi.fn(async () => undefined);
 
@@ -69,6 +128,6 @@ describe('AuthService primary WebUI user JWT handling', () => {
     await AuthService.invalidateAllTokens();
 
     expect(getPrimaryWebUIUserMock).toHaveBeenCalledOnce();
-    expect(updateJwtSecretMock).toHaveBeenCalledWith('legacy-admin', expect.any(String));
+    expect(updateJwtSecretMock).toHaveBeenCalledWith('legacy-admin', expect.stringContaining(CIPHER_PREFIX));
   });
 });
