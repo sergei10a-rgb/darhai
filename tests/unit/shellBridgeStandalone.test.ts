@@ -8,12 +8,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // --- Mocks (vi.hoisted so factories can reference them) ---
 
-const { openFileProvider, showItemInFolderProvider, openExternalProvider, execFileMock } = vi.hoisted(() => ({
-  openFileProvider: { fn: undefined as ((...args: any[]) => any) | undefined },
-  showItemInFolderProvider: { fn: undefined as ((...args: any[]) => any) | undefined },
-  openExternalProvider: { fn: undefined as ((...args: any[]) => any) | undefined },
-  execFileMock: vi.fn(),
-}));
+const { openFileProvider, showItemInFolderProvider, openExternalProvider, execFileMock, existsSyncMock } = vi.hoisted(
+  () => ({
+    openFileProvider: { fn: undefined as ((...args: any[]) => any) | undefined },
+    showItemInFolderProvider: { fn: undefined as ((...args: any[]) => any) | undefined },
+    openExternalProvider: { fn: undefined as ((...args: any[]) => any) | undefined },
+    execFileMock: vi.fn(),
+    existsSyncMock: vi.fn(() => true),
+  })
+);
 
 vi.mock('@/common', () => ({
   ipcBridge: {
@@ -41,19 +44,33 @@ vi.mock('node:child_process', () => ({
   execFile: (...args: any[]) => execFileMock(...args),
 }));
 
+vi.mock('node:fs', () => ({
+  existsSync: (...args: any[]) => existsSyncMock(...args),
+}));
+
 // --- Tests ---
 
 let initShellBridgeStandalone: typeof import('../../src/process/bridge/shellBridgeStandalone').initShellBridgeStandalone;
 
-beforeEach(async () => {
+// The standalone bridge captures `const isWindows = process.platform === 'win32'`
+// at module-load time, so the desired platform must be set BEFORE the dynamic
+// import. Each test sets `process.platform` then calls this to load a fresh module
+// instance bound to that platform.
+async function loadStandaloneForPlatform(platform: NodeJS.Platform): Promise<void> {
   vi.resetModules();
   vi.clearAllMocks();
   openFileProvider.fn = undefined;
   showItemInFolderProvider.fn = undefined;
   openExternalProvider.fn = undefined;
 
+  Object.defineProperty(process, 'platform', { value: platform, configurable: true });
+
   const mod = await import('../../src/process/bridge/shellBridgeStandalone');
   initShellBridgeStandalone = mod.initShellBridgeStandalone;
+}
+
+beforeEach(async () => {
+  await loadStandaloneForPlatform('darwin');
 });
 
 describe('shellBridgeStandalone', () => {
@@ -67,8 +84,8 @@ describe('shellBridgeStandalone', () => {
   });
 
   describe('runOpen — darwin platform', () => {
-    beforeEach(() => {
-      Object.defineProperty(process, 'platform', { value: 'darwin', configurable: true });
+    beforeEach(async () => {
+      await loadStandaloneForPlatform('darwin');
       execFileMock.mockImplementation((_cmd: string, _args: string[], cb: (err: null) => void) => cb(null));
       initShellBridgeStandalone();
     });
@@ -90,13 +107,17 @@ describe('shellBridgeStandalone', () => {
   });
 
   describe('runOpen — win32 platform', () => {
-    beforeEach(() => {
-      Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
+    beforeEach(async () => {
+      await loadStandaloneForPlatform('win32');
       execFileMock.mockImplementation((_cmd: string, _args: string[], cb: (err: null) => void) => cb(null));
       initShellBridgeStandalone();
     });
 
     it('openFile calls cmd /c start with the file path', async () => {
+      // On win32, openPathSafely's SEC-SHELL-03 guard requires the path to exist
+      // before invoking cmd; the mocked fs.existsSync returns true so a fixture
+      // path that is not on disk still reaches runOpen.
+      existsSyncMock.mockReturnValue(true);
       await openFileProvider.fn!('C:\\path\\to\\file.pdf');
       expect(execFileMock).toHaveBeenCalledWith(
         'cmd',
@@ -130,7 +151,7 @@ describe('shellBridgeStandalone', () => {
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
       await openExternalProvider.fn!('not-a-valid-url');
       expect(execFileMock).not.toHaveBeenCalled();
-      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Invalid URL'));
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('disallowed scheme'));
       warnSpy.mockRestore();
     });
 

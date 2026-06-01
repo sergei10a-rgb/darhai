@@ -141,7 +141,7 @@ describe('shellBridge with actual providers', () => {
       await registeredProviders['openExternal']('not-a-valid-url');
 
       expect(shell.openExternal).not.toHaveBeenCalled();
-      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Invalid URL'));
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('disallowed scheme'));
       warnSpy.mockRestore();
     });
 
