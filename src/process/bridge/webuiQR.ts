@@ -123,14 +123,28 @@ export async function verifyQRTokenDirect(
     }
 
     // P0 Security fix: Check local network restriction
-    // M2: do NOT bypass the gate when clientIP is falsy/empty (e.g. behind a
-    // misconfigured proxy or via an IPC path). Treat empty IP as non-local.
-    if (tokenData.allowLocalOnly && !isLocalIP(clientIP || '')) {
-      console.warn(`[WebUI QR] QR token rejected: non-local IP ${clientIP || '<empty>'} attempted to use local-only token`);
-      return {
-        success: false,
-        msg: 'QR login is only allowed from local network',
-      };
+    if (tokenData.allowLocalOnly) {
+      // RT-B3-05: Fail closed EXPLICITLY when clientIP cannot be determined.
+      // Do not rely on isLocalIP('') === false — if IP extraction is missing or
+      // breaks (misconfigured proxy, unexpected IPC path), reject the request
+      // rather than proceeding to token issuance.
+      const trimmedIP = typeof clientIP === 'string' ? clientIP.trim() : '';
+      if (!trimmedIP) {
+        console.warn('[WebUI QR] QR token rejected: missing client IP for local-only token');
+        return {
+          success: false,
+          msg: 'QR login requires a verifiable local network address',
+        };
+      }
+
+      // M2: do NOT bypass the gate; non-local IPs are rejected.
+      if (!isLocalIP(trimmedIP)) {
+        console.warn(`[WebUI QR] QR token rejected: non-local IP ${trimmedIP} attempted to use local-only token`);
+        return {
+          success: false,
+          msg: 'QR login is only allowed from local network',
+        };
+      }
     }
 
     // Mark as used

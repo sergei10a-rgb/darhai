@@ -8,7 +8,7 @@ import type { McpOperationResult } from '../McpProtocol';
 import { AbstractMcpAgent } from '../McpProtocol';
 import type { IMcpServer } from '@/common/config/storage';
 import { getEnhancedEnv } from '@process/utils/shellEnv';
-import { safeExec } from '@process/utils/safeExec';
+import { safeExec, safeExecFile } from '@process/utils/safeExec';
 
 /** Env options for exec calls — ensures CLI is found from Finder/launchd launches */
 const getExecEnv = () => ({
@@ -188,18 +188,18 @@ export class GeminiMcpAgent extends AbstractMcpAgent {
           if (server.transport.type === 'stdio') {
             // Use Gemini CLI to add an MCP server
             // Format: gemini mcp add <name> <command> [args...]
-            let command = `gemini mcp add "${server.name}" "${server.transport.command}"`;
+            // Pass name/command/args as separate argv elements (shell:false) so
+            // shell metacharacters in any value cannot inject commands (SEC-MCP-01).
+            const args = ['mcp', 'add', server.name, server.transport.command];
             if (server.transport.args?.length) {
-              // Quote each arg to protect URLs and special characters from shell interpretation
-              const quotedArgs = server.transport.args.map((arg: string) => `"${arg}"`).join(' ');
-              command += ` ${quotedArgs}`;
+              args.push(...server.transport.args);
             }
 
             // Add scope flag (user or project)
-            command += ' -s user';
+            args.push('-s', 'user');
 
             try {
-              await safeExec(command, { timeout: 5000, ...getExecEnv() });
+              await safeExecFile('gemini', args, { timeout: 5000, ...getExecEnv() });
               console.log(`[GeminiMcpAgent] Added MCP server: ${server.name}`);
             } catch (error) {
               console.warn(`Failed to add MCP ${server.name} to Gemini:`, error);
@@ -213,16 +213,12 @@ export class GeminiMcpAgent extends AbstractMcpAgent {
             // Handle SSE/HTTP/Streamable HTTP transport types
             // Gemini CLI uses --transport http for both HTTP and Streamable HTTP
             const transportFlag = server.transport.type === 'streamable_http' ? 'http' : server.transport.type;
-            let command = `gemini mcp add "${server.name}" "${server.transport.url}"`;
-
-            // Add transport type
-            command += ` --transport ${transportFlag}`;
-
-            // Add scope flag
-            command += ' -s user';
+            // Pass name/url as separate argv elements (shell:false) so shell
+            // metacharacters in any value cannot inject commands (SEC-MCP-01).
+            const args = ['mcp', 'add', server.name, server.transport.url, '--transport', transportFlag, '-s', 'user'];
 
             try {
-              await safeExec(command, { timeout: 5000, ...getExecEnv() });
+              await safeExecFile('gemini', args, { timeout: 5000, ...getExecEnv() });
               console.log(`[GeminiMcpAgent] Added MCP server: ${server.name}`);
             } catch (error) {
               console.warn(`Failed to add MCP ${server.name} to Gemini:`, error);
@@ -248,8 +244,10 @@ export class GeminiMcpAgent extends AbstractMcpAgent {
         // Use Gemini CLI to remove an MCP server
         // First try user scope
         try {
-          const removeCommand = `gemini mcp remove "${mcpServerName}" -s user`;
-          const result = await safeExec(removeCommand, { timeout: 5000, ...getExecEnv() });
+          const result = await safeExecFile('gemini', ['mcp', 'remove', mcpServerName, '-s', 'user'], {
+            timeout: 5000,
+            ...getExecEnv(),
+          });
 
           if (result.stdout && result.stdout.includes('removed')) {
             console.log(`[GeminiMcpAgent] Removed MCP server: ${mcpServerName}`);
@@ -263,8 +261,10 @@ export class GeminiMcpAgent extends AbstractMcpAgent {
         } catch (userError) {
           // Try project scope
           try {
-            const removeCommand = `gemini mcp remove "${mcpServerName}" -s project`;
-            const result = await safeExec(removeCommand, { timeout: 5000, ...getExecEnv() });
+            const result = await safeExecFile('gemini', ['mcp', 'remove', mcpServerName, '-s', 'project'], {
+              timeout: 5000,
+              ...getExecEnv(),
+            });
 
             if (result.stdout && result.stdout.includes('removed')) {
               console.log(`[GeminiMcpAgent] Removed MCP server from project: ${mcpServerName}`);

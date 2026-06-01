@@ -4,6 +4,10 @@ import path from 'path';
 // Store all mock states at module scope to ensure they remain accessible in vi.doMock
 let mockFsStore: Record<string, any> = {};
 let mockCustomExternalPaths: Array<{ name: string; path: string }> = [];
+// User-approved write destinations (mirrors src/process/bridge/userApprovedPaths).
+// The createZip destination is allowed when it is in an authorized root OR
+// inside one of these dialog/desktop-approved directories.
+let mockApprovedDirectories: string[] = [];
 
 describe('fsBridge skills functionality', () => {
   const originalEnv = { ...process.env };
@@ -13,6 +17,7 @@ describe('fsBridge skills functionality', () => {
     vi.clearAllMocks();
     mockFsStore = {};
     mockCustomExternalPaths = [];
+    mockApprovedDirectories = [];
 
     // Mock electron
     vi.doMock('electron', () => ({
@@ -27,10 +32,13 @@ describe('fsBridge skills functionality', () => {
       },
     }));
 
-    // Mock os
+    // Mock os. Path confinement (pathConfinement.ts) and NodePlatformServices
+    // both read os.tmpdir()/os.homedir() when seeding static authorized roots,
+    // so both must be present on the mock.
     vi.doMock('os', () => ({
-      default: { homedir: vi.fn(() => '/mock/home') },
+      default: { homedir: vi.fn(() => '/mock/home'), tmpdir: vi.fn(() => '/mock/tmp') },
       homedir: vi.fn(() => '/mock/home'),
+      tmpdir: vi.fn(() => '/mock/tmp'),
     }));
 
     // Mock fs/promises
@@ -165,6 +173,26 @@ describe('fsBridge skills functionality', () => {
       return { default: MockJSZip };
     });
 
+    // Mock the user-approved-paths allowlist. createZip allows a destination
+    // when it is inside a directory the user approved via the native dialog or
+    // the MAIN-resolved Desktop default (registered out of band of the
+    // renderer). Tests drive this via mockApprovedDirectories.
+    const resolveWithinApprovedDirectoryMock = (target: unknown): string | null => {
+      if (typeof target !== 'string' || target.length === 0) return null;
+      const resolved = path.resolve(target);
+      const inside = mockApprovedDirectories.some((dir) => {
+        const rel = path.relative(dir, resolved);
+        return rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel));
+      });
+      return inside ? resolved : null;
+    };
+    vi.doMock('@process/bridge/userApprovedPaths', () => ({
+      registerApprovedDirectory: vi.fn((dir: string) => {
+        if (typeof dir === 'string' && dir.length > 0) mockApprovedDirectories.push(path.resolve(dir));
+      }),
+      resolveWithinApprovedDirectory: vi.fn(resolveWithinApprovedDirectoryMock),
+    }));
+
     // Mock initStorage
     vi.doMock('@process/utils/initStorage', () => ({
       getSystemDir: vi.fn(() => ({
@@ -247,6 +275,13 @@ describe('fsBridge skills functionality', () => {
         },
       };
     });
+
+    // vi.resetModules() above reset the platform-services singleton in the fresh
+    // module graph; re-register Node services so path getters used by confinement
+    // resolve instead of throwing "[Platform] Services not registered".
+    const { registerPlatformServices } = await import('@/common/platform');
+    const { NodePlatformServices } = await import('@/common/platform/NodePlatformServices');
+    registerPlatformServices(new NodePlatformServices());
   });
 
   afterEach(() => {
@@ -296,23 +331,25 @@ describe('fsBridge skills functionality', () => {
 
   describe('readFile ENOENT handling (Fixes ELECTRON-6W)', () => {
     it('returns null when file does not exist instead of throwing', async () => {
+      // Path is inside the authorized temp root so confinement accepts it and the
+      // ENOENT-handling branch (not the confinement reject) is what returns null.
       const handler = await getProvider('readFile');
-      const result = await handler({ path: '/nonexistent/gemini-temp-123/README.md' });
+      const result = await handler({ path: '/mock/tmp/gemini-temp-123/README.md' });
       expect(result).toBeNull();
     });
 
     it('still throws for non-ENOENT errors (e.g., EISDIR)', async () => {
-      // Create a directory entry so readFile throws EISDIR
-      mockFsStore[path.resolve('/mock/some-dir')] = { isDirectory: true };
+      // Create a directory entry (inside the authorized temp root) so readFile throws EISDIR
+      mockFsStore[path.resolve('/mock/tmp/some-dir')] = { isDirectory: true };
       const handler = await getProvider('readFile');
-      await expect(handler({ path: '/mock/some-dir' })).rejects.toThrow('EISDIR');
+      await expect(handler({ path: '/mock/tmp/some-dir' })).rejects.toThrow('EISDIR');
     });
   });
 
   describe('readFileBuffer ENOENT handling', () => {
     it('returns null when file does not exist instead of throwing', async () => {
       const handler = await getProvider('readFileBuffer');
-      const result = await handler({ path: '/nonexistent/temp-workspace/file.bin' });
+      const result = await handler({ path: '/mock/tmp/temp-workspace/file.bin' });
       expect(result).toBeNull();
     });
   });
@@ -369,6 +406,13 @@ describe('fsBridge skills functionality', () => {
     it('should detect direct skills and nested skill packs from common and custom paths', async () => {
       const geminiPath = path.resolve('/mock/home/.gemini/skills');
       const customSrcPath = path.resolve('/mock/my/custom/path');
+
+      // The custom path is a user-picked EXTERNAL folder, approved via the
+      // native dialog. detectAndCountExternalSkills re-gates each persisted
+      // custom path, so it must be approved for enumeration to include it.
+      // (Built-in candidates like ~/.gemini/skills are app-authored fixed paths
+      // and stay ungated.)
+      mockApprovedDirectories.push(customSrcPath);
 
       // Configure mock custom paths
       mockCustomExternalPaths = [{ name: 'My Custom Path', path: customSrcPath }];
@@ -434,6 +478,12 @@ describe('fsBridge skills functionality', () => {
       mockFsStore[workBase] = { isDirectory: true };
       mockFsStore[path.join(workBase, 'custom_external_skill_paths.json')] = { isDirectory: false };
 
+      // The custom path is a user-picked EXTERNAL folder, approved via the
+      // native dialog. addCustomExternalPath only accepts approved-or-confined
+      // paths and persists the resolved form.
+      const fooBar = path.resolve('/foo/bar');
+      mockApprovedDirectories.push(fooBar);
+
       const addHandler = await getProvider('addCustomExternalPath');
       const result1 = await addHandler({ name: 'TestPath', path: '/foo/bar' });
       expect(result1.success).toBe(true);
@@ -441,6 +491,7 @@ describe('fsBridge skills functionality', () => {
       // Check state
       expect(mockCustomExternalPaths).toHaveLength(1);
       expect(mockCustomExternalPaths[0].name).toBe('TestPath');
+      expect(mockCustomExternalPaths[0].path).toBe(fooBar);
 
       // Try to add duplicate
       const result2 = await addHandler({ name: 'TestPath', path: '/foo/bar' });
@@ -449,8 +500,22 @@ describe('fsBridge skills functionality', () => {
 
       // Remove path
       const rmHandler = await getProvider('removeCustomExternalPath');
-      const result3 = await rmHandler({ path: '/foo/bar' });
+      const result3 = await rmHandler({ path: fooBar });
       expect(result3.success).toBe(true);
+      expect(mockCustomExternalPaths).toHaveLength(0);
+    });
+
+    it('rejects an arbitrary unapproved custom path (e.g. /etc) and never persists it', async () => {
+      const workBase = path.resolve('/mock/work');
+      mockFsStore[workBase] = { isDirectory: true };
+      mockFsStore[path.join(workBase, 'custom_external_skill_paths.json')] = { isDirectory: false };
+
+      // A compromised renderer tries to register /etc as a custom skill path so
+      // it can later enumerate it. Not in an authorized root, not dialog-
+      // approved — must fail closed with no write.
+      const addHandler = await getProvider('addCustomExternalPath');
+      const result = await addHandler({ name: 'evil', path: '/etc' });
+      expect(result.success).toBe(false);
       expect(mockCustomExternalPaths).toHaveLength(0);
     });
   });
@@ -460,6 +525,11 @@ describe('fsBridge skills functionality', () => {
       const srcPath = path.resolve('/mock/source/valid-skill');
       const badPath = path.resolve('/mock/source/invalid-skill');
       const targetBase = path.resolve('/mock/userData/config/skills');
+
+      // The source dirs are user-picked EXTERNAL folders (outside the app
+      // roots). The native dialog registers the picked dir as approved, so the
+      // confinement gate accepts it. Mirror that here.
+      mockApprovedDirectories.push(path.resolve('/mock/source'));
 
       mockFsStore[srcPath] = { isDirectory: true };
       mockFsStore[path.join(srcPath, 'SKILL.md')] = {
@@ -564,10 +634,15 @@ describe('fsBridge skills functionality', () => {
   });
 
   describe('createZip ensures parent directory exists (Fixes ELECTRON-66)', () => {
-    it('creates parent directory before writing zip file', async () => {
+    it('creates parent directory before writing zip to a user-approved destination', async () => {
       const handler = await getProvider('createZip');
       const exportDir = path.resolve('/mock/export/subdir');
       const zipPath = path.join(exportDir, 'batch-export-test.zip');
+
+      // The export destination is a folder the user picked via the native
+      // dialog (or the Desktop default), which is OUTSIDE the app's authorized
+      // roots. It is write-eligible only because main approved it.
+      mockApprovedDirectories.push(exportDir);
 
       const result = await handler({
         path: zipPath,
@@ -578,6 +653,25 @@ describe('fsBridge skills functionality', () => {
       expect(result).toBe(true);
       // Verify parent directory was created
       expect(mockFsStore[exportDir]).toBeDefined();
+    });
+
+    it('rejects an out-of-root destination that was never approved and never writes it', async () => {
+      const handler = await getProvider('createZip');
+      // Classic arbitrary-write target a compromised renderer would try. It is
+      // neither in an authorized root nor in any user-approved directory, so it
+      // must fail closed with no write — proving the arbitrary-write primitive
+      // (RT-R1-03 / RT-F1-02) is closed.
+      const zipPath = path.resolve('/etc/cron.d/pwned.zip');
+
+      const result = await handler({
+        path: zipPath,
+        files: [{ name: 'test.txt', content: 'hello' }],
+        requestId: 'test-req-reject',
+      });
+
+      expect(result).toBe(false);
+      expect(mockFsStore[path.resolve('/etc/cron.d')]).toBeUndefined();
+      expect(mockFsStore[zipPath]).toBeUndefined();
     });
   });
 
@@ -616,6 +710,11 @@ describe('fsBridge skills functionality', () => {
     it('should find skills nested in subdirectories or directly at the root', async () => {
       const scanDir = path.resolve('/mock/scan/dir');
 
+      // The scanned folder is a user-picked EXTERNAL folder (outside the app
+      // roots), approved via the native dialog. Mirror that approval so the
+      // confinement gate accepts it.
+      mockApprovedDirectories.push(path.resolve('/mock/scan'));
+
       // Scenario 1: Subdir
       mockFsStore[scanDir] = { isDirectory: true };
       mockFsStore[path.join(scanDir, 'sub-skill')] = { isDirectory: true };
@@ -642,6 +741,71 @@ describe('fsBridge skills functionality', () => {
       expect(result2.success).toBe(true);
       expect(result2.data).toHaveLength(1);
       expect(result2.data[0].name).toBe('RootSkill');
+    });
+  });
+
+  // Red-team confinement coverage for the skill handlers that take a renderer-
+  // supplied path. Each must REJECT an out-of-root, non-approved path (e.g.
+  // /root/.ssh, /etc) and still ACCEPT a user-approved (dialog-picked) external
+  // folder — preserving legitimate skill import.
+  describe('skill-path confinement (red-team)', () => {
+    const OUT_OF_ROOT = '/root/.ssh';
+
+    it('readSkillInfo rejects an out-of-root, unapproved path and never reads it', async () => {
+      const handler = await getProvider('readSkillInfo');
+      const result = await handler({ skillPath: OUT_OF_ROOT });
+      expect(result.success).toBe(false);
+      // No SKILL.md read happened — the gate rejected before any fs access.
+      expect(result.msg).toContain('outside the allowed or approved');
+    });
+
+    it('readSkillInfo accepts an approved external folder', async () => {
+      const approved = path.resolve('/mock/picked/skill');
+      mockApprovedDirectories.push(path.resolve('/mock/picked'));
+      mockFsStore[approved] = { isDirectory: true };
+      mockFsStore[path.join(approved, 'SKILL.md')] = {
+        content: '---\nname: PickedSkill\ndescription: ok\n---',
+        isDirectory: false,
+      };
+      const handler = await getProvider('readSkillInfo');
+      const result = await handler({ skillPath: approved });
+      expect(result.success).toBe(true);
+      expect(result.data.name).toBe('PickedSkill');
+    });
+
+    it('importSkill rejects an out-of-root, unapproved path and never copies it', async () => {
+      const handler = await getProvider('importSkill');
+      const result = await handler({ skillPath: '/etc' });
+      expect(result.success).toBe(false);
+      expect(result.msg).toContain('outside the allowed or approved');
+    });
+
+    it('importSkill accepts an approved external folder', async () => {
+      const approved = path.resolve('/mock/picked2/ImportMe');
+      mockApprovedDirectories.push(path.resolve('/mock/picked2'));
+      mockFsStore[approved] = { isDirectory: true };
+      mockFsStore[path.join(approved, 'SKILL.md')] = {
+        content: '---\nname: ImportMe\n---',
+        isDirectory: false,
+      };
+      const handler = await getProvider('importSkill');
+      const result = await handler({ skillPath: approved });
+      expect(result.success).toBe(true);
+      expect(result.data.skillName).toBe('ImportMe');
+    });
+
+    it('scanForSkills rejects an out-of-root, unapproved path and never enumerates it', async () => {
+      const handler = await getProvider('scanForSkills');
+      const result = await handler({ folderPath: OUT_OF_ROOT });
+      expect(result.success).toBe(false);
+      expect(result.msg).toContain('outside the allowed or approved');
+    });
+
+    it('importSkillWithSymlink rejects an out-of-root, unapproved path and never links it', async () => {
+      const handler = await getProvider('importSkillWithSymlink');
+      const result = await handler({ skillPath: '/etc' });
+      expect(result.success).toBe(false);
+      expect(result.msg).toContain('outside the allowed or approved');
     });
   });
 });

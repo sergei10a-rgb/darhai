@@ -22,6 +22,7 @@
 import { spawn } from 'node:child_process';
 import type { ChildProcess } from 'node:child_process';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 
 import { app } from 'electron';
@@ -102,6 +103,25 @@ const RECEIVE_RPC_TIMEOUT_MS = 60_000;
 export function resolveSignalCliPath(cliPath?: string): string {
   if (cliPath?.trim()) return cliPath.trim();
 
+  // On Windows signal-cli ships as a launcher script (signal-cli.bat) or a
+  // native signal-cli.exe — the extensionless name used on macOS/Linux does
+  // not exist there. Probe the Windows launchers in priority order; POSIX
+  // keeps the single extensionless candidate.
+  const cliNames =
+    process.platform === 'win32' ? ['signal-cli.bat', 'signal-cli.cmd', 'signal-cli.exe'] : ['signal-cli'];
+
+  const existsFirst = (dir: string): string | null => {
+    for (const name of cliNames) {
+      const candidate = path.join(dir, name);
+      try {
+        if (fs.existsSync(candidate)) return candidate;
+      } catch {
+        // continue
+      }
+    }
+    return null;
+  };
+
   const isPackaged = (() => {
     try {
       return Boolean(app?.isPackaged);
@@ -111,32 +131,30 @@ export function resolveSignalCliPath(cliPath?: string): string {
   })();
 
   if (isPackaged) {
-    const bundled = path.join(process.resourcesPath, 'signal-cli-runtime', 'bin', 'signal-cli');
-    if (fs.existsSync(bundled)) return bundled;
+    const bundled = existsFirst(path.join(process.resourcesPath, 'signal-cli-runtime', 'bin'));
+    if (bundled) return bundled;
   }
 
   // Dev: resolve relative to this file's location in the source tree.
-  const devCandidates = [
-    path.resolve(__dirname, '../../../signal-cli-runtime/bin/signal-cli'),
+  const devBinDirs = [
+    path.resolve(__dirname, '../../../signal-cli-runtime/bin'),
     (() => {
       try {
-        return path.resolve(app.getAppPath(), 'src/process/channels/signal-cli-runtime/bin/signal-cli');
+        return path.resolve(app.getAppPath(), 'src/process/channels/signal-cli-runtime/bin');
       } catch {
         return '';
       }
     })(),
   ].filter((p): p is string => p.length > 0);
 
-  for (const candidate of devCandidates) {
-    try {
-      if (fs.existsSync(candidate)) return candidate;
-    } catch {
-      // continue
-    }
+  for (const dir of devBinDirs) {
+    const candidate = existsFirst(dir);
+    if (candidate) return candidate;
   }
 
-  // PATH fallback
-  return 'signal-cli';
+  // PATH fallback. On Windows, prefer the .bat launcher name so that the
+  // shell-resolved spawn (see spawnChild) can find it via PATHEXT.
+  return process.platform === 'win32' ? 'signal-cli.bat' : 'signal-cli';
 }
 
 /**
@@ -261,17 +279,27 @@ export class SignalDaemon {
     const configDir = this.opts.configDir ?? this.resolveDefaultConfigDir();
 
     const args: string[] = [
-      '--config', configDir,
-      '-a', this.opts.phoneNumber,
+      '--config',
+      configDir,
+      '-a',
+      this.opts.phoneNumber,
       'daemon',
-      '--http', `${this.opts.httpHost}:${this.opts.httpPort}`,
+      '--http',
+      `${this.opts.httpHost}:${this.opts.httpPort}`,
       '--no-receive-stdout',
     ];
 
     // stdin is `ignore` — RPC travels over HTTP, not stdio.  stdout/stderr
     // remain piped so we can capture signal-cli's log lines for diagnostics.
+    //
+    // On Windows, signal-cli is a `.bat`/`.cmd` launcher script; Node cannot
+    // spawn those without `shell:true` (otherwise EINVAL). Mirror the
+    // shellBridge.ts windows pattern: shell + windowsHide to suppress the
+    // console flash. POSIX stays shell-free (argv array, no injection surface).
+    const isWindowsLauncher = process.platform === 'win32' && /\.(bat|cmd)$/i.test(cliPath);
     const child = spawn(cliPath, args, {
       stdio: ['ignore', 'pipe', 'pipe'],
+      ...(isWindowsLauncher ? { shell: true, windowsHide: true } : {}),
     });
 
     this.child = child;
@@ -345,11 +373,12 @@ export class SignalDaemon {
 
     // Audit gemini MED1 2026-05-18: jitter (0-1000ms) to avoid synchronized
     // signal-cli daemon restart storms across multiple bots.
-    const delayMs = Math.min(
-      BACKOFF_INITIAL_MS * Math.pow(BACKOFF_FACTOR, this.restartAttempts - 1),
-      BACKOFF_MAX_MS,
-    ) + Math.floor(Math.random() * 1000);
-    console.log(`[SignalDaemon] restarting in ${delayMs / 1000}s (attempt ${this.restartAttempts}/${MAX_RESTART_ATTEMPTS})…`);
+    const delayMs =
+      Math.min(BACKOFF_INITIAL_MS * Math.pow(BACKOFF_FACTOR, this.restartAttempts - 1), BACKOFF_MAX_MS) +
+      Math.floor(Math.random() * 1000);
+    console.log(
+      `[SignalDaemon] restarting in ${delayMs / 1000}s (attempt ${this.restartAttempts}/${MAX_RESTART_ATTEMPTS})…`
+    );
     this.setStatus('starting');
     this.restartTimer = setTimeout(() => {
       this.restartTimer = null;
@@ -371,11 +400,7 @@ export class SignalDaemon {
 
   // ── HTTP RPC ──────────────────────────────────────────────────────────────
 
-  private async postRpc(
-    method: string,
-    params: Record<string, JsonValue>,
-    timeoutMs: number,
-  ): Promise<unknown> {
+  private async postRpc(method: string, params: Record<string, JsonValue>, timeoutMs: number): Promise<unknown> {
     const id = ++this.rpcId;
     const body = JSON.stringify({ jsonrpc: '2.0', id, method, params });
     const controller = new AbortController();
@@ -445,7 +470,7 @@ export class SignalDaemon {
       const result = await this.postRpc(
         'receive',
         { account: this.opts.phoneNumber, ignoreAttachments: false },
-        RECEIVE_RPC_TIMEOUT_MS,
+        RECEIVE_RPC_TIMEOUT_MS
       );
       const envelopes = Array.isArray(result) ? result : [];
       for (const env of envelopes) {
@@ -478,7 +503,16 @@ export class SignalDaemon {
       const { app: electronApp } = require('electron') as typeof import('electron');
       return path.join(electronApp.getPath('userData'), 'signal');
     } catch {
-      return path.join(process.env.HOME ?? process.cwd(), '.local', 'share', 'signal-cli');
+      // No Electron app context (unit tests / CLI mode). os.homedir() resolves
+      // USERPROFILE on Windows and HOME on POSIX, so the signal-cli state dir
+      // lands in a stable, writable per-user location instead of cwd-relative
+      // (which would be lost across launches on Windows where HOME is unset).
+      // On Windows use %APPDATA% as the platform-appropriate data root.
+      if (process.platform === 'win32') {
+        const appData = process.env.APPDATA ?? path.join(os.homedir(), 'AppData', 'Roaming');
+        return path.join(appData, 'signal-cli');
+      }
+      return path.join(os.homedir(), '.local', 'share', 'signal-cli');
     }
   }
 
@@ -488,7 +522,11 @@ export class SignalDaemon {
     if (!child) return;
     return new Promise<void>((resolve) => {
       const timer = setTimeout(() => {
-        try { child.kill('SIGKILL'); } catch { /* best-effort */ }
+        try {
+          child.kill('SIGKILL');
+        } catch {
+          /* best-effort */
+        }
         resolve();
       }, 5_000);
       child.once('exit', () => {

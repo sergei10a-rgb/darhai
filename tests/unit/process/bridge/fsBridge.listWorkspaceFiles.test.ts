@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Dirent } from 'fs';
 import path from 'path';
+import os from 'os';
 
 const providerCallbacks: Record<string, (...args: unknown[]) => unknown> = {};
 const makeProvider = (name: string) => ({
@@ -40,8 +41,15 @@ vi.mock('@process/utils/initStorage', () => ({
   getAssistantsDir: () => '/mock/assistants',
 }));
 
+// Path confinement (pathConfinement.ts) seeds its static authorized roots from
+// these getters. The real getters route through the platform-services layer,
+// which is not registered after vi.resetModules(); provide deterministic temp
+// roots here so confinement of the in-workspace write path resolves cleanly.
 vi.mock('@process/utils', () => ({
   readDirectoryRecursive: vi.fn(),
+  getTempPath: () => path.join(os.tmpdir(), 'wayland'),
+  getConfigPath: () => path.join(os.tmpdir(), 'wayland-config'),
+  getDataPath: () => path.join(os.tmpdir(), 'wayland-data'),
 }));
 
 vi.mock('@/common', () => ({
@@ -104,7 +112,9 @@ vi.mock('fs/promises', async (importOriginal) => {
       writeFile: mockWriteFile,
       rm: vi.fn(),
       rename: vi.fn(),
-      realpath: vi.fn(),
+      // Identity realpath so confinement's symlink-collapse pass is a no-op for
+      // these in-memory fixtures (no real symlinks to resolve).
+      realpath: vi.fn(async (p: string) => p),
       copyFile: vi.fn(),
       symlink: vi.fn(),
       access: vi.fn(),
@@ -133,8 +143,20 @@ describe('fsBridge listWorkspaceFiles', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     vi.resetModules();
+    // vi.resetModules() resets the platform-services singleton in the fresh
+    // module graph; re-register Node services so any platform-routed path getter
+    // still resolves.
+    const { registerPlatformServices } = await import('@/common/platform');
+    const { NodePlatformServices } = await import('@/common/platform/NodePlatformServices');
+    registerPlatformServices(new NodePlatformServices());
     const mod = await import('@process/bridge/fsBridge');
     mod.initFsBridge();
+    // The workspace lives outside the static authorized roots (it can be any
+    // user-chosen directory). Authorize it the same way the production
+    // createUploadFile path does, so the write-confinement check accepts the
+    // in-workspace write instead of rejecting it.
+    const { registerAuthorizedRoot } = await import('@process/bridge/pathConfinement');
+    registerAuthorizedRoot(workspaceRoot);
   });
 
   it('returns nested files recursively as a flat list', async () => {

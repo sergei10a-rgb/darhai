@@ -29,8 +29,10 @@ RUN bun install --production --ignore-scripts
 
 ENV PORT=3000
 ENV NODE_ENV=production
-ENV ALLOW_REMOTE=true
 ENV DATA_DIR=/data
+
+# Remote (non-localhost) access is OFF by default. Opt in explicitly only when
+# the server is fronted by auth/TLS, e.g. `docker run -e ALLOW_REMOTE=true ...`.
 
 # SQLite data volume — mount with: -v $(pwd)/data:/data
 VOLUME ["/data"]

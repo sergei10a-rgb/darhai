@@ -136,6 +136,35 @@ function isAllowedGitUrl(url: string): boolean {
 // Regex to flag SKILL.md bodies that reference relative executable paths.
 const EXECUTABLE_REF_RE = /\.(\/scripts\/[^\s)'"]+|\/bin\/[^\s)'"]+)/;
 
+/**
+ * Decompression caps to defend against zip-bombs. A skill is a small bundle of
+ * markdown; these limits reject a single entry or a total payload that is
+ * implausible for a real skill import.
+ */
+const MAX_ZIP_ENTRY_BYTES = 16 * 1024 * 1024; // 16 MiB per entry
+const MAX_ZIP_TOTAL_BYTES = 64 * 1024 * 1024; // 64 MiB total
+
+/**
+ * Resolve a zip entry destination inside `baseDir`, rejecting any path that
+ * escapes it (zip-slip). Normalizes BOTH separators before inspection so a
+ * mixed-separator entry (e.g. `a/..\\..\\evil`) cannot bypass the check on
+ * either POSIX or Windows.
+ *
+ * @returns the contained absolute path, or `null` if the entry traverses out.
+ */
+function resolveContainedEntry(baseDir: string, entryName: string): string | null {
+  const normalized = entryName.replace(/\\/g, '/');
+  if (normalized.split('/').some((seg) => seg === '..')) {
+    return null;
+  }
+  const root = path.resolve(baseDir);
+  const resolved = path.resolve(root, normalized);
+  if (resolved !== root && !resolved.startsWith(root + path.sep)) {
+    return null;
+  }
+  return resolved;
+}
+
 // ---------------------------------------------------------------------------
 // Public class
 // ---------------------------------------------------------------------------
@@ -217,15 +246,27 @@ export class SkillImport {
         );
       }
 
+      let totalBytes = 0;
       for (const entry of entries) {
         // Reject symlink entries.
         if (entry.isSymlink) {
           throw new Error(`Rejected: zip contains a symlink entry — ${entry.path}`);
         }
-        // Zip-slip: resolved path must be inside tmpDir.
-        const resolved = path.resolve(tmpDir, entry.path);
-        if (!resolved.startsWith(path.resolve(tmpDir) + path.sep) && resolved !== path.resolve(tmpDir)) {
+        // Zip-slip: reject `..` segments under either separator, then require
+        // the resolved path to stay inside tmpDir. A separator-blind check
+        // alone misses mixed-separator entries like `a/..\\..\\evil` (the
+        // backslash form is literal on POSIX `path.resolve` but traverses on
+        // Windows `path.win32.resolve`).
+        if (resolveContainedEntry(tmpDir, entry.path) === null) {
           throw new Error(`Rejected: zip entry escapes extraction dir — ${entry.path}`);
+        }
+        // Zip-bomb cap: bound per-entry and cumulative decompressed size.
+        if (entry.data.length > MAX_ZIP_ENTRY_BYTES) {
+          throw new Error(`Rejected: zip entry exceeds size cap — ${entry.path}`);
+        }
+        totalBytes += entry.data.length;
+        if (totalBytes > MAX_ZIP_TOTAL_BYTES) {
+          throw new Error('Rejected: zip total decompressed size exceeds cap');
         }
         // Strip non-.md files (don't write them).
         if (!entry.path.endsWith('.md')) {

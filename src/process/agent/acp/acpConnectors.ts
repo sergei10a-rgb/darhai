@@ -44,15 +44,39 @@ function normalizeWindowsCommand(command: string): string {
   return trimmed;
 }
 
-function formatWindowsCommandForShell(command: string): string {
-  const normalized = normalizeWindowsCommand(command);
-  const isPathLike =
-    /^[a-zA-Z]:[\\/]/.test(normalized) ||
-    normalized.startsWith('.\\') ||
-    normalized.startsWith('..\\') ||
-    normalized.includes('\\') ||
-    normalized.includes('/');
-  return isPathLike ? `"${normalized}"` : normalized;
+/**
+ * Split a Windows cliPath into the executable and its inline arguments for a
+ * direct (shell: false) spawn.
+ *
+ * Supports:
+ *   - `"C:\Program Files\agent.exe"` → quoted path with spaces, optionally
+ *     followed by unquoted args (`"C:\..\agent.exe" --flag`).
+ *   - `goose acp`            → command + inline args.
+ *   - `node path/to/file.js` → command + inline args.
+ *
+ * No shell is invoked, so embedded metacharacters in the path are inert: they
+ * become literal characters in argv rather than being interpreted by cmd.exe.
+ */
+function parseWindowsCliPath(cliPath: string): { command: string; inlineArgs: string[] } {
+  const trimmed = cliPath.trim();
+
+  // Leading quoted executable path (may contain spaces); remainder are args.
+  if (trimmed.startsWith('"')) {
+    const closingQuote = trimmed.indexOf('"', 1);
+    if (closingQuote !== -1) {
+      const command = trimmed.slice(1, closingQuote);
+      const inlineArgs = trimmed
+        .slice(closingQuote + 1)
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean);
+      return { command, inlineArgs };
+    }
+  }
+
+  // Unquoted: first whitespace-delimited token is the command, the rest args.
+  const parts = trimmed.split(/\s+/).filter(Boolean);
+  return { command: parts[0] ?? '', inlineArgs: parts.slice(1) };
 }
 
 function resolveCodexAcpPlatformPackage(): string | null {
@@ -294,15 +318,17 @@ export function createGenericSpawnConfig(
     spawnCommand = resolveNpxPath(env);
     spawnArgs = ['x', '--bun', ...normalizeNpxArgsForBundledBun(parts.slice(1)), ...effectiveAcpArgs];
   } else if (isWindows) {
-    // On Windows with shell: true, let cmd.exe handle the full command string.
-    // This correctly supports paths with spaces (e.g., "C:\Program Files\agent.exe")
-    // and commands with inline args (e.g., "goose acp" or "node path/to/file.js").
+    // SEC-ACP-04: never hand a command string to cmd.exe (shell: true). cliPath
+    // can be a user/extension-supplied custom-agent path; under a shell, embedded
+    // metacharacters (e.g. `& calc.exe`) would be interpreted → code execution.
     //
-    // chcp 65001: switch console to UTF-8 so stderr/stdout doesn't get garbled
-    // (Chinese Windows defaults to CP936/GBK).
-    // Quotes around cliPath handle paths with spaces (e.g. "C:\Program Files\agent.exe").
-    spawnCommand = `chcp 65001 >nul && "${cliPath}"`;
-    spawnArgs = effectiveAcpArgs;
+    // Spawn the resolved executable directly (shell: false). A quoted Windows path
+    // is unquoted, then any inline args after the executable are split off — the
+    // same `"C:\Program Files\agent.exe"` / `goose acp` / `node path/to/file.js`
+    // cases the old shell string handled, but without shell interpretation.
+    const { command, inlineArgs } = parseWindowsCliPath(cliPath);
+    spawnCommand = command;
+    spawnArgs = [...inlineArgs, ...effectiveAcpArgs];
   } else {
     // Unix: simple command or path. If cliPath contains spaces (e.g., "goose acp"),
     // parse into command + inline args.
@@ -315,7 +341,10 @@ export function createGenericSpawnConfig(
     cwd: workingDir,
     stdio: ['pipe', 'pipe', 'pipe'],
     env,
-    shell: isWindows,
+    // shell: false on all platforms — args are passed as an argv array, so no
+    // shell metacharacter interpretation is possible (SEC-ACP-04).
+    shell: false,
+    windowsHide: true,
   };
 
   return {
@@ -411,13 +440,17 @@ export function spawnNpxBackend(
   // detached: true creates a new session (setsid) so the child has no controlling terminal.
   // Required for backends (e.g. CodeBuddy) that write to /dev/tty — without it, SIGTTOU
   // would suspend the entire Electron process group and freeze the UI.
-  // On Windows, prefix with chcp 65001 to switch console to UTF-8, preventing GBK garbling.
-  const effectiveCommand = isWindows ? `chcp 65001 >nul && ${formatWindowsCommandForShell(npxCommand)}` : npxCommand;
-  const child = spawn(effectiveCommand, spawnArgs, {
+  //
+  // SEC-ACP-04: spawn the resolved npx/bun path directly (shell: false) instead of
+  // building a `chcp 65001 >nul && ...` cmd.exe string. npxCommand and spawnArgs are
+  // passed as the executable + argv array, so no shell metacharacter interpretation
+  // can occur. windowsHide keeps the console window from flashing.
+  const child = spawn(normalizeWindowsCommand(npxCommand), spawnArgs, {
     cwd: workingDir,
     stdio: ['pipe', 'pipe', 'pipe'],
     env: cleanEnv,
-    shell: isWindows,
+    shell: false,
+    windowsHide: true,
     detached,
   });
   // Prevent the detached child from keeping the parent alive when the parent wants to exit normally.

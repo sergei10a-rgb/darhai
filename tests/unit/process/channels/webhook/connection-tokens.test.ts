@@ -4,8 +4,29 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+// SEC-DATA-03: webhook secrets are now encrypted at rest via Electron
+// safeStorage at the serialize/hydrate boundary. The `electron` module is not
+// available in the unit environment, so mock safeStorage with a deterministic
+// reversible round-trip (mirroring tests/unit/process/secrets/safeStorage.test.ts).
+const { mockSafeStorage } = vi.hoisted(() => ({
+  mockSafeStorage: {
+    isEncryptionAvailable: vi.fn(() => true),
+    encryptString: vi.fn((plaintext: string) => Buffer.from(`enc(${plaintext})`)),
+    decryptString: vi.fn((cipher: Buffer) => {
+      const match = cipher.toString('utf8').match(/^enc\((.*)\)$/);
+      return match ? match[1] : '';
+    }),
+  },
+}));
+
+vi.mock('electron', () => ({
+  safeStorage: mockSafeStorage,
+}));
+
 import { ConnectionTokenStore } from '@process/channels/webhook/connection-tokens';
+import { CIPHER_PREFIX } from '@process/secrets';
 
 describe('ConnectionTokenStore', () => {
   let store: ConnectionTokenStore;
@@ -50,17 +71,42 @@ describe('ConnectionTokenStore', () => {
       expect(resolved?.secret).toBe(secret);
     });
 
-    it('round-trips secret through serialize + hydrate', () => {
+    it('round-trips secret through serialize + hydrate, encrypted at rest', () => {
       const secret = 'audience-claim-xyz';
       store.register('google-chat', 'gc_default', 'default', secret);
       const snapshot = store.serialize();
 
+      // SEC-DATA-03: the persisted form must NOT be plaintext — it is encrypted
+      // via safeStorage and carries the version-pinned cipher prefix.
+      const [persisted] = snapshot;
+      expect(persisted.secret).not.toBe(secret);
+      expect(persisted.secret).not.toContain(secret);
+      expect(persisted.secret.startsWith(CIPHER_PREFIX)).toBe(true);
+
       const fresh = new ConnectionTokenStore();
       fresh.hydrate(snapshot);
-      const [restored] = fresh.serialize();
-      expect(restored.secret).toBe(secret);
-      const resolved = fresh.resolve(restored.token);
+      // Hydrated in-memory record decrypts back to plaintext for verifiers.
+      const resolved = fresh.resolve(persisted.token);
       expect(resolved?.secret).toBe(secret);
+    });
+
+    it('RT-S2: throws rather than emitting a plaintext secret when encryption is unavailable', () => {
+      mockSafeStorage.isEncryptionAvailable.mockReturnValueOnce(false);
+      store.register('slack', 'plugin-1', 'agent-1', 'plaintext-signing-secret');
+
+      // serialize() must fail loudly so the caller's persist path surfaces the
+      // error instead of writing a plaintext secret into the config store.
+      expect(() => store.serialize()).toThrow(/RT-S2/);
+    });
+
+    it('RT-S2: still serializes empty secrets when encryption is unavailable (nothing to leak)', () => {
+      mockSafeStorage.isEncryptionAvailable.mockReturnValueOnce(false);
+      const record = store.register('discord', 'p', 'a', '');
+
+      const snapshot = store.serialize();
+      const [persisted] = snapshot;
+      expect(persisted.token).toBe(record.token);
+      expect(persisted.secret).toBe('');
     });
   });
 

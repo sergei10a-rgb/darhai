@@ -15,6 +15,7 @@ import { CodexMcpAgent } from './agents/CodexMcpAgent';
 import { OpencodeMcpAgent } from './agents/OpencodeMcpAgent';
 import { WCoreMcpAgent } from './agents/WCoreMcpAgent';
 import type { IMcpProtocol, DetectedMcpServer, McpConnectionTestResult, McpSyncResult, McpSource } from './McpProtocol';
+import { validateMcpServer } from './validateMcpServer';
 
 /**
  * MCP service - coordinates the MCP operation protocol across agents
@@ -267,6 +268,12 @@ export class McpService {
 
     if (enabledServers.length === 0) {
       return Promise.resolve({ success: true, results: [] });
+    }
+
+    // Reject command-injection-prone names / non-http(s) URLs before any agent
+    // builds a CLI invocation from them (SEC-MCP-01 pre-sync guard).
+    for (const server of enabledServers) {
+      validateMcpServer(server);
     }
 
     return this.withServiceLock(async () => {

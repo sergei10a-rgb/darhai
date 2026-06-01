@@ -1,5 +1,6 @@
 // src/process/services/database/drivers/BetterSqlite3Driver.ts
 
+import fs from 'node:fs';
 import BetterSqlite3 from 'better-sqlite3';
 import type Database from 'better-sqlite3';
 import type { ISqliteDriver, IStatement } from './ISqliteDriver';
@@ -25,6 +26,18 @@ export class BetterSqlite3Driver implements ISqliteDriver {
 
   constructor(dbPath: string) {
     this.db = new BetterSqlite3(dbPath);
+    // SEC-DATA-04: the DB holds at-rest secrets (jwt_secret, encrypted api
+    // keys). Restrict it to owner-only on POSIX so other local users / backup
+    // daemons can't read it. No-op on Windows (file mode is meaningless there;
+    // the durable cross-platform story is value-level safeStorage encryption).
+    // Wrapped in try/catch so a chmod failure never blocks app startup.
+    if (process.platform !== 'win32') {
+      try {
+        fs.chmodSync(dbPath, 0o600);
+      } catch (err) {
+        console.warn('[BetterSqlite3Driver] Failed to chmod DB file to 0o600:', err);
+      }
+    }
   }
 
   prepare(sql: string): IStatement {

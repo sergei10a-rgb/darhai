@@ -14,6 +14,7 @@ import path from 'path';
 import { ipcBridge } from '@/common';
 import { getSystemDir, ProcessEnv } from '@process/utils/initStorage';
 import { copyDirectoryRecursively, getConfigPath, getDataPath, resolveCliSafePath } from '@process/utils';
+import { registerApprovedDirectory } from './userApprovedPaths';
 
 export function initApplicationBridgeCore(): void {
   ipcBridge.application.systemInfo.provider(() => {
@@ -48,6 +49,14 @@ export function initApplicationBridgeCore(): void {
       desktop: path.join(home, 'Desktop'),
       downloads: path.join(home, 'Downloads'),
     };
-    return Promise.resolve(map[name] ?? home);
+    const resolvedPath = map[name] ?? home;
+    // Approve the Desktop default as a write destination: the export feature
+    // uses this MAIN-resolved path as its default target, so an export to the
+    // Desktop must succeed without forcing the user through a dialog while
+    // arbitrary renderer-supplied destinations stay rejected.
+    if (name === 'desktop') {
+      registerApprovedDirectory(resolvedPath);
+    }
+    return Promise.resolve(resolvedPath);
   });
 }

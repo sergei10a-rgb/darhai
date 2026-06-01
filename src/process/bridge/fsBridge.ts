@@ -25,6 +25,8 @@ import { readDirectoryRecursive } from '@process/utils';
 import { writeFileAtomic } from '@process/utils/atomicWrite';
 import { getDatabase } from '@process/services/database';
 import { ExtensionRegistry } from '@process/extensions/ExtensionRegistry';
+import { confinePath, registerAuthorizedRoot } from './pathConfinement';
+import { resolveWithinApprovedDirectory } from './userApprovedPaths';
 import type { IWorkspaceFlatFile } from '@/common/adapter/ipcBridge';
 
 // ============================================================================
@@ -105,6 +107,31 @@ async function copyDirectory(src: string, dest: string) {
     } else {
       await fs.copyFile(srcPath, destPath);
     }
+  }
+}
+
+/**
+ * Link a skill directory into `targetPath`, falling back to a recursive copy
+ * when the symlink/junction cannot be created. XP-SKILL-SYMLINK-01: Windows
+ * 'junction' links are directory-only, require an ABSOLUTE target, and are
+ * unsupported on non-NTFS volumes (FAT/exFAT/network shares). We resolve the
+ * source to an absolute path first, then fall back to `copyDirectory` on the
+ * errors that indicate the link is unsupported (EPERM/ENOSYS/EINVAL).
+ *
+ * @returns `'symlink'` when a link was created, `'copy'` when copied instead.
+ */
+async function linkOrCopySkill(skillPath: string, targetPath: string): Promise<'symlink' | 'copy'> {
+  const absoluteSource = path.resolve(skillPath);
+  try {
+    await fs.symlink(absoluteSource, targetPath, 'junction');
+    return 'symlink';
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code;
+    if (code === 'EPERM' || code === 'ENOSYS' || code === 'EINVAL') {
+      await copyDirectory(absoluteSource, targetPath);
+      return 'copy';
+    }
+    throw error;
   }
 }
 
@@ -359,9 +386,31 @@ async function getCachedWorkspaceFiles(root: string): Promise<IWorkspaceFlatFile
 export function initFsBridge(): void {
   const canceledZipRequests = new Set<string>();
 
+  /**
+   * Gate a renderer-supplied skill source path. Skill import legitimately reads
+   * from user-picked EXTERNAL folders (outside the app roots), so a blanket
+   * app-root confinement would break it. Accept when the path is either inside
+   * an authorized root (confinePath) OR inside a directory the user explicitly
+   * approved through a main-mediated native dialog (registered by dialogBridge).
+   * Returns the resolved, realpath-collapsed path to operate on, or `null` to
+   * fail closed. Callers MUST use the returned path for the fs op so the path
+   * validated is the path touched.
+   */
+  const gateSkillPath = async (rawPath: unknown): Promise<string | null> => {
+    if (typeof rawPath !== 'string' || rawPath.trim().length === 0) return null;
+    const confined = await confinePath(rawPath);
+    if (confined !== null) return confined;
+    return resolveWithinApprovedDirectory(rawPath);
+  };
+
   ipcBridge.fs.getFilesByDir.provider(async ({ dir }) => {
     try {
-      const tree = await readDirectoryRecursive(dir);
+      // Confine to authorized roots (SEC-IPC-02): block arbitrary directory
+      // listing (e.g. ~/.ssh, /etc) from a compromised renderer or an
+      // authenticated remote WebUI client.
+      const safeDir = await confinePath(dir);
+      if (safeDir === null) return [];
+      const tree = await readDirectoryRecursive(safeDir);
       return tree ? [tree] : [];
     } catch (error) {
       console.error('[fsBridge] Failed to read directory:', dir, error);
@@ -371,7 +420,11 @@ export function initFsBridge(): void {
 
   ipcBridge.fs.listWorkspaceFiles.provider(async ({ root }) => {
     try {
-      return await getCachedWorkspaceFiles(root);
+      // Confine to authorized roots (SEC-IPC-02): block recursive enumeration
+      // of arbitrary directories from a compromised renderer or remote WebUI.
+      const safeRoot = await confinePath(root);
+      if (safeRoot === null) return [];
+      return await getCachedWorkspaceFiles(safeRoot);
     } catch (error) {
       console.error('[fsBridge] Failed to list workspace files:', root, error);
       return [];
@@ -382,11 +435,11 @@ export function initFsBridge(): void {
     // Image-MIME allowlist (M7). Unknown extensions are REJECTED — we
     // previously fell back to application/octet-stream, which let a
     // hostile HTML preview inline arbitrary non-image bytes as <img src>
-    // via the inliner. This provider trusts the caller's path; containment
-    // against the HTML file's directory is enforced in the renderer
-    // (HTMLRenderer.tsx). The allowlist here is defense-in-depth so any
-    // future caller that forgets containment still cannot smuggle
-    // non-image content out as a data: URL.
+    // via the inliner. The path is confined to the app's authorized roots
+    // below (SEC-IPC-02) so a compromised renderer or remote WebUI client
+    // cannot read arbitrary files (e.g. ~/.ssh/id_rsa renamed .png) off the
+    // disk. The extension allowlist remains a secondary defense-in-depth
+    // check against smuggling non-image bytes out as a data: URL.
     //
     // Note: SVG is allowed but is itself an active-content format;
     // sanitization before inlining is tracked as a follow-up item.
@@ -407,7 +460,10 @@ export function initFsBridge(): void {
         console.warn('[fsBridge] getImageBase64 rejected non-allowlisted extension:', ext || '(none)');
         return PLACEHOLDER;
       }
-      const base64 = await fs.readFile(filePath, { encoding: 'base64' });
+      // Confine to authorized roots (SEC-IPC-02): block arbitrary file reads.
+      const safePath = await confinePath(filePath);
+      if (safePath === null) return PLACEHOLDER;
+      const base64 = await fs.readFile(safePath, { encoding: 'base64' });
       return `data:${mime};base64,${base64}`;
     } catch (_error) {
       // Return a placeholder data URL instead of throwing
@@ -576,6 +632,9 @@ export function initFsBridge(): void {
           }
 
           const resolvedWorkspace = path.resolve(conversationWorkspace);
+          // Authorize this workspace root so the renderer's follow-up
+          // fs.writeFile to the returned upload path passes confinement.
+          registerAuthorizedRoot(resolvedWorkspace);
           uploadDir = path.join(resolvedWorkspace, 'uploads');
           await fs.mkdir(uploadDir, { recursive: true });
         } catch (error) {
@@ -637,12 +696,17 @@ export function initFsBridge(): void {
 
   ipcBridge.fs.readFile.provider(async ({ path: filePath }) => {
     try {
-      const stat = await fs.stat(filePath);
+      // Confine to authorized roots: reject arbitrary absolute reads
+      // (e.g. ~/.ssh/id_rsa, the app's .env) from a compromised renderer or
+      // an authenticated remote WebUI client. See SEC-IPC-02.
+      const safePath = await confinePath(filePath);
+      if (safePath === null) return null;
+      const stat = await fs.stat(safePath);
       if (stat.size > MAX_READ_FILE_SIZE) {
-        console.warn(`[fsBridge] File too large to read as text (${stat.size} bytes): ${filePath}`);
+        console.warn(`[fsBridge] File too large to read as text (${stat.size} bytes): ${safePath}`);
         return null;
       }
-      const content = await fs.readFile(filePath, 'utf-8');
+      const content = await fs.readFile(safePath, 'utf-8');
       return content;
     } catch (error) {
       const code = (error as NodeJS.ErrnoException).code;
@@ -658,13 +722,16 @@ export function initFsBridge(): void {
   // Read binary file as ArrayBuffer
   ipcBridge.fs.readFileBuffer.provider(async ({ path: filePath }) => {
     try {
+      // Confine to authorized roots (SEC-IPC-02): block arbitrary binary reads.
+      const safePath = await confinePath(filePath);
+      if (safePath === null) return null;
       // Cap binary reads to prevent main-process OOM on attacker-controlled paths (M6)
-      const stat = await fs.stat(filePath);
+      const stat = await fs.stat(safePath);
       if (stat.size > MAX_READ_FILE_BUFFER_SIZE) {
-        console.warn(`[fsBridge] File too large to read as buffer (${stat.size} bytes): ${filePath}`);
+        console.warn(`[fsBridge] File too large to read as buffer (${stat.size} bytes): ${safePath}`);
         return null;
       }
-      const buffer = await fs.readFile(filePath);
+      const buffer = await fs.readFile(safePath);
       // Convert Node.js Buffer to ArrayBuffer
       return buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
     } catch (error) {
@@ -680,18 +747,24 @@ export function initFsBridge(): void {
   // Write file
   ipcBridge.fs.writeFile.provider(async ({ path: filePath, data }) => {
     try {
+      // Confine to authorized roots (SEC-IPC-01): block arbitrary writes
+      // (e.g. overwriting ~/.zshrc or planting a startup item) from a
+      // compromised renderer or an authenticated remote WebUI client.
+      const safePath = await confinePath(filePath);
+      if (safePath === null) return false;
+
       // Handle string type
       if (typeof data === 'string') {
-        await fs.writeFile(filePath, data, 'utf-8');
+        await fs.writeFile(safePath, data, 'utf-8');
 
         // Send streaming content update to preview panel (for real-time updates)
         try {
-          const pathSegments = filePath.split(path.sep);
+          const pathSegments = safePath.split(path.sep);
           const fileName = pathSegments[pathSegments.length - 1];
           const workspace = pathSegments.slice(0, -1).join(path.sep);
 
           const eventData = {
-            filePath: filePath,
+            filePath: safePath,
             content: data,
             workspace: workspace,
             relativePath: fileName,
@@ -703,7 +776,7 @@ export function initFsBridge(): void {
           console.error('[fsBridge] ❌ Failed to emit file stream update:', emitError);
         }
 
-        invalidateWorkspaceFileListCacheByPath(filePath);
+        invalidateWorkspaceFileListCacheByPath(safePath);
         return true;
       }
 
@@ -731,8 +804,8 @@ export function initFsBridge(): void {
         bufferData = data;
       }
 
-      await fs.writeFile(filePath, bufferData);
-      invalidateWorkspaceFileListCacheByPath(filePath);
+      await fs.writeFile(safePath, bufferData);
+      invalidateWorkspaceFileListCacheByPath(safePath);
       return true;
     } catch (error) {
       console.error('Failed to write file:', error);
@@ -762,13 +835,28 @@ export function initFsBridge(): void {
 
         if (typeof file.sourcePath === 'string' && file.sourcePath) {
           try {
-            const entryStat = await fs.lstat(file.sourcePath);
+            // Confine to authorized roots (SEC-IPC-02): a renderer/WebUI client
+            // must not be able to bundle arbitrary files (e.g. ~/.ssh/id_rsa)
+            // into a downloadable zip. confinePath() also collapses symlinks on
+            // the existing prefix, so a symlinked source whose target escapes
+            // the authorized roots is rejected here (re-asserts confinement on
+            // the realpath'd target).
+            const safeSourcePath = await confinePath(file.sourcePath);
+            if (safeSourcePath === null) {
+              console.warn('[fsBridge] createZip rejected out-of-root source file:', file.sourcePath);
+              continue;
+            }
+
+            const entryStat = await fs.lstat(safeSourcePath);
             let isRegularFile = entryStat.isFile();
 
-            // Follow symlink target only when needed and keep non-regular files out
+            // Follow symlink target only when needed and keep non-regular files
+            // out. The realpath target was already re-confined by confinePath()
+            // above, so a symlink that escapes the authorized roots never
+            // reaches this point.
             if (!isRegularFile && entryStat.isSymbolicLink()) {
               try {
-                const targetStat = await fs.stat(file.sourcePath);
+                const targetStat = await fs.stat(safeSourcePath);
                 isRegularFile = targetStat.isFile();
               } catch {
                 isRegularFile = false;
@@ -789,7 +877,7 @@ export function initFsBridge(): void {
               if (isCanceled()) {
                 abortController.abort();
               }
-              const fileBuffer = await fs.readFile(file.sourcePath, {
+              const fileBuffer = await fs.readFile(safeSourcePath, {
                 signal: abortController.signal,
               });
               if (isCanceled()) {
@@ -849,9 +937,31 @@ export function initFsBridge(): void {
       if (isCanceled()) {
         throw new Error('Zip export canceled');
       }
+      // Gate the zip DESTINATION (RT-R1-03 / RT-F1-02): a compromised renderer
+      // must not be able to write the archive to an arbitrary location (e.g.
+      // ~/.zshrc, a startup item) without a user-mediated dialog. The export
+      // feature legitimately writes to a folder the user picked via the native
+      // dialog or the MAIN-resolved Desktop default — both inherently OUTSIDE
+      // the app's authorized roots. Accept the destination when it is either in
+      // an authorized root (confinePath) OR inside a directory the user
+      // explicitly approved through a main-mediated action. Fail closed
+      // otherwise. The resolved (symlink/`..`-collapsed) form is used for the
+      // actual write so the path we validated is the path we touch.
+      const confinedDestPath = await confinePath(filePath);
+      let safeDestPath: string | null = confinedDestPath;
+      if (safeDestPath === null) {
+        // resolveWithinApprovedDirectory returns the realpath-collapsed form, so
+        // an in-approved-dir symlink cannot redirect the write outside it
+        // (TOCTOU / symlink-follow). The path validated is the path written.
+        safeDestPath = resolveWithinApprovedDirectory(filePath);
+      }
+      if (safeDestPath === null) {
+        console.warn('[fsBridge] createZip rejected unapproved destination:', filePath);
+        return false;
+      }
       // Ensure parent directory exists before writing (may be deleted by OneDrive sync, etc.)
-      await fs.mkdir(path.dirname(filePath), { recursive: true });
-      await fs.writeFile(filePath, zipBuffer);
+      await fs.mkdir(path.dirname(safeDestPath), { recursive: true });
+      await fs.writeFile(safeDestPath, zipBuffer);
       return true;
     } catch (error) {
       if (error instanceof Error && error.message.includes('canceled')) {
@@ -869,26 +979,36 @@ export function initFsBridge(): void {
 
   // Get file metadata
   ipcBridge.fs.getFileMetadata.provider(async ({ path: filePath }) => {
+    // Empty-metadata sentinel returned for both confinement rejection and any
+    // stat failure. Using one shape for all failure modes avoids an existence
+    // oracle: a rejected out-of-root path is indistinguishable from a missing
+    // or permission-denied in-root path (no ENOENT vs EACCES leak).
+    const emptyMetadata = {
+      name: path.basename(filePath),
+      path: filePath,
+      size: -1,
+      type: '',
+      lastModified: 0,
+    };
     try {
-      const stats = await fs.stat(filePath);
+      // Confine to authorized roots (SEC-IPC-02): block stat probes of
+      // arbitrary paths from a compromised renderer or remote WebUI client.
+      const safePath = await confinePath(filePath);
+      if (safePath === null) return emptyMetadata;
+      const stats = await fs.stat(safePath);
       return {
-        name: path.basename(filePath),
-        path: filePath,
+        name: path.basename(safePath),
+        path: safePath,
         size: stats.size,
         type: '', // MIME type can be inferred from the file extension
         lastModified: stats.mtime.getTime(),
       };
     } catch (error) {
       // Return empty metadata instead of throwing to avoid unhandled rejection
-      // (bridge provider callbacks have no .catch handler)
+      // (bridge provider callbacks have no .catch handler). Do not surface the
+      // error code to the caller — keep the failure indistinguishable.
       console.error('[fsBridge] Failed to get file metadata:', filePath, error);
-      return {
-        name: path.basename(filePath),
-        path: filePath,
-        size: -1,
-        type: '',
-        lastModified: 0,
-      };
+      return emptyMetadata;
     }
   });
 
@@ -898,24 +1018,50 @@ export function initFsBridge(): void {
       const copiedFiles: string[] = [];
       const failedFiles: Array<{ path: string; error: string }> = [];
 
+      // Confine the workspace destination to authorized roots (SEC-IPC-01):
+      // block writing copied files to an arbitrary directory. Authorize the
+      // confined root so the structure-preserving targets below also pass.
+      const safeWorkspace = await confinePath(workspace);
+      if (safeWorkspace === null) {
+        return {
+          success: false,
+          msg: 'Workspace is outside the allowed roots',
+        };
+      }
+      registerAuthorizedRoot(safeWorkspace);
+
       // Ensure workspace directory exists
-      await fs.mkdir(workspace, { recursive: true });
+      await fs.mkdir(safeWorkspace, { recursive: true });
 
       for (const filePath of filePaths) {
         try {
+          // Confine each source path (SEC-IPC-02): block copying arbitrary
+          // files (e.g. ~/.ssh/id_rsa) into the workspace.
+          const safeFilePath = await confinePath(filePath);
+          if (safeFilePath === null) {
+            failedFiles.push({ path: filePath, error: 'Source path is outside the allowed roots' });
+            continue;
+          }
+
           let targetPath: string;
 
           if (sourceRoot) {
-            // Preserve directory structure
-            const relativePath = path.relative(sourceRoot, filePath);
-            targetPath = path.join(workspace, relativePath);
+            // Preserve directory structure. Reject a relative path that escapes
+            // sourceRoot (starts with `..` or is absolute), so a crafted
+            // filePath cannot redirect the copy target outside the workspace.
+            const relativePath = path.relative(sourceRoot, safeFilePath);
+            if (relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
+              failedFiles.push({ path: filePath, error: 'Source path escapes sourceRoot' });
+              continue;
+            }
+            targetPath = path.join(safeWorkspace, relativePath);
 
             // Ensure parent directory exists
             await fs.mkdir(path.dirname(targetPath), { recursive: true });
           } else {
             // Flatten to root (legacy behavior)
-            const fileName = path.basename(filePath);
-            targetPath = path.join(workspace, fileName);
+            const fileName = path.basename(safeFilePath);
+            targetPath = path.join(safeWorkspace, fileName);
           }
 
           // Check whether the target file already exists
@@ -936,7 +1082,7 @@ export function initFsBridge(): void {
             finalTargetPath = path.join(dir, newFileName);
           }
 
-          await fs.copyFile(filePath, finalTargetPath);
+          await fs.copyFile(safeFilePath, finalTargetPath);
           copiedFiles.push(finalTargetPath);
         } catch (error) {
           // Record failed file info so UI can warn user
@@ -950,7 +1096,7 @@ export function initFsBridge(): void {
       const success = failedFiles.length === 0;
       const msg = success ? undefined : 'Some files failed to copy';
       if (copiedFiles.length > 0) {
-        invalidateWorkspaceFileListCacheByPath(workspace);
+        invalidateWorkspaceFileListCacheByPath(safeWorkspace);
       }
 
       return {
@@ -970,21 +1116,27 @@ export function initFsBridge(): void {
   // Delete file or directory on disk
   ipcBridge.fs.removeEntry.provider(async ({ path: targetPath }) => {
     try {
-      const stats = await fs.lstat(targetPath);
+      // Confine to authorized roots (SEC-IPC-01): block deleting arbitrary
+      // paths — recursive force-delete of any directory is catastrophic.
+      const safePath = await confinePath(targetPath);
+      if (safePath === null) {
+        return { success: false, msg: 'Path is outside the allowed workspace roots' };
+      }
+      const stats = await fs.lstat(safePath);
       if (stats.isDirectory()) {
-        await fs.rm(targetPath, { recursive: true, force: true });
-        invalidateWorkspaceFileListCacheByPath(targetPath);
+        await fs.rm(safePath, { recursive: true, force: true });
+        invalidateWorkspaceFileListCacheByPath(safePath);
       } else {
-        await fs.unlink(targetPath);
+        await fs.unlink(safePath);
 
         // Send streaming delete event to preview panel (to close preview)
         try {
-          const pathSegments = targetPath.split(path.sep);
+          const pathSegments = safePath.split(path.sep);
           const fileName = pathSegments[pathSegments.length - 1];
           const workspace = pathSegments.slice(0, -1).join(path.sep);
 
           ipcBridge.fileStream.contentUpdate.emit({
-            filePath: targetPath,
+            filePath: safePath,
             content: '',
             workspace: workspace,
             relativePath: fileName,
@@ -994,7 +1146,7 @@ export function initFsBridge(): void {
           console.error('[fsBridge] Failed to emit file stream delete:', emitError);
         }
 
-        invalidateWorkspaceFileListCacheByPath(targetPath);
+        invalidateWorkspaceFileListCacheByPath(safePath);
       }
       return { success: true };
     } catch (error) {
@@ -1009,10 +1161,22 @@ export function initFsBridge(): void {
   // Rename file or directory and return new path
   ipcBridge.fs.renameEntry.provider(async ({ path: targetPath, newName }) => {
     try {
-      const directory = path.dirname(targetPath);
-      const newPath = path.join(directory, newName);
+      // Confine the source to authorized roots (SEC-IPC-01).
+      const safeTarget = await confinePath(targetPath);
+      if (safeTarget === null) {
+        return { success: false, msg: 'Path is outside the allowed workspace roots' };
+      }
 
-      if (newPath === targetPath) {
+      const directory = path.dirname(safeTarget);
+      // newName may contain traversal (e.g. `../../etc/cron.d/x`); confine the
+      // resulting destination as well so a rename cannot escape the root.
+      const candidateNewPath = path.join(directory, newName);
+      const newPath = await confinePath(candidateNewPath);
+      if (newPath === null) {
+        return { success: false, msg: 'Target name is outside the allowed workspace roots' };
+      }
+
+      if (newPath === safeTarget) {
         // Skip when the new name equals the original path
         return { success: true, data: { newPath } };
       }
@@ -1027,8 +1191,8 @@ export function initFsBridge(): void {
         return { success: false, msg: 'Target path already exists' };
       }
 
-      await fs.rename(targetPath, newPath);
-      invalidateWorkspaceFileListCacheByPath(targetPath);
+      await fs.rename(safeTarget, newPath);
+      invalidateWorkspaceFileListCacheByPath(safeTarget);
       invalidateWorkspaceFileListCacheByPath(newPath);
       return { success: true, data: { newPath } };
     } catch (error) {
@@ -1250,6 +1414,15 @@ export function initFsBridge(): void {
   // Read skill info without importing
   ipcBridge.fs.readSkillInfo.provider(async ({ skillPath }) => {
     try {
+      // Confine the renderer-supplied skill dir: in an authorized root OR a
+      // user-approved (dialog-picked) external folder. Reject arbitrary paths
+      // (e.g. /etc) and operate on the resolved, realpath-collapsed form.
+      const safeSkillPath = await gateSkillPath(skillPath);
+      if (safeSkillPath === null) {
+        return { success: false, msg: 'Skill path is outside the allowed or approved directories' };
+      }
+      skillPath = safeSkillPath;
+
       // Verify SKILL.md file exists
       const skillMdPath = path.join(skillPath, 'SKILL.md');
       try {
@@ -1299,6 +1472,16 @@ export function initFsBridge(): void {
   // Import skill directory
   ipcBridge.fs.importSkill.provider(async ({ skillPath }) => {
     try {
+      // Confine the renderer-supplied source dir: in an authorized root OR a
+      // user-approved (dialog-picked) external folder. Reject arbitrary paths
+      // (e.g. /etc) so a compromised renderer cannot copy arbitrary files into
+      // the skills dir. Operate on the resolved, realpath-collapsed form.
+      const safeSkillPath = await gateSkillPath(skillPath);
+      if (safeSkillPath === null) {
+        return { success: false, msg: 'Skill path is outside the allowed or approved directories' };
+      }
+      skillPath = safeSkillPath;
+
       // Verify SKILL.md file exists
       const skillMdPath = path.join(skillPath, 'SKILL.md');
       try {
@@ -1387,6 +1570,16 @@ export function initFsBridge(): void {
   ipcBridge.fs.scanForSkills.provider(async ({ folderPath }) => {
     console.log(`[fsBridge] scanForSkills called with path: ${folderPath}`);
     try {
+      // Confine the renderer-supplied folder: in an authorized root OR a
+      // user-approved (dialog-picked) external folder. Reject arbitrary paths
+      // (e.g. /etc) so a compromised renderer cannot enumerate arbitrary
+      // directories. Operate on the resolved, realpath-collapsed form.
+      const safeFolderPath = await gateSkillPath(folderPath);
+      if (safeFolderPath === null) {
+        return { success: false, msg: 'Folder path is outside the allowed or approved directories' };
+      }
+      folderPath = safeFolderPath;
+
       const skills: Array<{ name: string; description: string; path: string }> = [];
 
       await fs.access(folderPath);
@@ -1531,11 +1724,22 @@ export function initFsBridge(): void {
 
   ipcBridge.fs.addCustomExternalPath.provider(async ({ name, path: skillPath }) => {
     try {
+      // The custom path comes from a free-text input OR the native dialog. Only
+      // accept it when it is in an authorized root OR a user-approved (dialog-
+      // picked) directory — otherwise a compromised renderer could register an
+      // arbitrary path (e.g. /etc) and then enumerate it via
+      // detectAndCountExternalSkills. Persist the resolved, realpath-collapsed
+      // form so the stored entry is the validated path.
+      const safeSkillPath = await gateSkillPath(skillPath);
+      if (safeSkillPath === null) {
+        return { success: false, msg: 'Path is outside the allowed or approved directories' };
+      }
+
       const existing = await loadCustomExternalPaths();
-      if (existing.some((p) => p.path === skillPath)) {
+      if (existing.some((p) => p.path === safeSkillPath)) {
         return { success: false, msg: 'Path already exists' };
       }
-      existing.push({ name, path: skillPath });
+      existing.push({ name, path: safeSkillPath });
       await saveCustomExternalPaths(existing);
       return { success: true, msg: 'Custom path added' };
     } catch (error) {
@@ -1591,16 +1795,23 @@ export function initFsBridge(): void {
         },
       ];
 
-      // Load custom paths and merge
+      // Load custom paths and merge. Re-gate each persisted custom path at
+      // enumeration time (defense in depth): a custom_external_skill_paths.json
+      // written by an older build — before addCustomExternalPath enforced the
+      // gate — could still hold an arbitrary path (e.g. /etc). Drop any custom
+      // path that is no longer in an authorized root or a user-approved dir, and
+      // enumerate the resolved form.
       const customPaths = await loadCustomExternalPaths();
-      const candidates = [
-        ...builtinCandidates,
-        ...customPaths.map((cp) => ({
-          name: cp.name,
-          path: cp.path,
-          source: `custom-${cp.path}`,
-        })),
-      ];
+      const gatedCustomPaths: Array<{ name: string; path: string; source: string }> = [];
+      for (const cp of customPaths) {
+        const safe = await gateSkillPath(cp.path);
+        if (safe === null) {
+          console.warn('[fsBridge] detectAndCountExternalSkills skipped unapproved custom path:', cp.path);
+          continue;
+        }
+        gatedCustomPaths.push({ name: cp.name, path: safe, source: `custom-${safe}` });
+      }
+      const candidates = [...builtinCandidates, ...gatedCustomPaths];
 
       const results: Array<{
         name: string;
@@ -1706,6 +1917,17 @@ export function initFsBridge(): void {
   // Import skill via symlink
   ipcBridge.fs.importSkillWithSymlink.provider(async ({ skillPath }) => {
     try {
+      // Confine the renderer-supplied source dir: in an authorized root OR a
+      // user-approved (dialog-picked) external folder. Reject arbitrary paths
+      // (e.g. /etc) so a compromised renderer cannot symlink/copy an arbitrary
+      // directory into the skills dir. Operate on the resolved, realpath-
+      // collapsed form.
+      const safeSkillPath = await gateSkillPath(skillPath);
+      if (safeSkillPath === null) {
+        return { success: false, msg: 'Skill path is outside the allowed or approved directories' };
+      }
+      skillPath = safeSkillPath;
+
       const skillMdPath = path.join(skillPath, 'SKILL.md');
       try {
         await fs.access(skillMdPath);
@@ -1747,8 +1969,8 @@ export function initFsBridge(): void {
         // Does not exist, proceed
       }
 
-      await fs.symlink(skillPath, targetDir, 'junction');
-      console.log(`[fsBridge] Created symlink for skill "${skillName}" at ${targetDir}`);
+      const importMode = await linkOrCopySkill(skillPath, targetDir);
+      console.log(`[fsBridge] Imported skill "${skillName}" at ${targetDir} via ${importMode}`);
       return {
         success: true,
         data: { skillName },
@@ -1839,9 +2061,10 @@ export function initFsBridge(): void {
         // Path does not exist, proceed
       }
 
-      // Create symlink
-      await fs.symlink(skillPath, targetPath, 'junction');
-      console.log(`[fsBridge] Exported skill "${skillName}" to ${targetPath} via symlink`);
+      // Create symlink, falling back to a recursive copy where junctions are
+      // unsupported (non-NTFS targets, relative paths) — XP-SKILL-SYMLINK-01.
+      const exportMode = await linkOrCopySkill(skillPath, targetPath);
+      console.log(`[fsBridge] Exported skill "${skillName}" to ${targetPath} via ${exportMode}`);
 
       return { success: true, msg: `Successfully exported to ${targetPath}` };
     } catch (error) {
@@ -1852,5 +2075,4 @@ export function initFsBridge(): void {
       };
     }
   });
-
 }

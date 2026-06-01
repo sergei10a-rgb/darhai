@@ -11,6 +11,24 @@
  * via IPC, and waits for a success/failure response. This keeps the main
  * process event loop free while hooks run heavy operations (e.g. bun add -g).
  *
+ * ⚠️ DANGER — TRUSTED CODE ONLY. `runScript` loads the extension-supplied hook
+ * via `eval('require')(scriptPath)` and invokes it. The hook runs with FULL
+ * Node.js privileges in this forked process — it is NOT sandboxed (no vm
+ * context, no require allowlist, no permission enforcement). Anything that can
+ * reach this runner (an installed extension's `onInstall`/`onActivate`) is
+ * therefore equivalent to arbitrary host code execution. The shell-hook path is
+ * narrowed by ALLOWED_SHELL_COMMANDS, but the script path is not confined at
+ * all. Installation is gated behind a native local-user confirmation
+ * (HubInstaller.install) and remote-WS install is excluded from the bridge
+ * allowlist so this code path is only ever reached for extensions a local user
+ * explicitly chose to install. Do NOT relax those gates without first replacing
+ * eval('require') with a real sandbox.
+ *
+ * RESIDUAL (not addressed in this wave — would destabilize all extensions):
+ * a true permission/vm sandbox for hook execution (e.g. vm.runInNewContext with
+ * a permission-driven require proxy, or Node --experimental-permission), and a
+ * publisher-signature check on the extension before any hook runs.
+ *
  * Protocol:
  *   Main → Child:  { type, scriptPath?, hookName?, shell?, context }
  *   Child → Main:  { success: true } | { success: false, error: string }

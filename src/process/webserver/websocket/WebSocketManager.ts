@@ -17,6 +17,19 @@ interface ClientInfo {
 }
 
 /**
+ * Maximum allowed inbound WebSocket frame size in bytes (4 MiB).
+ *
+ * WS-POSTAUTH-DISPATCH: the `ws` default is 100 MiB/frame, parsed synchronously
+ * on the main thread — a single huge frame can OOM/stall the process. We bound
+ * it at the protocol layer (maxPayload, enforced by the ws receiver which closes
+ * the socket with code 1009) AND with an explicit pre-parse byte-length check
+ * before JSON.parse as defense-in-depth. 4 MiB comfortably covers legitimate
+ * bridge payloads (the HTTP body limit is 10 MiB, but WS messages are small
+ * control/RPC envelopes).
+ */
+const MAX_WS_FRAME_BYTES = 4 * 1024 * 1024;
+
+/**
  * WebSocket Manager - Manages client connections, heartbeat detection, and message handling
  */
 export class WebSocketManager {
@@ -29,6 +42,12 @@ export class WebSocketManager {
    * Initialize WebSocket manager
    */
   initialize(): void {
+    // WS-POSTAUTH-DISPATCH: bound inbound frame size at the protocol layer.
+    // The WSS is created with `noServer:true`, so `options.maxPayload` is read
+    // per-connection at upgrade-completion time (ws WebSocketServer.completeUpgrade).
+    // initialize() runs before any upgrade completes, so setting it here applies
+    // to every subsequent connection's receiver.
+    this.wss.options.maxPayload = MAX_WS_FRAME_BYTES;
     this.startHeartbeat();
     console.log('[WebSocketManager] Initialized');
   }
@@ -133,6 +152,20 @@ export class WebSocketManager {
   ): (rawData: Buffer) => void {
     return (rawData: Buffer) => {
       try {
+        // WS-POSTAUTH-DISPATCH: defense-in-depth bound on the synchronous parse.
+        // maxPayload already closes oversized frames at the ws protocol layer, but
+        // guard here too so a large frame can never reach JSON.parse on the main
+        // thread (the ws receiver may concatenate fragments before emitting).
+        if (rawData.length > MAX_WS_FRAME_BYTES) {
+          console.error('[WebSocketManager] Rejected oversized WebSocket frame:', rawData.length);
+          try {
+            ws.send(JSON.stringify({ error: 'Message too large' }));
+          } catch {
+            // Socket may be broken; ignore send failure
+          }
+          return;
+        }
+
         const parsed = JSON.parse(rawData.toString());
         const { name, data } = parsed;
 

@@ -97,20 +97,23 @@ describe('spawnNpxBackend - Windows UTF-8 fix', () => {
     );
   });
 
-  it('prefixes command with chcp 65001 on Windows to enable UTF-8', () => {
+  it('spawns the resolved command directly on Windows without a shell (SEC-ACP-04)', () => {
     spawnNpxBackend('claude', '@pkg/cli@1.0.0', '/bundled/bun', {}, '/cwd', true, false);
 
     const [command, , options] = mockSpawn.mock.calls[0];
-    expect(command).toBe('chcp 65001 >nul && "/bundled/bun"');
-    expect(options).toMatchObject({ shell: true });
+    // No `chcp 65001 >nul && ...` cmd.exe string — the executable is spawned directly.
+    expect(command).toBe('/bundled/bun');
+    expect(options).toMatchObject({ shell: false, windowsHide: true });
   });
 
-  it('quotes npxCommand on Windows to handle paths with spaces', () => {
+  it('passes a quoted Windows path through unquoted with no shell (SEC-ACP-04)', () => {
     const npxWithSpaces = 'C:\\Program Files\\nodejs\\npx.cmd';
-    spawnNpxBackend('claude', '@pkg/cli@1.0.0', npxWithSpaces, {}, '/cwd', true, false);
+    spawnNpxBackend('claude', '@pkg/cli@1.0.0', `"${npxWithSpaces}"`, {}, '/cwd', true, false);
 
-    const [command] = mockSpawn.mock.calls[0];
-    expect(command).toBe(`chcp 65001 >nul && "${npxWithSpaces}"`);
+    const [command, , options] = mockSpawn.mock.calls[0];
+    // Surrounding quotes are stripped; no chcp prefix, no shell interpretation.
+    expect(command).toBe(npxWithSpaces);
+    expect(options).toMatchObject({ shell: false });
   });
 
   it('passes bun x --bun and package name as spawn args', () => {
@@ -148,18 +151,20 @@ describe('spawnNpxBackend - Windows UTF-8 fix', () => {
     expect(mockChild.unref).not.toHaveBeenCalled();
   });
 
-  it('uses bundled bun command with chcp prefix on Windows', () => {
+  it('spawns the bundled bun command directly on Windows (no chcp prefix)', () => {
     spawnNpxBackend('claude', '@pkg/cli@1.0.0', 'npx.cmd', {}, 'C:\\cwd', true, false);
 
-    const [command] = mockSpawn.mock.calls[0];
-    expect(command).toBe('chcp 65001 >nul && npx.cmd');
+    const [command, , options] = mockSpawn.mock.calls[0];
+    expect(command).toBe('npx.cmd');
+    expect(options).toMatchObject({ shell: false });
   });
 
-  it('falls back to npxCommand when directInvoke is undefined on Windows', () => {
+  it('spawns an unquoted Windows npx path directly with no shell', () => {
     spawnNpxBackend('claude', '@pkg/cli@1.0.0', 'C:\\nodejs\\npx.cmd', {}, 'C:\\cwd', true, false);
 
-    const [command] = mockSpawn.mock.calls[0];
-    expect(command).toBe('chcp 65001 >nul && "C:\\nodejs\\npx.cmd"');
+    const [command, , options] = mockSpawn.mock.calls[0];
+    expect(command).toBe('C:\\nodejs\\npx.cmd');
+    expect(options).toMatchObject({ shell: false });
   });
 
   it('uses bundled bun command directly on non-Windows', () => {
@@ -200,21 +205,26 @@ describe('createGenericSpawnConfig - Windows path handling', () => {
     expect(config.options).toMatchObject({ shell: false });
   });
 
-  it('wraps cliPath with chcp 65001 and quotes on Windows', () => {
+  it('spawns the resolved executable directly on Windows with no shell (SEC-ACP-04)', () => {
     setWindowsPlatform();
     const config = createGenericSpawnConfig('goose', 'C:\\cwd', ['acp'], undefined, { PATH: 'C:\\Windows' });
 
-    expect(config.command).toBe('chcp 65001 >nul && "goose"');
-    expect(config.options).toMatchObject({ shell: true });
+    // No `chcp 65001 >nul && ...` cmd.exe string; cliPath is parsed into command + args
+    // and spawned directly so embedded metacharacters cannot reach a shell.
+    expect(config.command).toBe('goose');
+    expect(config.args).toEqual(['acp']);
+    expect(config.options).toMatchObject({ shell: false, windowsHide: true });
   });
 
-  it('handles Windows path with spaces using quotes', () => {
+  it('parses a quoted Windows path with spaces into a bare command, no shell', () => {
     setWindowsPlatform();
-    const config = createGenericSpawnConfig('C:\\Program Files\\agent\\agent.exe', 'C:\\cwd', [], undefined, {
+    const config = createGenericSpawnConfig('"C:\\Program Files\\agent\\agent.exe"', 'C:\\cwd', [], undefined, {
       PATH: 'C:\\Windows',
     });
 
-    expect(config.command).toBe('chcp 65001 >nul && "C:\\Program Files\\agent\\agent.exe"');
+    // Quoted path is unquoted into the command itself — not handed to cmd.exe.
+    expect(config.command).toBe('C:\\Program Files\\agent\\agent.exe');
+    expect(config.options).toMatchObject({ shell: false });
   });
 
   it('splits npx package into command and args (no chcp prefix for npx path)', () => {
@@ -369,12 +379,12 @@ describe('connectClaude - detached process group', () => {
     await connectClaude('C:\\cwd', { setup, cleanup });
 
     expect(mockSpawn).toHaveBeenCalledWith(
-      expect.stringContaining('chcp 65001 >nul &&'),
+      '/bundled/bun',
       expect.arrayContaining(['x', '--bun', '@agentclientprotocol/claude-agent-acp@0.33.1']),
       expect.objectContaining({
         cwd: 'C:\\cwd',
         detached: false,
-        shell: true,
+        shell: false,
       })
     );
     expect(mockChild.unref).not.toHaveBeenCalled();
@@ -421,12 +431,12 @@ describe('spawnGenericBackend - detached process group', () => {
     const result = await spawnGenericBackend('qwen', 'qwen', 'C:\\cwd', ['--acp']);
 
     expect(mockSpawn).toHaveBeenCalledWith(
-      expect.stringContaining('chcp 65001 >nul &&'),
+      'qwen',
       ['--acp'],
       expect.objectContaining({
         cwd: 'C:\\cwd',
         detached: false,
-        shell: true,
+        shell: false,
       })
     );
     expect(result.isDetached).toBe(false);
@@ -469,7 +479,8 @@ describe('connectCodex - Windows package selection', () => {
     await connectCodex('C:\\cwd', hooks);
 
     const [command, args] = mockSpawn.mock.calls[0];
-    expect(command).toContain('chcp 65001 >nul &&');
+    // SEC-ACP-04: bundled bun is spawned directly (shell: false), no chcp prefix.
+    expect(command).toBe('/bundled/bun');
     expect(args).toContain('x');
     expect(args).toContain('--bun');
     expect(args).toContain('@zed-industries/codex-acp-win32-x64@0.9.5');

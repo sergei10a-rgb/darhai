@@ -4,8 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import path from 'path';
 import { BrowserWindow, dialog } from 'electron';
 import { ipcBridge } from '@/common';
+import { registerApprovedDirectory } from './userApprovedPaths';
 
 export function initDialogBridge(): void {
   ipcBridge.dialog.showOpen.provider((options) => {
@@ -22,6 +24,15 @@ export function initDialogBridge(): void {
       : dialog.showOpenDialog(dialogOptions);
 
     return showDialogPromise.then((res) => {
+      // The user explicitly picked these paths through the native dialog (runs
+      // in MAIN — the renderer cannot spoof them). Approve them as write
+      // destinations so a subsequent main-mediated write (e.g. createZip export
+      // to a user-chosen folder) is accepted while arbitrary renderer-supplied
+      // destinations remain rejected.
+      const pickedDirectory = options?.properties?.includes('openDirectory');
+      for (const filePath of res.filePaths) {
+        registerApprovedDirectory(pickedDirectory ? filePath : path.dirname(filePath));
+      }
       return res.filePaths;
     });
   });

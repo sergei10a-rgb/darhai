@@ -1,7 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import os from 'os';
+import path from 'path';
 
 // Capture provider callbacks registered during initFsBridge()
 const providerCallbacks: Record<string, (...args: unknown[]) => unknown> = {};
+
+// Fixtures live under the OS temp dir, which path confinement authorizes as a
+// static root (pathConfinement.ts seeds os.tmpdir()). This proves the read-path
+// security gate accepts legitimate in-root paths while still rejecting arbitrary
+// absolute reads (covered by the confinement unit tests).
+const FIXTURE_ROOT = path.join(os.tmpdir(), 'fsbridge-readfile-test');
 
 vi.mock('@office-ai/platform', () => ({
   bridge: {
@@ -102,7 +110,9 @@ vi.mock('fs/promises', async (importOriginal) => {
       writeFile: vi.fn(),
       rm: vi.fn(),
       rename: vi.fn(),
-      realpath: vi.fn(),
+      // Identity realpath so path confinement's symlink-collapse pass is a no-op
+      // for these in-memory fixtures (no real symlinks to resolve).
+      realpath: vi.fn(async (p: string) => p),
       copyFile: vi.fn(),
       symlink: vi.fn(),
       access: vi.fn(),
@@ -132,6 +142,12 @@ describe('fsBridge readFile/readFileBuffer EBUSY handling', () => {
     mockStat.mockReset();
     // Re-import and initialize to capture provider callbacks
     vi.resetModules();
+    // vi.resetModules() resets the platform-services singleton in the freshly
+    // imported module graph, so re-register Node services. Path confinement reads
+    // the temp/config/data dirs through these at first use.
+    const { registerPlatformServices } = await import('@/common/platform');
+    const { NodePlatformServices } = await import('@/common/platform/NodePlatformServices');
+    registerPlatformServices(new NodePlatformServices());
   });
 
   it('readFile returns null for EBUSY (file locked by another process)', async () => {
@@ -142,7 +158,7 @@ describe('fsBridge readFile/readFileBuffer EBUSY handling', () => {
     mockStat.mockResolvedValueOnce({ size: 100 });
     mockReadFile.mockRejectedValueOnce(makeErrnoError('EBUSY', 'EBUSY: resource busy or locked'));
 
-    const result = await readFileCb({ path: '/some/locked/file.pptx' });
+    const result = await readFileCb({ path: path.join(FIXTURE_ROOT, 'file.pptx') });
     expect(result).toBeNull();
   });
 
@@ -152,7 +168,7 @@ describe('fsBridge readFile/readFileBuffer EBUSY handling', () => {
 
     mockStat.mockRejectedValueOnce(makeErrnoError('ENOENT', 'ENOENT: no such file or directory'));
 
-    const result = await readFileCb({ path: '/missing/file.txt' });
+    const result = await readFileCb({ path: path.join(FIXTURE_ROOT, 'file.txt') });
     expect(result).toBeNull();
   });
 
@@ -163,7 +179,7 @@ describe('fsBridge readFile/readFileBuffer EBUSY handling', () => {
     mockStat.mockResolvedValueOnce({ size: 100 });
     mockReadFile.mockRejectedValueOnce(makeErrnoError('EPERM', 'EPERM: operation not permitted'));
 
-    await expect(readFileCb({ path: '/forbidden/file.txt' })).rejects.toThrow('EPERM');
+    await expect(readFileCb({ path: path.join(FIXTURE_ROOT, 'file.txt') })).rejects.toThrow('EPERM');
   });
 
   it('readFile returns null for files exceeding 256MB size limit (ELECTRON-D3)', async () => {
@@ -173,7 +189,7 @@ describe('fsBridge readFile/readFileBuffer EBUSY handling', () => {
     const oversizedBytes = 256 * 1024 * 1024 + 1; // 256 MB + 1 byte
     mockStat.mockResolvedValueOnce({ size: oversizedBytes });
 
-    const result = await readFileCb({ path: '/huge/database.bin' });
+    const result = await readFileCb({ path: path.join(FIXTURE_ROOT, 'database.bin') });
     expect(result).toBeNull();
     expect(mockReadFile).not.toHaveBeenCalled();
   });
@@ -189,7 +205,7 @@ describe('fsBridge readFile/readFileBuffer EBUSY handling', () => {
     mockStat.mockResolvedValueOnce({ size: 1024 });
     mockReadFile.mockRejectedValueOnce(makeErrnoError('EBUSY', 'EBUSY: resource busy or locked'));
 
-    const result = await readFileBufferCb({ path: '/some/locked/file.pptx' });
+    const result = await readFileBufferCb({ path: path.join(FIXTURE_ROOT, 'file.pptx') });
     expect(result).toBeNull();
   });
 
@@ -200,7 +216,7 @@ describe('fsBridge readFile/readFileBuffer EBUSY handling', () => {
     mockStat.mockResolvedValueOnce({ size: 1024 });
     mockReadFile.mockResolvedValueOnce('file content');
 
-    const result = await readFileCb({ path: '/valid/file.txt' });
+    const result = await readFileCb({ path: path.join(FIXTURE_ROOT, 'file.txt') });
     expect(result).toBe('file content');
   });
 });

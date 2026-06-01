@@ -115,6 +115,122 @@ export function buildStorage<Refer = unknown>(
 }
 
 /**
+ * Provider keys that a REMOTE (paired-device WebSocket) caller must never reach,
+ * even though they pass {@link isAllowedInboundName} (which only gates the set of
+ * names the trusted local renderer may use). The WebSocket token proves a paired
+ * browser, not the local trusted user, so these write/exec/mutation providers are
+ * default-DENIED for remote callers (WS-POSTAUTH-DISPATCH).
+ *
+ * This is a denylist, not a tiny whitelist: everything the paired WebUI legitimately
+ * needs (conversation/chat/list/model/usage/memory/wiki/cron reads, etc.) stays
+ * allowed; only the dangerous write/exec/install surface is removed.
+ *
+ * Matching is by key (the part after the `subscribe-` wire prefix), using exact
+ * keys plus a small set of prefixes that cover whole dangerous namespaces.
+ */
+const REMOTE_DENIED_PREFIXES: readonly string[] = [
+  // Shell execution / open-with handlers (cmd/explorer, open, xdg-open).
+  'shell.',
+  // Hub extension install/update/retry/uninstall — remote-reachable RCE chain.
+  'hub.',
+];
+// Note: fs provider keys are registered WITHOUT an `fs.` prefix on the wire
+// (e.g. `write-file`, `remove-entry`), so the dangerous fs surface is enumerated
+// explicitly in REMOTE_DENIED_KEYS below rather than matched by prefix.
+
+/**
+ * Exact provider keys denied to remote WS callers. Covers the fs mutation/raw-read
+ * surface (registered without an `fs.` wire prefix), skill/assistant mutation, MCP
+ * agent-install mutation, and the app.* providers that can write settings, change
+ * the CDP config, control startup, or restart the process.
+ */
+const REMOTE_DENIED_KEYS: ReadonlySet<string> = new Set([
+  // --- Filesystem write / delete / rename / temp / raw-buffer reads ---
+  'write-file',
+  'remove-entry',
+  'rename-entry',
+  'read-file',
+  'read-file-buffer',
+  'create-temp-file',
+  'create-upload-file',
+  'fetch-remote-image',
+  'add-custom-external-path',
+  'remove-custom-external-path',
+  // fs raw-read / enumeration / archive / workspace-copy surface (arbitrary path access).
+  'get-file-metadata',
+  'get-file-by-dir',
+  'list-workspace-files',
+  'get-image-base64',
+  'create-zip-file',
+  'copy-files-to-workspace',
+  // --- Skill / assistant mutation (delete/write/import) ---
+  'delete-skill',
+  'delete-assistant-rule',
+  'delete-assistant-skill',
+  'write-assistant-rule',
+  'write-assistant-skill',
+  'import-skill',
+  'skills.build.draft',
+  'skills.import.folder',
+  'skills.import.git',
+  'skills.import.single-skill-md',
+  'skills.import.zip',
+  'skills.rescan-all',
+  'skills.scan',
+  'skills.set-pinned',
+  // --- MCP mutation (agent install/remove, OAuth login/logout, credential set) ---
+  'mcp.sync-to-agents',
+  'mcp.remove-from-agents',
+  'mcp.login-oauth',
+  'mcp.logout-oauth',
+  'mcp.set-byo-oauth-credentials',
+  // --- Project knowledge draft (reads arbitrary filePaths to feed the model) ---
+  'project.generate-knowledge-draft',
+  // --- Storage destructive / disk operations ---
+  'storage:changeDir',
+  'storage:clearDir',
+  'storage:openDir',
+  'storage:resetAll',
+  'storage:importBackup',
+  // --- app.* / process control that writes or executes ---
+  'app.set-start-on-boot',
+  'app.set-zoom-factor',
+  'app.update-cdp-config',
+  'restart-app',
+  'open-external',
+  'open-file',
+  'open-dev-tools',
+  'show-item-in-folder',
+]);
+
+/**
+ * Return true iff a provider invocation `name` (the full wire name, e.g.
+ * `subscribe-write-file`) is permitted for a REMOTE WebSocket caller.
+ *
+ * This is applied IN ADDITION to {@link isAllowedInboundName}: a name must pass
+ * BOTH to be dispatched from the WS path. Non-`subscribe-` names (control-plane
+ * heartbeat, renderer-side callbacks) are unaffected here — the inbound allowlist
+ * already constrains them and they carry no write/exec capability.
+ *
+ * @param name Full inbound wire name as received from the WebSocket client.
+ * @returns `false` if the resolved provider key is in the remote denylist.
+ */
+export function isAllowedForRemote(name: string): boolean {
+  if (typeof name !== 'string' || name.length === 0) return false;
+
+  // Only provider invocations carry capability; everything else (callbacks,
+  // heartbeat) is already constrained by isAllowedInboundName.
+  if (!name.startsWith('subscribe-')) return true;
+
+  const key = name.slice('subscribe-'.length);
+  if (REMOTE_DENIED_KEYS.has(key)) return false;
+  for (const prefix of REMOTE_DENIED_PREFIXES) {
+    if (key.startsWith(prefix)) return false;
+  }
+  return true;
+}
+
+/**
  * Return true iff `name` is a wire event that the renderer (or WebUI client)
  * is permitted to send to the main-process bridge emitter.
  */

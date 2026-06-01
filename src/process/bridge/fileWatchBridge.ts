@@ -11,6 +11,24 @@ import { ipcBridge } from '@/common';
 // Store all file watchers
 const watchers = new Map<string, fs.FSWatcher>();
 
+/**
+ * Close and drain every active file watcher. REL-WATCH-01: each `fs.watch`
+ * holds a native OS handle (inotify on Linux, FSEvents/kqueue on macOS,
+ * ReadDirectoryChangesW on Windows) — these must be released deterministically
+ * on app quit, not left to the renderer's best-effort stopWatch. Idempotent and
+ * safe to call from the before-quit cleanup path.
+ */
+export function stopAllFileWatchers(): void {
+  watchers.forEach((watcher) => {
+    try {
+      watcher.close();
+    } catch (error) {
+      console.error('[FileWatch] Failed to close watcher during drain:', error);
+    }
+  });
+  watchers.clear();
+}
+
 const WORKSPACE_OFFICE_RE = /\.(pptx|docx|xlsx)$/i;
 const WORKSPACE_OFFICE_TEMP_RE = /^(~\$|~|～)/;
 const WORKSPACE_SCAN_IGNORED_DIRS = new Set([
@@ -86,8 +104,20 @@ export function initFileWatchBridge(): void {
 
       return Promise.resolve({ success: true });
     } catch (error) {
+      // REL-WATCH-01: surface the OS resource-exhaustion errno (inotify
+      // max_user_watches on Linux → ENOSPC, EMFILE on any platform) instead of
+      // burying it in a generic "Unknown error" — these are actionable.
+      const code = (error as NodeJS.ErrnoException)?.code;
+      const detail =
+        code === 'ENOSPC'
+          ? 'Watcher limit reached (ENOSPC: inotify max_user_watches exhausted)'
+          : code === 'EMFILE'
+            ? 'Too many open file handles (EMFILE)'
+            : error instanceof Error
+              ? error.message
+              : 'Unknown error';
       console.error('[FileWatch] Failed to start watching:', error);
-      return Promise.resolve({ success: false, msg: error instanceof Error ? error.message : 'Unknown error' });
+      return Promise.resolve({ success: false, msg: detail });
     }
   });
 
@@ -109,10 +139,7 @@ export function initFileWatchBridge(): void {
   // Stop all watchers
   ipcBridge.fileWatch.stopAllWatches.provider(() => {
     try {
-      watchers.forEach((watcher) => {
-        watcher.close();
-      });
-      watchers.clear();
+      stopAllFileWatchers();
       return Promise.resolve({ success: true });
     } catch (error) {
       console.error('[FileWatch] Failed to stop all watches:', error);

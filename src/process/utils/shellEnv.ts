@@ -26,27 +26,57 @@ const PERF_LOG = process.env.ACP_PERF === '1';
 // Bundled bun runtime
 // ---------------------------------------------------------------------------
 
-// Bun's standard linux-x64 build requires AVX2. Older CPUs (e.g. AMD FX-8350,
-// Piledriver ~2012) only have AVX1 and crash with SIGILL. We read /proc/cpuinfo
+// Bun's standard x64 build requires AVX2. Older CPUs (e.g. AMD FX-8350,
+// Piledriver ~2012) only have AVX1 and crash with SIGILL. We probe the CPU
 // once on first call and cache the result for the process lifetime — subsequent
 // calls from getBundledBunDir() / resolveNpxPath() hit this cache only.
+//
+// Detection is per-OS: Linux reads /proc/cpuinfo; Windows queries the .NET
+// hardware-intrinsics API via PowerShell. Other platforms (macOS arm64, etc.)
+// short-circuit to true since AVX2 is irrelevant or always present there.
 let _hasAvx2: boolean | null = null;
 
 function detectAvx2(): boolean {
   if (_hasAvx2 !== null) return _hasAvx2;
 
-  if (process.platform !== 'linux' || process.arch !== 'x64') {
+  if (process.arch !== 'x64') {
     _hasAvx2 = true;
     return true;
   }
 
-  try {
-    const cpuinfo = readFileSync('/proc/cpuinfo', 'utf-8');
-    _hasAvx2 = cpuinfo.includes('avx2');
-  } catch {
-    _hasAvx2 = true;
+  if (process.platform === 'linux') {
+    try {
+      const cpuinfo = readFileSync('/proc/cpuinfo', 'utf-8');
+      _hasAvx2 = cpuinfo.includes('avx2');
+    } catch {
+      _hasAvx2 = true;
+    }
+    return _hasAvx2;
   }
 
+  if (process.platform === 'win32') {
+    // Windows has no /proc/cpuinfo. Probe AVX2 via .NET's hardware-intrinsics
+    // API, which is present on any modern Windows PowerShell. On any failure
+    // (PowerShell/.NET missing, timeout) default to true — same conservative
+    // fallback as Linux: we only divert to the baseline build on a definitive
+    // "no AVX2" answer, never on an inconclusive probe.
+    try {
+      const out = execFileSync(
+        'powershell.exe',
+        ['-NoProfile', '-NonInteractive', '-Command', '[System.Runtime.Intrinsics.X86.Avx2]::IsSupported'],
+        { encoding: 'utf-8', timeout: 3000, stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true }
+      )
+        .trim()
+        .toLowerCase();
+      // Empty/garbage output is inconclusive → treat as AVX2-present.
+      _hasAvx2 = out === '' ? true : out === 'true';
+    } catch {
+      _hasAvx2 = true;
+    }
+    return _hasAvx2;
+  }
+
+  _hasAvx2 = true;
   return _hasAvx2;
 }
 
@@ -89,10 +119,7 @@ function getBundledNodeModulesRoot(): string | null {
 function getBundledNpmBinDirs(): string[] {
   const root = getBundledNodeModulesRoot();
   if (!root) return [];
-  const candidates = [
-    path.join(root, 'node_modules', '.bin'),
-    path.join(root, 'node_modules', 'officecli', 'runtime'),
-  ];
+  const candidates = [path.join(root, 'node_modules', '.bin'), path.join(root, 'node_modules', 'officecli', 'runtime')];
   return candidates.filter((p) => existsSync(p));
 }
 

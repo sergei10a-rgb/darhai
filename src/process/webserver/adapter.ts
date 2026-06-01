@@ -6,7 +6,7 @@
 
 import type { WebSocketServer } from 'ws';
 import { registerWebSocketBroadcaster, getBridgeEmitter } from '@/common/adapter/registry';
-import { isAllowedInboundName } from '@/common/adapter/bridgeAllowlist';
+import { isAllowedInboundName, isAllowedForRemote } from '@/common/adapter/bridgeAllowlist';
 import { WebSocketManager } from './websocket/WebSocketManager';
 
 // Store unregister function for cleanup when server stops
@@ -35,6 +35,14 @@ export function initWebAdapter(wss: WebSocketServer): void {
   wsManager.setupConnectionHandler((name, data, _ws) => {
     if (!isAllowedInboundName(name)) {
       console.error('[adapter] Rejected disallowed WebSocket bridge event:', name);
+      return;
+    }
+    // WS-POSTAUTH-DISPATCH: the WebSocket token proves a paired browser, not the
+    // local trusted user. Apply the remote-reduced allowlist on top of the
+    // inbound allowlist so a token-holding remote client cannot drive
+    // fs.*/shell.*/skill-mutation/mcp-mutation/hub/app write/exec providers.
+    if (!isAllowedForRemote(name)) {
+      console.error('[adapter] Rejected remote-forbidden WebSocket bridge event:', name);
       return;
     }
     const emitter = getBridgeEmitter();

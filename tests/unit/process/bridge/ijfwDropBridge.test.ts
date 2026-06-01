@@ -74,7 +74,14 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  process.chdir(originalCwd);
+  // A test that mocks process.cwd() and throws before restoring it can leave the
+  // mock active; guard the restore-chdir so one failure cannot cascade into
+  // unrelated teardown ENOENTs (e.g. chdir to a POSIX '/etc' on Windows).
+  try {
+    process.chdir(originalCwd);
+  } catch {
+    /* originalCwd may be stale/invalid under a leaked cwd mock; ignore */
+  }
   fs.rmSync(tmpHome, { recursive: true, force: true });
   fs.rmSync(tmpCwd, { recursive: true, force: true });
 });
@@ -248,15 +255,24 @@ describe('ijfwDropBridge', () => {
     });
 
     it('Gemini B3: refuses ingest with errorReason=unavailable when cwd is a system path', async () => {
-      vi.spyOn(process, 'cwd').mockReturnValue('/etc');
-      const handler = providers.get('dropIngest')!;
-      const result = (await handler({ path: '/etc/hosts' })) as {
-        ok: boolean;
-        errorReason?: string;
-      };
-      expect(result.ok).toBe(false);
-      expect(result.errorReason).toBe('unavailable');
-      vi.restoreAllMocks();
+      // Use a platform-appropriate system root so isUnsafeRoot() flags it on the
+      // host actually running the test: '/etc' is a system dir on POSIX, while
+      // C:\Windows\System32 is the equivalent on Windows (a POSIX path is not a
+      // Windows system root, so it would be refused via a different code path).
+      const sysCwd = process.platform === 'win32' ? 'C:\\Windows\\System32' : '/etc';
+      const sysFile = process.platform === 'win32' ? 'C:\\Windows\\System32\\drivers\\etc\\hosts' : '/etc/hosts';
+      const cwdSpy = vi.spyOn(process, 'cwd').mockReturnValue(sysCwd);
+      try {
+        const handler = providers.get('dropIngest')!;
+        const result = (await handler({ path: sysFile })) as {
+          ok: boolean;
+          errorReason?: string;
+        };
+        expect(result.ok).toBe(false);
+        expect(result.errorReason).toBe('unavailable');
+      } finally {
+        cwdSpy.mockRestore();
+      }
     });
   });
 

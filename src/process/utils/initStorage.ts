@@ -163,7 +163,14 @@ const WriteFile = async (filePath: string, data: string) => {
   // Ensure parent directory exists to prevent ENOENT on first write
   const dir = nodePath.dirname(filePath);
   await fs.mkdir(dir, { recursive: true });
-  return writeFileAtomic(filePath, data);
+  // SEC-DATA-04 / RT-S1: these are the secret-bearing base64 config/env/chat
+  // blobs (webhook secrets, provider creds, env vars). Create them 0o600 so
+  // other local users / backup daemons can't read them on POSIX. Node ignores
+  // `mode` on Windows, so writeFileAtomic additionally restricts the temp file
+  // AND the final file to an owner-only DACL there (the files already live in
+  // the ACL-restricted userData/config dir; the explicit DACL is defense in
+  // depth). Value-level safeStorage encryption remains the durable fix.
+  return writeFileAtomic(filePath, data, { mode: 0o600 });
 };
 
 /**
@@ -686,7 +693,6 @@ const getDefaultMcpServers = (): IMcpServer[] => {
 const getBuiltinMcpScriptPath = (scriptName: string): string => {
   return getMcpScriptPath(`${scriptName}.js`);
 };
-
 
 /**
  * Ensure built-in MCP servers exist in mcp.config.

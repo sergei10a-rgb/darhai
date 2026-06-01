@@ -13,6 +13,18 @@
  * 3. Loads and executes the extension entry point via native require
  * 4. Proxies communication via structured messages
  *
+ * ⚠️ DANGER — THIS IS NOT A SECURITY SANDBOX. Despite the name, the extension
+ * entry point is loaded via `eval('require')(entryPath)` and runs with FULL
+ * Worker Thread privileges: all Node.js built-ins (fs, child_process, net, …)
+ * are reachable. The Worker only isolates extensions from the main-process
+ * Electron APIs and gives them a structured `aion` proxy — it does NOT confine
+ * what Node APIs the extension can call. Loading an extension is therefore
+ * equivalent to running arbitrary host code. This is acceptable ONLY because
+ * extensions are TRUSTED: installation requires an explicit native local-user
+ * confirmation (HubInstaller.install) and the remote-WS install path is
+ * excluded from the bridge allowlist. Treat any code that reaches this worker
+ * as fully privileged.
+ *
  * Current isolation model:
  * - Extension code runs with full Worker Thread privileges (Node.js built-ins accessible)
  * - Electron main-process APIs are not directly accessible (different process/thread)
@@ -21,9 +33,11 @@
  *   storage access is gated by the storage permission flag on both the worker
  *   and host sides. Other permissions remain informational only.
  *
- * TODO: Enforce remaining declared permissions at runtime (e.g. via
- * vm.runInNewContext + custom require proxy, or Node.js --experimental-permission
- * flag) to prevent extensions from accessing undeclared Node.js APIs.
+ * RESIDUAL (not addressed in this wave — would destabilize all extensions):
+ * Enforce remaining declared permissions at runtime to build a REAL sandbox
+ * (e.g. vm.runInNewContext + a permission-driven require proxy, or Node.js
+ * --experimental-permission), plus a publisher-signature check before load, so
+ * extension code is no longer implicitly trusted host code.
  */
 
 import { parentPort, workerData } from 'worker_threads';

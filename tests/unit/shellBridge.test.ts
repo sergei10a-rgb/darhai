@@ -168,7 +168,7 @@ describe('shellBridge', () => {
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
       await openExternalProvider.fn!('not-a-valid-url');
       expect(shellMock.openExternal).not.toHaveBeenCalled();
-      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Invalid URL'));
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('disallowed scheme'));
       warnSpy.mockRestore();
     });
 

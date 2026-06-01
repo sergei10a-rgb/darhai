@@ -4,8 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { randomBytes } from 'node:crypto';
 import { BasePlugin } from '../BasePlugin';
-import { decryptPayloadFull, encryptPayload, sha1Sign } from './WecomCrypto';
+import { decryptPayloadFull, encryptPayload, sha1Sign, verifySignature as verifyWecomSignature } from './WecomCrypto';
 import {
   consumeResponseUrl,
   finishStream,
@@ -179,7 +180,7 @@ export class WecomPlugin extends BasePlugin {
 
   verifySignature(signature: string, timestamp: string, nonce: string, encrypted: string): boolean {
     if (!this.token) return false;
-    return sha1Sign(this.token, timestamp, nonce, encrypted) === signature;
+    return verifyWecomSignature(this.token, timestamp, nonce, encrypted, signature);
   }
 
   /**
@@ -570,7 +571,10 @@ export class WecomPlugin extends BasePlugin {
         const firstKey = this.wsContexts.keys().next().value as string | undefined;
         if (firstKey) this.wsContexts.delete(firstKey);
       }
-      const streamId = `wecomws-stream-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      // RT-S4: use crypto.randomBytes for an unguessable stream id. The id
+      // correlates streamed reply chunks back to this chat with the WeCom peer,
+      // so a predictable Math.random() suffix is a (low) forgery/collision risk.
+      const streamId = `wecomws-stream-${Date.now()}-${randomBytes(9).toString('base64url')}`;
       this.wsContexts.set(unified.chatId, { frameHeaders, streamId });
     }
 

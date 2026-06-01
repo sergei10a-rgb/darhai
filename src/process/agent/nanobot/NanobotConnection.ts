@@ -35,7 +35,7 @@ export class NanobotConnection {
       // With shell: false (the default), Node.js handles argument quoting correctly:
       // - Windows: CreateProcessW properly quotes args containing spaces
       // - Unix: execvp passes args directly to the process
-      const args = ['agent', '-m', `"${message}"`, '--session', sessionId, '--no-markdown'];
+      const args = ['agent', '-m', message, '--session', sessionId, '--no-markdown'];
 
       this.child = spawn('nanobot', args, {
         cwd: this.workingDir,

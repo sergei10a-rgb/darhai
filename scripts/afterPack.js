@@ -10,12 +10,73 @@ const {
 } = require('./rebuildNativeModules');
 
 /**
+ * Resolve the path passed to @electron/fuses' flipFuses for the current target.
+ * - macOS: the .app bundle (flipFuses locates the Electron framework binary inside)
+ * - Windows: the top-level <productFilename>.exe
+ * - Linux: the lowercase executable produced from executableName/productFilename
+ */
+function resolveFuseTarget(electronPlatformName, appOutDir, packager) {
+  const productFilename = packager?.appInfo?.productFilename || 'Wayland';
+  if (electronPlatformName === 'darwin' || electronPlatformName === 'mas') {
+    return path.join(appOutDir, `${productFilename}.app`);
+  }
+  if (electronPlatformName === 'win32') {
+    return path.join(appOutDir, `${productFilename}.exe`);
+  }
+  // Linux: electron-builder exposes the final (sanitized) executable filename on the
+  // packager. It only lowercases when no executableName is configured, so don't force
+  // lowercase here — fall back to the lowercased sanitizedName only when unavailable.
+  const executableName = packager?.executableName || packager?.appInfo?.sanitizedName?.toLowerCase() || productFilename;
+  return path.join(appOutDir, executableName);
+}
+
+/**
+ * Apply Electron fuses to the packaged binary (SEC-ELEC-05).
+ * Disables Node-as-host attack surface (RunAsNode / NODE_OPTIONS / --inspect) and
+ * enforces asar-only loading + embedded asar integrity validation.
+ *
+ * On macOS this must run before code signing (afterSign) so the signature covers the
+ * fused binary; flipping fuses invalidates any existing (ad-hoc) signature, so we
+ * reset an ad-hoc signature here to keep afterSign's `codesign --verify` happy before
+ * real signing/notarization replaces it.
+ */
+async function applyElectronFuses(context) {
+  const { electronPlatformName, appOutDir, packager } = context;
+
+  // @electron/fuses is ESM-only.
+  const { flipFuses, FuseVersion, FuseV1Options } = await import('@electron/fuses');
+
+  const target = resolveFuseTarget(electronPlatformName, appOutDir, packager);
+  if (!fs.existsSync(target)) {
+    throw new Error(`Cannot apply Electron fuses: binary not found at ${target}`);
+  }
+
+  const isDarwin = electronPlatformName === 'darwin' || electronPlatformName === 'mas';
+
+  console.log(`\n🔒 Applying Electron fuses to ${target}`);
+  await flipFuses(target, {
+    version: FuseVersion.V1,
+    // Re-sign ad-hoc on macOS since flipping fuses invalidates the existing signature.
+    resetAdHocDarwinSignature: isDarwin,
+    [FuseV1Options.RunAsNode]: false,
+    [FuseV1Options.EnableNodeOptionsEnvironmentVariable]: false,
+    [FuseV1Options.EnableNodeCliInspectArguments]: false,
+    [FuseV1Options.OnlyLoadAppFromAsar]: true,
+    [FuseV1Options.EnableEmbeddedAsarIntegrityValidation]: true,
+  });
+  console.log(`   ✓ Fuses applied (RunAsNode/NODE_OPTIONS/inspect disabled, asar-only enforced)`);
+}
+
+/**
  * afterPack hook for electron-builder
- * Rebuilds native modules for cross-architecture builds
+ * Applies Electron fuses, then rebuilds native modules for cross-architecture builds.
  */
 
 module.exports = async function afterPack(context) {
   const { arch, electronPlatformName, appOutDir, packager } = context;
+
+  // Harden the packaged binary before anything else (notably before afterSign on macOS).
+  await applyElectronFuses(context);
   const targetArch = normalizeArch(typeof arch === 'string' ? arch : Arch[arch] || process.arch);
   const buildArch = normalizeArch(os.arch());
 

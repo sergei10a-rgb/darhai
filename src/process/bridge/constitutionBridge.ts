@@ -16,24 +16,51 @@
  */
 
 import { ipcMain } from 'electron';
-import {
-  existsSync,
-  mkdirSync,
-  readdirSync,
-  readFileSync,
-  renameSync,
-  statSync,
-  unlinkSync,
-  writeFileSync,
-} from 'fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, statSync, unlinkSync, writeFileSync } from 'fs';
 import { homedir } from 'os';
-import { join } from 'path';
+import { basename, join, resolve, sep } from 'path';
+import { enforceRateLimit } from './webuiDirectAuth';
 
 const WAYLAND_HOME_DIR = '.wayland';
 const CONSTITUTION_NAME = 'CONSTITUTION.md';
 const LEGACY_SOUL_NAME = 'SOUL.md';
 const SPECIALISTS_DIR = 'specialists';
 const ASSISTANT_ID_PATTERN = /^[A-Za-z0-9_-]+$/;
+
+/**
+ * Upper bound on a single Constitution / specialist write, in bytes.
+ *
+ * The Constitution and specialist overlays are short prose files (the shipped
+ * default is ~1KB). A renderer-XSS attacker should not be able to use these
+ * handlers to write a multi-megabyte payload to disk. 256KB is far above any
+ * legitimate use and well below a DoS-sized write.
+ */
+const MAX_WRITE_BYTES = 256 * 1024;
+
+/**
+ * Resolve a specialist overlay path and confirm it stays inside the
+ * `specialists/` directory. Returns `null` for any id that fails the
+ * `[A-Za-z0-9_-]+` allowlist or whose resolved path escapes the directory
+ * (defence-in-depth against absolute paths and `..` traversal — the pattern
+ * already rejects `/`, `\\`, and `.`, and `basename` strips any residual path
+ * separators before joining).
+ */
+const resolveSpecialistPath = (id: string): { specialistsDir: string; overlayPath: string } | null => {
+  if (typeof id !== 'string' || !ASSISTANT_ID_PATTERN.test(id)) return null;
+  const { dir } = resolveConstitutionPaths();
+  const specialistsDir = join(dir, SPECIALISTS_DIR);
+  const overlayPath = resolve(specialistsDir, `${basename(id)}.md`);
+  // Containment: the resolved overlay must live directly under specialistsDir.
+  if (!overlayPath.startsWith(specialistsDir + sep)) return null;
+  return { specialistsDir, overlayPath };
+};
+
+/**
+ * Validate write content: it must be a string within the size cap. Returns
+ * `false` for non-string input or oversized payloads.
+ */
+const isValidWriteContent = (content: unknown): content is string =>
+  typeof content === 'string' && Buffer.byteLength(content, 'utf-8') <= MAX_WRITE_BYTES;
 
 /**
  * The default Constitution shipped with the app — 11 sections, ~1,050 words.
@@ -201,6 +228,7 @@ const readConstitution = (): string => {
 };
 
 const writeConstitution = (content: string): boolean => {
+  if (!isValidWriteContent(content)) return false;
   const { dir, path, legacy } = resolveConstitutionPaths();
   try {
     mkdirSync(dir, { recursive: true });
@@ -312,10 +340,10 @@ const readConstitutionSpecialist = (id: string): string => {
  * Returns `false` on an invalid id or any IO failure.
  */
 const writeConstitutionSpecialist = (id: string, content: string): boolean => {
-  if (!ASSISTANT_ID_PATTERN.test(id)) return false;
-  const { dir } = resolveConstitutionPaths();
-  const specialistsDir = join(dir, SPECIALISTS_DIR);
-  const overlayPath = join(specialistsDir, `${id}.md`);
+  if (!isValidWriteContent(content)) return false;
+  const resolved = resolveSpecialistPath(id);
+  if (!resolved) return false;
+  const { specialistsDir, overlayPath } = resolved;
   try {
     mkdirSync(specialistsDir, { recursive: true });
     // Atomic write: write to .tmp then rename. Same pattern as writeConstitution.
@@ -335,9 +363,9 @@ const writeConstitutionSpecialist = (id: string, content: string): boolean => {
  * an invalid id or any IO failure.
  */
 const deleteConstitutionSpecialist = (id: string): boolean => {
-  if (!ASSISTANT_ID_PATTERN.test(id)) return false;
-  const { dir } = resolveConstitutionPaths();
-  const overlayPath = join(dir, SPECIALISTS_DIR, `${id}.md`);
+  const resolved = resolveSpecialistPath(id);
+  if (!resolved) return false;
+  const { overlayPath } = resolved;
   try {
     if (existsSync(overlayPath)) unlinkSync(overlayPath);
     return true;
@@ -352,21 +380,31 @@ const deleteConstitutionSpecialist = (id: string): boolean => {
  */
 export function initConstitutionBridge(): void {
   ipcMain.handle('constitution:read', () => readConstitution());
-  ipcMain.handle('constitution:write', (_event, content: string) => writeConstitution(content));
+  ipcMain.handle('constitution:write', (_event, content: string) => {
+    // Rate-limit guard: these write handlers are raw ipcMain (outside the
+    // bridge allowlist) and overwrite the agent's behavioral spec, so a
+    // renderer-XSS attacker could otherwise rewrite the Constitution at will.
+    // Confinement is enforced by the fixed CONSTITUTION.md path; content is
+    // validated (string + size cap) inside writeConstitution.
+    if (!enforceRateLimit('constitution:write')) return false;
+    return writeConstitution(content);
+  });
   ipcMain.handle('constitution:reset', () => resetConstitution());
   ipcMain.handle('constitution:readWithOverlay', (_event, assistantId?: string) =>
-    readConstitutionWithOverlay(assistantId),
+    readConstitutionWithOverlay(assistantId)
   );
   ipcMain.handle('constitution:listSpecialists', () => listConstitutionSpecialists());
-  ipcMain.handle('constitution:readSpecialist', (_event, id: string) =>
-    readConstitutionSpecialist(id),
-  );
-  ipcMain.handle('constitution:writeSpecialist', (_event, id: string, content: string) =>
-    writeConstitutionSpecialist(id, content),
-  );
-  ipcMain.handle('constitution:deleteSpecialist', (_event, id: string) =>
-    deleteConstitutionSpecialist(id),
-  );
+  ipcMain.handle('constitution:readSpecialist', (_event, id: string) => readConstitutionSpecialist(id));
+  ipcMain.handle('constitution:writeSpecialist', (_event, id: string, content: string) => {
+    // Same guard as constitution:write. Target is confined to the
+    // specialists/ directory via resolveSpecialistPath inside the writer.
+    if (!enforceRateLimit('constitution:writeSpecialist')) return false;
+    return writeConstitutionSpecialist(id, content);
+  });
+  ipcMain.handle('constitution:deleteSpecialist', (_event, id: string) => {
+    if (!enforceRateLimit('constitution:deleteSpecialist')) return false;
+    return deleteConstitutionSpecialist(id);
+  });
 }
 
 // Exported for tests

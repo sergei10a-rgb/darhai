@@ -108,14 +108,19 @@ describe('fetchModelList', () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.msg).toContain('Invalid URL');
+      // The SSRF base_url validator now rejects a malformed URL up front (before
+      // the SDK call), with a clearer message than the old connection error.
+      expect(result.msg).toContain('Invalid base URL');
     });
 
     it('should return original error when try_fix is false', async () => {
       mockModelsList.mockRejectedValueOnce(new Error('Connection refused'));
 
+      // Use a valid (loopback, IP-literal so no DNS lookup) base_url that passes
+      // the SSRF validator, so try_fix=false still exercises original-error
+      // propagation from the SDK rather than the up-front URL rejection.
       const result = await fetchModelList({
-        base_url: 'not-a-valid-url',
+        base_url: 'http://127.0.0.1:9999/v1',
         api_key: 'sk-test-key',
         try_fix: false,
       });

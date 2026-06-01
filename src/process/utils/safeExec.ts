@@ -45,9 +45,21 @@ interface SafeExecOptions {
 }
 
 /**
- * Shell-based command execution (replacement for `child_process.exec`).
- * Runs the command in `/bin/sh -c` (POSIX) or `cmd.exe /c` (Windows)
- * with `detached: true`.
+ * ⚠️ DANGER — this runs the given string through `sh -c` (POSIX) or
+ * `cmd.exe /c` (Windows). The shell interprets `$(...)`, backticks, `;`, `|`,
+ * `&`, quote-breakout, `%VAR%`, etc. Double-quoting interpolated values does
+ * NOT make it safe.
+ *
+ * NEVER pass a command string that interpolates untrusted input (MCP server
+ * names/URLs/headers, renderer/model-supplied data, file paths). For anything
+ * with arguments, use {@link safeExecFile} which takes an argv array with no
+ * shell. Reserve `safeExec` for constant command strings only.
+ *
+ * The "safe" in the name refers ONLY to TTY/SIGTTOU safety (see module banner),
+ * not to injection safety.
+ *
+ * @param command Constant shell command string. Must not contain interpolated untrusted input.
+ * @param options Optional timeout and environment.
  */
 export function safeExec(command: string, options: SafeExecOptions = {}): Promise<ExecResult> {
   return new Promise((resolve, reject) => {
@@ -112,7 +124,13 @@ export function safeExec(command: string, options: SafeExecOptions = {}): Promis
 
 /**
  * Direct executable invocation (replacement for `child_process.execFile`).
- * Does NOT use a shell — safer against injection.
+ * Does NOT use a shell — each argv element is passed verbatim, so it is safe
+ * against shell injection. Prefer this over {@link safeExec} whenever any
+ * argument is dynamic or derived from untrusted input.
+ *
+ * @param file Executable to run (resolved from PATH, no shell).
+ * @param args Argument vector; each element is passed literally (no shell parsing).
+ * @param options Optional timeout and environment.
  */
 export function safeExecFile(file: string, args: string[], options: SafeExecOptions = {}): Promise<ExecResult> {
   const isWindows = process.platform === 'win32';

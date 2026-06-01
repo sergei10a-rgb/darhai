@@ -155,13 +155,9 @@ export function initConversationBridge(
         // Merge assistant's own enabledSkills with globally-pinned names for the summary.
         // Store as { name, description: '' } to match the loadedSkills storage type while
         // keeping the payload minimal — descriptions are not needed here (no library dump).
-        const alwaysOnNames = Array.from(
-          new Set([...(extra.enabledSkills ?? []), ...pinnedNames])
-        );
+        const alwaysOnNames = Array.from(new Set([...(extra.enabledSkills ?? []), ...pinnedNames]));
         const excludeSet = new Set(extra.excludeBuiltinSkills ?? []);
-        const loadedSkills = alwaysOnNames
-          .filter((n) => !excludeSet.has(n))
-          .map((name) => ({ name, description: '' }));
+        const loadedSkills = alwaysOnNames.filter((n) => !excludeSet.has(n)).map((name) => ({ name, description: '' }));
         if (loadedSkills.length > 0) {
           const updatedExtra = {
             ...conversation.extra,
@@ -310,7 +306,10 @@ export function initConversationBridge(
           try {
             await cronService.removeJob(job.id);
           } catch (jobErr) {
-            console.warn(`[conversationBridge] Failed to remove cron job ${job.id} during conversation delete:`, jobErr);
+            console.warn(
+              `[conversationBridge] Failed to remove cron job ${job.id} during conversation delete:`,
+              jobErr
+            );
           }
         }
       } catch (cronCleanupErr) {
@@ -385,8 +384,13 @@ export function initConversationBridge(
       if (task && task.type === 'acp') {
         await (task as unknown as AcpAgentManager).initAgent();
       }
-    } catch {
-      // Ignore errors — warmup is best-effort
+    } catch (error) {
+      // Warmup is best-effort and never surfaced to the user, but log the
+      // failure so a chronically-failing bootstrap is observable in diagnostics.
+      console.warn('[conversationBridge] warmup failed (best-effort):', {
+        conversationId: conversation_id,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   });
 
@@ -593,9 +597,7 @@ export function initConversationBridge(
     const sendMessageConversation = await conversationService
       .getConversation(conversation_id)
       .catch((): undefined => undefined);
-    const sendMessageExtra = sendMessageConversation?.extra as unknown as
-      | { workflowSessionId?: string }
-      | undefined;
+    const sendMessageExtra = sendMessageConversation?.extra as unknown as { workflowSessionId?: string } | undefined;
     const workflowSessionId = sendMessageExtra?.workflowSessionId;
     if (workflowSessionId) {
       try {
@@ -706,10 +708,7 @@ export function initConversationBridge(
   // Session-level approval memory for "always allow" decisions.
   // Keys are parsed from raw action+commandType here (single source of truth).
   ipcBridge.conversation.approval.check.provider(async ({ conversation_id, action, commandType }) => {
-    const task = workerTaskManager.getTask(conversation_id) as unknown as
-      | GeminiAgentManager
-      | WCoreManager
-      | undefined;
+    const task = workerTaskManager.getTask(conversation_id) as unknown as GeminiAgentManager | WCoreManager | undefined;
     if (!task || !('approvalStore' in task) || !task.approvalStore) {
       return false;
     }

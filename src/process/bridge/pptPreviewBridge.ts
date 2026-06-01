@@ -13,12 +13,12 @@
  */
 
 import { ipcBridge } from '@/common';
-import { getPlatformServices } from '@/common/platform';
-import { spawn, exec, execSync, type ChildProcess } from 'node:child_process';
-import fs from 'node:fs';
+import { spawn, type ChildProcess } from 'node:child_process';
 import net from 'node:net';
 import path from 'node:path';
 import { getEnhancedEnv } from '@process/utils/shellEnv';
+import { installOfficecli } from './officecliInstaller';
+import { confinePath } from './pathConfinement';
 
 interface WatchSession {
   process: ChildProcess;
@@ -26,14 +26,39 @@ interface WatchSession {
   aborted: boolean;
 }
 
-// Track sessions by filePath — process is tracked immediately after spawn
+// Track sessions by canonical session key — process is tracked immediately
+// after spawn. The key is derived from the confined path but normalised so the
+// watcher (start) and preview client (stop) agree on it across processes on
+// case-insensitive filesystems (XP-OFFICE-PIPE-01).
 const sessions = new Map<string, WatchSession>();
 // Pending kill timers — delayed stop allows Strict Mode re-mount to reuse sessions
 const pendingKills = new Map<string, ReturnType<typeof setTimeout>>();
-// Skip further install attempts after the first failure in this session
-let installFailed = false;
-// Lazy update: check once per session on first use, not at startup
-let updateChecked = false;
+
+/**
+ * Whether the host filesystem treats paths case-insensitively. Windows (NTFS)
+ * and the default macOS volume (APFS case-insensitive) fold case, so a path that
+ * differs only by drive-letter/segment case refers to the same file. Linux is
+ * case-sensitive.
+ */
+const CASE_INSENSITIVE_FS = process.platform === 'win32' || process.platform === 'darwin';
+
+/**
+ * Canonicalise a confined path into a stable session/pipe key.
+ *
+ * officecli is spawned with the confined real path, but the *key* under which we
+ * track its watch session (and which must match what a separately-bundled
+ * officecli computes for its pipe/port name) has to be identical no matter how
+ * the path arrives. On case-insensitive filesystems realpath may return a
+ * drive-letter or segment in either case, and Windows callers may use `\` while
+ * the resolver used `/`; without normalisation start and stop can key different
+ * strings for the same file and never reuse/stop the session. We normalise
+ * separators to the platform default and lowercase the whole path on
+ * case-insensitive filesystems so the key is process-stable.
+ */
+function canonicalizeSessionKey(confinedPath: string): string {
+  const normalized = path.normalize(confinedPath);
+  return CASE_INSENSITIVE_FS ? normalized.toLowerCase() : normalized;
+}
 
 /**
  * Find a free TCP port by binding to port 0.
@@ -81,74 +106,15 @@ function waitForPort(port: number, maxRetries = 20, interval = 100): Promise<voi
 }
 
 /**
- * Kill an existing session and remove it from the map.
+ * Kill an existing session and remove it from the map. `key` is the canonical
+ * session key (see {@link canonicalizeSessionKey}).
  */
-function killSession(filePath: string): void {
-  const session = sessions.get(filePath);
+function killSession(key: string): void {
+  const session = sessions.get(key);
   if (session) {
     session.aborted = true;
     session.process.kill();
-    sessions.delete(filePath);
-  }
-}
-
-/**
- * Background update check — runs at most once per day, fully async to avoid blocking main process.
- */
-function checkForUpdate(): void {
-  const markerPath = path.join(getPlatformServices().paths.getDataDir(), '.officecli-update-check');
-  try {
-    const stat = fs.statSync(markerPath);
-    if (Date.now() - stat.mtimeMs < 24 * 60 * 60 * 1000) return;
-  } catch {}
-
-  try {
-    fs.writeFileSync(markerPath, '');
-  } catch {}
-
-  exec('officecli --version', { encoding: 'utf8', timeout: 10000 }, (err, stdout) => {
-    if (err) return;
-    const localVersion = stdout.trim();
-    const latestUrl = 'https://github.com/TradeCanyon/OfficeCli/releases/latest';
-    exec(
-      `curl -fsSL -o /dev/null -w "%{url_effective}" ${latestUrl}`,
-      { encoding: 'utf8', timeout: 10000 },
-      (err2, stdout2) => {
-        if (err2) return;
-        const remoteVersion = stdout2.trim().split('/').pop()?.replace(/^v/, '') ?? '';
-        if (remoteVersion && remoteVersion !== localVersion) {
-          installOfficecli();
-        }
-      }
-    );
-  });
-}
-
-/**
- * Auto-install officecli if not found.
- */
-function installOfficecli(): boolean {
-  if (installFailed) return false;
-  try {
-    ipcBridge.pptPreview.status.emit({ state: 'installing' });
-    if (process.platform === 'win32') {
-      execSync(
-        'powershell -Command "irm https://raw.githubusercontent.com/TradeCanyon/OfficeCli/main/install.ps1 | iex"',
-        { stdio: 'inherit' }
-      );
-    } else {
-      execSync('curl -fsSL https://raw.githubusercontent.com/TradeCanyon/OfficeCli/main/install.sh | bash', {
-        stdio: 'inherit',
-      });
-      try {
-        execSync('xattr -cr ~/.local/bin/officecli && codesign -s - --force ~/.local/bin/officecli', { stdio: 'pipe' });
-      } catch {}
-    }
-    return true;
-  } catch (e) {
-    installFailed = true;
-    console.error('[pptPreview] Failed to install officecli:', e);
-    return false;
+    sessions.delete(key);
   }
 }
 
@@ -158,35 +124,38 @@ function installOfficecli(): boolean {
  * Auto-installs officecli on first use if not found.
  */
 async function startWatch(filePath: string, retry = false): Promise<string> {
-  // Resolve symlinks so the pipe name matches what officecli commands compute
-  try {
-    filePath = fs.realpathSync(filePath);
-  } catch {
-    // If realpath fails, use original path
+  // Confine the renderer-supplied path to the app's authorized roots
+  // (workspace/temp/appData/downloads/desktop/documents) before spawning
+  // officecli against it. confinePath also collapses symlinks so the pipe name
+  // matches what officecli computes, and rejects traversal/UNC/ADS/out-of-root
+  // paths — preventing the renderer from driving officecli to open arbitrary
+  // documents (SEC-IPC-07).
+  const confined = await confinePath(filePath);
+  if (!confined) {
+    throw new Error('Refused to preview a file outside the allowed directories');
   }
+  filePath = confined;
+  // Session/pipe key derived from the confined path, normalised so start and
+  // stop agree across processes on case-insensitive filesystems
+  // (XP-OFFICE-PIPE-01).
+  const sessionKey = canonicalizeSessionKey(filePath);
 
   // Cancel any pending delayed kill (Strict Mode re-mount)
-  const pendingTimer = pendingKills.get(filePath);
+  const pendingTimer = pendingKills.get(sessionKey);
   if (pendingTimer) {
     clearTimeout(pendingTimer);
-    pendingKills.delete(filePath);
+    pendingKills.delete(sessionKey);
   }
 
   // Reuse existing session if process is still alive
-  const existing = sessions.get(filePath);
+  const existing = sessions.get(sessionKey);
   if (existing && !existing.aborted && existing.process.exitCode === null) {
     const url = `http://localhost:${existing.port}`;
     return url;
   }
 
   // Kill any existing/pending session for this file first
-  killSession(filePath);
-
-  // Lazy update check: once per session on first actual use
-  if (!updateChecked) {
-    updateChecked = true;
-    checkForUpdate();
-  }
+  killSession(sessionKey);
 
   const port = await findFreePort();
 
@@ -199,14 +168,14 @@ async function startWatch(filePath: string, retry = false): Promise<string> {
 
   // Track session immediately so stop can kill it
   const session: WatchSession = { process: child, port, aborted: false };
-  sessions.set(filePath, session);
+  sessions.set(sessionKey, session);
 
   return new Promise<string>((resolve, reject) => {
     let settled = false;
     const timeout = setTimeout(() => {
       if (!settled) {
         settled = true;
-        killSession(filePath);
+        killSession(sessionKey);
         reject(new Error('officecli watch timed out'));
       }
     }, 15000);
@@ -241,7 +210,7 @@ async function startWatch(filePath: string, retry = false): Promise<string> {
           })
           .catch(() => {
             settle(new Error('officecli watch server did not become ready'));
-            killSession(filePath);
+            killSession(sessionKey);
           });
       }
     });
@@ -252,24 +221,30 @@ async function startWatch(filePath: string, retry = false): Promise<string> {
 
     child.on('error', (err) => {
       console.error('[pptPreview] spawn error:', err.message);
-      sessions.delete(filePath);
+      sessions.delete(sessionKey);
       if ((err as NodeJS.ErrnoException).code === 'ENOENT' && !retry) {
-        // officecli not found — try auto-install then retry once.
-        // Clear timeout before potentially long sync install.
+        // officecli not found (bundled binary unresolvable) — offer a
+        // consent-gated, pinned, checksum-verified install, then retry once.
+        // Clear the timeout before the potentially long install + retry; the
+        // install path drives its own resolve/reject on the outer promise.
         clearTimeout(timeout);
-        if (installOfficecli()) {
-          settled = true;
-          startWatch(filePath, true).then(resolve, reject);
-        } else {
-          settle(new Error('officecli is not installed and auto-install failed'));
-        }
+        settled = true;
+        installOfficecli((payload) => ipcBridge.pptPreview.status.emit(payload))
+          .then((installed) => {
+            if (installed) {
+              startWatch(filePath, true).then(resolve, reject);
+            } else {
+              reject(new Error('officecli is not installed and auto-install was declined or failed'));
+            }
+          })
+          .catch(reject);
       } else {
         settle(new Error(`Failed to start officecli: ${err.message}`));
       }
     });
 
     child.on('exit', (code, signal) => {
-      sessions.delete(filePath);
+      sessions.delete(sessionKey);
       if (session.aborted) {
         settle();
         return;
@@ -297,8 +272,8 @@ export function isActivePreviewPort(port: number): boolean {
  * Stop all running watch processes (called on app shutdown).
  */
 export function stopAllWatchSessions(): void {
-  for (const [filePath] of sessions) {
-    killSession(filePath);
+  for (const [key] of sessions) {
+    killSession(key);
   }
 }
 
@@ -318,14 +293,18 @@ export function initPptPreviewBridge(): void {
   });
 
   ipcBridge.pptPreview.stop.provider(async ({ filePath }) => {
-    try {
-      filePath = fs.realpathSync(filePath);
-    } catch {}
+    // Resolve to the same confined real path used as the session key on start.
+    // Out-of-root paths never had a session, so nothing to stop.
+    const confined = await confinePath(filePath);
+    if (!confined) return;
+    // Canonicalise to the same key start used so stop matches the session on
+    // case-insensitive filesystems (XP-OFFICE-PIPE-01).
+    const key = canonicalizeSessionKey(confined);
     // Delay kill to allow Strict Mode re-mount to reuse the session
     const timer = setTimeout(() => {
-      pendingKills.delete(filePath);
-      killSession(filePath);
+      pendingKills.delete(key);
+      killSession(key);
     }, 500);
-    pendingKills.set(filePath, timer);
+    pendingKills.set(key, timer);
   });
 }

@@ -11,7 +11,8 @@ import type { McpOperationResult } from '../McpProtocol';
 import { AbstractMcpAgent } from '../McpProtocol';
 import type { IMcpServer } from '@/common/config/storage';
 import { getEnhancedEnv } from '@process/utils/shellEnv';
-import { safeExec } from '@process/utils/safeExec';
+import { safeExec, safeExecFile } from '@process/utils/safeExec';
+import { validateMcpEnvEntry } from '../validateMcpServer';
 
 /** Env options for exec calls — ensures CLI is found from Finder/launchd launches */
 const getExecEnv = () => ({
@@ -152,24 +153,24 @@ export class QwenMcpAgent extends AbstractMcpAgent {
           if (server.transport.type === 'stdio') {
             // Use Qwen CLI to add an MCP server
             // Format: qwen mcp add <name> <command> [args...]
-            let command = `qwen mcp add "${server.name}" "${server.transport.command}"`;
+            // Pass name/command/args/env as separate argv elements (shell:false)
+            // so shell metacharacters in any value cannot inject commands (SEC-MCP-01).
+            const args = ['mcp', 'add', server.name, server.transport.command];
             if (server.transport.args?.length) {
-              // Quote each arg to protect URLs and special characters from shell interpretation
-              const quotedArgs = server.transport.args.map((arg: string) => `"${arg}"`).join(' ');
-              command += ` ${quotedArgs}`;
+              args.push(...server.transport.args);
             }
-            const envEntries = Object.entries(server.transport.env || {});
-            if (envEntries.length) {
-              // Quote env values to protect special characters
-              const envArgs = envEntries.map(([key, value]) => `--env "${key}=${value}"`).join(' ');
-              command += ` ${envArgs}`;
+            for (const [key, value] of Object.entries(server.transport.env || {})) {
+              // Reject argv-breaking keys/values before they ride into the
+              // `--env KEY=VALUE` argv element (RT-B2-01 / RT-B2-03).
+              validateMcpEnvEntry(server.name, key, String(value ?? ''));
+              args.push('--env', `${key}=${value}`);
             }
 
             // Add scope flag, prefer user scope
-            command += ' -s user';
+            args.push('-s', 'user');
 
             try {
-              await safeExec(command, { timeout: 5000, ...getExecEnv() });
+              await safeExecFile('qwen', args, { timeout: 5000, ...getExecEnv() });
             } catch (error) {
               console.warn(`Failed to add MCP ${server.name} to Qwen Code:`, error);
             }
@@ -181,20 +182,21 @@ export class QwenMcpAgent extends AbstractMcpAgent {
             // Handle SSE/HTTP/Streamable HTTP transport types
             // Qwen CLI uses --transport http for both HTTP and Streamable HTTP
             const transportFlag = server.transport.type === 'streamable_http' ? 'http' : server.transport.type;
-            let command = `qwen mcp add "${server.name}" "${server.transport.url}"`;
-            command += ` --transport ${transportFlag}`;
+            // Pass name/url/headers as separate argv elements (shell:false) so
+            // shell metacharacters in any value cannot inject commands (SEC-MCP-01).
+            const args = ['mcp', 'add', server.name, server.transport.url, '--transport', transportFlag];
 
             // Add headers
             if (server.transport.headers) {
               for (const [key, value] of Object.entries(server.transport.headers)) {
-                command += ` --header "${key}: ${value}"`;
+                args.push('--header', `${key}: ${value}`);
               }
             }
 
-            command += ' -s user';
+            args.push('-s', 'user');
 
             try {
-              await safeExec(command, { timeout: 5000, ...getExecEnv() });
+              await safeExecFile('qwen', args, { timeout: 5000, ...getExecEnv() });
             } catch (error) {
               console.warn(`Failed to add MCP ${server.name} to Qwen Code:`, error);
             }
@@ -219,8 +221,10 @@ export class QwenMcpAgent extends AbstractMcpAgent {
         // Use Qwen CLI to remove an MCP server (try different scopes)
         // First try user scope (matches install), then try project scope
         try {
-          const removeCommand = `qwen mcp remove "${mcpServerName}" -s user`;
-          const result = await safeExec(removeCommand, { timeout: 5000, ...getExecEnv() });
+          const result = await safeExecFile('qwen', ['mcp', 'remove', mcpServerName, '-s', 'user'], {
+            timeout: 5000,
+            ...getExecEnv(),
+          });
 
           // Check output to determine real successful removal
           if (result.stdout && result.stdout.includes('removed from user settings')) {
@@ -235,8 +239,10 @@ export class QwenMcpAgent extends AbstractMcpAgent {
         } catch (userError) {
           // user scope failed; try project scope
           try {
-            const removeCommand = `qwen mcp remove "${mcpServerName}" -s project`;
-            const result = await safeExec(removeCommand, { timeout: 5000, ...getExecEnv() });
+            const result = await safeExecFile('qwen', ['mcp', 'remove', mcpServerName, '-s', 'project'], {
+              timeout: 5000,
+              ...getExecEnv(),
+            });
 
             // Check output to determine real successful removal
             if (result.stdout && result.stdout.includes('removed from project settings')) {

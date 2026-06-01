@@ -186,17 +186,19 @@ export class ClaudeMcpAgent extends AbstractMcpAgent {
             // Claude CLI uses --transport http for both HTTP and Streamable HTTP
             // Format: claude mcp add -s user --transport <type> <name> <url> [--header ...]
             const transportFlag = server.transport.type === 'streamable_http' ? 'http' : server.transport.type;
-            let command = `claude mcp add -s user --transport ${transportFlag} "${server.name}" "${server.transport.url}"`;
+            // Pass name/url/headers as separate argv elements (shell:false) so
+            // shell metacharacters in any value cannot inject commands (SEC-MCP-01).
+            const args = ['mcp', 'add', '-s', 'user', '--transport', transportFlag, server.name, server.transport.url];
 
             // Add headers
             if (server.transport.headers) {
               for (const [key, value] of Object.entries(server.transport.headers)) {
-                command += ` --header "${key}: ${value}"`;
+                args.push('--header', `${key}: ${value}`);
               }
             }
 
             try {
-              await safeExec(command, {
+              await safeExecFile('claude', args, {
                 timeout: 5000,
                 ...getExecEnv(),
               });
@@ -237,8 +239,7 @@ export class ClaudeMcpAgent extends AbstractMcpAgent {
         for (const scope of scopes) {
           for (const candidateName of candidateNames) {
             try {
-              const removeCommand = `claude mcp remove -s ${scope} "${candidateName}"`;
-              const result = await safeExec(removeCommand, {
+              const result = await safeExecFile('claude', ['mcp', 'remove', '-s', scope, candidateName], {
                 timeout: 5000,
                 ...getExecEnv(),
               });

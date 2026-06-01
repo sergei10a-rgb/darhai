@@ -12,15 +12,11 @@
     <link rel="icon" type="image/png" href="./pwa/icon-192.png" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./pwa/icon-180.png" />
-    <!-- UI System v1 typography — Sora display + IBM Plex Mono. Fallback chain
-         in --forge-font / --forge-mono-font keeps the app legible if the CDN
-         is unreachable on first launch. -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Sora:wght@300;400;500;600;700;800&display=swap"
-    />
+    <!-- UI System v1 typography — Sora display + IBM Plex Mono. SEC-ELEC-02:
+         the remote Google Fonts <link>/preconnect were removed to drop the
+         first-launch third-party network beacon and keep the renderer CSP at
+         font-src 'self'. The --forge-font / --forge-mono-font fallback chains
+         (Inter / system-ui / ui-monospace) keep the app fully legible. -->
     <title>Wayland</title>
     <script>
       // Synchronously restore theme from localStorage to prevent theme flash

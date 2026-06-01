@@ -52,7 +52,7 @@ if (process.env.SENTRY_DSN && process.env.SENTRY_DSN.trim()) {
 }
 
 import './process/utils/configureConsoleLog';
-import { app, BrowserWindow, nativeImage, net, powerMonitor, protocol, screen } from 'electron';
+import { app, BrowserWindow, nativeImage, net, powerMonitor, protocol, screen, session } from 'electron';
 import log from 'electron-log';
 import fixPath from 'fix-path';
 import * as fs from 'fs';
@@ -151,24 +151,30 @@ if (!gotTheLock) {
 if (process.platform === 'darwin' || process.platform === 'linux') {
   fixPath();
 
-  // Supplement nvm paths that fix-path might miss (nvm is often only in .zshrc, not .zshenv)
-  const nvmDir = process.env.NVM_DIR || path.join(process.env.HOME || '', '.nvm');
-  const nvmVersionsDir = path.join(nvmDir, 'versions', 'node');
-  if (fs.existsSync(nvmVersionsDir)) {
-    try {
-      const versions = fs.readdirSync(nvmVersionsDir);
-      const nvmPaths = versions.map((v) => path.join(nvmVersionsDir, v, 'bin')).filter((p) => fs.existsSync(p));
-      if (nvmPaths.length > 0) {
-        const currentPath = process.env.PATH || '';
-        const missingPaths = nvmPaths.filter((p) => !currentPath.includes(p));
-        if (missingPaths.length > 0) {
-          process.env.PATH = [...missingPaths, currentPath].join(path.delimiter);
+  // PERF-BOOT-03: defer the nvm directory walk off the synchronous boot path.
+  // existsSync + readdirSync + per-version existsSync ran at module top before
+  // app.whenReady; scheduling it on setImmediate keeps that blocking FS cost out
+  // of the hottest startup path while still supplementing PATH before the first
+  // shell/tool spawn (nvm is often only in .zshrc, not .zshenv).
+  setImmediate(() => {
+    const nvmDir = process.env.NVM_DIR || path.join(process.env.HOME || '', '.nvm');
+    const nvmVersionsDir = path.join(nvmDir, 'versions', 'node');
+    if (fs.existsSync(nvmVersionsDir)) {
+      try {
+        const versions = fs.readdirSync(nvmVersionsDir);
+        const nvmPaths = versions.map((v) => path.join(nvmVersionsDir, v, 'bin')).filter((p) => fs.existsSync(p));
+        if (nvmPaths.length > 0) {
+          const currentPath = process.env.PATH || '';
+          const missingPaths = nvmPaths.filter((p) => !currentPath.includes(p));
+          if (missingPaths.length > 0) {
+            process.env.PATH = [...missingPaths, currentPath].join(path.delimiter);
+          }
         }
+      } catch {
+        // Ignore errors when reading nvm directory
       }
-    } catch {
-      // Ignore errors when reading nvm directory
     }
-  }
+  });
 }
 
 // Log environment diagnostics once at startup (persisted via electron-log).
@@ -196,6 +202,165 @@ protocol.registerSchemesAsPrivileged([
     },
   },
 ]);
+
+// SEC-ELEC-03: centrally harden every web-contents the app creates, especially
+// guest <webview>s. The main window binds setWindowOpenHandler + a will-navigate
+// origin lock on its own webContents, but those guards never reached guest
+// webviews (HTMLRenderer's untrusted model-HTML preview, URLViewer/WebviewHost's
+// remote pages), which share the default session. This listener re-applies the
+// guards to every contents:
+//   - deny ALL renderer-initiated window.open() (popups) everywhere.
+//   - for guest webviews, block navigation/redirect INTO the first-party
+//     renderer origin or any privileged scheme, so a compromised preview cannot
+//     escalate into the app context (where it would inherit window.electronAPI).
+//     Remote https / data: / file: navigations stay allowed — preview surfaces
+//     legitimately load those.
+const isPrivilegedAppTarget = (rawUrl: string): boolean => {
+  try {
+    const target = new URL(rawUrl);
+    const scheme = target.protocol.replace(/:$/, '');
+    // Privileged custom scheme that serves local app assets.
+    if (scheme === AION_ASSET_PROTOCOL) {
+      return true;
+    }
+    // The packaged renderer is served from file://; treat any file:// frame as
+    // the privileged app origin for guests (preview file:// content is loaded
+    // as the guest's INITIAL src, not navigated to, so this only blocks a guest
+    // trying to escalate back into a file:// document mid-session).
+    if (scheme === 'file') {
+      return true;
+    }
+    // The dev renderer origin (Vite). In production ELECTRON_RENDERER_URL is unset.
+    const devUrl = process.env['ELECTRON_RENDERER_URL'];
+    if (!app.isPackaged && devUrl) {
+      try {
+        if (target.origin === new URL(devUrl).origin) {
+          return true;
+        }
+      } catch {
+        // Unparsable dev URL — fall through.
+      }
+    }
+    return false;
+  } catch {
+    // Unparsable target — treat as unexpected and block (fail closed).
+    return true;
+  }
+};
+
+// SEC-ELEC-02: enforce a restrictive Content-Security-Policy on the first-party
+// renderer document so any HTML-injection bug in the renderer (which renders
+// model output, file content, and remote data, and holds the full IPC bridge)
+// cannot load arbitrary remote script or exfiltrate over the network.
+//
+// The CSP is applied ONLY to first-party app documents (file:// in prod, the
+// Vite dev origin in dev, and the wayland-asset: scheme). Guest <webview>
+// content (remote pages in URLViewer, data:/file:// model HTML in HTMLRenderer)
+// is intentionally left ungoverned here — those are sandboxed and origin-locked
+// by the web-contents-created guard above, and applying app CSP to them would
+// break legitimate preview rendering.
+const buildRendererCsp = (): string => {
+  // Sentry ingest host, when a DSN is configured, so error reporting still works.
+  let sentryConnect = '';
+  const dsn = process.env.SENTRY_DSN?.trim();
+  if (dsn) {
+    try {
+      sentryConnect = ` ${new URL(dsn).origin}`;
+    } catch {
+      // Malformed DSN — omit from connect-src (Sentry init would also fail).
+    }
+  }
+  // Dev needs 'unsafe-eval' (Vite/React refresh) and ws: for HMR; prod does not.
+  const scriptExtra = app.isPackaged ? '' : " 'unsafe-eval'";
+  const devConnect = app.isPackaged ? '' : ' ws://localhost:* ws://127.0.0.1:* http://localhost:* http://127.0.0.1:*';
+  // Inline <script> blocks in index.html restore theme before first paint; pin
+  // them by sha256 hash instead of allowing 'unsafe-inline' for scripts.
+  const inlineScriptHashes =
+    "'sha256-F0Ydm3Y8FcXdrgJvTODBT9QYFs/xNmlOzrekFfx7Ji0=' 'sha256-k/0jDZE33E24TcBZUFNXmfI9LIUaujAblssNi/WzOJU='";
+  return [
+    "default-src 'self'",
+    `script-src 'self' 'wasm-unsafe-eval' ${inlineScriptHashes}${scriptExtra}`,
+    // Arco / UnoCSS inject runtime <style> tags, so style needs 'unsafe-inline'.
+    "style-src 'self' 'unsafe-inline'",
+    "font-src 'self' data:",
+    // Images/media come from local assets, generated data/blob URLs, the asset
+    // protocol, packaged files, and remote extension covers/icons.
+    `img-src 'self' data: blob: file: ${AION_ASSET_PROTOCOL}: https:`,
+    `media-src 'self' data: blob: file: ${AION_ASSET_PROTOCOL}:`,
+    // Renderer egress: same-origin, the embedded local WebUI server, the asset
+    // protocol, and the Sentry ingest endpoint when configured. Model-provider
+    // HTTP happens in the MAIN process, never the renderer, so no provider hosts
+    // are needed here.
+    `connect-src 'self' ${AION_ASSET_PROTOCOL}:${sentryConnect}${devConnect}`,
+    // <webview> preview frames are served via the asset protocol / file / data.
+    `frame-src 'self' ${AION_ASSET_PROTOCOL}: file: data: https:`,
+    "worker-src 'self' blob:",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+  ].join('; ');
+};
+
+const isFirstPartyAppDocument = (rawUrl: string): boolean => {
+  try {
+    const target = new URL(rawUrl);
+    const scheme = target.protocol.replace(/:$/, '');
+    if (scheme === 'file' || scheme === AION_ASSET_PROTOCOL) {
+      return true;
+    }
+    const devUrl = process.env['ELECTRON_RENDERER_URL'];
+    if (!app.isPackaged && devUrl) {
+      try {
+        return target.origin === new URL(devUrl).origin;
+      } catch {
+        return false;
+      }
+    }
+    return false;
+  } catch {
+    return false;
+  }
+};
+
+const applyRendererCsp = (): void => {
+  const csp = buildRendererCsp();
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    if (!isFirstPartyAppDocument(details.url)) {
+      // Leave guest webview content (remote / data: previews) untouched.
+      callback({ responseHeaders: details.responseHeaders });
+      return;
+    }
+    const responseHeaders = { ...details.responseHeaders };
+    // Strip any pre-existing CSP variants so ours is authoritative.
+    for (const key of Object.keys(responseHeaders)) {
+      if (key.toLowerCase() === 'content-security-policy') {
+        delete responseHeaders[key];
+      }
+    }
+    responseHeaders['Content-Security-Policy'] = [csp];
+    callback({ responseHeaders });
+  });
+};
+
+app.on('web-contents-created', (_event, contents) => {
+  // Deny window.open() for every contents. The main renderer routes external
+  // links through shell.openExternal; guests have no legitimate popup need.
+  contents.setWindowOpenHandler(() => ({ action: 'deny' }));
+
+  // Only add the guest navigation lock to webview contents. The main window's
+  // own will-navigate guard (in createWindow) already fully constrains it, and
+  // double-binding here would risk blocking its legitimate in-app file:// nav.
+  if (contents.getType() === 'webview') {
+    const blockEscalation = (event: Electron.Event, navigationUrl: string): void => {
+      if (isPrivilegedAppTarget(navigationUrl)) {
+        console.warn('[Wayland] Blocked guest webview navigation into app origin:', navigationUrl);
+        event.preventDefault();
+      }
+    };
+    contents.on('will-navigate', blockEscalation);
+    contents.on('will-redirect', blockEscalation);
+  }
+});
 
 // Global error handlers for main process.
 // Always log via electron-log AND console.error before deferring to Sentry — if SENTRY_DSN
@@ -370,16 +535,40 @@ const createWindow = ({ showOnReady = true }: { showOnReady?: boolean } = {}): v
     (params as { nodeintegration?: boolean }).nodeintegration = false;
   });
 
-  // 4) Permissions. The renderer's voice features call getUserMedia({ audio: true });
-  //    without an explicit handler Electron can leave the request unanswered, so the
-  //    mic silently never starts. The renderer is our own trusted code, origin-locked
-  //    by the will-navigate guard above, so granting its permission requests is safe.
+  // 4) Permissions (SEC-ELEC-01). The renderer's voice features call
+  //    getUserMedia({ audio: true }); without a handler Electron can leave the
+  //    request unanswered, so the mic silently never starts. But the default
+  //    session is shared with preview <webview>s that render untrusted
+  //    model-generated HTML (HTMLRenderer) or arbitrary remote pages (URLViewer).
+  //    A blanket `callback(true)` auto-granted geolocation / camera / clipboard /
+  //    notifications to those guests with no prompt.
+  //
+  //    Discriminate: grant ONLY the first-party renderer (our own webContents,
+  //    origin-locked by the will-navigate guard above) and ONLY the media
+  //    permission it actually needs (mic for voice). Everything else — and every
+  //    guest webview — is denied.
   {
+    const mainWebContentsId = mainWindow.webContents.id;
+    const GRANTED_PERMISSIONS = new Set(['media', 'mediaKeySystem', 'audioCapture', 'videoCapture']);
+    const isFirstPartyRenderer = (wc: Electron.WebContents | null | undefined): boolean => {
+      if (!wc || wc.id !== mainWebContentsId) {
+        return false;
+      }
+      try {
+        const target = new URL(wc.getURL());
+        const targetOrigin = target.protocol === 'file:' ? 'file://' : target.origin;
+        return !!expectedRendererOrigin && targetOrigin === expectedRendererOrigin;
+      } catch {
+        return false;
+      }
+    };
     const winSession = mainWindow.webContents.session;
-    winSession.setPermissionRequestHandler((_webContents, _permission, callback) => {
-      callback(true);
+    winSession.setPermissionRequestHandler((webContents, permission, callback) => {
+      callback(isFirstPartyRenderer(webContents) && GRANTED_PERMISSIONS.has(permission));
     });
-    winSession.setPermissionCheckHandler(() => true);
+    winSession.setPermissionCheckHandler((webContents, permission) => {
+      return isFirstPartyRenderer(webContents) && GRANTED_PERMISSIONS.has(permission);
+    });
   }
 
   // Show window after content is ready to prevent FOUC (Flash of Unstyled Content)
@@ -446,10 +635,7 @@ const createWindow = ({ showOnReady = true }: { showOnReady?: boolean } = {}): v
 
   // Initialize IJFW system service (skip when disabled via env, e.g. E2E / CI / explicit opt-out)
   // 初始化 IJFW 系统服务（环境变量禁用时跳过）
-  const disableIjfw =
-    isCiRuntime ||
-    process.env.WAYLAND_DISABLE_IJFW === '1' ||
-    process.env.WAYLAND_E2E_TEST === '1';
+  const disableIjfw = isCiRuntime || process.env.WAYLAND_DISABLE_IJFW === '1' || process.env.WAYLAND_E2E_TEST === '1';
   if (!disableIjfw) {
     import('./process/services/ijfwSystemService')
       .then(async ({ ijfwSystemService }) => {
@@ -912,6 +1098,10 @@ type CleanupModules = {
   webserverAdapter: typeof import('@process/webserver/adapter');
   officeWatch: typeof import('@process/bridge/officeWatchBridge');
   pptPreview: typeof import('@process/bridge/pptPreviewBridge');
+  // REL-WATCH-01: drain leaked fs.watch handles (renderer-initiated file
+  // watchers) deterministically on quit so they don't outlive the process and
+  // accumulate against inotify max_user_watches / EMFILE.
+  fileWatch: typeof import('@process/bridge/fileWatchBridge');
   // L15 (AUDIT-05 F17): close SQLite handle from before-quit so the DB file
   // is flushed/unlocked before process exit.
   database: typeof import('@process/services/database/export');
@@ -931,7 +1121,8 @@ const prefetchCleanupModules = (): Promise<CleanupModules> => {
     import('@process/bridge/pptPreviewBridge'),
     import('@process/services/database/export'),
     import('@process/services/cron/cronServiceSingleton'),
-  ]).then(([ambient, channels, webuiBridge, webserverAdapter, officeWatch, pptPreview, database, cron]) => ({
+    import('@process/bridge/fileWatchBridge'),
+  ]).then(([ambient, channels, webuiBridge, webserverAdapter, officeWatch, pptPreview, database, cron, fileWatch]) => ({
     ambient,
     channels,
     webuiBridge,
@@ -940,6 +1131,7 @@ const prefetchCleanupModules = (): Promise<CleanupModules> => {
     pptPreview,
     database,
     cron,
+    fileWatch,
   }));
 };
 
@@ -947,6 +1139,9 @@ const prefetchCleanupModules = (): Promise<CleanupModules> => {
 void app
   .whenReady()
   .then(() => {
+    // SEC-ELEC-02: install the renderer CSP on the default session as early as
+    // possible after ready, before any window loads its document.
+    applyRendererCsp();
     // Kick off cleanup-module prefetch BEFORE handleAppReady so it runs in
     // parallel with init. Failure is non-fatal — before-quit handles undefined.
     _cleanupModulesPromise = prefetchCleanupModules();
@@ -1070,6 +1265,7 @@ app.on('before-quit', async () => {
       safeImport('pptPreview', () => import('@process/bridge/pptPreviewBridge')),
       safeImport('database', () => import('@process/services/database/export')),
       safeImport('cron', () => import('@process/services/cron/cronServiceSingleton')),
+      safeImport('fileWatch', () => import('@process/bridge/fileWatchBridge')),
     ]);
     const out: Partial<CleanupModules> = {};
     for (const [k, v] of entries) {
@@ -1174,6 +1370,17 @@ app.on('before-quit', async () => {
       PER_STEP_TIMEOUT_MS
     );
 
+    // REL-WATCH-01: drain renderer-initiated fs.watch handles so they are
+    // released deterministically on quit rather than abandoned on Cmd+Q/crash.
+    const fileWatchStep = withTimeout(
+      'stopAllFileWatchers',
+      (async () => {
+        if (!mods.fileWatch) return;
+        mods.fileWatch.stopAllFileWatchers();
+      })(),
+      PER_STEP_TIMEOUT_MS
+    );
+
     // Run all steps concurrently; allSettled so one slow step can't starve
     // the rest. Each step has its own 2s budget via withTimeout above.
     // Listed in the documented top-down ordering above for readability.
@@ -1187,6 +1394,7 @@ app.on('before-quit', async () => {
       webServerStep,
       officeWatchStep,
       pptPreviewStep,
+      fileWatchStep,
     ]);
   };
 
