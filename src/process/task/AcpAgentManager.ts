@@ -23,6 +23,8 @@ import type {
 import { ACP_BACKENDS_ALL, getCurrentWrapperVersion } from '@/common/types/acpTypes';
 import { ExtensionRegistry } from '@process/extensions';
 import { getDatabase } from '@process/services/database';
+import { ProviderRepository } from '@process/providers/storage/ProviderRepository';
+import { PROVIDER_ENV_VARS } from '@process/providers/detection/KeyDiscovery';
 import { ProcessConfig } from '@process/utils/initStorage';
 import { addMessage, addOrUpdateMessage, nextTickToLocalFinish } from '@process/utils/message';
 import { handlePreviewOpenEvent } from '@process/utils/previewUtils';
@@ -464,10 +466,53 @@ ${collectedResponses.join('\n')}`;
     customEnv?: Record<string, string>;
     yoloMode?: boolean;
   }> {
-    if (data.customAgentId) {
-      return this.resolveCustomAgentCliConfig(data);
+    const resolved = data.customAgentId
+      ? await this.resolveCustomAgentCliConfig(data)
+      : await this.resolveBuiltinBackendConfig(data);
+
+    // Bridge connected-provider API keys (from the in-app model registry) into
+    // the spawned agent's env. A custom agent's explicit env wins over the
+    // auto-injected keys, which in turn win over the inherited shell env.
+    const providerEnv = await this.buildConnectedProviderEnv();
+    if (Object.keys(providerEnv).length > 0) {
+      return { ...resolved, customEnv: { ...providerEnv, ...resolved.customEnv } };
     }
-    return this.resolveBuiltinBackendConfig(data);
+    return resolved;
+  }
+
+  /**
+   * Bridge connected-provider API keys (from the in-app model registry) into a
+   * spawned agent's environment under each provider's well-known env var name.
+   *
+   * Why: ACP backends inherit the user's full shell env. When the shell exports
+   * a STALE key (e.g. an old OPENROUTER_API_KEY left in ~/.zshrc), it silently
+   * overrides the valid key the user connected in-app, and the CLI fails — qwen
+   * routes Qwen models through OpenRouter and a stale key yields "401 User not
+   * found". The registry is the source of truth (a connected provider passed
+   * live validation), so its key must win. We inject via customEnv, which
+   * createSpawnConfig applies OVER the shell env (Object.assign last).
+   */
+  private async buildConnectedProviderEnv(): Promise<Record<string, string>> {
+    const env: Record<string, string> = {};
+    try {
+      const db = await getDatabase();
+      const repo = new ProviderRepository(db.getDriver());
+      for (const provider of repo.listRegistryProviders()) {
+        if (provider.state !== 'connected') continue;
+        const envVars = PROVIDER_ENV_VARS[provider.providerId];
+        if (!envVars || envVars.length === 0) continue;
+        const stored = repo.getRegistryProviderCreds(provider.providerId);
+        if (stored.status !== 'ok') continue;
+        // Stored API-key creds carry the key under `key` (see
+        // modelRegistryIpc transformCredsToPayload), not `apiKey`.
+        const apiKey = stored.creds.key;
+        if (typeof apiKey !== 'string' || apiKey.length === 0) continue;
+        for (const name of envVars) env[name] = apiKey;
+      }
+    } catch (err) {
+      mainWarn('[AcpAgentManager]', 'buildConnectedProviderEnv failed', err);
+    }
+    return env;
   }
 
   /**
@@ -526,6 +571,7 @@ ${collectedResponses.join('\n')}`;
   private async resolveBuiltinBackendConfig(data: AcpAgentManagerData): Promise<{
     cliPath?: string;
     customArgs?: string[];
+    customEnv?: Record<string, string>;
     yoloMode?: boolean;
   }> {
     const config = await ProcessConfig.get('acp.config');
