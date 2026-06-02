@@ -176,18 +176,22 @@ win:
   # Alternatively, electron-builder reads WIN_CSC_LINK + CSC_KEY_PASSWORD from
   # the environment automatically for a .pfx-based OV cert; leaving those set
   # also works without touching this file.
-  certificateSubjectName: ${env.WIN_CSC_SUBJECT_NAME}
   signtoolOptions:
+    # electron-builder 26 nests Windows signing options under signtoolOptions;
+    # certificateSubjectName and publisherName were rejected at the win.* level.
+    # Subject-name signing drives signtool against an OV/EV certificate imported
+    # into the Windows cert store. Empty WIN_CSC_SUBJECT_NAME => signing skipped.
+    certificateSubjectName: ${env.WIN_CSC_SUBJECT_NAME}
     # Timestamp every signature so binaries stay valid after the cert expires.
     timeStampServer: ${env.WIN_TIMESTAMP_URL}
     rfc3161TimeStampServer: ${env.WIN_TIMESTAMP_URL}
     signingHashAlgorithms:
       - sha256
-  # Pin the publisher identity electron-updater enforces on the Windows
-  # auto-update path. Without this, the publisher check is a no-op even on a
-  # signed installer. Must match the CN of the signing certificate exactly.
-  publisherName:
-    - ${env.WIN_PUBLISHER_NAME}
+    # Pin the publisher identity electron-updater enforces on the Windows
+    # auto-update path. Without this, the publisher check is a no-op even on a
+    # signed installer. Must match the CN of the signing certificate exactly.
+    publisherName:
+      - ${env.WIN_PUBLISHER_NAME}
   # Make electron-updater REQUIRE a valid, matching Authenticode signature on
   # every downloaded Windows update before it is applied — closes UPD-01.
   verifyUpdateCodeSignature: true
