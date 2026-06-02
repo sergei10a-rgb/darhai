@@ -89,6 +89,33 @@ export function initSkillsBridge(): void {
     return SkillLibrary.getInstance().loadBody(name);
   });
 
+  ipcBridge.skills.updateBody.provider(async ({ name, body }) => {
+    const lib = SkillLibrary.getInstance();
+    const entry = await lib.get(name);
+    if (!entry) {
+      return { ok: false, error: 'not-found' };
+    }
+    // Only user-authored / imported skills live in a writable path. Bundled
+    // library, team, and cli-discovered skills are read-only.
+    if (entry.source !== 'user' && entry.source !== 'imported') {
+      return { ok: false, error: 'read-only' };
+    }
+    if (!entry.path || !path.isAbsolute(entry.path)) {
+      return { ok: false, error: 'no-writable-path' };
+    }
+    // Re-scan before writing — never persist a body that fails the guard.
+    const [report] = await SkillGuard.scan(
+      [{ name: entry.name, body, description: entry.description ?? '', tags: entry.metadata.tags ?? [] }],
+      { llm: true }
+    );
+    if (report.verdict === 'blocked') {
+      return { ok: false, error: 'blocked' };
+    }
+    await writeFile(entry.path, body, 'utf-8');
+    lib.registerSource([{ ...entry, security: report }]);
+    return { ok: true, verdict: report.verdict };
+  });
+
   ipcBridge.skills.setPinned.provider(async ({ name, pinned }) => {
     const prefs = (await ProcessConfig.get('skills.preferences')) ?? { pinned: [], disabled: [], revision: 0 };
     const current = prefs.pinned ?? [];

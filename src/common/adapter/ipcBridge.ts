@@ -395,6 +395,16 @@ export const skills = {
    * null for unknown names or blocked (quarantined) entries.
    */
   getBody: buildProvider<string | null, { name: string }>('skills.get-body'),
+  /**
+   * Overwrite a user-editable skill's SKILL.md body. Re-scans the new body
+   * (SkillGuard); a `blocked` verdict is rejected and the body is NOT written.
+   * Only `user`/`imported` source skills are editable — bundled skills are
+   * read-only and return `{ error: 'read-only' }`.
+   */
+  updateBody: buildProvider<
+    { ok: true; verdict: string } | { ok: false; error: string },
+    { name: string; body: string }
+  >('skills.update-body'),
   /** Pin or unpin a skill by name. */
   setPinned: buildProvider<void, { name: string; pinned: boolean }>('skills.set-pinned'),
   /**

@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Alert, Button, Drawer, Spin, Tag, Typography } from '@arco-design/web-react';
-import { Star } from 'lucide-react';
+import { Alert, Button, Drawer, Input, Message, Spin, Tag, Typography } from '@arco-design/web-react';
+import { Pencil, Star } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { SkillIndexEntry } from '@/common/types/skillTypes';
@@ -39,8 +39,14 @@ const SkillDetailDrawer: React.FC<Props> = ({ entry, open, onClose, onTogglePin 
   // does. The getBody IPC already existed; the drawer just never called it.
   const [body, setBody] = useState<string | null>(null);
   const [bodyLoading, setBodyLoading] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState('');
+  const [saving, setSaving] = useState(false);
   const entryName = entry?.name ?? null;
+  // Only user-authored / imported skills live in a writable path.
+  const editable = entry?.source === 'user' || entry?.source === 'imported';
   useEffect(() => {
+    setEditing(false);
     if (!entryName || !open) {
       setBody(null);
       return;
@@ -62,6 +68,37 @@ const SkillDetailDrawer: React.FC<Props> = ({ entry, open, onClose, onTogglePin 
       cancelled = true;
     };
   }, [entryName, open]);
+
+  const handleStartEdit = () => {
+    setDraft(body ?? '');
+    setEditing(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!entryName) return;
+    setSaving(true);
+    try {
+      const result = await ipcBridge.skills.updateBody.invoke({ name: entryName, body: draft });
+      if (result.ok) {
+        setBody(draft);
+        setEditing(false);
+        Message.success(t('detail.saved', { defaultValue: 'Skill saved.' }));
+      } else {
+        const error = (result as { error?: string }).error ?? 'unknown';
+        const reason =
+          error === 'blocked'
+            ? t('detail.saveBlocked', { defaultValue: 'Rejected by the security scanner — the content looks unsafe.' })
+            : error === 'read-only'
+              ? t('detail.saveReadOnly', { defaultValue: 'This skill is built-in and cannot be edited.' })
+              : error;
+        Message.error(reason);
+      }
+    } catch (e) {
+      Message.error(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSaving(false);
+    }
+  };
 
   if (!entry) return null;
 
@@ -188,15 +225,39 @@ const SkillDetailDrawer: React.FC<Props> = ({ entry, open, onClose, onTogglePin 
 
         {/* Skill content (SKILL.md body) */}
         <div>
-          <Typography.Text
-            className='block mb-8px text-11px uppercase font-semibold'
-            style={{ color: 'var(--color-text-3)', letterSpacing: '0.06em' }}
-          >
-            {t('detail.content', { defaultValue: 'Skill content' })}
-          </Typography.Text>
+          <div className='flex items-center justify-between mb-8px'>
+            <Typography.Text
+              className='text-11px uppercase font-semibold'
+              style={{ color: 'var(--color-text-3)', letterSpacing: '0.06em' }}
+            >
+              {t('detail.content', { defaultValue: 'Skill content' })}
+            </Typography.Text>
+            {editable && !editing && !bodyLoading && (
+              <Button type='text' size='mini' icon={<Pencil size={13} />} onClick={handleStartEdit}>
+                {t('detail.edit', { defaultValue: 'Edit' })}
+              </Button>
+            )}
+          </div>
           {bodyLoading ? (
             <div className='flex items-center justify-center py-20px'>
               <Spin />
+            </div>
+          ) : editing ? (
+            <div className='flex flex-col gap-8px'>
+              <Input.TextArea
+                value={draft}
+                onChange={setDraft}
+                autoSize={{ minRows: 10, maxRows: 22 }}
+                style={{ fontFamily: 'var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace)', fontSize: 12 }}
+              />
+              <div className='flex gap-8px justify-end'>
+                <Button size='small' onClick={() => setEditing(false)} disabled={saving}>
+                  {t('detail.cancel', { defaultValue: 'Cancel' })}
+                </Button>
+                <Button size='small' type='primary' loading={saving} onClick={handleSaveEdit}>
+                  {t('detail.save', { defaultValue: 'Save' })}
+                </Button>
+              </div>
             </div>
           ) : body ? (
             <pre
