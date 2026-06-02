@@ -100,7 +100,15 @@ describe('Packaged bundled bun resources integrity', () => {
       expect(manifest.version).toBeTruthy();
       expect(manifest.cacheDir).toBeTruthy();
       expect(Array.isArray(manifest.files)).toBe(true);
-      expect(manifest.skipped).not.toBe(true);
+      // bun publishes no Windows-on-ARM64 binary, so packaging legitimately
+      // skips that runtime (manifest.skipped=true, sourceType='none'). Tolerate
+      // ONLY that exact combo — any other skipped manifest is a real packaging
+      // regression that must still fail.
+      if (manifest.skipped === true) {
+        expect(manifest.platform).toBe('win32');
+        expect(manifest.arch).toBe('arm64');
+        continue;
+      }
       expect(['cache', 'download']).toContain(manifest.sourceType);
 
       if (manifest.variant) {
