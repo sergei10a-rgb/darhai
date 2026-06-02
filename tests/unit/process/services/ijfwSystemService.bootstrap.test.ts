@@ -105,6 +105,13 @@ function flush(): Promise<void> {
   return new Promise((resolve) => setImmediate(resolve));
 }
 
+// Flush the event loop until `pred()` is true or `max` flushes elapse. Replaces
+// fixed-count flush loops that race the async install-exit handler — those are
+// flaky on fast hosts and worse on the ~2.7x-slower windows runners.
+async function flushUntil(pred: () => boolean, max = 200): Promise<void> {
+  for (let i = 0; i < max && !pred(); i++) await flush();
+}
+
 // eslint-disable-next-line import/first
 import { ijfwSystemService, __resetCacheForTests } from '@process/services/ijfwSystemService';
 
@@ -197,57 +204,60 @@ describe('ijfwSystemService.bootstrap', () => {
 
     await ijfwSystemService.bootstrap();
     // Wait for install child's exit handler to fire (refreshAll + emit + release-lock).
-    for (let i = 0; i < 20; i++) await flush();
+    await flushUntil(() =>
+      emitSpy.mock.calls.some((c) => (c[0] as { status?: string })?.status === 'installed_current')
+    );
 
     expect(emitSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'installing' }));
     expect(emitSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'installed_current', version: '1.5.4' }));
     expect(refreshAllSpy).toHaveBeenCalled();
   });
 
-  // The upgrade path renames the existing mcp-server dir to `.pending`; on win32
-  // that staged-tree rename hits ENOENT in the fixture. Prod uses fs.rename
-  // (cross-platform); staging is covered on the posix shards. The no-op / install
-  // / install_failed cases in this describe still run on windows.
-  it.skipIf(process.platform === 'win32')(
-    'upgrades — emits upgrading then installed_pending_activation, stages to .pending',
-    async () => {
-      // Local install at 1.4.0; latest 1.5.4 — should upgrade.
-      const mcp = path.join(tmpHome, '.ijfw', 'mcp-server');
-      fs.mkdirSync(mcp, { recursive: true });
-      fs.writeFileSync(path.join(mcp, 'package.json'), JSON.stringify({ version: '1.4.0' }));
+  // The upgrade path stages the new tree to `.pending` via moveWithExdevFallback
+  // (fs.rename + copy fallback). The fixtures use path.join throughout, so this
+  // runs on windows too — NO skip. If the staging assertions fail on the windows
+  // CI shard, that is a real prod finding in moveWithExdevFallback's win32 rename
+  // semantics to fix in prod, not re-skip.
+  it('upgrades — emits upgrading then installed_pending_activation, stages to .pending', async () => {
+    // Local install at 1.4.0; latest 1.5.4 — should upgrade.
+    const mcp = path.join(tmpHome, '.ijfw', 'mcp-server');
+    fs.mkdirSync(mcp, { recursive: true });
+    fs.writeFileSync(path.join(mcp, 'package.json'), JSON.stringify({ version: '1.4.0' }));
 
-      safeSpawnSpy.mockReset();
-      safeSpawnSpy.mockImplementationOnce(() => {
-        const child = new EventEmitter() as EventEmitter & {
-          stdout: EventEmitter;
-          stderr: EventEmitter;
-          kill: () => void;
-        };
-        child.stdout = new EventEmitter();
-        child.stderr = new EventEmitter();
-        child.kill = () => {};
-        setImmediate(() => {
-          child.stdout.emit('data', Buffer.from('1.5.4\n'));
-          child.emit('exit', 0);
-        });
-        return Promise.resolve(child);
+    safeSpawnSpy.mockReset();
+    safeSpawnSpy.mockImplementationOnce(() => {
+      const child = new EventEmitter() as EventEmitter & {
+        stdout: EventEmitter;
+        stderr: EventEmitter;
+        kill: () => void;
+      };
+      child.stdout = new EventEmitter();
+      child.stderr = new EventEmitter();
+      child.kill = () => {};
+      setImmediate(() => {
+        child.stdout.emit('data', Buffer.from('1.5.4\n'));
+        child.emit('exit', 0);
       });
-      safeSpawnSpy.mockImplementationOnce(() => queueFakeChild(0));
+      return Promise.resolve(child);
+    });
+    safeSpawnSpy.mockImplementationOnce(() => queueFakeChild(0));
 
-      await ijfwSystemService.bootstrap();
-      // Walk the event loop until the install-exit handler completes its async work
-      // (move-pending → emit → release-lock). 8 flushes covers writeCache + move.
-      for (let i = 0; i < 20; i++) await flush();
+    await ijfwSystemService.bootstrap();
+    // Wait until the async install-exit handler has emitted the terminal
+    // status (move-pending → emit → release-lock) — condition-based, not a
+    // fixed flush count, so it is deterministic on every platform.
+    await flushUntil(() =>
+      emitSpy.mock.calls.some((c) => (c[0] as { status?: string })?.status === 'installed_pending_activation')
+    );
 
-      expect(emitSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'upgrading' }));
-      expect(emitSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ status: 'installed_pending_activation', version: '1.5.4' })
-      );
-      // The original directory should have been moved to .pending.
-      expect(fs.existsSync(path.join(tmpHome, '.ijfw', 'mcp-server.pending'))).toBe(true);
-      expect(fs.existsSync(mcp)).toBe(false);
-    }
-  );
+    expect(emitSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'upgrading' }));
+    expect(emitSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 'installed_pending_activation', version: '1.5.4' })
+    );
+    // The original directory should have been moved to .pending.
+    expect(fs.existsSync(path.join(tmpHome, '.ijfw', 'mcp-server.pending'))).toBe(true);
+    expect(fs.existsSync(mcp)).toBe(false);
+  });
 
   it('Checkpoint B H1: install_failed emitted once when both error and exit fire', async () => {
     // child_process can fire BOTH `error` and `exit` for a single failed
@@ -288,7 +298,7 @@ describe('ijfwSystemService.bootstrap', () => {
     });
 
     await ijfwSystemService.bootstrap();
-    for (let i = 0; i < 20; i++) await flush();
+    await flushUntil(() => emitSpy.mock.calls.some((c) => (c[0] as { status?: string })?.status === 'install_failed'));
 
     const failedEmits = emitSpy.mock.calls.filter((c) => (c[0] as { status?: string }).status === 'install_failed');
     expect(failedEmits.length).toBe(1);
@@ -314,7 +324,7 @@ describe('ijfwSystemService.bootstrap', () => {
     safeSpawnSpy.mockImplementationOnce(() => queueFakeChild(1, 'boom'));
 
     await ijfwSystemService.bootstrap();
-    for (let i = 0; i < 20; i++) await flush();
+    await flushUntil(() => emitSpy.mock.calls.some((c) => (c[0] as { status?: string })?.status === 'install_failed'));
 
     expect(emitSpy).toHaveBeenCalledWith(
       expect.objectContaining({ status: 'install_failed', errorReason: 'install_exit_nonzero' })

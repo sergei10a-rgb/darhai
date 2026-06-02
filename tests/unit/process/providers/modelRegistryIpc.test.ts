@@ -47,6 +47,7 @@ import type {
 } from '@process/providers/storage/ProviderRepository';
 import type { DiscoveredKey } from '@process/providers/detection/KeyDiscovery';
 import { BetterSqlite3Driver } from '@process/services/database/drivers/BetterSqlite3Driver';
+import { describeNativeSqlite } from '../../helpers/nativeSqlite';
 import { CURRENT_DB_VERSION, initSchema } from '@process/services/database/schema';
 import { runMigrations } from '@process/services/database/migrations';
 
@@ -1107,21 +1108,10 @@ describe('modelRegistry IPC — defensive behavior', () => {
 
 // ─── Real-repository credential encryption round-trip ─────────────────────────
 
-// `better-sqlite3` is a native module — skip these when its ABI does not match
-// the test runner (the same guard the team-repository round-trip tests use).
-let nativeSqliteAvailable = true;
-try {
-  const probe = new BetterSqlite3Driver(':memory:');
-  probe.close();
-} catch (e) {
-  if (e instanceof Error && e.message.includes('NODE_MODULE_VERSION')) {
-    nativeSqliteAvailable = false;
-  }
-}
-
-const describeOrSkip = nativeSqliteAvailable ? describe : describe.skip;
-
-describeOrSkip('ProviderRepository — registry credential encryption round-trip', () => {
+// `better-sqlite3` is a native module — describeNativeSqlite runs this when the
+// ABI matches (CI / after `npm rebuild better-sqlite3`), skips it locally on the
+// Electron-ABI dev build, and fails loudly in CI if the module ever goes missing.
+describeNativeSqlite('ProviderRepository — registry credential encryption round-trip', () => {
   let driver: BetterSqlite3Driver;
   let repo: ProviderRepository;
 

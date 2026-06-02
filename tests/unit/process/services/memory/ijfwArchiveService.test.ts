@@ -45,9 +45,14 @@ function makeEntry(opts: { type: string; summary: string; stored: string; tags: 
 // semantics, so the journal/registry reads ENOENT on win32. Prod resolves these
 // paths via path.join(os.homedir(), '.ijfw', 'memory') and creates files with
 // mkdir-recursive + appendFile (verified missing-file-safe), so this is a test-
-// fixture limitation, not a prod bug. Parsing logic is covered on the posix
-// shards. Tracked for windows-portable rework in the windows-test-hardening pass.
-describe.skipIf(process.platform === 'win32')('IjfwArchiveService', () => {
+// fixture limitation. The service resolves home via os.homedir(), which reads
+// $HOME on posix but $USERPROFILE on win32 — the tests below set BOTH, so the
+// fixture home is discovered on either platform and this block runs unskipped.
+function restoreEnv(key: string, value: string | undefined): void {
+  if (value === undefined) delete process.env[key];
+  else process.env[key] = value;
+}
+describe('IjfwArchiveService', () => {
   let tmpRoot: string;
   let projectRoot: string;
   let memDir: string;
@@ -109,7 +114,9 @@ describe.skipIf(process.platform === 'win32')('IjfwArchiveService', () => {
 
     // Temporarily override HOME to point to our fake home.
     const origHome = process.env.HOME;
+    const origUserProfile = process.env.USERPROFILE;
     process.env.HOME = fakeHome;
+    process.env.USERPROFILE = fakeHome;
 
     try {
       service = new IjfwArchiveService(noopWatcherFactory);
@@ -117,7 +124,8 @@ describe.skipIf(process.platform === 'win32')('IjfwArchiveService', () => {
       expect(stats.total).toBeGreaterThan(0);
       expect(stats.projects).toBeGreaterThan(0);
     } finally {
-      process.env.HOME = origHome;
+      restoreEnv('HOME', origHome);
+      restoreEnv('USERPROFILE', origUserProfile);
     }
   });
 
@@ -129,7 +137,9 @@ describe.skipIf(process.platform === 'win32')('IjfwArchiveService', () => {
     fs.writeFileSync(path.join(ijfwHomeDir, 'registry.md'), `${projectRoot} | abc123 | ${now}\n`, 'utf8');
 
     const origHome = process.env.HOME;
+    const origUserProfile = process.env.USERPROFILE;
     process.env.HOME = fakeHome;
+    process.env.USERPROFILE = fakeHome;
 
     try {
       service = new IjfwArchiveService(noopWatcherFactory);
@@ -137,7 +147,8 @@ describe.skipIf(process.platform === 'win32')('IjfwArchiveService', () => {
       expect(result.total).toBeGreaterThan(0);
       expect(result.entries.every((e) => e.type === 'decision')).toBe(true);
     } finally {
-      process.env.HOME = origHome;
+      restoreEnv('HOME', origHome);
+      restoreEnv('USERPROFILE', origUserProfile);
     }
   });
 
@@ -152,14 +163,17 @@ describe.skipIf(process.platform === 'win32')('IjfwArchiveService', () => {
     );
 
     const origHome = process.env.HOME;
+    const origUserProfile = process.env.USERPROFILE;
     process.env.HOME = fakeHome;
+    process.env.USERPROFILE = fakeHome;
 
     try {
       service = new IjfwArchiveService(noopWatcherFactory);
       const entry = await service.getEntry('nonexistent-id-000');
       expect(entry).toBeNull();
     } finally {
-      process.env.HOME = origHome;
+      restoreEnv('HOME', origHome);
+      restoreEnv('USERPROFILE', origUserProfile);
     }
   });
 
@@ -174,7 +188,9 @@ describe.skipIf(process.platform === 'win32')('IjfwArchiveService', () => {
     );
 
     const origHome = process.env.HOME;
+    const origUserProfile = process.env.USERPROFILE;
     process.env.HOME = fakeHome;
+    process.env.USERPROFILE = fakeHome;
 
     try {
       service = new IjfwArchiveService(noopWatcherFactory);
@@ -186,7 +202,8 @@ describe.skipIf(process.platform === 'win32')('IjfwArchiveService', () => {
       expect(full).not.toBeNull();
       expect(typeof full!.body).toBe('string');
     } finally {
-      process.env.HOME = origHome;
+      restoreEnv('HOME', origHome);
+      restoreEnv('USERPROFILE', origUserProfile);
     }
   });
 
@@ -201,7 +218,9 @@ describe.skipIf(process.platform === 'win32')('IjfwArchiveService', () => {
     );
 
     const origHome = process.env.HOME;
+    const origUserProfile = process.env.USERPROFILE;
     process.env.HOME = fakeHome;
+    process.env.USERPROFILE = fakeHome;
 
     try {
       service = new IjfwArchiveService(noopWatcherFactory);
@@ -210,7 +229,8 @@ describe.skipIf(process.platform === 'win32')('IjfwArchiveService', () => {
       expect(projects[0].basename).toBe('test-project');
       expect(projects[0].count).toBeGreaterThan(0);
     } finally {
-      process.env.HOME = origHome;
+      restoreEnv('HOME', origHome);
+      restoreEnv('USERPROFILE', origUserProfile);
     }
   });
 
@@ -225,7 +245,9 @@ describe.skipIf(process.platform === 'win32')('IjfwArchiveService', () => {
     );
 
     const origHome = process.env.HOME;
+    const origUserProfile = process.env.USERPROFILE;
     process.env.HOME = fakeHome;
+    process.env.USERPROFILE = fakeHome;
 
     try {
       service = new IjfwArchiveService(noopWatcherFactory);
@@ -238,7 +260,8 @@ describe.skipIf(process.platform === 'win32')('IjfwArchiveService', () => {
       expect(archTag).toBeDefined();
       expect(archTag!.count).toBeGreaterThanOrEqual(2);
     } finally {
-      process.env.HOME = origHome;
+      restoreEnv('HOME', origHome);
+      restoreEnv('USERPROFILE', origUserProfile);
     }
   });
 
@@ -247,7 +270,9 @@ describe.skipIf(process.platform === 'win32')('IjfwArchiveService', () => {
   it('B1: quickAdd global scope resolves to os.homedir()/.ijfw/memory', async () => {
     const fakeHome = path.join(tmpRoot, 'fake-home');
     const origHome = process.env.HOME;
+    const origUserProfile = process.env.USERPROFILE;
     process.env.HOME = fakeHome;
+    process.env.USERPROFILE = fakeHome;
     try {
       service = new IjfwArchiveService(noopWatcherFactory);
       await service.quickAdd('test observation', 'global');
@@ -256,7 +281,8 @@ describe.skipIf(process.platform === 'win32')('IjfwArchiveService', () => {
       const journalPath = path.join(expectedDir, 'journal.md');
       expect(fs.existsSync(journalPath)).toBe(true);
     } finally {
-      process.env.HOME = origHome;
+      restoreEnv('HOME', origHome);
+      restoreEnv('USERPROFILE', origUserProfile);
     }
   });
 
@@ -270,7 +296,9 @@ describe.skipIf(process.platform === 'win32')('IjfwArchiveService', () => {
       'utf8'
     );
     const origHome = process.env.HOME;
+    const origUserProfile = process.env.USERPROFILE;
     process.env.HOME = fakeHome;
+    process.env.USERPROFILE = fakeHome;
     try {
       service = new IjfwArchiveService(noopWatcherFactory);
       await service.init();
@@ -282,7 +310,8 @@ describe.skipIf(process.platform === 'win32')('IjfwArchiveService', () => {
       const rightPath = path.join(projectRoot, '.ijfw', 'memory', 'journal.md');
       expect(fs.existsSync(rightPath)).toBe(true);
     } finally {
-      process.env.HOME = origHome;
+      restoreEnv('HOME', origHome);
+      restoreEnv('USERPROFILE', origUserProfile);
     }
   });
 
@@ -291,7 +320,9 @@ describe.skipIf(process.platform === 'win32')('IjfwArchiveService', () => {
   it('B2: quickAdd strips newlines from content in summary field (injection prevention)', async () => {
     const fakeHome = path.join(tmpRoot, 'fake-home');
     const origHome = process.env.HOME;
+    const origUserProfile = process.env.USERPROFILE;
     process.env.HOME = fakeHome;
+    process.env.USERPROFILE = fakeHome;
     try {
       service = new IjfwArchiveService(noopWatcherFactory);
       const malicious = 'legit summary\nstored: 2000-01-01\ntags: [hacked]';
@@ -310,7 +341,8 @@ describe.skipIf(process.platform === 'win32')('IjfwArchiveService', () => {
       expect(storedLine).toBeDefined();
       expect(storedLine).not.toContain('2000-01-01');
     } finally {
-      process.env.HOME = origHome;
+      restoreEnv('HOME', origHome);
+      restoreEnv('USERPROFILE', origUserProfile);
     }
   });
 
@@ -327,7 +359,9 @@ describe.skipIf(process.platform === 'win32')('IjfwArchiveService', () => {
     );
 
     const origHome = process.env.HOME;
+    const origUserProfile = process.env.USERPROFILE;
     process.env.HOME = fakeHome;
+    process.env.USERPROFILE = fakeHome;
 
     try {
       service = new IjfwArchiveService(noopWatcherFactory);
@@ -345,7 +379,8 @@ describe.skipIf(process.platform === 'win32')('IjfwArchiveService', () => {
       expect(stats.typeCounts.wiki).toBe(0);
       expect(stats.typeCounts.preference).toBe(0);
     } finally {
-      process.env.HOME = origHome;
+      restoreEnv('HOME', origHome);
+      restoreEnv('USERPROFILE', origUserProfile);
     }
   });
 
@@ -361,14 +396,17 @@ describe.skipIf(process.platform === 'win32')('IjfwArchiveService', () => {
     );
 
     const origHome = process.env.HOME;
+    const origUserProfile = process.env.USERPROFILE;
     process.env.HOME = fakeHome;
+    process.env.USERPROFILE = fakeHome;
 
     try {
       service = new IjfwArchiveService(noopWatcherFactory);
       const stats = await service.getStats();
       expect(stats.streak.sessions).toBe(3);
     } finally {
-      process.env.HOME = origHome;
+      restoreEnv('HOME', origHome);
+      restoreEnv('USERPROFILE', origUserProfile);
     }
   });
 
@@ -401,7 +439,9 @@ describe.skipIf(process.platform === 'win32')('IjfwArchiveService', () => {
     );
 
     const origHome = process.env.HOME;
+    const origUserProfile = process.env.USERPROFILE;
     process.env.HOME = fakeHome;
+    process.env.USERPROFILE = fakeHome;
 
     try {
       service = new IjfwArchiveService(noopWatcherFactory);
@@ -409,7 +449,8 @@ describe.skipIf(process.platform === 'win32')('IjfwArchiveService', () => {
       expect(stats.streak.longestDays).toBe(3);
       expect(stats.streak.sessions).toBe(5);
     } finally {
-      process.env.HOME = origHome;
+      restoreEnv('HOME', origHome);
+      restoreEnv('USERPROFILE', origUserProfile);
     }
   });
 
@@ -431,14 +472,17 @@ describe.skipIf(process.platform === 'win32')('IjfwArchiveService', () => {
     );
 
     const origHome = process.env.HOME;
+    const origUserProfile = process.env.USERPROFILE;
     process.env.HOME = fakeHome;
+    process.env.USERPROFILE = fakeHome;
 
     try {
       service = new IjfwArchiveService(noopWatcherFactory);
       const stats = await service.getStats();
       expect(stats.streak).toEqual({ sessions: 0, longestDays: 0, lastActiveDayMs: 0 });
     } finally {
-      process.env.HOME = origHome;
+      restoreEnv('HOME', origHome);
+      restoreEnv('USERPROFILE', origUserProfile);
     }
   });
 
@@ -453,7 +497,9 @@ describe.skipIf(process.platform === 'win32')('IjfwArchiveService', () => {
     );
 
     const origHome = process.env.HOME;
+    const origUserProfile = process.env.USERPROFILE;
     process.env.HOME = fakeHome;
+    process.env.USERPROFILE = fakeHome;
 
     try {
       service = new IjfwArchiveService(noopWatcherFactory);
@@ -463,7 +509,8 @@ describe.skipIf(process.platform === 'win32')('IjfwArchiveService', () => {
       expect(stats.projects).toBeGreaterThan(0);
       expect(stats.lastIndexedAt).toBeGreaterThan(0);
     } finally {
-      process.env.HOME = origHome;
+      restoreEnv('HOME', origHome);
+      restoreEnv('USERPROFILE', origUserProfile);
     }
   });
 });

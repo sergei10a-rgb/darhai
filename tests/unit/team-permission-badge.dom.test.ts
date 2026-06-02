@@ -1,243 +1,243 @@
 /**
- * Tests for permission badge / pending permission count system
+ * Tests for the team pending-permission badge system (REQ-5 … REQ-8).
  *
- * Requirement coverage:
- * - REQ-5: Member tab shows ‼️ icon when permission dialog is pending
- * - REQ-6: Sider team entry shows iOS-style red badge with pending count
- * - REQ-7: Badge count clears when permission is handled; real-time update
- * - REQ-8: Badge count persists in localStorage with cleanup logic
+ * These exercise the ACTUAL shipped hooks, not reimplemented fakes:
+ *   - src/renderer/pages/team/hooks/useTeamPendingPermissions.ts
+ *   - src/renderer/pages/team/hooks/useSiderTeamBadges.ts
  *
- * NOTE: REQ-5 through REQ-8 are NOT yet implemented.
- * All tests for unimplemented behavior are marked .todo.
- * Runnable tests cover the localStorage persistence contract that must hold after implementation.
+ * Together they own the count semantics behind every requirement:
+ *   - REQ-5 (member tab ‼️ icon): TeamTabs renders the ‼️ span purely on
+ *     `pendingCount > 0`; the count it keys off is produced here.
+ *   - REQ-6 (sider iOS-style red badge with aggregate count): useSiderTeamBadges.
+ *   - REQ-7 (real-time bidirectional update): both hooks subscribe to
+ *     conversation.confirmation.add / .remove IPC events.
+ *   - REQ-8 (localStorage persistence + pruning + corruption-safety):
+ *     useTeamPendingPermissions persists pruned counts under
+ *     `team-pending-permissions-<teamId>`.
+ *
+ * The earlier version of this file asserted a hand-rolled
+ * `team-permission-pending-counts` schema that prod never used, and parked the
+ * real behaviour as `.todo`. The feature shipped — so this tests the real thing.
+ *
+ * The pure-DOM render of the ‼️ glyph / iOS badge lives in the heavyweight
+ * TeamTabs / TeamPage component tree (drag handlers, avatars, i18n) and is out
+ * of scope here; the count logic that drives those renders is fully covered.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { renderHook, act } from '@testing-library/react';
+import type { TTeam } from '@/common/types/teamTypes';
 
 // ---------------------------------------------------------------------------
-// localStorage helpers — these must work for REQ-8 persistence
+// IPC mock — capture the confirmation.add / .remove handlers so tests can fire
+// real-time events, and control confirmation.list for the initial backend sync.
 // ---------------------------------------------------------------------------
 
-const PENDING_PERMISSION_KEY = 'team-permission-pending-counts';
+type ConfirmationEvent = { conversation_id: string };
 
-/** Read pending count map from localStorage */
-function readPendingCounts(): Record<string, number> {
-  try {
-    const raw = localStorage.getItem(PENDING_PERMISSION_KEY);
-    if (!raw) return {};
-    return JSON.parse(raw) as Record<string, number>;
-  } catch {
-    return {};
-  }
-}
+const { listInvoke, addHandlers, removeHandlers } = vi.hoisted(() => ({
+  listInvoke: vi.fn(),
+  addHandlers: new Set<(d: ConfirmationEvent) => void>(),
+  removeHandlers: new Set<(d: ConfirmationEvent) => void>(),
+}));
 
-/** Write pending count map to localStorage */
-function writePendingCounts(counts: Record<string, number>): void {
-  localStorage.setItem(PENDING_PERMISSION_KEY, JSON.stringify(counts));
-}
+vi.mock('@/common', () => ({
+  ipcBridge: {
+    conversation: {
+      confirmation: {
+        list: { invoke: (...args: unknown[]) => listInvoke(...args) },
+        add: {
+          on: (h: (d: ConfirmationEvent) => void) => {
+            addHandlers.add(h);
+            return () => addHandlers.delete(h);
+          },
+        },
+        remove: {
+          on: (h: (d: ConfirmationEvent) => void) => {
+            removeHandlers.add(h);
+            return () => removeHandlers.delete(h);
+          },
+        },
+      },
+    },
+  },
+}));
 
-/** Increment pending count for a team */
-function incrementPendingCount(teamId: string): void {
-  const counts = readPendingCounts();
-  counts[teamId] = (counts[teamId] ?? 0) + 1;
-  writePendingCounts(counts);
-}
+// removeStack just composes unsubscribe callbacks — supply a faithful tiny impl
+// so we don't drag the whole renderer util barrel into a jsdom unit test.
+vi.mock('@/renderer/utils/common', () => ({
+  removeStack:
+    (...fns: Array<() => void>) =>
+    () => {
+      for (const f of fns) if (f) f();
+    },
+}));
 
-/** Decrement pending count for a team (floor at 0) */
-function decrementPendingCount(teamId: string): void {
-  const counts = readPendingCounts();
-  counts[teamId] = Math.max(0, (counts[teamId] ?? 0) - 1);
-  writePendingCounts(counts);
-}
-
-/** Clear pending count for a team */
-function clearPendingCount(teamId: string): void {
-  const counts = readPendingCounts();
-  delete counts[teamId];
-  writePendingCounts(counts);
-}
-
-/** Clean up stale team entries (teams that no longer exist) */
-function cleanupStaleCounts(activeTeamIds: string[]): void {
-  const counts = readPendingCounts();
-  const cleaned = Object.fromEntries(Object.entries(counts).filter(([id]) => activeTeamIds.includes(id)));
-  writePendingCounts(cleaned);
-}
+import { useTeamPendingPermissions } from '@/renderer/pages/team/hooks/useTeamPendingPermissions';
+import { useSiderTeamBadges } from '@/renderer/pages/team/hooks/useSiderTeamBadges';
 
 // ---------------------------------------------------------------------------
-// REQ-8: localStorage persistence contract
+// Helpers
 // ---------------------------------------------------------------------------
 
-describe('REQ-8: pending permission count localStorage persistence', () => {
-  beforeEach(() => {
-    localStorage.clear();
+const teamKey = (teamId: string) => `team-pending-permissions-${teamId}`;
+const seed = (teamId: string, counts: Record<string, number>) =>
+  localStorage.setItem(teamKey(teamId), JSON.stringify(counts));
+
+/** Fire a live confirmation.add for a conversation, inside act(). */
+const emitAdd = (cid: string) =>
+  act(() => {
+    for (const h of addHandlers) h({ conversation_id: cid });
   });
 
-  afterEach(() => {
-    localStorage.clear();
+/** Fire a live confirmation.remove for a conversation, inside act(). */
+const emitRemove = (cid: string) =>
+  act(() => {
+    for (const h of removeHandlers) h({ conversation_id: cid });
   });
 
-  it('initial state returns empty object when no data stored', () => {
-    expect(readPendingCounts()).toEqual({});
+/** Flush mounted async effects (the fetchInitial / fetchCurrent backend sync). */
+const flush = () => act(async () => {});
+
+/** Build a minimal TTeam carrying only the fields the badge hooks read. */
+const team = (id: string, conversationIds: string[]): TTeam =>
+  ({ id, agents: conversationIds.map((c) => ({ conversationId: c })) }) as unknown as TTeam;
+
+beforeEach(() => {
+  localStorage.clear();
+  addHandlers.clear();
+  removeHandlers.clear();
+  listInvoke.mockReset();
+  listInvoke.mockResolvedValue([]); // backend reports zero pending by default
+});
+
+// ---------------------------------------------------------------------------
+// useTeamPendingPermissions — REQ-7 (real-time) + REQ-8 (persistence)
+// ---------------------------------------------------------------------------
+
+describe('useTeamPendingPermissions', () => {
+  it('REQ-8: seeds counts and totalPending from localStorage for an instant first render', () => {
+    // Never-resolving backend → the synchronous localStorage seed is what the
+    // user sees on first paint, before any network round-trip.
+    listInvoke.mockReturnValue(new Promise(() => {}));
+    seed('team-1', { c1: 3, c2: 1 });
+
+    const { result } = renderHook(() => useTeamPendingPermissions('team-1', ['c1', 'c2']));
+
+    expect(result.current.pendingCounts).toEqual({ c1: 3, c2: 1 });
+    expect(result.current.totalPending).toBe(4);
   });
 
-  it('increment adds 1 to a team count', () => {
-    incrementPendingCount('team-1');
-    expect(readPendingCounts()['team-1']).toBe(1);
+  it('REQ-7: increments a slot count on a live confirmation.add event', async () => {
+    const { result } = renderHook(() => useTeamPendingPermissions('team-1', ['c1']));
+    await flush();
+
+    emitAdd('c1');
+    expect(result.current.pendingCounts.c1).toBe(1);
+    expect(result.current.totalPending).toBe(1);
+
+    emitAdd('c1');
+    expect(result.current.pendingCounts.c1).toBe(2);
+    expect(result.current.totalPending).toBe(2);
   });
 
-  it('multiple increments accumulate correctly', () => {
-    incrementPendingCount('team-1');
-    incrementPendingCount('team-1');
-    incrementPendingCount('team-1');
-    expect(readPendingCounts()['team-1']).toBe(3);
+  it('REQ-7: decrements on confirmation.remove and floors at 0', async () => {
+    const { result } = renderHook(() => useTeamPendingPermissions('team-1', ['c1']));
+    await flush();
+
+    emitAdd('c1');
+    emitRemove('c1');
+    expect(result.current.pendingCounts.c1).toBe(0);
+
+    // Removing again must not go negative.
+    emitRemove('c1');
+    expect(result.current.pendingCounts.c1).toBe(0);
   });
 
-  it('decrement subtracts 1 from a team count', () => {
-    writePendingCounts({ 'team-1': 3 });
-    decrementPendingCount('team-1');
-    expect(readPendingCounts()['team-1']).toBe(2);
+  it('REQ-7: ignores events for conversations outside this team', async () => {
+    const { result } = renderHook(() => useTeamPendingPermissions('team-1', ['c1']));
+    await flush();
+
+    emitAdd('someone-elses-conversation');
+    expect(result.current.totalPending).toBe(0);
+    expect(result.current.pendingCounts.c1 ?? 0).toBe(0);
   });
 
-  it('decrement floors at 0 (no negative counts)', () => {
-    writePendingCounts({ 'team-1': 0 });
-    decrementPendingCount('team-1');
-    expect(readPendingCounts()['team-1']).toBe(0);
+  it('REQ-8: persists only pruned (count>0, current-conversation) counts to localStorage', async () => {
+    // A stale entry for a conversation no longer in the team must be pruned out.
+    seed('team-1', { c_stale: 5 });
+
+    const { result } = renderHook(() => useTeamPendingPermissions('team-1', ['c1', 'c2']));
+    await flush();
+
+    emitAdd('c1');
+    emitAdd('c1');
+
+    const persisted = JSON.parse(localStorage.getItem(teamKey('team-1')) ?? '{}');
+    // c1 kept (>0), c2 omitted (==0), c_stale pruned (not a current conversation).
+    expect(persisted).toEqual({ c1: 2 });
+    expect(result.current.totalPending).toBe(2);
   });
 
-  it('decrement on non-existent team starts from 0 and stays at 0', () => {
-    decrementPendingCount('team-nonexistent');
-    expect(readPendingCounts()['team-nonexistent']).toBe(0);
+  it('REQ-8: corrupted localStorage yields empty counts without throwing', () => {
+    listInvoke.mockReturnValue(new Promise(() => {}));
+    localStorage.setItem(teamKey('team-1'), 'not-valid-json');
+
+    const { result } = renderHook(() => useTeamPendingPermissions('team-1', ['c1']));
+
+    expect(result.current.pendingCounts).toEqual({});
+    expect(result.current.totalPending).toBe(0);
   });
 
-  it('clear removes team entry from localStorage', () => {
-    writePendingCounts({ 'team-1': 5 });
-    clearPendingCount('team-1');
-    expect(readPendingCounts()['team-1']).toBeUndefined();
-  });
+  it('clearStorage removes the team key (called when a team is deleted)', () => {
+    listInvoke.mockReturnValue(new Promise(() => {}));
+    seed('team-1', { c1: 2 });
 
-  it('multiple teams tracked independently', () => {
-    incrementPendingCount('team-1');
-    incrementPendingCount('team-1');
-    incrementPendingCount('team-2');
-    incrementPendingCount('team-3');
-    incrementPendingCount('team-3');
-    incrementPendingCount('team-3');
+    const { result } = renderHook(() => useTeamPendingPermissions('team-1', ['c1']));
+    expect(localStorage.getItem(teamKey('team-1'))).not.toBeNull();
 
-    const counts = readPendingCounts();
-    expect(counts['team-1']).toBe(2);
-    expect(counts['team-2']).toBe(1);
-    expect(counts['team-3']).toBe(3);
-  });
-
-  it('persists across simulated page reload (re-reading from localStorage)', () => {
-    writePendingCounts({ 'team-1': 4, 'team-2': 2 });
-    // Simulate reload — read fresh
-    const counts = readPendingCounts();
-    expect(counts['team-1']).toBe(4);
-    expect(counts['team-2']).toBe(2);
-  });
-
-  it('handles corrupted localStorage gracefully (returns empty object)', () => {
-    localStorage.setItem(PENDING_PERMISSION_KEY, 'not-valid-json');
-    expect(readPendingCounts()).toEqual({});
+    act(() => result.current.clearStorage());
+    expect(localStorage.getItem(teamKey('team-1'))).toBeNull();
   });
 });
 
 // ---------------------------------------------------------------------------
-// REQ-8: cleanup logic
+// useSiderTeamBadges — REQ-6 (aggregate sider badge) + REQ-7 (real-time)
 // ---------------------------------------------------------------------------
 
-describe('REQ-8: stale entry cleanup', () => {
-  beforeEach(() => localStorage.clear());
-  afterEach(() => localStorage.clear());
+describe('useSiderTeamBadges', () => {
+  it('REQ-6: aggregates each team localStorage counts into a per-team Map (instant render)', () => {
+    listInvoke.mockReturnValue(new Promise(() => {}));
+    seed('teamA', { a1: 2, a2: 1 });
+    seed('teamB', { b1: 3 });
 
-  it('removes entries for teams that no longer exist', () => {
-    writePendingCounts({ 'team-1': 2, 'team-deleted': 5, 'team-2': 1 });
-    cleanupStaleCounts(['team-1', 'team-2']);
+    const teams = [team('teamA', ['a1', 'a2']), team('teamB', ['b1'])];
+    const { result } = renderHook(() => useSiderTeamBadges(teams));
 
-    const counts = readPendingCounts();
-    expect(counts['team-deleted']).toBeUndefined();
-    expect(counts['team-1']).toBe(2);
-    expect(counts['team-2']).toBe(1);
+    expect(result.current.get('teamA')).toBe(3); // 2 + 1 across members
+    expect(result.current.get('teamB')).toBe(3);
   });
 
-  it('cleanup with empty active teams removes all entries', () => {
-    writePendingCounts({ 'team-1': 2, 'team-2': 3 });
-    cleanupStaleCounts([]);
-    expect(readPendingCounts()).toEqual({});
+  it('REQ-7: a live confirmation.add increments only the owning team badge', async () => {
+    const teams = [team('teamA', ['a1', 'a2']), team('teamB', ['b1'])];
+    const { result } = renderHook(() => useSiderTeamBadges(teams));
+    await flush(); // backend resolves [] → badges settle to 0
+
+    emitAdd('a1');
+    expect(result.current.get('teamA')).toBe(1);
+    expect(result.current.get('teamB')).toBe(0);
   });
 
-  it('cleanup is idempotent when called multiple times', () => {
-    writePendingCounts({ 'team-1': 2, 'team-2': 3 });
-    cleanupStaleCounts(['team-1']);
-    cleanupStaleCounts(['team-1']);
-    expect(readPendingCounts()).toEqual({ 'team-1': 2 });
+  it('REQ-6: keeps the localStorage fallback when every backend query for a team fails', async () => {
+    // If the agent session is not running, confirmation.list rejects. The hook
+    // must keep the last-known localStorage count rather than zeroing the badge.
+    seed('teamA', { a1: 4 });
+    listInvoke.mockRejectedValue(new Error('session not running'));
+
+    const teams = [team('teamA', ['a1'])];
+    const { result } = renderHook(() => useSiderTeamBadges(teams));
+    await flush();
+
+    expect(result.current.get('teamA')).toBe(4);
   });
-});
-
-// ---------------------------------------------------------------------------
-// REQ-7: Real-time badge count update (bidirectional binding contract)
-// ---------------------------------------------------------------------------
-
-describe('REQ-7: badge count bidirectional binding', () => {
-  it('count increments when a new permission dialog appears', () => {
-    localStorage.clear();
-    incrementPendingCount('team-1');
-    expect(readPendingCounts()['team-1']).toBe(1);
-  });
-
-  it('count decrements when permission is handled', () => {
-    writePendingCounts({ 'team-1': 2 });
-    decrementPendingCount('team-1');
-    expect(readPendingCounts()['team-1']).toBe(1);
-  });
-
-  it('badge disappears (count=0) when all permissions handled', () => {
-    writePendingCounts({ 'team-1': 1 });
-    decrementPendingCount('team-1');
-    expect(readPendingCounts()['team-1']).toBe(0);
-  });
-});
-
-// ---------------------------------------------------------------------------
-// REQ-5: Tab ‼️ badge (unimplemented — all .todo)
-// ---------------------------------------------------------------------------
-
-describe.todo('REQ-5: member tab shows ‼️ icon when permission dialog pending', () => {
-  it.todo('renders ‼️ icon on tab when member has pending permission dialog');
-  it.todo('does NOT show ‼️ icon when member has no pending permission dialogs');
-  it.todo('‼️ icon disappears after permission dialog is resolved');
-  it.todo('multiple pending dialogs still show single ‼️ icon on tab (not multiple icons)');
-});
-
-// ---------------------------------------------------------------------------
-// REQ-6: Sider red badge (unimplemented — all .todo)
-// ---------------------------------------------------------------------------
-
-describe.todo('REQ-6: sider team entry shows iOS-style red badge', () => {
-  it.todo('shows red badge on team entry when any member has pending permission');
-  it.todo('badge displays correct count matching total pending permissions');
-  it.todo('badge hidden when pending count is 0');
-  it.todo('collapsed sider still shows red badge on team icon');
-  it.todo('badge count aggregates across ALL members in the team');
-});
-
-// ---------------------------------------------------------------------------
-// REQ-3: Permission dialog appears in member's own chat window (unimplemented)
-// REQ-4: Each member's dialog works and settings take effect (unimplemented)
-// ---------------------------------------------------------------------------
-
-describe.todo('REQ-3: permission confirmation dialog in member own window', () => {
-  it.todo('permission dialog renders inside member conversation window (not leader window)');
-  it.todo('leader window does not show member permission dialogs');
-  it.todo('each member window shows only its own permission dialogs');
-  it.todo('dialog is not shared/pooled between members');
-});
-
-describe.todo('REQ-4: member permission dialog functionality', () => {
-  it.todo('confirming permission in member dialog allows the pending action to proceed');
-  it.todo('denying permission in member dialog blocks the pending action');
-  it.todo('approved permission setting persists for subsequent actions in same session');
-  it.todo('permission change in member dialog does not affect other members');
 });

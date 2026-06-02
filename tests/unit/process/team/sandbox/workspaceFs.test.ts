@@ -220,12 +220,15 @@ describe('withOpenInsideWorkspace — fd discipline', () => {
   });
 });
 
-// O_NOFOLLOW is a POSIX-only open flag; Node leaves `constants.O_NOFOLLOW`
-// undefined on win32, so prod's `| constants.O_NOFOLLOW` is a no-op there and
-// these bit assertions are meaningless. The escape/traversal/symlink-via-lstat
-// protections above DO run on windows. Skip the flag-plumbing assertions on
-// win32 (covered on the posix shards).
-describe.skipIf(process.platform === 'win32')('openInsideWorkspace — O_NOFOLLOW flag plumbing', () => {
+// O_NOFOLLOW is a POSIX-only open flag; `constants.O_NOFOLLOW` is undefined on
+// win32, so prod's `| constants.O_NOFOLLOW` is a no-op there. SECURITY NOTE: the
+// atomic final-component symlink guard therefore does NOT exist on windows. The
+// ancestor lstat-walk still rejects pre-existing symlinks on every platform; what
+// win32 loses is O_NOFOLLOW protection of the leaf in the TOCTOU window between
+// lstat-walk and open (Node's fs exposes no win32 O_NOFOLLOW equivalent — tracked
+// as a prod finding). This block runs on BOTH platforms and asserts each side
+// honestly — NO skip.
+describe('openInsideWorkspace — O_NOFOLLOW flag plumbing', () => {
   it('passes O_NOFOLLOW to fs.open on read', async () => {
     await fs.writeFile(path.join(workspaceDir, 'data.txt'), 'hello', 'utf8');
     const openSpy = vi.spyOn(fs, 'open');
@@ -235,9 +238,13 @@ describe.skipIf(process.platform === 'win32')('openInsideWorkspace — O_NOFOLLO
       expect(call).toBeDefined();
       const flags = call?.[1] as number;
       expect(typeof flags).toBe('number');
-      // O_NOFOLLOW bit must be set on the open call.
-      expect(flags & constants.O_NOFOLLOW).toBe(constants.O_NOFOLLOW);
       expect(flags & constants.O_RDONLY).toBe(constants.O_RDONLY);
+      if (process.platform === 'win32') {
+        // No O_NOFOLLOW bit exists on win32 — see the security note above.
+        expect(constants.O_NOFOLLOW).toBeUndefined();
+      } else {
+        expect(flags & constants.O_NOFOLLOW).toBe(constants.O_NOFOLLOW);
+      }
     } finally {
       await fh.close();
     }
@@ -251,10 +258,14 @@ describe.skipIf(process.platform === 'win32')('openInsideWorkspace — O_NOFOLLO
       expect(call).toBeDefined();
       const flags = call?.[1] as number;
       expect(typeof flags).toBe('number');
-      expect(flags & constants.O_NOFOLLOW).toBe(constants.O_NOFOLLOW);
       expect(flags & constants.O_WRONLY).toBe(constants.O_WRONLY);
       expect(flags & constants.O_CREAT).toBe(constants.O_CREAT);
       expect(flags & constants.O_TRUNC).toBe(constants.O_TRUNC);
+      if (process.platform === 'win32') {
+        expect(constants.O_NOFOLLOW).toBeUndefined();
+      } else {
+        expect(flags & constants.O_NOFOLLOW).toBe(constants.O_NOFOLLOW);
+      }
     } finally {
       await fh.close();
     }

@@ -15,8 +15,13 @@ import { writeFileAtomic, writeFileSyncAtomic } from '@process/utils/atomicWrite
  * SEC-DATA-04: secret-bearing config/env blobs must be created 0o600 so other
  * local users / backup daemons can't read them. initStorage.WriteFile now
  * passes `{ mode: 0o600 }` through to these helpers; verify the option reaches
- * the on-disk file and survives the temp-then-rename. POSIX-only (file mode is
- * a no-op on Windows).
+ * the on-disk file and survives the temp-then-rename.
+ *
+ * This block is POSIX-only by design — unix file-mode bits do not exist on
+ * Windows. It is NOT a coverage gap: the Windows equivalent (restricting the
+ * temp + final file DACL to owner-only via `icacls`, since Node ignores `mode`
+ * on win32) is fully asserted in the sibling `atomicWrite.windowsAcl.test.ts`.
+ * So SEC-DATA-04 is verified on every platform, just split by mechanism.
  */
 const describePosix = process.platform === 'win32' ? describe.skip : describe;
 

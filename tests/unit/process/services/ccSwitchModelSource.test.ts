@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, expect, it } from 'vitest';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -14,20 +14,9 @@ import {
   readClaudeProviderEnvFromCcSwitch,
   readClaudeModelInfoFromCcSwitch,
 } from '../../../../src/process/services/ccSwitchModelSource';
+import { describeNativeSqlite } from '../../helpers/nativeSqlite';
 
-let nativeModuleAvailable = true;
-try {
-  const driver = new BetterSqlite3Driver(':memory:');
-  driver.close();
-} catch (error) {
-  if (error instanceof Error && error.message.includes('NODE_MODULE_VERSION')) {
-    nativeModuleAvailable = false;
-  }
-}
-
-const describeOrSkip = nativeModuleAvailable ? describe : describe.skip;
-
-describeOrSkip('ccSwitchModelSource', () => {
+describeNativeSqlite('ccSwitchModelSource', () => {
   const tempDirs: string[] = [];
 
   afterEach(() => {

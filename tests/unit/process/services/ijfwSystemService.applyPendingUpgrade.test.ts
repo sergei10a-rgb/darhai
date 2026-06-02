@@ -77,6 +77,18 @@ vi.mock('node:child_process', async () => {
   };
 });
 
+// On the spawn-test-success path the activator awaits `agentRegistry.refreshAll()`.
+// The real registry probes agent backends (spawn/`where`), which hangs under the
+// Windows CI runner and times the test out before its assertions run. Keep the
+// real singleton (other methods like getDetectedAgents stay intact) and only
+// neutralize that one slow call so the activation path completes promptly.
+const agentRefreshAllSpy = vi.fn().mockResolvedValue(undefined);
+vi.mock('@process/agent/AgentRegistry', async () => {
+  const actual = await vi.importActual<typeof import('@process/agent/AgentRegistry')>('@process/agent/AgentRegistry');
+  (actual.agentRegistry as { refreshAll: () => Promise<void> }).refreshAll = () => agentRefreshAllSpy();
+  return actual;
+});
+
 /**
  * Build a fake child that emits a tools/list response containing a tool in the
  * `ijfw_` namespace. Real IJFW v1.5.0 exposes 13 tools — we verify by namespace
@@ -148,14 +160,16 @@ function writePendingDir(): string {
 // eslint-disable-next-line import/first
 import { ijfwSystemService } from '@process/services/ijfwSystemService';
 
-// The pending-upgrade activator stages the MCP server via symlink ownership
-// checks (fs.symlinkSync) and `.pending` -> live directory renames. On win32,
-// directory symlink creation needs elevation (EPERM on CI) and the staged-tree
-// renames hit ENOENT, so the fixtures can't be built. Prod uses path.join +
-// fs.rename (cross-platform); the activation logic is covered on the posix
-// shards. Previously this whole describe was masked because its shard hung on
-// the electron-log import — now visible once that hang is fixed.
-describe.skipIf(process.platform === 'win32')('ijfwSystemService.applyPendingUpgrade', () => {
+// The pending-upgrade activator stages the MCP server via symlink-ownership
+// checks and `.pending` -> live directory moves (moveWithExdevFallback, i.e.
+// fs.rename with a copy fallback). Symlink fixtures are created as NTFS
+// junctions ('junction' type) so they need no elevation on win32 and still
+// report isSymbolicLink()=true — the ownership-rejection path is exercised on
+// both platforms. This block runs on windows — NO skip. If the move-sequence
+// tests fail on the windows CI shard, that is a REAL prod finding in
+// moveWithExdevFallback's win32 rename semantics (overwrite/open-handle
+// behaviour differs from posix) to fix in prod, not re-skip here.
+describe('ijfwSystemService.applyPendingUpgrade', () => {
   beforeEach(() => {
     tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), 'ijfw-pending-'));
     emitSpy.mockClear();
@@ -181,7 +195,7 @@ describe.skipIf(process.platform === 'win32')('ijfwSystemService.applyPendingUpg
     const realDir = path.join(tmpHome, 'evil');
     fs.mkdirSync(realDir, { recursive: true });
     fs.mkdirSync(path.join(tmpHome, '.ijfw'), { recursive: true });
-    fs.symlinkSync(realDir, path.join(tmpHome, '.ijfw', 'mcp-server.pending'));
+    fs.symlinkSync(realDir, path.join(tmpHome, '.ijfw', 'mcp-server.pending'), 'junction');
     await ijfwSystemService.applyPendingUpgrade();
     expect(emitSpy).toHaveBeenCalledWith(
       expect.objectContaining({ status: 'install_failed', errorReason: 'unsafe_ownership' })
@@ -270,7 +284,7 @@ describe.skipIf(process.platform === 'win32')('ijfwSystemService.applyPendingUpg
         // Drop the real pending tree (simulating attacker removing it after
         // the ownership check passed) and put a symlink in its place at `dst`.
         await fs.promises.rm(src, { recursive: true, force: true });
-        fs.symlinkSync(evilTarget, dst);
+        fs.symlinkSync(evilTarget, dst, 'junction');
         return;
       }
       // For other rename ops (preserve current → previous), no current dir
@@ -299,7 +313,7 @@ describe.skipIf(process.platform === 'win32')('ijfwSystemService.applyPendingUpg
     const realDir = path.join(tmpHome, 'evil');
     fs.mkdirSync(realDir, { recursive: true });
     fs.mkdirSync(path.join(tmpHome, '.ijfw'), { recursive: true });
-    fs.symlinkSync(realDir, path.join(tmpHome, '.ijfw', 'mcp-server.pending'));
+    fs.symlinkSync(realDir, path.join(tmpHome, '.ijfw', 'mcp-server.pending'), 'junction');
 
     await ijfwSystemService.applyPendingUpgrade();
 

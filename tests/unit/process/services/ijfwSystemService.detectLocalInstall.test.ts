@@ -77,21 +77,29 @@ describe('ijfwSystemService.detectLocalInstall', () => {
     expect(result.detectedVia).toBe('directory');
   });
 
-  // Creating a directory symlink on win32 needs elevation/Developer Mode, which
-  // CI runners lack (fs.symlinkSync throws EPERM). Prod's symlink-following via
-  // realpathSync works on windows when a link exists; only the test setup can't
-  // create one. Covered on the posix shards.
-  it.skipIf(process.platform === 'win32')('follows a symlink and reports detectedVia=symlink', async () => {
+  // A plain directory symlink needs elevation/Developer Mode on win32, but an
+  // NTFS *junction* does not — and Node's lstat reports a junction as a symbolic
+  // link, so prod's detectedVia='symlink' path is exercised on both platforms.
+  // The 'junction' type arg is ignored on posix (a regular symlink is created),
+  // so the test runs everywhere — no skip.
+  it('follows a symlink and reports detectedVia=symlink', async () => {
     const realDir = path.join(tmpHome, 'real-mcp');
     fs.mkdirSync(realDir, { recursive: true });
     fs.writeFileSync(path.join(realDir, 'package.json'), JSON.stringify({ version: '1.6.0' }));
     fs.mkdirSync(path.join(tmpHome, '.ijfw'), { recursive: true });
-    fs.symlinkSync(realDir, path.join(tmpHome, '.ijfw', 'mcp-server'));
+    const linkPath = path.join(tmpHome, '.ijfw', 'mcp-server');
+    fs.symlinkSync(realDir, linkPath, 'junction');
     const result = await ijfwSystemService.detectLocalInstall();
     expect(result.installed).toBe(true);
     expect(result.version).toBe('1.6.0');
     expect(result.detectedVia).toBe('symlink');
-    expect(result.mcpServerPath).toBe(fs.realpathSync(realDir));
+    // Prod resolves the junction with the async `fs.promises.realpath` (libuv's
+    // native realpath). The expected value must use the SAME call: on Windows
+    // `fs.promises.realpath` expands 8.3 short components (`RUNNER~1` →
+    // `runneradmin`) while the sync `fs.realpathSync` JS shim preserves them, so
+    // mixing the two spuriously fails. Same link + same realpath variant → same
+    // canonical form on every platform.
+    expect(result.mcpServerPath).toBe(await fs.promises.realpath(linkPath));
   });
 
   it('falls back to PATH probe and returns CLI-on-PATH when which/where succeeds', async () => {

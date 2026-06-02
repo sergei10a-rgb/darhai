@@ -4,21 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, expect, it } from 'vitest';
 import { CURRENT_DB_VERSION, initSchema } from '@process/services/database/schema';
 import { ALL_MIGRATIONS, runMigrations } from '@process/services/database/migrations';
 import { BetterSqlite3Driver } from '@process/services/database/drivers/BetterSqlite3Driver';
+import { describeNativeSqlite } from '../../../helpers/nativeSqlite';
 
-let nativeOk = true;
-try {
-  const d = new BetterSqlite3Driver(':memory:');
-  d.close();
-} catch (e) {
-  if (e instanceof Error && e.message.includes('NODE_MODULE_VERSION')) nativeOk = false;
-}
-const describeOrSkip = nativeOk ? describe : describe.skip;
-
-describeOrSkip('Migration v41 — workflow_sessions table', () => {
+describeNativeSqlite('Migration v41 — workflow_sessions table', () => {
   let driver: BetterSqlite3Driver;
 
   beforeEach(() => {

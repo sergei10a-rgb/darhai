@@ -6,7 +6,7 @@
  * W1e — team_event_log: schema/migration + hooks + token usage capture +
  * IPC-shape pagination.
  */
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, expect, it } from 'vitest';
 import { CURRENT_DB_VERSION, initSchema } from '@process/services/database/schema';
 import { runMigrations } from '@process/services/database/migrations';
 import { BetterSqlite3Driver } from '@process/services/database/drivers/BetterSqlite3Driver';
@@ -15,19 +15,7 @@ import { EventLogger } from '@process/team/EventLogger';
 import { Mailbox } from '@process/team/Mailbox';
 import { TaskManager } from '@process/team/TaskManager';
 import type { TeamAgent, TeamEvent } from '@process/team/types';
-
-// Skip the suite when the better-sqlite3 native module is built for a different
-// Node/Electron ABI - matches the pattern used by team-SqliteTeamRepository.test.ts.
-let nativeModuleAvailable = true;
-try {
-  const d = new BetterSqlite3Driver(':memory:');
-  d.close();
-} catch (e) {
-  if (e instanceof Error && e.message.includes('NODE_MODULE_VERSION')) {
-    nativeModuleAvailable = false;
-  }
-}
-const describeOrSkip = nativeModuleAvailable ? describe : describe.skip;
+import { describeNativeSqlite } from '../../helpers/nativeSqlite';
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -81,7 +69,7 @@ function seedUserAndTeam(driver: BetterSqlite3Driver): void {
 // T1e.1 - migration on fresh + already-migrated DB
 // ---------------------------------------------------------------------------
 
-describeOrSkip('W1e - migration runs cleanly (T1e.1)', () => {
+describeNativeSqlite('W1e - migration runs cleanly (T1e.1)', () => {
   it('creates team_event_log + both indexes on a fresh DB', () => {
     const driver = new BetterSqlite3Driver(':memory:');
     try {
@@ -130,7 +118,7 @@ describeOrSkip('W1e - migration runs cleanly (T1e.1)', () => {
 // Shared rig for hook tests
 // ---------------------------------------------------------------------------
 
-describeOrSkip('W1e - write hooks (T1e.2)', () => {
+describeNativeSqlite('W1e - write hooks (T1e.2)', () => {
   let driver: BetterSqlite3Driver;
   let repo: SqliteTeamRepository;
   let logger: EventLogger;
@@ -272,7 +260,7 @@ describeOrSkip('W1e - write hooks (T1e.2)', () => {
 // T1e.3 - listEvents pagination + filter (the API the IPC bridge serves)
 // ---------------------------------------------------------------------------
 
-describeOrSkip('W1e - listEvents pagination + filter (T1e.3)', () => {
+describeNativeSqlite('W1e - listEvents pagination + filter (T1e.3)', () => {
   let driver: BetterSqlite3Driver;
   let repo: SqliteTeamRepository;
 

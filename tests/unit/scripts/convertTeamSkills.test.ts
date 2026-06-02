@@ -6,7 +6,7 @@
 
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 // @ts-expect-error — .mjs script has no type declarations
 import { buildFrontmatter, convertTeamBundle, inferCategory, toKebab } from '../../../scripts/convert-team-bundle.mjs';
@@ -64,13 +64,13 @@ describe('buildFrontmatter', () => {
   });
 });
 
-// convertTeamBundle joins the bundle base with entry.file via path.join, so on
-// win32 the lookup key becomes `\fake\teams\...` while the fixture Map is keyed
-// with posix `/fake/teams/...` — the readBody throws "fixture missing". Prod
-// path joining is correct; the conversion logic is covered on the posix shards.
-// (The pure-logic toKebab / inferCategory / buildFrontmatter describes above
-// still run on windows.)
-describe.skipIf(process.platform === 'win32')('convertTeamBundle', () => {
+// convertTeamBundle builds each body path with `path.resolve(teamsRoot, entry.file)`,
+// so the fixture Map below is keyed with the SAME `resolve(base, entry.file)`.
+// This matters on win32: `'/fake/teams'` is drive-relative there, so `resolve`
+// prepends the CWD drive (`D:\fake\teams\...`) while `join` would not (`\fake\teams\...`),
+// and the keys must match prod exactly. On posix the base is absolute so resolve
+// and join agree. Runs on windows as well as posix — no skip.
+describe('convertTeamBundle', () => {
   let outDir: string;
 
   beforeEach(() => {
@@ -88,9 +88,9 @@ describe.skipIf(process.platform === 'win32')('convertTeamBundle', () => {
       { name: 'Ship It', description: 'Release flow.', file: 'skills/devops/ship.md' },
     ];
     const bodies = new Map<string, string>([
-      ['/fake/teams/skills/devops/setup.md', '# Setup\n\nDo the thing.'],
-      ['/fake/teams/skills/research/spec.md', '# Spec\n\nWrite it well.'],
-      ['/fake/teams/skills/devops/ship.md', '# Ship\n\nGo go go.'],
+      [resolve('/fake/teams', 'skills/devops/setup.md'), '# Setup\n\nDo the thing.'],
+      [resolve('/fake/teams', 'skills/research/spec.md'), '# Spec\n\nWrite it well.'],
+      [resolve('/fake/teams', 'skills/devops/ship.md'), '# Ship\n\nGo go go.'],
     ]);
     const readBody = (p: string): string => {
       const v = bodies.get(p);

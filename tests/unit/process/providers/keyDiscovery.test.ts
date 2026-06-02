@@ -20,6 +20,7 @@ vi.mock('node:os', () => ({
 }));
 
 import fs from 'node:fs';
+import path from 'node:path';
 
 import { KeyDiscovery, PROVIDER_ENV_VARS } from '@process/providers/detection/KeyDiscovery';
 
@@ -118,17 +119,18 @@ describe('KeyDiscovery — environment-variable scan', () => {
 // ─── CLI config-file scan ─────────────────────────────────────────────────────
 
 // The scan reconstructs config paths via path.join(os.homedir(), '.codex',
-// 'auth.json'), which yields backslashes on win32; the existsSync/readFile
-// mocks key on `.endsWith('.codex/auth.json')` (posix) and the expected source
-// strings hardcode forward slashes, so these fail on windows. Prod path
-// construction is correct cross-platform; the scan logic is covered on the
-// posix shards (the env-var, readValue, and PROVIDER_ENV_VARS describes still
-// run on windows).
-describe.skipIf(process.platform === 'win32')('KeyDiscovery — CLI config-file scan', () => {
+// 'auth.json') — native separators (backslashes on win32). Every mock matcher
+// and expected source below is built with the SAME path.join, so they match
+// prod's construction on both platforms and this block runs on windows too.
+// `codexAuthTail` = `.codex/auth.json` (posix) / `.codex\auth.json` (win32);
+// `codexAuthPath` is the full mocked-homedir path the scan emits.
+const codexAuthTail = path.join('.codex', 'auth.json');
+const codexAuthPath = path.join('/home/test', '.codex', 'auth.json');
+describe('KeyDiscovery — CLI config-file scan', () => {
   it('discovers an OpenAI key from ~/.codex/auth.json when it stores a raw key', async () => {
-    existsSyncMock.mockImplementation((p) => String(p).endsWith('.codex/auth.json'));
+    existsSyncMock.mockImplementation((p) => String(p).endsWith(codexAuthTail));
     readFileSyncMock.mockImplementation((p) => {
-      if (String(p).endsWith('.codex/auth.json')) {
+      if (String(p).endsWith(codexAuthTail)) {
         return JSON.stringify({ auth_mode: 'apikey', OPENAI_API_KEY: 'sk-proj-from-codex' });
       }
       throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
@@ -136,13 +138,13 @@ describe.skipIf(process.platform === 'win32')('KeyDiscovery — CLI config-file 
 
     const found = await new KeyDiscovery().scan();
 
-    expect(found).toEqual([{ providerId: 'openai', source: 'file:/home/test/.codex/auth.json#OPENAI_API_KEY' }]);
+    expect(found).toEqual([{ providerId: 'openai', source: `file:${codexAuthPath}#OPENAI_API_KEY` }]);
   });
 
   it('does not discover a key when ~/.codex/auth.json is in OAuth mode (OPENAI_API_KEY is null)', async () => {
-    existsSyncMock.mockImplementation((p) => String(p).endsWith('.codex/auth.json'));
+    existsSyncMock.mockImplementation((p) => String(p).endsWith(codexAuthTail));
     readFileSyncMock.mockImplementation((p) => {
-      if (String(p).endsWith('.codex/auth.json')) {
+      if (String(p).endsWith(codexAuthTail)) {
         return JSON.stringify({
           auth_mode: 'chatgpt',
           OPENAI_API_KEY: null,
@@ -159,9 +161,9 @@ describe.skipIf(process.platform === 'win32')('KeyDiscovery — CLI config-file 
 
   it('prefers the env source when the same provider is found in both env and a config file', async () => {
     setEnv({ OPENAI_API_KEY: 'sk-proj-from-env' });
-    existsSyncMock.mockImplementation((p) => String(p).endsWith('.codex/auth.json'));
+    existsSyncMock.mockImplementation((p) => String(p).endsWith(codexAuthTail));
     readFileSyncMock.mockImplementation((p) => {
-      if (String(p).endsWith('.codex/auth.json')) {
+      if (String(p).endsWith(codexAuthTail)) {
         return JSON.stringify({ auth_mode: 'apikey', OPENAI_API_KEY: 'sk-proj-from-codex' });
       }
       throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
@@ -184,9 +186,9 @@ describe.skipIf(process.platform === 'win32')('KeyDiscovery — CLI config-file 
   });
 
   it('never throws when a config file contains malformed JSON — degrades to not-found', async () => {
-    existsSyncMock.mockImplementation((p) => String(p).endsWith('.codex/auth.json'));
+    existsSyncMock.mockImplementation((p) => String(p).endsWith(codexAuthTail));
     readFileSyncMock.mockImplementation((p) => {
-      if (String(p).endsWith('.codex/auth.json')) return '{ not valid json';
+      if (String(p).endsWith(codexAuthTail)) return '{ not valid json';
       throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
     });
 

@@ -33,11 +33,7 @@ import type { IjfwErrorReason } from '@/common/types/ijfw';
 import { buildChildEnv } from '@process/services/ijfw/envAllowlist';
 import { safeSpawn } from '@process/services/ijfw/safeSpawn';
 import { writeAtomic, moveWithExdevFallback, ijfwCacheKey } from '@process/services/ijfw/atomicFile';
-import {
-  acquireLock,
-  releaseLock,
-  type LockMetadata,
-} from '@process/services/ijfw/installLock';
+import { acquireLock, releaseLock, type LockMetadata } from '@process/services/ijfw/installLock';
 import {
   applyPreludeForStatus,
   discoverTargets,
@@ -70,11 +66,7 @@ const NOT_IMPLEMENTED = new Error('ijfwSystemService: method not implemented yet
 
 let runtimeMode: IjfwRuntimeMode = 'disabled';
 
-const HOMEBREW_PATHS = [
-  '/opt/homebrew/bin',
-  '/usr/local/bin',
-  '/home/linuxbrew/.linuxbrew/bin',
-];
+const HOMEBREW_PATHS = ['/opt/homebrew/bin', '/usr/local/bin', '/home/linuxbrew/.linuxbrew/bin'];
 
 async function detectLocalInstallImpl(): Promise<IjfwDetectionResult> {
   const home = os.homedir();
@@ -93,10 +85,7 @@ async function detectLocalInstallImpl(): Promise<IjfwDetectionResult> {
       throw new Error('not a directory or symlink');
     }
     try {
-      const raw = await fs.promises.readFile(
-        path.join(resolvedPath, 'package.json'),
-        'utf-8',
-      );
+      const raw = await fs.promises.readFile(path.join(resolvedPath, 'package.json'), 'utf-8');
       const parsed = JSON.parse(raw) as { version?: unknown };
       const version = typeof parsed.version === 'string' ? parsed.version : undefined;
       return {
@@ -156,11 +145,7 @@ async function readCache(): Promise<LatestCache | null> {
   try {
     const raw = await fs.promises.readFile(cachePath(), 'utf-8');
     const parsed = JSON.parse(raw) as Partial<LatestCache>;
-    if (
-      typeof parsed.version !== 'string' ||
-      typeof parsed.fetchedAt !== 'number' ||
-      !semver.valid(parsed.version)
-    ) {
+    if (typeof parsed.version !== 'string' || typeof parsed.fetchedAt !== 'number' || !semver.valid(parsed.version)) {
       return null;
     }
     inMemoryCache = { version: parsed.version, fetchedAt: parsed.fetchedAt };
@@ -380,13 +365,7 @@ async function bootstrapImpl(): Promise<void> {
   const latest = await getLatestPublishedImpl();
 
   // Already current.
-  if (
-    local.installed &&
-    latest &&
-    local.version &&
-    semver.valid(local.version) &&
-    semver.gte(local.version, latest)
-  ) {
+  if (local.installed && latest && local.version && semver.valid(local.version) && semver.gte(local.version, latest)) {
     emitStatus({ status: 'installed_current', version: local.version });
     await syncPrelude('installed_current');
     runtimeMode = 'enabled';
@@ -478,7 +457,7 @@ async function bootstrapImpl(): Promise<void> {
               const homeDir = os.homedir();
               await moveWithExdevFallback(
                 path.join(homeDir, '.ijfw', 'mcp-server'),
-                path.join(homeDir, '.ijfw', 'mcp-server.pending'),
+                path.join(homeDir, '.ijfw', 'mcp-server.pending')
               );
             } catch (err) {
               log.error('[ijfw] failed to stage upgrade to .pending', { err });
@@ -519,14 +498,22 @@ async function bootstrapImpl(): Promise<void> {
 // ---------------------------------------------------------------------------
 
 async function isSafelyOwned(p: string): Promise<boolean> {
-  if (process.platform === 'win32') return true; // not enforced on Windows
   let stat: fs.Stats;
   try {
     stat = await fs.promises.lstat(p);
   } catch {
     return false;
   }
+  // Symlink/junction rejection is cross-platform and is the load-bearing check:
+  // a reparse point at this path is a symlink-escape vector on every OS. NTFS
+  // junctions are creatable without elevation and report isSymbolicLink()=true,
+  // so enforcing this on Windows too closes the bypass where a planted
+  // `.ijfw/mcp-server.pending` junction would otherwise be activated unchecked.
   if (stat.isSymbolicLink()) return false;
+  // The POSIX uid/world-writable checks have no NTFS-ACL equivalent exposed by
+  // fs.Stats, so they are enforced only where meaningful. Windows relies on the
+  // symlink rejection above (the actual escape vector) — not a blanket bypass.
+  if (process.platform === 'win32') return true;
   const uid = process.getuid?.() ?? -1;
   if (uid >= 0 && stat.uid !== uid) return false;
   return (stat.mode & 0o002) === 0;
@@ -574,7 +561,11 @@ async function spawnTestVerify(mcpServerDir: string): Promise<boolean> {
     const settle = (value: boolean) => {
       if (settled) return;
       settled = true;
-      try { child.kill(); } catch { /* ignore */ }
+      try {
+        child.kill();
+      } catch {
+        /* ignore */
+      }
       clearTimeout(timeout);
       resolve(value);
     };
@@ -620,9 +611,7 @@ async function spawnTestVerify(mcpServerDir: string): Promise<boolean> {
     child.on('exit', () => settle(false));
 
     try {
-      child.stdin?.write(
-        encode({ jsonrpc: '2.0', id: 1, method: 'tools/list', params: {} }),
-      );
+      child.stdin?.write(encode({ jsonrpc: '2.0', id: 1, method: 'tools/list', params: {} }));
     } catch (err) {
       log.warn('[ijfw] spawnTestVerify stdin.write failed', { err });
       settle(false);
@@ -641,10 +630,7 @@ async function applyPendingUpgradeImpl(): Promise<void> {
   // prelude stays in `installing` / `upgrading` state after a failed upgrade
   // and the next boot reads a stale optimistic state. Helper centralizes the
   // emit+sync so it can't be forgotten at any failure exit.
-  const failWithReason = async (
-    errorReason: IjfwErrorReason,
-    stderr?: string,
-  ): Promise<void> => {
+  const failWithReason = async (errorReason: IjfwErrorReason, stderr?: string): Promise<void> => {
     const payload: IjfwStatusPayload = stderr
       ? { status: 'install_failed', errorReason, stderr }
       : { status: 'install_failed', errorReason };
@@ -762,10 +748,7 @@ async function applyPendingUpgradeImpl(): Promise<void> {
         }
       });
     } catch (err) {
-      await failWithReason(
-        'upgrade_failed_no_rollback',
-        err instanceof Error ? err.message : String(err),
-      );
+      await failWithReason('upgrade_failed_no_rollback', err instanceof Error ? err.message : String(err));
       return;
     }
 

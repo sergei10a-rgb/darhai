@@ -11,24 +11,13 @@
 // read + update preserve all three fields and that defaults are applied when
 // omitted.
 
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, expect, it } from 'vitest';
 import { CURRENT_DB_VERSION, initSchema } from '@process/services/database/schema';
 import { runMigrations } from '@process/services/database/migrations';
 import { BetterSqlite3Driver } from '@process/services/database/drivers/BetterSqlite3Driver';
 import { SqliteTeamRepository } from '@process/team/repository/SqliteTeamRepository';
 import type { TTeam } from '@process/team/types';
-
-let nativeModuleAvailable = true;
-try {
-  const d = new BetterSqlite3Driver(':memory:');
-  d.close();
-} catch (e) {
-  if (e instanceof Error && e.message.includes('NODE_MODULE_VERSION')) {
-    nativeModuleAvailable = false;
-  }
-}
-
-const describeOrSkip = nativeModuleAvailable ? describe : describe.skip;
+import { describeNativeSqlite } from '../../../helpers/nativeSqlite';
 
 function makeTeam(overrides: Partial<TTeam> = {}): TTeam {
   return {
@@ -55,7 +44,7 @@ function makeTeam(overrides: Partial<TTeam> = {}): TTeam {
   };
 }
 
-describeOrSkip('SqliteTeamRepository — promote-to-Standing round-trip', () => {
+describeNativeSqlite('SqliteTeamRepository — promote-to-Standing round-trip', () => {
   let repo: SqliteTeamRepository;
   let driver: BetterSqlite3Driver;
 

@@ -15,6 +15,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import path from 'node:path';
 
 // `electron` is mocked per-test via vi.doMock so we can flip `isPackaged`
 // without re-importing or re-running the whole module graph.
@@ -50,12 +51,13 @@ vi.mock('fs', () => ({
   existsSync: (p: string) => existsSimulator.fn(p),
 }));
 
-// resolveBridgeEntryPath builds paths with path.join/path.resolve, which emit
-// native separators (backslashes on win32). These assertions hardcode posix
-// separators (`/test/resources/...`, endsWith('whatsapp-bridge/bridge.js')),
-// so they fail on windows even though prod resolves correctly there. The
-// resolution LOGIC is platform-identical and covered on the posix shards.
-describe.skipIf(process.platform === 'win32')('WhatsAppPlugin.resolveBridgeEntryPath', () => {
+// resolveBridgeEntryPath builds paths with path.join (packaged) and
+// path.resolve (dev candidates), which emit native separators — and on win32
+// path.resolve also prefixes the cwd drive letter. Every expectation below is
+// built with the SAME primitive prod uses (path.join vs path.resolve), so the
+// assertions are platform-correct by construction and this block runs on
+// windows as well as posix — no skip.
+describe('WhatsAppPlugin.resolveBridgeEntryPath', () => {
   const originalResourcesPath = process.resourcesPath;
 
   beforeEach(() => {
@@ -81,15 +83,15 @@ describe.skipIf(process.platform === 'win32')('WhatsAppPlugin.resolveBridgeEntry
     isPackagedRef.value = true;
     const mod = await import('@process/channels/plugins/tier1/whatsapp/WhatsAppPlugin');
     const resolved = mod.resolveBridgeEntryPath();
-    expect(resolved).toBe('/test/resources/whatsapp-bridge/bridge.js');
+    expect(resolved).toBe(path.join('/test/resources', 'whatsapp-bridge', 'bridge.js'));
   });
 
   it('resolves to the source-tree path in dev (isPackaged=false)', async () => {
     isPackagedRef.value = false;
     const mod = await import('@process/channels/plugins/tier1/whatsapp/WhatsAppPlugin');
     const resolved = mod.resolveBridgeEntryPath();
-    expect(resolved.endsWith('whatsapp-bridge/bridge.js')).toBe(true);
-    expect(resolved).not.toContain('/test/resources/');
+    expect(resolved.endsWith(path.join('whatsapp-bridge', 'bridge.js'))).toBe(true);
+    expect(resolved).not.toContain(path.join('/test/resources'));
     // Walks up from the WhatsAppPlugin source location; must contain the
     // channels segment somewhere upstream.
     expect(resolved).toContain('whatsapp-bridge');
@@ -100,9 +102,10 @@ describe.skipIf(process.platform === 'win32')('WhatsAppPlugin.resolveBridgeEntry
     // Simulate electron-vite output: only the app.getAppPath()-based candidate
     // exists on disk; the source-tree __dirname walk lands on a non-existent
     // path because runtime __dirname is out/main/.
-    existsSimulator.fn = (p: string) => p === '/test/app/src/process/channels/whatsapp-bridge/bridge.js';
+    const candidate2 = path.resolve('/test/app', 'src/process/channels/whatsapp-bridge/bridge.js');
+    existsSimulator.fn = (p: string) => p === candidate2;
     const mod = await import('@process/channels/plugins/tier1/whatsapp/WhatsAppPlugin');
     const resolved = mod.resolveBridgeEntryPath();
-    expect(resolved).toBe('/test/app/src/process/channels/whatsapp-bridge/bridge.js');
+    expect(resolved).toBe(candidate2);
   });
 });

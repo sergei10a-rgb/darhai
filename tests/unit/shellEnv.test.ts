@@ -84,9 +84,17 @@ describe('mergePaths', () => {
 // -------------------------------------------------------------------
 describe('getEnhancedEnv', () => {
   const SENTINEL_PATH = '/sentinel-test-path/bin';
+  const originalPlatform = process.platform;
 
   beforeEach(() => {
     vi.resetModules();
+  });
+
+  afterEach(() => {
+    // Some tests below pin process.platform to exercise the POSIX shell-merge
+    // path deterministically on every CI host. Always restore so a pinned value
+    // never leaks into the win32-only tests later in this file.
+    Object.defineProperty(process, 'platform', { value: originalPlatform });
   });
 
   it('includes process.env.PATH in the returned env (macOS/Linux, shell skipped via mock)', async () => {
@@ -109,7 +117,11 @@ describe('getEnhancedEnv', () => {
   });
 
   it('merges shell PATH with process.env.PATH (macOS/Linux, shell returns extra path)', async () => {
-    if (process.platform === 'win32') return; // Shell loading skipped on Windows
+    // Pin darwin so this POSIX shell-merge assertion runs on EVERY host,
+    // including Windows CI — rather than silently returning early there.
+    // The win32 counterpart (shell loading is skipped) is asserted separately
+    // in the 'skips shell env loading on Windows' test below.
+    Object.defineProperty(process, 'platform', { value: 'darwin' });
 
     const SHELL_EXTRA = '/nvm/versions/node/v22/bin';
     vi.doMock('child_process', () => ({
@@ -605,7 +617,10 @@ describe('loadFullShellEnvironment', () => {
   });
 
   it('spawns shell with -i and -l flags in detached mode', async () => {
-    if (process.platform === 'win32') return;
+    // Pin darwin so the detached-spawn assertion runs on every host (incl.
+    // Windows CI). On real win32 the impl early-returns {} — that branch is
+    // covered by 'returns empty object on Windows' above. afterEach restores.
+    Object.defineProperty(process, 'platform', { value: 'darwin' });
 
     const mockStdout = {
       on: vi.fn((event: string, cb: (chunk: Buffer) => void) => {
@@ -658,7 +673,10 @@ describe('loadFullShellEnvironment', () => {
   });
 
   it('returns cached result on second call', async () => {
-    if (process.platform === 'win32') return;
+    // Pin darwin so the dedup/caching assertion runs on every host. On real
+    // win32 the impl returns {} without spawning, so the spawn-call-count
+    // invariant only holds on the POSIX path. afterEach restores platform.
+    Object.defineProperty(process, 'platform', { value: 'darwin' });
 
     const mockStdout = {
       on: vi.fn((event: string, cb: (chunk: Buffer) => void) => {

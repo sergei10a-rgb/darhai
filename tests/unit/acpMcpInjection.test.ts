@@ -565,12 +565,13 @@ describe('Step 8: Task #3 IPC mcpStatus events', () => {
 //     → extra.teamMcpStdioConfig should be non-null
 //   ACP_PERF_LOG=1 bun run dev
 //     → session/load or session/new request body logged, check mcpServers field
+//
+// NOTE: the above is a MANUAL falsification plan — it needs a live Electron app,
+// a real Team, a real ACP backend, and DevTools IPC inspection, so it is not
+// expressible as a unit test. It is documented here (not parked as `it.todo`
+// placeholders, which would rot as perpetual "pending" noise) because the
+// unit-observable half of every item is already asserted in "Step 8: Task #3
+// IPC mcpStatus events" above: event ordering (session_injecting before
+// session_ready), session_error carrying a non-empty error string, the degraded
+// phase on empty command, and serverCount/teamId/slotId payloads.
 // ─────────────────────────────────────────────────────────────────────────────
-
-describe('Checklist #8: end-to-end falsification (documentation)', () => {
-  it.todo('E2E happy path: tcp_ready → session_injecting → session_ready events received in order');
-  it.todo('E2E failure A: missing stdio script → tcp_error event fires, frontend shows error');
-  it.todo('E2E failure B: empty command → degraded event fires, frontend shows warning');
-  it.todo('E2E failure C: session/load throws → session_error fires with non-empty error string');
-  it.todo('E2E Gemini gap: no mcpStatus events for Gemini agents (documented known limitation)');
-});

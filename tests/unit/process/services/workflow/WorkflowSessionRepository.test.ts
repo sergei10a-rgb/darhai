@@ -4,25 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, expect, it } from 'vitest';
 import { CURRENT_DB_VERSION, initSchema } from '@process/services/database/schema';
 import { runMigrations } from '@process/services/database/migrations';
 import { BetterSqlite3Driver } from '@process/services/database/drivers/BetterSqlite3Driver';
 import { WorkflowSessionRepository } from '@process/services/workflow/WorkflowSessionRepository';
 import type { AskRecord, ResolvedSkill, StepState, WorkflowSession } from '@/common/types/workflowTypes';
+import { describeNativeSqlite } from '../../../helpers/nativeSqlite';
 
-// Skip the suite if the better-sqlite3 native binding can't be loaded in this
-// runtime (NODE_MODULE_VERSION mismatch under vitest's node, ERR_DLOPEN_FAILED
-// under bun, etc.). CI runs with a binding built for the right runtime and
-// will execute these tests.
-let nativeOk = true;
-try {
-  const d = new BetterSqlite3Driver(':memory:');
-  d.close();
-} catch {
-  nativeOk = false;
-}
-const describeOrSkip = nativeOk ? describe : describe.skip;
+// describeNativeSqlite runs this when the better-sqlite3 ABI matches the runtime
+// (CI / after `npm rebuild better-sqlite3`), skips it on the local Electron-ABI
+// dev build, and fails loudly in CI if the binding is unloadable so the coverage
+// loss can't pass unnoticed.
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -90,7 +83,7 @@ const makeSession = (over: Partial<WorkflowSession> = {}): WorkflowSession => ({
   ...over,
 });
 
-describeOrSkip('WorkflowSessionRepository', () => {
+describeNativeSqlite('WorkflowSessionRepository', () => {
   let driver: BetterSqlite3Driver;
   let repo: WorkflowSessionRepository;
 
