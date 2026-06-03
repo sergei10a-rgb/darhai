@@ -385,6 +385,34 @@ export class WorkflowSessionService {
       );
     }
 
+    // W6: the parent agent narrates progress via `<step n status>` markers in its
+    // streamed reply. A single verbose turn can emit `now` for several steps at
+    // once; because applyTransition is per-step, each would be accepted and the
+    // rail would paint multiple steps `now` / jump current_step with no work
+    // actually done. A PARENT may only move a step to `now` once every earlier
+    // step is terminal (done/skipped/errored). Worker (intentional out-of-order
+    // autonomous runs) and user (explicit rail jumps) sources are not gated.
+    if (transition.status === 'now' && transition.source === 'parent') {
+      const earlierIncomplete = current.steps.some(
+        (s, i) => i < stepIdx && (s.status === 'todo' || s.status === 'now')
+      );
+      if (earlierIncomplete) {
+        await this.telemetry.record({
+          eventType: 'workflow.regress_attempt',
+          metadata: {
+            session_id: sessionId,
+            workflow_name: current.workflow_name,
+            step_n: transition.step_n,
+            incoming_status: transition.status,
+            current_status: current.steps[stepIdx].status,
+            source: transition.source,
+            reason: 'out_of_order',
+          },
+        });
+        return current;
+      }
+    }
+
     const result = applyTransition(current.steps[stepIdx].status, transition);
 
     if (result.accepted === false) {

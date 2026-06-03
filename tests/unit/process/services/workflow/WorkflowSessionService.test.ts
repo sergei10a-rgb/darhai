@@ -502,6 +502,85 @@ describe('WorkflowSessionService.applyStepTransition()', () => {
     expect(after.steps[0].completed_at).toBe(1_700_000_100_000);
   });
 
+  it('rejects a parent `now` on a later step while an earlier step is not terminal (W6 multi-advance gate)', async () => {
+    const parts = buildService();
+    parts.skillMap.set('demo', {
+      entry: skillEntry({ name: 'demo', type: 'workflow' }),
+      body: TWO_STEP_BODY,
+    });
+    const { sessionId } = await parts.service.start({ workflow_name: 'demo' });
+    // Step 1 → now (legitimate begin).
+    await parts.service.applyStepTransition(sessionId, {
+      step_n: 1,
+      status: 'now',
+      source: 'parent',
+      dispatch_id: null,
+      timestamp: 1_700_000_000_000,
+    });
+    // A verbose parent turn ALSO emits a `now` marker for step 2 while step 1 is
+    // still running. It must NOT advance — steps are sequential.
+    const after = await parts.service.applyStepTransition(sessionId, {
+      step_n: 2,
+      status: 'now',
+      source: 'parent',
+      dispatch_id: null,
+      timestamp: 1_700_000_000_500,
+    });
+    expect(after.steps[1].status).toBe('todo');
+    expect(after.steps[0].status).toBe('now');
+    expect(after.current_step).toBe(1);
+  });
+
+  it('allows step 2 → now once step 1 is done (sequential advance still works)', async () => {
+    const parts = buildService();
+    parts.skillMap.set('demo', {
+      entry: skillEntry({ name: 'demo', type: 'workflow' }),
+      body: TWO_STEP_BODY,
+    });
+    const { sessionId } = await parts.service.start({ workflow_name: 'demo' });
+    await parts.service.applyStepTransition(sessionId, {
+      step_n: 1,
+      status: 'now',
+      source: 'parent',
+      dispatch_id: null,
+      timestamp: 1_700_000_000_000,
+    });
+    await parts.service.applyStepTransition(sessionId, {
+      step_n: 1,
+      status: 'done',
+      source: 'parent',
+      dispatch_id: null,
+      timestamp: 1_700_000_000_100,
+    });
+    const after = await parts.service.applyStepTransition(sessionId, {
+      step_n: 2,
+      status: 'now',
+      source: 'parent',
+      dispatch_id: null,
+      timestamp: 1_700_000_000_200,
+    });
+    expect(after.steps[1].status).toBe('now');
+    expect(after.current_step).toBe(2);
+  });
+
+  it('does NOT gate worker/user sources (out-of-order autonomous runs / explicit jumps stay allowed)', async () => {
+    const parts = buildService();
+    parts.skillMap.set('demo', {
+      entry: skillEntry({ name: 'demo', type: 'workflow' }),
+      body: TWO_STEP_BODY,
+    });
+    const { sessionId } = await parts.service.start({ workflow_name: 'demo' });
+    // A worker dispatched onto step 2 while step 1 is still todo is intentional.
+    const after = await parts.service.applyStepTransition(sessionId, {
+      step_n: 2,
+      status: 'now',
+      source: 'worker',
+      dispatch_id: 'd1',
+      timestamp: 1_700_000_000_000,
+    });
+    expect(after.steps[1].status).toBe('now');
+  });
+
   it('rejects a regress transition WITHOUT persisting and emits regress_attempt telemetry', async () => {
     const parts = buildService();
     parts.skillMap.set('demo', {
