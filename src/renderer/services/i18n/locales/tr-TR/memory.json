@@ -213,7 +213,18 @@
       "loading": "Yükleniyor…",
       "notFound": "Kavram bulunamadı.",
       "notFoundBack": "← Wiki'ye dön"
-    }
+    },
+    "list_empty": "Henüz wiki kaydı yok. Başlamak için bir anıyı yükseltin.",
+    "select_prompt": "İçeriğini görüntülemek için bir kayıt seçin.",
+    "promote": "Yükselt",
+    "export": "Dışa Aktar",
+    "share_readme": "README Paylaş",
+    "promote_ok": "Wiki'ye yükseltildi",
+    "promote_err": "Kayıt yükseltilemedi",
+    "export_queued": "Dışa aktarma sıraya alındı -- indirme özelliği yakında geliyor",
+    "export_err": "Kayıt dışa aktarılamadı",
+    "share_ok": "README paylaşımı sıraya alındı",
+    "share_err": "README paylaşılamadı"
   },
   "crossProject": {
     "scope_label_app": "Arama kapsamı: tüm projeler (uygulama kapsamı)",

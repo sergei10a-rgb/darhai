@@ -155,30 +155,7 @@
     "export_queued": "Export queued -- Wave 6 wires download",
     "export_err": "Couldn't export the entry",
     "share_ok": "README share queued",
-    "share_err": "Couldn't share README"
-  },
-  "crossProject": {
-    "scope_label_app": "Searching: All projects (app scope)",
-    "scope_label_project": "Searching: {{project}} (project scope)",
-    "search_placeholder": "Search memories across projects",
-    "search_button": "Search",
-    "toggle_label": "Include other projects",
-    "prompt_empty": "Enter a query to search across project brains.",
-    "results_empty": "No matches across the searched scope.",
-    "navigation_stub": "Cross-project navigation coming in Wave 6"
-  },
-  "drop": {
-    "zone_title": "Drop files here",
-    "zone_hint": "Markdown, text, JSON, YAML, CSV. Max 50MB. Max 20 files queued.",
-    "browse_button": "Browse",
-    "queue_title": "Queued files",
-    "queue_empty": "No files queued",
-    "quarantine_button": "Quarantine",
-    "ingest_success": "Queued {{name}}",
-    "quarantine_success": "Quarantined {{name}}",
-    "path_unavailable": "Could not read file path. Try the Browse button instead."
-  },
-  "wiki": {
+    "share_err": "Couldn't share README",
     "home": {
       "title": "Wiki",
       "conceptCount": "{{count}} concepts synthesized from {{memories}} memories",
@@ -248,6 +225,27 @@
       "notFound": "Concept not found.",
       "notFoundBack": "← Back to Wiki"
     }
+  },
+  "crossProject": {
+    "scope_label_app": "Searching: All projects (app scope)",
+    "scope_label_project": "Searching: {{project}} (project scope)",
+    "search_placeholder": "Search memories across projects",
+    "search_button": "Search",
+    "toggle_label": "Include other projects",
+    "prompt_empty": "Enter a query to search across project brains.",
+    "results_empty": "No matches across the searched scope.",
+    "navigation_stub": "Cross-project navigation coming in Wave 6"
+  },
+  "drop": {
+    "zone_title": "Drop files here",
+    "zone_hint": "Markdown, text, JSON, YAML, CSV. Max 50MB. Max 20 files queued.",
+    "browse_button": "Browse",
+    "queue_title": "Queued files",
+    "queue_empty": "No files queued",
+    "quarantine_button": "Quarantine",
+    "ingest_success": "Queued {{name}}",
+    "quarantine_success": "Quarantined {{name}}",
+    "path_unavailable": "Could not read file path. Try the Browse button instead."
   },
   "archive": {
     "topbar": {

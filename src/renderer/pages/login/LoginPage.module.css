@@ -247,11 +247,50 @@
   margin-top: -4px;
 }
 
+/* Custom dark checkbox. A native checkbox renders an opaque white box when
+ * unchecked regardless of `accent-color` (which only tints the checked fill),
+ * so it reads as a bright square on the dark card. Reset the native appearance
+ * and draw our own dark box + brand-orange checked state with a white tick. */
 .login-page__checkbox input[type='checkbox'] {
-  width: 14px;
-  height: 14px;
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  position: relative;
+  border: 1px solid #3a3a3a;
+  border-radius: 4px;
+  background: rgba(22, 22, 22, 0.85);
   cursor: pointer;
-  accent-color: var(--login-brand);
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.login-page__checkbox input[type='checkbox']:hover {
+  border-color: var(--login-brand);
+}
+
+.login-page__checkbox input[type='checkbox']:checked {
+  background: var(--login-brand);
+  border-color: var(--login-brand);
+}
+
+.login-page__checkbox input[type='checkbox']:checked::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 2px;
+  width: 4px;
+  height: 8px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.login-page__checkbox input[type='checkbox']:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.2);
 }
 
 .login-page__checkbox label {

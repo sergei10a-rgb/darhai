@@ -155,30 +155,7 @@
     "export_queued": "Exportação na fila -- a Wave 6 conecta o download",
     "export_err": "Não foi possível exportar a entrada",
     "share_ok": "Compartilhamento de README na fila",
-    "share_err": "Não foi possível compartilhar o README"
-  },
-  "crossProject": {
-    "scope_label_app": "Buscando: Todos os projetos (escopo do app)",
-    "scope_label_project": "Buscando: {{project}} (escopo do projeto)",
-    "search_placeholder": "Buscar memórias entre projetos",
-    "search_button": "Buscar",
-    "toggle_label": "Incluir outros projetos",
-    "prompt_empty": "Digite uma consulta para buscar entre os cérebros dos projetos.",
-    "results_empty": "Nenhuma correspondência no escopo buscado.",
-    "navigation_stub": "Navegação entre projetos chegando na Wave 6"
-  },
-  "drop": {
-    "zone_title": "Solte os arquivos aqui",
-    "zone_hint": "Markdown, texto, JSON, YAML, CSV. Máx. 50MB. Máx. 20 arquivos na fila.",
-    "browse_button": "Procurar",
-    "queue_title": "Arquivos na fila",
-    "queue_empty": "Nenhum arquivo na fila",
-    "quarantine_button": "Quarentena",
-    "ingest_success": "Na fila: {{name}}",
-    "quarantine_success": "Em quarentena: {{name}}",
-    "path_unavailable": "Não foi possível ler o caminho do arquivo. Tente usar o botão Procurar."
-  },
-  "wiki": {
+    "share_err": "Não foi possível compartilhar o README",
     "home": {
       "title": "Wiki",
       "conceptCount": "{{count}} conceitos sintetizados a partir de {{memories}} memórias",
@@ -248,6 +225,27 @@
       "notFound": "Conceito não encontrado.",
       "notFoundBack": "← Voltar para a Wiki"
     }
+  },
+  "crossProject": {
+    "scope_label_app": "Buscando: Todos os projetos (escopo do app)",
+    "scope_label_project": "Buscando: {{project}} (escopo do projeto)",
+    "search_placeholder": "Buscar memórias entre projetos",
+    "search_button": "Buscar",
+    "toggle_label": "Incluir outros projetos",
+    "prompt_empty": "Digite uma consulta para buscar entre os cérebros dos projetos.",
+    "results_empty": "Nenhuma correspondência no escopo buscado.",
+    "navigation_stub": "Navegação entre projetos chegando na Wave 6"
+  },
+  "drop": {
+    "zone_title": "Solte os arquivos aqui",
+    "zone_hint": "Markdown, texto, JSON, YAML, CSV. Máx. 50MB. Máx. 20 arquivos na fila.",
+    "browse_button": "Procurar",
+    "queue_title": "Arquivos na fila",
+    "queue_empty": "Nenhum arquivo na fila",
+    "quarantine_button": "Quarentena",
+    "ingest_success": "Na fila: {{name}}",
+    "quarantine_success": "Em quarentena: {{name}}",
+    "path_unavailable": "Não foi possível ler o caminho do arquivo. Tente usar o botão Procurar."
   },
   "archive": {
     "topbar": {

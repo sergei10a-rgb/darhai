@@ -213,7 +213,18 @@
       "loading": "読み込み中…",
       "notFound": "コンセプトが見つかりません。",
       "notFoundBack": "← Wikiに戻る"
-    }
+    },
+    "list_empty": "ウィキの項目はまだありません。メモリをプロモートして始めましょう。",
+    "select_prompt": "項目を選択すると内容が表示されます。",
+    "promote": "プロモート",
+    "export": "エクスポート",
+    "share_readme": "READMEを共有",
+    "promote_ok": "ウィキにプロモートしました",
+    "promote_err": "項目をプロモートできませんでした",
+    "export_queued": "エクスポートを受け付けました。ダウンロード機能は近日公開予定です。",
+    "export_err": "項目をエクスポートできませんでした",
+    "share_ok": "READMEの共有を受け付けました",
+    "share_err": "READMEを共有できませんでした"
   },
   "crossProject": {
     "scope_label_app": "検索範囲: すべてのプロジェクト (アプリ全体)",

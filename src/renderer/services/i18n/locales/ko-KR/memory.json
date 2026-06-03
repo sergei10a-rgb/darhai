@@ -213,7 +213,18 @@
       "loading": "로딩 중…",
       "notFound": "개념을 찾을 수 없습니다.",
       "notFoundBack": "← Wiki로 돌아가기"
-    }
+    },
+    "list_empty": "아직 위키 항목이 없습니다. 메모리를 승격하여 시작하세요.",
+    "select_prompt": "내용을 보려면 항목을 선택하세요.",
+    "promote": "승격",
+    "export": "내보내기",
+    "share_readme": "README 공유",
+    "promote_ok": "위키로 승격되었습니다",
+    "promote_err": "항목을 승격하지 못했습니다",
+    "export_queued": "내보내기가 대기열에 추가되었습니다 -- 다운로드 기능은 곧 제공됩니다",
+    "export_err": "항목을 내보내지 못했습니다",
+    "share_ok": "README 공유가 대기열에 추가되었습니다",
+    "share_err": "README를 공유하지 못했습니다"
   },
   "crossProject": {
     "scope_label_app": "검색 중: 모든 프로젝트 (앱 범위)",

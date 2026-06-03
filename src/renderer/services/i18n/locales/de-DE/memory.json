@@ -155,30 +155,7 @@
     "export_queued": "Export eingereiht -- Welle 6 verbindet den Download",
     "export_err": "Der Eintrag konnte nicht exportiert werden",
     "share_ok": "README-Freigabe eingereiht",
-    "share_err": "README konnte nicht geteilt werden"
-  },
-  "crossProject": {
-    "scope_label_app": "Suche: Alle Projekte (App-Bereich)",
-    "scope_label_project": "Suche: {{project}} (Projektbereich)",
-    "search_placeholder": "Gedächtnisse projektübergreifend durchsuchen",
-    "search_button": "Suchen",
-    "toggle_label": "Andere Projekte einbeziehen",
-    "prompt_empty": "Gib eine Suchanfrage ein, um projektübergreifend zu suchen.",
-    "results_empty": "Keine Treffer im durchsuchten Bereich.",
-    "navigation_stub": "Projektübergreifende Navigation kommt in Welle 6"
-  },
-  "drop": {
-    "zone_title": "Dateien hier ablegen",
-    "zone_hint": "Markdown, Text, JSON, YAML, CSV. Max. 50 MB. Max. 20 Dateien in der Warteschlange.",
-    "browse_button": "Durchsuchen",
-    "queue_title": "Eingereihte Dateien",
-    "queue_empty": "Keine Dateien in der Warteschlange",
-    "quarantine_button": "Quarantäne",
-    "ingest_success": "{{name}} eingereiht",
-    "quarantine_success": "{{name}} in Quarantäne verschoben",
-    "path_unavailable": "Dateipfad konnte nicht gelesen werden. Verwende stattdessen die Schaltfläche „Durchsuchen“."
-  },
-  "wiki": {
+    "share_err": "README konnte nicht geteilt werden",
     "home": {
       "title": "Wiki",
       "conceptCount": "{{count}} Konzepte aus {{memories}} Gedächtnissen synthetisiert",
@@ -248,6 +225,27 @@
       "notFound": "Konzept nicht gefunden.",
       "notFoundBack": "← Zurück zum Wiki"
     }
+  },
+  "crossProject": {
+    "scope_label_app": "Suche: Alle Projekte (App-Bereich)",
+    "scope_label_project": "Suche: {{project}} (Projektbereich)",
+    "search_placeholder": "Gedächtnisse projektübergreifend durchsuchen",
+    "search_button": "Suchen",
+    "toggle_label": "Andere Projekte einbeziehen",
+    "prompt_empty": "Gib eine Suchanfrage ein, um projektübergreifend zu suchen.",
+    "results_empty": "Keine Treffer im durchsuchten Bereich.",
+    "navigation_stub": "Projektübergreifende Navigation kommt in Welle 6"
+  },
+  "drop": {
+    "zone_title": "Dateien hier ablegen",
+    "zone_hint": "Markdown, Text, JSON, YAML, CSV. Max. 50 MB. Max. 20 Dateien in der Warteschlange.",
+    "browse_button": "Durchsuchen",
+    "queue_title": "Eingereihte Dateien",
+    "queue_empty": "Keine Dateien in der Warteschlange",
+    "quarantine_button": "Quarantäne",
+    "ingest_success": "{{name}} eingereiht",
+    "quarantine_success": "{{name}} in Quarantäne verschoben",
+    "path_unavailable": "Dateipfad konnte nicht gelesen werden. Verwende stattdessen die Schaltfläche „Durchsuchen“."
   },
   "archive": {
     "topbar": {

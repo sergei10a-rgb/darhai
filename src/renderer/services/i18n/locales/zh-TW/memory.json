@@ -213,7 +213,18 @@
       "loading": "載入中…",
       "notFound": "找不到該概念。",
       "notFoundBack": "← 返回 Wiki"
-    }
+    },
+    "list_empty": "尚無 wiki 條目。請從提升記憶開始。",
+    "select_prompt": "選擇一個條目以檢視其內容。",
+    "promote": "提升",
+    "export": "匯出",
+    "share_readme": "分享 README",
+    "promote_ok": "已提升至 wiki",
+    "promote_err": "無法提升此條目",
+    "export_queued": "匯出已排入佇列 — 下載功能即將推出",
+    "export_err": "無法匯出此條目",
+    "share_ok": "README 分享已排入佇列",
+    "share_err": "無法分享 README"
   },
   "crossProject": {
     "scope_label_app": "搜尋: 所有專案（應用範圍）",

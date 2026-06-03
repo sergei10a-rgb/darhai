@@ -155,30 +155,7 @@
     "export_queued": "Exportación en cola: la Wave 6 habilita la descarga",
     "export_err": "No se pudo exportar la entrada",
     "share_ok": "Compartir README en cola",
-    "share_err": "No se pudo compartir el README"
-  },
-  "crossProject": {
-    "scope_label_app": "Buscando: Todos los proyectos (alcance de la app)",
-    "scope_label_project": "Buscando: {{project}} (alcance del proyecto)",
-    "search_placeholder": "Buscar memorias en todos los proyectos",
-    "search_button": "Buscar",
-    "toggle_label": "Incluir otros proyectos",
-    "prompt_empty": "Introduce una consulta para buscar entre los cerebros de los proyectos.",
-    "results_empty": "No hay coincidencias en el alcance buscado.",
-    "navigation_stub": "La navegación entre proyectos llegará en la Wave 6"
-  },
-  "drop": {
-    "zone_title": "Suelta los archivos aquí",
-    "zone_hint": "Markdown, texto, JSON, YAML, CSV. Máx. 50 MB. Máx. 20 archivos en cola.",
-    "browse_button": "Examinar",
-    "queue_title": "Archivos en cola",
-    "queue_empty": "No hay archivos en cola",
-    "quarantine_button": "Poner en cuarentena",
-    "ingest_success": "{{name}} en cola",
-    "quarantine_success": "{{name}} en cuarentena",
-    "path_unavailable": "No se pudo leer la ruta del archivo. Usa el botón Examinar en su lugar."
-  },
-  "wiki": {
+    "share_err": "No se pudo compartir el README",
     "home": {
       "title": "Wiki",
       "conceptCount": "{{count}} conceptos sintetizados a partir de {{memories}} memorias",
@@ -248,6 +225,27 @@
       "notFound": "Concepto no encontrado.",
       "notFoundBack": "← Volver a la Wiki"
     }
+  },
+  "crossProject": {
+    "scope_label_app": "Buscando: Todos los proyectos (alcance de la app)",
+    "scope_label_project": "Buscando: {{project}} (alcance del proyecto)",
+    "search_placeholder": "Buscar memorias en todos los proyectos",
+    "search_button": "Buscar",
+    "toggle_label": "Incluir otros proyectos",
+    "prompt_empty": "Introduce una consulta para buscar entre los cerebros de los proyectos.",
+    "results_empty": "No hay coincidencias en el alcance buscado.",
+    "navigation_stub": "La navegación entre proyectos llegará en la Wave 6"
+  },
+  "drop": {
+    "zone_title": "Suelta los archivos aquí",
+    "zone_hint": "Markdown, texto, JSON, YAML, CSV. Máx. 50 MB. Máx. 20 archivos en cola.",
+    "browse_button": "Examinar",
+    "queue_title": "Archivos en cola",
+    "queue_empty": "No hay archivos en cola",
+    "quarantine_button": "Poner en cuarentena",
+    "ingest_success": "{{name}} en cola",
+    "quarantine_success": "{{name}} en cuarentena",
+    "path_unavailable": "No se pudo leer la ruta del archivo. Usa el botón Examinar en su lugar."
   },
   "archive": {
     "topbar": {

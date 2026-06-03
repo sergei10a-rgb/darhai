@@ -155,30 +155,7 @@
     "export_queued": "Export mis en file -- la Vague 6 active le téléchargement",
     "export_err": "Impossible d'exporter l'entrée",
     "share_ok": "Partage du README mis en file",
-    "share_err": "Impossible de partager le README"
-  },
-  "crossProject": {
-    "scope_label_app": "Recherche : tous les projets (portée application)",
-    "scope_label_project": "Recherche : {{project}} (portée projet)",
-    "search_placeholder": "Rechercher des mémoires dans tous les projets",
-    "search_button": "Rechercher",
-    "toggle_label": "Inclure les autres projets",
-    "prompt_empty": "Saisissez une requête pour effectuer une recherche dans les cerveaux de projets.",
-    "results_empty": "Aucune correspondance dans la portée recherchée.",
-    "navigation_stub": "La navigation inter-projets arrive dans la Vague 6"
-  },
-  "drop": {
-    "zone_title": "Déposez les fichiers ici",
-    "zone_hint": "Markdown, texte, JSON, YAML, CSV. Max 50 Mo. Max 20 fichiers en file.",
-    "browse_button": "Parcourir",
-    "queue_title": "Fichiers en file",
-    "queue_empty": "Aucun fichier en file",
-    "quarantine_button": "Mettre en quarantaine",
-    "ingest_success": "{{name}} mis en file",
-    "quarantine_success": "{{name}} mis en quarantaine",
-    "path_unavailable": "Impossible de lire le chemin du fichier. Utilisez plutôt le bouton Parcourir."
-  },
-  "wiki": {
+    "share_err": "Impossible de partager le README",
     "home": {
       "title": "Wiki",
       "conceptCount": "{{count}} concepts synthétisés à partir de {{memories}} mémoires",
@@ -248,6 +225,27 @@
       "notFound": "Concept introuvable.",
       "notFoundBack": "← Retour au Wiki"
     }
+  },
+  "crossProject": {
+    "scope_label_app": "Recherche : tous les projets (portée application)",
+    "scope_label_project": "Recherche : {{project}} (portée projet)",
+    "search_placeholder": "Rechercher des mémoires dans tous les projets",
+    "search_button": "Rechercher",
+    "toggle_label": "Inclure les autres projets",
+    "prompt_empty": "Saisissez une requête pour effectuer une recherche dans les cerveaux de projets.",
+    "results_empty": "Aucune correspondance dans la portée recherchée.",
+    "navigation_stub": "La navigation inter-projets arrive dans la Vague 6"
+  },
+  "drop": {
+    "zone_title": "Déposez les fichiers ici",
+    "zone_hint": "Markdown, texte, JSON, YAML, CSV. Max 50 Mo. Max 20 fichiers en file.",
+    "browse_button": "Parcourir",
+    "queue_title": "Fichiers en file",
+    "queue_empty": "Aucun fichier en file",
+    "quarantine_button": "Mettre en quarantaine",
+    "ingest_success": "{{name}} mis en file",
+    "quarantine_success": "{{name}} mis en quarantaine",
+    "path_unavailable": "Impossible de lire le chemin du fichier. Utilisez plutôt le bouton Parcourir."
   },
   "archive": {
     "topbar": {
