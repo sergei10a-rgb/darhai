@@ -1171,6 +1171,13 @@ export async function initModelRegistryIpc(): Promise<void> {
   ipcBridge.modelRegistry.connect.provider(async (payload) => {
     const result = await h.connect(payload);
     if (result.ok && _repo) void mirrorConnectOrRekey(_repo, payload.providerId);
+    // Live-update any open picker / the Models page after a connect, the same
+    // way the manual refresh handler does. WITHOUT this, a fresh install that
+    // connects a provider (e.g. Google Gemini) builds + mirrors the catalog but
+    // never tells the renderer to re-read it — the SWR cache for `model.config`
+    // stays empty and the model picker shows "no models" until a manual reload.
+    // On failure the provider's `error` state must surface too, so emit always.
+    ipcBridge.modelRegistry.listChanged.emit();
     return result;
   });
   ipcBridge.modelRegistry.testConnection.provider((payload) => h.testConnection(payload));
@@ -1192,6 +1199,9 @@ export async function initModelRegistryIpc(): Promise<void> {
   ipcBridge.modelRegistry.rekey.provider(async (payload) => {
     const result = await h.rekey(payload);
     if (result.ok && _repo) void mirrorConnectOrRekey(_repo, payload.providerId);
+    // Same as connect: revalidate open pickers so a re-keyed provider's models
+    // refresh immediately instead of waiting for a reload.
+    ipcBridge.modelRegistry.listChanged.emit();
     return result;
   });
   ipcBridge.modelRegistry.curatedForAgent.provider((payload) => h.curatedForAgent(payload));

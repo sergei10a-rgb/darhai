@@ -9,7 +9,7 @@ import { usePreviewContext } from '@/renderer/pages/conversation/Preview';
 import { useLayoutContext } from '@/renderer/hooks/context/LayoutContext';
 import { getModelDisplayLabel } from '@/renderer/utils/model/agentLogo';
 import { Button, Dropdown, Menu, Tooltip } from '@arco-design/web-react';
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import classNames from 'classnames';
 import useSWR from 'swr';
@@ -27,7 +27,19 @@ const WCoreModelSelector: React.FC<{
   const isMobileHeaderCompact = Boolean(layout?.isMobile);
   const defaultModelLabel = t('common.defaultModel');
 
-  const { data: modelConfig } = useSWR<IProvider[]>('model.config', () => ipcBridge.mode.getModelConfig.invoke());
+  const { data: modelConfig, mutate: mutateModelConfig } = useSWR<IProvider[]>('model.config', () =>
+    ipcBridge.mode.getModelConfig.invoke()
+  );
+
+  // Re-read the model list when the registry catalog changes (connect / rekey /
+  // refresh emit `modelRegistry.listChanged`). Without this the Wayland Core
+  // picker shows "no models" right after connecting a provider on a fresh
+  // install, until the app is reloaded.
+  useEffect(() => {
+    return ipcBridge.modelRegistry.listChanged.on(() => {
+      void mutateModelConfig();
+    });
+  }, [mutateModelConfig]);
 
   const currentModel = selection?.currentModel;
   const currentModelHealth = useMemo(() => {
