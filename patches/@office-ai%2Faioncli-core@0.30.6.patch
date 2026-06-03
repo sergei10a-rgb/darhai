@@ -1,8 +1,11 @@
+diff --git a/node_modules/@office-ai/aioncli-core/.bun-tag-a322f8e24a95bb08 b/.bun-tag-a322f8e24a95bb08
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 diff --git a/node_modules/@office-ai/aioncli-core/.bun-tag-e430e8d9d3acdb6c b/.bun-tag-e430e8d9d3acdb6c
 new file mode 100644
 index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 diff --git a/dist/src/core/openaiContentGenerator.js b/dist/src/core/openaiContentGenerator.js
-index 2bdb1c5b9306902dabe47a5aedcf0e49bb954db6..20db52dd3861f7e803440710e5d9697131cc3283 100644
+index 2bdb1c5b9306902dabe47a5aedcf0e49bb954db6..80918bee2859cf26fc1b89e64794396b6e8a0d4d 100644
 --- a/dist/src/core/openaiContentGenerator.js
 +++ b/dist/src/core/openaiContentGenerator.js
 @@ -644,6 +644,19 @@ export class OpenAIContentGenerator {
@@ -25,19 +28,43 @@ index 2bdb1c5b9306902dabe47a5aedcf0e49bb954db6..20db52dd3861f7e803440710e5d96971
                  else if (typeof value === 'object') {
                      result[key] = convertTypes(value);
                  }
-@@ -1538,6 +1551,16 @@ export class OpenAIContentGenerator {
+@@ -1527,17 +1540,38 @@ export class OpenAIContentGenerator {
+         const modelName = this.model.toLowerCase();
+         const isKimiModel = modelName.includes('kimi-k2.5') ||
+             (modelName.includes('kimi') && modelName.includes('k2.5'));
+-        const isRestrictedModel = modelName.includes('gpt-5') ||
++        // OpenAI reasoning models — the gpt-5.x flagship family AND the o-series
++        // (o1/o3/o4, incl. -mini/-preview) — reject top_p, temperature!=1, the
++        // penalty knobs, logprobs and max_tokens; they accept only temperature=1
++        // and max_completion_tokens. The `\bo[134]\b` guard matches o1/o3/o4
++        // without catching gpt-4o (no word boundary before the trailing `o`).
++        const isReasoningModel = modelName.includes('gpt-5') ||
+             modelName.includes('gpt5') ||
++            /\bo[134]\b/.test(modelName);
++        const isRestrictedModel = isReasoningModel ||
+             modelName.includes('gpt-4o') ||
+             modelName.includes('gpt4o') ||
+             isKimiModel;
+         if (isRestrictedModel) {
+             params.temperature = 1.0;
+-            // Kimi K2.5 models enforce top_p=0.95
              if (isKimiModel) {
++                // Kimi K2.5 models enforce top_p=0.95
                  params.top_p = 0.95;
              }
-+            else if (modelName.includes('gpt-5') || modelName.includes('gpt5')) {
-+                // OpenAI reasoning models (gpt-5.x) reject top_p and the penalty
-+                // knobs entirely (`400 Unsupported parameter: 'top_p'`); only
-+                // temperature=1 is accepted. Strip the unsupported sampling params.
++            else if (isReasoningModel) {
++                // Strip the sampling params OpenAI reasoning models reject
++                // (`400 Unsupported parameter: 'top_p'`), and migrate any token cap
++                // to the parameter they do accept (max_completion_tokens).
 +                delete params.top_p;
 +                delete params.top_k;
 +                delete params.frequency_penalty;
 +                delete params.presence_penalty;
 +                delete params.repetition_penalty;
++                if (params.max_tokens !== undefined && params.max_completion_tokens === undefined) {
++                    params.max_completion_tokens = params.max_tokens;
++                    delete params.max_tokens;
++                }
 +            }
          }
          return params;
