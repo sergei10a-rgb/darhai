@@ -54,7 +54,10 @@ function makeService(active: Array<{ session: WorkflowSession; conversation_prev
 
 describe('sweepStalledAutonomousSteps', () => {
   it('errors-out a step still running past the threshold', async () => {
-    const step = makeStep({ n: 1, autonomous_run: { dispatch_id: 'd1', started_at: NOW - 31 * MIN, state: 'running' } });
+    const step = makeStep({
+      n: 1,
+      autonomous_run: { dispatch_id: 'd1', started_at: NOW - 31 * MIN, state: 'running' },
+    });
     const service = makeService([makeSession([step])]);
 
     const swept = await sweepStalledAutonomousSteps(service, 30 * MIN, NOW);

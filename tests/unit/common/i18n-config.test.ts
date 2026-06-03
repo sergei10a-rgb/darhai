@@ -11,7 +11,7 @@ describe('i18n config', () => {
     expect(SUPPORTED_LANGUAGES).toContain('uk-UA');
   });
 
-  it('should have zh-CN as the first language in this project', () => {
-    expect(SUPPORTED_LANGUAGES[0]).toBe('zh-CN');
+  it('should have en-US (English) as the first language — English-first, Western-priority order', () => {
+    expect(SUPPORTED_LANGUAGES[0]).toBe('en-US');
   });
 });

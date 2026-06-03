@@ -33,31 +33,11 @@
     "greeting": {
       "withName": "{{timeLabel}}, {{name}}",
       "labels": {
-        "lateNight": [
-          "Geç saatlere kaldın",
-          "Sabahın köründe çalışıyorsun",
-          "Hâlâ ayaktasın"
-        ],
-        "morning": [
-          "Günaydın",
-          "Hayırlı sabahlar",
-          "Güne merhaba"
-        ],
-        "afternoon": [
-          "İyi günler",
-          "Hayırlı günler",
-          "Tekrar hoş geldin"
-        ],
-        "evening": [
-          "İyi akşamlar",
-          "Hayırlı akşamlar",
-          "Tekrar hoş geldin"
-        ],
-        "night": [
-          "İyi akşamlar",
-          "Hayırlı akşamlar",
-          "Günü kapatıyorsun"
-        ]
+        "lateNight": ["Geç saatlere kaldın", "Sabahın köründe çalışıyorsun", "Hâlâ ayaktasın"],
+        "morning": ["Günaydın", "Hayırlı sabahlar", "Güne merhaba"],
+        "afternoon": ["İyi günler", "Hayırlı günler", "Tekrar hoş geldin"],
+        "evening": ["İyi akşamlar", "Hayırlı akşamlar", "Tekrar hoş geldin"],
+        "night": ["İyi akşamlar", "Hayırlı akşamlar", "Günü kapatıyorsun"]
       }
     },
     "intent": {
