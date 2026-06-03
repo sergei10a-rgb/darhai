@@ -319,6 +319,34 @@ describe('dispatchAutonomousStep', () => {
     );
   });
 
+  it('refuses to dispatch a step that already has a running worker (W2 double-dispatch guard)', async () => {
+    const session = makeSession({
+      steps: [
+        makeStep({ n: 1, status: 'now', autonomous_run: { dispatch_id: 'd0', started_at: 1, state: 'running' } }),
+        makeStep({ n: 2 }),
+      ],
+    });
+    const fakes = buildFakes({ parentSession: session });
+    await expect(
+      dispatchAutonomousStep({ parentSessionId: 'sess-1', stepN: 1 }, fakes.deps)
+    ).rejects.toThrow(/already has a running autonomous worker/);
+    // No second worker, no state mutation.
+    expect(fakes.conversationService.createConversation).not.toHaveBeenCalled();
+    expect(fakes.workerTaskManager.getOrBuildTask).not.toHaveBeenCalled();
+    expect(fakes.workflowSessionService.recordAutonomousDispatch).not.toHaveBeenCalled();
+  });
+
+  it('refuses to dispatch a step that is already done (W2 double-dispatch guard)', async () => {
+    const session = makeSession({
+      steps: [makeStep({ n: 1, status: 'done' }), makeStep({ n: 2 })],
+    });
+    const fakes = buildFakes({ parentSession: session });
+    await expect(
+      dispatchAutonomousStep({ parentSessionId: 'sess-1', stepN: 1 }, fakes.deps)
+    ).rejects.toThrow(/already done/);
+    expect(fakes.conversationService.createConversation).not.toHaveBeenCalled();
+  });
+
   it('throws when the parent workflow session is missing', async () => {
     const fakes = buildFakes({ parentSession: null });
     await expect(

@@ -115,6 +115,23 @@ export async function dispatchAutonomousStep(
     );
   }
 
+  // 2b. Double-dispatch guard (W2). A step that already has a running worker, or
+  //     that is already terminal, must not spawn a second child conversation.
+  //     The rail hides the Run button while a step is running, but a rapid
+  //     double-invoke, React double-render, or an auto-advance landing step N+1
+  //     under the cursor can still race two dispatches onto one step — one intent
+  //     must equal exactly one worker.
+  if (step.autonomous_run?.state === 'running') {
+    throw new Error(
+      `dispatchAutonomousStep: step ${stepN} in session ${parentSessionId} already has a running autonomous worker`
+    );
+  }
+  if (step.status === 'done') {
+    throw new Error(
+      `dispatchAutonomousStep: step ${stepN} in session ${parentSessionId} is already done`
+    );
+  }
+
   // 3. Reuse the parent conversation's backend type so the child runs on
   //    the same agent surface the user is chatting with. The model field
   //    is Omitted on most non-Gemini backends (it lives in extras instead),
