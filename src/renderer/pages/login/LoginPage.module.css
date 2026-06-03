@@ -411,12 +411,12 @@
  *
  * Reset all three layers so only the outermost .login-page__input border
  * + background shows. */
-/* The app ships a GLOBAL `.arco-input-inner-wrapper { background: var(--fill-2)
- * !important }` rule, and the Web UI renders pre-auth in Arco's LIGHT theme
- * (where that token is white). A plain (even more-specific) override loses to
- * that `!important`, so the inner-wrapper reads as a bright white box on the dark
+/* The app ships a GLOBAL Arco fill-token background on .arco-input-inner-wrapper
+ * marked !important, and the Web UI renders pre-auth in Arco's LIGHT theme (where
+ * that token resolves to white). A plain (even more-specific) override loses to
+ * that !important, so the inner-wrapper reads as a bright white box on the dark
  * card — the field's intended border-only "flush on card" look is destroyed.
- * These overrides must therefore also be `!important` to win the cascade. */
+ * These overrides must therefore also be !important to win the cascade. */
 .login-page__input-wrapper :global(.arco-input-inner-wrapper),
 .login-page__input-wrapper :global(.arco-input-inner-wrapper:hover),
 .login-page__input-wrapper :global(.arco-input-inner-wrapper:focus-within),
