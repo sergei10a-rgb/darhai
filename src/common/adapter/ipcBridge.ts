@@ -395,8 +395,28 @@ export const skills = {
    * null for unknown names or blocked (quarantined) entries.
    */
   getBody: buildProvider<string | null, { name: string }>('skills.get-body'),
+  /**
+   * Overwrite a user-editable skill's SKILL.md body. Re-scans the new body
+   * (SkillGuard); a `blocked` verdict is rejected and the body is NOT written.
+   * Only `user`/`imported` source skills are editable — bundled skills are
+   * read-only and return `{ error: 'read-only' }`.
+   */
+  updateBody: buildProvider<
+    { ok: true; verdict: string } | { ok: false; error: string },
+    { name: string; body: string }
+  >('skills.update-body'),
   /** Pin or unpin a skill by name. */
   setPinned: buildProvider<void, { name: string; pinned: boolean }>('skills.set-pinned'),
+  /**
+   * Add a skill to a single conversation from the chat composer. The skill's
+   * body is injected once on that conversation's next turn (persisted in
+   * conversation.extra.sessionSkills) and shown in the loaded-skills chip.
+   * Rejects unknown or blocked (quarantined) skills.
+   */
+  addToConversation: buildProvider<
+    { ok: true } | { ok: false; error: string },
+    { conversationId: string; name: string }
+  >('skills.add-to-conversation'),
   /**
    * Read / write the opt-in flag for CLI skill discovery
    * (`skills.cliDiscovery.enabled`). Toggling takes effect on the next
@@ -1921,9 +1941,13 @@ export const workflow = {
   // strip and badge counts without re-fetching the full session payload.
   // `action` distinguishes lifecycle phase: 'start' (insert), 'update'
   // (any state mutation), 'complete' (terminal flip to complete/ended).
-  sessionChanged: buildEmitter<{ session_id: string; action: 'start' | 'update' | 'complete' }>(
+  sessionChanged: buildEmitter<{ session_id: string; action: 'start' | 'update' | 'complete' | 'delete' }>(
     'workflow.session-changed'
   ),
+  // 6.6.1 — Permanently delete a workflow session (and its row). Distinct from
+  // the 'ended' status flip (updateSessionState): lets the user clear a stuck
+  // or unwanted in-flight workflow they can no longer make progress on.
+  deleteSession: buildProvider<void, { sessionId: string }>('workflow.delete-session'),
   // 6.7 — Count of currently-active (non-complete, non-ended) workflow
   // sessions. Backs the sidebar Workflows-section badge so the badge can
   // refresh in response to `sessionChanged` without paying for the full

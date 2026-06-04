@@ -157,14 +157,29 @@ export class WorkerTaskManagerJobExecutor implements ICronJobExecutor {
     this.emitCronTriggerMessage(conversationId, job.id, job.name, triggeredAt);
 
     // Pass both content and input — each agent type picks the field it uses.
-    await task.sendMessage({
-      content: messageText,
-      input: messageText,
-      msg_id: msgId,
-      files: workspaceFiles,
-      cronMeta,
-      hidden,
-    });
+    try {
+      await task.sendMessage({
+        content: messageText,
+        input: messageText,
+        msg_id: msgId,
+        files: workspaceFiles,
+        cronMeta,
+        hidden,
+      });
+    } catch (err) {
+      // A session-start timeout / crash leaves the agent half-started. Kill the
+      // task so the NEXT cron fire rebuilds a fully fresh one instead of reusing
+      // a poisoned task and crash-looping (BUG-5). AcpAgentManager's bootstrap
+      // reset already self-heals the cached promise; this additionally tears down
+      // any half-spawned child process. Re-throw so CronService records the error.
+      console.warn(`[CronExecutor] sendMessage failed for job ${job.id}; killing task ${conversationId}`, err);
+      try {
+        this.taskManager.kill(conversationId);
+      } catch (killErr) {
+        console.warn(`[CronExecutor] kill after sendMessage failure also failed for ${conversationId}:`, killErr);
+      }
+      throw err;
+    }
 
     if (needsSkillSuggest) {
       // Defensively unregister first in case a previous execution left a stale entry
@@ -406,10 +421,34 @@ export class WorkerTaskManagerJobExecutor implements ICronJobExecutor {
       return { ...match, useModel } as TProviderWithModel;
     }
 
-    // Fallback: return first available provider
+    // No provider is named after this backend. `wcore` in particular is a
+    // backend, not a provider — it proxies whichever provider actually serves
+    // the chosen model. Bind the preferred model to the provider whose catalog
+    // contains it, NOT providerList[0]: pasting an OpenAI model id (e.g.
+    // `gpt-5.5`) onto a Google provider POSTs it to
+    // generativelanguage.googleapis.com → `404 models/gpt-5.5 not found`. (C1/C2)
+    // `model.config` rows are IProvider at runtime (each carries the `model[]`
+    // catalog), even though the local type omits it. Read it back safely.
+    const catalogOf = (p: TProviderWithModel): string[] => {
+      const m = (p as unknown as { model?: unknown }).model;
+      return Array.isArray(m) ? (m as string[]) : [];
+    };
+
+    if (preferredModelId) {
+      const owner = providerList.find((p) => catalogOf(p).includes(preferredModelId));
+      if (owner) {
+        return { ...owner, useModel: preferredModelId } as TProviderWithModel;
+      }
+    }
+
+    // Fallback: no provider matched the backend AND none serves the preferred
+    // model. Use the first provider with ITS OWN model — never paste a foreign
+    // model id onto a mismatched provider's endpoint (the C1/C2 404).
     if (providerList.length > 0) {
-      const useModel = preferredModelId || providerList[0].useModel || 'auto';
-      return { ...providerList[0], useModel } as TProviderWithModel;
+      const first = providerList[0];
+      const ownModel = catalogOf(first)[0];
+      const useModel = ownModel || first.useModel || 'auto';
+      return { ...first, useModel } as TProviderWithModel;
     }
 
     // Last resort placeholder

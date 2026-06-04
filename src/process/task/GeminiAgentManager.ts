@@ -12,7 +12,12 @@ import type { IResponseMessage } from '@/common/adapter/ipcBridge';
 import type { IMcpServer, TProviderWithModel } from '@/common/config/storage';
 import { ProcessConfig, getSkillsDir } from '@process/utils/initStorage';
 import { ExtensionRegistry } from '@process/extensions';
-import { buildSystemInstructionsWithSkillsIndex } from './agentUtils';
+import {
+  buildSystemInstructionsWithSkillsIndex,
+  buildTurnSkillContext,
+  mergeLoadedSkillsExtra,
+  consumePendingSessionSkills,
+} from './agentUtils';
 import { detectSkillLoadRequest, AcpSkillManager, buildSkillContentText } from './AcpSkillManager';
 import { uuid } from '@/common/utils';
 import { getProviderAuthType } from '@/common/utils/platformAuthType';
@@ -493,6 +498,27 @@ export class GeminiAgentManager extends BaseAgentManager<
     this.status = 'pending';
     cronBusyGuard.setProcessing(this.conversation_id, true);
 
+    // Per-turn skill auto-load — surface relevant skills + inline-inject the clear
+    // winner for THIS turn. Augment a copy for sending; the stored user message
+    // (added above) keeps the clean original. Skipped for hidden turns.
+    let sendData = data;
+    if (!data.hidden) {
+      try {
+        // Skills the user added to this chat from the composer — inject once.
+        const pending = await consumePendingSessionSkills(this.conversation_id);
+        const turnSkill = await buildTurnSkillContext(data.input, { alwaysOnNames: this.enabledSkills });
+        const prefix = [pending, turnSkill.advert].filter(Boolean).join('\n\n');
+        if (prefix) {
+          sendData = { ...data, input: `${prefix}\n\n${data.input}` };
+        }
+        if (turnSkill.autoLoaded.length > 0) {
+          await mergeLoadedSkillsExtra(this.conversation_id, turnSkill.autoLoaded);
+        }
+      } catch (error) {
+        mainWarn('[GeminiAgentManager]', 'per-turn skill context failed', error);
+      }
+    }
+
     const result = await this.bootstrap
       .catch((e) => {
         cronBusyGuard.setProcessing(this.conversation_id, false);
@@ -507,7 +533,7 @@ export class GeminiAgentManager extends BaseAgentManager<
           });
         });
       })
-      .then(() => super.sendMessage(data))
+      .then(() => super.sendMessage(sendData))
       .finally(() => {
         cronBusyGuard.setProcessing(this.conversation_id, false);
       });

@@ -1,0 +1,76 @@
+{
+  "brand": "Wayland",
+  "welcome": "Bem-vindo ao Wayland",
+  "footer": {
+    "manage": "A detecção rodou uma vez. Altere o que quiser em Configurações → Provedores.",
+    "noLockIn": "Nada disso prende você.",
+    "keysKeepWorking": "Suas chaves continuam funcionando de qualquer forma. O Flux Router fica por cima, nunca na frente.",
+    "skip": "Pular por enquanto"
+  },
+  "connect": {
+    "title": "Conectar o Flux Router",
+    "subtitle": "Cole sua chave do Flux Router. Uma chave, todos os modelos, roteados por requisição.",
+    "keyLabel": "Chave do Flux Router",
+    "keyPlaceholder": "sk-...",
+    "getKey": "Obtenha uma chave em fluxrouter.ai",
+    "submit": "Conectar",
+    "connecting": "Conectando...",
+    "back": "Voltar",
+    "errorUnauthorized": "Essa chave foi rejeitada. Verifique e tente novamente.",
+    "errorNoCredit": "Esta conta ainda não tem crédito. Adicione crédito em fluxrouter.ai e tente de novo.",
+    "errorOffline": "Não foi possível acessar o Flux Router. Verifique sua conexão e tente de novo.",
+    "errorUnrecognized": "Essa chave não foi aceita como chave do Flux Router. Confira e tente novamente.",
+    "errorNoModels": "Conectado, mas nenhum modelo retornou. Tente novamente em instantes.",
+    "errorUnknown": "Algo deu errado ao conectar. Tente novamente.",
+    "trust": "Da Ferrox Labs, o time por trás do Wayland."
+  },
+  "scenarioA": {
+    "greeting": "{{name}}, você já está conectado",
+    "subGeneric": "Suas ferramentas foram detectadas e estão ativas.",
+    "sutherlandLede": "Fixe um modelo de ponta e ele responde tudo. Até as tarefas rápidas que não precisam dele.",
+    "sutherlandBody": "Recomendamos o Flux Router. Ele escolhe o modelo certo para cada requisição entre o que você já tem: suas assinaturas, seu Ollama local, sua chave da Anthropic. A mesma qualidade onde importa, modelos mais leves onde não importa. Você para de escolher. Ele escolhe. Você escreve.",
+    "microTrust": "Problemas difíceis sobem no roteamento, nunca descem. Você define o piso em Configurações.",
+    "primary": "Configurar o Flux Router",
+    "ghost": "Testar nas próximas 10 interações"
+  },
+  "scenarioB": {
+    "greeting": "Bem-vindo ao Wayland",
+    "sub": "Escolha uma forma de entrar. Adicione o resto quando quiser.",
+    "heroTag": "Recomendado",
+    "heroTitle": "Flux Router",
+    "heroBody": "Uma chave. Todos os modelos. Ele escolhe o certo para cada requisição, então você para de adivinhar. Custa menos, faz mais.",
+    "heroFoot": "Pague conforme o uso · sem assinatura · sem mínimo",
+    "heroCta": "Conectar o Flux Router",
+    "pasteKeyTitle": "Cole uma chave de provedor",
+    "pasteKeyBody": "Anthropic, OpenAI, Google, DeepSeek, Moonshot e mais. Nosso Smart Key Picker identifica qual é automaticamente.",
+    "pasteKeyFoot": "Testada antes de ser salva",
+    "ollamaTitle": "Instalar o Ollama",
+    "ollamaBody": "Modelos locais na sua máquina. Ideal se você tem a GPU e não quer que nada saia do seu computador.",
+    "ollamaFoot": "16 GB de RAM de vídeo no mínimo · abre ollama.com"
+  },
+  "scenarioC": {
+    "greeting": "{{name}}, suas chaves estão funcionando",
+    "subGeneric": "Detectadas e ativas. Tudo funciona agora mesmo. O Flux Router roteia entre suas chaves, por requisição. Suas chaves, sua cobrança.",
+    "sutherlandLede": "Toda chave funciona. Ainda assim colocaríamos o Flux Router por cima, e aqui está o porquê.",
+    "sutherlandBody": "Agora cada consulta paga tarifas de modelo de ponta, até as que não precisam. O Flux Router usa o Haiku na sua chave quando o Haiku é o ideal, e o GPT-5 na sua chave quando o GPT-5 é o ideal. Cerca de 1/20 do custo nas perguntas que não exigem um modelo de ponta, com a mesma qualidade nas que exigem.",
+    "microTrust": "Os prompts vão direto ao provedor. O Flux Router vê a decisão de rota, não o conteúdo da mensagem.",
+    "primary": "Adicionar o Flux Router por cima",
+    "ghost": "Continuar escolhendo manualmente"
+  },
+  "scenarioD": {
+    "greeting": "{{name}}, isto está funcionando redondo",
+    "sub": "O Flux Desktop está ativo. Seu roteamento passa pelo Flux Router.",
+    "body": "O modelo certo, a cada interação. Problemas difíceis sobem no roteamento, as tarefas rápidas vão para os modelos leves.",
+    "primary": "Começar a conversar",
+    "dismiss": "Dispensar"
+  },
+  "chips": {
+    "cli": "{{name}} · CLI",
+    "claudePro": "Claude Code · Pro",
+    "ollama": "Ollama · {{count}} modelos locais",
+    "ollama_one": "Ollama · {{count}} modelo local",
+    "envKey": "Chave {{name}} · no ambiente",
+    "fluxRouter": "Flux Router · ativo",
+    "fluxDesktop": "Flux Desktop · daemon :7878"
+  }
+}

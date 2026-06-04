@@ -27,7 +27,20 @@ export const useModelProviderList = (): ModelProviderListResult => {
     return lookup;
   }, [geminiModeOptions]);
 
-  const { data: modelConfig } = useSWR('model.config.shared', () => ipcBridge.mode.getModelConfig.invoke());
+  const { data: modelConfig, mutate: mutateModelConfig } = useSWR('model.config.shared', () =>
+    ipcBridge.mode.getModelConfig.invoke()
+  );
+
+  // Revalidate the legacy `model.config` view whenever the model registry's
+  // catalog changes (connect / rekey / per-provider or global refresh emit
+  // `modelRegistry.listChanged`). Without this, a fresh install that connects a
+  // provider mirrors the new catalog into `model.config` but the picker's SWR
+  // cache never re-reads it — the model list stays empty until a manual reload.
+  useEffect(() => {
+    return ipcBridge.modelRegistry.listChanged.on(() => {
+      void mutateModelConfig();
+    });
+  }, [mutateModelConfig]);
 
   // Mutable cache for available-model filtering
   const availableModelsCacheRef = useRef(new Map<string, string[]>());

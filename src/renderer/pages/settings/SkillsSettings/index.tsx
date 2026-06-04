@@ -80,9 +80,7 @@ const SkillsSettings: React.FC = () => {
     // Text search
     if (query.trim()) {
       const q = query.toLowerCase();
-      result = result.filter(
-        (e) => e.name.toLowerCase().includes(q) || e.description.toLowerCase().includes(q)
-      );
+      result = result.filter((e) => e.name.toLowerCase().includes(q) || e.description.toLowerCase().includes(q));
     }
 
     // Source filter (empty = show all)
@@ -92,16 +90,12 @@ const SkillsSettings: React.FC = () => {
 
     // Verdict filter (empty = show all)
     if (selectedVerdicts.size > 0) {
-      result = result.filter((e) =>
-        selectedVerdicts.has(e.security?.verdict ?? 'unscanned')
-      );
+      result = result.filter((e) => selectedVerdicts.has(e.security?.verdict ?? 'unscanned'));
     }
 
     // Category filter (empty = show all)
     if (selectedCategories.size > 0) {
-      result = result.filter(
-        (e) => e.metadata.category != null && selectedCategories.has(e.metadata.category)
-      );
+      result = result.filter((e) => e.metadata.category != null && selectedCategories.has(e.metadata.category));
     }
 
     return result;
@@ -155,7 +149,10 @@ const SkillsSettings: React.FC = () => {
   return (
     <SettingsPageShell
       title={t('title')}
-      subtitle={t('lede', 'Everything your agent can do. One library — built in, imported, and discovered from your other CLI tools. Skills load only when a task needs them, so a library this size never costs you context.')}
+      subtitle={t(
+        'lede',
+        'Everything your agent can do. One library — built in, imported, and discovered from your other CLI tools. Skills load only when a task needs them, so a library this size never costs you context.'
+      )}
       contentClassName='md:max-w-[1200px]'
     >
       <LibraryHealth stats={stats} />
@@ -177,7 +174,7 @@ const SkillsSettings: React.FC = () => {
           <span>
             {t(
               'banner.howItWorks',
-              "You don't switch skills on and off. Wayland reads each task and loads the skills that fit — out of all your skills. Pin the handful you always want at hand; leave the rest to us.",
+              "You don't switch skills on and off. Wayland reads each task and loads the skills that fit — out of all your skills. Pin the handful you always want at hand; leave the rest to us."
             )}
           </span>
         </div>
@@ -206,12 +203,7 @@ const SkillsSettings: React.FC = () => {
         >
           {t('actions.import', 'Import skills')}
         </Button>
-        <Button
-          type='primary'
-          icon={<Sparkles size={14} />}
-          onClick={() => setBuildModalVisible(true)}
-          className=''
-        >
+        <Button type='primary' icon={<Sparkles size={14} />} onClick={() => setBuildModalVisible(true)} className=''>
           {t('actions.build')}
         </Button>
       </div>
@@ -235,7 +227,7 @@ const SkillsSettings: React.FC = () => {
           <div className='text-12px mt-2px' style={{ color: 'var(--text-secondary)' }}>
             {t(
               'cliDiscovery.subtitle',
-              'Surface skills from ~/.claude/skills, ~/.codex/skills, and ~/.gemini/skills so they show up on your Skills page. Opt-in. Restart required to take effect.',
+              'Surface skills from ~/.claude/skills, ~/.codex/skills, and ~/.gemini/skills so they show up on your Skills page. Opt-in. Restart required to take effect.'
             )}
             {cliDiscoveryDirty ? (
               <span style={{ color: 'var(--warning, #e9a40e)', marginLeft: 6 }}>
@@ -246,14 +238,19 @@ const SkillsSettings: React.FC = () => {
         </div>
         <Switch
           checked={cliDiscoveryEnabled}
-          onChange={(v) => { void handleCliDiscoveryToggle(v); }}
+          onChange={(v) => {
+            void handleCliDiscoveryToggle(v);
+          }}
         />
       </div>
 
       <BuildSkillModal
         visible={buildModalVisible}
         onClose={() => setBuildModalVisible(false)}
-        onSaved={() => { void fetchData(); setBuildModalVisible(false); }}
+        onSaved={() => {
+          void fetchData();
+          setBuildModalVisible(false);
+        }}
       />
 
       <div
@@ -273,10 +270,7 @@ const SkillsSettings: React.FC = () => {
           onCategoriesChange={setSelectedCategories}
         />
 
-        <div
-          className='flex-1 min-w-0 flex flex-col'
-          style={{ background: 'var(--color-bg-1)' }}
-        >
+        <div className='flex-1 min-w-0 flex flex-col' style={{ background: 'var(--color-bg-1)' }}>
           {/* Row-list header — count + filter summary, mirrors the mockup's
               "2,047 skills · showing all sources" affordance. */}
           {filtered.length > 0 ? (
@@ -295,10 +289,7 @@ const SkillsSettings: React.FC = () => {
           ) : null}
 
           {filtered.length === 0 ? (
-            <div
-              className='text-center text-13px py-40px'
-              style={{ color: 'var(--text-secondary)' }}
-            >
+            <div className='text-center text-13px py-40px' style={{ color: 'var(--text-secondary)' }}>
               {query.trim()
                 ? t('search.empty')
                 : entries.length === 0
@@ -322,6 +313,7 @@ const SkillsSettings: React.FC = () => {
         open={drawerOpen}
         onClose={handleDrawerClose}
         onTogglePin={handleTogglePin}
+        pinned={selectedSkill ? pinnedNames.has(selectedSkill.name) : false}
       />
     </SettingsPageShell>
   );

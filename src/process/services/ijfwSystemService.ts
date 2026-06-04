@@ -405,7 +405,13 @@ async function bootstrapImpl(): Promise<void> {
     try {
       child = await safeSpawn({
         cmd: 'npx',
-        args: ['-y', `@ijfw/install@${targetVersion}`],
+        // The published `@ijfw/install` package exposes three bins (`ijfw`,
+        // `ijfw-install`, `ijfw-uninstall`) and none matches the unscoped
+        // package name, so a bare `npx @ijfw/install` fails with "could not
+        // determine executable to run". Name the bin explicitly via --package,
+        // and pass --yes so the installer runs non-interactively under our
+        // piped stdio (otherwise it can block on a prompt).
+        args: ['-y', '--package', `@ijfw/install@${targetVersion}`, 'ijfw-install', '--yes'],
       });
     } catch (err) {
       log.error('[ijfw] safeSpawn(npx install) failed', { err });

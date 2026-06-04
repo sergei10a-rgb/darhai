@@ -15,6 +15,7 @@ import { SkillQuarantine } from '@process/services/skills/SkillQuarantine';
 import { ProcessConfig } from '@process/utils/initStorage';
 import { loadTeamSkills } from '@process/extensions/data/bundle-vendored/teamSkillMerge';
 import { loadCliSkills } from '@process/services/skills/CliSkillDiscovery';
+import { getDatabase } from '@process/services/database';
 
 export function initSkillsBridge(): void {
   // Register the waylandteams bundle's 88 curated skills as the second
@@ -89,6 +90,33 @@ export function initSkillsBridge(): void {
     return SkillLibrary.getInstance().loadBody(name);
   });
 
+  ipcBridge.skills.updateBody.provider(async ({ name, body }) => {
+    const lib = SkillLibrary.getInstance();
+    const entry = await lib.get(name);
+    if (!entry) {
+      return { ok: false, error: 'not-found' };
+    }
+    // Only user-authored / imported skills live in a writable path. Bundled
+    // library, team, and cli-discovered skills are read-only.
+    if (entry.source !== 'user' && entry.source !== 'imported') {
+      return { ok: false, error: 'read-only' };
+    }
+    if (!entry.path || !path.isAbsolute(entry.path)) {
+      return { ok: false, error: 'no-writable-path' };
+    }
+    // Re-scan before writing — never persist a body that fails the guard.
+    const [report] = await SkillGuard.scan(
+      [{ name: entry.name, body, description: entry.description ?? '', tags: entry.metadata.tags ?? [] }],
+      { llm: true }
+    );
+    if (report.verdict === 'blocked') {
+      return { ok: false, error: 'blocked' };
+    }
+    await writeFile(entry.path, body, 'utf-8');
+    lib.registerSource([{ ...entry, security: report }]);
+    return { ok: true, verdict: report.verdict };
+  });
+
   ipcBridge.skills.setPinned.provider(async ({ name, pinned }) => {
     const prefs = (await ProcessConfig.get('skills.preferences')) ?? { pinned: [], disabled: [], revision: 0 };
     const current = prefs.pinned ?? [];
@@ -98,6 +126,37 @@ export function initSkillsBridge(): void {
       disabled: prefs.disabled ?? [],
       revision: (prefs.revision ?? 0) + 1,
     });
+  });
+
+  ipcBridge.skills.addToConversation.provider(async ({ conversationId, name }) => {
+    const lib = SkillLibrary.getInstance();
+    const entry = await lib.get(name);
+    if (!entry) return { ok: false, error: 'not-found' };
+    if (entry.security?.verdict === 'blocked') return { ok: false, error: 'blocked' };
+    try {
+      const db = await getDatabase();
+      const res = db.getConversation(conversationId);
+      if (!res.success || !res.data) return { ok: false, error: 'conversation-not-found' };
+      const conversation = res.data;
+      const extra = (conversation.extra ?? {}) as {
+        sessionSkills?: string[];
+        loadedSkills?: Array<{ name: string; description: string }>;
+      };
+      const sessionSkills = new Set(extra.sessionSkills ?? []);
+      sessionSkills.add(name);
+      const loaded = extra.loadedSkills ?? [];
+      const updatedExtra = {
+        ...conversation.extra,
+        sessionSkills: Array.from(sessionSkills),
+        loadedSkills: loaded.some((s) => s.name === name)
+          ? loaded
+          : [...loaded, { name, description: entry.description ?? '' }],
+      };
+      db.updateConversation(conversationId, { extra: updatedExtra } as Partial<typeof conversation>);
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: e instanceof Error ? e.message : 'failed' };
+    }
   });
 
   // ---------------------------------------------------------------------------

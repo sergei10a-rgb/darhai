@@ -23,6 +23,8 @@ import type {
 import { ACP_BACKENDS_ALL, getCurrentWrapperVersion } from '@/common/types/acpTypes';
 import { ExtensionRegistry } from '@process/extensions';
 import { getDatabase } from '@process/services/database';
+import { ProviderRepository } from '@process/providers/storage/ProviderRepository';
+import { PROVIDER_ENV_VARS } from '@process/providers/detection/KeyDiscovery';
 import { ProcessConfig } from '@process/utils/initStorage';
 import { addMessage, addOrUpdateMessage, nextTickToLocalFinish } from '@process/utils/message';
 import { handlePreviewOpenEvent } from '@process/utils/previewUtils';
@@ -40,7 +42,12 @@ import { skillSuggestWatcher } from '@process/services/cron/SkillSuggestWatcher'
 import { extractAndStripThinkTags } from './ThinkTagDetector';
 import type { AgentKillReason } from './IAgentManager';
 import { hasNativeSkillSupport } from '@/common/types/acpTypes';
-import { prepareFirstMessageWithSkillsIndex } from '@process/task/agentUtils';
+import {
+  prepareFirstMessageWithSkillsIndex,
+  buildTurnSkillContext,
+  mergeLoadedSkillsExtra,
+  consumePendingSessionSkills,
+} from '@process/task/agentUtils';
 import { composePrompt } from '@process/services/constitution/composePrompt';
 import { shouldInjectTeamGuideMcp } from '@process/team/prompts/teamGuideCapability.ts';
 import { extractTextFromMessage, processCronInMessage } from './MessageMiddleware';
@@ -388,6 +395,32 @@ ${collectedResponses.join('\n')}`;
       const result = await this.agent.sendMessage(data);
       this.promptInFlight = false;
 
+      // The agent turn failed (provider 5xx/429/disconnect after the backend's
+      // internal retries, auth error, etc.). Surface it to the conversation so
+      // the user sees what went wrong instead of a spinner that silently clears
+      // with no answer, then synthesize a finish to release the loading state.
+      if (!result.success) {
+        const turnError = (result as { error?: { message?: string } }).error;
+        this.emitTurnError(turnError, (data as { msg_id?: string }).msg_id);
+        // Release the loading state. The backend may already have emitted a
+        // finish (consumeTrackedTurnFinished) — only synthesize one if not, to
+        // avoid a double finish.
+        if (!this.consumeTrackedTurnFinished(turnId)) {
+          this.clearTrackedTurn(turnId);
+          await this.handleFinishSignal(
+            {
+              type: 'finish',
+              conversation_id: this.conversation_id,
+              msg_id: (data as { msg_id?: string }).msg_id || uuid(),
+              data: null,
+            },
+            this.options.backend,
+            { trackActiveTurn: false }
+          );
+        }
+        return result;
+      }
+
       if (this.consumeTrackedTurnFinished(turnId)) {
         return result;
       }
@@ -421,6 +454,24 @@ ${collectedResponses.join('\n')}`;
       this.clearTrackedTurn(turnId);
       throw error;
     }
+  }
+
+  /**
+   * Surface a failed agent turn to the conversation (and any bound channels) as
+   * a visible error message. Without this, a provider 5xx/429/auth/disconnect
+   * failure that the backend returns (rather than throws) leaves the user with a
+   * spinner that clears and no answer.
+   */
+  private emitTurnError(error: { message?: string } | undefined, msgId?: string): void {
+    const detail = error?.message ? String(error.message) : 'The agent could not complete this request.';
+    const message = {
+      type: 'error' as const,
+      conversation_id: this.conversation_id,
+      msg_id: msgId ? `${msgId}_error` : `turn_error_${uuid()}`,
+      data: detail,
+    };
+    ipcBridge.acpConversation.responseStream.emit(message);
+    channelEventBus.emitAgentMessage(this.conversation_id, message);
   }
 
   /**
@@ -464,10 +515,53 @@ ${collectedResponses.join('\n')}`;
     customEnv?: Record<string, string>;
     yoloMode?: boolean;
   }> {
-    if (data.customAgentId) {
-      return this.resolveCustomAgentCliConfig(data);
+    const resolved = data.customAgentId
+      ? await this.resolveCustomAgentCliConfig(data)
+      : await this.resolveBuiltinBackendConfig(data);
+
+    // Bridge connected-provider API keys (from the in-app model registry) into
+    // the spawned agent's env. A custom agent's explicit env wins over the
+    // auto-injected keys, which in turn win over the inherited shell env.
+    const providerEnv = await this.buildConnectedProviderEnv();
+    if (Object.keys(providerEnv).length > 0) {
+      return { ...resolved, customEnv: { ...providerEnv, ...resolved.customEnv } };
     }
-    return this.resolveBuiltinBackendConfig(data);
+    return resolved;
+  }
+
+  /**
+   * Bridge connected-provider API keys (from the in-app model registry) into a
+   * spawned agent's environment under each provider's well-known env var name.
+   *
+   * Why: ACP backends inherit the user's full shell env. When the shell exports
+   * a STALE key (e.g. an old OPENROUTER_API_KEY left in ~/.zshrc), it silently
+   * overrides the valid key the user connected in-app, and the CLI fails — qwen
+   * routes Qwen models through OpenRouter and a stale key yields "401 User not
+   * found". The registry is the source of truth (a connected provider passed
+   * live validation), so its key must win. We inject via customEnv, which
+   * createSpawnConfig applies OVER the shell env (Object.assign last).
+   */
+  private async buildConnectedProviderEnv(): Promise<Record<string, string>> {
+    const env: Record<string, string> = {};
+    try {
+      const db = await getDatabase();
+      const repo = new ProviderRepository(db.getDriver());
+      for (const provider of repo.listRegistryProviders()) {
+        if (provider.state !== 'connected') continue;
+        const envVars = PROVIDER_ENV_VARS[provider.providerId];
+        if (!envVars || envVars.length === 0) continue;
+        const stored = repo.getRegistryProviderCreds(provider.providerId);
+        if (stored.status !== 'ok') continue;
+        // Stored API-key creds carry the key under `key` (see
+        // modelRegistryIpc transformCredsToPayload), not `apiKey`.
+        const apiKey = stored.creds.key;
+        if (typeof apiKey !== 'string' || apiKey.length === 0) continue;
+        for (const name of envVars) env[name] = apiKey;
+      }
+    } catch (err) {
+      mainWarn('[AcpAgentManager]', 'buildConnectedProviderEnv failed', err);
+    }
+    return env;
   }
 
   /**
@@ -526,6 +620,7 @@ ${collectedResponses.join('\n')}`;
   private async resolveBuiltinBackendConfig(data: AcpAgentManagerData): Promise<{
     cliPath?: string;
     customArgs?: string[];
+    customEnv?: Record<string, string>;
     yoloMode?: boolean;
   }> {
     const config = await ProcessConfig.get('acp.config');
@@ -915,7 +1010,7 @@ ${collectedResponses.join('\n')}`;
     if (this.bootstrap) return this.bootstrap;
 
     this.bootstrapping = true;
-    this.bootstrap = (async () => {
+    const bootstrapPromise = (async () => {
       const { cliPath, customArgs, customEnv, yoloMode } = await this.resolveAgentCliConfig(data);
 
       const agentConfig = {
@@ -967,6 +1062,19 @@ ${collectedResponses.join('\n')}`;
         return this.agent;
       });
     })();
+    // If bootstrap rejects (e.g. session-start timeout on a slow cold start),
+    // clear the cached promise so the NEXT sendMessage re-inits a fresh agent
+    // instead of re-throwing the poisoned promise forever. Without this, one
+    // timeout permanently bricks the task — every later cron fire / user turn
+    // immediately re-throws the original error (BUG-5 crash loop). Guard on
+    // identity so a newer bootstrap is never clobbered.
+    bootstrapPromise.catch(() => {
+      if (this.bootstrap === bootstrapPromise) {
+        this.bootstrap = undefined;
+        this.bootstrapping = false;
+      }
+    });
+    this.bootstrap = bootstrapPromise;
     return this.bootstrap;
   }
 
@@ -1088,6 +1196,35 @@ ${collectedResponses.join('\n')}`;
           }
         }
 
+        // Per-turn skill auto-load (every genuine user turn, all backends).
+        // Proactively surfaces the most relevant skills for this message and
+        // inline-injects the single clear winner — works mid-chat, not just at
+        // session start. Skipped for hidden/silent system feedback turns.
+        if (!data.hidden && !data.silent) {
+          try {
+            // Rank against the original user text (not the rules-wrapped / augmented content).
+            const rawUserText = data.content.includes(WAYLAND_FILES_MARKER)
+              ? data.content.split(WAYLAND_FILES_MARKER)[0]
+              : data.content;
+            // Skills the user added to this chat from the composer — inject once.
+            const pending = await consumePendingSessionSkills(this.conversation_id);
+            if (pending) {
+              contentToSend = `${pending}\n\n${contentToSend}`;
+            }
+            const turnSkill = await buildTurnSkillContext(rawUserText, {
+              alwaysOnNames: this.options.enabledSkills,
+            });
+            if (turnSkill.advert) {
+              contentToSend = `${turnSkill.advert}\n\n${contentToSend}`;
+            }
+            if (turnSkill.autoLoaded.length > 0) {
+              await mergeLoadedSkillsExtra(this.conversation_id, turnSkill.autoLoaded);
+            }
+          } catch (error) {
+            mainWarn('[AcpAgentManager]', 'per-turn skill context failed', error);
+          }
+        }
+
         const result = await this.sendAgentMessageWithFinishFallback({
           ...data,
           content: contentToSend,
@@ -1120,11 +1257,18 @@ ${collectedResponses.join('\n')}`;
     } catch (e) {
       this.flushBufferedStreamTextMessages();
       this.clearBusyState();
+      // Turn the raw session-start timeout into something a user can act on, so a
+      // cron-fired (or interactive) run that hits a slow cold start surfaces a
+      // clear, non-cryptic message instead of leaving the surface dead (BUG-5).
+      const errorData =
+        e instanceof Error && e.message === 'Session start timed out'
+          ? 'The agent took too long to start (startup timed out). This usually means a slow cold start — it will retry on the next run.'
+          : parseError(e);
       const message: IResponseMessage = {
         type: 'error',
         conversation_id: this.conversation_id,
         msg_id: data.msg_id || uuid(),
-        data: parseError(e),
+        data: errorData,
       };
 
       // Backend handles persistence before emitting to frontend
@@ -1145,6 +1289,21 @@ ${collectedResponses.join('\n')}`;
         data: null,
       };
       ipcBridge.acpConversation.responseStream.emit(finishMessage);
+
+      // Emit a TERMINAL turn-completed event with state:'error'. Without this, a
+      // crashed/disconnected/timed-out turn never fires `turnCompleted`, so any
+      // autonomous workflow step dispatched onto this conversation hangs forever
+      // (BUG-6 GAP-B) and cron-fired runs leave the surface dead with no terminal
+      // signal (BUG-5). The initBridge listener treats state:'error' as terminal
+      // and flips the parent workflow step to `errored`. The service dedupes a
+      // double-emit within 1s, so this is safe alongside any later finish.
+      void ConversationTurnCompletionService.getInstance().notifyPotentialCompletion(this.conversation_id, {
+        status: 'finished',
+        state: 'error',
+        detail: errorData,
+        workspace: this.workspace,
+        backend: this.options.backend,
+      });
 
       return new Promise((_, reject) => {
         nextTickToLocalFinish(() => {

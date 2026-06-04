@@ -36,6 +36,7 @@ import { useWCoreModelSelection } from '../platforms/wcore/useWCoreModelSelectio
 import { usePreviewContext } from '../Preview';
 import StarOfficeMonitorCard from '../platforms/openclaw/StarOfficeMonitorCard.tsx';
 import ConversationSkillsIndicator from './ConversationSkillsIndicator';
+import AddSkillToChatButton from './AddSkillToChatButton';
 import { WorkflowSurface } from '@/renderer/pages/guid/components/workflow/WorkflowSurface';
 import type { WCoreModelSelection } from '../platforms/wcore/useWCoreModelSelection';
 import type { GeminiModelSelection } from '../platforms/gemini/useGeminiModelSelection';
@@ -188,6 +189,7 @@ const GeminiConversationPanel: React.FC<{
     headerExtra: (
       <div className='flex items-center gap-8px'>
         <ConversationSkillsIndicator conversation={conversation} />
+        <AddSkillToChatButton conversationId={conversation.id} />
         <CronJobManager
           conversationId={conversation.id}
           cronJobId={conversation.extra?.cronJobId as string | undefined}
@@ -248,6 +250,7 @@ const WCoreConversationPanel: React.FC<{ conversation: WCoreConversation; slider
     headerExtra: (
       <div className='flex items-center gap-8px'>
         <ConversationSkillsIndicator conversation={conversation} />
+        <AddSkillToChatButton conversationId={conversation.id} />
         <CronJobManager
           conversationId={conversation.id}
           cronJobId={conversation.extra?.cronJobId as string | undefined}
@@ -574,6 +577,7 @@ const ChatConversation: React.FC<{
         </div>
       )}
       <ConversationSkillsIndicator conversation={conversation} />
+      {conversation && <AddSkillToChatButton conversationId={conversation.id} />}
       {conversation && (
         <div className='shrink-0'>
           <CronJobManager

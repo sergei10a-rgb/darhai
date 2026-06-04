@@ -14,6 +14,10 @@ import {
 
 // Static imports for all locales to ensure packaged app can always switch language.
 import enUS from './locales/en-US/index';
+import esES from './locales/es-ES/index';
+import ptBR from './locales/pt-BR/index';
+import deDE from './locales/de-DE/index';
+import frFR from './locales/fr-FR/index';
 import zhCN from './locales/zh-CN/index';
 import jaJP from './locales/ja-JP/index';
 import zhTW from './locales/zh-TW/index';
@@ -32,6 +36,10 @@ export const supportedLanguages = i18nConfig.supportedLanguages;
 
 const localeData: LocaleData = {
   'en-US': enUS,
+  'es-ES': esES,
+  'pt-BR': ptBR,
+  'de-DE': deDE,
+  'fr-FR': frFR,
   'zh-CN': zhCN,
   'ja-JP': jaJP,
   'zh-TW': zhTW,

@@ -14,9 +14,10 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 // ── Hoisted mocks ────────────────────────────────────────────────────────────
-const { mockSetProcessing, mockIsProcessing } = vi.hoisted(() => ({
+const { mockSetProcessing, mockIsProcessing, mockNotifyCompletion } = vi.hoisted(() => ({
   mockSetProcessing: vi.fn(),
   mockIsProcessing: vi.fn(() => false),
+  mockNotifyCompletion: vi.fn(() => Promise.resolve()),
 }));
 
 vi.mock('@process/services/cron/CronBusyGuard', () => ({
@@ -86,6 +87,11 @@ vi.mock('@process/task/BaseAgentManager', () => ({
   },
 }));
 
+vi.mock('@process/task/ConversationTurnCompletionService', () => ({
+  ConversationTurnCompletionService: {
+    getInstance: () => ({ notifyPotentialCompletion: mockNotifyCompletion }),
+  },
+}));
 vi.mock('@process/task/IpcAgentEventEmitter', () => ({ IpcAgentEventEmitter: vi.fn() }));
 vi.mock('@process/task/CronCommandDetector', () => ({ hasCronCommands: vi.fn(() => false) }));
 vi.mock('@process/task/MessageMiddleware', () => ({
@@ -218,6 +224,21 @@ describe('AcpAgentManager.sendMessage — real class cronBusyGuard cleanup', () 
     await expect(manager.sendMessage({ content: 'hello' })).rejects.toThrow();
 
     expect(manager.status).toBe('finished');
+  });
+
+  // Shared systemic fix (BUG-5 / BUG-6 GAP-B): a thrown turn must emit a TERMINAL
+  // turnCompleted{state:'error'} so workflow steps + cron runs surface the failure
+  // instead of hanging forever.
+  it('emits a terminal turnCompleted{state:error} when agent.sendMessage throws', async () => {
+    const { manager, mockAgent } = makeManager('conv-err');
+    mockAgent.sendMessage.mockRejectedValue(new Error('unexpected crash'));
+
+    await expect(manager.sendMessage({ content: 'hello' })).rejects.toThrow();
+
+    expect(mockNotifyCompletion).toHaveBeenCalledWith(
+      'conv-err',
+      expect.objectContaining({ state: 'error', status: 'finished' })
+    );
   });
 
   // ── Guard is cleared before next invocation ───────────────────────────────

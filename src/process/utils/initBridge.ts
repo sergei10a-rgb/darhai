@@ -24,6 +24,10 @@ import { ensureUsageProviderRegistered, initUsageBridge } from '@process/bridge/
 import { initWorkflowBridge, registerWorkflowBridge } from '@process/bridge/workflowBridge';
 import { WorkflowSessionRepository } from '@process/services/workflow/WorkflowSessionRepository';
 import { WorkflowSessionService, type DefaultModelProvider } from '@process/services/workflow/WorkflowSessionService';
+import {
+  sweepStalledAutonomousSteps,
+  AUTONOMOUS_WATCHDOG_INTERVAL_MS,
+} from '@process/services/workflow/autonomousWatchdog';
 import { setWorkflowSessionService } from '@process/services/workflow/workflowSessionServiceSingleton';
 import { SkillLibrary } from '@process/services/skills/SkillLibrary';
 import { ProcessConfig } from '@process/utils/initStorage';
@@ -242,6 +246,29 @@ void getDatabase()
         }
       })();
     });
+
+    // BUG-6 GAP-A watchdog. The completion listener above is purely event-driven:
+    // a child agent that hangs without ever emitting a terminal turn would leave
+    // its step `running` forever (the 194-hour ghost). Sweep periodically and
+    // force-error any step stalled past the threshold via the same worker-sourced
+    // transition the listener uses. `unref` so it never holds the process open.
+    const autonomousWatchdog = setInterval(() => {
+      void (async () => {
+        try {
+          const swept = await sweepStalledAutonomousSteps(workflowService);
+          for (const s of swept) {
+            console.warn(`[initBridge] watchdog force-errored stalled workflow step ${s.sessionId}/${s.stepN}`);
+            await usageLogger.record({
+              eventType: 'workflow.autonomous_step_timeout',
+              metadata: { session_id: s.sessionId, step_n: s.stepN, dispatch_id: s.dispatchId },
+            });
+          }
+        } catch (err) {
+          console.warn('[initBridge] autonomous watchdog sweep failed:', err);
+        }
+      })();
+    }, AUTONOMOUS_WATCHDOG_INTERVAL_MS);
+    autonomousWatchdog.unref?.();
   })
   .catch((error) => {
     console.error('[initBridge] Failed to initialize usage telemetry bridge:', error);

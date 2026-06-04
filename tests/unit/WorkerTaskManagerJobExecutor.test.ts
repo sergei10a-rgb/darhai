@@ -143,6 +143,22 @@ describe('WorkerTaskManagerJobExecutor', () => {
     );
   });
 
+  describe('sendMessage failure resilience (BUG-5)', () => {
+    it('kills the stale task and re-throws when sendMessage rejects', async () => {
+      const task = makeTask('acp');
+      task.sendMessage = vi.fn().mockRejectedValue(new Error('Session start timed out'));
+      const kill = vi.fn();
+      const taskManager = makeTaskManager({
+        getTask: vi.fn(() => task as any),
+        kill,
+      });
+      const executor = new WorkerTaskManagerJobExecutor(taskManager, busyGuard);
+
+      await expect(executor.executeJob(makeJob('conv-1'))).rejects.toThrow('Session start timed out');
+      expect(kill).toHaveBeenCalledWith('conv-1');
+    });
+  });
+
   describe('buildMessageText behavior', () => {
     it('includes [Scheduled Task Execution] header when hasSkill=false and executionMode is not new_conversation', async () => {
       const task = makeTask('acp');

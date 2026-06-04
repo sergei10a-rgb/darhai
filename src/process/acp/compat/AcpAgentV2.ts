@@ -51,6 +51,15 @@ const BACKEND_LOGIN_ARGS: Record<string, string[] | undefined> = {
 const LOGIN_TIMEOUT_MS = 70_000;
 
 /**
+ * Wall-clock budget for an ACP session to reach `active` (or `error`) before we
+ * give up. A cold first run (bunx download + CLI init, e.g. Claude) genuinely
+ * takes ~90-120s on a slow disk / cold cache, which exceeded the old 2-minute
+ * cap and made cron-fired runs reliably time out (BUG-5). 3 minutes clears the
+ * observed cold-start window while still bounding a truly hung start.
+ */
+export const SESSION_START_TIMEOUT_MS = 180_000;
+
+/**
  * Refresh backend credentials by running the backend CLI login command.
  * Will be replaced by `authCommand + args` config when Agent Hub lands (PR #2349).
  */
@@ -589,7 +598,7 @@ export class AcpAgentV2 {
       const timer = setTimeout(() => {
         this.startOp = null;
         reject(new Error('Session start timed out'));
-      }, 120_000); // 2-minute timeout
+      }, SESSION_START_TIMEOUT_MS);
       this.startOp = { resolve, reject, timer };
       session.start();
     });

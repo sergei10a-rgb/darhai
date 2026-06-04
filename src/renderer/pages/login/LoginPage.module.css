@@ -20,11 +20,17 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  font-family: 'Inter Variable', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family:
+    'Inter Variable',
+    'Inter',
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
   background:
-    radial-gradient(ellipse 1200px 600px at 50% -10%, rgba(255, 107, 53, 0.10), transparent 70%),
-    radial-gradient(ellipse 800px 400px at 80% 110%, rgba(255, 107, 53, 0.06), transparent 70%),
-    var(--login-bg);
+    radial-gradient(ellipse 1200px 600px at 50% -10%, rgba(255, 107, 53, 0.1), transparent 70%),
+    radial-gradient(ellipse 800px 400px at 80% 110%, rgba(255, 107, 53, 0.06), transparent 70%), var(--login-bg);
   color: #f5f5f5;
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
@@ -192,7 +198,9 @@
     border-color 0.2s ease,
     box-shadow 0.2s ease,
     background-color 0.2s ease;
-  background: #111111;
+  /* Sit flush on the card — no separate gray box. The field is defined by its
+     border alone so the input reads as one cohesive piece with the card. */
+  background: transparent;
 }
 
 .login-page__input::placeholder {
@@ -200,14 +208,14 @@
 }
 
 .login-page__input:hover {
-  border-color: #353535;
-  background: #161616;
+  border-color: #3a3a3a;
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .login-page__input:focus {
   outline: none;
   border-color: rgba(255, 107, 53, 0.5);
-  background: #161616;
+  background: rgba(255, 107, 53, 0.05);
   box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.14);
 }
 
@@ -239,11 +247,50 @@
   margin-top: -4px;
 }
 
+/* Custom dark checkbox. A native checkbox renders an opaque white box when
+ * unchecked regardless of `accent-color` (which only tints the checked fill),
+ * so it reads as a bright square on the dark card. Reset the native appearance
+ * and draw our own dark box + brand-orange checked state with a white tick. */
 .login-page__checkbox input[type='checkbox'] {
-  width: 14px;
-  height: 14px;
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  position: relative;
+  border: 1px solid #3a3a3a;
+  border-radius: 4px;
+  background: rgba(22, 22, 22, 0.85);
   cursor: pointer;
-  accent-color: var(--login-brand);
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.login-page__checkbox input[type='checkbox']:hover {
+  border-color: var(--login-brand);
+}
+
+.login-page__checkbox input[type='checkbox']:checked {
+  background: var(--login-brand);
+  border-color: var(--login-brand);
+}
+
+.login-page__checkbox input[type='checkbox']:checked::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 2px;
+  width: 4px;
+  height: 8px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.login-page__checkbox input[type='checkbox']:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.2);
 }
 
 .login-page__checkbox label {
@@ -403,14 +450,21 @@
  *
  * Reset all three layers so only the outermost .login-page__input border
  * + background shows. */
+/* The app ships a GLOBAL Arco fill-token background on .arco-input-inner-wrapper
+ * marked !important, and the Web UI renders pre-auth in Arco's LIGHT theme (where
+ * that token resolves to white). A plain (even more-specific) override loses to
+ * that !important, so the inner-wrapper reads as a bright white box on the dark
+ * card — the field's intended border-only "flush on card" look is destroyed.
+ * These overrides must therefore also be !important to win the cascade. */
 .login-page__input-wrapper :global(.arco-input-inner-wrapper),
 .login-page__input-wrapper :global(.arco-input-inner-wrapper:hover),
-.login-page__input-wrapper :global(.arco-input-inner-wrapper:focus-within) {
-  border: none;
-  background: transparent;
+.login-page__input-wrapper :global(.arco-input-inner-wrapper:focus-within),
+.login-page__input-wrapper :global(.arco-input-inner-wrapper.arco-input-inner-wrapper-focus) {
+  border: none !important;
+  background: transparent !important;
   padding: 0;
   border-radius: 0;
-  box-shadow: none;
+  box-shadow: none !important;
 }
 .login-page__input-wrapper :global(.arco-input),
 .login-page__input-wrapper :global(.arco-input:hover),
@@ -441,4 +495,27 @@
   color: #777;
   display: flex;
   align-items: center;
+}
+
+/* Language picker is an Arco <Select>, not a native <select>: the visible box is
+ * `.arco-select-view`, which (same as the inputs) inherits Arco's light-theme
+ * white background pre-auth. The `.login-page__lang-select` rules above land on
+ * the outer `.arco-select` wrapper and never reach this inner element, so it
+ * renders as a white box on the dark card. Force it dark to match the field
+ * styling. `!important` for the same global-`!important` cascade reason as the
+ * inputs. */
+.login-page__lang-select :global(.arco-select-view) {
+  background-color: rgba(22, 22, 22, 0.85) !important;
+  border: 1px solid #2a2a2a !important;
+  border-radius: 8px;
+  color: #f0f0f0 !important;
+  box-shadow: none !important;
+}
+.login-page__lang-select :global(.arco-select-view-value),
+.login-page__lang-select :global(.arco-select-view-input) {
+  color: #f0f0f0 !important;
+}
+.login-page__lang-select :global(.arco-select-suffix),
+.login-page__lang-select :global(.arco-select-arrow-icon) {
+  color: #aaa !important;
 }

@@ -36,8 +36,23 @@ const { mockSafeStorage } = vi.hoisted(() => ({
 
 vi.mock('electron', () => ({ safeStorage: mockSafeStorage }));
 
-import { createModelRegistryHandlers } from '@process/providers/ipc/modelRegistryIpc';
+import { createModelRegistryHandlers, CloudRegistrySource } from '@process/providers/ipc/modelRegistryIpc';
 import type { ModelRegistryDeps } from '@process/providers/ipc/modelRegistryIpc';
+
+describe('CloudRegistrySource — google-auth Gemini catalog (zero-models regression)', () => {
+  // A google-auth Gemini connection routes through the cloud-synthesis path but
+  // its providerId is `google-gemini` — NOT in CLOUD_PROVIDERS — so the cloud-only
+  // key map missed it and the catalog came back empty ("Connected · No models").
+  // The fix falls back to the full provider→models.dev key map (google-gemini → google).
+  it('synthesizes Gemini models from the models.dev `google` slice for providerId google-gemini', async () => {
+    const registry = {
+      google: { models: { 'gemini-2.5-pro': {}, 'gemini-flash-latest': {} } },
+    } as never;
+    const src = new CloudRegistrySource('google-gemini' as never, registry);
+    const models = await src.listModels();
+    expect(models.map((m) => m.id).sort()).toEqual(['gemini-2.5-pro', 'gemini-flash-latest']);
+  });
+});
 import type { CatalogModel, ProviderId } from '@process/providers/types';
 import { ProviderRepository } from '@process/providers/storage/ProviderRepository';
 import type {

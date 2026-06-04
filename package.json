@@ -338,7 +338,8 @@
     "electronVersion": "^41.6.0"
   },
   "patchedDependencies": {
-    "7zip-bin@5.2.0": "patches/7zip-bin@5.2.0.patch"
+    "7zip-bin@5.2.0": "patches/7zip-bin@5.2.0.patch",
+    "@office-ai/aioncli-core@0.30.6": "patches/@office-ai%2Faioncli-core@0.30.6.patch"
   },
   "productName": "Wayland",
   "trustedDependencies": [

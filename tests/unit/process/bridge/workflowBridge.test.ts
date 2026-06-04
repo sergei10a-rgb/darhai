@@ -29,6 +29,7 @@ const {
   updateSessionStateProvider,
   dispatchAutonomousStepProvider,
   countActiveProvider,
+  deleteSessionProvider,
 } = vi.hoisted(() => ({
   startProvider: vi.fn(),
   findActiveProvider: vi.fn(),
@@ -37,6 +38,7 @@ const {
   updateSessionStateProvider: vi.fn(),
   dispatchAutonomousStepProvider: vi.fn(),
   countActiveProvider: vi.fn(),
+  deleteSessionProvider: vi.fn(),
 }));
 
 vi.mock('@/common', () => ({
@@ -49,6 +51,7 @@ vi.mock('@/common', () => ({
       updateSessionState: { provider: updateSessionStateProvider },
       dispatchAutonomousStep: { provider: dispatchAutonomousStepProvider },
       countActive: { provider: countActiveProvider },
+      deleteSession: { provider: deleteSessionProvider },
     },
   },
 }));
@@ -98,6 +101,7 @@ function makeFakeService() {
     completeSession: vi.fn(),
     endSession: vi.fn(),
     markBeginSent: vi.fn(),
+    deleteSession: vi.fn(),
   };
 }
 
@@ -110,6 +114,8 @@ describe('workflowBridge — handler routing', () => {
     resolveSkillsProvider.mockReset();
     updateSessionStateProvider.mockReset();
     dispatchAutonomousStepProvider.mockReset();
+    countActiveProvider.mockReset();
+    deleteSessionProvider.mockReset();
   });
 
   it('registers all 6 providers exactly once and is idempotent across init calls', () => {

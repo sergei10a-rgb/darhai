@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Workflow } from 'lucide-react';
+import { ExternalLink, MoreVertical, Trash2, Workflow } from 'lucide-react';
+import { Dropdown, Menu, Message, Modal } from '@arco-design/web-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -43,6 +44,7 @@ export const SiderWorkflowsSection: React.FC<SiderWorkflowsSectionProps> = ({ co
   const { state, toggle } = useSiderAccordionState();
   const [count, setCount] = useState(0);
   const [activeSessions, setActiveSessions] = useState<InFlightRow[]>([]);
+  const [menuVisibleId, setMenuVisibleId] = useState<string | null>(null);
 
   // Badge subscription — lightweight countActive with 300ms trailing debounce.
   useEffect(() => {
@@ -113,6 +115,33 @@ export const SiderWorkflowsSection: React.FC<SiderWorkflowsSectionProps> = ({ co
     [navigate]
   );
 
+  const handleDelete = useCallback(
+    (row: InFlightRow) => {
+      Modal.confirm({
+        title: t('workflow.delete.title', { defaultValue: 'Delete workflow?' }),
+        content: t('workflow.delete.confirm', {
+          defaultValue: 'This permanently removes the workflow session. This cannot be undone.',
+        }),
+        okText: t('conversation.history.deleteTitle', { defaultValue: 'Delete' }),
+        okButtonProps: { status: 'danger' },
+        style: { borderRadius: '12px' },
+        getPopupContainer: () => document.body,
+        onOk: async () => {
+          try {
+            await ipcBridge.workflow.deleteSession.invoke({ sessionId: row.sessionId });
+            // sessionChanged fires → list refetches; optimistically drop it now too.
+            setActiveSessions((prev) => prev.filter((s) => s.sessionId !== row.sessionId));
+            Message.success(t('workflow.delete.success', { defaultValue: 'Workflow deleted.' }));
+          } catch (err) {
+            console.error('Failed to delete workflow session:', err);
+            Message.error(t('workflow.delete.failed', { defaultValue: 'Failed to delete workflow.' }));
+          }
+        },
+      });
+    },
+    [t]
+  );
+
   // v0.6.2.1 hide-when-empty: TopZone "Workflows" entry handles discover/create
   // when nothing is in flight, so the runtime accordion only earns its row when
   // count > 0. Applies to both collapsed and expanded modes — one icon per
@@ -159,14 +188,60 @@ export const SiderWorkflowsSection: React.FC<SiderWorkflowsSectionProps> = ({ co
             <div
               key={row.sessionId}
               data-testid={`workflow-row-${row.sessionId}`}
-              className='flex items-center gap-8px px-10px py-6px pl-28px cursor-pointer hover:bg-fill-2 text-text-2'
+              className='group flex items-center gap-8px px-10px py-6px pl-28px cursor-pointer hover:bg-fill-2 text-text-2'
               onClick={() => handleRowClick(row)}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setMenuVisibleId(row.sessionId);
+              }}
             >
               <span className='w-6px h-6px rounded-full bg-success' />
               <span className='truncate flex-1'>{row.workflowName}</span>
-              <span className='text-text-3 tabular-nums text-10px'>
+              <span
+                className={`text-text-3 tabular-nums text-10px ${menuVisibleId === row.sessionId ? 'hidden' : 'group-hover:hidden'}`}
+              >
                 {row.currentStep} / {row.totalSteps}
               </span>
+              <Dropdown
+                trigger='click'
+                position='br'
+                popupVisible={menuVisibleId === row.sessionId}
+                onVisibleChange={(v) => setMenuVisibleId(v ? row.sessionId : null)}
+                getPopupContainer={() => document.body}
+                droplist={
+                  <Menu
+                    onClickMenuItem={(key) => {
+                      setMenuVisibleId(null);
+                      if (key === 'open') handleRowClick(row);
+                      else if (key === 'delete') handleDelete(row);
+                    }}
+                  >
+                    <Menu.Item key='open'>
+                      <div className='flex items-center gap-8px'>
+                        <ExternalLink size={14} />
+                        <span>{t('workflow.menu.open', { defaultValue: 'Open' })}</span>
+                      </div>
+                    </Menu.Item>
+                    <Menu.Item key='delete'>
+                      <div className='flex items-center gap-8px text-[rgb(var(--warning-6))]'>
+                        <Trash2 size={14} />
+                        <span>{t('workflow.menu.delete', { defaultValue: 'Delete' })}</span>
+                      </div>
+                    </Menu.Item>
+                  </Menu>
+                }
+              >
+                <span
+                  className={`flex-center cursor-pointer hover:bg-fill-3 rd-4px p-2px ${menuVisibleId === row.sessionId ? 'flex' : 'hidden group-hover:flex'}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMenuVisibleId(row.sessionId);
+                  }}
+                >
+                  <MoreVertical size={14} />
+                </span>
+              </Dropdown>
             </div>
           ))}
         </>
@@ -177,9 +252,7 @@ export const SiderWorkflowsSection: React.FC<SiderWorkflowsSectionProps> = ({ co
         className='px-10px py-6px pl-28px text-10px text-text-3 italic cursor-pointer hover:text-orange'
         onClick={() => navigate('/workflows')}
       >
-        {overflow > 0
-          ? t('sider.accordion.showMore', { count: overflow })
-          : t('sider.accordion.seeAllWorkflows')}
+        {overflow > 0 ? t('sider.accordion.showMore', { count: overflow }) : t('sider.accordion.seeAllWorkflows')}
       </div>
     </SiderAccordionShell>
   );

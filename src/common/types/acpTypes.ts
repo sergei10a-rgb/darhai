@@ -345,17 +345,7 @@ export const ACP_BACKENDS_ALL: Record<AcpBackendAll, AcpBackendConfig> = {
   //   supportsStreaming: true,
   //   skillsDirs: ['.gemini/skills'],
   // },
-  qwen: {
-    id: 'qwen',
-    name: 'Qwen Code',
-    cliCommand: 'qwen',
-    defaultCliPath: 'npx @qwen-code/qwen-code',
-    authRequired: true,
-    enabled: true, // ✅ 已验证支持：Qwen CLI v0.0.10+ 支持 --acp
-    supportsStreaming: true,
-    acpArgs: ['--acp'], // Use --acp instead of deprecated --experimental-acp
-    skillsDirs: ['.qwen/skills'],
-  },
+  // Codex is listed before Qwen so it appears earlier in the agent icon row.
   codex: {
     id: 'codex',
     name: 'Codex',
@@ -366,6 +356,17 @@ export const ACP_BACKENDS_ALL: Record<AcpBackendAll, AcpBackendConfig> = {
     supportsStreaming: false,
     acpArgs: [], // codex-acp is ACP by default, no flag needed
     skillsDirs: ['.codex/skills'],
+  },
+  qwen: {
+    id: 'qwen',
+    name: 'Qwen Code',
+    cliCommand: 'qwen',
+    defaultCliPath: 'npx @qwen-code/qwen-code',
+    authRequired: true,
+    enabled: true, // ✅ 已验证支持：Qwen CLI v0.0.10+ 支持 --acp
+    supportsStreaming: true,
+    acpArgs: ['--acp'], // Use --acp instead of deprecated --experimental-acp
+    skillsDirs: ['.qwen/skills'],
   },
   codebuddy: {
     id: 'codebuddy',

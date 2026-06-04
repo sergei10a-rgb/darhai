@@ -1,0 +1,76 @@
+{
+  "brand": "Wayland",
+  "welcome": "Willkommen bei Wayland",
+  "footer": {
+    "manage": "Die Erkennung lief einmal. Alles änderst du in Einstellungen → Anbieter.",
+    "noLockIn": "Keine dieser Optionen bindet dich.",
+    "keysKeepWorking": "Deine Keys funktionieren weiterhin. Flux Router sitzt obendrauf, nie davor.",
+    "skip": "Vorerst überspringen"
+  },
+  "connect": {
+    "title": "Flux Router verbinden",
+    "subtitle": "Füge deinen Flux-Router-Key ein. Ein Key, jedes Modell, pro Anfrage geroutet.",
+    "keyLabel": "Flux-Router-Key",
+    "keyPlaceholder": "sk-...",
+    "getKey": "Hol dir einen Key unter fluxrouter.ai",
+    "submit": "Verbinden",
+    "connecting": "Verbindung wird hergestellt...",
+    "back": "Zurück",
+    "errorUnauthorized": "Dieser Key wurde abgelehnt. Prüfe ihn und versuche es erneut.",
+    "errorNoCredit": "Dieses Konto hat noch kein Guthaben. Lade Guthaben auf fluxrouter.ai auf und versuche es erneut.",
+    "errorOffline": "Flux Router war nicht erreichbar. Prüfe deine Verbindung und versuche es erneut.",
+    "errorUnrecognized": "Dieser Key wurde nicht als Flux-Router-Key akzeptiert. Prüfe ihn und versuche es erneut.",
+    "errorNoModels": "Verbunden, aber es kamen keine Modelle zurück. Versuche es gleich noch einmal.",
+    "errorUnknown": "Beim Verbinden ist etwas schiefgelaufen. Versuche es erneut.",
+    "trust": "Von Ferrox Labs, dem Team hinter Wayland."
+  },
+  "scenarioA": {
+    "greeting": "{{name}}, du bist schon startklar",
+    "subGeneric": "Deine Tools sind erkannt und aktiv.",
+    "sutherlandLede": "Setz ein Flaggschiff fest, und es beantwortet alles. Sogar das Schnelle, das es gar nicht braucht.",
+    "sutherlandBody": "Wir empfehlen Flux Router. Er wählt für jede Anfrage das richtige Modell aus allem, was du schon hast: deine Abos, dein lokales Ollama, dein Anthropic-Key. Gleiche Qualität, wo es zählt, leichtere Modelle, wo nicht. Du wählst nicht mehr aus. Er wählt. Du schreibst.",
+    "microTrust": "Schwere Aufgaben werden hochgeroutet, nie runter. Den Mindeststandard legst du in den Einstellungen fest.",
+    "primary": "Flux Router einrichten",
+    "ghost": "Auf den nächsten 10 Zügen testen"
+  },
+  "scenarioB": {
+    "greeting": "Willkommen bei Wayland",
+    "sub": "Wähle einen Einstieg. Den Rest fügst du jederzeit hinzu.",
+    "heroTag": "Empfohlen",
+    "heroTitle": "Flux Router",
+    "heroBody": "Ein Key. Jedes Modell. Er wählt für jede Anfrage das richtige aus, damit du nicht mehr raten musst. Kostet weniger, kann mehr.",
+    "heroFoot": "Nutzungsbasiert · kein Abo · keine Mindestmenge",
+    "heroCta": "Flux Router verbinden",
+    "pasteKeyTitle": "Anbieter-Key einfügen",
+    "pasteKeyBody": "Anthropic, OpenAI, Google, DeepSeek, Moonshot und mehr. Unser Smart Key Picker erkennt automatisch, welcher es ist.",
+    "pasteKeyFoot": "Wird vor dem Speichern getestet",
+    "ollamaTitle": "Ollama installieren",
+    "ollamaBody": "Lokale Modelle auf deinem Rechner. Am besten, wenn du die GPU hast und nichts den Rechner verlassen soll.",
+    "ollamaFoot": "Mindestens 16 GB Grafikspeicher · öffnet ollama.com"
+  },
+  "scenarioC": {
+    "greeting": "{{name}}, deine Keys laufen",
+    "subGeneric": "Erkannt und aktiv. Alles funktioniert sofort. Flux Router routet pro Anfrage zwischen deinen Keys. Deine Keys, deine Abrechnung.",
+    "sutherlandLede": "Jeder Key funktioniert. Wir würden trotzdem Flux Router obendrauf setzen, und hier ist der Grund.",
+    "sutherlandBody": "Im Moment zahlt jede Anfrage Flaggschiff-Tarife, auch die, die das gar nicht brauchen. Flux Router nimmt Haiku auf deinem Key, wenn Haiku passt, und GPT-5 auf deinem Key, wenn GPT-5 passt. Etwa ein Zwanzigstel der Kosten bei Anfragen, die kein Flaggschiff brauchen, gleiche Qualität bei denen, die es brauchen.",
+    "microTrust": "Prompts gehen direkt zum Anbieter. Flux Router sieht die Routing-Entscheidung, nicht den Nachrichteninhalt.",
+    "primary": "Flux Router obendrauf setzen",
+    "ghost": "Weiterhin manuell auswählen"
+  },
+  "scenarioD": {
+    "greeting": "{{name}}, das hier läuft rund",
+    "sub": "Flux Desktop ist aktiv. Dein Routing läuft über Flux Router.",
+    "body": "Das richtige Modell, bei jedem Zug. Schwere Aufgaben werden hochgeroutet, das Schnelle läuft leicht.",
+    "primary": "Chat starten",
+    "dismiss": "Schließen"
+  },
+  "chips": {
+    "cli": "{{name}} · CLI",
+    "claudePro": "Claude Code · Pro",
+    "ollama": "Ollama · {{count}} lokale Modelle",
+    "ollama_one": "Ollama · {{count}} lokales Modell",
+    "envKey": "{{name}}-Key · in env",
+    "fluxRouter": "Flux Router · aktiv",
+    "fluxDesktop": "Flux Desktop · Daemon :7878"
+  }
+}

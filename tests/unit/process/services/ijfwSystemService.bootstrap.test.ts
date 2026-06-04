@@ -211,6 +211,15 @@ describe('ijfwSystemService.bootstrap', () => {
     expect(emitSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'installing' }));
     expect(emitSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'installed_current', version: '1.5.4' }));
     expect(refreshAllSpy).toHaveBeenCalled();
+
+    // Regression guard (BUG-0): @ijfw/install exposes three bins and none is
+    // named `install`, so a bare `npx @ijfw/install` fails with "could not
+    // determine executable to run". The install call MUST name the bin via
+    // --package and run non-interactively (--yes) under our piped stdio.
+    const installCall = safeSpawnSpy.mock.calls
+      .map((c) => c[0] as { cmd?: string; args?: string[] })
+      .find((opts) => opts?.cmd === 'npx');
+    expect(installCall?.args).toEqual(['-y', '--package', '@ijfw/install@1.5.4', 'ijfw-install', '--yes']);
   });
 
   // The upgrade path stages the new tree to `.pending` via moveWithExdevFallback

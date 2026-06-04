@@ -30,6 +30,7 @@ export type UsageEventType =
   | 'workflow.session_completed'
   | 'workflow.autonomous_step_dispatched'
   | 'workflow.autonomous_step_completed'
+  | 'workflow.autonomous_step_timeout'
   | 'workflow.marker_invalid'
   | 'workflow.marker_html_escaped'
   | 'workflow.marker_false_strip'

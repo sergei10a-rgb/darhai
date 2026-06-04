@@ -754,19 +754,49 @@ export class AcpAgent {
       return { success: true, data: null };
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      // Special handling for Internal error
-      if (errorMsg.includes('Internal error')) {
-        if (this.extra.backend === 'qwen') {
-          const enhancedMsg =
-            `Qwen ACP Internal Error: This usually means authentication failed or ` +
-            `the Qwen CLI has compatibility issues. Please try: 1) Restart the application ` +
-            `2) Use the packaged bun launcher instead of a global qwen install 3) Check if you have valid Qwen credentials.`;
-          this.emitErrorMessage(enhancedMsg);
-          return {
-            success: false,
-            error: createAcpError(AcpErrorType.AUTHENTICATION_FAILED, enhancedMsg, false),
-          };
+      // Special handling for qwen's generic "Internal error". The real cause is
+      // in the JSON-RPC error `data.details` (e.g. "404 Provider returned
+      // error", "429 ... rate-limited", "401 User not found") — NOT necessarily
+      // auth. Surface the actual upstream reason so the user knows whether to
+      // switch model, wait, or fix credentials, instead of a misleading
+      // "authentication failed" message.
+      if (errorMsg.includes('Internal error') && this.extra.backend === 'qwen') {
+        const errObj = error as { data?: { details?: string }; details?: string };
+        const upstream = String(errObj?.data?.details || errObj?.details || '').trim();
+        let enhancedMsg: string;
+        let qwenErrorType: AcpErrorType = AcpErrorType.UNKNOWN;
+        let qwenRetryable = false;
+        if (/\b429\b|rate.?limit/i.test(upstream)) {
+          enhancedMsg =
+            `Qwen's model is rate-limited upstream (429). The default "qwen3-coder:free" model is on ` +
+            `OpenRouter's free tier and is frequently throttled. Pick a paid model (e.g. Qwen Plus) from ` +
+            `the model selector above, or wait a minute and retry.`;
+          qwenRetryable = true;
+        } else if (/\b404\b|not found|no\s+(?:available\s+)?provider/i.test(upstream)) {
+          enhancedMsg =
+            `Qwen's selected model is unavailable upstream (404). The default free model has no available ` +
+            `provider on OpenRouter right now. Pick a different model (e.g. Qwen Plus) from the model selector above.`;
+        } else if (/\b401\b|unauthor|user not found/i.test(upstream)) {
+          enhancedMsg =
+            `Qwen authentication failed (401). Your OpenRouter key is invalid or missing — reconnect ` +
+            `OpenRouter in Settings → Models.`;
+          qwenErrorType = AcpErrorType.AUTHENTICATION_FAILED;
+        } else {
+          enhancedMsg = upstream
+            ? `Qwen returned an error: ${upstream}`
+            : `Qwen returned an internal error. The default free model is often unavailable — try switching ` +
+              `the model from the selector above.`;
         }
+        this.emitErrorMessage(enhancedMsg);
+        // Clear the frontend loading state (the original qwen branch forgot to,
+        // leaving the spinner stuck after a qwen error).
+        if (this.onSignalEvent) {
+          this.onSignalEvent({ type: 'finish', conversation_id: this.id, msg_id: uuid(), data: null });
+        }
+        return {
+          success: false,
+          error: createAcpError(qwenErrorType, enhancedMsg, qwenRetryable),
+        };
       }
       // Classify error types based on message content
       let errorType: AcpErrorType = AcpErrorType.UNKNOWN;

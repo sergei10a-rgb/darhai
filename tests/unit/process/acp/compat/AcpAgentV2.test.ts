@@ -1,7 +1,7 @@
 // tests/unit/process/acp/compat/AcpAgentV2.test.ts
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { AcpAgentV2 } from '@process/acp/compat/AcpAgentV2';
+import { AcpAgentV2, SESSION_START_TIMEOUT_MS } from '@process/acp/compat/AcpAgentV2';
 import type { SessionCallbacks } from '@process/acp/types';
 import type { OldAcpAgentConfig } from '@process/acp/compat/typeBridge';
 
@@ -128,7 +128,7 @@ describe('AcpAgentV2 - Lifecycle Methods', () => {
       expect(mockSessionMethods.start).toHaveBeenCalledOnce();
     });
 
-    it('should reject on timeout after 120 seconds', async () => {
+    it('should reject on timeout after the session-start budget', async () => {
       vi.useFakeTimers();
       const agent = createAgent();
 
@@ -139,8 +139,8 @@ describe('AcpAgentV2 - Lifecycle Methods', () => {
 
       const promise = agent.start().catch((e: unknown) => e);
 
-      // Fast-forward past 2-minute timeout (async to allow ensureSession microtask to settle)
-      await vi.advanceTimersByTimeAsync(120_000);
+      // Fast-forward past the cold-start timeout (async to allow ensureSession microtask to settle)
+      await vi.advanceTimersByTimeAsync(SESSION_START_TIMEOUT_MS);
 
       const result = await promise;
       expect(result).toBeInstanceOf(Error);
@@ -166,7 +166,7 @@ describe('AcpAgentV2 - Lifecycle Methods', () => {
       await expect(promise).resolves.toBeUndefined();
 
       // Verify timeout was cleared by advancing past it
-      await vi.advanceTimersByTimeAsync(120_000);
+      await vi.advanceTimersByTimeAsync(SESSION_START_TIMEOUT_MS);
       // No additional error should be thrown
 
       vi.useRealTimers();
@@ -190,7 +190,7 @@ describe('AcpAgentV2 - Lifecycle Methods', () => {
       expect((result as Error).message).toBe('Session failed to start');
 
       // Verify timeout was cleared by advancing past it
-      await vi.advanceTimersByTimeAsync(120_000);
+      await vi.advanceTimersByTimeAsync(SESSION_START_TIMEOUT_MS);
       // No additional error should be thrown
 
       vi.useRealTimers();

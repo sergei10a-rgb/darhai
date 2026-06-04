@@ -89,6 +89,7 @@ type Fakes = {
     findById: Mock;
     recordAutonomousDispatch: Mock;
     applyStepTransition: Mock;
+    recordAutonomousCompletion: Mock;
   };
   conversationService: {
     getConversation: Mock;
@@ -120,6 +121,7 @@ function buildFakes(opts: {
   const findById = vi.fn(async (_id: string) => parentSession);
   const recordAutonomousDispatch = vi.fn(async () => parentSession);
   const applyStepTransition = vi.fn(async () => parentSession);
+  const recordAutonomousCompletion = vi.fn(async () => parentSession);
   const getDefaultModel = vi.fn(async () => ({
     id: 'anthropic',
     platform: 'anthropic',
@@ -157,6 +159,7 @@ function buildFakes(opts: {
       findById,
       recordAutonomousDispatch,
       applyStepTransition,
+      recordAutonomousCompletion,
     } as unknown as AutonomousDispatchDeps['workflowSessionService'],
     conversationService: {
       getConversation,
@@ -169,7 +172,12 @@ function buildFakes(opts: {
 
   return {
     deps,
-    workflowSessionService: { findById, recordAutonomousDispatch, applyStepTransition },
+    workflowSessionService: {
+      findById,
+      recordAutonomousDispatch,
+      applyStepTransition,
+      recordAutonomousCompletion,
+    },
     conversationService: { getConversation, createConversation },
     workerTaskManager: { getOrBuildTask },
     telemetry: { record },
@@ -244,6 +252,99 @@ describe('dispatchAutonomousStep', () => {
         }),
       })
     );
+  });
+
+  it('propagates the parent backend identity into the child conversation (FINDING-2 regression)', async () => {
+    // Without this, the child ACP session starts with `backend: undefined` and
+    // fails to connect ("Starting session with backend undefined") — the step
+    // never runs. The parent here is a claude ACP conversation.
+    const fakes = buildFakes({
+      parentConv: makeParentConversation({
+        extra: {
+          workspace: '',
+          backend: 'claude',
+          cliPath: 'claude',
+          agentName: 'Claude Code',
+          sessionMode: 'bypassPermissions',
+        },
+      } as unknown as Partial<TChatConversation>),
+    });
+
+    await dispatchAutonomousStep({ parentSessionId: 'sess-1', stepN: 1 }, fakes.deps);
+
+    const createArg = fakes.conversationService.createConversation.mock.calls[0][0];
+    expect(createArg.extra.backend).toBe('claude');
+    expect(createArg.extra.cliPath).toBe('claude');
+    expect(createArg.extra.agentName).toBe('Claude Code');
+    expect(createArg.extra.sessionMode).toBe('bypassPermissions');
+  });
+
+  it('records `running` BEFORE sending, so a hung worker stays watchdog-visible (FINDING-2b)', async () => {
+    // sendMessage awaits the whole agent turn; if `running` were recorded after,
+    // a hung turn would leave the step `todo`/`autonomous_run=null` — invisible to
+    // the 30-min stalled-step watchdog. Running must be persisted first.
+    const fakes = buildFakes();
+    const order: string[] = [];
+    fakes.workflowSessionService.recordAutonomousDispatch.mockImplementation(async () => {
+      order.push('running');
+      return makeSession();
+    });
+    fakes.taskSend.mockImplementation(async () => {
+      order.push('send');
+    });
+
+    await dispatchAutonomousStep({ parentSessionId: 'sess-1', stepN: 1 }, fakes.deps);
+
+    expect(order).toEqual(['running', 'send']);
+  });
+
+  it('marks the step errored (fail-fast) when the worker send throws (FINDING-2b)', async () => {
+    const fakes = buildFakes();
+    fakes.taskSend.mockRejectedValueOnce(new Error('session failed to start'));
+
+    await expect(
+      dispatchAutonomousStep({ parentSessionId: 'sess-1', stepN: 1 }, fakes.deps)
+    ).rejects.toThrow(/session failed to start/);
+
+    // First flipped to running, then errored on the send failure.
+    expect(fakes.workflowSessionService.recordAutonomousDispatch).toHaveBeenCalled();
+    expect(fakes.workflowSessionService.recordAutonomousCompletion).toHaveBeenCalledWith(
+      'sess-1',
+      1,
+      false
+    );
+    expect(fakes.workflowSessionService.applyStepTransition).toHaveBeenCalledWith(
+      'sess-1',
+      expect.objectContaining({ step_n: 1, status: 'errored', source: 'worker' })
+    );
+  });
+
+  it('refuses to dispatch a step that already has a running worker (W2 double-dispatch guard)', async () => {
+    const session = makeSession({
+      steps: [
+        makeStep({ n: 1, status: 'now', autonomous_run: { dispatch_id: 'd0', started_at: 1, state: 'running' } }),
+        makeStep({ n: 2 }),
+      ],
+    });
+    const fakes = buildFakes({ parentSession: session });
+    await expect(
+      dispatchAutonomousStep({ parentSessionId: 'sess-1', stepN: 1 }, fakes.deps)
+    ).rejects.toThrow(/already has a running autonomous worker/);
+    // No second worker, no state mutation.
+    expect(fakes.conversationService.createConversation).not.toHaveBeenCalled();
+    expect(fakes.workerTaskManager.getOrBuildTask).not.toHaveBeenCalled();
+    expect(fakes.workflowSessionService.recordAutonomousDispatch).not.toHaveBeenCalled();
+  });
+
+  it('refuses to dispatch a step that is already done (W2 double-dispatch guard)', async () => {
+    const session = makeSession({
+      steps: [makeStep({ n: 1, status: 'done' }), makeStep({ n: 2 })],
+    });
+    const fakes = buildFakes({ parentSession: session });
+    await expect(
+      dispatchAutonomousStep({ parentSessionId: 'sess-1', stepN: 1 }, fakes.deps)
+    ).rejects.toThrow(/already done/);
+    expect(fakes.conversationService.createConversation).not.toHaveBeenCalled();
   });
 
   it('throws when the parent workflow session is missing', async () => {
