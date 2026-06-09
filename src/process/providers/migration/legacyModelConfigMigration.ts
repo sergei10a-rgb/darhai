@@ -177,6 +177,7 @@ const BASEURL_FINGERPRINTS: Array<{ host: string; providerId: ProviderId }> = [
   { host: 'api.baichuan-ai.com', providerId: 'baichuan' },
   { host: 'api.lingyiwanwu.com', providerId: 'lingyiwanwu' },
   { host: 'open.bigmodel.cn', providerId: 'zhipu-glm' },
+  { host: 'api.minimax.io', providerId: 'minimax' },
   { host: 'api.minimax.chat', providerId: 'minimax' },
   { host: 'api.stability.ai', providerId: 'stability' },
   { host: 'api.deepgram.com', providerId: 'deepgram' },

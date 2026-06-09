@@ -30,7 +30,11 @@ export const PROVIDER_ENDPOINTS: Partial<Record<ProviderId, string>> = {
   nvidia: 'https://integrate.api.nvidia.com/v1/models',
   anyscale: 'https://api.endpoints.anyscale.com/v1/models',
   'zhipu-glm': 'https://open.bigmodel.cn/api/paas/v4/models',
-  minimax: 'https://api.minimax.chat/v1/models',
+  // International MiniMax host (`api.minimax.io`, the platform.minimax.io
+  // platform). The mainland `api.minimax.chat` host 401s international keys, so
+  // probing `.io` matches the global audience (mirrors the Moonshot `.cn`/`.ai`
+  // split above). Inference already uses the `.io` host via models.dev.
+  minimax: 'https://api.minimax.io/v1/models',
   deepgram: 'https://api.deepgram.com/v1/models',
   assemblyai: 'https://api.assemblyai.com/v1/models',
   elevenlabs: 'https://api.elevenlabs.io/v1/models',
