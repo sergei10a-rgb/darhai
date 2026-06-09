@@ -35,4 +35,9 @@ export const PROVIDER_ENDPOINTS: Partial<Record<ProviderId, string>> = {
   assemblyai: 'https://api.assemblyai.com/v1/models',
   elevenlabs: 'https://api.elevenlabs.io/v1/models',
   'flux-router': 'https://api.fluxrouter.ai/v1/models',
+  // Ollama Cloud has a fixed OpenAI-compatible base; pin its models endpoint so
+  // the connection test always has a probe (it carries no TEST_MODEL). Ollama
+  // (Local) is intentionally omitted: its endpoint is derived from the user's
+  // configured base URL so custom ports/hosts still work.
+  'ollama-cloud': 'https://ollama.com/v1/models',
 };
