@@ -115,6 +115,21 @@
   color: var(--color-text-4);
 }
 
+/* Numbered circle for not-yet-started steps (mockup: todo shows its number). */
+.numBullet {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 1.5px solid var(--color-border-3, var(--color-text-4));
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--color-text-3);
+}
+
 .title {
   font-size: 13px;
   line-height: 1.35;

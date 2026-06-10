@@ -125,11 +125,16 @@ const StepRow: React.FC<StepRowProps> = ({ step, isCurrent, runMode, onJump }) =
   const sub = computeSubLine(step, t);
 
   // Derive display status: review/ask overlay the standard status for the current step.
+  // The current step's own status often lags at 'todo' (the 'now' transition is
+  // not always emitted), so treat the current step as live while the run is
+  // actively running - that's what makes the rail show real progress.
   const displayStatus: BulletStatus = (() => {
     if (isCurrent && runMode === 'awaiting_input') return 'review';
     if (autonomousRunning) return 'now';
+    if (isCurrent && runMode === 'running' && (step.status === 'todo' || step.status === 'now')) return 'now';
     return step.status;
   })();
+  const showSpinner = autonomousRunning || displayStatus === 'now';
 
   const handleRowClick = () => {
     onJump(step.n);
@@ -152,8 +157,10 @@ const StepRow: React.FC<StepRowProps> = ({ step, isCurrent, runMode, onJump }) =
       })}
     >
       <span className={styles.bullet} data-status={displayStatus} aria-hidden='true'>
-        {autonomousRunning ? (
+        {showSpinner ? (
           <Loader2 size={14} className={styles.spinner} aria-hidden='true' />
+        ) : displayStatus === 'todo' ? (
+          <span className={styles.numBullet}>{step.n}</span>
         ) : (
           <Bullet status={displayStatus} />
         )}
