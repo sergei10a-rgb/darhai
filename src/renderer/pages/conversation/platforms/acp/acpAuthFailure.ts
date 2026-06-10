@@ -81,6 +81,13 @@ const BACKEND_REMEDIES: Record<string, Partial<AcpAuthRemedy>> = {
     cliLoginCmd: 'codex login',
     fluxRoutable: true,
   },
+  grok: {
+    backendLabel: 'Grok Build',
+    // Auth is the grok.com OAuth login behind a SuperGrok subscription; the only
+    // fix is re-running the CLI login. Not Flux-routable (xAI's own gateway).
+    cliLoginCmd: 'grok login',
+    fluxRoutable: false,
+  },
   qwen: {
     backendLabel: 'Qwen Code',
     cliLoginCmd: 'qwen',

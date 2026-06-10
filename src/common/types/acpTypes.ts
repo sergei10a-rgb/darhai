@@ -42,6 +42,7 @@ export type AcpBackendAll =
   // | 'gemini' // Google Gemini - not an ACP agent, handled by AgentRegistry directly
   | 'qwen' // Qwen Code ACP
   | 'codex' // OpenAI Codex ACP (via codex-acp bridge)
+  | 'grok' // xAI Grok Build CLI (native ACP via `grok agent stdio`)
   | 'codebuddy' // Tencent CodeBuddy Code CLI
   | 'droid' // Factory Droid CLI (ACP via `droid exec --output-format acp`)
   | 'goose' // Block's Goose CLI
@@ -317,6 +318,20 @@ export const ACP_BACKENDS_ALL: Record<AcpBackendAll, AcpBackendConfig> = {
     // Needs the config-writing setup connector: codex routes through Flux's
     // Responses surface via a [model_providers.flux] table in its TOML config.
     fluxCompat: 'setup',
+  },
+  grok: {
+    id: 'grok',
+    name: 'Grok Build',
+    cliCommand: 'grok',
+    // Auth is CLI-owned: `grok login` (grok.com OAuth, SuperGrok subscription).
+    // Wayland spawns the binary and it uses its cached credentials.
+    authRequired: true,
+    enabled: true, // ✅ xAI Grok Build CLI, native ACP v1 via `grok agent stdio` (proven: initialize/session/new/session/prompt)
+    supportsStreaming: true, // streams agent_thought_chunk / agent_message_chunk over session/update
+    acpArgs: ['agent', 'stdio'],
+    skillsDirs: ['.grok/skills'],
+    // Talks to xAI's own gateway (grok.com); not Flux-routable.
+    fluxCompat: 'vendor',
   },
   qwen: {
     id: 'qwen',
