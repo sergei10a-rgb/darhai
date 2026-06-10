@@ -1,16 +1,53 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { Message } from '@arco-design/web-react';
 import { useMcpLibrary } from './hooks/useMcpLibrary';
-import { useMcpServers } from '@renderer/hooks/mcp/useMcpServers';
+import {
+  useMcpServers,
+  useMcpAgentStatus,
+  useMcpOperations,
+  useMcpServerCRUD,
+} from '@renderer/hooks/mcp';
+import type { IMcpServer } from '@/common/config/storage';
+import AddMcpServerModal from '@renderer/pages/settings/components/AddMcpServerModal';
 import { RecommendedGrid } from './components/RecommendedGrid';
 import { CategorySection } from './components/CategorySection';
 import { TierFilter } from './components/TierFilter';
 import type { Tier, CatalogIndexEntry } from './types';
 
 export function BrowsePage() {
+  const { t } = useTranslation();
   const library = useMcpLibrary();
-  const { mcpServers } = useMcpServers();
+  const { mcpServers, saveMcpServers } = useMcpServers();
   const navigate = useNavigate();
+
+  const [message, contextHolder] = Message.useMessage();
+  const [showAddModal, setShowAddModal] = useState(false);
+  const { setAgentInstallStatus, checkSingleServerInstallStatus } = useMcpAgentStatus();
+  const { syncMcpToAgents, removeMcpFromAgents } = useMcpOperations(mcpServers, message);
+  const crud = useMcpServerCRUD(
+    mcpServers,
+    saveMcpServers,
+    syncMcpToAgents,
+    removeMcpFromAgents,
+    checkSingleServerInstallStatus,
+    setAgentInstallStatus
+  );
+
+  const handleAddSubmit = useCallback(
+    (serverData: Omit<IMcpServer, 'id' | 'createdAt' | 'updatedAt'>) => {
+      void crud.handleAddMcpServer(serverData);
+    },
+    [crud]
+  );
+
+  const handleAddBatch = useCallback(
+    (servers: Omit<IMcpServer, 'id' | 'createdAt' | 'updatedAt'>[]) => {
+      void crud.handleBatchImportMcpServers(servers);
+    },
+    [crud]
+  );
 
   const installedIds = useMemo(
     // libraryEntryId is added in P8; cast to any for P7 forward-compat reads.
@@ -81,11 +118,17 @@ export function BrowsePage() {
 
   return (
     <div className="mcp-library-page">
+      {contextHolder}
       <header className="mcp-page-head">
-        <h2>MCP Library</h2>
-        <p>
-          Curated connectors. Browse, install with one click, and follow the setup guide.
-        </p>
+        <div>
+          <h2>MCP Library</h2>
+          <p>
+            Curated connectors. Browse, install with one click, and follow the setup guide.
+          </p>
+        </div>
+        <button className="mcp-btn-primary" onClick={() => setShowAddModal(true)}>
+          {t('mcpLibrary.installed.addCustom', '+ Add custom MCP')}
+        </button>
       </header>
 
       <div className="mcp-filter-bar">
@@ -115,6 +158,13 @@ export function BrowsePage() {
           onSelect={onSelect}
         />
       ))}
+
+      <AddMcpServerModal
+        visible={showAddModal}
+        onCancel={() => setShowAddModal(false)}
+        onSubmit={handleAddSubmit}
+        onBatchImport={handleAddBatch}
+      />
     </div>
   );
 }
