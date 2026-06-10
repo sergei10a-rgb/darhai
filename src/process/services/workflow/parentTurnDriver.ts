@@ -31,13 +31,14 @@
 import type { IConversationTurnCompletedEvent } from '@/common/adapter/ipcBridge';
 import type { WorkflowSession } from '@/common/types/workflowTypes';
 import type { AfterTurnDecision } from './runDriver';
+import type { TurnState } from './WorkflowSessionService';
 
 /** The slice of WorkflowSessionService the parent hand needs. */
 export type ParentTurnService = {
   findByConversationId(conversationId: string): WorkflowSession | null;
   continueRun(
     sessionId: string,
-    opts?: { repokeActiveStep?: boolean }
+    opts?: { repokeActiveStep?: boolean; turnState?: TurnState }
   ): Promise<{
     decision: AfterTurnDecision;
     directive: string | null;
@@ -86,7 +87,11 @@ export async function handleParentWorkflowTurn(
     const session = deps.service.findByConversationId(conversationId);
     if (session === null) return;
 
-    const { decision, directive } = await deps.service.continueRun(session.id);
+    // Thread the completed turn's terminal state into the brain. Only the three
+    // states in TERMINAL_TURN_STATES reach here (guarded above), and they map
+    // 1:1 onto the narrowed TurnState union the completion block keys off.
+    const turnState = event.state as TurnState;
+    const { decision, directive } = await deps.service.continueRun(session.id, { turnState });
     if (decision === 'advance' && directive) {
       try {
         await deps.sendDirective(conversationId, directive);

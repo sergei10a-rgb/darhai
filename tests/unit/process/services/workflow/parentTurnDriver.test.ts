@@ -105,8 +105,17 @@ describe('handleParentWorkflowTurn', () => {
     const { deps, continueRun, sendDirective } = makeDeps({ findSession: session() });
     await handleParentWorkflowTurn(turn({ sessionId: 'conv-1', state: 'ai_waiting_input' }), deps);
     expect(deps.service.findByConversationId).toHaveBeenCalledWith('conv-1');
-    expect(continueRun).toHaveBeenCalledWith('wf-1');
+    // The completed turn's terminal state is threaded into the brain so the
+    // driver-owned completion block (Stage 1) can mark the active step terminal.
+    expect(continueRun).toHaveBeenCalledWith('wf-1', { turnState: 'ai_waiting_input' });
     expect(sendDirective).toHaveBeenCalledWith('conv-1', 'Proceed to step 1: Audit');
+  });
+
+  it('threads the error turn state into continueRun (driver parks on a failed turn)', async () => {
+    const { deps, continueRun } = makeDeps({ findSession: session() });
+    deps.service.continueRun = continueRun;
+    await handleParentWorkflowTurn(turn({ sessionId: 'conv-1', state: 'error' }), deps);
+    expect(continueRun).toHaveBeenCalledWith('wf-1', { turnState: 'error' });
   });
 
   it('does not send when the decision is await_input (step mode halt)', async () => {

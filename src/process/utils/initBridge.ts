@@ -229,11 +229,25 @@ void getDatabase()
       conversationServiceImpl,
       defaultModelProvider
     );
+    // The HAND that sends a workflow directive into a conversation (the same
+    // worker-task send path cron uses). Defined here so the `acceptStep` IPC
+    // handler can reuse it; the parent driver loop below shares it too. Sent
+    // `hidden` so the control prompt never appears in the chat tape.
+    const sendWorkflowDirective = async (conversationId: string, directive: string): Promise<void> => {
+      const task = await workerTaskManager.getOrBuildTask(conversationId, { yoloMode: true });
+      await task.sendMessage({
+        content: directive,
+        input: directive,
+        msg_id: `workflow-advance-${conversationId}-${Date.now()}`,
+        hidden: true,
+      });
+    };
     initWorkflowBridge(workflowService, {
       conversationService: conversationServiceImpl,
       workerTaskManager,
       telemetry: usageLogger,
       getDefaultModel: () => defaultModelProvider.getDefaultModel(),
+      sendDirective: sendWorkflowDirective,
     });
     // Publish the same instance to the module-level singleton accessor so
     // `agentUtils.buildSystemInstructions*` can compose WORKFLOW_PROTOCOL
@@ -320,15 +334,6 @@ void getDatabase()
       } catch {
         return false;
       }
-    };
-    const sendWorkflowDirective = async (conversationId: string, directive: string): Promise<void> => {
-      const task = await workerTaskManager.getOrBuildTask(conversationId, { yoloMode: true });
-      await task.sendMessage({
-        content: directive,
-        input: directive,
-        msg_id: `workflow-advance-${conversationId}-${Date.now()}`,
-        hidden: true,
-      });
     };
     ipcBridge.conversation?.turnCompleted?.on?.((event) => {
       void handleParentWorkflowTurn(event, {

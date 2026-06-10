@@ -184,8 +184,12 @@ export const WorkflowSurface: React.FC<WorkflowSurfaceProps> = ({
   }, []);
 
   const handleContinue = useCallback(() => {
-    void session.resumeRun().catch((err) => {
-      console.warn('[WorkflowSurface] resumeRun failed:', err);
+    // StepReviewBeat "Accept & continue": mark the active step done, advance to
+    // the next step, and let the main side send the next-step directive. This
+    // replaces the old bare resumeRun (which only re-armed the gate and nudged
+    // the agent, never marking the step terminal - so the run sat `now` forever).
+    void session.acceptStep().catch((err) => {
+      console.warn('[WorkflowSurface] acceptStep failed:', err);
     });
   }, [session]);
 

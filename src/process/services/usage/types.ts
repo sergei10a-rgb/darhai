@@ -39,6 +39,8 @@ export type UsageEventType =
   | 'workflow.step_transition'
   | 'workflow.regress_attempt'
   | 'workflow.backtrack'
+  | 'workflow.step_auto_completed'
+  | 'workflow.poke_cap_hit'
   | 'workflow.orphaned_ask';
 
 export type UsageEvent = {

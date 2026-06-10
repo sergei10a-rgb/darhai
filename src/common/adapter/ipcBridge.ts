@@ -2187,6 +2187,11 @@ export const workflow = {
   dispatchAutonomousStep: buildProvider<{ dispatchId: string }, { sessionId: string; stepN: number }>(
     'workflow.dispatchAutonomousStep'
   ),
+  // 6.5.1 - Step-mode "Accept & continue": the user approved the active step at
+  // the StepReviewBeat. The service marks it done, advances to the next step,
+  // and the handler sends the next-step directive into the conversation. Returns
+  // the resulting session so the renderer rail re-renders immediately.
+  acceptStep: buildProvider<{ session: WorkflowSession }, { sessionId: string }>('workflow.acceptStep'),
   // 6.6 - Fire-and-forget notification that a workflow session was created,
   // mutated, or completed. Sidebar listeners use this to update the in-flight
   // strip and badge counts without re-fetching the full session payload.

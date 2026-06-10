@@ -58,6 +58,13 @@ export type UseWorkflowSessionReturn = {
    * advances the next step on the resulting turn. Best-effort send.
    */
   resumeRun: () => Promise<void>;
+  /**
+   * Step-mode "Accept & continue" at the StepReviewBeat. Marks the active step
+   * done, advances to the next step, and the main side sends the next-step
+   * directive into the conversation. Hydrates local data with the resulting
+   * session. Guarded against double-fire.
+   */
+  acceptStep: () => Promise<void>;
   /** Sends setSessionStatus='ended' via IPC. */
   end: () => Promise<void>;
   /** Permanently deletes the session via IPC (distinct from `end`, which only flips status). */
@@ -109,6 +116,9 @@ export function useWorkflowSession(
   // Guards resumeRun against double-fire (a double-clicked Continue would
   // otherwise send two "Continue" turns and drive the step twice).
   const resumeInFlightRef = useRef<boolean>(false);
+  // Guards acceptStep against double-fire (a double-clicked Accept would
+  // otherwise advance two steps).
+  const acceptInFlightRef = useRef<boolean>(false);
 
   // Stale-guard: keep the most recent sessionId so an in-flight refresh
   // doesn't overwrite state after the consumer switches sessions.
@@ -330,6 +340,24 @@ export function useWorkflowSession(
     }
   }, [sessionId, data?.conversation_id]);
 
+  const acceptStep = useCallback(async () => {
+    if (!sessionId) return;
+    if (acceptInFlightRef.current) return;
+    acceptInFlightRef.current = true;
+    try {
+      const result = await ipcBridge.workflow.acceptStep.invoke({ sessionId });
+      if (activeSessionIdRef.current === sessionId) {
+        setData(result.session);
+        setError(null);
+      }
+    } catch (err) {
+      if (activeSessionIdRef.current === sessionId) setError(toError(err));
+      throw err;
+    } finally {
+      acceptInFlightRef.current = false;
+    }
+  }, [sessionId]);
+
   const setInteractivity = useCallback(
     async (mode: WorkflowInteractivity) => {
       if (!sessionId) return;
@@ -385,6 +413,7 @@ export function useWorkflowSession(
     pause,
     resume,
     resumeRun,
+    acceptStep,
     end,
     remove,
     refresh,

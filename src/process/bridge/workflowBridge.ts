@@ -36,6 +36,13 @@ export type WorkflowDispatchDeps = {
   workerTaskManager: IWorkerTaskManager;
   telemetry: UsageEventLogger;
   getDefaultModel: () => TProviderWithModel | Promise<TProviderWithModel>;
+  /**
+   * The HAND: send a next-step directive into the parent conversation. Used by
+   * the `acceptStep` handler to drive the next step after the user approves the
+   * current one at the StepReviewBeat. Optional so existing routing tests that
+   * only exercise the dispatch path can omit it.
+   */
+  sendDirective?: (conversationId: string, directive: string) => Promise<void>;
 };
 
 let registered = false;
@@ -185,6 +192,31 @@ export function registerWorkflowBridge(): void {
       }
     );
     return { dispatchId: result.dispatchId };
+  });
+
+  ipcBridge.workflow.acceptStep.provider(async (input) => {
+    const svc = requireService('acceptStep');
+    const { directive, session } = await svc.acceptStep(input.sessionId);
+    // Send the next-step directive into the parent conversation (the HAND).
+    // Best-effort: a send failure must not fail the accept - the rail has
+    // already advanced, and the parent stall watchdog backstops a missed send.
+    if (directive && liveDispatchDeps?.sendDirective) {
+      try {
+        await liveDispatchDeps.sendDirective(session.conversation_id, directive);
+      } catch (err) {
+        console.warn('[workflowBridge] acceptStep directive send failed:', err);
+      }
+    } else if (directive) {
+      // The session already advanced (next step `now`, run_mode `running`) but
+      // `sendDirective` is not wired, so the agent will never get the
+      // "Proceed to step N" prompt and the run stalls at `running` until the
+      // parent watchdog times out. In production `initWorkflowBridge` always
+      // passes `sendDirective`; this loud error makes a mis-wire debuggable.
+      console.error(
+        '[workflowBridge] acceptStep: directive produced but sendDirective is not wired - next step will not start.'
+      );
+    }
+    return { session };
   });
 }
 

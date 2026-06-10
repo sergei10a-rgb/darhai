@@ -28,6 +28,7 @@ const {
   resolveSkillsProvider,
   updateSessionStateProvider,
   dispatchAutonomousStepProvider,
+  acceptStepProvider,
   countActiveProvider,
   deleteSessionProvider,
 } = vi.hoisted(() => ({
@@ -37,6 +38,7 @@ const {
   resolveSkillsProvider: vi.fn(),
   updateSessionStateProvider: vi.fn(),
   dispatchAutonomousStepProvider: vi.fn(),
+  acceptStepProvider: vi.fn(),
   countActiveProvider: vi.fn(),
   deleteSessionProvider: vi.fn(),
 }));
@@ -50,6 +52,7 @@ vi.mock('@/common', () => ({
       resolveSkills: { provider: resolveSkillsProvider },
       updateSessionState: { provider: updateSessionStateProvider },
       dispatchAutonomousStep: { provider: dispatchAutonomousStepProvider },
+      acceptStep: { provider: acceptStepProvider },
       countActive: { provider: countActiveProvider },
       deleteSession: { provider: deleteSessionProvider },
     },
@@ -109,6 +112,7 @@ function makeFakeService() {
     setRunMode: vi.fn(),
     setInteractivity: vi.fn(),
     backtrackToStep: vi.fn(),
+    acceptStep: vi.fn(),
   };
 }
 
@@ -121,6 +125,7 @@ describe('workflowBridge - handler routing', () => {
     resolveSkillsProvider.mockReset();
     updateSessionStateProvider.mockReset();
     dispatchAutonomousStepProvider.mockReset();
+    acceptStepProvider.mockReset();
     countActiveProvider.mockReset();
     deleteSessionProvider.mockReset();
   });
@@ -442,5 +447,43 @@ describe('workflowBridge - handler routing', () => {
       dispatchAutonomousStepProvider
     );
     await expect(handler({ sessionId: 'sess-1', stepN: 1 })).rejects.toThrow(/dispatch deps not yet wired/);
+  });
+
+  it('routes workflow.acceptStep to service.acceptStep and sends the directive', async () => {
+    const svc = makeFakeService();
+    const session = makeFakeSession({ conversation_id: 'conv-7' });
+    svc.acceptStep.mockResolvedValue({ decision: 'advance', directive: 'Proceed to step 2: Ship', session });
+    const sendDirective = vi.fn(async () => undefined);
+    initWorkflowBridge(svc as never, {
+      conversationService: {} as never,
+      workerTaskManager: {} as never,
+      telemetry: {} as never,
+      getDefaultModel: () => ({}) as never,
+      sendDirective,
+    });
+
+    const handler = captured<{ sessionId: string }, { session: WorkflowSession }>(acceptStepProvider);
+    const result = await handler({ sessionId: 'sess-1' });
+    expect(svc.acceptStep).toHaveBeenCalledWith('sess-1');
+    expect(sendDirective).toHaveBeenCalledWith('conv-7', 'Proceed to step 2: Ship');
+    expect(result.session).toBe(session);
+  });
+
+  it('acceptStep does not send when there is no directive (terminal/complete)', async () => {
+    const svc = makeFakeService();
+    const session = makeFakeSession();
+    svc.acceptStep.mockResolvedValue({ decision: 'complete', directive: null, session });
+    const sendDirective = vi.fn(async () => undefined);
+    initWorkflowBridge(svc as never, {
+      conversationService: {} as never,
+      workerTaskManager: {} as never,
+      telemetry: {} as never,
+      getDefaultModel: () => ({}) as never,
+      sendDirective,
+    });
+
+    const handler = captured<{ sessionId: string }, { session: WorkflowSession }>(acceptStepProvider);
+    await handler({ sessionId: 'sess-1' });
+    expect(sendDirective).not.toHaveBeenCalled();
   });
 });

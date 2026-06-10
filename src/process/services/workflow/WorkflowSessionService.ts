@@ -47,7 +47,7 @@ import type { IConversationService, CreateConversationParams } from '../IConvers
 import type { UsageEventLogger } from '../usage/UsageEventLogger';
 import type { WorkflowSessionRepository } from './WorkflowSessionRepository';
 import { parseSteps, type ParsedStep } from './parseSteps';
-import { backtrackTo, deriveCurrentStep, resolveTransition } from './stepCursor';
+import { backtrackTo, deriveCurrentStep, isStepTerminal, resolveTransition } from './stepCursor';
 import { decideAfterTurn, runModeOnPause, runModeOnResume } from './runDriver';
 import { composeWorkflowSystemPrompt } from './composeWorkflowSystemPrompt';
 import { resolveWorkflowPalette } from '@renderer/pages/guid/components/workflow/workflowPalette';
@@ -87,6 +87,16 @@ export type StartWorkflowResult = {
   session: WorkflowSession;
   systemPromptDirective: string;
 };
+
+/**
+ * The terminal turn states the run driver acts on, threaded from the
+ * `turnCompleted` event through {@link parentTurnDriver}. These are the only
+ * `IConversationTurnCompletedEvent['state']` values that reach `continueRun`
+ * (guarded by `TERMINAL_TURN_STATES`). `undefined` means the driver was invoked
+ * outside a turn boundary (boot-resume) and the auto-completion block must be
+ * skipped entirely.
+ */
+export type TurnState = 'ai_waiting_input' | 'stopped' | 'error';
 
 /**
  * Map a backend slug to the conversation `type` discriminator the
@@ -136,6 +146,14 @@ const parsedToStepState = (parsed: ParsedStep): StepState => ({
 });
 
 export class WorkflowSessionService {
+  /**
+   * Per-run advance-directive counter, in memory only (no migration). The
+   * global poke cap (`total_steps * 3`) trips on this to stop a runaway driver
+   * loop if completion/advance ever fails to make forward progress. Resets on
+   * restart, which is acceptable for a safety cap. See SPEC Stage 1 Guards.
+   */
+  private readonly pokeCounts = new Map<string, number>();
+
   constructor(
     private readonly repo: WorkflowSessionRepository,
     private readonly skillLibrary: SkillLibraryLike,
@@ -591,7 +609,7 @@ export class WorkflowSessionService {
    */
   async continueRun(
     sessionId: string,
-    opts: { repokeActiveStep?: boolean } = {}
+    opts: { repokeActiveStep?: boolean; turnState?: TurnState } = {}
   ): Promise<{ decision: ReturnType<typeof decideAfterTurn>; directive: string | null; session: WorkflowSession }> {
     const current = this.repo.findById(sessionId);
     if (current === null) {
@@ -607,7 +625,76 @@ export class WorkflowSessionService {
       return { decision: 'halt', directive: null, session: current };
     }
 
-    const decision = decideAfterTurn(current);
+    // Driver-owned completion (Stage 1). At a turn boundary (`turnState`
+    // defined - undefined means boot-resume, which must NEVER auto-complete) we
+    // decide whether the active `now` step is terminal, so the run actually
+    // advances instead of sitting `now` forever waiting on a `<step done>`
+    // marker the model may never emit. The `<step>`/`<ask>` markers remain a
+    // secondary signal. Operate on `working` so the subsequent `decideAfterTurn`
+    // sees the post-transition state.
+    //
+    // GUARD: only enter when `run_mode === 'running'`. A paused or
+    // already-`awaiting_input` run must NEVER be auto-advanced by a stray /
+    // in-flight `turnCompleted` event ("pause wins at the finish line"). Without
+    // this guard a turn that completes after the user paused (or after an ask was
+    // parked) would mark the active step `done` (a permanent DB write) and only
+    // THEN have `decideAfterTurn` return `halt` - too late, the step is already
+    // terminal and the run silently bypasses the pause/review intent on resume.
+    // Because the block is only entered when `run_mode === 'running'`, and
+    // `applyStepTransition` never mutates `run_mode`, `working.run_mode` is
+    // guaranteed `'running'` when `decideAfterTurn(working)` runs below.
+    let working = current;
+    if (opts.turnState !== undefined && working.run_mode === 'running') {
+      const idx = deriveCurrentStep(working.steps) - 1;
+      const active = working.steps[idx];
+      if (active && active.status === 'now') {
+        const hasOpenAsk = working.asks.some((a) => a.step_n === active.n && a.answer === null);
+        if (opts.turnState === 'error') {
+          // Rule 1: the turn failed. Mark the active step `errored` and park the
+          // run - never silently advance past a failure. The user sees the
+          // errored step and can Go back / retry.
+          working = await this.applyStepTransition(sessionId, {
+            step_n: active.n,
+            status: 'errored',
+            source: 'worker',
+            dispatch_id: null,
+            timestamp: Date.now(),
+          });
+          // `setRunMode` re-reads the row, so the returned `session` reflects
+          // BOTH the `errored` step write above AND the `awaiting_input` flip.
+          // Synchronous better-sqlite3 guarantees the re-read sees the prior
+          // `applyStepTransition` write.
+          const session = await this.setRunMode(sessionId, 'awaiting_input');
+          return { decision: 'await_input', directive: null, session };
+        }
+        if (hasOpenAsk) {
+          // Rule 2: the agent needs the user (an unanswered ask on the active
+          // step). Leave the step `now` and park - the AskCard surfaces it.
+          const session = await this.setRunMode(sessionId, 'awaiting_input');
+          return { decision: 'await_input', directive: null, session };
+        }
+        if (working.interactivity === 'auto') {
+          // Rule 3 (AUTO): normal completion with no open ask - mark the active
+          // step `done`, then fall through to `decideAfterTurn` which sees the
+          // step terminal and advances to the next `todo` (or completes).
+          working = await this.applyStepTransition(sessionId, {
+            step_n: active.n,
+            status: 'done',
+            source: 'worker',
+            dispatch_id: null,
+            timestamp: Date.now(),
+          });
+          await this.telemetry.record({
+            eventType: 'workflow.step_auto_completed',
+            metadata: { session_id: sessionId, step_n: active.n, mode: 'auto' },
+          });
+        }
+        // Rule 3 (STEP): do NOT mark done - fall through; `decideAfterTurn`
+        // returns `await_input` (the review beat). User gates each step.
+      }
+    }
+
+    const decision = decideAfterTurn(working);
 
     if (decision === 'complete') {
       await this.completeSession(sessionId);
@@ -619,7 +706,7 @@ export class WorkflowSessionService {
       return { decision, directive: null, session };
     }
     if (decision === 'halt') {
-      return { decision, directive: null, session: current };
+      return { decision, directive: null, session: working };
     }
 
     // decision === 'advance'. The active step is the first non-terminal one.
@@ -627,9 +714,9 @@ export class WorkflowSessionService {
     // that index (mirrors composeStepContext's `steps[current_step - 1]`).
     // Looking it up by `s.n === position` would mis-target a non-contiguously
     // numbered workflow (e.g. `## Step 2 / 5 / 7`).
-    const idx = deriveCurrentStep(current.steps) - 1;
-    const before = current.steps[idx];
-    let session = current;
+    const idx = deriveCurrentStep(working.steps) - 1;
+    const before = working.steps[idx];
+    let session = working;
     let flippedToNow = false;
     if (before && before.status === 'todo') {
       session = await this.applyStepTransition(sessionId, {
@@ -656,9 +743,142 @@ export class WorkflowSessionService {
     // Boot-resume passes `repokeActiveStep` to re-poke the live `now` step
     // exactly once after the agent process itself is gone.
     const shouldSend = flippedToNow || opts.repokeActiveStep === true;
+    if (shouldSend && target) {
+      const capped = await this.trippedPokeCap(sessionId, session.total_steps);
+      if (capped) {
+        const parked = await this.setRunMode(sessionId, 'awaiting_input');
+        return { decision: 'await_input', directive: null, session: parked };
+      }
+    }
     const directive =
       shouldSend && target ? `Proceed to step ${target.n}: ${target.title}\n\n${target.body_excerpt}`.trim() : null;
     return { decision, directive, session };
+  }
+
+  /**
+   * Increment the per-run advance-directive counter and report whether the
+   * global poke cap (`total_steps * 3`) has been exceeded. When it has, the
+   * caller parks the run at `awaiting_input` and emits `workflow.poke_cap_hit` -
+   * a backstop against a runaway driver loop if advance ever fails to make
+   * forward progress. In-memory only; resets on restart (acceptable for a cap).
+   */
+  private async trippedPokeCap(sessionId: string, totalSteps: number): Promise<boolean> {
+    const next = (this.pokeCounts.get(sessionId) ?? 0) + 1;
+    this.pokeCounts.set(sessionId, next);
+    if (next > totalSteps * 3) {
+      // The cap decision (return `true`) is safety-critical; the telemetry is
+      // observability-only. A telemetry failure must NOT propagate and prevent
+      // the caller from parking the run at `awaiting_input` - otherwise the
+      // counter stays incremented and the cap re-trips (and re-throws) on every
+      // subsequent turn, never parking, defeating the cap entirely.
+      try {
+        await this.telemetry.record({
+          eventType: 'workflow.poke_cap_hit',
+          metadata: { session_id: sessionId, count: next, total_steps: totalSteps },
+        });
+      } catch (err) {
+        console.warn('[WorkflowSessionService] poke_cap_hit telemetry failed:', err);
+      }
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Step-mode "Accept & continue": the user has approved the active step at the
+   * StepReviewBeat. Mark the active `now` step `done` (source `'worker'`),
+   * advance to the next step (flip `todo→now`, build its directive, honour the
+   * poke cap), and re-arm `run_mode = 'running'` so the parent driver loop keeps
+   * driving. Returns the directive (or null) for the HAND to send.
+   *
+   *  - Active step is not `now` (already terminal / nothing to accept): no-op
+   *    advance attempt; returns the current decision/directive.
+   *  - All steps terminal after marking done → `complete` + run_mode `done`.
+   */
+  async acceptStep(
+    sessionId: string
+  ): Promise<{ decision: ReturnType<typeof decideAfterTurn>; directive: string | null; session: WorkflowSession }> {
+    const current = this.repo.findById(sessionId);
+    if (current === null) {
+      throw new Error(`WorkflowSessionService.acceptStep: unknown session ${sessionId}`);
+    }
+    if (current.status !== 'active') {
+      return { decision: 'halt', directive: null, session: current };
+    }
+
+    // Mark the active `now` step done (the user has approved it). If the active
+    // step is not `now` (e.g. already terminal), skip the transition and fall
+    // straight to the advance path on the current state.
+    let working = current;
+    const activeIdx = deriveCurrentStep(working.steps) - 1;
+    const active = working.steps[activeIdx];
+    if (active && active.status === 'now') {
+      working = await this.applyStepTransition(sessionId, {
+        step_n: active.n,
+        status: 'done',
+        source: 'worker',
+        dispatch_id: null,
+        timestamp: Date.now(),
+      });
+      await this.telemetry.record({
+        eventType: 'workflow.step_auto_completed',
+        metadata: { session_id: sessionId, step_n: active.n, mode: 'step' },
+      });
+    }
+
+    // Accept is the EXPLICIT user advance, NOT the interactivity gate - it must
+    // move to the next step (or finalize) regardless of step/auto mode. So we do
+    // NOT route through `decideAfterTurn` (which would return `await_input` for a
+    // step-mode run and stall here). Finalize only when every step is terminal.
+    //
+    // Finalization is checked BEFORE re-arming to `running`. Re-arming first
+    // would leave a transient window where the row is `run_mode: 'running'` +
+    // `status: 'active'` + all steps terminal; a stray `turnCompleted` →
+    // `continueRun` in that window would see `decideAfterTurn === 'complete'` and
+    // call `completeSession` a second time, double-recording
+    // `workflow.session_completed` telemetry and overwriting `completed_at`.
+    // `completeSession` is also idempotent on `status === 'complete'`, but
+    // ordering the check first removes the window outright.
+    if (working.steps.every((s) => isStepTerminal(s.status))) {
+      await this.completeSession(sessionId);
+      const session = await this.setRunMode(sessionId, 'done');
+      return { decision: 'complete', directive: null, session };
+    }
+
+    // Not finalizing - re-arm the run gate (the StepReviewBeat parked it at
+    // `awaiting_input`) so the driver loop drives the next turn.
+    working = await this.setRunMode(sessionId, 'running');
+
+    // Flip the next `todo` step to `now` and build its directive (mirrors
+    // `continueRun`'s advance arm).
+    const idx = deriveCurrentStep(working.steps) - 1;
+    const before = working.steps[idx];
+    let session = working;
+    let flippedToNow = false;
+    if (before && before.status === 'todo') {
+      session = await this.applyStepTransition(sessionId, {
+        step_n: before.n,
+        status: 'now',
+        source: 'worker',
+        dispatch_id: null,
+        timestamp: Date.now(),
+      });
+      flippedToNow = true;
+    } else {
+      session = this.repo.update(sessionId, {});
+    }
+    const target = session.steps[idx];
+
+    if (flippedToNow && target) {
+      const capped = await this.trippedPokeCap(sessionId, session.total_steps);
+      if (capped) {
+        const parked = await this.setRunMode(sessionId, 'awaiting_input');
+        return { decision: 'await_input', directive: null, session: parked };
+      }
+    }
+    const directive =
+      flippedToNow && target ? `Proceed to step ${target.n}: ${target.title}\n\n${target.body_excerpt}`.trim() : null;
+    return { decision: 'advance', directive, session };
   }
 
   /** Append a new {@link AskRecord} to the session's asks tape. */
@@ -720,6 +940,13 @@ export class WorkflowSessionService {
     const current = this.repo.findById(sessionId);
     if (current === null) {
       throw new Error(`WorkflowSessionService.completeSession: unknown session ${sessionId}`);
+    }
+    // Idempotent on the terminal state: a second `completeSession` (e.g. a stray
+    // `turnCompleted` racing an `acceptStep` finalization) must NOT re-record
+    // `workflow.session_completed` telemetry or overwrite `completed_at` with a
+    // later timestamp. Return the already-complete row unchanged.
+    if (current.status === 'complete') {
+      return current;
     }
     const completedAt = Date.now();
     const updated = this.repo.update(sessionId, {

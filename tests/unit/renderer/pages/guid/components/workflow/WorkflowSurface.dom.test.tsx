@@ -202,6 +202,7 @@ type HookOverrides = {
   pause?: ReturnType<typeof vi.fn>;
   resume?: ReturnType<typeof vi.fn>;
   resumeRun?: ReturnType<typeof vi.fn>;
+  acceptStep?: ReturnType<typeof vi.fn>;
   end?: ReturnType<typeof vi.fn>;
   markBeginSent?: ReturnType<typeof vi.fn>;
   setInteractivity?: ReturnType<typeof vi.fn>;
@@ -222,6 +223,7 @@ vi.mock('@/renderer/hooks/workflow/useWorkflowSession', () => ({
     pause: hookOverrides.pause ?? vi.fn(),
     resume: hookOverrides.resume ?? vi.fn(),
     resumeRun: hookOverrides.resumeRun ?? vi.fn().mockResolvedValue(undefined),
+    acceptStep: hookOverrides.acceptStep ?? vi.fn().mockResolvedValue(undefined),
     end: hookOverrides.end ?? vi.fn().mockResolvedValue(undefined),
     refresh: vi.fn().mockResolvedValue(undefined),
     applyStepMarker: vi.fn().mockResolvedValue(undefined),
@@ -418,12 +420,16 @@ describe('WorkflowSurface', () => {
     expect(screen.getByTestId('mock-step-review-beat')).toBeTruthy();
   });
 
-  it('clicking Accept on StepReviewBeat calls resumeRun (accepts the step)', () => {
+  it('clicking Accept on StepReviewBeat calls acceptStep (marks active step done + advances)', () => {
+    const acceptStep = vi.fn().mockResolvedValue(undefined);
     const resumeRun = vi.fn().mockResolvedValue(undefined);
+    hookOverrides.acceptStep = acceptStep;
     hookOverrides.resumeRun = resumeRun;
     renderPostOverlay(buildSession({ run_mode: 'awaiting_input' } as Partial<WorkflowSession>));
     fireEvent.click(screen.getByTestId('review-beat-accept'));
-    expect(resumeRun).toHaveBeenCalledTimes(1);
+    expect(acceptStep).toHaveBeenCalledTimes(1);
+    // The old bare resumeRun (gate-only, never marked the step done) is gone.
+    expect(resumeRun).not.toHaveBeenCalled();
   });
 
   it('renders WorkflowCompleteCard instead of the rail when status === "complete"', () => {
