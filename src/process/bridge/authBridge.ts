@@ -14,8 +14,17 @@ import {
 } from '@office-ai/aioncli-core';
 import { ipcBridge } from '@/common';
 import { promises as fsAsync } from 'node:fs';
+import { xaiOAuthLogin, xaiRefreshToken } from '@process/onboarding/xaiOAuth';
 
 export function initAuthBridge(): void {
+  // Native xAI "Sign in with X (Grok)" OAuth - PKCE loopback against
+  // accounts.x.ai, persisted through the model-registry connect path as the
+  // `xai` provider. Both handlers are remote-denied in `bridgeAllowlist.ts`
+  // (they mint/persist a credential). They never reject - the renderer branches
+  // on the returned `XaiOAuthResult`.
+  ipcBridge.xaiAuth.login.provider(() => xaiOAuthLogin());
+  ipcBridge.xaiAuth.refresh.provider(() => xaiRefreshToken());
+
   ipcBridge.googleAuth.status.provider(async ({ proxy }) => {
     try {
       const credsPath = Storage.getOAuthCredsPath();

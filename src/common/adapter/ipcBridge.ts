@@ -31,7 +31,7 @@ import type {
   UpdateDownloadResult,
   AutoUpdateStatus,
 } from '../update/updateTypes';
-import type { ConnectFluxResult, ConnectPastedKeyResult } from '../types/onboarding';
+import type { ConnectFluxResult, ConnectPastedKeyResult, XaiOAuthResult } from '../types/onboarding';
 import type { ProtocolDetectionRequest, ProtocolDetectionResponse } from '../utils/protocolDetector';
 import type { SpeechToTextRequest, SpeechToTextResult } from '../types/speech';
 import type { DownloadResult, VoiceAsset } from '../types/voiceAsset';
@@ -525,6 +525,24 @@ export const googleAuth = {
   ),
   logout: buildProvider<void, {}>('google.auth.logout'),
   status: buildProvider<IBridgeResponse<{ account: string }>, { proxy?: string }>('google.auth.status'),
+};
+
+export const xaiAuth = {
+  /**
+   * Native xAI "Sign in with X (Grok)" via OAuth 2.0 Authorization Code + PKCE.
+   * Reuses an existing `~/.grok/auth.json` credential when present, otherwise
+   * opens the system browser to `accounts.x.ai`, runs a loopback listener,
+   * exchanges the code for a bearer token, and persists it through the
+   * model-registry connect path as the `xai` provider (inference targets
+   * `https://api.x.ai/v1`). Resolves `{ ok: true, reused }` or a stable error
+   * reason - it never rejects, so the renderer can branch on the result alone.
+   */
+  login: buildProvider<XaiOAuthResult, void>('xai.auth.login'),
+  /**
+   * Silent re-auth: exchange the persisted refresh token for a fresh access
+   * token and re-register it. Surfaced for the 401 re-auth path.
+   */
+  refresh: buildProvider<XaiOAuthResult, void>('xai.auth.refresh'),
 };
 
 export const onboarding = {

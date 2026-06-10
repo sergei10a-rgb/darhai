@@ -268,6 +268,12 @@ const REMOTE_DENIED_KEYS: ReadonlySet<string> = new Set([
   //     stays allowed. ---
   'onboarding.connect-pasted-key',
   'onboarding.connect-flux',
+  // --- Native xAI "Sign in with X (Grok)" OAuth. Both mint/persist the `xai`
+  //     provider credential via the model-registry connect path - same class as
+  //     connect-flux above. A remote WS caller must never drive an OAuth mint or
+  //     trigger a refresh-token exchange. ---
+  'xai.auth.login',
+  'xai.auth.refresh',
   // --- Cost observability (WS-D / WS-F). The whole cost.* namespace is already
   //     denied to remote callers via the `cost.` prefix above; these exact keys
   //     are enumerated for documentation + defence-in-depth. byConversation +
