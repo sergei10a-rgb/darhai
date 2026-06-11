@@ -5,6 +5,7 @@
  */
 
 import type { IProvider, ModelType } from '@/common/config/storage';
+import { isFluxModelId } from '@/common/config/flux';
 
 /**
  * Capability matching regex patterns
@@ -65,6 +66,18 @@ export const hasSpecificModelCapability = (
   modelName: string,
   type: ModelType
 ): boolean | undefined => {
+  // Flux routing aliases (flux-auto / -fast / -reasoning / -standard) are chat
+  // models that route per request, NOT FLUX.1 image models. Their ids contain
+  // "flux", which collides with the image_generation / excludeFromPrimary
+  // patterns and would hide them from the model picker ("No model configured").
+  // Treat them as first-class chat models. See the flux-auto picker bug.
+  if (isFluxModelId(modelName)) {
+    if (type === 'excludeFromPrimary' || type === 'image_generation' || type === 'embedding' || type === 'rerank') {
+      return false;
+    }
+    if (type === 'text' || type === 'function_calling') return true;
+  }
+
   const baseModelName = getBaseModelName(modelName);
   const exclusions = CAPABILITY_EXCLUSIONS[type];
   const pattern = CAPABILITY_PATTERNS[type];
