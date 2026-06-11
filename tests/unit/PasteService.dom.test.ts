@@ -177,6 +177,38 @@ describe('PasteService.handlePaste - filename deduplication', () => {
     expect(addedFiles[0].path).toMatch(/^\/tmp\/upload-/);
   });
 
+  it('renames the generic clipboard image name so repeated pastes do not collapse (#19)', async () => {
+    // Chromium hands every pasted clipboard image the constant name `image.png`.
+    // If kept verbatim, the on-disk `_wayland_<ts>` de-dup suffix is later
+    // stripped before the path reaches the agent, so every paste collapses back
+    // to the FIRST `image.png` on disk. The fix gives the generic name a unique
+    // timestamped base instead.
+    const event = createMockClipboardEvent([createImageFile('image.png')]);
+    const addedFiles: FileMetadata[] = [];
+
+    await PasteService.handlePaste(event, [], (files) => {
+      addedFiles.push(...files);
+    });
+
+    expect(addedFiles).toHaveLength(1);
+    expect(addedFiles[0].name).not.toBe('image.png');
+    expect(addedFiles[0].name).toMatch(/^pasted_image_\d+\.png$/);
+  });
+
+  it('keeps a descriptive clipboard name (only the generic image.* is renamed) (#19)', async () => {
+    // A non-generic name like `clipboard.png` is already distinct enough to
+    // survive, so it must be preserved (no needless renaming).
+    const event = createMockClipboardEvent([createImageFile('clipboard.png')]);
+    const addedFiles: FileMetadata[] = [];
+
+    await PasteService.handlePaste(event, [], (files) => {
+      addedFiles.push(...files);
+    });
+
+    expect(addedFiles).toHaveLength(1);
+    expect(addedFiles[0].name).toBe('clipboard.png');
+  });
+
   it('tracks upload progress for WebUI pasted images', async () => {
     isElectronDesktop.mockReturnValue(false);
     const onProgress = vi.fn();

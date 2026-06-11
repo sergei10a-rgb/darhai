@@ -171,12 +171,21 @@ class PasteServiceClass {
               const arrayBuffer = await file.arrayBuffer();
               const uint8Array = new Uint8Array(arrayBuffer);
 
-              // Generate a concise filename; replace system-generated default names
+              // Generate a concise filename; replace system-generated default names.
+              // Millisecond precision so two pastes in the same second do not collide.
               const now = new Date();
-              const timeStr = `${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
+              const timeStr = `${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}${now.getMilliseconds().toString().padStart(3, '0')}`;
 
               const isSystemGenerated = file.name && /^[a-zA-Z]?_?\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}/.test(file.name);
-              let fileName = file.name && !isSystemGenerated ? file.name : `pasted_image_${timeStr}${fileExt}`;
+              // Pasted clipboard images arrive with a constant generic name
+              // (Chromium uses `image.png`), so every paste keeps the same name.
+              // Downstream the on-disk `_wayland_<ts>` de-dup suffix is stripped
+              // before the path is sent to the agent, collapsing every paste back
+              // to the FIRST `image.png` written to disk. Treat the generic name
+              // like a system name and give it a unique, strip-proof base. See #19.
+              const isGenericClipboardName = !file.name || /^image\.\w+$/i.test(file.name);
+              let fileName =
+                file.name && !isSystemGenerated && !isGenericClipboardName ? file.name : `pasted_image_${timeStr}${fileExt}`;
               // Ensure unique filename within the same paste batch to prevent
               // collisions when multiple images are pasted simultaneously
               if (usedFileNames.has(fileName)) {
