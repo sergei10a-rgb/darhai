@@ -44,9 +44,9 @@ const SiderFooter: React.FC<SiderFooterProps> = ({
   const { t } = useTranslation();
 
   const settingsIcon = isSettings ? (
-    <ArrowLeftCircle size={20} color={iconColors.primary} className='block leading-none' style={{ lineHeight: 0 }} />
+    <ArrowLeftCircle size={18} color={iconColors.primary} className='block leading-none' style={{ lineHeight: 0 }} />
   ) : (
-    <Settings size={20} color={iconColors.primary} className='block leading-none' style={{ lineHeight: 0 }} />
+    <Settings size={18} color={iconColors.primary} className='block leading-none' style={{ lineHeight: 0 }} />
   );
   const showThemeToggle = isSettings && !collapsed;
   const themeTooltip = theme === 'dark' ? t('settings.lightMode') : t('settings.darkMode');
@@ -58,8 +58,8 @@ const SiderFooter: React.FC<SiderFooterProps> = ({
           <div
             onClick={onSettingsClick}
             className={classNames(
-              'h-40px flex items-center rd-0.5rem cursor-pointer transition-colors',
-              collapsed ? 'w-full justify-center' : 'flex-1 min-w-0 justify-start gap-8px px-10px',
+              'h-32px flex items-center rd-0.5rem cursor-pointer transition-colors',
+              collapsed ? 'w-full justify-center' : 'flex-1 min-w-0 justify-start gap-8px px-8px',
               isMobile && 'sider-footer-btn-mobile',
               {
                 'bg-[rgba(var(--primary-6),0.12)] text-primary': isSettings,
@@ -67,8 +67,8 @@ const SiderFooter: React.FC<SiderFooterProps> = ({
               }
             )}
           >
-            <span className='w-28px h-24px flex items-center justify-center shrink-0'>{settingsIcon}</span>
-            <span className='collapsed-hidden text-t-primary text-14px font-medium leading-24px truncate'>
+            <span className='w-20px h-20px flex items-center justify-center shrink-0'>{settingsIcon}</span>
+            <span className='collapsed-hidden text-t-primary text-13px font-medium leading-20px truncate'>
               {isSettings ? t('common.back') : t('common.settings')}
             </span>
           </div>
@@ -78,15 +78,15 @@ const SiderFooter: React.FC<SiderFooterProps> = ({
             <div
               onClick={onLogoutClick}
               className={classNames(
-                'h-40px flex items-center rd-0.5rem cursor-pointer transition-colors hover:bg-[rgba(var(--primary-6),0.14)] active:bg-fill-2',
-                collapsed ? 'w-full justify-center' : 'flex-1 min-w-0 justify-start gap-8px px-10px',
+                'h-32px flex items-center rd-0.5rem cursor-pointer transition-colors hover:bg-[rgba(var(--primary-6),0.14)] active:bg-fill-2',
+                collapsed ? 'w-full justify-center' : 'flex-1 min-w-0 justify-start gap-8px px-8px',
                 isMobile && 'sider-footer-btn-mobile'
               )}
             >
-              <span className='w-28px h-24px flex items-center justify-center shrink-0'>
+              <span className='w-20px h-20px flex items-center justify-center shrink-0'>
                 <LogOut size={18} color={iconColors.primary} className='block leading-none' style={{ lineHeight: 0 }} />
               </span>
-              <span className='collapsed-hidden text-t-primary text-14px font-medium leading-24px truncate'>
+              <span className='collapsed-hidden text-t-primary text-13px font-medium leading-20px truncate'>
                 {t('settings.googleLogout')}
               </span>
             </div>
@@ -102,12 +102,12 @@ const SiderFooter: React.FC<SiderFooterProps> = ({
             <div
               onClick={onThemeToggle}
               className={classNames(
-                'h-40px w-40px shrink-0 flex items-center justify-center cursor-pointer rd-0.5rem transition-colors text-t-secondary hover:bg-fill-2 hover:text-t-primary active:bg-fill-3',
+                'h-32px w-32px shrink-0 flex items-center justify-center cursor-pointer rd-0.5rem transition-colors text-t-secondary hover:bg-fill-2 hover:text-t-primary active:bg-fill-3',
                 isMobile && 'sider-footer-btn-mobile'
               )}
               aria-label={themeTooltip}
             >
-              <span className='w-28px h-28px flex items-center justify-center shrink-0'>
+              <span className='w-20px h-20px flex items-center justify-center shrink-0'>
                 {theme === 'dark' ? (
                   <Sun size={18} className='block leading-none' />
                 ) : (

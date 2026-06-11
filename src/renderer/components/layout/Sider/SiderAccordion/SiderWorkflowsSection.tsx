@@ -153,7 +153,7 @@ export const SiderWorkflowsSection: React.FC<SiderWorkflowsSectionProps> = ({ co
     return (
       <button
         type='button'
-        className='w-full h-40px flex items-center justify-center rd-7px bg-transparent border-none cursor-pointer hover:bg-fill-2 text-text-2 hover:text-text-1 relative'
+        className='w-full h-32px flex items-center justify-center rd-7px bg-transparent border-none cursor-pointer hover:bg-fill-2 text-text-2 hover:text-text-1 relative'
         onClick={() => navigate('/workflows')}
         aria-label={`Workflows (${count} in-flight)`}
         title={`Workflows · ${count} in-flight`}
@@ -182,7 +182,7 @@ export const SiderWorkflowsSection: React.FC<SiderWorkflowsSectionProps> = ({ co
     >
       {visibleInFlight.length > 0 && (
         <>
-          <div className='px-10px py-4px text-9px tracking-wide text-text-4 uppercase font-bold'>
+          <div className='px-8px py-4px text-9px tracking-wide text-text-4 uppercase font-bold'>
             {t('sider.accordion.inFlight')}
           </div>
           {visibleInFlight.map((row) => (

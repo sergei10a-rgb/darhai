@@ -72,7 +72,7 @@ const UpdateModal = React.lazy(() => import('@/renderer/components/settings/Upda
 // this is never invoked - it just satisfies the LayoutContext shape.
 const noopSetSiderCollapsed = (_value: boolean): void => {};
 
-const DEFAULT_SIDER_WIDTH = 240;
+const DEFAULT_SIDER_WIDTH = 280;
 const DESKTOP_COLLAPSED_WIDTH = 64;
 const SIDER_DRAG_SNAP_THRESHOLD = Math.round((DEFAULT_SIDER_WIDTH + DESKTOP_COLLAPSED_WIDTH) / 2);
 const SIDER_DRAG_HYSTERESIS = 6;

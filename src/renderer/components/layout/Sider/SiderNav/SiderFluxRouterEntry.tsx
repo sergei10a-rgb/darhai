@@ -190,13 +190,13 @@ const SiderFluxRouterEntry: React.FC<SiderFluxRouterEntryProps> = ({
       <Tooltip {...siderTooltipProps} content={tooltipContent} position='right'>
         <div
           className={classNames(
-            'w-full h-40px flex items-center justify-center cursor-pointer transition-colors rd-8px text-t-primary relative',
+            'w-full h-32px flex items-center justify-center cursor-pointer transition-colors rd-8px text-t-primary relative',
             'hover:bg-fill-3 active:bg-fill-4'
           )}
           onClick={handleClick}
           data-testid='sider-flux-router-entry'
         >
-          <FluxRouterMark size={20} color='currentColor' className='block leading-none shrink-0' />
+          <FluxRouterMark size={18} color='currentColor' className='block leading-none shrink-0' />
           <span
             style={{
               position: 'absolute',
@@ -223,7 +223,7 @@ const SiderFluxRouterEntry: React.FC<SiderFluxRouterEntryProps> = ({
     return (
       <div
         className={classNames(
-          'box-border w-full flex items-center gap-8px px-10px py-8px rd-0.5rem cursor-pointer shrink-0 transition-all text-t-secondary',
+          'box-border w-full flex items-center gap-8px px-8px py-8px rd-0.5rem cursor-pointer shrink-0 transition-all text-t-secondary',
           isMobile && 'sider-action-btn-mobile',
           'hover:bg-fill-3 active:bg-fill-4'
         )}
@@ -239,7 +239,7 @@ const SiderFluxRouterEntry: React.FC<SiderFluxRouterEntryProps> = ({
   return (
     <div
       className={classNames(
-        'box-border w-full flex flex-col gap-4px px-10px py-8px rd-0.5rem cursor-pointer shrink-0 transition-all text-t-primary',
+        'box-border w-full flex flex-col gap-4px px-8px py-8px rd-0.5rem cursor-pointer shrink-0 transition-all text-t-primary',
         isMobile && 'sider-action-btn-mobile',
         'hover:bg-fill-3 active:bg-fill-4'
       )}
