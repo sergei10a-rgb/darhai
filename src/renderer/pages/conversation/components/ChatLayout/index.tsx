@@ -67,10 +67,12 @@ const ChatLayout: React.FC<{
   const { conversationId, workspacePath } = props;
   const { backend, presetAssistant, agentName } = props;
   const { t } = useTranslation();
-  // #27 phase 2: in a pop-out window, hide the tab bar and the workspace panel
-  // (focused second-monitor view) and surface a Dock-back action.
+  // #27 phase 2: in a pop-out window, hide the tab bar and surface a Dock-back
+  // action. The workspace COMES WITH the chat (the conversation's workspace is
+  // its working context), so the panel + its toggle stay enabled in the pop-out;
+  // only the tab bar is removed.
   const isPopout = useIsPopoutMode();
-  const workspaceEnabled = isPopout ? false : (props.workspaceEnabled ?? true);
+  const workspaceEnabled = props.workspaceEnabled ?? true;
   const layout = useLayoutContext();
   const isMacRuntime = isMacEnvironment();
   const isWindowsRuntime = isWindowsEnvironment();
