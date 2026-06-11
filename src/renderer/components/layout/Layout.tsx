@@ -80,9 +80,12 @@ const DESKTOP_COLLAPSED_WIDTH = 64;
 const NARROW_RAIL_MAX_WIDTH = 1024;
 const SIDER_DRAG_SNAP_THRESHOLD = Math.round((DEFAULT_SIDER_WIDTH + DESKTOP_COLLAPSED_WIDTH) / 2);
 const SIDER_DRAG_HYSTERESIS = 6;
-const MOBILE_SIDER_WIDTH_RATIO = 0.67;
-const MOBILE_SIDER_MIN_WIDTH = 260;
-const MOBILE_SIDER_MAX_WIDTH = 420;
+// Overlay drawer width. Kept compact (Claude-style ~290px) rather than a big
+// fraction of the viewport - on a narrow desktop window 0.67*width ran ~420px,
+// which read as airy and oversized. A phone still gets a usable >=256px drawer.
+const MOBILE_SIDER_WIDTH_RATIO = 0.78;
+const MOBILE_SIDER_MIN_WIDTH = 256;
+const MOBILE_SIDER_MAX_WIDTH = 300;
 
 const detectMobileViewportOrTouch = (): boolean => {
   if (typeof window === 'undefined') return false;

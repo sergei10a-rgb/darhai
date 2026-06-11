@@ -284,13 +284,14 @@ const Titlebar: React.FC<TitlebarProps> = ({ workspaceAvailable }) => {
     // right: normally that's when the sider toggle shows, but a pop-out window
     // has no sider toggle yet still has traffic lights, so reserve there too.
     if (!isMacRuntime || (!showSiderToggle && !isPopout)) return {};
-    // macOS: sit the menu buttons right next to the traffic lights (which occupy ~70px).
-    // Mobile keeps its own layout (no traffic lights).
-    const marginLeft = layout?.isMobile ? '0px' : '76px';
+    // macOS: sit the menu buttons right next to the traffic lights (which occupy
+    // ~70px). This block only runs in the macOS desktop app, where the traffic
+    // lights are present at every window width - including a narrow window that
+    // trips isMobile - so always reserve the room (else the toggle overlaps them).
     return {
-      marginLeft,
+      marginLeft: '76px',
     };
-  }, [isMacRuntime, showSiderToggle, isPopout, layout?.isMobile]);
+  }, [isMacRuntime, showSiderToggle, isPopout]);
 
   return (
     <div
