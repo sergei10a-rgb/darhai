@@ -151,8 +151,34 @@ export class ConversationServiceImpl implements IConversationService {
     }
   }
 
+  /**
+   * #30: A chat created inside a project carries extra.projectId, but its
+   * workspace can arrive empty (the project route may pass an undefined project
+   * workspace). When the workspace is empty the agent factory substitutes a
+   * throwaway `wcore-temp-*` dir, so a project chat drifts off its project
+   * workspace. Fill the workspace from the project at create time. A
+   * user-chosen custom workspace is never overwritten; if the project itself
+   * has no workspace, the temp fallback still applies.
+   */
+  private async reconcileProjectWorkspace(params: CreateConversationParams): Promise<void> {
+    const extra = params.extra as Record<string, unknown> | undefined;
+    const projectId = extra?.projectId as string | undefined;
+    if (!extra || !projectId) return;
+    if (extra.customWorkspace || (typeof extra.workspace === 'string' && extra.workspace.trim())) return;
+    try {
+      const project = await new SqliteProjectRepository().getProject(projectId);
+      if (project?.workspace) extra.workspace = project.workspace;
+    } catch (err) {
+      console.error('[ConversationServiceImpl] project workspace reconcile failed:', err);
+    }
+  }
+
   async createConversation(params: CreateConversationParams): Promise<TChatConversation> {
     let conversation: TChatConversation;
+
+    // Resolve the project workspace before the factory runs, so a project chat
+    // never drifts to a temporary workspace (#30).
+    await this.reconcileProjectWorkspace(params);
 
     // Project knowledge auto-injection. When a chat is created inside a project
     // (extra.projectId), append that project's substantive .wayland/ knowledge to
