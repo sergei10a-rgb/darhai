@@ -282,6 +282,12 @@
   white-space: nowrap;
 }
 
+/* Provider on/off toggle at the far right of a connected row (#54). */
+.providerToggle {
+  flex-shrink: 0;
+  margin-left: 2px;
+}
+
 /* ---- Empty state ---- */
 .emptyState {
   background: var(--color-bg-2);

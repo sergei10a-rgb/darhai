@@ -3,11 +3,11 @@ import { Button, Input, Message, Modal, Spin, Switch, Tooltip } from '@arco-desi
 import { AlertTriangle, ChevronLeft, RefreshCw as RefreshIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { IModelRegistryProviderView } from '@/common/adapter/ipcBridge';
-import type { CatalogModel, ConnectError, CuratedModel, UsageTag } from '@process/providers/types';
+import type { ConnectError, CuratedModel, UsageTag } from '@process/providers/types';
 import { useModelRegistry } from '@renderer/hooks/useModelRegistry';
 import FluxRouterMark from '@renderer/components/icons/FluxRouterMark';
 import { providerMeta } from './providerCatalog';
-import { allVisibleEnabled, rowsToFlip } from './components/bulkToggle';
+import { allVisibleEnabled, mergeCatalogRows, rowsToFlip } from './components/bulkToggle';
 import styles from './ManageProvider.module.css';
 
 type Props = {
@@ -97,47 +97,10 @@ const ManageProvider: React.FC<Props> = ({ provider, onBack, onDisconnected }) =
     setLoadError(null);
     try {
       const view = await getCatalog(provider.providerId);
-      const fullCatalog: CatalogModel[] = Array.isArray(view?.catalog) ? view.catalog : [];
-      const curatedList: CuratedModel[] = Array.isArray(view?.curated) ? view.curated : [];
-      // Index curated flags by model id so non-curated catalog rows (image /
-      // audio / embedding) inherit empty defaults while curated text rows
-      // keep their `recommended` / `enabled` / `role` decisions.
-      const curatedById = new Map(curatedList.map((m) => [m.id, m]));
-      // If the catalog is empty but curated isn't (older backend), fall back
-      // to curated so we don't blank the page.
-      let baseRows: CuratedModel[];
-      if (fullCatalog.length > 0) {
-        baseRows = [];
-        for (const c of fullCatalog) {
-          const flagged = curatedById.get(c.id);
-          if (flagged) {
-            baseRows.push(flagged);
-          } else {
-            // Build a CuratedModel by aliasing into a new object - avoids
-            // the spread-in-map oxc warning while keeping copy-on-write.
-            const row: CuratedModel = {
-              id: c.id,
-              providerId: c.providerId,
-              displayName: c.displayName,
-              family: c.family,
-              kind: c.kind,
-              releaseDate: c.releaseDate,
-              contextWindow: c.contextWindow,
-              costInPerM: c.costInPerM,
-              costOutPerM: c.costOutPerM,
-              status: c.status,
-              enriched: c.enriched,
-              tags: Array.isArray(c.tags) ? c.tags : [],
-              recommended: false,
-              enabled: false,
-            };
-            baseRows.push(row);
-          }
-        }
-      } else {
-        baseRows = curatedList;
-      }
-      setModels(baseRows);
+      // The Manage page renders the FULL catalog joined with each row's curated
+      // `recommended` / `enabled` / `role` flags - the same merge the Models row
+      // uses for its provider on/off toggle (see `mergeCatalogRows`).
+      setModels(mergeCatalogRows(view));
     } catch (err) {
       setLoadError(err instanceof Error ? err.message : String(err));
       setModels([]);
