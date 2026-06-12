@@ -3202,6 +3202,7 @@ export type I18nKey =
   | 'settings.modelsPage.manage.rolePrevious'
   | 'settings.modelsPage.manage.searchPlaceholder'
   | 'settings.modelsPage.manage.sectionExplain'
+  | 'settings.modelsPage.manage.sectionExplainFlux'
   | 'settings.modelsPage.manage.sectionLabel'
   | 'settings.modelsPage.manage.selectAll'
   | 'settings.modelsPage.manage.statusConnected'
