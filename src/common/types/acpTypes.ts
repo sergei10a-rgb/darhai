@@ -477,6 +477,7 @@ export const ACP_BACKENDS_ALL: Record<AcpBackendAll, AcpBackendConfig> = {
     enabled: true, // ✅ Nous Research Hermes Agent, launched via `hermes acp`
     supportsStreaming: false,
     acpArgs: ['acp'], // hermes uses the acp subcommand
+    fluxCompat: 'setup',
   },
   snow: {
     id: 'snow',
