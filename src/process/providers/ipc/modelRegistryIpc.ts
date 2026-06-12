@@ -68,6 +68,7 @@ import type { CliAgentKey } from '../sources/CliAgentSource';
 import { CatalogAssembler, MODELS_DEV_PROVIDER_KEY } from '../catalog/CatalogAssembler';
 import { Curator } from '../catalog/Curator';
 import { ProviderCatalogStore, loadBaselineProviderCatalog } from '../catalog/providerCatalogStore';
+import { PROVIDER_ENDPOINTS } from '../detection/providerEndpoints';
 import type { CatalogProviderEntry } from '../catalog/catalogProvider';
 import { FLUX_PROVIDER_ID, isFluxModelId } from '@/common/config/flux';
 import { injectFluxVirtualModels } from '../catalog/fluxVirtualModels';
@@ -304,6 +305,18 @@ export function createModelRegistryHandlers(deps: ModelRegistryDeps): ModelRegis
       const out: { key: string; baseUrl?: string } = { key: creds.key };
       if (typeof creds.baseUrl === 'string' && creds.baseUrl.trim().length > 0) {
         out.baseUrl = creds.baseUrl.trim();
+      } else if (!PROVIDER_ENDPOINTS[providerId]) {
+        // Providers from the "100+ more" catalog (e.g. opencode-go) carry their
+        // endpoint in the bundled catalog, not in PROVIDER_ENDPOINTS. The connect
+        // view picks them key-only with no baseUrl, so resolve the catalog
+        // endpoint here - otherwise the connection test has no endpoint to probe
+        // and always fails "unknown", and inference would have no base URL. (#63)
+        try {
+          const entry = (await getProviderCatalog()).find((e) => e.id === providerId);
+          if (entry?.baseUrl) out.baseUrl = entry.baseUrl;
+        } catch {
+          /* non-fatal: fall through with no baseUrl */
+        }
       }
       return out;
     }

@@ -268,6 +268,20 @@ describe('modelRegistry IPC - connect', () => {
     expect(repo.getRegistryCatalog('openai').map((m) => m.id)).toEqual(['gpt-4o']);
   });
 
+  it('threads the catalog baseUrl when a catalog provider has no hardcoded endpoint (#63)', async () => {
+    const { deps, test } = makeFakes();
+    const h = createModelRegistryHandlers(deps);
+
+    // opencode-go is a "100+ more" catalog provider (no PROVIDER_ENDPOINTS entry);
+    // its endpoint must be resolved from the bundled catalog or the connection
+    // test has no URL to probe and always fails "unknown".
+    await h.connect({ providerId: 'opencode-go' as ProviderId, creds: { key: 'sk-test' } });
+
+    const call = test.mock.calls.find((c) => c[0] === 'opencode-go');
+    expect(call).toBeDefined();
+    expect(call?.[2]).toBe('https://opencode.ai/zen/go/v1');
+  });
+
   it('returns the ConnectError and does not persist when the test fails', async () => {
     const { deps, repo } = makeFakes({ testResult: { ok: false, error: 'unauthorized' } });
     const h = createModelRegistryHandlers(deps);
