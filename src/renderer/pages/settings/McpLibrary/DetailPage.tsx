@@ -157,6 +157,26 @@ export function DetailPage() {
     redirectUri: string;
   }>({ visible: false, server: null, redirectUri: 'http://localhost:57000/oauth/callback' });
 
+  // Steps the user has completed (beyond static autoCompletedByInstall):
+  // - any step whose primaryAction is 'oauth-flow' when the server has a
+  //   valid token and isn't asking for re-login.
+  // MUST run before the `!entry` early return below: the catalog library
+  // lazy-loads, so `entry` is briefly undefined on a hard navigation to a
+  // detail route. A hook after the early return changes the hook count
+  // between renders -> "Rendered fewer hooks than expected" crash.
+  const completedStepIds = useMemo(() => {
+    const done = new Set<string>();
+    if (!guide || !installedServer) return done;
+    const oauth = oauthStatus[installedServer.id];
+    const oauthDone = installedServer.enabled === true && oauth?.needsLogin !== true;
+    if (oauthDone) {
+      for (const step of guide.steps) {
+        if (step.primaryAction?.action === 'oauth-flow') done.add(step.id);
+      }
+    }
+    return done;
+  }, [guide, installedServer, oauthStatus]);
+
   if (!entry) return <div className="mcp-detail-page">Unknown entry: {id}</div>;
 
   const w = entry['x-wayland'];
@@ -353,22 +373,6 @@ export function DetailPage() {
         : t('mcpLibrary.install.button', 'Install');
 
   const oauthInFlight = installedServer ? !!loggingIn[installedServer.id] : false;
-
-  // Steps the user has completed (beyond static autoCompletedByInstall):
-  // - any step whose primaryAction is 'oauth-flow' when the server has a
-  //   valid token and isn't asking for re-login.
-  const completedStepIds = useMemo(() => {
-    const done = new Set<string>();
-    if (!guide || !installedServer) return done;
-    const oauth = oauthStatus[installedServer.id];
-    const oauthDone = installedServer.enabled === true && oauth?.needsLogin !== true;
-    if (oauthDone) {
-      for (const step of guide.steps) {
-        if (step.primaryAction?.action === 'oauth-flow') done.add(step.id);
-      }
-    }
-    return done;
-  }, [guide, installedServer, oauthStatus]);
 
   return (
     <div className="mcp-detail-page">
