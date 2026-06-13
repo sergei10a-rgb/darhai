@@ -102,23 +102,35 @@ describe('PasteService.handlePaste - filename deduplication', () => {
   });
 
   it('assigns unique filenames when pasting multiple images with the same generated name', async () => {
-    // Two system-generated screenshots pasted at the same time
-    // Names matching /^[a-zA-Z]?_?\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}/ are detected as system-generated
-    const file1 = createImageFile('a_2026-03-30_14-30-25.png');
-    const file2 = createImageFile('b_2026-03-30_14-30-25.png');
+    // Both screenshots are system-generated, so PasteService rebuilds their
+    // names as `pasted_image_<timeStr>` from `new Date()` (computed per file).
+    // That millisecond-precision timestamp normally differs between the two
+    // files, so freeze the clock (Date only - real timers/promises still run)
+    // to force the SAME base name. That collision is exactly what the `_2`
+    // dedup path resolves; without the freeze the dedup never runs and this
+    // test is timing-flaky.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-03-30T14:30:25.123Z'));
+    try {
+      // Names matching /^[a-zA-Z]?_?\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}/ are detected as system-generated
+      const file1 = createImageFile('a_2026-03-30_14-30-25.png');
+      const file2 = createImageFile('b_2026-03-30_14-30-25.png');
 
-    const event = createMockClipboardEvent([file1, file2]);
-    const addedFiles: FileMetadata[] = [];
+      const event = createMockClipboardEvent([file1, file2]);
+      const addedFiles: FileMetadata[] = [];
 
-    await PasteService.handlePaste(event, [], (files) => {
-      addedFiles.push(...files);
-    });
+      await PasteService.handlePaste(event, [], (files) => {
+        addedFiles.push(...files);
+      });
 
-    expect(addedFiles).toHaveLength(2);
-    // The two files must have different names
-    expect(addedFiles[0].name).not.toBe(addedFiles[1].name);
-    // Second file should have _2 suffix
-    expect(addedFiles[1].name).toMatch(/_2\.png$/);
+      expect(addedFiles).toHaveLength(2);
+      // The two files must have different names
+      expect(addedFiles[0].name).not.toBe(addedFiles[1].name);
+      // Second file should have _2 suffix
+      expect(addedFiles[1].name).toMatch(/_2\.png$/);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('keeps original names when they are already unique', async () => {
