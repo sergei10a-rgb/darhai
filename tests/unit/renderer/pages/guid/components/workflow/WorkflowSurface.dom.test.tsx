@@ -177,11 +177,9 @@ vi.mock('@arco-design/web-react', () => ({
       Group: ({
         children,
         value,
-        onChange,
       }: {
         children?: React.ReactNode;
         value?: string;
-        onChange?: (v: string) => void;
       }) => (
         <div data-testid='mock-radio-group' data-value={value}>
           {children}
@@ -433,22 +431,22 @@ describe('WorkflowSurface', () => {
   });
 
   it('renders WorkflowCompleteCard instead of the rail when status === "complete"', () => {
-    const onRunAgain = vi.fn();
-    const onLaunchNext = vi.fn();
+    const onLaunchWorkflow = vi.fn();
     renderPostOverlay(buildSession({ status: 'complete', completed_at: NOW }), {
-      onRunAgain,
-      onLaunchNext,
+      onLaunchWorkflow,
       suggestedNext: [{ slug: 'next-wf', display: 'Next Workflow' }],
     });
 
     expect(screen.getByTestId('mock-workflow-complete')).toBeTruthy();
     expect(screen.queryByTestId('mock-workflow-rail')).toBeNull();
 
+    // "Run again" relaunches THIS session's own workflow by name (#82).
     fireEvent.click(screen.getByText('run-again'));
-    expect(onRunAgain).toHaveBeenCalledTimes(1);
+    expect(onLaunchWorkflow).toHaveBeenCalledWith('automate-business-workflows');
 
+    // "Up next" relaunches the suggested slug.
     fireEvent.click(screen.getByText('launch-next'));
-    expect(onLaunchNext).toHaveBeenCalledWith('next-wf');
+    expect(onLaunchWorkflow).toHaveBeenCalledWith('next-wf');
 
     expect(completeCalls[0].suggestedNext).toEqual([{ slug: 'next-wf', display: 'Next Workflow' }]);
   });

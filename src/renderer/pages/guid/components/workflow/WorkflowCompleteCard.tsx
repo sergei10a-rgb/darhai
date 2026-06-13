@@ -8,8 +8,15 @@
  * WorkflowCompleteCard - replaces the step rail when a workflow session
  * reaches `status === 'complete'`. Surfaces the duration + step count
  * (and optional token/cost), up to 3 markdown-rendered "key outputs" the
- * W4 integration extracts from agent messages, the two terminal CTAs
- * (`Save this run`, `Run again`), and up to 3 suggested next workflows.
+ * W4 integration extracts from agent messages, the terminal `Run again`
+ * CTA, and up to 3 suggested next workflows.
+ *
+ * The SPEC's §5.5 originally paired `Run again` with a `Save this run`
+ * button that "pins to Recents with a workflow tag" - but the gap audit
+ * (SPEC MUST-4 / CUTS) concluded "Save is undefined" because the run's
+ * conversation is already auto-persisted and shows up in Recents. That
+ * pin feature was never built, so the button was a no-op (issue #82).
+ * Dropped it; `Run again` is now the single primary CTA.
  *
  * See SPEC §5.5 (`.planning/brainstorm/2026-05-25-workflow-launch-surface/SPEC.md`).
  */
@@ -34,7 +41,6 @@ export type WorkflowCompleteCardProps = {
   keyOutputs?: string[];
   /** Suggested follow-up workflows (slug + display name). */
   suggestedNext?: Array<{ slug: string; display: string }>;
-  onSaveRun: () => void;
   onRunAgain: () => void;
   onLaunchNext: (slug: string) => void;
 };
@@ -65,7 +71,6 @@ export const WorkflowCompleteCard: React.FC<WorkflowCompleteCardProps> = ({
   totalCostCents,
   keyOutputs,
   suggestedNext,
-  onSaveRun,
   onRunAgain,
   onLaunchNext,
 }) => {
@@ -132,10 +137,7 @@ export const WorkflowCompleteCard: React.FC<WorkflowCompleteCardProps> = ({
       ) : null}
 
       <div className={styles.ctaRow}>
-        <Button type='primary' onClick={onSaveRun}>
-          {t('workflow.complete.save', 'Save this run')}
-        </Button>
-        <Button type='secondary' onClick={onRunAgain}>
+        <Button type='primary' onClick={onRunAgain}>
           {t('workflow.complete.runAgain', 'Run again')}
         </Button>
       </div>

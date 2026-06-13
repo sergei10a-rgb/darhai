@@ -63,10 +63,12 @@ export type WorkflowSurfaceProps = {
   children: React.ReactNode;
   /** Suggested next workflows for the Complete card. Optional - caller can derive from category. */
   suggestedNext?: Array<{ slug: string; display: string }>;
-  /** Fired when the user picks "Run again" on the Complete card. */
-  onRunAgain?: () => void;
-  /** Fired when the user clicks a suggested-next card. */
-  onLaunchNext?: (slug: string) => void;
+  /**
+   * Launch a workflow by its slug/name. Backs both Complete-card CTAs:
+   * "Run again" passes this session's own `workflow_name`, "Up next" passes
+   * the suggested slug. The caller (ChatConversation) routes to the launcher.
+   */
+  onLaunchWorkflow?: (workflowName: string) => void;
 };
 
 const isFreshLaunch = (session: WorkflowSession): boolean => {
@@ -94,8 +96,7 @@ export const WorkflowSurface: React.FC<WorkflowSurfaceProps> = ({
   initialSession,
   children,
   suggestedNext,
-  onRunAgain,
-  onLaunchNext,
+  onLaunchWorkflow,
 }) => {
   const { t } = useTranslation();
   const session = useWorkflowSession(sessionId, initialSession);
@@ -511,11 +512,8 @@ export const WorkflowSurface: React.FC<WorkflowSurfaceProps> = ({
               <WorkflowCompleteCard
                 session={data}
                 suggestedNext={suggestedNext}
-                onSaveRun={() => {
-                  // Save-run defaults to no-op for v1; W4 wires persistence.
-                }}
-                onRunAgain={() => onRunAgain?.()}
-                onLaunchNext={(slug) => onLaunchNext?.(slug)}
+                onRunAgain={() => onLaunchWorkflow?.(data.workflow_name)}
+                onLaunchNext={(slug) => onLaunchWorkflow?.(slug)}
               />
             ) : (
               <WorkflowStepRail session={data} needsInput={needsInput} onJumpToStep={handleJumpToStep}>

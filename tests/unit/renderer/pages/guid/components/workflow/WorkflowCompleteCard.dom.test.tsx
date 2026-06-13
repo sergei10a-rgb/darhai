@@ -91,7 +91,6 @@ describe('WorkflowCompleteCard', () => {
     const { container } = render(
       <WorkflowCompleteCard
         session={baseSession({ steps: baseSession().steps.slice(0, 3) })}
-        onSaveRun={vi.fn()}
         onRunAgain={vi.fn()}
         onLaunchNext={vi.fn()}
       />
@@ -111,7 +110,6 @@ describe('WorkflowCompleteCard', () => {
     const { container } = render(
       <WorkflowCompleteCard
         session={baseSession()}
-        onSaveRun={vi.fn()}
         onRunAgain={vi.fn()}
         onLaunchNext={vi.fn()}
       />
@@ -130,7 +128,6 @@ describe('WorkflowCompleteCard', () => {
         session={baseSession()}
         totalTokens={12_500}
         totalCostCents={42}
-        onSaveRun={vi.fn()}
         onRunAgain={vi.fn()}
         onLaunchNext={vi.fn()}
       />
@@ -149,7 +146,6 @@ describe('WorkflowCompleteCard', () => {
           created_at: NOW - (2 * 3600 + 5 * 60) * 1000,
           completed_at: NOW,
         })}
-        onSaveRun={vi.fn()}
         onRunAgain={vi.fn()}
         onLaunchNext={vi.fn()}
       />
@@ -163,7 +159,6 @@ describe('WorkflowCompleteCard', () => {
     render(
       <WorkflowCompleteCard
         session={baseSession()}
-        onSaveRun={vi.fn()}
         onRunAgain={vi.fn()}
         onLaunchNext={vi.fn()}
       />
@@ -177,7 +172,6 @@ describe('WorkflowCompleteCard', () => {
       <WorkflowCompleteCard
         session={baseSession()}
         keyOutputs={['First output paragraph', 'Second output paragraph', 'Third output', 'Fourth (should not render)']}
-        onSaveRun={vi.fn()}
         onRunAgain={vi.fn()}
         onLaunchNext={vi.fn()}
       />
@@ -195,7 +189,6 @@ describe('WorkflowCompleteCard', () => {
     render(
       <WorkflowCompleteCard
         session={baseSession()}
-        onSaveRun={vi.fn()}
         onRunAgain={vi.fn()}
         onLaunchNext={vi.fn()}
       />
@@ -214,7 +207,6 @@ describe('WorkflowCompleteCard', () => {
           { slug: 'ship-a-newsletter', display: 'Ship A Newsletter' },
           { slug: 'plan-a-quarter', display: 'Plan A Quarter' },
         ]}
-        onSaveRun={vi.fn()}
         onRunAgain={vi.fn()}
         onLaunchNext={onLaunchNext}
       />
@@ -227,19 +219,16 @@ describe('WorkflowCompleteCard', () => {
     expect(onLaunchNext).toHaveBeenCalledWith('ship-a-newsletter');
   });
 
-  it('fires onSaveRun when "Save this run" is clicked', () => {
-    const onSaveRun = vi.fn();
+  it('no longer renders the dead "Save this run" CTA (#82)', () => {
     render(
       <WorkflowCompleteCard
         session={baseSession()}
-        onSaveRun={onSaveRun}
         onRunAgain={vi.fn()}
         onLaunchNext={vi.fn()}
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /Save this run/i }));
-    expect(onSaveRun).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('button', { name: /Save this run/i })).toBeNull();
   });
 
   it('fires onRunAgain when "Run again" is clicked', () => {
@@ -247,7 +236,6 @@ describe('WorkflowCompleteCard', () => {
     render(
       <WorkflowCompleteCard
         session={baseSession()}
-        onSaveRun={vi.fn()}
         onRunAgain={onRunAgain}
         onLaunchNext={vi.fn()}
       />
@@ -264,7 +252,6 @@ describe('WorkflowCompleteCard', () => {
           completed_at: null,
           created_at: NOW - 90 * 1000, // 1m 30s ago
         })}
-        onSaveRun={vi.fn()}
         onRunAgain={vi.fn()}
         onLaunchNext={vi.fn()}
       />

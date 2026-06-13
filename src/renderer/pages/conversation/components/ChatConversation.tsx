@@ -64,12 +64,6 @@ const WORKFLOW_GEMINI_MODEL_SELECTION: GeminiModelSelection = {
   handleSelectModel: async () => {},
 };
 
-/** Check whether a specific skill is loaded for the conversation */
-const hasLoadedSkill = (conversation: TChatConversation | undefined, skillName: string): boolean => {
-  const loadedSkills = (conversation?.extra as { loadedSkills?: Array<{ name: string }> })?.loadedSkills;
-  return loadedSkills?.some((s) => s.name === skillName) ?? false;
-};
-
 const _AssociatedConversation: React.FC<{ conversation_id: string }> = ({ conversation_id }) => {
   const { data } = useSWR(['getAssociateConversation', conversation_id], () =>
     ipcBridge.conversation.getAssociateConversation.invoke({ conversation_id })
@@ -283,7 +277,19 @@ const ChatConversation: React.FC<{
   const { t } = useTranslation();
   const { openPreview } = usePreviewContext();
   const location = useLocation();
+  const navigate = useNavigate();
   const workspaceEnabled = Boolean(conversation?.extra?.workspace);
+
+  // Complete-card CTAs ("Run again" / "Up next") launch a workflow by name.
+  // Route to the library launcher deeplink (mirrors `/scheduled?workflow=`)
+  // so the user lands on the pre-opened detail modal with the agent/model
+  // picker and remembered selection, one click from a fresh run (issue #82).
+  const handleLaunchWorkflow = useCallback(
+    (workflowName: string) => {
+      void navigate(`/workflows?workflow=${encodeURIComponent(workflowName)}`);
+    },
+    [navigate]
+  );
 
   // Resolve workflowSessionId from router state (preferred - present on first
   // navigation) then fall back to the persisted extra field (survives refresh).
@@ -479,7 +485,7 @@ const ChatConversation: React.FC<{
           conversationId={wcoreConv.id}
           hideHeader={true}
         >
-          <WorkflowSurface sessionId={workflowSessionId} initialSession={initialWorkflowSession}>
+          <WorkflowSurface sessionId={workflowSessionId} initialSession={initialWorkflowSession} onLaunchWorkflow={handleLaunchWorkflow}>
             {wcoreChatNode}
           </WorkflowSurface>
         </ChatLayout>
@@ -513,7 +519,7 @@ const ChatConversation: React.FC<{
           conversationId={geminiConv.id}
           hideHeader={true}
         >
-          <WorkflowSurface sessionId={workflowSessionId} initialSession={initialWorkflowSession}>
+          <WorkflowSurface sessionId={workflowSessionId} initialSession={initialWorkflowSession} onLaunchWorkflow={handleLaunchWorkflow}>
             {geminiChatNode}
           </WorkflowSurface>
         </ChatLayout>
@@ -532,7 +538,7 @@ const ChatConversation: React.FC<{
         conversationId={conversation?.id}
         hideHeader={true}
       >
-        <WorkflowSurface sessionId={workflowSessionId} initialSession={initialWorkflowSession}>
+        <WorkflowSurface sessionId={workflowSessionId} initialSession={initialWorkflowSession} onLaunchWorkflow={handleLaunchWorkflow}>
           {conversationNode}
         </WorkflowSurface>
       </ChatLayout>
