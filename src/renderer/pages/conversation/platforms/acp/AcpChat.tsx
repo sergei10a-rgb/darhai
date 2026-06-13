@@ -11,6 +11,7 @@ import type { StepStatus, StepTransitionSource } from '@/common/types/workflowTy
 import AcpAuthFailureCard from '@/renderer/components/activation/AcpAuthFailureCard';
 import { emitter, useAddEventListener } from '@/renderer/utils/emitter';
 import { FLUX_AUTO_MODEL } from '@/common/config/flux';
+import { useFluxConnected } from '@/renderer/hooks/useFluxConnected';
 import { routeThroughFluxAndReplay, type FluxFailoverTurn } from './acpFluxFailover';
 import { copyText } from '@/renderer/utils/ui/clipboard';
 import { Message } from '@arco-design/web-react';
@@ -66,6 +67,9 @@ const AcpChat: React.FC<{
   // The turn that triggered the auth-failure card, captured so the Flux failover
   // can replay it after the backend reconnects.
   const pendingTurnRef = useRef<FluxFailoverTurn | null>(null);
+  // When Flux is already connected, the failover skips the browser OAuth and
+  // routes straight away; only an unconnected user needs the one-click sign-in.
+  const fluxConnected = useFluxConnected();
 
   useAddEventListener(
     'acp.auth.failed.card',
@@ -95,7 +99,8 @@ const AcpChat: React.FC<{
     await routeThroughFluxAndReplay({
       conversationId: conversation_id,
       pendingTurn: pendingTurnRef.current,
-      connectFlux: () => ipcBridge.onboarding.connectFlux.invoke(),
+      connectFlux: () =>
+        fluxConnected ? Promise.resolve({ ok: true }) : ipcBridge.onboarding.connectFlux.invoke(),
       switchToFlux: async (cid) => {
         const res = await ipcBridge.acpConversation.setModel.invoke({ conversationId: cid, modelId: FLUX_AUTO_MODEL });
         return res.success === true;
@@ -106,7 +111,7 @@ const AcpChat: React.FC<{
         setAuthRemedy(null);
       },
     });
-  }, [conversation_id]);
+  }, [conversation_id, fluxConnected]);
 
   const onCliLogin = useCallback(async () => {
     if (!authRemedy?.cliLoginCmd) return;
