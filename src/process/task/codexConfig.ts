@@ -6,6 +6,7 @@
 
 import { isCodexNoSandboxMode } from '@/common/types/codex/codexModes';
 import { FLUX_AUTO_MODEL, FLUX_SURFACE } from '@/common/config/flux';
+import { parse as parseToml, stringify as stringifyToml } from 'smol-toml';
 import { mkdir, readFile, writeFile } from 'fs/promises';
 import { homedir } from 'os';
 import { dirname, join, posix, win32 } from 'path';
@@ -95,14 +96,38 @@ export async function writeCodexSandboxMode(sandboxMode: CodexSandboxMode): Prom
  * `app.getPath('userData')`); kept as a parameter so this stays unit-testable
  * without importing electron here.
  */
+/**
+ * Read the user's real codex `[mcp_servers]` table so a Flux-routed spawn keeps
+ * the user's MCP tools (#56: the scoped CODEX_HOME otherwise has none, so codex
+ * loses every MCP server when routed through Flux). We copy the table verbatim
+ * from the user's own config.toml - codex itself wrote it via `codex mcp add`,
+ * so the format is correct by construction; we never hand-author codex TOML.
+ * Returns {} on any failure (missing file / parse error) so Flux routing still
+ * works - MCP injection is best-effort, never a hard dependency.
+ */
+async function readUserCodexMcpServers(userConfigPath: string): Promise<Record<string, unknown>> {
+  try {
+    const raw = await readFile(userConfigPath, 'utf8');
+    const parsed = parseToml(raw) as { mcp_servers?: Record<string, unknown> };
+    const servers = parsed.mcp_servers;
+    if (servers && typeof servers === 'object' && Object.keys(servers).length > 0) {
+      return servers;
+    }
+  } catch {
+    // no user config / unreadable / invalid TOML - degrade to no MCP.
+  }
+  return {};
+}
+
 export async function materializeFluxCodexHome(
   userDataDir: string,
   sandboxMode: SupportedCodexSandboxMode = 'workspace-write',
-  baseURL: string = FLUX_SURFACE.responses
+  baseURL: string = FLUX_SURFACE.responses,
+  userConfigPath: string = getCodexConfigPath()
 ): Promise<string> {
   const codexHomeDir = join(userDataDir, 'flux-codex-home');
   const configPath = join(codexHomeDir, 'config.toml');
-  const content = [
+  let content = [
     '# Wayland-managed CODEX_HOME for Flux-routed codex spawns.',
     "# Selects Flux globally within this scoped home; the user's real ~/.codex",
     '# config is never modified. Regenerated on each Flux-routed spawn.',
@@ -119,6 +144,14 @@ export async function materializeFluxCodexHome(
     'wire_api = "responses"',
     '',
   ].join('\n');
+
+  // #56: carry the user's MCP servers into the scoped home so flux-routed codex
+  // keeps its tools. Appended (the flux block above is byte-identical to before),
+  // library-serialized from the user's own table - so Flux routing cannot regress.
+  const mcpServers = await readUserCodexMcpServers(userConfigPath);
+  if (Object.keys(mcpServers).length > 0) {
+    content += `${stringifyToml({ mcp_servers: mcpServers })}\n`;
+  }
 
   await mkdir(codexHomeDir, { recursive: true });
   await writeFile(configPath, content, 'utf8');
