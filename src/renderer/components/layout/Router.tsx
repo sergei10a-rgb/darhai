@@ -24,9 +24,6 @@ const ImageGenSettings = React.lazy(() => import('@renderer/pages/settings/Image
 const McpLibraryBrowsePage = React.lazy(() =>
   import('@renderer/pages/settings/McpLibrary').then((m) => ({ default: m.BrowsePage }))
 );
-const McpLibraryInstalledPage = React.lazy(() =>
-  import('@renderer/pages/settings/McpLibrary').then((m) => ({ default: m.InstalledPage }))
-);
 const McpLibraryDetailPage = React.lazy(() =>
   import('@renderer/pages/settings/McpLibrary').then((m) => ({ default: m.DetailPage }))
 );
@@ -131,16 +128,18 @@ const PanelRoute: React.FC<{ layout: React.ReactElement }> = ({ layout }) => {
             <Route path='/settings/channels' element={withRouteFallback(ChannelsIndex)} />
             <Route path='/settings/channels/:id' element={withRouteFallback(ChannelDetailPage)} />
             {/* Legacy `/settings/mcp` route - the old McpSettings page was
-              removed in P8; redirect to the new MCP Library Installed view so
+              removed in P8; redirect to the new MCP Library Browse view so
               bookmarks still land somewhere useful. */}
-            <Route path='/settings/mcp' element={<Navigate to='/settings/mcp-library/installed' replace />} />
-            {/* MCP Library - new catalog-driven Browse / Installed / Detail surface. */}
+            <Route path='/settings/mcp' element={<Navigate to='/settings/mcp-library/browse' replace />} />
+            {/* MCP Library - new catalog-driven Browse / Detail surface.
+              The standalone Installed page was replaced by the rail's
+              Installed filter on Browse; its route now redirects there. */}
             <Route path='/settings/mcp-library' element={<Navigate to='/settings/mcp-library/browse' replace />} />
             <Route path='/settings/mcp-library/browse' element={withRouteFallback(McpLibraryBrowsePage)} />
-            <Route path='/settings/mcp-library/installed' element={withRouteFallback(McpLibraryInstalledPage)} />
+            <Route path='/settings/mcp-library/installed' element={<Navigate to='/settings/mcp-library/browse' replace />} />
             <Route path='/settings/mcp-library/:entryId' element={withRouteFallback(McpLibraryDetailPage)} />
-            {/* Legacy redirect - old `/settings/tools/mcp` route now lands on Installed. */}
-            <Route path='/settings/tools/mcp' element={<Navigate to='/settings/mcp-library/installed' replace />} />
+            {/* Legacy redirect - old `/settings/tools/mcp` route now lands on Browse. */}
+            <Route path='/settings/tools/mcp' element={<Navigate to='/settings/mcp-library/browse' replace />} />
             {/* APPEARANCE */}
             <Route path='/settings/theme' element={withRouteFallback(DisplaySettings)} />
             <Route path='/settings/editor' element={withRouteFallback(EditorSettings)} />

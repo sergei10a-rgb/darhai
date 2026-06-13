@@ -4,6 +4,7 @@ import { ExternalLink } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import MarkdownView from '@renderer/components/Markdown';
 import { openExternalUrl } from '@renderer/utils/platform';
+import styles from './ByoCredentialsModal.module.css';
 
 export interface ByoVendorHint {
   /** URL of the vendor's "create OAuth app" console (e.g. https://api.slack.com/apps). */
@@ -89,13 +90,13 @@ export function ByoCredentialsModal({
       autoFocus
       simple={false}
     >
-      <div className="mcp-byo-body">
+      <div className={styles.body}>
         {vendorHint?.guide ? (
-          <div className="mcp-byo-vendor-guide">
+          <div className={styles.vendorGuide}>
             <MarkdownView>{vendorHint.guide}</MarkdownView>
           </div>
         ) : (
-          <div className="mcp-byo-universal-guide">
+          <div className={styles.universalGuide}>
             <p>
               {t(
                 'mcpLibrary.byo.universalIntro',
@@ -109,7 +110,7 @@ export function ByoCredentialsModal({
         {vendorHint?.registrationUrl && (
           <button
             type="button"
-            className="mcp-byo-open-console"
+            className={styles.openConsole}
             onClick={() => void openExternalUrl(vendorHint.registrationUrl)}
           >
             <ExternalLink size={14} />
@@ -117,14 +118,14 @@ export function ByoCredentialsModal({
           </button>
         )}
 
-        <div className="mcp-byo-redirect">
-          <div className="mcp-byo-redirect-label">
+        <div className={styles.redirect}>
+          <div className={styles.redirectLabel}>
             {t('mcpLibrary.byo.redirectLabel', 'Redirect URI to paste in the vendor console:')}
           </div>
-          <code className="mcp-byo-redirect-uri">{redirectUri}</code>
+          <code className={styles.redirectUri}>{redirectUri}</code>
         </div>
 
-        <div className="mcp-byo-input">
+        <div className={styles.input}>
           <label htmlFor="mcp-byo-client-id">
             {t('mcpLibrary.byo.clientIdLabel', 'Client ID')}
           </label>
@@ -140,7 +141,7 @@ export function ByoCredentialsModal({
         </div>
 
         {requiresSecret && (
-          <div className="mcp-byo-input">
+          <div className={styles.input}>
             <label htmlFor="mcp-byo-client-secret">
               {t('mcpLibrary.byo.clientSecretLabel', 'Client secret')}
             </label>

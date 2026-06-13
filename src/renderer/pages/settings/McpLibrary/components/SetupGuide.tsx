@@ -1,8 +1,10 @@
 import React from 'react';
+import classNames from 'classnames';
 import { Check, ExternalLink } from 'lucide-react';
 import MarkdownView from '@renderer/components/Markdown';
 import { openExternalUrl } from '@renderer/utils/platform';
 import type { SetupGuide as GuideT, SetupStep } from '../types';
+import styles from './SetupGuide.module.css';
 
 interface Props {
   guide: GuideT;
@@ -23,26 +25,29 @@ function StepCard({
 }: Props & { step: SetupStep; idx: number }) {
   const done = !!step.autoCompletedByInstall || (completedStepIds?.has(step.id) ?? false);
   return (
-    <div className={`mcp-step ${done ? 'is-done' : ''}`} data-step-id={step.id}>
-      <div className="mcp-step-num">{done ? <Check size={14} /> : idx + 1}</div>
-      <div className="mcp-step-body">
-        <div className="mcp-step-title">
+    <div
+      className={classNames(styles.step, { [styles.isDone]: done })}
+      data-step-id={step.id}
+    >
+      <div className={styles.stepNum}>{done ? <Check size={14} /> : idx + 1}</div>
+      <div className={styles.stepBody}>
+        <div className={styles.stepTitle}>
           {step.title}
           {step.estSeconds ? (
-            <span className="mcp-step-est">
+            <span className={styles.stepEst}>
               {' '}
               {Math.max(1, Math.round(step.estSeconds / 60))} min
             </span>
           ) : null}
         </div>
         {step.body && (
-          <div className="mcp-step-body-md">
+          <div className={styles.stepBodyMd}>
             <MarkdownView>{step.body}</MarkdownView>
           </div>
         )}
         {step.externalAction && (
           <button
-            className="mcp-open-link"
+            className={styles.openLink}
             onClick={() => {
               void openExternalUrl(step.externalAction!.url);
             }}
@@ -52,7 +57,7 @@ function StepCard({
         )}
         {step.inputs &&
           step.inputs.map((inp) => (
-            <div className="mcp-step-input" key={inp.name}>
+            <div className={styles.stepInput} key={inp.name}>
               <label htmlFor={`mcp-input-${inp.name}`}>{inp.label}</label>
               <input
                 id={`mcp-input-${inp.name}`}
@@ -63,10 +68,10 @@ function StepCard({
               />
             </div>
           ))}
-        {step.warning && <div className="mcp-step-warn">{step.warning}</div>}
+        {step.warning && <div className={styles.stepWarn}>{step.warning}</div>}
         {step.primaryAction && (
           <button
-            className="mcp-step-primary"
+            className={styles.stepPrimary}
             onClick={() => onPrimary(step.primaryAction!.action)}
           >
             {step.primaryAction.label}
@@ -79,7 +84,7 @@ function StepCard({
 
 export function SetupGuide(props: Props) {
   return (
-    <div className="mcp-setup-guide">
+    <div className={styles.setupGuide}>
       {props.guide.steps.map((step, idx) => (
         <StepCard key={step.id} step={step} idx={idx} {...props} />
       ))}
