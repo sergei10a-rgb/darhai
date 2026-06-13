@@ -36,7 +36,13 @@ interface EventTypes {
    * CLI login command).
    */
   'acp.auth.failed.card': [
-    { conversation_id: string; backend: string; pendingInput?: string; pendingFiles?: string[] },
+    {
+      conversation_id: string;
+      backend: string;
+      pendingInput?: string;
+      pendingFiles?: string[];
+      fluxAlreadyRouted?: boolean;
+    },
   ];
   /**
    * Fired by AcpChat after a successful Flux failover. AcpSendBox listens and
@@ -51,7 +57,13 @@ interface EventTypes {
    * to re-key that specific provider.
    */
   'wcore.auth.failed.card': [
-    { conversation_id: string; providerLabel?: string; pendingInput?: string; pendingFiles?: string[] },
+    {
+      conversation_id: string;
+      providerLabel?: string;
+      pendingInput?: string;
+      pendingFiles?: string[];
+      fluxAlreadyRouted?: boolean;
+    },
   ];
   /** Fired by WCoreChat after a successful Flux failover; WCoreSendBox replays the failed turn. */
   'wcore.flux.replay': [{ conversation_id: string; input: string; files: string[] }];

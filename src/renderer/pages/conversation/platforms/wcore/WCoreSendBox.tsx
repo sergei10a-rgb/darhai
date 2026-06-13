@@ -39,12 +39,13 @@ import { buildDisplayMessage, collectSelectedFiles } from '@/renderer/utils/file
 import { mergeWithCapabilities, type AgentModeOption } from '@/renderer/utils/model/agentModes';
 import { getModelContextLimit } from '@/renderer/utils/model/modelContextLimits';
 import { Message, Tag } from '@arco-design/web-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useWCoreMessage } from './useWCoreMessage';
 import type { WCoreModelSelection } from './useWCoreModelSelection';
 import type { IResponseMessage } from '@/common/adapter/ipcBridge';
 import { classifyAcpAuthFailure } from '@/renderer/pages/conversation/platforms/acp/acpAuthFailure';
+import { isFluxModelId } from '@/common/config/flux';
 
 const useWCoreSendBoxDraft = getSendBoxDraftHook('wcore', {
   _type: 'wcore',
@@ -98,6 +99,10 @@ const WCoreSendBox: React.FC<{
 }> = ({ conversation_id, modelSelection, teamId, agentSlotId, sessionMode }) => {
   const [workspacePath, setWorkspacePath] = useState('');
   const [dynamicModes, setDynamicModes] = useState<AgentModeOption[]>([]);
+  // The most recent turn dispatched, kept so the Flux failover can replay it.
+  // WCore's 401 arrives asynchronously via the stream (onError), where the
+  // original input is no longer in scope - so we stash it at send time.
+  const lastSentRef = useRef<{ input: string; files: string[]; msg_id: string } | null>(null);
   const { t } = useTranslation();
   const { checkAndUpdateTitle } = useAutoTitle();
   const { currentModel, getDisplayModelName } = modelSelection;
@@ -114,10 +119,16 @@ const WCoreSendBox: React.FC<{
     (message: IResponseMessage) => {
       const text = typeof message.data === 'string' ? message.data : String(message.data ?? '');
       if (classifyAcpAuthFailure('wcore', text)) {
-        emitter.emit('wcore.auth.failed.card', { conversation_id, providerLabel: currentModel?.name });
+        emitter.emit('wcore.auth.failed.card', {
+          conversation_id,
+          providerLabel: currentModel?.name,
+          pendingInput: lastSentRef.current?.input,
+          pendingFiles: lastSentRef.current?.files,
+          fluxAlreadyRouted: isFluxModelId(currentModel?.useModel),
+        });
       }
     },
-    [conversation_id, currentModel?.name]
+    [conversation_id, currentModel?.name, currentModel?.useModel]
   );
 
   const { thought, running, hasHydratedRunningState, tokenUsage, setActiveMsgId, setWaitingResponse, resetState } =
@@ -184,6 +195,7 @@ const WCoreSendBox: React.FC<{
       }
 
       const msg_id = uuid();
+      lastSentRef.current = { input, files, msg_id };
       setActiveMsgId(msg_id);
       setWaitingResponse(true);
 
@@ -374,6 +386,20 @@ const WCoreSendBox: React.FC<{
       setAtPath(merged as Array<string | FileOrFolderItem>);
     }
   });
+
+  // Flux failover replay: WCoreChat re-routes the dead chat through Flux, then
+  // asks the send box to re-run the failed turn. Drop the original failed bubble
+  // first so the retry does not duplicate it.
+  useAddEventListener(
+    'wcore.flux.replay',
+    (p) => {
+      if (p.conversation_id !== conversation_id) return;
+      const last = lastSentRef.current;
+      if (last?.msg_id) removeMessageByMsgId(last.msg_id);
+      void executeCommand({ input: p.input, files: p.files });
+    },
+    [conversation_id, executeCommand, removeMessageByMsgId]
+  );
 
   // Stop conversation handler
   const handleStop = async (): Promise<void> => {

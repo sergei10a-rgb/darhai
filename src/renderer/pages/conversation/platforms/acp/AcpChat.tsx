@@ -77,7 +77,7 @@ const AcpChat: React.FC<{
       if (p.conversation_id !== conversation_id) return;
       pendingTurnRef.current =
         p.pendingInput !== undefined ? { input: p.pendingInput, files: p.pendingFiles ?? [] } : null;
-      setAuthRemedy(getAcpAuthRemedy(p.backend));
+      setAuthRemedy(getAcpAuthRemedy(p.backend, { fluxAlreadyRouted: p.fluxAlreadyRouted }));
     },
     [conversation_id]
   );

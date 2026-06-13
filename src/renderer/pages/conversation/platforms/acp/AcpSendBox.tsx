@@ -135,6 +135,7 @@ const AcpSendBox: React.FC<{
   // Use useLatestRef to keep latest setters to avoid re-registering handler
   const setContentRef = useLatestRef(setContent);
   const atPathRef = useLatestRef(atPath);
+  const routingRef = useLatestRef(routing);
 
   const addOrUpdateMessage = useAddOrUpdateMessage(); // Move this here so it's available in useEffect
   const addOrUpdateMessageRef = useLatestRef(addOrUpdateMessage);
@@ -215,7 +216,13 @@ const AcpSendBox: React.FC<{
           // The CLI could not authenticate. Surface the remedy card (route
           // through Flux, add a provider key, or run the CLI login command)
           // instead of the raw auth tip.
-          emitter.emit('acp.auth.failed.card', { conversation_id, backend, pendingInput: input, pendingFiles: files });
+          emitter.emit('acp.auth.failed.card', {
+            conversation_id,
+            backend,
+            pendingInput: input,
+            pendingFiles: files,
+            fluxAlreadyRouted: routingRef.current === 'flux',
+          });
           setAiProcessing(false);
           throw error;
         }
