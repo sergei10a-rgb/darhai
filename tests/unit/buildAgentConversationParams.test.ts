@@ -70,6 +70,39 @@ describe('buildAgentConversationParams', () => {
     });
   });
 
+  it('pre-loads an assistant’s assigned skills into sessionSkills (merged + deduped with staged)', () => {
+    const params = buildAgentConversationParams({
+      backend: 'gemini',
+      name: 'Copy Assistant',
+      workspace: '/workspace',
+      model: { id: 'p', useModel: 'gemini-2.0-flash' } as any,
+      customAgentId: 'assistant-1',
+      isPreset: true,
+      presetAgentType: 'gemini',
+      presetResources: { rules: 'R', enabledSkills: ['officecli', 'copywriting'] },
+      // A skill the user also staged in the composer "+" menu.
+      extra: { sessionSkills: ['copywriting', 'staged-only'] },
+    });
+    const skills = (params.extra as { sessionSkills?: string[] }).sessionSkills ?? [];
+    expect(skills).toEqual(expect.arrayContaining(['officecli', 'copywriting', 'staged-only']));
+    // Deduped - 'copywriting' appears once.
+    expect(skills.filter((s) => s === 'copywriting')).toHaveLength(1);
+  });
+
+  it('does not pre-load any sessionSkills when the assistant has no explicit skill list (uses all skills)', () => {
+    const params = buildAgentConversationParams({
+      backend: 'gemini',
+      name: 'Open Assistant',
+      workspace: '/workspace',
+      model: { id: 'p', useModel: 'gemini-2.0-flash' } as any,
+      customAgentId: 'assistant-2',
+      isPreset: true,
+      presetAgentType: 'gemini',
+      presetResources: { rules: 'R', enabledSkills: [] },
+    });
+    expect((params.extra as { sessionSkills?: string[] }).sessionSkills).toBeUndefined();
+  });
+
   it('builds remote params with remote agent id', () => {
     const params = buildAgentConversationParams({
       backend: 'remote',

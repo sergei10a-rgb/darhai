@@ -161,7 +161,9 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
     // project. Omitted from extra when undefined so it never pollutes a normal chat.
     const projectExtra = projectId ? { projectId } : {};
     // Skills staged in the composer "+" menu. Injected on turn 1 by
-    // consumePendingSessionSkills (all backends). Omitted when empty.
+    // consumePendingSessionSkills (all backends). A chosen assistant's own
+    // assigned skills are merged in centrally by buildAgentConversationParams
+    // (so the in-chat "new tab" path gets them too). Omitted when empty.
     const sessionSkillsExtra =
       stagedSessionSkills && stagedSessionSkills.length > 0 ? { sessionSkills: stagedSessionSkills } : {};
 
