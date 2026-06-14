@@ -1209,7 +1209,7 @@
   "needHelpTooltip": "Si necesitas ayuda, consulta",
   "googleCloudProjectPlaceholder": "Introduce tu ID de proyecto de Google Cloud",
   "noAvailableModels": "No hay modelos disponibles",
-  "appDescription": "App de interfaz gráfica gratuita, local y de código abierto para Gemini CLI",
+  "appDescription": "Interfaz gráfica gratuita, local y de código abierto para agentes de IA de programación",
   "helpDocumentation": "Documentación de ayuda",
   "updateLog": "Registro de actualizaciones",
   "feedback": "Comentarios",

@@ -1184,7 +1184,7 @@
   "needHelpTooltip": "Якщо потрібна допомога, перевірте",
   "googleCloudProjectPlaceholder": "Введіть Google Cloud Project ID",
   "noAvailableModels": "Немає доступних моделей",
-  "appDescription": "Безкоштовна локальна програма з відкритим кодом для Gemini CLI",
+  "appDescription": "Безкоштовний локальний інтерфейс з відкритим кодом для ШІ-агентів програмування",
   "helpDocumentation": "Довідкова документація",
   "updateLog": "Журнал оновлень",
   "feedback": "Зворотний зв'язок",

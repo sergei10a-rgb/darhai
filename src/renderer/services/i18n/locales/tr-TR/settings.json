@@ -1186,7 +1186,7 @@
   "needHelpTooltip": "Yardıma ihtiyacınız varsa, lütfen kontrol edin",
   "googleCloudProjectPlaceholder": "Google Cloud Proje ID'nizi girin",
   "noAvailableModels": "Mevcut model yok",
-  "appDescription": "Gemini CLI için ücretsiz, yerel, açık kaynaklı GUI uygulaması",
+  "appDescription": "Yapay zekâ kodlama ajanları için ücretsiz, yerel, açık kaynaklı arayüz",
   "helpDocumentation": "Yardım Dokümantasyonu",
   "updateLog": "Güncelleme Günlüğü",
   "feedback": "Geri Bildirim",

@@ -1211,7 +1211,7 @@
   "needHelpTooltip": "If you need help, please check",
   "googleCloudProjectPlaceholder": "Enter your Google Cloud Project ID",
   "noAvailableModels": "No available models",
-  "appDescription": "Free, local, open-source GUI app for Gemini CLI",
+  "appDescription": "Free, local, open-source GUI for AI coding agents",
   "helpDocumentation": "Help Documentation",
   "updateLog": "Update Log",
   "feedback": "Feedback",

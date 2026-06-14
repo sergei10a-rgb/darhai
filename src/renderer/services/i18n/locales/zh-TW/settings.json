@@ -1186,7 +1186,7 @@
   "needHelpTooltip": "如需幫助，請查看",
   "googleCloudProjectPlaceholder": "請輸入 Google Cloud Project ID",
   "noAvailableModels": "暫無可用模型",
-  "appDescription": "Free, local, open-source GUI app for Gemini CLI",
+  "appDescription": "面向 AI 程式設計代理的免費、本機、開源圖形介面",
   "helpDocumentation": "幫助文檔",
   "updateLog": "更新日誌",
   "feedback": "意見反饋",
