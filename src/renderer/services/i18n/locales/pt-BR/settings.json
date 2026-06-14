@@ -2084,7 +2084,27 @@
       "pickFolder": "Escolher pasta",
       "pickFolderFirst": "Escolha uma pasta primeiro",
       "enable": "Ativar sincronização"
-    }
+    },
+    "copyPath": "Copy path",
+    "pathCopied": "Path copied to clipboard",
+    "pathCopyFailed": "Couldn't copy the path",
+    "cleared": "Cleared",
+    "clearFailed": "Couldn't clear the directory",
+    "exportFailed": "Export failed",
+    "restoreModalTitle": "Restore from backup",
+    "restoreConfirm": "Restore",
+    "restoreWarning": "Restore overwrites your current conversations, attachments, and config. A safety backup of your current data is created first. Available only from a trusted local network (loopback, LAN, or Tailscale).",
+    "restorePickFile": "Choose backup (.zip)",
+    "restoreNoFile": "No file selected",
+    "restorePasswordLabel": "Confirm your password",
+    "restorePasswordHint": "Your WebUI password",
+    "restorePassphraseLabel": "Backup passphrase (optional)",
+    "restorePassphraseHint": "Only if the backup includes encrypted keys",
+    "restoreSuccess": "Restore complete",
+    "restoreNotOperator": "Restore is only available from a trusted local network (loopback, LAN, or Tailscale).",
+    "restoreBadPassword": "Password is incorrect",
+    "restoreTooLarge": "That backup file is too large",
+    "restoreFailed": "Restore failed"
   },
   "editorPage": {
     "title": "Editor",
