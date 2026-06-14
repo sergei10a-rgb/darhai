@@ -4,13 +4,17 @@
 
 .menuWrap {
   display: flex;
+  /* align-items is set inline by the panel based on the resolved open direction
+     (Arco's position class is unreliable - it stays "tl" even when flipped
+     downward), so the short left pane always anchors to the "+". */
   align-items: flex-end;
-  gap: 8px;
+  gap: 6px;
 }
 
 /* Our panel brings its own surfaces; strip the Arco dropdown popup chrome. */
-:global(.composer-add-popup .arco-dropdown),
-:global(.composer-add-popup.arco-dropdown) {
+:global(.composer-add-popup),
+:global(.composer-add-popup.arco-dropdown),
+:global(.composer-add-popup .arco-dropdown) {
   background: transparent;
   border: none;
   box-shadow: none;
@@ -86,7 +90,11 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  max-height: 460px;
+  /* FIXED height (not max-height): the Skills and Connectors flyouts must be the
+     same size so switching panes never resizes the popup - a resize makes Arco
+     re-evaluate placement and flip the whole menu up/down (the "jumps down the
+     page" bug). Inner sections scroll within this. */
+  height: 400px;
   flex-shrink: 0;
 }
 .flyoutHead {

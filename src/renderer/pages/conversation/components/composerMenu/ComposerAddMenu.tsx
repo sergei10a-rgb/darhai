@@ -6,7 +6,7 @@
 
 import { Button, Dropdown } from '@arco-design/web-react';
 import { LayoutGrid, Plus, Upload, Zap } from 'lucide-react';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { iconColors } from '@/renderer/styles/colors';
@@ -61,11 +61,36 @@ const ComposerAddMenuPanel: React.FC<{
   mode: 'staged' | 'live';
   draftText?: string;
   uploadItems: ComposerUploadItem[];
+  triggerRef: React.RefObject<HTMLElement>;
   onClose: () => void;
-}> = ({ composer, draftText, uploadItems, onClose }) => {
+}> = ({ composer, draftText, uploadItems, triggerRef, onClose }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [pane, setPane] = useState<Pane>('skills');
+
+  // Anchor the panes to the "+". Arco may open the popup above OR below the
+  // trigger (and its position class is unreliable - it reports "tl" even when
+  // flipped down), so detect the resolved direction from geometry: when the
+  // panel sits below the trigger, top-align the panes (short left pane tucks
+  // under the "+"); when above, bottom-align (panes rise from the "+").
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [openedBelow, setOpenedBelow] = useState(false);
+  useLayoutEffect(() => {
+    const measure = () => {
+      const trigger = triggerRef.current;
+      const wrap = wrapRef.current;
+      if (!trigger || !wrap) return;
+      const triggerRect = trigger.getBoundingClientRect();
+      const wrapRect = wrap.getBoundingClientRect();
+      // Below when the panel's top sits at or beneath the trigger's top.
+      setOpenedBelow(wrapRect.top >= triggerRect.top);
+    };
+    // Arco positions the popup across a few frames after mount, so re-measure
+    // until it settles rather than trusting a single (pre-position) read.
+    measure();
+    const timers = [16, 60, 160].map((ms) => setTimeout(measure, ms));
+    return () => timers.forEach(clearTimeout);
+  }, [triggerRef]);
 
   // MCP stack - instantiated only while the panel is mounted (menu open).
   const [message, contextHolder] = Message.useMessage();
@@ -88,7 +113,7 @@ const ComposerAddMenuPanel: React.FC<{
   const goConnectors = () => navigate('/settings/mcp-library/browse');
 
   return (
-    <div className={styles.menuWrap}>
+    <div ref={wrapRef} className={styles.menuWrap} style={{ alignItems: openedBelow ? 'flex-start' : 'flex-end' }}>
       {contextHolder}
       <div className={styles.menu}>
         {uploadItems.map((item) => (
@@ -190,6 +215,7 @@ const ComposerAddMenu: React.FC<ComposerAddMenuProps> = ({
   onStagedSkillsChange,
 }) => {
   const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLSpanElement>(null);
 
   // Skills state lives here (not in the panel) so staged picks survive the menu
   // closing before the user sends.
@@ -214,6 +240,7 @@ const ComposerAddMenu: React.FC<ComposerAddMenuProps> = ({
           mode={mode}
           draftText={draftText}
           uploadItems={uploadItems}
+          triggerRef={triggerRef}
           onClose={() => setOpen(false)}
         />
       ) : (
@@ -225,15 +252,18 @@ const ComposerAddMenu: React.FC<ComposerAddMenuProps> = ({
   return (
     <Dropdown
       trigger='click'
-      position='tl'
+      // Prefer opening BELOW the trigger (the home composer has more room there,
+      // so it never clips the top bar). Arco auto-flips ABOVE when there is not
+      // enough room below (the in-chat composer sits at the viewport bottom).
+      position='bl'
       popupVisible={open}
       onVisibleChange={setOpen}
       droplist={droplist}
       // The droplist is our own surface; Arco's default card padding fights the
-      // two-pane layout, so render it bare.
-      triggerProps={{ className: 'composer-add-menu-trigger' }}
+      // two-pane layout, so render it bare (class targeted by the module CSS reset).
+      triggerProps={{ className: 'composer-add-popup' }}
     >
-      <span className={open ? styles.plusOpen : styles.plusBtn}>
+      <span ref={triggerRef} className={open ? styles.plusOpen : styles.plusBtn}>
         <Button
           type='text'
           shape='circle'
