@@ -98,6 +98,8 @@ interface AcpAgentManagerData {
   sandboxMode?: CodexSandboxMode;
   /** Pending config option selections from Guid page (applied after session creation) */
   pendingConfigOptions?: Record<string, string>;
+  /** Per-conversation reasoning effort (codex/claude). Absent => backend default. */
+  effort?: 'low' | 'medium' | 'high';
 }
 
 type BufferedStreamTextMessage = {
@@ -585,7 +587,13 @@ ${collectedResponses.join('\n')}`;
       if (data.backend === 'codex') {
         try {
           const sandboxMode = normalizeCodexSandboxMode(data.sandboxMode);
-          const codexHome = await materializeFluxCodexHome(app.getPath('userData'), sandboxMode);
+          const codexHome = await materializeFluxCodexHome(
+            app.getPath('userData'),
+            sandboxMode,
+            undefined,
+            undefined,
+            data.effort
+          );
           mergedEnv.CODEX_HOME = codexHome;
         } catch (err) {
           mainWarn('[AcpAgentManager]', 'materializeFluxCodexHome failed', err);
@@ -601,7 +609,11 @@ ${collectedResponses.join('\n')}`;
       // real ~/.claude is never modified.
       if (data.backend === 'claude') {
         try {
-          mergedEnv.CLAUDE_CONFIG_DIR = await materializeFluxClaudeConfigDir(app.getPath('userData'));
+          mergedEnv.CLAUDE_CONFIG_DIR = await materializeFluxClaudeConfigDir(
+            app.getPath('userData'),
+            undefined,
+            data.effort
+          );
         } catch (err) {
           mainWarn('[AcpAgentManager]', 'materializeFluxClaudeConfigDir failed', err);
         }

@@ -177,7 +177,9 @@ export async function materializeFluxCodexHome(
   userDataDir: string,
   sandboxMode: SupportedCodexSandboxMode = 'workspace-write',
   baseURL: string = FLUX_SURFACE.responses,
-  userConfigPath: string = getCodexConfigPath()
+  userConfigPath: string = getCodexConfigPath(),
+  /** Per-conversation reasoning effort. When set, written as `model_reasoning_effort`. */
+  effort?: 'low' | 'medium' | 'high'
 ): Promise<string> {
   const codexHomeDir = join(userDataDir, 'flux-codex-home');
   const configPath = join(codexHomeDir, 'config.toml');
@@ -193,6 +195,9 @@ export async function materializeFluxCodexHome(
     // found" and defaulting to fallback metadata for flux-auto.
     `model_auto_compact_token_limit = ${FLUX_AUTO_COMPACT_TOKEN_LIMIT}`,
     `model_catalog_json = ${JSON.stringify(catalogPath)}`,
+    // Per-conversation reasoning effort (omitted => codex applies the model's
+    // default_reasoning_level from the catalog above).
+    ...(effort ? [`model_reasoning_effort = "${effort}"`] : []),
     `sandbox_mode = "${sandboxMode}"`,
     'suppress_unstable_features_warning = true',
     '',

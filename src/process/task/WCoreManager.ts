@@ -110,6 +110,8 @@ type WCoreManagerData = {
   sessionMode?: string;
   sessionId?: string;
   resume?: string;
+  /** Per-conversation reasoning effort (sent to the engine via set_config). Absent => engine default. */
+  effort?: 'low' | 'medium' | 'high';
   teamMcpStdioConfig?: {
     name: string;
     command: string;
@@ -249,6 +251,13 @@ export class WCoreManager extends BaseAgentManager<WCoreManagerData, string> {
     await agent.start();
     this.agent = agent;
     this._capabilities = agent.capabilities ?? null;
+
+    // Per-conversation reasoning effort: forward to the engine via set_config on
+    // spawn so the first (and every subsequent) turn runs at the selected effort.
+    // Omitted => the engine keeps its own default.
+    if (mergedData.effort) {
+      agent.setConfig({ effort: mergedData.effort });
+    }
 
     // #50: On resume, seed recent persisted history so the rebuilt engine keeps
     // prior context. The engine's --resume does not reliably restore history
