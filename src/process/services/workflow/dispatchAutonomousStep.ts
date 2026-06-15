@@ -146,6 +146,12 @@ export async function dispatchAutonomousStep(
   const inheritedCliPath = typeof parentExtra.cliPath === 'string' ? parentExtra.cliPath : undefined;
   const inheritedAgentName = typeof parentExtra.agentName === 'string' ? parentExtra.agentName : undefined;
   const inheritedSessionMode = typeof parentExtra.sessionMode === 'string' ? parentExtra.sessionMode : undefined;
+  // Inherit the model the user selected for the workflow. ACP backends (codex
+  // in particular) read this at spawn; without it the child worker falls back
+  // to the CLI default model (e.g. gpt-5.3-codex), which a ChatGPT-account
+  // user cannot use. (GitHub #111.)
+  const inheritedModelId =
+    typeof parentExtra.currentModelId === 'string' ? parentExtra.currentModelId : undefined;
 
   const dispatchId = randomUUID();
   const childName = `${parent.workflow_title} - Step ${stepN}`;
@@ -163,6 +169,7 @@ export async function dispatchAutonomousStep(
       cliPath: inheritedCliPath,
       agentName: inheritedAgentName,
       sessionMode: inheritedSessionMode,
+      ...(inheritedModelId ? { currentModelId: inheritedModelId } : {}),
       autonomousDispatch: {
         parentWorkflowSessionId: parentSessionId,
         stepN,

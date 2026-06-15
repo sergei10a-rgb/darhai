@@ -281,9 +281,22 @@ export class WorkflowSessionService {
     // backend's full-auto mode (the same mode cron tasks use); an explicit
     // launch-provided sessionMode still wins.
     const effectiveSessionMode = sessionMode ?? getFullAutoMode(backend);
+    const conversationType = agentTypeForBackend(backend);
+    // ACP-protocol backends (claude/codex/qwen/…) read the model the user
+    // picked from `extra.currentModelId` at spawn (AcpConversation.start →
+    // connection.setModel). The model the renderer resolved lives in
+    // `resolvedModel.useModel`. Without this propagation the codex CLI falls
+    // back to its own default (e.g. gpt-5.3-codex), which a ChatGPT-account
+    // user cannot use ("model is not supported when using Codex with a ChatGPT
+    // account"). Carry the selected model id through so the workflow runs on
+    // the model the user actually chose. (GitHub #111.)
+    const selectedAcpModelId =
+      conversationType === 'acp' && typeof resolvedModel.useModel === 'string'
+        ? resolvedModel.useModel.trim()
+        : '';
 
     const conversationParams: CreateConversationParams = {
-      type: agentTypeForBackend(backend),
+      type: conversationType,
       name: workflowTitle,
       model: resolvedModel,
       source: 'wayland',
@@ -295,6 +308,7 @@ export class WorkflowSessionService {
         ...(customAgentId ? { customAgentId } : {}),
         ...(presetAssistantId ? { presetAssistantId } : {}),
         ...(effectiveSessionMode ? { sessionMode: effectiveSessionMode } : {}),
+        ...(selectedAcpModelId ? { currentModelId: selectedAcpModelId } : {}),
         workflowSessionId: sessionId,
         workflowName: workflow_name,
       },

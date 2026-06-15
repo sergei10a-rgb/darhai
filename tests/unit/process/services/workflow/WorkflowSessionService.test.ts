@@ -890,6 +890,67 @@ describe('WorkflowSessionService.start() - launch target consumption', () => {
     expect(callArg.model).toMatchObject({ id: 'wcore' });
   });
 
+  it('propagates the selected codex model id into extra.currentModelId so the spawn does not fall back to the codex default (GitHub #111)', async () => {
+    const parts = buildService();
+    parts.skillMap.set('demo', {
+      entry: skillEntry({ name: 'demo', type: 'workflow' }),
+      body: TWO_STEP_BODY,
+    });
+
+    const codexModel: TProviderWithModel = {
+      id: 'codex',
+      platform: 'codex',
+      name: 'Codex',
+      baseUrl: '',
+      apiKey: '',
+      useModel: 'gpt-5.1-codex-mini',
+    };
+
+    await parts.service.start({
+      workflow_name: 'demo',
+      backend: 'codex',
+      cliPath: '/usr/local/bin/codex',
+      model: codexModel,
+    });
+
+    const callArg = (parts.conversationService.createConversation as Mock).mock.calls[0][0] as CreateConversationParams;
+    expect(callArg.extra.backend).toBe('codex');
+    // agentTypeForBackend('codex') → 'acp'
+    expect(callArg.type).toBe('acp');
+    // The user-selected model must reach the ACP spawn via extra.currentModelId,
+    // otherwise codex runs on its CLI default (gpt-5.3-codex), unusable on a
+    // ChatGPT account.
+    expect(callArg.extra.currentModelId).toBe('gpt-5.1-codex-mini');
+  });
+
+  it('does not set extra.currentModelId for non-ACP backends (wcore reads model elsewhere)', async () => {
+    const parts = buildService();
+    parts.skillMap.set('demo', {
+      entry: skillEntry({ name: 'demo', type: 'workflow' }),
+      body: TWO_STEP_BODY,
+    });
+
+    const wcoreModel: TProviderWithModel = {
+      id: 'wcore',
+      platform: 'wcore',
+      name: 'Wayland Core',
+      baseUrl: '',
+      apiKey: '',
+      useModel: 'default',
+    };
+
+    await parts.service.start({
+      workflow_name: 'demo',
+      backend: 'wcore',
+      cliPath: '/usr/local/bin/wcore',
+      model: wcoreModel,
+    });
+
+    const callArg = (parts.conversationService.createConversation as Mock).mock.calls[0][0] as CreateConversationParams;
+    expect(callArg.type).toBe('wcore');
+    expect(callArg.extra.currentModelId).toBeUndefined();
+  });
+
   it('missing backend/model falls through to getDefaultLaunchTarget()', async () => {
     const parts = buildService();
     parts.skillMap.set('demo', {
