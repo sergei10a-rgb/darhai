@@ -48,6 +48,12 @@ function parseManifest(text) {
       files.push(cur);
       continue;
     }
+    // A top-level key (column 0, e.g. `path:`/`sha512:`/`releaseDate:` that
+    // follow the `files:` block) ends the current file entry. Without this the
+    // trailing top-level `sha512:` (the .zip / path digest) overwrote the LAST
+    // file entry's sha512 — making the dmg appear to carry the zip's hash and
+    // producing a misleading mismatch report.
+    if (/^\S/.test(raw)) cur = null;
     if (!cur) continue;
     const sha = line.match(/^\s*sha512:\s*(.+)$/);
     if (sha) cur.sha512 = sha[1].trim();
