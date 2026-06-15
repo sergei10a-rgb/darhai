@@ -47,9 +47,17 @@ export interface SiderTeamsSectionProps {
   onSessionClick?: () => void;
 }
 
-/** Count of agents in `active` status across every team - drives the live badge. */
+/**
+ * Count of agents in `active` status across every team - drives the live badge.
+ * Defensive: this runs in the always-mounted sidebar, so a non-array `teams`
+ * (or a malformed team record with no `agents`) must NEVER throw and white-screen
+ * the whole app - it just contributes 0.
+ */
 const countRunningAgents = (teams: TTeam[]): number =>
-  teams.reduce((acc, team) => acc + team.agents.filter((a) => a.status === 'active').length, 0);
+  (Array.isArray(teams) ? teams : []).reduce(
+    (acc, team) => acc + (team?.agents ?? []).filter((a) => a?.status === 'active').length,
+    0
+  );
 
 export const SiderTeamsSection: React.FC<SiderTeamsSectionProps> = ({
   collapsed,
