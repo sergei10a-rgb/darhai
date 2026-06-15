@@ -9,7 +9,6 @@ import net from 'net';
 import { createServer } from 'http';
 import https from 'node:https';
 import { WebSocketServer } from 'ws';
-import { networkInterfaces } from 'os';
 import { AuthService } from '@process/webserver/auth/service/AuthService';
 import { UserRepository } from '@process/webserver/auth/repository/UserRepository';
 import { AUTH_CONFIG, SERVER_CONFIG } from './config/constants';
@@ -19,6 +18,7 @@ import { registerAuthRoutes } from './routes/authRoutes';
 import { registerApiRoutes } from './routes/apiRoutes';
 import { registerStaticRoutes, resolveRendererPath, VITE_DEV_PORT } from './routes/staticRoutes';
 import { generateQRLoginUrlDirect } from '@process/bridge/webuiQR';
+import { getLanIP } from '@process/bridge/lanAddress';
 import { mountWebhookRoutes } from '@process/channels/webhook';
 
 // Express Request type extension is defined in src/webserver/types/express.d.ts
@@ -54,27 +54,6 @@ export function getInitialAdminPassword(): string | null {
  */
 export function clearInitialAdminPassword(): void {
   initialAdminPassword = null;
-}
-
-/**
- * Get LAN IP address using os.networkInterfaces()
- */
-function getLanIP(): string | null {
-  const nets = networkInterfaces();
-  for (const name of Object.keys(nets)) {
-    const netInfo = nets[name];
-    if (!netInfo) continue;
-
-    for (const iface of netInfo) {
-      // Skip internal addresses (127.0.0.1) and IPv6
-      const isIPv4 = iface.family === 'IPv4';
-      const isNotInternal = !iface.internal;
-      if (isIPv4 && isNotInternal) {
-        return iface.address;
-      }
-    }
-  }
-  return null;
 }
 
 /**

@@ -895,7 +895,7 @@
   "webui.networkUrl": "网络地址",
   "webui.qrLogin": "二维码登录",
   "webui.qrLoginTitle": "扫码登录",
-  "webui.qrLoginHint": "使用手机扫描二维码，即可在手机浏览器中自动登录",
+  "webui.qrLoginHint": "使用手机扫描二维码，即可在手机浏览器中自动登录。手机需与此电脑连接同一 Wi-Fi/网络。",
   "webui.qrExpires": "有效期至 {{time}}",
   "webui.refreshQr": "刷新二维码",
   "webui.copyQrLink": "复制链接",

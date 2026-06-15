@@ -905,7 +905,7 @@
   "webui.networkUrl": "URL de Rede",
   "webui.qrLogin": "Login por QR Code",
   "webui.qrLoginTitle": "Escaneie para Entrar",
-  "webui.qrLoginHint": "Escaneie o QR code com seu celular para fazer login automaticamente no navegador móvel",
+  "webui.qrLoginHint": "Escaneie o QR code com seu celular para fazer login automaticamente no navegador móvel Seu celular precisa estar na mesma rede Wi-Fi deste computador.",
   "webui.qrExpires": "Expira em {{time}}",
   "webui.refreshQr": "Atualizar QR Code",
   "webui.copyQrLink": "Copiar Link",

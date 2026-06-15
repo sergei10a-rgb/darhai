@@ -895,7 +895,7 @@
   "webui.networkUrl": "Ağ URL",
   "webui.qrLogin": "QR Kod ile Giriş",
   "webui.qrLoginTitle": "Giriş Yapmak İçin Tarayın",
-  "webui.qrLoginHint": "Mobil tarayıcıda otomatik giriş yapmak için QR kodu telefonunuzla tarayın",
+  "webui.qrLoginHint": "Mobil tarayıcıda otomatik giriş yapmak için QR kodu telefonunuzla tarayın Telefonunuz bu bilgisayarla aynı Wi-Fi/ağda olmalıdır.",
   "webui.qrExpires": "{{time}} içinde sona eriyor",
   "webui.refreshQr": "QR Kodunu Yenile",
   "webui.copyQrLink": "Bağlantıyı Kopyala",

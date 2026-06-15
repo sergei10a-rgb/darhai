@@ -907,7 +907,7 @@
   "webui.networkUrl": "Network URL",
   "webui.qrLogin": "QR Code Login",
   "webui.qrLoginTitle": "Scan to Login",
-  "webui.qrLoginHint": "Scan the QR code with your phone to log in automatically on mobile browser",
+  "webui.qrLoginHint": "Scan the QR code with your phone to log in automatically on mobile browser. Your phone must be on the same Wi-Fi/network as this computer.",
   "webui.qrExpires": "Expires at {{time}}",
   "webui.refreshQr": "Refresh QR Code",
   "webui.copyQrLink": "Copy Link",

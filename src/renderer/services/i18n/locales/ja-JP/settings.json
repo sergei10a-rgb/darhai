@@ -895,7 +895,7 @@
   "webui.networkUrl": "ネットワークURL",
   "webui.qrLogin": "QRコードログイン",
   "webui.qrLoginTitle": "スキャンしてログイン",
-  "webui.qrLoginHint": "スマートフォンでQRコードをスキャンして、モバイルブラウザで自動ログイン",
+  "webui.qrLoginHint": "スマートフォンでQRコードをスキャンして、モバイルブラウザで自動ログインします。スマートフォンはこのコンピューターと同じ Wi-Fi/ネットワークに接続している必要があります。",
   "webui.qrExpires": "{{time}} に有効期限切れ",
   "webui.refreshQr": "QRコードを更新",
   "webui.copyQrLink": "リンクをコピー",

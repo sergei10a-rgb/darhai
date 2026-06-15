@@ -905,7 +905,7 @@
   "webui.networkUrl": "Netzwerk-URL",
   "webui.qrLogin": "QR-Code-Anmeldung",
   "webui.qrLoginTitle": "Zum Anmelden scannen",
-  "webui.qrLoginHint": "Scanne den QR-Code mit deinem Telefon, um dich im mobilen Browser automatisch anzumelden",
+  "webui.qrLoginHint": "Scanne den QR-Code mit deinem Telefon, um dich im mobilen Browser automatisch anzumelden Dein Telefon muss im selben WLAN/Netzwerk wie dieser Computer sein.",
   "webui.qrExpires": "Läuft ab um {{time}}",
   "webui.refreshQr": "QR-Code aktualisieren",
   "webui.copyQrLink": "Link kopieren",

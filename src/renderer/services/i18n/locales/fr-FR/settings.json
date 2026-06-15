@@ -905,7 +905,7 @@
   "webui.networkUrl": "URL réseau",
   "webui.qrLogin": "Connexion par QR code",
   "webui.qrLoginTitle": "Scanner pour se connecter",
-  "webui.qrLoginHint": "Scannez le QR code avec votre téléphone pour vous connecter automatiquement sur le navigateur mobile",
+  "webui.qrLoginHint": "Scannez le QR code avec votre téléphone pour vous connecter automatiquement sur le navigateur mobile Votre téléphone doit être sur le même réseau Wi-Fi que cet ordinateur.",
   "webui.qrExpires": "Expire à {{time}}",
   "webui.refreshQr": "Actualiser le QR code",
   "webui.copyQrLink": "Copier le lien",

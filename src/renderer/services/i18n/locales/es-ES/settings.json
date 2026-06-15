@@ -905,7 +905,7 @@
   "webui.networkUrl": "URL de red",
   "webui.qrLogin": "Inicio de sesión con código QR",
   "webui.qrLoginTitle": "Escanea para iniciar sesión",
-  "webui.qrLoginHint": "Escanea el código QR con tu teléfono para iniciar sesión automáticamente en el navegador móvil",
+  "webui.qrLoginHint": "Escanea el código QR con tu teléfono para iniciar sesión automáticamente en el navegador móvil Tu teléfono debe estar en la misma red Wi-Fi que este ordenador.",
   "webui.qrExpires": "Caduca a las {{time}}",
   "webui.refreshQr": "Actualizar código QR",
   "webui.copyQrLink": "Copiar enlace",

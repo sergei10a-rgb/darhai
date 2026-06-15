@@ -895,7 +895,7 @@
   "webui.networkUrl": "網路網址",
   "webui.qrLogin": "QR 碼登入",
   "webui.qrLoginTitle": "掃描登入",
-  "webui.qrLoginHint": "使用手機掃描 QR 碼，即可在手機瀏覽器中自動登入",
+  "webui.qrLoginHint": "使用手機掃描 QR 碼，即可在手機瀏覽器中自動登入。手機需與此電腦連接同一 Wi-Fi/網路。",
   "webui.qrExpires": "有效期至 {{time}}",
   "webui.refreshQr": "重新整理 QR 碼",
   "webui.copyQrLink": "複製連結",
