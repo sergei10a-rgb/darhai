@@ -238,15 +238,6 @@ export class ExtensionRegistry {
       console.warn(`[Extensions] Cannot disable: extension "${name}" not found`);
       return false;
     }
-    // Native built-ins (e.g. the waylandteams catalog) ship with the app and
-    // cannot be disabled - they are integrated content, not user-installable
-    // plugins. Refuse here so neither the UI nor a WebUI/IPC caller can turn
-    // them off and strip the user's teams/specialists.
-    const loaded = this.extensions.find((e) => e.manifest.name === name);
-    if (loaded?.source === 'builtin') {
-      console.warn(`[Extensions] Refusing to disable built-in extension "${name}" (native, non-removable)`);
-      return false;
-    }
     if (!state.enabled) {
       console.warn(`[Extensions] Extension "${name}" is already disabled`);
       return false;
