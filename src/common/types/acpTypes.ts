@@ -283,6 +283,38 @@ export interface AcpBackendConfig {
    * Unset means no Flux compatibility is claimed (no chip shown).
    */
   fluxCompat?: 'env' | 'setup' | 'vendor';
+
+  // ---- Native catalog (builtin-catalog) fields ----
+  // Let a native built-in record carry the library-grouping + team-launcher
+  // metadata that previously only existed on extension-contributed records.
+  // They round-trip through config storage as plain JSON and are mapped to the
+  // renderer's `_kind`/`_teammates`/... fields by useAssistantList.
+
+  /** Library grouping: 'team' composes multiple roles (launcher / standing company), 'specialist' is a single role. Drives /assistants + /teams classification. */
+  kind?: 'team' | 'specialist';
+
+  /** Dominant action category (sell | write | research | build | run | office | general). */
+  category?: string;
+
+  /** Team launcher roster - specialist assistant ids this team composes (kind === 'team'). */
+  teammates?: string[];
+
+  /** Recurring rituals declared by a standing team (e.g. weekly rollup). */
+  rituals?: Array<{ name: string; cadence: string }>;
+
+  /** Standing Company flag - always-on multi-role org (kind === 'team'). */
+  standing?: boolean;
+
+  /** SuggestionEngine kickoff cards shown on the new-chat empty state. */
+  kickoffs?: Array<{
+    id: string;
+    text: string;
+    prefill: string;
+    scenario: string;
+    timeBucket?: string;
+    requiresRitualOutput?: boolean;
+    beginnerSafe?: boolean;
+  }>;
 }
 
 // All backend configurations - including temporarily disabled ones

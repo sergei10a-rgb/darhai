@@ -25,6 +25,7 @@ import { readDirectoryRecursive } from '@process/utils';
 import { writeFileAtomic } from '@process/utils/atomicWrite';
 import { getDatabase } from '@process/services/database';
 import { ExtensionRegistry } from '@process/extensions/ExtensionRegistry';
+import { getBuiltinCatalogContext, isBuiltinCatalogId } from '@process/utils/builtinCatalog';
 import { confinePath, registerAuthorizedRoot } from './pathConfinement';
 import { resolveWithinApprovedDirectory } from './userApprovedPaths';
 import type { IWorkspaceFlatFile } from '@/common/adapter/ipcBridge';
@@ -173,6 +174,17 @@ async function readAssistantResource(
       }
     } catch {
       // Registry not initialized - fall through to filename lookup.
+    }
+  }
+
+  // Native built-in catalog (waylandteams): context bodies live in the in-memory
+  // catalog, not on disk. builtin-<id> catalog records have no per-locale .md
+  // file, so the disk lookup below would return '' and spawn with no system
+  // prompt. Serve the catalog context directly - it is the source of truth.
+  if (resourceType === 'rules' && isBuiltinCatalogId(assistantId)) {
+    const context = getBuiltinCatalogContext(assistantId);
+    if (typeof context === 'string' && context.length > 0) {
+      return context;
     }
   }
 

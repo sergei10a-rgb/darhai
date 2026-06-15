@@ -45,6 +45,7 @@ import {
 } from '../resources/builtinMcp/constants';
 import { getMcpScriptPath, inspectMcpScripts } from './mcpScriptDir';
 import { getAppDataExtensionsDir, EXTENSION_MANIFEST_FILE } from '../extensions/constants';
+import { getBuiltinCatalogAssistants } from './builtinCatalog';
 // Platform and architecture types (moved from deleted updateConfig)
 type PlatformType = 'win32' | 'darwin' | 'linux';
 type ArchitectureType = 'x64' | 'arm64' | 'ia32' | 'arm';
@@ -648,7 +649,11 @@ const getBuiltinAssistants = (): AcpBackendConfig[] => {
     });
   }
 
-  return assistants;
+  // Native built-in catalog (waylandteams: 28 specialists + 60 team launchers).
+  // Appended here so they merge into config.assistants through the same prune/
+  // update machinery as the ASSISTANT_PRESETS rows. They carry kind/teammates/
+  // rituals/standing/kickoffs so the renderer surfaces teams on /teams.
+  return [...assistants, ...getBuiltinCatalogAssistants()];
 };
 
 /**

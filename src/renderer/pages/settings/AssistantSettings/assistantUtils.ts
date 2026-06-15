@@ -167,6 +167,34 @@ export const normalizeExtensionAssistants = (extensionAssistants: Record<string,
 };
 
 /**
+ * Map a stored (config.assistants) record's native-catalog fields onto the
+ * renderer's `_`-prefixed fields. Native built-in catalog records (waylandteams)
+ * carry `kind`/`teammates`/`rituals`/`standing`/`kickoffs` on the base config;
+ * the library + /teams surfaces read `_kind`/`_teammates`/... (the shape the
+ * extension path produced). This bridges the two so a native team launcher
+ * surfaces on /teams identically to how it did when loaded as an extension.
+ * No-op for records that carry no `kind` (e.g. the 31 ASSISTANT_PRESETS rows).
+ */
+export const normalizeStoredAssistant = (assistant: AssistantListItem): AssistantListItem => {
+  const a = assistant as AssistantListItem & {
+    kind?: 'team' | 'specialist';
+    teammates?: string[];
+    rituals?: Array<{ name: string; cadence: string }>;
+    standing?: boolean;
+    kickoffs?: unknown;
+  };
+  if (!a.kind) return assistant;
+  return {
+    ...assistant,
+    _kind: a._kind ?? a.kind,
+    _teammates: a._teammates ?? a.teammates,
+    _rituals: a._rituals ?? a.rituals,
+    _standing: a._standing ?? a.standing,
+    _kickoffs: a._kickoffs ?? normalizeKickoffs(a.kickoffs),
+  };
+};
+
+/**
  * Check if an assistant originates from an extension or another bundle-vendored
  * source (waylandteams via the resolver, FoundrySkills via the agent-profile
  * merge). All of these are read-only, ship their context inline on the record,

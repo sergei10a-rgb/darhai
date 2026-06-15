@@ -77,9 +77,13 @@ type CardEntry = {
 const TEAM_CATEGORIES: ReadonlySet<AssistantCategory> = new Set<AssistantCategory>(['sell', 'run']);
 
 const classifyAssistant = (assistant: AssistantListItem, category: AssistantCategory): AssistantCardType => {
-  if (assistant.isBuiltin) return 'builtin';
+  // `_kind` wins over `isBuiltin`: native built-in catalog records (waylandteams)
+  // are isBuiltin AND carry a kind, and must group as Team / Specialist - not be
+  // swept into the Built-ins bucket. The 31 ASSISTANT_PRESETS carry no kind and
+  // fall through to 'builtin' unchanged.
   if (assistant._kind === 'team') return 'team';
   if (assistant._kind === 'specialist') return 'specialist';
+  if (assistant.isBuiltin) return 'builtin';
   // Legacy fallback for bundles that didn't declare `kind`.
   if (TEAM_CATEGORIES.has(category)) return 'team';
   return 'specialist';
