@@ -247,6 +247,26 @@ describe('continueRun - driver auto-completion (Stage 1)', () => {
     expect(s?.run_mode).toBe('awaiting_input');
   });
 
+  it('#123: AUTO + active now + endedWithUserQuestion: parks (await_input), does NOT auto-advance', async () => {
+    const { parts, sessionId } = await startDemo('auto');
+    await parts.service.continueRun(sessionId, { turnState: 'ai_waiting_input' });
+    let s = await parts.service.findById(sessionId);
+    expect(s?.steps[0].status).toBe('now');
+
+    // The turn finished with the agent's final message reading as a prose
+    // question to the user (no marker, no confirmation). Park, don't cascade.
+    const res = await parts.service.continueRun(sessionId, {
+      turnState: 'ai_waiting_input',
+      endedWithUserQuestion: true,
+    });
+    expect(res.decision).toBe('await_input');
+    expect(res.directive).toBeNull();
+    s = await parts.service.findById(sessionId);
+    expect(s?.steps[0].status).toBe('now'); // not done
+    expect(s?.steps[1].status).toBe('todo'); // not advanced
+    expect(s?.run_mode).toBe('awaiting_input');
+  });
+
   it('AUTO + last step now + others done + normal turn: all terminal -> complete + run_mode done', async () => {
     const { parts, sessionId } = await startDemo('auto');
     // Mark step 1 done, step 2 now (the agent is finishing the last step).

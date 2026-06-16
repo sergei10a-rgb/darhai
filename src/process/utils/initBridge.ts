@@ -340,11 +340,30 @@ void getDatabase()
         return false;
       }
     };
+    // The agent's most recent text reply (skipping the user's own messages and
+    // tool/status rows), so the parent driver can detect a prose clarification
+    // question and park AUTO instead of force-advancing past it (#123).
+    const getLastAgentText = async (conversationId: string): Promise<string | null> => {
+      try {
+        const db = await getDatabase();
+        const result = db.getConversationMessages(conversationId, 0, 5, 'DESC');
+        for (const msg of result.data ?? []) {
+          if (msg.type === 'text' && msg.position !== 'right') {
+            const content = (msg.content as { content?: unknown }).content;
+            return typeof content === 'string' ? content : null;
+          }
+        }
+        return null;
+      } catch {
+        return null;
+      }
+    };
     ipcBridge.conversation?.turnCompleted?.on?.((event) => {
       void handleParentWorkflowTurn(event, {
         service: workflowService,
         isAutonomousChild,
         sendDirective: sendWorkflowDirective,
+        getLastAgentText,
       });
     });
 

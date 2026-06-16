@@ -16,7 +16,7 @@
  */
 
 import { describe, expect, it, vi } from 'vitest';
-import { handleParentWorkflowTurn } from '@process/services/workflow/parentTurnDriver';
+import { handleParentWorkflowTurn, looksLikeUserQuestion } from '@process/services/workflow/parentTurnDriver';
 import type { WorkflowSession } from '@/common/types/workflowTypes';
 import type { IConversationTurnCompletedEvent } from '@/common/adapter/ipcBridge';
 
@@ -61,7 +61,9 @@ function session(over: Partial<WorkflowSession> = {}): WorkflowSession {
 
 type Deps = Parameters<typeof handleParentWorkflowTurn>[1];
 
-function makeDeps(over: Partial<{ findSession: WorkflowSession | null; isChild: boolean; decision: ReturnType<NonNullable<Deps['service']['continueRun']>> extends Promise<infer R> ? R : never }> = {}) {
+function makeDeps(
+  over: Partial<{ findSession: WorkflowSession | null; isChild: boolean; lastAgentText: string | null }> = {}
+) {
   const continueRun = vi.fn(async () => ({
     decision: 'advance' as const,
     directive: 'Proceed to step 1: Audit',
@@ -69,6 +71,7 @@ function makeDeps(over: Partial<{ findSession: WorkflowSession | null; isChild: 
   }));
   const sendDirective = vi.fn(async () => undefined);
   const setRunMode = vi.fn(async () => session({ run_mode: 'awaiting_input' }));
+  const getLastAgentText = vi.fn(async () => over.lastAgentText ?? null);
   const deps: Deps = {
     service: {
       findByConversationId: vi.fn(() => over.findSession ?? null),
@@ -77,8 +80,9 @@ function makeDeps(over: Partial<{ findSession: WorkflowSession | null; isChild: 
     },
     isAutonomousChild: vi.fn(async () => over.isChild ?? false),
     sendDirective,
+    getLastAgentText,
   };
-  return { deps, continueRun, sendDirective, setRunMode };
+  return { deps, continueRun, sendDirective, setRunMode, getLastAgentText };
 }
 
 describe('handleParentWorkflowTurn', () => {
@@ -107,7 +111,11 @@ describe('handleParentWorkflowTurn', () => {
     expect(deps.service.findByConversationId).toHaveBeenCalledWith('conv-1');
     // The completed turn's terminal state is threaded into the brain so the
     // driver-owned completion block (Stage 1) can mark the active step terminal.
-    expect(continueRun).toHaveBeenCalledWith('wf-1', { turnState: 'ai_waiting_input', pendingConfirmations: 0 });
+    expect(continueRun).toHaveBeenCalledWith('wf-1', {
+      turnState: 'ai_waiting_input',
+      pendingConfirmations: 0,
+      endedWithUserQuestion: false,
+    });
     expect(sendDirective).toHaveBeenCalledWith('conv-1', 'Proceed to step 1: Audit');
   });
 
@@ -115,7 +123,11 @@ describe('handleParentWorkflowTurn', () => {
     const { deps, continueRun } = makeDeps({ findSession: session() });
     deps.service.continueRun = continueRun;
     await handleParentWorkflowTurn(turn({ sessionId: 'conv-1', state: 'error' }), deps);
-    expect(continueRun).toHaveBeenCalledWith('wf-1', { turnState: 'error', pendingConfirmations: 0 });
+    expect(continueRun).toHaveBeenCalledWith('wf-1', {
+      turnState: 'error',
+      pendingConfirmations: 0,
+      endedWithUserQuestion: false,
+    });
   });
 
   it('#123: threads a non-zero pending-confirmation count so the brain can park instead of advancing', async () => {
@@ -137,8 +149,55 @@ describe('handleParentWorkflowTurn', () => {
       }),
       deps
     );
-    expect(continueRun).toHaveBeenCalledWith('wf-1', { turnState: 'ai_waiting_input', pendingConfirmations: 2 });
+    expect(continueRun).toHaveBeenCalledWith('wf-1', {
+      turnState: 'ai_waiting_input',
+      pendingConfirmations: 2,
+      endedWithUserQuestion: false,
+    });
     expect(sendDirective).not.toHaveBeenCalled();
+  });
+
+  it('#123: threads endedWithUserQuestion=true when the agent ends on a prose question', async () => {
+    const { deps, getLastAgentText } = makeDeps({
+      findSession: session(),
+      lastAgentText: 'There is an untracked file build.local here. Should I include it in git?',
+    });
+    const park = vi.fn(async () => ({
+      decision: 'await_input' as const,
+      directive: null,
+      session: session({ run_mode: 'awaiting_input' }),
+    }));
+    deps.service.continueRun = park;
+    await handleParentWorkflowTurn(turn({ sessionId: 'conv-1', state: 'ai_waiting_input' }), deps);
+    expect(getLastAgentText).toHaveBeenCalledWith('conv-1');
+    expect(park).toHaveBeenCalledWith('wf-1', {
+      turnState: 'ai_waiting_input',
+      pendingConfirmations: 0,
+      endedWithUserQuestion: true,
+    });
+    expect(deps.sendDirective).not.toHaveBeenCalled();
+  });
+
+  it('#123: does NOT read the agent text (or flag a question) when a confirmation is already pending', async () => {
+    const { deps, continueRun, getLastAgentText } = makeDeps({
+      findSession: session(),
+      lastAgentText: 'anything?',
+    });
+    await handleParentWorkflowTurn(
+      turn({
+        sessionId: 'conv-1',
+        state: 'ai_waiting_input',
+        runtime: { hasTask: false, isProcessing: false, pendingConfirmations: 1 },
+      }),
+      deps
+    );
+    // A pending confirmation already parks - skip the extra DB read.
+    expect(getLastAgentText).not.toHaveBeenCalled();
+    expect(continueRun).toHaveBeenCalledWith('wf-1', {
+      turnState: 'ai_waiting_input',
+      pendingConfirmations: 1,
+      endedWithUserQuestion: false,
+    });
   });
 
   it('does not send when the decision is await_input (step mode halt)', async () => {
@@ -182,5 +241,25 @@ describe('handleParentWorkflowTurn', () => {
     await expect(handleParentWorkflowTurn(turn({ state: 'ai_waiting_input' }), deps)).resolves.toBeUndefined();
     // A failed send must leave the run resumable, not silently stuck `now`.
     expect(setRunMode).toHaveBeenCalledWith('wf-1', 'awaiting_input');
+  });
+});
+
+describe('looksLikeUserQuestion (#123 prose-question heuristic)', () => {
+  it('is true when the final non-whitespace character is a question mark', () => {
+    expect(looksLikeUserQuestion('Should I include the untracked file in git?')).toBe(true);
+    expect(looksLikeUserQuestion('Done.\n\nDo you want me to proceed?\n  ')).toBe(true);
+  });
+
+  it('is false for a normal completion that does not end on a question', () => {
+    expect(looksLikeUserQuestion('Step complete. All tests pass.')).toBe(false);
+    // A question mid-text that the agent then answered itself is not a wait.
+    expect(looksLikeUserQuestion('Is the cache stale? Yes - I cleared it and moved on.')).toBe(false);
+  });
+
+  it('is false for empty / null / non-string', () => {
+    expect(looksLikeUserQuestion('')).toBe(false);
+    expect(looksLikeUserQuestion('   ')).toBe(false);
+    expect(looksLikeUserQuestion(null)).toBe(false);
+    expect(looksLikeUserQuestion(undefined)).toBe(false);
   });
 });

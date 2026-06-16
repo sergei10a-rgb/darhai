@@ -623,7 +623,12 @@ export class WorkflowSessionService {
    */
   async continueRun(
     sessionId: string,
-    opts: { repokeActiveStep?: boolean; turnState?: TurnState; pendingConfirmations?: number } = {}
+    opts: {
+      repokeActiveStep?: boolean;
+      turnState?: TurnState;
+      pendingConfirmations?: number;
+      endedWithUserQuestion?: boolean;
+    } = {}
   ): Promise<{ decision: ReturnType<typeof decideAfterTurn>; directive: string | null; session: WorkflowSession }> {
     const current = this.repo.findById(sessionId);
     if (current === null) {
@@ -684,14 +689,16 @@ export class WorkflowSessionService {
         // The agent finishes a turn that is blocked on a tool/permission
         // confirmation with the default `ai_waiting_input` state but a non-zero
         // pending-confirmation count (AcpAgentManager.handleFinishSignal). Treat
-        // that exactly like an open ask: the step is NOT complete.
+        // that exactly like an open ask: the step is NOT complete. The third
+        // signal - `endedWithUserQuestion` - covers a PROSE clarification with
+        // neither a structured ask nor a confirmation (the driver derives it from
+        // the agent's last reply), the final hole in the #123 cascade.
         const hasPendingConfirmation = (opts.pendingConfirmations ?? 0) > 0;
-        if (hasOpenAsk || hasPendingConfirmation) {
-          // Rule 2: the agent needs the user - an unanswered ask OR an unresolved
-          // confirmation. Leave the step `now` and park. Without this, AUTO mode
-          // force-marked the step done and advanced, cascading the agent through
-          // every step without doing the work (#123). The AskCard / confirmation
-          // prompt surfaces the block so the user can answer.
+        if (hasOpenAsk || hasPendingConfirmation || opts.endedWithUserQuestion === true) {
+          // Rule 2: the agent needs the user - an unanswered ask, an unresolved
+          // confirmation, or a final-message question. Leave the step `now` and
+          // park. Without this, AUTO mode force-marked the step done and advanced,
+          // cascading the agent through every step without doing the work (#123).
           const session = await this.setRunMode(sessionId, 'awaiting_input');
           return { decision: 'await_input', directive: null, session };
         }
