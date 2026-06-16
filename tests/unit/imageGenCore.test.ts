@@ -605,6 +605,27 @@ describe('executeFluxImageGen', () => {
     );
   });
 
+  it('translates the recommended "flux-image" entry to a model-less, quality-categorized request', async () => {
+    const fetchFn = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ data: [{ b64_json: Buffer.from('auto').toString('base64') }] }), { status: 200 })
+    ) as unknown as typeof globalThis.fetch;
+
+    const result = await executeFluxImageGen(
+      { prompt: 'a red apple' },
+      fluxProvider('flux-image'),
+      '/workspace',
+      false,
+      undefined,
+      fetchFn
+    );
+
+    expect(result.success).toBe(true);
+    const init = (fetchFn as unknown as ReturnType<typeof vi.fn>).mock.calls[0][1] as RequestInit;
+    const body = JSON.parse(init.body as string);
+    expect(body).toEqual({ prompt: 'a red apple', n: 1, category: 'Pro' });
+    expect(body).not.toHaveProperty('model');
+  });
+
   it('appends the SynthID notice for Gemini arms', async () => {
     const notice = 'This image contains an invisible SynthID watermark (Google).';
     const fetchFn = vi.fn().mockResolvedValue(

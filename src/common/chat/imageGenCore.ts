@@ -21,6 +21,7 @@ import type { TProviderWithModel } from '@/common/config/storage';
 import type { UnifiedChatCompletionResponse } from '@/common/api/RotatingApiClient';
 import { getProviderAuthType } from '@/common/utils/platformAuthType';
 import { FLUX_PROVIDER_ID } from '@/common/config/flux';
+import { FLUX_RECOMMENDED_IMAGE_ID } from '@/common/config/imageModels';
 import { IMAGE_EXTENSIONS, MIME_TYPE_MAP, MIME_TO_EXT_MAP, DEFAULT_IMAGE_EXTENSION } from '@/common/config/constants';
 
 // Copyright 2026 Ferrox Labs
@@ -485,12 +486,22 @@ export async function executeFluxImageGen(
   const baseUrl = (provider.baseUrl || `https://${FLUX_IMAGE_HOST}/v1`).replace(/\/+$/, '');
   const endpoint = `${baseUrl}/images/generations`;
 
+  // "Flux Image" (the recommended default) is not a literal arm: omit the model
+  // and pass a quality category so Flux picks a strong arm per request (contract
+  // §3.2/§3.3 - category 'Pro' resolves to nano-banana-pro-2k class: high
+  // quality, SynthID, no org-verify requirement). A concrete arm id is sent
+  // verbatim. Either way: n=1, never response_format (gpt-image rejects it).
+  const isRecommendedAuto = provider.useModel === FLUX_RECOMMENDED_IMAGE_ID;
+  const requestBody = isRecommendedAuto
+    ? { prompt: params.prompt, n: 1, category: 'Pro' }
+    : { model: provider.useModel, prompt: params.prompt, n: 1 };
+
   let response: Response;
   try {
     response = await fetchFn(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${provider.apiKey}` },
-      body: JSON.stringify({ model: provider.useModel, prompt: params.prompt, n: 1 }),
+      body: JSON.stringify(requestBody),
       signal,
     });
   } catch (error) {

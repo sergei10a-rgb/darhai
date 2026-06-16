@@ -66,12 +66,21 @@ type CuratedRule = {
  * provider pointed at OpenRouter / OpenAI gets the right family.
  */
 /**
- * FluxRouter image arms (the exact `model` values its `/v1/images/generations`
- * endpoint accepts - capabilities contract §3.3). Display order, best-first.
- * `gpt-image-high` leads because it's the connected-Flux default. Every id
- * passes {@link isImageModelName}, so the picker surfaces them.
+ * The recommended, default Flux image option ("Flux Image"). Not a literal arm
+ * id - `executeFluxImageGen` translates it to a model-less request with a
+ * quality category so Flux picks a strong arm per request (contract §3.2/§3.3).
+ * Contains "image" so it survives {@link isImageModelName} in the picker.
+ */
+export const FLUX_RECOMMENDED_IMAGE_ID = 'flux-image';
+
+/**
+ * FluxRouter image options the picker offers. `flux-image` (recommended) leads;
+ * the rest are the exact concrete `model` arm ids the `/v1/images/generations`
+ * endpoint accepts (capabilities contract §3.3), best-first, for power users who
+ * want to pin one. Every id passes {@link isImageModelName}.
  */
 export const FLUX_IMAGE_ARMS = [
+  FLUX_RECOMMENDED_IMAGE_ID,
   'gpt-image-high',
   'nano-banana-pro-4k',
   'nano-banana-pro-2k',
@@ -81,11 +90,12 @@ export const FLUX_IMAGE_ARMS = [
   'flux-image-together-flux',
 ] as const;
 
-/** The arm Flux defaults to when it becomes the connected image backend. */
-export const FLUX_DEFAULT_IMAGE_ARM = 'gpt-image-high';
+/** What Flux defaults to when it becomes the connected image backend: "Flux Image". */
+export const FLUX_DEFAULT_IMAGE_ARM: string = FLUX_RECOMMENDED_IMAGE_ID;
 
-/** Friendly, scannable labels for the Flux arms (proper-noun model names, not chrome). */
+/** Friendly, scannable labels for the Flux options (proper-noun model names, not chrome). */
 const FLUX_IMAGE_ARM_LABELS: Record<string, string> = {
+  [FLUX_RECOMMENDED_IMAGE_ID]: 'Flux Image',
   'gpt-image-high': 'GPT Image (High)',
   'gpt-image-high-xl': 'GPT Image (High XL)',
   'gpt-image-med': 'GPT Image (Medium)',
@@ -153,4 +163,9 @@ export function curatedImageModelsForProvider(provider: { platform?: string; bas
   const host = hostOf(provider.baseUrl);
   const rule = CURATED_IMAGE_MODEL_RULES.find((r) => r.test(platform, host));
   return rule ? [...rule.models] : [];
+}
+
+/** True when a provider row is FluxRouter (by host or platform id). */
+export function isFluxProviderRow(provider: { platform?: string; baseUrl?: string }): boolean {
+  return (provider.platform || '') === 'flux-router' || hostOf(provider.baseUrl).includes('fluxrouter.ai');
 }

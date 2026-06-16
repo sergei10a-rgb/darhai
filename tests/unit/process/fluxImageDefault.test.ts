@@ -36,7 +36,7 @@ describe('resolveFluxImageDefault', () => {
       platform: 'openai',
       baseUrl: 'https://api.fluxrouter.ai/v1',
       apiKey: 'sk-flux',
-      useModel: 'gpt-image-high',
+      useModel: 'flux-image',
     });
   });
 
@@ -51,7 +51,7 @@ describe('resolveFluxImageDefault', () => {
       providers: [fluxRow({ platform: 'flux-router', baseUrl: '' })],
       fluxKey: 'sk-flux',
     });
-    expect(seed?.useModel).toBe('gpt-image-high');
+    expect(seed?.useModel).toBe('flux-image');
     expect(seed?.baseUrl).toBe('https://api.fluxrouter.ai/v1');
   });
 

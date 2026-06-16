@@ -8,8 +8,10 @@ import {
   isImageModelName,
   curatedImageModelsForProvider,
   imageModelDisplayLabel,
+  isFluxProviderRow,
   FLUX_IMAGE_ARMS,
   FLUX_DEFAULT_IMAGE_ARM,
+  FLUX_RECOMMENDED_IMAGE_ID,
 } from '@/common/config/imageModels';
 
 describe('isImageModelName', () => {
@@ -95,14 +97,28 @@ describe('curatedImageModelsForProvider', () => {
     }
   });
 
-  it('defaults to gpt-image-high and includes it in the arm list', () => {
-    expect(FLUX_DEFAULT_IMAGE_ARM).toBe('gpt-image-high');
-    expect(FLUX_IMAGE_ARMS).toContain(FLUX_DEFAULT_IMAGE_ARM);
+  it('defaults to the recommended Flux Image entry, which leads the arm list', () => {
+    expect(FLUX_DEFAULT_IMAGE_ARM).toBe(FLUX_RECOMMENDED_IMAGE_ID);
+    expect(FLUX_RECOMMENDED_IMAGE_ID).toBe('flux-image');
+    expect(FLUX_IMAGE_ARMS[0]).toBe(FLUX_RECOMMENDED_IMAGE_ID);
+  });
+});
+
+describe('isFluxProviderRow', () => {
+  it('matches by the Flux host or the flux-router platform id', () => {
+    expect(isFluxProviderRow({ platform: 'openai', baseUrl: 'https://api.fluxrouter.ai/v1' })).toBe(true);
+    expect(isFluxProviderRow({ platform: 'flux-router' })).toBe(true);
+  });
+
+  it('does not match OpenAI or other providers', () => {
+    expect(isFluxProviderRow({ platform: 'openai', baseUrl: 'https://api.openai.com/v1' })).toBe(false);
+    expect(isFluxProviderRow({})).toBe(false);
   });
 });
 
 describe('imageModelDisplayLabel', () => {
   it('gives Flux arms friendly names', () => {
+    expect(imageModelDisplayLabel('flux-image')).toBe('Flux Image');
     expect(imageModelDisplayLabel('gpt-image-high')).toBe('GPT Image (High)');
     expect(imageModelDisplayLabel('nano-banana-pro-2k')).toBe('Nano Banana Pro 2K');
     expect(imageModelDisplayLabel('flux-image-together-flux')).toBe('Together FLUX (Fastest)');
