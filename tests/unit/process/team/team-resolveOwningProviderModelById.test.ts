@@ -49,7 +49,7 @@ const TWO_PROVIDERS = [
   { id: 'flux', enabled: true, apiKey: 'sk-flux', model: ['claude-sonnet-4'], modelEnabled: {} },
 ];
 
-describe('TeamSessionService.resolveAionrsModelById (#87)', () => {
+describe('TeamSessionService.resolveOwningProviderModelById (#87)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockProcessConfig.get.mockImplementation(async (key: string) =>
@@ -59,9 +59,9 @@ describe('TeamSessionService.resolveAionrsModelById (#87)', () => {
 
   it('selects the provider that OWNS the pinned model, not providers[0]', async () => {
     const svc = makeService() as unknown as {
-      resolveAionrsModelById: (id: string) => Promise<{ id: string; apiKey: string; useModel: string } | null>;
+      resolveOwningProviderModelById: (id: string) => Promise<{ id: string; apiKey: string; useModel: string } | null>;
     };
-    const resolved = await svc.resolveAionrsModelById('claude-sonnet-4');
+    const resolved = await svc.resolveOwningProviderModelById('claude-sonnet-4');
     expect(resolved).not.toBeNull();
     expect(resolved?.id).toBe('flux'); // before the fix this resolved to 'openai'
     expect(resolved?.apiKey).toBe('sk-flux');
@@ -70,9 +70,9 @@ describe('TeamSessionService.resolveAionrsModelById (#87)', () => {
 
   it('returns null when no enabled provider owns the model (caller falls back)', async () => {
     const svc = makeService() as unknown as {
-      resolveAionrsModelById: (id: string) => Promise<unknown>;
+      resolveOwningProviderModelById: (id: string) => Promise<unknown>;
     };
-    expect(await svc.resolveAionrsModelById('unknown-model')).toBeNull();
+    expect(await svc.resolveOwningProviderModelById('unknown-model')).toBeNull();
   });
 
   it('skips a provider that has the model disabled', async () => {
@@ -82,8 +82,8 @@ describe('TeamSessionService.resolveAionrsModelById (#87)', () => {
         : null
     );
     const svc = makeService() as unknown as {
-      resolveAionrsModelById: (id: string) => Promise<unknown>;
+      resolveOwningProviderModelById: (id: string) => Promise<unknown>;
     };
-    expect(await svc.resolveAionrsModelById('claude-sonnet-4')).toBeNull();
+    expect(await svc.resolveOwningProviderModelById('claude-sonnet-4')).toBeNull();
   });
 });

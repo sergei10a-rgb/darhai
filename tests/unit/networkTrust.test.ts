@@ -15,12 +15,14 @@ describe('networkTrust - private-network classification (#83)', () => {
     expect(classifyClientTrust('::ffff:127.0.0.1')).toBe('operator');
   });
 
-  it('treats RFC1918 LAN ranges as operator', () => {
-    expect(classifyClientTrust('10.0.0.4')).toBe('operator');
-    expect(classifyClientTrust('192.168.1.50')).toBe('operator');
-    expect(classifyClientTrust('172.16.0.1')).toBe('operator');
-    expect(classifyClientTrust('172.31.255.254')).toBe('operator');
-    // 172.32 is OUTSIDE the /12 - public.
+  it('treats bare RFC1918 LAN ranges as restricted by default (operator only via allowlist, R4)', () => {
+    // Cross-audit 2026-06-15 R4: broad RFC1918 is NOT operator by default - on a
+    // cloud VPS it covers the VPC/Docker-bridge/metadata net. Operators opt a
+    // trusted LAN back in via WAYLAND_OPERATOR_CIDRS (see the allowlist test).
+    expect(classifyClientTrust('10.0.0.4')).toBe('restricted');
+    expect(classifyClientTrust('192.168.1.50')).toBe('restricted');
+    expect(classifyClientTrust('172.16.0.1')).toBe('restricted');
+    expect(classifyClientTrust('172.31.255.254')).toBe('restricted');
     expect(classifyClientTrust('172.32.0.1')).toBe('restricted');
     expect(classifyClientTrust('172.15.0.1')).toBe('restricted');
   });
@@ -34,11 +36,26 @@ describe('networkTrust - private-network classification (#83)', () => {
     expect(classifyClientTrust('100.63.0.1')).toBe('restricted');
   });
 
-  it('treats link-local + IPv6 unique-local as operator', () => {
-    expect(classifyClientTrust('169.254.1.1')).toBe('operator');
-    expect(classifyClientTrust('fe80::1')).toBe('operator');
-    expect(classifyClientTrust('fd00::1')).toBe('operator');
-    expect(classifyClientTrust('fc00::1')).toBe('operator');
+  it('treats link-local + IPv6 unique-local as restricted by default', () => {
+    expect(classifyClientTrust('169.254.1.1')).toBe('restricted');
+    expect(classifyClientTrust('fe80::1')).toBe('restricted');
+    expect(classifyClientTrust('fd00::1')).toBe('restricted');
+    expect(classifyClientTrust('fc00::1')).toBe('restricted');
+  });
+
+  it('escalates an allowlisted LAN range to operator via WAYLAND_OPERATOR_CIDRS (R4)', () => {
+    const prev = process.env.WAYLAND_OPERATOR_CIDRS;
+    try {
+      process.env.WAYLAND_OPERATOR_CIDRS = '10.0.0.0/8, 192.168.1.0/24';
+      expect(classifyClientTrust('10.0.0.4')).toBe('operator');
+      expect(classifyClientTrust('192.168.1.50')).toBe('operator');
+      // Outside the allowlisted ranges stays restricted.
+      expect(classifyClientTrust('192.168.2.50')).toBe('restricted');
+      expect(classifyClientTrust('172.16.0.1')).toBe('restricted');
+    } finally {
+      if (prev === undefined) delete process.env.WAYLAND_OPERATOR_CIDRS;
+      else process.env.WAYLAND_OPERATOR_CIDRS = prev;
+    }
   });
 
   it('treats public IPs as restricted', () => {
