@@ -64,6 +64,7 @@
 
 import type { CatalogModel, CuratedModel } from '../types';
 import { isFluxModelId } from '@/common/config/flux';
+import { CHATGPT_SUBSCRIPTION_PROVIDER_ID } from './chatgptSubscriptionModels';
 
 /**
  * The recency window - a family flagship is only eligible for `recommended`
@@ -326,6 +327,15 @@ function curateOne(model: CatalogModel, rank: number, familyEligible: boolean): 
   // the rest of the flux-router catalog follows normal curation.
   if (isFluxModelId(model.id)) {
     return { ...model, recommended: false, enabled: true, role: 'flagship' };
+  }
+  // The ChatGPT-subscription static catalog (GPT-5.x / Codex) is a curated,
+  // unenriched virtual set just like the Flux tiers - there is no `/v1/models`
+  // to enrich it. Without this branch every model fails the enrichment gate
+  // (Rule 4) and lands `enabled: false`, so a freshly connected subscription
+  // shows its provider toggle OFF with zero usable models. Treat the whole set
+  // as recommended + on so the connection is usable the moment it lands.
+  if (model.providerId === CHATGPT_SUBSCRIPTION_PROVIDER_ID) {
+    return { ...model, recommended: true, enabled: true, role: 'flagship' };
   }
   if (familyEligible && rank === 0 && !isKnownLegacy(model.id)) {
     return { ...model, recommended: true, enabled: true, role: 'flagship' };

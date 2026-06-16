@@ -38,7 +38,8 @@ const DISPLAY: Record<string, string> = {
  * Build the static catalog for the ChatGPT subscription provider. There is no
  * live model listing on the ChatGPT backend, so these are the canonical ids the
  * Responses path accepts. Mirrors `injectFluxVirtualModels`: unenriched virtual
- * entries the Curator keeps enabled downstream.
+ * entries that the Curator special-cases (by `providerId`) to keep enabled +
+ * recommended downstream, so a connected subscription is usable immediately.
  */
 export function buildChatGptSubscriptionCatalog(): CatalogModel[] {
   return CHATGPT_SUBSCRIPTION_MODEL_IDS.map((id) => ({
