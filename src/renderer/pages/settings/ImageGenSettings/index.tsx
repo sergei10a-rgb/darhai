@@ -224,10 +224,14 @@ const ImageGenSettings: React.FC = () => {
         <Divider className='mt-0px mb-20px' />
 
         {/* Default model picker */}
-        <Form layout='horizontal' labelAlign='left'>
+        <Form layout='horizontal' labelAlign='left' labelCol={{ flex: '170px' }} wrapperCol={{ flex: '1' }}>
           <Form.Item label={t('settings.imageGenPage.defaultModelLabel')}>
             {imageModelList.length > 0 ? (
-              <WaylandSelect value={selectedValue} onChange={handleModelChange}>
+              <WaylandSelect
+                value={selectedValue}
+                onChange={handleModelChange}
+                className='max-w-[420px]'
+              >
                 {imageModelList.map(({ model, ...platform }) => (
                   <WaylandSelect.OptGroup label={platform.name} key={platform.id}>
                     {model.map((modelName) => (

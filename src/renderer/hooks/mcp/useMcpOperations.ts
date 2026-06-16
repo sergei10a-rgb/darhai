@@ -1,4 +1,5 @@
-import { useCallback } from 'react';
+import { useCallback, createElement } from 'react';
+import { Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { acpConversation, mcpService } from '@/common/adapter/ipcBridge';
 import { ConfigStorage } from '@/common/config/storage';
@@ -16,6 +17,14 @@ const truncateErrorMessage = (message: string, maxLength: number = 150): string 
   }
   return message.substring(0, maxLength) + '...';
 };
+
+/**
+ * A green spinning loader for in-progress toasts. Syncing/removing MCP config is
+ * a process, not a problem, so it gets a spinner in the success colour instead
+ * of the orange info glyph that reads as a warning.
+ */
+const progressIcon = () =>
+  createElement(Loader2, { size: 14, className: 'animate-spin', style: { color: 'var(--success)' } });
 
 // MCP operation result types
 interface McpOperationResult {
@@ -111,7 +120,7 @@ export const useMcpOperations = (
 
         // Show remove-started message (via queue)
         await globalMessageQueue.add(() => {
-          message.info(t('settings.mcpRemoveStarted', { count: compatibleCount }));
+          message.info({ content: t('settings.mcpRemoveStarted', { count: compatibleCount }), icon: progressIcon() });
         });
 
         // Desktop -> Electron IPC; hosted WebUI -> token-authed + CSRF'd write-only
@@ -140,7 +149,7 @@ export const useMcpOperations = (
 
         // Show sync-started message (via queue)
         await globalMessageQueue.add(() => {
-          message.info(t('settings.mcpSyncStarted', { count: compatibleCount }));
+          message.info({ content: t('settings.mcpSyncStarted', { count: compatibleCount }), icon: progressIcon() });
         });
 
         // Desktop -> Electron IPC; hosted WebUI -> token-authed + CSRF'd write-only
