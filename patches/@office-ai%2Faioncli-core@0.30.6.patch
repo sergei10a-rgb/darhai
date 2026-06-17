@@ -1,16 +1,7 @@
-diff --git a/node_modules/@office-ai/aioncli-core/.bun-tag-a322f8e24a95bb08 b/node_modules/@office-ai/aioncli-core/.bun-tag-a322f8e24a95bb08
-new file mode 100644
-index 0000000..e69de29
-diff --git a/node_modules/@office-ai/aioncli-core/.bun-tag-d5fdf500a8c912 b/node_modules/@office-ai/aioncli-core/.bun-tag-d5fdf500a8c912
-new file mode 100644
-index 0000000..e69de29
-diff --git a/node_modules/@office-ai/aioncli-core/.bun-tag-e430e8d9d3acdb6c b/node_modules/@office-ai/aioncli-core/.bun-tag-e430e8d9d3acdb6c
-new file mode 100644
-index 0000000..e69de29
-diff --git a/node_modules/@office-ai/aioncli-core/dist/src/core/openaiContentGenerator.js b/node_modules/@office-ai/aioncli-core/dist/src/core/openaiContentGenerator.js
-index 2bdb1c5..80918be 100644
---- a/node_modules/@office-ai/aioncli-core/dist/src/core/openaiContentGenerator.js
-+++ b/node_modules/@office-ai/aioncli-core/dist/src/core/openaiContentGenerator.js
+diff --git a/dist/src/core/openaiContentGenerator.js b/dist/src/core/openaiContentGenerator.js
+index 2bdb1c5b9306902dabe47a5aedcf0e49bb954db6..80918bee2859cf26fc1b89e64794396b6e8a0d4d 100644
+--- a/dist/src/core/openaiContentGenerator.js
++++ b/dist/src/core/openaiContentGenerator.js
 @@ -644,6 +644,19 @@ export class OpenAIContentGenerator {
                          result[key] = value;
                      }
@@ -72,10 +63,10 @@ index 2bdb1c5..80918be 100644
          }
          return params;
      }
-diff --git a/node_modules/@office-ai/aioncli-core/dist/src/mcp/oauth-provider.js b/node_modules/@office-ai/aioncli-core/dist/src/mcp/oauth-provider.js
-index 51ed849..ee53d42 100644
---- a/node_modules/@office-ai/aioncli-core/dist/src/mcp/oauth-provider.js
-+++ b/node_modules/@office-ai/aioncli-core/dist/src/mcp/oauth-provider.js
+diff --git a/dist/src/mcp/oauth-provider.js b/dist/src/mcp/oauth-provider.js
+index 51ed8492791864445208fef3d0a38801ba0978bd..ee53d4244ce04e64950884b239ddf387c01b062a 100644
+--- a/dist/src/mcp/oauth-provider.js
++++ b/dist/src/mcp/oauth-provider.js
 @@ -147,6 +147,18 @@ export class MCPOAuthProvider {
       * @returns Object containing the port (available immediately) and a promise for the auth response
       */
@@ -250,3 +241,24 @@ index 51ed849..ee53d42 100644
                  return newToken.accessToken;
              }
              catch (error) {
+diff --git a/package.json b/package.json
+index e9d3a992a9c3ffb35080509fbfff8224274e8d14..87b394208f6a9e1e73e855f6f1b85cc2b43e3e66 100644
+--- a/package.json
++++ b/package.json
+@@ -74,13 +74,13 @@
+     "node-fetch": "^3.3.2",
+     "open": "^10.1.2",
+     "openai": "^5.11.0",
+-    "picomatch": "^4.0.1",
++    "picomatch": "*",
+     "proper-lockfile": "^4.1.2",
+     "read-package-up": "^11.0.0",
+     "shell-quote": "^1.8.3",
+-    "simple-git": "^3.28.0",
++    "simple-git": "*",
+     "strip-ansi": "^7.1.0",
+-    "systeminformation": "^5.25.11",
++    "systeminformation": "*",
+     "tiktoken": "^1.0.22",
+     "tree-sitter-bash": "^0.25.0",
+     "undici": "^7.10.0",
