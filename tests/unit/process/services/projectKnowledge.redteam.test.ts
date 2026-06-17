@@ -62,8 +62,8 @@ const mockCopyFile = vi.mocked(fs.copyFile);
 const mockAccess = vi.mocked(fs.access);
 const mockReaddir = vi.mocked(fs.readdir);
 
-const WORKSPACE = '/Users/seandonahoe/Documents/project';
-const IN_ROOT = '/Users/seandonahoe/Documents/project/spec.md';
+const WORKSPACE = '/Users/you/Documents/project';
+const IN_ROOT = '/Users/you/Documents/project/spec.md';
 const OUT_OF_ROOT = '/etc/passwd';
 
 /** Minimal fs.Stats-like double for a plain regular file of `size` bytes. */

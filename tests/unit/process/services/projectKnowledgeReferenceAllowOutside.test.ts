@@ -55,7 +55,7 @@ const mockCopyFile = vi.mocked(fs.copyFile);
 const mockAccess = vi.mocked(fs.access);
 const mockReaddir = vi.mocked(fs.readdir);
 
-const WORKSPACE = '/Users/seandonahoe/Documents/project';
+const WORKSPACE = '/Users/you/Documents/project';
 // A safe regular file the user dragged from a folder outside every app root.
 const DROPPED = '/Volumes/Scratch/notes/brief.md';
 
