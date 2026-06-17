@@ -890,7 +890,9 @@
           "help": "STARTTLS when port = 587, implicit TLS when port = 465."
         }
       }
-    }
+    },
+    "genericDesc": "Chat with your Wayland assistant via {{channel}}",
+    "openFullSettingsDesc": "Open Settings then Channels to connect {{channel}}."
   },
   "webui.description": "Use Wayland as your \"24/7 Remote Assistant\" - arrange tasks from any remote device, anytime, anywhere.",
   "webui.steps": "Step 1. Turn on WebUI; Step 2. Copy the access URL; Step 3. Open in remote browser",
@@ -1825,7 +1827,7 @@
       "toggleFailed": "Could not change that provider. Please try again.",
       "providerToggleAria": "Turn {{provider}} models on or off",
       "providerToggleOnHint": "Turn on this provider's recommended models",
-      "providerToggleNoModelsHint": "No models loaded yet. Open Manage and refresh to load this provider\u0027s models first.",
+      "providerToggleNoModelsHint": "No models loaded yet. Open Manage and refresh to load this provider's models first.",
       "providerToggleOffHint": "Turn off all of this provider's models",
       "via": {
         "apiKey": "API key",
@@ -2122,7 +2124,11 @@
       "folderPath": "Sync folder",
       "pickFolder": "Pick folder",
       "pickFolderFirst": "Pick a folder first",
-      "enable": "Enable sync"
+      "enable": "Enable sync",
+      "syncNowSuccess": "Sync complete",
+      "syncNowFailed": "Sync failed. Please try again.",
+      "disableSuccess": "Sync disabled",
+      "disableFailed": "Couldn't disable sync. Please try again."
     },
     "copyPath": "Copy path",
     "pathCopied": "Path copied to clipboard",
@@ -2143,7 +2149,9 @@
     "restoreNotOperator": "Restore is only available from a trusted local network (loopback, LAN, or Tailscale).",
     "restoreBadPassword": "Password is incorrect",
     "restoreTooLarge": "That backup file is too large",
-    "restoreFailed": "Restore failed"
+    "restoreFailed": "Restore failed",
+    "resetFailed": "Couldn't reset Wayland. Your data was not deleted. Please try again.",
+    "exportSuccess": "Backup exported"
   },
   "editorPage": {
     "title": "Editor",

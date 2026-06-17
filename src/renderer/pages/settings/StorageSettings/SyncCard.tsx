@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Tag } from '@arco-design/web-react';
+import { Message, Tag } from '@arco-design/web-react';
 import { Cloud, ShieldCheck } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import Card from '@renderer/components/settings/shared/cards/Card';
@@ -68,14 +68,24 @@ const SyncCard: React.FC = () => {
     try {
       await sync.forceSync.invoke();
       await refresh();
+      Message.success(t('settings.storagePage.sync.syncNowSuccess'));
+    } catch (error) {
+      console.error('Sync now failed:', error);
+      Message.error(t('settings.storagePage.sync.syncNowFailed'));
     } finally {
       setSyncing(false);
     }
   };
 
   const handleDisable = async () => {
-    await sync.disable.invoke();
-    await refresh();
+    try {
+      await sync.disable.invoke();
+      await refresh();
+      Message.success(t('settings.storagePage.sync.disableSuccess'));
+    } catch (error) {
+      console.error('Sync disable failed:', error);
+      Message.error(t('settings.storagePage.sync.disableFailed'));
+    }
   };
 
   return (

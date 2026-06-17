@@ -276,16 +276,31 @@ const WebuiModalContent: React.FC = () => {
             initialPassword: responsePassword || cachedPassword || prev?.initialPassword,
           }));
         } else {
-          setStatus((prev) => ({
-            ...(prev || { adminUsername: 'admin' }),
-            running: true,
-            port,
-            allowRemote: allowRemotePreference,
-            localUrl,
-            lanIP: currentIP || prev?.lanIP,
-            networkUrl: allowRemotePreference && currentIP ? `http://${currentIP}:${port}` : undefined,
-            initialPassword: cachedPassword || prev?.initialPassword,
-          }));
+          // Start timed out or returned null: do NOT assume success.
+          // Re-check actual server status before claiming the server is up.
+          let statusResult: { success: boolean; data?: IWebUIStatus } | null = null;
+          if (window.electronAPI?.webuiGetStatus) {
+            statusResult = await window.electronAPI.webuiGetStatus();
+          } else {
+            statusResult = await Promise.race([
+              webui.getStatus.invoke(),
+              new Promise<null>((resolve) => setTimeout(() => resolve(null), 1500)),
+            ]);
+          }
+
+          if (!statusResult?.success || !statusResult?.data?.running) {
+            // Server is not actually running: surface an honest error,
+            // roll back UI, and do NOT persist enabled=true.
+            setWebuiEnabled(previousEnabled);
+            setStatus((prev) => (prev ? { ...prev, running: false } : null));
+            Message.error(t('settings.webui.operationFailed'));
+            return;
+          }
+
+          // Server actually started.
+          const responseIP = statusResult.data.lanIP || currentIP;
+          if (responseIP) setCachedIP(responseIP);
+          setStatus(statusResult.data);
         }
 
         // Persist only after successful start

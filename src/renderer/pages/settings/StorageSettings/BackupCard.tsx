@@ -32,6 +32,7 @@ const BackupCard: React.FC = () => {
       } else {
         await exportBackupHttp(opts);
       }
+      Message.success(t('settings.storagePage.exportSuccess'));
     } catch {
       Message.error(t('settings.storagePage.exportFailed'));
     } finally {
