@@ -128,6 +128,9 @@ export class WCoreManager extends BaseAgentManager<WCoreManagerData, string> {
   readonly approvalStore = new WCoreApprovalStore();
   private agent: WCoreAgent | null = null;
   private agentReady: Promise<void>;
+  /** Captured failure from `start()`, so a failed bootstrap surfaces an honest
+   * error+finish on the next `sendMessage` instead of silently hanging the turn. */
+  private startError: unknown = null;
   private currentMode: string = 'default';
   private _capabilities: WCoreCapabilities | null = null;
   private _configSentAt: number | null = null;
@@ -168,8 +171,14 @@ export class WCoreManager extends BaseAgentManager<WCoreManagerData, string> {
     // enableFork=false skips auto-init in ForkTask, so init manually
     this.init();
 
-    // Start the agent bootstrap - store promise so sendMessage can await it
-    this.agentReady = this.start().catch(() => {});
+    // Start the agent bootstrap - store promise so sendMessage can await it.
+    // Capture (don't swallow) a failed start: agentReady still resolves so the
+    // sendMessage path is reached, where startError is surfaced as a real
+    // error+finish instead of hanging the turn with no reply (S2).
+    this.agentReady = this.start().catch((error) => {
+      this.startError = error;
+      mainError('[WCoreManager]', 'agent bootstrap (start) failed', error);
+    });
   }
 
   /**
@@ -382,6 +391,17 @@ export class WCoreManager extends BaseAgentManager<WCoreManagerData, string> {
     this._lastActivityAt = Date.now();
     // Wait for agent bootstrap to complete before sending
     await this.agentReady;
+
+    // S2: if bootstrap failed, the turn would otherwise hang forever (this.agent
+    // is null -> the send below is skipped, no reply/error/finish ever emitted).
+    // Surface an honest error + finish so the UI shows a real failure instead of
+    // an infinite spinner. Triggers on missing/old wcore binary, auth failure,
+    // or bad model config.
+    if (this.startError || !this.agent) {
+      this.emitStartFailure(data.msg_id, this.startError);
+      return;
+    }
+
     this._messageSentAt = Date.now();
     mainLog('[WCoreManager]', `message sent: msg_id=${data.msg_id}`);
 
@@ -745,6 +765,37 @@ export class WCoreManager extends BaseAgentManager<WCoreManagerData, string> {
       conversation_id: this.conversation_id,
       msg_id: activeMsgId,
       data: `Agent process exited unexpectedly (code ${code})`,
+    };
+    ipcBridge.conversation.responseStream.emit(errorMessage);
+    this.emitToEventBuses(errorMessage);
+
+    const finishMessage: IResponseMessage = {
+      type: 'finish',
+      conversation_id: this.conversation_id,
+      msg_id: uuid(),
+      data: null,
+    };
+    ipcBridge.conversation.responseStream.emit(finishMessage);
+    this.emitToEventBuses(finishMessage);
+  }
+
+  /**
+   * S2: Surface a failed agent bootstrap as a real error + finish for the held
+   * turn, so the UI shows a failure instead of hanging on an infinite spinner.
+   * Mirrors handleProcessExit's emit pattern.
+   */
+  private emitStartFailure(activeMsgId: string, error: unknown): void {
+    mainError('[WCoreManager]', `agent bootstrap failed; turn ${activeMsgId} cannot start`, error);
+
+    this.status = 'finished';
+    cronBusyGuard.setProcessing(this.conversation_id, false);
+
+    const detail = error instanceof Error ? error.message : String(error ?? 'unknown error');
+    const errorMessage: IResponseMessage = {
+      type: 'error',
+      conversation_id: this.conversation_id,
+      msg_id: activeMsgId,
+      data: `Agent failed to start: ${detail}`,
     };
     ipcBridge.conversation.responseStream.emit(errorMessage);
     this.emitToEventBuses(errorMessage);

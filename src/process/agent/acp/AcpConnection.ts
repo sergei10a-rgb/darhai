@@ -1136,6 +1136,29 @@ export class AcpConnection {
   }
 
   /**
+   * S4: Cheap honest liveness signal for the auto-reconnect guard.
+   *
+   * `isConnected` is presence-only (child alive), so a spawned-but-dead/hung
+   * CLI still reads "connected" and the guard would silently wait on a session
+   * that can never reply. This combines the presence check with the signals we
+   * already track at zero cost: an established session id, a completed
+   * initialize+setup handshake, and a child that has not exited
+   * (`exitCode === null`). It does NOT add a ping/echo round-trip (out of
+   * scope) - it only stops treating an obviously-dead session as ready so the
+   * caller reconnects (or surfaces an honest error) instead of hanging.
+   */
+  get isSessionReady(): boolean {
+    return (
+      this.child !== null &&
+      !this.child.killed &&
+      this.child.exitCode === null &&
+      this.sessionId !== null &&
+      this.isInitialized &&
+      this.isSetupComplete
+    );
+  }
+
+  /**
    * Get the current session ID (for session resume support).
    */
   get currentSessionId(): string | null {

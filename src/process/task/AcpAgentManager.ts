@@ -1378,8 +1378,12 @@ ${collectedResponses.join('\n')}`;
         // Ensure conversation list sorting updates immediately after user sends.
         try {
           (await getDatabase()).updateConversation(this.conversation_id, {});
-        } catch {
-          // Conversation might not exist in DB yet
+        } catch (error) {
+          // Graceful degrade: the conversation row might not exist in the DB
+          // yet, so a failure here is non-fatal to the turn. But log it (S6) so
+          // real failures (corruption, disk-full) are no longer swallowed
+          // silently with zero diagnostics.
+          mainWarn('[AcpAgentManager]', 'updateConversation (touch for list sort) failed', error);
         }
         const userResponseMessage: IResponseMessage = {
           type: 'user_content',
@@ -1794,7 +1798,10 @@ ${collectedResponses.join('\n')}`;
     const result = await this.agent.setModelByConfigOption(modelId);
     if (result) {
       this.persistedModelId = result.currentModelId;
-      this.saveModelId(result.currentModelId);
+      // S6: await (was fire-and-forget) so a persist failure can't surface as an
+      // unhandled rejection and the selected model is actually persisted before
+      // returning (matters for resume).
+      await this.saveModelId(result.currentModelId);
       // Update cached models so Guid page defaults to the newly selected model
       if (result.availableModels?.length > 0) {
         void this.cacheModelList(result);
