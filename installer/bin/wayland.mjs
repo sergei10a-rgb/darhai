@@ -126,6 +126,27 @@ function ensureUnzipCurl() {
   spawnSync('bash', ['-c', `${sudo}apt-get update -qq >/dev/null 2>&1; ${sudo}apt-get install -y -qq unzip curl >/dev/null 2>&1`], { stdio: 'inherit' });
 }
 
+/** The bundled wayland-core engine binary links libasound (ALSA). A minimal
+ *  Debian/Ubuntu server image ships without it, so the engine aborts on the
+ *  first chat turn with "wcore exited with code 127". Install it the same way we
+ *  install bun's unzip/curl prereqs - idempotent, apt-only (other distros: the
+ *  user installs the equivalent package). */
+function ensureEngineRuntimeLibs() {
+  if (!has('apt-get')) return; // non-Debian: user handles prereqs
+  const root = typeof process.getuid === 'function' && process.getuid() === 0;
+  const sudo = root ? '' : 'sudo ';
+  console.log(c.dim('  Ensuring engine runtime libraries (libasound2)…'));
+  // libasound2t64 on Ubuntu 24.04+ (the t64 ABI transition); libasound2 elsewhere.
+  spawnSync(
+    'bash',
+    [
+      '-c',
+      `${sudo}apt-get install -y -qq libasound2t64 >/dev/null 2>&1 || ${sudo}apt-get install -y -qq libasound2 >/dev/null 2>&1`,
+    ],
+    { stdio: 'inherit' }
+  );
+}
+
 async function ensureBun() {
   if (hasBun()) return true;
   console.log(c.dim('\n  The server runs on the bun runtime, which isn\'t installed.'));
@@ -153,6 +174,10 @@ async function setup() {
     process.exit(1);
   }
   if (!(await ensureBun())) process.exit(1);
+
+  // The bundled engine needs ALSA at runtime; install it now so the first chat
+  // turn does not fail with "wcore exited with code 127" on a minimal box.
+  ensureEngineRuntimeLibs();
 
   console.log(c.dim(`  Bring a model. Flux Router is the easy path - one key, every model,`));
   console.log(c.dim(`  best-fit routing. Free account: ${c.o(FLUX_SIGNUP)}\n`));
