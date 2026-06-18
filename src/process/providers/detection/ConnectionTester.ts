@@ -93,6 +93,21 @@ export class ConnectionTester {
   async test(providerId: ProviderId, creds: TestCreds, customBaseUrl?: string): Promise<TestResult> {
     const apiKey = extractKey(creds);
 
+    // A user-supplied custom base URL means the request must reach THAT host, not
+    // the provider's canonical one. This is the Flux-via-`openai` path
+    // (`OPENAI_BASE_URL=https://api.fluxrouter.ai/v1`): the key is scoped to the
+    // gateway's own models, so the canonical `openai` test model (`gpt-4o-mini`)
+    // is rejected with a 401 and the probe would wrongly report `unauthorized`.
+    // Probe the custom base's `/models` endpoint for an auth-only check instead -
+    // a 200 there proves the key authenticates against the host it will actually
+    // use, and `ApiProviderSource` already builds the catalog from the same base.
+    if (apiKey) {
+      const customModelsEndpoint = deriveModelsEndpoint(customBaseUrl);
+      if (customModelsEndpoint) {
+        return this.probeModelsEndpoint(providerId, apiKey, customModelsEndpoint);
+      }
+    }
+
     const testModel = TEST_MODEL[providerId];
     if (testModel && apiKey) {
       return this.probeInference(providerId, apiKey, testModel);

@@ -65,6 +65,23 @@ describe('ConnectionTester', () => {
     expect(Array.isArray(payload.messages)).toBe(true);
   });
 
+  // A Flux key wired as `openai` + OPENAI_BASE_URL=https://api.fluxrouter.ai/v1
+  // is scoped to the gateway's own models, so the canonical `gpt-4o-mini`
+  // inference probe against api.openai.com 401s. With a custom base URL the
+  // probe must instead GET <base>/models on the gateway host (auth-only check).
+  it('probes the custom base /models endpoint, not the canonical host, when a base URL is given', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(response({ data: [{ id: 'flux-auto' }] }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await tester.test('openai', { key: 'sk-flux-test' }, 'https://api.fluxrouter.ai/v1');
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('https://api.fluxrouter.ai/v1/models');
+    expect(url).not.toContain('api.openai.com');
+    expect(init.method).toBe('GET');
+    expect(result).toEqual({ ok: true });
+  });
+
   it('maps a 401 to unauthorized', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({ error: 'bad key' }, 401)));
     const result = await tester.test('openai', { key: 'bad' });
