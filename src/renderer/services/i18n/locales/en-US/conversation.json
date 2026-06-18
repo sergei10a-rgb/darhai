@@ -240,6 +240,9 @@
       "permissionDenied": "Microphone permission was denied",
       "recordingUnsupported": "Live recording is not supported here. Please upload an audio file instead",
       "transcriptionFailed": "Audio transcription failed",
+      "authError": "Flux key is invalid — reconnect Flux Router to use voice input",
+      "premiumLocked": "Flux Voice needs a paid Flux plan — upgrade to use dictation",
+      "rateLimited": "Too many requests — try again shortly",
       "genericError": "Voice input failed. Please try again"
     }
   },
