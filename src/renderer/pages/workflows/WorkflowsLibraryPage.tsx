@@ -34,6 +34,7 @@ import {
   LibrarySectionHeader,
 } from '@/renderer/components/layout/library';
 import PageShell from '@/renderer/components/layout/PageShell';
+import ImportModal from '@/renderer/components/import/ImportModal';
 import type { SkillIndexEntry } from '@/common/types/skillTypes';
 import BuildWorkflowModal from './BuildWorkflowModal';
 import WorkflowCard from './WorkflowCard';
@@ -87,6 +88,7 @@ const WorkflowsLibraryPage: React.FC = () => {
   const [selected, setSelected] = useState<SkillIndexEntry | null>(null);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [buildOpen, setBuildOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
 
   const refreshWorkflows = useCallback(() => {
@@ -183,15 +185,7 @@ const WorkflowsLibraryPage: React.FC = () => {
           <Button
             type='secondary'
             icon={<Download size={14} />}
-            onClick={() => {
-              // eslint-disable-next-line no-alert
-              window.alert(
-                t(
-                  'import.placeholder',
-                  'Import wiring lands next: folder / git URL / SKILL.md with type:workflow auto-detected via frontmatter, scanned by Skill Guard, and registered as source:imported.',
-                ),
-              );
-            }}
+            onClick={() => setImportOpen(true)}
           >
             {t('actions.import', 'Import workflow')}
           </Button>
@@ -307,6 +301,12 @@ const WorkflowsLibraryPage: React.FC = () => {
         visible={buildOpen}
         onClose={() => setBuildOpen(false)}
         onSaved={refreshWorkflows}
+      />
+      <ImportModal
+        visible={importOpen}
+        kind='workflow'
+        onCancel={() => setImportOpen(false)}
+        onDone={refreshWorkflows}
       />
     </PageShell>
   );

@@ -79,6 +79,10 @@ export function initSkillsBridge(): void {
       if (entry.type === 'agent-profile') {
         const parsed = parseFrontmatter(entry.body);
         const name = parsed?.name ?? entry.name;
+        // Sequential by design: each call read-modify-writes the same
+        // ConfigStorage('assistants') array, so parallelizing would drop
+        // writes. A single import batch is tiny, so the cost is negligible.
+        // oxlint-disable-next-line no-await-in-loop
         const imported = await importAgentProfile(
           { name, description: parsed?.description },
           entry.body,
