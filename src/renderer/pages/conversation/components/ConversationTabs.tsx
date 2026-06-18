@@ -13,6 +13,7 @@ import { ipcBridge } from '@/common';
 import type { TChatConversation } from '@/common/config/storage';
 import { isElectronDesktop } from '@/renderer/utils/platform';
 import { CUSTOM_AVATAR_IMAGE_MAP } from '@/renderer/pages/guid/constants';
+import { isLucideAvatar, renderLucideAvatar } from '@/renderer/utils/lucideAvatar';
 import { getAgentLogo } from '@/renderer/utils/model/agentLogo';
 import { emitter } from '@/renderer/utils/emitter';
 import { cleanupSiderTooltips } from '@/renderer/utils/ui/siderTooltip';
@@ -424,7 +425,9 @@ const ConversationTabs: React.FC = () => {
   // Render agent dropdown menu
   const renderAgentDropdownMenu = useCallback(() => {
     return (
-      <Menu onClickMenuItem={(key) => void handleCreateConversation(key)}>
+      // Cap the width so the droplist doesn't stretch to the full viewport on
+      // large displays (#144); the menu items are short agent names.
+      <Menu onClickMenuItem={(key) => void handleCreateConversation(key)} style={{ minWidth: 200, maxWidth: 320 }}>
         {cliAgents.length > 0 && (
           <Menu.ItemGroup title={t('conversation.dropdown.cliAgents')}>
             {cliAgents.map((agent) => {
@@ -453,12 +456,15 @@ const ConversationTabs: React.FC = () => {
           <Menu.ItemGroup title={t('conversation.dropdown.presetAssistants')}>
             {presetAssistants.map((agent) => {
               const avatarImage = agent.avatar ? CUSTOM_AVATAR_IMAGE_MAP[agent.avatar] : undefined;
-              const isEmoji = agent.avatar && !avatarImage && !agent.avatar.endsWith('.svg');
+              const isLucide = !avatarImage && isLucideAvatar(agent.avatar);
+              const isEmoji = agent.avatar && !avatarImage && !isLucide && !agent.avatar.endsWith('.svg');
               return (
                 <Menu.Item key={`preset:${agent.customAgentId}`}>
                   <div className='flex items-center gap-8px'>
                     {avatarImage ? (
                       <img src={avatarImage} alt={agent.name} style={{ width: 16, height: 16, objectFit: 'contain' }} />
+                    ) : isLucide ? (
+                      (renderLucideAvatar(agent.avatar, 16) ?? <Bot size={16} />)
                     ) : isEmoji ? (
                       <span style={{ fontSize: 14, lineHeight: '16px' }}>{agent.avatar}</span>
                     ) : (
