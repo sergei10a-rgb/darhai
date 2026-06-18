@@ -214,6 +214,12 @@ export class AcpSession {
         // second message from hitting a "Cannot send in prompting state" error.
         this.promptExecutor.setPending(content);
         return;
+      case 'starting':
+      case 'resuming':
+        // Session is spawning / reconnecting — queue the message so doStart /
+        // doResume flush it automatically when the session reaches 'active'.
+        this.promptExecutor.setPending(content);
+        return;
       default:
         throw new AcpError('INVALID_STATE', `Cannot send in ${this._status} state`);
     }
