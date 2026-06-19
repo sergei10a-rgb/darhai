@@ -438,12 +438,14 @@
         "accountSid": {
           "label": "Account SID",
           "placeholder": "ACxxxxxxxxxxxxxxxx",
-          "help": "Account SID は Twilio コンソールのダッシュボードで確認できます。「AC」で始まります。"
+          "help": "Account SID は Twilio コンソールのダッシュボードで確認できます。「AC」で始まります。",
+          "required": "Account SID is required"
         },
         "authToken": {
           "label": "認証トークン",
           "placeholder": "認証トークン",
-          "help": "認証トークンはパスワードと同様に扱ってください。Twilio はすべての webhook にこのトークンで署名します。"
+          "help": "認証トークンはパスワードと同様に扱ってください。Twilio はすべての webhook にこのトークンで署名します。",
+          "required": "Auth Token is required"
         },
         "fromNumber": {
           "label": "発信元番号",
@@ -466,7 +468,12 @@
         "rotateButton": "ローテーション",
         "rotateSuccess": "Webhook URL をローテーションしました",
         "rotateFailed": "ローテーションに失敗しました"
-      }
+      },
+      "testAndEnable": "Test & Enable",
+      "connectionFailed": "Twilio connection test failed",
+      "pluginEnabled": "SMS (Twilio) channel enabled",
+      "enableFailed": "Failed to enable Twilio SMS plugin",
+      "fromOrServiceRequired": "A From Number or Messaging Service SID is required"
     },
     "signal": {
       "comingSoonTitle": "Signal は {{phase}} で対応予定です",
@@ -1772,7 +1779,7 @@
       "toggleFailed": "Could not change that provider. Please try again.",
       "providerToggleAria": "Turn {{provider}} models on or off",
       "providerToggleOnHint": "Turn on this provider's recommended models",
-      "providerToggleNoModelsHint": "No models loaded yet. Open Manage and refresh to load this provider\u0027s models first.",
+      "providerToggleNoModelsHint": "No models loaded yet. Open Manage and refresh to load this provider's models first.",
       "providerToggleOffHint": "Turn off all of this provider's models",
       "via": {
         "apiKey": "API キー",
@@ -2564,5 +2571,6 @@
     }
   },
   "checkForUpdatesDesc": "Check that you are running the latest version of Wayland.",
-  "checkForUpdatesButton": "Check for updates"
+  "checkForUpdatesButton": "Check for updates",
+  "settings": {}
 }

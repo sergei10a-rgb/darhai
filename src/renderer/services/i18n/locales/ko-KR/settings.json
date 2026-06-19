@@ -438,12 +438,14 @@
         "accountSid": {
           "label": "Account SID",
           "placeholder": "ACxxxxxxxxxxxxxxxx",
-          "help": "Twilio 콘솔 대시보드에서 Account SID를 확인할 수 있습니다. \"AC\"로 시작합니다."
+          "help": "Twilio 콘솔 대시보드에서 Account SID를 확인할 수 있습니다. \"AC\"로 시작합니다.",
+          "required": "Account SID is required"
         },
         "authToken": {
           "label": "인증 토큰",
           "placeholder": "인증 토큰",
-          "help": "인증 토큰은 비밀번호처럼 취급하세요. Twilio는 모든 webhook에 이 토큰으로 서명합니다."
+          "help": "인증 토큰은 비밀번호처럼 취급하세요. Twilio는 모든 webhook에 이 토큰으로 서명합니다.",
+          "required": "Auth Token is required"
         },
         "fromNumber": {
           "label": "발신 번호",
@@ -466,7 +468,12 @@
         "rotateButton": "교체",
         "rotateSuccess": "Webhook URL이 교체되었습니다",
         "rotateFailed": "교체에 실패했습니다"
-      }
+      },
+      "testAndEnable": "Test & Enable",
+      "connectionFailed": "Twilio connection test failed",
+      "pluginEnabled": "SMS (Twilio) channel enabled",
+      "enableFailed": "Failed to enable Twilio SMS plugin",
+      "fromOrServiceRequired": "A From Number or Messaging Service SID is required"
     },
     "signal": {
       "comingSoonTitle": "Signal은 {{phase}}에 제공됩니다",
@@ -1772,7 +1779,7 @@
       "toggleFailed": "Could not change that provider. Please try again.",
       "providerToggleAria": "Turn {{provider}} models on or off",
       "providerToggleOnHint": "Turn on this provider's recommended models",
-      "providerToggleNoModelsHint": "No models loaded yet. Open Manage and refresh to load this provider\u0027s models first.",
+      "providerToggleNoModelsHint": "No models loaded yet. Open Manage and refresh to load this provider's models first.",
       "providerToggleOffHint": "Turn off all of this provider's models",
       "via": {
         "apiKey": "API 키",
@@ -2564,5 +2571,6 @@
     }
   },
   "checkForUpdatesDesc": "Check that you are running the latest version of Wayland.",
-  "checkForUpdatesButton": "Check for updates"
+  "checkForUpdatesButton": "Check for updates",
+  "settings": {}
 }

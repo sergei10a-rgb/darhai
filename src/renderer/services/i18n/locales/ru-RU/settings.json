@@ -430,12 +430,14 @@
         "accountSid": {
           "label": "Account SID",
           "placeholder": "ACxxxxxxxxxxxxxxxx",
-          "help": "Найдите ваш Account SID на панели управления Twilio Console. Начинается с «AC»."
+          "help": "Найдите ваш Account SID на панели управления Twilio Console. Начинается с «AC».",
+          "required": "Account SID is required"
         },
         "authToken": {
           "label": "Токен авторизации",
           "placeholder": "токен авторизации",
-          "help": "Относитесь к токену авторизации как к паролю - Twilio подписывает им каждый webhook."
+          "help": "Относитесь к токену авторизации как к паролю - Twilio подписывает им каждый webhook.",
+          "required": "Auth Token is required"
         },
         "fromNumber": {
           "label": "Номер отправителя",
@@ -458,7 +460,12 @@
         "rotateButton": "Сменить",
         "rotateSuccess": "URL webhook изменён",
         "rotateFailed": "Не удалось сменить"
-      }
+      },
+      "testAndEnable": "Test & Enable",
+      "connectionFailed": "Twilio connection test failed",
+      "pluginEnabled": "SMS (Twilio) channel enabled",
+      "enableFailed": "Failed to enable Twilio SMS plugin",
+      "fromOrServiceRequired": "A From Number or Messaging Service SID is required"
     },
     "signal": {
       "comingSoonTitle": "Signal появится в {{phase}}",
@@ -1772,7 +1779,7 @@
       "toggleFailed": "Could not change that provider. Please try again.",
       "providerToggleAria": "Turn {{provider}} models on or off",
       "providerToggleOnHint": "Turn on this provider's recommended models",
-      "providerToggleNoModelsHint": "No models loaded yet. Open Manage and refresh to load this provider\u0027s models first.",
+      "providerToggleNoModelsHint": "No models loaded yet. Open Manage and refresh to load this provider's models first.",
       "providerToggleOffHint": "Turn off all of this provider's models",
       "via": {
         "apiKey": "API-ключ",
@@ -2564,5 +2571,6 @@
     }
   },
   "checkForUpdatesDesc": "Check that you are running the latest version of Wayland.",
-  "checkForUpdatesButton": "Check for updates"
+  "checkForUpdatesButton": "Check for updates",
+  "settings": {}
 }
