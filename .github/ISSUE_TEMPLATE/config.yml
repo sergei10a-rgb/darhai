@@ -1,5 +1,11 @@
 blank_issues_enabled: false
 contact_links:
+  - name: Ask a question (Discussions)
+    url: https://github.com/FerroxLabs/wayland/discussions
+    about: Usage, setup, and how-to questions are answered in Discussions — not the issue tracker.
+  - name: Community chat & live help (Discord)
+    url: https://discord.gg/hXwAcR4MyU
+    about: Join the Wayland Discord for real-time help, the #report-a-bug channel, and announcements.
   - name: Documentation
     url: https://github.com/FerroxLabs/wayland/wiki
     about: Setup guides, configuration, and troubleshooting.
