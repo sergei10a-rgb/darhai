@@ -116,7 +116,10 @@ describe('AcpAgentManager.setModel - Flux routing-boundary detection', () => {
     expect(setModelByConfigOption).toHaveBeenCalledWith('opus');
   });
 
-  it('keeps the in-place setModel for a same-routing switch (native -> native)', async () => {
+  it('respawns a native claude slot change to apply ANTHROPIC_MODEL (#184)', async () => {
+    // A native (non-Flux) claude slot pick is carried by ANTHROPIC_MODEL at
+    // spawn, so it only takes effect on a respawn — the bridge's in-place
+    // set_model is unreliable when it advertises no model list.
     const { manager, setModelByConfigOption, respawnSpy } = makeManager({
       lastRouting: 'native',
       nextRouting: 'native',
@@ -124,9 +127,8 @@ describe('AcpAgentManager.setModel - Flux routing-boundary detection', () => {
 
     await manager.setModel('opus');
 
-    expect(respawnSpy).not.toHaveBeenCalled();
-    expect(setModelByConfigOption).toHaveBeenCalledOnce();
-    expect(setModelByConfigOption).toHaveBeenCalledWith('opus');
+    expect(respawnSpy).toHaveBeenCalledWith('opus');
+    expect(setModelByConfigOption).not.toHaveBeenCalled();
   });
 
   it('never re-spawns a non-routable backend (next routing unknown)', async () => {

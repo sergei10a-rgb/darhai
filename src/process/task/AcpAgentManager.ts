@@ -13,6 +13,7 @@ import type { IConfigStorageRefer } from '@/common/config/storage';
 import { WAYLAND_FILES_MARKER } from '@/common/config/constants';
 import type { IResponseMessage } from '@/common/adapter/ipcBridge';
 import { parseError, uuid } from '@/common/utils';
+import { CLAUDE_SLOT_MODELS } from '@process/agent/acp/utils';
 import type {
   AcpBackend,
   AcpModelInfo,
@@ -679,6 +680,17 @@ ${collectedResponses.join('\n')}`;
         } catch (err) {
           mainWarn('[AcpAgentManager]', 'materializeFluxHermesHome failed', err);
         }
+      }
+    }
+
+    // Native (non-Flux) claude slot picks (sonnet/opus/haiku) get no model list
+    // from the bridge under subscription/OAuth auth, so an in-place set_model is
+    // unreliable. Back the pick with ANTHROPIC_MODEL at spawn so the chosen slot
+    // actually runs (#184). Flux routing already injected its own model above.
+    if (data.backend === 'claude' && decision.routing !== 'flux') {
+      const slot = data.currentModelId;
+      if (slot && CLAUDE_SLOT_MODELS.some((m) => m.id === slot)) {
+        mergedEnv.ANTHROPIC_MODEL = slot;
       }
     }
 
@@ -1825,7 +1837,15 @@ ${collectedResponses.join('\n')}`;
     const crossesRoutingBoundary =
       nextRouting !== 'unknown' && this.lastRouting !== 'unknown' && nextRouting !== this.lastRouting;
 
-    if (crossesRoutingBoundary) {
+    // A native claude slot pick is carried by ANTHROPIC_MODEL at spawn (see
+    // resolveAgentCliConfig), so it only takes effect on a respawn — the bridge's
+    // in-place set_model is unreliable when it advertises no model list (#184).
+    const nativeClaudeSlotChange =
+      this.options.backend === 'claude' &&
+      nextRouting !== 'flux' &&
+      CLAUDE_SLOT_MODELS.some((m) => m.id === modelId);
+
+    if (crossesRoutingBoundary || nativeClaudeSlotChange) {
       return this.respawnForRoutingChange(modelId);
     }
 
