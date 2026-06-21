@@ -24,6 +24,7 @@ const mockUpdateSessionState = vi.fn();
 const mockGetReport = vi.fn();
 const mockGetBody = vi.fn();
 const mockFindActive = vi.fn();
+const mockCuratedForAgent = vi.fn();
 
 vi.mock('@/common', () => ({
   ipcBridge: {
@@ -37,6 +38,9 @@ vi.mock('@/common', () => ({
     skills: {
       getReport: { invoke: (...args: unknown[]) => mockGetReport(...args) },
       getBody: { invoke: (...args: unknown[]) => mockGetBody(...args) },
+    },
+    modelRegistry: {
+      curatedForAgent: { invoke: (...args: unknown[]) => mockCuratedForAgent(...args) },
     },
   },
 }));
@@ -129,6 +133,8 @@ describe('WorkflowDetailModal - launch wiring (v0.6.1 picker)', () => {
     mockFetchDetectedAgents.mockReset();
     mockConfigStorageGet.mockReset();
     mockConfigStorageSet.mockReset();
+    mockCuratedForAgent.mockReset();
+    mockCuratedForAgent.mockResolvedValue([]);
 
     mockGetReport.mockResolvedValue({});
     // Default: no SKILL.md body -> modal shows the generic fallback copy.
@@ -327,6 +333,62 @@ describe('WorkflowDetailModal - launch wiring (v0.6.1 picker)', () => {
     expect(callArg).toHaveProperty('model');
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(mockNavigate).toHaveBeenCalledWith('/conversation/conv_new', expect.any(Object));
+  });
+
+  // --- #198: WCore model carries provider identity into launch ------------
+
+  it('resolves the real provider for a WCore model instead of a synthetic fallback (#198)', async () => {
+    // Repro: Wayland Core picker is empty in the ACP cache (user hasn't opened
+    // a WCore chat), so the model list comes from the curated registry, which
+    // carries a registry providerId ('openai') - NOT the backend key ('wcore').
+    // The bug: buildLaunchTarget matched providers by `platform === backend`,
+    // which never matched for wcore, so it built a synthetic 'wcore-fallback'
+    // provider that the send box later rejected as "No model selected".
+    mockFetchDetectedAgents.mockResolvedValue([WCORE_AGENT]);
+    mockCuratedForAgent.mockResolvedValue([{ id: 'gpt-5.5', displayName: 'GPT-5.5', providerId: 'openai' }]);
+    mockConfigStorageGet.mockImplementation((key: string) => {
+      if (key === 'guid.lastSelectedAgent') return Promise.resolve(null);
+      // No wcore entry -> picker falls back to the curated registry list.
+      if (key === 'acp.cachedModels') return Promise.resolve({});
+      if (key === 'acp.config') return Promise.resolve({});
+      if (key === 'model.config') {
+        // The real connected provider: opaque legacy id, platform 'openai',
+        // and the model in its catalog. Its id is NOT 'openai' and its platform
+        // is NOT 'wcore', so only providerId/membership resolution finds it.
+        return Promise.resolve([
+          {
+            id: 'openai-7f3a',
+            platform: 'openai',
+            name: 'OpenAI',
+            baseUrl: 'https://api.openai.com',
+            apiKey: 'sk-real',
+            model: ['gpt-5.5'],
+          },
+        ]);
+      }
+      return Promise.resolve(null);
+    });
+
+    const newSession = makeSession({ id: 'sess_new', conversation_id: 'conv_new' });
+    mockStart.mockResolvedValue({ sessionId: 'sess_new', session: newSession });
+
+    render(<WorkflowDetailModal entry={makeEntry()} onClose={vi.fn()} />);
+
+    await waitFor(() => expect(screen.getByTestId('workflow-model-select')).toBeTruthy());
+
+    clickLaunch();
+
+    await waitFor(() => expect(mockStart).toHaveBeenCalledTimes(1));
+
+    const callArg = mockStart.mock.calls[0][0] as { model: Record<string, unknown> };
+    // The launch target must carry the REAL provider, not a synthetic fallback.
+    expect(callArg.model.id).toBe('openai-7f3a');
+    expect(callArg.model.platform).toBe('openai');
+    expect(callArg.model.apiKey).toBe('sk-real');
+    expect(callArg.model.useModel).toBe('gpt-5.5');
+    // Guard against the regression specifically.
+    expect(callArg.model.id).not.toBe('wcore-fallback');
+    expect(callArg.model.platform).not.toBe('wcore');
   });
 
   // --- Resume probe tests (Audit B HIGH-2) --------------------------------
