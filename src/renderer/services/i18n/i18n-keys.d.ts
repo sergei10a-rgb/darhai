@@ -1157,6 +1157,7 @@ export type I18nKey =
   | 'memory.archive.import.dropFolder.processBtn'
   | 'memory.archive.import.dropFolder.success'
   | 'memory.archive.import.dropFolder.title'
+  | 'memory.archive.import.failed'
   | 'memory.archive.import.importing'
   | 'memory.archive.import.obsidian.btn'
   | 'memory.archive.import.obsidian.count'

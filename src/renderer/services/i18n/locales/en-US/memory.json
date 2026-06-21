@@ -399,6 +399,7 @@
       "title": "Import memories",
       "close": "Close import drawer",
       "importing": "Importing…",
+      "failed": "Import failed. Please try again.",
       "status": {
         "ready": "ready",
         "checking": "checking",
