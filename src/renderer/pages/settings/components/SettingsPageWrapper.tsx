@@ -1,4 +1,5 @@
 import {
+  ArrowRightLeft,
   BookOpen,
   Bot,
   Brain,
@@ -126,6 +127,12 @@ export function getBuiltinSettingsNavItems(isDesktop: boolean, t: TranslateFn): 
       label: t('settings.sider.mcpLibrary', { defaultValue: 'MCP Library' }),
       icon: <Server size={16} />,
       path: 'mcp-library/browse',
+    },
+    migrate: {
+      id: 'migrate',
+      label: t('settings.sider.migrate', { defaultValue: 'Migrate' }),
+      icon: <ArrowRightLeft size={16} />,
+      path: 'migrate',
     },
     theme: {
       id: 'theme',

@@ -16,6 +16,7 @@ import type { AgentBackend, AcpModelInfo } from '../types/acpTypes';
 import type { SlashCommandItem } from '../chat/slash/types';
 import type { IMcpServer, IProvider, TChatConversation, TProviderWithModel, ICssTheme } from '../config/storage';
 import type { PreviewHistoryTarget, PreviewSnapshotInfo } from '../types/preview';
+import type { MigrationPlan, MigrationResult, MigrationToolId } from '../types/migration';
 import type { IjfwErrorReason, IjfwInvokeResult, IjfwRuntimeModePublic } from '../types/ijfw';
 import type {
   CodexSetupResult,
@@ -2734,4 +2735,16 @@ export const project = {
    * existing `changed.on(() => refresh())` listeners remain valid.
    */
   changed: buildEmitter<{ id?: string; count?: number } | undefined>('project.changed'),
+};
+
+/**
+ * Migrate config (provider keys, MCP servers) from a sibling agent tool
+ * (Hermes, OpenClaw) into Wayland (#migrate). `scan` is read-only and returns a
+ * secret-free plan; `apply` re-reads the source in the main process to recover
+ * key values, so secrets never cross this boundary - the renderer only sends
+ * back the selected item ids.
+ */
+export const migrate = {
+  scan: buildProvider<MigrationPlan, { toolId: MigrationToolId }>('migrate.scan'),
+  apply: buildProvider<MigrationResult, { toolId: MigrationToolId; selectedIds: string[] }>('migrate.apply'),
 };

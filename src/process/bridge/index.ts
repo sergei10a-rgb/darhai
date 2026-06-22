@@ -45,6 +45,7 @@ import { initMemoryArchiveBridge, initPromotionSweep } from './memoryArchiveBrid
 import { initWikiBridge } from './wikiBridge';
 import { startWikiAutoSync } from '@process/services/wiki/wikiAutoSync';
 import { initImportBridge } from './importBridge';
+import { initMigrationBridge } from './migrationBridge';
 import { initSystemSettingsBridge } from './systemSettingsBridge';
 import { initFluxConnectorBridge } from './fluxConnectorBridge';
 import { initAmbientBridge } from './ambientBridge';
@@ -118,6 +119,7 @@ export function initAllBridges(deps: BridgeDependencies): void {
   initWikiBridge();
   startWikiAutoSync();
   initImportBridge();
+  initMigrationBridge();
   initAmbientBridge();
   initNotificationBridge();
   initTaskBridge(deps.workerTaskManager);
@@ -212,6 +214,7 @@ export {
   initIjfwDropBridge,
   initWikiBridge,
   initImportBridge,
+  initMigrationBridge,
   initDoctorBridge,
 };
 export { initModelRegistryIpc } from '@process/providers/ipc/modelRegistryIpc';

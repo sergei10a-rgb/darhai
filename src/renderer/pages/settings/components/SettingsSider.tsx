@@ -1,4 +1,5 @@
 import {
+  ArrowRightLeft,
   Bot,
   BookOpen,
   Brain,
@@ -49,6 +50,7 @@ export const BUILTIN_TAB_IDS = [
   'webui',
   'channels',
   'mcp-library',
+  'migrate',
   // APPEARANCE
   'theme',
   'editor',
@@ -246,6 +248,12 @@ const SettingsSider: React.FC<{ collapsed?: boolean; tooltipEnabled?: boolean }>
         label: t('settings.sider.mcpLibrary', { defaultValue: 'MCP Library' }),
         icon: <Server />,
         path: 'mcp-library/browse',
+      },
+      migrate: {
+        id: 'migrate',
+        label: t('settings.sider.migrate', { defaultValue: 'Migrate' }),
+        icon: <ArrowRightLeft />,
+        path: 'migrate',
       },
       theme: {
         id: 'theme',

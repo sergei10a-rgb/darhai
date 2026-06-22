@@ -1648,6 +1648,7 @@
     "voice": "Voice",
     "channels": "Channels",
     "mcp": "MCP Servers",
+    "migrate": "Migrate",
     "theme": "Theme & Display",
     "editor": "Editor",
     "general": "General",
@@ -1659,6 +1660,20 @@
     "groupEngine": "ENGINE",
     "commands": "Slash Commands",
     "doctor": "Doctor"
+  },
+  "migrate": {
+    "title": "Migrate from another tool",
+    "subtitle": "Bring your provider keys and MCP servers over from Hermes or OpenClaw. Nothing is changed until you import.",
+    "scanning": "Scanning…",
+    "detectedAt": "Found at {{path}}",
+    "notFound": "No {{name}} install found",
+    "nothingToImport": "Nothing to import from this tool.",
+    "alreadyAdded": "Already in Wayland",
+    "key": "API key",
+    "selectedCount": "{{count}} selected",
+    "newCount": "{{count}} new",
+    "importSelected": "Import {{count}}",
+    "resultSummary": "Imported {{applied}}, skipped {{skipped}}."
   },
   "channelsIndex": {
     "title": "Channels",
