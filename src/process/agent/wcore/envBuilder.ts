@@ -6,6 +6,7 @@
 
 import type { TProviderWithModel } from '@/common/config/storage';
 import { isOpenAIHost } from '@/common/utils/urlValidation';
+import { CHATGPT_SUBSCRIPTION_PROVIDER_ID } from '@process/providers/catalog/chatgptSubscriptionModels';
 import { loadBaselineProviderCatalog } from '@process/providers/catalog/providerCatalogStore';
 import { PROVIDER_ENV_VARS } from '@process/providers/detection/KeyDiscovery';
 import type { ProviderId } from '@process/providers/types';
@@ -19,7 +20,19 @@ import { getEnhancedEnv } from '@process/utils/shellEnv';
  * generic openai+base-url path) to get the token refresh + the grok-4.3
  * stop-param fix.
  */
-type NativeWCoreProvider = 'anthropic' | 'openai' | 'bedrock' | 'vertex' | 'xai';
+type NativeWCoreProvider = 'anthropic' | 'openai' | 'bedrock' | 'vertex' | 'xai' | 'openai-chatgpt';
+
+/**
+ * The engine `--provider` value for a ChatGPT subscription connected via OAuth
+ * (#243). The engine drives inference against the ChatGPT backend
+ * (`chatgpt.com/backend-api`) and reads the OAuth token from `~/.codex/auth.json`
+ * (written by `writeCodexAuthFile` at sign-in), so the desktop must route this
+ * provider to the engine's native slug instead of collapsing it to
+ * `--provider openai` (which presents the OAuth bearer to api.openai.com -> a
+ * non-working spawn that errors on send). The provider owns the backend host, so
+ * NO `--base-url` and NO key env var are emitted (see {@link buildSpawnConfig}).
+ */
+const CHATGPT_SUBSCRIPTION_ENGINE_PROVIDER = 'openai-chatgpt';
 
 /**
  * A wcore `--provider` value. Either a {@link NativeWCoreProvider} literal or a
@@ -154,11 +167,28 @@ function nativeEngineEnvVar(provider: WCoreProvider): string | undefined {
 }
 
 /**
+ * True if the model is a ChatGPT subscription connected via OAuth (#243).
+ * Detected by the registry bridge tag `v2:chatgpt-subscription` written by
+ * `legacyModelConfigBridge.mirrorConnectOrRekey` (the legacy `platform`
+ * collapses to `openai-compatible`, so the tag is the only surviving carrier of
+ * the provider id - mirrors {@link catalogIdFor} / {@link nativeEngineProviderId}).
+ */
+function isChatGptSubscription(model: TProviderWithModel): boolean {
+  const tag = (model as unknown as Record<string, unknown>).__waylandModelRegistryBridge;
+  return tag === `v2:${CHATGPT_SUBSCRIPTION_PROVIDER_ID}`;
+}
+
+/**
  * Map provider name to wcore provider name.
  *
  * Platform values: 'custom' | 'new-api' | 'gemini' | 'gemini-vertex-ai' | 'anthropic' | 'bedrock'
  */
 function mapProvider(model: TProviderWithModel): WCoreProvider {
+  // ChatGPT subscription (OAuth): route to the engine's native slug so it drives
+  // the ChatGPT backend + reads the token from ~/.codex/auth.json, instead of
+  // collapsing to `--provider openai` against api.openai.com (#243).
+  if (isChatGptSubscription(model)) return CHATGPT_SUBSCRIPTION_ENGINE_PROVIDER;
+
   // Catalog provider (one of the ~100): pass the catalog id through verbatim so
   // the engine resolves base_url/api_path/env_var from its own providers.toml.
   // Takes precedence over the native platform mapping below.
@@ -353,6 +383,17 @@ export function buildSpawnConfig(
   const nativeEnvVar = nativeEngineEnvVar(provider);
   if (nativeEnvVar !== undefined) {
     if (model.apiKey) env[nativeEnvVar] = model.apiKey;
+    const projectConfig = buildProjectConfig(model, provider);
+    return { args, env, projectConfig, resolvedMaxTokens };
+  }
+
+  // ChatGPT subscription (#243): the engine owns the ChatGPT backend host and
+  // reads the OAuth token from ~/.codex/auth.json (bridged by writeCodexAuthFile
+  // at sign-in), so pass NEITHER a --base-url NOR a key env var - just the native
+  // `--provider openai-chatgpt`. Setting OPENAI_API_KEY here would present the
+  // OAuth bearer to api.openai.com (the rejected path); the base URL must stay
+  // engine-owned, not the openai-compatible backend URL on the legacy row.
+  if (provider === CHATGPT_SUBSCRIPTION_ENGINE_PROVIDER) {
     const projectConfig = buildProjectConfig(model, provider);
     return { args, env, projectConfig, resolvedMaxTokens };
   }

@@ -249,3 +249,37 @@ describe('buildSpawnConfig - engine-native provider routing (#177)', () => {
     expect(hasBaseUrl(args)).toBe(false);
   });
 });
+
+/**
+ * #243 - ChatGPT subscription (OAuth) routing. The mirror persists a connected
+ * subscription as a generic `openai-compatible` row (the ChatGPT backend base
+ * URL on the legacy row, the OAuth access token as `apiKey`), so its identity
+ * survives only in the `v2:chatgpt-subscription` tag. It must reach the engine
+ * as the native `--provider openai-chatgpt` with NO `--base-url` (engine owns
+ * the ChatGPT backend host) and NO key env var (the engine reads the token from
+ * `~/.codex/auth.json`, bridged at sign-in) - NOT the openai+base-url path that
+ * presents the OAuth bearer to api.openai.com and errors on send (the
+ * "not connected / kicked back to Settings" symptom).
+ */
+describe('buildSpawnConfig - ChatGPT subscription routing (#243)', () => {
+  it('routes a chatgpt-subscription via the v2 tag as --provider openai-chatgpt, NO --base-url, NO key env', () => {
+    const model: TProviderWithModel = {
+      id: 'chatgpt-uuid',
+      platform: 'openai-compatible',
+      name: 'ChatGPT subscription',
+      baseUrl: 'https://chatgpt.com/backend-api',
+      apiKey: 'oauth-access-token',
+      useModel: 'gpt-5.2',
+      __waylandModelRegistryBridge: 'v2:chatgpt-subscription',
+    } as TProviderWithModel;
+    const { args, env } = buildSpawnConfig(model, OPTS);
+
+    // The fix: native engine slug, no longer collapses to `--provider openai`.
+    expect(providerArg(args)).toBe('openai-chatgpt');
+    // The engine owns chatgpt.com/backend-api - we must NOT pass a base URL.
+    expect(hasBaseUrl(args)).toBe(false);
+    // The OAuth bearer must NOT be presented to api.openai.com via OPENAI_API_KEY;
+    // the engine reads it from ~/.codex/auth.json instead.
+    expect(env.OPENAI_API_KEY).toBeUndefined();
+  });
+});
