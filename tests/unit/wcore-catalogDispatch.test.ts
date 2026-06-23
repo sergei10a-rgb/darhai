@@ -289,6 +289,16 @@ describe('buildSpawnConfig - keyless local Ollama (#268)', () => {
     expect(env.OPENAI_API_KEY).toBe('ollama');
   });
 
+  it('treats a whitespace-only key as keyless and injects the placeholder (modelBridge parity)', () => {
+    const model = makeLocalOllamaModel();
+    model.apiKey = '   ';
+    const { env } = buildSpawnConfig(model, OPTS);
+    // modelBridge trims the key before the placeholder fallback; envBuilder must
+    // match, or a whitespace-only key would be sent as a bearer and skip the
+    // keyless fix - re-triggering the #268 init bail.
+    expect(env.OPENAI_API_KEY).toBe('ollama');
+  });
+
   it('produces the SAME effective endpoint as the working `--profile ollama` CLI path', () => {
     const { args } = buildSpawnConfig(makeLocalOllamaModel(), OPTS);
     // mapProvider -> openai; stripTrailingV1 strips the persisted `/v1`, and the

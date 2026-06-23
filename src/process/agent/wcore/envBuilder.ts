@@ -389,8 +389,9 @@ export function buildSpawnConfig(
       // key for `--provider openai` or it bails at init, so inject the dummy
       // placeholder (the local daemon ignores Authorization). A keyless CLOUD
       // endpoint is a genuine misconfig and is left to fail as before.
-      if (model.apiKey) {
-        env.OPENAI_API_KEY = model.apiKey;
+      const trimmedKey = model.apiKey?.trim();
+      if (trimmedKey) {
+        env.OPENAI_API_KEY = trimmedKey;
       } else if (isLocalBaseUrl(baseUrl)) {
         env.OPENAI_API_KEY = LOCAL_KEYLESS_PLACEHOLDER;
       }
