@@ -1097,6 +1097,16 @@ const CHAT_START_PLATFORM: Partial<Record<ProviderId, string>> = {
   // Without this entry chat-start returned `unsupported` and inference fell
   // back to api.openai.com (401). See #36.
   'ollama-cloud': 'openai-compatible',
+  // ChatGPT subscription (OAuth) - dispatched as `openai-compatible` so the
+  // legacy bridge's `v2:chatgpt-subscription` tag propagates onto the chat-start
+  // model (via the `platformFor === 'openai-compatible'` legacy-match in
+  // GuidModelSelector), where envBuilder re-routes it to the native
+  // `--provider openai-chatgpt` (the engine owns chatgpt.com/backend-api and
+  // reads the OAuth token from ~/.codex/auth.json). Without this entry
+  // buildChatStartPayload returned `unsupported`, so resolveForChatStart failed
+  // and the picker bounced the user to Settings - the model could never be
+  // selected and the #243 engine routing was never reached (live-E2E gap).
+  'chatgpt-subscription': 'openai-compatible',
   // Azure intentionally absent - the legacy dispatch has no Azure arm; a
   // future Azure chat-start will need its own dispatcher work.
 };
