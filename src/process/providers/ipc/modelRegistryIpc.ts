@@ -73,6 +73,7 @@ import { FLUX_PROVIDER_ID, isFluxModelId } from '@/common/config/flux';
 import { injectFluxVirtualModels } from '../catalog/fluxVirtualModels';
 import {
   buildChatGptSubscriptionCatalog,
+  buildChatGptSubscriptionCatalogLive,
   CHATGPT_SUBSCRIPTION_PROVIDER_ID,
 } from '../catalog/chatgptSubscriptionModels';
 import { ConnectionTester } from '../detection/ConnectionTester';
@@ -375,17 +376,18 @@ export function createModelRegistryHandlers(deps: ModelRegistryDeps): ModelRegis
         return { ok: false, models: 0, sourceErrors: 0 };
       }
 
-      // The ChatGPT subscription has a STATIC catalog - there is no `/v1/models`
-      // on the ChatGPT backend to list. Running it through the API source below
-      // would fetch zero models and overwrite the static catalog with [], so a
-      // refresh (manual or the periodic auto-refresh sweep) silently wipes every
-      // ChatGPT model. Rebuild from the static set instead, exactly as connect
-      // does. (Flux is handled differently: it has a real `/v1/models`, so it
-      // assembles normally and only APPENDS its virtual tier aliases below.)
+      // The ChatGPT subscription can't be listed via `api.openai.com/v1/models`
+      // (the subscription token is locked out of it), but the Codex backend DOES
+      // expose the account's live model list at `codex/models?client_version=...`
+      // (same source the Codex CLI / Hermes / OpenClaw use). Fetch it live so the
+      // catalog always reflects OpenAI's current models; fall back to a static
+      // snapshot only when the fetch fails. The generic API source below would
+      // fetch zero models and wipe the catalog, so this provider stays special.
       if (providerId === CHATGPT_SUBSCRIPTION_PROVIDER_ID) {
-        const staticModels = buildChatGptSubscriptionCatalog();
-        repo.replaceRegistryCatalog(providerId, staticModels);
-        return { ok: true, models: staticModels.length, sourceErrors: 0 };
+        const accessToken = 'key' in creds ? creds.key : '';
+        const models = await buildChatGptSubscriptionCatalogLive(accessToken);
+        repo.replaceRegistryCatalog(providerId, models);
+        return { ok: true, models: models.length, sourceErrors: 0 };
       }
 
       // `refreshAllOnce` fetches the models.dev registry once for the whole
@@ -2009,9 +2011,20 @@ export function connectChatGptSubscriptionProvider(params: {
       state: 'connected',
       creds: { key: params.accessToken, baseUrl: params.baseUrl },
     });
+    // Write a static placeholder immediately so the picker is never empty during
+    // the live fetch, then upgrade to the account's real model list in the
+    // background (connect must stay sync for the IPC contract).
     _repo.replaceRegistryCatalog(CHATGPT_SUBSCRIPTION_PROVIDER_ID, buildChatGptSubscriptionCatalog());
     void mirrorConnectOrRekey(_repo, CHATGPT_SUBSCRIPTION_PROVIDER_ID);
     ipcBridge.modelRegistry.listChanged.emit();
+    void buildChatGptSubscriptionCatalogLive(params.accessToken).then((models) => {
+      try {
+        _repo?.replaceRegistryCatalog(CHATGPT_SUBSCRIPTION_PROVIDER_ID, models);
+        ipcBridge.modelRegistry.listChanged.emit();
+      } catch {
+        // Keep the static placeholder if the live upgrade can't be persisted.
+      }
+    });
     return { ok: true };
   } catch {
     return { ok: false, error: 'unknown' };

@@ -36,12 +36,21 @@ const { mockSafeStorage } = vi.hoisted(() => ({
 
 vi.mock('electron', () => ({ safeStorage: mockSafeStorage }));
 
+// The chatgpt-subscription catalog now fetches the live Codex model list. Mock
+// the network layer so these tests stay hermetic: default to a non-200 so the
+// live fetch fails and the catalog falls back to the static snapshot (the path
+// most of these tests exercise). Individual tests override per-case.
+vi.mock('@process/utils/fetchWithRetry', () => ({
+  fetchWithRetry: vi.fn(async () => ({ ok: false, json: async () => ({}) })),
+}));
+
 import {
   createModelRegistryHandlers,
   CloudRegistrySource,
   resolveSpawnSecretsFromRepo,
 } from '@process/providers/ipc/modelRegistryIpc';
 import type { ModelRegistryDeps, SpawnHandle } from '@process/providers/ipc/modelRegistryIpc';
+import { fetchWithRetry } from '@process/utils/fetchWithRetry';
 
 describe('CloudRegistrySource - google-auth Gemini catalog (zero-models regression)', () => {
   // A google-auth Gemini connection routes through the cloud-synthesis path but
@@ -716,12 +725,12 @@ describe('modelRegistry IPC - refresh', () => {
     expect(repo.getRegistryProvider('openai')?.state).toBe('error');
   });
 
-  it('rebuilds the chatgpt-subscription STATIC catalog on refresh instead of wiping it', async () => {
-    // Regression: the ChatGPT backend has no `/v1/models`, so the API source
-    // returns nothing. Without the static-catalog short-circuit, a refresh
-    // (manual or the periodic auto-refresh sweep) overwrites the connect-time
-    // catalog with [] and every ChatGPT model vanishes - including on the very
-    // next auto-refresh tick.
+  it('on refresh, falls back to the current static snapshot when the live fetch fails (never wipes, never the generic API source)', async () => {
+    // The ChatGPT subscription token can't be listed via `/v1/models`, so the
+    // generic API source is never used. The catalog now fetches the live Codex
+    // model list; when that fetch fails (here: the mocked non-200), it falls back
+    // to the CURRENT static snapshot rather than wiping to []. The dead pre-5.3
+    // slugs must never come back.
     const { deps, repo, apiListModels } = makeFakes();
     repo.upsertRegistryProvider({
       providerId: 'chatgpt-subscription',
@@ -729,10 +738,8 @@ describe('modelRegistry IPC - refresh', () => {
       state: 'connected',
       creds: { key: 'access-token', baseUrl: 'https://chatgpt.com/backend-api' },
     });
-    // Seed the connect-time static catalog, then make the API source empty
-    // (what the ChatGPT backend really returns for a model listing).
     repo.replaceRegistryCatalog('chatgpt-subscription', [
-      catalogModel({ id: 'gpt-5.2', providerId: 'chatgpt-subscription' }),
+      catalogModel({ id: 'gpt-5.5', providerId: 'chatgpt-subscription' }),
     ]);
     apiListModels.mockResolvedValue([]);
     const h = createModelRegistryHandlers(deps);
@@ -741,9 +748,37 @@ describe('modelRegistry IPC - refresh', () => {
 
     expect(result).toEqual({ ok: true });
     const ids = repo.getRegistryCatalog('chatgpt-subscription').map((m) => m.id);
-    expect(ids.length).toBeGreaterThan(0);
-    expect(ids).toContain('gpt-5.2');
-    // The static set must NOT have been replaced by the empty API listing.
+    expect(ids.length).toBeGreaterThan(0); // not wiped
+    expect(ids).toContain('gpt-5.5'); // current static fallback
+    expect(ids).not.toContain('gpt-5.2'); // dead slug never returns
+    // chatgpt-subscription never routes through the generic /v1/models source.
+    expect(apiListModels).not.toHaveBeenCalled();
+  });
+
+  it('on refresh, persists the LIVE Codex model list when the endpoint responds', async () => {
+    const { deps, repo, apiListModels } = makeFakes();
+    repo.upsertRegistryProvider({
+      providerId: 'chatgpt-subscription',
+      connectedVia: 'ChatGPT subscription',
+      state: 'connected',
+      creds: { key: 'access-token', baseUrl: 'https://chatgpt.com/backend-api' },
+    });
+    vi.mocked(fetchWithRetry).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        models: [
+          { slug: 'gpt-5.5', display_name: 'GPT-5.5', visibility: 'list' },
+          { slug: 'gpt-5.4-mini', display_name: 'GPT-5.4-Mini', visibility: 'list' },
+        ],
+      }),
+    } as unknown as Response);
+    const h = createModelRegistryHandlers(deps);
+
+    const result = await h.refresh({ providerId: 'chatgpt-subscription' });
+
+    expect(result).toEqual({ ok: true });
+    const ids = repo.getRegistryCatalog('chatgpt-subscription').map((m) => m.id);
+    expect(ids).toEqual(['gpt-5.5', 'gpt-5.4-mini']);
     expect(apiListModels).not.toHaveBeenCalled();
   });
 
