@@ -1415,20 +1415,44 @@ export function mergeSpawnSecrets<T extends TProviderWithModel>(model: T, secret
  * never sent to the renderer. Resolution is per-call, so two concurrent chats
  * each get their own key with no shared global state in this path.
  */
+/**
+ * Extract the canonical registry providerId from the `v2:<id>` bridge tag a
+ * legacy-mirrored binding carries. After `legacyModelConfigBridge` collapses
+ * `platform` to `openai-compatible` and assigns a random-uuid `id`, this tag is
+ * the ONLY surviving carrier of the real provider id.
+ */
+function bridgeProviderId(model: TProviderWithModel): string | undefined {
+  const tag = (model as unknown as Record<string, unknown>).__waylandModelRegistryBridge;
+  if (typeof tag === 'string' && tag.startsWith('v2:')) {
+    const id = tag.slice('v2:'.length);
+    if (id) return id;
+  }
+  return undefined;
+}
+
 export async function hydrateModelForSpawn<T extends TProviderWithModel>(model: T): Promise<T> {
-  // Flux bindings mirror into legacy model.config with a generated uuid id, not
-  // the registry providerId, so a providerId=model.id lookup misses and the Flux
-  // base URL (https://api.fluxrouter.ai/v1) is never applied. The engine then
-  // falls back to api.openai.com with the Flux key + an unknown model and the
-  // turn hangs with no response. Resolve Flux by its canonical provider id so
-  // the registry supplies the correct base URL and key. See the flux-auto bug.
-  const providerId = isFluxModelId(model.useModel) ? FLUX_PROVIDER_ID : model.id;
+  // A legacy-mirrored binding (Flux, Sakana, OpenRouter, ...) collapses `platform`
+  // to `openai-compatible` and stores a random-uuid `id`; the canonical registry
+  // providerId survives ONLY in the `v2:<id>` bridge tag. Resolving by `model.id`
+  // misses the registry, so the provider's base URL is never applied and the engine
+  // falls back to api.openai.com with a valid non-OpenAI key -> 401. Resolve by the
+  // bridge tag first (this generalizes the prior Flux-only special-case).
+  const bridgeId = bridgeProviderId(model);
+  const providerId = isFluxModelId(model.useModel) ? FLUX_PROVIDER_ID : (bridgeId ?? model.id);
   const secrets = await resolveModelSecretsForSpawn({
     providerId,
     accountId: model.accountId ?? DEFAULT_ACCOUNT_ID,
     modelId: model.useModel,
   });
-  return mergeSpawnSecrets(model, secrets);
+  const merged = mergeSpawnSecrets(model, secrets);
+  // Safety net: if no base URL resolved but the bridge tag names a provider with a
+  // known canonical base URL, apply it so an openai-compatible key is never shipped
+  // to api.openai.com (covers a binding whose registry row is absent/legacy).
+  if (!merged.baseUrl && bridgeId) {
+    const canonicalBaseUrl = CHAT_START_BASE_URL[bridgeId as ProviderId];
+    if (canonicalBaseUrl) return { ...merged, baseUrl: canonicalBaseUrl };
+  }
+  return merged;
 }
 
 // ─── IPC registration ─────────────────────────────────────────────────────────
