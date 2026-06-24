@@ -89,8 +89,8 @@ describe('NATIVE_COLLISION_IDS', () => {
     expect(NATIVE_COLLISION_IDS.has('novita-ai')).toBe(false);
   });
 
-  it('has the full 34-member native set', () => {
-    expect(NATIVE_COLLISION_IDS.size).toBe(34);
+  it('has the full 35-member native set', () => {
+    expect(NATIVE_COLLISION_IDS.size).toBe(35);
   });
 
   it('includes the native ollama-local id (so a bundled local catalog row is dropped as a collision)', () => {

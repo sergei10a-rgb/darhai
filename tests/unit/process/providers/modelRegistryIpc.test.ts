@@ -1755,7 +1755,7 @@ describe('modelRegistry IPC - refreshAllOnce SSRF gate (ollama-local exemption)'
 });
 
 describe('modelRegistry IPC - resolveForChatStart (#243 ChatGPT subscription)', () => {
-  it('resolves a connected ChatGPT subscription to platform openai-chatgpt with no key, no bounce (#243)', async () => {
+  it('resolves a connected ChatGPT subscription to platform openai-compatible with no key, no bounce (#243)', async () => {
     const { deps, repo } = makeFakes();
     repo.upsertRegistryProvider({
       providerId: 'chatgpt-subscription',
@@ -1769,7 +1769,11 @@ describe('modelRegistry IPC - resolveForChatStart (#243 ChatGPT subscription)', 
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.provider.platform).toBe('openai-chatgpt');
+      // Dispatched as `openai-compatible` (the legacy chat-start platform) so the
+      // `v2:chatgpt-subscription` bridge tag survives and envBuilder re-routes to
+      // the native `--provider openai-chatgpt`. The chatgpt identity is carried by
+      // `providerId` below, not the platform field (see CHAT_START_PLATFORM, #243).
+      expect(result.provider.platform).toBe('openai-compatible');
       expect(result.provider.providerId).toBe('chatgpt-subscription');
       expect(result.provider.name).toBe('ChatGPT');
       expect(result.provider.baseUrl).toBe('');
