@@ -1,0 +1,19 @@
+{
+  "plan": "Төлөвлөх горим",
+  "default": "Үндсэн",
+  "acceptEdits": "Засваруудыг зөвшөөрөх",
+  "autoEdit": "Авто засвар",
+  "auto_edit": "Авто засвар",
+  "yolo": "Автопилот",
+  "yoloNoSandbox": "Бүрэн авто (Sandbox-гүй)",
+  "auto": "Авто",
+  "dontAsk": "Бүү асуу",
+  "bypass": "Алгасах (Автопилот)",
+  "bypassPermissions": "Автопилот",
+  "smart": "Ухаалаг",
+  "build": "Бүтээх горим",
+  "permission": "Зөвшөөрөл",
+  "switchMode": "Горим солих",
+  "switchSuccess": "Горим амжилттай солигдлоо",
+  "switchFailed": "Горим солиход алдаа гарлаа"
+}

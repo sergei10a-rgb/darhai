@@ -37,6 +37,7 @@ export const LANGUAGE_OPTIONS: ReadonlyArray<{ code: SupportedLanguage; label: s
   { code: 'ru-RU', label: 'Русский' },
   { code: 'uk-UA', label: 'Українська' },
   { code: 'tr-TR', label: 'Türkçe' },
+  { code: 'mn-MN', label: 'Монгол' },
 ];
 
 /**
@@ -64,6 +65,8 @@ export function normalizeLanguageCode(language: string): SupportedLanguage {
       return 'ru-RU';
     case 'uk':
       return 'uk-UA';
+    case 'mn':
+      return 'mn-MN';
     default:
       return DEFAULT_LANGUAGE;
   }

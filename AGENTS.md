@@ -68,7 +68,7 @@ signals:
     domain: content
     name: post-rewrite
 ---
-# Wayland - Project Guide
+# Дархай (Darhai) - Project Guide
 
 All contributors (human and AI) must follow [CONTRIBUTING.md](CONTRIBUTING.md) before opening a PR.
 

@@ -1,0 +1,108 @@
+{
+  "sidebarLabel": "Mission Control",
+  "pageTitle": "Mission Control",
+  "description": "Every task and scheduled job across your teams, live in one place.",
+  "refresh": "Refresh",
+  "live": "Live",
+  "empty": "All quiet",
+  "emptyHint": "Team tasks and scheduled jobs appear here the moment they start.",
+  "status": {
+    "running": "Running",
+    "verifying": "Verifying",
+    "pending": "Pending",
+    "blocked": "Blocked",
+    "failed": "Failed",
+    "zombie": "Stalled",
+    "done": "Done",
+    "idle": "Idle"
+  },
+  "source": {
+    "team": "Team",
+    "cron": "Schedule"
+  },
+  "section": {
+    "attention": "Needs attention",
+    "active": "Active now",
+    "verifying": "Verifying",
+    "scheduled": "Scheduled",
+    "done": "Completed",
+    "idle": "Idle"
+  },
+  "meta": {
+    "blockedBy_one": "Blocked by {{count}} task",
+    "blockedBy_other": "Blocked by {{count}} tasks",
+    "nextRun": "Next run {{time}}",
+    "updated": "Updated {{time}}",
+    "heartbeat": "Heartbeat {{time}}",
+    "retries": "Retry {{used}}/{{total}}",
+    "verdictPass": "Verified",
+    "verdictFail": "Failed audit",
+    "needsHuman": "Needs review"
+  },
+  "tabs": {
+    "operations": "Operations",
+    "cost": "Cost"
+  },
+  "cost": {
+    "periodLabel": "Period",
+    "period": {
+      "day": "Day",
+      "week": "Week",
+      "month": "Month"
+    },
+    "totalSpend": "Total spend",
+    "totalTokens": "Total tokens",
+    "totalEvents": "Turns recorded",
+    "byModel": "By model",
+    "byBackend": "By backend",
+    "byTeam": "By team",
+    "byConversation": "By conversation",
+    "trendTitle": "Spend over time",
+    "unattributed": "Unattributed",
+    "loading": "Loading...",
+    "noData": "No spend recorded for this period.",
+    "emptyTitle": "No spend yet",
+    "emptyHint": "Costs appear here as your agents run turns across backends. Pick a longer period to widen the window.",
+    "budgets": {
+      "title": "Budgets",
+      "add": "New budget",
+      "edit": "Edit",
+      "delete": "Delete",
+      "save": "Save",
+      "cancel": "Cancel",
+      "addTitle": "New budget",
+      "editTitle": "Edit budget",
+      "deleteTitle": "Delete budget",
+      "deleteBody": "This budget and its limit will be removed. Spend history is unaffected.",
+      "emptyTitle": "No budgets set",
+      "emptyHint": "Set a spend limit per model, backend, team, or globally. Budgets warn by default; pause is opt-in and resumable.",
+      "fieldScope": "Applies to",
+      "fieldScopeKey": "Target",
+      "scopeKeyPlaceholder": "Enter or pick a value",
+      "fieldLimit": "Limit (USD)",
+      "fieldPeriod": "Period",
+      "fieldAction": "When over budget",
+      "scope": {
+        "global": "All spend",
+        "model": "Model",
+        "backend": "Backend",
+        "team": "Team"
+      },
+      "period": {
+        "day": "Per day",
+        "week": "Per week",
+        "month": "Per month"
+      },
+      "action": {
+        "warn": "Warn only",
+        "pause": "Pause new turns"
+      },
+      "warnTag": "Warn",
+      "pauseTag": "Pause",
+      "pauseHint": "Pausing is opt-in and resumable: turns are gated only while over budget, and you can resume from the alert.",
+      "pauseActionHint": "Pause gates new turns for this scope while over budget. It is resumable at any time and reserved for scheduled or team work.",
+      "alertTitle": "Budget exceeded",
+      "alertBody": "Spent {{spent}} of the {{limit}} limit."
+    }
+  }
+}

@@ -16,7 +16,7 @@
  * Native translations land in a follow-up i18n pass.
  */
 
-export type QrLoginLocale = 'en-US' | 'zh-CN' | 'zh-TW' | 'ja-JP' | 'ko-KR' | 'tr-TR' | 'uk-UA' | 'ru-RU';
+export type QrLoginLocale = 'en-US' | 'zh-CN' | 'zh-TW' | 'ja-JP' | 'ko-KR' | 'tr-TR' | 'uk-UA' | 'ru-RU' | 'mn-MN';
 
 export interface QrLoginStrings {
   /** `<html lang>` attribute value, e.g. "en". */
@@ -73,6 +73,7 @@ export const QR_LOGIN_STRINGS: Record<QrLoginLocale, QrLoginStrings> = {
   'tr-TR': { ...EN_US },
   'uk-UA': { ...EN_US },
   'ru-RU': { ...EN_US },
+  'mn-MN': { ...EN_US },
 };
 
 const SUPPORTED_LOCALES: readonly QrLoginLocale[] = [
@@ -84,6 +85,7 @@ const SUPPORTED_LOCALES: readonly QrLoginLocale[] = [
   'tr-TR',
   'uk-UA',
   'ru-RU',
+  'mn-MN',
 ];
 
 /**

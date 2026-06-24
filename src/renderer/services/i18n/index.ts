@@ -25,6 +25,7 @@ import koKR from './locales/ko-KR/index';
 import trTR from './locales/tr-TR/index';
 import ruRU from './locales/ru-RU/index';
 import ukUA from './locales/uk-UA/index';
+import mnMN from './locales/mn-MN/index';
 
 export type { I18nKey, I18nModule } from './i18n-keys';
 
@@ -47,6 +48,7 @@ const localeData: LocaleData = {
   'tr-TR': trTR,
   'ru-RU': ruRU,
   'uk-UA': ukUA,
+  'mn-MN': mnMN,
 };
 
 const fallbackLocale = localeData[DEFAULT_LANGUAGE] ?? {};

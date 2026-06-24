@@ -198,7 +198,7 @@ export const createOrUpdateTray = (): void => {
   try {
     const icon = getTrayIcon();
     tray = new Tray(icon);
-    tray.setToolTip('Wayland');
+    tray.setToolTip('Дархай');
     void buildTrayContextMenu().then((menu) => tray?.setContextMenu(menu));
 
     tray.on('double-click', () => {

@@ -1,0 +1,22 @@
+{
+  "auth": {
+    "failed": "{{backend}} баталгаажуулалт амжилтгүй:\n\n{{error}}\n\nДотоод CLI хэрэгслийн баталгаажуулалтын төлвөө шалгана уу",
+    "console_error": "ACP баталгаажуулалтын алдааны дэлгэрэнгүй:",
+    "failed_confirm": "ACP {{backend}} баталгаажуулалт амжилтгүй:\n\n{{error}}\n\nОдоо тохиргооны хуудас руу очиж тохируулах уу?"
+  },
+  "sendbox": {
+    "placeholder": "{{backend}} рүү мессеж илгээх..."
+  },
+  "status": {
+    "connecting": "{{agent}}-д холбогдож байна...",
+    "connected": "{{agent}}-д холбогдлоо",
+    "authenticated": "{{agent}}-тэй баталгаажлаа",
+    "session_active": "{{agent}}-тэй идэвхтэй сесс",
+    "error": "Холболтын алдаа",
+    "unknown": "Тодорхойгүй төлөв"
+  },
+  "config": {
+    "reasoning_effort": "Сэтгэх хүчин чармайлт",
+    "default": "Үндсэн"
+  }
+}

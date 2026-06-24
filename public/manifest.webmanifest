@@ -1,7 +1,7 @@
 {
-  "name": "Wayland",
-  "short_name": "Wayland",
-  "description": "Wayland WebUI for mobile and desktop browsers.",
+  "name": "Дархай",
+  "short_name": "Дархай",
+  "description": "Гар утас болон ширээний компьютерийн хөтөчид зориулсан Дархай WebUI.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
