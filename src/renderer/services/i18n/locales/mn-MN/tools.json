@@ -1,69 +1,69 @@
 {
-  "unknownFile": "Unknown file",
-  "newFile": "New File",
-  "deletedFile": "Deleted File",
-  "modified": "Modified",
-  "fileChanges": "File Changes",
+  "unknownFile": "Тодорхойгүй файл",
+  "newFile": "Шинэ файл",
+  "deletedFile": "Устгасан файл",
+  "modified": "Өөрчилсөн",
+  "fileChanges": "Файлын өөрчлөлт",
   "shell": {
-    "displayName": "Shell Command",
-    "description": "Execute shell commands"
+    "displayName": "Shell команд",
+    "description": "Shell командууд ажиллуулах"
   },
   "fileOps": {
-    "displayName": "File Operations",
-    "description": "File read, write and modification"
+    "displayName": "Файлын үйлдлүүд",
+    "description": "Файл унших, бичих, өөрчлөх"
   },
   "webSearch": {
-    "displayName": "Web Search",
-    "description": "Search web content"
+    "displayName": "Вэб хайлт",
+    "description": "Вэб агуулга хайх"
   },
   "mcp": {
     "generic": {
-      "displayName": "MCP Tool: {{toolName}}",
-      "description": "MCP tool call: {{toolName}}"
+      "displayName": "MCP хэрэгсэл: {{toolName}}",
+      "description": "MCP хэрэгслийн дуудлага: {{toolName}}"
     }
   },
   "unknown": {
-    "displayName": "Unknown Tool",
-    "description": "Unknown tool type"
+    "displayName": "Тодорхойгүй хэрэгсэл",
+    "description": "Тодорхойгүй хэрэгслийн төрөл"
   },
   "status": {
-    "pending": "Pending",
-    "executing": "Executing",
-    "success": "Success",
-    "error": "Error",
-    "canceled": "Canceled"
+    "pending": "Хүлээгдэж буй",
+    "executing": "Гүйцэтгэж байна",
+    "success": "Амжилттай",
+    "error": "Алдаа",
+    "canceled": "Цуцлагдсан"
   },
   "titles": {
-    "web_search_started": "Web Search Started",
-    "web_search_completed": "Web Search Completed",
-    "web_search": "Web Search",
-    "applying_patch": "Applying Patch",
-    "patch_applied": "Patch Applied",
-    "file_patch": "File Patch",
-    "mcp_tool_starting": "MCP Tool: {{toolName}} (starting)",
-    "mcp_tool": "MCP Tool: {{toolName}}",
-    "execute_command": "Execute: {{command}}",
-    "command_output": "Command Output",
-    "command_completed": "Command Completed",
-    "shell_command": "Shell Command"
+    "web_search_started": "Вэб хайлт эхэллээ",
+    "web_search_completed": "Вэб хайлт дууслаа",
+    "web_search": "Вэб хайлт",
+    "applying_patch": "Засвар хэрэгжүүлж байна",
+    "patch_applied": "Засвар хэрэгжсэн",
+    "file_patch": "Файлын засвар",
+    "mcp_tool_starting": "MCP хэрэгсэл: {{toolName}} (эхэлж байна)",
+    "mcp_tool": "MCP хэрэгсэл: {{toolName}}",
+    "execute_command": "Гүйцэтгэх: {{command}}",
+    "command_output": "Командын гаралт",
+    "command_completed": "Команд дууслаа",
+    "shell_command": "Shell команд"
   },
   "labels": {
-    "search_query": "Search Query:",
-    "file_changes": "File Changes:",
-    "tool_details": "Tool Details:",
-    "tool": "Tool",
-    "arguments": "Arguments:",
-    "result": "Result:",
-    "command": "Command:",
-    "working_directory": "Working directory:",
-    "exit_code": "Exit: {{code}}",
-    "duration": "Duration: {{seconds}}",
-    "auto_approved": "Auto-approved",
-    "manual_approval": "Manual approval"
+    "search_query": "Хайлтын асуулга:",
+    "file_changes": "Файлын өөрчлөлт:",
+    "tool_details": "Хэрэгслийн дэлгэрэнгүй:",
+    "tool": "Хэрэгсэл",
+    "arguments": "Аргументууд:",
+    "result": "Үр дүн:",
+    "command": "Команд:",
+    "working_directory": "Ажлын хавтас:",
+    "exit_code": "Гарц: {{code}}",
+    "duration": "Үргэлжлэх хугацаа: {{seconds}}",
+    "auto_approved": "Авто зөвшөөрсөн",
+    "manual_approval": "Гар зөвшөөрөл"
   },
   "actions": {
-    "create": "create",
-    "modify": "modify",
-    "delete": "delete"
+    "create": "үүсгэх",
+    "modify": "өөрчлөх",
+    "delete": "устгах"
   }
 }

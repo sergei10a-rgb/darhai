@@ -1,44 +1,44 @@
 {
-  "siderEntry": "Workflows",
-  "title": "Workflows",
-  "subtitle": "Step-by-step recipes you can launch in one click or schedule to run automatically. Pick a workflow, choose your engine, and the agent will walk you through it.",
-  "count": "{{count}} workflow",
-  "count_other": "{{count}} workflows",
-  "allCategories": "All workflows",
+  "siderEntry": "Ажлын урсгал",
+  "title": "Ажлын урсгал",
+  "subtitle": "Нэг товшилтоор эхлүүлэх эсвэл автоматаар ажиллуулахаар хуваарилж болох алхам алхмаар жорууд. Ажлын урсгалаа сонгож, хөдөлгүүрээ сонгоход агент таныг алхам алхмаар дагуулна.",
+  "count": "{{count}} ажлын урсгал",
+  "count_other": "{{count}} ажлын урсгал",
+  "allCategories": "Бүх ажлын урсгал",
   "section": {
-    "featured": "Featured workflows",
-    "all": "All workflows"
+    "featured": "Онцлох ажлын урсгал",
+    "all": "Бүх ажлын урсгал"
   },
   "actions": {
-    "launch": "Launch now",
-    "schedule": "Schedule",
-    "import": "Import workflow",
-    "build": "Build a workflow",
-    "runOn": "Run on"
+    "launch": "Одоо эхлүүлэх",
+    "schedule": "Хуваарилах",
+    "import": "Ажлын урсгал импортлох",
+    "build": "Ажлын урсгал бүтээх",
+    "runOn": "Дээр ажиллуулах"
   },
-  "launchError": "Failed to launch workflow: {{msg}}",
+  "launchError": "Ажлын урсгалыг эхлүүлж чадсангүй: {{msg}}",
   "picker": {
-    "noAgent": "No backend selected"
+    "noAgent": "Backend сонгоогүй байна"
   },
   "import": {
-    "placeholder": "Import wiring lands next: folder / git URL / SKILL.md with type:workflow auto-detected via frontmatter, scanned by Skill Guard, and registered as source:imported."
+    "placeholder": "Импортын холболт удахгүй: хавтас / git URL / type:workflow гэсэн SKILL.md-г frontmatter-ээр автоматаар илрүүлж, Skill Guard-аар шалгаж, source:imported болгон бүртгэнэ."
   },
   "build": {
-    "placeholder": "Workflow builder coming next: describe it in plain language → AI drafts a SKILL.md with category + depends inferred from the live skill library → review + save."
+    "placeholder": "Ажлын урсгал бүтээгч удахгүй: энгийн үгээр тайлбарла → AI нь идэвхтэй ур чадварын сангаас category + depends-ийг тааварлаж SKILL.md ноорог гаргана → хянаж хадгал."
   },
   "depends": {
-    "title": "Uses these skills",
-    "openSkill": "Open in Skills page"
+    "title": "Эдгээр ур чадварыг ашигладаг",
+    "openSkill": "Ур чадварын хуудсанд нээх"
   },
   "search": {
-    "placeholder": "Search workflows…",
-    "empty": "No workflows match your search",
-    "emptyLibrary": "No workflows loaded yet. The bundled library will populate at next restart."
+    "placeholder": "Ажлын урсгал хайх…",
+    "empty": "Хайлтад тохирох ажлын урсгал алга",
+    "emptyLibrary": "Ажлын урсгал хараахан ачаалаагүй байна. Багц сан дараагийн дахин эхлэлд бөглөгдөнө."
   },
-  "whatHappens": "When you launch this",
-  "bodyFallback": "The agent loads this workflow as its first directive and walks you through it step by step. You can interrupt or change direction at any point.",
-  "noDescription": "No description provided.",
+  "whatHappens": "Үүнийг эхлүүлэхэд",
+  "bodyFallback": "Агент энэ ажлын урсгалыг анхны заавар болгон ачаалж, таныг алхам алхмаар дагуулна. Та хүссэн үедээ тасалж эсвэл чиглэлээ өөрчилж болно.",
+  "noDescription": "Тайлбар оруулаагүй байна.",
   "launch": {
-    "placeholder": "Launch wiring is in flight. Soon you will pick an engine (Wayland Core / Gemini / Claude / Codex), and the workflow will load as the agent's first directive in a fresh chat."
+    "placeholder": "Эхлүүлэх холболт хийгдэж байна. Удахгүй та хөдөлгүүр (Wayland Core / Gemini / Claude / Codex) сонгох бөгөөд ажлын урсгал нь шинэ чатад агентын анхны заавар болж ачаалагдана."
   }
 }

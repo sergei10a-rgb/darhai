@@ -1,10 +1,10 @@
-appId: com.ferroxlabs.wayland
-productName: Wayland
-executableName: Wayland
+appId: com.ferroxlabs.darhai
+productName: Дархай
+executableName: Darhai
 copyright: Copyright © 2026 Trade Canyon
 
 protocols:
-  - name: Wayland Protocol
+  - name: Дархай Protocol
     schemes:
       - wayland
 

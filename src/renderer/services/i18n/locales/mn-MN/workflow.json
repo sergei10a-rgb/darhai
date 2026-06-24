@@ -1,27 +1,27 @@
 {
   "complete": {
-    "headline": "Workflow Complete",
-    "steps": "{{n}} steps",
-    "tokens": "{{n}} tokens",
-    "outputsTitle": "What this produced",
-    "save": "Save this run",
-    "runAgain": "Run again",
-    "nextTitle": "Up next"
+    "headline": "Ажлын урсгал дууслаа",
+    "steps": "{{n}} алхам",
+    "tokens": "{{n}} токен",
+    "outputsTitle": "Энэ юу гаргасан бэ",
+    "save": "Энэ ажиллагааг хадгалах",
+    "runAgain": "Дахин ажиллуулах",
+    "nextTitle": "Дараа нь"
   },
   "rail": {
-    "inProgress": "in progress",
-    "errored": "needs attention",
-    "skipped": "skipped",
-    "jumpToStep": "Jump to step {{n}}: {{title}}",
-    "runningLabel": "Running… ({{elapsed}})",
-    "runAutonomouslyAria": "Run step {{n}} autonomously",
-    "runAutonomously": "Run autonomously",
-    "titleManual": "Workflow steps · manual",
-    "titleAuto": "Workflow steps · auto-driven",
-    "confirmTitle": "Run Step {{n}} autonomously?",
-    "confirmOk": "Run autonomously",
-    "confirmCancel": "Cancel",
-    "confirmBody": "Дархай will spawn an autonomous worker to complete Step {{n}} in the background. You can keep chatting on the main session.",
-    "confirmEta": "ETA: 4-8 minutes."
+    "inProgress": "явагдаж байна",
+    "errored": "анхаарал шаардлагатай",
+    "skipped": "алгассан",
+    "jumpToStep": "{{n}}-р алхам руу очих: {{title}}",
+    "runningLabel": "Ажиллаж байна… ({{elapsed}})",
+    "runAutonomouslyAria": "{{n}}-р алхмыг бие даан ажиллуулах",
+    "runAutonomously": "Бие даан ажиллуулах",
+    "titleManual": "Ажлын урсгалын алхмууд · гар",
+    "titleAuto": "Ажлын урсгалын алхмууд · авто",
+    "confirmTitle": "{{n}}-р алхмыг бие даан ажиллуулах уу?",
+    "confirmOk": "Бие даан ажиллуулах",
+    "confirmCancel": "Цуцлах",
+    "confirmBody": "Дархай {{n}}-р алхмыг арын дэвсгэрт гүйцэтгэх бие даасан ажилтан үүсгэнэ. Та үндсэн сесс дээр чатлаж болно.",
+    "confirmEta": "ETA: 4-8 минут."
   }
 }
