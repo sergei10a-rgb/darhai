@@ -1,10 +1,10 @@
-# Contributing to Wayland
+# Дархай (Darhai)-д хувь нэмэр оруулах
 
-Thanks for helping build Wayland.
+Дархайг бүтээхэд тусалж байгаад баярлалаа.
 
 ## License & contributor agreement (read before your first PR)
 
-Wayland is licensed under **AGPL-3.0-or-later** (see `LICENSE`). To keep a
+Дархай is licensed under **AGPL-3.0-or-later** (see `LICENSE`). To keep a
 sustainable open-core project - a freely self-hostable core plus a commercial
 hosted/Pro tier - we ask every contributor to agree to a lightweight CLA:
 
@@ -28,7 +28,7 @@ is a one-click acknowledgement on your first PR.
 
 ## Trademark
 
-"Wayland" and the Wayland marks are trademarks of Ferrox Labs. The AGPL covers
-the **code**, not the **name** - forks must rebrand, though you can always say
-your fork is "built on Wayland." Full policy, including the permitted nominative
-uses, is in [TRADEMARK.md](./TRADEMARK.md).
+Дархай (Darhai) is a fork built on Wayland. "Wayland" and the Wayland marks are
+trademarks of Ferrox Labs. The AGPL covers the **code**, not the **name** - this
+fork uses its own name "Дархай / Darhai" in line with that policy. Full policy,
+including the permitted nominative uses, is in [TRADEMARK.md](./TRADEMARK.md).

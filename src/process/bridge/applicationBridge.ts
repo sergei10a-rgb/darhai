@@ -76,8 +76,8 @@ const setLinuxAutostart = (enabled: boolean): void => {
   const exec = getLinuxExecPath();
   const body = `[Desktop Entry]
 Type=Application
-Name=Wayland
-Comment=Wayland AI Agent
+Name=Дархай
+Comment=Дархай AI Агент
 Exec="${exec}" ${START_ON_BOOT_LINUX_ARG}
 Terminal=false
 X-GNOME-Autostart-enabled=true

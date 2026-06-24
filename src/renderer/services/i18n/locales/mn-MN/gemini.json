@@ -1,0 +1,7 @@
+{
+  "mode": {
+    "autoGemini3Desc": "Gemini CLI-д даалгаварт тохирох шилдэг загварыг сонгуулна: gemini-3-pro, gemini-3-flash",
+    "autoGemini25Desc": "Gemini CLI-д даалгаварт тохирох шилдэг загварыг сонгуулна: gemini-2.5-pro, gemini-2.5-flash",
+    "manualDesc": "Загварыг гараар сонгох"
+  }
+}

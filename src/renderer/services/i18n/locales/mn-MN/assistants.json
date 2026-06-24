@@ -1,0 +1,43 @@
+{
+  "title": "Туслахууд",
+  "totalCount": "{{count}} туслах",
+  "siderEntry": "Туслахууд",
+  "emptyState": "Таны шүүлтүүрт тохирох туслах алга.",
+  "card": {
+    "backendHint": "· {{backend}} дээр ажиллана · солих ⌄",
+    "menuAria": "{{name}}-ийн цэсийг нээх"
+  },
+  "buildMyOwn": {
+    "label": "Өөрийгөө бүтээх",
+    "hint": "Хоосон туслахаас эхлэх",
+    "cta": "Өөрийгөө бүтээх"
+  },
+  "group": {
+    "teams": "Багууд",
+    "specialists": "Мэргэжилтнүүд",
+    "builtins": "Суурь туслахууд"
+  },
+  "filterRail": {
+    "aria": "Туслахын шүүлтүүр",
+    "searchPlaceholder": "Туслах хайх",
+    "typeLabel": "Төрөл",
+    "domainLabel": "Салбар",
+    "reset": "Шүүлтүүр шинэчлэх",
+    "type": {
+      "all": "Бүгд",
+      "team": "Багууд",
+      "specialist": "Мэргэжилтнүүд",
+      "builtin": "Суурь туслахууд"
+    },
+    "domain": {
+      "all": "Бүгд",
+      "sell": "Худалдаа",
+      "write": "Бичих",
+      "research": "Судалгаа",
+      "build": "Бүтээх",
+      "run": "Ажиллуулах",
+      "office": "Оффис",
+      "general": "Ерөнхий"
+    }
+  }
+}

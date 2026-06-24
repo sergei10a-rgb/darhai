@@ -1,0 +1,37 @@
+{
+  "memory": "Санах ой",
+  "fluxRouter": {
+    "label": "Flux төлөв",
+    "connect": {
+      "body": "Бүх асуулга флагман загвар руу чиглэж байна. Flux Router хүсэлт бүрд тохирох загварыг сонгоно.",
+      "action": "Flux Router холбох"
+    },
+    "install": {
+      "body": "Codex, Cursor, Claude Code хараахан чиглүүлэгдээгүй байна. Flux Desktop гурвуулангийг нэг товшилтоор холбоно.",
+      "action": "Flux Desktop суулгах",
+      "sub": "fluxrouter.ai/download"
+    },
+    "ollama": {
+      "body": "Дотоод Ollama өнгөрсөн долоо хоногт {{pct}}%-ийг хийсэн. Таны төхөөрөмж дийлэхгүй болоход Flux Router үлдсэнийг авна.",
+      "action": "Нөөц тохируулах"
+    },
+    "wired": {
+      "body": "Сүүлийн 100: H{{h}} · S{{s}} · O{{o}}",
+      "action": "Эргэлт бүр хаашаа явсныг харах"
+    }
+  },
+  "accordion": {
+    "scheduled": "Товлогдсон даалгавар",
+    "workflows": "Ажлын урсгал",
+    "teams": "Багууд",
+    "recentChats": "Сүүлийн чатууд",
+    "inFlight": "Явагдаж буй",
+    "running": "Ажиллаж байна",
+    "recentlyLaunched": "Саяхан эхлүүлсэн",
+    "myTeams": "Миний багууд",
+    "seeAllWorkflows": "Бүх ажлын урсгалыг харах →",
+    "seeAllScheduled": "Бүх товлогдсоныг харах →",
+    "seeAllChats": "Бүх чатыг харах →",
+    "showMore": "Өөр {{count}}-г харах →"
+  }
+}

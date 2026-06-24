@@ -13,7 +13,8 @@
     "ko-KR",
     "ru-RU",
     "uk-UA",
-    "tr-TR"
+    "tr-TR",
+    "mn-MN"
   ],
   "modules": [
     "common",
