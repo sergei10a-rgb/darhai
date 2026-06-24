@@ -1,133 +1,133 @@
 {
   "sendbox": {},
   "network": {
-    "cloudflare_blocked": "Cloudflare protection blocked access to {{service}}. Suggestions: 1) Use VPN 2) Switch network 3) Retry later 4) Switch to other AI services",
-    "network_timeout": "Network timeout, automatically retrying connection...",
-    "connection_refused": "Connection refused, please check if Codex service is running properly.",
-    "unknown_error": "Network connection error, please check network settings.",
-    "retry_attempt": "Retrying attempt {{current}}...",
-    "cloudflare_blocked_title": "🚫 {{service}} service blocked by Cloudflare protection",
-    "network_timeout_title": "⏱️ Network connection timeout",
-    "connection_refused_title": "❌ Service connection refused",
-    "unknown_error_title": "🔌 Network connection error",
-    "recovery_suggestions": "**Suggested Solutions:**",
-    "technical_info": "**Technical Information:**",
-    "error_type": "Error Type",
-    "retry_count": "Retry Count",
-    "error_details": "Error Details",
-    "quick_switch_title": "💡 **Quick Switch Options:**",
-    "quick_switch_content": "When current service encounters network restrictions, you can:\n\n1. **Switch AI Assistant Immediately**: Select other available assistants from the left panel\n2. **Check Service Status**: Availability of different AI services may vary by region\n3. **Network Optimization**: Use stable network environment to improve connection success rate\n4. **Retry Later**: Network restrictions are usually temporary\n\n**Tip**: It's recommended to configure multiple AI services as alternatives to ensure work continuity.",
+    "cloudflare_blocked": "Cloudflare хамгаалалт {{service}}-д хандахыг хаалаа. Зөвлөмж: 1) VPN ашиглах 2) Сүлжээ солих 3) Дараа дахин оролдох 4) Өөр AI үйлчилгээ рүү шилжих",
+    "network_timeout": "Сүлжээний хугацаа дууссан, холболтыг автоматаар дахин оролдож байна...",
+    "connection_refused": "Холболтоос татгалзсан, Codex үйлчилгээ зөв ажиллаж байгаа эсэхийг шалгана уу.",
+    "unknown_error": "Сүлжээний холболтын алдаа, сүлжээний тохиргоог шалгана уу.",
+    "retry_attempt": "{{current}} дахь оролдлогыг дахин хийж байна...",
+    "cloudflare_blocked_title": "🚫 {{service}} үйлчилгээг Cloudflare хамгаалалт хаасан",
+    "network_timeout_title": "⏱️ Сүлжээний холболтын хугацаа дууссан",
+    "connection_refused_title": "❌ Үйлчилгээний холболтоос татгалзсан",
+    "unknown_error_title": "🔌 Сүлжээний холболтын алдаа",
+    "recovery_suggestions": "**Санал болгож буй шийдлүүд:**",
+    "technical_info": "**Техникийн мэдээлэл:**",
+    "error_type": "Алдааны төрөл",
+    "retry_count": "Дахин оролдлогын тоо",
+    "error_details": "Алдааны дэлгэрэнгүй",
+    "quick_switch_title": "💡 **Хурдан шилжих сонголтууд:**",
+    "quick_switch_content": "Одоогийн үйлчилгээ сүлжээний хязгаарлалттай тулгарвал та:\n\n1. **AI туслахаа шууд солих**: Зүүн самбараас бусад боломжит туслахуудыг сонгох\n2. **Үйлчилгээний төлвийг шалгах**: Өөр AI үйлчилгээний боломж бүс нутгаар өөр өөр байж болно\n3. **Сүлжээ сайжруулах**: Холболтын амжилтыг сайжруулахын тулд тогтвортой сүлжээ ашиглах\n4. **Дараа дахин оролдох**: Сүлжээний хязгаарлалт ихэвчлэн түр зуурынх\n\n**Зөвлөмж**: Ажлын тасралтгүй байдлыг хангахын тулд хэд хэдэн AI үйлчилгээг нөөц болгон тохируулахыг зөвлөж байна.",
     "recovery_actions": {
       "cloudflare_blocked": [
-        "• Use VPN or proxy service",
-        "• Switch network environment (like mobile hotspot)",
-        "• Wait 10-30 minutes and retry",
-        "• Clear browser cache and cookies",
-        "• Switch to other available services: ChatGPT, Claude, Qwen, Gemini"
+        "• VPN эсвэл прокси үйлчилгээ ашиглах",
+        "• Сүлжээний орчноо солих (гар утасны hotspot гэх мэт)",
+        "• 10-30 минут хүлээгээд дахин оролдох",
+        "• Хөтчийн кэш болон cookie цэвэрлэх",
+        "• Бусад боломжит үйлчилгээ рүү шилжих: ChatGPT, Claude, Qwen, Gemini"
       ],
       "network_timeout": [
-        "• Check if network connection is stable",
-        "• Retry connection operation",
-        "• Switch to more stable network environment",
-        "• Check firewall settings"
+        "• Сүлжээний холболт тогтвортой эсэхийг шалгах",
+        "• Холболтыг дахин оролдох",
+        "• Илүү тогтвортой сүлжээний орчинд шилжих",
+        "• Галт ханын тохиргоог шалгах"
       ],
       "connection_refused": [
-        "• Check if Codex CLI is properly installed",
-        "• Verify service configuration and API keys",
-        "• Restart application",
-        "• Check if local ports are occupied"
+        "• Codex CLI зөв суулгасан эсэхийг шалгах",
+        "• Үйлчилгээний тохиргоо болон API түлхүүрүүдийг шалгах",
+        "• Аппликейшнийг дахин эхлүүлэх",
+        "• Локал портууд эзлэгдсэн эсэхийг шалгах"
       ],
       "unknown": [
-        "• Check network connection status",
-        "• Retry current operation",
-        "• Switch network environment",
-        "• Contact technical support"
+        "• Сүлжээний холболтын төлвийг шалгах",
+        "• Одоогийн үйлдлийг дахин оролдох",
+        "• Сүлжээний орчноо солих",
+        "• Техникийн дэмжлэгтэй холбогдох"
       ]
     }
   },
   "thinking": {
-    "processing": "🤔 Codex is thinking...",
-    "completed": "💭 Thinking process completed",
-    "analyzing": "Analyzing the problem and formulating solutions...",
-    "composing": "Composing response content..."
+    "processing": "🤔 Codex бодож байна...",
+    "completed": "💭 Бодох үйл явц дууссан",
+    "analyzing": "Асуудлыг шинжилж шийдэл боловсруулж байна...",
+    "composing": "Хариултын агуулга зохиож байна..."
   },
   "error": {
-    "system_init_failed": "Failed to initialize Codex system",
-    "invalid_message_format": "Invalid message format",
-    "invalid_input": "Invalid input provided",
-    "session_timeout": "Session timed out, please retry",
-    "permission_denied": "Permission denied for this operation",
-    "context_error": "Error occurred in {{context}}, please refresh or retry.",
-    "generic": "Codex component encountered an exception, please try again later.",
-    "troubleshooting": "Troubleshooting Suggestions",
-    "suggestion_1": "Check if network connection is stable",
-    "suggestion_2": "Ensure Codex service is running properly",
-    "suggestion_3": "Try restarting the application",
-    "suggestion_4": "Clear browser cache and local storage"
+    "system_init_failed": "Codex системийг эхлүүлж чадсангүй",
+    "invalid_message_format": "Мессежийн формат буруу",
+    "invalid_input": "Буруу оролт өгсөн",
+    "session_timeout": "Сешний хугацаа дууссан, дахин оролдоно уу",
+    "permission_denied": "Энэ үйлдэлд зөвшөөрөл татгалзсан",
+    "context_error": "{{context}}-д алдаа гарлаа, сэргээх эсвэл дахин оролдоно уу.",
+    "generic": "Codex бүрэлдэхүүнд алдаа гарлаа, дараа дахин оролдоно уу.",
+    "troubleshooting": "Алдаа засах зөвлөмж",
+    "suggestion_1": "Сүлжээний холболт тогтвортой эсэхийг шалгах",
+    "suggestion_2": "Codex үйлчилгээ зөв ажиллаж байгаа эсэхийг шалгах",
+    "suggestion_3": "Аппликейшнийг дахин эхлүүлж үзэх",
+    "suggestion_4": "Хөтчийн кэш болон локал хадгалалтыг цэвэрлэх"
   },
   "performance": {
-    "virtualization_enabled": "List virtualization is enabled for better performance",
-    "virtualization_disabled": "List virtualization is disabled, showing all items",
-    "debounce_enabled": "Input debouncing is enabled ({{delay}}ms delay)",
-    "debounce_disabled": "Input debouncing is disabled"
+    "virtualization_enabled": "Илүү сайн гүйцэтгэлийн тулд жагсаалтын виртуалчлал идэвхжсэн",
+    "virtualization_disabled": "Жагсаалтын виртуалчлал идэвхгүй, бүх зүйлийг харуулж байна",
+    "debounce_enabled": "Оролтын debounce идэвхжсэн ({{delay}}мс хоцролт)",
+    "debounce_disabled": "Оролтын debounce идэвхгүй"
   },
   "config": {
-    "loaded": "Configuration loaded successfully",
-    "updated": "Configuration updated successfully",
-    "reset": "Configuration reset to defaults",
-    "validation_failed": "Configuration validation failed",
-    "import_success": "Configuration imported successfully",
-    "import_failed": "Failed to import configuration",
-    "export_success": "Configuration exported successfully"
+    "loaded": "Тохиргоо амжилттай ачаалагдлаа",
+    "updated": "Тохиргоо амжилттай шинэчлэгдлээ",
+    "reset": "Тохиргоо анхдагч руу шинэчлэгдлээ",
+    "validation_failed": "Тохиргооны баталгаажуулалт амжилтгүй",
+    "import_success": "Тохиргоо амжилттай импортлогдлоо",
+    "import_failed": "Тохиргоог импортлож чадсангүй",
+    "export_success": "Тохиргоо амжилттай экспортлогдлоо"
   },
   "permissions": {
-    "allow_once": "Allow Once",
-    "allow_always": "Allow Always",
-    "reject_once": "Reject Once",
-    "reject_always": "Reject Always",
-    "allow_once_desc": "Grant permission for this request only",
-    "allow_always_desc": "Always grant permission for similar requests",
-    "reject_once_desc": "Reject this request only",
-    "reject_always_desc": "Always reject similar requests",
-    "processing": "Processing...",
-    "response_sent": "Response sent successfully",
-    "choose_action": "Choose an action:",
+    "allow_once": "Нэг удаа зөвшөөрөх",
+    "allow_always": "Үргэлж зөвшөөрөх",
+    "reject_once": "Нэг удаа татгалзах",
+    "reject_always": "Үргэлж татгалзах",
+    "allow_once_desc": "Зөвхөн энэ хүсэлтэд зөвшөөрөл олгох",
+    "allow_always_desc": "Ижил төстэй хүсэлтэд үргэлж зөвшөөрөл олгох",
+    "reject_once_desc": "Зөвхөн энэ хүсэлтийг татгалзах",
+    "reject_always_desc": "Ижил төстэй хүсэлтийг үргэлж татгалзах",
+    "processing": "Боловсруулж байна...",
+    "response_sent": "Хариулт амжилттай илгээгдлээ",
+    "choose_action": "Үйлдэл сонгоно уу:",
     "titles": {
-      "exec_approval_request": "Execute Command Permission",
-      "apply_patch_approval_request": "Apply File Changes Permission",
-      "command_execution": "Command Execution Permission",
-      "file_write": "File Write Permission",
-      "file_read": "File Read Permission"
+      "exec_approval_request": "Команд гүйцэтгэх зөвшөөрөл",
+      "apply_patch_approval_request": "Файлын өөрчлөлт хэрэгжүүлэх зөвшөөрөл",
+      "command_execution": "Команд гүйцэтгэх зөвшөөрөл",
+      "file_write": "Файл бичих зөвшөөрөл",
+      "file_read": "Файл унших зөвшөөрөл"
     },
     "labels": {
-      "command": "Command:",
-      "directory": "Directory:",
-      "reason": "Reason:",
-      "files_to_modify": "Files to modify",
-      "summary": "Summary:"
+      "command": "Команд:",
+      "directory": "Хавтас:",
+      "reason": "Шалтгаан:",
+      "files_to_modify": "Өөрчлөх файлууд",
+      "summary": "Хураангуй:"
     },
     "descriptions": {
-      "command_execution": "Codex requests to execute system commands",
-      "file_write": "Codex requests to modify or create files",
-      "file_read": "Codex requests to read file contents"
+      "command_execution": "Codex системийн команд гүйцэтгэхийг хүсэж байна",
+      "file_write": "Codex файл өөрчлөх эсвэл үүсгэхийг хүсэж байна",
+      "file_read": "Codex файлын агуулгыг уншихыг хүсэж байна"
     },
     "command_execution": {
-      "allow_once_desc": "Allow this command execution only",
-      "allow_always_desc": "Always allow all command execution requests",
-      "reject_once_desc": "Reject this command execution only",
-      "reject_always_desc": "Always reject all command execution requests"
+      "allow_once_desc": "Зөвхөн энэ командын гүйцэтгэлийг зөвшөөрөх",
+      "allow_always_desc": "Бүх командын гүйцэтгэлийн хүсэлтийг үргэлж зөвшөөрөх",
+      "reject_once_desc": "Зөвхөн энэ командын гүйцэтгэлийг татгалзах",
+      "reject_always_desc": "Бүх командын гүйцэтгэлийн хүсэлтийг үргэлж татгалзах"
     },
     "file_write": {
-      "allow_once_desc": "Allow this file write only",
-      "allow_always_desc": "Always allow all file write requests",
-      "reject_once_desc": "Reject this file write only",
-      "reject_always_desc": "Always reject all file write requests"
+      "allow_once_desc": "Зөвхөн энэ файл бичихийг зөвшөөрөх",
+      "allow_always_desc": "Бүх файл бичих хүсэлтийг үргэлж зөвшөөрөх",
+      "reject_once_desc": "Зөвхөн энэ файл бичихийг татгалзах",
+      "reject_always_desc": "Бүх файл бичих хүсэлтийг үргэлж татгалзах"
     },
     "file_read": {
-      "allow_once_desc": "Allow this file read only",
-      "allow_always_desc": "Always allow all file read requests",
-      "reject_once_desc": "Reject this file read only",
-      "reject_always_desc": "Always reject all file read requests"
+      "allow_once_desc": "Зөвхөн энэ файл уншихыг зөвшөөрөх",
+      "allow_always_desc": "Бүх файл унших хүсэлтийг үргэлж зөвшөөрөх",
+      "reject_once_desc": "Зөвхөн энэ файл уншихыг татгалзах",
+      "reject_always_desc": "Бүх файл унших хүсэлтийг үргэлж татгалзах"
     }
   }
 }

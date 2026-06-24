@@ -1,181 +1,181 @@
 {
-  "title": "Skills",
-  "subtitle": "Manage and discover skills for your assistants",
+  "title": "Ур чадварууд",
+  "subtitle": "Туслахуудадаа зориулсан ур чадваруудыг удирдаж, нээ",
   "search": {
-    "placeholder": "Search skills...",
-    "empty": "No skills match your search",
-    "emptyLibrary": "No skills loaded yet - try importing one, or restart to reload the bundled library.",
-    "resultsCount": "{{count}} matching skills"
+    "placeholder": "Ур чадвар хайх...",
+    "empty": "Хайлтад тохирох ур чадвар алга",
+    "emptyLibrary": "Ур чадвар хараахан ачаалаагүй байна - нэгийг импортлох эсвэл багц санг дахин ачаалахын тулд дахин эхлүүлнэ үү.",
+    "resultsCount": "{{count}} тохирох ур чадвар"
   },
   "stats": {
-    "total": "Total skills",
-    "pinned": "Pinned",
-    "flagged": "Flagged",
-    "sources": "Sources"
+    "total": "Нийт ур чадвар",
+    "pinned": "Бэхэлсэн",
+    "flagged": "Тэмдэглэсэн",
+    "sources": "Эх сурвалжууд"
   },
   "sections": {
-    "sources": "Sources",
-    "status": "Status",
-    "categories": "Categories"
+    "sources": "Эх сурвалжууд",
+    "status": "Төлөв",
+    "categories": "Ангилал"
   },
   "filters": {
-    "allSources": "All sources",
+    "allSources": "Бүх эх сурвалж",
     "source": {
-      "wayland-library": "Дархай library",
-      "team": "Team",
-      "user": "My skills",
-      "imported": "Imported",
-      "cli-discovered": "From your CLIs"
+      "wayland-library": "Дархай сан",
+      "team": "Баг",
+      "user": "Миний ур чадвар",
+      "imported": "Импортолсон",
+      "cli-discovered": "Таны CLI-аас"
     },
     "verdict": {
-      "all": "All",
-      "clean": "Clean",
-      "review": "Needs review",
-      "blocked": "Blocked"
+      "all": "Бүгд",
+      "clean": "Цэвэр",
+      "review": "Хяналт шаардлагатай",
+      "blocked": "Хаагдсан"
     },
     "category": {
-      "all": "All categories"
+      "all": "Бүх ангилал"
     }
   },
   "status": {
-    "scanned": "Scanned - no red flags found",
-    "review": "Needs review",
-    "blocked": "Blocked - quarantined",
-    "unscanned": "Not yet scanned"
+    "scanned": "Скан хийсэн - анхааруулга олдсонгүй",
+    "review": "Хяналт шаардлагатай",
+    "blocked": "Хаагдсан - тусгаарласан",
+    "unscanned": "Хараахан скан хийгээгүй"
   },
   "actions": {
-    "pin": "Pin to all assistants",
-    "unpin": "Unpin",
-    "enable": "Enable",
-    "disable": "Disable",
-    "delete": "Delete",
-    "import": "Import",
-    "build": "Build a skill"
+    "pin": "Бүх туслахад бэхлэх",
+    "unpin": "Бэхлэлтийг авах",
+    "enable": "Идэвхжүүлэх",
+    "disable": "Идэвхгүй болгох",
+    "delete": "Устгах",
+    "import": "Импортлох",
+    "build": "Ур чадвар бүтээх"
   },
   "cliDiscovery": {
-    "title": "Mirror skills from installed CLI tools",
-    "subtitle": "Surface skills from ~/.claude/skills, ~/.codex/skills, and ~/.gemini/skills so they show up on your Skills page. Opt-in. Restart required to take effect.",
-    "restartNeeded": "- restart the app to apply."
+    "title": "Суулгасан CLI хэрэгслүүдээс ур чадварыг тусгах",
+    "subtitle": "~/.claude/skills, ~/.codex/skills, ~/.gemini/skills дахь ур чадваруудыг Ур чадварын хуудсанд гарч ирэхээр гаргана. Сонголтоор. Хэрэгжихийн тулд дахин эхлүүлэх шаардлагатай.",
+    "restartNeeded": "- хэрэгжүүлэхийн тулд аппыг дахин эхлүүлнэ үү."
   },
   "threats": {
-    "credential-access": "Credential access",
-    "network-exfiltration": "Network exfiltration",
-    "shell-execution": "Shell execution",
-    "filesystem-write": "Filesystem write",
-    "instruction-override": "Instruction override",
-    "obfuscation": "Obfuscation",
-    "index-poisoning": "Index poisoning"
+    "credential-access": "Итгэмжлэлд хандах",
+    "network-exfiltration": "Сүлжээгээр мэдээлэл гаргах",
+    "shell-execution": "Shell гүйцэтгэл",
+    "filesystem-write": "Файлын системд бичих",
+    "instruction-override": "Зааврыг дарж бичих",
+    "obfuscation": "Бүрхэгдүүлэлт",
+    "index-poisoning": "Индекс хордуулалт"
   },
   "severity": {
-    "critical": "Critical",
-    "medium": "Medium",
-    "low": "Low"
+    "critical": "Ноцтой",
+    "medium": "Дунд",
+    "low": "Бага"
   },
   "import": {
-    "title": "Import skill",
+    "title": "Ур чадвар импортлох",
     "source": {
-      "folder": "Folder",
+      "folder": "Хавтас",
       "git": "Git URL",
-      "zip": "ZIP file",
-      "singleSkillMd": "Single SKILL.md",
-      "marketplace": "Marketplace (coming soon)"
+      "zip": "ZIP файл",
+      "singleSkillMd": "Ганц SKILL.md",
+      "marketplace": "Маркетплэйс (удахгүй)"
     },
     "folder": {
-      "label": "Skill folder",
-      "placeholder": "Click to choose a folder…",
-      "browse": "Browse"
+      "label": "Ур чадварын хавтас",
+      "placeholder": "Хавтас сонгохын тулд дарна уу…",
+      "browse": "Үзэх"
     },
     "git": {
       "label": "Git URL",
       "placeholder": "https://github.com/user/my-skill"
     },
     "zip": {
-      "label": "ZIP file",
-      "placeholder": "Click to choose a ZIP…",
-      "browse": "Browse"
+      "label": "ZIP файл",
+      "placeholder": "ZIP сонгохын тулд дарна уу…",
+      "browse": "Үзэх"
     },
     "singleSkillMd": {
-      "label": "SKILL.md file",
-      "placeholder": "Click to choose a SKILL.md…",
-      "browse": "Browse"
+      "label": "SKILL.md файл",
+      "placeholder": "SKILL.md сонгохын тулд дарна уу…",
+      "browse": "Үзэх"
     },
     "actions": {
-      "import": "Import",
-      "importing": "Importing…",
-      "importAllClean": "Import all clean",
-      "reviewAndSelect": "Review and select",
-      "cancel": "Cancel"
+      "import": "Импортлох",
+      "importing": "Импортлож байна…",
+      "importAllClean": "Бүх цэврийг импортлох",
+      "reviewAndSelect": "Хянаж сонгох",
+      "cancel": "Цуцлах"
     },
     "scan": {
-      "title": "Scan results",
+      "title": "Сканын үр дүн",
       "verdict": {
-        "clean": "Clean",
-        "review": "Needs review",
-        "blocked": "Blocked"
+        "clean": "Цэвэр",
+        "review": "Хяналт шаардлагатай",
+        "blocked": "Хаагдсан"
       },
-      "noFindings": "No issues found",
-      "finding": "{{count}} finding",
-      "finding_other": "{{count}} findings"
+      "noFindings": "Асуудал олдсонгүй",
+      "finding": "{{count}} илрүүлэлт",
+      "finding_other": "{{count}} илрүүлэлт"
     },
     "error": {
-      "failed": "Import failed",
-      "invalidUrl": "Enter a valid https:// or git@ URL"
+      "failed": "Импорт амжилтгүй",
+      "invalidUrl": "Хүчинтэй https:// эсвэл git@ URL оруулна уу"
     }
   },
   "builder": {
-    "title": "Build a skill",
+    "title": "Ур чадвар бүтээх",
     "tab": {
-      "write": "Write it myself",
-      "describe": "Describe it"
+      "write": "Өөрөө бичих",
+      "describe": "Тайлбарлах"
     },
     "form": {
       "name": {
-        "label": "Name",
-        "placeholder": "e.g. my-skill"
+        "label": "Нэр",
+        "placeholder": "жнь. my-skill"
       },
       "description": {
-        "label": "Description",
-        "placeholder": "What does this skill do?",
-        "hint": "Include Use-when and Do-NOT-use guidance so the model activates it accurately."
+        "label": "Тайлбар",
+        "placeholder": "Энэ ур чадвар юу хийдэг вэ?",
+        "hint": "Загвар үнэн зөв идэвхжүүлэхийн тулд Хэзээ ашиглах болон Бүү ашигла зааврыг оруулна уу."
       },
       "category": {
-        "label": "Category",
-        "placeholder": "e.g. coding"
+        "label": "Ангилал",
+        "placeholder": "жнь. coding"
       },
       "tags": {
-        "label": "Tags",
-        "placeholder": "comma-separated, e.g. git, review"
+        "label": "Шошго",
+        "placeholder": "таслалаар тусгаарласан, жнь. git, review"
       },
       "body": {
-        "label": "SKILL.md body"
+        "label": "SKILL.md агуулга"
       }
     },
     "describe": {
-      "label": "Describe your skill",
-      "placeholder": "Describe your skill in plain language and we will draft a SKILL.md for you…",
-      "generate": "Generate",
-      "generating": "Generating…"
+      "label": "Ур чадвараа тайлбарла",
+      "placeholder": "Ур чадвараа энгийн үгээр тайлбарлавал бид танд SKILL.md ноорог гаргаж өгнө…",
+      "generate": "Үүсгэх",
+      "generating": "Үүсгэж байна…"
     },
     "actions": {
-      "save": "Save skill",
-      "saving": "Saving…",
-      "cancel": "Cancel",
-      "done": "Done"
+      "save": "Ур чадвар хадгалах",
+      "saving": "Хадгалж байна…",
+      "cancel": "Цуцлах",
+      "done": "Дууссан"
     },
     "verdict": {
-      "clean": "Skill \"{{name}}\" saved successfully.",
-      "review": "Skill \"{{name}}\" saved, but flagged for review.",
-      "blocked": "Skill \"{{name}}\" was blocked by Skill Guard and not registered. Edit the body to remove flagged content."
+      "clean": "\"{{name}}\" ур чадвар амжилттай хадгалагдлаа.",
+      "review": "\"{{name}}\" ур чадвар хадгалагдсан боловч хяналтад тэмдэглэгдсэн.",
+      "blocked": "\"{{name}}\" ур чадварыг Skill Guard хааж, бүртгээгүй. Тэмдэглэсэн агуулгыг арилгахын тулд агуулгыг засна уу."
     },
     "error": {
-      "saveFailed": "Save failed",
-      "generateFailed": "Generation failed"
+      "saveFailed": "Хадгалалт амжилтгүй",
+      "generateFailed": "Үүсгэлт амжилтгүй"
     }
   },
   "detail": {
-    "whenLoaded": "When Дархай loads this",
-    "metadata": "Metadata",
-    "body": "Body",
-    "quarantined": "This skill is quarantined and cannot be loaded."
+    "whenLoaded": "Дархай үүнийг ачаалахад",
+    "metadata": "Мета өгөгдөл",
+    "body": "Агуулга",
+    "quarantined": "Энэ ур чадвар тусгаарлагдсан тул ачаалах боломжгүй."
   }
 }

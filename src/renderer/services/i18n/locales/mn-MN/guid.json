@@ -1,85 +1,85 @@
 {
-  "agentFallbackNotice": "{{original}} is unavailable, using {{fallback}} instead.",
-  "noAgentAvailable": "No Main Agent is available. Please login to Google or install Claude/Codex CLI. Go to settings?",
-  "noAgentAvailableShort": "No Main Agent available. Click to configure.",
-  "agentTabAutoSwitch": "Model not compatible with Gemini, auto-switched to {{fallback}}",
-  "autoSwitchToAgent": "Gemini is not configured, auto-switching to {{agent}}",
-  "autoSwitchedAgent": "{{from}} is not available, switched to {{to}}",
-  "promptExamplesHint": "Try example prompts:",
-  "agentSwitcherLabel": "Agent",
-  "switchedToAgent": "Switched to {{agent}}",
+  "agentFallbackNotice": "{{original}} боломжгүй тул оронд нь {{fallback}}-г ашиглаж байна.",
+  "noAgentAvailable": "Үндсэн агент байхгүй байна. Google-д нэвтрэх эсвэл Claude/Codex CLI суулгана уу. Тохиргоо руу орох уу?",
+  "noAgentAvailableShort": "Үндсэн агент байхгүй. Тохируулахын тулд дарна уу.",
+  "agentTabAutoSwitch": "Загвар Gemini-тэй нийцэхгүй тул {{fallback}} руу автоматаар шилжлээ",
+  "autoSwitchToAgent": "Gemini тохируулагдаагүй тул {{agent}} руу автоматаар шилжиж байна",
+  "autoSwitchedAgent": "{{from}} боломжгүй тул {{to}} руу шилжлээ",
+  "promptExamplesHint": "Жишээ промпт туршина уу:",
+  "agentSwitcherLabel": "Агент",
+  "switchedToAgent": "{{agent}} руу шилжлээ",
   "hint": {
-    "search": "Press {{key}} to search",
-    "backend": "{{key}} for backend",
-    "newChat": "{{key}} for new chat"
+    "search": "Хайхын тулд {{key}} дарна уу",
+    "backend": "Backend-д {{key}}",
+    "newChat": "Шинэ чатад {{key}}"
   },
   "scanning": {
-    "initialMessage": "Current Agent is unavailable, detecting other available agents...",
-    "scanningMessage": "Scanning local available agents...",
-    "connectingMessage": "Connected successfully, please wait...",
-    "establishingConnection": "Establishing connection...",
-    "statusQueued": "Queued",
-    "statusTesting": "Testing latency...",
-    "statusUnreachable": "Unreachable",
-    "statusAvailable": "Available"
+    "initialMessage": "Одоогийн агент боломжгүй байна, бусад боломжит агентуудыг илрүүлж байна...",
+    "scanningMessage": "Локал боломжит агентуудыг скан хийж байна...",
+    "connectingMessage": "Амжилттай холбогдлоо, түр хүлээнэ үү...",
+    "establishingConnection": "Холболт үүсгэж байна...",
+    "statusQueued": "Дараалалд орсон",
+    "statusTesting": "Хоцролт шалгаж байна...",
+    "statusUnreachable": "Хүрэхгүй",
+    "statusAvailable": "Боломжтой"
   },
   "newChat": {
     "greeting": {
       "withName": "{{timeLabel}}, {{name}}",
       "labels": {
         "lateNight": [
-          "Working late",
-          "Burning the midnight oil",
-          "Up late"
+          "Шөнө орой ажиллаж байна",
+          "Шөнө дунд хүртэл ажиллаж байна",
+          "Орой хүртэл сэрүүн"
         ],
         "morning": [
-          "Morning",
-          "Good morning",
-          "Rise and shine"
+          "Өглөө",
+          "Өглөөний мэнд",
+          "Сайхан өглөө"
         ],
         "afternoon": [
-          "Afternoon",
-          "Good afternoon",
-          "Welcome back"
+          "Өдөр",
+          "Өдрийн мэнд",
+          "Эргэн тавтай морил"
         ],
         "evening": [
-          "Evening",
-          "Good evening",
-          "Welcome back"
+          "Орой",
+          "Оройн мэнд",
+          "Эргэн тавтай морил"
         ],
         "night": [
-          "Evening",
-          "Good evening",
-          "Winding down"
+          "Орой",
+          "Оройн мэнд",
+          "Амрах цаг"
         ]
       }
     },
     "intent": {
-      "sell": "Sell",
-      "write": "Write",
-      "research": "Research",
-      "build": "Build",
-      "run": "Run"
+      "sell": "Зарах",
+      "write": "Бичих",
+      "research": "Судлах",
+      "build": "Бүтээх",
+      "run": "Ажиллуулах"
     },
     "pillBar": {
-      "label": "Choose an intent",
-      "pillLabel": "{{label}} intent"
+      "label": "Зорилгоо сонгох",
+      "pillLabel": "{{label}} зорилго"
     },
     "suggestionPanel": {
-      "label": "{{label}} starter prompts",
-      "heading": "Start with {{label}}",
-      "close": "Close suggestions"
+      "label": "{{label}} эхлэлийн промптууд",
+      "heading": "{{label}}-аас эхлэх",
+      "close": "Зөвлөмжийг хаах"
     },
     "recents": {
-      "label": "Recent conversations",
-      "heading": "Jump back in"
+      "label": "Сүүлийн яриа",
+      "heading": "Эргэн орох"
     },
-    "voiceHint": "Click the mic to talk",
+    "voiceHint": "Ярихын тулд микрофон дээр дарна уу",
     "kickoff": {
-      "accept": "Yes, let's start",
-      "redirect": "Something else",
-      "dismissAria": "Dismiss suggestion",
-      "regionAria": "Suggested first message"
+      "accept": "Тийм, эхэлцгээе",
+      "redirect": "Өөр зүйл",
+      "dismissAria": "Зөвлөмжийг хаах",
+      "regionAria": "Санал болгосон эхний мессеж"
     }
   }
 }
