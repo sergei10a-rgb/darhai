@@ -398,7 +398,7 @@ LATEST_COMMIT_TIME=$(gh pr view <PR_NUMBER> --json commits \
 
 ```bash
 REPO_ROOT=$(git rev-parse --show-toplevel)
-WORKTREE_DIR="/tmp/wayland-pr-${PR_NUMBER}"
+WORKTREE_DIR="/tmp/darhai-pr-${PR_NUMBER}"
 
 # Clean up any stale worktree
 git worktree remove "$WORKTREE_DIR" --force 2>/dev/null || true

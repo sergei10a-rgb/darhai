@@ -1,11 +1,11 @@
 ---
 name: bump-version
-description: Use when bumping the Wayland version: update package.json, run checks, branch, commit, push, create PR, wait for merge, tag release.
+description: Use when bumping the Darhai version: update package.json, run checks, branch, commit, push, create PR, wait for merge, tag release.
 ---
 
 # Bump Version
 
-Automate the Wayland version bump workflow: update version → quality checks → branch → commit → push → PR → tag.
+Automate the Darhai version bump workflow: update version → quality checks → branch → commit → push → PR → tag.
 
 **Usage:** `/bump-version [version]`
 

@@ -129,7 +129,7 @@ Create an isolated worktree for this PR fix. The main repo stays on its current 
 ```bash
 REPO_ROOT=$(git rev-parse --show-toplevel)
 PR_NUMBER=<PR_NUMBER>
-WORKTREE_DIR="/tmp/wayland-pr-${PR_NUMBER}"
+WORKTREE_DIR="/tmp/darhai-pr-${PR_NUMBER}"
 
 # Clean up any stale worktree from a previous crash
 git worktree remove "$WORKTREE_DIR" --force 2>/dev/null || true
@@ -460,7 +460,7 @@ git worktree remove "$WORKTREE_DIR" --force 2>/dev/null || true
  1. Parse summary table → ordered issue list
  2. Pre-flight: fetch PR info (state, isCrossRepository, maintainerCanModify, forkOwner)
     → ABORT: state=MERGED
- 3. Create worktree at /tmp/wayland-pr-<PR_NUMBER> (all paths use --detach):
+ 3. Create worktree at /tmp/darhai-pr-<PR_NUMBER> (all paths use --detach):
     → same-repo:        git fetch + git worktree add --detach
     → fork+canModify:   git worktree add --detach + gh pr checkout <PR_NUMBER>
     → fork+fallback:    git worktree add --detach + merge fork head

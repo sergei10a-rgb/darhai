@@ -8,7 +8,7 @@
 
 name: Build Matrix
 
-# Cross-platform packaged-build verification for the Wayland fork.
+# Cross-platform packaged-build verification for the Darhai fork.
 # Runs on push to main and on a weekly nightly schedule.
 #
 # Feature-flagged: only runs when repository variable
@@ -45,7 +45,9 @@ permissions:
   contents: read
 
 env:
-  # Wayland-core release stream does not exist yet (see commit 48d155826).
+  # Skip bundling the Wayland-Core engine (upstream FerroxLabs/wayland-core
+  # artifact source) in PR/test builds to stay fast; only the release path
+  # in _build-reusable.yml ships the engine.
   WCORE_SKIP: '1'
   CI: 'true'
   NODE_OPTIONS: '--max-old-space-size=8192'
@@ -195,7 +197,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: wayland-${{ matrix.platform }}
+          name: darhai-${{ matrix.platform }}
           path: |
             out/*.dmg
             out/*.zip

@@ -101,10 +101,10 @@ code path is found, apply a defensive fix.
 git log --oneline --since="2 weeks ago" --grep="<keyword-from-error>"
 
 # Check open PRs
-gh pr list --repo FerroxLabs/wayland --state open --search "<error-keyword>" --json number,title
+gh pr list --repo sergei10a-rgb/darhai --state open --search "<error-keyword>" --json number,title
 
 # Check closed PRs (recently merged)
-gh pr list --repo FerroxLabs/wayland --state merged --search "<error-keyword>" --limit 5 --json number,title,mergedAt
+gh pr list --repo sergei10a-rgb/darhai --state merged --search "<error-keyword>" --limit 5 --json number,title,mergedAt
 ```
 
 ## Step E: Judging "needs_more_info" vs fixable

@@ -26,18 +26,19 @@ on:
 
 env:
   BUN_INSTALL_REGISTRY: 'https://registry.npmjs.org/'
-  WAYLAND_HUB_TAG: 'dist-ebc6a2b'
-  # The FerroxLabs/waylandHub repo/tag does not exist yet, so
-  # prepareHubResources.js fails ("Failed to download index.json from all
-  # mirrors") and aborts the build. Skip hub staging until that repo is
-  # published; hub extensions are not required to ship a working release.
-  WAYLAND_HUB_SKIP: '1'
+  DARHAI_HUB_TAG: 'dist-latest'
+  # Hub extensions are staged from sergei10a-rgb/darhaiHub (Darhai Hub -
+  # AionUi-derived ACP adapter extensions). prepareHubResources.js downloads
+  # index.json + all extension zips from the DARHAI_HUB_TAG ref and bundles
+  # them into resources/hub/ as the local fallback for the Agent Hub.
+  DARHAI_HUB_SKIP: '0'
   # Bundle the Wayland-Core engine into every release installer. The engine's
-  # multi-platform release stream (FerroxLabs/wayland-core) now exists with all
-  # six platform archives + verified shasums, so prepareWaylandCore.js downloads
-  # and bundles the matching binary at build time (auth via the GH_TOKEN passed
-  # to the build step). There is NO runtime download fallback, so the release
-  # MUST bundle the engine here. PR/test builds (build-matrix.yml, pr-checks.yml)
+  # multi-platform release stream (FerroxLabs/wayland-core - live upstream
+  # artifact source, do NOT rebrand) now exists with all six platform archives
+  # + verified shasums, so prepareWaylandCore.js downloads and bundles the
+  # matching binary at build time (auth via the GH_TOKEN passed to the build
+  # step). There is NO runtime download fallback, so the release MUST bundle
+  # the engine here. PR/test builds (build-matrix.yml, pr-checks.yml)
   # keep WCORE_SKIP=1 to stay fast; only this release path ships the engine.
   WCORE_SKIP: '0'
   # aionrs binary version to bundle (used by scripts/prepareAionrs.js)
@@ -45,7 +46,7 @@ env:
   # Pinned Bun runtime bundled into the packaged app. Must match
   # PINNED_BUN_VERSION in scripts/prepareBundledBun.js and the
   # corresponding entry in scripts/bundled-bun-shasums.json.
-  WAYLAND_BUN_VERSION: '1.3.14'
+  DARHAI_BUN_VERSION: '1.3.14'
 
 jobs:
   code-quality:
@@ -596,8 +597,7 @@ jobs:
             out/*.deb
             out/*.AppImage
             out/*.rpm
-            out/Wayland-*-win32-*.zip
-            out/Wayland-*-mac-*.zip
+            out/Darhai-*.zip
             out/*.yml
           if-no-files-found: warn
           retention-days: 7

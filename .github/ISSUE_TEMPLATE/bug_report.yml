@@ -1,13 +1,13 @@
-name: 🐛 Bug Report
-description: Report a bug or unexpected behavior in Wayland
-title: '[Bug]: '
+name: 🐛 Алдаа мэдээлэх
+description: Дархай (Darhai) дээр гарсан алдаа буюу гэнэтийн зан төлөвийг мэдээлэх
+title: '[Алдаа]: '
 labels: ['bug']
 body:
   - type: dropdown
     id: platform
     attributes:
-      label: Platform
-      description: Which platform are you using?
+      label: Платформ
+      description: Та ямар платформ дээр ажиллаж байна вэ?
       options:
         - macOS (Apple Silicon)
         - macOS (Intel)
@@ -19,54 +19,54 @@ body:
   - type: input
     id: version
     attributes:
-      label: Wayland Version
-      description: What version of Wayland are you using?
-      placeholder: e.g., 1.2.2
+      label: Дархайн хувилбар
+      description: Та Дархайн аль хувилбарыг ашиглаж байна вэ?
+      placeholder: 'жишээ нь: 1.2.2'
     validations:
       required: true
 
   - type: textarea
     id: bug_description
     attributes:
-      label: Bug Description
-      description: A clear and concise description of what the bug is.
-      placeholder: Describe what happened...
+      label: Алдааны тодорхойлолт
+      description: Ямар алдаа гарсныг товч бөгөөд тодорхой бичнэ үү.
+      placeholder: Юу болсныг тайлбарлана уу...
     validations:
       required: true
 
   - type: textarea
     id: steps_to_reproduce
     attributes:
-      label: Steps to Reproduce
-      description: Steps to reproduce the behavior
+      label: Алдааг давтах алхмууд
+      description: Алдааг дахин гаргах алхмууд
       placeholder: |
-        1. Go to '...'
-        2. Click on '...'
-        3. See error
+        1. '...' хэсэг рүү орно
+        2. '...' дээр дарна
+        3. Алдаа гарна
     validations:
       required: true
 
   - type: textarea
     id: expected_behavior
     attributes:
-      label: Expected Behavior
-      description: What should have happened?
-      placeholder: What should have happened?
+      label: Хүлээгдэж байсан үр дүн
+      description: Юу болох ёстой байсан бэ?
+      placeholder: Юу болох ёстой байсан бэ?
     validations:
       required: true
 
   - type: textarea
     id: actual_behavior
     attributes:
-      label: Actual Behavior
-      description: What actually happened?
-      placeholder: What actually happened?
+      label: Бодит үр дүн
+      description: Бодитоор юу болсон бэ?
+      placeholder: Бодитоор юу болсон бэ?
     validations:
       required: true
 
   - type: textarea
     id: additional_context
     attributes:
-      label: Additional Context
-      description: Add any other context about the problem here.
-      placeholder: Screenshots, error logs, etc.
+      label: Нэмэлт мэдээлэл
+      description: Асуудалтай холбоотой бусад мэдээллийг эндээ нэмнэ үү.
+      placeholder: Дэлгэцийн зураг, алдааны лог гэх мэт.

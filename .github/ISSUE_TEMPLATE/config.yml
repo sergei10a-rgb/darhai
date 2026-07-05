@@ -1,14 +1,11 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Ask a question (Discussions)
-    url: https://github.com/FerroxLabs/wayland/discussions
-    about: Usage, setup, and how-to questions are answered in Discussions — not the issue tracker.
-  - name: Community chat & live help (Discord)
-    url: https://discord.gg/hXwAcR4MyU
-    about: Join the Wayland Discord for real-time help, the #report-a-bug channel, and announcements.
-  - name: Documentation
-    url: https://github.com/FerroxLabs/wayland/wiki
-    about: Setup guides, configuration, and troubleshooting.
-  - name: Report a security vulnerability
-    url: https://github.com/FerroxLabs/wayland/security/advisories/new
-    about: Report vulnerabilities privately through GitHub. Do not open a public issue.
+  - name: Асуулт асуух (Discussions)
+    url: https://github.com/sergei10a-rgb/darhai/discussions
+    about: Хэрэглээ, тохиргоо, "яаж хийх вэ" төрлийн асуултуудад Discussions хэсэгт хариулна — issue tracker дээр биш.
+  - name: Алдаа, санал хүсэлт (Issues)
+    url: https://github.com/sergei10a-rgb/darhai/issues
+    about: Алдааны мэдээлэл болон шинэ боломжийн саналыг Issues хэсэгт бүртгэнэ.
+  - name: Аюулгүй байдлын цоорхой мэдээлэх
+    url: https://github.com/sergei10a-rgb/darhai/security/advisories/new
+    about: Цоорхойг GitHub-ээр дамжуулан нууцаар мэдээлнэ үү. Нээлттэй issue бүү үүсгээрэй.

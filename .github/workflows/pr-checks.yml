@@ -1,9 +1,9 @@
 name: 'PR Checks'
 
-# Consolidated PR-gate workflow for the Wayland fork.
+# Consolidated PR-gate workflow for the Darhai fork.
 #
 # This file is the union of the legacy upstream `pr-checks.yml` and the
-# Wayland-fork `pr-gate.yml` (commit dc59d43e3). The two duplicated
+# fork-side `pr-gate.yml` (commit dc59d43e3). The two duplicated
 # tsc/lint/vitest/build steps across separate runners; they are now one
 # workflow.
 #
@@ -21,7 +21,7 @@ name: 'PR Checks'
 #
 # Required repo secrets / variables:
 #   secrets.CODECOV_TOKEN          -- optional, falls back to OIDC if unset
-#                                     (only used on FerroxLabs/wayland)
+#                                     (only used on sergei10a-rgb/darhai)
 #   vars.CI_BUILD_MATRIX_ENABLED   -- owned by build-matrix.yml, not used here
 #
 # Security: no untrusted PR/issue text is interpolated into any run: step.
@@ -65,7 +65,8 @@ permissions:
 
 env:
   BUN_INSTALL_REGISTRY: 'https://registry.npmjs.org/'
-  # Wayland-core release stream does not exist yet (see commit 48d155826).
+  # Skip bundling the Wayland-Core engine (upstream FerroxLabs/wayland-core
+  # artifact source) in PR builds to stay fast (see _build-reusable.yml).
   WCORE_SKIP: '1'
   CI: 'true'
   NODE_OPTIONS: '--max-old-space-size=8192'
@@ -276,7 +277,7 @@ jobs:
         run: bun run test:coverage
 
       - name: Upload coverage to Codecov (Linux coverage only)
-        if: always() && hashFiles('coverage/lcov.info') != '' && github.repository == 'FerroxLabs/wayland'
+        if: always() && hashFiles('coverage/lcov.info') != '' && github.repository == 'sergei10a-rgb/darhai'
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -286,7 +287,7 @@ jobs:
           verbose: true
 
       - name: Skip Codecov upload when preconditions are not met
-        if: always() && hashFiles('coverage/lcov.info') != '' && github.repository != 'FerroxLabs/wayland'
+        if: always() && hashFiles('coverage/lcov.info') != '' && github.repository != 'sergei10a-rgb/darhai'
         shell: bash
         env:
           REPO: ${{ github.repository }}
