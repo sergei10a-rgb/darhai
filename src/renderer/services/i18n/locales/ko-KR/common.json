@@ -86,6 +86,7 @@
   "clear": "지우기",
   "brand": "Darhai",
   "brandTagline": "AI Agent",
+  "brandMotto": "Perceives · Reasons · Acts · Evolves",
   "cmdk": {
     "label": "[TODO:translate] Command palette",
     "placeholder": "[TODO:translate] Search assistants, chats, prompts…",

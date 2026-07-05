@@ -194,6 +194,7 @@ export type I18nKey =
   | 'common.attach'
   | 'common.back'
   | 'common.brand'
+  | 'common.brandMotto'
   | 'common.brandTagline'
   | 'common.browse'
   | 'common.cancel'

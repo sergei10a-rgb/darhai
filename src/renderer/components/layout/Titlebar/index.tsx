@@ -21,7 +21,7 @@ import type { WorkspaceStateDetail } from '@renderer/utils/workspace/workspaceEv
 import { useLayoutContext } from '@/renderer/hooks/context/LayoutContext';
 import { useNavigationHistory } from '@/renderer/hooks/context/NavigationHistoryContext';
 import { isElectronDesktop, isMacOS } from '@/renderer/utils/platform';
-// Full brand lockups (orbit mark + wordmark). Dark wordmark shows on light
+// Full brand lockups (anvil mark + wordmark). Dark wordmark shows on light
 // theme, white wordmark on dark theme - toggled purely via CSS on [data-theme].
 import lockupDark from '@renderer/assets/logos/brand/darhai-lockup-dark.png';
 import lockupWhite from '@renderer/assets/logos/brand/darhai-lockup-white.png';
@@ -43,11 +43,11 @@ const DarhaiLogoMark: React.FC = () => (
     aria-hidden='true'
     focusable='false'
   >
-    <path d='M20.341 6.484A10 10 0 0 1 10.266 21.85' />
-    <path d='M3.659 17.516A10 10 0 0 1 13.74 2.152' />
-    <circle cx='12' cy='12' r='3' />
-    <circle cx='19' cy='5' r='2' />
-    <circle cx='5' cy='19' r='2' />
+    <path d='M7 10H6a4 4 0 0 1-4-4 1 1 0 0 1 1-1h4' />
+    <path d='M7 5a1 1 0 0 1 1-1h13a1 1 0 0 1 1 1 7 7 0 0 1-7 7H8a1 1 0 0 1-1-1z' />
+    <path d='M9 12v5' />
+    <path d='M15 12v5' />
+    <path d='M5 20a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3 1 1 0 0 1-1 1H6a1 1 0 0 1-1-1' />
   </svg>
 );
 
@@ -375,7 +375,7 @@ const Titlebar: React.FC<TitlebarProps> = ({ workspaceAvailable }) => {
               aria-hidden='true'
               draggable={false}
             />
-            <span className='app-titlebar__brand-tagline'>Perceives · Reasons · Acts · Evolves</span>
+            <span className='app-titlebar__brand-tagline'>{t('common.brandMotto')}</span>
           </span>
         )}
       </div>
