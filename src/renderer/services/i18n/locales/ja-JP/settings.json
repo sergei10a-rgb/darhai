@@ -2593,5 +2593,10 @@
     },
     "scopeWritesTo": "Writes to",
     "scopeSharedCli": "— used by the Darhai Core CLI too."
-  }
+  },
+  "semanticSearch": "セマンティック検索",
+  "semanticSearchDescription": "キーワードだけでなく意味でスキルとメモリをランク付けします。オフラインで動作し、ローカルモデルが利用できない場合はキーワード検索にフォールバックします。",
+  "semanticSearchActive": "セマンティック検索が有効",
+  "semanticSearchFallback": "キーワード検索を使用中（セマンティックモデルが利用不可）",
+  "semanticSearchIndexing": "セマンティックインデックスを構築中…"
 }

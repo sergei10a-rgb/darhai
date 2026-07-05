@@ -2592,5 +2592,10 @@
     },
     "scopeWritesTo": "Writes to",
     "scopeSharedCli": "— used by the Darhai Core CLI too."
-  }
+  },
+  "semanticSearch": "Recherche sémantique",
+  "semanticSearchDescription": "Classe les compétences et la mémoire par sens, pas seulement par mots-clés. Fonctionne hors ligne ; revient à la recherche par mots-clés lorsque le modèle local est indisponible.",
+  "semanticSearchActive": "Recherche sémantique active",
+  "semanticSearchFallback": "Utilisation de la recherche par mots-clés (modèle sémantique indisponible)",
+  "semanticSearchIndexing": "Création de l’index sémantique…"
 }

@@ -2593,5 +2593,10 @@
     },
     "scopeWritesTo": "Writes to",
     "scopeSharedCli": "— used by the Darhai Core CLI too."
-  }
+  },
+  "semanticSearch": "Семантический поиск",
+  "semanticSearchDescription": "Ранжирует навыки и память по смыслу, а не только по ключевым словам. Работает офлайн; переходит к поиску по ключевым словам, когда локальная модель недоступна.",
+  "semanticSearchActive": "Семантический поиск активен",
+  "semanticSearchFallback": "Используется поиск по ключевым словам (семантическая модель недоступна)",
+  "semanticSearchIndexing": "Создание семантического индекса…"
 }

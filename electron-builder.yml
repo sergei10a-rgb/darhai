@@ -35,6 +35,16 @@ files:
   - package.json
   # Native modules and their runtime dependencies
   - node_modules/better-sqlite3/**/*
+  # sqlite-vec: JS shim + platform binary (the loadable vec0 extension). The
+  # binary must be on disk (asarUnpack below) so better-sqlite3 can loadExtension
+  # it for semantic vector search; keyword search still works if it's absent.
+  - node_modules/sqlite-vec/**/*
+  - node_modules/sqlite-vec-*/**/*
+  # transformers.js Node runtime + ONNX native backend for local embeddings.
+  # Absence degrades semantic search to keyword-only (offline-tolerant).
+  - node_modules/@huggingface/transformers/**/*
+  - node_modules/onnxruntime-node/**/*
+  - node_modules/onnxruntime-common/**/*
   - node_modules/bcrypt/**/*
   - node_modules/node-pty/**/*
   - node_modules/@mapbox/**/*
@@ -293,6 +303,14 @@ nodeGypRebuild: false
 
 asarUnpack:
   - '**/node_modules/better-sqlite3/**/*'
+  # sqlite-vec loadable extension + transformers.js ONNX runtime: native code
+  # that must live on the real filesystem (dlopen / loadExtension can't read
+  # from inside app.asar). Missing ⇒ retrieval falls back to keyword search.
+  - '**/node_modules/sqlite-vec/**/*'
+  - '**/node_modules/sqlite-vec-*/**/*'
+  - '**/node_modules/@huggingface/transformers/**/*'
+  - '**/node_modules/onnxruntime-node/**/*'
+  - '**/node_modules/onnxruntime-common/**/*'
   - '**/node_modules/bcrypt/**/*'
   - '**/node_modules/node-pty/**/*'
   - '**/node_modules/@mapbox/**/*'

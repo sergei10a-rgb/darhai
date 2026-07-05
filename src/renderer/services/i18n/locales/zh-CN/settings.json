@@ -2592,5 +2592,10 @@
     },
     "scopeWritesTo": "Writes to",
     "scopeSharedCli": "— used by the Darhai Core CLI too."
-  }
+  },
+  "semanticSearch": "语义搜索",
+  "semanticSearchDescription": "按含义而不仅仅是关键词对技能和记忆进行排序。可离线运行；当本地模型不可用时回退到关键词搜索。",
+  "semanticSearchActive": "语义搜索已启用",
+  "semanticSearchFallback": "正在使用关键词搜索（语义模型不可用）",
+  "semanticSearchIndexing": "正在构建语义索引…"
 }

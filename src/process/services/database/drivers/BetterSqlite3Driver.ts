@@ -56,6 +56,16 @@ export class BetterSqlite3Driver implements ISqliteDriver {
     return this.db.transaction(fn);
   }
 
+  /**
+   * Load a native loadable extension (e.g. sqlite-vec's vec0). better-sqlite3
+   * exposes `loadExtension` directly; it throws if the DLL/dylib/.so is missing
+   * or incompatible, which the caller treats as "no vector support" and falls
+   * back to keyword retrieval.
+   */
+  loadExtension(path: string): void {
+    this.db.loadExtension(path);
+  }
+
   close(): void {
     this.db.close();
   }

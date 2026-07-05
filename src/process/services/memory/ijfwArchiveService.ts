@@ -18,6 +18,11 @@ import * as crypto from 'node:crypto';
 import log from 'electron-log';
 import { parseMarkdownBlocks } from './markdownFrontmatter';
 import { computePromotionScore } from './promotionScore';
+import {
+  scheduleMemoryReindex,
+  searchMemoryIds,
+  type MemoryDocInput,
+} from '@process/services/semantic/memorySemanticLane';
 import type {
   MemoryEntry,
   MemoryStats,
@@ -30,6 +35,13 @@ import type {
 
 // Memory files to read per project root.
 const MEMORY_FILES = ['knowledge.md', 'journal.md', 'handoff.md', 'plan.md', 'brief.md', 'project-journal.md'] as const;
+
+// Frontmatter is attacker-controllable (any project on disk). Clamp the fields
+// that flow into the embedder / index so a giant `summary` or a tags flood can't
+// blow up memory or the vector pass. `bodyPreview` is already capped at 200.
+const MAX_SUMMARY_CHARS = 500;
+const MAX_TAGS = 64;
+const MAX_TAG_CHARS = 128;
 
 type WatcherFactory = (
   filePath: string,
@@ -128,7 +140,8 @@ async function fallbackScanForProjects(): Promise<RegistryEntry[]> {
 
 // ===== Entry parser =====
 
-function parseEntriesFromFile(filePath: string, projectPath: string, projectName: string): MemoryEntry[] {
+// Exported for unit testing of the frontmatter clamping (summary / tags caps).
+export function parseEntriesFromFile(filePath: string, projectPath: string, projectName: string): MemoryEntry[] {
   let content: string;
   try {
     content = fs.readFileSync(filePath, 'utf8');
@@ -143,16 +156,28 @@ function parseEntriesFromFile(filePath: string, projectPath: string, projectName
     const block = blocks[i];
     const fm = block.frontmatter;
 
-    const summary =
+    const rawSummary =
       typeof fm['summary'] === 'string' && fm['summary']
         ? fm['summary']
         : block.body.split('\n')[0].replace(/^#+\s*/, '') || 'Untitled';
+    // Clamp: attacker-controlled frontmatter must not feed an unbounded string
+    // into the index / embedder (bodyPreview is already capped at 200).
+    const summary = rawSummary.length > MAX_SUMMARY_CHARS ? rawSummary.slice(0, MAX_SUMMARY_CHARS) : rawSummary;
 
     const storedStr = typeof fm['stored'] === 'string' ? fm['stored'] : '';
     const storedAt = parseDateToMs(storedStr) || Date.now();
 
     const rawTags = fm['tags'];
-    const tags: string[] = Array.isArray(rawTags) ? rawTags : typeof rawTags === 'string' && rawTags ? [rawTags] : [];
+    const tagList: string[] = Array.isArray(rawTags)
+      ? rawTags.filter((t): t is string => typeof t === 'string')
+      : typeof rawTags === 'string' && rawTags
+        ? [rawTags]
+        : [];
+    // Cap the tag count and each tag's length so a tags flood can't bloat the
+    // embedding text or the in-memory index.
+    const tags: string[] = tagList
+      .slice(0, MAX_TAGS)
+      .map((t) => (t.length > MAX_TAG_CHARS ? t.slice(0, MAX_TAG_CHARS) : t));
 
     const id = makeId(filePath, storedStr || String(storedAt), summary);
     const bodyPreview = stripMarkdown(block.body).slice(0, 200);
@@ -387,6 +412,13 @@ class IjfwArchiveService {
       refsExpiry: 0,
       refsByEntry: new Map(),
     };
+
+    // Fire-and-forget: keep the memory vector index in sync in the background.
+    // No-op when unchanged or when vectors are unavailable; never blocks the
+    // index build or any query.
+    scheduleMemoryReindex(
+      resident.map((e) => ({ id: e.id, summary: e.summary, bodyPreview: e.bodyPreview, tags: e.tags }))
+    );
   }
 
   private ensureRefs(): void {
@@ -603,15 +635,38 @@ class IjfwArchiveService {
       entries = entries.filter((e) => e.storedAt >= cutoff);
     }
 
-    // Search filter.
+    // Search filter. Substring is the always-on baseline (identical to the
+    // prior behavior). When the semantic vector lane is available it ADDS
+    // entries that match the query by meaning but not by literal substring
+    // (e.g. a Cyrillic query recalling a related English memory). Additive
+    // union - offline / no-vector behavior is byte-for-byte the same.
     if (filter.search && filter.search.trim()) {
-      const q = filter.search.toLowerCase();
-      entries = entries.filter(
+      const rawQuery = filter.search.trim();
+      const q = rawQuery.toLowerCase();
+      const substringMatched = entries.filter(
         (e) =>
           e.summary.toLowerCase().includes(q) ||
           e.bodyPreview.toLowerCase().includes(q) ||
           e.tags.some((t) => t.toLowerCase().includes(q))
       );
+
+      const semanticIds = await this.semanticSearchIds(rawQuery, entries);
+      if (semanticIds && semanticIds.length > 0) {
+        const seen = new Set(substringMatched.map((e) => e.id));
+        const byId = new Map(entries.map((e) => [e.id, e]));
+        const merged = [...substringMatched];
+        for (const id of semanticIds) {
+          if (seen.has(id)) continue;
+          const entry = byId.get(id);
+          if (entry) {
+            merged.push(entry);
+            seen.add(id);
+          }
+        }
+        entries = merged;
+      } else {
+        entries = substringMatched;
+      }
     }
 
     // Sort.
@@ -630,6 +685,22 @@ class IjfwArchiveService {
     entries = entries.slice(offset, offset + limit);
 
     return { entries, total };
+  }
+
+  /**
+   * Hybrid (vector + substring) id ranking for a free-text query over the given
+   * entries. Delegates to the memory semantic lane, which is itself fail-soft:
+   * returns null when the semantic path is unavailable so the caller keeps its
+   * substring result unchanged.
+   */
+  private async semanticSearchIds(query: string, entries: readonly MemoryEntry[]): Promise<string[] | null> {
+    const docs: MemoryDocInput[] = entries.map((e) => ({
+      id: e.id,
+      summary: e.summary,
+      bodyPreview: e.bodyPreview,
+      tags: e.tags,
+    }));
+    return searchMemoryIds(query, docs, Math.min(docs.length, 50));
   }
 
   async getEntry(id: string): Promise<(MemoryEntry & { body: string }) | null> {

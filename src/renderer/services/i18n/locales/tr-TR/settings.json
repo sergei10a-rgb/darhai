@@ -2591,5 +2591,10 @@
     },
     "scopeWritesTo": "Writes to",
     "scopeSharedCli": "— used by the Darhai Core CLI too."
-  }
+  },
+  "semanticSearch": "Anlamsal arama",
+  "semanticSearchDescription": "Becerileri ve belleği yalnızca anahtar kelimelere göre değil, anlama göre sıralar. Çevrimdışı çalışır; yerel model kullanılamadığında anahtar kelime aramasına geri döner.",
+  "semanticSearchActive": "Anlamsal arama etkin",
+  "semanticSearchFallback": "Anahtar kelime araması kullanılıyor (anlamsal model kullanılamıyor)",
+  "semanticSearchIndexing": "Anlamsal dizin oluşturuluyor…"
 }

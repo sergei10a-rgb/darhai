@@ -2021,9 +2021,7 @@ const migration_v45: IMigration = {
   version: 45,
   name: 'Add lease/heartbeat/retry columns to team_tasks for durable execution',
   up: (db) => {
-    const columns = new Set(
-      (db.pragma('table_info(team_tasks)') as Array<{ name: string }>).map((c) => c.name)
-    );
+    const columns = new Set((db.pragma('table_info(team_tasks)') as Array<{ name: string }>).map((c) => c.name));
     if (!columns.has('lease_owner')) {
       db.exec('ALTER TABLE team_tasks ADD COLUMN lease_owner TEXT');
     }
@@ -2184,6 +2182,40 @@ const migration_v49: IMigration = {
 };
 
 /**
+ * Migration v49 -> v50: Semantic retrieval fingerprint shadow tables.
+ *
+ * The hybrid vector retriever stores its embeddings in sqlite-vec `vec0` virtual
+ * tables, which can only be created AFTER the sqlite-vec extension is loaded at
+ * runtime (SqliteVecStore owns that). What we CAN create up front - with plain
+ * SQLite, no extension - are the fingerprint shadow tables that let a backfill
+ * skip unchanged docs. Creating them here keeps schema ownership in migrations
+ * and means the vector store finds them ready on first run.
+ *
+ * If sqlite-vec is unavailable these tables simply stay empty; retrieval falls
+ * back to keyword search. No FK dependencies, so this is additive and safe.
+ */
+const migration_v50: IMigration = {
+  version: 50,
+  name: 'Add semantic retrieval fingerprint shadow tables',
+  up: (db) => {
+    db.exec(`CREATE TABLE IF NOT EXISTS vec_skills_meta (
+      id TEXT PRIMARY KEY,
+      fingerprint TEXT NOT NULL
+    )`);
+    db.exec(`CREATE TABLE IF NOT EXISTS vec_memory_meta (
+      id TEXT PRIMARY KEY,
+      fingerprint TEXT NOT NULL
+    )`);
+    console.log('[Migration v50] Created semantic fingerprint shadow tables');
+  },
+  down: (db) => {
+    db.exec('DROP TABLE IF EXISTS vec_skills_meta');
+    db.exec('DROP TABLE IF EXISTS vec_memory_meta');
+    console.log('[Migration v50] Dropped semantic fingerprint shadow tables');
+  },
+};
+
+/**
  * All migrations in order
  */
 // prettier-ignore
@@ -2196,7 +2228,7 @@ export const ALL_MIGRATIONS: IMigration[] = [
   migration_v31, migration_v32, migration_v33, migration_v34, migration_v35, migration_v36,
   migration_v37, migration_v38, migration_v39, migration_v40, migration_v41, migration_v42,
   migration_v43, migration_v44, migration_v45, migration_v46, migration_v47,
-  migration_v48, migration_v49,
+  migration_v48, migration_v49, migration_v50,
 ];
 
 /**

@@ -70,10 +70,13 @@ const STOPWORDS = new Set([
   'team',
 ]);
 
+// Unicode-aware split: keep runs of letters/numbers/apostrophe across every
+// script. The old `[^a-z0-9']+` split shredded Cyrillic / Mongolian goal text
+// into empty tokens, so non-Latin goals scored zero against every specialist.
 const tokenize = (text: string): string[] =>
   text
-    .toLowerCase()
-    .split(/[^a-z0-9']+/)
+    .toLocaleLowerCase()
+    .split(/[^\p{L}\p{N}']+/u)
     .filter((t) => t.length > 2 && !STOPWORDS.has(t));
 
 export type SuggestSpecialist = {
@@ -107,10 +110,7 @@ export type SuggestRosterResult = {
 /** Pure scoring + selection. No I/O. */
 export function suggestRoster(input: SuggestRosterInput): SuggestRosterResult {
   const goalTokens = tokenize(input.goalText);
-  const target = Math.max(
-    2,
-    Math.min(input.targetSize ?? 5, Math.min(6, input.specialists.length))
-  );
+  const target = Math.max(2, Math.min(input.targetSize ?? 5, Math.min(6, input.specialists.length)));
 
   // Score each specialist by token overlap with name + description.
   const scored = input.specialists.map((s) => {

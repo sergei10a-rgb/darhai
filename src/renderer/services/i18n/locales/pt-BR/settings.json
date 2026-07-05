@@ -2592,5 +2592,10 @@
     },
     "scopeWritesTo": "Writes to",
     "scopeSharedCli": "— used by the Darhai Core CLI too."
-  }
+  },
+  "semanticSearch": "Busca semântica",
+  "semanticSearchDescription": "Classifica habilidades e memória por significado, não apenas por palavras-chave. Funciona offline; recorre à busca por palavras-chave quando o modelo local está indisponível.",
+  "semanticSearchActive": "Busca semântica ativa",
+  "semanticSearchFallback": "Usando busca por palavras-chave (modelo semântico indisponível)",
+  "semanticSearchIndexing": "Construindo índice semântico…"
 }

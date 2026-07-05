@@ -2610,5 +2610,10 @@
     },
     "scopeWritesTo": "Writes to",
     "scopeSharedCli": "Used by the Darhai Core CLI too."
-  }
+  },
+  "semanticSearch": "Semantic search",
+  "semanticSearchDescription": "Rank skills and memory by meaning, not just keywords. Works offline; falls back to keyword search when the local model is unavailable.",
+  "semanticSearchActive": "Semantic search active",
+  "semanticSearchFallback": "Using keyword search (semantic model unavailable)",
+  "semanticSearchIndexing": "Building semantic index…"
 }

@@ -8,6 +8,11 @@ import { getSkillsDir, getBuiltinSkillsCopyDir, loadSkillsContent } from '@proce
 import { AcpSkillManager, buildSkillsIndexText, type SkillIndex } from './AcpSkillManager';
 import { SkillLibrary } from '@process/services/skills/SkillLibrary';
 import { SkillRetriever } from '@process/services/skills/SkillRetriever';
+import {
+  augmentSkillAdvertWithVector,
+  keywordLaneFromRetriever,
+  scheduleSkillReindex,
+} from '@process/services/semantic/skillSemanticLane';
 import { getDatabase } from '@process/services/database';
 import { mainWarn } from '@process/utils/mainLogger';
 import { getTeamGuidePrompt } from '@process/team/prompts/teamGuidePrompt.ts';
@@ -103,7 +108,10 @@ const QUERY_STOPWORDS = new Set(
 
 /** Distinct, length>2, non-stopword query tokens - the signal we retrieve on. */
 function discriminativeQueryTerms(text: string): string[] {
-  const tokens: string[] = text.toLowerCase().match(/\b[a-z0-9_-]+\b/g) ?? [];
+  // Unicode-aware tokenization (`\p{L}\p{N}`) so Cyrillic / Mongolian query
+  // words survive - the old ASCII `[a-z0-9_-]` regex dropped them entirely,
+  // leaving non-Latin turns with zero discriminative terms.
+  const tokens: string[] = text.toLocaleLowerCase().match(/[\p{L}\p{N}_-]+/gu) ?? [];
   return [...new Set(tokens.filter((t) => t.length > 2 && !QUERY_STOPWORDS.has(t)))];
 }
 
@@ -146,6 +154,11 @@ export async function buildTurnSkillContext(
     return empty;
   }
   if (!entries || entries.length === 0) return empty;
+
+  // Fire-and-forget: keep the vector index warm in the background. No-op when
+  // the library size is unchanged, a pass is running, or vectors are
+  // unavailable (offline / no sqlite-vec). Never blocks this turn.
+  scheduleSkillReindex(entries);
 
   // (Re)build the BM25 index when the library size changes.
   if (!turnRetriever || turnRetrieverEntryCount !== entries.length) {
@@ -194,11 +207,27 @@ export async function buildTurnSkillContext(
     .filter((h) => h.score >= advertFloor && !alwaysOn.has(h.name) && !autoLoaded.some((a) => a.name === h.name))
     .slice(0, TURN_ADVERT_LIMIT);
 
-  if (advertHits.length === 0 && !autoBody) return empty;
+  // Semantic recall: append skills the vector lane surfaces that BM25 missed
+  // (e.g. a Cyrillic query matching an English skill by meaning). Additive only
+  // - never reorders or drops the lexical picks. No-op offline / without vectors.
+  const chosen = new Set<string>([...alwaysOn, ...autoLoaded.map((a) => a.name), ...advertHits.map((h) => h.name)]);
+  // Reuse the turn's already-built BM25 index as the keyword lane so the vector
+  // augmentation does not re-index the full skill corpus on every turn.
+  const vectorExtra = await augmentSkillAdvertWithVector(
+    query,
+    entries,
+    chosen,
+    Math.max(0, TURN_ADVERT_LIMIT - advertHits.length),
+    keywordLaneFromRetriever(turnRetriever)
+  );
+
+  const combinedAdvert = [...advertHits.map((h) => ({ name: h.name, description: h.description })), ...vectorExtra];
+
+  if (combinedAdvert.length === 0 && !autoBody) return empty;
 
   const advertBlock =
-    advertHits.length > 0
-      ? `[Relevant skills for this request]\nThese skills may help. Load full instructions with the wayland_search_skills tool (or read the skill's SKILL.md) when useful:\n${advertHits
+    combinedAdvert.length > 0
+      ? `[Relevant skills for this request]\nThese skills may help. Load full instructions with the wayland_search_skills tool (or read the skill's SKILL.md) when useful:\n${combinedAdvert
           .map((h) => `- ${h.name}: ${h.description}`)
           .join('\n')}`
       : '';

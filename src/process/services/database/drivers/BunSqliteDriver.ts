@@ -69,4 +69,9 @@ export class BunSqliteDriver implements ISqliteDriver {
   close(): void {
     this.db.close();
   }
+
+  loadExtension(path: string): void {
+    // bun:sqlite exposes native loadable-extension support via Database.loadExtension.
+    this.db.loadExtension(path);
+  }
 }

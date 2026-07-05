@@ -41,6 +41,8 @@
     "src/process/services/database/migration_v47.bun.test.ts",
     "src/process/services/database/migration_v48.bun.test.ts",
     "src/process/services/database/migration_v49.bun.test.ts",
+    "src/process/services/database/migration_v50.bun.test.ts",
+    "src/process/services/semantic/semanticStore_v50.bun.test.ts",
     "src/process/services/cost/ModelPricing.bun.test.ts",
     "src/process/services/cost/CostRecorder.bun.test.ts",
     "src/process/services/cost/SqliteCostRepository.bun.test.ts",

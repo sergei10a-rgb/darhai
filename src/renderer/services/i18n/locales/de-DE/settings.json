@@ -2592,5 +2592,10 @@
     },
     "scopeWritesTo": "Writes to",
     "scopeSharedCli": "— used by the Darhai Core CLI too."
-  }
+  },
+  "semanticSearch": "Semantische Suche",
+  "semanticSearchDescription": "Ordnet Skills und Speicher nach Bedeutung, nicht nur nach Schlüsselwörtern. Funktioniert offline; greift auf die Schlüsselwortsuche zurück, wenn das lokale Modell nicht verfügbar ist.",
+  "semanticSearchActive": "Semantische Suche aktiv",
+  "semanticSearchFallback": "Schlüsselwortsuche wird verwendet (semantisches Modell nicht verfügbar)",
+  "semanticSearchIndexing": "Semantischer Index wird erstellt…"
 }

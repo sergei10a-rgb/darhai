@@ -9,8 +9,12 @@
  *
  * BM25 parameters: k1 = 1.5, b = 0.75.
  * Document text: name + description + tags + category (all lowercased).
- * Tokenization: word-boundary split, lowercase, no stemming.
- * Blocked skills (security.verdict === 'blocked') are excluded from the index.
+ * Tokenization: Unicode-aware letter/number run split, locale-lowercased, no
+ * stemming. The Unicode class `\p{L}` matches Cyrillic (Mongolian), CJK, and
+ * every other script - the previous ASCII-only `[a-z0-9_-]` regex silently
+ * dropped Cyrillic query and document terms, so Mongolian searches never
+ * matched. Blocked skills (security.verdict === 'blocked') are excluded from
+ * the index.
  */
 
 import type { SkillIndexEntry } from '@/common/types/skillTypes';
@@ -40,8 +44,15 @@ type DocRecord = {
 // Tokenizer
 // ---------------------------------------------------------------------------
 
+// Unicode-aware: `\p{L}` covers every letter (Cyrillic, CJK, Latin, ...),
+// `\p{N}` every digit. `u` flag enables Unicode property escapes. We keep `_`
+// and `-` so identifiers like `python_setup` / `git-workflow` stay whole.
+const TOKEN_RE = /[\p{L}\p{N}_-]+/gu;
+
 function tokenize(text: string): string[] {
-  return text.toLowerCase().match(/\b[a-z0-9_-]+\b/g) ?? [];
+  // `toLocaleLowerCase` casefolds Cyrillic and other non-ASCII scripts
+  // correctly, where `toLowerCase` can be locale-insensitive for some ranges.
+  return text.toLocaleLowerCase().match(TOKEN_RE) ?? [];
 }
 
 // ---------------------------------------------------------------------------
@@ -90,12 +101,7 @@ export class SkillRetriever {
     let totalLength = 0;
 
     for (const e of eligible) {
-      const text = [
-        e.name,
-        e.description,
-        ...(e.metadata.tags ?? []),
-        e.metadata.category ?? '',
-      ].join(' ');
+      const text = [e.name, e.description, ...(e.metadata.tags ?? []), e.metadata.category ?? ''].join(' ');
 
       const tokens = tokenize(text);
       const termFreqs = new Map<string, number>();
