@@ -43,6 +43,7 @@ import {
 import { type Editor, Extension, type Range } from '@tiptap/core';
 import Suggestion from '@tiptap/suggestion';
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 
 import styles from './TipTapMarkdownEditor.module.css';
@@ -208,7 +209,15 @@ type SlashMenuPopupProps = SlashState & {
   onClose: () => void;
 };
 
-export const SlashMenuPopup: React.FC<SlashMenuPopupProps> = ({ open, items, command, rect, keyHandleRef, onClose }) => {
+export const SlashMenuPopup: React.FC<SlashMenuPopupProps> = ({
+  open,
+  items,
+  command,
+  rect,
+  keyHandleRef,
+  onClose,
+}) => {
+  const { t } = useTranslation();
   const [selected, setSelected] = useState(0);
   const safeSelected = items.length === 0 ? 0 : Math.min(Math.max(selected, 0), items.length - 1);
   const popupRef = useRef<HTMLDivElement>(null);
@@ -280,12 +289,12 @@ export const SlashMenuPopup: React.FC<SlashMenuPopupProps> = ({ open, items, com
     items.length === 0 ? (
       <div ref={popupRef} className={styles.slashMenuPortal} style={{ left, top }}>
         <div className={styles.slashMenu}>
-          <div className={styles.slashMenuEmpty}>No commands match</div>
+          <div className={styles.slashMenuEmpty}>{t('preview.slashMenu.empty')}</div>
         </div>
       </div>
     ) : (
       <div ref={popupRef} className={styles.slashMenuPortal} style={{ left, top }}>
-        <div className={styles.slashMenu} role='listbox' aria-label='Slash commands'>
+        <div className={styles.slashMenu} role='listbox' aria-label={t('preview.slashMenu.label')}>
           {items.map((item, i) => (
             <button
               key={item.label}

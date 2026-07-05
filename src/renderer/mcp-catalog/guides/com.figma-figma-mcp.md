@@ -7,7 +7,7 @@ steps:
     estSeconds: 30
     autoCompletedByInstall: true
     body: |
-      Wayland connects to Figma's hosted MCP at `https://mcp.figma.com/mcp` -
+      Дархай connects to Figma's hosted MCP at `https://mcp.figma.com/mcp` -
       nothing is installed locally. The connection is added on first launch;
       authorization happens in the next step.
   - id: authorize
@@ -20,15 +20,15 @@ steps:
       "access denied" page in the OAuth tab if your seat doesn't qualify.
     body: |
       Figma's hosted MCP doesn't allow automatic client registration, so the
-      first time you click **Sign in with Figma** Wayland opens a dialog for
+      first time you click **Sign in with Figma** Дархай opens a dialog for
       your own Figma app's **Client ID** and **Client Secret**. The dialog
       walks you through creating an app at **figma.com/developers/apps** and
       shows the callback URL to paste in.
 
-      After you save the credentials, Wayland opens a browser tab to
-      `figma.com` - pick the account whose files you want Wayland to read.
+      After you save the credentials, Дархай opens a browser tab to
+      `figma.com` - pick the account whose files you want Дархай to read.
       Figma shows an **Allow access** consent screen listing your team /
-      project access. Approve it and the tab redirects back to Wayland; the
+      project access. Approve it and the tab redirects back to Дархай; the
       server status flips to Running.
 
       The token lives in your OS keychain. Revoke any time at
@@ -42,5 +42,5 @@ steps:
 # Figma setup
 
 Figma hosts the MCP server. One click of **Sign in with Figma**, approve the
-consent screen, and Wayland can read design files, variables, components, and
+consent screen, and Дархай can read design files, variables, components, and
 Dev Mode metadata on a paid Dev or Full seat.

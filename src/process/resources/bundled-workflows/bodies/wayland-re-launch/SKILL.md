@@ -14,7 +14,7 @@ license: Apache-2.0
 type: workflow
 skills: "launch"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: marketing launch relaunch debrief step-by-step planning
   category: marketing

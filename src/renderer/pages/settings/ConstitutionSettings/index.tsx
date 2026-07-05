@@ -18,7 +18,7 @@ type TocEntry = { id: string; text: string; level: number };
 const SAVE_DEBOUNCE_MS = 500;
 const SAVED_FLASH_MS = 1500;
 const FALLBACK_SUBTITLE =
-  "Wayland's rules. Loaded fresh on every turn - edits apply immediately, no restart. See §11 for how overrides work.";
+  "Дархай's rules. Loaded fresh on every turn - edits apply immediately, no restart. See §11 for how overrides work.";
 
 const HEADING_REGEX = /^(#{1,3})\s+(.+?)\s*$/;
 const FENCE_PREFIX = '```';

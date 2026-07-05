@@ -51,7 +51,7 @@ export type WcoreProfilesSection = Record<string, unknown>;
  * Resolve the absolute path to the engine's NATIVE (`default`-profile) USER
  * `config.toml`, mirroring the engine's `wayland_config_dir()` precedence via
  * {@link nativeConfigDir}:
- *   1. `$WAYLAND_HOME`              -> `<WAYLAND_HOME>/config.toml`
+ *   1. `$DARHAI_HOME`              -> `<DARHAI_HOME>/config.toml`
  *   2. `$XDG_DATA_HOME`            -> `<XDG_DATA_HOME>/wayland-core/config.toml`
  *   3. `dirs::config_dir()`        -> `<config_dir>/wayland-core/config.toml`
  *

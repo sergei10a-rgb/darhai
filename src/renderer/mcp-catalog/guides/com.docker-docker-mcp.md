@@ -7,7 +7,7 @@ steps:
     estSeconds: 30
     autoCompletedByInstall: true
     body: |
-      Wayland fetches `docker-mcp` from PyPI via `uvx` on first launch - no
+      Дархай fetches `docker-mcp` from PyPI via `uvx` on first launch - no
       manual install needed. The server talks to your local Docker daemon
       over the default Unix socket; there is no API key or login flow.
 
@@ -30,7 +30,7 @@ steps:
 
       3. **Non-default daemon?** If your Docker socket lives elsewhere
          (rootless install, remote host, colima, OrbStack), set `DOCKER_HOST`
-         in your shell *before* launching Wayland - e.g.
+         in your shell *before* launching Дархай - e.g.
          `export DOCKER_HOST=unix:///$HOME/.colima/default/docker.sock` or
          `export DOCKER_HOST=tcp://192.168.1.10:2375`.
 
@@ -43,4 +43,4 @@ steps:
 
 No configuration. The server talks to your local Docker daemon over the
 default socket. You'll need **Docker Desktop** (macOS / Windows) or the
-Docker Engine (Linux) installed and running before launching Wayland.
+Docker Engine (Linux) installed and running before launching Дархай.

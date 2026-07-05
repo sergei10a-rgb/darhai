@@ -14,7 +14,7 @@ license: Apache-2.0
 type: workflow
 skills: "commerce-winback funnels-offer"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: commerce ecommerce retention winback email segmentation step-by-step
   category: marketing

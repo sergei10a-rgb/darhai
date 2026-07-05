@@ -14,7 +14,7 @@ license: Apache-2.0
 type: workflow
 skills: "funnels-architecture-audit funnels-offer-audit"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: marketing funnels audit diagnostics step-by-step optimization
   category: marketing

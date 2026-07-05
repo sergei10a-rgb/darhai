@@ -8,7 +8,7 @@
  * AgentBackendPill - per-agent backend swap control for the team
  * page header (live-smoke fix #4b, 2026-05-19).
  *
- * Wraps the same compact `WaylandSelect` used by the launcher's
+ * Wraps the same compact `DarhaiSelect` used by the launcher's
  * BackendPill (`pages/teams/components/BackendPill.tsx`), but the
  * onChange handler fires `ipcBridge.team.changeAgentBackend` against
  * a running team agent and surfaces success/error as an Arco toast.
@@ -27,11 +27,11 @@ import { Message } from '@arco-design/web-react';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ipcBridge } from '@/common';
-import { WaylandSelect } from '@renderer/components/base';
+import { DarhaiSelect } from '@renderer/components/base';
 import { useAvailableBackends } from '@renderer/hooks/assistant/useAvailableBackends';
 import { getAgentLogo } from '@renderer/utils/model/agentLogo';
 
-const { Option } = WaylandSelect;
+const { Option } = DarhaiSelect;
 
 type Props = {
   teamId: string;
@@ -71,19 +71,14 @@ const AgentBackendPill: React.FC<Props> = ({ teamId, slotId, agentType, disabled
         })) as void | { __bridgeError: true; message?: string };
         if (result && typeof result === 'object' && '__bridgeError' in result) {
           Message.error(
-            result.message ??
-              t('team.agentBackendSwap.error', { defaultValue: 'Failed to change agent backend' })
+            result.message ?? t('team.agentBackendSwap.error', { defaultValue: 'Failed to change agent backend' })
           );
           return;
         }
-        Message.success(
-          t('team.agentBackendSwap.success', { defaultValue: 'Agent backend changed' })
-        );
+        Message.success(t('team.agentBackendSwap.success', { defaultValue: 'Agent backend changed' }));
       } catch (error) {
         const msg = error instanceof Error ? error.message : String(error);
-        Message.error(
-          msg || t('team.agentBackendSwap.error', { defaultValue: 'Failed to change agent backend' })
-        );
+        Message.error(msg || t('team.agentBackendSwap.error', { defaultValue: 'Failed to change agent backend' }));
       }
     },
     [agentType, slotId, t, teamId]
@@ -93,7 +88,7 @@ const AgentBackendPill: React.FC<Props> = ({ teamId, slotId, agentType, disabled
   if (options.length < 2) return null;
 
   return (
-    <WaylandSelect
+    <DarhaiSelect
       size='mini'
       style={{ width: 120 }}
       value={agentType}
@@ -111,18 +106,14 @@ const AgentBackendPill: React.FC<Props> = ({ teamId, slotId, agentType, disabled
       }}
     >
       {options.map((id) => (
-        <Option
-          key={id}
-          value={id}
-          data-testid={`agent-backend-pill-${slotId}-option-${id}`}
-        >
+        <Option key={id} value={id} data-testid={`agent-backend-pill-${slotId}-option-${id}`}>
           <span className='flex items-center gap-6px'>
             <BackendIcon backend={id} />
             <span>{id}</span>
           </span>
         </Option>
       ))}
-    </WaylandSelect>
+    </DarhaiSelect>
   );
 };
 

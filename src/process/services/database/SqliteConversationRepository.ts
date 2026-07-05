@@ -12,7 +12,7 @@ import type { IMessageSearchResponse } from '@/common/types/database';
 
 /**
  * SQLite-backed implementation of IConversationRepository.
- * Delegates to the WaylandUIDatabase singleton via getDatabase().
+ * Delegates to the DarhaiUIDatabase singleton via getDatabase().
  * Methods are async because getDatabase() returns a Promise.
  */
 export class SqliteConversationRepository implements IConversationRepository {

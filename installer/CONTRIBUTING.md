@@ -1,10 +1,10 @@
-# Contributing to Wayland
+# Contributing to Darhai
 
-Thanks for helping build Wayland.
+Thanks for helping build Darhai.
 
 ## License & contributor agreement (read before your first PR)
 
-Wayland is licensed under **AGPL-3.0-or-later** (see `LICENSE`). To keep a
+Darhai is licensed under **AGPL-3.0-or-later** (see `LICENSE`). To keep a
 sustainable open-core project - a freely self-hostable core plus a commercial
 hosted/Pro tier - we ask every contributor to agree to a lightweight CLA:
 
@@ -28,6 +28,6 @@ is a one-click acknowledgement on your first PR.
 
 ## Trademark
 
-"Wayland" and the Wayland marks are trademarks of Ferrox Labs. The AGPL covers
-the **code**, not the **name** - forks must rebrand. (Wayland the AI agent is
-unaffiliated with the Wayland display server protocol.)
+"Darhai" and the Darhai marks are trademarks of Ferrox Labs. The AGPL covers
+the **code**, not the **name** - forks must rebrand. (Darhai the AI agent is
+unaffiliated with the Darhai display server protocol.)

@@ -14,7 +14,7 @@ license: Apache-2.0
 type: workflow
 skills: "finance-budget finance-report"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: business-finance budget planning step-by-step cfo
   category: business-finance

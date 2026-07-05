@@ -142,7 +142,7 @@ describe('webuiConfig module', () => {
     });
 
     it('should fallback to env variable', async () => {
-      process.env.WAYLAND_PORT = '7070';
+      process.env.DARHAI_PORT = '7070';
       const { resolveWebUIPort } = await import('@process/utils/webuiConfig');
 
       expect(resolveWebUIPort({}, () => undefined)).toBe(7070);
@@ -169,14 +169,14 @@ describe('webuiConfig module', () => {
     });
 
     it('should return true when env says allow remote', async () => {
-      process.env.WAYLAND_ALLOW_REMOTE = '1';
+      process.env.DARHAI_ALLOW_REMOTE = '1';
       const { resolveRemoteAccess } = await import('@process/utils/webuiConfig');
 
       expect(resolveRemoteAccess({}, false)).toBe(true);
     });
 
     it('should return true when host is 0.0.0.0', async () => {
-      process.env.WAYLAND_HOST = '0.0.0.0';
+      process.env.DARHAI_HOST = '0.0.0.0';
       const { resolveRemoteAccess } = await import('@process/utils/webuiConfig');
 
       expect(resolveRemoteAccess({}, false)).toBe(true);

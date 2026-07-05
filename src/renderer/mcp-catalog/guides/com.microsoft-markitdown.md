@@ -7,7 +7,7 @@ steps:
     estSeconds: 30
     autoCompletedByInstall: true
     body: |
-      Wayland fetches `markitdown-mcp` from PyPI via `uvx` on first launch - no
+      Дархай fetches `markitdown-mcp` from PyPI via `uvx` on first launch - no
       manual install needed. The package is Microsoft's official lightweight
       stdio wrapper around the `markitdown` library, kept up-to-date by the
       same team that ships the CLI. If the server fails to start, click
@@ -17,7 +17,7 @@ steps:
     estSeconds: 15
     body: |
       The server exposes a single tool, `convert_to_markdown(uri)`, that
-      accepts `http:`, `https:`, `file:`, and `data:` URIs. Ask Wayland things
+      accepts `http:`, `https:`, `file:`, and `data:` URIs. Ask Дархай things
       like "convert this PDF to markdown" or paste a file path - it routes to
       the tool automatically.
 

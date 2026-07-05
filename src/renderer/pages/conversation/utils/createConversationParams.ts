@@ -128,7 +128,7 @@ export async function getDefaultWCoreModel(): Promise<TProviderWithModel> {
   // Wayland Core supports all platforms via OpenAI-compatible protocol
   const provider = providers.find((p) => p.enabled !== false);
   if (!provider) {
-    throw new Error('No enabled model provider for Wayland Core');
+    throw new Error('No enabled model provider for Darhai Core');
   }
 
   const enabledModel = provider.model.find((m) => provider.modelEnabled?.[m] !== false);

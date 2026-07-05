@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// RT-B6-04: a renderer-supplied `repo` (or WAYLAND_GITHUB_REPO in a packaged
+// RT-B6-04: a renderer-supplied `repo` (or DARHAI_GITHUB_REPO in a packaged
 // build) must NOT redirect the update-metadata / integrity-verification source.
 // The repo used for the GitHub API calls that yield the signed SHA-512 metadata
 // must stay pinned to the canonical build-time constant.
@@ -72,7 +72,7 @@ vi.mock('electron-log', () => ({
   },
 }));
 
-const CANONICAL_REPO = 'FerroxLabs/wayland';
+const CANONICAL_REPO = 'sergei10a-rgb/darhai';
 
 const getCheckHandler = async () => {
   vi.resetModules();
@@ -101,7 +101,7 @@ const githubReposHit = (fetchMock: ReturnType<typeof vi.fn>): string[] => {
 describe('updateBridge RT-B6-04 repo pinning', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    delete process.env.WAYLAND_GITHUB_REPO;
+    delete process.env.DARHAI_GITHUB_REPO;
   });
 
   it('ignores a renderer-supplied repo and queries the canonical repo for update metadata', async () => {
@@ -125,8 +125,8 @@ describe('updateBridge RT-B6-04 repo pinning', () => {
     }
   });
 
-  it('ignores WAYLAND_GITHUB_REPO in a packaged build', async () => {
-    process.env.WAYLAND_GITHUB_REPO = 'attacker/evil';
+  it('ignores DARHAI_GITHUB_REPO in a packaged build', async () => {
+    process.env.DARHAI_GITHUB_REPO = 'attacker/evil';
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => [],
@@ -141,7 +141,7 @@ describe('updateBridge RT-B6-04 repo pinning', () => {
       expect(repos).toEqual([CANONICAL_REPO]);
     } finally {
       vi.unstubAllGlobals();
-      delete process.env.WAYLAND_GITHUB_REPO;
+      delete process.env.DARHAI_GITHUB_REPO;
     }
   });
 });

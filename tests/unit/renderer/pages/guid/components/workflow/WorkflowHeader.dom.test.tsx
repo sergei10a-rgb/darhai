@@ -10,7 +10,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, fallback?: string) => fallback ?? _key,
+    // Mirrors the app convention t(key, 'English default', options?) and
+    // interpolates {{var}} placeholders so assertions can use real English.
+    t: (_key: string, fallback?: string | Record<string, unknown>, options?: Record<string, unknown>) => {
+      const template = typeof fallback === 'string' ? fallback : _key;
+      const vars = (typeof fallback === 'object' && fallback !== null ? fallback : options) ?? {};
+      return template.replace(/\{\{(\w+)\}\}/g, (match, name: string) =>
+        vars[name] === undefined ? match : String(vars[name])
+      );
+    },
     i18n: { language: 'en-US' },
   }),
 }));
@@ -83,9 +91,7 @@ describe('WorkflowHeader', () => {
   });
 
   it('renders the workflow title, step counter, and two control buttons', () => {
-    render(
-      <WorkflowHeader session={baseSession()} paused={false} onPauseToggle={vi.fn()} onEnd={vi.fn()} />
-    );
+    render(<WorkflowHeader session={baseSession()} paused={false} onPauseToggle={vi.fn()} onEnd={vi.fn()} />);
 
     expect(screen.getByText('Automate Business Workflows')).toBeTruthy();
     expect(screen.getByText(/Step 3 of 6/)).toBeTruthy();
@@ -95,9 +101,7 @@ describe('WorkflowHeader', () => {
 
   it('fires onPauseToggle when the pause button is clicked', () => {
     const onPauseToggle = vi.fn();
-    render(
-      <WorkflowHeader session={baseSession()} paused={false} onPauseToggle={onPauseToggle} onEnd={vi.fn()} />
-    );
+    render(<WorkflowHeader session={baseSession()} paused={false} onPauseToggle={onPauseToggle} onEnd={vi.fn()} />);
 
     fireEvent.click(screen.getByRole('button', { name: /Pause auto-advance/i }));
     expect(onPauseToggle).toHaveBeenCalledTimes(1);
@@ -105,18 +109,14 @@ describe('WorkflowHeader', () => {
 
   it('fires onEnd when the end button is clicked', () => {
     const onEnd = vi.fn();
-    render(
-      <WorkflowHeader session={baseSession()} paused={false} onPauseToggle={vi.fn()} onEnd={onEnd} />
-    );
+    render(<WorkflowHeader session={baseSession()} paused={false} onPauseToggle={vi.fn()} onEnd={onEnd} />);
 
     fireEvent.click(screen.getByRole('button', { name: /End workflow/i }));
     expect(onEnd).toHaveBeenCalledTimes(1);
   });
 
   it('flips the pause button label to "Resume auto-advance" when paused', () => {
-    render(
-      <WorkflowHeader session={baseSession()} paused={true} onPauseToggle={vi.fn()} onEnd={vi.fn()} />
-    );
+    render(<WorkflowHeader session={baseSession()} paused={true} onPauseToggle={vi.fn()} onEnd={vi.fn()} />);
 
     expect(screen.getByRole('button', { name: /Resume auto-advance/i })).toBeTruthy();
     expect(screen.queryByRole('button', { name: /^Pause auto-advance$/i })).toBeNull();
@@ -153,9 +153,7 @@ describe('WorkflowHeader', () => {
   });
 
   it('renders skill chip names without a checkmark and collapsed by default; expands on click', () => {
-    render(
-      <WorkflowHeader session={baseSession()} paused={false} onPauseToggle={vi.fn()} onEnd={vi.fn()} />
-    );
+    render(<WorkflowHeader session={baseSession()} paused={false} onPauseToggle={vi.fn()} onEnd={vi.fn()} />);
 
     // Collapsed: chips not in DOM yet
     expect(screen.queryByText('Workflow Designer')).toBeNull();

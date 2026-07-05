@@ -8,7 +8,7 @@ steps:
     autoCompletedByInstall: true
     body: |
       No local install needed. ClickUp hosts the MCP server at
-      `https://mcp.clickup.com` - Wayland connects over streamable HTTP
+      `https://mcp.clickup.com` - Дархай connects over streamable HTTP
       the moment you finish auth.
   - id: authorize
     title: Sign in with ClickUp (OAuth)
@@ -23,7 +23,7 @@ steps:
          authorize. (You can only authorize workspaces you're a member
          of - guest workspaces and ones owned by another org won't appear
          here.)
-      3. Click **Connect Workspace**. The tab redirects back to Wayland
+      3. Click **Connect Workspace**. The tab redirects back to Дархай
          and the server status flips to Running.
 
       The MCP only sees the workspaces you ticked. Re-run sign-in later
@@ -33,7 +33,7 @@ steps:
     estSeconds: 30
     body: |
       Open a new chat and ask: *"List my open ClickUp tasks for this
-      week."* Wayland will call the MCP and stream the task list back.
+      week."* Дархай will call the MCP and stream the task list back.
 
       **Personal API token (alternative):** if you'd rather use a
       long-lived token (headless / CI use), open ClickUp:
@@ -52,7 +52,7 @@ steps:
 # ClickUp setup
 
 ClickUp runs the MCP server. OAuth is the recommended path - you authorize
-specific workspaces and Wayland never sees the others. Personal API tokens are
+specific workspaces and Дархай never sees the others. Personal API tokens are
 a fallback for automated / headless use.
 
 Your credentials live in your OS keychain. Revoke OAuth any time from

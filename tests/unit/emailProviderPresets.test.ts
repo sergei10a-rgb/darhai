@@ -6,7 +6,7 @@ import { detectEmailProvider, emailDomain } from '@/common/channels/emailProvide
 
 describe('emailDomain', () => {
   it('extracts and lowercases the domain', () => {
-    expect(emailDomain('Sean@Gmail.com')).toBe('gmail.com');
+    expect(emailDomain('User@Gmail.com')).toBe('gmail.com');
     expect(emailDomain('a.b+tag@sub.example.co.uk')).toBe('sub.example.co.uk');
   });
   it('returns null for malformed addresses', () => {

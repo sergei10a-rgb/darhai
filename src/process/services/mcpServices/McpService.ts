@@ -10,7 +10,7 @@ import { ClaudeMcpAgent } from './agents/ClaudeMcpAgent';
 import { CodebuddyMcpAgent } from './agents/CodebuddyMcpAgent';
 import { QwenMcpAgent } from './agents/QwenMcpAgent';
 import { GeminiMcpAgent } from './agents/GeminiMcpAgent';
-import { WaylandMcpAgent } from './agents/WaylandMcpAgent';
+import { DarhaiMcpAgent } from './agents/DarhaiMcpAgent';
 import { CodexMcpAgent } from './agents/CodexMcpAgent';
 import { OpencodeMcpAgent } from './agents/OpencodeMcpAgent';
 import { WCoreMcpAgent } from './agents/WCoreMcpAgent';
@@ -85,7 +85,7 @@ export class McpService {
       ['codebuddy', new CodebuddyMcpAgent()],
       ['qwen', new QwenMcpAgent()],
       ['gemini', new GeminiMcpAgent()],
-      ['wayland', new WaylandMcpAgent()], // Wayland local @office-ai/aioncli-core
+      ['wayland', new DarhaiMcpAgent()], // Wayland local @office-ai/aioncli-core
       ['codex', new CodexMcpAgent()],
       ['opencode', new OpencodeMcpAgent()],
       ['wcore', new WCoreMcpAgent()], // Wayland Core (Rust binary, TOML config)
@@ -101,11 +101,11 @@ export class McpService {
 
   /**
    * Get the correct MCP agent instance based on agent config.
-   * Fork Gemini (cliPath=undefined) uses WaylandMcpAgent.
+   * Fork Gemini (cliPath=undefined) uses DarhaiMcpAgent.
    * Native Gemini (cliPath='gemini') uses GeminiMcpAgent.
    */
   private getAgentForConfig(agent: { backend: string; cliPath?: string }): IMcpProtocol | undefined {
-    // Fork Gemini uses WaylandMcpAgent to manage MCP config
+    // Fork Gemini uses DarhaiMcpAgent to manage MCP config
     if (agent.backend === 'gemini' && !agent.cliPath) {
       return this.agents.get('wayland');
     }
@@ -230,7 +230,7 @@ export class McpService {
 
   /**
    * Get supported transport types for a given agent config.
-   * Fork Gemini (backend='gemini', no cliPath) uses WaylandMcpAgent.
+   * Fork Gemini (backend='gemini', no cliPath) uses DarhaiMcpAgent.
    */
   getSupportedTransportsForAgent(agent: { backend: string; cliPath?: string }): string[] {
     const agentInstance = this.getAgentForConfig(agent as { backend: string; cliPath?: string });

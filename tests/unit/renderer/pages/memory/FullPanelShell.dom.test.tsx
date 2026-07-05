@@ -143,9 +143,7 @@ const { mockMemory, mockShell, mockIjfw } = vi.hoisted(() => {
         scanDevDir: { invoke: vi.fn() },
         processDropFolder: { invoke: vi.fn() },
         getDropFolderStatus: {
-          invoke: vi
-            .fn()
-            .mockResolvedValue({ path: '~/Documents/Wayland-Memory', watching: false, ingestedToday: 0 }),
+          invoke: vi.fn().mockResolvedValue({ path: '~/Documents/Darhai-Memory', watching: false, ingestedToday: 0 }),
         },
       },
       readSourceContext: { invoke: vi.fn() },
@@ -186,13 +184,12 @@ vi.mock('@arco-design/web-react', async () => {
     },
     Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
     Popover: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-    Dropdown: ({
-      children,
-      droplist,
-    }: {
-      children: React.ReactNode;
-      droplist: React.ReactNode;
-    }) => <div>{children}{droplist}</div>,
+    Dropdown: ({ children, droplist }: { children: React.ReactNode; droplist: React.ReactNode }) => (
+      <div>
+        {children}
+        {droplist}
+      </div>
+    ),
   };
 });
 
@@ -212,8 +209,14 @@ vi.mock('react-i18next', () => ({
 
 vi.mock(
   '@renderer/pages/memory/components/PromotionThresholdModal',
-  () => ({ default: ({ onClose }: { onClose: () => void }) => <div data-testid='threshold-modal'><button onClick={onClose}>Close</button></div> }),
-  { ssr: false },
+  () => ({
+    default: ({ onClose }: { onClose: () => void }) => (
+      <div data-testid='threshold-modal'>
+        <button onClick={onClose}>Close</button>
+      </div>
+    ),
+  }),
+  { ssr: false }
 );
 
 import FullPanelShell from '@renderer/pages/memory/state-branches/FullPanelShell';
@@ -222,7 +225,7 @@ const renderShell = (initialEntries: string[] = ['/memory']) =>
   render(
     <MemoryRouter initialEntries={initialEntries}>
       <FullPanelShell />
-    </MemoryRouter>,
+    </MemoryRouter>
   );
 
 afterEach(() => {

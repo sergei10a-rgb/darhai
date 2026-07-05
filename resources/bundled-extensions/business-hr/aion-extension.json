@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "apiVersion": "^1.0.0",
   "description": "US-employment-compliance HR instruments for SMBs: the gap layer the bundled HR templates lack. Accommodation interactive process, FMLA/state-PFML leave eligibility, offboarding with final-pay/COBRA routing, WARN-Act reduction-in-force, termination letters, handbook sections, and an HR orchestrator that routes people-ops verbs to the right sub-skill. Templates only, not employment-law advice.",
-  "author": "Wayland Business Pack",
+  "author": "Darhai Business Pack",
   "contributes": {
     "skills": [
       {

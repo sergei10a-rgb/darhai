@@ -106,26 +106,26 @@ export function createMainMenuCard(): LarkCard {
   return {
     config: { wide_screen_mode: true },
     header: {
-      title: { tag: 'plain_text', content: 'Wayland Assistant' },
+      title: { tag: 'plain_text', content: 'Дархай туслах' },
       template: 'blue',
     },
     elements: [
       {
         tag: 'markdown',
-        content: 'Welcome! Choose an action below:',
+        content: 'Тавтай морил! Доорх үйлдлээс сонгоно уу:',
       },
       {
         tag: 'action',
         actions: [
           {
             tag: 'button',
-            text: { tag: 'plain_text', content: '🆕 New Chat' },
+            text: { tag: 'plain_text', content: '🆕 Шинэ чат' },
             type: 'primary',
             value: { action: 'session.new' },
           },
           {
             tag: 'button',
-            text: { tag: 'plain_text', content: '🔄 Agent' },
+            text: { tag: 'plain_text', content: '🔄 Агент' },
             type: 'default',
             value: { action: 'agent.show' },
           },
@@ -136,13 +136,13 @@ export function createMainMenuCard(): LarkCard {
         actions: [
           {
             tag: 'button',
-            text: { tag: 'plain_text', content: '📊 Status' },
+            text: { tag: 'plain_text', content: '📊 Төлөв' },
             type: 'default',
             value: { action: 'session.status' },
           },
           {
             tag: 'button',
-            text: { tag: 'plain_text', content: '❓ Help' },
+            text: { tag: 'plain_text', content: '❓ Тусламж' },
             type: 'default',
             value: { action: 'help.show' },
           },
@@ -160,22 +160,22 @@ export function createPairingCard(pairingCode: string): LarkCard {
   return {
     config: { wide_screen_mode: true },
     header: {
-      title: { tag: 'plain_text', content: '🔗 Pairing Required' },
+      title: { tag: 'plain_text', content: '🔗 Хослуулалт шаардлагатай' },
       template: 'yellow',
     },
     elements: [
       {
         tag: 'markdown',
         content: [
-          'Please pair your account with Wayland:',
+          'Бүртгэлээ Дархайтай хослуулна уу:',
           '',
-          `**Pairing Code:** \`${pairingCode}\``,
+          `**Хослуулалтын код:** \`${pairingCode}\``,
           '',
-          '1. Open Wayland settings',
-          '2. Go to Channels → Lark',
-          '3. Enter this pairing code',
+          '1. Дархайн тохиргоог нээнэ үү',
+          '2. Сувгууд → Lark руу орно уу',
+          '3. Энэ хослуулалтын кодыг оруулна уу',
           '',
-          'Code expires in 10 minutes.',
+          'Кодын хүчинтэй хугацаа 10 минут.',
         ].join('\n'),
       },
       {
@@ -183,13 +183,13 @@ export function createPairingCard(pairingCode: string): LarkCard {
         actions: [
           {
             tag: 'button',
-            text: { tag: 'plain_text', content: '🔄 Refresh Code' },
+            text: { tag: 'plain_text', content: '🔄 Код шинэчлэх' },
             type: 'primary',
             value: { action: 'pairing.refresh' },
           },
           {
             tag: 'button',
-            text: { tag: 'plain_text', content: '❓ Help' },
+            text: { tag: 'plain_text', content: '❓ Тусламж' },
             type: 'default',
             value: { action: 'pairing.help' },
           },
@@ -207,21 +207,21 @@ export function createPairingStatusCard(pairingCode: string): LarkCard {
   return {
     config: { wide_screen_mode: true },
     header: {
-      title: { tag: 'plain_text', content: '⏳ Waiting for Approval' },
+      title: { tag: 'plain_text', content: '⏳ Зөвшөөрөл хүлээж байна' },
       template: 'orange',
     },
     elements: [
       {
         tag: 'markdown',
         content: [
-          'Your pairing request is pending approval.',
+          'Таны хослуулалтын хүсэлт зөвшөөрөл хүлээж байна.',
           '',
-          `**Pairing Code:** \`${pairingCode}\``,
+          `**Хослуулалтын код:** \`${pairingCode}\``,
           '',
-          'Please approve in Wayland settings:',
-          '1. Open Wayland app',
-          '2. Go to WebUI → Channels',
-          '3. Click "Approve" for this code',
+          'Дархайн тохиргоонд зөвшөөрнө үү:',
+          '1. Дархай аппыг нээнэ үү',
+          '2. WebUI → Сувгууд руу орно уу',
+          '3. Энэ кодын ард "Зөвшөөрөх" дарна уу',
         ].join('\n'),
       },
       {
@@ -229,13 +229,13 @@ export function createPairingStatusCard(pairingCode: string): LarkCard {
         actions: [
           {
             tag: 'button',
-            text: { tag: 'plain_text', content: '🔄 Check Status' },
+            text: { tag: 'plain_text', content: '🔄 Төлөв шалгах' },
             type: 'primary',
             value: { action: 'pairing.check' },
           },
           {
             tag: 'button',
-            text: { tag: 'plain_text', content: '🔁 New Code' },
+            text: { tag: 'plain_text', content: '🔁 Шинэ код' },
             type: 'default',
             value: { action: 'pairing.refresh' },
           },
@@ -253,28 +253,28 @@ export function createPairingHelpCard(): LarkCard {
   return {
     config: { wide_screen_mode: true },
     header: {
-      title: { tag: 'plain_text', content: '❓ Pairing Help' },
+      title: { tag: 'plain_text', content: '❓ Хослуулалтын тусламж' },
       template: 'turquoise',
     },
     elements: [
       {
         tag: 'markdown',
         content: [
-          '**What is pairing?**',
-          'Pairing links your Lark/Feishu account with the local Wayland application.',
-          'You need to pair before using the AI assistant.',
+          '**Хослуулалт гэж юу вэ?**',
+          'Хослуулалт нь таны Lark/Feishu бүртгэлийг локал Дархай апптай холбоно.',
+          'AI туслахыг ашиглахын өмнө хослуулах шаардлагатай.',
           '',
-          '**How to pair:**',
-          '1. Send any message to this bot',
-          '2. You will receive a pairing code',
-          '3. Open Wayland desktop app',
-          '4. Go to WebUI → Channels → Lark',
-          '5. Click "Approve" for your code',
+          '**Хэрхэн хослуулах вэ:**',
+          '1. Энэ ботод дурын мессеж илгээнэ үү',
+          '2. Танд хослуулалтын код ирнэ',
+          '3. Дархай десктоп аппыг нээнэ үү',
+          '4. WebUI → Сувгууд → Lark руу орно уу',
+          '5. Кодынхоо ард "Зөвшөөрөх" дарна уу',
           '',
-          '**FAQ:**',
-          '• Pairing code valid for 10 minutes',
-          '• Wayland app must be running',
-          '• One account can only pair once',
+          '**Түгээмэл асуулт:**',
+          '• Хослуулалтын код 10 минут хүчинтэй',
+          '• Дархай апп ажиллаж байх ёстой',
+          '• Нэг бүртгэл зөвхөн нэг удаа хослуулна',
         ].join('\n'),
       },
       {
@@ -282,7 +282,7 @@ export function createPairingHelpCard(): LarkCard {
         actions: [
           {
             tag: 'button',
-            text: { tag: 'plain_text', content: '🔗 Get Pairing Code' },
+            text: { tag: 'plain_text', content: '🔗 Хослуулалтын код авах' },
             type: 'primary',
             value: { action: 'pairing.show' },
           },
@@ -320,18 +320,18 @@ export function createAgentSelectionCard(
   }
 
   const currentAgentInfo = availableAgents.find((a) => a.type === currentAgent);
-  const currentAgentName = currentAgentInfo ? `${currentAgentInfo.emoji} ${currentAgentInfo.name}` : 'None';
+  const currentAgentName = currentAgentInfo ? `${currentAgentInfo.emoji} ${currentAgentInfo.name}` : 'Байхгүй';
 
   return {
     config: { wide_screen_mode: true },
     header: {
-      title: { tag: 'plain_text', content: '🔄 Switch Agent' },
+      title: { tag: 'plain_text', content: '🔄 Агент солих' },
       template: 'indigo',
     },
     elements: [
       {
         tag: 'markdown',
-        content: `Select an AI agent for your conversations:\n\nCurrent: **${currentAgentName}**`,
+        content: `Харилцан ярианд ашиглах AI агентаа сонгоно уу:\n\nОдоогийнх: **${currentAgentName}**`,
       },
       ...actionRows,
     ],
@@ -351,20 +351,20 @@ export function createSessionStatusCard(session?: {
     return {
       config: { wide_screen_mode: true },
       header: {
-        title: { tag: 'plain_text', content: '📊 Session Status' },
+        title: { tag: 'plain_text', content: '📊 Сешний төлөв' },
         template: 'grey',
       },
       elements: [
         {
           tag: 'markdown',
-          content: 'No active session.\n\nSend a message to start a new conversation, or tap the "New Chat" button.',
+          content: 'Идэвхтэй сешн алга.\n\nШинэ яриа эхлүүлэхийн тулд мессеж илгээх эсвэл "Шинэ чат" товчийг дарна уу.',
         },
         {
           tag: 'action',
           actions: [
             {
               tag: 'button',
-              text: { tag: 'plain_text', content: '🆕 New Session' },
+              text: { tag: 'plain_text', content: '🆕 Шинэ сешн' },
               type: 'primary',
               value: { action: 'session.new' },
             },
@@ -380,17 +380,17 @@ export function createSessionStatusCard(session?: {
   return {
     config: { wide_screen_mode: true },
     header: {
-      title: { tag: 'plain_text', content: '📊 Session Status' },
+      title: { tag: 'plain_text', content: '📊 Сешний төлөв' },
       template: 'green',
     },
     elements: [
       {
         tag: 'markdown',
         content: [
-          `🤖 **Agent:** ${session.agentType}`,
-          `⏱ **Duration:** ${duration} min`,
-          `📝 **Last activity:** ${lastActivity} sec ago`,
-          `🔖 **Session ID:** \`${session.id.slice(-8)}\``,
+          `🤖 **Агент:** ${session.agentType}`,
+          `⏱ **Үргэлжилсэн:** ${duration} мин`,
+          `📝 **Сүүлийн үйлдэл:** ${lastActivity} сек өмнө`,
+          `🔖 **Сешний ID:** \`${session.id.slice(-8)}\``,
         ].join('\n'),
       },
       {
@@ -398,13 +398,13 @@ export function createSessionStatusCard(session?: {
         actions: [
           {
             tag: 'button',
-            text: { tag: 'plain_text', content: '🆕 New Session' },
+            text: { tag: 'plain_text', content: '🆕 Шинэ сешн' },
             type: 'default',
             value: { action: 'session.new' },
           },
           {
             tag: 'button',
-            text: { tag: 'plain_text', content: '📊 Refresh' },
+            text: { tag: 'plain_text', content: '📊 Шинэчлэх' },
             type: 'default',
             value: { action: 'session.status' },
           },
@@ -421,22 +421,22 @@ export function createHelpCard(): LarkCard {
   return {
     config: { wide_screen_mode: true },
     header: {
-      title: { tag: 'plain_text', content: '❓ Wayland Assistant Help' },
+      title: { tag: 'plain_text', content: '❓ Дархай туслахын тусламж' },
       template: 'turquoise',
     },
     elements: [
       {
         tag: 'markdown',
         content: [
-          'A remote assistant to interact with Wayland via Lark.',
+          'Lark-аар дамжуулан Дархайтай харилцах алсын туслах.',
           '',
-          '**Common Actions:**',
-          '• 🆕 New Chat - Start a new session',
-          '• 🔄 Agent - Switch AI agent',
-          '• 📊 Status - View current session status',
-          '• ❓ Help - Show this help message',
+          '**Түгээмэл үйлдлүүд:**',
+          '• 🆕 Шинэ чат - Шинэ сешн эхлүүлэх',
+          '• 🔄 Агент - AI агент солих',
+          '• 📊 Төлөв - Одоогийн сешний төлөвийг харах',
+          '• ❓ Тусламж - Энэ тусламжийг харуулах',
           '',
-          'Send a message to chat with the AI assistant.',
+          'AI туслахтай чатлахын тулд мессеж илгээгээрэй.',
         ].join('\n'),
       },
       {
@@ -444,13 +444,13 @@ export function createHelpCard(): LarkCard {
         actions: [
           {
             tag: 'button',
-            text: { tag: 'plain_text', content: '🤖 Features' },
+            text: { tag: 'plain_text', content: '🤖 Боломжууд' },
             type: 'default',
             value: { action: 'help.features' },
           },
           {
             tag: 'button',
-            text: { tag: 'plain_text', content: '🔗 Pairing Guide' },
+            text: { tag: 'plain_text', content: '🔗 Хослуулалтын заавар' },
             type: 'default',
             value: { action: 'help.pairing' },
           },
@@ -461,7 +461,7 @@ export function createHelpCard(): LarkCard {
         actions: [
           {
             tag: 'button',
-            text: { tag: 'plain_text', content: '💬 Tips' },
+            text: { tag: 'plain_text', content: '💬 Зөвлөмж' },
             type: 'default',
             value: { action: 'help.tips' },
           },
@@ -478,27 +478,27 @@ export function createFeaturesCard(): LarkCard {
   return {
     config: { wide_screen_mode: true },
     header: {
-      title: { tag: 'plain_text', content: '🤖 Features' },
+      title: { tag: 'plain_text', content: '🤖 Боломжууд' },
       template: 'blue',
     },
     elements: [
       {
         tag: 'markdown',
         content: [
-          '**AI Chat**',
-          '• Natural language conversation',
-          '• Streaming output, real-time display',
-          '• Context memory support',
+          '**AI чат**',
+          '• Энгийн хэлээр харилцах',
+          '• Урсгал гаралт, бодит цагт харагдана',
+          '• Контекст ой санамжийн дэмжлэг',
           '',
-          '**Session Management**',
-          '• Single session mode',
-          '• Clear context anytime',
-          '• View session status',
+          '**Сешний удирдлага**',
+          '• Нэг сешний горим',
+          '• Контекстийг хүссэн үедээ цэвэрлэх',
+          '• Сешний төлөвийг харах',
           '',
-          '**Message Actions**',
-          '• Copy reply content',
-          '• Regenerate reply',
-          '• Continue conversation',
+          '**Зурвасын үйлдлүүд**',
+          '• Хариултын агуулгыг хуулах',
+          '• Хариултыг дахин үүсгэх',
+          '• Яриаг үргэлжлүүлэх',
         ].join('\n'),
       },
       {
@@ -506,7 +506,7 @@ export function createFeaturesCard(): LarkCard {
         actions: [
           {
             tag: 'button',
-            text: { tag: 'plain_text', content: '← Back to Help' },
+            text: { tag: 'plain_text', content: '← Тусламж руу буцах' },
             type: 'default',
             value: { action: 'help.show' },
           },
@@ -523,23 +523,23 @@ export function createPairingGuideCard(): LarkCard {
   return {
     config: { wide_screen_mode: true },
     header: {
-      title: { tag: 'plain_text', content: '🔗 Pairing Guide' },
+      title: { tag: 'plain_text', content: '🔗 Хослуулалтын заавар' },
       template: 'orange',
     },
     elements: [
       {
         tag: 'markdown',
         content: [
-          '**First-time Setup:**',
-          '1. Send any message to the bot',
-          '2. Bot displays pairing code',
-          '3. Approve pairing in Wayland settings',
-          '4. Ready to use after pairing',
+          '**Анхны тохиргоо:**',
+          '1. Ботод дурын мессеж илгээнэ үү',
+          '2. Бот хослуулалтын код харуулна',
+          '3. Дархайн тохиргоонд хослуулалтыг зөвшөөрнө үү',
+          '4. Хослуулсны дараа ашиглахад бэлэн',
           '',
-          '**Notes:**',
-          '• Pairing code valid for 10 minutes',
-          '• Wayland app must be running',
-          '• One Lark account can only pair once',
+          '**Тэмдэглэл:**',
+          '• Хослуулалтын код 10 минут хүчинтэй',
+          '• Дархай апп ажиллаж байх ёстой',
+          '• Нэг Lark бүртгэл зөвхөн нэг удаа хослуулна',
         ].join('\n'),
       },
       {
@@ -547,7 +547,7 @@ export function createPairingGuideCard(): LarkCard {
         actions: [
           {
             tag: 'button',
-            text: { tag: 'plain_text', content: '← Back to Help' },
+            text: { tag: 'plain_text', content: '← Тусламж руу буцах' },
             type: 'default',
             value: { action: 'help.show' },
           },
@@ -564,22 +564,22 @@ export function createTipsCard(): LarkCard {
   return {
     config: { wide_screen_mode: true },
     header: {
-      title: { tag: 'plain_text', content: '💬 Tips' },
+      title: { tag: 'plain_text', content: '💬 Зөвлөмж' },
       template: 'purple',
     },
     elements: [
       {
         tag: 'markdown',
         content: [
-          '**Effective Conversations:**',
-          '• Be clear and specific',
-          '• Feel free to ask follow-ups',
-          '• Regenerate if not satisfied',
+          '**Үр дүнтэй харилцахын тулд:**',
+          '• Тодорхой, оновчтой бичээрэй',
+          '• Нэмэлт асуулт чөлөөтэй асуугаарай',
+          '• Сэтгэл ханамжгүй бол дахин үүсгээрэй',
           '',
-          '**Quick Actions:**',
-          '• Use card buttons for quick access',
-          '• Tap message buttons for actions',
-          '• New chat clears history context',
+          '**Шуурхай үйлдлүүд:**',
+          '• Хурдан хандахын тулд картын товчнуудыг ашиглаарай',
+          '• Үйлдэл хийхийн тулд зурвасын товчийг дараарай',
+          '• Шинэ чат түүхийн контекстийг цэвэрлэнэ',
         ].join('\n'),
       },
       {
@@ -587,7 +587,7 @@ export function createTipsCard(): LarkCard {
         actions: [
           {
             tag: 'button',
-            text: { tag: 'plain_text', content: '← Back to Help' },
+            text: { tag: 'plain_text', content: '← Тусламж руу буцах' },
             type: 'default',
             value: { action: 'help.show' },
           },
@@ -617,19 +617,19 @@ export function createResponseActionsCard(text: string): LarkCard {
         actions: [
           {
             tag: 'button',
-            text: { tag: 'plain_text', content: '📋 Copy' },
+            text: { tag: 'plain_text', content: '📋 Хуулах' },
             type: 'default',
             value: { action: 'chat.copy' },
           },
           {
             tag: 'button',
-            text: { tag: 'plain_text', content: '🔄 Regenerate' },
+            text: { tag: 'plain_text', content: '🔄 Дахин үүсгэх' },
             type: 'default',
             value: { action: 'chat.regenerate' },
           },
           {
             tag: 'button',
-            text: { tag: 'plain_text', content: '💬 Continue' },
+            text: { tag: 'plain_text', content: '💬 Үргэлжлүүлэх' },
             type: 'default',
             value: { action: 'chat.continue' },
           },
@@ -646,26 +646,26 @@ export function createErrorRecoveryCard(errorMessage?: string): LarkCard {
   return {
     config: { wide_screen_mode: true },
     header: {
-      title: { tag: 'plain_text', content: '⚠️ Error' },
+      title: { tag: 'plain_text', content: '⚠️ Алдаа' },
       template: 'red',
     },
     elements: [
       {
         tag: 'markdown',
-        content: errorMessage || 'An error occurred. Please try again.',
+        content: errorMessage || 'Алдаа гарлаа. Дахин оролдоно уу.',
       },
       {
         tag: 'action',
         actions: [
           {
             tag: 'button',
-            text: { tag: 'plain_text', content: '🔄 Retry' },
+            text: { tag: 'plain_text', content: '🔄 Дахин оролдох' },
             type: 'primary',
             value: { action: 'error.retry' },
           },
           {
             tag: 'button',
-            text: { tag: 'plain_text', content: '🆕 New Session' },
+            text: { tag: 'plain_text', content: '🆕 Шинэ сешн' },
             type: 'default',
             value: { action: 'session.new' },
           },
@@ -734,13 +734,13 @@ export function createConfirmationCard(message: string, confirmAction: string, c
         actions: [
           {
             tag: 'button',
-            text: { tag: 'plain_text', content: '✅ Confirm' },
+            text: { tag: 'plain_text', content: '✅ Зөвшөөрөх' },
             type: 'primary',
             value: { action: confirmAction },
           },
           {
             tag: 'button',
-            text: { tag: 'plain_text', content: '❌ Cancel' },
+            text: { tag: 'plain_text', content: '❌ Цуцлах' },
             type: 'danger',
             value: { action: cancelAction },
           },
@@ -757,16 +757,16 @@ export function createSettingsCard(): LarkCard {
   return {
     config: { wide_screen_mode: true },
     header: {
-      title: { tag: 'plain_text', content: '⚙️ Settings' },
+      title: { tag: 'plain_text', content: '⚙️ Тохиргоо' },
       template: 'grey',
     },
     elements: [
       {
         tag: 'markdown',
         content: [
-          'Channel settings need to be configured in the Wayland app.',
+          'Сувгийн тохиргоог Дархай апп дотор хийнэ.',
           '',
-          'Open Wayland → WebUI → Channels',
+          'Дархай → WebUI → Сувгууд гэж нээнэ үү',
         ].join('\n'),
       },
       {
@@ -774,7 +774,7 @@ export function createSettingsCard(): LarkCard {
         actions: [
           {
             tag: 'button',
-            text: { tag: 'plain_text', content: '← Back' },
+            text: { tag: 'plain_text', content: '← Буцах' },
             type: 'default',
             value: { action: 'help.show' },
           },

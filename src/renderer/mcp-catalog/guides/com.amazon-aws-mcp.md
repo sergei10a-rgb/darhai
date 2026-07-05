@@ -7,7 +7,7 @@ steps:
     estSeconds: 30
     autoCompletedByInstall: true
     body: |
-      Wayland fetches `awslabs.aws-api-mcp-server` from PyPI via `uvx` on first
+      Дархай fetches `awslabs.aws-api-mcp-server` from PyPI via `uvx` on first
       launch - no manual install needed. If the server fails to start later,
       reinstall from this page.
   - id: credentials
@@ -35,7 +35,7 @@ steps:
       1. Click **Open AWS IAM console** above and sign in (root or admin).
       2. Left sidebar → **Access management → Users**.
       3. Click **Create user** (top right).
-      4. Give it a name like `wayland-mcp`. Leave **Provide user access to the
+      4. Give it a name like `darhai-mcp`. Leave **Provide user access to the
          AWS Management Console** unchecked - programmatic access only.
       5. Click **Next**.
 
@@ -43,7 +43,7 @@ steps:
 
       1. On **Set permissions**, choose **Attach policies directly**.
       2. Search for and check only the AWS-managed policies that match the
-         services you'll ask Wayland about - e.g. `AmazonS3ReadOnlyAccess`,
+         services you'll ask Дархай about - e.g. `AmazonS3ReadOnlyAccess`,
          `AmazonEC2ReadOnlyAccess`, `CloudWatchReadOnlyAccess`.
          Avoid `AdministratorAccess`.
       3. Click **Next → Create user**.
@@ -63,7 +63,7 @@ steps:
 
 # AWS setup
 
-Wayland talks to AWS through the official `awslabs.aws-api-mcp-server`. It
+Дархай talks to AWS through the official `awslabs.aws-api-mcp-server`. It
 covers every AWS service the AWS CLI supports, scoped to whatever permissions
 your IAM user has.
 

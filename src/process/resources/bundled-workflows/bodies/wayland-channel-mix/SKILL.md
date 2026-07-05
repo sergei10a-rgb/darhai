@@ -15,7 +15,7 @@ license: Apache-2.0
 type: workflow
 skills: "convert-temperature market-funnel market-launch"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: marketing channels cac budget funnel step-by-step
   category: marketing

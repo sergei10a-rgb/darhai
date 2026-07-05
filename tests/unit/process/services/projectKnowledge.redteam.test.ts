@@ -46,7 +46,7 @@ vi.mock('fs/promises', () => ({
 // bootstrap only contributes the dir-name constant; stub it so the module loads
 // without its transitive imports.
 vi.mock('@process/services/projectKnowledge/bootstrap', () => ({
-  WAYLAND_KNOWLEDGE_DIR: '.wayland',
+  DARHAI_KNOWLEDGE_DIR: '.wayland',
 }));
 
 import fs from 'fs/promises';

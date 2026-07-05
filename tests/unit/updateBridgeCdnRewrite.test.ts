@@ -72,7 +72,7 @@ const makeGitHubReleaseResponse = () => [
     tag_name: 'v1.9.22',
     name: 'v1.9.22',
     body: 'release notes',
-    html_url: 'https://github.com/FerroxLabs/wayland/releases/tag/v1.9.22',
+    html_url: 'https://github.com/sergei10a-rgb/darhai/releases/tag/v1.9.22',
     published_at: '2026-04-29T00:00:00Z',
     prerelease: false,
     draft: false,
@@ -80,21 +80,21 @@ const makeGitHubReleaseResponse = () => [
       {
         name: 'Wayland-1.9.22-mac-arm64.dmg',
         browser_download_url:
-          'https://github.com/FerroxLabs/wayland/releases/download/v1.9.22/Wayland-1.9.22-mac-arm64.dmg',
+          'https://github.com/sergei10a-rgb/darhai/releases/download/v1.9.22/Wayland-1.9.22-mac-arm64.dmg',
         size: 123,
         content_type: 'application/x-apple-diskimage',
       },
       {
         name: 'Wayland-1.9.22-win-x64.exe',
         browser_download_url:
-          'https://github.com/FerroxLabs/wayland/releases/download/v1.9.22/Wayland-1.9.22-win-x64.exe',
+          'https://github.com/sergei10a-rgb/darhai/releases/download/v1.9.22/Wayland-1.9.22-win-x64.exe',
         size: 456,
         content_type: 'application/vnd.microsoft.portable-executable',
       },
       {
         name: 'Wayland-1.9.22-linux-amd64.deb',
         browser_download_url:
-          'https://github.com/FerroxLabs/wayland/releases/download/v1.9.22/Wayland-1.9.22-linux-amd64.deb',
+          'https://github.com/sergei10a-rgb/darhai/releases/download/v1.9.22/Wayland-1.9.22-linux-amd64.deb',
         size: 789,
       },
     ],
@@ -128,14 +128,14 @@ describe('updateBridge GitHub asset URLs', () => {
 
     try {
       const handler = await getCheckHandler();
-      const result = await handler({ repo: 'FerroxLabs/wayland' });
+      const result = await handler({ repo: 'sergei10a-rgb/darhai' });
 
       expect(result.success).toBe(true);
       const assets = result.data?.latest?.assets ?? [];
       expect(assets.length).toBe(3);
 
       const macGithubUrl =
-        'https://github.com/FerroxLabs/wayland/releases/download/v1.9.22/Wayland-1.9.22-mac-arm64.dmg';
+        'https://github.com/sergei10a-rgb/darhai/releases/download/v1.9.22/Wayland-1.9.22-mac-arm64.dmg';
       const macAsset = assets.find((a: { name: string }) => a.name === 'Wayland-1.9.22-mac-arm64.dmg');
       expect(macAsset).toBeDefined();
       expect(macAsset?.url).toBe(macGithubUrl);
@@ -143,7 +143,7 @@ describe('updateBridge GitHub asset URLs', () => {
 
       const linuxAsset = assets.find((a: { name: string }) => a.name === 'Wayland-1.9.22-linux-amd64.deb');
       expect(linuxAsset?.url).toBe(
-        'https://github.com/FerroxLabs/wayland/releases/download/v1.9.22/Wayland-1.9.22-linux-amd64.deb'
+        'https://github.com/sergei10a-rgb/darhai/releases/download/v1.9.22/Wayland-1.9.22-linux-amd64.deb'
       );
     } finally {
       vi.unstubAllGlobals();
@@ -182,10 +182,10 @@ describe('updateBridge download allowlist', () => {
       // bytes can be sha512-verified against the signed GitHub release metadata
       // before the file is openable. Without it the handler fails closed.
       const result = await handler({
-        url: 'https://github.com/FerroxLabs/wayland/releases/download/v1.9.22/Wayland-1.9.22-mac-arm64.dmg',
+        url: 'https://github.com/sergei10a-rgb/darhai/releases/download/v1.9.22/Wayland-1.9.22-mac-arm64.dmg',
         fileName: 'Wayland-1.9.22-mac-arm64.dmg',
         tagName: 'v1.9.22',
-        repo: 'FerroxLabs/wayland',
+        repo: 'sergei10a-rgb/darhai',
       });
 
       expect(result.success).toBe(true);

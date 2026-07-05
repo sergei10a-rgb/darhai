@@ -8,7 +8,7 @@ steps:
     autoCompletedByInstall: true
     body: |
       No local install needed. Linear hosts the MCP server at
-      `https://mcp.linear.app/mcp` - Wayland connects over streamable HTTP
+      `https://mcp.linear.app/mcp` - Дархай connects over streamable HTTP
       the moment you finish the sign-in step below.
   - id: authorize
     title: Sign in with Linear
@@ -16,7 +16,7 @@ steps:
     primaryAction: { label: "Sign in with Linear", action: "oauth-flow" }
     warning: |
       Linear had a bug where MCP OAuth sessions could disconnect after about
-      24 hours. It's resolved in current builds, but if Wayland stops
+      24 hours. It's resolved in current builds, but if Дархай stops
       returning issues a day after first auth, click **Re-authorize** on the
       Installed page.
     body: |
@@ -24,13 +24,13 @@ steps:
       `linear.app` - Linear uses **OAuth 2.1 with dynamic client
       registration**, so there's nothing to pre-configure on their side.
 
-      1. Pick the workspace you want Wayland to act on. If you belong to
+      1. Pick the workspace you want Дархай to act on. If you belong to
          several, the dropdown is at the top-right of the consent screen.
-      2. Review the scopes - by default Wayland requests **read** (issues,
+      2. Review the scopes - by default Дархай requests **read** (issues,
          projects, cycles), **write** (update issues), and
          **issues:create**. Anything you can't see in Linear, the MCP can't
          see either.
-      3. Click **Authorize**. The tab redirects back to Wayland and the
+      3. Click **Authorize**. The tab redirects back to Дархай and the
          server status flips to Running.
 
       Tokens are stored in your OS keychain and never leave your machine.
@@ -39,7 +39,7 @@ steps:
     estSeconds: 30
     body: |
       Open a new chat and ask: *"List my assigned Linear issues this
-      cycle."* Wayland will call the MCP and stream the results back.
+      cycle."* Дархай will call the MCP and stream the results back.
 
       If you'd rather use a long-lived Personal API key (e.g. for headless
       / CI use), open `linear.app/settings/api` → **Personal API keys** →

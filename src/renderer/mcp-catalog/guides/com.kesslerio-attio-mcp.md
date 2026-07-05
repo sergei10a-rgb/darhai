@@ -7,7 +7,7 @@ steps:
     estSeconds: 30
     autoCompletedByInstall: true
     body: |
-      Wayland fetches `attio-mcp` from npm via `npx` on first launch - no
+      Дархай fetches `attio-mcp` from npm via `npx` on first launch - no
       manual install needed. The server runs locally in stdio mode and
       talks to Attio's REST API using the workspace access token you
       paste in the next step. If the server fails to start later,
@@ -25,9 +25,9 @@ steps:
       1. Click **Open Attio developer settings** above. Sign in.
       2. In the left sidebar, go to **Workspace settings → Developers**
          (or **Apps** on some plans), then click **Create app**.
-      3. Name it *Wayland* and continue.
+      3. Name it *Darhai* and continue.
       4. Open the new app, go to its **Permissions / Scopes** tab, and
-         enable the scopes Wayland needs:
+         enable the scopes Дархай needs:
          - `object_configuration:read` and `record:read` (read-only), or
          - `record:read_write` and `list_entry:read_write` for full edit.
          Grant only what you need - you can change scopes later.

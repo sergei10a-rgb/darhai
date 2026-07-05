@@ -85,8 +85,8 @@ describe('ACP built-in MCP session config', () => {
           command: 'node',
           args: ['/abs/builtin-mcp-image-gen.js'],
           env: {
-            WAYLAND_IMG_PLATFORM: 'openai',
-            WAYLAND_IMG_MODEL: 'gpt-image-1',
+            DARHAI_IMG_PLATFORM: 'openai',
+            DARHAI_IMG_MODEL: 'gpt-image-1',
           },
         },
         createdAt: 1,
@@ -160,8 +160,8 @@ describe('ACP built-in MCP session config', () => {
         command: 'node',
         args: ['/abs/builtin-mcp-image-gen.js'],
         env: [
-          { name: 'WAYLAND_IMG_PLATFORM', value: 'openai' },
-          { name: 'WAYLAND_IMG_MODEL', value: 'gpt-image-1' },
+          { name: 'DARHAI_IMG_PLATFORM', value: 'openai' },
+          { name: 'DARHAI_IMG_MODEL', value: 'gpt-image-1' },
         ],
       },
       {
@@ -255,8 +255,8 @@ describe('McpService Gemini detection', () => {
     vi.doMock('../../src/process/services/mcpServices/agents/GeminiMcpAgent', () => ({
       GeminiMcpAgent: makeAgentClass(nativeDetect),
     }));
-    vi.doMock('../../src/process/services/mcpServices/agents/WaylandMcpAgent', () => ({
-      WaylandMcpAgent: makeAgentClass(builtinDetect),
+    vi.doMock('../../src/process/services/mcpServices/agents/DarhaiMcpAgent', () => ({
+      DarhaiMcpAgent: makeAgentClass(builtinDetect),
     }));
 
     const { McpService } = await import('../../src/process/services/mcpServices/McpService');
@@ -287,8 +287,8 @@ describe('McpService Gemini detection', () => {
     vi.doMock('../../src/process/services/mcpServices/agents/GeminiMcpAgent', () => ({
       GeminiMcpAgent: makeAgentClass(nativeDetect),
     }));
-    vi.doMock('../../src/process/services/mcpServices/agents/WaylandMcpAgent', () => ({
-      WaylandMcpAgent: makeAgentClass(builtinDetect),
+    vi.doMock('../../src/process/services/mcpServices/agents/DarhaiMcpAgent', () => ({
+      DarhaiMcpAgent: makeAgentClass(builtinDetect),
     }));
 
     const { McpService } = await import('../../src/process/services/mcpServices/McpService');
@@ -321,8 +321,8 @@ describe('McpService Gemini detection', () => {
     vi.doMock('../../src/process/services/mcpServices/agents/GeminiMcpAgent', () => ({
       GeminiMcpAgent: makeAgentClass(emptyDetect),
     }));
-    vi.doMock('../../src/process/services/mcpServices/agents/WaylandMcpAgent', () => ({
-      WaylandMcpAgent: makeAgentClass(builtinDetect),
+    vi.doMock('../../src/process/services/mcpServices/agents/DarhaiMcpAgent', () => ({
+      DarhaiMcpAgent: makeAgentClass(builtinDetect),
     }));
 
     const { McpService } = await import('../../src/process/services/mcpServices/McpService');
@@ -354,8 +354,8 @@ describe('McpService OpenCode detection', () => {
     vi.doMock('../../src/process/services/mcpServices/agents/GeminiMcpAgent', () => ({
       GeminiMcpAgent: makeAgentClass(emptyDetect),
     }));
-    vi.doMock('../../src/process/services/mcpServices/agents/WaylandMcpAgent', () => ({
-      WaylandMcpAgent: makeAgentClass(emptyDetect),
+    vi.doMock('../../src/process/services/mcpServices/agents/DarhaiMcpAgent', () => ({
+      DarhaiMcpAgent: makeAgentClass(emptyDetect),
     }));
     vi.doMock('../../src/process/services/mcpServices/agents/OpencodeMcpAgent', () => ({
       OpencodeMcpAgent: makeAgentClass(opencodeDetect),

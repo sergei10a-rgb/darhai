@@ -7,7 +7,7 @@ steps:
     estSeconds: 30
     autoCompletedByInstall: true
     body: |
-      Wayland connects to Stripe's hosted MCP at `https://mcp.stripe.com` -
+      Дархай connects to Stripe's hosted MCP at `https://mcp.stripe.com` -
       no local install. Stripe runs the OAuth flow and gates access per
       account and environment (test vs live).
   - id: authorize
@@ -25,13 +25,13 @@ steps:
 
       1. Pick the **account** to connect (top-left account switcher).
       2. Confirm the **environment** - the orange "Test mode" toggle in the
-         top bar must match the data set you want Wayland to read.
+         top bar must match the data set you want Дархай to read.
       3. Choose a scope on the consent screen:
          - **read_only** - list and read customers, payments, invoices,
            subscriptions. Safe for analytics agents.
          - **read_write** - additionally create, update, refund. Required
            if your agent issues refunds or creates checkout sessions.
-      4. Click **Authorize**. The tab redirects back to Wayland.
+      4. Click **Authorize**. The tab redirects back to Дархай.
 
       Revoke any time at **dashboard.stripe.com → Settings → Your user →
       OAuth sessions → Revoke access** (not under Connected apps).
@@ -40,5 +40,5 @@ steps:
 # Stripe setup
 
 Stripe runs the MCP server. Sign in once to pick which account, environment
-(test vs live), and permission level (read-only vs read-write) Wayland can
+(test vs live), and permission level (read-only vs read-write) Дархай can
 use.

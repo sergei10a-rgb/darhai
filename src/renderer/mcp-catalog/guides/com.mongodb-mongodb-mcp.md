@@ -7,7 +7,7 @@ steps:
     estSeconds: 30
     autoCompletedByInstall: true
     body: |
-      Wayland installs `mongodb-mcp-server` from npm via `npx` on first
+      Дархай installs `mongodb-mcp-server` from npm via `npx` on first
       launch - no manual install needed. If the server fails to start later,
       reinstall from this page.
   - id: connection-string
@@ -22,12 +22,12 @@ steps:
       Set `MDB_MCP_READ_ONLY=true` in the env for a safe sandbox - it allows
       only read/connect/metadata operations. The connection string includes
       the database password in plaintext, so never paste a prod admin user;
-      create a dedicated `wayland-mcp` user with the minimum DB roles.
+      create a dedicated `darhai-mcp` user with the minimum DB roles.
     body: |
       The official `mongodb-mcp-server` talks to a local mongod, a
       self-hosted cluster, or MongoDB Atlas. Pick **one** of the two paths
       below - connection string is the common case, API keys are only
-      needed if you want Wayland to manage Atlas infra (create clusters,
+      needed if you want Дархай to manage Atlas infra (create clusters,
       database users, etc.).
 
       **Path A - Atlas connection string** (recommended, ≈ 2 min)
@@ -39,7 +39,7 @@ steps:
          a `mongodb+srv://...` connection string.
       5. If you don't have a DB user yet, click **Create a database user**
          under **Database Access**. Give it a strong password and the
-         **readWrite** role on the databases Wayland will touch.
+         **readWrite** role on the databases Дархай will touch.
       6. Copy the string, **replace `<db_password>`** with that user's
          password (URL-encode reserved characters: `@` → `%40`, `:` → `%3A`).
       7. Paste it above as `MDB_MCP_CONNECTION_STRING`.
@@ -52,7 +52,7 @@ steps:
 
       1. Atlas top bar → **Organization → Access Manager → Applications →
          Service Accounts → Create Service Account**.
-      2. Name it `wayland-mcp`. Grant the **minimum** roles you need
+      2. Name it `darhai-mcp`. Grant the **minimum** roles you need
          (e.g. *Project Read Only*, or *Project Cluster Manager* to spin up
          clusters). Avoid *Organization Owner*.
       3. Generate a client secret - copy the **Client ID** and
@@ -63,6 +63,6 @@ steps:
 
 # MongoDB setup
 
-Wayland uses the official MongoDB MCP - same server the Mongo team ships for
+Дархай uses the official MongoDB MCP - same server the Mongo team ships for
 Cursor/Claude. Works with Atlas, self-hosted, or local mongod. For most users,
 just the connection string is enough.

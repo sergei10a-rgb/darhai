@@ -275,7 +275,7 @@ export default defineConfig(({ mode }) => {
       define: {
         'process.env.NODE_ENV': JSON.stringify(mode),
         'process.env.env': JSON.stringify(process.env.env),
-        'process.env.WAYLAND_MULTI_INSTANCE': JSON.stringify(process.env.WAYLAND_MULTI_INSTANCE ?? ''),
+        'process.env.DARHAI_MULTI_INSTANCE': JSON.stringify(process.env.DARHAI_MULTI_INSTANCE ?? ''),
         'process.env.SENTRY_DSN': JSON.stringify(process.env.SENTRY_DSN ?? ''),
         global: 'globalThis',
       },

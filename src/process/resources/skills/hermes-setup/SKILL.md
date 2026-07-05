@@ -1,11 +1,11 @@
 ---
 name: hermes-setup
-description: 'Install, authenticate, configure, and connect the Hermes Agent CLI (Nous Research) as a Wayland backend. Covers install, the ACP dependency extra, portal and model auth, memory/tools/MCP setup, and doctor diagnostics. Use when a user wants to set up Hermes or fix why its acp backend will not start.'
+description: 'Install, authenticate, configure, and connect the Hermes Agent CLI (Nous Research) as a Дархай backend. Covers install, the ACP dependency extra, portal and model auth, memory/tools/MCP setup, and doctor diagnostics. Use when a user wants to set up Hermes or fix why its acp backend will not start.'
 ---
 
 # Hermes Setup Expert
 
-You install, authenticate, configure, and connect the Hermes Agent CLI so Wayland can drive it as a backend over ACP.
+You install, authenticate, configure, and connect the Hermes Agent CLI so Дархай can drive it as a backend over ACP.
 
 ## Documentation freshness
 
@@ -13,7 +13,7 @@ Hermes is actively developed and the PyPI build can lag the main branch, so a fe
 
 ## Step 1: Environment diagnostics (run before responding)
 
-Detect state before changing anything. Prefer a login shell (`zsh -i -l -c "..."`) since Wayland may launch with a trimmed PATH.
+Detect state before changing anything. Prefer a login shell (`zsh -i -l -c "..."`) since Дархай may launch with a trimmed PATH.
 
 ```bash
 which hermes 2>/dev/null || echo "hermes NOT found in PATH"
@@ -34,7 +34,7 @@ Interpret: not on PATH means install first. On PATH but `hermes acp --check` fai
 
 Confirm the install with `hermes --version`, then run `hermes doctor`.
 
-## The ACP extra (do this before connecting to Wayland)
+## The ACP extra (do this before connecting to Дархай)
 
 `hermes acp` needs the optional `[acp]` dependency extra, which is NOT installed by default.
 
@@ -46,7 +46,7 @@ pip install 'hermes-agent[acp]'
 # pipx inject hermes-agent '<acp extra deps>'   # verify exact form against current docs
 ```
 
-Re-run `hermes acp --check` until it passes. Without this, the Wayland backend will not start.
+Re-run `hermes acp --check` until it passes. Without this, the Дархай backend will not start.
 
 ## Authenticate
 
@@ -69,11 +69,11 @@ Auth must be set up before `hermes acp` produces output. Confirm with `hermes au
 - **MCP:** `hermes mcp add|list|test|serve` to connect MCP servers (client) or expose Hermes as one (server).
 - **Other surfaces (optional):** `hermes cron`, `hermes webhook`, `hermes whatsapp`, `hermes slack`, `hermes gateway install`, `hermes computer-use`, `hermes dashboard` (web UI on port 9119).
 
-Only set up what the user needs. For a Wayland backend, a working provider/model plus the ACP extra is enough; memory/tools/MCP are enhancements.
+Only set up what the user needs. For a Дархай backend, a working provider/model plus the ACP extra is enough; memory/tools/MCP are enhancements.
 
-## Connect to Wayland (ACP)
+## Connect to Дархай (ACP)
 
-`hermes acp` is the ACP stdio server Wayland spawns (also exposed as `hermes-acp` or `python -m acp_adapter`). Preconditions: auth configured, and the `[acp]` extra installed (`hermes acp --check` passes).
+`hermes acp` is the ACP stdio server Дархай spawns (also exposed as `hermes-acp` or `python -m acp_adapter`). Preconditions: auth configured, and the `[acp]` extra installed (`hermes acp --check` passes).
 
 Useful flags:
 - `--accept-hooks` (or `HERMES_ACCEPT_HOOKS=1`): auto-accept hook prompts for headless/embedded use, so a prompt does not hang the spawn.

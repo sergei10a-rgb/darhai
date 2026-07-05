@@ -9,7 +9,7 @@ import type { IChannelPluginStatus } from '@process/channels/types';
 import type { IProvider, TProviderWithModel } from '@/common/config/storage';
 import { channel, webui, type IWebUIStatus } from '@/common/adapter/ipcBridge';
 import { ConfigStorage } from '@/common/config/storage';
-import WaylandScrollArea from '@/renderer/components/base/WaylandScrollArea';
+import DarhaiScrollArea from '@/renderer/components/base/DarhaiScrollArea';
 import { useModelProviderList } from '@/renderer/hooks/agent/useModelProviderList';
 import type { GeminiModelSelection } from '@/renderer/pages/conversation/platforms/gemini/useGeminiModelSelection';
 import { useGeminiModelSelection } from '@/renderer/pages/conversation/platforms/gemini/useGeminiModelSelection';
@@ -637,9 +637,12 @@ const ChannelModalContent: React.FC = () => {
               {lanCallbackUrl ? <div>LAN Callback URL: {lanCallbackUrl}</div> : null}
               {publicCallbackUrl ? <div>Public Callback URL (configured value): {publicCallbackUrl}</div> : null}
               <div className='mt-6px'>
-                Enabling WebUI remote access (LAN) alone is usually not sufficient for WeCom callbacks. WeCom servers require a publicly accessible HTTPS address.
+                Enabling WebUI remote access (LAN) alone is usually not sufficient for WeCom callbacks. WeCom servers
+                require a publicly accessible HTTPS address.
               </div>
-              <div>Recommended: use a reverse proxy with a TLS certificate, or expose via Cloudflare Tunnel / ngrok.</div>
+              <div>
+                Recommended: use a reverse proxy with a TLS certificate, or expose via Cloudflare Tunnel / ngrok.
+              </div>
             </div>
           )}
           {fields.map((field) => {
@@ -712,7 +715,7 @@ const ChannelModalContent: React.FC = () => {
     const telegramChannel: ChannelConfig = {
       id: 'telegram',
       title: t('settings.channels.telegramTitle', 'Telegram'),
-      description: t('settings.channels.telegramDesc', 'Chat with Wayland assistant via Telegram'),
+      description: t('settings.channels.telegramDesc', 'Chat with Дархай assistant via Telegram'),
       status: 'active',
       enabled: pluginStatus?.enabled || false,
       disabled: enableLoading,
@@ -734,7 +737,7 @@ const ChannelModalContent: React.FC = () => {
     const larkChannel: ChannelConfig = {
       id: 'lark',
       title: t('settings.channels.larkTitle', 'Lark / Feishu'),
-      description: t('settings.channels.larkDesc', 'Chat with Wayland assistant via Lark or Feishu'),
+      description: t('settings.channels.larkDesc', 'Chat with Дархай assistant via Lark or Feishu'),
       status: 'active',
       enabled: larkPluginStatus?.enabled || false,
       disabled: larkEnableLoading,
@@ -752,7 +755,7 @@ const ChannelModalContent: React.FC = () => {
     const dingtalkChannel: ChannelConfig = {
       id: 'dingtalk',
       title: t('settings.channels.dingtalkTitle', 'DingTalk'),
-      description: t('settings.channels.dingtalkDesc', 'Chat with Wayland assistant via DingTalk'),
+      description: t('settings.channels.dingtalkDesc', 'Chat with Дархай assistant via DingTalk'),
       status: 'active',
       enabled: dingtalkPluginStatus?.enabled || false,
       disabled: dingtalkEnableLoading,
@@ -770,7 +773,7 @@ const ChannelModalContent: React.FC = () => {
     const weixinChannel: ChannelConfig = {
       id: 'weixin',
       title: t('settings.channels.weixinTitle', 'WeChat'),
-      description: t('settings.channels.weixinDesc', 'Chat with Wayland assistant via WeChat'),
+      description: t('settings.channels.weixinDesc', 'Chat with Дархай assistant via WeChat'),
       status: 'active',
       enabled: weixinPluginStatus?.enabled || false,
       disabled: weixinEnableLoading,
@@ -788,7 +791,7 @@ const ChannelModalContent: React.FC = () => {
     const wecomChannel: ChannelConfig = {
       id: 'wecom',
       title: t('settings.channels.wecomTitle', 'WeCom'),
-      description: t('settings.channels.wecomDesc', 'Chat with Wayland assistant via WeCom (Enterprise WeChat)'),
+      description: t('settings.channels.wecomDesc', 'Chat with Дархай assistant via WeCom (Enterprise WeChat)'),
       status: 'active',
       enabled: wecomPluginStatus?.enabled || false,
       disabled: wecomEnableLoading,
@@ -828,7 +831,7 @@ const ChannelModalContent: React.FC = () => {
       {
         id: 'slack',
         title: t('settings.channels.slackTitle', 'Slack'),
-        description: t('settings.channels.slackDesc', 'Chat with Wayland assistant via Slack'),
+        description: t('settings.channels.slackDesc', 'Chat with Дархай assistant via Slack'),
         status: 'coming_soon' as const,
         enabled: false,
         disabled: true,
@@ -843,7 +846,7 @@ const ChannelModalContent: React.FC = () => {
       {
         id: 'discord',
         title: t('settings.channels.discordTitle', 'Discord'),
-        description: t('settings.channels.discordDesc', 'Chat with Wayland assistant via Discord'),
+        description: t('settings.channels.discordDesc', 'Chat with Дархай assistant via Discord'),
         status: 'coming_soon' as const,
         enabled: false,
         disabled: true,
@@ -904,7 +907,7 @@ const ChannelModalContent: React.FC = () => {
     return undefined;
   };
   const channelGuideText = t('settings.webui.featureChannelsDesc', {
-    defaultValue: 'Connect Telegram, Lark, and DingTalk to interact with Wayland from IM apps.',
+    defaultValue: 'Connect Telegram, Lark, and DingTalk to interact with Дархай from IM apps.',
   });
   const channelSetupSteps = [
     t('settings.channels.selectFirst', {
@@ -916,7 +919,7 @@ const ChannelModalContent: React.FC = () => {
   ];
 
   return (
-    <WaylandScrollArea className={isPageMode ? 'h-full' : ''}>
+    <DarhaiScrollArea className={isPageMode ? 'h-full' : ''}>
       <div className='px-[12px] md:px-[28px]'>
         <h2 className='text-20px font-500 text-t-primary m-0'>{t('settings.channels.title', 'Channels')}</h2>
         <div className='space-y-8px mt-10px'>
@@ -946,7 +949,7 @@ const ChannelModalContent: React.FC = () => {
           ))}
         </div>
       </div>
-    </WaylandScrollArea>
+    </DarhaiScrollArea>
   );
 };
 

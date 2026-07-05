@@ -144,7 +144,7 @@ describe('RemoteAgentManagement', () => {
     fireEvent.click(screen.getByText('settings.remoteAgent.guideAction'));
 
     expect(mockOpenExternalUrl).toHaveBeenCalledWith(
-      'https://github.com/FerroxLabs/wayland/wiki/Remote-Agent-Guide-Chinese'
+      'https://github.com/sergei10a-rgb/darhai/wiki/Remote-Agent-Guide-Chinese'
     );
   });
 

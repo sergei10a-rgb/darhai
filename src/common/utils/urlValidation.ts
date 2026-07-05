@@ -173,14 +173,15 @@ export function isLocalBaseUrl(baseUrl: string | undefined | null): boolean {
 /**
  * Schemes allowed to be handed to the OS via shell.openExternal.
  *
- * Only web/mail and the app's own deep-link scheme (`wayland:`, see
- * src/process/utils/deepLink.ts PROTOCOL_SCHEME) are permitted. Everything else
+ * Only web/mail and the app's own deep-link schemes (`darhai:` plus legacy
+ * `wayland:`, see src/process/utils/deepLink.ts PROTOCOL_SCHEMES) are permitted.
+ * Everything else
  * - `file:`, `smb:`, `ms-*`, `vbscript:`, and any registered custom-protocol
  * handler - is rejected so model-rendered markdown links cannot drive the OS
  * into opening local files, leaking NTLM credentials, or launching arbitrary
  * protocol handlers. Schemes are compared lowercase, with the trailing colon.
  */
-export const ALLOWED_EXTERNAL_URL_SCHEMES: readonly string[] = ['https:', 'http:', 'mailto:', 'wayland:'];
+export const ALLOWED_EXTERNAL_URL_SCHEMES: readonly string[] = ['https:', 'http:', 'mailto:', 'darhai:', 'wayland:'];
 
 /**
  * Validate that a URL uses a scheme on the openExternal allowlist.

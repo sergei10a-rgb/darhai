@@ -80,7 +80,7 @@ async function requireInstallConsent(): Promise<boolean> {
     title: 'Install officecli?',
     message: 'Office/PPT preview needs the officecli helper, which was not found bundled.',
     detail:
-      `Wayland can download and run the official, version-pinned officecli installer ` +
+      `Дархай can download and run the official, version-pinned officecli installer ` +
       `(${OFFICECLI_INSTALL_TAG}) from GitHub. The download is integrity-checked before it runs. ` +
       `Only proceed if you trust this source.`,
     buttons: ['Download and install', 'Cancel'],

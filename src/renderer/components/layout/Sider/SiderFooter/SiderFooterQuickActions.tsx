@@ -23,7 +23,7 @@ import styles from './SiderFooterQuickActions.module.css';
 
 type WebuiQuickStatus = 'checking' | 'running' | 'stopped' | 'error';
 
-const GITHUB_REPO_URL = 'https://github.com/FerroxLabs/wayland';
+const GITHUB_REPO_URL = 'https://github.com/sergei10a-rgb/darhai';
 
 export interface SiderFooterQuickActionsProps {
   /** Optional bug-report opener. If omitted, the button is rendered but inert (v0.6.2). */

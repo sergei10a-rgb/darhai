@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { Switch, Slider, Radio, Input } from '@arco-design/web-react';
 import FontSizeControl from '@/renderer/components/settings/FontSizeControl';
 import { ThemeSwitcher } from '@/renderer/components/settings/ThemeSwitcher';
-import WaylandScrollArea from '@/renderer/components/base/WaylandScrollArea';
+import DarhaiScrollArea from '@/renderer/components/base/DarhaiScrollArea';
 import { useUserDisplayName } from '@/renderer/hooks/system/useUserDisplayName';
 import { useSettingsViewMode } from '../settingsViewContext';
 import LaunchpadBar from '@/renderer/pages/guid/components/newChatStarter/LaunchpadBar';
@@ -135,7 +135,7 @@ const DisplayModalContent: React.FC = () => {
   return (
     <div className='flex flex-col h-full w-full'>
       {/* Content Area */}
-      <WaylandScrollArea className='flex-1 min-h-0 pb-16px' disableOverflow={isPageMode}>
+      <DarhaiScrollArea className='flex-1 min-h-0 pb-16px' disableOverflow={isPageMode}>
         <div className='space-y-16px'>
           {/* Launchpad bar customization - same widget as /assistants and the launchpad cold-start. */}
           <div
@@ -204,7 +204,7 @@ const DisplayModalContent: React.FC = () => {
             </div>
           </div>
         </div>
-      </WaylandScrollArea>
+      </DarhaiScrollArea>
     </div>
   );
 };

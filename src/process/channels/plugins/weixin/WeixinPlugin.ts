@@ -29,7 +29,7 @@ const RESPONSE_TIMEOUT_MS = 5 * 60 * 1000;
  * a Chinese-speaking audience can override this via plugin
  * `credentials.displayName` without a code change (audit LOW-1).
  */
-export const DEFAULT_DISPLAY_NAME = 'Wayland Core Assistant';
+export const DEFAULT_DISPLAY_NAME = 'Darhai Core Assistant';
 
 /**
  * Menu button → action mapping. Extracted to a module-level constant so it

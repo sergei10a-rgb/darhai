@@ -31,11 +31,7 @@ import styles from './ComposerModal.module.css';
 export type ComposerModalProps = {
   open: boolean;
   onClose: () => void;
-  onSubmit?: (entry: {
-    content: string;
-    scope: 'project' | 'global';
-    tags: string[];
-  }) => void | Promise<void>;
+  onSubmit?: (entry: { content: string; scope: 'project' | 'global'; tags: string[] }) => void | Promise<void>;
 };
 
 const MAX_CHARS = 8000;
@@ -84,15 +80,11 @@ export function ComposerModal({ open, onClose, onSubmit }: ComposerModalProps): 
   const handleSubmit = useCallback(async () => {
     const trimmed = content.trim();
     if (!trimmed) {
-      setError(t('archive.composer.errorEmpty', 'Content cannot be empty.'));
+      setError(t('memory.archive.composer.errorEmpty'));
       return;
     }
     if (trimmed.length > MAX_CHARS) {
-      setError(
-        t('archive.composer.errorTooLong', `Content exceeds ${MAX_CHARS} character limit.`, {
-          max: MAX_CHARS,
-        }),
-      );
+      setError(t('memory.archive.composer.errorTooLong', { max: MAX_CHARS }));
       return;
     }
     setError(null);
@@ -109,10 +101,10 @@ export function ComposerModal({ open, onClose, onSubmit }: ComposerModalProps): 
         // Fire archive refresh via the event emitter so MemoryList picks it up
         // (same pattern as FullPanelShell's handleQuickAdd → reload)
       }
-      Message.success(t('archive.composer.toastSaved', 'Memory saved'));
+      Message.success(t('memory.archive.composer.toastSaved'));
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('archive.composer.errorUnknown', 'Failed to save.'));
+      setError(err instanceof Error ? err.message : t('memory.archive.composer.errorUnknown'));
     } finally {
       setSubmitting(false);
     }
@@ -126,7 +118,7 @@ export function ComposerModal({ open, onClose, onSubmit }: ComposerModalProps): 
         void handleSubmit();
       }
     },
-    [handleSubmit],
+    [handleSubmit]
   );
 
   // ---- Tag management ----
@@ -150,7 +142,7 @@ export function ComposerModal({ open, onClose, onSubmit }: ComposerModalProps): 
         setAddingTag(false);
       }
     },
-    [commitTag],
+    [commitTag]
   );
 
   const removeTag = useCallback((tag: string) => {
@@ -172,15 +164,13 @@ export function ComposerModal({ open, onClose, onSubmit }: ComposerModalProps): 
       reader.onload = (ev) => {
         const text = ev.target?.result;
         if (typeof text === 'string') {
-          const block = content.trim()
-            ? `${content}\n\n\`\`\`\n${text}\n\`\`\``
-            : text;
+          const block = content.trim() ? `${content}\n\n\`\`\`\n${text}\n\`\`\`` : text;
           setContent(block);
         }
       };
       reader.readAsText(file);
     },
-    [content],
+    [content]
   );
 
   if (!open) return null;
@@ -204,12 +194,12 @@ export function ComposerModal({ open, onClose, onSubmit }: ComposerModalProps): 
         {/* ---- Header ---- */}
         <div className={styles.header}>
           <h2 className={styles.title} data-testid='composer-title'>
-            {t('archive.composer.title', 'Remember anything…')}
+            {t('memory.archive.composer.title')}
           </h2>
           <button
             className={styles.closeBtn}
             onClick={onClose}
-            aria-label={t('common.close', 'Close')}
+            aria-label={t('common.close')}
             data-testid='composer-close-btn'
           >
             <X size={18} aria-hidden />
@@ -226,7 +216,7 @@ export function ComposerModal({ open, onClose, onSubmit }: ComposerModalProps): 
               }
             }}
             className={`${styles.textarea}${charOverLimit ? ` ${styles.textareaError}` : ''}`}
-            placeholder={t('archive.composer.placeholder', 'Type your memory… (markdown OK)')}
+            placeholder={t('memory.archive.composer.placeholder')}
             value={content}
             onChange={(val) => {
               setContent(val);
@@ -246,7 +236,7 @@ export function ComposerModal({ open, onClose, onSubmit }: ComposerModalProps): 
             )}
             <span
               className={`${styles.charCount}${charOverLimit ? ` ${styles.charCountOver}` : ''}`}
-              aria-label={`${charCount} characters`}
+              aria-label={t('memory.archive.composer.charCount', { count: charCount })}
             >
               {charCount.toLocaleString()}/{MAX_CHARS.toLocaleString()}
             </span>
@@ -261,7 +251,7 @@ export function ComposerModal({ open, onClose, onSubmit }: ComposerModalProps): 
             aria-pressed={scope === 'project'}
             data-testid='composer-scope-project'
           >
-            📁 {t('archive.composer.scopeProject', 'project')}
+            📁 {t('memory.archive.quickadd.scope_project')}
           </button>
           <button
             className={`${styles.scopePill}${scope === 'global' ? ` ${styles.scopePillActive}` : ''}`}
@@ -269,7 +259,7 @@ export function ComposerModal({ open, onClose, onSubmit }: ComposerModalProps): 
             aria-pressed={scope === 'global'}
             data-testid='composer-scope-global'
           >
-            🌐 {t('archive.composer.scopeGlobal', 'global')}
+            🌐 {t('memory.archive.quickadd.scope_global')}
           </button>
         </div>
 
@@ -281,7 +271,7 @@ export function ComposerModal({ open, onClose, onSubmit }: ComposerModalProps): 
               <button
                 className={styles.tagRemoveBtn}
                 onClick={() => removeTag(tag)}
-                aria-label={`Remove tag ${tag}`}
+                aria-label={t('memory.archive.composer.removeTag', { tag })}
               >
                 <X size={10} aria-hidden />
               </button>
@@ -295,17 +285,13 @@ export function ComposerModal({ open, onClose, onSubmit }: ComposerModalProps): 
               onChange={(e) => setTagInput(e.target.value)}
               onKeyDown={handleTagKeyDown}
               onBlur={commitTag}
-              placeholder='tag…'
+              placeholder={t('memory.archive.composer.tagPlaceholder')}
               data-testid='composer-tag-input'
               autoFocus
             />
           ) : (
-            <button
-              className={styles.addTagBtn}
-              onClick={() => setAddingTag(true)}
-              data-testid='composer-add-tag-btn'
-            >
-              + {t('archive.composer.addTag', 'Add tag')}
+            <button className={styles.addTagBtn} onClick={() => setAddingTag(true)} data-testid='composer-add-tag-btn'>
+              + {t('memory.archive.composer.addTag')}
             </button>
           )}
         </div>
@@ -318,21 +304,17 @@ export function ComposerModal({ open, onClose, onSubmit }: ComposerModalProps): 
           onDrop={handleDrop}
           data-testid='composer-drop-zone'
           role='region'
-          aria-label={t('archive.composer.dropZoneLabel', 'Drop a file to ingest')}
+          aria-label={t('memory.archive.composer.dropZoneLabel')}
         >
-          {t('archive.composer.dropZone', 'or drop a file to ingest')}
+          {t('memory.archive.composer.dropZone')}
         </div>
 
         {/* ---- Footer ---- */}
         <div className={styles.footer}>
-          <span className={styles.footerHint}>⌘↵ {t('archive.composer.hint', 'to Remember')}</span>
+          <span className={styles.footerHint}>⌘↵ {t('memory.archive.composer.hint')}</span>
           <div className={styles.footerActions}>
-            <Button
-              onClick={onClose}
-              disabled={submitting}
-              data-testid='composer-cancel-btn'
-            >
-              {t('common.cancel', 'Cancel')}
+            <Button onClick={onClose} disabled={submitting} data-testid='composer-cancel-btn'>
+              {t('common.cancel')}
             </Button>
             <Button
               type='primary'
@@ -342,7 +324,7 @@ export function ComposerModal({ open, onClose, onSubmit }: ComposerModalProps): 
               data-testid='composer-submit-btn'
               className={styles.submitBtn}
             >
-              {t('archive.composer.submit', 'Remember')}
+              {t('memory.archive.composer.submit')}
             </Button>
           </div>
         </div>

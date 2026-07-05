@@ -7,7 +7,7 @@ steps:
     estSeconds: 30
     autoCompletedByInstall: true
     body: |
-      Wayland fetches `postgres-mcp` from PyPI via `uvx` on first launch -
+      Дархай fetches `postgres-mcp` from PyPI via `uvx` on first launch -
       no manual install needed. The server defaults to **restricted /
       read-only** mode: it opens read-only transactions and parses SQL to
       block writes at the application layer.
@@ -35,15 +35,15 @@ steps:
       **Recommended: create a dedicated read-only role first.** From `psql`:
 
       ```
-      CREATE ROLE wayland_ro LOGIN PASSWORD 'changeme';
-      GRANT CONNECT ON DATABASE mydb TO wayland_ro;
-      GRANT USAGE ON SCHEMA public TO wayland_ro;
-      GRANT SELECT ON ALL TABLES IN SCHEMA public TO wayland_ro;
+      CREATE ROLE darhai_ro LOGIN PASSWORD 'changeme';
+      GRANT CONNECT ON DATABASE mydb TO darhai_ro;
+      GRANT USAGE ON SCHEMA public TO darhai_ro;
+      GRANT SELECT ON ALL TABLES IN SCHEMA public TO darhai_ro;
       ALTER DEFAULT PRIVILEGES IN SCHEMA public
-        GRANT SELECT ON TABLES TO wayland_ro;
+        GRANT SELECT ON TABLES TO darhai_ro;
       ```
 
-      Then put `wayland_ro` in the connection string. Defense in depth: the
+      Then put `darhai_ro` in the connection string. Defense in depth: the
       server blocks writes *and* the role can't perform them.
 ---
 

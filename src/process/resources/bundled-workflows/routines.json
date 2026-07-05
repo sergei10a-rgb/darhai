@@ -7,8 +7,8 @@
     "timezone": "local",
     "workflow": "wayland-launch-status-batch",
     "inputs": {
-      "active_launch_path": "~/wayland/state/active-launch.yaml",
-      "data_dirs": "~/wayland/inbox/sales,~/wayland/inbox/ads,~/wayland/inbox/support"
+      "active_launch_path": "~/darhai/state/active-launch.yaml",
+      "data_dirs": "~/darhai/inbox/sales,~/darhai/inbox/ads,~/darhai/inbox/support"
     }
   },
   {
@@ -19,7 +19,7 @@
     "timezone": "local",
     "workflow": "wayland-listing-audit-pick",
     "inputs": {
-      "inventory_path": "~/wayland/commerce/inventory.csv",
+      "inventory_path": "~/darhai/commerce/inventory.csv",
       "pick_strategy": "lowest_conversion"
     }
   },
@@ -31,8 +31,8 @@
     "timezone": "local",
     "workflow": "wayland-content-batch-process",
     "inputs": {
-      "briefs_dir": "~/wayland/inbox/content-briefs/",
-      "voice_profile_path": "~/wayland/voice-notes.md"
+      "briefs_dir": "~/darhai/inbox/content-briefs/",
+      "voice_profile_path": "~/darhai/voice-notes.md"
     }
   },
   {
@@ -43,8 +43,8 @@
     "timezone": "local",
     "workflow": "wayland-bullshit-clean-batch",
     "inputs": {
-      "copy_dir": "~/wayland/inbox/copy/",
-      "voice_profile_path": "~/wayland/voice-notes.md"
+      "copy_dir": "~/darhai/inbox/copy/",
+      "voice_profile_path": "~/darhai/voice-notes.md"
     }
   },
   {
@@ -55,8 +55,8 @@
     "timezone": "local",
     "workflow": "wayland-cashflow-batch-review",
     "inputs": {
-      "bank_csv_dir": "~/wayland/inbox/finance/bank/",
-      "forecast_path": "~/wayland/finance/active-forecast.md"
+      "bank_csv_dir": "~/darhai/inbox/finance/bank/",
+      "forecast_path": "~/darhai/finance/active-forecast.md"
     }
   },
   {
@@ -67,8 +67,8 @@
     "timezone": "local",
     "workflow": "wayland-budget-variance-check",
     "inputs": {
-      "actuals_dir": "~/wayland/inbox/finance/",
-      "budget_path": "~/wayland/finance/active-budget.md"
+      "actuals_dir": "~/darhai/inbox/finance/",
+      "budget_path": "~/darhai/finance/active-budget.md"
     }
   },
   {
@@ -79,8 +79,8 @@
     "timezone": "local",
     "workflow": "wayland-competitor-watch",
     "inputs": {
-      "competitor_list_path": "~/wayland/marketing/competitors.yaml",
-      "last_scan_path": "~/wayland/outbox/marketing/last-competitor-scan.md"
+      "competitor_list_path": "~/darhai/marketing/competitors.yaml",
+      "last_scan_path": "~/darhai/outbox/marketing/last-competitor-scan.md"
     }
   },
   {
@@ -91,8 +91,8 @@
     "timezone": "local",
     "workflow": "business-ops-weekly-review",
     "inputs": {
-      "data_dirs": "~/wayland/inbox/finance,~/wayland/inbox/sales,~/wayland/inbox/support",
-      "prior_review_path": "~/wayland/outbox/ops/last-weekly-review.md"
+      "data_dirs": "~/darhai/inbox/finance,~/darhai/inbox/sales,~/darhai/inbox/support",
+      "prior_review_path": "~/darhai/outbox/ops/last-weekly-review.md"
     }
   },
   {
@@ -103,8 +103,8 @@
     "timezone": "local",
     "workflow": "business-ops-monthly-review",
     "inputs": {
-      "data_dirs": "~/wayland/inbox/finance,~/wayland/inbox/sales,~/wayland/inbox/support",
-      "prior_review_path": "~/wayland/outbox/ops/last-monthly-review.md"
+      "data_dirs": "~/darhai/inbox/finance,~/darhai/inbox/sales,~/darhai/inbox/support",
+      "prior_review_path": "~/darhai/outbox/ops/last-monthly-review.md"
     }
   },
   {
@@ -115,8 +115,8 @@
     "timezone": "local",
     "workflow": "wayland-batch-investor-update",
     "inputs": {
-      "data_dir": "~/wayland/inbox/monthly-data/",
-      "prior_update_path": "~/wayland/outbox/investor-updates/last.md"
+      "data_dir": "~/darhai/inbox/monthly-data/",
+      "prior_update_path": "~/darhai/outbox/investor-updates/last.md"
     }
   },
   {
@@ -127,7 +127,7 @@
     "timezone": "local",
     "workflow": "wayland-pipeline-batch-review",
     "inputs": {
-      "pipeline_dir": "~/wayland/inbox/sales/",
+      "pipeline_dir": "~/darhai/inbox/sales/",
       "stuck_threshold_days": "14"
     }
   },
@@ -139,8 +139,8 @@
     "timezone": "local",
     "workflow": "wayland-support-week-batch",
     "inputs": {
-      "tickets_dir": "~/wayland/inbox/support/",
-      "sla_targets_path": "~/wayland/support/sla-targets.yaml"
+      "tickets_dir": "~/darhai/inbox/support/",
+      "sla_targets_path": "~/darhai/support/sla-targets.yaml"
     }
   }
 ]

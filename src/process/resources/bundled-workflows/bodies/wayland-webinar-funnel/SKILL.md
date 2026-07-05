@@ -14,7 +14,7 @@ license: Apache-2.0
 type: workflow
 skills: "sales-icp funnels-conviction-webinar convert-webinar-reg-page funnels-story-drip funnels-cart-cycle-launch"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: marketing funnels webinar conviction step-by-step high-ticket
   category: marketing

@@ -3,13 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Message } from '@arco-design/web-react';
 import { Check, ExternalLink } from 'lucide-react';
-import {
-  useMcpServers,
-  useMcpAgentStatus,
-  useMcpOperations,
-  useMcpOAuth,
-  useMcpServerCRUD,
-} from '@renderer/hooks/mcp';
+import { useMcpServers, useMcpAgentStatus, useMcpOperations, useMcpOAuth, useMcpServerCRUD } from '@renderer/hooks/mcp';
 import { openExternalUrl } from '@renderer/utils/platform';
 import type { IMcpServer, IMcpServerTransport } from '@/common/config/storage';
 import { useMcpLibrary } from './hooks/useMcpLibrary';
@@ -45,7 +39,7 @@ function normalizeRemoteType(t: string): 'sse' | 'http' | 'streamable_http' {
 
 function entryToServerData(
   entry: CatalogEntry,
-  envValues: Record<string, string>,
+  envValues: Record<string, string>
 ): Omit<IMcpServer, 'id' | 'createdAt' | 'updatedAt'> {
   const pkg = entry.packages.length > 0 ? entry.packages[0] : undefined;
   const remote = entry.remotes && entry.remotes.length > 0 ? entry.remotes[0] : undefined;
@@ -110,19 +104,13 @@ export function DetailPage() {
     syncMcpToAgents,
     removeMcpFromAgents,
     checkSingleServerInstallStatus,
-    setAgentInstallStatus,
+    setAgentInstallStatus
   );
 
   const entry = useMemo(() => library.getEntry(id), [library, id]);
-  const guide = useMemo(
-    () => (entry?.['x-wayland'].setupGuide ? library.getGuide(id) : null),
-    [library, id, entry],
-  );
+  const guide = useMemo(() => (entry?.['x-wayland'].setupGuide ? library.getGuide(id) : null), [library, id, entry]);
   const installed = mcpServers.some((s) => s.libraryEntryId === id);
-  const installedServer = useMemo(
-    () => mcpServers.find((s) => s.libraryEntryId === id),
-    [mcpServers, id],
-  );
+  const installedServer = useMemo(() => mcpServers.find((s) => s.libraryEntryId === id), [mcpServers, id]);
 
   const [tab, setTab] = useState<Tab>('setup-guide');
   const [env, setEnv] = useState<Record<string, string>>({});
@@ -133,7 +121,7 @@ export function DetailPage() {
     redirectUri: string;
   }>({ visible: false, server: null, redirectUri: 'http://localhost:57000/oauth/callback' });
 
-  if (!entry) return <div className="mcp-detail-page">Unknown entry: {id}</div>;
+  if (!entry) return <div className='mcp-detail-page'>Unknown entry: {id}</div>;
 
   const w = entry['x-wayland'];
 
@@ -146,21 +134,19 @@ export function DetailPage() {
         message.error(
           t('mcpLibrary.install.errorFailed', 'Install failed: {{error}}', {
             error: 'unknown',
-          }),
+          })
         );
         return null;
       }
       message.success(
         t('mcpLibrary.install.successAdded', '{{name}} added to library.', {
           name: entry.title,
-        }),
+        })
       );
       return newServer;
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      message.error(
-        t('mcpLibrary.install.errorFailed', 'Install failed: {{error}}', { error: msg }),
-      );
+      message.error(t('mcpLibrary.install.errorFailed', 'Install failed: {{error}}', { error: msg }));
       return null;
     } finally {
       setInstalling(false);
@@ -216,7 +202,7 @@ export function DetailPage() {
     message.error(
       t('mcpLibrary.install.oauthFailed', 'Authorization failed: {{error}}', {
         error: (result.success === false && result.error) || 'unknown',
-      }),
+      })
     );
   };
 
@@ -232,7 +218,7 @@ export function DetailPage() {
       message.error(
         t('mcpLibrary.byo.saveFailed', 'Failed to save credentials: {{error}}', {
           error: saveResult.error ?? 'unknown',
-        }),
+        })
       );
       return;
     }
@@ -240,9 +226,7 @@ export function DetailPage() {
 
     // Persist via the renderer cache too so the next pageload sees byoOAuth
     // without waiting for a useMcpServers re-mount.
-    await saveMcpServers((prev) =>
-      prev.map((s) => (s.id === saveResult.server!.id ? saveResult.server! : s)),
-    );
+    await saveMcpServers((prev) => prev.map((s) => (s.id === saveResult.server!.id ? saveResult.server! : s)));
 
     const retryResult = await login(saveResult.server);
     if (retryResult.success === true) {
@@ -252,7 +236,7 @@ export function DetailPage() {
     message.error(
       t('mcpLibrary.install.oauthFailed', 'Authorization failed: {{error}}', {
         error: (retryResult.success === false && retryResult.error) || 'unknown',
-      }),
+      })
     );
   };
 
@@ -283,34 +267,31 @@ export function DetailPage() {
   // After install + (for OAuth entries) successful auth, surface a clear
   // "you're done" banner so the user knows the setup is complete.
   const isOauth = w.auth.method === 'oauth2-byo';
-  const isReady = installed && (!isOauth || (installedServer?.enabled === true && oauthStatus[installedServer.id]?.needsLogin !== true));
+  const isReady =
+    installed &&
+    (!isOauth || (installedServer?.enabled === true && oauthStatus[installedServer.id]?.needsLogin !== true));
 
   return (
-    <div className="mcp-detail-page">
+    <div className='mcp-detail-page'>
       {contextHolder}
-      <button
-        className="mcp-back"
-        onClick={() => navigate('/settings/mcp-library/browse')}
-      >
+      <button className='mcp-back' onClick={() => navigate('/settings/mcp-library/browse')}>
         ← MCP Library
       </button>
 
-      <header className="mcp-detail-head">
-        {safeUrl(w.iconUrl) && (
-          <img className="mcp-detail-logo" src={safeUrl(w.iconUrl)} alt="" />
-        )}
+      <header className='mcp-detail-head'>
+        {safeUrl(w.iconUrl) && <img className='mcp-detail-logo' src={safeUrl(w.iconUrl)} alt='' />}
         <div>
           <h1>{entry.title}</h1>
           {w.verifiedAt && (
-            <span className="mcp-verified-pill">
-              <Check size={12} /> Wayland verified
+            <span className='mcp-verified-pill'>
+              <Check size={12} /> {t('mcpLibrary.verifiedPill', { defaultValue: 'Darhai verified' })}
             </span>
           )}
-          <div className="mcp-detail-pub">
+          <div className='mcp-detail-pub'>
             {safeUrl(entry.websiteUrl) ? (
               <button
-                type="button"
-                className="mcp-link-button"
+                type='button'
+                className='mcp-link-button'
                 onClick={() => {
                   const u = safeUrl(entry.websiteUrl);
                   if (u) void openExternalUrl(u);
@@ -323,11 +304,11 @@ export function DetailPage() {
             )}{' '}
             · v{entry.version} · {w.license ?? '-'}
           </div>
-          <p className="mcp-detail-tagline">{entry.description}</p>
+          <p className='mcp-detail-tagline'>{entry.description}</p>
         </div>
-        <div className="mcp-detail-actions">
+        <div className='mcp-detail-actions'>
           <button
-            className="mcp-btn-primary"
+            className='mcp-btn-primary'
             onClick={() => void install()}
             disabled={installed || installing || oauthInFlight}
           >
@@ -335,8 +316,8 @@ export function DetailPage() {
           </button>
           {safeUrl(entry.websiteUrl) && (
             <button
-              type="button"
-              className="mcp-btn"
+              type='button'
+              className='mcp-btn'
               onClick={() => {
                 const u = safeUrl(entry.websiteUrl);
                 if (u) void openExternalUrl(u);
@@ -348,48 +329,42 @@ export function DetailPage() {
         </div>
       </header>
 
-      <div className="mcp-tabs">
-        {(['overview', 'setup-guide', 'tools', 'permissions', 'changelog'] as Tab[]).map(
-          (tabKey) => (
-            <button
-              key={tabKey}
-              className={`mcp-tab ${tab === tabKey ? 'is-active' : ''}`}
-              onClick={() => setTab(tabKey)}
-            >
-              {tabKey.replace('-', ' ').replace(/^./, (c) => c.toUpperCase())}
-            </button>
-          ),
-        )}
+      <div className='mcp-tabs'>
+        {(['overview', 'setup-guide', 'tools', 'permissions', 'changelog'] as Tab[]).map((tabKey) => (
+          <button
+            key={tabKey}
+            className={`mcp-tab ${tab === tabKey ? 'is-active' : ''}`}
+            onClick={() => setTab(tabKey)}
+          >
+            {tabKey.replace('-', ' ').replace(/^./, (c) => c.toUpperCase())}
+          </button>
+        ))}
       </div>
 
-      <div className="mcp-detail-body">
+      <div className='mcp-detail-body'>
         {tab === 'setup-guide' && guide && (
           <>
             {isReady && (
-              <div className="mcp-setup-success" role="status">
+              <div className='mcp-setup-success' role='status'>
                 <Check size={16} />
                 <span>
-                  {t(
-                    'mcpLibrary.install.setupComplete',
-                    "{{name}} is connected and ready. Ask any chat to use it.",
-                    { name: entry.title },
-                  )}
+                  {t('mcpLibrary.install.setupComplete', '{{name}} is connected and ready. Ask any chat to use it.', {
+                    name: entry.title,
+                  })}
                 </span>
               </div>
             )}
             <SetupGuide
               guide={guide}
               envValues={env}
-              onEnvChange={(name, value) =>
-                setEnv((prev) => ({ ...prev, [name]: value }))
-              }
+              onEnvChange={(name, value) => setEnv((prev) => ({ ...prev, [name]: value }))}
               onPrimary={(action) => void onPrimary(action)}
               completedStepIds={completedStepIds}
             />
           </>
         )}
         {tab === 'tools' && (
-          <ul className="mcp-tool-groups">
+          <ul className='mcp-tool-groups'>
             {w.toolGroups?.map((g) => (
               <li key={g.label}>
                 <b>{g.label}</b> · {g.count} tools
@@ -398,7 +373,7 @@ export function DetailPage() {
           </ul>
         )}
         {tab === 'permissions' && w.auth.scopes && (
-          <ul className="mcp-scope-list">
+          <ul className='mcp-scope-list'>
             {w.auth.scopes.map((s) => (
               <li key={s.name}>
                 <code>{s.name}</code> - {s.plainLanguage}
@@ -407,17 +382,13 @@ export function DetailPage() {
           </ul>
         )}
         {tab === 'overview' && (
-          <div className="mcp-overview">
+          <div className='mcp-overview'>
             <div>
               <TierBadge tier={w.tier} /> <MaintainerBadge type={w.maintainerType} />
             </div>
             <dl>
               <dt>Transport</dt>
-              <dd>
-                {entry.packages[0]?.transport.type ??
-                  entry.remotes?.[0]?.type ??
-                  '-'}
-              </dd>
+              <dd>{entry.packages[0]?.transport.type ?? entry.remotes?.[0]?.type ?? '-'}</dd>
               <dt>Runtime</dt>
               <dd>{entry.packages[0]?.runtimeHint ?? 'hosted'}</dd>
               <dt>Platforms</dt>

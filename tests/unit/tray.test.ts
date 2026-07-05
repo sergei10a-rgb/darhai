@@ -193,7 +193,7 @@ describe('tray module', () => {
 
       createOrUpdateTray();
 
-      expect(mockTrayInstance.setToolTip).toHaveBeenCalledWith('Wayland');
+      expect(mockTrayInstance.setToolTip).toHaveBeenCalledWith('Дархай');
     });
 
     it('should be idempotent - second call does not create another tray', async () => {

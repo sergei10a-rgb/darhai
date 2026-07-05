@@ -5,8 +5,8 @@ import { Button, Select, Spin } from '@arco-design/web-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { iconColors } from '@/renderer/styles/colors';
-import WaylandSteps from '@/renderer/components/base/WaylandSteps';
-import WaylandModal from '@/renderer/components/base/WaylandModal';
+import DarhaiSteps from '@/renderer/components/base/DarhaiSteps';
+import DarhaiModal from '@/renderer/components/base/DarhaiModal';
 
 interface OneClickImportModalProps {
   visible: boolean;
@@ -182,7 +182,9 @@ const OneClickImportModal: React.FC<OneClickImportModalProps> = ({ visible, onCa
               <div
                 key={index}
                 className='p-3'
-                style={index < importableServers.length - 1 ? { borderBottom: '1px solid var(--color-border-1)' } : undefined}
+                style={
+                  index < importableServers.length - 1 ? { borderBottom: '1px solid var(--color-border-1)' } : undefined
+                }
               >
                 <div className='font-medium text-t-primary'>{server.name}</div>
                 {server.description && <div className='text-sm text-t-secondary mt-1'>{server.description}</div>}
@@ -212,7 +214,9 @@ const OneClickImportModal: React.FC<OneClickImportModalProps> = ({ visible, onCa
               <div
                 key={index}
                 className='p-3'
-                style={index < importableServers.length - 1 ? { borderBottom: '1px solid var(--color-border-1)' } : undefined}
+                style={
+                  index < importableServers.length - 1 ? { borderBottom: '1px solid var(--color-border-1)' } : undefined
+                }
               >
                 <div className='font-medium text-t-primary'>{server.name}</div>
                 {server.description && <div className='text-sm text-t-secondary mt-1'>{server.description}</div>}
@@ -271,7 +275,7 @@ const OneClickImportModal: React.FC<OneClickImportModalProps> = ({ visible, onCa
   );
 
   return (
-    <WaylandModal
+    <DarhaiModal
       header={{ title: t('settings.mcpOneKeyImport'), showClose: true }}
       visible={visible}
       onCancel={onCancel}
@@ -289,17 +293,17 @@ const OneClickImportModal: React.FC<OneClickImportModalProps> = ({ visible, onCa
         <div className='mb-6 text-t-secondary text-sm'>{t('settings.mcpImportDescription')}</div>
 
         <div className='mb-6'>
-          <WaylandSteps current={currentStep} size='small'>
-            <WaylandSteps.Step
+          <DarhaiSteps current={currentStep} size='small'>
+            <DarhaiSteps.Step
               title={t('settings.mcpStepSelectAgent')}
               icon={currentStep > 1 ? <Check size={16} color='rgb(var(--primary-6))' /> : undefined}
             />
-            <WaylandSteps.Step
+            <DarhaiSteps.Step
               title={t('settings.mcpStepFetchTools')}
               icon={currentStep > 2 ? <Check size={16} color='rgb(var(--primary-6))' /> : undefined}
             />
-            <WaylandSteps.Step title={t('settings.mcpStepImportSuccess')} />
-          </WaylandSteps>
+            <DarhaiSteps.Step title={t('settings.mcpStepImportSuccess')} />
+          </DarhaiSteps>
         </div>
 
         <div className={`mb-6 flex-1 overflow-y-auto ${currentStep === 1 ? 'min-h-[60px]' : 'min-h-[180px]'}`}>
@@ -308,7 +312,7 @@ const OneClickImportModal: React.FC<OneClickImportModalProps> = ({ visible, onCa
           {currentStep === 3 && renderStep3()}
         </div>
       </div>
-    </WaylandModal>
+    </DarhaiModal>
   );
 };
 

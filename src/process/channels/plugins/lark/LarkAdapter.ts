@@ -36,7 +36,7 @@ export const LARK_MESSAGE_LIMIT = 4000;
  * resolved or configured. Exported so plugin tests can assert against the
  * exact constant rather than a magic string.
  */
-export const DEFAULT_DISPLAY_NAME = 'Wayland Core Assistant';
+export const DEFAULT_DISPLAY_NAME = 'Darhai Core Assistant';
 
 /**
  * Inbound message types we know how to convert into IUnifiedIncomingMessage

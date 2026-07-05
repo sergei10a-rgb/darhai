@@ -72,8 +72,8 @@ export class ClientFactory {
           baseURL: baseUrl,
           timeout: options.timeout,
           defaultHeaders: {
-            'HTTP-Referer': 'https://getwayland.com',
-            'X-Title': 'Wayland',
+            'HTTP-Referer': 'https://github.com/sergei10a-rgb/darhai',
+            'X-Title': 'Darhai',
           },
           ...(options.baseConfig as OpenAIClientConfig),
         };
@@ -124,8 +124,8 @@ export class ClientFactory {
           baseURL: baseUrl,
           timeout: options.timeout,
           defaultHeaders: {
-            'HTTP-Referer': 'https://getwayland.com',
-            'X-Title': 'Wayland',
+            'HTTP-Referer': 'https://github.com/sergei10a-rgb/darhai',
+            'X-Title': 'Darhai',
           },
           ...(options.baseConfig as OpenAIClientConfig),
         };

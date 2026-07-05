@@ -35,6 +35,21 @@ vi.mock('@office-ai/platform', () => ({
   logger: {
     config: (...args: unknown[]) => mocks.loggerConfig(...args),
   },
+  // C1: unmocked imports (e.g. TeamSessionService -> @/common -> ipcBridge)
+  // call buildProvider/buildEmitter through the allowlist wrapper at module
+  // load. These stubs make those calls inert during the unit test.
+  bridge: {
+    buildProvider: vi.fn(() => ({ provider: vi.fn(), invoke: vi.fn() })),
+    buildEmitter: vi.fn(() => ({ emit: vi.fn(), on: vi.fn() })),
+  },
+  storage: {
+    buildStorage: vi.fn(() => ({
+      get: vi.fn(),
+      set: vi.fn(),
+      remove: vi.fn(),
+      clear: vi.fn(),
+    })),
+  },
 }));
 
 vi.mock('@process/agent/AgentRegistry', () => ({

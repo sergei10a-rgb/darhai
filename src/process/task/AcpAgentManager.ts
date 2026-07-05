@@ -8,7 +8,7 @@ import { isCodexAutoApproveMode } from '@/common/types/codex/codexModes';
 import type { SlashCommandItem } from '@/common/chat/slash/types';
 import { transformMessage } from '@/common/chat/chatLib';
 import type { IConfigStorageRefer } from '@/common/config/storage';
-import { WAYLAND_FILES_MARKER } from '@/common/config/constants';
+import { DARHAI_FILES_MARKER } from '@/common/config/constants';
 import type { IResponseMessage } from '@/common/adapter/ipcBridge';
 import { parseError, uuid } from '@/common/utils';
 import type {
@@ -1112,7 +1112,7 @@ ${collectedResponses.join('\n')}`;
         type: 'error',
         conversation_id: this.conversation_id,
         msg_id: v.msg_id,
-        data: 'Permission required. Please open Wayland and confirm the pending request in the conversation panel.',
+        data: 'Permission required. Please open Дархай and confirm the pending request in the conversation panel.',
       });
       return;
     }
@@ -1330,8 +1330,8 @@ ${collectedResponses.join('\n')}`;
 
       if (data.msg_id && data.content) {
         let contentToSend = data.content;
-        if (contentToSend.includes(WAYLAND_FILES_MARKER)) {
-          contentToSend = contentToSend.split(WAYLAND_FILES_MARKER)[0].trimEnd();
+        if (contentToSend.includes(DARHAI_FILES_MARKER)) {
+          contentToSend = contentToSend.split(DARHAI_FILES_MARKER)[0].trimEnd();
         }
 
         // Inject preset rules and skills on first message
@@ -1387,8 +1387,8 @@ ${collectedResponses.join('\n')}`;
         if (!data.hidden && !data.silent) {
           try {
             // Rank against the original user text (not the rules-wrapped / augmented content).
-            const rawUserText = data.content.includes(WAYLAND_FILES_MARKER)
-              ? data.content.split(WAYLAND_FILES_MARKER)[0]
+            const rawUserText = data.content.includes(DARHAI_FILES_MARKER)
+              ? data.content.split(DARHAI_FILES_MARKER)[0]
               : data.content;
             // Skills the user added to this chat from the composer - inject once.
             const pending = await consumePendingSessionSkills(this.conversation_id);

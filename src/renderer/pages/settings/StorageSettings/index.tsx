@@ -29,7 +29,7 @@ const StorageSettings: React.FC = () => {
       title={t('settings.sider.storage')}
       subtitle={t(
         'settings.storagePage.subtitleLine',
-        'Where Wayland keeps your data on disk, plus backup and end-to-end encrypted sync.'
+        'Where Дархай keeps your data on disk, plus backup and end-to-end encrypted sync.'
       )}
     >
       <UsageCard />

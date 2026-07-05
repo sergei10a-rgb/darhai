@@ -118,7 +118,7 @@ export class SynologyChatPlugin extends BasePlugin {
     return {
       id: 'wayland-bot',
       username: 'wayland-bot',
-      displayName: 'Wayland Bot',
+      displayName: 'Darhai Bot',
     };
   }
 
@@ -254,7 +254,7 @@ export class SynologyChatPlugin extends BasePlugin {
     }
 
     try {
-      const body = `payload=${encodeURIComponent(JSON.stringify({ text: 'Wayland test connection' }))}`;
+      const body = `payload=${encodeURIComponent(JSON.stringify({ text: 'Darhai test connection' }))}`;
       await doPost(creds.incomingUrl, body, creds.allowInsecureSsl);
       return { success: true, botUsername: 'wayland-bot' };
     } catch (err) {

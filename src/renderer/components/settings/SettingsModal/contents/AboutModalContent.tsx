@@ -53,17 +53,17 @@ const AboutModalContent: React.FC = () => {
   const linkItems: LinkItem[] = [
     {
       title: t('settings.helpDocumentation'),
-      url: 'https://github.com/FerroxLabs/wayland/wiki',
+      url: 'https://github.com/sergei10a-rgb/darhai/wiki',
       icon: <ChevronRight size={16} />,
     },
     {
       title: t('settings.updateLog'),
-      url: 'https://github.com/FerroxLabs/wayland/releases',
+      url: 'https://github.com/sergei10a-rgb/darhai/releases',
       icon: <ChevronRight size={16} />,
     },
     {
       title: t('settings.feedback'),
-      url: 'https://github.com/FerroxLabs/wayland/issues',
+      url: 'https://github.com/sergei10a-rgb/darhai/issues',
       icon: <ChevronRight size={16} />,
     },
     {
@@ -78,7 +78,7 @@ const AboutModalContent: React.FC = () => {
     },
     {
       title: t('settings.officialWebsite'),
-      url: 'https://getwayland.com',
+      url: 'https://github.com/sergei10a-rgb/darhai',
       icon: <ChevronRight size={16} />,
     },
   ];
@@ -108,7 +108,7 @@ const AboutModalContent: React.FC = () => {
               <div
                 className='text-t-primary cursor-pointer hover:text-t-secondary transition-colors p-4px'
                 onClick={() =>
-                  openLink('https://github.com/FerroxLabs/wayland').catch((error) =>
+                  openLink('https://github.com/sergei10a-rgb/darhai').catch((error) =>
                     console.error('Failed to open link:', error)
                   )
                 }

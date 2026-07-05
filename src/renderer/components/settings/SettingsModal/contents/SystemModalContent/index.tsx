@@ -8,7 +8,7 @@ import { FolderSearch } from 'lucide-react';
 import { ipcBridge } from '@/common';
 import type { IStartOnBootStatus } from '@/common/adapter/ipcBridge';
 import { ConfigStorage } from '@/common/config/storage';
-import WaylandScrollArea from '@/renderer/components/base/WaylandScrollArea';
+import DarhaiScrollArea from '@/renderer/components/base/DarhaiScrollArea';
 import LanguageSwitcher from '@/renderer/components/settings/LanguageSwitcher';
 import { AUTO_PREVIEW_OFFICE_FILES_SWR_KEY } from '@/renderer/hooks/system/useAutoPreviewOfficeFilesEnabled';
 import { iconColors } from '@/renderer/styles/colors';
@@ -342,7 +342,7 @@ const SystemModalContent: React.FC = () => {
     <div className='flex flex-col h-full w-full'>
       {modalContextHolder}
 
-      <WaylandScrollArea className='flex-1 min-h-0 pb-16px' disableOverflow={isPageMode}>
+      <DarhaiScrollArea className='flex-1 min-h-0 pb-16px' disableOverflow={isPageMode}>
         <div className='space-y-16px'>
           <div className='px-[12px] md:px-[32px] py-16px bg-[var(--color-bg-2)] border-2 border-solid border-[var(--color-border-2)] rd-12px space-y-12px'>
             {updateChannelStatus && !updateChannelStatus.available && (
@@ -436,7 +436,7 @@ const SystemModalContent: React.FC = () => {
           {/* Developer settings: DevTools + CDP (only visible in dev mode) */}
           <DevSettings />
         </div>
-      </WaylandScrollArea>
+      </DarhaiScrollArea>
     </div>
   );
 };

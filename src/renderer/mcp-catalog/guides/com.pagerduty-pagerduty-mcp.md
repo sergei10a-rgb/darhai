@@ -7,7 +7,7 @@ steps:
     estSeconds: 30
     autoCompletedByInstall: true
     body: |
-      Wayland fetches `pagerduty-mcp` from PyPI via `uvx` on first launch -
+      Дархай fetches `pagerduty-mcp` from PyPI via `uvx` on first launch -
       no manual install needed. The server runs locally in stdio mode and
       talks to PagerDuty's REST API using the user token you paste in the
       next step. If the server fails to start later, reinstall from this
@@ -29,7 +29,7 @@ steps:
       3. Open the **User Settings** tab.
       4. Scroll to the **API Access** section and click
          **Create API User Token**.
-      5. Give it a description like *Wayland*, click **Create Token**, and
+      5. Give it a description like *Darhai*, click **Create Token**, and
          copy the value - PagerDuty only shows it once.
       6. Paste the token into `PAGERDUTY_USER_API_KEY` above.
 

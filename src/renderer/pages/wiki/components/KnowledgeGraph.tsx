@@ -74,7 +74,7 @@ function computePositions(concepts: WikiConcept[]): NodePosition[] {
 
 function computeEdges(
   positions: NodePosition[],
-  backlinkGraph: Record<string, string[]>,
+  backlinkGraph: Record<string, string[]>
 ): Array<{ x1: number; y1: number; x2: number; y2: number }> {
   const posMap = new Map(positions.map((p) => [p.concept.slug, p]));
   const edges: Array<{ x1: number; y1: number; x2: number; y2: number }> = [];
@@ -84,7 +84,7 @@ function computeEdges(
     const fromPos = posMap.get(from);
     if (!fromPos) continue;
     for (const to of tos) {
-      const key = [from, to].sort().join('--');
+      const key = [from, to].toSorted().join('--');
       if (seen.has(key)) continue;
       seen.add(key);
       const toPos = posMap.get(to);
@@ -102,12 +102,8 @@ export type KnowledgeGraphProps = {
   onNavigate?: (slug: string) => void;
 };
 
-export function KnowledgeGraph({
-  concepts,
-  backlinkGraph = {},
-  onNavigate,
-}: KnowledgeGraphProps): React.ReactElement {
-  const { t } = useTranslation('memory');
+export function KnowledgeGraph({ concepts, backlinkGraph = {}, onNavigate }: KnowledgeGraphProps): React.ReactElement {
+  const { t } = useTranslation();
   const [hovered, setHovered] = useState<string | null>(null);
 
   const positions = computePositions(concepts);
@@ -122,7 +118,7 @@ export function KnowledgeGraph({
           className={styles.svg}
           viewBox='0 0 1200 600'
           xmlns='http://www.w3.org/2000/svg'
-          aria-label='Knowledge graph'
+          aria-label={t('memory.wiki.graphLabel')}
         >
           {/* Grid background */}
           <defs>
@@ -135,16 +131,7 @@ export function KnowledgeGraph({
 
           {/* Edges */}
           {edges.map((e, i) => (
-            <line
-              key={i}
-              x1={e.x1}
-              y1={e.y1}
-              x2={e.x2}
-              y2={e.y2}
-              stroke='#2E3238'
-              strokeWidth='1.5'
-              opacity='0.7'
-            />
+            <line key={i} x1={e.x1} y1={e.y1} x2={e.x2} y2={e.y2} stroke='#2E3238' strokeWidth='1.5' opacity='0.7' />
           ))}
 
           {/* Nodes */}
@@ -161,14 +148,7 @@ export function KnowledgeGraph({
                 onMouseLeave={() => setHovered(null)}
                 onClick={() => onNavigate?.(concept.slug)}
               />
-              <text
-                x={x}
-                y={y + 3}
-                textAnchor='middle'
-                fontSize='7'
-                fill='white'
-                pointerEvents='none'
-              >
+              <text x={x} y={y + 3} textAnchor='middle' fontSize='7' fill='white' pointerEvents='none'>
                 {concept.name.slice(0, 12)}
               </text>
               {/* Invisible hit target */}
@@ -197,8 +177,7 @@ export function KnowledgeGraph({
           >
             <strong>{hoveredNode.concept.name}</strong>
             <br />
-            {hoveredNode.concept.sourceMemoryIds.length} sources &middot;{' '}
-            {hoveredNode.concept.topicTag}
+            {hoveredNode.concept.sourceMemoryIds.length} sources &middot; {hoveredNode.concept.topicTag}
           </div>
         )}
       </div>

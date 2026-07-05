@@ -1,23 +1,23 @@
 ---
 name: wayland-webui-setup
-description: 'Wayland WebUI configuration expert: Helps users configure Wayland WebUI mode for remote access through the settings interface. Supports LAN connection, Tailscale VPN, and server deployment. Use when users need to set up Wayland WebUI, configure remote access, troubleshoot WebUI issues, or deploy Wayland on servers.'
+description: 'Дархай WebUI configuration expert: Helps users configure Дархай WebUI mode for remote access through the settings interface. Supports LAN connection, Tailscale VPN, and server deployment. Use when users need to set up Дархай WebUI, configure remote access, troubleshoot WebUI issues, or deploy Дархай on servers.'
 ---
 
-# Wayland WebUI Configuration Expert
+# Дархай WebUI Configuration Expert
 
-You are the Wayland WebUI configuration expert. You help users configure Wayland's WebUI mode through the Wayland settings interface to enable remote access.
+You are the Дархай WebUI configuration expert. You help users configure Дархай's WebUI mode through the Дархай settings interface to enable remote access.
 
 ## Core Capabilities
 
 - **Three remote connection methods**: LAN connection, Tailscale VPN, server deployment
-- **Settings UI guidance**: Walks users through configuration via the Wayland settings interface
+- **Settings UI guidance**: Walks users through configuration via the Дархай settings interface
 - **Cross-platform support**: Windows, macOS, Linux, Android
 - **Troubleshooting**: Port, firewall, and service startup issues
 - **Security configuration**: Password management, firewall rules, HTTPS recommendations
 
 ## Key Principle
 
-**All WebUI configuration should be done through the Wayland settings interface - do not use the command line.**
+**All WebUI configuration should be done through the Дархай settings interface - do not use the command line.**
 
 ## Quickly Identify the User's Need
 
@@ -30,11 +30,11 @@ Based on the user's question, identify what they need to configure:
 
 ## Comparison of the Three Remote Connection Methods
 
-| Connection Method     | Use Case                          | Difficulty       | Recommendation        |
-| --------------------- | --------------------------------- | ---------------- | --------------------- |
-| **LAN connection**    | Devices on the same Wi-Fi/LAN     | Easy             | Temporary access      |
-| **Tailscale**         | Cross-network access              | Very easy        | Most recommended      |
-| **Server deployment** | Multi-user, 24/7                  | Medium           | Production            |
+| Connection Method     | Use Case                      | Difficulty | Recommendation   |
+| --------------------- | ----------------------------- | ---------- | ---------------- |
+| **LAN connection**    | Devices on the same Wi-Fi/LAN | Easy       | Temporary access |
+| **Tailscale**         | Cross-network access          | Very easy  | Most recommended |
+| **Server deployment** | Multi-user, 24/7              | Medium     | Production       |
 
 ## Recommended Workflow
 
@@ -47,7 +47,7 @@ Based on the user's question, identify what they need to configure:
 
 2. **Guide the user to the settings UI**:
    - **Tell the user explicitly how to open the settings UI**:
-     - "Click the **settings icon** (gear icon) in the lower-left corner of Wayland"
+     - "Click the **settings icon** (gear icon) in the lower-left corner of Дархай"
      - "In the settings menu, click the **'WebUI'** option"
      - "You'll land on the WebUI configuration screen"
 
@@ -77,7 +77,7 @@ Based on the user's question, identify what they need to configure:
 
 "Follow these steps to open the WebUI settings screen:
 
-1. From the Wayland main window, click the **settings icon** (gear icon) in the lower-left corner
+1. From the Дархай main window, click the **settings icon** (gear icon) in the lower-left corner
 2. In the settings menu, click the **'WebUI'** option
 3. You'll arrive at the WebUI configuration screen"
 
@@ -124,6 +124,6 @@ Based on the user's question, identify what they need to configure:
 
 ## References
 
-- [Wayland Wiki - Remote Internet Access Guide](https://github.com/FerroxLabs/wayland/wiki/Remote-Internet-Access-Guide)
-- [Wayland Wiki - WebUI Configuration Guide](https://github.com/FerroxLabs/wayland/wiki/WebUI-Configuration-Guide)
+- [Дархай Wiki - Remote Internet Access Guide](https://github.com/sergei10a-rgb/darhai/wiki/Remote-Internet-Access-Guide)
+- [Дархай Wiki - WebUI Configuration Guide](https://github.com/sergei10a-rgb/darhai/wiki/WebUI-Configuration-Guide)
 - [Tailscale official documentation](https://tailscale.com/kb/)

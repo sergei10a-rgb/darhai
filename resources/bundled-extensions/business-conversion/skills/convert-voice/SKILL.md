@@ -24,13 +24,13 @@ negative_triggers:
 tags: [conversion, copy, donahoe-method, voice-rules, voice]
 priority: 100
 version: 1.0.0
-author: Wayland Business Pack
+author: Darhai Business Pack
 license: MIT
 metadata:
   wayland:
     related_skills: [convert, convert-bullshit-filter, convert-fingerprint, convert-chute, convert-open, convert-bullets, convert-close, convert-sales-page]
 attribution:
-  lineage: "The Donahoe Method (Wayland-owned operating system); references *Halbert plain-spoken canon (Boron Letters, 1984)*, *Ogilvy 'how to write' rules (Confessions of an Advertising Man, 1963)*, and *Strunk & White brevity doctrine (The Elements of Style, 1918)*"
+  lineage: "The Donahoe Method (Дархай-owned operating system); references *Halbert plain-spoken canon (Boron Letters, 1984)*, *Ogilvy 'how to write' rules (Confessions of an Advertising Man, 1963)*, and *Strunk & White brevity doctrine (The Elements of Style, 1918)*"
 ---
 
 # Convert Voice - The Donahoe Voice Rules
@@ -377,7 +377,7 @@ Voice fixes: first-person, contractions throughout, specific numbers ($4,800, fi
 
 ## Lineage
 
-The Donahoe Voice Rules are part of **The Donahoe Method** (Wayland-owned operating system).
+The Donahoe Voice Rules are part of **The Donahoe Method** (Дархай-owned operating system).
 
 Lineage references:
 - Plain-spoken first-person mandate - *Gary Halbert, the Boron Letters (1984)*: "write like one person to one person"

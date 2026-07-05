@@ -1,4 +1,4 @@
-import WaylandSelect from '@/renderer/components/base/WaylandSelect';
+import DarhaiSelect from '@/renderer/components/base/DarhaiSelect';
 import type { SelectHandle } from '@arco-design/web-react/es/Select/interface';
 import React, { useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -29,13 +29,13 @@ const LanguageSwitcher: React.FC = () => {
 
   return (
     <div className='flex items-center gap-8px'>
-      <WaylandSelect ref={selectRef} className='w-160px' value={i18n.language} onChange={handleLanguageChange}>
+      <DarhaiSelect ref={selectRef} className='w-160px' value={i18n.language} onChange={handleLanguageChange}>
         {LANGUAGE_OPTIONS.map((lang) => (
-          <WaylandSelect.Option key={lang.code} value={lang.code}>
+          <DarhaiSelect.Option key={lang.code} value={lang.code}>
             {lang.label}
-          </WaylandSelect.Option>
+          </DarhaiSelect.Option>
         ))}
-      </WaylandSelect>
+      </DarhaiSelect>
     </div>
   );
 };

@@ -15,29 +15,29 @@ import React from 'react';
  * @example
  * ```tsx
  * // Vertical scroll (default)
- * <WaylandScrollArea className="h-400px">
+ * <DarhaiScrollArea className="h-400px">
  *   <div>Content...</div>
- * </WaylandScrollArea>
+ * </DarhaiScrollArea>
  *
  * // Horizontal scroll
- * <WaylandScrollArea direction="x" className="w-400px">
+ * <DarhaiScrollArea direction="x" className="w-400px">
  *   <div className="whitespace-nowrap">Content...</div>
- * </WaylandScrollArea>
+ * </DarhaiScrollArea>
  *
  * // Both directions
- * <WaylandScrollArea direction="both" className="h-400px w-400px">
+ * <DarhaiScrollArea direction="both" className="h-400px w-400px">
  *   <div>Content...</div>
- * </WaylandScrollArea>
+ * </DarhaiScrollArea>
  * ```
  */
-interface WaylandScrollAreaProps extends React.HTMLAttributes<HTMLDivElement> {
+interface DarhaiScrollAreaProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Scroll direction: y-vertical, x-horizontal, both-bidirectional */
   direction?: 'y' | 'x' | 'both';
   /** Whether to disable scrolling (used for embedded page display) */
   disableOverflow?: boolean;
 }
 
-const WaylandScrollArea: React.FC<WaylandScrollAreaProps> = ({
+const DarhaiScrollArea: React.FC<DarhaiScrollAreaProps> = ({
   children,
   className,
   direction = 'y',
@@ -64,6 +64,6 @@ const WaylandScrollArea: React.FC<WaylandScrollAreaProps> = ({
   );
 };
 
-WaylandScrollArea.displayName = 'WaylandScrollArea';
+DarhaiScrollArea.displayName = 'DarhaiScrollArea';
 
-export default WaylandScrollArea;
+export default DarhaiScrollArea;

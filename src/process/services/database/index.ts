@@ -109,7 +109,7 @@ const extractSearchPreviewText = (rawContent: string): string => {
  * Main database class for Wayland
  * Uses a pluggable ISqliteDriver for SQLite operations
  */
-export class WaylandUIDatabase {
+export class DarhaiUIDatabase {
   private db: ISqliteDriver;
   private readonly defaultUserId = 'system_default_user';
   private readonly systemPasswordPlaceholder = '';
@@ -119,10 +119,10 @@ export class WaylandUIDatabase {
   }
 
   /**
-   * Create a new WaylandUIDatabase instance with corruption recovery.
+   * Create a new DarhaiUIDatabase instance with corruption recovery.
    * This is the only way to obtain an instance - the constructor is private.
    */
-  static async create(dbPath: string): Promise<WaylandUIDatabase> {
+  static async create(dbPath: string): Promise<DarhaiUIDatabase> {
     const dir = path.dirname(dbPath);
     ensureDirectory(dir);
 
@@ -131,7 +131,7 @@ export class WaylandUIDatabase {
     try {
       const driver = await createDriver(dbPath);
       failedDriver = driver;
-      const instance = new WaylandUIDatabase(driver);
+      const instance = new DarhaiUIDatabase(driver);
       instance.initialize();
       return instance;
     } catch (error) {
@@ -200,7 +200,7 @@ export class WaylandUIDatabase {
 
     // Retry with fresh file
     const driver = await createDriver(dbPath);
-    const instance = new WaylandUIDatabase(driver);
+    const instance = new DarhaiUIDatabase(driver);
     instance.initialize();
     return instance;
   }
@@ -271,7 +271,7 @@ export class WaylandUIDatabase {
   }
   /**
    * Expose the underlying SQLite driver for repositories that need raw SQL access.
-   * Prefer using dedicated methods on WaylandUIDatabase where possible.
+   * Prefer using dedicated methods on DarhaiUIDatabase where possible.
    */
   getDriver(): ISqliteDriver {
     return this.db;
@@ -825,9 +825,7 @@ export class WaylandUIDatabase {
     try {
       const finalUserId = userId || this.defaultUserId;
       const rows = this.db
-        .prepare(
-          `SELECT * FROM projects WHERE user_id = ? ORDER BY pinned DESC, pinned_at DESC, updated_at DESC`
-        )
+        .prepare(`SELECT * FROM projects WHERE user_id = ? ORDER BY pinned DESC, pinned_at DESC, updated_at DESC`)
         .all(finalUserId) as IProjectRow[];
       return { success: true, data: rows.map(rowToProject) };
     } catch (error: any) {
@@ -1875,17 +1873,17 @@ export class WaylandUIDatabase {
 }
 
 // Async singleton with Promise cache
-let dbInstancePromise: Promise<WaylandUIDatabase> | null = null;
+let dbInstancePromise: Promise<DarhaiUIDatabase> | null = null;
 // Synchronous reference to the resolved instance - used for safe close on exit
-let dbResolved: WaylandUIDatabase | null = null;
+let dbResolved: DarhaiUIDatabase | null = null;
 
 function resolveDbPath(): string {
   return path.join(getDataPath(), 'wayland.db');
 }
 
-export function getDatabase(): Promise<WaylandUIDatabase> {
+export function getDatabase(): Promise<DarhaiUIDatabase> {
   if (!dbInstancePromise) {
-    dbInstancePromise = WaylandUIDatabase.create(resolveDbPath()).then((db) => {
+    dbInstancePromise = DarhaiUIDatabase.create(resolveDbPath()).then((db) => {
       dbResolved = db;
       return db;
     });

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Simplified build script for Wayland
+ * Simplified build script for Darhai
  * Coordinates electron-vite (bundling) and electron-builder (packaging)
  *
  * Features:
@@ -522,14 +522,15 @@ try {
     const winUnpackedDir = path.join(outDir, 'win-unpacked');
     let cleaned = tryRemoveDir(winUnpackedDir);
     if (!cleaned) {
-      const aionRunning = isProcessRunningWindows('Wayland.exe');
+      // 'Wayland.exe' kept alongside 'Darhai.exe' to catch stale pre-rebrand processes.
+      const appRunning = isProcessRunningWindows('Darhai.exe') || isProcessRunningWindows('Wayland.exe');
       const electronRunning = isProcessRunningWindows('electron.exe');
-      if (aionRunning || electronRunning) {
-        console.log('⚠️  Detected running Wayland/Electron process. Attempting to close...');
-        killWindowsProcesses(['Wayland.exe', 'electron.exe']);
+      if (appRunning || electronRunning) {
+        console.log('⚠️  Detected running Darhai/Electron process. Attempting to close...');
+        killWindowsProcesses(['Darhai.exe', 'Wayland.exe', 'electron.exe']);
         cleaned = tryRemoveDir(winUnpackedDir);
         if (!cleaned) {
-          console.log('⚠️  Directory still locked. Please close any running Wayland/Electron processes and retry.');
+          console.log('⚠️  Directory still locked. Please close any running Darhai/Electron processes and retry.');
         }
       }
     }
@@ -544,7 +545,7 @@ try {
   try {
     buildWithDmgRetry(builderCommand, targetArch);
   } catch (error) {
-    const winExePath = path.join(outDir, 'win-unpacked', 'Wayland.exe');
+    const winExePath = path.join(outDir, 'win-unpacked', 'Darhai.exe');
     const firstError = formatExecError(error);
     const canRetryWithoutExecutableEdit =
       process.platform === 'win32' && isWindowsBuild && process.env.CI !== 'true' && fs.existsSync(winExePath);
@@ -553,7 +554,7 @@ try {
       throw error;
     }
 
-    console.log('⚠️  Windows local build failed after Wayland.exe was produced.');
+    console.log('⚠️  Windows local build failed after Darhai.exe was produced.');
     if (firstError) {
       console.log('   First failure summary:');
       console.log(
@@ -566,7 +567,7 @@ try {
     }
     console.log('   Retrying local build with win.signAndEditExecutable=false...');
     console.log('   This fallback is intended for transient rcedit / file-lock failures on developer machines.');
-    killWindowsProcesses(['Wayland.exe', 'electron.exe']);
+    killWindowsProcesses(['Darhai.exe', 'Wayland.exe', 'electron.exe']);
     cleanupWindowsPackOutput();
 
     try {

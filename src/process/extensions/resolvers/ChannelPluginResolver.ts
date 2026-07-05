@@ -12,7 +12,7 @@ import { isPathWithinDirectory } from '../sandbox/pathSafety';
 import { resolveRuntimeEntryPath } from './utils/entryPointResolver';
 import { toAssetUrl } from '../protocol/assetProtocol';
 
-const DEBUG_ENABLED = process.env.WAYLAND_EXTENSION_DEBUG === '1' || process.env.WAYLAND_EXTENSION_DEBUG === 'true';
+const DEBUG_ENABLED = process.env.DARHAI_EXTENSION_DEBUG === '1' || process.env.DARHAI_EXTENSION_DEBUG === 'true';
 
 function logSecurity(message: string): void {
   if (DEBUG_ENABLED) {

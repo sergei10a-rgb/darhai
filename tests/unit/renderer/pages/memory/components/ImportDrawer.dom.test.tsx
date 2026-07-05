@@ -237,6 +237,6 @@ describe('ImportDrawer', () => {
   it('drop folder card shows folder path', () => {
     render(<ImportDrawer open={true} onClose={vi.fn()} />);
     const pathEl = screen.getByTestId('import-dropfolder-path');
-    expect(pathEl.textContent).toContain('~/Documents/Wayland-Memory/');
+    expect(pathEl.textContent).toContain('~/Documents/Darhai-Memory/');
   });
 });

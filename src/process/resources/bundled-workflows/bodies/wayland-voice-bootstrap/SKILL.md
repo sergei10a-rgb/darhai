@@ -14,7 +14,7 @@ license: Apache-2.0
 type: workflow
 skills: "content-voice-profile content-thought-leadership-post"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: content voice writing onboarding step-by-step profile
   category: marketing

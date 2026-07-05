@@ -14,7 +14,7 @@ license: Apache-2.0
 type: workflow
 skills: "commerce-abandoned-cart"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: commerce ecommerce email retention cart-recovery step-by-step
   category: marketing

@@ -7,7 +7,7 @@ steps:
     estSeconds: 60
     autoCompletedByInstall: true
     body: |
-      Wayland pulls the official `hashicorp/terraform-mcp-server` Docker
+      Дархай pulls the official `hashicorp/terraform-mcp-server` Docker
       image on first launch. Make sure **Docker Desktop** (macOS / Windows)
       or **Docker Engine** (Linux) is installed and running - verify with
       `docker info`.
@@ -30,7 +30,7 @@ steps:
          `app.terraform.io` and click your **avatar** (top right) →
          **Account settings** → left sidebar **Tokens**.
       2. Click **Create an API token**, give it a description like
-         *Wayland MCP*, and pick an expiration. User tokens carry your full
+         *Darhai MCP*, and pick an expiration. User tokens carry your full
          account permissions; for tighter scope, generate a **Team token**
          from your team's settings instead.
       3. Click **Generate token**. HCP Terraform shows the token **once** -
@@ -44,6 +44,6 @@ steps:
 # Terraform setup
 
 HashiCorp ships the Terraform MCP server as the
-`hashicorp/terraform-mcp-server` Docker image. Wayland pulls the image on
+`hashicorp/terraform-mcp-server` Docker image. Дархай pulls the image on
 install - make sure Docker is running. A token is optional but unlocks
 workspace operations on top of registry browsing.

@@ -14,7 +14,7 @@ license: Apache-2.0
 type: workflow
 skills: "legal-employment"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: legal employment offer ip-assignment non-compete step-by-step business-legal
   category: business-legal

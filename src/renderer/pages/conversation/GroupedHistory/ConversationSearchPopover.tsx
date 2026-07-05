@@ -7,7 +7,7 @@
 import { MessageSquare, Search, X } from 'lucide-react';
 import { ipcBridge } from '@/common';
 import type { IMessageSearchItem } from '@/common/types/database';
-import WaylandModal from '@/renderer/components/base/WaylandModal';
+import DarhaiModal from '@/renderer/components/base/DarhaiModal';
 import { usePresetAssistantInfo } from '@/renderer/hooks/agent/usePresetAssistantInfo';
 import { getLucideIcon } from '@/renderer/utils/lucideAvatar';
 import { useOptionalConversationTabs } from '@/renderer/pages/conversation/hooks/ConversationTabsContext';
@@ -483,16 +483,10 @@ const ConversationSearchPopover: React.FC<ConversationSearchPopoverProps> = ({
         >
           {fullWidth ? (
             <span className='w-28px h-28px flex items-center justify-center shrink-0'>
-              <Search size={20}
-                className='block leading-none'
-                style={{ lineHeight: 0 }}
-              />
+              <Search size={20} className='block leading-none' style={{ lineHeight: 0 }} />
             </span>
           ) : (
-            <Search size={20}
-              className='block leading-none shrink-0'
-              style={{ lineHeight: 0 }}
-            />
+            <Search size={20} className='block leading-none shrink-0' style={{ lineHeight: 0 }} />
           )}
           {fullWidth && label ? (
             <span className='collapsed-hidden text-t-primary text-14px font-medium leading-24px'>{label}</span>
@@ -500,7 +494,7 @@ const ConversationSearchPopover: React.FC<ConversationSearchPopoverProps> = ({
         </button>
       )}
 
-      <WaylandModal
+      <DarhaiModal
         visible={visible}
         onCancel={handleClose}
         footer={null}
@@ -544,7 +538,7 @@ const ConversationSearchPopover: React.FC<ConversationSearchPopoverProps> = ({
               type='button'
               className='conversation-search-modal__close-btn'
               onClick={handleClose}
-              aria-label='Close'
+              aria-label={t('common.close')}
             >
               <X size={16} />
             </button>
@@ -565,7 +559,7 @@ const ConversationSearchPopover: React.FC<ConversationSearchPopoverProps> = ({
                   type='button'
                   className='conversation-search-modal__clear-btn'
                   onClick={handleClearKeyword}
-                  aria-label='Clear search'
+                  aria-label={t('common.clearSearch')}
                 >
                   <X size={14} />
                 </button>
@@ -575,7 +569,7 @@ const ConversationSearchPopover: React.FC<ConversationSearchPopoverProps> = ({
 
           <div className='flex-1 min-h-0'>{resultContent}</div>
         </div>
-      </WaylandModal>
+      </DarhaiModal>
     </>
   );
 };

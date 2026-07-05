@@ -13,7 +13,7 @@ import semver from 'semver';
  * Current Wayland extension API version.
  * Increment major for breaking changes, minor for new features, patch for fixes.
  */
-export const WAYLAND_VERSION = getWaylandVersion();
+export const DARHAI_VERSION = getDarhaiVersion();
 export const EXTENSION_API_VERSION = '1.0.0';
 
 /**
@@ -58,7 +58,7 @@ function isUnpackedDevMode(): boolean {
  * Get the Wayland version from package.json.
  * Falls back to '0.0.0' if not available.
  */
-function getWaylandVersion(): string {
+function getDarhaiVersion(): string {
   // Prefer Electron runtime version when available (desktop / packaged mode).
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
@@ -119,10 +119,10 @@ export function validateEngineCompatibility(extension: LoadedExtension): EngineV
 
   // Check Wayland core version compatibility
   if (engine?.wayland) {
-    if (!satisfiesVersion(WAYLAND_VERSION, engine.wayland)) {
+    if (!satisfiesVersion(DARHAI_VERSION, engine.wayland)) {
       result.valid = false;
       result.issues.push(
-        `Extension "${extension.manifest.name}" requires Wayland ${engine.wayland} but current version is ${WAYLAND_VERSION}`
+        `Extension "${extension.manifest.name}" requires Wayland ${engine.wayland} but current version is ${DARHAI_VERSION}`
       );
     }
   }

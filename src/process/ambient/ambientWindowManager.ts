@@ -98,9 +98,9 @@ async function resolveInitialBounds(): Promise<{ x: number; y: number }> {
   // persistence layer is shared with the dev app's userData (`Wayland-Dev/config/`)
   // so a previous local run could leave a non-default `ambient.bubblePosition`
   // that breaks AC-M1-1's "bottom-right on first launch" assertion. Honoring
-  // WAYLAND_E2E_TEST here gives the test suite a clean slate without needing
+  // DARHAI_E2E_TEST here gives the test suite a clean slate without needing
   // sandbox-per-worker userData isolation.
-  const isE2E = process.env['WAYLAND_E2E_TEST'] === '1';
+  const isE2E = process.env['DARHAI_E2E_TEST'] === '1';
   if (!isE2E) {
     try {
       persisted = (await ProcessConfig.get('ambient.bubblePosition')) ?? null;
@@ -163,7 +163,7 @@ export async function createAmbientWindow(): Promise<void> {
     height: BUBBLE_SIZE,
     x,
     y,
-    title: 'Wayland Ambient Bubble',
+    title: 'Дархай Ambient Bubble',
     frame: false,
     transparent: true,
     resizable: false,

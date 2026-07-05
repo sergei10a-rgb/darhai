@@ -24,13 +24,13 @@ negative_triggers:
 tags: [conversion, page, above-fold, hero, donahoe-method, four-layer-open, visual]
 priority: 80
 version: 1.0.0
-author: Wayland Business Pack
+author: Darhai Business Pack
 license: MIT
 metadata:
   wayland:
     related_skills: [convert, convert-open, convert-sales-page, convert-scroll-rhythm, convert-mobile, convert-proof-stack]
 attribution:
-  lineage: "The Donahoe Method (Wayland-owned operating system); Steve Krug's 5-second comprehension test (2000) and Nielsen Norman Group's Jakob's Law as supporting visual canon"
+  lineage: "The Donahoe Method (Дархай-owned operating system); Steve Krug's 5-second comprehension test (2000) and Nielsen Norman Group's Jakob's Law as supporting visual canon"
 ---
 
 # Convert Above-Fold - Hero Hierarchy Engineered for the Four-Layer Open
@@ -377,7 +377,7 @@ The Open's text continues immediately below the fold. The hero hands off to the 
 
 ## Lineage
 
-- Visual scaffolding for **The Donahoe Method's Four-Layer Open** (Wayland-owned operating system) - every slot serves a layer
+- Visual scaffolding for **The Donahoe Method's Four-Layer Open** (Дархай-owned operating system) - every slot serves a layer
 - *The 5-second comprehension test* (popularized by Steve Krug, 2000)
 - *Jakob's Law* (Nielsen Norman Group) - users prefer hero patterns they already know
 - Z-pattern reading (Nielsen Norman eye-tracking, 2006/2020)

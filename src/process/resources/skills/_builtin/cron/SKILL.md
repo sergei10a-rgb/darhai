@@ -5,7 +5,7 @@ description: Scheduled task management - propose, query, update scheduled tasks.
 
 # Scheduled Task Skill
 
-You can manage scheduled tasks that run at specified times. Wayland renders an inline confirmation card so the user reviews + approves every new task before it's created.
+You can manage scheduled tasks that run at specified times. Дархай renders an inline confirmation card so the user reviews + approves every new task before it's created.
 
 ## IMPORTANT RULES
 

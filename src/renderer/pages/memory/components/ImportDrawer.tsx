@@ -15,7 +15,7 @@
  *   1. claude-mem   - imports from ~/.claude-mem/claude-mem.db
  *   2. Obsidian     - detects vault list, user picks one, imports .md files
  *   3. ~/dev scan   - scans dev directory for IJFW memory dirs
- *   4. Drop folder  - ~/Documents/Wayland-Memory/ watcher + one-shot process
+ *   4. Drop folder  - ~/Documents/Darhai-Memory/ watcher + one-shot process
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -66,7 +66,7 @@ export function ImportDrawer({ open, onClose }: ImportDrawerProps): React.ReactE
   const [dropStatus, setDropStatus] = useState<ImportStatus>('idle');
   const [dropCount, setDropCount] = useState<number | null>(null);
 
-  const DROP_FOLDER_PATH = '~/Documents/Wayland-Memory/';
+  const DROP_FOLDER_PATH = '~/Documents/Darhai-Memory/';
 
   // Track mount to avoid setState after unmount
   const mountedRef = useRef(true);

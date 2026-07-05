@@ -14,7 +14,7 @@ license: Apache-2.0
 type: workflow
 skills: "convert-four-questions convert-temperature convert-audit convert-bullshit-filter convert-voice"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: marketing conversion copywriting audit donahoe-method step-by-step
   category: marketing

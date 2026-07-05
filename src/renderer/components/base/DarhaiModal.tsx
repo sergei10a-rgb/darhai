@@ -71,8 +71,8 @@ export interface ModalContentStyleConfig {
   maxHeight?: string | number;
 }
 
-/** WaylandModal component Props */
-export interface WaylandModalProps extends Omit<ModalProps, 'title' | 'footer'> {
+/** DarhaiModal component Props */
+export interface DarhaiModalProps extends Omit<ModalProps, 'title' | 'footer'> {
   children?: React.ReactNode;
 
   /** Preset size, overridden by width/height in style */
@@ -117,17 +117,17 @@ const FOOTER_BASE_CLASS = 'flex-shrink-0 bg-transparent';
  * @example
  * ```tsx
  * // Basic usage
- * <WaylandModal visible={true} onCancel={handleClose} header="Title">
+ * <DarhaiModal visible={true} onCancel={handleClose} header="Title">
  *   Content
- * </WaylandModal>
+ * </DarhaiModal>
  *
  * // Preset size
- * <WaylandModal visible={true} size="large" header="Large Modal">
+ * <DarhaiModal visible={true} size="large" header="Large Modal">
  *   Content
- * </WaylandModal>
+ * </DarhaiModal>
  *
  * // Custom header
- * <WaylandModal
+ * <DarhaiModal
  *   visible={true}
  *   header={{
  *     title: "Custom Title",
@@ -136,10 +136,10 @@ const FOOTER_BASE_CLASS = 'flex-shrink-0 bg-transparent';
  *   }}
  * >
  *   Content
- * </WaylandModal>
+ * </DarhaiModal>
  *
  * // Custom footer
- * <WaylandModal
+ * <DarhaiModal
  *   visible={true}
  *   header="Title"
  *   footer={
@@ -150,7 +150,7 @@ const FOOTER_BASE_CLASS = 'flex-shrink-0 bg-transparent';
  *   }
  * >
  *   Content
- * </WaylandModal>
+ * </DarhaiModal>
  * ```
  */
 const dimensionKeys = ['width', 'minWidth', 'maxWidth', 'height', 'minHeight', 'maxHeight'] as const;
@@ -161,7 +161,7 @@ const formatDimensionValue = (value?: string | number) => {
   return typeof value === 'number' ? `${value}px` : value;
 };
 
-const WaylandModal: React.FC<WaylandModalProps> = ({
+const DarhaiModal: React.FC<DarhaiModalProps> = ({
   children,
   size,
   header,
@@ -292,12 +292,7 @@ const WaylandModal: React.FC<WaylandModalProps> = ({
             <Button onClick={onCancel} className='px-16px min-w-80px' style={{ borderRadius: 8 }}>
               {cancelLabel}
             </Button>
-            <Button
-              type='primary'
-              onClick={props.onOk}
-              loading={props.confirmLoading}
-              className='min-w-80px'
-            >
+            <Button type='primary' onClick={props.onOk} loading={props.confirmLoading} className='min-w-80px'>
               {okLabel}
             </Button>
           </div>
@@ -342,7 +337,7 @@ const WaylandModal: React.FC<WaylandModalProps> = ({
       <div className={headerClassName} style={headerStyle}>
         {headerConfig.title && <h3 className={TITLE_BASE_CLASS}>{headerConfig.title}</h3>}
         {headerConfig.showClose && (
-          <button onClick={onCancel} className={CLOSE_BUTTON_CLASS} aria-label='Close'>
+          <button onClick={onCancel} className={CLOSE_BUTTON_CLASS} aria-label={t('common.close')}>
             {headerConfig.closeIcon || <X size={20} color='var(--color-text-3)' />}
           </button>
         )}
@@ -375,13 +370,13 @@ const WaylandModal: React.FC<WaylandModalProps> = ({
       closable={false}
       footer={null}
       onCancel={onCancel}
-      className={`wayland-modal ${className}`}
+      className={`darhai-modal ${className}`}
       style={finalStyle}
       getPopupContainer={() => document.body}
     >
-      <div className='wayland-modal-wrapper' style={{ borderRadius: borderRadiusVal }}>
+      <div className='darhai-modal-wrapper' style={{ borderRadius: borderRadiusVal }}>
         {renderHeader()}
-        <div className='wayland-modal-body-content' style={bodyInlineStyle}>
+        <div className='darhai-modal-body-content' style={bodyInlineStyle}>
           {children}
         </div>
         {renderFooter()}
@@ -390,6 +385,6 @@ const WaylandModal: React.FC<WaylandModalProps> = ({
   );
 };
 
-WaylandModal.displayName = 'WaylandModal';
+DarhaiModal.displayName = 'DarhaiModal';
 
-export default WaylandModal;
+export default DarhaiModal;

@@ -15,35 +15,38 @@ describe('getElectronConfigCandidatePaths', () => {
     process.env = { ...originalEnv };
   });
 
-  it('returns both symlink candidates on macOS', async () => {
+  it('returns symlink + Darhai candidates on macOS', async () => {
     Object.defineProperty(process, 'platform', { value: 'darwin' });
     const { getElectronConfigCandidatePaths } = await import('../../../../src/process/utils/configMigration');
     const home = os.homedir();
     const paths = getElectronConfigCandidatePaths();
     expect(paths).toContain(path.join(home, '.wayland-config', 'wayland-config.txt'));
+    expect(paths).toContain(path.join(home, 'Library', 'Application Support', 'Darhai', 'config', 'wayland-config.txt'));
     expect(paths).toContain(path.join(home, '.wayland-config-dev', 'wayland-config.txt'));
-    expect(paths).toHaveLength(2);
+    expect(paths).toHaveLength(3);
   });
 
-  it('returns both app-name candidates on Windows', async () => {
+  it('returns Darhai + legacy app-name candidates on Windows', async () => {
     Object.defineProperty(process, 'platform', { value: 'win32' });
     const appData = 'C:\\Users\\test\\AppData\\Roaming';
     process.env.APPDATA = appData;
     const { getElectronConfigCandidatePaths } = await import('../../../../src/process/utils/configMigration');
     const paths = getElectronConfigCandidatePaths();
+    expect(paths[0]).toBe(path.join(appData, 'Darhai', 'config', 'wayland-config.txt'));
     expect(paths).toContain(path.join(appData, 'Wayland', 'config', 'wayland-config.txt'));
     expect(paths).toContain(path.join(appData, 'Wayland-Dev', 'config', 'wayland-config.txt'));
-    expect(paths).toHaveLength(2);
+    expect(paths).toHaveLength(3);
   });
 
-  it('returns both app-name candidates on Linux', async () => {
+  it('returns Darhai + legacy app-name candidates on Linux', async () => {
     Object.defineProperty(process, 'platform', { value: 'linux' });
     const { getElectronConfigCandidatePaths } = await import('../../../../src/process/utils/configMigration');
     const home = os.homedir();
     const paths = getElectronConfigCandidatePaths();
+    expect(paths[0]).toBe(path.join(home, '.config', 'Darhai', 'config', 'wayland-config.txt'));
     expect(paths).toContain(path.join(home, '.config', 'Wayland', 'config', 'wayland-config.txt'));
     expect(paths).toContain(path.join(home, '.config', 'Wayland-Dev', 'config', 'wayland-config.txt'));
-    expect(paths).toHaveLength(2);
+    expect(paths).toHaveLength(3);
   });
 });
 

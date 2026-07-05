@@ -14,7 +14,7 @@ license: Apache-2.0
 type: workflow
 skills: "legal-tos legal-privacy legal-refund-policy"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: legal tos privacy refund eula cookie compliance step-by-step business-legal
   category: business-legal

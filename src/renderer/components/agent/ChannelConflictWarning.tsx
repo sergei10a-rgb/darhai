@@ -7,6 +7,7 @@
 import { AlertCircle } from 'lucide-react';
 import { Alert, Button, Link, Space, Typography } from '@arco-design/web-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 const { Paragraph, Text } = Typography;
 
@@ -18,7 +19,7 @@ interface ChannelConflictWarningProps {
 }
 
 /**
- * Warning component when OpenClaw channel conflicts with Wayland Channels
+ * Warning component when OpenClaw channel conflicts with Дархай Channels
  */
 export const ChannelConflictWarning: React.FC<ChannelConflictWarningProps> = ({
   platform,
@@ -26,6 +27,7 @@ export const ChannelConflictWarning: React.FC<ChannelConflictWarningProps> = ({
   onDisableOpenClaw,
   onIgnore,
 }) => {
+  const { t } = useTranslation();
   const platformName = platform === 'lark' ? 'Lark/Feishu' : 'Telegram';
   const channelKey = platform === 'lark' ? 'feishu' : 'telegram';
 
@@ -33,63 +35,112 @@ export const ChannelConflictWarning: React.FC<ChannelConflictWarningProps> = ({
     <Alert
       type='warning'
       icon={<AlertCircle />}
-      title={`${platformName} Channel Conflict Detected`}
+      title={t('settings.channelConflict.title', {
+        platform: platformName,
+        defaultValue: '{{platform}} Channel Conflict Detected',
+      })}
       content={
         <Space direction='vertical' size='medium' style={{ width: '100%' }}>
           <Paragraph>
-            <Text bold>OpenClaw is handling {platformName} messages, not Wayland.</Text>
+            <Text bold>
+              {t('settings.channelConflict.headline', {
+                platform: platformName,
+                defaultValue: 'OpenClaw is handling {{platform}} messages, not Дархай.',
+              })}
+            </Text>
           </Paragraph>
 
           <Paragraph>
-            Your {platformName} bot credentials are also configured in OpenClaw. This means:
+            {t('settings.channelConflict.credsAlso', {
+              platform: platformName,
+              defaultValue: 'Your {{platform}} bot credentials are also configured in OpenClaw. This means:',
+            })}
             <ul>
               <li>
-                <Text type='error'>✗ Switching agents in Wayland will have no effect</Text>
+                <Text type='error'>
+                  {t('settings.channelConflict.effectNoSwitch', {
+                    defaultValue: '✗ Switching agents in Дархай will have no effect',
+                  })}
+                </Text>
               </li>
               <li>
-                <Text type='error'>✗ Messages are processed by OpenClaw's agent</Text>
+                <Text type='error'>
+                  {t('settings.channelConflict.effectProcessed', {
+                    defaultValue: "✗ Messages are processed by OpenClaw's agent",
+                  })}
+                </Text>
               </li>
               <li>
-                <Text type='success'>✓ Messages still work (via OpenClaw)</Text>
+                <Text type='success'>
+                  {t('settings.channelConflict.effectStillWork', {
+                    defaultValue: '✓ Messages still work (via OpenClaw)',
+                  })}
+                </Text>
               </li>
             </ul>
           </Paragraph>
 
           <Paragraph>
-            <Text bold>To use Wayland Channels and switch agents:</Text>
+            <Text bold>
+              {t('settings.channelConflict.toUse', {
+                defaultValue: 'To use Дархай Channels and switch agents:',
+              })}
+            </Text>
           </Paragraph>
 
           <Paragraph>
-            <Text type='secondary'>Option 1: Disable OpenClaw {platformName} (Recommended)</Text>
+            <Text type='secondary'>
+              {t('settings.channelConflict.option1', {
+                platform: platformName,
+                defaultValue: 'Option 1: Disable OpenClaw {{platform}} (Recommended)',
+              })}
+            </Text>
             <br />
-            Edit: <Text code>{openclawConfigPath}</Text>
+            {t('settings.channelConflict.option1Edit', { defaultValue: 'Edit:' })}{' '}
+            <Text code>{openclawConfigPath}</Text>
             <br />
-            Set: <Text code>{`channels.${channelKey}.enabled = false`}</Text>
+            {t('settings.channelConflict.option1Set', { defaultValue: 'Set:' })}{' '}
+            <Text code>{`channels.${channelKey}.enabled = false`}</Text>
             <br />
-            Then restart OpenClaw and Wayland.
+            {t('settings.channelConflict.option1Restart', {
+              defaultValue: 'Then restart OpenClaw and Дархай.',
+            })}
           </Paragraph>
 
           <Paragraph>
-            <Text type='secondary'>Option 2: Use a different bot</Text>
+            <Text type='secondary'>
+              {t('settings.channelConflict.option2', { defaultValue: 'Option 2: Use a different bot' })}
+            </Text>
             <br />
-            Create a new {platformName} bot with different credentials for Wayland.
+            {t('settings.channelConflict.option2Body', {
+              platform: platformName,
+              defaultValue: 'Create a new {{platform}} bot with different credentials for Дархай.',
+            })}
           </Paragraph>
 
           <Paragraph>
-            <Text type='secondary'>Option 3: Keep using OpenClaw</Text>
+            <Text type='secondary'>
+              {t('settings.channelConflict.option3', { defaultValue: 'Option 3: Keep using OpenClaw' })}
+            </Text>
             <br />
-            Disable {platformName} in Wayland Channels and continue using OpenClaw's integration.
+            {t('settings.channelConflict.option3Body', {
+              platform: platformName,
+              defaultValue: "Disable {{platform}} in Дархай Channels and continue using OpenClaw's integration.",
+            })}
           </Paragraph>
 
           <Space>
             {onDisableOpenClaw && (
               <Button type='primary' onClick={onDisableOpenClaw}>
-                Help me disable OpenClaw {platformName}
+                {t('settings.channelConflict.helpDisable', {
+                  platform: platformName,
+                  defaultValue: 'Help me disable OpenClaw {{platform}}',
+                })}
               </Button>
             )}
             {onIgnore && (
               <Button type='text' onClick={onIgnore}>
-                Ignore (I know what I'm doing)
+                {t('settings.channelConflict.ignore', { defaultValue: "Ignore (I know what I'm doing)" })}
               </Button>
             )}
           </Space>
@@ -108,6 +159,7 @@ export const ChannelConflictBanner: React.FC<{ platform: 'lark' | 'telegram'; on
   platform,
   onLearnMore,
 }) => {
+  const { t } = useTranslation();
   const platformName = platform === 'lark' ? 'Lark/Feishu' : 'Telegram';
 
   return (
@@ -115,8 +167,15 @@ export const ChannelConflictBanner: React.FC<{ platform: 'lark' | 'telegram'; on
       type='warning'
       content={
         <Space>
-          <Text>⚠️ OpenClaw {platformName} conflict detected - Agent switching won't work.</Text>
-          <Link onClick={onLearnMore}>Learn more</Link>
+          <Text>
+            {t('settings.channelConflict.bannerText', {
+              platform: platformName,
+              defaultValue: "⚠️ OpenClaw {{platform}} conflict detected - Agent switching won't work.",
+            })}
+          </Text>
+          <Link onClick={onLearnMore}>
+            {t('settings.channelConflict.learnMore', { defaultValue: 'Learn more' })}
+          </Link>
         </Space>
       }
       closable

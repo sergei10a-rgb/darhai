@@ -62,13 +62,13 @@ body[arco-theme='dark'] .conversation-search-modal {
   --conversation-search-highlight-fg: #93c5fd;
 }
 
-.conversation-search-modal.wayland-modal .arco-modal,
-.conversation-search-modal.wayland-modal .arco-modal-content,
-.conversation-search-modal.wayland-modal .arco-modal-header,
-.conversation-search-modal.wayland-modal .arco-modal-body,
-.conversation-search-modal.wayland-modal .arco-modal-footer,
-.conversation-search-modal .wayland-modal-wrapper,
-.conversation-search-modal .wayland-modal-body-content {
+.conversation-search-modal.darhai-modal .arco-modal,
+.conversation-search-modal.darhai-modal .arco-modal-content,
+.conversation-search-modal.darhai-modal .arco-modal-header,
+.conversation-search-modal.darhai-modal .arco-modal-body,
+.conversation-search-modal.darhai-modal .arco-modal-footer,
+.conversation-search-modal .darhai-modal-wrapper,
+.conversation-search-modal .darhai-modal-body-content {
   background: transparent !important;
   box-shadow: none !important;
   border: none !important;
@@ -76,7 +76,7 @@ body[arco-theme='dark'] .conversation-search-modal {
   -webkit-backdrop-filter: none !important;
 }
 
-.conversation-search-modal.wayland-modal .arco-modal-content,
+.conversation-search-modal.darhai-modal .arco-modal-content,
 .conversation-search-modal .arco-modal-content {
   position: relative;
   background: var(--conversation-search-panel-bg) !important;
@@ -92,7 +92,7 @@ body[arco-theme='dark'] .conversation-search-modal {
   overflow: hidden !important;
 }
 
-.conversation-search-modal .wayland-modal-body-content {
+.conversation-search-modal .darhai-modal-body-content {
   padding: 0 !important;
 }
 

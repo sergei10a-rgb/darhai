@@ -2,7 +2,7 @@
   "$schema": "../schema/entry.schema.json",
   "name": "com.zapier/zapier-mcp",
   "title": "Zapier",
-  "description": "Trigger Zapier actions across 9,000+ apps from Wayland - Gmail, Slack, Salesforce, and the rest. Zapier's official hosted MCP.",
+  "description": "Trigger Zapier actions across 9,000+ apps from Дархай - Gmail, Slack, Salesforce, and the rest. Zapier's official hosted MCP.",
   "version": "1.0.0",
   "websiteUrl": "https://zapier.com/mcp",
   "packages": [],

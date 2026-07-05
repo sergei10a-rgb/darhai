@@ -12,31 +12,31 @@
 
 // ==================== Component Exports ====================
 
-export { default as WaylandModal } from './WaylandModal';
-export { default as WaylandCollapse } from './WaylandCollapse';
-export { default as WaylandSelect } from './WaylandSelect';
-export { default as WaylandScrollArea } from './WaylandScrollArea';
-export { default as WaylandSteps } from './WaylandSteps';
+export { default as DarhaiModal } from './DarhaiModal';
+export { default as DarhaiCollapse } from './DarhaiCollapse';
+export { default as DarhaiSelect } from './DarhaiSelect';
+export { default as DarhaiScrollArea } from './DarhaiScrollArea';
+export { default as DarhaiSteps } from './DarhaiSteps';
 export { default as Avatar } from './Avatar';
 export type { AvatarProps } from './Avatar';
 
 // ==================== Type Exports ====================
 
-// WaylandModal types
+// DarhaiModal types
 export type {
   ModalSize,
   ModalHeaderConfig,
   ModalFooterConfig,
   ModalContentStyleConfig,
-  WaylandModalProps,
-} from './WaylandModal';
-export { MODAL_SIZES } from './WaylandModal';
+  DarhaiModalProps,
+} from './DarhaiModal';
+export { MODAL_SIZES } from './DarhaiModal';
 
-// WaylandCollapse types
-export type { WaylandCollapseProps, WaylandCollapseItemProps } from './WaylandCollapse';
+// DarhaiCollapse types
+export type { DarhaiCollapseProps, DarhaiCollapseItemProps } from './DarhaiCollapse';
 
-// WaylandSelect types
-export type { WaylandSelectProps } from './WaylandSelect';
+// DarhaiSelect types
+export type { DarhaiSelectProps } from './DarhaiSelect';
 
-// WaylandSteps types
-export type { WaylandStepsProps } from './WaylandSteps';
+// DarhaiSteps types
+export type { DarhaiStepsProps } from './DarhaiSteps';

@@ -8,19 +8,19 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Divider, Form, Switch, Tooltip, Message } from '@arco-design/web-react';
 import { HelpCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { ConfigStorage, BUILTIN_IMAGE_GEN_ID, type IConfigStorageRefer, type IMcpServer } from '@/common/config/storage';
-import useConfigModelListWithImage from '@renderer/hooks/agent/useConfigModelListWithImage';
 import {
-  useMcpServers,
-  useMcpAgentStatus,
-  useMcpOperations,
-} from '@renderer/hooks/mcp';
-import WaylandSelect from '@renderer/components/base/WaylandSelect';
+  ConfigStorage,
+  BUILTIN_IMAGE_GEN_ID,
+  type IConfigStorageRefer,
+  type IMcpServer,
+} from '@/common/config/storage';
+import useConfigModelListWithImage from '@renderer/hooks/agent/useConfigModelListWithImage';
+import { useMcpServers, useMcpAgentStatus, useMcpOperations } from '@renderer/hooks/mcp';
+import DarhaiSelect from '@renderer/components/base/DarhaiSelect';
 import McpAgentStatusDisplay from '@renderer/pages/settings/ToolsSettings/McpAgentStatusDisplay';
 import SettingsPageShell from '@renderer/pages/settings/components/SettingsPageShell';
 
-const isBuiltinImageGenServer = (server: IMcpServer) =>
-  server.builtin === true && server.id === BUILTIN_IMAGE_GEN_ID;
+const isBuiltinImageGenServer = (server: IMcpServer) => server.builtin === true && server.id === BUILTIN_IMAGE_GEN_ID;
 
 const ImageGenSettings: React.FC = () => {
   const { t } = useTranslation();
@@ -95,14 +95,14 @@ const ImageGenSettings: React.FC = () => {
       if (!server || server.transport.type !== 'stdio') return;
 
       const env: Record<string, string> = { ...server.transport.env };
-      if (model.platform) env.WAYLAND_IMG_PLATFORM = model.platform;
-      else delete env.WAYLAND_IMG_PLATFORM;
-      if (model.baseUrl) env.WAYLAND_IMG_BASE_URL = model.baseUrl;
-      else delete env.WAYLAND_IMG_BASE_URL;
-      if (model.apiKey) env.WAYLAND_IMG_API_KEY = model.apiKey;
-      else delete env.WAYLAND_IMG_API_KEY;
-      if (model.useModel) env.WAYLAND_IMG_MODEL = model.useModel;
-      else delete env.WAYLAND_IMG_MODEL;
+      if (model.platform) env.DARHAI_IMG_PLATFORM = model.platform;
+      else delete env.DARHAI_IMG_PLATFORM;
+      if (model.baseUrl) env.DARHAI_IMG_BASE_URL = model.baseUrl;
+      else delete env.DARHAI_IMG_BASE_URL;
+      if (model.apiKey) env.DARHAI_IMG_API_KEY = model.apiKey;
+      else delete env.DARHAI_IMG_API_KEY;
+      if (model.useModel) env.DARHAI_IMG_MODEL = model.useModel;
+      else delete env.DARHAI_IMG_MODEL;
 
       const updated: IMcpServer = { ...server, transport: { ...server.transport, env }, updatedAt: Date.now() };
       const next = mcpServers.map((s) => (s.id === BUILTIN_IMAGE_GEN_ID ? updated : s));
@@ -190,10 +190,7 @@ const ImageGenSettings: React.FC = () => {
     isUpdating || !builtinImageGenServer || !imageModelList.length || !imageGenerationModel?.useModel;
 
   return (
-    <SettingsPageShell
-      title={t('settings.imageGenPage.title')}
-      subtitle={t('settings.imageGenPage.subtitle')}
-    >
+    <SettingsPageShell title={t('settings.imageGenPage.title')} subtitle={t('settings.imageGenPage.subtitle')}>
       {messageContext}
 
       {/* MCP server enable/disable */}
@@ -228,17 +225,17 @@ const ImageGenSettings: React.FC = () => {
         <Form layout='horizontal' labelAlign='left'>
           <Form.Item label={t('settings.imageGenPage.defaultModelLabel')}>
             {imageModelList.length > 0 ? (
-              <WaylandSelect value={selectedValue} onChange={handleModelChange}>
+              <DarhaiSelect value={selectedValue} onChange={handleModelChange}>
                 {imageModelList.map(({ model, ...platform }) => (
-                  <WaylandSelect.OptGroup label={platform.name} key={platform.id}>
+                  <DarhaiSelect.OptGroup label={platform.name} key={platform.id}>
                     {model.map((modelName) => (
-                      <WaylandSelect.Option key={platform.id + modelName} value={`${platform.id}|${modelName}`}>
+                      <DarhaiSelect.Option key={platform.id + modelName} value={`${platform.id}|${modelName}`}>
                         {modelName}
-                      </WaylandSelect.Option>
+                      </DarhaiSelect.Option>
                     ))}
-                  </WaylandSelect.OptGroup>
+                  </DarhaiSelect.OptGroup>
                 ))}
-              </WaylandSelect>
+              </DarhaiSelect>
             ) : (
               <div className='flex items-center gap-8px text-t-secondary text-13px'>
                 <span>{t('settings.imageGenPage.noModels')}</span>
@@ -247,7 +244,7 @@ const ImageGenSettings: React.FC = () => {
                     <span>
                       {t('settings.needHelpTooltip')}{' '}
                       <a
-                        href='https://github.com/FerroxLabs/wayland/wiki/Wayland-Image-Generation-Tool-Model-Configuration-Guide'
+                        href='https://github.com/sergei10a-rgb/darhai/wiki/Wayland-Image-Generation-Tool-Model-Configuration-Guide'
                         target='_blank'
                         rel='noopener noreferrer'
                         className='text-[rgb(var(--primary-6))] underline'
@@ -259,7 +256,7 @@ const ImageGenSettings: React.FC = () => {
                   }
                 >
                   <a
-                    href='https://github.com/FerroxLabs/wayland/wiki/Wayland-Image-Generation-Tool-Model-Configuration-Guide'
+                    href='https://github.com/sergei10a-rgb/darhai/wiki/Wayland-Image-Generation-Tool-Model-Configuration-Guide'
                     target='_blank'
                     rel='noopener noreferrer'
                     className='text-[rgb(var(--primary-6))] cursor-pointer'

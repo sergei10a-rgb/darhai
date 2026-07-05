@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useMcpLibrary } from './hooks/useMcpLibrary';
 import { useMcpServers } from '@renderer/hooks/mcp/useMcpServers';
@@ -8,6 +9,7 @@ import { TierFilter } from './components/TierFilter';
 import type { Tier, CatalogIndexEntry } from './types';
 
 export function BrowsePage() {
+  const { t } = useTranslation();
   const library = useMcpLibrary();
   const { mcpServers } = useMcpServers();
   const navigate = useNavigate();
@@ -16,7 +18,7 @@ export function BrowsePage() {
     // libraryEntryId is added in P8; cast to any for P7 forward-compat reads.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     () => new Set(mcpServers.map((s: any) => s.libraryEntryId).filter(Boolean) as string[]),
-    [mcpServers],
+    [mcpServers]
   );
 
   const [tier, setTier] = useState<Tier | 'all'>('all');
@@ -27,9 +29,7 @@ export function BrowsePage() {
     return library.entries.filter(
       (e) =>
         (tier === 'all' || e.tier === tier) &&
-        (q === '' ||
-          e.name.toLowerCase().includes(q) ||
-          e.shortDescription.toLowerCase().includes(q)),
+        (q === '' || e.name.toLowerCase().includes(q) || e.shortDescription.toLowerCase().includes(q))
     );
   }, [library.entries, tier, search]);
 
@@ -76,22 +76,19 @@ export function BrowsePage() {
     return map;
   }, [filtered]);
 
-  const onSelect = (id: string) =>
-    navigate(`/settings/mcp-library/${encodeURIComponent(id)}`);
+  const onSelect = (id: string) => navigate(`/settings/mcp-library/${encodeURIComponent(id)}`);
 
   return (
-    <div className="mcp-library-page">
-      <header className="mcp-page-head">
-        <h2>MCP Library</h2>
-        <p>
-          Curated connectors. Browse, install with one click, and follow the setup guide.
-        </p>
+    <div className='mcp-library-page'>
+      <header className='mcp-page-head'>
+        <h2>{t('mcpLibrary.browse.title')}</h2>
+        <p>{t('mcpLibrary.browse.subtitle')}</p>
       </header>
 
-      <div className="mcp-filter-bar">
+      <div className='mcp-filter-bar'>
         <input
-          className="mcp-search"
-          placeholder="Search MCPs…"
+          className='mcp-search'
+          placeholder={t('mcpLibrary.browse.searchPlaceholder')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -99,11 +96,7 @@ export function BrowsePage() {
       </div>
 
       {search === '' && tier === 'all' && (
-        <RecommendedGrid
-          entries={library.recommended}
-          installedIds={installedIds}
-          onSelect={onSelect}
-        />
+        <RecommendedGrid entries={library.recommended} installedIds={installedIds} onSelect={onSelect} />
       )}
 
       {categoryOrder.map((cat) => (

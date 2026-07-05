@@ -153,7 +153,7 @@ const WCoreConfig: React.FC = () => {
         <div className={styles.brand}>
           <img
             src={coreLockup}
-            alt={t('settings.wcoreConfig.title', { defaultValue: 'Wayland Core' })}
+            alt={t('settings.wcoreConfig.title', { defaultValue: 'Darhai Core' })}
             className={styles.brandLockup}
           />
           <div className={styles.brandText}>
@@ -174,7 +174,7 @@ const WCoreConfig: React.FC = () => {
 
       <div className={styles.body}>
         {/* Category rail (engine-only) */}
-        <nav className={styles.rail} aria-label='Wayland Core'>
+        <nav className={styles.rail} aria-label='Darhai Core'>
           <div className={styles.railLabel}>{t('settings.wcoreConfig.railGroup', { defaultValue: 'Engine' })}</div>
           {railEntries.map((entry) => {
             const isActive = entry.key === active;

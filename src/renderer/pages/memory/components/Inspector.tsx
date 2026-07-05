@@ -14,6 +14,7 @@
  */
 
 import React, { useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button, Tag, Tooltip } from '@arco-design/web-react';
 import { Close, Copy, LinkOne, FileCode, Help } from '@icon-park/react';
 import type { MemoryEntry, MemoryType } from '@/common/types/memory';
@@ -73,13 +74,7 @@ const scoreBarClass = (score: number, threshold: number): string => {
 function EmptyState(): React.ReactElement {
   return (
     <div className={styles.empty} data-testid='inspector-empty'>
-      <FileCode
-        className={styles.emptyIcon}
-        theme='outline'
-        size='32'
-        aria-hidden
-        data-testid='inspector-empty-icon'
-      />
+      <FileCode className={styles.emptyIcon} theme='outline' size='32' aria-hidden data-testid='inspector-empty-icon' />
       <span>Select a memory to inspect it</span>
       <div className={styles.emptyHint}>
         <span className={styles.kbdChip}>↑/↓ navigate</span>
@@ -105,6 +100,7 @@ const Inspector: React.FC<InspectorProps> = ({
   onOpenSource,
   onCopy,
 }) => {
+  const { t } = useTranslation();
   // Esc-to-close
   useEffect(() => {
     const handleKey = (e: KeyboardEvent): void => {
@@ -122,7 +118,7 @@ const Inspector: React.FC<InspectorProps> = ({
       onCopy?.(text);
       // Parent onCopy shows its own toast - do not add a second one here.
     },
-    [onCopy],
+    [onCopy]
   );
 
   if (entry === null) {
@@ -164,7 +160,7 @@ const Inspector: React.FC<InspectorProps> = ({
             type='secondary'
             icon={<Close theme='outline' size='12' />}
             onClick={() => onClose?.()}
-            aria-label='Close inspector'
+            aria-label={t('memory.archive.inspector.close_btn')}
             data-testid='inspector-close'
           />
           <h2 className={styles.title} data-testid='inspector-title'>
@@ -228,7 +224,7 @@ const Inspector: React.FC<InspectorProps> = ({
               theme='outline'
               size='13'
               style={{ cursor: 'help', opacity: 0.6 }}
-              aria-label='Score formula'
+              aria-label={t('memory.archive.inspector.score_help')}
             />
           </Tooltip>
         </div>
@@ -255,11 +251,7 @@ const Inspector: React.FC<InspectorProps> = ({
         <div className={styles.section} data-testid='inspector-section-why'>
           <h3 className={styles.sectionLabel}>Why</h3>
           <div className={styles.sectionContent}>
-            {entry.why ? (
-              <p>{entry.why}</p>
-            ) : (
-              <span className={styles.sectionAbsent}>No "Why" recorded</span>
-            )}
+            {entry.why ? <p>{entry.why}</p> : <span className={styles.sectionAbsent}>No "Why" recorded</span>}
           </div>
         </div>
 

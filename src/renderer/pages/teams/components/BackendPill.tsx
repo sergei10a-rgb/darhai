@@ -16,10 +16,10 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Bot } from 'lucide-react';
-import { WaylandSelect } from '@renderer/components/base';
+import { DarhaiSelect } from '@renderer/components/base';
 import { getAgentLogo } from '@renderer/utils/model/agentLogo';
 
-const { Option } = WaylandSelect;
+const { Option } = DarhaiSelect;
 
 export type BackendPillProps = {
   value: string;
@@ -44,7 +44,7 @@ const BackendPill: React.FC<BackendPillProps> = ({ value, options, onChange, dis
   };
 
   return (
-    <WaylandSelect
+    <DarhaiSelect
       data-testid={testId}
       size='small'
       style={{ width: 160 }}
@@ -70,7 +70,7 @@ const BackendPill: React.FC<BackendPillProps> = ({ value, options, onChange, dis
           </span>
         </Option>
       ))}
-    </WaylandSelect>
+    </DarhaiSelect>
   );
 };
 

@@ -1,18 +1,18 @@
-# Wayland WebUI Configuration Guide
+# Дархай WebUI Configuration Guide
 
 ## Overview
 
-Wayland supports WebUI mode, allowing you to access the application through a browser. This is particularly useful for accessing Wayland remotely. Wayland provides three remote connection methods to suit different scenarios.
+Дархай supports WebUI mode, allowing you to access the application through a browser. This is particularly useful for accessing Дархай remotely. Дархай provides three remote connection methods to suit different scenarios.
 
-**Important**: WebUI configuration should be done through the Wayland settings interface - no command line required. This guide walks you through the configuration steps in the settings UI.
+**Important**: WebUI configuration should be done through the Дархай settings interface - no command line required. This guide walks you through the configuration steps in the settings UI.
 
 ## Three Remote Connection Methods
 
-| Connection Method               | Use Case                                    | Description                                                              | Difficulty     |
-| ------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------ | -------------- |
-| **1. LAN Connection**           | Devices on the same WiFi/LAN                | Phone and computer on the same WiFi - just enable "Allow Remote Access"  | ⭐ Easy        |
-| **2. VPN Software (Tailscale)** | Cross-network access (e.g. office to home)  | Uses VPN software like Tailscale - no public IP or server required       | ⭐ Very Easy   |
-| **3. Server Deployment**        | Multi-user access, 24/7 uptime              | Deploy on a cloud server, accessible via public IP                       | ⭐⭐ Moderate  |
+| Connection Method               | Use Case                                   | Description                                                             | Difficulty    |
+| ------------------------------- | ------------------------------------------ | ----------------------------------------------------------------------- | ------------- |
+| **1. LAN Connection**           | Devices on the same WiFi/LAN               | Phone and computer on the same WiFi - just enable "Allow Remote Access" | ⭐ Easy       |
+| **2. VPN Software (Tailscale)** | Cross-network access (e.g. office to home) | Uses VPN software like Tailscale - no public IP or server required      | ⭐ Very Easy  |
+| **3. Server Deployment**        | Multi-user access, 24/7 uptime             | Deploy on a cloud server, accessible via public IP                      | ⭐⭐ Moderate |
 
 ### How to Choose?
 
@@ -38,13 +38,13 @@ Wayland supports WebUI mode, allowing you to access the application through a br
 
 **Method 1: Via the Settings Button (Recommended)**
 
-1. In the Wayland main interface, click the **Settings icon** (gear icon) in the bottom-left corner
+1. In the Дархай main interface, click the **Settings icon** (gear icon) in the bottom-left corner
 2. In the settings menu, click **"WebUI"**
 3. The WebUI configuration screen will open
 
 **Method 2: Via Keyboard Shortcut**
 
-- In the Wayland main interface, use the keyboard shortcut to open settings (see Wayland help docs for the exact shortcut)
+- In the Дархай main interface, use the keyboard shortcut to open settings (see Дархай help docs for the exact shortcut)
 
 **Method 3: Via URL (WebUI Mode)**
 
@@ -94,7 +94,7 @@ Once WebUI is running, the settings screen will display:
 
 #### Step 1: Open the WebUI Settings
 
-1. In the Wayland main interface, click the **Settings icon** in the bottom-left corner
+1. In the Дархай main interface, click the **Settings icon** in the bottom-left corner
 2. Click **"WebUI"**
 
 #### Step 2: Enable WebUI and Remote Access
@@ -111,7 +111,7 @@ Once WebUI is running, the settings screen will display:
 
 #### Step 4: Access From the Remote Device
 
-1. Make sure the remote device is on the same WiFi network as the Wayland computer
+1. Make sure the remote device is on the same WiFi network as the Дархай computer
 2. In the remote device's browser, paste and navigate to the copied URL
 3. Log in using the **username** and **password** shown in the settings screen
 
@@ -121,8 +121,8 @@ Once WebUI is running, the settings screen will display:
 
 ### Use Cases
 
-- Accessing your home Wayland from the office
-- Accessing your home Wayland from a phone on mobile data
+- Accessing your home Дархай from the office
+- Accessing your home Дархай from a phone on mobile data
 - Cross-network access without needing a public IP
 
 ### Advantages
@@ -134,10 +134,10 @@ Once WebUI is running, the settings screen will display:
 
 ### Configuration Steps
 
-#### Step 1: Configure WebUI on the Wayland Computer
+#### Step 1: Configure WebUI on the Дархай Computer
 
 1. **Open the WebUI settings screen**:
-   - In the Wayland main interface, click the **Settings icon** in the bottom-left corner
+   - In the Дархай main interface, click the **Settings icon** in the bottom-left corner
    - Click **"WebUI"**
 
 2. **Enable WebUI**:
@@ -148,7 +148,7 @@ Once WebUI is running, the settings screen will display:
    - Note the **local access URL** shown (`http://localhost:25808`)
    - Note the **username** and **password**
 
-#### Step 2: Install and Log In to Tailscale on the Wayland Computer
+#### Step 2: Install and Log In to Tailscale on the Дархай Computer
 
 1. Visit [Tailscale's website](https://tailscale.com/) to download and install
 2. Log in to your Tailscale account (register if this is your first time)
@@ -156,7 +156,7 @@ Once WebUI is running, the settings screen will display:
 
 #### Step 3: Get the Tailscale IP
 
-1. On the Wayland computer, open the Tailscale app
+1. On the Дархай computer, open the Tailscale app
 2. Note the Tailscale IP address shown (e.g. `100.x.x.x`)
 3. Construct the access URL: `http://<Tailscale_IP>:25808`
 
@@ -206,14 +206,14 @@ tailscale status --json
 
 ### Linux Server Deployment (Recommended)
 
-#### Step 1: Install Wayland on the Server
+#### Step 1: Install Дархай on the Server
 
-Follow the Wayland installation guide to install the Wayland application on the server.
+Follow the Дархай installation guide to install the Дархай application on the server.
 
 #### Step 2: Configure WebUI Through the Settings Interface
 
 1. **Open the WebUI settings screen**:
-   - If the server has a graphical interface, open the Wayland application directly
+   - If the server has a graphical interface, open the Дархай application directly
    - If the server has no graphical interface, access the GUI via SSH port forwarding or VNC
 
 2. **Configure WebUI**:
@@ -243,7 +243,7 @@ sudo iptables -A INPUT -p tcp --dport 25808 -j ACCEPT
 
 #### Step 4: Configure Auto-Start on Boot (Optional)
 
-If you need Wayland to start automatically on boot, you can configure a systemd service. However, it is recommended to manage the WebUI through the Wayland settings interface rather than the command line.
+If you need Дархай to start automatically on boot, you can configure a systemd service. However, it is recommended to manage the WebUI through the Дархай settings interface rather than the command line.
 
 #### Step 5: Get the Access URL
 
@@ -263,13 +263,13 @@ If you need Wayland to start automatically on boot, you can configure a systemd 
 
 ### macOS Server Deployment
 
-#### Step 1: Install Wayland on the Server
+#### Step 1: Install Дархай on the Server
 
-Follow the Wayland installation guide to install the Wayland application on the macOS server.
+Follow the Дархай installation guide to install the Дархай application on the macOS server.
 
 #### Step 2: Configure WebUI Through the Settings Interface
 
-1. Open the Wayland application
+1. Open the Дархай application
 2. Click the **Settings icon** in the bottom-left corner
 3. Click **"WebUI"**
 4. Switch both **"Enable WebUI"** and **"Allow Remote Access"** toggles to the **on** position
@@ -278,8 +278,8 @@ Follow the Wayland installation guide to install the Wayland application on the 
 
 ```bash
 # Allow port 25808
-sudo /usr/libexec/ApplicationFirewall/socketfilterfw --add /Applications/Wayland.app/Contents/MacOS/Wayland
-sudo /usr/libexec/ApplicationFirewall/socketfilterfw --unblockapp /Applications/Wayland.app/Contents/MacOS/Wayland
+sudo /usr/libexec/ApplicationFirewall/socketfilterfw --add /Applications/Дархай.app/Contents/MacOS/Дархай
+sudo /usr/libexec/ApplicationFirewall/socketfilterfw --unblockapp /Applications/Дархай.app/Contents/MacOS/Дархай
 ```
 
 ---
@@ -309,7 +309,7 @@ sudo /usr/libexec/ApplicationFirewall/socketfilterfw --unblockapp /Applications/
 ### Channels Configuration
 
 - Configure Bot Tokens for chat platforms such as Telegram and Lark
-- Enables accessing Wayland through IM applications
+- Enables accessing Дархай through IM applications
 
 ---
 
@@ -359,7 +359,7 @@ sudo /usr/libexec/ApplicationFirewall/socketfilterfw --unblockapp /Applications/
 
 - Confirm both devices are logged in to Tailscale
 - Check Tailscale status: `tailscale status`
-- Confirm Wayland WebUI is enabled in the settings screen
+- Confirm Дархай WebUI is enabled in the settings screen
 
 ---
 
@@ -369,11 +369,11 @@ If you need to use a port other than the default (25808), you can set it via the
 
 ### Configuration File Location
 
-| Platform | Configuration File Path                                          |
-| -------- | ---------------------------------------------------------------- |
-| Windows  | `%APPDATA%/Wayland/webui.config.json`                            |
-| macOS    | `~/Library/Application Support/Wayland/webui.config.json`        |
-| Linux    | `~/.config/Wayland/webui.config.json`                            |
+| Platform | Configuration File Path                                   |
+| -------- | --------------------------------------------------------- |
+| Windows  | `%APPDATA%/Дархай/webui.config.json`                     |
+| macOS    | `~/Library/Application Support/Дархай/webui.config.json` |
+| Linux    | `~/.config/Дархай/webui.config.json`                     |
 
 ### Configuration Example
 
@@ -407,7 +407,7 @@ If you need to use a port other than the default (25808), you can set it via the
 
 1. **Configure firewall rules**: Only open necessary ports
 2. **Use a strong password**: Avoid default or weak passwords
-3. **Keep software updated**: Keep Wayland and the operating system up to date
+3. **Keep software updated**: Keep Дархай and the operating system up to date
 4. **Monitor logs**: Regularly review access logs
 5. **Consider a reverse proxy**: Use Nginx or similar with SSL/TLS configured
 
@@ -422,11 +422,11 @@ If you need to use a port other than the default (25808), you can set it via the
 
 ## Integration with OpenClaw
 
-Once WebUI is running, you can access Wayland through a browser and:
+Once WebUI is running, you can access Дархай through a browser and:
 
 1. **Find the OpenClaw entry on the home page** (ACP agent list)
 2. **Chat directly with OpenClaw**
-3. **Enjoy the full Wayland interface**:
+3. **Enjoy the full Дархай interface**:
    - File preview and management
    - Multi-conversation management
    - Full tool and skill support
@@ -435,8 +435,8 @@ Once WebUI is running, you can access Wayland through a browser and:
 
 ## Related Resources
 
-- [Wayland Wiki - Remote Internet Access Guide](https://github.com/FerroxLabs/wayland/wiki/Remote-Internet-Access-Guide)
-- [Wayland Wiki - WebUI Configuration Guide](https://github.com/FerroxLabs/wayland/wiki/WebUI-Configuration-Guide)
+- [Дархай Wiki - Remote Internet Access Guide](https://github.com/sergei10a-rgb/darhai/wiki/Remote-Internet-Access-Guide)
+- [Дархай Wiki - WebUI Configuration Guide](https://github.com/sergei10a-rgb/darhai/wiki/WebUI-Configuration-Guide)
 - [Tailscale Official Documentation](https://tailscale.com/kb/)
 
 ---
@@ -445,7 +445,7 @@ Once WebUI is running, you can access Wayland through a browser and:
 
 ### Settings Interface Actions
 
-1. **Open Settings**: Click the **Settings icon** in the Wayland bottom-left corner → click **"WebUI"**
+1. **Open Settings**: Click the **Settings icon** in the Дархай bottom-left corner → click **"WebUI"**
 2. **Enable WebUI**: Switch the "Enable WebUI" toggle to the **on** position
 3. **Enable Remote Access**: Switch the "Allow Remote Access" toggle to the **on** position (if needed)
 4. **Copy Access URL**: Click the **Copy icon** next to the access URL
@@ -459,7 +459,7 @@ Once WebUI is running, you can access Wayland through a browser and:
 lsof -i :25808
 
 # Check process
-ps aux | grep Wayland
+ps aux | grep Дархай
 
 # Get IP address
 ifconfig | grep "inet " | grep -v 127.0.0.1

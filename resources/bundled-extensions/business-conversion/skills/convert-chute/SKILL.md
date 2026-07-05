@@ -25,13 +25,13 @@ negative_triggers:
 tags: [conversion, copy, donahoe-method, greased-chute, momentum, rhythm]
 priority: 100
 version: 1.0.0
-author: Wayland Business Pack
+author: Darhai Business Pack
 license: MIT
 metadata:
   wayland:
     related_skills: [convert, convert-open, convert-transition, convert-voice, convert-bullshit-filter, convert-sales-page, convert-vsl]
 attribution:
-  lineage: "The Donahoe Method (Wayland-owned operating system); references *Sugarman 'slippery slide' principle (AdWeek Copywriting Handbook, 1998)*, *Halbert short-paragraph canon (Boron Letters, 1984)*, and *Robert Bly's varied-rhythm doctrine (The Copywriter's Handbook, 1985)*"
+  lineage: "The Donahoe Method (Дархай-owned operating system); references *Sugarman 'slippery slide' principle (AdWeek Copywriting Handbook, 1998)*, *Halbert short-paragraph canon (Boron Letters, 1984)*, and *Robert Bly's varied-rhythm doctrine (The Copywriter's Handbook, 1985)*"
 ---
 
 # Convert Chute - The Greased Chute
@@ -334,7 +334,7 @@ Fixes: short paragraphs, varied rhythm, two open loops (the system reveal + the 
 
 ## Lineage
 
-The Greased Chute is part of **The Donahoe Method** (Wayland-owned operating system).
+The Greased Chute is part of **The Donahoe Method** (Дархай-owned operating system).
 
 Lineage references:
 - The "slippery slide" - *Joseph Sugarman, the AdWeek Copywriting Handbook (1998)*: "the sole purpose of every sentence is to get you to read the next sentence"

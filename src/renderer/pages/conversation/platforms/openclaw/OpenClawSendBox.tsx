@@ -35,6 +35,7 @@ import { buildDisplayMessage } from '@/renderer/utils/file/messageFiles';
 import { Message, Tag } from '@arco-design/web-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 
 const normalizeRuntimeValue = (value?: string | null): string => (value || '').trim();
 
@@ -56,10 +57,10 @@ const useOpenClawSendBoxDraft = getSendBoxDraftHook('openclaw-gateway', {
  * Validate that the OpenClaw runtime matches the expected configuration.
  * Returns true if validation passes, false otherwise (with user-facing error).
  */
-const validateRuntimeMismatch = async (conversationId: string): Promise<boolean> => {
+const validateRuntimeMismatch = async (conversationId: string, t: TFunction): Promise<boolean> => {
   const runtimeResult = await ipcBridge.openclawConversation.getRuntime.invoke({ conversation_id: conversationId });
   if (!runtimeResult?.success || !runtimeResult.data) {
-    Message.error('Failed to validate agent runtime');
+    Message.error(t('conversation.openclaw.runtimeCheckFailed', { defaultValue: 'Failed to validate agent runtime' }));
     return false;
   }
 
@@ -105,7 +106,12 @@ const validateRuntimeMismatch = async (conversationId: string): Promise<boolean>
   }
 
   if (mismatches.length > 0) {
-    Message.error(`Agent switch validation failed: ${mismatches.join(' | ')}`);
+    Message.error(
+      t('conversation.openclaw.runtimeMismatch', {
+        defaultValue: 'Agent switch validation failed: {{details}}',
+        details: mismatches.join(' | '),
+      })
+    );
     return false;
   }
   return true;
@@ -409,7 +415,7 @@ const OpenClawSendBox: React.FC<{ conversation_id: string }> = ({ conversation_i
 
   const executeCommand = useCallback(
     async ({ input, files }: Pick<ConversationCommandQueueItem, 'input' | 'files'>) => {
-      const runtimeOk = await validateRuntimeMismatch(conversation_id);
+      const runtimeOk = await validateRuntimeMismatch(conversation_id, t);
       if (!runtimeOk) {
         throw new Error('OpenClaw runtime validation failed');
       }
@@ -446,7 +452,7 @@ const OpenClawSendBox: React.FC<{ conversation_id: string }> = ({ conversation_i
         throw error;
       }
     },
-    [addOrUpdateMessage, checkAndUpdateTitle, conversation_id, removeMessageByMsgId, workspacePath]
+    [addOrUpdateMessage, checkAndUpdateTitle, conversation_id, removeMessageByMsgId, workspacePath, t]
   );
 
   const {
@@ -533,7 +539,7 @@ const OpenClawSendBox: React.FC<{ conversation_id: string }> = ({ conversation_i
       if (sessionStorage.getItem(processedKey)) return;
 
       try {
-        const runtimeOk = await validateRuntimeMismatch(conversation_id);
+        const runtimeOk = await validateRuntimeMismatch(conversation_id, t);
         if (!runtimeOk) return;
 
         sessionStorage.setItem(processedKey, 'true');
@@ -584,7 +590,7 @@ const OpenClawSendBox: React.FC<{ conversation_id: string }> = ({ conversation_i
     return () => {
       clearTimeout(timer);
     };
-  }, [conversation_id, openclawStatus, addOrUpdateMessage]);
+  }, [conversation_id, openclawStatus, addOrUpdateMessage, t]);
 
   const handleStop = async (): Promise<void> => {
     try {

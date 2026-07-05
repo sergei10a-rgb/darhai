@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "apiVersion": "^1.0.0",
   "description": "Customer-support operator skills built for live situations: a verb-router orchestrator that dispatches to reply, KB-article, FAQ, escalation, refund-script, SLA-review, NPS-analysis, churn-investigation, and report sub-skills. Enriches the bundled Support persona (mend); ships no net-new persona.",
-  "author": "Wayland Business Pack",
+  "author": "Darhai Business Pack",
   "contributes": {
     "skills": [
       {

@@ -10,7 +10,7 @@
  *      it via group-hover)
  *   2. click the three-dot trigger to open the Arco Dropdown menu
  *   3. click "Delete" inside the dropdown
- *   4. drive the typed-delete WaylandModal
+ *   4. drive the typed-delete DarhaiModal
  */
 
 import { test, expect } from '../fixtures';
@@ -79,9 +79,7 @@ test.describe('Team Sidebar - routing + typed-delete', () => {
     // three-dot trigger that SiderItem renders inside `group-hover:flex`.
     // The row is the closest container of the name span that has the
     // `.group` class - match by walking up from the visible text.
-    const row = sidebarEntry.locator(
-      'xpath=ancestor::div[contains(@class,"group") and contains(@class,"h-40px")][1]'
-    );
+    const row = sidebarEntry.locator('xpath=ancestor::div[contains(@class,"group") and contains(@class,"h-40px")][1]');
     await expect(row).toBeVisible({ timeout: 5_000 });
     await row.hover();
 
@@ -101,7 +99,7 @@ test.describe('Team Sidebar - routing + typed-delete', () => {
     await expect(deleteItem).toBeVisible({ timeout: 5_000 });
     await deleteItem.click();
 
-    // --- (A3.d) Typed-delete WaylandModal gates the destructive CTA.
+    // --- (A3.d) Typed-delete DarhaiModal gates the destructive CTA.
     const modal = page.locator('[data-testid="delete-team-confirm-modal"]');
     await expect(modal).toBeVisible({ timeout: 5_000 });
 

@@ -12,7 +12,7 @@ license: Apache-2.0
 type: workflow
 skills: "finance-forecast finance-cashflow finance-report"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: business-finance runway cashflow step-by-step cfo
   category: business-finance

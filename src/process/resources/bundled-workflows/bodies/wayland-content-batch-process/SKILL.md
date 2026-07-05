@@ -14,7 +14,7 @@ license: Apache-2.0
 type: workflow
 skills: "content-audit content-blog content-humanize content-repurpose"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: marketing content batch repurpose deterministic automation
   category: marketing

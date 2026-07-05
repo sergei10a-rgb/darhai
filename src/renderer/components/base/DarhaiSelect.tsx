@@ -15,13 +15,13 @@ import React from 'react';
  */
 type NativeSelectProps = Omit<SelectProps, 'size'>;
 type NativeSelectSize = NonNullable<SelectProps['size']>;
-type WaylandSelectSize = NativeSelectSize | 'middle';
+type DarhaiSelectSize = NativeSelectSize | 'middle';
 
-export interface WaylandSelectProps extends NativeSelectProps {
+export interface DarhaiSelectProps extends NativeSelectProps {
   /** Additional class name */
   className?: string;
   /** Unified size with additional "middle" (32px) */
-  size?: WaylandSelectSize;
+  size?: DarhaiSelectSize;
 }
 
 /**
@@ -69,42 +69,42 @@ const defaultGetPopupContainer = (): HTMLElement => {
  * @example
  * ```tsx
  * // Basic usage
- * <WaylandSelect placeholder="Please select" style={{ width: 200 }}>
- *   <WaylandSelect.Option value="1">Option 1</WaylandSelect.Option>
- *   <WaylandSelect.Option value="2">Option 2</WaylandSelect.Option>
- * </WaylandSelect>
+ * <DarhaiSelect placeholder="Please select" style={{ width: 200 }}>
+ *   <DarhaiSelect.Option value="1">Option 1</DarhaiSelect.Option>
+ *   <DarhaiSelect.Option value="2">Option 2</DarhaiSelect.Option>
+ * </DarhaiSelect>
  *
  * // Multiple selection
- * <WaylandSelect mode="multiple" placeholder="Select multiple">
- *   <WaylandSelect.Option value="1">Option 1</WaylandSelect.Option>
- *   <WaylandSelect.Option value="2">Option 2</WaylandSelect.Option>
- * </WaylandSelect>
+ * <DarhaiSelect mode="multiple" placeholder="Select multiple">
+ *   <DarhaiSelect.Option value="1">Option 1</DarhaiSelect.Option>
+ *   <DarhaiSelect.Option value="2">Option 2</DarhaiSelect.Option>
+ * </DarhaiSelect>
  *
  * // Grouped options
- * <WaylandSelect placeholder="Please select">
- *   <WaylandSelect.OptGroup label="Group 1">
- *     <WaylandSelect.Option value="1">Option 1</WaylandSelect.Option>
- *   </WaylandSelect.OptGroup>
- *   <WaylandSelect.OptGroup label="Group 2">
- *     <WaylandSelect.Option value="2">Option 2</WaylandSelect.Option>
- *   </WaylandSelect.OptGroup>
- * </WaylandSelect>
+ * <DarhaiSelect placeholder="Please select">
+ *   <DarhaiSelect.OptGroup label="Group 1">
+ *     <DarhaiSelect.Option value="1">Option 1</DarhaiSelect.Option>
+ *   </DarhaiSelect.OptGroup>
+ *   <DarhaiSelect.OptGroup label="Group 2">
+ *     <DarhaiSelect.Option value="2">Option 2</DarhaiSelect.Option>
+ *   </DarhaiSelect.OptGroup>
+ * </DarhaiSelect>
  * ```
  *
  * @see arco-override.css for theme-related styles (.aion-select)
  */
-const mapSizeToNative = (size?: WaylandSelectSize): NativeSelectSize | undefined => {
+const mapSizeToNative = (size?: DarhaiSelectSize): NativeSelectSize | undefined => {
   if (!size) return undefined;
   if (size === 'middle') return 'default';
   return size;
 };
 
-type WaylandSelectComponent = React.ForwardRefExoticComponent<WaylandSelectProps & React.RefAttributes<SelectHandle>> & {
+type DarhaiSelectComponent = React.ForwardRefExoticComponent<DarhaiSelectProps & React.RefAttributes<SelectHandle>> & {
   Option: typeof Select.Option;
   OptGroup: typeof Select.OptGroup;
 };
 
-const InternalSelect = React.forwardRef<SelectHandle, WaylandSelectProps>(
+const InternalSelect = React.forwardRef<SelectHandle, DarhaiSelectProps>(
   ({ className, getPopupContainer, size = 'middle', ...rest }, ref) => {
     const normalizedSize = mapSizeToNative(size);
     return (
@@ -119,12 +119,12 @@ const InternalSelect = React.forwardRef<SelectHandle, WaylandSelectProps>(
   }
 );
 
-const WaylandSelect = InternalSelect as WaylandSelectComponent;
+const DarhaiSelect = InternalSelect as DarhaiSelectComponent;
 
-WaylandSelect.displayName = 'WaylandSelect';
+DarhaiSelect.displayName = 'DarhaiSelect';
 
 // Export sub-components
-WaylandSelect.Option = Select.Option;
-WaylandSelect.OptGroup = Select.OptGroup;
+DarhaiSelect.Option = Select.Option;
+DarhaiSelect.OptGroup = Select.OptGroup;
 
-export default WaylandSelect;
+export default DarhaiSelect;

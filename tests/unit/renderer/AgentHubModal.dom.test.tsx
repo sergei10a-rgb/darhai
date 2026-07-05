@@ -159,8 +159,8 @@ describe('AgentHubModal', () => {
 
     expect(screen.getByText('Want a new Agent listed here?')).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open a PR on WaylandHub' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open a PR on Darhai Hub' }));
 
-    expect(mockOpenExternalUrl).toHaveBeenCalledWith('https://github.com/FerroxLabs/waylandHub');
+    expect(mockOpenExternalUrl).toHaveBeenCalledWith('https://github.com/sergei10a-rgb/darhaiHub');
   });
 });

@@ -27,7 +27,7 @@ import { FLUX_AUTO_MODEL, FLUX_PROVIDER_ID } from '@/common/config/flux';
 import { ConfigStorage } from '@/common/config/storage';
 import type { DetectionResult } from '@/common/types/onboarding';
 import type { ProviderId } from '@process/providers/types';
-import wordmark from '@renderer/assets/logos/wayland-wordmark-white.png';
+import wordmark from '@renderer/assets/logos/darhai-wordmark-white.png';
 import anthropicLogo from '@renderer/assets/logos/anthropic.svg';
 import claudeLogo from '@renderer/assets/logos/claude.svg';
 import codexLogo from '@renderer/assets/logos/codex.svg';

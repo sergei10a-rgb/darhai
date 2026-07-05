@@ -15,7 +15,7 @@ license: Apache-2.0
 type: workflow
 skills: "hr-handbook"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: hr handbook policy compliance step-by-step planning
   category: hr

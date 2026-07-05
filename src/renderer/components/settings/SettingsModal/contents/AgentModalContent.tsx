@@ -10,7 +10,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import LocalAgents from '@/renderer/pages/settings/AgentSettings/LocalAgents';
 import RemoteAgents from '@/renderer/pages/settings/AgentSettings/RemoteAgents';
-import WaylandScrollArea from '@/renderer/components/base/WaylandScrollArea';
+import DarhaiScrollArea from '@/renderer/components/base/DarhaiScrollArea';
 import { useSettingsViewMode } from '../settingsViewContext';
 
 const AgentModalContent: React.FC = () => {
@@ -44,14 +44,14 @@ const AgentModalContent: React.FC = () => {
         className='flex flex-col flex-1 min-h-0 [&>.arco-tabs-content]:pt-0'
       >
         <Tabs.TabPane key='local' title={t('settings.agentManagement.localAgents')}>
-          <WaylandScrollArea className='flex-1 min-h-0 pb-16px scrollbar-hide' disableOverflow={isPageMode}>
+          <DarhaiScrollArea className='flex-1 min-h-0 pb-16px scrollbar-hide' disableOverflow={isPageMode}>
             <LocalAgents />
-          </WaylandScrollArea>
+          </DarhaiScrollArea>
         </Tabs.TabPane>
         <Tabs.TabPane key='remote' title={t('settings.agentManagement.remoteAgents')}>
-          <WaylandScrollArea className='flex-1 min-h-0 pb-16px scrollbar-hide' disableOverflow={isPageMode}>
+          <DarhaiScrollArea className='flex-1 min-h-0 pb-16px scrollbar-hide' disableOverflow={isPageMode}>
             <RemoteAgents />
-          </WaylandScrollArea>
+          </DarhaiScrollArea>
         </Tabs.TabPane>
       </Tabs>
     </div>

@@ -36,7 +36,7 @@ import { isPathWithinDirectory } from '../sandbox/pathSafety';
  * serve files. Directories are resolved to absolute paths and deduplicated.
  *
  * NOTE: We do not cache the result - env-configured extension dirs
- * (`WAYLAND_EXTENSIONS_PATH`) can change between calls in tests, and the
+ * (`DARHAI_EXTENSIONS_PATH`) can change between calls in tests, and the
  * computation is cheap.
  */
 export function buildAssetAllowlist(): string[] {

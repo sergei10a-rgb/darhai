@@ -7,7 +7,7 @@ steps:
     estSeconds: 30
     autoCompletedByInstall: true
     body: |
-      Wayland runs `@mapbox/mcp-server` from npm via `npx` on first launch -
+      Дархай runs `@mapbox/mcp-server` from npm via `npx` on first launch -
       no manual install. The package starts as a stdio child process whenever
       you invoke a Mapbox tool.
   - id: api-key
@@ -19,13 +19,13 @@ steps:
     warning: |
       Don't use a **secret** token with URL restrictions for desktop use -
       restrictions block non-browser origins. A **public** token (or a secret
-      token with no URL restriction) is correct for Wayland.
+      token with no URL restriction) is correct for Дархай.
     body: |
       1. Click **Open Mapbox tokens dashboard** above. Sign in if prompted -
          the URL is `console.mapbox.com → Account → Access tokens`.
       2. Either copy your **Default public token** (top of the list, prefix
          `pk.`) or click **Create a token**:
-         - Name: *Wayland Desktop*
+         - Name: *Darhai Desktop*
          - **Public scopes** are enough for most agent use:
            `styles:read`, `styles:tiles`, `fonts:read`, `datasets:read`.
          - Add secret scopes (`uploads:write`, `tilesets:write`, etc.) only

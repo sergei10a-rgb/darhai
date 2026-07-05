@@ -1,6 +1,6 @@
 import type { IProvider } from '@/common/config/storage';
 import ModalHOC from '@/renderer/utils/ui/ModalHOC';
-import WaylandModal from '@/renderer/components/base/WaylandModal';
+import DarhaiModal from '@/renderer/components/base/DarhaiModal';
 import { Button, Select, Tag } from '@arco-design/web-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -45,7 +45,7 @@ const AddModelModal = ModalHOC<{ data?: IProvider; onSubmit: (model: IProvider) 
     }, [data, existingModels, model, modelProtocol, isNewApi, onSubmit, modalCtrl]);
 
     return (
-      <WaylandModal
+      <DarhaiModal
         visible={modalProps.visible}
         onCancel={modalCtrl.close}
         header={{ title: t('settings.addModel'), showClose: true }}
@@ -111,7 +111,7 @@ const AddModelModal = ModalHOC<{ data?: IProvider; onSubmit: (model: IProvider) 
           {/* <div className='text-12px tet-t-tertiary leading-5 bg-fill-1 rd-8px px-12px py-10px border border-dashed border-border-2'>{t('settings.addModelTips')}</div> */}
         </div>
         {/* <div className='text-12px text-t-secondary leading-5 my-4'>{model ? t('settings.addModelSelectedHint', { model }) : t('settings.addModelHint')}</div> */}
-      </WaylandModal>
+      </DarhaiModal>
     );
   }
 );

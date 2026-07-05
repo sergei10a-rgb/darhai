@@ -21,9 +21,9 @@ import { ProcessConfig } from '@process/utils/initStorage';
  *
  * Differences vs. other ACP Backend MCP Agents:
  * - ACP Backend Agents: manage MCP configuration of real CLI tools (e.g. claude mcp, qwen mcp commands)
- * - WaylandMcpAgent: manages runtime MCP configuration for Wayland's local @office-ai/aioncli-core
+ * - DarhaiMcpAgent: manages runtime MCP configuration for Wayland's local @office-ai/aioncli-core
  */
-export class WaylandMcpAgent extends AbstractMcpAgent {
+export class DarhaiMcpAgent extends AbstractMcpAgent {
   constructor() {
     // Use 'wayland' as the backend type to distinguish from the real Gemini CLI
     // Even though config is consumed by GeminiAgentManager, at the MCP management layer it's a separate agent
@@ -54,7 +54,7 @@ export class WaylandMcpAgent extends AbstractMcpAgent {
         return supportedTypes.includes(server.transport.type);
       });
     } catch (error) {
-      console.warn('[WaylandMcpAgent] Failed to detect MCP servers:', error);
+      console.warn('[DarhaiMcpAgent] Failed to detect MCP servers:', error);
       return [];
     }
   }
@@ -86,7 +86,7 @@ export class WaylandMcpAgent extends AbstractMcpAgent {
             updatedAt: Date.now(),
           });
         } else {
-          console.warn(`[WaylandMcpAgent] Skipping ${server.name}: unsupported transport type ${server.transport.type}`);
+          console.warn(`[DarhaiMcpAgent] Skipping ${server.name}: unsupported transport type ${server.transport.type}`);
         }
       });
 
@@ -94,10 +94,10 @@ export class WaylandMcpAgent extends AbstractMcpAgent {
       const mergedServers = Array.from(serverMap.values());
       await ProcessConfig.set('mcp.config', mergedServers);
 
-      console.log('[WaylandMcpAgent] Installed MCP servers:', mcpServers.map((s) => s.name).join(', '));
+      console.log('[DarhaiMcpAgent] Installed MCP servers:', mcpServers.map((s) => s.name).join(', '));
       return { success: true };
     } catch (error) {
-      console.error('[WaylandMcpAgent] Failed to install MCP servers:', error);
+      console.error('[DarhaiMcpAgent] Failed to install MCP servers:', error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   }
@@ -110,12 +110,12 @@ export class WaylandMcpAgent extends AbstractMcpAgent {
    * 1. When toggled off: the frontend already sets enabled: false; no backend mutation needed
    * 2. When deleted: the frontend already removed it from config; no backend mutation needed
    *
-   * WaylandMcpAgent is only responsible for reading config (detectMcpServers) and adding
+   * DarhaiMcpAgent is only responsible for reading config (detectMcpServers) and adding
    * config (installMcpServers). It should not mutate config during remove to avoid
    * conflicting with the frontend's configuration management.
    */
   removeMcpServer(mcpServerName: string): Promise<McpOperationResult> {
-    console.log(`[WaylandMcpAgent] Skip removing '${mcpServerName}' - config managed by renderer`);
+    console.log(`[DarhaiMcpAgent] Skip removing '${mcpServerName}' - config managed by renderer`);
     return Promise.resolve({ success: true });
   }
 }

@@ -7,7 +7,7 @@ steps:
     estSeconds: 30
     autoCompletedByInstall: true
     body: |
-      Wayland fetches `@upstash/context7-mcp` from npm via `npx` on first
+      Дархай fetches `@upstash/context7-mcp` from npm via `npx` on first
       launch - no manual install needed. Context7 indexes up-to-date docs
       for thousands of libraries (React, Next.js, Prisma, FastAPI, etc.) so
       agents can pull the right snippet instead of guessing from training
@@ -21,7 +21,7 @@ steps:
     externalAction: { label: "Get a Context7 API key", url: "https://context7.com/dashboard" }
     body: |
       A free key raises the per-IP rate limit. Recommended if you run
-      Wayland behind a shared egress IP (corporate VPN, office NAT) or rely
+      Дархай behind a shared egress IP (corporate VPN, office NAT) or rely
       on Context7 in a long-running agent loop.
 
       1. Click **Get a Context7 API key** above. Sign in with GitHub or
@@ -30,7 +30,7 @@ steps:
          default key that's already provisioned for your account).
       3. Paste the value into MCP advanced settings as `CONTEXT7_API_KEY`.
 
-      Restart the server from the Installed page after pasting - Wayland
+      Restart the server from the Installed page after pasting - Дархай
       reads the env var at process start.
 ---
 

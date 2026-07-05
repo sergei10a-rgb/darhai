@@ -135,7 +135,7 @@ vi.mock('jszip', () => {
     },
   };
 });
-vi.mock('@/common/config/constants', () => ({ WAYLAND_TIMESTAMP_SEPARATOR: '__ts__' }));
+vi.mock('@/common/config/constants', () => ({ DARHAI_TIMESTAMP_SEPARATOR: '__ts__' }));
 
 import { initFsBridge } from '../../../src/process/bridge/fsBridge';
 

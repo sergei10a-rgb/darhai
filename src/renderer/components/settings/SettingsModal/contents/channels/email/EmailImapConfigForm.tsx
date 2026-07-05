@@ -100,40 +100,24 @@ const EmailImapConfigForm: React.FC<EmailImapConfigFormProps> = ({
 
   const handleTestAndEnable = useCallback(async () => {
     if (!imapHost.trim()) {
-      Message.error(
-        t('settings.channels.emailImap.credentials.imapHost.required', 'IMAP host is required')
-      );
+      Message.error(t('settings.channels.emailImap.credentials.imapHost.required', 'IMAP host is required'));
       return;
     }
     if (!imapUser.trim()) {
-      Message.error(
-        t('settings.channels.emailImap.credentials.imapUser.required', 'IMAP user is required')
-      );
+      Message.error(t('settings.channels.emailImap.credentials.imapUser.required', 'IMAP user is required'));
       return;
     }
     if (!imapPassword) {
-      Message.error(
-        t(
-          'settings.channels.emailImap.credentials.imapPassword.required',
-          'IMAP password is required'
-        )
-      );
+      Message.error(t('settings.channels.emailImap.credentials.imapPassword.required', 'IMAP password is required'));
       return;
     }
     if (!useSameAuth) {
       if (!smtpUser.trim()) {
-        Message.error(
-          t('settings.channels.emailImap.credentials.smtpUser.required', 'SMTP user is required')
-        );
+        Message.error(t('settings.channels.emailImap.credentials.smtpUser.required', 'SMTP user is required'));
         return;
       }
       if (!smtpPassword) {
-        Message.error(
-          t(
-            'settings.channels.emailImap.credentials.smtpPassword.required',
-            'SMTP password is required'
-          )
-        );
+        Message.error(t('settings.channels.emailImap.credentials.smtpPassword.required', 'SMTP password is required'));
         return;
       }
     }
@@ -184,10 +168,7 @@ const EmailImapConfigForm: React.FC<EmailImapConfigFormProps> = ({
       if (enableResult.success) {
         Message.success(t('settings.channels.emailImap.pluginEnabled', 'Email (IMAP) enabled'));
       } else {
-        Message.error(
-          enableResult.msg ??
-            t('settings.channels.emailImap.enableFailed', 'Failed to enable plugin')
-        );
+        Message.error(enableResult.msg ?? t('settings.channels.emailImap.enableFailed', 'Failed to enable plugin'));
       }
     } catch (error: unknown) {
       Message.error(error instanceof Error ? error.message : String(error));
@@ -234,20 +215,14 @@ const EmailImapConfigForm: React.FC<EmailImapConfigFormProps> = ({
         <Input
           value={imapHost}
           onChange={(value) => setImapHost(value)}
-          placeholder={t(
-            'settings.channels.emailImap.credentials.imapHost.placeholder',
-            'imap.gmail.com'
-          )}
+          placeholder={t('settings.channels.emailImap.credentials.imapHost.placeholder', 'imap.gmail.com')}
           style={{ width: 280 }}
         />
       </PreferenceRow>
 
       <PreferenceRow
         label={t('settings.channels.emailImap.credentials.imapPort.label', 'IMAP Port')}
-        description={t(
-          'settings.channels.emailImap.credentials.imapPort.help',
-          'Default 993 for IMAPS.'
-        )}
+        description={t('settings.channels.emailImap.credentials.imapPort.help', 'Default 993 for IMAPS.')}
         required
       >
         <InputNumber
@@ -261,20 +236,14 @@ const EmailImapConfigForm: React.FC<EmailImapConfigFormProps> = ({
 
       <PreferenceRow
         label={t('settings.channels.emailImap.credentials.imapUser.label', 'IMAP User')}
-        description={t(
-          'settings.channels.emailImap.credentials.imapUser.help',
-          'Usually your full email address.'
-        )}
+        description={t('settings.channels.emailImap.credentials.imapUser.help', 'Usually your full email address.')}
         required
       >
         <div style={{ position: 'relative', width: 280 }}>
           <Input
             value={imapUser}
             onChange={handleImapUserChange}
-            placeholder={t(
-              'settings.channels.emailImap.credentials.imapUser.placeholder',
-              'agent@example.com'
-            )}
+            placeholder={t('settings.channels.emailImap.credentials.imapUser.placeholder', 'agent@example.com')}
             style={{ width: 280 }}
           />
           {detectedProvider && (
@@ -312,10 +281,7 @@ const EmailImapConfigForm: React.FC<EmailImapConfigFormProps> = ({
 
       <PreferenceRow
         label={t('settings.channels.emailImap.credentials.imapTls.label', 'IMAP TLS')}
-        description={t(
-          'settings.channels.emailImap.credentials.imapTls.help',
-          'Use TLS (recommended).'
-        )}
+        description={t('settings.channels.emailImap.credentials.imapTls.help', 'Use TLS (recommended).')}
       >
         <Switch checked={imapTls} onChange={(value) => setImapTls(value)} />
       </PreferenceRow>
@@ -336,18 +302,12 @@ const EmailImapConfigForm: React.FC<EmailImapConfigFormProps> = ({
 
       <PreferenceRow
         label={t('settings.channels.emailImap.credentials.smtpHost.label', 'SMTP Host')}
-        description={t(
-          'settings.channels.emailImap.credentials.smtpHost.help',
-          'Leave blank to reuse the IMAP host.'
-        )}
+        description={t('settings.channels.emailImap.credentials.smtpHost.help', 'Leave blank to reuse the IMAP host.')}
       >
         <Input
           value={smtpHost}
           onChange={(value) => setSmtpHost(value)}
-          placeholder={t(
-            'settings.channels.emailImap.credentials.smtpHost.placeholder',
-            'smtp.gmail.com'
-          )}
+          placeholder={t('settings.channels.emailImap.credentials.smtpHost.placeholder', 'smtp.gmail.com')}
           style={{ width: 280 }}
         />
       </PreferenceRow>
@@ -370,15 +330,8 @@ const EmailImapConfigForm: React.FC<EmailImapConfigFormProps> = ({
 
       {!useSameAuth && (
         <>
-          <PreferenceRow
-            label={t('settings.channels.emailImap.credentials.smtpUser.label', 'SMTP User')}
-            required
-          >
-            <Input
-              value={smtpUser}
-              onChange={(value) => setSmtpUser(value)}
-              style={{ width: 280 }}
-            />
+          <PreferenceRow label={t('settings.channels.emailImap.credentials.smtpUser.label', 'SMTP User')} required>
+            <Input value={smtpUser} onChange={(value) => setSmtpUser(value)} style={{ width: 280 }} />
           </PreferenceRow>
 
           <PreferenceRow
@@ -414,12 +367,11 @@ const EmailImapConfigForm: React.FC<EmailImapConfigFormProps> = ({
         <span className='text-12px text-t-tertiary'>
           {t(
             'settings.channels.emailImap.howToTalk',
-            'Check your own inbox. Wayland just emailed you; reply to that email any time.',
+            'Check your own inbox. Дархай just emailed you; reply to that email any time.'
           )}
         </span>
       )}
       <ChannelAgentModelSelector platform='email-imap' modelSelection={modelSelection} />
-
     </div>
   );
 };

@@ -63,8 +63,8 @@ const PromotionThresholdModalLazy = lazy(
     import('../components/PromotionThresholdModal').catch(
       (): PromotionThresholdModalModule => ({
         default: () => null,
-      }),
-    ) as Promise<PromotionThresholdModalModule>,
+      })
+    ) as Promise<PromotionThresholdModalModule>
 );
 
 // ---------------------------------------------------------------------------
@@ -101,7 +101,7 @@ const DEFAULT_THRESHOLD = 90;
 // ---------------------------------------------------------------------------
 
 const FullPanelShell: React.FC = () => {
-  const { t } = useTranslation('memory');
+  const { t } = useTranslation();
 
   const [filter, setFilter] = useState<ListFilter>(DEFAULT_FILTER);
   const [timeWindow, setTimeWindow] = useState<TimeWindow>('all');
@@ -244,7 +244,7 @@ const FullPanelShell: React.FC = () => {
         selectEntry(id);
       }
     },
-    [selectedId, clearSelection, selectEntry],
+    [selectedId, clearSelection, selectEntry]
   );
 
   // Promote entry
@@ -259,23 +259,27 @@ const FullPanelShell: React.FC = () => {
         reload();
       }
     },
-    [reload, t],
+    [reload, t]
   );
 
   // Open source file
-  const handleOpenSource = useCallback((path: string, _line: number) => {
-    ipcBridge.shell.openFile
-      .invoke(path)
-      .catch(() => {
+  const handleOpenSource = useCallback(
+    (path: string, _line: number) => {
+      ipcBridge.shell.openFile.invoke(path).catch(() => {
         void navigator.clipboard.writeText(path);
         Message.success(t('archive.toast.pathCopied', 'Path copied'));
       });
-  }, [t]);
+    },
+    [t]
+  );
 
-  const handleCopy = useCallback((text: string) => {
-    void navigator.clipboard.writeText(text);
-    Message.success(t('archive.toast.copied', 'Copied'));
-  }, [t]);
+  const handleCopy = useCallback(
+    (text: string) => {
+      void navigator.clipboard.writeText(text);
+      Message.success(t('archive.toast.copied', 'Copied'));
+    },
+    [t]
+  );
 
   // Cursor pagination (no-deferment #5)
   const handleEndReached = useCallback(() => {
@@ -294,14 +298,16 @@ const FullPanelShell: React.FC = () => {
   const showEmptyHero = entries.length === 0 && !isLoading && !hasActiveFilters;
 
   // Result count for filter bar
-  const resultCountLabel =
-    isLoading
-      ? ''
-      : `${total.toLocaleString()} ${t('archive.filter.results', 'results')}`;
+  const resultCountLabel = isLoading ? '' : `${total.toLocaleString()} ${t('archive.filter.results', 'results')}`;
 
   const projectSelected = filter.project !== 'all' ? filter.project : null;
   const typeCounts = stats?.typeCounts ?? {
-    decision: 0, pattern: 0, session: 0, observation: 0, wiki: 0, preference: 0,
+    decision: 0,
+    pattern: 0,
+    session: 0,
+    observation: 0,
+    wiki: 0,
+    preference: 0,
   };
 
   // ── Drag-drop handlers ──────────────────────────────────────────────────────
@@ -338,13 +344,11 @@ const FullPanelShell: React.FC = () => {
       if (files.length === 0) return;
 
       try {
-        const filePayloads = await Promise.all(
-          files.map(async (f) => ({ name: f.name, content: await f.text() })),
-        );
+        const filePayloads = await Promise.all(files.map(async (f) => ({ name: f.name, content: await f.text() })));
         const result = await memoryBridge.ingestFiles.invoke({ files: filePayloads });
         if (result.ingested > 0) {
           Message.success(
-            t('archive.dragDrop.toastIngested', `Ingested ${result.ingested} file${result.ingested === 1 ? '' : 's'}`),
+            t('archive.dragDrop.toastIngested', `Ingested ${result.ingested} file${result.ingested === 1 ? '' : 's'}`)
           );
           reload();
         } else {
@@ -355,7 +359,7 @@ const FullPanelShell: React.FC = () => {
         console.error('[FullPanelShell] drag-drop ingest error', err);
       }
     },
-    [reload, t],
+    [reload, t]
   );
 
   return (
@@ -364,11 +368,13 @@ const FullPanelShell: React.FC = () => {
       className={styles.shell}
       data-testid='memory-full-panel'
       role='region'
-      aria-label='Memory Archive'
+      aria-label={t('memory.archive.regionLabel')}
       onDragEnter={handleDragEnter}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
-      onDrop={(e) => { void handleDrop(e); }}
+      onDrop={(e) => {
+        void handleDrop(e);
+      }}
     >
       {/* ---- Drag-drop overlay ---- */}
       {dragOver && (
@@ -384,29 +390,20 @@ const FullPanelShell: React.FC = () => {
             <span className={styles.breadcrumbIcon} aria-hidden>
               <Archive size={20} />
             </span>
-            <span className={styles.breadcrumbPrimary}>
-              {t('archive.topbar.archive', 'Archive')}
+            <span className={styles.breadcrumbPrimary}>{t('archive.topbar.archive', 'Archive')}</span>
+            <span className={styles.breadcrumbSep} aria-hidden>
+              ·
             </span>
-            <span className={styles.breadcrumbSep} aria-hidden>·</span>
             <span className={styles.breadcrumbProject}>
               {projects[0]?.basename ?? t('archive.topbar.allProjects', 'All projects')}
             </span>
           </span>
 
           {/* Type chips (no-deferment #1) */}
-          <TopbarChips
-            typeCounts={typeCounts}
-            activeType={activeChipType}
-            onFilterChange={handleChipFilter}
-          />
+          <TopbarChips typeCounts={typeCounts} activeType={activeChipType} onFilterChange={handleChipFilter} />
 
           {/* Streak pill (no-deferment #2) */}
-          {stats?.streak && (
-            <StreakPill
-              sessions={stats.streak.sessions}
-              longestDays={stats.streak.longestDays}
-            />
-          )}
+          {stats?.streak && <StreakPill sessions={stats.streak.sessions} longestDays={stats.streak.longestDays} />}
         </div>
 
         <div className={styles.topbarActions}>
@@ -462,20 +459,9 @@ const FullPanelShell: React.FC = () => {
           />
         </div>
         <div className={styles.filterDropdowns}>
-          <ProjectDropdown
-            projects={projects}
-            selected={projectSelected}
-            onSelect={handleProjectSelect}
-          />
-          <TimeDropdown
-            selected={timeWindow}
-            onSelect={handleTimeSelect}
-          />
-          <TypeDropdown
-            typeCounts={typeCounts}
-            selected={filter.types ?? []}
-            onFilterChange={handleTypeFilter}
-          />
+          <ProjectDropdown projects={projects} selected={projectSelected} onSelect={handleProjectSelect} />
+          <TimeDropdown selected={timeWindow} onSelect={handleTimeSelect} />
+          <TypeDropdown typeCounts={typeCounts} selected={filter.types ?? []} onFilterChange={handleTypeFilter} />
         </div>
         <div className={styles.resultCount} data-testid='memory-result-count'>
           {resultCountLabel}
@@ -485,10 +471,7 @@ const FullPanelShell: React.FC = () => {
       {/* ---- Main area (1fr) ---- */}
       <div className={styles.main} data-testid='memory-body'>
         {showEmptyHero ? (
-          <EmptyStateHero
-            onImportComplete={reload}
-            onSearchChange={handleSearchChange}
-          />
+          <EmptyStateHero onImportComplete={reload} onSearchChange={handleSearchChange} />
         ) : (
           <>
             {/* List column - shrinks when drawer opens (push-content) */}
@@ -524,11 +507,7 @@ const FullPanelShell: React.FC = () => {
       </div>
 
       {/* ---- Status bar (28px) ---- */}
-      <MemoryStatusBar
-        brainLive={!isLoading && stats !== null}
-        cliCount={cliCount}
-        lastDream={lastDream}
-      />
+      <MemoryStatusBar brainLive={!isLoading && stats !== null} cliCount={cliCount} lastDream={lastDream} />
 
       {/* ---- Import drawer ---- */}
       <ImportDrawer open={importOpen} onClose={() => setImportOpen(false)} />

@@ -162,11 +162,11 @@ export function getFileExtension(fileName: string): string {
   return lastDotIndex > -1 ? fileName.substring(lastDotIndex).toLowerCase() : '';
 }
 
-import { WAYLAND_TIMESTAMP_REGEX } from '@/common/config/constants';
+import { DARHAI_TIMESTAMP_REGEX } from '@/common/config/constants';
 
 // Strip Wayland timestamp suffix to return the original file name
 export function cleanWaylandTimestamp(fileName: string): string {
-  return fileName.replace(WAYLAND_TIMESTAMP_REGEX, '$1');
+  return fileName.replace(DARHAI_TIMESTAMP_REGEX, '$1');
 }
 
 // Get the cleaned file name from a file path (used for UI display)

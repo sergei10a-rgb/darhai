@@ -70,7 +70,7 @@ A role invoked standalone cannot rely on the Publisher to gate it. Each role che
 
 ## Team coordination (real MCP tool names)
 
-When the roles run as a Wayland team, the Publisher coordinates with these tools. Names are exact.
+When the roles run as a Дархай team, the Publisher coordinates with these tools. Names are exact.
 
 - **Write / dispatch:** `team_task_create` (assign a task to a teammate), `team_task_update` (change status), `team_send_message` (message a teammate), `team_spawn_agent` (bring a role online).
 - **Read / inspect:** `team_task_list` (see assignments and status), `team_members` (see who is on the team), `team_describe_assistant` (look up a teammate's role).

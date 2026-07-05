@@ -24,13 +24,13 @@ negative_triggers:
 tags: [conversion, page, proof, donahoe-method, conversational-proof, three-locks, visual]
 priority: 80
 version: 1.0.0
-author: Wayland Business Pack
+author: Darhai Business Pack
 license: MIT
 metadata:
   wayland:
     related_skills: [convert, convert-proof, convert-three-locks, convert-above-fold, convert-scroll-rhythm, convert-mobile, convert-sales-page]
 attribution:
-  lineage: "The Donahoe Method - Conversational Proof + 5 proof types (Wayland-owned operating system); Cialdini's social-proof principle (Influence, 1984/2021); Aristotle's three rhetorical appeals (ethos / pathos / logos, c. 350 BCE) for the proof-type hierarchy"
+  lineage: "The Donahoe Method - Conversational Proof + 5 proof types (Дархай-owned operating system); Cialdini's social-proof principle (Influence, 1984/2021); Aristotle's three rhetorical appeals (ethos / pathos / logos, c. 350 BCE) for the proof-type hierarchy"
 ---
 
 # Convert Proof-Stack - Visual Stacking of the 5 Donahoe Proof Types
@@ -495,7 +495,7 @@ Pass the proof stack through the anti-pattern filter:
 
 ## Lineage
 
-- **Conversational Proof + 5 proof types** - The Donahoe Method, Framework 2 (Wayland-owned operating system)
+- **Conversational Proof + 5 proof types** - The Donahoe Method, Framework 2 (Дархай-owned operating system)
 - **Anecdote / Receipt / Drive-By / Namecheck / Because** - Donahoe-coined proof typology
 - **Cialdini's social proof principle** - *Influence: The Psychology of Persuasion* (Cialdini, 1984; expanded 2021)
 - **Aristotle's three rhetorical appeals** (ethos / pathos / logos, *Rhetoric*, c. 350 BCE) - the priority order maps loosely: pathos (Anecdote) → logos (Receipt + Because) → ethos (Drive-By + Namecheck)

@@ -14,7 +14,7 @@ license: Apache-2.0
 type: workflow
 skills: "commerce-listing commerce-description"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: commerce ecommerce listing audit triage deterministic
   category: marketing

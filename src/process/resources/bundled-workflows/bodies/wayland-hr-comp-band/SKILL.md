@@ -14,7 +14,7 @@ license: Apache-2.0
 type: workflow
 skills: "hr-comp-band"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: hr compensation comp-band hiring step-by-step planning
   category: hr

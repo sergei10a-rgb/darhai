@@ -117,13 +117,13 @@ describe('ijfwSystemService.detectLocalInstall', () => {
 
   it('uses buildChildEnv (filtered allowlist) for the which probe - SEC-006', async () => {
     spawnSyncSpy.mockReturnValue({ status: 1, stdout: '', stderr: '' });
-    process.env.WAYLAND_FAKE_SECRET = 'should-not-leak';
+    process.env.DARHAI_FAKE_SECRET = 'should-not-leak';
     await ijfwSystemService.detectLocalInstall();
-    delete process.env.WAYLAND_FAKE_SECRET;
+    delete process.env.DARHAI_FAKE_SECRET;
     expect(spawnSyncSpy).toHaveBeenCalled();
     const [, , opts] = spawnSyncSpy.mock.calls[0] as [string, string[], { env?: NodeJS.ProcessEnv }];
     expect(opts.env).toBeDefined();
-    expect(opts.env!.WAYLAND_FAKE_SECRET).toBeUndefined();
+    expect(opts.env!.DARHAI_FAKE_SECRET).toBeUndefined();
     expect(opts.env!.PATH).toBeDefined();
   });
 });

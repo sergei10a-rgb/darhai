@@ -7,7 +7,7 @@ steps:
     estSeconds: 30
     autoCompletedByInstall: true
     body: |
-      Wayland connects to GitLab's hosted MCP endpoint at
+      Дархай connects to GitLab's hosted MCP endpoint at
       `https://mcp.gitlab.com` - nothing runs locally. Works against
       gitlab.com out of the box.
 
@@ -24,11 +24,11 @@ steps:
       `read_repository` scopes.
 
       1. Sign in if you aren't already, then pick the account whose projects
-         you want Wayland to reach.
-      2. Review the scope list on the **Authorize Wayland** screen - `api`
+         you want Дархай to reach.
+      2. Review the scope list on the **Authorize Darhai** screen - `api`
          is required for issue and merge-request operations, `read_repository`
          for browsing code.
-      3. Click **Authorize**. The tab redirects back to Wayland and the
+      3. Click **Authorize**. The tab redirects back to Дархай and the
          server status flips to Running. Tokens live in your OS keychain.
 
       Prefer a Personal Access Token instead? Open `gitlab.com` → avatar →

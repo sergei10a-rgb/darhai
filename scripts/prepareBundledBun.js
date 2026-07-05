@@ -47,7 +47,7 @@ function getRequiredRuntimeFiles(platform) {
 }
 
 function getRuntimeVersion() {
-  const configured = process.env.WAYLAND_BUN_VERSION;
+  const configured = process.env.DARHAI_BUN_VERSION;
   return configured && configured.trim() ? configured.trim() : PINNED_BUN_VERSION;
 }
 
@@ -80,16 +80,15 @@ function loadExpectedShaForAsset(version, assetName) {
 
   const raw = versionEntry[assetName];
   if (!raw || typeof raw !== 'string') {
-    throw new Error(
-      `No SHA-256 entry for asset "${assetName}" under version "${versionKey}" in ${SHASUMS_FILE}.`
-    );
+    throw new Error(`No SHA-256 entry for asset "${assetName}" under version "${versionKey}" in ${SHASUMS_FILE}.`);
   }
 
-  const hex = raw.replace(/^sha256:/i, '').trim().toLowerCase();
+  const hex = raw
+    .replace(/^sha256:/i, '')
+    .trim()
+    .toLowerCase();
   if (!/^[0-9a-f]{64}$/.test(hex)) {
-    throw new Error(
-      `Malformed SHA-256 entry for "${assetName}" (version "${versionKey}") in ${SHASUMS_FILE}: ${raw}`
-    );
+    throw new Error(`Malformed SHA-256 entry for "${assetName}" (version "${versionKey}") in ${SHASUMS_FILE}: ${raw}`);
   }
   return hex;
 }
@@ -112,7 +111,7 @@ function verifyArchiveChecksum(archivePath, expectedHex, assetName, version) {
 }
 
 function getCacheRootDir() {
-  const custom = process.env.WAYLAND_BUN_CACHE_DIR;
+  const custom = process.env.DARHAI_BUN_CACHE_DIR;
   if (custom && custom.trim()) {
     return path.resolve(custom.trim());
   }
@@ -160,7 +159,7 @@ function getDownloadUrl(assetName, version) {
     // SHA-pinned, so we never resolve to releases/latest/download.
     throw new Error(
       `Bundled Bun version "latest" is not allowed (no SHA pin possible). ` +
-        `Set WAYLAND_BUN_VERSION to a specific release (e.g. "${PINNED_BUN_VERSION}") ` +
+        `Set DARHAI_BUN_VERSION to a specific release (e.g. "${PINNED_BUN_VERSION}") ` +
         `or leave it unset to use the pinned default.`
     );
   }

@@ -4,14 +4,24 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
+
+// Default/legacy drop folders live under `os.homedir()` - redirect it to a tmp
+// fixture (per-test) so the backward-compat suite never touches the real home.
+const homeState = vi.hoisted(() => ({ dir: null as string | null }));
+vi.mock('node:os', async () => {
+  const actual = await vi.importActual<typeof import('node:os')>('node:os');
+  return { ...actual, homedir: () => homeState.dir ?? actual.homedir() };
+});
+
+// eslint-disable-next-line import/first
 import { runDropFolderProcess, startDropFolderWatcher } from '@process/services/import/dropFolderWatcher';
 
 function makeTmp(): string {
-  return fs.mkdtempSync(path.join(os.tmpdir(), 'wayland-dropfolder-test-'));
+  return fs.mkdtempSync(path.join(os.tmpdir(), 'darhai-dropfolder-test-'));
 }
 
 describe('runDropFolderProcess', () => {
@@ -57,11 +67,7 @@ describe('runDropFolderProcess', () => {
     const memDir = makeTmp();
     tmpDirs.push(memDir);
 
-    fs.writeFileSync(
-      path.join(dropFolder, 'note.md'),
-      '# Dropped Note\nSome content.',
-      'utf8',
-    );
+    fs.writeFileSync(path.join(dropFolder, 'note.md'), '# Dropped Note\nSome content.', 'utf8');
 
     const result = await runDropFolderProcess({ dropFolder, ijfwMemoryDir: memDir });
 
@@ -83,11 +89,7 @@ describe('runDropFolderProcess', () => {
     const memDir = makeTmp();
     tmpDirs.push(memDir);
 
-    fs.writeFileSync(
-      path.join(dropFolder, 'thoughts.txt'),
-      'Just a plain text note.',
-      'utf8',
-    );
+    fs.writeFileSync(path.join(dropFolder, 'thoughts.txt'), 'Just a plain text note.', 'utf8');
 
     const result = await runDropFolderProcess({ dropFolder, ijfwMemoryDir: memDir });
     expect(result.count).toBe(1);
@@ -118,11 +120,7 @@ describe('runDropFolderProcess', () => {
     const memDir = makeTmp();
     tmpDirs.push(memDir);
 
-    fs.writeFileSync(
-      path.join(dropFolder, 'data.json'),
-      JSON.stringify({ key: 'value' }),
-      'utf8',
-    );
+    fs.writeFileSync(path.join(dropFolder, 'data.json'), JSON.stringify({ key: 'value' }), 'utf8');
 
     const result = await runDropFolderProcess({ dropFolder, ijfwMemoryDir: memDir });
     expect(result.count).toBe(1);
@@ -193,5 +191,63 @@ describe('startDropFolderWatcher', () => {
     expect(ingested).toContain('watch-note.md');
     // Original should have been consumed.
     expect(fs.existsSync(path.join(dropFolder, 'watch-note.md'))).toBe(false);
+  }, 10000);
+});
+
+describe('legacy Wayland-Memory backward compat', () => {
+  afterEach(() => {
+    if (homeState.dir) {
+      try {
+        fs.rmSync(homeState.dir, { recursive: true, force: true });
+      } catch {
+        // ignore
+      }
+      homeState.dir = null;
+    }
+  });
+
+  it('one-shot processes files left in the legacy Wayland-Memory folder', async () => {
+    homeState.dir = makeTmp();
+    const legacy = path.join(homeState.dir, 'Documents', 'Wayland-Memory');
+    fs.mkdirSync(legacy, { recursive: true });
+    fs.writeFileSync(path.join(legacy, 'old-note.md'), '# Old Note\nBody.', 'utf8');
+    const memDir = path.join(homeState.dir, '.ijfw', 'memory');
+
+    const result = await runDropFolderProcess({ ijfwMemoryDir: memDir });
+
+    expect(result.errors).toHaveLength(0);
+    expect(result.count).toBe(1);
+    // Legacy original consumed; the new default folder was created alongside.
+    expect(fs.existsSync(path.join(legacy, 'old-note.md'))).toBe(false);
+    expect(fs.existsSync(path.join(homeState.dir, 'Documents', 'Darhai-Memory'))).toBe(true);
+  });
+
+  it('watches an existing legacy Wayland-Memory folder alongside the default', async () => {
+    homeState.dir = makeTmp();
+    const legacy = path.join(homeState.dir, 'Documents', 'Wayland-Memory');
+    fs.mkdirSync(legacy, { recursive: true });
+    const memDir = path.join(homeState.dir, '.ijfw', 'memory');
+
+    const ingested: string[] = [];
+    const handle = startDropFolderWatcher({
+      ijfwMemoryDir: memDir,
+      onIngest: (filename) => ingested.push(filename),
+      onError: () => undefined,
+    });
+
+    // Wait a tick for chokidar to initialise.
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
+    // Drop into the LEGACY folder - the watcher must still pick it up.
+    fs.writeFileSync(path.join(legacy, 'legacy-note.md'), '# Legacy\nBody.', 'utf8');
+
+    // Wait for chokidar add event and async ingest.
+    await new Promise((resolve) => setTimeout(resolve, 800));
+
+    handle.stop();
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    expect(ingested).toContain('legacy-note.md');
+    expect(fs.existsSync(path.join(legacy, 'legacy-note.md'))).toBe(false);
   }, 10000);
 });

@@ -36,12 +36,12 @@ async function listAgents(page: Parameters<typeof invokeBridge>[0]): Promise<Age
 
 const WCORE_RUNTIME_AVAILABLE = !process.env.WCORE_SKIP && isCliOnPath('wayland-core');
 
-test.describe('Agent: Wayland Core (wcore)', () => {
+test.describe('Agent: Darhai Core (wcore)', () => {
   test('detection: appears in AgentRegistry list', async ({ page }) => {
     const agents = await listAgents(page);
     const wcore = agents.find((a) => a.backend === 'wcore' || a.kind === 'wcore');
     expect(wcore, `agents=${agents.map((a) => `${a.backend}/${a.kind}`).join(',')}`).toBeDefined();
-    expect(wcore?.name?.toLowerCase()).toContain('wayland');
+    expect(wcore?.name?.toLowerCase()).toContain('darhai');
   });
 
   test('detection: surfaces in renderer pill bar', async ({ page }) => {

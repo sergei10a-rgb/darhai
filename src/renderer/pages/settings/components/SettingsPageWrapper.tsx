@@ -59,7 +59,7 @@ export function getBuiltinSettingsNavItems(isDesktop: boolean, t: TranslateFn): 
     },
     wcore: {
       id: 'wcore',
-      label: t('settings.wcoreConfig.navLabel', { defaultValue: 'Wayland Core' }),
+      label: t('settings.wcoreConfig.navLabel', { defaultValue: 'Darhai Core' }),
       icon: <Cpu size={16} />,
       path: 'wcore-config',
     },

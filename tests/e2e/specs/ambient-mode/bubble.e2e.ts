@@ -25,7 +25,7 @@
  *   AC-M1-8 Click = mouseup-triggered, 5 px threshold
  *   AC-M1-9 DOM must use data-testid (ambient-bubble / ambient-input / ambient-chat)
  *   AC-M1-10 ambient enabled -> ambient window created, legacy pet path skipped (U-1=A evolution, [REQ-CHANGE-v5] rewritten)
- *   AC-M1-11 WAYLAND_AMBIENT env var has priority over the settings toggle
+ *   AC-M1-11 DARHAI_AMBIENT env var has priority over the settings toggle
  *   AC-M1-12 Settings toggle requires restart + toast "Restart required to apply"
  *   AC-M1-13 (new) displayId validate + position clamp boundary protection
  *   AC-M1-14 (new) E2E fixture contract: launchAppWithEnv + ambientTest fixture
@@ -50,7 +50,7 @@
  * to avoid Windows DWM frequent-resize flicker. This spec extracts M1's transparent:true
  * into the `BUBBLE_RENDER_MODE` constant; the M3 spec will define the corresponding `CHAT_RENDER_MODE` constant.
  */
-// AC-M1-14 fixture: use ambientTest (independent WAYLAND_AMBIENT=1 Electron process,
+// AC-M1-14 fixture: use ambientTest (independent DARHAI_AMBIENT=1 Electron process,
 // `electronApp` / `page` are aliases pointing to the ambient app / bubble page).
 import { ambientTest as test, expect } from '../../fixtures';
 import { invokeBridge } from '../../helpers';
@@ -218,7 +218,7 @@ test.describe('Ambient Mode - M1 Bubble', () => {
     test.skip(
       info === null,
       'Ambient bubble window not found. Blockers: (1) Dev has not implemented ambient mode yet; ' +
-        '(2) Q7 REQ-CLARIFY-REPLY pending - `WAYLAND_AMBIENT=1` launch path under singleton fixture undefined. ' +
+        '(2) Q7 REQ-CLARIFY-REPLY pending - `DARHAI_AMBIENT=1` launch path under singleton fixture undefined. ' +
         'Unskip after Dev [IMPL_DONE] + Q7 answer lands.'
     );
   });
@@ -537,12 +537,12 @@ test.describe('Ambient Mode - M1 Bubble', () => {
     expect(counts.ambient, 'the single bubble must be ambient-titled, not legacy pet').toBe(1);
   });
 
-  // -- AC-M1-11: WAYLAND_AMBIENT env var takes priority over the settings switch --
-  test('AC-M1-11: WAYLAND_AMBIENT env var overrides settings switch', async ({ electronApp }) => {
+  // -- AC-M1-11: DARHAI_AMBIENT env var takes priority over the settings switch --
+  test('AC-M1-11: DARHAI_AMBIENT env var overrides settings switch', async ({ electronApp }) => {
     test.skip(
       true,
       'PENDING AC-M1-14 fixture `launchAppWithEnv` + `ambientTest`: this assertion requires launching a second ' +
-        'Electron process with `WAYLAND_AMBIENT=0` while ConfigStorage `ambient.enabled=true` (and the reverse), ' +
+        'Electron process with `DARHAI_AMBIENT=0` while ConfigStorage `ambient.enabled=true` (and the reverse), ' +
         'then asserting env-var wins. Arch/Dev must add `launchAppWithEnv(extraEnv)` helper to tests/e2e/fixtures.ts first.'
     );
     void electronApp;
@@ -569,7 +569,7 @@ test.describe('Ambient Mode - M1 Bubble', () => {
       'PENDING AC-M1-14 fixture `launchAppWithEnv`: this assertion requires seeding ConfigStorage with ' +
         '`ambient.bubblePosition: { x, y, displayId: 999 }` before launch, then asserting bubble appears at ' +
         'primary workArea bottom-right (AC-M1-1). Needs a fresh launch per case (singleton fixture cannot reset). ' +
-        'Assertion shape: write stale displayId → launchAppWithEnv({WAYLAND_AMBIENT:"1"}) → getAmbientBubbleInfo → ' +
+        'Assertion shape: write stale displayId → launchAppWithEnv({DARHAI_AMBIENT:"1"}) → getAmbientBubbleInfo → ' +
         'assert bounds match AC-M1-1 default, AND ambient.getBubblePosition returns sanitized value (fresh displayId).'
     );
   });

@@ -26,7 +26,6 @@ body,
   --arco-font-family: var(--forge-font);
 }
 
-
 /* Override Arco Design component backgrounds to white in light mode */
 /* .arco-input,
 .arco-textarea,
@@ -97,23 +96,23 @@ body[arco-theme='dark'] .arco-tag-checked.arco-tag-gray {
 }
 
 /* Wayland Steps wrapper styles */
-.wayland-steps .arco-steps-item-process .arco-steps-item-icon {
+.darhai-steps .arco-steps-item-process .arco-steps-item-icon {
   background-color: var(--aou-6-brand) !important;
   border-color: var(--aou-6-brand) !important;
 }
 
-.wayland-steps .arco-steps-item-finish .arco-steps-item-icon {
+.darhai-steps .arco-steps-item-finish .arco-steps-item-icon {
   background-color: #e8f3ff !important;
   border-color: #e8f3ff !important;
   border-radius: 50% !important;
 }
 
-.wayland-steps .arco-steps-item-finish .arco-steps-item-icon .arco-steps-icon {
+.darhai-steps .arco-steps-item-finish .arco-steps-item-icon .arco-steps-icon {
   line-height: 28px !important;
 }
 
 /* Wayland Modal wrapper styles */
-.wayland-modal .arco-modal-content {
+.darhai-modal .arco-modal-content {
   background: var(--dialog-fill-0) !important;
   border: 1px solid var(--border-base) !important;
   border-radius: 16px !important;
@@ -239,21 +238,21 @@ body[arco-theme='dark'] .arco-modal-confirm-icon {
   border-color: var(--bg-4) !important;
 }
 
-.wayland-modal-header {
+.darhai-modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 20px 24px 16px;
 }
 
-.wayland-modal-title {
+.darhai-modal-title {
   font-size: 18px;
   font-weight: 500;
   color: var(--text-primary);
   margin: 0;
 }
 
-.wayland-modal-close-btn {
+.darhai-modal-close-btn {
   width: 32px;
   height: 32px;
   display: flex;
@@ -267,7 +266,7 @@ body[arco-theme='dark'] .arco-modal-confirm-icon {
   padding: 0;
 }
 
-.wayland-modal-close-btn:hover {
+.darhai-modal-close-btn:hover {
   background: var(--color-fill-1);
 }
 

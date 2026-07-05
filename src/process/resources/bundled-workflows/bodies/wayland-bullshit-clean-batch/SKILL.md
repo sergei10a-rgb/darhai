@@ -13,7 +13,7 @@ license: Apache-2.0
 type: workflow
 skills: "content-audit convert-bullshit-filter convert-voice"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: marketing conversion copywriting bullshit-filter voice cleanup batch
   category: marketing

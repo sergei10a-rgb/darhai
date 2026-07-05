@@ -88,7 +88,7 @@ function normalizeOrigin(origin: string): string | null {
 }
 
 function parseAllowedOriginsEnv(): string[] {
-  return (process.env.WAYLAND_ALLOWED_ORIGINS || '')
+  return (process.env.DARHAI_ALLOWED_ORIGINS || process.env.WAYLAND_ALLOWED_ORIGINS || '')
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean)
@@ -106,11 +106,9 @@ function getConfiguredOrigins(port: number, allowRemote: boolean): Set<string> {
 
   if (allowRemote) {
     if (envOrigins.length === 0) {
-      console.warn(
-        '[security] remote mode without WAYLAND_ALLOWED_ORIGINS: only localhost allowed'
-      );
+      console.warn('[security] remote mode without DARHAI_ALLOWED_ORIGINS: only localhost allowed');
     } else {
-      // In remote mode, WAYLAND_ALLOWED_ORIGINS is the explicit allowlist.
+      // In remote mode, DARHAI_ALLOWED_ORIGINS is the explicit allowlist.
       for (const origin of envOrigins) {
         baseOrigins.add(origin);
       }

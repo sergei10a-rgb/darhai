@@ -14,7 +14,7 @@ license: Apache-2.0
 type: workflow
 skills: "sales-coach sales-icp sales-qualify"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: sales icp customer-profile segmentation qualification step-by-step
   category: sales

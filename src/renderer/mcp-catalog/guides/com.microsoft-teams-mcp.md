@@ -7,7 +7,7 @@ steps:
     estSeconds: 30
     autoCompletedByInstall: true
     body: |
-      Wayland fetches `@floriscornel/teams-mcp` from npm via `npx` on first
+      Дархай fetches `@floriscornel/teams-mcp` from npm via `npx` on first
       launch - no manual install. The server uses Microsoft's MSAL library and
       OAuth 2.0 device-code flow against Microsoft Graph. Works with personal,
       work, and school accounts. If the server fails to start, click
@@ -28,7 +28,7 @@ steps:
       2. In the global search bar, type **Microsoft Entra ID** and open it.
          In the left sidebar of Entra, pick **App registrations**, then click
          **+ New registration** at the top.
-      3. **Name:** anything memorable, e.g. *Wayland Teams*.
+      3. **Name:** anything memorable, e.g. *Darhai Teams*.
       4. **Supported account types:** pick
          **Accounts in any organizational directory (Any Microsoft Entra ID
          tenant - Multitenant) and personal Microsoft accounts (e.g. Skype,
@@ -45,7 +45,7 @@ steps:
       - { name: TEAMS_TENANT_ID, label: "Directory (tenant) ID", default: "common" }
     body: |
       Add the Graph delegated permissions the MCP needs, then copy the two
-      IDs into Wayland.
+      IDs into Дархай.
 
       **A. Add API permissions**
 
@@ -78,7 +78,7 @@ steps:
       to act as in Teams.
 
       You'll see the list of scopes you granted in the previous step. Click
-      **Accept**. The tab redirects back to Wayland and the server flips to
+      **Accept**. The tab redirects back to Дархай and the server flips to
       Running. Tokens are cached locally; the MCP refreshes them silently
       using `offline_access`. If auth ever times out, click **Re-authorize**
       on the Installed page.

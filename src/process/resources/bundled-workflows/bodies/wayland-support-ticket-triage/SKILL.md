@@ -13,7 +13,7 @@ license: Apache-2.0
 type: workflow
 skills: "support-reply support-escalation"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: support triage ticket reply escalation step-by-step
   category: support

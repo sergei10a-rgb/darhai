@@ -7,6 +7,11 @@
 // configureChromium sets app name (dev isolation) and Chromium flags - must run before
 // ANY module that calls app.getPath('userData'), because Electron caches the path on first call.
 import './process/utils/configureChromium';
+// One-time userData migration from the pre-rebrand 'Wayland' directory (packaged
+// builds only). Must run after configureChromium (userData path finalized) and
+// before ANY module that reads from userData - initStorage reads the env/config
+// files synchronously at import time.
+import './process/utils/userDataMigration';
 // Force IPv4-first DNS in the main process (side-effect import). Keeps outbound
 // connects fast/reliable; fixes the IMAP email channel hanging on a slow IPv6 path.
 import './process/utils/dnsOrder';
@@ -84,7 +89,8 @@ import {
   clearPendingDeepLinkUrl,
   getPendingDeepLinkUrl,
   handleDeepLinkUrl,
-  PROTOCOL_SCHEME,
+  isDeepLinkArg,
+  PROTOCOL_SCHEMES,
 } from './process/utils/deepLink';
 import {
   bindMainWindowReferences,
@@ -113,9 +119,9 @@ import electronSquirrelStartup from 'electron-squirrel-startup';
 // Acquire lock early so the second instance quits before doing unnecessary work.
 // When a second instance starts (e.g. from protocol URL), it sends its data
 // to the first instance via second-instance event, then quits.
-const isE2ETestMode = process.env.WAYLAND_E2E_TEST === '1';
-const skipSingleInstanceLock = isE2ETestMode || process.env.WAYLAND_MULTI_INSTANCE === '1';
-const deepLinkFromArgv = process.argv.find((arg) => arg.startsWith(`${PROTOCOL_SCHEME}://`));
+const isE2ETestMode = process.env.DARHAI_E2E_TEST === '1';
+const skipSingleInstanceLock = isE2ETestMode || process.env.DARHAI_MULTI_INSTANCE === '1';
+const deepLinkFromArgv = process.argv.find(isDeepLinkArg);
 const gotTheLock = skipSingleInstanceLock ? true : app.requestSingleInstanceLock({ deepLinkUrl: deepLinkFromArgv });
 if (!gotTheLock) {
   console.warn('[Wayland] Another instance is already running; current process will exit.');
@@ -123,9 +129,7 @@ if (!gotTheLock) {
 } else {
   app.on('second-instance', (_event, argv, _workingDirectory, additionalData) => {
     // Prefer additionalData (reliable on all platforms), fallback to argv scan
-    const deepLinkUrl =
-      (additionalData as { deepLinkUrl?: string })?.deepLinkUrl ||
-      argv.find((arg) => arg.startsWith(`${PROTOCOL_SCHEME}://`));
+    const deepLinkUrl = (additionalData as { deepLinkUrl?: string })?.deepLinkUrl || argv.find(isDeepLinkArg);
     if (deepLinkUrl) {
       handleDeepLinkUrl(deepLinkUrl);
     }
@@ -610,7 +614,7 @@ const createWindow = ({ showOnReady = true }: { showOnReady?: boolean } = {}): v
   // Initialize auto-updater service (skip when disabled via env, e.g. E2E / CI)
   const isCiRuntime = process.env.CI === 'true' || process.env.CI === '1' || process.env.GITHUB_ACTIONS === 'true';
   const disableAutoUpdater =
-    process.env.WAYLAND_DISABLE_AUTO_UPDATE === '1' || process.env.WAYLAND_E2E_TEST === '1' || isCiRuntime;
+    process.env.DARHAI_DISABLE_AUTO_UPDATE === '1' || process.env.DARHAI_E2E_TEST === '1' || isCiRuntime;
   if (!disableAutoUpdater) {
     Promise.all([import('./process/services/autoUpdaterService'), import('./process/bridge/updateBridge')])
       .then(([{ autoUpdaterService }, { createAutoUpdateStatusBroadcast }]) => {
@@ -635,7 +639,7 @@ const createWindow = ({ showOnReady = true }: { showOnReady?: boolean } = {}): v
   }
 
   // Initialize IJFW system service (skip when disabled via env, e.g. E2E / CI / explicit opt-out)
-  const disableIjfw = isCiRuntime || process.env.WAYLAND_DISABLE_IJFW === '1' || process.env.WAYLAND_E2E_TEST === '1';
+  const disableIjfw = isCiRuntime || process.env.DARHAI_DISABLE_IJFW === '1' || process.env.DARHAI_E2E_TEST === '1';
   if (!disableIjfw) {
     import('./process/services/ijfwSystemService')
       .then(async ({ ijfwSystemService }) => {
@@ -919,10 +923,10 @@ const handleAppReady = async (): Promise<void> => {
     // main window must have the earlier Page object).
     //
     // Priority:
-    //   1. WAYLAND_AMBIENT=1 → ambient on  (env wins)
-    //   2. WAYLAND_AMBIENT=0 → ambient off (env wins, explicit off)
+    //   1. DARHAI_AMBIENT=1 → ambient on  (env wins)
+    //   2. DARHAI_AMBIENT=0 → ambient off (env wins, explicit off)
     //   3. ambient.enabled === true        (settings fallback)
-    const ambientEnvVar = process.env['WAYLAND_AMBIENT'];
+    const ambientEnvVar = process.env['DARHAI_AMBIENT'];
     void (async () => {
       try {
         let useAmbient = false;
@@ -986,13 +990,16 @@ const handleAppReady = async (): Promise<void> => {
       await setInitialLanguage(savedLanguage);
       // After language is set, refresh tray menu if it exists
       await refreshTrayMenu();
+      // Rebuild the application menu so its labels use the active language
+      setupApplicationMenu();
     } catch (error) {
       console.error('[index] Failed to initialize i18n language:', error);
     }
 
-    // Listen for language changes to refresh tray menu labels
+    // Listen for language changes to refresh tray and application menu labels
     onLanguageChanged(() => {
       void refreshTrayMenu();
+      setupApplicationMenu();
     });
 
     if (!isE2ETestMode) {
@@ -1066,15 +1073,17 @@ const handleAppReady = async (): Promise<void> => {
 };
 
 // ============ Protocol Registration ============
-// Register wayland:// as the default protocol client
-if (process.defaultApp) {
-  // Dev mode: need to pass execPath explicitly
-  app.setAsDefaultProtocolClient(PROTOCOL_SCHEME, process.execPath, [path.resolve(process.argv[1])]);
-} else {
-  app.setAsDefaultProtocolClient(PROTOCOL_SCHEME);
+// Register darhai:// (primary) and legacy wayland:// as default protocol clients
+for (const scheme of PROTOCOL_SCHEMES) {
+  if (process.defaultApp) {
+    // Dev mode: need to pass execPath explicitly
+    app.setAsDefaultProtocolClient(scheme, process.execPath, [path.resolve(process.argv[1])]);
+  } else {
+    app.setAsDefaultProtocolClient(scheme);
+  }
 }
 
-// macOS: handle wayland:// URLs via the open-url event
+// macOS: handle darhai:// / wayland:// URLs via the open-url event
 app.on('open-url', (event, url) => {
   event.preventDefault();
   handleDeepLinkUrl(url);

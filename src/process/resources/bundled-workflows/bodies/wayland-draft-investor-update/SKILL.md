@@ -15,7 +15,7 @@ license: Apache-2.0
 type: workflow
 skills: "pitch-investor-email finance-report"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: pitch investor-update reporting metrics fundraising step-by-step
   category: marketing

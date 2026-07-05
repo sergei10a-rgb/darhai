@@ -24,13 +24,13 @@ negative_triggers:
 tags: [conversion, copy, donahoe-method, four-layer-open, fingerprint, voice]
 priority: 100
 version: 1.0.0
-author: Wayland Business Pack
+author: Darhai Business Pack
 license: MIT
 metadata:
   wayland:
     related_skills: [convert, convert-open, convert-voice, convert-bullshit-filter, convert-three-locks, convert-bullets, convert-sales-page]
 attribution:
-  lineage: "The Donahoe Method (Wayland-owned operating system); references *Schwartz market sophistication doctrine (Breakthrough Advertising, 1966)* requiring a unique angle, *Carlton 'big idea' tradition (Kick-Ass Copywriting Secrets, 2003)*, and *Ogilvy 'every advertisement should contribute to the brand image' (Confessions of an Advertising Man, 1963)*"
+  lineage: "The Donahoe Method (Дархай-owned operating system); references *Schwartz market sophistication doctrine (Breakthrough Advertising, 1966)* requiring a unique angle, *Carlton 'big idea' tradition (Kick-Ass Copywriting Secrets, 2003)*, and *Ogilvy 'every advertisement should contribute to the brand image' (Confessions of an Advertising Man, 1963)*"
 ---
 
 # Convert Fingerprint - The Only-You POV
@@ -329,7 +329,7 @@ Read each Fingerprint moment aloud. Does it sound like *this specific seller*? I
 
 ## Lineage
 
-The Fingerprint is part of **The Donahoe Method** (Wayland-owned operating system).
+The Fingerprint is part of **The Donahoe Method** (Дархай-owned operating system).
 
 Lineage references:
 - The need for a unique angle in saturated markets - *Eugene Schwartz, market sophistication stages, Breakthrough Advertising (1966)*

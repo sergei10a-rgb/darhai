@@ -7,7 +7,7 @@ steps:
     estSeconds: 30
     autoCompletedByInstall: true
     body: |
-      Wayland bundles the News server as `builtin-mcp-news.mjs` - no external
+      Дархай bundles the News server as `builtin-mcp-news.mjs` - no external
       download. Hacker News and RSS/Atom feeds work immediately with no
       credentials. The optional step below adds mainstream-press search.
   - id: api-key
@@ -26,7 +26,7 @@ steps:
          it's a 32-character hex string. Copy it.
       3. Paste it into `NEWSAPI_KEY` above and save. The Developer plan is
          free with a 100 requests/day cap and is rate-limited to localhost
-         in development; it works fine for personal Wayland use.
+         in development; it works fine for personal Дархай use.
 
       Leave the field blank to skip - Hacker News and arbitrary RSS/Atom
       feeds still work without any key.

@@ -264,7 +264,7 @@ const SkillsHubSettings: React.FC<SkillsHubSettingsProps> = ({ withWrapper = tru
                 </div>
                 <Typography.Text className='text-13px text-t-secondary block max-w-xl leading-relaxed'>
                   {t('settings.skillsHub.discoveryAlert', {
-                    defaultValue: 'Detected skills from your CLI tools. Import them to use in Wayland.',
+                    defaultValue: 'Detected skills from your CLI tools. Import them to use in Дархай.',
                   })}
                 </Typography.Text>
               </div>

@@ -23,26 +23,35 @@ export interface ConfigStore {
 
 /**
  * Returns candidate Electron config file paths for the current platform.
- * Always returns two candidates (packaged + dev app name) since the server
- * cannot determine which Electron build the user ran.
+ * Candidates cover the rebranded packaged app ('Darhai'), the pre-rebrand
+ * packaged app ('Wayland') and the dev app name ('Wayland-Dev', unchanged by
+ * the rebrand), since the server cannot determine which Electron build the
+ * user ran. Order matters: the first existing file wins, so the current
+ * 'Darhai' install is preferred over legacy dirs.
  */
 export function getElectronConfigCandidatePaths(): string[] {
   const home = os.homedir();
   if (process.platform === 'darwin') {
+    // The '.wayland-config' CLI-safe symlink (created by the desktop app)
+    // points at the active userData/config dir regardless of app name; the
+    // real 'Darhai' path is listed too in case the symlink was never created.
     return [
       path.join(home, '.wayland-config', 'wayland-config.txt'),
+      path.join(home, 'Library', 'Application Support', 'Darhai', 'config', 'wayland-config.txt'),
       path.join(home, '.wayland-config-dev', 'wayland-config.txt'),
     ];
   }
   if (process.platform === 'win32') {
     const appData = process.env.APPDATA ?? path.join(home, 'AppData', 'Roaming');
     return [
+      path.join(appData, 'Darhai', 'config', 'wayland-config.txt'),
       path.join(appData, 'Wayland', 'config', 'wayland-config.txt'),
       path.join(appData, 'Wayland-Dev', 'config', 'wayland-config.txt'),
     ];
   }
   // Linux and other platforms
   return [
+    path.join(home, '.config', 'Darhai', 'config', 'wayland-config.txt'),
     path.join(home, '.config', 'Wayland', 'config', 'wayland-config.txt'),
     path.join(home, '.config', 'Wayland-Dev', 'config', 'wayland-config.txt'),
   ];

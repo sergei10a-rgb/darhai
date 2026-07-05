@@ -1,11 +1,21 @@
-appId: com.ferroxlabs.darhai
-productName: Дархай
+appId: mn.darhai.app
+# productName MUST stay ASCII: it feeds artifactName (GitHub sanitizes non-ASCII
+# release asset names, which breaks electron-updater latest.yml lookups AND
+# updateBridge.ts fetchExpectedSha512 asset matching) and the NSIS default
+# installDir (bundled-bun / wayland-core / voice models break on a Cyrillic
+# "C:\Program Files\Дархай" path). The Mongolian brand name «Дархай» is applied
+# on user-visible surfaces instead: nsis.shortcutName / uninstallDisplayName
+# below and the in-app i18n strings.
+productName: Darhai
 executableName: Darhai
 copyright: Copyright © 2026 Trade Canyon
 
 protocols:
-  - name: Дархай Protocol
+  - name: Darhai Protocol
     schemes:
+      # darhai:// is the primary scheme; wayland:// stays registered for
+      # backward compatibility with existing deep links.
+      - darhai
       - wayland
 
 asar:
@@ -209,8 +219,10 @@ nsis:
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true
   createStartMenuShortcut: true
-  shortcutName: ${productName}
-  uninstallDisplayName: ${productName}
+  # Shortcuts and Add/Remove Programs show the Mongolian brand name; the
+  # ASCII productName above only drives file/dir/artifact naming.
+  shortcutName: Дархай
+  uninstallDisplayName: Дархай
   artifactName: ${productName}-${version}-${os}-${arch}.${ext}
   differentialPackage: false
 
@@ -258,17 +270,22 @@ linux:
   icon: resources/app.png
   artifactName: ${productName}-${version}-${os}-${arch}.${ext}
   category: Utility
-  maintainer: wayland
-  vendor: wayland
+  maintainer: Darhai
+  vendor: Darhai
   synopsis: ${description}
   description: ${description}
   desktop:
     entry:
-      Name: Wayland
+      # Keep Name ASCII for .desktop compatibility; GenericName carries the
+      # localized (Mongolian) descriptor.
+      Name: Darhai
+      GenericName: AI туслах
       Comment: ${description}
-      Icon: wayland
+      # electron-builder installs the exported linux.icon under the
+      # executableName (Darhai), so the Icon key must match it.
+      Icon: Darhai
       Categories: Office;Utility;
-      MimeType: x-scheme-handler/wayland;
+      MimeType: x-scheme-handler/darhai;x-scheme-handler/wayland;
 
 npmRebuild: false
 buildDependenciesFromSource: false
@@ -329,7 +346,7 @@ electronDownload:
 
 publish:
   provider: github
-  owner: FerroxLabs
-  repo: wayland
+  owner: sergei10a-rgb
+  repo: darhai
   publishAutoUpdate: true
   releaseType: release

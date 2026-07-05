@@ -37,14 +37,12 @@ const SubAgentActivityCard: React.FC<{ message: IMessageSubAgent }> = ({ message
       <hr className={styles.divider} />
       <div className={styles.header} onClick={() => setExpanded((v) => !v)}>
         {isRunning && <Spin size={12} />}
-        {isDone && <span className={styles.dotDone} aria-label='done' />}
-        {isFailed && <span className={styles.dotFailed} aria-label='failed' />}
+        {isDone && <span className={styles.dotDone} aria-label={t('conversation.subAgent.statusDone')} />}
+        {isFailed && <span className={styles.dotFailed} aria-label={t('conversation.subAgent.statusFailed')} />}
         <span className={`${styles.arrow} ${expanded ? styles.arrowExpanded : ''}`}>{'▶'}</span>
         <span className={styles.summary}>{headerLabel}</span>
       </div>
-      {body && (
-        <div className={`${styles.body} ${!expanded ? styles.collapsed : ''}`}>{body}</div>
-      )}
+      {body && <div className={`${styles.body} ${!expanded ? styles.collapsed : ''}`}>{body}</div>}
       <hr className={styles.divider} />
     </div>
   );

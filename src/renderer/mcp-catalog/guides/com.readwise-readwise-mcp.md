@@ -8,7 +8,7 @@ steps:
     autoCompletedByInstall: true
     body: |
       Readwise hosts the MCP server at `https://mcp.readwise.io` - nothing
-      to install. Wayland connects via streamable HTTP on first use.
+      to install. Дархай connects via streamable HTTP on first use.
   - id: authorize
     title: Sign in with Readwise
     estSeconds: 30
@@ -21,7 +21,7 @@ steps:
       2. Approve the **read** and **write** scopes. One sign-in covers
          both Readwise classic (highlights, books) and the Reader inbox -
          the same token works for both APIs.
-      3. The tab redirects back to Wayland and the server status flips
+      3. The tab redirects back to Дархай and the server status flips
          to Running.
 
       **Rate limits:** Readwise's API allows 240 requests/minute on standard

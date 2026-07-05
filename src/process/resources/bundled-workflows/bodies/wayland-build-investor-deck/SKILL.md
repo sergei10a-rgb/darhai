@@ -16,7 +16,7 @@ license: Apache-2.0
 type: workflow
 skills: "pitch-deck"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: pitch fundraising deck investor narrative step-by-step planning
   category: marketing

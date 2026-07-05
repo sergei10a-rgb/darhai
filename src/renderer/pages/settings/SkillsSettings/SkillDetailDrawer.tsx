@@ -106,7 +106,9 @@ const SkillDetailDrawer: React.FC<Props> = ({ entry, open, onClose, onTogglePin,
 
   const verdict = entry.security?.verdict ?? 'unscanned';
   const isBlocked = verdict === 'blocked';
-  const sourceLabel = entry.sourceLabel ?? SOURCE_LABEL[entry.source] ?? entry.source;
+  const sourceLabel =
+    entry.sourceLabel ??
+    t(`filters.source.${entry.source}`, { defaultValue: SOURCE_LABEL[entry.source] ?? entry.source });
   const findings = entry.security?.findings ?? [];
 
   return (

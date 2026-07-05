@@ -56,7 +56,7 @@ describe('getBuiltinSettingsNavItems', () => {
       'Agents',
       'Image Generation',
       'Voice',
-      'Wayland Core',
+      'Darhai Core',
       'WebUI',
       'Channels',
       'MCP Library',

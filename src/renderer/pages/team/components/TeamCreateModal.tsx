@@ -9,8 +9,8 @@ import type { AcpInitializeResult } from '@/common/types/acpTypes';
 import type { TTeam, TeamAgent } from '@/common/types/teamTypes';
 import { useAuth } from '@renderer/hooks/context/AuthContext';
 import { useConversationAgents } from '@renderer/pages/conversation/hooks/useConversationAgents';
-import WaylandModal from '@renderer/components/base/WaylandModal';
-import WaylandSelect from '@renderer/components/base/WaylandSelect';
+import DarhaiModal from '@renderer/components/base/DarhaiModal';
+import DarhaiSelect from '@renderer/components/base/DarhaiSelect';
 import { WorkspaceFolderSelect } from '@renderer/components/workspace';
 import {
   agentKey,
@@ -22,7 +22,7 @@ import {
 } from './agentSelectUtils';
 
 const FormItem = Form.Item;
-const { Option, OptGroup } = WaylandSelect;
+const { Option, OptGroup } = DarhaiSelect;
 
 type Props = {
   visible: boolean;
@@ -131,7 +131,7 @@ const TeamCreateModal: React.FC<Props> = ({ visible, onClose, onCreated }) => {
     }
   };
   return (
-    <WaylandModal
+    <DarhaiModal
       visible={visible}
       onCancel={handleClose}
       className='team-create-modal'
@@ -165,12 +165,7 @@ const TeamCreateModal: React.FC<Props> = ({ visible, onClose, onCreated }) => {
           <Button onClick={handleClose} className='min-w-88px px-16px' style={{ borderRadius: 8 }}>
             {t('common.cancel', { defaultValue: 'Cancel' })}
           </Button>
-          <Button
-            type='primary'
-            onClick={handleCreate}
-            loading={loading}
-            className='min-w-88px'
-          >
+          <Button type='primary' onClick={handleCreate} loading={loading} className='min-w-88px'>
             {t('team.create.confirm', { defaultValue: 'Create Team' })}
           </Button>
         </div>
@@ -201,7 +196,7 @@ const TeamCreateModal: React.FC<Props> = ({ visible, onClose, onCreated }) => {
                   {t('team.create.noSupportedAgents', { defaultValue: 'No supported agents installed' })}
                 </div>
               ) : (
-                <WaylandSelect
+                <DarhaiSelect
                   data-testid='team-create-leader-select'
                   showSearch
                   allowClear
@@ -249,7 +244,7 @@ const TeamCreateModal: React.FC<Props> = ({ visible, onClose, onCreated }) => {
                       })}
                     </OptGroup>
                   )}
-                </WaylandSelect>
+                </DarhaiSelect>
               )}
             </div>
           </FormItem>
@@ -280,7 +275,7 @@ const TeamCreateModal: React.FC<Props> = ({ visible, onClose, onCreated }) => {
           </FormItem>
         </Form>
       </div>
-    </WaylandModal>
+    </DarhaiModal>
   );
 };
 

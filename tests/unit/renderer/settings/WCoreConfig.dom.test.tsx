@@ -87,13 +87,13 @@ describe('WCoreConfig - Wayland Core configuration surface', () => {
     mockMcpServers.value = [];
     mockGetAvailableAgents.mockResolvedValue({
       success: true,
-      data: [{ backend: 'wcore', name: 'Wayland Core', cliPath: '/usr/local/bin/wcore' }],
+      data: [{ backend: 'wcore', name: 'Darhai Core', cliPath: '/usr/local/bin/wcore' }],
     });
   });
 
   it('renders the seven engine rail sections (no Constitution — engine has none)', () => {
     render(<WCoreConfig />);
-    const rail = screen.getByLabelText('Wayland Core');
+    const rail = screen.getByLabelText('Darhai Core');
     for (const label of [
       'Overview',
       'Services & Keys',
@@ -111,7 +111,7 @@ describe('WCoreConfig - Wayland Core configuration surface', () => {
 
   it('defaults to the Overview pane with the inherited-from-Desktop card', () => {
     render(<WCoreConfig />);
-    expect(screen.getByText('Allocated by Wayland Desktop')).toBeTruthy();
+    expect(screen.getByText('Allocated by Дархай Desktop')).toBeTruthy();
     expect(screen.getByText('Models (override)')).toBeTruthy();
     expect(screen.getAllByText('Manage in Desktop Settings').length).toBeGreaterThan(0);
   });
@@ -153,8 +153,8 @@ describe('WCoreConfig - Wayland Core configuration surface', () => {
     ];
     render(<WCoreConfig />);
     // The embedded engine does not receive the user's Desktop MCP library — only
-    // Wayland's own operational MCPs — so the row must not claim the Desktop servers.
-    expect(screen.getByText('Wayland operational MCPs · your Desktop MCP library is separate')).toBeTruthy();
+    // Дархай's own operational MCPs — so the row must not claim the Desktop servers.
+    expect(screen.getByText('Дархай operational MCPs · your Desktop MCP library is separate')).toBeTruthy();
   });
 
   it('deep-links to the Desktop models settings from the inherited row', () => {

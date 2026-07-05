@@ -201,7 +201,7 @@ Copy the `wayland.db` and `wayland.db-wal` files directly.
 
 ## API Reference
 
-### WaylandUIDatabase Main Methods
+### DarhaiUIDatabase Main Methods
 
 #### Conversation Operations
 

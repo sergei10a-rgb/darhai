@@ -177,7 +177,7 @@ describe('createConversationParams', () => {
     const params = await buildCliAgentParams(
       {
         backend: 'wcore',
-        name: 'Wayland Core Agent',
+        name: 'Darhai Core Agent',
       },
       '/tmp/workspace'
     );
@@ -194,7 +194,7 @@ describe('createConversationParams', () => {
       buildCliAgentParams(
         {
           backend: 'wcore',
-          name: 'Wayland Core Agent',
+          name: 'Darhai Core Agent',
         },
         '/tmp/workspace'
       )
@@ -313,7 +313,7 @@ describe('createConversationParams', () => {
   it('throws error for wcore if no enabled provider', async () => {
     configGet.mockResolvedValue([{ id: 'p1', enabled: false, model: ['m1'] }]);
     await expect(buildCliAgentParams({ backend: 'wcore', name: 'Agent' }, '/tmp')).rejects.toThrow(
-      'No enabled model provider for Wayland Core'
+      'No enabled model provider for Darhai Core'
     );
   });
 

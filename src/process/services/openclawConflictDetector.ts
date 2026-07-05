@@ -184,10 +184,10 @@ export function getConflictResolutionSteps(platform: 'lark' | 'telegram'): strin
   const platformName = platform === 'lark' ? 'Feishu' : 'Telegram';
 
   return [
-    `Detected conflict: OpenClaw ${platformName} channel is using the same credentials as Wayland.`,
+    `Detected conflict: OpenClaw ${platformName} channel is using the same credentials as Дархай.`,
     ``,
-    `This means messages are being handled by OpenClaw, not Wayland Channels.`,
-    `Switching agents in Wayland will have no effect.`,
+    `This means messages are being handled by OpenClaw, not Дархай Channels.`,
+    `Switching agents in Дархай will have no effect.`,
     ``,
     `To fix this, choose one:`,
     ``,
@@ -198,11 +198,11 @@ export function getConflictResolutionSteps(platform: 'lark' | 'telegram'): strin
     ``,
     `Option 2: Use different credentials`,
     `  - Create a new ${platformName} bot`,
-    `  - Configure it in Wayland Channels`,
+    `  - Configure it in Дархай Channels`,
     `  - Keep OpenClaw ${platformName} channel for other use`,
     ``,
     `Option 3: Use OpenClaw for ${platformName}`,
-    `  - Disable ${platformName} in Wayland Channels`,
+    `  - Disable ${platformName} in Дархай Channels`,
     `  - Use OpenClaw's native ${platformName} integration`,
   ];
 }

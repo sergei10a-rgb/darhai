@@ -193,10 +193,10 @@ Variables set automatically during test launch:
 
 | Variable                     | Value | Purpose                  |
 | ---------------------------- | ----- | ------------------------ |
-| `WAYLAND_E2E_TEST`            | `1`   | App recognizes test mode |
-| `WAYLAND_DISABLE_AUTO_UPDATE` | `1`   | No update checks         |
-| `WAYLAND_DISABLE_DEVTOOLS`    | `1`   | No DevTools windows      |
-| `WAYLAND_CDP_PORT`            | `0`   | CDP disabled             |
+| `DARHAI_E2E_TEST`            | `1`   | App recognizes test mode |
+| `DARHAI_DISABLE_AUTO_UPDATE` | `1`   | No update checks         |
+| `DARHAI_DISABLE_DEVTOOLS`    | `1`   | No DevTools windows      |
+| `DARHAI_CDP_PORT`            | `0`   | CDP disabled             |
 
 ---
 

@@ -24,13 +24,13 @@ negative_triggers:
 tags: [conversion, copy, donahoe-method, transition-system, transitions]
 priority: 100
 version: 1.0.0
-author: Wayland Business Pack
+author: Darhai Business Pack
 license: MIT
 metadata:
   wayland:
     related_skills: [convert, convert-chute, convert-open, convert-voice, convert-bullshit-filter, convert-sales-page, convert-vsl]
 attribution:
-  lineage: "The Donahoe Method (Wayland-owned operating system); references *Robert McKee's scene-transition theory (Story, 1997)*, *Sugarman's slippery-slide momentum doctrine (AdWeek Copywriting Handbook, 1998)*, and *Bly's transition mechanics (The Copywriter's Handbook, 1985)*"
+  lineage: "The Donahoe Method (Дархай-owned operating system); references *Robert McKee's scene-transition theory (Story, 1997)*, *Sugarman's slippery-slide momentum doctrine (AdWeek Copywriting Handbook, 1998)*, and *Bly's transition mechanics (The Copywriter's Handbook, 1985)*"
 ---
 
 # Convert Transition - The Donahoe Transition System
@@ -362,7 +362,7 @@ Final pass: would I actually say this transition out loud? If a transition sound
 
 ## Lineage
 
-The Donahoe Transition System is part of **The Donahoe Method** (Wayland-owned operating system).
+The Donahoe Transition System is part of **The Donahoe Method** (Дархай-owned operating system).
 
 Lineage references:
 - Energy-direction transitions (accelerate/decelerate/redirect/detonate) - *Robert McKee, Story (1997)*: scene-transition theory adapted from screenwriting

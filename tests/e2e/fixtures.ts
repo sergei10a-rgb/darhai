@@ -122,7 +122,7 @@ function resolvePackagedApp(): { executablePath: string; cwd: string } | null {
  * Auto-bootstrap the waylandteams-bundle symlink so specs that need the 24
  * standing/launcher assistants find them without manual setup. Resolution
  * order:
- *   1. WAYLAND_E2E_BUNDLE_PATH env var - CI sets this after cloning the
+ *   1. DARHAI_E2E_BUNDLE_PATH env var - CI sets this after cloning the
  *      waylandteams repo at the pinned ref.
  *   2. ~/dev/waylandteams - sibling-repo convention on contributor machines.
  *
@@ -132,7 +132,7 @@ function resolvePackagedApp(): { executablePath: string; cwd: string } | null {
 function ensureWaylandteamsBundleSymlink(wrapperDir: string, projectRoot: string): void {
   const linkName = 'waylandteams-bundle';
   const linkPath = path.join(wrapperDir, linkName);
-  const explicit = process.env.WAYLAND_E2E_BUNDLE_PATH;
+  const explicit = process.env.DARHAI_E2E_BUNDLE_PATH;
   // From ~/dev/wayland/app → ../../waylandteams = ~/dev/waylandteams
   const sibling = path.resolve(projectRoot, '../../waylandteams');
   const candidate = explicit ?? sibling;
@@ -170,10 +170,10 @@ function shouldUsePackagedMode(): boolean {
  * Launch an Electron app with optional extra environment variables.
  *
  * AC-M1-14 fixture contract: ambient E2E uses this to launch a *second* Electron
- * process with `WAYLAND_AMBIENT=1` while the singleton remains ambient-unaware.
+ * process with `DARHAI_AMBIENT=1` while the singleton remains ambient-unaware.
  * Regular (non-ambient) tests call this without `extraEnv` via the singleton path.
  *
- * @param extraEnv - merged on top of `commonEnv` (e.g. `{ WAYLAND_AMBIENT: '1' }`).
+ * @param extraEnv - merged on top of `commonEnv` (e.g. `{ DARHAI_AMBIENT: '1' }`).
  *                   Callers wanting to clear a var can pass an empty string.
  */
 export async function launchAppWithEnv(extraEnv: Record<string, string> = {}): Promise<ElectronApplication> {
@@ -185,7 +185,7 @@ export async function launchAppWithEnv(extraEnv: Record<string, string> = {}): P
   //   2. tests/e2e/fixtures/extensions/ - wrapper dir scanned by
   //      ExtensionLoader for `<child>/aion-extension.json` manifests. Auto-
   //      bootstrap below creates a `waylandteams-bundle` symlink here when
-  //      either WAYLAND_E2E_BUNDLE_PATH (CI) or ~/dev/waylandteams (local)
+  //      either DARHAI_E2E_BUNDLE_PATH (CI) or ~/dev/waylandteams (local)
   //      resolves to a valid extension. Specs that assert against the 24
   //      standing/launcher assistants (teams-library-load, golden-path,
   //      launcher flows) depend on this bundle being present.
@@ -196,20 +196,20 @@ export async function launchAppWithEnv(extraEnv: Record<string, string> = {}): P
   ensureWaylandteamsBundleSymlink(wrapperDir, projectRoot);
   const PATH_SEP = process.platform === 'win32' ? ';' : ':';
   const extensionPaths: string[] = [];
-  if (process.env.WAYLAND_EXTENSIONS_PATH) {
-    extensionPaths.push(process.env.WAYLAND_EXTENSIONS_PATH);
+  if (process.env.DARHAI_EXTENSIONS_PATH) {
+    extensionPaths.push(process.env.DARHAI_EXTENSIONS_PATH);
   } else {
     extensionPaths.push(path.join(projectRoot, 'examples'));
     extensionPaths.push(wrapperDir);
   }
   const commonEnv = {
     ...process.env,
-    WAYLAND_EXTENSIONS_PATH: extensionPaths.join(PATH_SEP),
-    WAYLAND_EXTENSION_STATES_FILE: process.env.WAYLAND_EXTENSION_STATES_FILE || e2eStateFile,
-    WAYLAND_DISABLE_AUTO_UPDATE: '1',
-    WAYLAND_DISABLE_DEVTOOLS: '1',
-    WAYLAND_E2E_TEST: '1',
-    WAYLAND_CDP_PORT: '0',
+    DARHAI_EXTENSIONS_PATH: extensionPaths.join(PATH_SEP),
+    DARHAI_EXTENSION_STATES_FILE: process.env.DARHAI_EXTENSION_STATES_FILE || e2eStateFile,
+    DARHAI_DISABLE_AUTO_UPDATE: '1',
+    DARHAI_DISABLE_DEVTOOLS: '1',
+    DARHAI_E2E_TEST: '1',
+    DARHAI_CDP_PORT: '0',
     ...extraEnv,
   };
 
@@ -223,7 +223,7 @@ export async function launchAppWithEnv(extraEnv: Record<string, string> = {}): P
     }
 
     console.log(
-      `[E2E] Launching PACKAGED app: ${packaged.executablePath}${extraEnv.WAYLAND_AMBIENT === '1' ? ' (ambient)' : ''}`
+      `[E2E] Launching PACKAGED app: ${packaged.executablePath}${extraEnv.DARHAI_AMBIENT === '1' ? ' (ambient)' : ''}`
     );
 
     const launchArgs: string[] = [];
@@ -242,7 +242,7 @@ export async function launchAppWithEnv(extraEnv: Record<string, string> = {}): P
       timeout: 60_000,
     });
 
-    const expectAmbient = commonEnv.WAYLAND_AMBIENT === '1';
+    const expectAmbient = commonEnv.DARHAI_AMBIENT === '1';
     await waitForExpectedWindow(electronApp, expectAmbient, 8_000).catch(() => {
       /* best-effort */
     });
@@ -250,7 +250,7 @@ export async function launchAppWithEnv(extraEnv: Record<string, string> = {}): P
   }
 
   // Dev mode: launch via electron .
-  console.log(`[E2E] Launching DEV app from: ${projectRoot}${extraEnv.WAYLAND_AMBIENT === '1' ? ' (ambient)' : ''}`);
+  console.log(`[E2E] Launching DEV app from: ${projectRoot}${extraEnv.DARHAI_AMBIENT === '1' ? ' (ambient)' : ''}`);
 
   const launchArgs = ['.'];
   if (process.platform === 'linux' && process.env.CI) {
@@ -274,11 +274,11 @@ export async function launchAppWithEnv(extraEnv: Record<string, string> = {}): P
   // (e.g. `tests/e2e/specs/ambient-mode/bubble.e2e.ts` guards on it). Wait
   // up to ~8s for a useful window so downstream tests see a stable app.
   //
-  // When WAYLAND_AMBIENT=1 is set, we specifically wait for the ambient
+  // When DARHAI_AMBIENT=1 is set, we specifically wait for the ambient
   // bubble window (title matches /ambient|bubble/) - the app creates the
   // main window first, then ambient, so waiting on ambient also guarantees
   // main is already up.
-  const expectAmbient = commonEnv.WAYLAND_AMBIENT === '1';
+  const expectAmbient = commonEnv.DARHAI_AMBIENT === '1';
   await waitForExpectedWindow(electronApp, expectAmbient, 12_000).catch(() => {
     // best-effort: if no window appears in 12s, let the individual spec decide
   });
@@ -450,7 +450,7 @@ registerCleanup();
 // ── Ambient Fixture (AC-M1-14) ──────────────────────────────────────────────
 //
 // Independent Electron app instance for ambient-mode specs. Uses
-// `WAYLAND_AMBIENT=1` env var (AC-M1-11 feature flag - env var overrides
+// `DARHAI_AMBIENT=1` env var (AC-M1-11 feature flag - env var overrides
 // settings). Runs as its own singleton so tests against ambient don't pollute
 // the main app's state (settings file, window state) and vice versa.
 //
@@ -512,14 +512,14 @@ export const ambientTest = base.extend<AmbientFixtures>({
   // eslint-disable-next-line no-empty-pattern
   ambientApp: async ({}, use) => {
     if (!sharedAmbientApp) {
-      sharedAmbientApp = await launchAppWithEnv({ WAYLAND_AMBIENT: '1' });
+      sharedAmbientApp = await launchAppWithEnv({ DARHAI_AMBIENT: '1' });
     }
     // Verify the app process is still alive; relaunch if it crashed
     try {
       await sharedAmbientApp.evaluate(() => true);
     } catch {
       console.log('[E2E ambient] App process lost – relaunching...');
-      sharedAmbientApp = await launchAppWithEnv({ WAYLAND_AMBIENT: '1' });
+      sharedAmbientApp = await launchAppWithEnv({ DARHAI_AMBIENT: '1' });
       sharedBubblePage = null;
     }
     await use(sharedAmbientApp);

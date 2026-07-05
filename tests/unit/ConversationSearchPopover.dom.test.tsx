@@ -26,7 +26,7 @@ vi.mock('../../src/common', () => ({
   },
 }));
 
-vi.mock('../../src/renderer/components/base/WaylandModal', () => ({
+vi.mock('../../src/renderer/components/base/DarhaiModal', () => ({
   default: ({ visible, children }: { visible?: boolean; children?: ReactNode }) =>
     visible ? <div data-testid='conversation-search-modal'>{children}</div> : null,
 }));

@@ -104,7 +104,10 @@ i18n
 async function initLanguage(): Promise<void> {
   try {
     const savedLanguage = await ConfigStorage.get('language');
-    const language = savedLanguage || normalizeLanguageCode(navigator.language || DEFAULT_LANGUAGE);
+    // Saved preference wins. Fresh installs default to Mongolian (mn-MN) —
+    // Дархай is a Mongolian-first product, so the initial default deliberately
+    // ignores navigator.language. Users can switch languages in Settings.
+    const language = savedLanguage || i18nConfig.defaultLanguage;
     await ensureAndSwitch(i18n, language, loadLocaleModules);
     // Sync to localStorage so next page load can use it as a fast hint
     if (typeof localStorage !== 'undefined') {
@@ -114,6 +117,14 @@ async function initLanguage(): Promise<void> {
     console.error('Failed to initialize language:', error);
   }
 }
+
+// Keep <html lang> in sync with the active language (initial value is set
+// statically to "mn" in index.html for the mn-MN default).
+i18n.on('languageChanged', (lang: string) => {
+  if (typeof document !== 'undefined') {
+    document.documentElement.lang = normalizeLanguageCode(lang);
+  }
+});
 
 // Listen for language changes and lazy load translations
 i18n.on('languageChanged', async (lang: string) => {

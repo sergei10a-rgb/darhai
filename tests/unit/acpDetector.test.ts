@@ -106,7 +106,7 @@ describe('AgentRegistry', () => {
       const agents = registry.getDetectedAgents();
 
       expect(agents).toHaveLength(2); // wcore + gemini
-      expect(agents[0]).toMatchObject({ backend: 'wcore', name: 'Wayland Core' });
+      expect(agents[0]).toMatchObject({ backend: 'wcore', name: 'Darhai Core' });
       expect(agents[1]).toMatchObject({ backend: 'gemini', name: 'Gemini CLI' });
     });
 

@@ -3,7 +3,7 @@ import type { TooltipProps } from '@arco-design/web-react';
 /**
  * Mount container for tooltips inside the sider: attach the popup to the left sider root node,
  * so collapsing/closing the sider hides the tooltip with it and avoids leaving leftover content on screen.
- * See: https://github.com/FerroxLabs/wayland/issues/987
+ * See: https://github.com/sergei10a-rgb/darhai/issues/987
  */
 export const getSiderPopupContainer = (_node: HTMLElement): Element =>
   document.querySelector('.layout-sider') || document.body;

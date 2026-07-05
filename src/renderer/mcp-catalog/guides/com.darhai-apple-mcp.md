@@ -7,7 +7,7 @@ steps:
     estSeconds: 30
     autoCompletedByInstall: true
     body: |
-      The Apple Ecosystem MCP is bundled with Wayland - there's nothing to
+      The Apple Ecosystem MCP is bundled with Дархай - there's nothing to
       download. It speaks to macOS apps directly through EventKit (Calendar,
       Reminders), AppleScript (Notes, Mail), MapKit (Maps), and the Photos
       framework. macOS only; the entry is hidden on Windows and Linux.
@@ -15,7 +15,7 @@ steps:
       If the server crashes on launch, click **Reinstall** to rebundle the
       native binary and reset its sandbox.
   - id: full-disk-access
-    title: Grant Full Disk Access to Wayland
+    title: Grant Full Disk Access to Darhai
     estSeconds: 60
     externalAction: { label: "Open System Settings → Privacy & Security", url: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles" }
     primaryAction: { label: "Done - verify access", action: "verify-fda" }
@@ -28,12 +28,12 @@ steps:
       1. Click **Open System Settings → Privacy & Security** above. macOS
          opens the **Privacy & Security** pane scrolled to **Full Disk
          Access**.
-      2. If **Wayland** is already listed, flip its toggle **on**. If not,
-         click the **+** button, navigate to `/Applications/Wayland.app`, and
+      2. If **Darhai** is already listed, flip its toggle **on**. If not,
+         click the **+** button, navigate to `/Applications/Darhai.app`, and
          click **Open**. macOS will ask for your password or Touch ID.
-      3. macOS warns that Wayland must restart to pick up the permission -
-         click **Quit & Reopen** (or restart Wayland manually).
-      4. Back in Wayland, click **Done - verify access** above. We'll probe
+      3. macOS warns that Darhai must restart to pick up the permission -
+         click **Quit & Reopen** (or restart Дархай manually).
+      4. Back in Дархай, click **Done - verify access** above. We'll probe
          EventKit and confirm the grant landed.
 
       First call into Calendar or Reminders may surface a one-time EventKit

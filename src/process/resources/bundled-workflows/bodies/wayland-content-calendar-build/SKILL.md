@@ -13,7 +13,7 @@ license: Apache-2.0
 type: workflow
 skills: "content-audit content-calendar content-repurpose"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: marketing content calendar planning funnel step-by-step
   category: marketing

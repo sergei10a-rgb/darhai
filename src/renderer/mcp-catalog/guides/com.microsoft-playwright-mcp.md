@@ -7,7 +7,7 @@ steps:
     estSeconds: 60
     autoCompletedByInstall: true
     body: |
-      Wayland fetches `@playwright/mcp` from npm via `npx` on first launch.
+      Дархай fetches `@playwright/mcp` from npm via `npx` on first launch.
       The first run downloads the Chromium build Playwright pins (~200 MB to
       `~/Library/Caches/ms-playwright` on macOS or `%LOCALAPPDATA%\\ms-playwright`
       on Windows). Subsequent launches are instant.

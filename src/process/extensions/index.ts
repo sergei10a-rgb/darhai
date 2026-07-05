@@ -46,7 +46,7 @@ export type { ExtPermissions, PermissionSummary, PermissionLevel } from './sandb
 export {
   validateEngineCompatibility,
   filterByEngineCompatibility,
-  WAYLAND_VERSION,
+  DARHAI_VERSION,
   EXTENSION_API_VERSION,
 } from './resolvers/utils/engineValidator';
 

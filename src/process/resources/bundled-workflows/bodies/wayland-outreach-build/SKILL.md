@@ -14,7 +14,7 @@ license: Apache-2.0
 type: workflow
 skills: "sales-coach sales-outreach sales-followup"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: sales outreach cold-email cadence follow-up step-by-step
   category: sales

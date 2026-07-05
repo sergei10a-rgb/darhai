@@ -7,7 +7,7 @@ steps:
     estSeconds: 30
     autoCompletedByInstall: true
     body: |
-      Wayland fetches `@softeria/ms-365-mcp-server` from npm via `npx` on first
+      Дархай fetches `@softeria/ms-365-mcp-server` from npm via `npx` on first
       launch - no manual install. The server uses MSAL device-code flow
       against Microsoft Graph and covers Outlook, Calendar, OneDrive, Excel,
       Teams, To Do, and OneNote in a single server. If the server fails to
@@ -26,7 +26,7 @@ steps:
       2. In the global search bar, type **Microsoft Entra ID** and open it.
          In the left sidebar of Entra, pick **App registrations**, then click
          **+ New registration** at the top.
-      3. **Name:** anything memorable, e.g. *Wayland Personal*.
+      3. **Name:** anything memorable, e.g. *Darhai Personal*.
       4. **Supported account types:** pick
          **Accounts in any organizational directory (Any Microsoft Entra ID
          tenant - Multitenant) and personal Microsoft accounts (e.g. Skype,
@@ -47,7 +47,7 @@ steps:
       accounts, use your organization's tenant ID.
     body: |
       Add the Graph delegated permissions the MCP needs, copy the IDs into
-      Wayland, then (optionally) mint a client secret for background refresh.
+      Дархай, then (optionally) mint a client secret for background refresh.
 
       **A. Add API permissions**
 
@@ -77,7 +77,7 @@ steps:
 
       1. Left sidebar → **Certificates & secrets** → **Client secrets** tab →
          **+ New client secret**.
-      2. Description: *Wayland*. Expires: pick a value (Azure caps at 24
+      2. Description: *Darhai*. Expires: pick a value (Azure caps at 24
          months). Click **Add**.
       3. Copy the **Value** column **immediately** - Azure hides it after you
          leave the page. Paste into **Client secret (optional)** above.
@@ -91,7 +91,7 @@ steps:
       account you intend to act as.
 
       You'll see the list of scopes you granted in the previous step. Click
-      **Accept**. The tab redirects back to Wayland and the server flips to
+      **Accept**. The tab redirects back to Дархай and the server flips to
       Running. Tokens are cached locally; the MCP refreshes them silently via
       `offline_access`. If auth ever times out, click **Re-authorize** on the
       Installed page.

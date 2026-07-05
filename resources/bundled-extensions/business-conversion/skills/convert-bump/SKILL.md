@@ -23,13 +23,13 @@ negative_triggers:
 tags: [conversion, copy, bump, donahoe-method, html, page]
 priority: 80
 version: 1.0.0
-author: Wayland Business Pack
+author: Darhai Business Pack
 license: MIT
 metadata:
   wayland:
     related_skills: [convert, convert-checkout-page, convert-oto-page, convert-bullets, convert-proof, convert-voice, convert-bullshit-filter, convert-four-questions]
 attribution:
-  lineage: "The Donahoe Method (Wayland-owned operating system); references direct-response order-form bump canon, Cialdini commitment-and-consistency, behavioral-economics 'completion bias' framing"
+  lineage: "The Donahoe Method (Дархай-owned operating system); references direct-response order-form bump canon, Cialdini commitment-and-consistency, behavioral-economics 'completion bias' framing"
 ---
 
 # Convert Bump - Order-Form Bump Offer
@@ -252,4 +252,4 @@ When the user wants a bump variant, here are the canonical patterns:
 - Order-form bump canon - direct-response info-marketing (long-form sales letter to order form transition).
 - Commitment-and-consistency at point of purchase - Cialdini (Influence, 1984).
 - Completion-bias framing ("you're already getting X - finish the set with Y") - behavioral-economics literature on bundle effects.
-- The Method itself - Wayland-owned operating system.
+- The Method itself - Дархай-owned operating system.

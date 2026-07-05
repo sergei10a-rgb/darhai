@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "apiVersion": "^1.0.0",
   "description": "Direct-response funnel architecture: irresistible-offer construction, value/ascension ladders, lead magnets, tripwires, conviction and evergreen webinar funnels, and the full-campaign composite. Designs the selling system, not the page that sells it.",
-  "author": "Wayland Business Pack",
+  "author": "Darhai Business Pack",
   "contributes": {
     "assistants": [
       {
@@ -16,7 +16,9 @@
         "category": "sell",
         "kind": "specialist",
         "contextFile": "agents/funnel-architect.md",
-        "models": ["inherit"],
+        "models": [
+          "inherit"
+        ],
         "enabledSkills": [
           "funnels",
           "funnels-lead-magnet",

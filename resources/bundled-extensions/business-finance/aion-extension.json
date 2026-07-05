@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "apiVersion": "^1.0.0",
   "description": "SMB finance and tax skills for the Numbers / CFO role: 1099 and payroll prep, R&D credit, receivables, sales-tax nexus, and basis-aware financial-statement generation (P&L, balance sheet, cash flow). Templates and analytical tools only, not personalized advice.",
-  "author": "Wayland Business Pack",
+  "author": "Darhai Business Pack",
   "contributes": {
     "skills": [
       {

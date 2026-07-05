@@ -7,7 +7,7 @@ steps:
     estSeconds: 30
     autoCompletedByInstall: true
     body: |
-      The Cal.com MCP is bundled with Wayland - nothing to download. It speaks
+      The Cal.com MCP is bundled with Дархай - nothing to download. It speaks
       to Cal.com's REST API v2 (`https://api.cal.com/v2`). Works against the
       hosted cal.com service out of the box; self-hosted deployments only need
       to override the base URL in the next step.
@@ -28,7 +28,7 @@ steps:
       1. Click **Open Cal.com API keys** above. Sign in if prompted. You land
          on the developer settings page that lists your existing keys.
       2. Click the create-key button (labeled **Add** in the current UI) and
-         give the key a recognizable name like *Wayland*. Pick an expiration
+         give the key a recognizable name like *Darhai*. Pick an expiration
          that matches your risk tolerance - the longest available option is
          fine for personal use; pick **Never expires** only if you'll rotate
          manually.

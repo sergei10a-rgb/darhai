@@ -7,7 +7,7 @@ steps:
     estSeconds: 30
     autoCompletedByInstall: true
     body: |
-      Wayland fetches `@google-cloud/gcloud-mcp` from npm via `npx` on first
+      Дархай fetches `@google-cloud/gcloud-mcp` from npm via `npx` on first
       launch - no manual install needed. The server wraps Google's official
       Cloud SDK client libraries and authenticates via Application Default
       Credentials (ADC). If the server fails to start later, click
@@ -19,7 +19,7 @@ steps:
     inputs:
       - { name: GCLOUD_PROJECT, label: "Project ID" }
     body: |
-      Wayland needs a default project so commands like *"list my Cloud Run
+      Дархай needs a default project so commands like *"list my Cloud Run
       services"* know which project to target. You can change it per-call
       later by saying *"in project foo-bar"* in chat.
 
@@ -52,9 +52,9 @@ steps:
       1. In the Cloud console, navigate to **IAM & Admin → Service Accounts**,
          create or pick a service account, then open its **Keys** tab.
       2. Click **Add Key → Create new key → JSON** and save the file
-         somewhere private (e.g. `~/.config/wayland/gcloud-sa.json`).
+         somewhere private (e.g. `~/.config/darhai/gcloud-sa.json`).
          Chmod `0600`.
-      3. Paste the absolute path above. Wayland sets
+      3. Paste the absolute path above. Дархай sets
          `GOOGLE_APPLICATION_CREDENTIALS` for the server and ADC picks it up
          automatically.
   - id: authorize
@@ -70,13 +70,13 @@ steps:
       You'll be asked to grant the `cloud-platform` scope - that's
       cloud-wide access scoped to the projects your account already has
       permissions on. The credential is stored locally and used by ADC; no
-      tokens leave your machine. Wayland flips the server to Running when the
+      tokens leave your machine. Дархай flips the server to Running when the
       browser redirects back.
 ---
 
 # Google Cloud setup
 
 The MCP uses Google's Application Default Credentials. Easiest path: sign in
-through the Wayland OAuth flow. Power users can drop a service account key
+through the Дархай OAuth flow. Power users can drop a service account key
 file and point the env var at it.
 

@@ -53,7 +53,7 @@ const mockOpenPath = () =>
 
 beforeEach(() => {
   mockGetDropFolderStatus().mockResolvedValue({
-    path: '/Users/testuser/Documents/Wayland-Memory',
+    path: '/Users/testuser/Documents/Darhai-Memory',
     watching: true,
     ingestedToday: 0,
   });
@@ -115,7 +115,7 @@ describe('MemoryStatusBar', () => {
   it('renders drop folder chip with abbreviated path after IPC resolves', async () => {
     render(<MemoryStatusBar brainLive cliCount={5} />);
     const chip = await screen.findByTestId('status-drop-folder-chip');
-    expect(chip.textContent).toContain('~/Documents/Wayland-Memory');
+    expect(chip.textContent).toContain('~/Documents/Darhai-Memory');
   });
 
   it('does not render drop folder badge when ingestedToday is 0', async () => {
@@ -126,7 +126,7 @@ describe('MemoryStatusBar', () => {
 
   it('renders drop folder badge with count when ingestedToday > 0', async () => {
     mockGetDropFolderStatus().mockResolvedValue({
-      path: '/Users/testuser/Documents/Wayland-Memory',
+      path: '/Users/testuser/Documents/Darhai-Memory',
       watching: true,
       ingestedToday: 3,
     });
@@ -141,7 +141,7 @@ describe('MemoryStatusBar', () => {
     fireEvent.click(chip);
     await waitFor(() => {
       expect(mockOpenPath()).toHaveBeenCalledWith({
-        path: '/Users/testuser/Documents/Wayland-Memory',
+        path: '/Users/testuser/Documents/Darhai-Memory',
       });
     });
   });

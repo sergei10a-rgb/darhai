@@ -451,7 +451,7 @@ const ENGINE_ENV_ALLOWLIST: readonly string[] = [
  *     active profile's OWN config.toml + memory.db + skills. Set explicitly for
  *     every profile (default -> native dir; named -> `~/.wayland/profiles/<n>`)
  *     so the live config file the panes edit and the file the engine reads can
- *     never diverge. Layered last so a stray `process.env.WAYLAND_HOME` can't
+ *     never diverge. Layered last so a stray `process.env.DARHAI_HOME` can't
  *     override the resolved profile dir.
  */
 export function buildEngineSpawnEnv(opts: {
@@ -482,7 +482,7 @@ export function buildEngineSpawnEnv(opts: {
 
   // Active-profile config root (Design B). Authoritative - set last.
   if (opts.waylandHome) {
-    out.WAYLAND_HOME = opts.waylandHome;
+    out.DARHAI_HOME = opts.waylandHome;
   }
 
   return out;

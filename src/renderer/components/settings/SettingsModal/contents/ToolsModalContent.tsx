@@ -33,14 +33,10 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import useConfigModelListWithImage from '@/renderer/hooks/agent/useConfigModelListWithImage';
-import WaylandScrollArea from '@/renderer/components/base/WaylandScrollArea';
-import WaylandSelect from '@/renderer/components/base/WaylandSelect';
+import DarhaiScrollArea from '@/renderer/components/base/DarhaiScrollArea';
+import DarhaiSelect from '@/renderer/components/base/DarhaiSelect';
 import McpAgentStatusDisplay from '@/renderer/pages/settings/ToolsSettings/McpAgentStatusDisplay';
-import {
-  useMcpServers,
-  useMcpAgentStatus,
-  useMcpOperations,
-} from '@/renderer/hooks/mcp';
+import { useMcpServers, useMcpAgentStatus, useMcpOperations } from '@/renderer/hooks/mcp';
 import classNames from 'classnames';
 import { useNavigate } from 'react-router-dom';
 import { useSettingsViewMode } from '../settingsViewContext';
@@ -162,10 +158,10 @@ const WhisperLocalDownloadControl: React.FC<{
   return (
     <>
       <Form.Item label={t('settings.speechToTextWhisperModel')}>
-        <WaylandSelect value={model} onChange={onModelChange}>
-          <WaylandSelect.Option value='base'>base</WaylandSelect.Option>
-          <WaylandSelect.Option value='small'>small</WaylandSelect.Option>
-        </WaylandSelect>
+        <DarhaiSelect value={model} onChange={onModelChange}>
+          <DarhaiSelect.Option value='base'>base</DarhaiSelect.Option>
+          <DarhaiSelect.Option value='small'>small</DarhaiSelect.Option>
+        </DarhaiSelect>
       </Form.Item>
       <Form.Item label={t('settings.speechToTextDownloadModel')}>
         <div className='flex flex-col gap-8px'>
@@ -314,14 +310,14 @@ export const TextToSpeechSettingsSection: React.FC<{
       <Form layout='horizontal' labelAlign='left' className='space-y-12px'>
         <Form.Item label={t('settings.textToSpeechProvider')}>
           <div className='flex items-center gap-8px'>
-            <WaylandSelect value={config.provider} onChange={handleProviderChange} className='flex-1'>
-              <WaylandSelect.Option value='kokoro-local'>
+            <DarhaiSelect value={config.provider} onChange={handleProviderChange} className='flex-1'>
+              <DarhaiSelect.Option value='kokoro-local'>
                 {t('settings.textToSpeechProviderKokoroLocal')}
-              </WaylandSelect.Option>
-              <WaylandSelect.Option value='system-native'>
+              </DarhaiSelect.Option>
+              <DarhaiSelect.Option value='system-native'>
                 {t('settings.textToSpeechProviderSystemNative')}
-              </WaylandSelect.Option>
-            </WaylandSelect>
+              </DarhaiSelect.Option>
+            </DarhaiSelect>
             <Button size='small' onClick={handleTestVoice}>
               {t('settings.textToSpeechTestVoice', 'Test voice')}
             </Button>
@@ -488,13 +484,13 @@ export const SpeechToTextSettingsSection: React.FC<{
 
       <Form layout='horizontal' labelAlign='left' className='space-y-12px'>
         <Form.Item label={t('settings.speechToTextProvider')}>
-          <WaylandSelect value={config.provider} onChange={handleProviderChange}>
-            <WaylandSelect.Option value='openai'>{t('settings.speechToTextProviderOpenAI')}</WaylandSelect.Option>
-            <WaylandSelect.Option value='deepgram'>{t('settings.speechToTextProviderDeepgram')}</WaylandSelect.Option>
-            <WaylandSelect.Option value='whisper-local'>
+          <DarhaiSelect value={config.provider} onChange={handleProviderChange}>
+            <DarhaiSelect.Option value='openai'>{t('settings.speechToTextProviderOpenAI')}</DarhaiSelect.Option>
+            <DarhaiSelect.Option value='deepgram'>{t('settings.speechToTextProviderDeepgram')}</DarhaiSelect.Option>
+            <DarhaiSelect.Option value='whisper-local'>
               {t('settings.speechToTextProviderWhisperLocal')}
-            </WaylandSelect.Option>
-          </WaylandSelect>
+            </DarhaiSelect.Option>
+          </DarhaiSelect>
         </Form.Item>
 
         <Form.Item label={t('settings.voiceMicCheckLabel', 'Microphone')}>
@@ -608,14 +604,9 @@ const ModalMcpLibraryLinkSection: React.FC = () => {
     <div className='flex flex-col gap-12px min-h-0'>
       <div className='flex items-center justify-between gap-12px'>
         <div className='flex flex-col gap-4px'>
-          <span className='text-14px text-t-primary'>
-            {t('settings.mcpSettings', { defaultValue: 'MCP Servers' })}
-          </span>
+          <span className='text-14px text-t-primary'>{t('settings.mcpSettings', { defaultValue: 'MCP Servers' })}</span>
           <span className='text-13px text-t-secondary'>
-            {t(
-              'settings.mcpModalDeprecatedBody',
-              'Browse, install, and manage MCP servers in the new MCP Library.'
-            )}
+            {t('settings.mcpModalDeprecatedBody', 'Browse, install, and manage MCP servers in the new MCP Library.')}
           </span>
         </div>
         <Button type='outline' shape='round' onClick={handleOpenLibrary}>
@@ -722,24 +713,24 @@ const ToolsModalContent: React.FC = () => {
 
       const env: Record<string, string> = { ...builtinServer.transport.env };
       if (model.platform) {
-        env.WAYLAND_IMG_PLATFORM = model.platform;
+        env.DARHAI_IMG_PLATFORM = model.platform;
       } else {
-        delete env.WAYLAND_IMG_PLATFORM;
+        delete env.DARHAI_IMG_PLATFORM;
       }
       if (model.baseUrl) {
-        env.WAYLAND_IMG_BASE_URL = model.baseUrl;
+        env.DARHAI_IMG_BASE_URL = model.baseUrl;
       } else {
-        delete env.WAYLAND_IMG_BASE_URL;
+        delete env.DARHAI_IMG_BASE_URL;
       }
       if (model.apiKey) {
-        env.WAYLAND_IMG_API_KEY = model.apiKey;
+        env.DARHAI_IMG_API_KEY = model.apiKey;
       } else {
-        delete env.WAYLAND_IMG_API_KEY;
+        delete env.DARHAI_IMG_API_KEY;
       }
       if (model.useModel) {
-        env.WAYLAND_IMG_MODEL = model.useModel;
+        env.DARHAI_IMG_MODEL = model.useModel;
       } else {
-        delete env.WAYLAND_IMG_MODEL;
+        delete env.DARHAI_IMG_MODEL;
       }
 
       const updatedServer: IMcpServer = {
@@ -860,17 +851,17 @@ const ToolsModalContent: React.FC = () => {
       {mcpMessageContext}
 
       {/* Content Area */}
-      <WaylandScrollArea className='flex-1 min-h-0 pb-16px' disableOverflow={isPageMode}>
+      <DarhaiScrollArea className='flex-1 min-h-0 pb-16px' disableOverflow={isPageMode}>
         <div className='space-y-16px'>
           {/* MCP tool configuration */}
           <div className='px-[12px] md:px-[32px] py-[24px] bg-2 rd-12px md:rd-16px flex flex-col min-h-0 border border-border-2'>
             <div className='flex-1 min-h-0'>
-              <WaylandScrollArea
+              <DarhaiScrollArea
                 className={classNames('h-full', isPageMode && 'overflow-visible')}
                 disableOverflow={isPageMode}
               >
                 <ModalMcpLibraryLinkSection />
-              </WaylandScrollArea>
+              </DarhaiScrollArea>
             </div>
           </div>
           {/* Image generation */}
@@ -906,7 +897,7 @@ const ToolsModalContent: React.FC = () => {
             <Form layout='horizontal' labelAlign='left' className='space-y-12px'>
               <Form.Item label={t('settings.imageGenerationModel')}>
                 {imageGenerationModelList.length > 0 ? (
-                  <WaylandSelect
+                  <DarhaiSelect
                     value={
                       imageGenerationModel?.id && imageGenerationModel?.useModel
                         ? `${imageGenerationModel.id}|${imageGenerationModel.useModel}`
@@ -924,15 +915,15 @@ const ToolsModalContent: React.FC = () => {
                     }}
                   >
                     {imageGenerationModelList.map(({ model, ...platform }) => (
-                      <WaylandSelect.OptGroup label={platform.name} key={platform.id}>
+                      <DarhaiSelect.OptGroup label={platform.name} key={platform.id}>
                         {model.map((modelName) => (
-                          <WaylandSelect.Option key={platform.id + modelName} value={platform.id + '|' + modelName}>
+                          <DarhaiSelect.Option key={platform.id + modelName} value={platform.id + '|' + modelName}>
                             {modelName}
-                          </WaylandSelect.Option>
+                          </DarhaiSelect.Option>
                         ))}
-                      </WaylandSelect.OptGroup>
+                      </DarhaiSelect.OptGroup>
                     ))}
-                  </WaylandSelect>
+                  </DarhaiSelect>
                 ) : (
                   <div className='text-t-secondary flex items-center'>
                     {t('settings.noAvailable')}
@@ -941,7 +932,7 @@ const ToolsModalContent: React.FC = () => {
                         <div>
                           {t('settings.needHelpTooltip')}
                           <a
-                            href='https://github.com/FerroxLabs/wayland/wiki/Wayland-Image-Generation-Tool-Model-Configuration-Guide'
+                            href='https://github.com/sergei10a-rgb/darhai/wiki/Wayland-Image-Generation-Tool-Model-Configuration-Guide'
                             target='_blank'
                             rel='noopener noreferrer'
                             className='text-[rgb(var(--primary-6))] hover:text-[rgb(var(--primary-5))] underline ml-4px'
@@ -953,7 +944,7 @@ const ToolsModalContent: React.FC = () => {
                       }
                     >
                       <a
-                        href='https://github.com/FerroxLabs/wayland/wiki/Wayland-Image-Generation-Tool-Model-Configuration-Guide'
+                        href='https://github.com/sergei10a-rgb/darhai/wiki/Wayland-Image-Generation-Tool-Model-Configuration-Guide'
                         target='_blank'
                         rel='noopener noreferrer'
                         className='ml-8px text-[rgb(var(--primary-6))] hover:text-[rgb(var(--primary-5))] cursor-pointer'
@@ -969,7 +960,7 @@ const ToolsModalContent: React.FC = () => {
           </div>
           <SpeechToTextSettingsSection config={speechToTextConfig} onChange={updateSpeechToTextConfig} />
         </div>
-      </WaylandScrollArea>
+      </DarhaiScrollArea>
     </div>
   );
 };

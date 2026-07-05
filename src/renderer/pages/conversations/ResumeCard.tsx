@@ -9,6 +9,7 @@ import { getAgentLogo } from '@/renderer/utils/model/agentLogo';
 import { Dropdown } from '@arco-design/web-react';
 import { MessageSquare, MoreHorizontal, Star } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import ConversationMenu, { type ConversationMenuAction } from './ConversationMenu';
 import styles from './conversationCards.module.css';
 
@@ -26,6 +27,7 @@ type ResumeCardProps = {
  * glance and one click.
  */
 const ResumeCard: React.FC<ResumeCardProps> = ({ conversation, pinned, timeLabel, onOpen, onAction }) => {
+  const { t } = useTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
   const logo = getAgentLogo(conversation.type);
   const model = 'model' in conversation ? conversation.model.useModel : '';
@@ -70,7 +72,7 @@ const ResumeCard: React.FC<ResumeCardProps> = ({ conversation, pinned, timeLabel
             getPopupContainer={() => document.body}
             droplist={<ConversationMenu pinned={pinned} onAction={runAction} />}
           >
-            <button type='button' className={styles.iconBtn} aria-label='More actions'>
+            <button type='button' className={styles.iconBtn} aria-label={t('common.moreActions')}>
               <MoreHorizontal size={16} />
             </button>
           </Dropdown>

@@ -1,6 +1,7 @@
 {
   "referenceLanguage": "en-US",
   "fallbackLanguage": "en-US",
+  "defaultLanguage": "mn-MN",
   "supportedLanguages": [
     "en-US",
     "es-ES",

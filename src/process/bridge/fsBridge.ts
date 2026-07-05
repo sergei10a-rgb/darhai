@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { WAYLAND_TIMESTAMP_SEPARATOR } from '@/common/config/constants';
+import { DARHAI_TIMESTAMP_SEPARATOR } from '@/common/config/constants';
 import fs from 'fs/promises';
 import type { Dirent } from 'fs';
 import path from 'path';
@@ -503,8 +503,8 @@ export function initFsBridge(): void {
           targetUrl,
           {
             headers: {
-              'User-Agent': 'Wayland-Preview',
-              Referer: 'https://github.com/FerroxLabs/wayland',
+              'User-Agent': 'Darhai-Preview',
+              Referer: 'https://github.com/sergei10a-rgb/darhai',
             },
           },
           (response) => {
@@ -598,7 +598,7 @@ export function initFsBridge(): void {
         const timestamp = Date.now();
         const ext = path.extname(safeFileName);
         const name = path.basename(safeFileName, ext);
-        const tempFileName = `${name}${WAYLAND_TIMESTAMP_SEPARATOR}${timestamp}${ext}`;
+        const tempFileName = `${name}${DARHAI_TIMESTAMP_SEPARATOR}${timestamp}${ext}`;
         tempFilePath = path.join(tempDir, tempFileName);
       }
 
@@ -667,7 +667,7 @@ export function initFsBridge(): void {
         const timestamp = Date.now();
         const ext = path.extname(safeFileName);
         const name = path.basename(safeFileName, ext);
-        const newFileName = `${name}${WAYLAND_TIMESTAMP_SEPARATOR}${timestamp}${ext}`;
+        const newFileName = `${name}${DARHAI_TIMESTAMP_SEPARATOR}${timestamp}${ext}`;
         filePath = path.join(uploadDir, newFileName);
       }
 
@@ -1078,7 +1078,7 @@ export function initFsBridge(): void {
             const name = path.basename(targetPath, ext);
             // Construct new path in the same directory
             const dir = path.dirname(targetPath);
-            const newFileName = `${name}${WAYLAND_TIMESTAMP_SEPARATOR}${timestamp}${ext}`;
+            const newFileName = `${name}${DARHAI_TIMESTAMP_SEPARATOR}${timestamp}${ext}`;
             finalTargetPath = path.join(dir, newFileName);
           }
 

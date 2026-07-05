@@ -8,7 +8,7 @@ import { CheckCircle2, Download, FolderOpen, RefreshCw, XCircle } from 'lucide-r
 import React, { useEffect, useMemo, useState } from 'react';
 import { Button, Progress, Message } from '@arco-design/web-react';
 import { ipcBridge } from '@/common';
-import WaylandModal from '@/renderer/components/base/WaylandModal';
+import DarhaiModal from '@/renderer/components/base/DarhaiModal';
 import MarkdownView from '@/renderer/components/Markdown';
 import type { UpdateDownloadProgressEvent, UpdateReleaseInfo, AutoUpdateStatus } from '@/common/update/updateTypes';
 import { useTranslation } from 'react-i18next';
@@ -463,7 +463,7 @@ const UpdateModal: React.FC = () => {
   };
 
   return (
-    <WaylandModal
+    <DarhaiModal
       visible={visible}
       onCancel={handleClose}
       size={status === 'available' ? 'medium' : 'small'}
@@ -479,7 +479,7 @@ const UpdateModal: React.FC = () => {
       }}
     >
       <div className='flex flex-col h-full w-full'>{renderContent()}</div>
-    </WaylandModal>
+    </DarhaiModal>
   );
 };
 

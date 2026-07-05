@@ -6,7 +6,7 @@
 
 import { Hammer } from 'lucide-react';
 import type { IMessageAvailableCommands } from '@/common/chat/chatLib';
-import WaylandCollapse from '@/renderer/components/base/WaylandCollapse';
+import DarhaiCollapse from '@/renderer/components/base/DarhaiCollapse';
 import CollapsibleContent from '@/renderer/components/chat/CollapsibleContent';
 import { iconColors } from '@/renderer/styles/colors';
 import React from 'react';
@@ -33,9 +33,9 @@ const MessageAvailableCommands: React.FC<MessageAvailableCommandsProps> = ({ mes
         </span>
       </div>
       <CollapsibleContent maxHeight={150} defaultCollapsed={true}>
-        <WaylandCollapse accordion bordered={false} expandIconPosition='right'>
+        <DarhaiCollapse accordion bordered={false} expandIconPosition='right'>
           {commands.map((command) => (
-            <WaylandCollapse.Item
+            <DarhaiCollapse.Item
               key={command.name}
               name={command.name}
               header={<span className='text-t-primary font-medium'>{command.name}</span>}
@@ -44,9 +44,9 @@ const MessageAvailableCommands: React.FC<MessageAvailableCommandsProps> = ({ mes
                 {command.description}
                 {command.hint && <span className='text-t-tertiary ml-4px'>({command.hint})</span>}
               </div>
-            </WaylandCollapse.Item>
+            </DarhaiCollapse.Item>
           ))}
-        </WaylandCollapse>
+        </DarhaiCollapse>
       </CollapsibleContent>
     </div>
   );

@@ -51,9 +51,9 @@ async function loadConfigureChromium(options: SetupOptions = {}) {
   }
 
   process.env = { ...originalEnv };
-  delete process.env.WAYLAND_CDP_PORT;
+  delete process.env.DARHAI_CDP_PORT;
   if (options.envPort !== undefined) {
-    process.env.WAYLAND_CDP_PORT = options.envPort;
+    process.env.DARHAI_CDP_PORT = options.envPort;
   }
 
   const appendSwitch = vi.fn();

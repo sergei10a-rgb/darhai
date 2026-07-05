@@ -61,12 +61,7 @@ vi.mock('@arco-design/web-react', () => ({
     [key: string]: unknown;
   }) =>
     visible ? (
-      <div
-        role='dialog'
-        aria-label={title}
-        className={className ?? ''}
-        {...rest}
-      >
+      <div role='dialog' aria-label={title} className={className ?? ''} {...rest}>
         {children}
       </div>
     ) : null,
@@ -102,14 +97,7 @@ vi.mock('@arco-design/web-react', () => ({
     checked: boolean;
     onChange: (b: boolean) => void;
     [key: string]: unknown;
-  }) => (
-    <input
-      type='checkbox'
-      checked={checked}
-      onChange={(e) => onChange(e.target.checked)}
-      {...rest}
-    />
-  ),
+  }) => <input type='checkbox' checked={checked} onChange={(e) => onChange(e.target.checked)} {...rest} />,
 
   Button: ({
     children,
@@ -124,11 +112,7 @@ vi.mock('@arco-design/web-react', () => ({
     type?: string;
     [key: string]: unknown;
   }) => (
-    <button
-      onClick={onClick}
-      disabled={loading === true}
-      {...rest}
-    >
+    <button onClick={onClick} disabled={loading === true} {...rest}>
       {children}
     </button>
   ),
@@ -140,7 +124,17 @@ vi.mock('@arco-design/web-react', () => ({
 }));
 
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (k: string) => k }),
+  useTranslation: () => ({
+    // Mirrors the app convention t(key, 'English default', options?) and
+    // interpolates {{var}} placeholders so assertions can use real English.
+    t: (key: string, fallback?: string | Record<string, unknown>, options?: Record<string, unknown>) => {
+      const template = typeof fallback === 'string' ? fallback : key;
+      const vars = (typeof fallback === 'object' && fallback !== null ? fallback : options) ?? {};
+      return template.replace(/\{\{(\w+)\}\}/g, (match, name: string) =>
+        vars[name] === undefined ? match : String(vars[name])
+      );
+    },
+  }),
 }));
 
 // ===== Subject (imported AFTER mocks) =====

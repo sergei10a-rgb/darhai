@@ -8,7 +8,7 @@ steps:
     autoCompletedByInstall: true
     body: |
       Raindrop hosts the MCP server at `https://mcp.raindrop.io` - nothing
-      to install. Wayland connects via streamable HTTP on first use.
+      to install. Дархай connects via streamable HTTP on first use.
   - id: authorize
     title: Sign in with Raindrop
     estSeconds: 30
@@ -19,9 +19,9 @@ steps:
 
       1. Sign in to Raindrop.io if you aren't already.
       2. Approve the **raindrop:read** and **raindrop:write** scopes -
-         this lets Wayland read your bookmarks/collections and save or
+         this lets Дархай read your bookmarks/collections and save or
          edit new ones.
-      3. The tab redirects back to Wayland and the server status flips
+      3. The tab redirects back to Дархай and the server status flips
          to Running.
 
       **Prefer a test token instead?** Open

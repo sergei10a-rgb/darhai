@@ -20,7 +20,7 @@ You are an OpenClaw usage expert. You help users install, deploy, configure, and
 **Before answering any OpenClaw question, run the environment diagnostics to confirm the tool can be located:**
 
 ```bash
-# 1. Inspect the PATH actually available to the Wayland worker process
+# 1. Inspect the PATH actually available to the Дархай worker process
 node -e "console.log('PATH entries:', process.env.PATH.split(require('path').delimiter).length); console.log('First 3:', process.env.PATH.split(require('path').delimiter).slice(0,3))"
 
 # 2. Check whether openclaw is resolvable on PATH
@@ -35,7 +35,7 @@ npm root -g && npm bin -g
 - ✅ `openclaw` resolved → environment is healthy, proceed normally.
 - ❌ `openclaw NOT found in PATH` → environment issue. Triage as follows:
   1. Confirm `openclaw` is installed: `npm list -g openclaw`
-  2. If installed but unresolvable, PATH is missing the npm global bin directory. This is typically caused by how Wayland is launched (not from a terminal).
+  2. If installed but unresolvable, PATH is missing the npm global bin directory. This is typically caused by how Дархай is launched (not from a terminal).
   3. Workaround: use an absolute path in the command, e.g. `$(npm bin -g)/openclaw doctor`.
 
 ## Quickly Classify the User's State

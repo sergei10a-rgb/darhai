@@ -5,7 +5,7 @@
  */
 
 import ModalHOC from '@/renderer/utils/ui/ModalHOC';
-import WaylandModal from '@/renderer/components/base/WaylandModal';
+import DarhaiModal from '@/renderer/components/base/DarhaiModal';
 import { Button, Input, Message } from '@arco-design/web-react';
 import { Check, Folder, Plus } from 'lucide-react';
 import React, { useState } from 'react';
@@ -60,7 +60,7 @@ const AssignToProjectModal = ModalHOC<AssignToProjectModalProps>(({ modalProps, 
   };
 
   return (
-    <WaylandModal
+    <DarhaiModal
       visible={modalProps.visible}
       onCancel={modalCtrl.close}
       header={{ title: t('projects.assign.title'), showClose: true }}
@@ -118,7 +118,7 @@ const AssignToProjectModal = ModalHOC<AssignToProjectModalProps>(({ modalProps, 
           </Button>
         </div>
       </div>
-    </WaylandModal>
+    </DarhaiModal>
   );
 });
 

@@ -16,7 +16,7 @@ license: Apache-2.0
 type: workflow
 skills: "market-competitors market-brand market-audit market-copy"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: marketing positioning messaging competitors brand step-by-step
   category: marketing

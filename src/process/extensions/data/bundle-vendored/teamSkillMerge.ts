@@ -47,10 +47,11 @@ let loaded = false;
  *
  * Dev: `~/dev/waylandteams/` - Sean's canonical source-of-truth checkout.
  *
- * Production: any `~/Library/Application Support/Wayland*` install that has
- * the bundle symlinked under `wayland/extensions/waylandteams/`. We probe
- * the three known variants (Wayland, Wayland-Dev, Wayland-Beta) instead of
- * shelling out to a glob.
+ * Production: any `~/Library/Application Support/{Darhai,Wayland*}` install
+ * that has the bundle symlinked under `wayland/extensions/waylandteams/`. We
+ * probe the known variants (Darhai - the post-rename packaged userData dir -
+ * plus the legacy Wayland, Wayland-Dev, Wayland-Beta) instead of shelling out
+ * to a glob.
  *
  * Returns the FIRST candidate whose `contributes/skills.json` is present.
  */
@@ -58,6 +59,7 @@ function resolveTeamBundleRoot(): string | null {
   const home = homedir();
   const candidates = [
     path.join(home, 'dev', 'waylandteams'),
+    path.join(home, 'Library', 'Application Support', 'Darhai', 'wayland', 'extensions', 'waylandteams'),
     path.join(home, 'Library', 'Application Support', 'Wayland', 'wayland', 'extensions', 'waylandteams'),
     path.join(home, 'Library', 'Application Support', 'Wayland-Dev', 'wayland', 'extensions', 'waylandteams'),
     path.join(home, 'Library', 'Application Support', 'Wayland-Beta', 'wayland', 'extensions', 'waylandteams'),
@@ -128,7 +130,7 @@ function buildEntries(explicitRoot?: string): SkillIndexEntry[] {
       description: entry.description,
       type: 'skill',
       source: 'team',
-      sourceLabel: 'Wayland Teams',
+      sourceLabel: 'Дархай багууд',
       metadata: {
         tags: [],
         category: deriveCategory(entry.name),

@@ -8,7 +8,7 @@ steps:
     autoCompletedByInstall: true
     body: |
       No local install needed. HubSpot hosts the MCP at
-      `https://mcp.hubspot.com` - Wayland connects over streamable HTTP
+      `https://mcp.hubspot.com` - Дархай connects over streamable HTTP
       once you've authorized.
   - id: private-app
     title: Create a HubSpot Private App
@@ -26,16 +26,16 @@ steps:
       long-lived token. The OAuth path requires a published HubSpot app
       registration - overkill for personal use.
 
-      1. Open `app.hubspot.com` and pick the account you want Wayland to
+      1. Open `app.hubspot.com` and pick the account you want Дархай to
          act on (top-right account switcher).
       2. Click the **gear icon** (top-right) to open **Settings**.
       3. In the left sidebar, navigate to
          **Integrations → Private Apps**.
       4. Click **Create a private app**.
-      5. **Basic Info** tab: give it a name like *Wayland Desktop* and a
+      5. **Basic Info** tab: give it a name like *Darhai Desktop* and a
          short description.
       6. **Scopes** tab: click **Add new scope** and tick the scopes
-         Wayland needs - at minimum:
+         Дархай needs - at minimum:
          - `crm.objects.contacts.read`
          - `crm.objects.contacts.write`
          - `crm.objects.deals.read`
@@ -51,7 +51,7 @@ steps:
     title: Verify the connection
     estSeconds: 30
     body: |
-      Wayland will use the token as a Bearer header on every MCP call.
+      Дархай will use the token as a Bearer header on every MCP call.
       Open a new chat and ask: *"Show my five most recently created
       HubSpot contacts."* The MCP will return them.
 

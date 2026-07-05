@@ -14,7 +14,7 @@ license: Apache-2.0
 type: workflow
 skills: "sales-icp market-funnel convert-temperature funnels-offer convert-three-locks funnels-offer-stack funnels-offer-pricing funnels-offer-guarantee"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: marketing funnels offer pricing step-by-step donahoe-method
   category: marketing

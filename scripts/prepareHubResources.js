@@ -1,14 +1,14 @@
 /**
  * prepareHubResources.js
  *
- * Downloads the WaylandHub index.json and all extension zip packages
+ * Downloads the Darhai Hub index.json and all extension zip packages
  * into resources/hub/ so they are bundled with the app as local fallback.
  *
  * Called during the build pipeline before electron-builder runs.
  *
  * Environment variables:
- *   WAYLAND_HUB_TAG    - Git tag to fetch from (default: 'dist-latest')
- *   WAYLAND_HUB_SKIP   - Set to '1' to skip hub resource preparation
+ *   DARHAI_HUB_TAG    - Git tag to fetch from (default: 'dist-latest')
+ *   DARHAI_HUB_SKIP   - Set to '1' to skip hub resource preparation
  */
 
 const fs = require('fs');
@@ -20,8 +20,8 @@ const HUB_DIR = path.join(PROJECT_ROOT, 'resources', 'hub');
 
 const DEFAULT_TAG = 'dist-latest';
 const BASE_URLS = [
-  `https://raw.githubusercontent.com/FerroxLabs/waylandHub/${process.env.WAYLAND_HUB_TAG || DEFAULT_TAG}/`,
-  `https://cdn.jsdelivr.net/gh/FerroxLabs/waylandHub@${process.env.WAYLAND_HUB_TAG || DEFAULT_TAG}/`,
+  `https://raw.githubusercontent.com/sergei10a-rgb/darhaiHub/${process.env.DARHAI_HUB_TAG || DEFAULT_TAG}/`,
+  `https://cdn.jsdelivr.net/gh/sergei10a-rgb/darhaiHub@${process.env.DARHAI_HUB_TAG || DEFAULT_TAG}/`,
 ];
 
 // ---------------------------------------------------------------------------
@@ -94,12 +94,12 @@ function downloadUrl(url, destPath) {
 // ---------------------------------------------------------------------------
 
 async function prepareHubResources() {
-  if (process.env.WAYLAND_HUB_SKIP === '1') {
-    console.log('[hub] Skipping hub resource preparation (WAYLAND_HUB_SKIP=1)');
+  if (process.env.DARHAI_HUB_SKIP === '1') {
+    console.log('[hub] Skipping hub resource preparation (DARHAI_HUB_SKIP=1)');
     return { skipped: true };
   }
 
-  const tag = process.env.WAYLAND_HUB_TAG || DEFAULT_TAG;
+  const tag = process.env.DARHAI_HUB_TAG || DEFAULT_TAG;
   console.log(`[hub] Preparing hub resources from tag: ${tag}`);
 
   // Clean and create target directory

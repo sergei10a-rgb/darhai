@@ -7,7 +7,7 @@ steps:
     estSeconds: 30
     autoCompletedByInstall: true
     body: |
-      Wayland fetches `firecrawl-mcp` from npm via `npx` on first launch -
+      Дархай fetches `firecrawl-mcp` from npm via `npx` on first launch -
       no manual install needed. If the server fails to start later,
       reinstall from this page.
   - id: api-key
@@ -25,7 +25,7 @@ steps:
          account at `firecrawl.dev`.
       2. The link drops you on **Dashboard → API Keys**. (If you land on
          the home dashboard, click **API Keys** in the left sidebar.)
-      3. Click **Create API Key**. Name it anything (e.g. *Wayland*).
+      3. Click **Create API Key**. Name it anything (e.g. *Darhai*).
       4. Copy the key - it starts with `fc-` and is shown in full only once.
       5. Paste it into the `FIRECRAWL_API_KEY` field above.
 

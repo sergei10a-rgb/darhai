@@ -1,4 +1,4 @@
-import { WAYLAND_FILES_MARKER, WAYLAND_TIMESTAMP_REGEX } from '@/common/config/constants';
+import { DARHAI_FILES_MARKER, DARHAI_TIMESTAMP_REGEX } from '@/common/config/constants';
 import type { FileOrFolderItem } from '@/renderer/utils/file/fileTypes';
 
 export const collectSelectedFiles = (uploadFile: string[], atPath: Array<string | FileOrFolderItem>): string[] => {
@@ -10,7 +10,7 @@ export const buildDisplayMessage = (input: string, files: string[], workspacePat
   if (!files.length) return input;
   const normalizedWorkspace = workspacePath?.replace(/[\\/]+$/, '');
   const displayPaths = files.map((filePath) => {
-    const sanitizedPath = filePath.replace(WAYLAND_TIMESTAMP_REGEX, '$1');
+    const sanitizedPath = filePath.replace(DARHAI_TIMESTAMP_REGEX, '$1');
     if (!normalizedWorkspace) {
       return sanitizedPath;
     }
@@ -22,7 +22,7 @@ export const buildDisplayMessage = (input: string, files: string[], workspacePat
       const normalizedWorkspaceWithForwardSlash = normalizedWorkspace.replace(/\\/g, '/');
       if (normalizedFile.startsWith(normalizedWorkspaceWithForwardSlash + '/')) {
         const relativePath = normalizedFile.slice(normalizedWorkspaceWithForwardSlash.length + 1);
-        return `${normalizedWorkspace}/${relativePath.replace(WAYLAND_TIMESTAMP_REGEX, '$1')}`;
+        return `${normalizedWorkspace}/${relativePath.replace(DARHAI_TIMESTAMP_REGEX, '$1')}`;
       }
       // Keep external absolute paths unchanged so preview and metadata lookups
       // continue to read the real file instead of a non-existent workspace path.
@@ -30,5 +30,5 @@ export const buildDisplayMessage = (input: string, files: string[], workspacePat
     }
     return `${normalizedWorkspace}/${sanitizedPath}`;
   });
-  return `${input}\n\n${WAYLAND_FILES_MARKER}\n${displayPaths.join('\n')}`;
+  return `${input}\n\n${DARHAI_FILES_MARKER}\n${displayPaths.join('\n')}`;
 };

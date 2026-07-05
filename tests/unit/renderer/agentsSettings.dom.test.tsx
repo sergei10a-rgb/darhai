@@ -158,7 +158,7 @@ import AgentsSettings from '../../../src/renderer/pages/settings/AgentSettings';
 // ---------------------------------------------------------------------------
 
 const AGENTS = [
-  { backend: 'wcore', name: 'Wayland Core' },
+  { backend: 'wcore', name: 'Darhai Core' },
   { backend: 'claude', name: 'Claude Code' },
   { backend: 'codex', name: 'Codex' },
   { backend: 'gemini', name: 'Gemini CLI' },
@@ -201,7 +201,7 @@ afterEach(() => {
 describe('AgentsSettings (Packet 2D)', () => {
   it('renders a card for each featured agent', async () => {
     render(<AgentsSettings />);
-    await waitFor(() => expect(screen.getByText('Wayland Core')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Darhai Core')).toBeTruthy());
 
     // Wayland Core / Claude Code / Codex are featured cards.
     expect(screen.getAllByTestId('agent-card')).toHaveLength(3);
@@ -215,7 +215,7 @@ describe('AgentsSettings (Packet 2D)', () => {
 
   it('states in plain language what models each agent runs', async () => {
     render(<AgentsSettings />);
-    await waitFor(() => expect(screen.getByText('Wayland Core')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Darhai Core')).toBeTruthy());
 
     // The exact plain-language scope sentences (spec §4.7).
     expect(screen.getByText('Runs any model you connect')).toBeTruthy();
@@ -227,7 +227,7 @@ describe('AgentsSettings (Packet 2D)', () => {
 
   it('shows the Flux status chip per backend from the registry classification', async () => {
     render(<AgentsSettings />);
-    await waitFor(() => expect(screen.getByText('Wayland Core')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Darhai Core')).toBeTruthy());
 
     // `wcore`, `claude`, `gemini`, `qwen` are classified `env` -> "Flux ready"
     // chips (several render, so assert on the count, not a single match).
@@ -255,7 +255,7 @@ describe('AgentsSettings (Packet 2D)', () => {
 
   it('maps the `vibe` backend to the Mistral scope copy', async () => {
     render(<AgentsSettings />);
-    await waitFor(() => expect(screen.getByText('Wayland Core')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Darhai Core')).toBeTruthy());
 
     // `vibe` is the one non-obvious backend → scope mapping: it resolves to
     // the `mistral` scope key, not a `vibe`-named one (agentScopes.ts).
@@ -265,7 +265,7 @@ describe('AgentsSettings (Packet 2D)', () => {
 
   it('uses no "family" jargon and no padlock metaphor', async () => {
     const { container } = render(<AgentsSettings />);
-    await waitFor(() => expect(screen.getByText('Wayland Core')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Darhai Core')).toBeTruthy());
 
     // The redesign explicitly bans "family" jargon and the locked/restricted
     // padlock metaphor for model scope (spec §2, §4.7).
@@ -276,7 +276,7 @@ describe('AgentsSettings (Packet 2D)', () => {
 
   it('renders the remote agents section', async () => {
     render(<AgentsSettings />);
-    await waitFor(() => expect(screen.getByText('Wayland Core')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Darhai Core')).toBeTruthy());
 
     expect(screen.getByText('Remote agents')).toBeTruthy();
     expect(screen.getByTestId('remote-agents')).toBeTruthy();
@@ -285,7 +285,7 @@ describe('AgentsSettings (Packet 2D)', () => {
   it('renders the Flux Router card with a working route-through toggle when connected', async () => {
     mockGetRouteThroughFlux.mockResolvedValue(true);
     render(<AgentsSettings />);
-    await waitFor(() => expect(screen.getByText('Wayland Core')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Darhai Core')).toBeTruthy());
 
     const card = await screen.findByTestId('flux-router-card');
     expect(card.textContent).toContain('Flux Router');
@@ -312,7 +312,7 @@ describe('AgentsSettings (Packet 2D)', () => {
   it('shows a Connect affordance and no toggle when Flux is not connected', async () => {
     mockProviders = [];
     render(<AgentsSettings />);
-    await waitFor(() => expect(screen.getByText('Wayland Core')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Darhai Core')).toBeTruthy());
 
     const card = await screen.findByTestId('flux-router-card');
     expect(card.textContent).toContain('Not connected');
@@ -337,39 +337,39 @@ describe('AgentsSettings (Packet 2D)', () => {
     expect(screen.getByText('Remote agent store unavailable')).toBeTruthy();
   });
 
-  it('shows the empty note and the always-available Wayland Core hero when no agents are detected', async () => {
+  it('shows the empty note and the always-available Darhai Core hero when no agents are detected', async () => {
     mockGetAvailableAgents.mockResolvedValue(agentsOk([]));
     render(<AgentsSettings />);
 
     // The wcore hero card must always render - the engine is always-available
     // once a model is connected, so the page never goes wcore-less.
-    await waitFor(() => expect(screen.getByText('Wayland Core')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Darhai Core')).toBeTruthy());
     const cards = screen.getAllByTestId('agent-card');
     expect(cards).toHaveLength(1);
 
     // The empty note still renders alongside the always-available hero.
     expect(
-      screen.getByText('No agents detected yet. Wayland Core is always available once a model is connected.')
+      screen.getByText('No agents detected yet. Darhai Core is always available once a model is connected.')
     ).toBeTruthy();
   });
 
-  it('still renders the Wayland Core hero when the agents IPC call fails', async () => {
+  it('still renders the Darhai Core hero when the agents IPC call fails', async () => {
     // The SWR fetcher swallows `success: false` into an empty array - the
     // page must still render the wcore hero (always-available) plus the
     // empty-state note.
     mockGetAvailableAgents.mockResolvedValue({ success: false });
     render(<AgentsSettings />);
 
-    await waitFor(() => expect(screen.getByText('Wayland Core')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Darhai Core')).toBeTruthy());
     expect(screen.getAllByTestId('agent-card')).toHaveLength(1);
     expect(
-      screen.getByText('No agents detected yet. Wayland Core is always available once a model is connected.')
+      screen.getByText('No agents detected yet. Darhai Core is always available once a model is connected.')
     ).toBeTruthy();
   });
 
   it('renders a "show in toolbar" toggle for each detected agent, on by default', async () => {
     render(<AgentsSettings />);
-    await waitFor(() => expect(screen.getByText('Wayland Core')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Darhai Core')).toBeTruthy());
 
     // A featured agent (Codex) and a tile agent (Gemini) both expose a toggle.
     const codexToggle = await screen.findByTestId('agent-toolbar-toggle-codex');
@@ -381,7 +381,7 @@ describe('AgentsSettings (Packet 2D)', () => {
 
   it('persists hiding a detected agent through ConfigStorage', async () => {
     render(<AgentsSettings />);
-    await waitFor(() => expect(screen.getByText('Wayland Core')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Darhai Core')).toBeTruthy());
 
     await act(async () => {
       (await screen.findByTestId('agent-toolbar-toggle-codex')).click();
@@ -403,7 +403,7 @@ describe('AgentsSettings (Packet 2D)', () => {
 
   it('locks the Wayland Core toggle on so the toolbar keeps at least one agent', async () => {
     render(<AgentsSettings />);
-    await waitFor(() => expect(screen.getByText('Wayland Core')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Darhai Core')).toBeTruthy());
 
     const wcoreToggle = await screen.findByTestId('agent-toolbar-toggle-wcore');
     expect(wcoreToggle.getAttribute('aria-checked')).toBe('true');
@@ -418,7 +418,7 @@ describe('AgentsSettings (Packet 2D)', () => {
   it('reflects a pre-hidden agent as toggled off', async () => {
     mockHiddenStore = ['gemini'];
     render(<AgentsSettings />);
-    await waitFor(() => expect(screen.getByText('Wayland Core')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Darhai Core')).toBeTruthy());
 
     const geminiToggle = await screen.findByTestId('agent-toolbar-toggle-gemini');
     await waitFor(() => expect(geminiToggle.getAttribute('aria-checked')).toBe('false'));

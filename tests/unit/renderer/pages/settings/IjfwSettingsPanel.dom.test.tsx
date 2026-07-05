@@ -106,7 +106,7 @@ describe('IjfwSettingsPanel', () => {
     expect(screen.getByText('Skip IJFW automatic setup')).toBeTruthy();
     expect(
       screen.getByText(
-        'When enabled, Wayland will not install or upgrade IJFW. You can install manually later via the Memory page.'
+        'When enabled, Дархай will not install or upgrade IJFW. You can install manually later via the Memory page.'
       )
     ).toBeTruthy();
     expect(screen.getByTestId('ijfw-settings-skip-switch')).toBeTruthy();
@@ -170,9 +170,7 @@ describe('IjfwSettingsPanel', () => {
     await flushAsync();
     expect(screen.getByTestId('ijfw-settings-about')).toBeTruthy();
     expect(screen.getByText('An open-source persistent memory engine by Ferrox Labs.')).toBeTruthy();
-    expect(screen.getByTestId('ijfw-settings-github-link').textContent).toContain(
-      'github.com/FerroxLabs/ijfw'
-    );
+    expect(screen.getByTestId('ijfw-settings-github-link').textContent).toContain('IJFW GitHub');
   });
 
   it('opens the IJFW GitHub URL via ipcBridge.shell.openExternal when the link is clicked', async () => {

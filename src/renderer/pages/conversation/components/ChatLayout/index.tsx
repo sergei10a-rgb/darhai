@@ -28,6 +28,7 @@ import {
 } from '@/renderer/pages/conversation/utils/layoutCalc';
 import { Layout as ArcoLayout } from '@arco-design/web-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import useSWR from 'swr';
 import './chat-layout.css';
 
@@ -60,6 +61,7 @@ const ChatLayout: React.FC<{
    */
   hideHeader?: boolean;
 }> = (props) => {
+  const { t } = useTranslation();
   const { conversationId, workspacePath } = props;
   const { backend, presetAssistant, agentName, workspaceEnabled = true } = props;
   const layout = useLayoutContext();
@@ -103,7 +105,7 @@ const ChatLayout: React.FC<{
   // covers ACP-protocol agents; native-spawn backends like wcore need
   // their own friendly-name lookup so the badge doesn't show the raw id).
   const NON_ACP_BACKEND_DISPLAY_NAMES: Record<string, string> = {
-    wcore: 'Wayland Core',
+    wcore: 'Darhai Core',
   };
 
   // Compute display name with fallback chain
@@ -230,7 +232,7 @@ const ChatLayout: React.FC<{
             <button
               type='button'
               className='workspace-header__toggle'
-              aria-label='Toggle workspace'
+              aria-label={t('conversation.workspace.toggleLabel')}
               onClick={() => dispatchWorkspaceToggleEvent()}
             >
               {rightSiderCollapsed ? <PanelRightOpen size={16} /> : <PanelRightClose size={16} />}

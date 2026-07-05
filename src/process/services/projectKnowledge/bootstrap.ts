@@ -8,7 +8,7 @@ import fs from 'fs/promises';
 import path from 'path';
 
 /** Directory name for per-project knowledge, mounted at the project workspace root. */
-export const WAYLAND_KNOWLEDGE_DIR = '.wayland';
+export const DARHAI_KNOWLEDGE_DIR = '.wayland';
 
 /**
  * Bootstrap a `.wayland/` knowledge folder at the project workspace root.
@@ -29,7 +29,7 @@ export async function bootstrapProjectKnowledge(
 ): Promise<void> {
   if (!workspace || !workspace.trim()) return;
 
-  const root = path.join(workspace, WAYLAND_KNOWLEDGE_DIR);
+  const root = path.join(workspace, DARHAI_KNOWLEDGE_DIR);
   await fs.mkdir(path.join(root, 'reference'), { recursive: true });
 
   await writeIfAbsent(
@@ -59,7 +59,7 @@ async function writeIfAbsent(filePath: string, content: string): Promise<void> {
 /** True if a workspace has a `.wayland/` knowledge folder with at least one readable file. */
 export async function hasProjectKnowledge(workspace: string): Promise<boolean> {
   if (!workspace || !workspace.trim()) return false;
-  const root = path.join(workspace, WAYLAND_KNOWLEDGE_DIR);
+  const root = path.join(workspace, DARHAI_KNOWLEDGE_DIR);
   try {
     const entries = await fs.readdir(root);
     return entries.length > 0;

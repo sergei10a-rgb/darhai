@@ -91,11 +91,11 @@ export async function resetPasswordCLI(username: string): Promise<void> {
     if (!hasUsersResult.data) {
       log.error('Database is not initialized yet');
       log.info('');
-      log.info('Please run Wayland at least once to initialize the database:');
-      log.info('  wayland --webui');
+      log.info('Please run Darhai at least once to initialize the database:');
+      log.info('  Darhai --webui');
       log.info('');
       log.info('Then you can reset the password using:');
-      log.info('  wayland --resetpass <username>');
+      log.info('  Darhai --resetpass <username>');
       process.exit(1);
     }
 

@@ -166,12 +166,12 @@ const ServicesKeysPane: React.FC = () => {
     <div className={`${styles.pane} flex flex-col gap-24px`}>
       {/* Pane head */}
       <div className={styles.head}>
-        <div className={styles.eyebrow}>Wayland Core</div>
+        <div className={styles.eyebrow}>Darhai Core</div>
         <h1 className={styles.title}>{t('settings.wcoreConfig.rail.services', { defaultValue: 'Services & Keys' })}</h1>
         <p className={styles.sub}>
           {t('settings.wcoreConfig.services.subtitle', {
             defaultValue:
-              "The engine's tool backends: web search, vision, voice and image. Wayland ships working out of the box; plug in a key to unlock higher limits and better quality.",
+              "The engine's tool backends: web search, vision, voice and image. Darhai ships working out of the box; plug in a key to unlock higher limits and better quality.",
           })}
         </p>
       </div>
@@ -200,7 +200,7 @@ const ServicesKeysPane: React.FC = () => {
                 <Typography.Text type='secondary' className='text-12px'>
                   {t('settings.wcoreConfig.services.ddgBody', {
                     defaultValue:
-                      'No key needed; Wayland searches the web right now. Add a key below only to go faster or run higher volume.',
+                      'No key needed; Дархай searches the web right now. Add a key below only to go faster or run higher volume.',
                   })}
                 </Typography.Text>
               </div>

@@ -7,7 +7,7 @@ steps:
     estSeconds: 30
     autoCompletedByInstall: true
     body: |
-      Wayland fetches `exa-mcp-server` from npm via `npx` on first launch -
+      Дархай fetches `exa-mcp-server` from npm via `npx` on first launch -
       no manual install needed. If the server fails to start later,
       reinstall from this page.
   - id: api-key
@@ -24,7 +24,7 @@ steps:
       1. Click **Open Exa dashboard** above. Sign in or create an account
          at `dashboard.exa.ai`.
       2. Left sidebar → **API Keys**.
-      3. Click **Create new key**. Name it anything (e.g. *Wayland*).
+      3. Click **Create new key**. Name it anything (e.g. *Darhai*).
       4. Copy the key shown - it's displayed in full only once.
       5. Paste it into the `EXA_API_KEY` field above.
 

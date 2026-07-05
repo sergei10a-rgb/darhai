@@ -7,7 +7,7 @@ steps:
     estSeconds: 30
     autoCompletedByInstall: true
     body: |
-      Wayland connects to Miro's hosted MCP at `https://mcp.miro.com/` -
+      Дархай connects to Miro's hosted MCP at `https://mcp.miro.com/` -
       nothing runs locally. Miro provides the OAuth flow centrally; no
       developer app registration is needed for the hosted endpoint.
   - id: authorize
@@ -17,7 +17,7 @@ steps:
     body: |
       Click **Sign in with Miro** below. A browser tab opens to `miro.com`
       and prompts you to sign in with the account whose boards you want
-      Wayland to reach.
+      Дархай to reach.
 
       Miro shows an **Allow access** consent screen requesting the
       `boards:read` and `boards:write` scopes:
@@ -26,7 +26,7 @@ steps:
         comments on boards you have access to.
       - `boards:write` - create and edit those items on the same boards.
 
-      Approve and the tab redirects back to Wayland. The token lives in your
+      Approve and the tab redirects back to Дархай. The token lives in your
       OS keychain. Revoke any time at **miro.com → Avatar → Settings →
       Connected apps**.
 
@@ -37,5 +37,5 @@ steps:
 # Miro setup
 
 Miro hosts the MCP server and runs the OAuth flow for you. Sign in once,
-approve `boards:read` and `boards:write`, and Wayland can manipulate sticky
+approve `boards:read` and `boards:write`, and Дархай can manipulate sticky
 notes, frames, shapes, and connectors on any board you can access.

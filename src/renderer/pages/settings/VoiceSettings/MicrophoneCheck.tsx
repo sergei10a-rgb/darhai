@@ -15,7 +15,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@arco-design/web-react';
 import { Mic, Square } from 'lucide-react';
-import WaylandSelect from '@/renderer/components/base/WaylandSelect';
+import DarhaiSelect from '@/renderer/components/base/DarhaiSelect';
 
 type CheckState = 'idle' | 'requesting' | 'listening' | 'graded' | 'error';
 type Grade = 'no-signal' | 'too-quiet' | 'good' | 'too-hot';
@@ -140,13 +140,11 @@ const MicrophoneCheck: React.FC = () => {
         setErrorMsg(
           t(
             'settings.voiceMicPermissionBlocked',
-            'Microphone access blocked. Open System Settings → Privacy → Microphone and enable Wayland.'
+            'Microphone access blocked. Open System Settings → Privacy → Microphone and enable Darhai.'
           )
         );
       } else if (name === 'NotFoundError' || name === 'OverconstrainedError') {
-        setErrorMsg(
-          t('settings.voiceMicNotFound', 'Selected microphone is not available. Pick another input device.')
-        );
+        setErrorMsg(t('settings.voiceMicNotFound', 'Selected microphone is not available. Pick another input device.'));
       } else {
         setErrorMsg(err instanceof Error ? err.message : String(err));
       }
@@ -282,31 +280,29 @@ const MicrophoneCheck: React.FC = () => {
   return (
     <div className='flex flex-col gap-12px'>
       <div className='flex items-center gap-12px flex-wrap'>
-        <WaylandSelect
+        <DarhaiSelect
           size='small'
           value={selectedDeviceId}
           onChange={(value: string) => setSelectedDeviceId(value)}
           disabled={isTesting}
           style={{ minWidth: 240 }}
         >
-          <WaylandSelect.Option value={DEFAULT_DEVICE_ID}>
+          <DarhaiSelect.Option value={DEFAULT_DEVICE_ID}>
             {t('settings.voiceMicDeviceDefault', 'System default microphone')}
-          </WaylandSelect.Option>
+          </DarhaiSelect.Option>
           {devices.map((device, index) => (
-            <WaylandSelect.Option key={device.deviceId} value={device.deviceId}>
+            <DarhaiSelect.Option key={device.deviceId} value={device.deviceId}>
               {deviceOptionLabel(device, index)}
-            </WaylandSelect.Option>
+            </DarhaiSelect.Option>
           ))}
-        </WaylandSelect>
+        </DarhaiSelect>
         <Button
           size='small'
           icon={isTesting ? <Square size={12} /> : <Mic size={14} />}
           loading={state === 'requesting'}
           onClick={isTesting ? handleStop : () => void handleStart()}
         >
-          {isTesting
-            ? t('settings.voiceMicStop', 'Stop Test')
-            : t('settings.voiceMicTest', 'Test Microphone')}
+          {isTesting ? t('settings.voiceMicStop', 'Stop Test') : t('settings.voiceMicTest', 'Test Microphone')}
         </Button>
       </div>
 
