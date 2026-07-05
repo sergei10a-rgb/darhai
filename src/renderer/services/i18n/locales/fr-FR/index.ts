@@ -33,6 +33,8 @@ import mcpLibrary from './mcpLibrary.json';
 import onboarding from './onboarding.json';
 import projects from './projects.json';
 import modelAdvisor from './modelAdvisor.json';
+import workflows from './workflows.json';
+import models from './models.json';
 
 export default {
   common,
@@ -65,4 +67,6 @@ export default {
   onboarding,
   projects,
   modelAdvisor,
+  workflows,
+  models,
 };
