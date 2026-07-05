@@ -328,7 +328,7 @@ ScheduleWakeup(
 - **No label pollution** - pr-ship does not set any `bot:*` labels
 - **ScheduleWakeup only for CI wait** - never during review or fix execution
 - **REPO detection at runtime** - `gh repo view --json nameWithOwner --jq '.nameWithOwner'`
-- **Worktree path** - always `/tmp/wayland-ship-<PR_NUMBER>` (distinct from pr-automation's `/tmp/wayland-pr-*` and pr-verify's `/tmp/wayland-verify-*`)
+- **Worktree path** - always `/tmp/wayland-ship-<PR_NUMBER>` (distinct from pr-automation's `/tmp/darhai-pr-*` and pr-verify's `/tmp/wayland-verify-*`)
 - **Worktree cleanup** - always remove worktree after CI fix, even on failure
 
 ## Quick Reference

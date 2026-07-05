@@ -37,7 +37,7 @@ CRITICAL_PATH_PATTERN: env var - pattern to detect critical file paths
 REPO=$(gh repo view --json nameWithOwner --jq '.nameWithOwner')
 ```
 
-**Worktree path:** always `/tmp/wayland-verify-<PR_NUMBER>` - never use `/tmp/wayland-pr-*` (reserved for pr-automation/pr-fix).
+**Worktree path:** always `/tmp/wayland-verify-<PR_NUMBER>` - never use `/tmp/darhai-pr-*` (reserved for pr-automation/pr-fix).
 
 ---
 
@@ -718,7 +718,7 @@ Total PRs processed: N
 
 ## Mandatory Rules
 
-- **Worktree path** - always `/tmp/wayland-verify-<PR_NUMBER>`; never use `/tmp/wayland-pr-*` (reserved for pr-automation/pr-fix)
+- **Worktree path** - always `/tmp/wayland-verify-<PR_NUMBER>`; never use `/tmp/darhai-pr-*` (reserved for pr-automation/pr-fix)
 - **No AI signature** - no `Co-Authored-By`, no `Generated with` in any commit or comment
 - **Merge strategy** - always `--squash`; never `--merge` or `--rebase`
 - **Comment marker** - use `<!-- pr-verify-bot -->` (distinct from `<!-- pr-review-bot -->` and `<!-- pr-automation-bot -->`)

@@ -1,39 +1,39 @@
 # Pull Request
 
-## Description
+## Тодорхойлолт
 
-<!-- Provide a clear and concise description of what this PR does. -->
+<!-- Энэ PR юу хийдгийг товч бөгөөд тодорхой бичнэ үү. -->
 
-## Related Issues
+## Холбоотой Issue
 
-<!-- Link to related issues using "Closes #123" or "Fixes #123" -->
+<!-- Холбоотой issue-г "Closes #123" эсвэл "Fixes #123" хэлбэрээр холбоно уу. -->
 
 - Closes #
 
-## Type of Change
+## Өөрчлөлтийн төрөл
 
-- [ ] Bug fix (non-breaking change which fixes an issue)
-- [ ] New feature (non-breaking change which adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
-- [ ] Documentation update
+- [ ] Алдааны засвар (одоо байгаа боломжийг эвдэхгүй засвар)
+- [ ] Шинэ боломж (одоо байгаа боломжийг эвдэхгүй нэмэлт)
+- [ ] Эвдэлттэй өөрчлөлт (одоо ажиллаж буй боломжийг өөрөөр ажиллуулах засвар/нэмэлт)
+- [ ] Баримт бичгийн шинэчлэл
 
-## Testing
+## Туршилт
 
-- [ ] Tested on macOS
-- [ ] Tested on Windows
-- [ ] Tested on Linux
-- [ ] My code follows the project's code style guidelines
-- [ ] I have performed a self-review of my own code
-- [ ] My changes generate no new warnings or errors
+- [ ] macOS дээр туршсан
+- [ ] Windows дээр туршсан
+- [ ] Linux дээр туршсан
+- [ ] Миний код төслийн кодын хэв маягийн дүрмийг дагасан
+- [ ] Би өөрийн кодоо өөрөө хянаж үзсэн
+- [ ] Миний өөрчлөлт шинэ анхааруулга, алдаа үүсгэхгүй
 
-## Screenshots
+## Дэлгэцийн зураг
 
-<!-- If applicable, add screenshots to help explain your changes. -->
+<!-- Шаардлагатай бол өөрчлөлтөө тайлбарлах дэлгэцийн зураг хавсаргана уу. -->
 
-## Additional Context
+## Нэмэлт мэдээлэл
 
-<!-- Add any other context about the pull request here. -->
+<!-- PR-тай холбоотой бусад мэдээллийг эндээ нэмнэ үү. -->
 
 ---
 
-**Thank you for contributing to Wayland! 🎉**
+**Дархай (Darhai)-д хувь нэмэр оруулсанд баярлалаа! 🎉**

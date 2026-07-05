@@ -1,53 +1,53 @@
-name: ✨ Feature Request
-description: Suggest an idea for Wayland
-title: '[Feature]: '
+name: ✨ Шинэ боломж санал болгох
+description: Дархай (Darhai)-д нэмэхийг хүссэн санаагаа хуваалцах
+title: '[Санал]: '
 labels: ['enhancement']
 body:
   - type: textarea
     id: feature_description
     attributes:
-      label: Feature Description
-      description: A clear and concise description of the feature you'd like to see.
-      placeholder: Describe the feature you'd like to see...
+      label: Боломжийн тодорхойлолт
+      description: Та ямар боломж нэмэгдээсэй гэж хүсэж байгаагаа товч бөгөөд тодорхой бичнэ үү.
+      placeholder: Хүсэж буй боломжоо тайлбарлана уу...
     validations:
       required: true
 
   - type: textarea
     id: problem_statement
     attributes:
-      label: Problem Statement
-      description: What problem does this feature solve?
-      placeholder: What problem or limitation would this feature address?
+      label: Шийдэх асуудал
+      description: Энэ боломж ямар асуудлыг шийдэх вэ?
+      placeholder: Энэ боломж ямар асуудал буюу хязгаарлалтыг арилгах вэ?
     validations:
       required: true
 
   - type: textarea
     id: proposed_solution
     attributes:
-      label: Proposed Solution
-      description: Describe the solution you'd like to see implemented.
-      placeholder: How would you like this feature to work?
+      label: Санал болгож буй шийдэл
+      description: Хэрэгжээсэй гэж хүсэж буй шийдлээ тайлбарлана уу.
+      placeholder: Энэ боломж хэрхэн ажиллаасай гэж хүсэж байна вэ?
     validations:
       required: true
 
   - type: dropdown
     id: feature_category
     attributes:
-      label: Feature Category
-      description: Which category does this feature belong to?
+      label: Боломжийн ангилал
+      description: Энэ боломж аль ангилалд хамаарах вэ?
       options:
-        - UI/UX Improvement
-        - AI Model Integration
-        - File Management
-        - Multi-Agent Support
-        - Performance
-        - Other
+        - UI/UX сайжруулалт
+        - AI загварын интеграц
+        - Файлын менежмент
+        - Олон агентын дэмжлэг
+        - Гүйцэтгэл
+        - Бусад
     validations:
       required: true
 
   - type: textarea
     id: additional_context
     attributes:
-      label: Additional Context
-      description: Add any other context about the feature request here.
-      placeholder: Use cases, examples, mockups, etc.
+      label: Нэмэлт мэдээлэл
+      description: Энэ саналтай холбоотой бусад мэдээллийг эндээ нэмнэ үү.
+      placeholder: Хэрэглээний жишээ, зураглал гэх мэт.

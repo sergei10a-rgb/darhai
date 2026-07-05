@@ -6,9 +6,10 @@ name: Close fixed-pending-release on stable
 #
 # How "delivered by release $TAG" is decided, per issue (from its wl:pending-release
 # "fixed-in=<repo>@<ver>" marker):
-#   - wayland-desktop@<ver> / FerroxLabs/wayland@<ver> / bare <ver>  -> ver == $TAG (exact)
-#   - wayland-core@<ver>  -> this desktop build BUNDLES engine >= <ver>
-#                            (read from scripts/prepareWaylandCore.js at the release tag)
+#   - darhai-desktop@<ver> / sergei10a-rgb/darhai@<ver> / legacy wayland-desktop
+#     carriers / bare <ver>  -> ver == $TAG (exact)
+#   - wayland-core@<ver> (upstream engine name)  -> this desktop build BUNDLES
+#     engine >= <ver> (read from scripts/prepareWaylandCore.js at the release tag)
 #   - no fixed-in marker, or any other carrier  -> LEFT OPEN (fail safe; never false-close)
 #
 # Triggers: workflow_run (dependable), release (belt+suspenders), workflow_dispatch (manual).
@@ -66,7 +67,7 @@ jobs:
                        | grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+' | head -1 || true)"
             BUNDLED="$(norm "${BUNDLED:-}")"
           fi
-          echo "Release $TAG delivers: wayland-desktop@$TAGV ; bundled wayland-core@${BUNDLED:-unknown}"
+          echo "Release $TAG delivers: darhai-desktop@$TAGV ; bundled wayland-core@${BUNDLED:-unknown}"
 
           gh issue list -R "$REPO" --state open --label 'state:fixed-pending-release' --limit 200 \
             --json number --jq '.[].number' | while read -r n; do
@@ -80,7 +81,7 @@ jobs:
             repo="${fixed%@*}"; ver="$(norm "${fixed#*@}")"; deliver=false
             case "$repo" in
               wayland-core) { [ -n "$BUNDLED" ] && gte "$BUNDLED" "$ver"; } && deliver=true ;;
-              wayland-desktop|FerroxLabs/wayland|wayland) [ "$ver" = "$TAGV" ] && deliver=true ;;
+              darhai-desktop|sergei10a-rgb/darhai|darhai|wayland-desktop|FerroxLabs/wayland|wayland) [ "$ver" = "$TAGV" ] && deliver=true ;;
               *) [ "$ver" = "$TAGV" ] && deliver=true ;;
             esac
             if [ "$deliver" = true ]; then
