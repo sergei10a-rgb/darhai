@@ -90,7 +90,9 @@
     "addTeammateError": "Гишүүн нэмж чадсангүй",
     "restartAgent": "Дахин эхлүүлэх",
     "restartAgentSuccess": "Дахин эхлүүлэлт эхэлсэн",
-    "restartAgentError": "Агентыг дахин эхлүүлж чадсангүй"
+    "restartAgentError": "Агентыг дахин эхлүүлж чадсангүй",
+    "expand": "Багийнхны самбарыг дэлгэх",
+    "collapse": "Багийнхны самбарыг хумих"
   },
   "activity": {
     "tabLabel": "Үйл ажиллагаа",

@@ -214,45 +214,47 @@
     "densityCompact": "Авсаархан",
     "sidebarWidth": "Хажуугийн самбарын өргөн",
     "yourName": "Таны нэр",
-    "yourNamePlaceholder": "Нэрээ оруулна уу"
+    "yourNamePlaceholder": "Нэрээ оруулна уу",
+    "launchpadBar": "Launchpad мөр",
+    "launchpadHint": "Дараалал өөрчлөхийн тулд чирэх, устгахын тулд × дарах, нэмэхийн тулд +. Launchpad болон /assistants-тэй хуваалцана."
   },
   "skillsHub": {
-    "title": "Ур чадварын төв",
-    "description": "AI агентын ур чадварыг төвлөрсөн байдлаар удирдах. Нэг удаа суулгаад бүх туслахад ашиглах.",
-    "mySkillsTitle": "Миний ур чадварууд",
-    "discoveredTitle": "Илрүүлсэн гадны ур чадварууд",
-    "discoveryAlert": "Таны CLI хэрэгслүүдээс ур чадвар илрүүлсэн. Дархайд ашиглахын тулд импортлоно уу.",
+    "title": "Скиллийн төв",
+    "description": "AI агентын скиллийг төвлөрсөн байдлаар удирдах. Нэг удаа суулгаад бүх туслахад ашиглах.",
+    "mySkillsTitle": "Миний скиллүүд",
+    "discoveredTitle": "Илрүүлсэн гадны скиллүүд",
+    "discoveryAlert": "Таны CLI хэрэгслүүдээс скилл илрүүлсэн. Дархайд ашиглахын тулд импортлоно уу.",
     "importAll": "Бүгдийг импортлох",
-    "importAllSuccess": "{{count}} ур чадвар импортлогдсон",
-    "noSkills": "Ур чадвар олдсонгүй. Эхлэхийн тулд хэдийг импортлоно уу.",
+    "importAllSuccess": "{{count}} скилл импортлогдсон",
+    "noSkills": "Скилл олдсонгүй. Эхлэхийн тулд хэдийг импортлоно уу.",
     "custom": "Тусгай",
     "builtin": "Суурилуулсан",
     "manualImport": "Хавтаснаас импортлох",
     "tipTitle": "Ашиглах зөвлөмж:",
-    "tipContent": "Энд тохируулсан ур чадваруудыг \"Туслахууд\" тохиргооны хуудаснаас аль ч туслахад идэвхжүүлж болно; ур чадварыг symbolic link ашиглан импортлож, экспортолдог.",
-    "fetchError": "Ур чадвар татаж чадсангүй",
-    "importSuccess": "Ур чадвар амжилттай импортлогдлоо",
-    "importFailed": "Ур чадвар импортлож чадсангүй",
-    "importError": "Ур чадвар импортлоход алдаа гарлаа",
-    "deleteSuccess": "Ур чадвар устгагдлаа",
-    "deleteFailed": "Ур чадвар устгаж чадсангүй",
-    "deleteError": "Ур чадвар устгахад алдаа гарлаа",
-    "deleteConfirmTitle": "Ур чадвар устгах",
+    "tipContent": "Энд тохируулсан скиллүүдийг \"Туслахууд\" тохиргооны хуудаснаас аль ч туслахад идэвхжүүлж болно; скиллийг symbolic link ашиглан импортлож, экспортолдог.",
+    "fetchError": "Скилл татаж чадсангүй",
+    "importSuccess": "Скилл амжилттай импортлогдлоо",
+    "importFailed": "Скилл импортлож чадсангүй",
+    "importError": "Скилл импортлоход алдаа гарлаа",
+    "deleteSuccess": "Скилл устгагдлаа",
+    "deleteFailed": "Скилл устгаж чадсангүй",
+    "deleteError": "Скилл устгахад алдаа гарлаа",
+    "deleteConfirmTitle": "Скилл устгах",
     "deleteConfirmContent": "Та \"{{name}}\"-г устгахдаа итгэлтэй байна уу?",
-    "manageInHub": "Ур чадварын төвд удирдах",
-    "recommend": "Ур чадвар санал болгох",
-    "recommendSuccess": "Амжилттай санал болголоо: дүрэмд үндэслэн {{count}} ур чадвар сонгогдсон",
-    "noRecommendations": "Тохирох ур чадвар олдсонгүй, гараар сонгоно уу",
+    "manageInHub": "Скиллийн төвд удирдах",
+    "recommend": "Скилл санал болгох",
+    "recommendSuccess": "Амжилттай санал болголоо: дүрэмд үндэслэн {{count}} скилл сонгогдсон",
+    "noRecommendations": "Тохирох скилл олдсонгүй, гараар сонгоно уу",
     "exportTo": "Хаашаа экспортлох...",
-    "exportSuccess": "Ур чадвар амжилттай экспортлогдлоо",
-    "exportFailed": "Ур чадвар экспортлож чадсангүй",
-    "exportAlreadyExists": "Ур чадвар зорилтот хавтсанд аль хэдийн байна",
-    "addCustomPath": "Тусгай ур чадварын зам нэмэх",
-    "customPathNamePlaceholder": "ж.нь Миний тусгай ур чадварууд",
-    "customPathLabel": "Ур чадварын хавтасны зам",
+    "exportSuccess": "Скилл амжилттай экспортлогдлоо",
+    "exportFailed": "Скилл экспортлож чадсангүй",
+    "exportAlreadyExists": "Скилл зорилтот хавтсанд аль хэдийн байна",
+    "addCustomPath": "Тусгай скиллийн зам нэмэх",
+    "customPathNamePlaceholder": "ж.нь Миний тусгай скиллүүд",
+    "customPathLabel": "Скиллийн хавтасны зам",
     "customPathPlaceholder": "ж.нь C:\\Users\\me\\.mytools\\skills",
-    "searchPlaceholder": "Ур чадвар хайх...",
-    "noSearchResults": "Тохирох ур чадвар олдсонгүй"
+    "searchPlaceholder": "Скилл хайх...",
+    "noSearchResults": "Тохирох скилл олдсонгүй"
   },
   "authMethod": "Баталгаажуулалт",
   "geminiApiKey": "Gemini API түлхүүр",
@@ -269,7 +271,12 @@
   "claudeYoloModeDesc": "Claude Code-ийн бүх зөвшөөрлийн шалгалтыг тойрох (--dangerously-skip-permissions-тэй тэнцэх).",
   "customCss": "Тусгай CSS",
   "customCssDesc": "Интерфейсийн харагдах байдлыг өөрчлөхийн тулд тусгай CSS загваруудыг энд оруулна уу. Систем хамгийн өндөр давуу эрхийг хангахын тулд !important-г автоматаар нэмнэ. Өөрчлөлт шууд хэрэгжинэ.",
-  "assistants": "Туслахууд",
+  "assistants": {
+    "libraryHint": {
+      "link": "Туслахуудын сан нээх →",
+      "prefix": "Туслахуудыг үзэж, ажиллуулах уу? "
+    }
+  },
   "agents": "Агентууд",
   "assistantsList": "Боломжит туслахууд",
   "assistantsEmpty": "Туслах тохируулаагүй байна.",
@@ -285,7 +292,7 @@
   "assistantPromptPlaceholder": "Промпт эсвэл дүрэм оруулна уу...",
   "saveAssistant": "Тохиргоо хадгалах",
   "createAssistant": "Туслах үүсгэх",
-  "assistantsListDescription": "AI агентыг тусгай дүрэм болон ур чадвартай хослуулан тодорхой даалгаврын туслахуудыг бүтээнэ.",
+  "assistantsListDescription": "AI агентыг тусгай дүрэм болон скиллтэй хослуулан тодорхой даалгаврын туслахуудыг бүтээнэ.",
   "assistantFilterAll": "Бүгд",
   "assistantFilterBuiltin": "Систем",
   "assistantFilterCustom": "Тусгай",
@@ -303,9 +310,9 @@
   "assistantRulesPlaceholder": "Дүрмийг Markdown форматаар оруулна уу...",
   "assistantModels": "Боломжит загварууд",
   "assistantModelsHint": "Энэ туслах ямар загварыг ашиглаж болохыг сонгоно уу.",
-  "assistantSkills": "Ур чадварууд",
-  "assistantSkillsHint": "Туслахад зориулсан тохиромжтой хэрэгсэл/ур чадваруудыг жагсаана уу.",
-  "assistantSkillsPlaceholder": "Ур чадварыг Markdown форматаар оруулна уу...",
+  "assistantSkills": "Скиллүүд",
+  "assistantSkillsHint": "Туслахад зориулсан тохиромжтой хэрэгсэл/скиллүүдийг жагсаана уу.",
+  "assistantSkillsPlaceholder": "Скиллийг Markdown форматаар оруулна уу...",
   "promptEdit": "Засах",
   "promptPreview": "Урьдчилан үзэх",
   "promptPreviewEmpty": "Урьдчилан үзэх агуулга байхгүй",
@@ -314,28 +321,28 @@
   "cannotDeleteBuiltin": "Суурилуулсан туслахуудыг устгах боломжгүй",
   "duplicateAssistant": "Хувилах",
   "assistantMainAgent": "Үндсэн агент",
-  "addSkills": "Ур чадвар нэмэх",
-  "addSkillsTitle": "Ур чадвар нэмэх",
-  "customSkills": "Тусгай ур чадварууд",
-  "builtinSkills": "Суурилуулсан ур чадварууд",
-  "noCustomSkills": "Тусгай ур чадвар нэмээгүй",
-  "noBuiltinSkills": "Боломжит суурилуулсан ур чадвар байхгүй",
-  "autoInjectedSkills": "Автоматаар оруулсан ур чадварууд",
+  "addSkills": "Скилл нэмэх",
+  "addSkillsTitle": "Скилл нэмэх",
+  "customSkills": "Тусгай скиллүүд",
+  "builtinSkills": "Суурилуулсан скиллүүд",
+  "noCustomSkills": "Тусгай скилл нэмээгүй",
+  "noBuiltinSkills": "Боломжит суурилуулсан скилл байхгүй",
+  "autoInjectedSkills": "Автоматаар оруулсан скиллүүд",
   "autoInjectedSkillsBadge": "Авто",
-  "skillFolderPath": "Ур чадварын хавтасны зам",
-  "skillPathPlaceholder": "Ур чадварын хавтасны зам(ууд)-ыг таслалаар тусгаарлан оруулах эсвэл сонгоно уу",
-  "pleaseSelectSkillPath": "Ур чадварын хавтасны зам сонгоно уу",
-  "skillAlreadyExists": "\"{{name}}\" ур чадвар аль хэдийн байна",
-  "skillAdded": "\"{{name}}\" ур чадвар нэмэгдэж сонгогдлоо",
-  "skillReadFailed": "Ур чадварын мэдээллийг уншиж чадсангүй",
-  "deletePendingSkillTitle": "Хүлээгдэж буй ур чадвар устгах",
-  "deletePendingSkillConfirm": "Та \"{{name}}\"-г хасахдаа итгэлтэй байна уу? Энэ ур чадвар хараахан импортлогдоогүй байна.",
-  "deletePendingSkillNote": "Энэ нь зөвхөн ур чадварыг хүлээгдэж буй жагсаалтаас хасна. Та \"Ур чадвар нэмэх\" функцийг ашиглан дахин нэмж болно.",
-  "skillDeleted": "Ур чадвар хүлээгдэж буй жагсаалтаас хасагдлаа",
-  "removeCustomSkillTitle": "Туслахаас ур чадвар хасах",
+  "skillFolderPath": "Скиллийн хавтасны зам",
+  "skillPathPlaceholder": "Скиллийн хавтасны зам(ууд)-ыг таслалаар тусгаарлан оруулах эсвэл сонгоно уу",
+  "pleaseSelectSkillPath": "Скиллийн хавтасны зам сонгоно уу",
+  "skillAlreadyExists": "\"{{name}}\" скилл аль хэдийн байна",
+  "skillAdded": "\"{{name}}\" скилл нэмэгдэж сонгогдлоо",
+  "skillReadFailed": "Скиллийн мэдээллийг уншиж чадсангүй",
+  "deletePendingSkillTitle": "Хүлээгдэж буй скилл устгах",
+  "deletePendingSkillConfirm": "Та \"{{name}}\"-г хасахдаа итгэлтэй байна уу? Энэ скилл хараахан импортлогдоогүй байна.",
+  "deletePendingSkillNote": "Энэ нь зөвхөн скиллийг хүлээгдэж буй жагсаалтаас хасна. Та \"Скилл нэмэх\" функцийг ашиглан дахин нэмж болно.",
+  "skillDeleted": "Скилл хүлээгдэж буй жагсаалтаас хасагдлаа",
+  "removeCustomSkillTitle": "Туслахаас скилл хасах",
   "removeCustomSkillConfirm": "Та \"{{name}}\"-г энэ туслахаас хасахдаа итгэлтэй байна уу?",
-  "removeCustomSkillNote": "Энэ нь зөвхөн ур чадварыг энэ туслахаас хасна. Ур чадвар нь суурилуулсан ур чадваруудад үлдэх бөгөөд дараа дахин нэмж болно.",
-  "skillRemovedFromAssistant": "Ур чадвар энэ туслахаас хасагдлаа",
+  "removeCustomSkillNote": "Энэ нь зөвхөн скиллийг энэ туслахаас хасна. Скилл нь суурилуулсан скиллүүдэд үлдэх бөгөөд дараа дахин нэмж болно.",
+  "skillRemovedFromAssistant": "Скилл энэ туслахаас хасагдлаа",
   "pending": "Хүлээгдэж буй",
   "removeFromAssistant": "Туслахаас хасах",
   "noRecentEmojis": "Сүүлийн эможи байхгүй",
@@ -460,10 +467,13 @@
   "tools": "Хэрэгслүүд",
   "capabilities": "Чадварууд",
   "capabilitiesTab": {
-    "skills": "Ур чадварууд",
+    "skills": "Скиллүүд",
     "tools": "MCP ба дуу хоолой"
   },
-  "webui": "Алсын",
+  "webui": {
+    "passwordReset": "Нууц үг шинэчлэгдлээ — таны шинэ нууц үг дээр харагдаж байна.",
+    "resetUnavailable": "Нууц үг шинэчлэх нь зөвхөн ширээний апп-д боломжтой."
+  },
   "installed": "Суулгасан",
   "builtin": "Суурилуулсан",
   "channels": {
@@ -543,12 +553,41 @@
           "placeholder": "ed25519 нийтийн түлхүүр hex хэлбэрээр",
           "help": "Сонголттой. Зөвхөн дараа нь Gateway-ийн оронд HTTP харилцан үйлчлэлийн цэг рүү шилжвэл шаардлагатай."
         }
-      }
+      },
+      "privilegedIntentsHint": "Шалгахаас өмнө: Developer Portal → таны апп → Bot → Privileged Gateway Intents хэсэгт \"Message Content Intent\" БОЛОН \"Server Members Intent\"-ийг идэвхжүүл. Wayland мессеж унших болон гишүүдийг тодорхойлоход хоёулаа шаардлагатай. Эдгээргүйгээр Шалгаад идэвхжүүлэх амжилтгүй болно."
     },
     "webhook": {
       "comingSoonTitle": "Webhook суваг {{phase}}-д ирнэ",
       "comingSoonBody": "HMAC гарын үсгийн баталгаажуулалттай ерөнхий inbound HTTP харилцан үйлчлэлийн цэг. Захиалгат интеграцид ашиглана.",
-      "learnMore": "Дэлгэрэнгүй"
+      "learnMore": "Дэлгэрэнгүй",
+      "connectionFailed": "Холболтын шалгалт амжилтгүй боллоо",
+      "credentials": {
+        "outboundSecret": {
+          "help": "Заавал биш. Тохируулсан үед Дархай гарах POST бүрд X-Webhook-Signature: sha256=<hmac> нэмнэ.",
+          "label": "Гарах гарын үсгийн Secret",
+          "placeholder": "whsec_xxxxxxxxxxxxxxxx"
+        },
+        "outboundUrl": {
+          "help": "Дархай гарах зурвасыг энэ URL рүү POST хийнэ. 2xx буцаах ёстой.",
+          "label": "Гарах URL",
+          "placeholder": "https://your-service.example.com/webhook",
+          "required": "Гарах URL шаардлагатай"
+        }
+      },
+      "enableFailed": "Plugin-ийг идэвхжүүлж чадсангүй",
+      "info": "Ерөнхий webhook гүүр. Дархай гарах зурвасыг таны URL рүү POST хийнэ; таны платформ орох зурвасыг доорх Дархай-н орох URL рүү POST хийнэ.",
+      "pluginEnabled": "Webhook суваг идэвхжлээ",
+      "testAndEnable": "Шалгаад идэвхжүүлэх",
+      "webhookUrl": {
+        "copyButton": "Хуулах",
+        "help": "Энэ URL-ыг платформдоо webhook хүрэх цэг болгон буулга. Орох secret-ийг Дархай удирдана.",
+        "label": "Орох Webhook URL",
+        "notMinted": "<not-minted>",
+        "rotateButton": "Эргүүлэх",
+        "rotateFailed": "Эргүүлэлт амжилтгүй боллоо",
+        "rotateSuccess": "Орох URL эргүүлэгдлээ",
+        "tunnelNotConfigured": "Эхлээд урвуу прокси / туннелээ тохируул. Нийтийн хост нэр хүрэхэд бэлэн болмогц орох webhook URL энд гарч, хуулах боломжтой болно."
+      }
     },
     "dingtalk": {
       "help": "DingTalk бот ашиглан байгууллагын мессеж. Хандах токен авахын тулд DingTalk группын дотор захиалгат бот үүсгэнэ."
@@ -606,6 +645,11 @@
           "placeholder": "урт санамсаргүй тэмдэгт мөр",
           "help": "GET /webhook гар барих явцад Meta давтан илгээдэг, оператороос сонгосон тэмдэгт мөр. Meta самбарт оруулсантай тань таарах ёстой.",
           "required": ""
+        },
+        "appSecret": {
+          "help": "Meta App Secret (Meta App Dashboard → Settings → Basic → App Secret). Орж ирэх webhook хүргэлт дээрх X-Hub-Signature-256 толгойг HMAC-аар баталгаажуулахад ашиглана. Дээрх Verify Token-оос ялгаатай.",
+          "label": "App Secret",
+          "placeholder": "32 тэмдэгтийн hex мөр"
         }
       },
       "mode": {
@@ -703,7 +747,8 @@
           "placeholder": "/usr/local/bin/signal-cli",
           "help": "Багцалсан runtime буюу PATH дээрх signal-cli ашиглахын тулд хоосон үлдээнэ үү."
         }
-      }
+      },
+      "captchaHint": "Бүртгэл \"CaptchaRequired\" алдаагаар амжилтгүй болбол https://signalcaptchas.org/registration/generate.html хаягаар орж, signal-cli register-т --captcha <token> дамжуулна уу."
     },
     "matrix": {
       "comingSoonTitle": "Matrix {{phase}}-д ирнэ",
@@ -794,12 +839,36 @@
         "help": "Энэ URL-ийг LINE Developers Console → Messaging API → Webhook URL-д оруулна уу.",
         "copyButton": "Хуулах",
         "notMinted": "<үүсгээгүй>"
-      }
+      },
+      "help": "LINE Messaging API. LINE Developers Console → таны суваг → Messaging API хэсэгт: Use webhook = ON, Auto-reply messages = OFF, Greeting messages = OFF болго. Дараа нь Шалгаад идэвхжүүлэх дарсны дараа харагдах webhook URL-ийг Webhook URL талбарт буулга."
     },
     "imessage": {
       "comingSoonTitle": "iMessage {{phase}}-д ирнэ",
       "comingSoonBody": "Зөвхөн macOS, туршилтын. Messages.app руу AppleScript гүүр. Apple скрипт илгээлтийг чимээгүйхэн хязгаарладаг тул мессеж удааширна.",
-      "howToTalk": "Mac-ийнхаа зөвшөөрөгдсөн handle руу iMessage илгээ. Дархай тэндээ шууд хариулна."
+      "howToTalk": "Mac-ийнхаа зөвшөөрөгдсөн handle руу iMessage илгээ. Дархай тэндээ шууд хариулна.",
+      "allowedHandles": {
+        "help": "Мессеж хүлээн авахыг зөвшөөрсөн утасны дугаар эсвэл имэйлүүдийг таслал эсвэл шинэ мөрөөр тусгаарлан бичнэ. Бүгдийг зөвшөөрөхийн тулд хоосон орхи.",
+        "label": "Зөвшөөрсөн handle-ууд (заавал биш)",
+        "placeholder": "+15551234567, user@icloud.com"
+      },
+      "attachmentsHelp": "Зөвхөн текст - зураг, видео, аудио хавсралтыг ирэхэд чимээгүй хаядаг бөгөөд гарахад дэмждэггүй.",
+      "attachmentsNote": "Зөвхөн текст - зураг, видео, аудио хавсралтыг ирэхэд чимээгүй хаядаг бөгөөд гарахад дэмждэггүй.",
+      "automationNote": "iMessage нь Messages.app-д зориулсан macOS Automation зөвшөөрөл мөн шаардана. Гарах мессеж анх ашиглах үед гарч ирэх OS-ийн хүсэлтийг зөвшөөр, эсвэл System Settings → Privacy & Security → Automation → энэ апп → Messages хэсэгт олго.",
+      "connectionFailed": "iMessage холболтын шалгалт амжилтгүй боллоо",
+      "connectionSuccess": "iMessage баталгаажлаа",
+      "enableFailed": "iMessage плагин идэвхжүүлж чадсангүй",
+      "fdaRelaunchHelp": "ЧУХАЛ: Full Disk Access-ийг анх удаа олгосны дараа апп-аа БҮРЭН хааж, дахин ажиллуулах ЁСТОЙ - macOS зөвхөн апп ажиллах үед FDA-г дахин уншдаг тул дахин ажиллуулахгүй бол \"chat.db not readable\" алдаанд гацна.",
+      "help": "Зөвхөн macOS. chat.db-г шалгадаг (Full Disk Access шаардана) бөгөөд AppleScript-ээр илгээдэг (Messages.app-д Automation зөвшөөрөл шаардана - гарч ирэх үед OS-ийн хүсэлтийг зөвшөөр, эсвэл System Settings → Privacy & Security → Automation хэсэгт олго).",
+      "openFdaPane": "Full Disk Access тохиргоог нээх",
+      "permissionNote": "iMessage энэ апп-д Full Disk Access шаардана. System Settings → Privacy & Security → Full Disk Access хэсэгт олго.",
+      "pluginEnabled": "iMessage плагин идэвхжлээ",
+      "pollInterval": {
+        "help": "Шинэ мессежийг хэр давтамжтай шалгах. Анхдагч: 2000 мс. Бага утга нь хариу үйлдлийг сайжруулна ч илүү CPU ашиглана.",
+        "label": "Шалгах давтамж (мс)"
+      },
+      "relaunchApp": "Апп дахин ажиллуулах (FDA олгосны дараа)",
+      "replaceWarning": "Хадгалснаар одоо байгаа iMessage тохиргоог дарж бичнэ.",
+      "testAndEnable": "Шалгаад идэвхжүүлэх"
     },
     "viber": {
       "comingSoonTitle": "Viber {{phase}}-д ирнэ",
@@ -807,7 +876,27 @@
     },
     "bluebubbles": {
       "comingSoonTitle": "BlueBubbles {{phase}}-д ирнэ",
-      "comingSoonBody": "BlueBubbles реле серверээр iMessage. Сүлжээндээ BlueBubbles сервер ажиллуулдаг нөөц Mac шаардана."
+      "comingSoonBody": "BlueBubbles реле серверээр iMessage. Сүлжээндээ BlueBubbles сервер ажиллуулдаг нөөц Mac шаардана.",
+      "accountLockWarning": "Шинэ нэвтрэх мэдээлэл хадгалснаар одоо байгаа BlueBubbles серверийн холболтыг орлуулна.",
+      "connectionFailed": "Холболт амжилтгүй боллоо",
+      "connectionSuccess": "Connected to ${testResult.data.botUsername ?? 'BlueBubbles server'}",
+      "credentials": {
+        "bothRequired": "Серверийн URL болон нууц үг шаардлагатай",
+        "password": {
+          "help": "BlueBubbles Server апп-ын Settings хэсэгт тохируулсан нууц үг.",
+          "label": "Серверийн нууц үг",
+          "placeholder": "BlueBubbles серверийнхээ нууц үг"
+        },
+        "serverUrl": {
+          "help": "BlueBubbles серверийн URL (BlueBubbles Server.app ажиллуулж буй Mac). BB Server апп-ын Connection тохиргооноос олно. Дотоод сүлжээнд: http://192.168.1.100:1234. Алсаас хандахад tunnel (ngrok, Cloudflare Tunnel, Tailscale) ашигла.",
+          "label": "Серверийн URL",
+          "placeholder": "http://192.168.1.100:1234"
+        }
+      },
+      "enableFailed": "Плагин идэвхжүүлж чадсангүй",
+      "help": "BlueBubbles Server-ээр дамжуулах iMessage холбоос. Хостлохын тулд BlueBubbles Server.app ажиллуулж буй Mac шаардана. Mac бус платформоос алсаас хандахын тулд tunnel (ngrok, Cloudflare Tunnel, Tailscale)-ээр нээ.",
+      "pluginEnabled": "BlueBubbles плагин идэвхжлээ",
+      "testAndEnable": "Шалгаад идэвхжүүлэх"
     },
     "threema": {
       "comingSoonTitle": "Threema {{phase}}-д ирнэ",
@@ -851,12 +940,54 @@
           "label": "Сувгууд",
           "help": "Нэгдэх сувгийн нэрсийг таслалаар тусгаарлан (жишээ нь mychannel, otherchannel). # угтвар нь сонголттой.",
           "required": "Нэгдэх дор хаяж нэг суваг оруулна уу"
+        },
+        "clientId": {
+          "help": "Twitch app-ийн Client ID (dev.twitch.tv → Console → Apps).",
+          "label": "Client ID"
+        },
+        "clientSecret": {
+          "help": "Twitch app-ийн Client Secret — энэ утгыг хэзээ ч бүү хуваалц.",
+          "label": "Client Secret"
+        },
+        "refreshToken": {
+          "help": "Authorization Code grant урсгалаар авсан refresh token.",
+          "label": "Refresh Token"
         }
+      },
+      "advanced": {
+        "help": "Заавал биш: Token автоматаар шинэчлэхийг идэвхжүүлэхийн тулд Twitch app-ийн Client ID + Client Secret + Refresh Token оруул. Тохируулсан үед дээрх тогтмол OAuth Token-ыг тоохгүй, холбогдох бүрд шинэ access token үүсгэнэ.",
+        "hide": "▾ Нэмэлт: token шинэчлэлт",
+        "show": "▸ Нэмэлт: token шинэчлэлт"
       }
     },
     "nostr": {
       "comingSoonTitle": "Nostr {{phase}}-д ирнэ",
-      "comingSoonBody": "Nostr реле дээгүүр шифрлэгдсэн DM. Өөрийн хувийн түлхүүрээ (nsec) авчирна."
+      "comingSoonBody": "Nostr реле дээгүүр шифрлэгдсэн DM. Өөрийн хувийн түлхүүрээ (nsec) авчирна.",
+      "connectionFailed": "Nostr relay холболт амжилтгүй боллоо",
+      "connectionSuccess": "Nostr relay холбогдлоо",
+      "credentials": {
+        "allowedSenders": {
+          "help": "Энэ ботод мессеж илгээхийг зөвшөөрсөн npub эсвэл hex pubkey-үүдийг таслалаар тусгаарлан бичнэ. Нээлттэй горимд хоосон орхи (нийтийн npub-д САНАЛ БОЛГОХГҮЙ).",
+          "label": "Зөвшөөрсөн илгээгчид"
+        },
+        "privateKey": {
+          "help": "Ботын таних түлхүүр nsec bech32 эсвэл 64 тэмдэгтийн hex форматаар. Үүнийг хэзээ ч бүү хуваалц.",
+          "label": "Хувийн түлхүүр",
+          "placeholder": "nsec1... эсвэл 64 тэмдэгтийн hex",
+          "required": "nsec эсвэл hex хувийн түлхүүрээ оруулна уу"
+        },
+        "relays": {
+          "help": "Таслалаар тусгаарласan wss:// реле URL-ууд. Анхныхаар: relay.damus.io, nos.lol.",
+          "label": "Реле",
+          "required": "Дор хаяж нэг wss:// реле URL оруулна уу"
+        }
+      },
+      "enableFailed": "Nostr plugin-ийг идэвхжүүлж чадсангүй",
+      "help": "Nostr реле ашиглан төвлөрөлгүй шифрлэгдсэн шууд зурвас. Өөрийн нууц түлхүүрээ (nsec эсвэл hex) ашиглаж, дурын wss:// реле рүү холбогдоно.",
+      "keyHowTo": "Дурын Nostr клиент (Damus, Amethyst, Snort) эсвэл nostr-tools keygen ашиглан түлхүүрийн хос үүсгэ. Хувийн nsec биш, зориулалтын bot түлхүүр ашигла.",
+      "pluginEnabled": "Nostr plugin идэвхжлээ",
+      "replaceWarning": "Шинэ Nostr бүртгэл холбоход одоо байгаа бүртгэлийг чинь орлоно.",
+      "testAndEnable": "Шалгаад идэвхжүүлэх"
     },
     "telegramUserbot": {
       "comingSoonTitle": "Telegram Userbot {{phase}}-д ирнэ",
@@ -864,7 +995,36 @@
     },
     "mattermost": {
       "comingSoonTitle": "Mattermost {{phase}}-д ирнэ",
-      "comingSoonBody": "Өөрөө хостлох боломжтой Slack-ийн хувилбар. WebSocket үйл явдал дээр REST."
+      "comingSoonBody": "Өөрөө хостлох боломжтой Slack-ийн хувилбар. WebSocket үйл явдал дээр REST.",
+      "connectionFailed": "Mattermost холболт амжилтгүй боллоо",
+      "connectionSuccess": "Mattermost холбогдлоо",
+      "credentials": {
+        "accessToken": {
+          "help": "Mattermost-д Account Settings → Security → Personal Access Tokens хэсэгт Personal Access Token үүсгэ. АНХААР: System Admin эхлээд System Console-д Integrations → Integration Management → Enable Personal Access Tokens-ийг идэвхжүүлэх ёстой - хэрэв та",
+          "label": "Personal Access Token",
+          "placeholder": "your-personal-access-token",
+          "required": "Personal access token оруулна уу"
+        },
+        "blockPrivateNetwork": {
+          "help": "Анхдагчаар OFF - Mattermost голдуу LAN/хувийн IP дээр өөрөө хостлогддог тул хувийн хаягуудыг зөвшөөрдөг. Зөвхөн удирдлагатай SaaS Mattermost-д ON болго; энэ нь DNS-rebinding/SSRF довтолгоог хаадаг ч LAN серверүүдийг эвдэнэ.",
+          "label": "Хувийн сүлжээний хаягуудыг хаах (нарийвчилсан)"
+        },
+        "serverUrl": {
+          "help": "Mattermost серверийнхээ бүтэн HTTPS үндсэн URL, жишээ нь https://mattermost.example.com",
+          "label": "Серверийн URL",
+          "required": "Mattermost серверийн URL оруулна уу"
+        },
+        "teamId": {
+          "help": "Ботыг тодорхой багт хязгаарлана - бусад багаас ирэх үйл явдлыг хаядаг (шууд мессеж дамжсаар байна). Бүх багаас үйл явдал хүлээн авахын тулд хоосон орхи.",
+          "label": "Team ID (заавал биш)",
+          "placeholder": "team-id эсвэл хоосон орхи"
+        }
+      },
+      "enableFailed": "Mattermost плагин идэвхжүүлж чадсангүй",
+      "help": "Personal access token-оор Mattermost серверт холбогдоно. Бот WebSocket-оор сонсож, REST-ээр нийтэлнэ.",
+      "pluginEnabled": "Mattermost плагин идэвхжлээ",
+      "replaceWarning": "Шинэ Mattermost данс холбосноор одоо байгаа дансыг тань орлуулна.",
+      "testAndEnable": "Шалгаад идэвхжүүлэх"
     },
     "googleChat": {
       "comingSoonTitle": "Google Chat {{phase}}-д ирнэ",
@@ -888,13 +1048,26 @@
           "placeholder": "123456789012",
           "required": "Webhook баталгаажуулалтад JWT audience шаардлагатай"
         },
-        "bothRequired": "Service Account JSON болон JWT audience шаардлагатай"
+        "bothRequired": "Service Account JSON болон JWT audience шаардлагатай",
+        "audienceRequired": "Webhook дамжуулалтад JWT audience шаардлагатай",
+        "serviceAccountRequired": "Service Account JSON шаардлагатай",
+        "subscriptionName": {
+          "help": "Chat апп нийтэлдэг pull-subscription-ий бүтэн зам. Формат: projects/<project>/subscriptions/<sub>. Service account-д Pub/Sub Subscriber эрх шаардлагатай.",
+          "label": "Pub/Sub Subscription"
+        },
+        "subscriptionRequired": "Pub/Sub дамжуулалтад subscription нэр шаардлагатай"
       },
       "webhookUrl": {
         "label": "Орох вебхүкийн URL",
         "help": "Энэ URL-ийг Google Cloud Console → Google Chat API → Configuration → App URL-д оруулна уу.",
         "copyButton": "Хуулах",
         "notMinted": "<үүсгээгүй>"
+      },
+      "transport": {
+        "help": "Webhook-д нийтийн HTTPS URL шаардлагатай. Pub/Sub нь Google Cloud subscription-оос үйл явдлыг татдаг бөгөөд нийтийн URL шаардахгүй (десктопт санал болгоно).",
+        "label": "Ирэх дамжуулалт",
+        "pubsub": "Pub/Sub татах (нийтийн URL шаардахгүй)",
+        "webhook": "Webhook (нийтийн URL)"
       }
     },
     "nextcloudTalk": {
@@ -951,6 +1124,10 @@
           "help": "Synology Chat outgoing webhook хүсэлт бүрт илгээдэг токен (Outgoing Webhooks → Token). Inbound хүргэлтийг баталгаажуулахад ашиглана.",
           "placeholder": "your-synology-webhook-token",
           "required": "Webhook токенийг оруулна уу"
+        },
+        "allowInsecureSsl": {
+          "help": "Зөвхөн өөрөө гарын үсэг зурсан гэрчилгээтэй дотоод сүлжээний Synology-д идэвхжүүл. Нийтийн Synology хостод хэзээ ч бүү идэвхжүүл.",
+          "label": "Өөрөө гарын үсэг зурсан гэрчилгээ зөвшөөрөх (LAN Synology NAS)"
         }
       },
       "webhookUrl": {
@@ -958,11 +1135,60 @@
         "help": "Энэ URL-ийг Synology Chat → Outgoing Webhooks → Outgoing URL-д оруулна уу.",
         "copyButton": "Хуулах",
         "notMinted": "<үүсгээгүй>"
-      }
+      },
+      "help": "Synology DSM дээр байршуулсan NAS-д суурилсан багийн чат. Зурвас хүлээн авахын тулд Synology Chat-д гарах webhook тохируулж, хариу илгээхийн тулд орох webhook URL-ыг оруулна."
     },
     "irc": {
       "comingSoonTitle": "IRC {{phase}}-д ирнэ",
-      "comingSoonBody": "Сонгодог IRC холболт. Сервер, порт, сувгууд, сонголттой SASL баталгаажуулалт."
+      "comingSoonBody": "Сонгодог IRC холболт. Сервер, порт, сувгууд, сонголттой SASL баталгаажуулалт.",
+      "connectionFailed": "IRC холболт амжилтгүй боллоо",
+      "connectionSuccess": "IRC холбогдлоо",
+      "credentials": {
+        "channels": {
+          "help": "Автоматаар нэгдэх сувгуудыг таслалаар тусгаарлан бичнэ, жишээ нь #darhai-bots,#general.",
+          "label": "Сувгууд"
+        },
+        "nick": {
+          "help": "Бот-ын IRC хоч.",
+          "label": "Ботын хоч",
+          "required": "Ботын хоч оруулна уу"
+        },
+        "password": {
+          "help": "NickServ / SASL PLAIN нууц үг. Нэргүй холболтод хоосон орхи.",
+          "label": "Нууц үг (заавал биш)",
+          "placeholder": "NickServ нууц үг"
+        },
+        "port": {
+          "help": "TLS-д 6697 (анхдагч), энгийнд 6667.",
+          "label": "Порт"
+        },
+        "realname": {
+          "help": "WHOIS-д харагдах GECOS / жинхэнэ нэр. Анхдагчаар username болно.",
+          "label": "Жинхэнэ нэр (заавал биш)"
+        },
+        "sasl": {
+          "help": "PLAIN нь SASL-аар баталгаажуулна (санал болгоно). None нь серверийн PASS руу шилжинэ (NickServ маягийн).",
+          "label": "SASL механизм"
+        },
+        "server": {
+          "help": "IRC серверийн hostname, жишээ нь irc.libera.chat эсвэл irc.freenode.net.",
+          "label": "Сервер",
+          "required": "IRC серверийн hostname оруулна уу"
+        },
+        "tls": {
+          "help": "TLS идэвхжүүлэх (анхдагч). Порт 6667 дээрх хуучин энгийн текстийн серверт унтраа.",
+          "label": "TLS"
+        },
+        "username": {
+          "help": "IRC ident/username. Анхдагчаар ботын хоч болно.",
+          "label": "Username (заавал биш)"
+        }
+      },
+      "enableFailed": "IRC плагин идэвхжүүлж чадсангүй",
+      "help": "SASL PLAIN нэвтрэлт (сонголтоор) бүхий аль ч IRC серверт холбогдоно. Бот тохируулсан сувгуудад нэгдэж, PRIVMSG-г Дархай руу дамжуулна.",
+      "pluginEnabled": "IRC плагин идэвхжлээ",
+      "replaceWarning": "Шинэ IRC серверт холбогдсоноор одоо байгаа тохиргоог тань орлуулна.",
+      "testAndEnable": "Шалгаад идэвхжүүлэх"
     },
     "qq": {
       "comingSoonTitle": "QQ {{phase}}-д ирнэ",
@@ -1423,7 +1649,7 @@
   "bugReportCancel": "Цуцлах",
   "bugReportSuccess": "Мэдээлэл илгээгдлээ, санал хүсэлт өгсөнд баярлалаа",
   "bugReportError": "Илгээж чадсангүй, дараа дахин оролдоно уу",
-  "bugReportModuleSkills": "Ур чадвар ба залгаасууд",
+  "bugReportModuleSkills": "Скилл ба залгаасууд",
   "bugReportModuleWebui": "WebUI ба алсын хандалт",
   "bugReportModuleMcp": "MCP ба хэрэгслүүд",
   "bugReportModuleChannel": "Сувгийн интеграц",
@@ -1434,7 +1660,7 @@
   "bugReportModulePermission": "Агент илрүүлэх ба холболт",
   "bugReportModuleSession": "Хайлт ба түүх",
   "bugReportModuleWorkspace": "Ажлын талбар, файл ба урьдчилан үзэх",
-  "bugReportModuleSkillsDescription": "Skills Market, суурьшсан буюу гадны ур чадвар, залгаас суулгах ба идэвхжүүлэх урсгал, ачаалах алдаа, эсвэл залгаасын ажиллагааны асуудлуудад зориулсан.",
+  "bugReportModuleSkillsDescription": "Skills Market, суурьшсан буюу гадны скилл, залгаас суулгах ба идэвхжүүлэх урсгал, ачаалах алдаа, эсвэл залгаасын ажиллагааны асуудлуудад зориулсан.",
   "bugReportModuleWebuiDescription": "WebUI эхлүүлэх, алсын хандалт, QR нэвтрэлт, данс буюу нууц үг солих, эсвэл хөтчийн талын зан төлөвийн асуудлуудад зориулсан.",
   "bugReportModuleMcpDescription": "MCP серверийн тохиргоо, OAuth нэвтрэлт, хэрэгслийн синк, дутуу хэрэгсэл, эсвэл хэрэгсэл дуудах алдаанд зориулсан.",
   "bugReportModuleChannelDescription": "Telegram, Slack, Lark болон бусад сувгийн залгаасуудын тохиргоо, холболт, зөвшөөрөл, эсвэл мессеж хүргэлтийн асуудлуудад зориулсан.",
@@ -1544,11 +1770,11 @@
   "multiKeyAllValid": "Бүх {{total}} түлхүүр хүчинтэй",
   "multiKeyPartialValid": "{{valid}} хүчинтэй, {{invalid}} хүчингүй",
   "multiKeyAllInvalid": "Бүх {{total}} түлхүүр хүчингүй",
-  "skillsAdded": "{{addedCount}} ур чадвар нэмэгдэж сонгогдлоо{{skippedCountText}}",
+  "skillsAdded": "{{addedCount}} скилл нэмэгдэж сонгогдлоо{{skippedCountText}}",
   "skippedCount": "{{count}} алгассан",
-  "allSkillsExist": "Олдсон бүх ур чадвар аль хэдийн байна",
-  "noSkillsFound": "Сонгосон зам(ууд)аас хүчинтэй ур чадвар олдсонгүй",
-  "skillScanFailed": "Ур чадваруудыг скан хийж чадсангүй",
+  "allSkillsExist": "Олдсон бүх скилл аль хэдийн байна",
+  "noSkillsFound": "Сонгосон зам(ууд)аас хүчинтэй скилл олдсонгүй",
+  "skillScanFailed": "Скиллүүдийг скан хийж чадсангүй",
   "quickScan": "Түгээмэл замуудыг хурдан скан хийх",
   "assistant": {
     "tokenRequired": "Бот токен оруулна уу",
@@ -1630,7 +1856,11 @@
     "hideOptionalFields": "Заавал бус тохиргоог нуух",
     "agent": "Агент",
     "agentDesc": "Lark яриануудад ашиглана",
-    "autoFollowCliModel": "CLI ажиллаж байх үед загварыг автоматаар дагах"
+    "autoFollowCliModel": "CLI ажиллаж байх үед загварыг автоматаар дагах",
+    "domain": "Домэйн",
+    "domainDesc": "Тив дэх Хятадад Feishu (feishu.cn), олон улсад Lark (larksuite.com) ашигла",
+    "domainFeishu": "Feishu (Хятад)",
+    "domainLark": "Lark (Олон улс)"
   },
   "dingtalk": {
     "clientId": "Client ID",
@@ -1658,7 +1888,9 @@
     "step4": "Зөвшөөрсний дараа та DingTalk-аар AI туслахтай ярилцаж эхэлж болно!",
     "waitingConnection": "Холболт үүсгэгдэж байна. Хүлээнэ үү...",
     "agent": "Агент",
-    "agentDesc": "DingTalk яриануудад ашиглана"
+    "agentDesc": "DingTalk яриануудад ашиглана",
+    "webhookSecret": "Webhook Secret (заавал биш)",
+    "webhookSecretDesc": "Таны DingTalk робот гарын үсэгтэй webhook нууцлалыг идэвхжүүлсэн бол шаардлагатай"
   },
   "weixin": {
     "accountId": "Бүртгэлийн ID",
@@ -1711,7 +1943,25 @@
     "step4": "Зөвшөөрсний дараа та WeCom-аар AI туслахтай ярилцаж болно.",
     "waitingConnection": "WeCom callback URL-д хүрэхийн тулд WebUI ажиллаж байгаа эсэхийг шалгана уу.",
     "agent": "Агент",
-    "agentDesc": "WeCom яриануудад ашиглана"
+    "agentDesc": "WeCom яриануудад ашиглана",
+    "aesKeyLengthError": "EncodingAESKey яг 43 тэмдэгт байх ёстой",
+    "botId": "Bot ID",
+    "botIdDesc": "WeCom Intelligent Bot-ийн Bot ID (Long Connection горим)",
+    "callbackUrl": "Callback URL",
+    "corpId": "CorpID",
+    "corpIdDesc": "Таны байгууллагын CorpID. Тайлагдсан receiveid-ийг баталгаажуулахад ашиглана (хуурамчаас хамгаалах).",
+    "mode": "Холболтын горим",
+    "modeDesc": "Long-Connection (WS)-д нийтийн URL хэрэггүй. Webhook-т хүрэх боломжтой HTTPS callback URL хэрэгтэй.",
+    "modeWebhook": "Шифрлэгдсэн Callback (Webhook)",
+    "modeWebsocket": "Long Connection (WS)",
+    "secret": "Secret",
+    "secretDesc": "WeCom Intelligent Bot-ийн Secret (Long Connection горим)",
+    "webhookCredentialsRequired": "Webhook горимд Token, EncodingAESKey, CorpID оруулна уу",
+    "webhookDocLink": "WeCom callback баримт",
+    "webhookHint": "WeCom админ консолоос Token + EncodingAESKey-ээ, мөн CorpID-ээ (тайлагдсан callback баталгаажуулахад ашиглана) буулга.",
+    "webhookTitle": "WeCom Шифрлэгдсэн Callback",
+    "wsHint": "WeCom Intelligent Bot-ийн \"Long Connection (WebSocket)\" горимыг ашигла. Callback URL / домэйн / нийтийн IP шаардлагагүй.",
+    "wsTitle": "WeCom WebSocket холболт"
   },
   "extensionAssistantReadonly": "Өргөтгөлийн туслахууд зөвхөн уншигдах боломжтой. Та хувилбарыг хуулж, хуулбарыг засварлаж болно.",
   "agentManagement": {
@@ -1742,7 +1992,8 @@
     "customAgents": "Тусгай агентууд",
     "custom": "Тусгай",
     "addCustomAgent": "Тусгай агент нэмэх",
-    "customEmpty": "Тусгай агент тохируулаагүй байна. Үүсгэхийн тулд \"Тусгай агент нэмэх\" дарна уу."
+    "customEmpty": "Тусгай агент тохируулаагүй байна. Үүсгэхийн тулд \"Тусгай агент нэмэх\" дарна уу.",
+    "loadErrorsTitle": "Зарим агент ачаалагдсангүй"
   },
   "remoteAgent": {
     "title": "Алсын агентууд",
@@ -1786,7 +2037,7 @@
     "pendingCancel": "Цуцлах",
     "pendingTimeRemaining": "Үлдсэн хугацаа: {{time}}"
   },
-  "noExternalSources": "Гадаад ур чадварын эх сурвалж олдсонгүй",
+  "noExternalSources": "Гадаад скиллийн эх сурвалж олдсонгүй",
   "wcore": {
     "available": "Боломжтой",
     "notFound": "Олдсонгүй",
@@ -1826,10 +2077,11 @@
     "general": "Ерөнхий",
     "notifications": "Мэдэгдэл",
     "storage": "Хадгалалт",
-    "skills": "Ур чадвар ба хэрэгсэл",
+    "skills": "Скилл ба хэрэгсэл",
     "agents": "Агентууд",
     "constitution": "Үндсэн дүрэм",
-    "groupEngine": "ХӨДӨЛГҮҮР"
+    "groupEngine": "ХӨДӨЛГҮҮР",
+    "mcpLibrary": "MCP Library"
   },
   "channelsIndex": {
     "title": "Сувгууд",
@@ -2257,7 +2509,8 @@
       "pickFolder": "Хавтас сонгох",
       "pickFolderFirst": "Эхлээд хавтас сонгоно уу",
       "enable": "Синхрончлолыг идэвхжүүлэх"
-    }
+    },
+    "subtitleLine": "Дархай таны өгөгдлийг диск дээр хаана хадгалдаг, мөн нөөшлөлт болон төгсгөлөөс төгсгөл хүртэл шифрлэгдсэн синк."
   },
   "editorPage": {
     "title": "Засварлагч",
@@ -2274,10 +2527,11 @@
     "frontmatterHelp": "Markdown файлуудын дээд талын `--- ... ---` блокуудыг бүрэн хадгалах.",
     "spellCheck": "Үг зөв бичлэг шалгах",
     "syntaxHighlight": "Синтакс тодотгол",
-    "syntaxHighlightHelp": "Markdown баримт дахь кодын блокуудыг тодотгох."
+    "syntaxHighlightHelp": "Markdown баримт дахь кодын блокуудыг тодотгох.",
+    "subtitle": "Дархай-д Markdown баримт хэрхэн нээгдэж, хадгалагдаж, дүрслэгдэх нь."
   },
   "skillsPage": {
-    "title": "Ур чадвар ба хэрэгсэл"
+    "title": "Скилл ба хэрэгсэл"
   },
   "constitutionPage": {
     "subtitle": "Дархайн дүрэм. Эргэлт бүрд шинээр ачаалагдана, засвар тэр даруй хэрэгжинэ, дахин эхлүүлэх шаардлагагүй. Override хэрхэн ажилладгийг §11-ээс үзнэ үү.",
@@ -2403,12 +2657,12 @@
       "title": "Тойм",
       "subtitle": "Бүх чат, ажлын урсгал, агентын ард байгаа хөдөлгүүр. Ухаалаг үндсэн тохиргоотойгоор аль хэдийн ажиллаж байна. Энэ хэсэг нь капотын доорхыг тааруулах газар юм.",
       "inheritedTitle": "Дархай Desktop-оор хуваарилагдсан",
-      "inheritedBody": "Энэ сешний хувьд Desktop нь хөдөлгүүрт таны загварыг (давхар тохиргоо болгон) дамжуулж, системийн заавраараа Ур чадвар + Туслах/Үндсэн дүрмийг оруулна. Таны Desktop MCP сан дамжуулагддаггүй; зөвхөн Дархайн өөрийн ажиллагааны MCP-ууд дамжина.",
+      "inheritedBody": "Энэ сешний хувьд Desktop нь хөдөлгүүрт таны загварыг (давхар тохиргоо болгон) дамжуулж, системийн заавраараа Скилл + Туслах/Үндсэн дүрмийг оруулна. Таны Desktop MCP сан дамжуулагддаггүй; зөвхөн Дархайн өөрийн ажиллагааны MCP-ууд дамжина.",
       "readOnly": "зөвхөн унших",
       "manageInDesktop": "Desktop тохиргоонд удирдах",
       "inheritModels": "Загварууд (давхар тохиргоо)",
       "inheritMcp": "MCP серверүүд",
-      "inheritSkills": "Ур чадварууд",
+      "inheritSkills": "Скиллүүд",
       "inheritAssistants": "Туслахууд ба Үндсэн дүрэм",
       "inheritManaged": "Desktop тохиргоонд удирдагдаж, өвлөгдсөн",
       "deeperHint": "Дээрх бүгд ажиллахаар нийлүүлэгдсэн. Гүнзгийрүүлэхийн тулд зүүн талын Хэрэгслүүд, Үйлчилгээ ба түлхүүр, эсвэл Аюулгүй байдлыг нээ, эсвэл орхи; хөдөлгүүр зүгээр ажиллана.",
@@ -2570,7 +2824,7 @@
       "blockPrivateDesc": "Хөдөлгүүрийг 10.x, 192.168.x, localhost болон metadata эцсийн цэгүүдэд хүрэхээс зогсоох"
     },
     "profiles": {
-      "subtitle": "Лавлах тусгаарласан тохиргоонууд. Профайл бүр өөрийн загвар, хэрэгсэл, түлхүүр, ур чадвар, санах ойтой тул та контекстийг хооронд нь хольж бохирдуулахгүйгээр шууд сольдог.",
+      "subtitle": "Лавлах тусгаарласан тохиргоонууд. Профайл бүр өөрийн загвар, хэрэгсэл, түлхүүр, скилл, санах ойтой тул та контекстийг хооронд нь хольж бохирдуулахгүйгээр шууд сольдог.",
       "activateFailed": "Амжилтгүй.",
       "deleteFailed": "Амжилтгүй.",
       "nameInvalid": "Нэр нь зөвхөн үсэг, тоо, - ба _ ашиглана (дээд тал нь 64).",
@@ -2587,7 +2841,7 @@
       "cloningFrom": "“{{from}}”-с хувилж байна.",
       "namePlaceholder": "профайл-нэр",
       "toolsChip": "{{count}} хэрэгсэл",
-      "skillsChip": "{{count}} ур чадвар"
+      "skillsChip": "{{count}} скилл"
     },
     "runtime": {
       "subtitle": "Хөдөлгүүр бодитоор хаана ажилладаг. Анхдагчаар дотооддоо суулгагдсан; шаардлагатай үед алсын машин эсвэл хост хийсэн headless сервер рүү шилжүүлнэ.",
@@ -2604,7 +2858,7 @@
       "agentsVal": "{{count}} агент",
       "powerUser": "Чадварлаг хэрэглэгч",
       "rawEngine": "Түүхий хөдөлгүүрийн горим",
-      "rawEngineDesc": "Суулгагдсан хөдөлгүүрийг Desktop-н загвар ба ур чадвараар давхарлахгүйгээр өөрийн тохиргоогоор ажиллуулах.",
+      "rawEngineDesc": "Суулгагдсан хөдөлгүүрийг Desktop-н загвар ба скиллээр давхарлахгүйгээр өөрийн тохиргоогоор ажиллуулах.",
       "headlessTitle": "Headless серверийн горим",
       "headlessBody": "Дархай Core-г урт хугацааны сервер болгон (түрээслэгч тус бүрд нэг контейнер) ажиллуулж, LAN, Tailscale, эсвэл хост хийсэн Pro түвшингээр хандах."
     },
@@ -2612,8 +2866,51 @@
     "scopeSharedCli": "Дархай Core CLI-д бас ашиглагдана."
   },
   "semanticSearch": "Утгын хайлт",
-  "semanticSearchDescription": "Ур чадвар болон санах ойг зөвхөн түлхүүр үгээр биш, утгаар нь эрэмбэлнэ. Офлайн ажиллана; локал загвар байхгүй үед түлхүүр үгийн хайлт руу шилжинэ.",
+  "semanticSearchDescription": "Скилл болон санах ойг зөвхөн түлхүүр үгээр биш, утгаар нь эрэмбэлнэ. Офлайн ажиллана; локал загвар байхгүй үед түлхүүр үгийн хайлт руу шилжинэ.",
   "semanticSearchActive": "Утгын хайлт идэвхтэй",
   "semanticSearchFallback": "Түлхүүр үгийн хайлт ашиглаж байна (утгын загвар байхгүй)",
-  "semanticSearchIndexing": "Утгын индекс үүсгэж байна…"
+  "semanticSearchIndexing": "Утгын индекс үүсгэж байна…",
+  "assistantSourceExtension": "Өргөтгөлөөс",
+  "channelDetail": {
+    "disconnectAction": "Салгах",
+    "disconnectConfirmBody": "Энэ нь {{channel}} сувгийг зогсоож, хадгалагдсан бүх нэвтрэх мэдээлэл болон эрх бүхий хэрэглэгчдийг устгана.",
+    "disconnectConfirmTitle": "{{channel}} салгах уу?",
+    "disconnectDesc": "Сувгийг зогсоож, хадгалсан нэвтрэх мэдээллийг устгана. Эрх бүхий хэрэглэгчид дахин холбогдох шаардлагатай болно.",
+    "disconnectFailed": "Салгаж чадсангүй",
+    "disconnectTitle": "{{channel}} салгах",
+    "disconnected": "Суваг салгагдлаа"
+  },
+  "extensionSkills": "Өргөтгөлийн скиллүүд",
+  "extensionSkillsBadge": "Өргөтгөл",
+  "mcpModalDeprecatedBody": "Шинэ MCP Library дотор MCP серверүүдийг үзэж, суулгаж, удирдана.",
+  "mcpModalOpenLibraryCTA": "MCP Library нээх",
+  "speechToTextDownloadProgressNotReported": "Татаж байна… (явцын мэдээлэл удахгүй нэмэгдэнэ)",
+  "speechToTextModelInstalled": "Суулгасан",
+  "speechToTextRedownload": "Дахин татах",
+  "systemMode": "Авто",
+  "textToSpeechModelInstalled": "Суулгасан",
+  "textToSpeechRedownload": "Дахин татах",
+  "textToSpeechTestPhrase": "Дуу хоолой шалгах.",
+  "textToSpeechTestVoice": "Хоолой турших",
+  "voiceMicCheckLabel": "Микрофон",
+  "voiceMicDeviceDefault": "Системийн анхны микрофон",
+  "voiceMicGradeGood": "Сайхан сонсогдож байна!",
+  "voiceMicGradeHot": "Түвшин хэт өндөр байна. Хол зайлж эсвэл оролтын gain-ийг бууруулж үзээрэй.",
+  "voiceMicGradeNoSignal": "Дуу илрээгүй. Микрофоны холболтоо шалгаарай.",
+  "voiceMicGradeQuiet": "Дуу хоолой сул байна. Чангаар ярих эсвэл ойртож үзээрэй.",
+  "voiceMicIdleHint": "Микрофоноо шалгахын тулд яриарай…",
+  "voiceMicListening": "Сонсож байна — түвшин шалгахын тулд ямар нэг зүйл яриарай…",
+  "voiceMicNotFound": "Сонгосон микрофон байхгүй байна. Өөр оролтын төхөөрөмж сонгоно уу.",
+  "voiceMicPermissionBlocked": "Микрофоны хандалт хаагдсан. System Settings → Privacy → Microphone нээж Darhai-г идэвхжүүлнэ үү.",
+  "voiceMicRequesting": "Микрофоны хандалт хүсэж байна…",
+  "voiceMicStop": "Туршилт зогсоох",
+  "voiceMicTest": "Микрофон турших",
+  "voiceProviderHintBody": "Одоо байгаа провайдерийн түлхүүрээ хостолсон хоолойд ашигла — чанар илүү, локал татах шаардлагагүй.",
+  "voiceProviderHintCTAGrok": "Grok руу шилжих",
+  "voiceProviderHintCTAOpenAI": "OpenAI руу шилжих",
+  "voiceProviderHintGrokTitle": "xAI Grok түлхүүр илэрлээ",
+  "voiceProviderHintOpenAITitle": "OpenAI түлхүүр илэрлээ",
+  "voiceProviderKeyDeferBody": "Провайдерийн түлхүүрүүд нэг дор байрлаж, бүх боломж ашиглаж чадна.",
+  "voiceProviderKeyDeferCTA": "Провайдерууд нээх →",
+  "voiceProviderKeyDeferTitle": "OpenAI түлхүүрээ Провайдеруудад тохируул"
 }

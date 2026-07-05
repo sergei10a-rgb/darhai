@@ -333,7 +333,7 @@ export function WikiHomePage(): React.ReactElement {
                   <p className={styles.emptyMsg}>
                     {allConcepts.length === 0
                       ? t('wiki.home.empty', 'Your wiki is empty. Promote a memory or wait for auto-sync.')
-                      : 'No concepts match your filters.'}
+                      : t('wiki.home.noMatch', 'No concepts match your filters.')}
                   </p>
                 )}
               </div>
@@ -347,7 +347,9 @@ export function WikiHomePage(): React.ReactElement {
                   updatedThisWeek.map((c) => <ConceptCard key={c.id} concept={c} onClick={handleNavigate} />)
                 ) : !loading ? (
                   <p className={styles.emptyMsg}>
-                    {allConcepts.length === 0 ? 'No concepts yet.' : 'No concepts updated this week.'}
+                    {allConcepts.length === 0
+                      ? t('wiki.home.noConceptsYet', 'No concepts yet.')
+                      : t('wiki.home.noUpdatedThisWeek', 'No concepts updated this week.')}
                   </p>
                 ) : null}
               </div>
@@ -368,7 +370,7 @@ export function WikiHomePage(): React.ReactElement {
                     />
                   ))
                 ) : (
-                  <p className={styles.emptyMsg}>No emerging concepts detected yet.</p>
+                  <p className={styles.emptyMsg}>{t('wiki.home.noEmerging', 'No emerging concepts detected yet.')}</p>
                 )}
               </div>
             </div>

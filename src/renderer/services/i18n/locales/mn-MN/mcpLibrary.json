@@ -9,7 +9,8 @@
     "successAdded": "{{name}} санд нэмэгдлээ.",
     "oauthRequired": "Энэ серверийн хэрэгслүүдийг идэвхжүүлэхийн тулд зөвшөөрнө үү.",
     "oauthSuccess": "Зөвшөөрөгдсөн.",
-    "oauthFailed": "Зөвшөөрөл амжилтгүй: {{error}}"
+    "oauthFailed": "Зөвшөөрөл амжилтгүй: {{error}}",
+    "setupComplete": "{{name}} холбогдож бэлэн боллоо. Аль ч чатад ашиглахыг хүс."
   },
   "installed": {
     "title": "MCP сан - Суулгасан",
@@ -39,7 +40,11 @@
     "statusErrorCountLabel": "алдаа",
     "statusRunningCount": "{{count}} ажиллаж байна",
     "statusRunningCountLabel": "ажиллаж байна",
-    "logsToast": "Бүртгэл харагч удахгүй ирнэ."
+    "logsToast": "Бүртгэл харагч удахгүй ирнэ.",
+    "statusIdle": "Сул зогсолт",
+    "statusChecking": "Шалгаж байна...",
+    "actionReconnect": "Дахин холбох",
+    "reconnectToast": "{{name}}-ийг дахин холбож байна - агентууд дараагийн мессежээс эхлэн авна."
   },
   "byo": {
     "title": "{{vendor}} холбох - OAuth итгэмжлэлийг буулгана уу",

@@ -32,6 +32,16 @@
     "resumeAutoAdvance": "Автомат үргэлжлүүлэлтийг сэргээх",
     "endWorkflow": "Ажлын урсгалыг дуусгах",
     "deleteWorkflow": "Ажлын урсгалыг устгах",
-    "skillCount": "{{count}} ур чадвар"
+    "skillCount": "{{count}} скилл"
+  },
+  "delete": {
+    "title": "Workflow устгах уу?",
+    "confirm": "Энэ нь workflow-ийн session-ийг бүрмөсөн устгана. Буцаах боломжгүй.",
+    "success": "Workflow устгагдлаа.",
+    "failed": "Workflow устгаж чадсангүй."
+  },
+  "menu": {
+    "open": "Нээх",
+    "delete": "Устгах"
   }
 }
