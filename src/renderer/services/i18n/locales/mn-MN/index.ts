@@ -36,6 +36,8 @@ import modelAdvisor from './modelAdvisor.json';
 import workflows from './workflows.json';
 import models from './models.json';
 import conversations from './conversations.json';
+import archive from './archive.json';
+import wiki from './wiki.json';
 
 export default {
   common,
@@ -71,4 +73,6 @@ export default {
   workflows,
   models,
   conversations,
+  archive,
+  wiki,
 };

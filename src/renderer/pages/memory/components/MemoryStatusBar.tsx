@@ -82,7 +82,7 @@ const MemoryStatusBar: React.FC<MemoryStatusBarProps> = ({
   cliCount,
   lastDream,
 }) => {
-  const { t } = useTranslation('memory');
+  const { t } = useTranslation();
   const [dropStatus, setDropStatus] = useState<DropFolderStatus | null>(null);
   const [openPathError, setOpenPathError] = useState<string | null>(null);
 

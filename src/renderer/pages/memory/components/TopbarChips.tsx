@@ -83,7 +83,7 @@ const TopbarChips: React.FC<TopbarChipsProps> = ({
   activeType,
   onFilterChange,
 }) => {
-  const { t } = useTranslation('memory');
+  const { t } = useTranslation();
 
   const totalCount = Object.values(typeCounts).reduce((a, b) => a + b, 0);
 

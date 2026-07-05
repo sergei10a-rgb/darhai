@@ -39,28 +39,28 @@ const CARDS: CardDef[] = [
   {
     key: 'claude-mem',
     icon: '🧠',
-    titleKey: 'archive.import.claudeMem',
+    titleKey: 'archive.import.claudeMem.cardTitle',
     titleFallback: 'Import claude-mem',
     defaultSubline: 'Click to scan ~/.claude-mem/',
   },
   {
     key: 'obsidian',
     icon: '📓',
-    titleKey: 'archive.import.obsidian',
+    titleKey: 'archive.import.obsidian.cardTitle',
     titleFallback: 'Import Obsidian vault',
     defaultSubline: 'Click to detect vaults',
   },
   {
     key: 'drop',
     icon: '📂',
-    titleKey: 'archive.import.dropFolder',
+    titleKey: 'archive.import.dropFolder.cardTitle',
     titleFallback: 'Watch drop folder',
     defaultSubline: '~/Documents/Darhai-Memory/',
   },
   {
     key: 'dev-scan',
     icon: '🔍',
-    titleKey: 'archive.import.devScan',
+    titleKey: 'archive.import.devScan.cardTitle',
     titleFallback: 'Scan ~/dev',
     defaultSubline: 'Click to scan ~/dev/',
   },
@@ -71,7 +71,7 @@ const CARDS: CardDef[] = [
 // ---------------------------------------------------------------------------
 
 const EmptyStateHero: React.FC<EmptyStateHeroProps> = ({ onImportComplete, onSearchChange }) => {
-  const { t } = useTranslation('memory');
+  const { t } = useTranslation();
   const [counts, setCounts] = useState<Partial<Record<CardDef['key'], number>>>({});
   const [loading, setLoading] = useState<Partial<Record<CardDef['key'], boolean>>>({});
 

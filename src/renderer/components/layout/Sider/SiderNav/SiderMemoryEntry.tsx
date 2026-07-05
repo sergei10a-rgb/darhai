@@ -199,7 +199,7 @@ const SiderMemoryEntry: React.FC<SiderMemoryEntryProps> = ({
               <Archive size={14} className='block leading-none' style={{ lineHeight: 0 }} />
             </span>
             <span className='collapsed-hidden text-13px font-medium leading-22px'>
-              Archive
+              {t('sider.archive', { defaultValue: 'Archive' })}
             </span>
           </div>
 
@@ -217,7 +217,7 @@ const SiderMemoryEntry: React.FC<SiderMemoryEntryProps> = ({
               <BookOpen size={14} className='block leading-none' style={{ lineHeight: 0 }} />
             </span>
             <span className='collapsed-hidden text-13px font-medium leading-22px'>
-              Wiki
+              {t('sider.wiki', { defaultValue: 'Wiki' })}
             </span>
           </div>
         </>

@@ -32,7 +32,7 @@ export type ProjectDropdownProps = {
 // ---------------------------------------------------------------------------
 
 const ProjectDropdown: React.FC<ProjectDropdownProps> = ({ projects, selected, onSelect }) => {
-  const { t } = useTranslation('memory');
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
 
   const maxCount = useMemo(

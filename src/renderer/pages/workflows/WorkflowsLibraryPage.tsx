@@ -135,7 +135,7 @@ const WorkflowsLibraryPage: React.FC = () => {
     const known = new Set(CATEGORY_ORDER.map((c) => c.slug));
     const out = CATEGORY_ORDER.map((c) => ({
       slug: c.slug,
-      label: c.label,
+      label: t(`category.${c.slug}`, c.label),
       entries: grouped.get(c.slug) ?? [],
     })).filter((s) => s.entries.length > 0);
     // Append "Other" for any future categories we haven't named yet.
@@ -144,10 +144,10 @@ const WorkflowsLibraryPage: React.FC = () => {
       if (!known.has(cat)) other.push(...list);
     }
     if (other.length > 0) {
-      out.push({ slug: 'other', label: 'Other', entries: other });
+      out.push({ slug: 'other', label: t('category.other', 'Other'), entries: other });
     }
     return out;
-  }, [grouped]);
+  }, [grouped, t]);
 
   const visibleSections = useMemo(() => {
     if (!activeCategory) return sections;

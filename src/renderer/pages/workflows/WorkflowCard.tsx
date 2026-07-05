@@ -44,11 +44,14 @@ function sourceLabel(entry: SkillIndexEntry, t: TFunction): { label: string; bg:
         bg: 'rgba(33,150,243,0.14)',
       };
     case 'user':
-      return { label: 'My workflows', bg: 'rgba(76,175,80,0.16)' };
+      return { label: t('workflows.card.source.user', { defaultValue: 'My workflows' }), bg: 'rgba(76,175,80,0.16)' };
     case 'imported':
       return { label: t('skills.filters.source.imported', { defaultValue: 'Imported' }), bg: 'rgba(233,164,14,0.18)' };
     case 'cli-discovered':
-      return { label: entry.sourceLabel ?? 'CLI', bg: 'rgba(0,188,212,0.18)' };
+      return {
+        label: entry.sourceLabel ?? t('workflows.card.source.cli', { defaultValue: 'CLI' }),
+        bg: 'rgba(0,188,212,0.18)',
+      };
     default:
       return { label: entry.source, bg: 'var(--color-fill-3)' };
   }
@@ -74,7 +77,7 @@ const WorkflowCard: React.FC<WorkflowCardProps> = ({ entry, onClick, featured = 
       {featured && (
         <span className={styles.featuredBadge}>
           <span className={styles.featuredBadgeDot} aria-hidden='true' />
-          Featured
+          {t('workflows.card.featured', { defaultValue: 'Featured' })}
         </span>
       )}
       <div className={styles.header}>
@@ -95,7 +98,7 @@ const WorkflowCard: React.FC<WorkflowCardProps> = ({ entry, onClick, featured = 
             </span>
           </div>
           <div className={styles.description}>
-            {entry.description || 'No description provided.'}
+            {entry.description || t('workflows.card.noDescription', { defaultValue: 'No description provided.' })}
           </div>
         </div>
       </div>

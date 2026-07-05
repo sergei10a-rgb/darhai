@@ -1,0 +1,76 @@
+{
+  "home": {
+    "title": "Вики",
+    "conceptCount": "{{memories}} санах ойгоос {{count}} ойлголт нэгтгэсэн",
+    "viewList": "Жагсаалт",
+    "viewGraph": "Граф",
+    "synthesizing": "Нэгтгэж байна…",
+    "synthesizeNow": "Одоо нэгтгэх",
+    "synthesizeNow.success": "{{count}} шинэ ойлголт нэгтгэлээ",
+    "synthesizeNow.error": "Нэгтгэл амжилтгүй боллоо",
+    "newConcept": "+ Шинэ ойлголт",
+    "settings": "Тохиргоо",
+    "search": {
+      "placeholder": "Ойлголт хайх…"
+    },
+    "columns": {
+      "byTopic": "Сэдвээр",
+      "updatedThisWeek": "Энэ долоо хоногт шинэчлэгдсэн",
+      "emerging": "Шинээр гарч буй — ойлголтын хуудас болгох нь зүйтэй"
+    },
+    "empty": "Таны Вики хоосон байна. Санах ойгоос дэвшүүлэх эсвэл автомат синкийг хүлээнэ үү.",
+    "mostReferenced": "Хамгийн их иш татагдсан",
+    "references": "ишлэл",
+    "emergingLabel": "Шинээр гарч буй",
+    "status": {
+      "concepts": "{{count}} ойлголт",
+      "memoriesSynthesized": "{{count}} санах ой нэгтгэсэн",
+      "autoSync": "автомат синк 30 мин тутам",
+      "lastSync": "сүүлийн синк: {{when}} өмнө",
+      "lastSyncNever": "синк хийгдээгүй"
+    }
+  },
+  "detail": {
+    "loading": "Ачаалж байна…",
+    "back": "← Вики",
+    "notFound": "Ойлголт олдсонгүй.",
+    "notFoundBack": "← Вики руу буцах",
+    "edit": "Засах",
+    "updateFromSources": "Эх сурвалжаас шинэчлэх",
+    "settings": "Тохиргоо",
+    "updatedAgo": "Шинэчилсэн: {{when}}",
+    "synthesizedFromMem": "{{count}} санах ойгоос нэгтгэсэн",
+    "tldr": "Товчхондоо",
+    "sources": "Эх сурвалж",
+    "linkedFrom": "Холбосон хуудсууд",
+    "relatedConcepts": "Холбоотой ойлголтууд",
+    "autoSynthesized": "Автоматаар нэгтгэсэн",
+    "lastReviewedNever": "та одоогоор хянаж үзээгүй",
+    "lastSynthesized": "Сүүлд нэгтгэсэн: {{when}}",
+    "markAsReviewed": "Хянасан гэж тэмдэглэх",
+    "editThisPage": "Энэ хуудсыг засах",
+    "reSynthesizeFromSources": "Эх сурвалжаас дахин нэгтгэх",
+    "statusTotalConcepts": "нийт {{count}} ойлголт",
+    "statusNotReviewedYet": "Хараахан хянаагүй",
+    "statusLastSync": "сүүлийн синк: {{when}} өмнө",
+    "openMemory": "Санах ой нээх →",
+    "hiddenSourcesOne": "өөр {{count}} эх сурвалж санах ой",
+    "hiddenSourcesOther": "өөр {{count}} эх сурвалж санах ой",
+    "showAll": "Бүгдийг харах ({{count}}) ↓",
+    "freshness": {
+      "fresh": "Шинэ",
+      "stale": "Хуучирсан",
+      "neverReviewed": "Огт хянагдаагүй"
+    }
+  },
+  "concept": {
+    "synthesizedFrom": "{{count}} санах ойгоос нэгтгэсэн"
+  },
+  "orphan": {
+    "noPageYet": "Хуудас хараахан алга",
+    "references": "{{count}} ишлэл",
+    "projectsSingular": "{{count}} төсөл",
+    "projects": "{{count}} төсөл",
+    "synthesize": "Хуудас нэгтгэн үүсгэх →"
+  }
+}

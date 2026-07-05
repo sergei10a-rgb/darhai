@@ -33,5 +33,7 @@
     "seeAllScheduled": "Бүх хуваарьт даалгаврыг харах →",
     "seeAllChats": "Бүх чатыг харах →",
     "showMore": "Өөр {{count}}-г харах →"
-  }
+  },
+  "archive": "Архив",
+  "wiki": "Вики"
 }

@@ -27,7 +27,7 @@ export type StreakPillProps = {
 // ---------------------------------------------------------------------------
 
 const StreakPill: React.FC<StreakPillProps> = ({ sessions, longestDays }) => {
-  const { t } = useTranslation('memory');
+  const { t } = useTranslation();
 
   if (sessions === 0) return null;
 

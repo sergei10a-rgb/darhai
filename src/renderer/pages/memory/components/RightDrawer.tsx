@@ -201,7 +201,7 @@ const RightDrawer: React.FC<RightDrawerProps> = ({
   onOpenSource,
   onCopy,
 }) => {
-  const { t } = useTranslation('memory');
+  const { t } = useTranslation();
 
   // Esc closes drawer
   useEffect(() => {
