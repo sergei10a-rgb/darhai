@@ -35,6 +35,7 @@ import projects from './projects.json';
 import modelAdvisor from './modelAdvisor.json';
 import workflows from './workflows.json';
 import models from './models.json';
+import conversations from './conversations.json';
 
 export default {
   common,
@@ -69,4 +70,5 @@ export default {
   modelAdvisor,
   workflows,
   models,
+  conversations,
 };
