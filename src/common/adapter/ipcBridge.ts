@@ -1083,6 +1083,23 @@ export const missionControl = {
 };
 
 /**
+ * Hardware-fit model advisor ("Загвар зөвлөмж" / Cookbook). Scans the host
+ * hardware and ranks the bundled local-model catalog against it. Read-only:
+ * scan + rank only - no model download or serve orchestration here.
+ */
+export const hwfit = {
+  /** Probe the host GPU/CPU/RAM. `fresh` bypasses the short scan cache. */
+  scanHardware: buildProvider<import('@/common/types/hwfit').HwfitHardware, { fresh?: boolean }>('hwfit.scan-hardware'),
+  /** Rank the catalog for a use-case; accepts a simulated-rig override. */
+  rankModels: buildProvider<
+    import('@/common/types/hwfit').HwfitResult[],
+    import('@/common/types/hwfit').HwfitRankOptions
+  >('hwfit.rank-models'),
+  /** Number of models in the bundled catalog (for the UI footer/count). */
+  catalogSize: buildProvider<number, void>('hwfit.catalog-size'),
+};
+
+/**
  * v0.6.2.6 - payload returned by cron.confirmProposal when action='edit'.
  * The renderer uses this to open CreateTaskDialog pre-filled so the user
  * can tweak the proposed cron before saving.

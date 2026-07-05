@@ -1,0 +1,71 @@
+{
+  "sidebarLabel": "Советник по моделям",
+  "pageTitle": "Советник по моделям",
+  "description": "Локальные модели, ранжированные под ваше железо. Выберите задачу и посмотрите, что подходит и как быстро.",
+  "rescan": "Пересканировать",
+  "scanning": "Сканирование оборудования...",
+  "hardware": {
+    "title": "Ваше оборудование",
+    "gpu": "Видеокарта",
+    "vram": "Видеопамять",
+    "ram": "Оперативная память",
+    "cpu": "Процессор",
+    "cores": "{{count}} ядер",
+    "noGpu": "Видеокарта не найдена",
+    "gpuError": "Ошибка драйвера GPU",
+    "unified": "Единая память",
+    "cpuOnly": "Только CPU / RAM"
+  },
+  "useCase": {
+    "label": "Задача",
+    "general": "Общее",
+    "coding": "Программирование",
+    "reasoning": "Рассуждение",
+    "chat": "Чат",
+    "multimodal": "Мультимодальность",
+    "embedding": "Эмбеддинг",
+    "tts": "Текст в речь",
+    "stt": "Речь в текст"
+  },
+  "simulate": {
+    "label": "Simulate a GPU",
+    "detected": "Detected hardware",
+    "hint": "Preview what a different GPU would run.",
+    "gpuOnly": "GPU only (no CPU offload)"
+  },
+  "search": {
+    "placeholder": "Search model or provider"
+  },
+  "fitOnly": "Показывать только подходящие модели",
+  "table": {
+    "model": "Model",
+    "params": "Params",
+    "quant": "Quant",
+    "vram": "Needs",
+    "speed": "Speed",
+    "context": "Context",
+    "fit": "Fit",
+    "score": "Score",
+    "moe": "MoE",
+    "tps": "{{value}} tok/s"
+  },
+  "fit": {
+    "perfect": "Отлично",
+    "good": "Хорошо",
+    "marginal": "Впритык",
+    "too_tight": "Слишком большая"
+  },
+  "runMode": {
+    "gpu": "Runs on GPU",
+    "cpu_offload": "GPU + RAM offload",
+    "cpu_only": "CPU only",
+    "no_fit": "Does not fit"
+  },
+  "empty": {
+    "title": "No models match",
+    "hint": "Try a different use-case, clear the search, or turn off \"only show models that fit\"."
+  },
+  "footer": {
+    "count": "{{shown}} of {{total}} models"
+  }
+}

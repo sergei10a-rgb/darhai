@@ -59,6 +59,7 @@ import { initRemoteAgentBridge } from './remoteAgentBridge';
 import { initHubBridge } from './hubBridge';
 import { initTeamBridge } from './teamBridge';
 import { initMissionControlBridge } from './missionControlBridge';
+import { initHwfitBridge } from './hwfitBridge';
 import { initStorageBridge } from '@process/storage/storageIpc';
 import { initNicknamesBridge } from '@process/storage/nicknamesIpc';
 import { initSyncIpc } from '@process/sync/syncIpc';
@@ -130,6 +131,7 @@ export function initAllBridges(deps: BridgeDependencies): void {
   initHubBridge();
   initTeamBridge(deps.teamSessionService);
   initMissionControlBridge(deps.teamSessionService);
+  initHwfitBridge();
   // A DB / migration failure during registration would otherwise become an
   // unhandled rejection and the `modelRegistry` namespace would silently never
   // register - log it so the failure is at least visible.
@@ -201,6 +203,7 @@ export {
   initRemoteAgentBridge,
   initHubBridge,
   initTeamBridge,
+  initHwfitBridge,
   initWindowControlsBridge,
   initWeixinLoginBridge,
   initWorkspaceSnapshotBridge,

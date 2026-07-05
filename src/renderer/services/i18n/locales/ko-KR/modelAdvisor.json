@@ -1,0 +1,71 @@
+{
+  "sidebarLabel": "모델 어드바이저",
+  "pageTitle": "모델 어드바이저",
+  "description": "하드웨어에 맞춰 로컬 모델을 순위 매깁니다. 용도를 고르면 무엇이 돌아가고 얼마나 빠른지 보여줍니다.",
+  "rescan": "다시 스캔",
+  "scanning": "하드웨어 스캔 중...",
+  "hardware": {
+    "title": "내 하드웨어",
+    "gpu": "GPU",
+    "vram": "VRAM",
+    "ram": "시스템 메모리",
+    "cpu": "CPU",
+    "cores": "{{count}} 코어",
+    "noGpu": "GPU를 찾을 수 없음",
+    "gpuError": "GPU 드라이버 오류",
+    "unified": "통합 메모리",
+    "cpuOnly": "CPU / 메모리만"
+  },
+  "useCase": {
+    "label": "용도",
+    "general": "일반",
+    "coding": "코딩",
+    "reasoning": "추론",
+    "chat": "채팅",
+    "multimodal": "멀티모달",
+    "embedding": "임베딩",
+    "tts": "텍스트 음성 변환",
+    "stt": "음성 인식"
+  },
+  "simulate": {
+    "label": "Simulate a GPU",
+    "detected": "Detected hardware",
+    "hint": "Preview what a different GPU would run.",
+    "gpuOnly": "GPU only (no CPU offload)"
+  },
+  "search": {
+    "placeholder": "Search model or provider"
+  },
+  "fitOnly": "실행 가능한 모델만 표시",
+  "table": {
+    "model": "Model",
+    "params": "Params",
+    "quant": "Quant",
+    "vram": "Needs",
+    "speed": "Speed",
+    "context": "Context",
+    "fit": "Fit",
+    "score": "Score",
+    "moe": "MoE",
+    "tps": "{{value}} tok/s"
+  },
+  "fit": {
+    "perfect": "완벽",
+    "good": "좋음",
+    "marginal": "빠듯함",
+    "too_tight": "너무 큼"
+  },
+  "runMode": {
+    "gpu": "Runs on GPU",
+    "cpu_offload": "GPU + RAM offload",
+    "cpu_only": "CPU only",
+    "no_fit": "Does not fit"
+  },
+  "empty": {
+    "title": "No models match",
+    "hint": "Try a different use-case, clear the search, or turn off \"only show models that fit\"."
+  },
+  "footer": {
+    "count": "{{shown}} of {{total}} models"
+  }
+}

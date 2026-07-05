@@ -287,6 +287,17 @@ const REMOTE_DENIED_KEYS: ReadonlySet<string> = new Set([
   'mcp.set-byo-oauth-credentials',
   // --- Project knowledge draft (reads arbitrary filePaths to feed the model) ---
   'project.generate-knowledge-draft',
+  // --- Hardware-fit model advisor (host probe). scan-hardware spawns
+  //     nvidia-smi / rocminfo / sysctl / a PowerShell WMI probe on the host;
+  //     rank-models falls through to scan-hardware when no hardwareOverride is
+  //     supplied, so it too kicks off host probes. A paired-device WebSocket
+  //     caller must not be able to drive these — repeated remote invocations
+  //     amplify into a host-process spawn DoS. catalog-size is denied for
+  //     consistency (it exposes the same read-only host-side surface). The
+  //     renderer-local UI is unaffected; only remote WS callers are blocked. ---
+  'hwfit.scan-hardware',
+  'hwfit.rank-models',
+  'hwfit.catalog-size',
   // --- Storage destructive / disk operations ---
   'storage:changeDir',
   'storage:clearDir',

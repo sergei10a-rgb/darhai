@@ -1,0 +1,71 @@
+{
+  "sidebarLabel": "Modellberater",
+  "pageTitle": "Modellberater",
+  "description": "Lokale Modelle, sortiert für genau deine Hardware. Wähle einen Anwendungsfall und sieh, was passt und wie schnell.",
+  "rescan": "Neu scannen",
+  "scanning": "Hardware wird gescannt...",
+  "hardware": {
+    "title": "Deine Hardware",
+    "gpu": "GPU",
+    "vram": "VRAM",
+    "ram": "Arbeitsspeicher",
+    "cpu": "CPU",
+    "cores": "{{count}} Kerne",
+    "noGpu": "Keine GPU erkannt",
+    "gpuError": "GPU-Treiberfehler",
+    "unified": "Vereinheitlichter Speicher",
+    "cpuOnly": "Nur CPU / RAM"
+  },
+  "useCase": {
+    "label": "Anwendungsfall",
+    "general": "Allgemein",
+    "coding": "Programmierung",
+    "reasoning": "Schlussfolgern",
+    "chat": "Chat",
+    "multimodal": "Multimodal",
+    "embedding": "Embedding",
+    "tts": "Text-zu-Sprache",
+    "stt": "Sprache-zu-Text"
+  },
+  "simulate": {
+    "label": "Simulate a GPU",
+    "detected": "Detected hardware",
+    "hint": "Preview what a different GPU would run.",
+    "gpuOnly": "GPU only (no CPU offload)"
+  },
+  "search": {
+    "placeholder": "Search model or provider"
+  },
+  "fitOnly": "Nur passende Modelle anzeigen",
+  "table": {
+    "model": "Model",
+    "params": "Params",
+    "quant": "Quant",
+    "vram": "Needs",
+    "speed": "Speed",
+    "context": "Context",
+    "fit": "Fit",
+    "score": "Score",
+    "moe": "MoE",
+    "tps": "{{value}} tok/s"
+  },
+  "fit": {
+    "perfect": "Perfekt",
+    "good": "Gut",
+    "marginal": "Knapp",
+    "too_tight": "Zu groß"
+  },
+  "runMode": {
+    "gpu": "Runs on GPU",
+    "cpu_offload": "GPU + RAM offload",
+    "cpu_only": "CPU only",
+    "no_fit": "Does not fit"
+  },
+  "empty": {
+    "title": "No models match",
+    "hint": "Try a different use-case, clear the search, or turn off \"only show models that fit\"."
+  },
+  "footer": {
+    "count": "{{shown}} of {{total}} models"
+  }
+}

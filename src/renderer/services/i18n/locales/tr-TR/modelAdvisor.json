@@ -1,0 +1,71 @@
+{
+  "sidebarLabel": "Model Danışmanı",
+  "pageTitle": "Model Danışmanı",
+  "description": "Donanımınıza göre sıralanmış yerel modeller. Bir kullanım amacı seçin, neyin sığdığını ve ne kadar hızlı olduğunu görün.",
+  "rescan": "Yeniden tara",
+  "scanning": "Donanım taranıyor...",
+  "hardware": {
+    "title": "Donanımınız",
+    "gpu": "Ekran kartı",
+    "vram": "VRAM",
+    "ram": "Sistem belleği",
+    "cpu": "İşlemci",
+    "cores": "{{count}} çekirdek",
+    "noGpu": "Ekran kartı bulunamadı",
+    "gpuError": "GPU sürücü hatası",
+    "unified": "Birleşik bellek",
+    "cpuOnly": "Yalnızca CPU / RAM"
+  },
+  "useCase": {
+    "label": "Kullanım amacı",
+    "general": "Genel",
+    "coding": "Kodlama",
+    "reasoning": "Akıl yürütme",
+    "chat": "Sohbet",
+    "multimodal": "Çok kipli",
+    "embedding": "Gömme",
+    "tts": "Metinden sese",
+    "stt": "Sesten metne"
+  },
+  "simulate": {
+    "label": "Simulate a GPU",
+    "detected": "Detected hardware",
+    "hint": "Preview what a different GPU would run.",
+    "gpuOnly": "GPU only (no CPU offload)"
+  },
+  "search": {
+    "placeholder": "Search model or provider"
+  },
+  "fitOnly": "Yalnızca sığan modelleri göster",
+  "table": {
+    "model": "Model",
+    "params": "Params",
+    "quant": "Quant",
+    "vram": "Needs",
+    "speed": "Speed",
+    "context": "Context",
+    "fit": "Fit",
+    "score": "Score",
+    "moe": "MoE",
+    "tps": "{{value}} tok/s"
+  },
+  "fit": {
+    "perfect": "Mükemmel",
+    "good": "İyi",
+    "marginal": "Sınırda",
+    "too_tight": "Çok büyük"
+  },
+  "runMode": {
+    "gpu": "Runs on GPU",
+    "cpu_offload": "GPU + RAM offload",
+    "cpu_only": "CPU only",
+    "no_fit": "Does not fit"
+  },
+  "empty": {
+    "title": "No models match",
+    "hint": "Try a different use-case, clear the search, or turn off \"only show models that fit\"."
+  },
+  "footer": {
+    "count": "{{shown}} of {{total}} models"
+  }
+}

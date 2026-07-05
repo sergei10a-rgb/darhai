@@ -1,0 +1,71 @@
+{
+  "sidebarLabel": "模型顧問",
+  "pageTitle": "模型顧問",
+  "description": "根據你的硬體對本地模型排名。選擇用途，查看哪些能跑、跑多快。",
+  "rescan": "重新掃描",
+  "scanning": "正在掃描硬體...",
+  "hardware": {
+    "title": "你的硬體",
+    "gpu": "顯示卡",
+    "vram": "顯示記憶體",
+    "ram": "記憶體",
+    "cpu": "處理器",
+    "cores": "{{count}} 核",
+    "noGpu": "未偵測到顯示卡",
+    "gpuError": "顯示卡驅動錯誤",
+    "unified": "統一記憶體",
+    "cpuOnly": "僅 CPU / 記憶體"
+  },
+  "useCase": {
+    "label": "用途",
+    "general": "通用",
+    "coding": "程式設計",
+    "reasoning": "推理",
+    "chat": "聊天",
+    "multimodal": "多模態",
+    "embedding": "嵌入",
+    "tts": "文字轉語音",
+    "stt": "語音轉文字"
+  },
+  "simulate": {
+    "label": "Simulate a GPU",
+    "detected": "Detected hardware",
+    "hint": "Preview what a different GPU would run.",
+    "gpuOnly": "GPU only (no CPU offload)"
+  },
+  "search": {
+    "placeholder": "Search model or provider"
+  },
+  "fitOnly": "僅顯示可執行的模型",
+  "table": {
+    "model": "Model",
+    "params": "Params",
+    "quant": "Quant",
+    "vram": "Needs",
+    "speed": "Speed",
+    "context": "Context",
+    "fit": "Fit",
+    "score": "Score",
+    "moe": "MoE",
+    "tps": "{{value}} tok/s"
+  },
+  "fit": {
+    "perfect": "完美",
+    "good": "良好",
+    "marginal": "勉強",
+    "too_tight": "太大"
+  },
+  "runMode": {
+    "gpu": "Runs on GPU",
+    "cpu_offload": "GPU + RAM offload",
+    "cpu_only": "CPU only",
+    "no_fit": "Does not fit"
+  },
+  "empty": {
+    "title": "No models match",
+    "hint": "Try a different use-case, clear the search, or turn off \"only show models that fit\"."
+  },
+  "footer": {
+    "count": "{{shown}} of {{total}} models"
+  }
+}

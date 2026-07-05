@@ -1,0 +1,71 @@
+{
+  "sidebarLabel": "模型顾问",
+  "pageTitle": "模型顾问",
+  "description": "根据你的硬件对本地模型排名。选择用途，查看哪些能跑、跑多快。",
+  "rescan": "重新扫描",
+  "scanning": "正在扫描硬件...",
+  "hardware": {
+    "title": "你的硬件",
+    "gpu": "显卡",
+    "vram": "显存",
+    "ram": "内存",
+    "cpu": "处理器",
+    "cores": "{{count}} 核",
+    "noGpu": "未检测到显卡",
+    "gpuError": "显卡驱动错误",
+    "unified": "统一内存",
+    "cpuOnly": "仅 CPU / 内存"
+  },
+  "useCase": {
+    "label": "用途",
+    "general": "通用",
+    "coding": "编程",
+    "reasoning": "推理",
+    "chat": "聊天",
+    "multimodal": "多模态",
+    "embedding": "嵌入",
+    "tts": "文本转语音",
+    "stt": "语音转文本"
+  },
+  "simulate": {
+    "label": "Simulate a GPU",
+    "detected": "Detected hardware",
+    "hint": "Preview what a different GPU would run.",
+    "gpuOnly": "GPU only (no CPU offload)"
+  },
+  "search": {
+    "placeholder": "Search model or provider"
+  },
+  "fitOnly": "仅显示可运行的模型",
+  "table": {
+    "model": "Model",
+    "params": "Params",
+    "quant": "Quant",
+    "vram": "Needs",
+    "speed": "Speed",
+    "context": "Context",
+    "fit": "Fit",
+    "score": "Score",
+    "moe": "MoE",
+    "tps": "{{value}} tok/s"
+  },
+  "fit": {
+    "perfect": "完美",
+    "good": "良好",
+    "marginal": "勉强",
+    "too_tight": "太大"
+  },
+  "runMode": {
+    "gpu": "Runs on GPU",
+    "cpu_offload": "GPU + RAM offload",
+    "cpu_only": "CPU only",
+    "no_fit": "Does not fit"
+  },
+  "empty": {
+    "title": "No models match",
+    "hint": "Try a different use-case, clear the search, or turn off \"only show models that fit\"."
+  },
+  "footer": {
+    "count": "{{shown}} of {{total}} models"
+  }
+}

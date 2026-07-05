@@ -1,0 +1,71 @@
+{
+  "sidebarLabel": "モデルアドバイザー",
+  "pageTitle": "モデルアドバイザー",
+  "description": "あなたのハードウェアに合わせてローカルモデルをランク付け。用途を選んで、何が動くか・どれくらい速いかを確認できます。",
+  "rescan": "再スキャン",
+  "scanning": "ハードウェアをスキャン中...",
+  "hardware": {
+    "title": "あなたのハードウェア",
+    "gpu": "GPU",
+    "vram": "VRAM",
+    "ram": "システムメモリ",
+    "cpu": "CPU",
+    "cores": "{{count}} コア",
+    "noGpu": "GPU が見つかりません",
+    "gpuError": "GPU ドライバーエラー",
+    "unified": "ユニファイドメモリ",
+    "cpuOnly": "CPU / メモリのみ"
+  },
+  "useCase": {
+    "label": "用途",
+    "general": "汎用",
+    "coding": "コーディング",
+    "reasoning": "推論",
+    "chat": "チャット",
+    "multimodal": "マルチモーダル",
+    "embedding": "埋め込み",
+    "tts": "テキスト読み上げ",
+    "stt": "音声認識"
+  },
+  "simulate": {
+    "label": "Simulate a GPU",
+    "detected": "Detected hardware",
+    "hint": "Preview what a different GPU would run.",
+    "gpuOnly": "GPU only (no CPU offload)"
+  },
+  "search": {
+    "placeholder": "Search model or provider"
+  },
+  "fitOnly": "動作するモデルのみ表示",
+  "table": {
+    "model": "Model",
+    "params": "Params",
+    "quant": "Quant",
+    "vram": "Needs",
+    "speed": "Speed",
+    "context": "Context",
+    "fit": "Fit",
+    "score": "Score",
+    "moe": "MoE",
+    "tps": "{{value}} tok/s"
+  },
+  "fit": {
+    "perfect": "最適",
+    "good": "良好",
+    "marginal": "ぎりぎり",
+    "too_tight": "大きすぎ"
+  },
+  "runMode": {
+    "gpu": "Runs on GPU",
+    "cpu_offload": "GPU + RAM offload",
+    "cpu_only": "CPU only",
+    "no_fit": "Does not fit"
+  },
+  "empty": {
+    "title": "No models match",
+    "hint": "Try a different use-case, clear the search, or turn off \"only show models that fit\"."
+  },
+  "footer": {
+    "count": "{{shown}} of {{total}} models"
+  }
+}

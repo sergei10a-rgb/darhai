@@ -1,0 +1,180 @@
+/**
+ * @license
+ * Copyright 2026 Ferrox Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/* ---- hardware panel ---- */
+.hwCard {
+  margin-bottom: 18px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border-2);
+  background: var(--color-bg-2);
+}
+.hwHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.hwTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text-1);
+}
+.hwGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+.statCell {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+}
+.statIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  background: var(--color-fill-2);
+  color: var(--color-text-2);
+  flex-shrink: 0;
+}
+.statBody {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.statLabel {
+  font-size: 12px;
+  color: var(--color-text-3);
+}
+.statValue {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.statValueMuted {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-3);
+}
+
+/* ---- toolbar ---- */
+.toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.toolbarRow {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.fieldLabel {
+  font-size: 12px;
+  color: var(--color-text-3);
+}
+.select {
+  width: 190px;
+}
+.searchInput {
+  width: 260px;
+  flex: 1 1 200px;
+  max-width: 360px;
+}
+.switchField {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+/* ---- table ---- */
+.table {
+  margin-top: 4px;
+}
+.modelCell {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.modelName {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.modelProvider {
+  font-size: 12px;
+  color: var(--color-text-3);
+}
+.mono {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 13px;
+  color: var(--color-text-2);
+}
+.moeTag {
+  margin-left: 6px;
+}
+.scoreValue {
+  font-weight: 700;
+  color: var(--color-text-1);
+}
+
+/* ---- empty state ---- */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 64px 20px;
+  text-align: center;
+}
+.emptyIcon {
+  color: var(--color-text-4);
+  margin-bottom: 4px;
+}
+.emptyTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-2);
+}
+.emptyHint {
+  font-size: 13px;
+  color: var(--color-text-3);
+  max-width: 420px;
+}
+
+/* ---- footer ---- */
+.footer {
+  margin-top: 14px;
+  font-size: 12px;
+  color: var(--color-text-3);
+  text-align: right;
+}
+
+@media (max-width: 900px) {
+  .hwGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
