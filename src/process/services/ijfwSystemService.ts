@@ -68,6 +68,47 @@ let runtimeMode: IjfwRuntimeMode = 'disabled';
 
 const HOMEBREW_PATHS = ['/opt/homebrew/bin', '/usr/local/bin', '/home/linuxbrew/.linuxbrew/bin'];
 
+/** Absolute path to the installer-bundled mcp-server seed, or null if unbundled. */
+function bundledIjfwSeedDir(): string | null {
+  const base = process.resourcesPath;
+  if (!base || typeof base !== 'string') return null;
+  return path.join(base, 'bundled-ijfw', 'mcp-server');
+}
+
+/**
+ * Seed ~/.ijfw/mcp-server from the copy shipped inside the installer
+ * (electron-builder extraResources -> resources/bundled-ijfw) when no install
+ * is present. This lets the Memory engine come up with zero npm and zero
+ * network on a fresh machine - the runtime download via npx is now only a
+ * fallback/upgrade path. Never overwrites an existing install. Returns true
+ * when a seed was written.
+ */
+async function seedFromBundleIfPresent(): Promise<boolean> {
+  const seed = bundledIjfwSeedDir();
+  if (!seed) return false;
+  try {
+    await fs.promises.access(path.join(seed, 'package.json'));
+  } catch {
+    return false; // no bundle in this build (IJFW_SKIP, or a dev run)
+  }
+  const target = path.join(os.homedir(), '.ijfw', 'mcp-server');
+  try {
+    await fs.promises.lstat(target);
+    return false; // already installed - never clobber
+  } catch {
+    /* absent - seed it */
+  }
+  try {
+    await fs.promises.mkdir(path.dirname(target), { recursive: true });
+    await fs.promises.cp(seed, target, { recursive: true });
+    log.info('[ijfw] seeded mcp-server from bundled installer copy', { target });
+    return true;
+  } catch (err) {
+    log.warn('[ijfw] bundle seed failed - will fall back to npm install', { err });
+    return false;
+  }
+}
+
 async function detectLocalInstallImpl(): Promise<IjfwDetectionResult> {
   const home = os.homedir();
   const target = path.join(home, '.ijfw', 'mcp-server');
@@ -360,6 +401,9 @@ async function bootstrapImpl(): Promise<void> {
     await syncPrelude('not_installed');
     return;
   }
+
+  // Seed from the installer-bundled copy first so a fresh machine needs no npm.
+  await seedFromBundleIfPresent();
 
   const local = await detectLocalInstallImpl();
   const latest = await getLatestPublishedImpl();

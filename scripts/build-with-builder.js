@@ -456,6 +456,9 @@ try {
 
   // 5b. Prepare hub resources (index.json + extension zips for offline fallback)
   execSync('node scripts/prepareHubResources.js', { stdio: 'inherit', env: process.env });
+  // 5b-ijfw. Stage the IJFW (Memory) MCP server so it ships in the installer and
+  // seeds ~/.ijfw/mcp-server on first run - no runtime npm/network required.
+  execSync('node scripts/prepareIjfw.js', { stdio: 'inherit', env: process.env });
   // 5b. Prepare wayland-core binary (Rust CLI for agent integration)
   prepareWaylandCore();
   // 5c. Prepare the bundled voice STT model (Whisper-tiny ONNX, ~43 MB) so
