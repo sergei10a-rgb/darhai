@@ -245,7 +245,7 @@ src/renderer/
 
 ```
 src/renderer/components/
-├── base/           # UI primitives - DarhaiModal, WaylandSelect, FlexFullContainer, etc.
+├── base/           # UI primitives - DarhaiModal, FlexFullContainer, etc.
 ├── chat/           # Conversation/message domain (example, not exhaustive)
 ├── agent/          # Agent selection/configuration domain
 ├── settings/       # Settings domain

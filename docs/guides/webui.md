@@ -220,11 +220,9 @@ sudo systemctl status darhai-webui.service
 
 **Чухал тэмдэглэл**: Android дээр Electron дэсктоп горим **дэмжигдэхгүй**. Гэхдээ Termux + proot Linux орчин ашиглан Дархайг WebUI горимд ажиллуулж болно.
 
-> **Нийгэмлэгийн хувь нэмэр**: Энэ зааврыг [@Manamama](https://github.com/Manamama) upstream Wayland төсөлд зориулж бичсэн бөгөөд Android дээр ажиллуулах боломжийг нээж өгсөнд нь баярлалаа! 🙏
+> **Нийгэмлэгийн хувь нэмэр**: Энэ Android WebUI зааврыг [@Manamama](https://github.com/Manamama) анх бичиж, Termux + proot орчинд ажиллуулах боломжийг нээж өгсөнд нь баярлалаа! 🙏
 >
-> **Эх заавар**: [Running Wayland WebUI on Android via Termux + Proot Ubuntu](https://gist.github.com/Manamama/b4f903c279b5e73bdad4c2c0a58d5ddd)
->
-> **Холбогдох хэлэлцүүлэг**: [upstream Wayland төслийн асуудал #217 — Android дэмжлэг](https://github.com/FerroxLabs/wayland/issues/217)
+> **Эх заавар**: [WebUI on Android via Termux + Proot Ubuntu](https://gist.github.com/Manamama/b4f903c279b5e73bdad4c2c0a58d5ddd)
 
 ### Урьдчилсан шаардлага
 

@@ -114,7 +114,7 @@ bun run start:multi
 This sets `DARHAI_MULTI_INSTANCE=1`, which:
 
 - Skips the Electron single-instance lock
-- Uses a separate userData directory (`Wayland-Dev-2`) to avoid database and config conflicts
+- Uses a separate dev-mode userData directory to avoid database and config conflicts
 - Isolates data/config symlink paths (`~/.darhai-dev-2`, `~/.darhai-config-dev-2`)
 - Vite renderer, CDP, and WebUI proxy ports auto-increment to avoid collisions
 
