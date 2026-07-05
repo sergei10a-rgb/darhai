@@ -15,7 +15,7 @@ license: Apache-2.0
 type: workflow
 skills: "convert-temperature convert-four-questions convert-three-locks convert-open convert-package convert-close convert-bullshit-filter"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: marketing conversion copywriting sales-letter donahoe-method step-by-step
   category: marketing

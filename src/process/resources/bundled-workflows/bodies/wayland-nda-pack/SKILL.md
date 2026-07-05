@@ -14,7 +14,7 @@ license: Apache-2.0
 type: workflow
 skills: "legal-nda"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: legal nda confidentiality mutual unilateral step-by-step business-legal
   category: business-legal

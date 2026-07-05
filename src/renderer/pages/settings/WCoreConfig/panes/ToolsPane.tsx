@@ -262,7 +262,7 @@ const ToolsPane: React.FC<ToolsPaneProps> = ({ onGoServices }) => {
   return (
     <div className={styles.pane}>
       <div className={styles.head}>
-        <div className={styles.eyebrow}>Wayland Core</div>
+        <div className={styles.eyebrow}>Darhai Core</div>
         <h1 className={styles.title}>{t('settings.wcoreConfig.rail.tools', { defaultValue: 'Tools' })}</h1>
         <p className={styles.sub}>
           {t('settings.wcoreConfig.tools.subtitle', {

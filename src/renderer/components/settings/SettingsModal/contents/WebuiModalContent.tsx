@@ -8,8 +8,8 @@ import { CheckCircle2, Copy, Globe, PencilLine, RefreshCw } from 'lucide-react';
 import { WEBUI_DEFAULT_PORT } from '@/common/config/constants';
 import { shell, webui, type IWebUIStatus } from '@/common/adapter/ipcBridge';
 import { ConfigStorage } from '@/common/config/storage';
-import WaylandModal from '@/renderer/components/base/WaylandModal';
-import WaylandScrollArea from '@/renderer/components/base/WaylandScrollArea';
+import DarhaiModal from '@/renderer/components/base/DarhaiModal';
+import DarhaiScrollArea from '@/renderer/components/base/DarhaiScrollArea';
 import ChannelDingTalkLogo from '@/renderer/assets/channel-logos/dingtalk.svg';
 import ChannelDiscordLogo from '@/renderer/assets/channel-logos/discord.svg';
 import ChannelLarkLogo from '@/renderer/assets/channel-logos/lark.svg';
@@ -661,20 +661,20 @@ const WebuiModalContent: React.FC = () => {
   if (!isDesktop) {
     return (
       <div className='flex flex-col h-full w-full'>
-        <WaylandScrollArea className='flex-1 min-h-0 pb-16px' disableOverflow={isPageMode}>
+        <DarhaiScrollArea className='flex-1 min-h-0 pb-16px' disableOverflow={isPageMode}>
           <div className='space-y-16px'>
             <h2 className='text-20px font-500 text-t-primary m-0'>Channels</h2>
             <Suspense fallback={<div className='text-13px text-t-secondary'>{t('common.loading')}</div>}>
               <ChannelModalContentLazy />
             </Suspense>
           </div>
-        </WaylandScrollArea>
+        </DarhaiScrollArea>
       </div>
     );
   }
 
   const webuiPanel = (
-    <WaylandScrollArea className='flex-1 min-h-0 pb-16px' disableOverflow={isPageMode}>
+    <DarhaiScrollArea className='flex-1 min-h-0 pb-16px' disableOverflow={isPageMode}>
       <div className='space-y-12px px-[12px] md:px-[28px]'>
         {/* Title */}
         <h2 className='text-20px font-500 text-t-primary m-0'>WebUI</h2>
@@ -769,7 +769,7 @@ const WebuiModalContent: React.FC = () => {
                   className='text-primary hover:underline cursor-pointer bg-transparent border-none p-0 text-12px'
                   onClick={() =>
                     shell.openExternal
-                      .invoke('https://github.com/FerroxLabs/wayland/wiki/Remote-Internet-Access-Guide')
+                      .invoke('https://github.com/sergei10a-rgb/darhai/wiki/Remote-Internet-Access-Guide')
                       .catch(console.error)
                   }
                 >
@@ -898,14 +898,14 @@ const WebuiModalContent: React.FC = () => {
           )}
         </div>
       </div>
-    </WaylandScrollArea>
+    </DarhaiScrollArea>
   );
 
   return (
     <div className='flex flex-col h-full w-full'>
       {webuiPanel}
 
-      <WaylandModal
+      <DarhaiModal
         visible={setUsernameModalVisible}
         onCancel={() => setSetUsernameModalVisible(false)}
         onOk={handleSetNewUsername}
@@ -962,10 +962,10 @@ const WebuiModalContent: React.FC = () => {
             <Input placeholder={t('settings.webui.newUsernamePlaceholder')} />
           </Form.Item>
         </Form>
-      </WaylandModal>
+      </DarhaiModal>
 
       {/* Set New Password Modal */}
-      <WaylandModal
+      <DarhaiModal
         visible={setPasswordModalVisible}
         onCancel={() => setSetPasswordModalVisible(false)}
         onOk={handleSetNewPassword}
@@ -1015,7 +1015,7 @@ const WebuiModalContent: React.FC = () => {
             <Input.Password placeholder={t('settings.webui.confirmPasswordPlaceholder')} />
           </Form.Item>
         </Form>
-      </WaylandModal>
+      </DarhaiModal>
     </div>
   );
 };

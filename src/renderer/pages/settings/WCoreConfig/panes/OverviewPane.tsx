@@ -67,7 +67,7 @@ const OverviewPane: React.FC<OverviewPaneProps> = ({ version }) => {
   // Honesty relabel: distinguish what the engine ACTUALLY receives from Desktop
   // this session (Models override, Skills + Assistants/Constitution via system
   // prompt) from what it does NOT (the user's Desktop MCP Library; only
-  // Wayland's own operational MCPs are injected).
+  // Дархай's own operational MCPs are injected).
   const allocatedLabel = t('settings.wcoreConfig.overview.allocatedSession', {
     defaultValue: 'Allocated by Desktop · this session',
   });
@@ -122,7 +122,7 @@ const OverviewPane: React.FC<OverviewPaneProps> = ({ version }) => {
         icon: <Server size={16} />,
         name: t('settings.wcoreConfig.overview.inheritMcp', { defaultValue: 'MCP Servers' }),
         detail: t('settings.wcoreConfig.overview.mcpDetail', {
-          defaultValue: 'Wayland operational MCPs · your Desktop MCP library is separate',
+          defaultValue: 'Дархай operational MCPs · your Desktop MCP library is separate',
         }),
         target: 'mcp-library/installed',
       },
@@ -135,7 +135,7 @@ const OverviewPane: React.FC<OverviewPaneProps> = ({ version }) => {
     <div className={styles.pane}>
       {/* Pane head */}
       <div className={styles.head}>
-        <div className={styles.eyebrow}>{t('settings.wcoreConfig.title', { defaultValue: 'Wayland Core' })}</div>
+        <div className={styles.eyebrow}>{t('settings.wcoreConfig.title', { defaultValue: 'Darhai Core' })}</div>
         <h1 className={styles.title}>{t('settings.wcoreConfig.overview.title', { defaultValue: 'Overview' })}</h1>
         <p className={styles.sub}>
           {t('settings.wcoreConfig.overview.subtitle', {
@@ -183,7 +183,7 @@ const OverviewPane: React.FC<OverviewPaneProps> = ({ version }) => {
         </div>
       </div>
 
-      {/* Inherited from Wayland Desktop (read-only, deep-links back) */}
+      {/* Inherited from Дархай Desktop (read-only, deep-links back) */}
       <div className={styles.section}>
         <div className={styles.inheritCard}>
           <div className={styles.inheritHead}>
@@ -191,13 +191,13 @@ const OverviewPane: React.FC<OverviewPaneProps> = ({ version }) => {
             <div>
               <div className={styles.ihTitle}>
                 {t('settings.wcoreConfig.overview.inheritedTitle', {
-                  defaultValue: 'Allocated by Wayland Desktop',
+                  defaultValue: 'Allocated by Дархай Desktop',
                 })}
               </div>
               <div className={styles.ihBody}>
                 {t('settings.wcoreConfig.overview.inheritedBody', {
                   defaultValue:
-                    'For this session, Desktop hands the engine your model (as an override) and injects Skills + Assistants/Constitution through its system prompt. Your Desktop MCP library is NOT passed through; only Wayland’s own operational MCPs are.',
+                    'For this session, Desktop hands the engine your model (as an override) and injects Skills + Assistants/Constitution through its system prompt. Your Desktop MCP library is NOT passed through; only Дархай’s own operational MCPs are.',
                 })}
               </div>
             </div>
@@ -238,7 +238,7 @@ const OverviewPane: React.FC<OverviewPaneProps> = ({ version }) => {
           <div className={styles.engineOwnedLine}>
             {t('settings.wcoreConfig.overview.engineOwnedLine', {
               defaultValue:
-                'Tools, Memory, Security and Profiles are the engine’s own: written to ~/.wayland-core/config.toml and shared with the Wayland Core CLI.',
+                'Tools, Memory, Security and Profiles are the engine’s own: written to ~/.wayland-core/config.toml and shared with the Darhai Core CLI.',
             })}
           </div>
         </div>

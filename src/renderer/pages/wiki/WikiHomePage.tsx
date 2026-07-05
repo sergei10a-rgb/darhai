@@ -67,7 +67,7 @@ function formatLastSync(ms: number): string {
 
 export function WikiHomePage(): React.ReactElement {
   const navigate = useNavigate();
-  const { t } = useTranslation('memory');
+  const { t } = useTranslation();
   const [view, setView] = useState<View>('list');
   const [activeTopic, setActiveTopic] = useState<WikiTopicTag | 'All'>('All');
   const [search, setSearch] = useState('');
@@ -142,9 +142,7 @@ export function WikiHomePage(): React.ReactElement {
 
   // Most referenced = top 6 by sourceMemoryIds count
   const mostReferenced = useMemo(() => {
-    return [...allConcepts]
-      .sort((a, b) => b.sourceMemoryIds.length - a.sourceMemoryIds.length)
-      .slice(0, 6);
+    return [...allConcepts].toSorted((a, b) => b.sourceMemoryIds.length - a.sourceMemoryIds.length).slice(0, 6);
   }, [allConcepts]);
 
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -171,7 +169,7 @@ export function WikiHomePage(): React.ReactElement {
         Message.success(
           t('wiki.home.synthesizeNow.success', 'Synthesized {{count}} new concepts', {
             count: result.newConcepts,
-          }),
+          })
         );
       } else {
         Message.error(result?.error ?? t('wiki.home.synthesizeNow.error', 'Synthesis failed'));
@@ -205,7 +203,7 @@ export function WikiHomePage(): React.ReactElement {
           })}
         </span>
         <div className={styles.topbarSpacer} />
-        <div className={styles.viewToggle} role='group' aria-label='View toggle'>
+        <div className={styles.viewToggle} role='group' aria-label={t('memory.wiki.home.viewToggleLabel')}>
           <button
             className={view === 'list' ? `${styles.viewBtn} ${styles.viewBtnActive}` : styles.viewBtn}
             onClick={() => setView('list')}
@@ -240,14 +238,16 @@ export function WikiHomePage(): React.ReactElement {
           disabled={synthesizing}
           icon={synthesizing ? <Spin size={12} /> : undefined}
         >
-          {synthesizing
-            ? t('wiki.home.synthesizing', 'Synthesizing…')
-            : t('wiki.home.synthesizeNow', 'Synthesize now')}
+          {synthesizing ? t('wiki.home.synthesizing', 'Synthesizing…') : t('wiki.home.synthesizeNow', 'Synthesize now')}
         </Button>
         <Button type='primary' size='small' className={styles.newBtn}>
           {t('wiki.home.newConcept', '+ New concept')}
         </Button>
-        <button className={styles.iconBtn} title={t('wiki.home.settings', 'Settings')} aria-label={t('wiki.home.settings', 'Settings')}>
+        <button
+          className={styles.iconBtn}
+          title={t('wiki.home.settings', 'Settings')}
+          aria-label={t('wiki.home.settings', 'Settings')}
+        >
           <Settings size={15} />
         </button>
       </header>
@@ -271,15 +271,11 @@ export function WikiHomePage(): React.ReactElement {
               <span className={styles.kbd}>K</span>
             </div>
           </div>
-          <div className={styles.topicChips} role='group' aria-label='Topic filter'>
+          <div className={styles.topicChips} role='group' aria-label={t('memory.wiki.home.topicFilterLabel')}>
             {TOPIC_CHIPS.map((topic) => (
               <button
                 key={topic}
-                className={
-                  activeTopic === topic
-                    ? `${styles.chip} ${styles.chipActive}`
-                    : styles.chip
-                }
+                className={activeTopic === topic ? `${styles.chip} ${styles.chipActive}` : styles.chip}
                 onClick={() => setActiveTopic(topic)}
                 aria-pressed={activeTopic === topic}
                 data-testid={`topic-chip-${topic.toLowerCase()}`}
@@ -295,11 +291,7 @@ export function WikiHomePage(): React.ReactElement {
       <div className={styles.content}>
         {view === 'graph' ? (
           <div className={styles.graphView} data-testid='graph-view'>
-            <KnowledgeGraph
-              concepts={filtered}
-              backlinkGraph={backlinkGraph}
-              onNavigate={handleNavigate}
-            />
+            <KnowledgeGraph concepts={filtered} backlinkGraph={backlinkGraph} onNavigate={handleNavigate} />
           </div>
         ) : (
           <>
@@ -328,14 +320,9 @@ export function WikiHomePage(): React.ReactElement {
                             }}
                             data-testid='concept-item'
                           >
-                            <div
-                              className={styles.conceptDot}
-                              style={{ background: TOPIC_DOT_COLORS[c.topicTag] }}
-                            />
+                            <div className={styles.conceptDot} style={{ background: TOPIC_DOT_COLORS[c.topicTag] }} />
                             <span className={styles.conceptName}>{c.name}</span>
-                            <span className={styles.conceptRefCount}>
-                              {c.sourceMemoryIds.length}
-                            </span>
+                            <span className={styles.conceptRefCount}>{c.sourceMemoryIds.length}</span>
                           </a>
                         </li>
                       ))}
@@ -357,14 +344,10 @@ export function WikiHomePage(): React.ReactElement {
                   {t('wiki.home.columns.updatedThisWeek', 'Updated this week')}
                 </div>
                 {updatedThisWeek.length > 0 ? (
-                  updatedThisWeek.map((c) => (
-                    <ConceptCard key={c.id} concept={c} onClick={handleNavigate} />
-                  ))
+                  updatedThisWeek.map((c) => <ConceptCard key={c.id} concept={c} onClick={handleNavigate} />)
                 ) : !loading ? (
                   <p className={styles.emptyMsg}>
-                    {allConcepts.length === 0
-                      ? 'No concepts yet.'
-                      : 'No concepts updated this week.'}
+                    {allConcepts.length === 0 ? 'No concepts yet.' : 'No concepts updated this week.'}
                   </p>
                 ) : null}
               </div>

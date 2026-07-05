@@ -9,7 +9,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { getCookieOptions, SERVER_CONFIG } from '@process/webserver/config/constants';
 
-const ENV_KEYS = ['WAYLAND_HTTPS', 'HTTPS', 'NODE_ENV', 'SERVER_BASE_URL'] as const;
+const ENV_KEYS = ['DARHAI_HTTPS', 'HTTPS', 'NODE_ENV', 'SERVER_BASE_URL'] as const;
 
 function buildRequest(overrides: Partial<Request>): Request {
   return overrides as Request;
@@ -58,8 +58,8 @@ describe('getCookieOptions', () => {
     });
   });
 
-  it('issues Secure + SameSite=None when WAYLAND_HTTPS=true', () => {
-    process.env.WAYLAND_HTTPS = 'true';
+  it('issues Secure + SameSite=None when DARHAI_HTTPS=true', () => {
+    process.env.DARHAI_HTTPS = 'true';
 
     expect(getCookieOptions()).toEqual({
       httpOnly: true,

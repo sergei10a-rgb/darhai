@@ -50,9 +50,11 @@ interface PageInfo {
 async function getPage(): Promise<PageInfo> {
   const res = await fetch(`http://${CDP_HOST}:${CDP_PORT}/json/list`);
   const pages: PageInfo[] = await res.json();
-  const renderer = pages.find((p) => p.type === 'page' && p.title === 'Wayland');
+  // Renderer <title> is «Дархай» (src/renderer/index.html); 'Wayland' kept for
+  // stale pre-rebrand builds.
+  const renderer = pages.find((p) => p.type === 'page' && (p.title === 'Дархай' || p.title === 'Wayland'));
   if (!renderer) {
-    throw new Error('No Wayland renderer page found at CDP port ' + CDP_PORT);
+    throw new Error('No Darhai renderer page found at CDP port ' + CDP_PORT);
   }
   return renderer;
 }

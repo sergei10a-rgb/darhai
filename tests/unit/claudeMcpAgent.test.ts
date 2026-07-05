@@ -19,8 +19,8 @@ describe('ClaudeMcpAgent helpers', () => {
         command: 'node',
         args: ['/abs/builtin-mcp-image-gen.js'],
         env: {
-          WAYLAND_IMG_PLATFORM: 'openai',
-          WAYLAND_IMG_MODEL: 'gpt-image-1',
+          DARHAI_IMG_PLATFORM: 'openai',
+          DARHAI_IMG_MODEL: 'gpt-image-1',
         },
       },
       createdAt: 1,
@@ -32,8 +32,8 @@ describe('ClaudeMcpAgent helpers', () => {
       command: 'node',
       args: ['/abs/builtin-mcp-image-gen.js'],
       env: {
-        WAYLAND_IMG_PLATFORM: 'openai',
-        WAYLAND_IMG_MODEL: 'gpt-image-1',
+        DARHAI_IMG_PLATFORM: 'openai',
+        DARHAI_IMG_MODEL: 'gpt-image-1',
       },
     });
   });

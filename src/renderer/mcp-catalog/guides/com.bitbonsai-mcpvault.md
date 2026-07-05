@@ -7,12 +7,12 @@ steps:
     estSeconds: 30
     autoCompletedByInstall: true
     body: |
-      Wayland fetches `@bitbonsai/mcpvault` from npm via `npx` on first
+      Дархай fetches `@bitbonsai/mcpvault` from npm via `npx` on first
       launch - no manual install needed. The server reads and writes your
       vault directly as Markdown, with no Obsidian plugin and no running
       Obsidian app required. Requires Node 18+.
   - id: vault-path
-    title: Point Wayland at your vault folder
+    title: Point Дархай at your vault folder
     estSeconds: 30
     inputs:
       - { name: OBSIDIAN_VAULT_PATH, label: "Absolute path to your vault" }

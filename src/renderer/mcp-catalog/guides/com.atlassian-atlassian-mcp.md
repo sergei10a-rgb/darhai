@@ -9,7 +9,7 @@ steps:
     body: |
       No local install needed. Atlassian hosts the MCP server (Atlassian
       Remote MCP / Rovo MCP) at `https://mcp.atlassian.com/v1/mcp/authv2`.
-      Wayland connects over streamable HTTP the moment you finish sign-in.
+      Дархай connects over streamable HTTP the moment you finish sign-in.
   - id: admin-check
     title: Confirm your site admin has authorized Rovo MCP
     estSeconds: 90
@@ -42,14 +42,14 @@ steps:
       `id.atlassian.com`.
 
       1. Sign in with the Atlassian account that has access to the Jira /
-         Confluence sites you want Wayland to act on.
+         Confluence sites you want Дархай to act on.
       2. Pick the site (e.g. *acme.atlassian.net*) from the **Accessible
          resources** list. You can re-run sign-in later to add more sites.
-      3. Review the scopes - Wayland requests **read:jira-work**,
+      3. Review the scopes - Дархай requests **read:jira-work**,
          **write:jira-work**, **read:confluence-content.all**, and
          **write:confluence-content**. The MCP enforces your existing
          per-project / per-space permissions on every call.
-      4. Click **Accept**. The tab redirects back to Wayland and the
+      4. Click **Accept**. The tab redirects back to Дархай and the
          server status flips to Running.
 
       Tokens live in your OS keychain.
@@ -58,7 +58,7 @@ steps:
     estSeconds: 30
     body: |
       Open a new chat and ask: *"List open Jira issues assigned to me in
-      <project key>."* Wayland will call the MCP and stream the results.
+      <project key>."* Дархай will call the MCP and stream the results.
 
       Revoke any time from
       `id.atlassian.com/manage-profile/apps`.

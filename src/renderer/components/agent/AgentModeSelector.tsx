@@ -219,20 +219,20 @@ const AgentModeSelector: React.FC<AgentModeSelectorProps> = ({
         if (result.success) {
           setCurrentMode(result.data?.mode ?? mode);
           onModeChanged?.(result.data?.mode ?? mode);
-          Message.success('Mode switched');
+          Message.success(t('agentMode.switchSuccess'));
         } else {
-          const errorMsg = result.msg || 'Switch failed';
+          const errorMsg = result.msg || t('agentMode.switchFailed');
           console.warn('[AgentModeSelector] Mode switch failed:', errorMsg);
           Message.warning(errorMsg);
         }
       } catch (error) {
         console.error('[AgentModeSelector] Failed to switch mode:', error);
-        Message.error('Switch failed');
+        Message.error(t('agentMode.switchFailed'));
       } finally {
         setIsLoading(false);
       }
     },
-    [conversationId, currentMode, onModeSelect]
+    [conversationId, currentMode, onModeSelect, t]
   );
 
   const renderLogo = () => (

@@ -73,14 +73,14 @@ const mkdirSync = (path: string) => {
  * ExtensionLoader discovers them via the 'appdata' scan source. Mirrors the
  * builtin-skills sync: app-managed, overwrite-on-update, copies only our own
  * per-pack subdirs so user-installed extensions in the same dir are untouched.
- * Packaged-only: dev uses WAYLAND_EXTENSIONS_PATH, not this copy.
+ * Packaged-only: dev uses DARHAI_EXTENSIONS_PATH, not this copy.
  *
  * Source (packaged): <process.resourcesPath>/bundled-extensions  (extraResources)
  * Target:            getAppDataExtensionsDir() = <userData>/extensions
  */
 const initBundledExtensions = async (): Promise<void> => {
   const platform = getPlatformServices().paths;
-  // Dev resolves extensions via WAYLAND_EXTENSIONS_PATH; only sync when packaged.
+  // Dev resolves extensions via DARHAI_EXTENSIONS_PATH; only sync when packaged.
   if (!platform.isPackaged()) return;
 
   const sourceRoot = path.join(process.resourcesPath, 'bundled-extensions');
@@ -146,7 +146,11 @@ const migrateLegacyData = async () => {
           try {
             await fs.rm(oldDir, { recursive: true });
           } catch (cleanupError) {
-            console.warn('[Wayland] Failed to clean up original directory, please delete manually:', oldDir, cleanupError);
+            console.warn(
+              '[Wayland] Failed to clean up original directory, please delete manually:',
+              oldDir,
+              cleanupError
+            );
           }
         }
       }
@@ -725,10 +729,10 @@ const ensureBuiltinMcpServers = async (): Promise<void> => {
     const buildEnvFromConfig = (cfg: typeof oldConfig): Record<string, string> => {
       if (!cfg) return {};
       const env: Record<string, string> = {};
-      if (cfg.platform) env.WAYLAND_IMG_PLATFORM = cfg.platform;
-      if (cfg.baseUrl) env.WAYLAND_IMG_BASE_URL = cfg.baseUrl;
-      if (cfg.apiKey) env.WAYLAND_IMG_API_KEY = cfg.apiKey;
-      if (cfg.useModel) env.WAYLAND_IMG_MODEL = cfg.useModel;
+      if (cfg.platform) env.DARHAI_IMG_PLATFORM = cfg.platform;
+      if (cfg.baseUrl) env.DARHAI_IMG_BASE_URL = cfg.baseUrl;
+      if (cfg.apiKey) env.DARHAI_IMG_API_KEY = cfg.apiKey;
+      if (cfg.useModel) env.DARHAI_IMG_MODEL = cfg.useModel;
       return env;
     };
 

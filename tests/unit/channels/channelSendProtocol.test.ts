@@ -14,9 +14,9 @@ function buildChannelSendProtocol(action: {
   fileName?: string;
   caption?: string;
 }): string {
-  return `[WAYLAND_CHANNEL_SEND]
+  return `[DARHAI_CHANNEL_SEND]
 ${JSON.stringify(action)}
-[/WAYLAND_CHANNEL_SEND]`;
+[/DARHAI_CHANNEL_SEND]`;
 }
 
 vi.mock('@process/services/database', () => ({

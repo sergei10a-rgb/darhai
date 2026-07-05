@@ -8,7 +8,7 @@ import { Home, Plus } from 'lucide-react';
 import { ipcBridge } from '@/common';
 import { ConfigStorage } from '@/common/config/storage';
 import type { AcpBackendConfig } from '@/common/types/acpTypes';
-import WaylandModal from '@/renderer/components/base/WaylandModal';
+import DarhaiModal from '@/renderer/components/base/DarhaiModal';
 import { Alert, Button, Typography } from '@arco-design/web-react';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -210,7 +210,7 @@ const LocalAgents: React.FC = () => {
         </div>
       )}
 
-      <WaylandModal
+      <DarhaiModal
         visible={editorVisible}
         onCancel={() => {
           setEditorVisible(false);
@@ -239,7 +239,7 @@ const LocalAgents: React.FC = () => {
             setEditingAgent(null);
           }}
         />
-      </WaylandModal>
+      </DarhaiModal>
 
       <div className='flex flex-col gap-4px px-0'>
         {customAgents?.map((agent) => (

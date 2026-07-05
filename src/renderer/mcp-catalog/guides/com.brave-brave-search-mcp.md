@@ -7,7 +7,7 @@ steps:
     estSeconds: 30
     autoCompletedByInstall: true
     body: |
-      Wayland fetches `brave-search-mcp` from npm via `npx` on first launch -
+      Дархай fetches `brave-search-mcp` from npm via `npx` on first launch -
       no manual install needed. If the server fails to start later, reinstall
       from this page.
   - id: api-key
@@ -26,7 +26,7 @@ steps:
       3. Left sidebar → **Subscriptions**. Find **Data for Search - Free**
          and click **Subscribe**. The page confirms the Free plan is active.
       4. Left sidebar → **API Keys**.
-      5. Click **+ Add a key**. Name it anything (e.g. *Wayland*) and pick
+      5. Click **+ Add a key**. Name it anything (e.g. *Darhai*) and pick
          your Free subscription from the dropdown.
       6. Click **Add**. Copy the key shown - it's displayed only once.
       7. Paste it into the `BRAVE_API_KEY` field above.

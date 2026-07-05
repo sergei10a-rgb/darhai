@@ -7,10 +7,10 @@ steps:
     estSeconds: 30
     autoCompletedByInstall: true
     body: |
-      Wayland connects to Box's hosted MCP at `https://mcp.box.com` -
+      Дархай connects to Box's hosted MCP at `https://mcp.box.com` -
       nothing runs locally. Box doesn't support automatic OAuth client
       registration, so you'll register a Box Custom App once (the next step
-      walks you through it) and Wayland reuses your credentials.
+      walks you through it) and Дархай reuses your credentials.
   - id: authorize
     title: Sign in with Box
     estSeconds: 60
@@ -21,12 +21,12 @@ steps:
       Integrations → Box MCP server → Configure** before personal OAuth will
       succeed. Hit that error and you'll need to ask them first.
     body: |
-      The first time you click **Sign in with Box** Wayland opens a dialog for
+      The first time you click **Sign in with Box** Дархай opens a dialog for
       your own Box Custom App's **Client ID** and **Client Secret**. The dialog
       walks you through creating the app at **app.box.com/developers/console**
       and shows the redirect URI to paste in.
 
-      After you save the credentials, Wayland opens a browser tab to
+      After you save the credentials, Дархай opens a browser tab to
       `account.box.com` and prompts you to sign in. Box then shows a **Grant
       access** consent screen requesting three scopes:
 
@@ -35,7 +35,7 @@ steps:
       - `docgen.readwrite` - generate documents with Box Doc Gen templates.
 
       Pick which folders the integration may touch - start narrow (one
-      folder), widen later. Approve, and the tab redirects back to Wayland.
+      folder), widen later. Approve, and the tab redirects back to Дархай.
 
       The token lives in your OS keychain. Revoke any time at
       **app.box.com → Account Settings → Apps → Authorized apps**.
@@ -44,5 +44,5 @@ steps:
 # Box setup
 
 Box hosts the MCP server at `https://mcp.box.com`. One click of **Sign in
-with Box**, approve the scopes and folder scope, and Wayland can read, write,
+with Box**, approve the scopes and folder scope, and Дархай can read, write,
 and run Box AI on your selected content.

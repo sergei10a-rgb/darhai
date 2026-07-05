@@ -5,7 +5,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { WAYLAND_STRICT_ENV_ENV } from '../../../src/process/extensions/constants';
+import { DARHAI_STRICT_ENV_ENV } from '../../../src/process/extensions/constants';
 import {
   UndefinedEnvVariableError,
   clearStrictModeCache,
@@ -83,12 +83,12 @@ describe('extensions/envResolver', () => {
   });
 
   it('global strict mode should be cached and invalidated via clearStrictModeCache', () => {
-    process.env[WAYLAND_STRICT_ENV_ENV] = '1';
+    process.env[DARHAI_STRICT_ENV_ENV] = '1';
     clearStrictModeCache();
 
     expect(isGlobalStrictMode()).toBe(true);
 
-    process.env[WAYLAND_STRICT_ENV_ENV] = '0';
+    process.env[DARHAI_STRICT_ENV_ENV] = '0';
     // still uses cached value
     expect(isGlobalStrictMode()).toBe(true);
 

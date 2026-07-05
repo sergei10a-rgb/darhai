@@ -14,7 +14,7 @@ license: Apache-2.0
 type: workflow
 skills: "support-churn-investigate support-nps-analysis"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: support churn retention root-cause action-plan step-by-step
   category: support

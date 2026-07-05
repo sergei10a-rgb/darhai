@@ -14,7 +14,7 @@ const ComponentsShowcase: React.FC = () => {
       {contextHolder}
 
       <div>
-        <h1 className='text-3xl font-bold mb-2'>Wayland Custom Component Style Showcase</h1>
+        <h1 className='text-3xl font-bold mb-2'>Дархай Custom Component Style Showcase</h1>
         <p className='text-t-secondary'>Displays all component styles customized in arco-override.css</p>
       </div>
 

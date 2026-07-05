@@ -1,6 +1,6 @@
 {
   "$schema": "../schema/entry.schema.json",
-  "name": "com.wayland/apple-mcp",
+  "name": "com.darhai/apple-mcp",
   "title": "Apple Ecosystem",
   "description": "Notes, Reminders, Mail, Calendar, Maps, Photos via EventKit and AppleScript. macOS only.",
   "version": "0.1.0",
@@ -36,7 +36,7 @@
       { "label": "Maps", "count": 3 },
       { "label": "Photos", "count": 3 }
     ],
-    "setupGuide": { "path": "guides/com.wayland-apple-mcp.md", "estimatedMinutes": 2, "stepCount": 2 },
+    "setupGuide": { "path": "guides/com.darhai-apple-mcp.md", "estimatedMinutes": 2, "stepCount": 2 },
     "platforms": ["macos"],
     "minWaylandVersion": "0.8.0"
   }

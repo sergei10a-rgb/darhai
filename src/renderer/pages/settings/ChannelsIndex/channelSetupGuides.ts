@@ -61,11 +61,10 @@ export const CHANNEL_SETUP_GUIDES: Readonly<Record<string, ChannelSetupGuideCont
     steps: [
       {
         textKey: 'settings.channelGuide.slack.step1',
-        textDefault:
-          'Click "Create New App" then "From scratch". Name it and pick your workspace.',
+        textDefault: 'Click "Create New App" then "From scratch". Name it and pick your workspace.',
         links: [
           {
-            labelKey: 'settings.channelGuide.slack.step1.link',
+            labelKey: 'settings.channelGuide.slack.step1Link',
             labelDefault: 'Open api.slack.com/apps',
             url: 'https://api.slack.com/apps',
           },
@@ -110,7 +109,7 @@ export const CHANNEL_SETUP_GUIDES: Readonly<Record<string, ChannelSetupGuideCont
         textDefault: 'In Telegram, open a chat with @BotFather.',
         links: [
           {
-            labelKey: 'settings.channelGuide.telegram.step1.link',
+            labelKey: 'settings.channelGuide.telegram.step1Link',
             labelDefault: 'Open @BotFather in Telegram',
             url: 'https://t.me/BotFather',
           },
@@ -122,8 +121,7 @@ export const CHANNEL_SETUP_GUIDES: Readonly<Record<string, ChannelSetupGuideCont
       },
       {
         textKey: 'settings.channelGuide.telegram.step3',
-        textDefault:
-          'BotFather replies with an HTTP API token (looks like 123456:ABC-DEF...). Copy it.',
+        textDefault: 'BotFather replies with an HTTP API token (looks like 123456:ABC-DEF...). Copy it.',
       },
       {
         textKey: 'settings.channelGuide.telegram.step4',
@@ -140,7 +138,7 @@ export const CHANNEL_SETUP_GUIDES: Readonly<Record<string, ChannelSetupGuideCont
         textDefault: 'Open the Discord developer portal and create a New Application. Name it.',
         links: [
           {
-            labelKey: 'settings.channelGuide.discord.step1.link',
+            labelKey: 'settings.channelGuide.discord.step1Link',
             labelDefault: 'Open discord.com/developers/applications',
             url: 'https://discord.com/developers/applications',
           },
@@ -181,22 +179,22 @@ export const CHANNEL_SETUP_GUIDES: Readonly<Record<string, ChannelSetupGuideCont
           'You need an APP PASSWORD, not your normal login. It requires 2-Step Verification / 2FA enabled on the account first.',
         links: [
           {
-            labelKey: 'settings.channelGuide.emailImap.step2.gmail',
+            labelKey: 'settings.channelGuide.emailImap.step2Gmail',
             labelDefault: 'Gmail app passwords (enable 2-Step Verification first)',
             url: 'https://myaccount.google.com/apppasswords',
           },
           {
-            labelKey: 'settings.channelGuide.emailImap.step2.outlook',
+            labelKey: 'settings.channelGuide.emailImap.step2Outlook',
             labelDefault: 'Outlook / Microsoft Advanced security options',
             url: 'https://account.microsoft.com/security',
           },
           {
-            labelKey: 'settings.channelGuide.emailImap.step2.icloud',
+            labelKey: 'settings.channelGuide.emailImap.step2Icloud',
             labelDefault: 'iCloud App-Specific Passwords',
             url: 'https://appleid.apple.com',
           },
           {
-            labelKey: 'settings.channelGuide.emailImap.step2.workspace',
+            labelKey: 'settings.channelGuide.emailImap.step2Workspace',
             labelDefault: 'Google Workspace admin: enable IMAP org-wide',
             url: 'https://admin.google.com',
           },
@@ -225,7 +223,7 @@ export const CHANNEL_SETUP_GUIDES: Readonly<Record<string, ChannelSetupGuideCont
       {
         textKey: 'settings.channelGuide.signal.step2',
         textDefault:
-          'Connect a number. Easiest is to LINK as a secondary device to your existing Signal: run `signal-cli link -n "Wayland"`, it prints a sgnl:// URI / QR; on your phone go to Signal then Settings then Linked Devices then + and scan it. (Alternatively register a fresh number with `signal-cli -a +1XXXXXXXXXX register` then `verify`.)',
+          'Connect a number. Easiest is to LINK as a secondary device to your existing Signal: run `signal-cli link -n "Darhai"`, it prints a sgnl:// URI / QR; on your phone go to Signal then Settings then Linked Devices then + and scan it. (Alternatively register a fresh number with `signal-cli -a +1XXXXXXXXXX register` then `verify`.)',
       },
       {
         textKey: 'settings.channelGuide.signal.step3',
@@ -246,10 +244,10 @@ export const CHANNEL_SETUP_GUIDES: Readonly<Record<string, ChannelSetupGuideCont
       {
         textKey: 'settings.channelGuide.whatsapp.step2',
         textDefault:
-          'For the Meta Business backend (official WhatsApp Cloud API): in the Meta for Developers console create an app, add the WhatsApp product, then under WhatsApp then API Setup copy the temporary Access Token and the Phone Number ID. The form requires only Access Token and Phone Number ID; Business Account ID, Verify Token, and App Secret are optional (needed only if you wire Meta\'s webhook back).',
+          "For the Meta Business backend (official WhatsApp Cloud API): in the Meta for Developers console create an app, add the WhatsApp product, then under WhatsApp then API Setup copy the temporary Access Token and the Phone Number ID. The form requires only Access Token and Phone Number ID; Business Account ID, Verify Token, and App Secret are optional (needed only if you wire Meta's webhook back).",
         links: [
           {
-            labelKey: 'settings.channelGuide.whatsapp.step2.link',
+            labelKey: 'settings.channelGuide.whatsapp.step2Link',
             labelDefault: 'Open Meta for Developers',
             url: 'https://developers.facebook.com/apps',
           },
@@ -266,7 +264,7 @@ export const CHANNEL_SETUP_GUIDES: Readonly<Record<string, ChannelSetupGuideCont
         textDefault: 'In the Twilio Console, copy your Account SID and Auth Token from the dashboard.',
         links: [
           {
-            labelKey: 'settings.channelGuide.smsTwilio.step1.link',
+            labelKey: 'settings.channelGuide.smsTwilio.step1Link',
             labelDefault: 'Open console.twilio.com',
             url: 'https://console.twilio.com',
           },
@@ -279,8 +277,7 @@ export const CHANNEL_SETUP_GUIDES: Readonly<Record<string, ChannelSetupGuideCont
       },
       {
         textKey: 'settings.channelGuide.smsTwilio.step3',
-        textDefault:
-          'Paste Account SID, Auth Token, and the From number (or Messaging Service SID) here.',
+        textDefault: 'Paste Account SID, Auth Token, and the From number (or Messaging Service SID) here.',
       },
       {
         textKey: 'settings.channelGuide.smsTwilio.step4',
@@ -299,7 +296,7 @@ export const CHANNEL_SETUP_GUIDES: Readonly<Record<string, ChannelSetupGuideCont
           'In Google Cloud Console, pick or create a project and enable the Google Chat API and Cloud Pub/Sub API.',
         links: [
           {
-            labelKey: 'settings.channelGuide.googleChat.step1.link',
+            labelKey: 'settings.channelGuide.googleChat.step1Link',
             labelDefault: 'Open Google Cloud Console',
             url: 'https://console.cloud.google.com',
           },
@@ -335,7 +332,7 @@ export const CHANNEL_SETUP_GUIDES: Readonly<Record<string, ChannelSetupGuideCont
           'Create a dedicated account for the bot on that homeserver (register a new user, e.g. @mybot). Its full Matrix ID, including the server suffix (e.g. @mybot:matrix.org), goes in the User ID (mxid) field.',
         links: [
           {
-            labelKey: 'settings.channelGuide.matrix.step2.link',
+            labelKey: 'settings.channelGuide.matrix.step2Link',
             labelDefault: 'Open app.element.io to register an account',
             url: 'https://app.element.io',
           },
@@ -363,7 +360,7 @@ export const CHANNEL_SETUP_GUIDES: Readonly<Record<string, ChannelSetupGuideCont
           'In the Azure Portal, create an Azure Bot resource (Create a resource then Azure Bot). Choose "Multi Tenant" or "Single Tenant" and let it create a Microsoft App ID.',
         links: [
           {
-            labelKey: 'settings.channelGuide.msTeams.step1.link',
+            labelKey: 'settings.channelGuide.msTeams.step1Link',
             labelDefault: 'Open the Azure Portal',
             url: 'https://portal.azure.com',
           },
@@ -382,7 +379,7 @@ export const CHANNEL_SETUP_GUIDES: Readonly<Record<string, ChannelSetupGuideCont
       {
         textKey: 'settings.channelGuide.msTeams.step4',
         textDefault:
-          'In the bot resource open Channels and add the "Microsoft Teams" channel. Copy the Inbound Webhook URL shown here and paste it as the bot Messaging endpoint in Azure (Configuration), so Teams delivers messages to Wayland.',
+          'In the bot resource open Channels and add the "Microsoft Teams" channel. Copy the Inbound Webhook URL shown here and paste it as the bot Messaging endpoint in Azure (Configuration), so Teams delivers messages to Дархай.',
       },
       {
         textKey: 'settings.channelGuide.msTeams.step5',
@@ -400,7 +397,7 @@ export const CHANNEL_SETUP_GUIDES: Readonly<Record<string, ChannelSetupGuideCont
           'In the LINE Developers Console, create a provider, then create a channel with type "Messaging API".',
         links: [
           {
-            labelKey: 'settings.channelGuide.line.step1.link',
+            labelKey: 'settings.channelGuide.line.step1Link',
             labelDefault: 'Open the LINE Developers Console',
             url: 'https://developers.line.biz/console/',
           },
@@ -435,10 +432,10 @@ export const CHANNEL_SETUP_GUIDES: Readonly<Record<string, ChannelSetupGuideCont
       {
         textKey: 'settings.channelGuide.imessage.step2',
         textDefault:
-          'Grant Full Disk Access: open System Settings then Privacy & Security then Full Disk Access, and enable Wayland (toggle it on, restart the app if prompted).',
+          'Grant Full Disk Access: open System Settings then Privacy & Security then Full Disk Access, and enable Darhai (toggle it on, restart the app if prompted).',
         links: [
           {
-            labelKey: 'settings.channelGuide.imessage.step2.link',
+            labelKey: 'settings.channelGuide.imessage.step2Link',
             labelDefault: 'Open Full Disk Access settings',
             url: 'x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles',
           },
@@ -461,12 +458,12 @@ export const CHANNEL_SETUP_GUIDES: Readonly<Record<string, ChannelSetupGuideCont
           'Choose your Domain here: Feishu for mainland China (feishu.cn) or Lark for international (larksuite.com). Then open the matching developer console and create a "Custom App" (Enterprise self-built app).',
         links: [
           {
-            labelKey: 'settings.channelGuide.lark.step1.feishu',
+            labelKey: 'settings.channelGuide.lark.step1Feishu',
             labelDefault: 'Open Feishu Open Platform (China)',
             url: 'https://open.feishu.cn/app',
           },
           {
-            labelKey: 'settings.channelGuide.lark.step1.lark',
+            labelKey: 'settings.channelGuide.lark.step1Lark',
             labelDefault: 'Open Lark Developer (International)',
             url: 'https://open.larksuite.com/app',
           },
@@ -499,7 +496,7 @@ export const CHANNEL_SETUP_GUIDES: Readonly<Record<string, ChannelSetupGuideCont
           'In the DingTalk Open Platform, go to Application Development then create an internal Enterprise app (DingTalk app).',
         links: [
           {
-            labelKey: 'settings.channelGuide.dingtalk.step1.link',
+            labelKey: 'settings.channelGuide.dingtalk.step1Link',
             labelDefault: 'Open DingTalk Open Platform',
             url: 'https://open-dev.dingtalk.com',
           },
@@ -517,8 +514,7 @@ export const CHANNEL_SETUP_GUIDES: Readonly<Record<string, ChannelSetupGuideCont
       },
       {
         textKey: 'settings.channelGuide.dingtalk.step4',
-        textDefault:
-          'Paste Client ID and Client Secret here (Webhook Secret is optional) and Test & Enable.',
+        textDefault: 'Paste Client ID and Client Secret here (Webhook Secret is optional) and Test & Enable.',
       },
     ],
   },
@@ -553,7 +549,7 @@ export const CHANNEL_SETUP_GUIDES: Readonly<Record<string, ChannelSetupGuideCont
           'In the WeCom (WeChat Work) app, go to Workspace then Smart Robot then Create Robot then Manual Creation, and choose API Mode.',
         links: [
           {
-            labelKey: 'settings.channelGuide.wecom.step1.link',
+            labelKey: 'settings.channelGuide.wecom.step1Link',
             labelDefault: 'Open the WeCom admin console',
             url: 'https://work.weixin.qq.com',
           },
@@ -590,7 +586,7 @@ export const CHANNEL_SETUP_GUIDES: Readonly<Record<string, ChannelSetupGuideCont
           'Create a bot account: System Console then Integrations then Bot Accounts then Add Bot Account. Give it a username and create it, then copy the Access Token it shows once (you cannot view it again).',
         links: [
           {
-            labelKey: 'settings.channelGuide.mattermost.step2.link',
+            labelKey: 'settings.channelGuide.mattermost.step2Link',
             labelDefault: 'Mattermost bot accounts documentation',
             url: 'https://docs.mattermost.com/integrate/admin-guide/admin-bot-accounts.html',
           },
@@ -623,7 +619,7 @@ export const CHANNEL_SETUP_GUIDES: Readonly<Record<string, ChannelSetupGuideCont
           'Sign in to Nextcloud as that account and create an App Password: Settings then Personal then Security then Devices & sessions then "Create new app password". Copy it into the App Password field. Do not use the normal login password.',
         links: [
           {
-            labelKey: 'settings.channelGuide.nextcloudTalk.step3.link',
+            labelKey: 'settings.channelGuide.nextcloudTalk.step3Link',
             labelDefault: 'Nextcloud session/app-password management docs',
             url: 'https://docs.nextcloud.com/server/latest/user_manual/en/session_management.html',
           },
@@ -631,8 +627,7 @@ export const CHANNEL_SETUP_GUIDES: Readonly<Record<string, ChannelSetupGuideCont
       },
       {
         textKey: 'settings.channelGuide.nextcloudTalk.step4',
-        textDefault:
-          'Test & Enable, then add that account to a Talk conversation to chat with it.',
+        textDefault: 'Test & Enable, then add that account to a Talk conversation to chat with it.',
       },
     ],
   },
@@ -651,7 +646,7 @@ export const CHANNEL_SETUP_GUIDES: Readonly<Record<string, ChannelSetupGuideCont
           'Optional but recommended on Libera.Chat: register your nick so it is reserved. Connect once with that nick, then message NickServ: /msg NickServ REGISTER yourpassword your@email. Put that password in the optional Password field to log in via SASL/NickServ on connect.',
         links: [
           {
-            labelKey: 'settings.channelGuide.irc.step2.link',
+            labelKey: 'settings.channelGuide.irc.step2Link',
             labelDefault: 'Libera.Chat nick registration guide',
             url: 'https://libera.chat/guides/registration',
           },
@@ -660,7 +655,7 @@ export const CHANNEL_SETUP_GUIDES: Readonly<Record<string, ChannelSetupGuideCont
       {
         textKey: 'settings.channelGuide.irc.step3',
         textDefault:
-          'Enter the Channels to join (comma-separated, e.g. #wayland-bots). Username and Real name are optional (they default to the nick). Then Test & Enable.',
+          'Enter the Channels to join (comma-separated, e.g. #darhai-bots). Username and Real name are optional (they default to the nick). Then Test & Enable.',
       },
     ],
   },
@@ -674,7 +669,7 @@ export const CHANNEL_SETUP_GUIDES: Readonly<Record<string, ChannelSetupGuideCont
           'You need a Nostr private key (nsec) for the bot identity. Generate a fresh keypair in any Nostr client (Damus, Amethyst, Primal) or a key generator, and back up the nsec safely. Anyone with the nsec can post as the bot.',
         links: [
           {
-            labelKey: 'settings.channelGuide.nostr.step1.link',
+            labelKey: 'settings.channelGuide.nostr.step1Link',
             labelDefault: 'About Nostr keys (nsec / npub)',
             url: 'https://nostr.com/',
           },
@@ -682,8 +677,7 @@ export const CHANNEL_SETUP_GUIDES: Readonly<Record<string, ChannelSetupGuideCont
       },
       {
         textKey: 'settings.channelGuide.nostr.step2',
-        textDefault:
-          'Paste the Private Key (nsec1... or 64-char hex) into the Private Key field.',
+        textDefault: 'Paste the Private Key (nsec1... or 64-char hex) into the Private Key field.',
       },
       {
         textKey: 'settings.channelGuide.nostr.step3',
@@ -707,7 +701,7 @@ export const CHANNEL_SETUP_GUIDES: Readonly<Record<string, ChannelSetupGuideCont
           'Generate a chat OAuth token for that account with the chat:read and chat:edit scopes (e.g. via twitchtokengenerator.com while logged in as the bot account). Copy the token into the OAuth Token field (an oauth: prefix or a bare token both work).',
         links: [
           {
-            labelKey: 'settings.channelGuide.twitch.step2.link',
+            labelKey: 'settings.channelGuide.twitch.step2Link',
             labelDefault: 'Open twitchtokengenerator.com',
             url: 'https://twitchtokengenerator.com',
           },
@@ -715,8 +709,7 @@ export const CHANNEL_SETUP_GUIDES: Readonly<Record<string, ChannelSetupGuideCont
       },
       {
         textKey: 'settings.channelGuide.twitch.step3',
-        textDefault:
-          'Enter the Channels to join (your channel names, comma-separated). Then Test & Enable.',
+        textDefault: 'Enter the Channels to join (your channel names, comma-separated). Then Test & Enable.',
       },
       {
         textKey: 'settings.channelGuide.twitch.step4',
@@ -724,7 +717,7 @@ export const CHANNEL_SETUP_GUIDES: Readonly<Record<string, ChannelSetupGuideCont
           'Optional: to auto-refresh the chat token, register an app at the Twitch Developer Console and fill the advanced Client ID, Client Secret, and Refresh Token fields.',
         links: [
           {
-            labelKey: 'settings.channelGuide.twitch.step4.link',
+            labelKey: 'settings.channelGuide.twitch.step4Link',
             labelDefault: 'Open the Twitch Developer Console',
             url: 'https://dev.twitch.tv/console/apps',
           },
@@ -742,7 +735,7 @@ export const CHANNEL_SETUP_GUIDES: Readonly<Record<string, ChannelSetupGuideCont
           'In the Synology Chat client (web or desktop), open the user-profile menu then Integration. You will create one Incoming webhook (replies go out) and one Outgoing webhook (messages come in).',
         links: [
           {
-            labelKey: 'settings.channelGuide.synologyChat.step1.link',
+            labelKey: 'settings.channelGuide.synologyChat.step1Link',
             labelDefault: 'Synology Chat integration docs',
             url: 'https://kb.synology.com/en-global/DSM/help/Chat/chat_integration',
           },
@@ -751,7 +744,7 @@ export const CHANNEL_SETUP_GUIDES: Readonly<Record<string, ChannelSetupGuideCont
       {
         textKey: 'settings.channelGuide.synologyChat.step2',
         textDefault:
-          'Create an Incoming Webhook, pick a channel, and copy its webhook URL into the Incoming Webhook URL field here (Wayland POSTs replies there).',
+          'Create an Incoming Webhook, pick a channel, and copy its webhook URL into the Incoming Webhook URL field here (Дархай POSTs replies there).',
       },
       {
         textKey: 'settings.channelGuide.synologyChat.step3',
@@ -775,7 +768,7 @@ export const CHANNEL_SETUP_GUIDES: Readonly<Record<string, ChannelSetupGuideCont
           'On a Mac that is signed in to iMessage, install and run the BlueBubbles Server app. Complete its setup wizard.',
         links: [
           {
-            labelKey: 'settings.channelGuide.bluebubbles.step1.link',
+            labelKey: 'settings.channelGuide.bluebubbles.step1Link',
             labelDefault: 'BlueBubbles server setup guide',
             url: 'https://bluebubbles.app/install/',
           },
@@ -788,8 +781,7 @@ export const CHANNEL_SETUP_GUIDES: Readonly<Record<string, ChannelSetupGuideCont
       },
       {
         textKey: 'settings.channelGuide.bluebubbles.step3',
-        textDefault:
-          'Paste the Server URL and Server Password here and Test & Enable.',
+        textDefault: 'Paste the Server URL and Server Password here and Test & Enable.',
       },
     ],
   },
@@ -800,12 +792,12 @@ export const CHANNEL_SETUP_GUIDES: Readonly<Record<string, ChannelSetupGuideCont
       {
         textKey: 'settings.channelGuide.webhook.step1',
         textDefault:
-          'This is a generic HTTP channel. Enter the Outbound URL: the https endpoint of your own service that should receive the agent\'s replies (Wayland POSTs each reply there as JSON).',
+          "This is a generic HTTP channel. Enter the Outbound URL: the https endpoint of your own service that should receive the agent's replies (Дархай POSTs each reply there as JSON).",
       },
       {
         textKey: 'settings.channelGuide.webhook.step2',
         textDefault:
-          'Optional: set an Outbound Secret. Wayland sends it so your service can verify the request is genuinely from Wayland.',
+          'Optional: set an Outbound Secret. Дархай sends it so your service can verify the request is genuinely from Дархай.',
       },
       {
         textKey: 'settings.channelGuide.webhook.step3',
@@ -824,7 +816,7 @@ export const CHANNEL_SETUP_GUIDES: Readonly<Record<string, ChannelSetupGuideCont
           'AgentMail provides hosted email inboxes built for AI agents. Create an account and an inbox in the AgentMail dashboard.',
         links: [
           {
-            labelKey: 'settings.channelGuide.emailAgentMail.step1.link',
+            labelKey: 'settings.channelGuide.emailAgentMail.step1Link',
             labelDefault: 'Open the AgentMail dashboard',
             url: 'https://app.agentmail.to',
           },
@@ -838,7 +830,7 @@ export const CHANNEL_SETUP_GUIDES: Readonly<Record<string, ChannelSetupGuideCont
       {
         textKey: 'settings.channelGuide.emailAgentMail.step3',
         textDefault:
-          'Test & Enable. Then copy the Inbound Webhook URL shown here into the AgentMail dashboard\'s Webhook URL field so new mail reaches Wayland. Optionally paste AgentMail\'s signing secret (whsec_...) into Webhook Secret to verify deliveries.',
+          "Test & Enable. Then copy the Inbound Webhook URL shown here into the AgentMail dashboard's Webhook URL field so new mail reaches Дархай. Optionally paste AgentMail's signing secret (whsec_...) into Webhook Secret to verify deliveries.",
       },
     ],
   },

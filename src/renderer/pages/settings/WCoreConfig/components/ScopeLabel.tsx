@@ -22,7 +22,7 @@ const ScopeLabel: React.FC = () => {
       <span>
         {t('settings.wcoreConfig.scopeWritesTo', { defaultValue: 'Writes to' })}{' '}
         <code>~/.wayland-core/config.toml</code>{' '}
-        {t('settings.wcoreConfig.scopeSharedCli', { defaultValue: 'Used by the Wayland Core CLI too.' })}
+        {t('settings.wcoreConfig.scopeSharedCli', { defaultValue: 'Used by the Darhai Core CLI too.' })}
       </span>
     </div>
   );

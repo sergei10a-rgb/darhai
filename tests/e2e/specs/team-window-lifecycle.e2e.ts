@@ -54,17 +54,16 @@ async function launchIsolated(userDataDir: string, statesFile: string): Promise<
     cwd: projectRoot,
     env: {
       ...process.env,
-      WAYLAND_EXTENSIONS_PATH:
-        process.env.WAYLAND_EXTENSIONS_PATH ||
-        [
-          path.join(projectRoot, 'examples'),
-          path.join(projectRoot, 'tests/e2e/fixtures/extensions'),
-        ].join(process.platform === 'win32' ? ';' : ':'),
-      WAYLAND_EXTENSION_STATES_FILE: statesFile,
-      WAYLAND_DISABLE_AUTO_UPDATE: '1',
-      WAYLAND_DISABLE_DEVTOOLS: '1',
-      WAYLAND_E2E_TEST: '1',
-      WAYLAND_CDP_PORT: '0',
+      DARHAI_EXTENSIONS_PATH:
+        process.env.DARHAI_EXTENSIONS_PATH ||
+        [path.join(projectRoot, 'examples'), path.join(projectRoot, 'tests/e2e/fixtures/extensions')].join(
+          process.platform === 'win32' ? ';' : ':'
+        ),
+      DARHAI_EXTENSION_STATES_FILE: statesFile,
+      DARHAI_DISABLE_AUTO_UPDATE: '1',
+      DARHAI_DISABLE_DEVTOOLS: '1',
+      DARHAI_E2E_TEST: '1',
+      DARHAI_CDP_PORT: '0',
       NODE_ENV: 'development',
     },
     timeout: 60_000,
@@ -183,11 +182,7 @@ test.describe.serial('Team window lifecycle (adversarial)', () => {
       },
     });
 
-    const beforeRestart = await invokeBridgeOn<{ agents?: Array<{ role: string }> } | null>(
-      p1,
-      'team.get',
-      { id }
-    );
+    const beforeRestart = await invokeBridgeOn<{ agents?: Array<{ role: string }> } | null>(p1, 'team.get', { id });
     expect(beforeRestart?.agents?.length).toBe(2);
 
     // Restart.

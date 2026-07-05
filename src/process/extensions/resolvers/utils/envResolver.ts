@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { WAYLAND_STRICT_ENV_ENV } from '../../constants';
+import { DARHAI_STRICT_ENV_ENV } from '../../constants';
 
 const ENV_TEMPLATE_REGEX = /\$\{env:([^}]+)\}/g;
 
@@ -16,7 +16,7 @@ let _globalStrictMode: boolean | undefined;
 
 export function isGlobalStrictMode(): boolean {
   if (_globalStrictMode === undefined) {
-    _globalStrictMode = process.env[WAYLAND_STRICT_ENV_ENV] === '1' || process.env[WAYLAND_STRICT_ENV_ENV] === 'true';
+    _globalStrictMode = process.env[DARHAI_STRICT_ENV_ENV] === '1' || process.env[DARHAI_STRICT_ENV_ENV] === 'true';
   }
   return _globalStrictMode;
 }
@@ -46,7 +46,7 @@ export function resolveEnvTemplates(value: string, options?: EnvResolverOptions)
       if (strictMode) {
         throw new UndefinedEnvVariableError(
           varName,
-          `[Extensions] Strict mode: Required environment variable "${varName}" is not defined. Set the variable or disable strict mode (WAYLAND_STRICT_ENV=0).`
+          `[Extensions] Strict mode: Required environment variable "${varName}" is not defined. Set the variable or disable strict mode (DARHAI_STRICT_ENV=0).`
         );
       }
       console.warn(`[Extensions] Environment variable not defined: ${varName}`);
@@ -57,7 +57,7 @@ export function resolveEnvTemplates(value: string, options?: EnvResolverOptions)
 
   if (!strictMode && undefinedVars.length > 0) {
     console.warn(
-      `[Extensions] ${undefinedVars.length} undefined environment variable(s): ${undefinedVars.join(', ')}. Enable strict mode (WAYLAND_STRICT_ENV=1) to catch these errors early.`
+      `[Extensions] ${undefinedVars.length} undefined environment variable(s): ${undefinedVars.join(', ')}. Enable strict mode (DARHAI_STRICT_ENV=1) to catch these errors early.`
     );
   }
 

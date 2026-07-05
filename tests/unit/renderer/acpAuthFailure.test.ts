@@ -59,7 +59,7 @@ describe('classifyAcpAuthFailure', () => {
   it('classifies wcore as flux-routable, no CLI login, with a tailored explainer', () => {
     const remedy = classifyAcpAuthFailure('wcore', 'API error 401: invalid x-api-key');
     expect(remedy).not.toBeNull();
-    expect(remedy?.backendLabel).toBe('Wayland Core');
+    expect(remedy?.backendLabel).toBe('Darhai Core');
     expect(remedy?.fluxRoutable).toBe(true);
     // No CLI login and no subscription fallback for the engine.
     expect(remedy?.cliLoginCmd).toBeUndefined();
@@ -86,7 +86,7 @@ describe('getAcpAuthRemedy', () => {
 
   it('applies runtime overrides (wcore names the failing provider)', () => {
     const remedy = getAcpAuthRemedy('wcore', { providerKeyLabel: 'Anthropic' });
-    expect(remedy.backendLabel).toBe('Wayland Core');
+    expect(remedy.backendLabel).toBe('Darhai Core');
     expect(remedy.providerKeyLabel).toBe('Anthropic');
     expect(remedy.cliLoginCmd).toBeUndefined();
   });

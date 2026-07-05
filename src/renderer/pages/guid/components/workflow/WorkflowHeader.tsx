@@ -5,6 +5,7 @@
  */
 
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@arco-design/web-react';
 import { Check, ChevronDown, ChevronUp, Pause, Play, Trash2, Workflow, X } from 'lucide-react';
 
@@ -66,6 +67,7 @@ const formatDuration = (ms: number): string => {
 };
 
 export const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({ session, paused, onPauseToggle, onEnd, onDelete }) => {
+  const { t } = useTranslation();
   const [skillsOpen, setSkillsOpen] = useState(false);
 
   const tileKey = useMemo(() => {
@@ -83,7 +85,7 @@ export const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({ session, paused,
           <span className={styles.completeIcon} aria-hidden='true'>
             <Check size={16} />
           </span>
-          <span>Completed in {duration}</span>
+          <span>{t('workflow.header.completedIn', 'Completed in {{duration}}', { duration })}</span>
         </div>
       </div>
     );
@@ -92,7 +94,9 @@ export const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({ session, paused,
   const elapsedMs = Date.now() - session.created_at;
   const isErrored = session.status === 'errored';
   const rootClass = `${styles.root}${isErrored ? ` ${styles.errored}` : ''}`;
-  const pauseLabel = paused ? 'Resume auto-advance' : 'Pause auto-advance';
+  const pauseLabel = paused
+    ? t('workflow.header.resumeAutoAdvance', 'Resume auto-advance')
+    : t('workflow.header.pauseAutoAdvance', 'Pause auto-advance');
   const PauseIcon = paused ? Play : Pause;
 
   return (
@@ -106,11 +110,14 @@ export const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({ session, paused,
           <div className={styles.meta}>
             <span className={styles.live}>
               <span className={styles.liveDot} aria-hidden='true' />
-              Agent driving
+              {t('workflow.header.agentDriving', 'Agent driving')}
             </span>
             <span className={styles.metaSep}>·</span>
             <span>
-              Step {session.current_step} of {session.total_steps}
+              {t('workflow.header.stepOf', 'Step {{current}} of {{total}}', {
+                current: session.current_step,
+                total: session.total_steps,
+              })}
             </span>
             <span className={styles.metaSep}>·</span>
             <span>{formatElapsed(elapsedMs)}</span>
@@ -132,9 +139,9 @@ export const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({ session, paused,
             status='danger'
             icon={<X size={12} />}
             onClick={onEnd}
-            aria-label='End workflow'
+            aria-label={t('workflow.header.endWorkflow', 'End workflow')}
           >
-            End workflow
+            {t('workflow.header.endWorkflow', 'End workflow')}
           </Button>
           <Button
             size='small'
@@ -142,9 +149,9 @@ export const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({ session, paused,
             status='danger'
             icon={<Trash2 size={12} />}
             onClick={onDelete}
-            aria-label='Delete workflow'
+            aria-label={t('workflow.header.deleteWorkflow', 'Delete workflow')}
           >
-            Delete
+            {t('common.delete', 'Delete')}
           </Button>
         </div>
       </div>
@@ -159,7 +166,7 @@ export const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({ session, paused,
             aria-expanded={skillsOpen}
           >
             {skillsOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-            {session.skills.length} {session.skills.length === 1 ? 'skill' : 'skills'}
+            {t('workflow.header.skillCount', '{{count}} skill(s)', { count: session.skills.length })}
           </button>
           {skillsOpen && (
             <div className={styles.skillsRow} data-testid='workflow-header-skills-row'>

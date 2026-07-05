@@ -23,7 +23,7 @@ irm https://raw.githubusercontent.com/iOfficeAI/OfficeCLI/main/install.ps1 | iex
 ```
 
 Verify with `officecli --version`. If still not found after install, open a new terminal.
-NOTE: Wayland ships officecli pre-installed in newer builds; this section only applies on legacy installs or stripped environments.
+NOTE: Дархай ships officecli pre-installed in newer builds; this section only applies on legacy installs or stripped environments.
 
 ---
 

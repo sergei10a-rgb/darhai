@@ -14,7 +14,7 @@ license: Apache-2.0
 type: workflow
 skills: "sales-icp funnels-offer-pricing content-course-outline content-slide-deck content-leadmagnet-ebook"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: education content course curriculum step-by-step planning
   category: education

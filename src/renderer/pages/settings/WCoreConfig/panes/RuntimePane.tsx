@@ -79,7 +79,7 @@ const RuntimePane: React.FC = () => {
   return (
     <div className={styles.pane}>
       <div className={styles.head}>
-        <div className={styles.eyebrow}>Wayland Core</div>
+        <div className={styles.eyebrow}>Darhai Core</div>
         <h1 className={styles.title}>{t('settings.wcoreConfig.rail.runtime', { defaultValue: 'Runtime' })}</h1>
         <p className={styles.sub}>
           {t('settings.wcoreConfig.runtime.subtitle', {
@@ -200,7 +200,7 @@ const RuntimePane: React.FC = () => {
         <div className={styles.inBody}>
           {t('settings.wcoreConfig.runtime.headlessBody', {
             defaultValue:
-              'Run Wayland Core as a long-lived server (one container per tenant) and reach it over LAN, Tailscale, or the hosted Pro tier.',
+              'Run Darhai Core as a long-lived server (one container per tenant) and reach it over LAN, Tailscale, or the hosted Pro tier.',
           })}
         </div>
       </div>

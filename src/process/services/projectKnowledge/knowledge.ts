@@ -6,7 +6,7 @@
 
 import fs from 'fs/promises';
 import path from 'path';
-import { WAYLAND_KNOWLEDGE_DIR } from './bootstrap';
+import { DARHAI_KNOWLEDGE_DIR } from './bootstrap';
 import { confinePath } from '@process/bridge/pathConfinement';
 import { resolveWithinApprovedDirectory } from '@process/bridge/userApprovedPaths';
 
@@ -57,7 +57,7 @@ export type ReferenceFile = {
   size: number;
 };
 
-const knowledgeRoot = (workspace: string): string => path.join(workspace, WAYLAND_KNOWLEDGE_DIR);
+const knowledgeRoot = (workspace: string): string => path.join(workspace, DARHAI_KNOWLEDGE_DIR);
 
 const readIfExists = async (filePath: string): Promise<string> => {
   try {
@@ -247,7 +247,7 @@ export async function readProjectIjfwMemory(
   } catch {
     return { available: false, files: [] };
   }
-  const mdFiles = entries.filter((n) => n.toLowerCase().endsWith('.md')).sort();
+  const mdFiles = entries.filter((n) => n.toLowerCase().endsWith('.md')).toSorted();
   const files: IjfwMemoryFile[] = [];
   for (const name of mdFiles) {
     try {
@@ -283,7 +283,7 @@ export async function listProjectReference(workspace: string): Promise<Reference
       }
     })
   );
-  return files.filter((f): f is ReferenceFile => f !== null).sort((a, b) => a.name.localeCompare(b.name));
+  return files.filter((f): f is ReferenceFile => f !== null).toSorted((a, b) => a.name.localeCompare(b.name));
 }
 
 /** Most reference files accepted in one addProjectReference call. */

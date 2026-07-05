@@ -14,7 +14,7 @@ license: Apache-2.0
 type: workflow
 skills: "legal-contract"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: legal contract review red-line counsel step-by-step business-legal
   category: business-legal

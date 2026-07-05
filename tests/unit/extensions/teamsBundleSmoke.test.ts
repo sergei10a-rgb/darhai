@@ -41,7 +41,7 @@ describeIfMounted('waylandteams bundle - live load + resolve', () => {
   beforeAll(() => {
     // Point ExtensionLoader at the dev-mount dir so the loader scans it
     // regardless of what getDataPath() resolves to under vitest.
-    process.env.WAYLAND_EXTENSIONS_PATH = DEFAULT_EXT_DIR;
+    process.env.DARHAI_EXTENSIONS_PATH = DEFAULT_EXT_DIR;
   });
 
   afterAll(() => {

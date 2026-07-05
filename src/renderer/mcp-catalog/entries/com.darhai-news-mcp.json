@@ -1,6 +1,6 @@
 {
   "$schema": "../schema/entry.schema.json",
-  "name": "com.wayland/news-mcp",
+  "name": "com.darhai/news-mcp",
   "title": "News & RSS",
   "description": "Unified search across NewsAPI, Hacker News, and any RSS or Atom feed - one MCP for staying current.",
   "version": "0.1.0",
@@ -14,7 +14,12 @@
       "runtimeHint": "native",
       "transport": { "type": "stdio" },
       "environmentVariables": [
-        { "name": "NEWSAPI_KEY", "description": "Optional newsapi.org key. Without it, only Hacker News + RSS work.", "isRequired": false, "isSecret": true }
+        {
+          "name": "NEWSAPI_KEY",
+          "description": "Optional newsapi.org key. Without it, only Hacker News + RSS work.",
+          "isRequired": false,
+          "isSecret": true
+        }
       ]
     }
   ],
@@ -39,7 +44,7 @@
       { "label": "Hacker News", "count": 3 },
       { "label": "RSS / Atom", "count": 3 }
     ],
-    "setupGuide": { "path": "guides/com.wayland-news-mcp.md", "estimatedMinutes": 2, "stepCount": 2 },
+    "setupGuide": { "path": "guides/com.darhai-news-mcp.md", "estimatedMinutes": 2, "stepCount": 2 },
     "platforms": ["macos", "windows", "linux"],
     "minWaylandVersion": "0.8.0"
   }

@@ -113,7 +113,7 @@ const SecurityPane: React.FC = () => {
   return (
     <div className={styles.pane}>
       <div className={styles.head}>
-        <div className={styles.eyebrow}>Wayland Core</div>
+        <div className={styles.eyebrow}>Darhai Core</div>
         <h1 className={styles.title}>
           {t('settings.wcoreConfig.rail.security', { defaultValue: 'Security & Permissions' })}
         </h1>

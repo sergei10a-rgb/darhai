@@ -127,7 +127,7 @@ export const SERVER_CONFIG = {
  * Determine whether the request arrived over HTTPS (reverse-proxy aware)
  *
  * Signals (by priority):
- * 1. WAYLAND_HTTPS=true / NODE_ENV=production + HTTPS=true (explicit opt-in)
+ * 1. DARHAI_HTTPS=true / NODE_ENV=production + HTTPS=true (explicit opt-in)
  * 2. SERVER_BASE_URL starts with https:// (explicit public entrypoint, e.g. nginx TLS)
  * 3. req.secure === true (only meaningful once Express trust proxy is configured)
  *
@@ -135,7 +135,10 @@ export const SERVER_CONFIG = {
  * would be spoofable. Use SERVER_BASE_URL or trust proxy + req.secure instead.
  */
 function detectHttps(req?: Request): boolean {
-  if (process.env.WAYLAND_HTTPS === 'true' || (process.env.NODE_ENV === 'production' && process.env.HTTPS === 'true')) {
+  if (
+    (process.env.DARHAI_HTTPS ?? process.env.WAYLAND_HTTPS) === 'true' ||
+    (process.env.NODE_ENV === 'production' && process.env.HTTPS === 'true')
+  ) {
     return true;
   }
 

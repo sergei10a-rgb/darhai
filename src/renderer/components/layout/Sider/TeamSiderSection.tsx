@@ -74,7 +74,7 @@ const TeamSiderSection: React.FC<TeamSiderSectionProps> = ({
 
   // Live-smoke fix #3 (2026-05-19): Arco Modal.confirm is one-shot and
   // cannot gate its OK button on input state, so we drive the
-  // destructive delete with a stateful WaylandModal instead. The pending
+  // destructive delete with a stateful DarhaiModal instead. The pending
   // team-id captures which row to delete on confirm.
   const [deleteVisible, setDeleteVisible] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
@@ -179,7 +179,9 @@ const TeamSiderSection: React.FC<TeamSiderSectionProps> = ({
                   >
                     <Users
                       data-testid={`collapsed-team-icon-${team.id}`}
-                      data-icon-fill={iconColors.primary} size={20} color={iconColors.primary}
+                      data-icon-fill={iconColors.primary}
+                      size={20}
+                      color={iconColors.primary}
                       style={{ lineHeight: 0 }}
                     />
                     {(teamBadgeCounts.get(team.id) ?? 0) > 0 && (

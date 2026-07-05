@@ -15,7 +15,7 @@ license: Apache-2.0
 type: workflow
 skills: "market-copy market-launch"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: marketing campaign brief creative launch step-by-step
   category: marketing

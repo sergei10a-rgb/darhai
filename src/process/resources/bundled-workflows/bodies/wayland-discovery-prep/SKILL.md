@@ -13,7 +13,7 @@ license: Apache-2.0
 type: workflow
 skills: "sales-coach sales-research sales-icp sales-prep sales-qualify"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: sales discovery call-prep research qualification step-by-step
   category: sales

@@ -81,7 +81,7 @@ describe('loadTeamSkills', () => {
       'beacon-channel-strategy',
       'research-jtbd-interviews',
     ]);
-    expect(teamEntries[0].sourceLabel).toBe('Wayland Teams');
+    expect(teamEntries[0].sourceLabel).toBe('Дархай багууд');
     expect(teamEntries[0].metadata.tags).toEqual([]);
   });
 

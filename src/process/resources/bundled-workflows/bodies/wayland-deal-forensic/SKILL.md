@@ -15,7 +15,7 @@ license: Apache-2.0
 type: workflow
 skills: "sales-coach sales-qualify sales-objections sales-followup"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: sales deal-diagnosis objections forensics step-by-step
   category: sales

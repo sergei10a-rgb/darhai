@@ -42,7 +42,7 @@
       "scopes": [
         {
           "name": "boards:read",
-          "plainLanguage": "Read content from boards you give Wayland access to."
+          "plainLanguage": "Read content from boards you give Дархай access to."
         },
         {
           "name": "boards:write",

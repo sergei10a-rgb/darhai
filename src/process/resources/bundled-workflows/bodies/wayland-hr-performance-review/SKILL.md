@@ -14,7 +14,7 @@ license: Apache-2.0
 type: workflow
 skills: "hr-review hr-1on1"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: hr performance-review development-plan feedback step-by-step planning
   category: hr

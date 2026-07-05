@@ -26,13 +26,13 @@ negative_triggers:
 tags: [conversion, copy, donahoe-method, bullshit-filter, diagnostic, voice]
 priority: 100
 version: 2.0.0
-author: Wayland Business Pack
+author: Darhai Business Pack
 license: MIT
 metadata:
   wayland:
     related_skills: [convert, convert-voice, convert-fingerprint, convert-chute, convert-audit, convert-sales-page, convert-vsl]
 attribution:
-  lineage: "The Donahoe Method (Wayland-owned operating system); references *Halbert plain-spoken canon (Boron Letters, 1984)*, *Ogilvy 'never write what you wouldn't say' (Confessions of an Advertising Man, 1963)*, and *Orwell's six rules of plain English ('Politics and the English Language', 1946)*"
+  lineage: "The Donahoe Method (Дархай-owned operating system); references *Halbert plain-spoken canon (Boron Letters, 1984)*, *Ogilvy 'never write what you wouldn't say' (Confessions of an Advertising Man, 1963)*, and *Orwell's six rules of plain English ('Politics and the English Language', 1946)*"
 ---
 
 # Convert Bullshit Filter - The Adversarial Coaching Pass
@@ -295,7 +295,7 @@ The Filter does not ship copy. The writer ships copy. This skill makes the write
 
 ## Lineage
 
-The Bullshit Filter is part of **The Donahoe Method** (Wayland-owned operating system).
+The Bullshit Filter is part of **The Donahoe Method** (Дархай-owned operating system).
 
 Lineage references:
 - "Write what you'd say" doctrine - *Gary Halbert, the Boron Letters (1984)*: "imagine one person reading this letter at the kitchen table"

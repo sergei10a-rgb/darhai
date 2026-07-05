@@ -77,9 +77,11 @@ test.describe('Security audit verification (W1-W4 runtime gate)', () => {
     // Attempt 1: raw electronAPI.emit with a forged provider name. The handler
     // in src/common/adapter/main.ts rejects the promise with a known message.
     const forged = await page.evaluate(async () => {
-      const api = (window as unknown as {
-        electronAPI?: { emit?: (n: string, d: unknown) => Promise<unknown> };
-      }).electronAPI;
+      const api = (
+        window as unknown as {
+          electronAPI?: { emit?: (n: string, d: unknown) => Promise<unknown> };
+        }
+      ).electronAPI;
       if (!api?.emit) return { reachable: false } as const;
       try {
         const result = await api.emit('subscribe-forged.not-an-allowlisted-key', {
@@ -189,7 +191,7 @@ test.describe('Security audit verification (W1-W4 runtime gate)', () => {
 
     expect(status, 'getStatus returned a value').toBeDefined();
     expect(typeof status.available, '`available` is boolean').toBe('boolean');
-    // In dev (WAYLAND_DISABLE_AUTO_UPDATE=1 set by fixtures) the channel
+    // In dev (DARHAI_DISABLE_AUTO_UPDATE=1 set by fixtures) the channel
     // defaults to available:true because the global is only flipped on
     // explicit import success/failure. Either value is acceptable.
     if (!status.available) {

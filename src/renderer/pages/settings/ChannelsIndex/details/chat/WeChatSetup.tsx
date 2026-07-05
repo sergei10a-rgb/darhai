@@ -39,7 +39,7 @@ const WeChatSetup: React.FC = () => {
       displayName='WeChat'
       helpText={t(
         'settings.channels.wechat.help',
-        'EXPERIMENTAL - Unofficial channel. Scanning the QR code registers Wayland as a Tencent iLink Bot tied to your WeChat account (not a personal-account session). This API is undocumented by Tencent, region-restricted (mainland China endpoints), and provides no SLA. Using it may violate WeChat ToS and can trigger automated risk-control suspension of your account. Tencent can revoke bot tokens or remove this surface without notice. Only enable on a WeChat account you are willing to lose.'
+        'EXPERIMENTAL - Unofficial channel. Scanning the QR code registers Дархай as a Tencent iLink Bot tied to your WeChat account (not a personal-account session). This API is undocumented by Tencent, region-restricted (mainland China endpoints), and provides no SLA. Using it may violate WeChat ToS and can trigger automated risk-control suspension of your account. Tencent can revoke bot tokens or remove this surface without notice. Only enable on a WeChat account you are willing to lose.'
       )}
       showDisconnect={!!pluginStatus?.enabled}
     >

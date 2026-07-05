@@ -35,7 +35,7 @@ function canonicalizeRootResource(value: string): string {
 
 const originalBuildResourceParameter = OAuthUtils.buildResourceParameter.bind(OAuthUtils);
 (OAuthUtils as unknown as { buildResourceParameter: (url: string) => string }).buildResourceParameter = (
-  endpointUrl: string,
+  endpointUrl: string
 ): string => canonicalizeRootResource(originalBuildResourceParameter(endpointUrl));
 
 // Mirror the canonicalization on the inbound side. discoverOAuthConfig compares
@@ -50,8 +50,7 @@ const originalBuildResourceParameter = OAuthUtils.buildResourceParameter.bind(OA
 // endpoint path. Path-vs-base mismatches (Linear: requests /mcp, advertises the
 // bare host) are handled in the discoverOAuthConfig wrapper below, which DOES
 // have the server url in scope.
-const originalFetchProtectedResourceMetadata =
-  OAuthUtils.fetchProtectedResourceMetadata.bind(OAuthUtils);
+const originalFetchProtectedResourceMetadata = OAuthUtils.fetchProtectedResourceMetadata.bind(OAuthUtils);
 (
   OAuthUtils as unknown as {
     fetchProtectedResourceMetadata: (url: string) => Promise<{ resource?: string } | null>;
@@ -99,8 +98,7 @@ function isSameOriginPrefix(advertised: string, requested: string): boolean {
       err && typeof err === 'object' && 'message' in err
         ? String((err as { message: string }).message).match(/Protected resource (\S+)/)?.[1]
         : undefined;
-    const isMismatch =
-      err instanceof Error && err.name === 'ResourceMismatchError' && !!advertised;
+    const isMismatch = err instanceof Error && err.name === 'ResourceMismatchError' && !!advertised;
     if (!isMismatch || !isSameOriginPrefix(advertised!, serverUrl)) {
       throw err;
     }
@@ -108,8 +106,8 @@ function isSameOriginPrefix(advertised: string, requested: string): boolean {
     // (prefix) form so the strict compare inside discoverOAuthConfig passes.
     const saved = OAuthUtils.buildResourceParameter;
     const advForced = canonicalizeRootResource(advertised!);
-    (OAuthUtils as unknown as { buildResourceParameter: (u: string) => string }).buildResourceParameter =
-      () => advForced;
+    (OAuthUtils as unknown as { buildResourceParameter: (u: string) => string }).buildResourceParameter = () =>
+      advForced;
     try {
       return await originalDiscoverOAuthConfig(serverUrl);
     } finally {
@@ -125,10 +123,10 @@ function isSameOriginPrefix(advertised: string, requested: string): boolean {
 // must match what the callback server actually binds. Pin to 57000 unless the
 // user has explicitly overridden it. Same port for DCR and BYO - DCR registers
 // the same redirect URI it'll receive on.
-export const WAYLAND_OAUTH_CALLBACK_PORT = '57000';
-export const WAYLAND_OAUTH_REDIRECT_URI = `http://localhost:${WAYLAND_OAUTH_CALLBACK_PORT}/oauth/callback`;
+export const DARHAI_OAUTH_CALLBACK_PORT = '57000';
+export const DARHAI_OAUTH_REDIRECT_URI = `http://localhost:${DARHAI_OAUTH_CALLBACK_PORT}/oauth/callback`;
 if (!process.env.OAUTH_CALLBACK_PORT) {
-  process.env.OAUTH_CALLBACK_PORT = WAYLAND_OAUTH_CALLBACK_PORT;
+  process.env.OAUTH_CALLBACK_PORT = DARHAI_OAUTH_CALLBACK_PORT;
 }
 
 export interface OAuthStatus {
@@ -313,7 +311,7 @@ export class McpOAuthService {
         config.clientSecret = server.byoOAuth.clientSecret;
       }
       // Pin redirect URI so the user's registered OAuth-app callback matches.
-      config.redirectUri ??= WAYLAND_OAUTH_REDIRECT_URI;
+      config.redirectUri ??= DARHAI_OAUTH_REDIRECT_URI;
     } else {
       // Step 3: Pre-probe DCR support. Skip when caller already provided a
       // pre-resolved authorizationUrl + registrationUrl in oauthConfig (no
@@ -325,9 +323,10 @@ export class McpOAuthService {
             return {
               success: false,
               code: 'needs_byo',
-              redirectUri: WAYLAND_OAUTH_REDIRECT_URI,
+              redirectUri: DARHAI_OAUTH_REDIRECT_URI,
               authorizationUrl: discovered.authorizationUrl,
-              error: 'This vendor does not support automatic OAuth client registration. Paste a manually-registered client_id (and secret) to continue.',
+              error:
+                'This vendor does not support automatic OAuth client registration. Paste a manually-registered client_id (and secret) to continue.',
             };
           }
         } catch (probeErr) {
@@ -353,7 +352,7 @@ export class McpOAuthService {
         return {
           success: false,
           code: 'needs_byo',
-          redirectUri: WAYLAND_OAUTH_REDIRECT_URI,
+          redirectUri: DARHAI_OAUTH_REDIRECT_URI,
           error: msg,
         };
       }

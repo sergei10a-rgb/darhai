@@ -7,7 +7,7 @@ steps:
     estSeconds: 30
     autoCompletedByInstall: true
     body: |
-      Wayland fetches `telegram-mcp` from npm via `npx` on first launch - no
+      Дархай fetches `telegram-mcp` from npm via `npx` on first launch - no
       manual install needed. The MCP uses *your* Telegram user account
       (not a bot) so it can read private chats and channels you've joined.
   - id: credentials
@@ -20,7 +20,7 @@ steps:
       - { name: TELEGRAM_PHONE, label: "Phone number (E.164)" }
     warning: |
       Telegram will send a login code to your account. Enter it when prompted
-      in the Wayland UI on first connect. Your session file is stored locally.
+      in the Дархай UI on first connect. Your session file is stored locally.
     body: |
       Telegram requires `api_id` and `api_hash` for any user-account client.
       Free and one-time. Per Telegram, do not share these credentials with
@@ -39,12 +39,12 @@ steps:
       1. From the signed-in landing page, open **API development tools**
          (or paste `my.telegram.org/apps` into the address bar).
       2. Fill out the create-application form. App title and short name can
-         be anything (e.g. *Wayland Personal* / *wayland*). Platform: pick
+         be anything (e.g. *Darhai Personal* / *darhai*). Platform: pick
          **Desktop**. URL and Description can be left blank.
       3. Submit the form. The next page shows your `api_id` (a number) and
          `api_hash` (a 32-char hex string).
 
-      **C. Paste credentials into Wayland**
+      **C. Paste credentials into Дархай**
 
       1. Paste the number into `TELEGRAM_API_ID` above.
       2. Paste the hash into `TELEGRAM_API_HASH`.
@@ -52,7 +52,7 @@ steps:
          `TELEGRAM_PHONE` (E.164 format with the leading `+`).
 
       On first connect, Telegram will send a login code to your Telegram
-      app - Wayland will prompt you for it. The resulting session file is
+      app - Дархай will prompt you for it. The resulting session file is
       stored locally and re-used on every restart.
 ---
 
@@ -68,5 +68,5 @@ channels you read. About five minutes the first time.
    can be anything.
 3. Copy `api_id` and `api_hash` and paste them above, along with your phone
    number in E.164 format (e.g. `+15555550123`).
-4. On first connect, Telegram will text/in-app a login code. Wayland will
+4. On first connect, Telegram will text/in-app a login code. Дархай will
    prompt you to enter it.

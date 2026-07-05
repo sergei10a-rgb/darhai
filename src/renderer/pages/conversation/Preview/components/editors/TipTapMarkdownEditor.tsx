@@ -37,6 +37,7 @@ import { type Editor, EditorContent, useEditor, useEditorState } from '@tiptap/r
 import { BubbleMenu } from '@tiptap/react/menus';
 import StarterKit from '@tiptap/starter-kit';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 // tiptap-markdown registers parsing on setContent and exposes
 // editor.storage.markdown.getMarkdown() for the onChange path.
 import { Markdown } from 'tiptap-markdown';
@@ -85,35 +86,36 @@ type FormatButtonsProps = {
 };
 
 const FormatButtons: React.FC<FormatButtonsProps> = ({ editor, variant }) => {
+  const { t } = useTranslation();
   const promptLink = useCallback(() => {
     const prev = editor.getAttributes('link').href as string | undefined;
-    const url = window.prompt('Link URL (leave empty to remove)', prev ?? 'https://');
+    const url = window.prompt(t('preview.markdownEditor.linkPrompt'), prev ?? 'https://');
     if (url === null) return;
     if (url === '') {
       editor.chain().focus().extendMarkRange('link').unsetLink().run();
       return;
     }
     editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
-  }, [editor]);
+  }, [editor, t]);
 
   return (
     <>
       <ToolbarButton
-        title='Heading 1'
+        title={t('preview.markdownEditor.toolbar.heading1')}
         active={editor.isActive('heading', { level: 1 })}
         onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
       >
         <H1 size='16' />
       </ToolbarButton>
       <ToolbarButton
-        title='Heading 2'
+        title={t('preview.markdownEditor.toolbar.heading2')}
         active={editor.isActive('heading', { level: 2 })}
         onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
       >
         <H2 size='16' />
       </ToolbarButton>
       <ToolbarButton
-        title='Heading 3'
+        title={t('preview.markdownEditor.toolbar.heading3')}
         active={editor.isActive('heading', { level: 3 })}
         onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
       >
@@ -121,28 +123,28 @@ const FormatButtons: React.FC<FormatButtonsProps> = ({ editor, variant }) => {
       </ToolbarButton>
       <ToolbarDivider />
       <ToolbarButton
-        title='Bold (⌘B)'
+        title={t('preview.markdownEditor.toolbar.bold')}
         active={editor.isActive('bold')}
         onClick={() => editor.chain().focus().toggleBold().run()}
       >
         <TextBold size='16' />
       </ToolbarButton>
       <ToolbarButton
-        title='Italic (⌘I)'
+        title={t('preview.markdownEditor.toolbar.italic')}
         active={editor.isActive('italic')}
         onClick={() => editor.chain().focus().toggleItalic().run()}
       >
         <TextItalic size='16' />
       </ToolbarButton>
       <ToolbarButton
-        title='Strikethrough'
+        title={t('preview.markdownEditor.toolbar.strikethrough')}
         active={editor.isActive('strike')}
         onClick={() => editor.chain().focus().toggleStrike().run()}
       >
         <Strikethrough size='16' />
       </ToolbarButton>
       <ToolbarButton
-        title='Inline code'
+        title={t('preview.markdownEditor.toolbar.inlineCode')}
         active={editor.isActive('code')}
         onClick={() => editor.chain().focus().toggleCode().run()}
       >
@@ -150,45 +152,52 @@ const FormatButtons: React.FC<FormatButtonsProps> = ({ editor, variant }) => {
       </ToolbarButton>
       <ToolbarDivider />
       <ToolbarButton
-        title='Bulleted list'
+        title={t('preview.markdownEditor.toolbar.bulletedList')}
         active={editor.isActive('bulletList')}
         onClick={() => editor.chain().focus().toggleBulletList().run()}
       >
         <UnorderedList size='16' />
       </ToolbarButton>
       <ToolbarButton
-        title='Numbered list'
+        title={t('preview.markdownEditor.toolbar.numberedList')}
         active={editor.isActive('orderedList')}
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
       >
         <OrderedList size='16' />
       </ToolbarButton>
       <ToolbarButton
-        title='Blockquote'
+        title={t('preview.markdownEditor.toolbar.blockquote')}
         active={editor.isActive('blockquote')}
         onClick={() => editor.chain().focus().toggleBlockquote().run()}
       >
         <Quote size='16' />
       </ToolbarButton>
       <ToolbarDivider />
-      <ToolbarButton title='Link' active={editor.isActive('link')} onClick={promptLink}>
+      <ToolbarButton
+        title={t('preview.markdownEditor.toolbar.link')}
+        active={editor.isActive('link')}
+        onClick={promptLink}
+      >
         <LinkIcon size='16' />
       </ToolbarButton>
       {variant === 'full' && (
         <>
-          <ToolbarButton title='Horizontal rule' onClick={() => editor.chain().focus().setHorizontalRule().run()}>
+          <ToolbarButton
+            title={t('preview.markdownEditor.toolbar.horizontalRule')}
+            onClick={() => editor.chain().focus().setHorizontalRule().run()}
+          >
             <DividingLine size='16' />
           </ToolbarButton>
           <ToolbarDivider />
           <ToolbarButton
-            title='Undo (⌘Z)'
+            title={t('preview.markdownEditor.toolbar.undo')}
             disabled={!editor.can().undo()}
             onClick={() => editor.chain().focus().undo().run()}
           >
             <Undo size='16' />
           </ToolbarButton>
           <ToolbarButton
-            title='Redo (⌘⇧Z)'
+            title={t('preview.markdownEditor.toolbar.redo')}
             disabled={!editor.can().redo()}
             onClick={() => editor.chain().focus().redo().run()}
           >
@@ -200,17 +209,23 @@ const FormatButtons: React.FC<FormatButtonsProps> = ({ editor, variant }) => {
   );
 };
 
-const TopToolbar: React.FC<{ editor: Editor }> = ({ editor }) => (
-  <div className={styles.toolbar} role='toolbar' aria-label='Markdown formatting'>
-    <FormatButtons editor={editor} variant='full' />
-  </div>
-);
+const TopToolbar: React.FC<{ editor: Editor }> = ({ editor }) => {
+  const { t } = useTranslation();
+  return (
+    <div className={styles.toolbar} role='toolbar' aria-label={t('preview.markdownEditor.formattingLabel')}>
+      <FormatButtons editor={editor} variant='full' />
+    </div>
+  );
+};
 
-const BubbleToolbar: React.FC<{ editor: Editor }> = ({ editor }) => (
-  <div className={styles.bubbleMenu} role='toolbar' aria-label='Inline formatting'>
-    <FormatButtons editor={editor} variant='bubble' />
-  </div>
-);
+const BubbleToolbar: React.FC<{ editor: Editor }> = ({ editor }) => {
+  const { t } = useTranslation();
+  return (
+    <div className={styles.bubbleMenu} role='toolbar' aria-label={t('preview.markdownEditor.inlineFormattingLabel')}>
+      <FormatButtons editor={editor} variant='bubble' />
+    </div>
+  );
+};
 
 /**
  * TipTap WYSIWYG markdown editor.
@@ -233,6 +248,7 @@ const TipTapMarkdownEditor: React.FC<TipTapMarkdownEditorProps> = ({
   containerRef,
   onScroll,
 }) => {
+  const { t } = useTranslation();
   const { theme } = useThemeContext();
   const isDark = theme === 'dark';
   const editable = !readOnly && !isStreaming;
@@ -281,8 +297,8 @@ const TipTapMarkdownEditor: React.FC<TipTapMarkdownEditorProps> = ({
         showOnlyCurrent: true,
         showOnlyWhenEditable: true,
         placeholder: ({ node }) => {
-          if (node.type.name === 'heading') return 'Heading';
-          return "Press '/' for commands, or just start typing…";
+          if (node.type.name === 'heading') return t('preview.markdownEditor.placeholderHeading');
+          return t('preview.markdownEditor.placeholderEmpty');
         },
       }),
       createSlashCommand(setSlashState, slashKeyRef),
@@ -371,10 +387,13 @@ const TipTapMarkdownEditor: React.FC<TipTapMarkdownEditorProps> = ({
     setHoveredPos(pos);
   }, []);
 
-  const bubbleShouldShow = useCallback(({ state }: { state: { selection: { from: number; to: number; empty: boolean } } }) => {
-    const { from, to, empty } = state.selection;
-    return !empty && from !== to;
-  }, []);
+  const bubbleShouldShow = useCallback(
+    ({ state }: { state: { selection: { from: number; to: number; empty: boolean } } }) => {
+      const { from, to, empty } = state.selection;
+      return !empty && from !== to;
+    },
+    []
+  );
 
   // "+" button: insert an empty paragraph after the hovered block and put
   // the cursor there. The user can then type "/" to open the slash menu.
@@ -402,13 +421,7 @@ const TipTapMarkdownEditor: React.FC<TipTapMarkdownEditorProps> = ({
           Agent is writing…
         </div>
       )}
-      {slashState && (
-        <SlashMenuPopup
-          {...slashState}
-          keyHandleRef={slashKeyRef}
-          onClose={() => setSlashState(null)}
-        />
-      )}
+      {slashState && <SlashMenuPopup {...slashState} keyHandleRef={slashKeyRef} onClose={() => setSlashState(null)} />}
       {editor && editable && <TopToolbar editor={editor} />}
       {editor && editable && (
         <BubbleMenu editor={editor} shouldShow={bubbleShouldShow}>
@@ -420,8 +433,8 @@ const TipTapMarkdownEditor: React.FC<TipTapMarkdownEditorProps> = ({
           <div className={styles.blockHandle}>
             <button
               type='button'
-              title='Add block below'
-              aria-label='Add block below'
+              title={t('preview.markdownEditor.toolbar.addBlockBelow')}
+              aria-label={t('preview.markdownEditor.toolbar.addBlockBelow')}
               className={styles.blockHandleBtn}
               onMouseDown={(e) => e.preventDefault()}
               onClick={insertBlockBelow}
@@ -431,8 +444,8 @@ const TipTapMarkdownEditor: React.FC<TipTapMarkdownEditorProps> = ({
             <span
               role='button'
               tabIndex={-1}
-              title='Drag to reorder'
-              aria-label='Drag to reorder'
+              title={t('preview.markdownEditor.toolbar.dragToReorder')}
+              aria-label={t('preview.markdownEditor.toolbar.dragToReorder')}
               className={styles.blockHandleGrip}
               data-drag-handle
             >

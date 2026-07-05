@@ -14,7 +14,7 @@ license: Apache-2.0
 type: workflow
 skills: "finance-cashflow finance-forecast finance-report"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: business-finance cashflow status deterministic cfo
   category: business-finance

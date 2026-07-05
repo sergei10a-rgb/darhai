@@ -46,12 +46,12 @@ if (isWebUI || isResetPassword) {
   // Sandbox disable is opt-in only (secure-by-default).
   // Electron's setuid sandbox helper cannot be used when running as root, so
   // historically we auto-disabled the sandbox in that case. The supported path
-  // now is to run Wayland as a dedicated non-root user (see scripts/install-ubuntu.sh
-  // and the systemd unit's `User=wayland`). For environments where running as
+  // now is to run Darhai as a dedicated non-root user (see scripts/install-ubuntu.sh
+  // and the systemd unit's `User=darhai`). For environments where running as
   // root is unavoidable and no kernel containment is available (e.g. Termux
-  // proot, certain unprivileged containers), set WAYLAND_DISABLE_SANDBOX=1 to
+  // proot, certain unprivileged containers), set DARHAI_DISABLE_SANDBOX=1 to
   // explicitly opt out of the Chromium sandbox.
-  if (process.env.WAYLAND_DISABLE_SANDBOX === '1') {
+  if ((process.env.DARHAI_DISABLE_SANDBOX ?? process.env.WAYLAND_DISABLE_SANDBOX) === '1') {
     app.commandLine.appendSwitch('no-sandbox');
   }
 }
@@ -61,7 +61,7 @@ if (isWebUI || isResetPassword) {
 // so chrome-devtools-mcp and other CDP clients can connect to this Electron app.
 //
 // Default port: 9230 (avoids conflict with common CDP ports).
-// Override via WAYLAND_CDP_PORT env variable. Set to "0" to disable.
+// Override via DARHAI_CDP_PORT env variable. Set to "0" to disable.
 //
 // Configuration file: userData/cdp.config.json
 // - enabled: boolean - whether CDP is enabled (default: true in dev mode, false in production)
@@ -246,7 +246,7 @@ export function saveCdpConfig(config: CdpConfig): void {
  * Returns null if explicitly disabled via env.
  */
 function resolveCdpPortFromEnv(): number | null | undefined {
-  const envVal = process.env.WAYLAND_CDP_PORT;
+  const envVal = process.env.DARHAI_CDP_PORT;
   if (envVal === '0' || envVal === 'false') return null;
   if (envVal) {
     const parsed = Number(envVal);
@@ -260,7 +260,7 @@ function resolveCdpPortFromEnv(): number | null | undefined {
  * Priority: env variable > config file > default (dev mode: true, production: false)
  */
 function shouldEnableCdp(config: CdpConfig): boolean {
-  const envVal = process.env.WAYLAND_CDP_PORT;
+  const envVal = process.env.DARHAI_CDP_PORT;
   if (envVal === '0' || envVal === 'false') return false;
   if (envVal) return true;
 

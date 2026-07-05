@@ -81,14 +81,14 @@ function btn(label: string, action: string, params?: Record<string, string>): Di
  */
 export function createMainMenuCard(): DingTalkCard {
   return {
-    title: 'Wayland Assistant',
-    text: '### Wayland Assistant\n\nWelcome! Choose an action below:',
+    title: 'Дархай туслах',
+    text: '### Дархай туслах\n\nТавтай морил! Доорх үйлдлээс сонгоно уу:',
     btnOrientation: '1',
     btns: [
-      btn('New Chat', 'session.new'),
-      btn('Agent', 'agent.show'),
-      btn('Status', 'session.status'),
-      btn('Help', 'help.show'),
+      btn('Шинэ чат', 'session.new'),
+      btn('Агент', 'agent.show'),
+      btn('Төлөв', 'session.status'),
+      btn('Тусламж', 'help.show'),
     ],
   };
 }
@@ -98,22 +98,22 @@ export function createMainMenuCard(): DingTalkCard {
  */
 export function createPairingCard(pairingCode: string): DingTalkCard {
   return {
-    title: 'Pairing Required',
+    title: 'Хослуулалт шаардлагатай',
     text: [
-      '### Pairing Required',
+      '### Хослуулалт шаардлагатай',
       '',
-      'Please pair your account with Wayland:',
+      'Бүртгэлээ Дархайтай хослуулна уу:',
       '',
-      `**Pairing Code:** \`${pairingCode}\``,
+      `**Хослуулалтын код:** \`${pairingCode}\``,
       '',
-      '1. Open Wayland settings',
-      '2. Go to Channels > DingTalk',
-      '3. Enter this pairing code',
+      '1. Дархайн тохиргоог нээнэ үү',
+      '2. Сувгууд > DingTalk руу орно уу',
+      '3. Энэ хослуулалтын кодыг оруулна уу',
       '',
-      'Code expires in 10 minutes.',
+      'Кодын хүчинтэй хугацаа 10 минут.',
     ].join('\n'),
     btnOrientation: '1',
-    btns: [btn('Refresh Code', 'pairing.refresh'), btn('Help', 'pairing.help')],
+    btns: [btn('Код шинэчлэх', 'pairing.refresh'), btn('Тусламж', 'pairing.help')],
   };
 }
 
@@ -122,21 +122,21 @@ export function createPairingCard(pairingCode: string): DingTalkCard {
  */
 export function createPairingStatusCard(pairingCode: string): DingTalkCard {
   return {
-    title: 'Waiting for Approval',
+    title: 'Зөвшөөрөл хүлээж байна',
     text: [
-      '### Waiting for Approval',
+      '### Зөвшөөрөл хүлээж байна',
       '',
-      'Your pairing request is pending approval.',
+      'Таны хослуулалтын хүсэлт зөвшөөрөл хүлээж байна.',
       '',
-      `**Pairing Code:** \`${pairingCode}\``,
+      `**Хослуулалтын код:** \`${pairingCode}\``,
       '',
-      'Please approve in Wayland settings:',
-      '1. Open Wayland app',
-      '2. Go to WebUI > Channels',
-      '3. Click "Approve" for this code',
+      'Дархайн тохиргоонд зөвшөөрнө үү:',
+      '1. Дархай аппыг нээнэ үү',
+      '2. WebUI > Сувгууд руу орно уу',
+      '3. Энэ кодын ард "Зөвшөөрөх" дарна уу',
     ].join('\n'),
     btnOrientation: '1',
-    btns: [btn('Check Status', 'pairing.check'), btn('New Code', 'pairing.refresh')],
+    btns: [btn('Төлөв шалгах', 'pairing.check'), btn('Шинэ код', 'pairing.refresh')],
   };
 }
 
@@ -145,27 +145,27 @@ export function createPairingStatusCard(pairingCode: string): DingTalkCard {
  */
 export function createPairingHelpCard(): DingTalkCard {
   return {
-    title: 'Pairing Help',
+    title: 'Хослуулалтын тусламж',
     text: [
-      '### Pairing Help',
+      '### Хослуулалтын тусламж',
       '',
-      '**What is pairing?**',
-      'Pairing links your DingTalk account with the local Wayland application.',
-      'You need to pair before using the AI assistant.',
+      '**Хослуулалт гэж юу вэ?**',
+      'Хослуулалт нь таны DingTalk бүртгэлийг локал Дархай апптай холбоно.',
+      'AI туслахыг ашиглахын өмнө хослуулах шаардлагатай.',
       '',
-      '**How to pair:**',
-      '1. Send any message to this bot',
-      '2. You will receive a pairing code',
-      '3. Open Wayland desktop app',
-      '4. Go to WebUI > Channels > DingTalk',
-      '5. Click "Approve" for your code',
+      '**Хэрхэн хослуулах вэ:**',
+      '1. Энэ ботод дурын мессеж илгээнэ үү',
+      '2. Танд хослуулалтын код ирнэ',
+      '3. Дархай десктоп аппыг нээнэ үү',
+      '4. WebUI > Сувгууд > DingTalk руу орно уу',
+      '5. Кодынхоо ард "Зөвшөөрөх" дарна уу',
       '',
-      '**FAQ:**',
-      '- Pairing code valid for 10 minutes',
-      '- Wayland app must be running',
-      '- One account can only pair once',
+      '**Түгээмэл асуулт:**',
+      '- Хослуулалтын код 10 минут хүчинтэй',
+      '- Дархай апп ажиллаж байх ёстой',
+      '- Нэг бүртгэл зөвхөн нэг удаа хослуулна',
     ].join('\n'),
-    btns: [btn('Get Pairing Code', 'pairing.show')],
+    btns: [btn('Хослуулалтын код авах', 'pairing.show')],
   };
 }
 
@@ -177,22 +177,22 @@ export function createAgentSelectionCard(
   currentAgent?: ChannelAgentType
 ): DingTalkCard {
   const currentAgentInfo = availableAgents.find((a) => a.type === currentAgent);
-  const currentAgentName = currentAgentInfo ? `${currentAgentInfo.emoji} ${currentAgentInfo.name}` : 'None';
+  const currentAgentName = currentAgentInfo ? `${currentAgentInfo.emoji} ${currentAgentInfo.name}` : 'Байхгүй';
 
   const agentButtons: DingTalkButton[] = availableAgents.map((agent) => {
     const label =
-      currentAgent === agent.type ? `[Current] ${agent.emoji} ${agent.name}` : `${agent.emoji} ${agent.name}`;
+      currentAgent === agent.type ? `[Одоогийнх] ${agent.emoji} ${agent.name}` : `${agent.emoji} ${agent.name}`;
     return btn(label, 'agent.select', { agentType: agent.type });
   });
 
   return {
-    title: 'Switch Agent',
+    title: 'Агент солих',
     text: [
-      `### Switch Agent`,
+      `### Агент солих`,
       '',
-      `Select an AI agent for your conversations:`,
+      `Харилцан ярианд ашиглах AI агентаа сонгоно уу:`,
       '',
-      `Current: **${currentAgentName}**`,
+      `Одоогийнх: **${currentAgentName}**`,
     ].join('\n'),
     btnOrientation: '0',
     btns: agentButtons,
@@ -210,15 +210,15 @@ export function createSessionStatusCard(session?: {
 }): DingTalkCard {
   if (!session) {
     return {
-      title: 'Session Status',
+      title: 'Сешний төлөв',
       text: [
-        '### Session Status',
+        '### Сешний төлөв',
         '',
-        'No active session.',
+        'Идэвхтэй сешн алга.',
         '',
-        'Send a message to start a new conversation, or tap the "New Chat" button.',
+        'Шинэ яриа эхлүүлэхийн тулд мессеж илгээх эсвэл "Шинэ чат" товчийг дарна уу.',
       ].join('\n'),
-      btns: [btn('New Session', 'session.new')],
+      btns: [btn('Шинэ сешн', 'session.new')],
     };
   }
 
@@ -226,17 +226,17 @@ export function createSessionStatusCard(session?: {
   const lastActivity = Math.floor((Date.now() - session.lastActivity) / 1000);
 
   return {
-    title: 'Session Status',
+    title: 'Сешний төлөв',
     text: [
-      '### Session Status',
+      '### Сешний төлөв',
       '',
-      `- **Agent:** ${session.agentType}`,
-      `- **Duration:** ${duration} min`,
-      `- **Last activity:** ${lastActivity} sec ago`,
-      `- **Session ID:** \`${session.id.slice(-8)}\``,
+      `- **Агент:** ${session.agentType}`,
+      `- **Үргэлжилсэн:** ${duration} мин`,
+      `- **Сүүлийн үйлдэл:** ${lastActivity} сек өмнө`,
+      `- **Сешний ID:** \`${session.id.slice(-8)}\``,
     ].join('\n'),
     btnOrientation: '1',
-    btns: [btn('New Session', 'session.new'), btn('Refresh', 'session.status')],
+    btns: [btn('Шинэ сешн', 'session.new'), btn('Шинэчлэх', 'session.status')],
   };
 }
 
@@ -245,22 +245,26 @@ export function createSessionStatusCard(session?: {
  */
 export function createHelpCard(): DingTalkCard {
   return {
-    title: 'Wayland Assistant Help',
+    title: 'Дархай туслахын тусламж',
     text: [
-      '### Wayland Assistant Help',
+      '### Дархай туслахын тусламж',
       '',
-      'A remote assistant to interact with Wayland via DingTalk.',
+      'DingTalk-оор дамжуулан Дархайтай харилцах алсын туслах.',
       '',
-      '**Common Actions:**',
-      '- New Chat - Start a new session',
-      '- Agent - Switch AI agent',
-      '- Status - View current session status',
-      '- Help - Show this help message',
+      '**Түгээмэл үйлдлүүд:**',
+      '- Шинэ чат - Шинэ сешн эхлүүлэх',
+      '- Агент - AI агент солих',
+      '- Төлөв - Одоогийн сешний төлөвийг харах',
+      '- Тусламж - Энэ тусламжийг харуулах',
       '',
-      'Send a message to chat with the AI assistant.',
+      'AI туслахтай чатлахын тулд мессеж илгээгээрэй.',
     ].join('\n'),
     btnOrientation: '0',
-    btns: [btn('Features', 'help.features'), btn('Pairing Guide', 'help.pairing'), btn('Tips', 'help.tips')],
+    btns: [
+      btn('Боломжууд', 'help.features'),
+      btn('Хослуулалтын заавар', 'help.pairing'),
+      btn('Зөвлөмж', 'help.tips'),
+    ],
   };
 }
 
@@ -269,26 +273,26 @@ export function createHelpCard(): DingTalkCard {
  */
 export function createFeaturesCard(): DingTalkCard {
   return {
-    title: 'Features',
+    title: 'Боломжууд',
     text: [
-      '### Features',
+      '### Боломжууд',
       '',
-      '**AI Chat**',
-      '- Natural language conversation',
-      '- Streaming output, real-time display',
-      '- Context memory support',
+      '**AI чат**',
+      '- Энгийн хэлээр харилцах',
+      '- Урсгал гаралт, бодит цагт харагдана',
+      '- Контекст ой санамжийн дэмжлэг',
       '',
-      '**Session Management**',
-      '- Single session mode',
-      '- Clear context anytime',
-      '- View session status',
+      '**Сешний удирдлага**',
+      '- Нэг сешний горим',
+      '- Контекстийг хүссэн үедээ цэвэрлэх',
+      '- Сешний төлөвийг харах',
       '',
-      '**Message Actions**',
-      '- Copy reply content',
-      '- Regenerate reply',
-      '- Continue conversation',
+      '**Зурвасын үйлдлүүд**',
+      '- Хариултын агуулгыг хуулах',
+      '- Хариултыг дахин үүсгэх',
+      '- Яриаг үргэлжлүүлэх',
     ].join('\n'),
-    btns: [btn('Back to Help', 'help.show')],
+    btns: [btn('Тусламж руу буцах', 'help.show')],
   };
 }
 
@@ -297,22 +301,22 @@ export function createFeaturesCard(): DingTalkCard {
  */
 export function createPairingGuideCard(): DingTalkCard {
   return {
-    title: 'Pairing Guide',
+    title: 'Хослуулалтын заавар',
     text: [
-      '### Pairing Guide',
+      '### Хослуулалтын заавар',
       '',
-      '**First-time Setup:**',
-      '1. Send any message to the bot',
-      '2. Bot displays pairing code',
-      '3. Approve pairing in Wayland settings',
-      '4. Ready to use after pairing',
+      '**Анхны тохиргоо:**',
+      '1. Ботод дурын мессеж илгээнэ үү',
+      '2. Бот хослуулалтын код харуулна',
+      '3. Дархайн тохиргоонд хослуулалтыг зөвшөөрнө үү',
+      '4. Хослуулсны дараа ашиглахад бэлэн',
       '',
-      '**Notes:**',
-      '- Pairing code valid for 10 minutes',
-      '- Wayland app must be running',
-      '- One DingTalk account can only pair once',
+      '**Тэмдэглэл:**',
+      '- Хослуулалтын код 10 минут хүчинтэй',
+      '- Дархай апп ажиллаж байх ёстой',
+      '- Нэг DingTalk бүртгэл зөвхөн нэг удаа хослуулна',
     ].join('\n'),
-    btns: [btn('Back to Help', 'help.show')],
+    btns: [btn('Тусламж руу буцах', 'help.show')],
   };
 }
 
@@ -321,21 +325,21 @@ export function createPairingGuideCard(): DingTalkCard {
  */
 export function createTipsCard(): DingTalkCard {
   return {
-    title: 'Tips',
+    title: 'Зөвлөмж',
     text: [
-      '### Tips',
+      '### Зөвлөмж',
       '',
-      '**Effective Conversations:**',
-      '- Be clear and specific',
-      '- Feel free to ask follow-ups',
-      '- Regenerate if not satisfied',
+      '**Үр дүнтэй харилцахын тулд:**',
+      '- Тодорхой, оновчтой бичээрэй',
+      '- Нэмэлт асуулт чөлөөтэй асуугаарай',
+      '- Сэтгэл ханамжгүй бол дахин үүсгээрэй',
       '',
-      '**Quick Actions:**',
-      '- Use card buttons for quick access',
-      '- Tap message buttons for actions',
-      '- New chat clears history context',
+      '**Шуурхай үйлдлүүд:**',
+      '- Хурдан хандахын тулд картын товчнуудыг ашиглаарай',
+      '- Үйлдэл хийхийн тулд зурвасын товчийг дараарай',
+      '- Шинэ чат түүхийн контекстийг цэвэрлэнэ',
     ].join('\n'),
-    btns: [btn('Back to Help', 'help.show')],
+    btns: [btn('Тусламж руу буцах', 'help.show')],
   };
 }
 
@@ -345,10 +349,10 @@ export function createTipsCard(): DingTalkCard {
  */
 export function createResponseActionsCard(text: string): DingTalkCard {
   return {
-    title: 'Response',
+    title: 'Хариулт',
     text: text + '\n\n---',
     btnOrientation: '1',
-    btns: [btn('Copy', 'chat.copy'), btn('Regenerate', 'chat.regenerate'), btn('Continue', 'chat.continue')],
+    btns: [btn('Хуулах', 'chat.copy'), btn('Дахин үүсгэх', 'chat.regenerate'), btn('Үргэлжлүүлэх', 'chat.continue')],
   };
 }
 
@@ -357,10 +361,10 @@ export function createResponseActionsCard(text: string): DingTalkCard {
  */
 export function createErrorRecoveryCard(errorMessage?: string): DingTalkCard {
   return {
-    title: 'Error',
-    text: ['### Error', '', errorMessage || 'An error occurred. Please try again.'].join('\n'),
+    title: 'Алдаа',
+    text: ['### Алдаа', '', errorMessage || 'Алдаа гарлаа. Дахин оролдоно уу.'].join('\n'),
     btnOrientation: '1',
-    btns: [btn('Retry', 'error.retry'), btn('New Session', 'session.new')],
+    btns: [btn('Дахин оролдох', 'error.retry'), btn('Шинэ сешн', 'session.new')],
   };
 }
 
@@ -390,15 +394,15 @@ export function createToolConfirmationCard(
  */
 export function createSettingsCard(): DingTalkCard {
   return {
-    title: 'Settings',
+    title: 'Тохиргоо',
     text: [
-      '### Settings',
+      '### Тохиргоо',
       '',
-      'Channel settings need to be configured in the Wayland app.',
+      'Сувгийн тохиргоог Дархай апп дотор хийнэ.',
       '',
-      'Open Wayland > WebUI > Channels',
+      'Дархай > WebUI > Сувгууд гэж нээнэ үү',
     ].join('\n'),
-    btns: [btn('Back', 'help.show')],
+    btns: [btn('Буцах', 'help.show')],
   };
 }
 
@@ -409,7 +413,7 @@ export function createSettingsCard(): DingTalkCard {
  */
 export function createTextCard(text: string, title?: string): DingTalkCard {
   return {
-    title: title || 'Message',
+    title: title || 'Зурвас',
     text,
   };
 }

@@ -96,7 +96,7 @@ describe('SiderFooterQuickActions', () => {
     const onOpenLink = vi.fn();
     renderActions({ onOpenLink });
     fireEvent.click(screen.getByTestId('sider-footer-quick-repo'));
-    expect(onOpenLink).toHaveBeenCalledWith('https://github.com/FerroxLabs/wayland');
+    expect(onOpenLink).toHaveBeenCalledWith('https://github.com/sergei10a-rgb/darhai');
   });
 
   it('does NOT setState after unmount when webui status fires (cleanup pattern)', async () => {

@@ -25,7 +25,7 @@ import {
 
 const WCORE_AGENT: DetectedAgent = {
   id: 'wcore',
-  name: 'Wayland Core',
+  name: 'Darhai Core',
   kind: 'wcore',
   available: true,
   backend: 'wcore',
@@ -155,7 +155,7 @@ describe('resolveDefaultLaunchTarget()', () => {
     const wCoreProvider: TProviderWithModel = {
       id: 'wcore-prov',
       platform: 'wcore',
-      name: 'Wayland Core Provider',
+      name: 'Darhai Core Provider',
       baseUrl: '',
       apiKey: '',
       useModel: 'default',

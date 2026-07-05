@@ -232,7 +232,7 @@ const WCoreSendBox: React.FC<{
             conversation_id,
             files,
           });
-          assertBridgeSuccess(result, 'Failed to send message to Wayland Core');
+          assertBridgeSuccess(result, 'Failed to send message to Darhai Core');
         }
         emitter.emit('chat.history.refresh');
         if (files.length > 0) {

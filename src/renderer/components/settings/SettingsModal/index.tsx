@@ -5,8 +5,8 @@
  */
 
 import { CloudCog, Globe, Info, Monitor, Puzzle, Sparkles, Wrench } from 'lucide-react';
-import WaylandModal from '@/renderer/components/base/WaylandModal';
-import WaylandScrollArea from '@/renderer/components/base/WaylandScrollArea';
+import DarhaiModal from '@/renderer/components/base/DarhaiModal';
+import DarhaiScrollArea from '@/renderer/components/base/DarhaiScrollArea';
 import { iconColors } from '@/renderer/styles/colors';
 import { isElectronDesktop, resolveExtensionAssetUrl } from '@/renderer/utils/platform';
 import { extensions as extensionsIpc, type IExtensionSettingsTab } from '@/common/adapter/ipcBridge';
@@ -99,7 +99,7 @@ interface SubModalProps {
  */
 export const SubModal: React.FC<SubModalProps> = ({ visible, onCancel, title, children }) => {
   return (
-    <WaylandModal
+    <DarhaiModal
       visible={visible}
       onCancel={onCancel}
       footer={null}
@@ -107,8 +107,8 @@ export const SubModal: React.FC<SubModalProps> = ({ visible, onCancel, title, ch
       size='medium'
       title={title}
     >
-      <WaylandScrollArea className='h-full px-20px pb-16px text-14px text-t-primary'>{children}</WaylandScrollArea>
-    </WaylandModal>
+      <DarhaiScrollArea className='h-full px-20px pb-16px text-14px text-t-primary'>{children}</DarhaiScrollArea>
+    </DarhaiModal>
   );
 };
 
@@ -373,10 +373,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onCancel, defaul
 
   // Desktop menu (sidebar)
   const desktopMenu = (
-    <WaylandScrollArea
-      className='flex-shrink-0 b-color-border-2 scrollbar-hide'
-      style={{ width: `${SIDEBAR_WIDTH}px` }}
-    >
+    <DarhaiScrollArea className='flex-shrink-0 b-color-border-2 scrollbar-hide' style={{ width: `${SIDEBAR_WIDTH}px` }}>
       <div className='flex flex-col gap-2px'>
         {menuItems.map((item) => (
           <div
@@ -395,12 +392,12 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onCancel, defaul
           </div>
         ))}
       </div>
-    </WaylandScrollArea>
+    </DarhaiScrollArea>
   );
 
   return (
     <SettingsViewModeProvider value='modal'>
-      <WaylandModal
+      <DarhaiModal
         visible={visible}
         onCancel={onCancel}
         footer={null}
@@ -423,14 +420,14 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onCancel, defaul
         >
           {isMobile ? mobileMenu : desktopMenu}
 
-          <WaylandScrollArea
+          <DarhaiScrollArea
             className={classNames('flex-1 min-h-0', isMobile ? 'overflow-y-auto' : 'flex flex-col pl-24px gap-16px')}
           >
             {renderBuiltinContent()}
             {renderExtensionTabs()}
-          </WaylandScrollArea>
+          </DarhaiScrollArea>
         </div>
-      </WaylandModal>
+      </DarhaiModal>
     </SettingsViewModeProvider>
   );
 };

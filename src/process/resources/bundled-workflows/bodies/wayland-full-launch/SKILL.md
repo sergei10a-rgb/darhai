@@ -15,7 +15,7 @@ license: Apache-2.0
 type: workflow
 skills: "launch market-audit funnels-offer funnels-cart-cycle-launch convert-package content-calendar sales-followup market-ads market-launch"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: marketing launch step-by-step planning campaign funnel
   category: marketing

@@ -16,5 +16,5 @@ test('renders Google Workspace detail page', () => {
   expect(screen.getByText('Google Workspace')).toBeInTheDocument();
   // Tab label uses "Setup guide" - case-insensitive regex
   expect(screen.getByText(/Setup guide/i)).toBeInTheDocument();
-  expect(screen.getByText(/Wayland verified/)).toBeInTheDocument();
+  expect(screen.getByText(/Darhai verified/)).toBeInTheDocument();
 });

@@ -1,5 +1,6 @@
 import { Minus, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ipcBridge } from '@/common';
 
 const WindowMaximizeIcon: React.FC<{ size?: number }> = ({ size = 14 }) => (
@@ -19,6 +20,7 @@ const WindowRestoreIcon: React.FC<{ size?: number }> = ({ size = 14 }) => (
 );
 
 const WindowControls: React.FC = () => {
+  const { t } = useTranslation();
   const [isMaximized, setIsMaximized] = useState(false);
   const [available, setAvailable] = useState(true);
 
@@ -77,14 +79,19 @@ const WindowControls: React.FC = () => {
 
   return (
     <div className='app-window-controls'>
-      <button type='button' className='app-window-controls__button' onClick={handleMinimize} aria-label='Minimize'>
+      <button
+        type='button'
+        className='app-window-controls__button'
+        onClick={handleMinimize}
+        aria-label={t('common.windowControls.minimize')}
+      >
         <Minus size={14} strokeWidth={4} />
       </button>
       <button
         type='button'
         className='app-window-controls__button'
         onClick={handleToggleMaximize}
-        aria-label={isMaximized ? 'Restore' : 'Maximize'}
+        aria-label={isMaximized ? t('common.windowControls.restore') : t('common.windowControls.maximize')}
       >
         {isMaximized ? <WindowRestoreIcon size={14} /> : <WindowMaximizeIcon size={14} />}
       </button>
@@ -92,7 +99,7 @@ const WindowControls: React.FC = () => {
         type='button'
         className='app-window-controls__button app-window-controls__button--close'
         onClick={handleClose}
-        aria-label='Close'
+        aria-label={t('common.close')}
       >
         <X size={16} strokeWidth={3} />
       </button>

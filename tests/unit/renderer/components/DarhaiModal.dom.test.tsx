@@ -58,19 +58,19 @@ vi.mock('@arco-design/web-react', () => ({
   }) => <button onClick={onClick}>{children}</button>,
 }));
 
-import WaylandModal from '@/renderer/components/base/WaylandModal';
+import DarhaiModal from '@/renderer/components/base/DarhaiModal';
 
 const arcoOverrideCss = readFileSync(resolve(process.cwd(), 'src/renderer/styles/arco-override.css'), 'utf8');
 
-describe('WaylandModal', () => {
+describe('DarhaiModal', () => {
   it('uses dialog fill as the default content background', () => {
     const { container } = render(
-      <WaylandModal visible onCancel={vi.fn()} header='Modal title'>
+      <DarhaiModal visible onCancel={vi.fn()} header='Modal title'>
         content
-      </WaylandModal>
+      </DarhaiModal>
     );
 
-    const body = container.querySelector('.wayland-modal-body-content');
+    const body = container.querySelector('.darhai-modal-body-content');
 
     expect(body).toBeTruthy();
     expect(body).toHaveStyle({ background: 'var(--dialog-fill-0)' });
@@ -78,12 +78,17 @@ describe('WaylandModal', () => {
 
   it('preserves an explicit content background override', () => {
     const { container } = render(
-      <WaylandModal visible onCancel={vi.fn()} header='Modal title' contentStyle={{ background: 'rgb(var(--primary-1))' }}>
+      <DarhaiModal
+        visible
+        onCancel={vi.fn()}
+        header='Modal title'
+        contentStyle={{ background: 'rgb(var(--primary-1))' }}
+      >
         content
-      </WaylandModal>
+      </DarhaiModal>
     );
 
-    const body = container.querySelector('.wayland-modal-body-content');
+    const body = container.querySelector('.darhai-modal-body-content');
 
     expect(body).toBeTruthy();
     expect(body).toHaveStyle({ background: 'rgb(var(--primary-1))' });

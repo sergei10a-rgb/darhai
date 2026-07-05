@@ -11,7 +11,7 @@
  * `~/.wayland/profiles/<name>/`. Each named profile is its own folder; the
  * active profile is recorded in a small `.active` marker file at the profiles
  * root. The PATH resolution (sanitising, containment, native-vs-profile dir,
- * `WAYLAND_HOME` target) lives in the dependency-light {@link ./profilePaths}
+ * `DARHAI_HOME` target) lives in the dependency-light {@link ./profilePaths}
  * module so the config bridge and the engine spawn share one source of truth.
  *
  * SECURITY (SEC-4) - this module does PATH-DERIVING FILESYSTEM MUTATION from a
@@ -23,7 +23,7 @@
  * `bridgeAllowlist.ts` and must never reach the agent/engine tool surface.
  *
  * PROFILE ACTIVATION (was SEC-3): the engine resolves its whole config tree
- * (config.toml, memory.db, skills) through `WAYLAND_HOME`, which the spawn now
+ * (config.toml, memory.db, skills) through `DARHAI_HOME`, which the spawn now
  * sets to the active profile's dir (see `envBuilder.buildEngineSpawnEnv` +
  * `WCoreAgent.start`). So `activate()` need only persist the marker: every NEW
  * engine spawn picks the active profile up automatically. Already-running
@@ -127,10 +127,10 @@ export async function listProfiles(): Promise<IWcoreProfile[]> {
   const names = new Set<string>([DEFAULT_PROFILE, ...entries]);
   const ordered = Array.from(names)
     .filter((n) => PROFILE_NAME_RE.test(n))
-    .sort((a, b) => (a === DEFAULT_PROFILE ? -1 : b === DEFAULT_PROFILE ? 1 : a.localeCompare(b)));
+    .toSorted((a, b) => (a === DEFAULT_PROFILE ? -1 : b === DEFAULT_PROFILE ? 1 : a.localeCompare(b)));
   // Read each profile's stats from its own config tree (best-effort, parallel).
   return Promise.all(
-    ordered.map(async (name) => ({ name, active: name === active, ...(await readProfileStats(name)) }))
+    ordered.map(async (name) => Object.assign({ name, active: name === active }, await readProfileStats(name)))
   );
 }
 
@@ -158,7 +158,7 @@ export async function cloneProfile(from: string, to: string): Promise<void> {
  * marker never points at a nonexistent profile.
  *
  * The marker is the single source of truth read by `resolveActiveConfigDir()`
- * (profilePaths). Every subsequent engine spawn resolves `WAYLAND_HOME` through
+ * (profilePaths). Every subsequent engine spawn resolves `DARHAI_HOME` through
  * it, so a NEW conversation immediately uses this profile's isolated config +
  * memory. Engines already running keep the profile they spawned under until
  * they restart - we intentionally never hot-yank a live engine's config dir

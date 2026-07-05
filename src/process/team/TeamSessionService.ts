@@ -188,7 +188,7 @@ export class TeamSessionService {
 
     const provider = providers[0];
     if (!provider) {
-      throw new Error('No enabled model provider for Wayland Core');
+      throw new Error('No enabled model provider for Darhai Core');
     }
 
     const enabledModel = provider.model?.find((m: string) => provider.modelEnabled?.[m] !== false);

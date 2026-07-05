@@ -1,6 +1,15 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import classNames from 'classnames';
-import { ArrowLeftCircle, ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Plus } from 'lucide-react';
+import {
+  ArrowLeftCircle,
+  ChevronLeft,
+  ChevronRight,
+  PanelLeftClose,
+  PanelLeftOpen,
+  PanelRightClose,
+  PanelRightOpen,
+  Plus,
+} from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -12,17 +21,17 @@ import type { WorkspaceStateDetail } from '@renderer/utils/workspace/workspaceEv
 import { useLayoutContext } from '@/renderer/hooks/context/LayoutContext';
 import { useNavigationHistory } from '@/renderer/hooks/context/NavigationHistoryContext';
 import { isElectronDesktop, isMacOS } from '@/renderer/utils/platform';
-// Full brand lockups (orbit mark + wordmark + ™). Dark wordmark shows on light
+// Full brand lockups (orbit mark + wordmark). Dark wordmark shows on light
 // theme, white wordmark on dark theme - toggled purely via CSS on [data-theme].
-import lockupDark from '@renderer/assets/logos/brand/wayland-lockup-dark.png';
-import lockupWhite from '@renderer/assets/logos/brand/wayland-lockup-white.png';
+import lockupDark from '@renderer/assets/logos/brand/darhai-lockup-dark.png';
+import lockupWhite from '@renderer/assets/logos/brand/darhai-lockup-white.png';
 import './titlebar.css';
 
 interface TitlebarProps {
   workspaceAvailable: boolean;
 }
 
-const WaylandLogoMark: React.FC = () => (
+const DarhaiLogoMark: React.FC = () => (
   <svg
     className='app-titlebar__brand-logo'
     viewBox='0 0 24 24'
@@ -347,13 +356,25 @@ const Titlebar: React.FC<TitlebarProps> = ({ workspaceAvailable }) => {
       >
         {layout?.isMobile ? (
           <span className='app-titlebar__brand-mobile'>
-            <WaylandLogoMark />
+            <DarhaiLogoMark />
             <span className='app-titlebar__brand-text'>{mobileCenterTitle}</span>
           </span>
         ) : (
           <span className='app-titlebar__brand-desktop'>
-            <img src={lockupDark} alt={appTitle} className='app-titlebar__brand-lockup app-titlebar__brand-lockup--on-light' aria-hidden='true' draggable={false} />
-            <img src={lockupWhite} alt={appTitle} className='app-titlebar__brand-lockup app-titlebar__brand-lockup--on-dark' aria-hidden='true' draggable={false} />
+            <img
+              src={lockupDark}
+              alt={appTitle}
+              className='app-titlebar__brand-lockup app-titlebar__brand-lockup--on-light'
+              aria-hidden='true'
+              draggable={false}
+            />
+            <img
+              src={lockupWhite}
+              alt={appTitle}
+              className='app-titlebar__brand-lockup app-titlebar__brand-lockup--on-dark'
+              aria-hidden='true'
+              draggable={false}
+            />
             <span className='app-titlebar__brand-tagline'>Perceives · Reasons · Acts · Evolves</span>
           </span>
         )}
@@ -376,11 +397,7 @@ const Titlebar: React.FC<TitlebarProps> = ({ workspaceAvailable }) => {
             onClick={handleWorkspaceToggle}
             aria-label={workspaceTooltip}
           >
-            {workspaceCollapsed ? (
-              <PanelRightOpen size={iconSize} />
-            ) : (
-              <PanelRightClose size={iconSize} />
-            )}
+            {workspaceCollapsed ? <PanelRightOpen size={iconSize} /> : <PanelRightClose size={iconSize} />}
           </button>
         )}
         {showWindowControls && <WindowControls />}

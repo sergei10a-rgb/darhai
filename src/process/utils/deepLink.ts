@@ -7,13 +7,24 @@
 import type { BrowserWindow } from 'electron';
 import { ipcBridge } from '@/common';
 
-export const PROTOCOL_SCHEME = 'wayland';
+/** Primary deep-link scheme registered by the app. */
+export const PROTOCOL_SCHEME = 'darhai';
+
+/** Legacy scheme kept registered so existing wayland:// links keep working. */
+export const LEGACY_PROTOCOL_SCHEME = 'wayland';
+
+/** All schemes the app registers and accepts, primary first. */
+export const PROTOCOL_SCHEMES: readonly string[] = [PROTOCOL_SCHEME, LEGACY_PROTOCOL_SCHEME];
+
+/** True when the given argv entry is a deep-link URL for any accepted scheme. */
+export const isDeepLinkArg = (arg: string): boolean =>
+  PROTOCOL_SCHEMES.some((scheme) => arg.startsWith(`${scheme}://`));
 
 /**
- * Parse an wayland:// URL into action and params.
+ * Parse a darhai:// (or legacy wayland://) URL into action and params.
  * Supports two formats:
- *   1. wayland://add-provider?baseUrl=xxx&apiKey=xxx
- *   2. wayland://provider/add?v=1&data=<base64 JSON>  (one-api / new-api style)
+ *   1. darhai://add-provider?baseUrl=xxx&apiKey=xxx
+ *   2. darhai://provider/add?v=1&data=<base64 JSON>  (one-api / new-api style)
  */
 export type DeepLinkParsed = {
   action: string;
@@ -34,7 +45,7 @@ export type DeepLinkParsed = {
 export const parseDeepLinkUrl = (url: string): DeepLinkParsed | null => {
   try {
     const parsed = new URL(url);
-    if (parsed.protocol !== `${PROTOCOL_SCHEME}:`) return null;
+    if (!PROTOCOL_SCHEMES.some((scheme) => parsed.protocol === `${scheme}:`)) return null;
 
     const hostname = parsed.hostname || '';
     const pathname = parsed.pathname.replace(/^\/+/, '');
@@ -74,7 +85,7 @@ export const parseDeepLinkUrl = (url: string): DeepLinkParsed | null => {
 };
 
 let mainWindowRef: BrowserWindow | null = null;
-let pendingDeepLinkUrl: string | null = process.argv.find((arg) => arg.startsWith(`${PROTOCOL_SCHEME}://`)) || null;
+let pendingDeepLinkUrl: string | null = process.argv.find(isDeepLinkArg) || null;
 
 export const setDeepLinkMainWindow = (win: BrowserWindow): void => {
   mainWindowRef = win;

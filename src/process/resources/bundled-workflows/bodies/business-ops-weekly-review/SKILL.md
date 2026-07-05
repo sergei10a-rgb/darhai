@@ -14,7 +14,7 @@ license: Apache-2.0
 type: workflow
 skills: "ops-report"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: business-ops weekly-review metrics reporting deterministic
   category: Business Operations

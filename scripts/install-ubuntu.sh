@@ -1,27 +1,27 @@
 #!/usr/bin/env bash
 # ============================================================================
-# Wayland - Ubuntu / Debian 一鍵自動化安裝腳本
+# Дархай (Darhai) - Ubuntu / Debian one-shot installer
 # ============================================================================
-# 功能：
-#   1. 自動偵測系統架構 (amd64 / arm64)
-#   2. 從 GitHub Release 下載指定版本的 .deb 套件（預設 latest）
-#   3. 安裝 .deb + 自動修復依賴
-#   4. 安裝 Xvfb 等 headless 運行所需套件
-#   5. 建立服務管理腳本 (/opt/Wayland/start-wayland.sh)
-#   6. (可選) 建立 systemd service
-#   7. (可選) 建立桌面捷徑
+# What it does:
+#   1. Detects the system architecture (amd64 / arm64)
+#   2. Downloads the requested release .deb from GitHub Releases (default: latest)
+#   3. Installs the .deb and auto-repairs missing dependencies
+#   4. Installs Xvfb and other packages needed for headless operation
+#   5. Creates the service management script (/opt/Darhai/start-darhai.sh)
+#   6. (Optional) Creates a systemd service
+#   7. (Optional) Creates a desktop launcher
 #
-# 用法：
-#   curl -fsSL https://raw.githubusercontent.com/FerroxLabs/wayland/main/scripts/install-ubuntu.sh | bash
-#   # 或指定版本：
-#   WAYLAND_VERSION=1.8.25 bash install-ubuntu.sh
-#   # 僅安裝桌面版（跳過 headless 設定）：
-#   WAYLAND_MODE=desktop bash install-ubuntu.sh
+# Usage:
+#   curl -fsSL https://raw.githubusercontent.com/sergei10a-rgb/darhai/main/scripts/install-ubuntu.sh | bash
+#   # Pin a specific version:
+#   DARHAI_VERSION=1.8.25 bash install-ubuntu.sh
+#   # Desktop-only install (skip headless setup):
+#   DARHAI_MODE=desktop bash install-ubuntu.sh
 # ============================================================================
 
 set -euo pipefail
 
-# ─── 顏色定義 ───────────────────────────────────────────────────────────────
+# ─── Colors ─────────────────────────────────────────────────────────────────
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -30,7 +30,7 @@ CYAN='\033[0;36m'
 BOLD='\033[1m'
 NC='\033[0m' # No Color
 
-# ─── 輔助函式 ───────────────────────────────────────────────────────────────
+# ─── Helpers ────────────────────────────────────────────────────────────────
 info()    { echo -e "${BLUE}[INFO]${NC} $*"; }
 success() { echo -e "${GREEN}[✓]${NC} $*"; }
 warn()    { echo -e "${YELLOW}[!]${NC} $*"; }
@@ -40,33 +40,33 @@ die()     { error "$*"; exit 1; }
 banner() {
     echo -e "${CYAN}${BOLD}"
     echo "  ╔══════════════════════════════════════════════╗"
-    echo "  ║          Wayland Installer for Ubuntu         ║"
+    echo "  ║        Дархай (Darhai) Ubuntu суулгагч       ║"
     echo "  ╚══════════════════════════════════════════════╝"
     echo -e "${NC}"
 }
 
-# ─── 前置檢查 ───────────────────────────────────────────────────────────────
+# ─── Prerequisites ──────────────────────────────────────────────────────────
 check_prerequisites() {
-    # 必須是 Linux
-    [[ "$(uname -s)" == "Linux" ]] || die "此腳本僅支援 Linux 系統"
+    # Linux only
+    [[ "$(uname -s)" == "Linux" ]] || die "This script only supports Linux"
 
-    # 必須有 apt (Debian/Ubuntu 系列)
-    command -v apt-get &>/dev/null || die "此腳本需要 apt-get (Debian/Ubuntu 系列)"
+    # apt is required (Debian/Ubuntu family)
+    command -v apt-get &>/dev/null || die "This script requires apt-get (Debian/Ubuntu family)"
 
-    # 建議以 root 或 sudo 執行
+    # Run as root or via sudo
     if [[ $EUID -ne 0 ]]; then
         if command -v sudo &>/dev/null; then
             SUDO="sudo"
-            warn "非 root 使用者，將使用 sudo 執行安裝"
+            warn "Not running as root; installation steps will use sudo"
         else
-            die "請以 root 身份執行，或安裝 sudo"
+            die "Please run as root, or install sudo first"
         fi
     else
         SUDO=""
     fi
 }
 
-# ─── 偵測架構 ───────────────────────────────────────────────────────────────
+# ─── Detect architecture ────────────────────────────────────────────────────
 detect_arch() {
     local machine
     machine="$(uname -m)"
@@ -78,87 +78,88 @@ detect_arch() {
             DEB_ARCH="arm64"
             ;;
         *)
-            die "不支援的架構: $machine（僅支援 x86_64 / aarch64）"
+            die "Unsupported architecture: $machine (only x86_64 / aarch64 are supported)"
             ;;
     esac
-    info "偵測到系統架構: ${BOLD}$machine${NC} → 套件架構: ${BOLD}$DEB_ARCH${NC}"
+    info "Detected system architecture: ${BOLD}$machine${NC} → package architecture: ${BOLD}$DEB_ARCH${NC}"
 }
 
-# ─── 取得版本號 ──────────────────────────────────────────────────────────────
+# ─── Resolve version ─────────────────────────────────────────────────────────
 resolve_version() {
-    if [[ -n "${WAYLAND_VERSION:-}" ]]; then
-        VERSION="$WAYLAND_VERSION"
-        info "使用指定版本: ${BOLD}v$VERSION${NC}"
+    if [[ -n "${DARHAI_VERSION:-}" ]]; then
+        VERSION="$DARHAI_VERSION"
+        info "Using pinned version: ${BOLD}v$VERSION${NC}"
     else
-        info "正在查詢最新版本..."
-        # 透過 GitHub API 取得 latest release tag
+        info "Querying the latest release version..."
+        # Fetch the latest release tag via the GitHub API
         if command -v curl &>/dev/null; then
-            VERSION=$(curl -fsSL "https://api.github.com/repos/FerroxLabs/wayland/releases/latest" \
+            VERSION=$(curl -fsSL "https://api.github.com/repos/sergei10a-rgb/darhai/releases/latest" \
                 | grep '"tag_name"' | head -1 | sed 's/.*"v\([^"]*\)".*/\1/')
         elif command -v wget &>/dev/null; then
-            VERSION=$(wget -qO- "https://api.github.com/repos/FerroxLabs/wayland/releases/latest" \
+            VERSION=$(wget -qO- "https://api.github.com/repos/sergei10a-rgb/darhai/releases/latest" \
                 | grep '"tag_name"' | head -1 | sed 's/.*"v\([^"]*\)".*/\1/')
         else
-            die "需要 curl 或 wget 來下載，請先安裝: sudo apt-get install -y curl"
+            die "curl or wget is required for downloading. Install one first: sudo apt-get install -y curl"
         fi
 
         if [[ -z "$VERSION" ]]; then
-            die "無法取得最新版本號，請手動指定: WAYLAND_VERSION=1.8.25 bash $0"
+            die "Could not resolve the latest version. Pin one manually: DARHAI_VERSION=1.8.25 bash $0"
         fi
-        info "最新版本: ${BOLD}v$VERSION${NC}"
+        info "Latest version: ${BOLD}v$VERSION${NC}"
     fi
 
-    DEB_FILENAME="Wayland-${VERSION}-linux-${DEB_ARCH}.deb"
-    DOWNLOAD_URL="https://github.com/FerroxLabs/wayland/releases/download/v${VERSION}/${DEB_FILENAME}"
+    # Must match electron-builder artifactName: Darhai-${version}-linux-${arch}.deb
+    DEB_FILENAME="Darhai-${VERSION}-linux-${DEB_ARCH}.deb"
+    DOWNLOAD_URL="https://github.com/sergei10a-rgb/darhai/releases/download/v${VERSION}/${DEB_FILENAME}"
 }
 
-# ─── 下載 .deb 套件 ──────────────────────────────────────────────────────────
+# ─── Download the .deb package ───────────────────────────────────────────────
 download_deb() {
     local tmpdir
     tmpdir="$(mktemp -d)"
     DEB_PATH="${tmpdir}/${DEB_FILENAME}"
 
-    info "下載 ${BOLD}$DEB_FILENAME${NC} ..."
-    info "網址: $DOWNLOAD_URL"
+    info "Downloading ${BOLD}$DEB_FILENAME${NC} ..."
+    info "URL: $DOWNLOAD_URL"
 
     if command -v curl &>/dev/null; then
-        curl -fSL --progress-bar -o "$DEB_PATH" "$DOWNLOAD_URL" || die "下載失敗"
+        curl -fSL --progress-bar -o "$DEB_PATH" "$DOWNLOAD_URL" || die "Download failed"
     elif command -v wget &>/dev/null; then
-        wget --show-progress -q -O "$DEB_PATH" "$DOWNLOAD_URL" || die "下載失敗"
+        wget --show-progress -q -O "$DEB_PATH" "$DOWNLOAD_URL" || die "Download failed"
     fi
 
     local size
     size=$(du -h "$DEB_PATH" | cut -f1)
-    success "下載完成 ($size)"
+    success "Download complete ($size)"
 }
 
-# ─── 安裝 .deb + 修復依賴 ────────────────────────────────────────────────────
+# ─── Install the .deb + repair dependencies ──────────────────────────────────
 install_deb() {
-    info "安裝 Wayland .deb 套件..."
+    info "Installing the Darhai .deb package..."
 
-    # dpkg 安裝（可能會缺依賴）
+    # dpkg install (may leave missing dependencies)
     $SUDO dpkg -i "$DEB_PATH" 2>/dev/null || true
 
-    # 自動修復缺失的依賴
-    info "修復依賴套件..."
+    # Auto-repair missing dependencies
+    info "Repairing dependencies..."
     $SUDO apt-get install -f -y
 
-    success "Wayland v${VERSION} 安裝完成"
+    success "Darhai v${VERSION} installed"
 
-    # 驗證安裝
-    if command -v Wayland &>/dev/null || [[ -x /usr/bin/Wayland ]]; then
-        success "Wayland 已安裝至 $(which Wayland 2>/dev/null || echo '/usr/bin/Wayland')"
+    # Verify the install
+    if command -v Darhai &>/dev/null || [[ -x /usr/bin/Darhai ]]; then
+        success "Darhai installed at $(which Darhai 2>/dev/null || echo '/usr/bin/Darhai')"
     else
-        warn "安裝可能不完整，找不到 Wayland 執行檔"
+        warn "Installation may be incomplete: Darhai executable not found"
     fi
 
-    # 清理暫存
+    # Clean up the temp download
     rm -rf "$(dirname "$DEB_PATH")"
 }
 
-# ─── 安裝 Headless 依賴 ──────────────────────────────────────────────────────
+# ─── Install headless dependencies ───────────────────────────────────────────
 install_headless_deps() {
-    info "安裝 headless 運行所需套件 (Xvfb 等)..."
+    info "Installing packages required for headless operation (Xvfb etc.)..."
 
     $SUDO apt-get update -qq
     $SUDO apt-get install -y --no-install-recommends \
@@ -170,53 +171,53 @@ install_headless_deps() {
         libxss1 \
         libasound2 \
         libgbm1 \
-        2>/dev/null || warn "部分套件可能已安裝或不可用"
+        2>/dev/null || warn "Some packages may already be installed or unavailable"
 
-    success "Headless 依賴安裝完成"
+    success "Headless dependencies installed"
 }
 
-# ─── 建立服務管理腳本 ─────────────────────────────────────────────────────────
+# ─── Create the service management script ────────────────────────────────────
 create_service_script() {
-    local script_dir="/opt/Wayland"
-    local script_path="${script_dir}/start-wayland.sh"
+    local script_dir="/opt/Darhai"
+    local script_path="${script_dir}/start-darhai.sh"
 
-    info "建立服務管理腳本: $script_path"
+    info "Creating service management script: $script_path"
     $SUDO mkdir -p "$script_dir"
 
     $SUDO tee "$script_path" > /dev/null << 'SCRIPT_EOF'
 #!/bin/bash
 # ============================================================================
-# Wayland WebUI Headless 服務管理腳本
-# 用法: ./start-wayland.sh [start|stop|restart|status|logs]
+# Darhai WebUI headless service management script
+# Usage: ./start-darhai.sh [start|stop|restart|status|logs]
 # ============================================================================
 
-PIDFILE="/var/run/wayland.pid"
-LOGFILE="/var/log/wayland.log"
-WORKDIR="${WAYLAND_WORKDIR:-$HOME}"
+PIDFILE="/var/run/darhai.pid"
+LOGFILE="/var/log/darhai.log"
+WORKDIR="${DARHAI_WORKDIR:-$HOME}"
 
 start() {
     if [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
-        echo "⚡ Wayland 已在執行中 (PID: $(cat "$PIDFILE"))"
+        echo "⚡ Darhai is already running (PID: $(cat "$PIDFILE"))"
         return 1
     fi
 
-    echo "🚀 正在啟動 Wayland WebUI..."
+    echo "🚀 Starting Darhai WebUI..."
     cd "$WORKDIR" || exit 1
 
     nohup xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" \
-        /usr/bin/Wayland --webui --remote \
+        /usr/bin/Darhai --webui --remote \
         > "$LOGFILE" 2>&1 &
 
     echo $! > "$PIDFILE"
     sleep 3
 
     if kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
-        echo "✅ Wayland 啟動成功 (PID: $(cat "$PIDFILE"))"
+        echo "✅ Darhai started (PID: $(cat "$PIDFILE"))"
         local ip
         ip=$(hostname -I 2>/dev/null | awk '{print $1}')
         echo "🌐 WebUI: http://${ip:-localhost}:25808"
     else
-        echo "❌ Wayland 啟動失敗，請查看日誌: $LOGFILE"
+        echo "❌ Darhai failed to start. Check the log: $LOGFILE"
         rm -f "$PIDFILE"
         return 1
     fi
@@ -224,18 +225,18 @@ start() {
 
 stop() {
     if [ ! -f "$PIDFILE" ]; then
-        echo "⚠️  Wayland 未在執行"
+        echo "⚠️  Darhai is not running"
         return 1
     fi
     local pid
     pid=$(cat "$PIDFILE")
-    echo "🛑 正在停止 Wayland (PID: $pid)..."
+    echo "🛑 Stopping Darhai (PID: $pid)..."
     kill "$pid" 2>/dev/null
     sleep 2
     kill -9 "$pid" 2>/dev/null
-    pkill -f "Wayland --webui" 2>/dev/null
+    pkill -f "Darhai --webui" 2>/dev/null
     rm -f "$PIDFILE"
-    echo "✅ Wayland 已停止"
+    echo "✅ Darhai stopped"
 }
 
 restart() {
@@ -246,10 +247,10 @@ restart() {
 
 status() {
     if [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
-        echo "✅ Wayland 執行中 (PID: $(cat "$PIDFILE"))"
+        echo "✅ Darhai is running (PID: $(cat "$PIDFILE"))"
         ss -tlnp 2>/dev/null | grep 25808 || netstat -tlnp 2>/dev/null | grep 25808 || true
     else
-        echo "⚠️  Wayland 未在執行"
+        echo "⚠️  Darhai is not running"
         rm -f "$PIDFILE" 2>/dev/null
     fi
 }
@@ -258,7 +259,7 @@ logs() {
     if [ -f "$LOGFILE" ]; then
         tail -f "$LOGFILE"
     else
-        echo "日誌檔案不存在: $LOGFILE"
+        echo "Log file not found: $LOGFILE"
     fi
 }
 
@@ -269,200 +270,201 @@ case "${1:-}" in
     status)  status ;;
     logs)    logs ;;
     "")
-        echo "用法: $0 {start|stop|restart|status|logs}"
+        echo "Usage: $0 {start|stop|restart|status|logs}"
         echo ""
-        echo "環境變數:"
-        echo "  WAYLAND_WORKDIR  - Wayland 工作目錄 (預設: \$HOME)"
+        echo "Environment variables:"
+        echo "  DARHAI_WORKDIR  - Darhai working directory (default: \$HOME)"
         ;;
     *)
-        echo "用法: $0 {start|stop|restart|status|logs}"
+        echo "Usage: $0 {start|stop|restart|status|logs}"
         exit 1
         ;;
 esac
 SCRIPT_EOF
 
     $SUDO chmod +x "$script_path"
-    success "服務管理腳本已建立: $script_path"
+    success "Service management script created: $script_path"
 }
 
-# ─── 建立 wayland 系統使用者 ─────────────────────────────────────────────────
-create_wayland_user() {
-    local home_dir="/var/lib/wayland"
+# ─── Create the darhai system user ───────────────────────────────────────────
+create_darhai_user() {
+    local home_dir="/var/lib/darhai"
 
-    if id wayland &>/dev/null; then
-        info "系統使用者 'wayland' 已存在"
+    if id darhai &>/dev/null; then
+        info "System user 'darhai' already exists"
     else
-        info "建立系統使用者 'wayland' (home: $home_dir)..."
-        $SUDO useradd --system --shell /usr/sbin/nologin --home-dir "$home_dir" --create-home wayland
-        success "系統使用者 'wayland' 已建立"
+        info "Creating system user 'darhai' (home: $home_dir)..."
+        $SUDO useradd --system --shell /usr/sbin/nologin --home-dir "$home_dir" --create-home darhai
+        success "System user 'darhai' created"
     fi
 
-    # 確保 home 目錄存在且擁有正確的權限
+    # Make sure the home directory exists with correct ownership/permissions
     $SUDO mkdir -p "$home_dir"
-    $SUDO chown wayland:wayland "$home_dir"
+    $SUDO chown darhai:darhai "$home_dir"
     $SUDO chmod 0750 "$home_dir"
 }
 
-# ─── 建立 systemd service (可選) ─────────────────────────────────────────────
+# ─── Create the systemd service (optional) ───────────────────────────────────
 create_systemd_service() {
-    # 若系統不支援 systemd 則跳過
+    # Skip when the system does not use systemd
     if ! command -v systemctl &>/dev/null; then
-        info "系統不支援 systemd，跳過 service 建立"
+        info "systemd not available; skipping service creation"
         return
     fi
 
-    local service_path="/etc/systemd/system/wayland.service"
+    local service_path="/etc/systemd/system/darhai.service"
 
-    info "建立 systemd 服務: $service_path"
+    info "Creating systemd service: $service_path"
 
     $SUDO tee "$service_path" > /dev/null << 'SERVICE_EOF'
 [Unit]
-Description=Wayland AI Agent Desktop App (WebUI Mode)
-Documentation=https://github.com/FerroxLabs/wayland
+Description=Darhai AI Agent Desktop App (WebUI Mode)
+Documentation=https://github.com/sergei10a-rgb/darhai
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=simple
-User=wayland
-Group=wayland
-WorkingDirectory=/var/lib/wayland
-ExecStart=/usr/bin/xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" /usr/bin/Wayland --webui --remote
+User=darhai
+Group=darhai
+WorkingDirectory=/var/lib/darhai
+ExecStart=/usr/bin/xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" /usr/bin/Darhai --webui --remote
 Restart=on-failure
 RestartSec=10
 StandardOutput=journal
 StandardError=journal
 
-# 安全性設定 (secure-by-default)
+# Security settings (secure-by-default)
 NoNewPrivileges=true
 ProtectSystem=strict
 PrivateTmp=true
-ReadWritePaths=/var/lib/wayland /var/log/wayland.log /var/run
+ReadWritePaths=/var/lib/darhai /var/log/darhai.log /var/run
 
 [Install]
 WantedBy=multi-user.target
 SERVICE_EOF
 
     $SUDO systemctl daemon-reload
-    success "systemd 服務已建立"
-    info "使用方式:"
-    echo "    sudo systemctl start wayland     # 啟動"
-    echo "    sudo systemctl stop wayland      # 停止"
-    echo "    sudo systemctl enable wayland    # 開機自動啟動"
-    echo "    sudo systemctl status wayland    # 查看狀態"
-    echo "    journalctl -u wayland -f         # 查看日誌"
+    success "systemd service created"
+    info "Usage:"
+    echo "    sudo systemctl start darhai      # start"
+    echo "    sudo systemctl stop darhai       # stop"
+    echo "    sudo systemctl enable darhai     # start on boot"
+    echo "    sudo systemctl status darhai     # status"
+    echo "    journalctl -u darhai -f          # logs"
 }
 
-# ─── 建立桌面捷徑 ─────────────────────────────────────────────────────────────
+# ─── Create the desktop launcher ─────────────────────────────────────────────
 create_desktop_entry() {
     local desktop_dir="${HOME}/.local/share/applications"
-    local desktop_file="${desktop_dir}/wayland.desktop"
+    local desktop_file="${desktop_dir}/darhai.desktop"
 
     mkdir -p "$desktop_dir"
 
     cat > "$desktop_file" << 'DESKTOP_EOF'
 [Desktop Entry]
-Name=Wayland
+Name=Darhai
+GenericName=AI туслах
 Comment=AI Agent Cowork Platform
-Exec=/usr/bin/Wayland %U
-Icon=Wayland
+Exec=/usr/bin/Darhai %U
+Icon=Darhai
 Terminal=false
 Type=Application
 Categories=Office;Utility;Development;
-MimeType=x-scheme-handler/wayland;
-StartupWMClass=Wayland
+MimeType=x-scheme-handler/darhai;x-scheme-handler/wayland;
+StartupWMClass=Darhai
 DESKTOP_EOF
 
-    success "桌面捷徑已建立: $desktop_file"
+    success "Desktop launcher created: $desktop_file"
 }
 
-# ─── 顯示安裝摘要 ─────────────────────────────────────────────────────────────
+# ─── Print install summary ───────────────────────────────────────────────────
 print_summary() {
     echo ""
     echo -e "${GREEN}${BOLD}══════════════════════════════════════════════════${NC}"
-    echo -e "${GREEN}${BOLD}  🎉 Wayland v${VERSION} 安裝完成！${NC}"
+    echo -e "${GREEN}${BOLD}  🎉 Дархай (Darhai) v${VERSION} суулгаж дууслаа!${NC}"
     echo -e "${GREEN}${BOLD}══════════════════════════════════════════════════${NC}"
     echo ""
-    echo -e "  ${BOLD}📍 執行檔位置:${NC}  /usr/bin/Wayland"
-    echo -e "  ${BOLD}📍 管理腳本:${NC}    /opt/Wayland/start-wayland.sh"
+    echo -e "  ${BOLD}📍 Executable:${NC}        /usr/bin/Darhai"
+    echo -e "  ${BOLD}📍 Management script:${NC} /opt/Darhai/start-darhai.sh"
     echo ""
 
     if [[ "${MODE}" == "headless" ]]; then
-        echo -e "  ${BOLD}🖥️  Headless 模式使用方式:${NC}"
+        echo -e "  ${BOLD}🖥️  Headless mode usage:${NC}"
         echo ""
-        echo "    # 使用管理腳本"
-        echo "    /opt/Wayland/start-wayland.sh start"
-        echo "    /opt/Wayland/start-wayland.sh status"
-        echo "    /opt/Wayland/start-wayland.sh stop"
+        echo "    # Using the management script"
+        echo "    /opt/Darhai/start-darhai.sh start"
+        echo "    /opt/Darhai/start-darhai.sh status"
+        echo "    /opt/Darhai/start-darhai.sh stop"
         echo ""
         if command -v systemctl &>/dev/null; then
-            echo "    # 或使用 systemd"
-            echo "    sudo systemctl start wayland"
-            echo "    sudo systemctl enable wayland  # 開機自啟"
+            echo "    # Or via systemd"
+            echo "    sudo systemctl start darhai"
+            echo "    sudo systemctl enable darhai   # start on boot"
             echo ""
         fi
-        echo "    # WebUI 預設監聽 http://localhost:25808"
+        echo "    # WebUI listens on http://localhost:25808 by default"
         echo ""
     else
-        echo -e "  ${BOLD}🖥️  桌面模式使用方式:${NC}"
+        echo -e "  ${BOLD}🖥️  Desktop mode usage:${NC}"
         echo ""
-        echo "    # 直接啟動（桌面環境）"
-        echo "    Wayland"
+        echo "    # Launch directly (desktop environment)"
+        echo "    Darhai"
         echo ""
-        echo "    # 或從應用程式選單尋找 Wayland"
+        echo "    # Or find 'Darhai' in the applications menu"
         echo ""
     fi
 
-    echo -e "  ${BOLD}📖 文件:${NC}  https://github.com/FerroxLabs/wayland"
-    echo -e "  ${BOLD}🐛 回報:${NC}  https://github.com/FerroxLabs/wayland/issues"
+    echo -e "  ${BOLD}📖 Docs:${NC}    https://github.com/sergei10a-rgb/darhai"
+    echo -e "  ${BOLD}🐛 Issues:${NC}  https://github.com/sergei10a-rgb/darhai/issues"
     echo ""
 
     if [[ "${MODE}" == "headless" ]]; then
-        echo -e "  ${YELLOW}💡 提示:${NC}"
-        echo "     • 設定工作目錄: export WAYLAND_WORKDIR=/path/to/workspace"
-        echo "     • 遠端存取方式: SSH 隧道 / ngrok / 直接開放 25808 端口"
-        echo "     • 詳細指南: docs/guides/deploy-server.md"
+        echo -e "  ${YELLOW}💡 Tips:${NC}"
+        echo "     • Set the working directory: export DARHAI_WORKDIR=/path/to/workspace"
+        echo "     • Remote access: SSH tunnel / ngrok / open port 25808 directly"
+        echo "     • Full guide: docs/guides/deploy-server.md"
         echo ""
     fi
 }
 
-# ─── 主流程 ───────────────────────────────────────────────────────────────────
+# ─── Main ─────────────────────────────────────────────────────────────────────
 main() {
     banner
 
-    # 安裝模式：headless (預設) 或 desktop
-    MODE="${WAYLAND_MODE:-headless}"
-    info "安裝模式: ${BOLD}$MODE${NC}"
+    # Install mode: headless (default) or desktop
+    MODE="${DARHAI_MODE:-headless}"
+    info "Install mode: ${BOLD}$MODE${NC}"
 
-    # Step 1: 前置檢查
+    # Step 1: prerequisites
     check_prerequisites
 
-    # Step 2: 偵測架構
+    # Step 2: detect architecture
     detect_arch
 
-    # Step 3: 取得版本號
+    # Step 3: resolve version
     resolve_version
 
-    # Step 4: 下載
+    # Step 4: download
     download_deb
 
-    # Step 5: 安裝
+    # Step 5: install
     install_deb
 
-    # Step 6: 根據模式安裝額外元件
+    # Step 6: extra components depending on mode
     if [[ "$MODE" == "headless" ]]; then
         install_headless_deps
         create_service_script
-        create_wayland_user
+        create_darhai_user
         create_systemd_service
     fi
 
-    # Step 7: 桌面捷徑（兩種模式都建立）
+    # Step 7: desktop launcher (created in both modes)
     create_desktop_entry
 
-    # 完成！
+    # Done!
     print_summary
 }
 
-# 執行
+# Run
 main "$@"

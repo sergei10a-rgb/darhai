@@ -1,17 +1,26 @@
 {
-  "name": "getwayland",
+  "name": "darhai",
   "version": "0.9.6-rc.2",
-  "description": "Self-host Wayland - your always-on AI agent - on any Linux box or VPS. Headless web server, reachable from your phone.",
-  "type": "module",
+  "description": "Self-host Darhai - your always-on AI agent - on any Linux box or VPS. Headless web server, reachable from your phone.",
+  "keywords": [
+    "agent",
+    "ai",
+    "claude",
+    "darhai",
+    "flux-router",
+    "gemini",
+    "llm",
+    "self-hosted"
+  ],
+  "homepage": "https://github.com/sergei10a-rgb/darhai",
   "license": "AGPL-3.0-or-later",
-  "homepage": "https://getwayland.ai",
   "repository": {
     "type": "git",
-    "url": "https://github.com/FerroxLabs/wayland.git",
+    "url": "https://github.com/sergei10a-rgb/darhai.git",
     "directory": "app/installer"
   },
   "bin": {
-    "wayland": "bin/wayland.mjs"
+    "darhai": "bin/darhai.mjs"
   },
   "files": [
     "bin/",
@@ -19,21 +28,12 @@
     "payload/",
     "README.md"
   ],
+  "type": "module",
   "scripts": {
     "postinstall": "node scripts/postinstall.mjs",
     "build": "node scripts/build-payload.mjs"
   },
   "engines": {
     "node": ">=18"
-  },
-  "keywords": [
-    "ai",
-    "agent",
-    "wayland",
-    "self-hosted",
-    "flux-router",
-    "llm",
-    "claude",
-    "gemini"
-  ]
+  }
 }

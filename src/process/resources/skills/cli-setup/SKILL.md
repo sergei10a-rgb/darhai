@@ -1,11 +1,11 @@
 ---
 name: cli-setup
-description: 'Install, authenticate, and connect coding-agent CLIs as Wayland backends: Claude Code, Codex, Kimi CLI, OpenCode, and Qwen Code. Use when a user wants to set up one of these CLIs, fix its login, or diagnose why its backend will not connect over ACP.'
+description: 'Install, authenticate, and connect coding-agent CLIs as Дархай backends: Claude Code, Codex, Kimi CLI, OpenCode, and Qwen Code. Use when a user wants to set up one of these CLIs, fix its login, or diagnose why its backend will not connect over ACP.'
 ---
 
 # CLI Setup Expert
 
-You install, authenticate, and connect five coding-agent CLIs so Wayland can drive them as backends over ACP: Claude Code, Codex, Kimi CLI, OpenCode, and Qwen Code.
+You install, authenticate, and connect five coding-agent CLIs so Дархай can drive them as backends over ACP: Claude Code, Codex, Kimi CLI, OpenCode, and Qwen Code.
 
 ## Documentation freshness
 
@@ -13,7 +13,7 @@ These CLIs ship updates constantly. The commands below were verified against rea
 
 ## Step 1: Environment diagnostics (run before responding)
 
-Detect what is present before you change anything. Wayland may launch with a trimmed PATH, so prefer a login shell for these checks (`zsh -i -l -c "..."`, or the user's shell from `echo $SHELL`).
+Detect what is present before you change anything. Дархай may launch with a trimmed PATH, so prefer a login shell for these checks (`zsh -i -l -c "..."`, or the user's shell from `echo $SHELL`).
 
 ```bash
 # Which of the five are on PATH, and their versions
@@ -34,7 +34,7 @@ Report the result plainly, then proceed to the CLI the user wants. If a CLI show
 3. **Install** if missing (confirm with the user first; never `sudo npm -g`).
 4. **Authenticate** (confirm first; the user signs in or pastes a key; never echo secrets).
 5. **Verify auth** with the CLI's own status command.
-6. **ACP smoke**: start the CLI's ACP entrypoint and confirm it comes up cleanly. That is what Wayland spawns.
+6. **ACP smoke**: start the CLI's ACP entrypoint and confirm it comes up cleanly. That is what Дархай spawns.
 
 Two engine-level facts to keep in mind: Claude Code needs an external ACP adapter (it has no native ACP), and Kimi's default model needs OAuth, not a key. Both are detailed below.
 
@@ -50,7 +50,7 @@ Two engine-level facts to keep in mind: Claude Code needs an external ACP adapte
 
 **Verify:** `claude --version`; `claude auth status --text`; `claude doctor`.
 
-**ACP / connect to Wayland (IMPORTANT):** Claude Code has NO native `acp`/`--acp` command. ACP works only through an external adapter such as `@zed-industries/claude-code-acp` (or the newer `@agentclientprotocol/claude-agent-acp`). The adapter spawns and drives the installed `claude`, reusing its login or `ANTHROPIC_API_KEY` (Node 18+). If a Claude backend will not connect, this is almost always why: confirm the adapter is present, not just `claude`.
+**ACP / connect to Дархай (IMPORTANT):** Claude Code has NO native `acp`/`--acp` command. ACP works only through an external adapter such as `@zed-industries/claude-code-acp` (or the newer `@agentclientprotocol/claude-agent-acp`). The adapter spawns and drives the installed `claude`, reusing its login or `ANTHROPIC_API_KEY` (Node 18+). If a Claude backend will not connect, this is almost always why: confirm the adapter is present, not just `claude`.
 
 **Top gotchas:** `claude --acp`/`claude acp` do not exist (ACP is the adapter); the free plan is rejected; PATH must include `~/.local/bin`; a stale `ANTHROPIC_API_KEY` silently overrides a subscription login; Node under 18 breaks the npm install and the adapter.
 
@@ -68,7 +68,7 @@ Two engine-level facts to keep in mind: Claude Code needs an external ACP adapte
 
 **Verify:** `codex --version`; `codex login status`; `codex doctor`.
 
-**ACP / connect to Wayland:** Wayland launches codex-acp (it is ACP by default, no extra args). The bridge wraps `codex` and passes credentials via env. Auth precedence: `CODEX_API_KEY`/`OPENAI_API_KEY` in the environment, or a prior `codex login` in `~/.codex/auth.json`. ChatGPT-subscription auth can be unreliable headless, so for an embedded backend an API key is the more reliable choice.
+**ACP / connect to Дархай:** Дархай launches codex-acp (it is ACP by default, no extra args). The bridge wraps `codex` and passes credentials via env. Auth precedence: `CODEX_API_KEY`/`OPENAI_API_KEY` in the environment, or a prior `codex login` in `~/.codex/auth.json`. ChatGPT-subscription auth can be unreliable headless, so for an embedded backend an API key is the more reliable choice.
 
 **Top gotchas:** it is `codex login`, not `codex auth`; codex-acp needs `codex` on PATH; the spawn environment must carry `~/.codex/auth.json` (consistent HOME) or `OPENAI_API_KEY`; ChatGPT login fails headless without `--device-auth`; API-key billing is at API rates.
 
@@ -86,7 +86,7 @@ Two engine-level facts to keep in mind: Claude Code needs an external ACP adapte
 
 **Verify:** `kimi --version`; `kimi info --json` (no network). There is no `whoami`; confirm `~/.kimi/credentials/kimi-code.json` exists and check its `expires_at`. `kimi logout` clears the session.
 
-**ACP / connect to Wayland:** `kimi acp` (the old top-level `--acp` is deprecated). Precondition: a completed `kimi login`. No env var or key substitutes for OAuth on the default coding model.
+**ACP / connect to Дархай:** `kimi acp` (the old top-level `--acp` is deprecated). Precondition: a completed `kimi login`. No env var or key substitutes for OAuth on the default coding model.
 
 **Top gotchas:** the OAuth-vs-key trap (AUTH_REQUIRED if only a key is set, fix with `kimi login`); the access token expires every 15 minutes and auto-refreshes, but a revoked refresh token or clock skew forces a re-login; region endpoints are not interchangeable (kimi.com/coding/v1 for OAuth vs moonshot.ai/v1 for the intl key vs moonshot.cn for China); needs `uv` and `~/.local/bin` on PATH; use `kimi acp`, not `kimi --acp`.
 
@@ -107,7 +107,7 @@ This is SST's `sst/opencode` (npm package `opencode-ai`), not the unrelated Go p
 
 **Verify:** `opencode --version`; `opencode auth list`; `opencode models` (empty or errors if no provider is configured).
 
-**ACP / connect to Wayland:** `opencode acp`. Useful flags: `--cwd`, `-m provider/model` (model id MUST be `provider/model`, not a bare name), `--log-level`, `--pure` (no plugins, good for a clean spawn).
+**ACP / connect to Дархай:** `opencode acp`. Useful flags: `--cwd`, `-m provider/model` (model id MUST be `provider/model`, not a bare name), `--log-level`, `--pure` (no plugins, good for a clean spawn).
 
 **Top gotchas:** the name collision (verify the binary); no provider configured means `models` is empty and acp will not answer, so set an env key or run `auth login`; `-m` needs `provider/model`; install-path inconsistency (detect by PATH); stale model list (`opencode models --refresh`); needs `rg` on PATH.
 
@@ -130,7 +130,7 @@ A Gemini-CLI fork for Qwen3-Coder. Package `@qwen-code/qwen-code`.
 
 **Verify:** `qwen --version`; `qwen auth status`.
 
-**ACP / connect to Wayland:** `qwen --acp`. The older `--experimental-acp` is a deprecated alias; standardize on `--acp` and fall back to `--experimental-acp` only on very old builds.
+**ACP / connect to Дархай:** `qwen --acp`. The older `--experimental-acp` is a deprecated alias; standardize on `--acp` and fall back to `--experimental-acp` only on very old builds.
 
 **Top gotchas:** region/endpoint mismatch (China vs intl DashScope keys and URLs are not interchangeable, mismatched pairs return 401); do not push Qwen OAuth (free tier gone); the Coding Plan uses a different endpoint; use `--acp`, not `--experimental-acp`; `~/.qwen/.env` only loads vars not already set, so a stale value in the spawn environment silently shadows the file.
 
@@ -140,7 +140,7 @@ A Gemini-CLI fork for Qwen3-Coder. Package `@qwen-code/qwen-code`.
 
 ## When a backend will not connect (triage order)
 
-1. Is the CLI on PATH in a login shell? (Wayland's PATH can differ from your terminal's.)
+1. Is the CLI on PATH in a login shell? (Дархай's PATH can differ from your terminal's.)
 2. Is it authenticated? Run the CLI's own status command, not a guess.
 3. For Claude Code: is the ACP adapter present? Bare `claude` is not enough.
 4. For Kimi: did `kimi login` complete? A key alone gives AUTH_REQUIRED.

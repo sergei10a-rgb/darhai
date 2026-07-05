@@ -33,7 +33,7 @@ const WCoreSettings: React.FC = () => {
     <SettingsPageWrapper>
       <div className='flex flex-col gap-16px'>
         <Typography.Title heading={5} className='!mb-0'>
-          Wayland Core
+          Darhai Core
         </Typography.Title>
 
         {/* Status */}
@@ -64,7 +64,7 @@ const WCoreSettings: React.FC = () => {
         <Typography.Text type='secondary' className='text-12px'>
           {t('settings.wcore.providerNote', {
             defaultValue:
-              'Provider and API key settings are managed in the Models page. Wayland Core supports: Anthropic, OpenAI, AWS Bedrock.',
+              'Provider and API key settings are managed in the Models page. Darhai Core supports: Anthropic, OpenAI, AWS Bedrock.',
           })}
         </Typography.Text>
       </div>

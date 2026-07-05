@@ -7,7 +7,7 @@ steps:
     estSeconds: 30
     autoCompletedByInstall: true
     body: |
-      Wayland bundles the IMAP/SMTP server as `builtin-mcp-imap.mjs` - no
+      Дархай bundles the IMAP/SMTP server as `builtin-mcp-imap.mjs` - no
       external download. The server starts the first time you complete
       Step 2 below. If it fails to start later, reinstall from this page.
   - id: credentials
@@ -45,7 +45,7 @@ steps:
       1. Open your provider's account/security settings page.
       2. Look for a section named **App passwords**, **App-specific
          passwords**, or **Generate password for app**.
-      3. Create a new one labelled `Wayland` (or anything you'll recognize)
+      3. Create a new one labelled `Darhai` (or anything you'll recognize)
          and copy the generated string.
       4. Paste it into `IMAP_PASSWORD` above. The username (`IMAP_USER`) is
          almost always your full email address.

@@ -275,7 +275,7 @@ export abstract class AbstractMcpAgent implements IMcpProtocol {
           return {
             success: false,
             error:
-              'Bundled bun runtime is unavailable. Please reinstall Wayland or use a direct stdio command instead of npx.',
+              'Bundled bun runtime is unavailable. Please reinstall Дархай or use a direct stdio command instead of npx.',
           };
         }
         return {
@@ -288,7 +288,7 @@ export abstract class AbstractMcpAgent implements IMcpProtocol {
       if (errorCode === 'EACCES' || errorMessage.includes('EACCES') || errorMessage.includes('permission denied')) {
         return {
           success: false,
-          error: `Permission denied when running "${transport.command}". Please check file permissions or reinstall Wayland.`,
+          error: `Permission denied when running "${transport.command}". Please check file permissions or reinstall Дархай.`,
         };
       }
 

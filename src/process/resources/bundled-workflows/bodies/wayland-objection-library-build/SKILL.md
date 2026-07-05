@@ -14,7 +14,7 @@ license: Apache-2.0
 type: workflow
 skills: "sales-coach sales-objections convert-three-locks"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: sales objections three-locks templates buyer-types step-by-step
   category: sales

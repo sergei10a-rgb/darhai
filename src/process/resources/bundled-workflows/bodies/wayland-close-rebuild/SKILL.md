@@ -13,7 +13,7 @@ license: Apache-2.0
 type: workflow
 skills: "convert-temperature convert-audit convert-close"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: marketing conversion copywriting close cascade-close step-by-step
   category: marketing

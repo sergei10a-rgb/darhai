@@ -412,7 +412,7 @@ const HTMLPreview: React.FC<HTMLPreviewProps> = ({ content, filePath, hideToolba
             // is intentionally dropped (H2). The element inspector talks back
             // through window.parent.postMessage, which works cross-origin.
             sandbox='allow-scripts'
-            title='HTML Preview'
+            title={t('preview.html.iframeTitle')}
           />
         </div>
       </div>

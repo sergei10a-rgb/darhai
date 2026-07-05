@@ -10,6 +10,7 @@ import { getAgentLogo } from '@/renderer/utils/model/agentLogo';
 import { Dropdown } from '@arco-design/web-react';
 import { Folder, MessageSquare, MoreHorizontal, Star } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import ConversationMenu, { type ConversationMenuAction } from './ConversationMenu';
 import styles from './conversationCards.module.css';
 
@@ -35,6 +36,7 @@ const ConversationRow: React.FC<ConversationRowProps> = ({
   onOpen,
   onAction,
 }) => {
+  const { t } = useTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
   const logo = getAgentLogo(conversation.type);
   const model = 'model' in conversation ? conversation.model.useModel : '';
@@ -101,7 +103,7 @@ const ConversationRow: React.FC<ConversationRowProps> = ({
           getPopupContainer={() => document.body}
           droplist={<ConversationMenu pinned={pinned} onAction={runAction} />}
         >
-          <button type='button' className={styles.iconBtn} aria-label='More actions'>
+          <button type='button' className={styles.iconBtn} aria-label={t('common.moreActions')}>
             <MoreHorizontal size={16} />
           </button>
         </Dropdown>

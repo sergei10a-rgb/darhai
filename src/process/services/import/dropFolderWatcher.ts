@@ -3,9 +3,11 @@
  * Copyright 2026 Ferrox Labs
  * SPDX-License-Identifier: Apache-2.0
  *
- * Drop-folder watcher - monitors ~/Documents/Wayland-Memory/ (non-recursive,
+ * Drop-folder watcher - monitors ~/Documents/Darhai-Memory/ (non-recursive,
  * depth 0) for incoming .md / .txt / .json files, ingests them into the current
- * IJFW memory directory, and deletes the originals.
+ * IJFW memory directory, and deletes the originals. The pre-rebrand
+ * ~/Documents/Wayland-Memory/ folder is also watched when it already exists
+ * (backward compat - it is never created).
  *
  * Safety: chokidar is constrained to depth 0 per HANDOFF §10 chokidar safety.
  */
@@ -16,7 +18,29 @@ import * as path from 'node:path';
 import chokidar from 'chokidar';
 import log from 'electron-log';
 
-const DEFAULT_DROP_FOLDER = path.join(os.homedir(), 'Documents', 'Wayland-Memory');
+function getDefaultDropFolder(): string {
+  return path.join(os.homedir(), 'Documents', 'Darhai-Memory');
+}
+
+/** Pre-rebrand (Wayland) drop folder - only honoured when it already exists. */
+function getLegacyDropFolder(): string {
+  return path.join(os.homedir(), 'Documents', 'Wayland-Memory');
+}
+
+/**
+ * Returns the legacy Wayland-Memory folder when the caller is operating on the
+ * default drop folder AND the legacy directory exists on disk. Custom folders
+ * (tests, explicit overrides) never get the legacy mirror.
+ */
+function existingLegacyDropFolder(dropFolder: string): string | null {
+  if (dropFolder !== getDefaultDropFolder()) return null;
+  const legacy = getLegacyDropFolder();
+  try {
+    return fs.statSync(legacy).isDirectory() ? legacy : null;
+  } catch {
+    return null;
+  }
+}
 
 const INGEST_EXTENSIONS = new Set(['.md', '.txt', '.json']);
 
@@ -49,7 +73,7 @@ export function isDropFolderWatching(): boolean {
 }
 
 export function getDropFolderPath(): string {
-  return DEFAULT_DROP_FOLDER;
+  return getDefaultDropFolder();
 }
 
 export type DropFolderStatus = {
@@ -60,7 +84,7 @@ export type DropFolderStatus = {
 
 export function getDropFolderStatus(): DropFolderStatus {
   return {
-    path: DEFAULT_DROP_FOLDER,
+    path: getDefaultDropFolder(),
     watching: _isWatching,
     ingestedToday: getIngestedTodayCount(),
   };
@@ -98,7 +122,9 @@ function buildFrontmatter(fields: Record<string, string | string[] | number>): s
     if (Array.isArray(val)) {
       lines.push(`${key}: [${val.map((v) => String(v)).join(', ')}]`);
     } else {
-      const escaped = String(val).replace(/[\r\n]+/g, ' ').slice(0, 500);
+      const escaped = String(val)
+        .replace(/[\r\n]+/g, ' ')
+        .slice(0, 500);
       lines.push(`${key}: ${escaped}`);
     }
   }
@@ -111,10 +137,7 @@ function destFilename(timestamp: number, basename: string): string {
   return `dropped-${timestamp}-${safe}`;
 }
 
-async function ingestFile(
-  filePath: string,
-  ijfwMemoryDir: string,
-): Promise<void> {
+async function ingestFile(filePath: string, ijfwMemoryDir: string): Promise<void> {
   const ext = path.extname(filePath).toLowerCase();
   const basename = path.basename(filePath);
   const rawContent = await fs.promises.readFile(filePath, 'utf8');
@@ -128,7 +151,10 @@ async function ingestFile(
     if (hasFrontmatter) {
       fileContent = rawContent;
     } else {
-      const summary = rawContent.split('\n')[0].slice(0, 200).replace(/[\r\n]+/g, ' ');
+      const summary = rawContent
+        .split('\n')[0]
+        .slice(0, 200)
+        .replace(/[\r\n]+/g, ' ');
       const frontmatter = buildFrontmatter({
         type: 'observation',
         summary,
@@ -142,7 +168,10 @@ async function ingestFile(
     }
   } else {
     // .txt or .json - wrap body.
-    const summary = rawContent.split('\n')[0].slice(0, 200).replace(/[\r\n]+/g, ' ');
+    const summary = rawContent
+      .split('\n')[0]
+      .slice(0, 200)
+      .replace(/[\r\n]+/g, ' ');
     const frontmatter = buildFrontmatter({
       type: 'observation',
       summary,
@@ -173,7 +202,8 @@ async function ingestFile(
 
 /**
  * Start watching the drop folder. Returns a handle to stop the watcher.
- * Creates the drop folder if absent.
+ * Creates the drop folder if absent. When operating on the default folder,
+ * an already-existing legacy Wayland-Memory folder is watched as well.
  */
 export function startDropFolderWatcher(opts: {
   ijfwMemoryDir: string;
@@ -181,7 +211,7 @@ export function startDropFolderWatcher(opts: {
   onIngest: (filename: string) => void;
   onError: (err: string) => void;
 }): DropFolderWatcherHandle {
-  const dropFolder = opts.dropFolder ?? DEFAULT_DROP_FOLDER;
+  const dropFolder = opts.dropFolder ?? getDefaultDropFolder();
   const { ijfwMemoryDir, onIngest, onError } = opts;
 
   // Create drop folder synchronously so chokidar can start watching immediately.
@@ -192,7 +222,10 @@ export function startDropFolderWatcher(opts: {
     onError(`Failed to create directories: ${String(err)}`);
   }
 
-  const watcher = chokidar.watch(dropFolder, {
+  const legacyFolder = existingLegacyDropFolder(dropFolder);
+  const watchTargets = legacyFolder ? [dropFolder, legacyFolder] : [dropFolder];
+
+  const watcher = chokidar.watch(watchTargets, {
     depth: 0,
     ignoreInitial: true,
     persistent: true,
@@ -239,33 +272,17 @@ export function startDropFolderWatcher(opts: {
 
 // ===== One-shot processor =====
 
-/**
- * Process all files currently in the drop folder (one-shot, no watching).
- * Creates the drop folder if absent.
- */
-export async function runDropFolderProcess(opts?: {
-  dropFolder?: string;
-  ijfwMemoryDir?: string;
-}): Promise<DropFolderProcessResult> {
-  const dropFolder = opts?.dropFolder ?? DEFAULT_DROP_FOLDER;
-  const ijfwMemoryDir =
-    opts?.ijfwMemoryDir ?? path.join(os.homedir(), '.ijfw', 'memory');
-  const result: DropFolderProcessResult = { count: 0, errors: [] };
-
-  try {
-    await fs.promises.mkdir(dropFolder, { recursive: true, mode: 0o755 });
-    await fs.promises.mkdir(ijfwMemoryDir, { recursive: true });
-  } catch (err) {
-    result.errors.push(`Failed to create directories: ${String(err)}`);
-    return result;
-  }
-
+async function processFolderInto(
+  dropFolder: string,
+  ijfwMemoryDir: string,
+  result: DropFolderProcessResult
+): Promise<void> {
   let entries: fs.Dirent[];
   try {
     entries = await fs.promises.readdir(dropFolder, { withFileTypes: true });
   } catch (err) {
     result.errors.push(`Cannot read drop folder: ${String(err)}`);
-    return result;
+    return;
   }
 
   for (const entry of entries) {
@@ -281,6 +298,35 @@ export async function runDropFolderProcess(opts?: {
       log.warn('[dropFolderWatcher] one-shot ingest failed', { filePath, err });
       result.errors.push(`${entry.name}: ${String(err)}`);
     }
+  }
+}
+
+/**
+ * Process all files currently in the drop folder (one-shot, no watching).
+ * Creates the drop folder if absent. When operating on the default folder,
+ * an already-existing legacy Wayland-Memory folder is processed as well.
+ */
+export async function runDropFolderProcess(opts?: {
+  dropFolder?: string;
+  ijfwMemoryDir?: string;
+}): Promise<DropFolderProcessResult> {
+  const dropFolder = opts?.dropFolder ?? getDefaultDropFolder();
+  const ijfwMemoryDir = opts?.ijfwMemoryDir ?? path.join(os.homedir(), '.ijfw', 'memory');
+  const result: DropFolderProcessResult = { count: 0, errors: [] };
+
+  try {
+    await fs.promises.mkdir(dropFolder, { recursive: true, mode: 0o755 });
+    await fs.promises.mkdir(ijfwMemoryDir, { recursive: true });
+  } catch (err) {
+    result.errors.push(`Failed to create directories: ${String(err)}`);
+    return result;
+  }
+
+  await processFolderInto(dropFolder, ijfwMemoryDir, result);
+
+  const legacyFolder = existingLegacyDropFolder(dropFolder);
+  if (legacyFolder) {
+    await processFolderInto(legacyFolder, ijfwMemoryDir, result);
   }
 
   return result;

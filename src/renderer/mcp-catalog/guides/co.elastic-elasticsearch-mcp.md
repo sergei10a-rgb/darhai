@@ -7,7 +7,7 @@ steps:
     estSeconds: 30
     autoCompletedByInstall: true
     body: |
-      Wayland installs `@elastic/mcp-server-elasticsearch` from npm via `npx`
+      Дархай installs `@elastic/mcp-server-elasticsearch` from npm via `npx`
       on first launch - no manual install needed. If the server fails to
       start later, reinstall from this page.
   - id: credentials
@@ -18,7 +18,7 @@ steps:
       - { name: ES_URL, label: "Elasticsearch URL" }
       - { name: ES_API_KEY, label: "Elasticsearch API key", secret: true }
     warning: |
-      Scope the API key to the **minimum index privileges** Wayland needs -
+      Scope the API key to the **minimum index privileges** Дархай needs -
       typically `read` and `view_index_metadata`. Don't reuse a superuser key.
       For local dev clusters with self-signed certs, set
       `ES_SSL_SKIP_VERIFY=true` (development only).
@@ -43,10 +43,10 @@ steps:
       2. In Kibana, open the global search (top bar) and search for
          **API keys**. Pick the **API keys** management page (under
          **Stack Management → Security → API keys**).
-      3. Click **Create API key**. Name it `wayland-mcp`.
+      3. Click **Create API key**. Name it `darhai-mcp`.
       4. Under **Restrict privileges**, paste a role descriptor like:
          ```json
-         { "wayland": { "indices": [{ "names": ["*"], "privileges": ["read","view_index_metadata"] }] } }
+         { "darhai": { "indices": [{ "names": ["*"], "privileges": ["read","view_index_metadata"] }] } }
          ```
          Tighten `names` to specific indices if you can.
       5. Click **Create API key**. Copy the **Encoded** value - Kibana shows
@@ -58,5 +58,5 @@ steps:
 
 # Elasticsearch setup
 
-Connects Wayland to any Elasticsearch cluster - Elastic Cloud, self-hosted,
+Connects Дархай to any Elasticsearch cluster - Elastic Cloud, self-hosted,
 or local. Read-only API keys are strongly recommended.

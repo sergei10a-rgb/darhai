@@ -7,7 +7,7 @@ steps:
     estSeconds: 30
     autoCompletedByInstall: true
     body: |
-      Wayland fetches `google-workspace-mcp` from PyPI via `uvx` on first
+      Дархай fetches `google-workspace-mcp` from PyPI via `uvx` on first
       launch - no manual install needed. If the server fails to start later,
       reinstall from this page.
   - id: cloud-project
@@ -22,7 +22,7 @@ steps:
       1. Click **Open Google Cloud console** above. Sign in with the Google
          account whose Workspace data you want to access.
       2. On the **New Project** page that opens, give it a name like
-         *Wayland Personal*. Leave **Organization** as *No organization* (or
+         *Darhai Personal*. Leave **Organization** as *No organization* (or
          your Workspace org if you're on a paid plan).
       3. Click **Create**. Wait ~10 seconds for the project to provision -
          a banner will say "Creating project…" then switch to it automatically.
@@ -59,11 +59,11 @@ steps:
       2. User Type: pick **External** (unless you're on Workspace with an
          internal-only org). Click **Create**.
       3. Fill the **App information**:
-         - App name: anything, e.g. *Wayland Personal*
+         - App name: anything, e.g. *Darhai Personal*
          - User support email: your own Gmail address
          - Developer contact: your own Gmail address
          - Leave logo, app domain, and authorized domains blank.
-      4. Click **Save and Continue** through **Scopes** (leave blank - Wayland
+      4. Click **Save and Continue** through **Scopes** (leave blank - Дархай
          requests them at runtime) and **Test users**.
       5. On **Test users**, click **+ Add Users** and add your own Gmail
          address. Save and continue.
@@ -74,7 +74,7 @@ steps:
       1. Left sidebar → **APIs & Services → Credentials**.
       2. Click **+ CREATE CREDENTIALS** → **OAuth client ID**.
       3. Application type: **Desktop app**. Name: anything, e.g.
-         *Wayland Desktop*.
+         *Darhai Desktop*.
       4. Click **Create**. A modal pops with **Client ID** and
          **Client secret** - copy both and paste into the fields above.
          (You can also download the JSON later if you lose them.)
@@ -91,7 +91,7 @@ steps:
       **Advanced → Go to <app name> (unsafe)** and grant the scopes you
       enabled in Step B above.
 
-      The tab redirects back to Wayland and the server status flips to
+      The tab redirects back to Дархай and the server status flips to
       Running. If the auth times out, click Re-authorize on the Installed
       page.
 ---

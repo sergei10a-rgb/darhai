@@ -13,7 +13,7 @@ license: Apache-2.0
 type: workflow
 skills: "funnels-offer-pricing commerce-listing commerce-description commerce-postpurchase-thankyou commerce-upsell-flow"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: commerce ecommerce sku-launch pricing listing upsell step-by-step
   category: marketing

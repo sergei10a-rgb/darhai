@@ -16,7 +16,7 @@ const {
  * - Linux: the lowercase executable produced from executableName/productFilename
  */
 function resolveFuseTarget(electronPlatformName, appOutDir, packager) {
-  const productFilename = packager?.appInfo?.productFilename || 'Wayland';
+  const productFilename = packager?.appInfo?.productFilename || 'Darhai';
   if (electronPlatformName === 'darwin' || electronPlatformName === 'mas') {
     return path.join(appOutDir, `${productFilename}.app`);
   }
@@ -116,11 +116,11 @@ module.exports = async function afterPack(context) {
     require('../package.json').devDependencies?.electron?.replace(/^\D*/, '');
 
   // Determine resources directory based on platform
-  // macOS: appOutDir/Wayland.app/Contents/Resources
+  // macOS: appOutDir/Darhai.app/Contents/Resources
   // Windows/Linux: appOutDir/resources
   let resourcesDir;
   if (electronPlatformName === 'darwin') {
-    const appName = packager?.appInfo?.productFilename || 'Wayland';
+    const appName = packager?.appInfo?.productFilename || 'Darhai';
     resourcesDir = path.join(appOutDir, `${appName}.app`, 'Contents', 'Resources');
   } else {
     resourcesDir = path.join(appOutDir, 'resources');

@@ -76,7 +76,7 @@ Keep STATUS current after every state change, and give the user a short progress
 
 ## Coordinating a team (exact tool names)
 
-When the roles run as a Wayland team, coordinate with these tools. Names are exact and must not be approximated.
+When the roles run as a Дархай team, coordinate with these tools. Names are exact and must not be approximated.
 
 **Write / dispatch:**
 

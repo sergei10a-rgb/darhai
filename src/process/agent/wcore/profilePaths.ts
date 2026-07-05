@@ -10,7 +10,7 @@
  * This is the pure, dependency-light resolution layer shared by:
  *  - `profileStore.ts`   (profile mutations + human-only IPC),
  *  - `configBridge.ts`   (reads/writes the ACTIVE profile's `config.toml`),
- *  - `envBuilder.ts`     (sets `WAYLAND_HOME` on the engine spawn).
+ *  - `envBuilder.ts`     (sets `DARHAI_HOME` on the engine spawn).
  *
  * It deliberately imports NOTHING from `@/common` (no `ipcBridge`) so that the
  * security-load-bearing config/spawn paths never pull the IPC graph in and no
@@ -19,9 +19,9 @@
  * ── The isolation model ────────────────────────────────────────────────────
  * Each profile is a self-contained config tree under `~/.wayland/profiles/<name>/`.
  * The engine reads its ENTIRE state (config.toml, memory.db, skills) relative to
- * `wayland_config_dir()`, which honours `$WAYLAND_HOME` first
- * (`crates/wcore-config/src/config.rs` - `WAYLAND_HOME` is the literal config
- * dir, NOT `<WAYLAND_HOME>/wayland-core`). So pointing `WAYLAND_HOME` at a
+ * `wayland_config_dir()`, which honours `$DARHAI_HOME` first
+ * (`crates/wcore-config/src/config.rs` - `DARHAI_HOME` is the literal config
+ * dir, NOT `<DARHAI_HOME>/wayland-core`). So pointing `DARHAI_HOME` at a
  * profile dir gives that profile its own model, tools, security, and memory -
  * exactly the "directory-isolated, no cross-contamination" contract.
  *
@@ -147,16 +147,16 @@ function platformConfigBase(): string {
 /**
  * The NATIVE engine config dir for the `default` profile, mirroring the engine's
  * `wayland_config_dir()` precedence EXACTLY (config.rs):
- *   1. `$WAYLAND_HOME`              -> `<WAYLAND_HOME>`               (literal dir)
+ *   1. `$DARHAI_HOME`              -> `<DARHAI_HOME>`               (literal dir)
  *   2. `$XDG_DATA_HOME`            -> `<XDG_DATA_HOME>/wayland-core`
  *   3. `dirs::config_dir()`        -> `<config_base>/wayland-core`
  *
  * Reads `process.env` but is otherwise side-effect-free. This is what the engine
- * resolves to when no profile `WAYLAND_HOME` is forced, so `default` writes/reads
+ * resolves to when no profile `DARHAI_HOME` is forced, so `default` writes/reads
  * here and stays backward-compatible with existing installs.
  */
 export function nativeConfigDir(): string {
-  const waylandHome = process.env.WAYLAND_HOME;
+  const waylandHome = process.env.DARHAI_HOME;
   if (waylandHome && waylandHome.length > 0) {
     return waylandHome;
   }
@@ -173,7 +173,7 @@ export function nativeConfigDir(): string {
  *  - a named profile       -> `~/.wayland/profiles/<name>/` (isolated tree).
  *
  * This is the single source of truth that BOTH the config bridge (what file the
- * panes edit) and the engine spawn (`WAYLAND_HOME`) resolve through, so they can
+ * panes edit) and the engine spawn (`DARHAI_HOME`) resolve through, so they can
  * never disagree about which profile is live.
  */
 export async function resolveActiveConfigDir(): Promise<string> {

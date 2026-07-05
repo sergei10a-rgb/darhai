@@ -50,7 +50,7 @@ test.describe('Team Launcher - backend selection', () => {
     const beforeText = (await leaderPill.textContent())?.trim() ?? '';
     expect(beforeText.length).toBeGreaterThan(0);
 
-    // Open the WaylandSelect dropdown. Arco renders options into document.body.
+    // Open the DarhaiSelect dropdown. Arco renders options into document.body.
     await leaderPill.click();
 
     // List the visible option labels - wayland-core is guaranteed; if other
@@ -74,7 +74,7 @@ test.describe('Team Launcher - backend selection', () => {
     }
     if (!pickedValue) {
       // Single-backend host - close dropdown by pressing Escape, validate that
-      // the pill still shows the same value (the WaylandSelect remains usable).
+      // the pill still shows the same value (the DarhaiSelect remains usable).
       await page.keyboard.press('Escape');
       pickedValue = beforeText;
     }
@@ -97,11 +97,9 @@ test.describe('Team Launcher - backend selection', () => {
     // Backend persistence: team.get returns the leader with the agentType we
     // chose. Note: BackendPill renders `id` directly (e.g. "wayland-core"), so
     // pickedValue equals the backend id.
-    const state = await invokeBridge<{ agents: Array<{ role: string; agentType: string }> }>(
-      page,
-      'team.get',
-      { id: teamId }
-    );
+    const state = await invokeBridge<{ agents: Array<{ role: string; agentType: string }> }>(page, 'team.get', {
+      id: teamId,
+    });
     const leader = state.agents.find((a) => a.role === 'leader');
     expect(leader?.agentType).toBe(pickedValue);
 

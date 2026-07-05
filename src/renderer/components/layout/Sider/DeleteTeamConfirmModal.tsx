@@ -13,7 +13,7 @@
 import { Button, Input } from '@arco-design/web-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import WaylandModal from '@renderer/components/base/WaylandModal';
+import DarhaiModal from '@renderer/components/base/DarhaiModal';
 
 type Props = {
   visible: boolean;
@@ -23,13 +23,7 @@ type Props = {
   loading?: boolean;
 };
 
-const DeleteTeamConfirmModal: React.FC<Props> = ({
-  visible,
-  teamName,
-  onConfirm,
-  onCancel,
-  loading = false,
-}) => {
+const DeleteTeamConfirmModal: React.FC<Props> = ({ visible, teamName, onConfirm, onCancel, loading = false }) => {
   const { t } = useTranslation();
   const [typed, setTyped] = useState('');
 
@@ -41,7 +35,7 @@ const DeleteTeamConfirmModal: React.FC<Props> = ({
   const enabled = typed.trim().toLowerCase() === 'delete';
 
   return (
-    <WaylandModal
+    <DarhaiModal
       visible={visible}
       onCancel={onCancel}
       size='small'
@@ -70,10 +64,7 @@ const DeleteTeamConfirmModal: React.FC<Props> = ({
         </div>
       }
     >
-      <div
-        className='flex flex-col gap-12px p-24px'
-        data-testid='delete-team-confirm-modal'
-      >
+      <div className='flex flex-col gap-12px p-24px' data-testid='delete-team-confirm-modal'>
         <p className='text-13px text-t-secondary m-0'>
           {t('team.sider.deleteConfirmBody', {
             teamName,
@@ -89,7 +80,7 @@ const DeleteTeamConfirmModal: React.FC<Props> = ({
           data-testid='delete-team-confirm-input'
         />
       </div>
-    </WaylandModal>
+    </DarhaiModal>
   );
 };
 

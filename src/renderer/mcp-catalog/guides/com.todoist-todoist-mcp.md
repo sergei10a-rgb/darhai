@@ -8,7 +8,7 @@ steps:
     autoCompletedByInstall: true
     body: |
       Doist hosts the MCP server at `https://mcp.todoist.com` - nothing to
-      install. Wayland connects via streamable HTTP on first use.
+      install. Дархай connects via streamable HTTP on first use.
   - id: authorize
     title: Sign in with Todoist
     estSeconds: 30
@@ -18,18 +18,18 @@ steps:
       OAuth consent screen.
 
       1. Sign in to Todoist if you aren't already.
-      2. Approve the **data:read_write** scope - this lets Wayland read and
+      2. Approve the **data:read_write** scope - this lets Дархай read and
          modify your tasks, projects, labels, and filters.
-      3. The tab redirects back to Wayland and the server status flips
+      3. The tab redirects back to Дархай and the server status flips
          to Running.
 
       **Prefer a personal API token instead?** You can grab one at
       **Avatar → Settings → Integrations → Developer → Copy API token**,
-      but the hosted MCP flow above is the recommended path for Wayland.
+      but the hosted MCP flow above is the recommended path for Дархай.
 ---
 
 # Todoist setup
 
-Doist runs the MCP server - one click and you're connected. Wayland reads
+Doist runs the MCP server - one click and you're connected. Дархай reads
 and writes your tasks, projects, labels, and filters using the standard
 Todoist OAuth scopes.

@@ -219,11 +219,11 @@ describe('DingTalkPlugin - R16 L5/L6 testConnection honesty', () => {
     expect(result.botInfo?.name).toBe('My Custom Bot');
   });
 
-  it('falls back to the default Wayland name when no displayName is provided', async () => {
+  it('falls back to the default Darhai name when no displayName is provided', async () => {
     stubHttpsResponse({ accessToken: 'tok-xyz', expireIn: 7200 });
     const result = await DingTalkPlugin.testConnection('app-key', 'app-secret');
     expect(result.success).toBe(true);
-    expect(result.botInfo?.name).toBe('Wayland DingTalk Bot');
+    expect(result.botInfo?.name).toBe('Darhai DingTalk Bot');
   });
 
   it('returns success=false with the upstream error when token mint fails', async () => {

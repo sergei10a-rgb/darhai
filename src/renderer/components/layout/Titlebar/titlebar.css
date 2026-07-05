@@ -121,7 +121,7 @@
   letter-spacing: 0.01em;
 }
 
-/* Full brand lockup (orbit mark + wordmark + ™). 600x122 source → height-locked,
+/* Full brand lockup (orbit mark + wordmark). 600x122 source → height-locked,
    width auto to keep the aspect ratio. Theme-swapped via [data-theme]: the dark
    wordmark shows on light, the white wordmark on dark. */
 .app-titlebar__brand-lockup {

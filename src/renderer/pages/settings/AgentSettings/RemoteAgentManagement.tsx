@@ -23,7 +23,7 @@ import {
   Tag,
   Typography,
 } from '@arco-design/web-react';
-import WaylandModal from '@/renderer/components/base/WaylandModal';
+import DarhaiModal from '@/renderer/components/base/DarhaiModal';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import useSWR from 'swr';
@@ -33,7 +33,7 @@ const FormItem = Form.Item;
 
 const PAIRING_POLL_INTERVAL = 5_000;
 const PAIRING_TIMEOUT = 5 * 60 * 1000;
-const REMOTE_AGENT_GUIDE_URL = 'https://github.com/FerroxLabs/wayland/wiki/Remote-Agent-Guide-Chinese';
+const REMOTE_AGENT_GUIDE_URL = 'https://github.com/sergei10a-rgb/darhai/wiki/Remote-Agent-Guide-Chinese';
 
 type PairingState = 'idle' | 'handshaking' | 'pending' | 'timeout';
 
@@ -183,7 +183,10 @@ const RemoteAgentFormModal: React.FC<{
         const result = await ipcBridge.remoteAgent.handshake.invoke({ id: agentId });
 
         if (result.status === 'ok') {
-          toast.show({ variant: 'success', title: editAgent ? t('settings.remoteAgent.updated') : t('settings.remoteAgent.created') });
+          toast.show({
+            variant: 'success',
+            title: editAgent ? t('settings.remoteAgent.updated') : t('settings.remoteAgent.created'),
+          });
           onSaved();
           onClose();
         } else if (result.status === 'pending_approval') {
@@ -198,7 +201,10 @@ const RemoteAgentFormModal: React.FC<{
           onClose();
         }
       } else {
-        toast.show({ variant: 'success', title: editAgent ? t('settings.remoteAgent.updated') : t('settings.remoteAgent.created') });
+        toast.show({
+          variant: 'success',
+          title: editAgent ? t('settings.remoteAgent.updated') : t('settings.remoteAgent.created'),
+        });
         onSaved();
         onClose();
       }
@@ -219,7 +225,7 @@ const RemoteAgentFormModal: React.FC<{
   // Render pairing waiting UI
   if (pairingState === 'pending' || pairingState === 'timeout') {
     return (
-      <WaylandModal
+      <DarhaiModal
         visible={visible}
         onCancel={handleCancelPairing}
         header={{
@@ -262,12 +268,12 @@ const RemoteAgentFormModal: React.FC<{
             </>
           )}
         </div>
-      </WaylandModal>
+      </DarhaiModal>
     );
   }
 
   return (
-    <WaylandModal
+    <DarhaiModal
       visible={visible}
       onCancel={onClose}
       header={{
@@ -394,18 +400,12 @@ const RemoteAgentFormModal: React.FC<{
             }
           </Form.Item>
 
-          <Button
-            long
-            type='outline'
-            icon={<Gauge size={14} />}
-            loading={testing}
-            onClick={handleTestConnection}
-          >
+          <Button long type='outline' icon={<Gauge size={14} />} loading={testing} onClick={handleTestConnection}>
             {t('settings.remoteAgent.testConnection')}
           </Button>
         </Form>
       </div>
-    </WaylandModal>
+    </DarhaiModal>
   );
 };
 

@@ -55,7 +55,7 @@ const CARDS: CardDef[] = [
     icon: '📂',
     titleKey: 'archive.import.dropFolder',
     titleFallback: 'Watch drop folder',
-    defaultSubline: '~/Documents/Wayland-Memory/',
+    defaultSubline: '~/Documents/Darhai-Memory/',
   },
   {
     key: 'dev-scan',

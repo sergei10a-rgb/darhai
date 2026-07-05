@@ -62,7 +62,7 @@ export function initStorageBridge(): void {
   // Export all data to a zip file
   ipcBridge.storage.exportAll.provider(async (opts) => {
     const result = await dialog.showSaveDialog({
-      title: 'Export Wayland data',
+      title: 'Export Дархай data',
       defaultPath: `wayland-backup-${new Date().toISOString().slice(0, 10)}.zip`,
       filters: [{ name: 'ZIP archive', extensions: ['zip'] }],
     });
@@ -79,7 +79,7 @@ export function initStorageBridge(): void {
   // Import from a backup zip
   ipcBridge.storage.importBackup.provider(async (opts) => {
     const result = await dialog.showOpenDialog({
-      title: 'Restore Wayland backup',
+      title: 'Restore Дархай backup',
       filters: [{ name: 'ZIP archive', extensions: ['zip'] }],
       properties: ['openFile'],
     });

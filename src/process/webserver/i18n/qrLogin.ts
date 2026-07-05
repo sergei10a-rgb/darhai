@@ -11,9 +11,10 @@
  * code runs, so it cannot rely on the renderer's translation files. This
  * module owns its own table.
  *
- * Wayland is anglophone-first: non-English locales currently hold English
- * placeholder values so the page never falls back to undefined strings.
- * Native translations land in a follow-up i18n pass.
+ * Дархай is Mongolian-first: mn-MN carries the native copy and is the
+ * fallback locale. Other locales currently hold English placeholder values
+ * so the page never falls back to undefined strings; native translations
+ * land in a follow-up i18n pass.
  */
 
 export type QrLoginLocale = 'en-US' | 'zh-CN' | 'zh-TW' | 'ja-JP' | 'ko-KR' | 'tr-TR' | 'uk-UA' | 'ru-RU' | 'mn-MN';
@@ -45,10 +46,25 @@ export interface QrLoginStrings {
   networkErrorDetail: string;
 }
 
+const MN_MN: QrLoginStrings = {
+  htmlLang: 'mn',
+  pageTitle: 'QR нэвтрэлт · Дархай',
+  brand: 'Дархай',
+  verifying: 'QR кодыг шалгаж байна…',
+  invalidTitle: 'QR код буруу байна',
+  invalidDetail: 'QR код буруу эсвэл дутуу байна.',
+  successTitle: 'Амжилттай нэвтэрлээ',
+  redirecting: 'Шилжүүлж байна…',
+  failedTitle: 'Нэвтрэлт амжилтгүй',
+  expiredDetail: 'QR кодын хугацаа дууссан эсвэл буруу байна. Шинэ код уншуулна уу.',
+  networkErrorTitle: 'Сүлжээний алдаа',
+  networkErrorDetail: 'Сервертэй холбогдож чадсангүй. Дахин оролдоно уу.',
+};
+
 const EN_US: QrLoginStrings = {
   htmlLang: 'en',
-  pageTitle: 'QR Login · Wayland',
-  brand: 'Wayland',
+  pageTitle: 'QR Login · Дархай',
+  brand: 'Дархай',
   verifying: 'Verifying QR code…',
   invalidTitle: 'Invalid QR code',
   invalidDetail: 'The QR code is invalid or missing.',
@@ -61,8 +77,9 @@ const EN_US: QrLoginStrings = {
 };
 
 /**
- * Wayland is anglophone-first. Non-English locales reuse the English copy
- * verbatim until native translations are authored.
+ * Дархай is Mongolian-first: mn-MN is native and the fallback. Other
+ * non-English locales reuse the English copy verbatim until native
+ * translations are authored.
  */
 export const QR_LOGIN_STRINGS: Record<QrLoginLocale, QrLoginStrings> = {
   'en-US': EN_US,
@@ -73,7 +90,7 @@ export const QR_LOGIN_STRINGS: Record<QrLoginLocale, QrLoginStrings> = {
   'tr-TR': { ...EN_US },
   'uk-UA': { ...EN_US },
   'ru-RU': { ...EN_US },
-  'mn-MN': { ...EN_US },
+  'mn-MN': MN_MN,
 };
 
 const SUPPORTED_LOCALES: readonly QrLoginLocale[] = [
@@ -93,11 +110,12 @@ const SUPPORTED_LOCALES: readonly QrLoginLocale[] = [
  *
  * Picks the highest-quality tag that matches one of our supported locales,
  * either exactly (`zh-CN`) or by primary subtag (`zh` → `zh-CN`). Falls back
- * to `en-US` when nothing matches or the header is absent/malformed.
+ * to `mn-MN` (the product default) when nothing matches or the header is
+ * absent/malformed.
  */
 export function pickLocale(acceptLanguage: string | undefined): QrLoginLocale {
   if (!acceptLanguage || typeof acceptLanguage !== 'string') {
-    return 'en-US';
+    return 'mn-MN';
   }
 
   type Candidate = { tag: string; q: number; order: number };
@@ -141,5 +159,5 @@ export function pickLocale(acceptLanguage: string | undefined): QrLoginLocale {
     if (fallback) return fallback;
   }
 
-  return 'en-US';
+  return 'mn-MN';
 }

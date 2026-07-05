@@ -7,7 +7,7 @@ steps:
     estSeconds: 30
     autoCompletedByInstall: true
     body: |
-      Wayland fetches the `chrome-devtools-mcp` npm package on first launch via
+      Дархай fetches the `chrome-devtools-mcp` npm package on first launch via
       `npx` - nothing to configure. The server drives a real Chrome instance
       over the Chrome DevTools Protocol via Puppeteer, so you need **Google
       Chrome current stable or newer** already installed on your machine

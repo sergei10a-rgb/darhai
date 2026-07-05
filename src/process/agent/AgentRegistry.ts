@@ -71,7 +71,7 @@ class AgentRegistry {
   private createWCoreAgent(): WCoreDetectedAgent {
     return {
       id: 'wcore',
-      name: 'Wayland Core',
+      name: 'Darhai Core',
       kind: 'wcore',
       available: true,
       backend: 'wcore',

@@ -22,7 +22,7 @@
       "guideUrl": "guides/io.github.taylorwilsdon-google-workspace-mcp.md"
     },
     {
-      "id": "com.wayland/apple-mcp",
+      "id": "com.darhai/apple-mcp",
       "name": "Apple Ecosystem",
       "shortDescription": "Notes, Reminders, Mail, Calendar, Maps, Photos via EventKit and AppleScript. macOS only.",
       "iconUrl": "icons/apple.svg",
@@ -37,8 +37,8 @@
       "verifiedByWayland": "2026-05-27",
       "popularityRank": 2,
       "installRate": 0.71,
-      "entryUrl": "entries/com.wayland-apple-mcp.json",
-      "guideUrl": "guides/com.wayland-apple-mcp.md"
+      "entryUrl": "entries/com.darhai-apple-mcp.json",
+      "guideUrl": "guides/com.darhai-apple-mcp.md"
     },
     {
       "id": "com.slack/slack-mcp",
@@ -111,7 +111,7 @@
       "guideUrl": "guides/com.softeria-ms-365-mcp-server.md"
     },
     {
-      "id": "com.wayland/imap-mcp",
+      "id": "com.darhai/imap-mcp",
       "name": "Generic IMAP / SMTP",
       "shortDescription": "Personal email via IMAP/SMTP - works with iCloud, Proton Bridge, Fastmail, and any standards-compliant mail host.",
       "iconUrl": "icons/email.svg",
@@ -123,8 +123,8 @@
       "verifiedByWayland": "2026-05-27",
       "popularityRank": 8,
       "installRate": 0.34,
-      "entryUrl": "entries/com.wayland-imap-mcp.json",
-      "guideUrl": "guides/com.wayland-imap-mcp.md"
+      "entryUrl": "entries/com.darhai-imap-mcp.json",
+      "guideUrl": "guides/com.darhai-imap-mcp.md"
     },
     {
       "id": "io.modelcontextprotocol/server-filesystem",
@@ -178,7 +178,7 @@
       "guideUrl": "guides/com.todoist-todoist-mcp.md"
     },
     {
-      "id": "com.wayland/news-mcp",
+      "id": "com.darhai/news-mcp",
       "name": "News & RSS",
       "shortDescription": "Unified search across NewsAPI, Hacker News, and any RSS or Atom feed - one MCP for staying current.",
       "iconUrl": "icons/news.svg",
@@ -192,8 +192,8 @@
       "verifiedByWayland": "2026-05-27",
       "popularityRank": 12,
       "installRate": 0.28,
-      "entryUrl": "entries/com.wayland-news-mcp.json",
-      "guideUrl": "guides/com.wayland-news-mcp.md"
+      "entryUrl": "entries/com.darhai-news-mcp.json",
+      "guideUrl": "guides/com.darhai-news-mcp.md"
     },
     {
       "id": "com.linear/linear-mcp",
@@ -333,7 +333,7 @@
       "guideUrl": "guides/com.calendly-calendly-mcp.md"
     },
     {
-      "id": "com.wayland/cal-com-mcp",
+      "id": "com.darhai/cal-com-mcp",
       "name": "Cal.com Scheduling",
       "shortDescription": "Open-source scheduling - bookings, event types, and availability via Cal.com's API.",
       "iconUrl": "icons/cal-com.svg",
@@ -346,8 +346,8 @@
       "verifiedByWayland": "2026-05-27",
       "popularityRank": 25,
       "installRate": 0.16,
-      "entryUrl": "entries/com.wayland-cal-com-mcp.json",
-      "guideUrl": "guides/com.wayland-cal-com-mcp.md"
+      "entryUrl": "entries/com.darhai-cal-com-mcp.json",
+      "guideUrl": "guides/com.darhai-cal-com-mcp.md"
     },
     {
       "id": "com.hubspot/hubspot-mcp",
@@ -753,7 +753,7 @@
     {
       "id": "com.zapier/zapier-mcp",
       "name": "Zapier",
-      "shortDescription": "Trigger Zapier actions across 9,000+ apps from Wayland - Gmail, Slack, Salesforce, and the rest. Zapier's official hosted MCP.",
+      "shortDescription": "Trigger Zapier actions across 9,000+ apps from Дархай - Gmail, Slack, Salesforce, and the rest. Zapier's official hosted MCP.",
       "iconUrl": "icons/zapier.svg",
       "tier": "worker",
       "categories": [

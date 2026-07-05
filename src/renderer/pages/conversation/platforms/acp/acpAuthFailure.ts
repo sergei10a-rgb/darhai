@@ -97,7 +97,7 @@ const BACKEND_REMEDIES: Record<string, Partial<AcpAuthRemedy>> = {
     fluxRoutable: true,
   },
   wcore: {
-    backendLabel: 'Wayland Core',
+    backendLabel: 'Darhai Core',
     fluxRoutable: true,
     // No CLI login and no subscription fallback - the only fixes are a working
     // provider key or the Flux route. Keep cliLoginCmd undefined so buildRemedy

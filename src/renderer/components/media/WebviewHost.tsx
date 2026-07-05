@@ -6,6 +6,7 @@
 
 import { ChevronLeft, ChevronRight, Loader2, RefreshCw } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export interface WebviewHostProps {
   /** URL to display */
@@ -49,6 +50,7 @@ const WebviewHost: React.FC<WebviewHostProps> = ({
   onDidFinishLoad,
   onDidFailLoad,
 }) => {
+  const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
   const webviewRef = useRef<Electron.WebviewTag | null>(null);
@@ -577,26 +579,32 @@ const WebviewHost: React.FC<WebviewHostProps> = ({
       {/* Navigation bar (optional) */}
       {showNavBar && (
         <div className='aion-url-viewer-toolbar flex items-center gap-6px h-40px px-10px bg-bg-2 border-b border-border-1 flex-shrink-0'>
-          <button onClick={handleGoBack} disabled={!canGoBack} className='toolbar-btn icon-btn' title='Back'>
+          <button
+            onClick={handleGoBack}
+            disabled={!canGoBack}
+            className='toolbar-btn icon-btn'
+            title={t('common.historyBack')}
+          >
             <ChevronLeft size={16} />
           </button>
-          <button onClick={handleGoForward} disabled={!canGoForward} className='toolbar-btn icon-btn' title='Forward'>
+          <button
+            onClick={handleGoForward}
+            disabled={!canGoForward}
+            className='toolbar-btn icon-btn'
+            title={t('common.forward')}
+          >
             <ChevronRight size={16} />
           </button>
-          <button onClick={handleRefresh} className='toolbar-btn icon-btn' title='Refresh'>
-            {isLoading ? (
-              <Loader2 size={16} className='animate-spin' />
-            ) : (
-              <RefreshCw size={16} />
-            )}
+          <button onClick={handleRefresh} className='toolbar-btn icon-btn' title={t('common.refresh')}>
+            {isLoading ? <Loader2 size={16} className='animate-spin' /> : <RefreshCw size={16} />}
           </button>
           {isStarOffice && (
             <div className='flex items-center gap-6px ml-2px'>
-              <button onClick={handleZoomReset} className='toolbar-btn' title='Reset zoom'>
+              <button onClick={handleZoomReset} className='toolbar-btn' title={t('common.webview.resetZoom')}>
                 100%
               </button>
-              <button onClick={handleZoomFit} className='toolbar-btn' title='Fit'>
-                Fit
+              <button onClick={handleZoomFit} className='toolbar-btn' title={t('common.webview.fit')}>
+                {t('common.webview.fit')}
               </button>
               <span className='toolbar-chip'>{Math.round(zoomFactor * 100)}%</span>
             </div>
@@ -609,7 +617,7 @@ const WebviewHost: React.FC<WebviewHostProps> = ({
               onKeyDown={handleUrlKeyDown}
               onFocus={(e) => e.target.select()}
               className='toolbar-input'
-              placeholder='Enter URL...'
+              placeholder={t('common.webview.urlPlaceholder')}
             />
           </form>
         </div>
@@ -618,7 +626,7 @@ const WebviewHost: React.FC<WebviewHostProps> = ({
       {/* Loading indicator (when no nav bar) */}
       {!showNavBar && isLoading && (
         <div className='absolute inset-0 flex items-center justify-center text-t-secondary text-14px z-10 pointer-events-none'>
-          <span className='animate-pulse'>Loader2…</span>
+          <span className='animate-pulse'>{t('common.loading')}</span>
         </div>
       )}
 

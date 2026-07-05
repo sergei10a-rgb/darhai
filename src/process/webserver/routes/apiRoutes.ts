@@ -19,7 +19,7 @@ import { ExtensionRegistry } from '@process/extensions';
 import { SpeechToTextService } from '@process/bridge/services/SpeechToTextService';
 import { isActivePreviewPort } from '@process/bridge/pptPreviewBridge';
 import { isActiveOfficeWatchPort } from '@process/bridge/officeWatchBridge';
-import { WAYLAND_TIMESTAMP_SEPARATOR } from '@/common/config/constants';
+import { DARHAI_TIMESTAMP_SEPARATOR } from '@/common/config/constants';
 import directoryApi from '../directoryApi';
 import { apiRateLimiter } from '../middleware/security';
 import { registerWeixinLoginRoutes } from './weixinLoginRoutes';
@@ -348,7 +348,7 @@ export function registerApiRoutes(app: Express): void {
           // File exists, append timestamp
           const ext = path.extname(safeFileName);
           const name = path.basename(safeFileName, ext);
-          targetPath = path.join(uploadDir, `${name}${WAYLAND_TIMESTAMP_SEPARATOR}${Date.now()}${ext}`);
+          targetPath = path.join(uploadDir, `${name}${DARHAI_TIMESTAMP_SEPARATOR}${Date.now()}${ext}`);
         } catch {
           // File doesn't exist, proceed with original name
         }

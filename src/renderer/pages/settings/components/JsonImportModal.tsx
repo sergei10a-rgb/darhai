@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import CodeMirror from '@uiw/react-codemirror';
 import { json } from '@codemirror/lang-json';
 import { useThemeContext } from '@/renderer/hooks/context/ThemeContext';
-import WaylandModal from '@/renderer/components/base/WaylandModal';
+import DarhaiModal from '@/renderer/components/base/DarhaiModal';
 
 interface JsonImportModalProps {
   visible: boolean;
@@ -239,7 +239,7 @@ const JsonImportModal: React.FC<JsonImportModalProps> = ({ visible, server, onCa
   if (!visible) return null;
 
   return (
-    <WaylandModal
+    <DarhaiModal
       visible={visible}
       onCancel={onCancel}
       onOk={handleSubmit}
@@ -281,7 +281,10 @@ const JsonImportModal: React.FC<JsonImportModalProps> = ({ visible, server, onCa
               }}
               style={{
                 fontSize: '13px',
-                border: validation.isValid || !jsonInput.trim() ? '1px solid var(--color-border-1)' : '1px solid var(--danger)',
+                border:
+                  validation.isValid || !jsonInput.trim()
+                    ? '1px solid var(--color-border-1)'
+                    : '1px solid var(--danger)',
                 borderRadius: '6px',
                 marginBottom: '20px',
                 overflow: 'hidden',
@@ -358,7 +361,7 @@ const JsonImportModal: React.FC<JsonImportModalProps> = ({ visible, server, onCa
           }
         />
       </div>
-    </WaylandModal>
+    </DarhaiModal>
   );
 };
 

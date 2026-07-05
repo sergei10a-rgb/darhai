@@ -31,7 +31,7 @@ const ORIGINAL_ENV = { ...process.env };
 
 beforeEach(async () => {
   home = await mkdtemp(join(tmpdir(), 'wcore-home-'));
-  delete process.env.WAYLAND_HOME;
+  delete process.env.DARHAI_HOME;
   delete process.env.XDG_DATA_HOME;
 });
 
@@ -48,8 +48,8 @@ async function setActive(name: string): Promise<void> {
 }
 
 describe('nativeConfigDir - mirrors engine wayland_config_dir precedence', () => {
-  it('honors WAYLAND_HOME as the literal config dir', () => {
-    process.env.WAYLAND_HOME = '/tmp/wh';
+  it('honors DARHAI_HOME as the literal config dir', () => {
+    process.env.DARHAI_HOME = '/tmp/wh';
     expect(nativeConfigDir()).toBe('/tmp/wh');
   });
 

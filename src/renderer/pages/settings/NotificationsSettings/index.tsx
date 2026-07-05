@@ -112,14 +112,14 @@ const NotificationsSettings: React.FC = () => {
   return (
     <SettingsPageShell
       title={t('settings.notificationsPage.title', 'Notifications')}
-      subtitle={t('settings.notificationsPage.subtitle', 'When and how Wayland alerts you.')}
+      subtitle={t('settings.notificationsPage.subtitle', 'When and how Дархай alerts you.')}
     >
       <Card title={t('settings.notificationsPage.systemTitle', 'System notifications')} titleIcon={Bell}>
         <PreferenceRow
           label={t('settings.notificationsPage.master', 'Master switch')}
           help={t(
             'settings.notificationsPage.masterHelp',
-            'When off, Wayland sends no system notifications. Other rules below are ignored.'
+            'When off, Дархай sends no system notifications. Other rules below are ignored.'
           )}
         >
           <Switch checked={state.master} loading={!loaded} onChange={handleMaster} />

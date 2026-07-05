@@ -132,7 +132,7 @@ export class IrcPlugin extends BasePlugin {
     }
     if (this.client) {
       try {
-        this.client.quit('Wayland shutdown');
+        this.client.quit('Darhai shutdown');
       } catch {
         // ignore quit errors during teardown
       }
@@ -369,7 +369,7 @@ export class IrcPlugin extends BasePlugin {
         tls: creds.tls,
         nick: creds.nick,
         username: creds.username,
-        gecos: creds.realname || 'Wayland IRC bot',
+        gecos: creds.realname || 'Darhai IRC bot',
         auto_reconnect: false, // we own the reconnect state machine
       };
 
@@ -529,7 +529,7 @@ export class IrcPlugin extends BasePlugin {
         tls: creds.tls,
         nick: creds.nick,
         username: creds.username,
-        gecos: 'Wayland IRC test',
+        gecos: 'Darhai IRC test',
         auto_reconnect: false,
       };
 

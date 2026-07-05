@@ -24,13 +24,13 @@ negative_triggers:
 tags: [conversion, copy, donahoe-method, three-locks, persuasion, architecture]
 priority: 100
 version: 1.0.0
-author: Wayland Business Pack
+author: Darhai Business Pack
 license: MIT
 metadata:
   wayland:
     related_skills: [convert, convert-four-questions, convert-open, convert-proof, convert-bullets, convert-close, convert-sales-page, convert-vsl]
 attribution:
-  lineage: "The Donahoe Method (Wayland-owned operating system); references *Cialdini's six principles of influence (Influence, 1984)*, *Halbert's want-and-justify model (Boron Letters, 1984)*, and the *AIDA architecture (Lewis, 1898)*"
+  lineage: "The Donahoe Method (Дархай-owned operating system); references *Cialdini's six principles of influence (Influence, 1984)*, *Halbert's want-and-justify model (Boron Letters, 1984)*, and the *AIDA architecture (Lewis, 1898)*"
 ---
 
 # Convert Three Locks - The Persuasion Architecture
@@ -317,7 +317,7 @@ If any lock fails the read-aloud test, rewrite it.
 
 ## Lineage
 
-The Three Locks is part of **The Donahoe Method** (Wayland-owned operating system).
+The Three Locks is part of **The Donahoe Method** (Дархай-owned operating system).
 
 Lineage references:
 - The want-then-justify pattern - *Halbert, the Boron Letters (1984)*: "give them what they want, give them the reason"

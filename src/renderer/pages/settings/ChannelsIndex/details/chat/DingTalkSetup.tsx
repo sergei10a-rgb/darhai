@@ -39,7 +39,7 @@ const DingTalkSetup: React.FC = () => {
       displayName='DingTalk'
       helpText={t(
         'settings.channels.dingtalk.help',
-        'Connect Wayland to DingTalk via Stream Mode. On open-dev.dingtalk.com, create an enterprise internal app, copy its AppKey / AppSecret into Client ID / Client Secret below, then enable Event Subscription → Stream Mode and grant the Robot.message.read event scope.'
+        'Connect Дархай to DingTalk via Stream Mode. On open-dev.dingtalk.com, create an enterprise internal app, copy its AppKey / AppSecret into Client ID / Client Secret below, then enable Event Subscription → Stream Mode and grant the Robot.message.read event scope.'
       )}
       showDisconnect={!!pluginStatus?.enabled}
     >

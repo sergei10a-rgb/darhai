@@ -6,14 +6,7 @@
 
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  MoreHorizontal,
-  Shield,
-  ShieldAlert,
-  ShieldOff,
-  ShieldQuestion,
-  Star,
-} from 'lucide-react';
+import { MoreHorizontal, Shield, ShieldAlert, ShieldOff, ShieldQuestion, Star } from 'lucide-react';
 import type { SkillIndexEntry, SkillSource, SkillVerdict } from '@/common/types/skillTypes';
 import { toDisplayName } from './displayName';
 
@@ -32,9 +25,10 @@ export const VERDICT_ICON: Record<SkillVerdict, React.ReactNode> = {
   unscanned: <ShieldQuestion size={16} style={{ color: 'var(--color-text-3)' }} />,
 };
 
-// Friendly source labels - also consumed by the detail drawer.
+// Friendly source labels - untranslated fallbacks for the localized
+// `skills.filters.source.*` keys; also consumed by the detail drawer.
 export const SOURCE_LABEL: Record<SkillSource, string> = {
-  'wayland-library': 'Wayland library',
+  'wayland-library': 'Darhai library',
   team: 'Team',
   user: 'My skills',
   imported: 'Imported',
@@ -81,8 +75,11 @@ const SOURCE_BADGE_STYLE: Record<SkillSource, React.CSSProperties> = {
 
 const SkillRow: React.FC<Props> = ({ entry, pinned, onTogglePin, onClick }) => {
   const { t } = useTranslation(undefined, { keyPrefix: 'skills' });
+  const { t: tGlobal } = useTranslation();
   const verdict = entry.security?.verdict ?? 'unscanned';
-  const sourceLabel = entry.sourceLabel ?? SOURCE_LABEL[entry.source] ?? entry.source;
+  const sourceLabel =
+    entry.sourceLabel ??
+    t(`filters.source.${entry.source}`, { defaultValue: SOURCE_LABEL[entry.source] ?? entry.source });
   const badgeStyle = SOURCE_BADGE_STYLE[entry.source] ?? SOURCE_BADGE_STYLE['wayland-library'];
   const isBlocked = verdict === 'blocked';
   const isReview = verdict === 'review';
@@ -158,9 +155,7 @@ const SkillRow: React.FC<Props> = ({ entry, pinned, onTogglePin, onClick }) => {
                     }),
               }}
             >
-              {isBlocked
-                ? t('filters.verdict.blocked', 'Blocked')
-                : t('filters.verdict.review', 'Review')}
+              {isBlocked ? t('filters.verdict.blocked', 'Blocked') : t('filters.verdict.review', 'Review')}
             </span>
           ) : null}
         </div>
@@ -205,7 +200,7 @@ const SkillRow: React.FC<Props> = ({ entry, pinned, onTogglePin, onClick }) => {
           type='button'
           className='p-6px rd-6px outline-none border-none bg-transparent cursor-pointer transition-colors hover:bg-fill-2'
           style={{ color: 'var(--color-text-3)' }}
-          title='More'
+          title={tGlobal('common.more')}
           onClick={stopProp}
         >
           <MoreHorizontal size={16} />

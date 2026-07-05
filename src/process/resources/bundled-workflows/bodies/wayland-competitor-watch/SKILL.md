@@ -15,7 +15,7 @@ license: Apache-2.0
 type: workflow
 skills: "market-competitors market-report"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: marketing competitors monitoring scan brief deterministic
   category: marketing

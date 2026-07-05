@@ -36,7 +36,7 @@ vi.mock('@process/channels/utils/credentialCrypto', () => ({
   decryptString: vi.fn(),
 }));
 
-import { WaylandUIDatabase } from '@process/services/database/index';
+import { DarhaiUIDatabase } from '@process/services/database/index';
 import { createDriver } from '@process/services/database/drivers/createDriver';
 import { initSchema } from '@process/services/database/schema';
 import fs from 'fs';
@@ -55,7 +55,7 @@ function createMockDriver(): ISqliteDriver {
   };
 }
 
-describe('WaylandUIDatabase.create recovery', () => {
+describe('DarhaiUIDatabase.create recovery', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -77,7 +77,7 @@ describe('WaylandUIDatabase.create recovery', () => {
     const renameSpy = vi.spyOn(fs, 'renameSync').mockImplementation(() => undefined as never);
     vi.spyOn(fs, 'unlinkSync').mockImplementation(() => undefined as never);
 
-    await WaylandUIDatabase.create('/tmp/test.db');
+    await DarhaiUIDatabase.create('/tmp/test.db');
 
     expect(failedDriver.close).toHaveBeenCalledOnce();
     expect(renameSpy).toHaveBeenCalled();
@@ -99,15 +99,15 @@ describe('WaylandUIDatabase.create recovery', () => {
     vi.spyOn(fs, 'renameSync').mockImplementation(() => undefined as never);
     vi.spyOn(fs, 'unlinkSync').mockImplementation(() => undefined as never);
 
-    const db = await WaylandUIDatabase.create('/tmp/test.db');
-    expect(db).toBeInstanceOf(WaylandUIDatabase);
+    const db = await DarhaiUIDatabase.create('/tmp/test.db');
+    expect(db).toBeInstanceOf(DarhaiUIDatabase);
     expect(createDriver).toHaveBeenCalledTimes(2);
   });
 
   it('does not close driver when createDriver itself throws', async () => {
     vi.mocked(createDriver).mockRejectedValueOnce(new Error('dlopen failed: libsqlite3.so not found'));
 
-    await expect(WaylandUIDatabase.create('/tmp/test.db')).rejects.toThrow('dlopen');
+    await expect(DarhaiUIDatabase.create('/tmp/test.db')).rejects.toThrow('dlopen');
   });
 
   it('does not replace the database when initialization fails without corruption markers', async () => {
@@ -123,7 +123,7 @@ describe('WaylandUIDatabase.create recovery', () => {
     const renameSpy = vi.spyOn(fs, 'renameSync').mockImplementation(() => undefined as never);
     const unlinkSpy = vi.spyOn(fs, 'unlinkSync').mockImplementation(() => undefined as never);
 
-    await expect(WaylandUIDatabase.create('/tmp/test.db')).rejects.toThrow('SQLITE_CANTOPEN');
+    await expect(DarhaiUIDatabase.create('/tmp/test.db')).rejects.toThrow('SQLITE_CANTOPEN');
 
     expect(failedDriver.close).toHaveBeenCalledOnce();
     expect(renameSpy).not.toHaveBeenCalled();
@@ -147,7 +147,7 @@ describe('WaylandUIDatabase.create recovery', () => {
       throw new Error('EPERM: operation not permitted');
     });
 
-    await expect(WaylandUIDatabase.create('/tmp/test.db')).rejects.toThrow(
+    await expect(DarhaiUIDatabase.create('/tmp/test.db')).rejects.toThrow(
       'Database is corrupted and cannot be recovered'
     );
     expect(failedDriver.close).toHaveBeenCalledOnce();
@@ -171,7 +171,7 @@ describe('WaylandUIDatabase.create recovery', () => {
     });
     const unlinkSpy = vi.spyOn(fs, 'unlinkSync').mockImplementation(() => undefined as never);
 
-    await WaylandUIDatabase.create('/tmp/test.db');
+    await DarhaiUIDatabase.create('/tmp/test.db');
 
     expect(unlinkSpy).toHaveBeenCalledWith('/tmp/test.db');
   });

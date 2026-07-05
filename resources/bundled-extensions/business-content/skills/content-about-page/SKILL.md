@@ -26,13 +26,13 @@ negative_triggers:
 tags: [content, personal_brand, about_page, storytelling, direct_response, conversion]
 priority: 80
 version: 1.0.0
-author: Wayland Business Pack
+author: Darhai Business Pack
 license: MIT
 metadata:
   wayland:
     related_skills: [content-bio, content-speaker-kit, content-thought-leadership-post, convert-open]
 attribution:
-  lineage: "The Donahoe Method (Wayland-owned operating system); StoryBrand 'guide not hero' frame (Donald Miller, 2017) inverted into DR sales narrative; DR canon: Gary Halbert (The Boron Letters, 1984), Eugene Schwartz (Breakthrough Advertising, 1966), Joseph Sugarman (AdWeek Copywriting Handbook, 1998); personal brand canon: Justin Welsh, Michael Hyatt (Platform, 2012), Marie Forleo; Sean Donahoe's 28 years of direct-response personal brand operating"
+  lineage: "The Donahoe Method (Дархай-owned operating system); StoryBrand 'guide not hero' frame (Donald Miller, 2017) inverted into DR sales narrative; DR canon: Gary Halbert (The Boron Letters, 1984), Eugene Schwartz (Breakthrough Advertising, 1966), Joseph Sugarman (AdWeek Copywriting Handbook, 1998); personal brand canon: Justin Welsh, Michael Hyatt (Platform, 2012), Marie Forleo; Sean Donahoe's 28 years of direct-response personal brand operating"
 ---
 
 # Content About Page - The DR About-Page Arc
@@ -321,7 +321,7 @@ Does the existing page end with a specific action? If it ends with "Feel free to
 
 ## Lineage
 
-- **The Donahoe Method** (Wayland-owned operating system) - hook/promise/proof/close as the structural spine; Fingerprint as Section 4
+- **The Donahoe Method** (Дархай-owned operating system) - hook/promise/proof/close as the structural spine; Fingerprint as Section 4
 - *Donald Miller, StoryBrand (2017)* - "you are the guide, not the hero" frame, inverted here into DR sales narrative: the guide's own discovery story is the proof of path
 - *Eugene Schwartz, Breakthrough Advertising (1966)* - market sophistication: the reader has already heard the generic claims; the About page must show something they haven't seen
 - *Gary Halbert, The Boron Letters (1984)* - the reader is always asking "what's in it for me?"; even an About page must answer that question on every page

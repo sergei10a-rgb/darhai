@@ -17,13 +17,13 @@ export const BUILTIN_SEARCH_SKILLS_TOOL_NAME = 'wayland_search_skills';
 // Bundled @wayland MCP servers shipped with the installer (no npm publish).
 // Each catalog entry's transport stores the bare filename as args[0]; the
 // spawn layer rewrites it to an absolute path via `getMcpScriptPath()`.
-export const BUILTIN_WAYLAND_APPLE_NAME = 'com.wayland/apple-mcp';
+export const BUILTIN_WAYLAND_APPLE_NAME = 'com.darhai/apple-mcp';
 export const BUILTIN_WAYLAND_APPLE_FILE = 'builtin-mcp-apple.mjs';
-export const BUILTIN_WAYLAND_IMAP_NAME = 'com.wayland/imap-mcp';
+export const BUILTIN_WAYLAND_IMAP_NAME = 'com.darhai/imap-mcp';
 export const BUILTIN_WAYLAND_IMAP_FILE = 'builtin-mcp-imap.mjs';
-export const BUILTIN_WAYLAND_NEWS_NAME = 'com.wayland/news-mcp';
+export const BUILTIN_WAYLAND_NEWS_NAME = 'com.darhai/news-mcp';
 export const BUILTIN_WAYLAND_NEWS_FILE = 'builtin-mcp-news.mjs';
-export const BUILTIN_WAYLAND_CAL_COM_NAME = 'com.wayland/cal-com-mcp';
+export const BUILTIN_WAYLAND_CAL_COM_NAME = 'com.darhai/cal-com-mcp';
 export const BUILTIN_WAYLAND_CAL_COM_FILE = 'builtin-mcp-cal-com.mjs';
 
 export const BUILTIN_WAYLAND_MCP_FILES = [
@@ -89,7 +89,5 @@ export function isBuiltinSearchSkillsTransport(transport?: {
     return false;
   }
 
-  return (transport.args || []).some(
-    (arg) => typeof arg === 'string' && arg.includes('builtin-mcp-search-skills.js')
-  );
+  return (transport.args || []).some((arg) => typeof arg === 'string' && arg.includes('builtin-mcp-search-skills.js'));
 }

@@ -14,7 +14,7 @@ license: Apache-2.0
 type: workflow
 skills: "content-case-study content-humanize content-repurpose"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: marketing content case-study repurpose step-by-step proof
   category: marketing

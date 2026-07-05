@@ -38,10 +38,10 @@ vi.mock('fs', () => ({
 
 // Path constants - must mirror the bridge's resolution logic.
 const HOME = homedir();
-const WAYLAND_DIR = join(HOME, '.wayland');
-const CONSTITUTION_PATH = join(WAYLAND_DIR, 'CONSTITUTION.md');
-const LEGACY_SOUL_PATH = join(WAYLAND_DIR, 'SOUL.md');
-const SPECIALISTS_DIR = join(WAYLAND_DIR, 'specialists');
+const DARHAI_DIR = join(HOME, '.wayland');
+const CONSTITUTION_PATH = join(DARHAI_DIR, 'CONSTITUTION.md');
+const LEGACY_SOUL_PATH = join(DARHAI_DIR, 'SOUL.md');
+const SPECIALISTS_DIR = join(DARHAI_DIR, 'specialists');
 
 const overlayPathFor = (id: string): string => join(SPECIALISTS_DIR, `${id}.md`);
 
@@ -71,7 +71,7 @@ describe('readConstitutionWithOverlay', () => {
     // hardening pulls in a transitive import that reads the app's own
     // package.json at module-load time; that read is unrelated to the bridge's
     // file access and is excluded here.)
-    const waylandReads = fsMock.readFileSync.mock.calls.filter((call) => String(call[0]).includes(WAYLAND_DIR));
+    const waylandReads = fsMock.readFileSync.mock.calls.filter((call) => String(call[0]).includes(DARHAI_DIR));
     expect(waylandReads).toEqual([]);
   });
 
@@ -255,7 +255,7 @@ describe('specialist overlay CRUD', () => {
       // No overlay file exists, so the bridge must not read any specialist
       // file. (A transitive import reads the app's own package.json at
       // module-load time; that read is unrelated and excluded here.)
-      const waylandReads = fsMock.readFileSync.mock.calls.filter((call) => String(call[0]).includes(WAYLAND_DIR));
+      const waylandReads = fsMock.readFileSync.mock.calls.filter((call) => String(call[0]).includes(DARHAI_DIR));
       expect(waylandReads).toEqual([]);
     });
 

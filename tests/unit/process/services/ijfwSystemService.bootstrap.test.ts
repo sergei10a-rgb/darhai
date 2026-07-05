@@ -105,11 +105,20 @@ function flush(): Promise<void> {
   return new Promise((resolve) => setImmediate(resolve));
 }
 
-// Flush the event loop until `pred()` is true or `max` flushes elapse. Replaces
-// fixed-count flush loops that race the async install-exit handler - those are
-// flaky on fast hosts and worse on the ~2.7x-slower windows runners.
-async function flushUntil(pred: () => boolean, max = 200): Promise<void> {
-  for (let i = 0; i < max && !pred(); i++) await flush();
+// Flush the event loop until `pred()` is true or the wall-clock deadline
+// elapses. A pure setImmediate spin (the previous `max = 200` turns) burns
+// through in microseconds without ever yielding poll-phase time, so the real
+// fs I/O the install-exit handler performs (moveWithExdevFallback on the tmp
+// fixture) never completes under full-suite disk load - the test then passes
+// in isolation but flakes in the full run. Alternate immediates with short
+// real-timer sleeps so pending I/O callbacks get delivered.
+async function flushUntil(pred: () => boolean, timeoutMs = 5000): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  while (!pred() && Date.now() < deadline) {
+    await flush();
+    if (pred()) return;
+    await new Promise((resolve) => setTimeout(resolve, 5));
+  }
 }
 
 // eslint-disable-next-line import/first

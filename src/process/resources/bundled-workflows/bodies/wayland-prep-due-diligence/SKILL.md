@@ -16,7 +16,7 @@ license: Apache-2.0
 type: workflow
 skills: "pitch-dd-prep"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: pitch fundraising due-diligence data-room investor step-by-step planning
   category: marketing

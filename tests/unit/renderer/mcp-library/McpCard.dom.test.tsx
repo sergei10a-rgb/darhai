@@ -23,7 +23,7 @@ test('renders title, description, tier and maintainer badges', () => {
   expect(screen.getByText('Test Service')).toBeInTheDocument();
   expect(screen.getByText('Does a thing.')).toBeInTheDocument();
   expect(screen.getByText(/Core/)).toBeInTheDocument();
-  expect(screen.getByText(/Built by Wayland/)).toBeInTheDocument();
+  expect(screen.getByText(/Built by Darhai/)).toBeInTheDocument();
 });
 
 test('shows Installed pill when installed=true', () => {

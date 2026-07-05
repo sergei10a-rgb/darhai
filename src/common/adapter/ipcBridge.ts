@@ -887,7 +887,7 @@ export const excelPreview = {
 
 // Deep link protocol handling
 export const deepLink = {
-  /** Emitted when app is opened via wayland:// protocol URL */
+  /** Emitted when app is opened via darhai:// (or legacy wayland://) protocol URL */
   received: buildEmitter<{
     action: string; // e.g. 'add-provider'
     params: Record<string, string>; // parsed query params

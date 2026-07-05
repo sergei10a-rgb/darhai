@@ -26,10 +26,7 @@ import { cleanupSiderTooltips } from '@renderer/utils/ui/siderTooltip';
 import { useConversationShortcuts } from '@renderer/hooks/ui/useConversationShortcuts';
 import { useGlobalKeybind } from '@renderer/hooks/settings/useGlobalKeybind';
 import { CommandPalette } from '@renderer/components/cmdk';
-import type {
-  PaletteAssistant,
-  PaletteStarterPrompt,
-} from '@renderer/components/cmdk';
+import type { PaletteAssistant, PaletteStarterPrompt } from '@renderer/components/cmdk';
 import { getAgentKey } from '@renderer/pages/guid/hooks/agentSelectionUtils';
 import type { AcpBackend } from '@/common/types/acpTypes';
 import { isElectronDesktop } from '@renderer/utils/platform';
@@ -545,7 +542,9 @@ const Layout: React.FC<{
                   </svg>
                 </div>
                 <div className='flex-1 flex flex-col gap-2px collapsed-hidden min-w-0'>
-                  <span className='text-14px font-700 text-t-primary leading-none tracking-[0.01em]'>{t('common.brand')}</span>
+                  <span className='text-14px font-700 text-t-primary leading-none tracking-[0.01em]'>
+                    {t('common.brand')}
+                  </span>
                   <span className='text-10px font-500 uppercase tracking-[0.16em] text-[var(--text-dim,#555)] leading-none'>
                     {t('common.brandTagline')}
                   </span>
@@ -555,13 +554,9 @@ const Layout: React.FC<{
                     type='button'
                     className='app-titlebar__button'
                     onClick={() => setCollapsed(true)}
-                    aria-label='Collapse sidebar'
+                    aria-label={t('common.collapseSidebar')}
                   >
-                    {collapsed ? (
-                      <PanelLeftOpen size={18} />
-                    ) : (
-                      <PanelLeftClose size={18} />
-                    )}
+                    {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
                   </button>
                 )}
                 {/* Sidebar folding handled by Titlebar toggle */}

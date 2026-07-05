@@ -1043,7 +1043,7 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
     },
     descriptionI18n: {
       'en-US':
-        'Expert guide for installing, configuring, and connecting the Hermes Agent CLI as a Wayland backend. Handles install, portal and model auth, memory and tools setup, the ACP extra, and doctor diagnostics.',
+        'Expert guide for installing, configuring, and connecting the Hermes Agent CLI as a Дархай backend. Handles install, portal and model auth, memory and tools setup, the ACP extra, and doctor diagnostics.',
     },
     promptsI18n: {
       'en-US': [
@@ -1068,12 +1068,12 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
     },
     descriptionI18n: {
       'en-US':
-        'Installs, authenticates, and connects coding-agent CLIs as Wayland backends: Claude Code, Codex, Kimi, OpenCode, and Qwen. Detects what you have, fixes auth, and verifies the ACP connection.',
+        'Installs, authenticates, and connects coding-agent CLIs as Дархай backends: Claude Code, Codex, Kimi, OpenCode, and Qwen. Detects what you have, fixes auth, and verifies the ACP connection.',
     },
     promptsI18n: {
       'en-US': [
         'Install and set up Claude Code as a backend',
-        'Set up Kimi CLI as a Wayland backend',
+        'Set up Kimi CLI as a Дархай backend',
         "My Codex backend won't connect, fix it",
       ],
     },

@@ -13,7 +13,7 @@ license: Apache-2.0
 type: workflow
 skills: "sales-icp content-blog content-humanize content-repurpose"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: marketing content blogging repurpose step-by-step publishing
   category: marketing

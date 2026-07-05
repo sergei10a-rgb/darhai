@@ -68,13 +68,13 @@ function listLikelyConflictingProcesses() {
   try {
     if (isWindows()) {
       const output = run(
-        "powershell -NoProfile -Command \"Get-Process | Where-Object { $_.ProcessName -in @('electron','Wayland','node','bun') } | Select-Object ProcessName,Id | ConvertTo-Json -Compress\""
+        "powershell -NoProfile -Command \"Get-Process | Where-Object { $_.ProcessName -in @('electron','Darhai','Wayland','node','bun') } | Select-Object ProcessName,Id | ConvertTo-Json -Compress\""
       );
       const parsed = output ? JSON.parse(output) : [];
       return Array.isArray(parsed) ? parsed : [parsed];
     }
 
-    const output = run(`ps -A -o pid=,comm= | egrep "electron|Wayland|node|bun" || true`);
+    const output = run(`ps -A -o pid=,comm= | egrep "electron|Darhai|Wayland|node|bun" || true`);
     return output
       .split(/\r?\n/)
       .filter(Boolean)
@@ -168,11 +168,11 @@ function launch(scriptName, withExtensions) {
     // Load both the example extensions and the bundled business-pack extensions
     // (which only auto-sync into appData when packaged) so dev mirrors production.
     const sep = process.platform === 'win32' ? ';' : ':';
-    env.WAYLAND_EXTENSIONS_PATH = [
+    env.DARHAI_EXTENSIONS_PATH = [
       path.resolve(process.cwd(), 'examples'),
       path.resolve(process.cwd(), 'resources', 'bundled-extensions'),
     ].join(sep);
-    log(`WAYLAND_EXTENSIONS_PATH=${env.WAYLAND_EXTENSIONS_PATH}`);
+    log(`DARHAI_EXTENSIONS_PATH=${env.DARHAI_EXTENSIONS_PATH}`);
   }
 
   const child = spawn('bun', ['run', scriptName], {

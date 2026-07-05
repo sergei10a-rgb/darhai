@@ -9,7 +9,7 @@ steps:
     body: |
       No local install needed. monday.com hosts the MCP at
       `https://mcp.monday.com/mcp`. The integration is preinstalled on
-      every monday account at no extra cost - Wayland connects over
+      every monday account at no extra cost - Дархай connects over
       streamable HTTP the moment you finish sign-in.
   - id: authorize
     title: Sign in with monday.com (OAuth)
@@ -19,11 +19,11 @@ steps:
       Click **Sign in with monday.com** below. A browser tab opens.
 
       1. Sign in if you aren't already.
-      2. Review the scopes - Wayland requests **boards:read**,
+      2. Review the scopes - Дархай requests **boards:read**,
          **boards:write**, **users:read**, and **workspaces:read**. All
          MCP calls execute *as you* - anything you can't see in the app,
          the agent can't see either.
-      3. Click **Authorize**. The tab redirects back to Wayland and the
+      3. Click **Authorize**. The tab redirects back to Дархай and the
          server status flips to Running.
 
       Revoke any time at
@@ -33,7 +33,7 @@ steps:
     estSeconds: 30
     body: |
       Open a new chat and ask: *"Show items assigned to me in the Sprint
-      board."* Wayland will call the MCP and stream the results back.
+      board."* Дархай will call the MCP and stream the results back.
 
       **Personal API token (alternative):** for headless / CI use you can
       paste a long-lived token. monday.com offers **two paths** depending

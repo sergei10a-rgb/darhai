@@ -80,7 +80,7 @@ import WorkflowDetailModal from '@renderer/pages/workflows/WorkflowDetailModal';
 // --- Fixtures -----------------------------------------------------------
 
 const CLAUDE_AGENT = { backend: 'claude', name: 'Claude Code', cliPath: '/usr/bin/claude' };
-const WCORE_AGENT = { backend: 'wcore', name: 'Wayland Core' };
+const WCORE_AGENT = { backend: 'wcore', name: 'Darhai Core' };
 
 const makeEntry = (overrides: Partial<SkillIndexEntry> = {}): SkillIndexEntry =>
   ({
@@ -192,7 +192,7 @@ describe('WorkflowDetailModal - launch wiring (v0.6.1 picker)', () => {
     await waitFor(() => expect(screen.getByTestId('workflow-backend-select')).toBeTruthy());
     // The value 'wcore' should be reflected (Arco Select renders the option label)
     const select = screen.getByTestId('workflow-backend-select');
-    expect(select.textContent).toContain('Wayland Core');
+    expect(select.textContent).toContain('Darhai Core');
   });
 
   it('launches and invokes ipcBridge.workflow.start with full launch target', async () => {

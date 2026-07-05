@@ -7,16 +7,16 @@ steps:
     estSeconds: 30
     autoCompletedByInstall: true
     body: |
-      Wayland fetches `@modelcontextprotocol/server-filesystem` from npm via
+      Дархай fetches `@modelcontextprotocol/server-filesystem` from npm via
       `npx` on first launch - no manual install needed.
 
       The server accepts allowed directories as **positional arguments**
       passed at startup, e.g.
       `npx -y @modelcontextprotocol/server-filesystem /Users/me/docs /Users/me/projects`.
-      Wayland fills these in for you from the directory picker on the
+      Дархай fills these in for you from the directory picker on the
       Installed page - you don't need to edit the command yourself.
 
-      **After install, Wayland prompts you to pick the directories this MCP
+      **After install, Дархай prompts you to pick the directories this MCP
       can read and write.** The default is your home folder; tighten the
       scope from MCP settings any time. The server only sees files inside
       the directories you authorize, and all paths must be **absolute**.
@@ -30,7 +30,7 @@ steps:
 
 # Filesystem setup
 
-No setup required. After install, Wayland will prompt you to pick the
+No setup required. After install, Дархай will prompt you to pick the
 directories this MCP is allowed to read and write. The default is your
 home folder; you can tighten the scope from the MCP settings.
 

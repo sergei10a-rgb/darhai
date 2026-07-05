@@ -56,7 +56,7 @@ vi.mock('@/renderer/components/settings/LanguageSwitcher', () => ({
   default: () => <div data-testid='language-switcher' />,
 }));
 
-vi.mock('@/renderer/components/base/WaylandScrollArea', () => ({
+vi.mock('@/renderer/components/base/DarhaiScrollArea', () => ({
   default: ({ children }: any) => <div data-testid='scroll-area'>{children}</div>,
 }));
 

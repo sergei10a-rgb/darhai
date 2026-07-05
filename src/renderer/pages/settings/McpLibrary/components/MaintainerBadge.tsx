@@ -1,14 +1,20 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import type { MaintainerType } from '../types';
 
-const labels: Record<MaintainerType, string> = {
+// Untranslated fallbacks for the localized `mcpLibrary.maintainer.*` keys.
+// The `wayland` maintainerType id is an internal catalog value - display only.
+const fallbackLabels: Record<MaintainerType, string> = {
   official: 'Official',
   community: 'Community',
-  wayland: 'Built by Wayland',
+  wayland: 'Built by Darhai',
 };
 
 export function MaintainerBadge({ type }: { type: MaintainerType }) {
+  const { t } = useTranslation();
   return (
-    <span className={`mcp-maintainer-badge mcp-maintainer-${type}`}>{labels[type]}</span>
+    <span className={`mcp-maintainer-badge mcp-maintainer-${type}`}>
+      {t(`mcpLibrary.maintainer.${type}`, { defaultValue: fallbackLabels[type] })}
+    </span>
   );
 }

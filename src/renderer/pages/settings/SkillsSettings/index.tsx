@@ -174,7 +174,7 @@ const SkillsSettings: React.FC = () => {
           <span>
             {t(
               'banner.howItWorks',
-              "You don't switch skills on and off. Wayland reads each task and loads the skills that fit - out of all your skills. Pin the handful you always want at hand; leave the rest to us."
+              "You don't switch skills on and off. Дархай reads each task and loads the skills that fit - out of all your skills. Pin the handful you always want at hand; leave the rest to us."
             )}
           </span>
         </div>

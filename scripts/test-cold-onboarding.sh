@@ -41,10 +41,10 @@ mkdir -p "$TMP_HOME/Library"
 ln -s "$HOME/Library/Keychains" "$TMP_HOME/Library/Keychains"
 
 # Optional: restore a stashed ~/.gemini (oauth_creds.json) so a re-test doesn't
-# need a fresh Google sign-in. Set WAYLAND_COLD_GEMINI_STASH=/path/to/.gemini
-if [[ -n "${WAYLAND_COLD_GEMINI_STASH:-}" && -d "$WAYLAND_COLD_GEMINI_STASH" ]]; then
-  cp -a "$WAYLAND_COLD_GEMINI_STASH" "$TMP_HOME/.gemini"
-  echo "  restored Gemini OAuth from $WAYLAND_COLD_GEMINI_STASH"
+# need a fresh Google sign-in. Set DARHAI_COLD_GEMINI_STASH=/path/to/.gemini
+if [[ -n "${DARHAI_COLD_GEMINI_STASH:-}" && -d "$DARHAI_COLD_GEMINI_STASH" ]]; then
+  cp -a "$DARHAI_COLD_GEMINI_STASH" "$TMP_HOME/.gemini"
+  echo "  restored Gemini OAuth from $DARHAI_COLD_GEMINI_STASH"
 fi
 
 echo "Cold-onboarding sandbox"
@@ -59,16 +59,16 @@ echo ""
 # the self-contained Electron binary. None of the shell's exported API keys carry
 # over, and the minimal PATH contains none of the installed CLIs.
 #
-# WAYLAND_MULTI_INSTANCE=1 skips Electron's single-instance lock so this coexists
+# DARHAI_MULTI_INSTANCE=1 skips Electron's single-instance lock so this coexists
 # with a real dev app already running (src/index.ts), and isolates onto the
-# '-dev-2' profile. WAYLAND_CDP_PORT moves CDP off 9230 to avoid colliding with
+# '-dev-2' profile. DARHAI_CDP_PORT moves CDP off 9230 to avoid colliding with
 # the real instance (the app force-enables CDP itself; a CLI flag won't move it).
 exec env -i \
   HOME="$TMP_HOME" \
   PATH="/usr/bin:/bin:/usr/sbin:/sbin" \
   TERM="${TERM:-xterm-256color}" \
   LANG="${LANG:-en_US.UTF-8}" \
-  WAYLAND_MULTI_INSTANCE=1 \
-  WAYLAND_CDP_PORT="$CDP_PORT" \
+  DARHAI_MULTI_INSTANCE=1 \
+  DARHAI_CDP_PORT="$CDP_PORT" \
   "$ELECTRON_BIN" \
   "$APP_DIR"

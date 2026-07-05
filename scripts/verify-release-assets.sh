@@ -65,7 +65,7 @@ for f in latest-win-arm64.yml latest-arm64-mac.yml; do
   fi
 done
 
-for f in Wayland-1.0.0-win-x64.exe Wayland-1.0.0-win-arm64.exe Wayland-1.0.0-mac-x64.dmg Wayland-1.0.0-mac-arm64.dmg Wayland-1.0.0.deb Wayland-1.0.0-arm64.deb; do
+for f in Darhai-1.0.0-win-x64.exe Darhai-1.0.0-win-arm64.exe Darhai-1.0.0-mac-x64.dmg Darhai-1.0.0-mac-arm64.dmg Darhai-1.0.0.deb Darhai-1.0.0-arm64.deb; do
   if [ ! -f "$OUTPUT_DIR/$f" ]; then
     echo "FAIL: missing distributable: $f"
     ERRORS=$((ERRORS + 1))

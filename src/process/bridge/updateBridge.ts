@@ -56,8 +56,8 @@ interface AutoUpdateCheckParams {
   includePrerelease?: boolean;
 }
 
-const DEFAULT_REPO = 'FerroxLabs/wayland';
-const DEFAULT_USER_AGENT = 'Wayland';
+const DEFAULT_REPO = 'sergei10a-rgb/darhai';
+const DEFAULT_USER_AGENT = 'Darhai';
 const ALLOWED_ASSET_EXTS = new Set(['.exe', '.msi', '.dmg', '.zip', '.deb', '.rpm']);
 const ALLOWED_DOWNLOAD_HOSTS = new Set<string>([
   'github.com',
@@ -185,7 +185,7 @@ export const pickRecommendedAsset = (
 /**
  * RT-B6-04: The repo that supplies update metadata + integrity-verification
  * hashes MUST be a build-time constant. A renderer-supplied `repo` (or the
- * `WAYLAND_GITHUB_REPO` env var in a packaged build) would let an attacker
+ * `DARHAI_GITHUB_REPO` env var in a packaged build) would let an attacker
  * redirect the VERIFICATION SOURCE at `attacker/fake-wayland` and serve a
  * matching SHA-512, defeating the integrity check entirely. So the renderer
  * override is ignored outright, and the env override is honored ONLY in
@@ -194,7 +194,7 @@ export const pickRecommendedAsset = (
  */
 const resolveRepo = (): string => {
   if (!app.isPackaged) {
-    const envRepo = process.env.WAYLAND_GITHUB_REPO?.trim();
+    const envRepo = process.env.DARHAI_GITHUB_REPO?.trim();
     if (envRepo) return envRepo;
   }
   return DEFAULT_REPO;

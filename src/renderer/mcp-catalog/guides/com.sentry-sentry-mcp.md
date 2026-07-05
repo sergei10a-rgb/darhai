@@ -8,7 +8,7 @@ steps:
     autoCompletedByInstall: true
     body: |
       Sentry hosts the MCP server at `https://mcp.sentry.dev` - nothing to
-      install. Wayland connects via streamable HTTP on first use.
+      install. Дархай connects via streamable HTTP on first use.
   - id: authorize
     title: Sign in with Sentry
     estSeconds: 30
@@ -23,13 +23,13 @@ steps:
          page later.
       3. Approve the scopes: read projects & issues, read events & traces,
          and (optionally) resolve issues / tag releases.
-      4. The tab redirects back to Wayland and the server status flips
+      4. The tab redirects back to Дархай and the server status flips
          to Running.
 
       **Self-hosted Sentry?** This hosted MCP is SaaS-only. For self-hosted
       Sentry, use the stdio package `@sentry/mcp-server` with
       `--host=sentry.example.com` - file an issue if you'd like first-class
-      support in Wayland.
+      support in Дархай.
 ---
 
 # Sentry setup

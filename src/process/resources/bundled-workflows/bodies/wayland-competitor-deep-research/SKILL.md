@@ -16,7 +16,7 @@ license: Apache-2.0
 type: workflow
 skills: "market-competitors market-audit"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: marketing competitors research positioning step-by-step
   category: marketing

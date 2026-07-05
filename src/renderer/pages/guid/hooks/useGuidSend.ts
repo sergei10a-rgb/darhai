@@ -372,7 +372,7 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
         });
 
         if (!conversation || !conversation.id) {
-          alert('Failed to create Wayland Core conversation. Please ensure wcore is installed.');
+          alert('Failed to create Darhai Core conversation. Please ensure wcore is installed.');
           return false;
         }
 
@@ -393,7 +393,7 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
         await navigate(`/conversation/${conversation.id}`);
       } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : String(error);
-        alert(`Failed to create Wayland Core conversation: ${errorMessage}`);
+        alert(`Failed to create Darhai Core conversation: ${errorMessage}`);
         throw error;
       }
       return true;

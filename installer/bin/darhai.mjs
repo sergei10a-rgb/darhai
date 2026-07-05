@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 /**
- * getwayland - self-host Wayland's headless server on any Linux box / VPS.
+ * darhai - self-host Darhai's headless server on any Linux box / VPS.
  *
- *   wayland setup   Interactive: paste a provider key (Flux recommended) → writes
+ *   darhai setup   Interactive: paste a provider key (Flux recommended) → writes
  *                   env, ensures the bun runtime, prints your login + QR.
- *   wayland start   Run the server (foreground). Reads the env written by setup.
- *   wayland help
+ *   darhai start   Run the server (foreground). Reads the env written by setup.
+ *   darhai help
  *
  * Design: the server reads provider credentials from the environment, so the
  * key never touches the OS keychain (which isn't available headless). Flux is
@@ -23,8 +23,8 @@ import { fileURLToPath } from 'node:url';
 const PKG_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PAYLOAD = join(PKG_ROOT, 'payload');
 const SERVER = join(PAYLOAD, 'dist-server', 'server.mjs');
-const DATA_DIR = process.env.DATA_DIR || join(homedir(), '.wayland-server');
-const ENV_FILE = join(DATA_DIR, 'wayland.env');
+const DATA_DIR = process.env.DATA_DIR || join(homedir(), '.darhai-server');
+const ENV_FILE = join(DATA_DIR, 'darhai.env');
 const FLUX_OPENAI_BASE = 'https://api.fluxrouter.ai/v1';
 const FLUX_SIGNUP = 'https://fluxrouter.ai';
 
@@ -38,7 +38,12 @@ const c = {
 
 function ask(question) {
   const rl = createInterface({ input: process.stdin, output: process.stdout });
-  return new Promise((res) => rl.question(question, (a) => { rl.close(); res(a.trim()); }));
+  return new Promise((res) =>
+    rl.question(question, (a) => {
+      rl.close();
+      res(a.trim());
+    })
+  );
 }
 
 /** Map a pasted key to the env vars the server reads. Flux is the default lens. */
@@ -68,8 +73,11 @@ function writeEnvFile(env) {
   };
   const merged = { ...base, ...env };
   const body =
-    '# Written by `wayland setup`. Loaded by `wayland start`.\n' +
-    Object.entries(merged).map(([k, v]) => `${k}=${v}`).join('\n') + '\n';
+    '# Written by `darhai setup`. Loaded by `darhai start`.\n' +
+    Object.entries(merged)
+      .map(([k, v]) => `${k}=${v}`)
+      .join('\n') +
+    '\n';
   writeFileSync(ENV_FILE, body, { mode: 0o600 });
 }
 
@@ -100,15 +108,19 @@ function ensureUnzipCurl() {
   const root = typeof process.getuid === 'function' && process.getuid() === 0;
   const sudo = root ? '' : 'sudo ';
   console.log(c.dim('  Installing prerequisites (unzip, curl)…'));
-  spawnSync('bash', ['-c', `${sudo}apt-get update -qq >/dev/null 2>&1; ${sudo}apt-get install -y -qq unzip curl >/dev/null 2>&1`], { stdio: 'inherit' });
+  spawnSync(
+    'bash',
+    ['-c', `${sudo}apt-get update -qq >/dev/null 2>&1; ${sudo}apt-get install -y -qq unzip curl >/dev/null 2>&1`],
+    { stdio: 'inherit' }
+  );
 }
 
 async function ensureBun() {
   if (hasBun()) return true;
-  console.log(c.dim('\n  The server runs on the bun runtime, which isn\'t installed.'));
+  console.log(c.dim("\n  The server runs on the bun runtime, which isn't installed."));
   const yes = (await ask('  Install bun now? [Y/n] ')).toLowerCase();
   if (yes === 'n' || yes === 'no') {
-    console.log(c.r('\n  Skipped. Install bun (https://bun.sh) then re-run `wayland setup`.'));
+    console.log(c.r('\n  Skipped. Install bun (https://bun.sh) then re-run `darhai setup`.'));
     return false;
   }
   ensureUnzipCurl();
@@ -123,10 +135,10 @@ async function ensureBun() {
 }
 
 async function setup() {
-  console.log(c.o('\n  Wayland - self-host setup\n'));
+  console.log(c.o('\n  Darhai - self-host setup\n'));
   if (!existsSync(SERVER)) {
     console.log(c.r(`  Server payload missing at ${SERVER}.`));
-    console.log(c.dim('  Reinstall: npm i -g getwayland'));
+    console.log(c.dim('  Reinstall: npm i -g darhai'));
     process.exit(1);
   }
   if (!(await ensureBun())) process.exit(1);
@@ -151,7 +163,7 @@ async function setup() {
     writeEnvFile({});
     console.log(c.dim('\n  No key set - the server will run, add one later in Settings → Models'));
     console.log(c.dim(`  (in-app key add on a headless box is a known fast-follow; for now re-run`));
-    console.log(c.dim('   `wayland setup` to add a key via env).'));
+    console.log(c.dim('   `darhai setup` to add a key via env).'));
   }
 
   printNext();
@@ -161,7 +173,7 @@ async function setup() {
 function printNext() {
   const port = process.env.PORT || '3000';
   console.log(c.b('\n  Next:'));
-  console.log(`    ${c.o('wayland start')}        ${c.dim('# run it now (foreground)')}`);
+  console.log(`    ${c.o('darhai start')}        ${c.dim('# run it now (foreground)')}`);
   console.log(`    ${c.dim(`then open  http://<this-box-ip>:${port}  on your phone or laptop`)}`);
   console.log(c.dim('    First boot prints a QR code + admin login in this terminal.'));
   console.log(c.dim('\n  Lock it down (recommended): put it behind Tailscale so it never touches'));
@@ -174,7 +186,7 @@ async function maybeSystemd() {
   if (yes !== 'y' && yes !== 'yes') return;
   const bin = process.argv[1];
   const unit = `[Unit]
-Description=Wayland headless server
+Description=Darhai headless server
 After=network-online.target
 
 [Service]
@@ -187,13 +199,13 @@ Environment=DATA_DIR=${DATA_DIR}
 [Install]
 WantedBy=multi-user.target
 `;
-  const path = '/etc/systemd/system/wayland.service';
+  const path = '/etc/systemd/system/darhai.service';
   try {
-    writeFileSync('/tmp/wayland.service', unit);
+    writeFileSync('/tmp/darhai.service', unit);
     console.log(c.dim(`\n  Run these (need sudo):`));
-    console.log(`    sudo mv /tmp/wayland.service ${path}`);
-    console.log(`    sudo systemctl daemon-reload && sudo systemctl enable --now wayland`);
-    console.log(c.dim(`    sudo journalctl -u wayland -f      # logs (incl. the QR + admin login)`));
+    console.log(`    sudo mv /tmp/darhai.service ${path}`);
+    console.log(`    sudo systemctl daemon-reload && sudo systemctl enable --now darhai`);
+    console.log(c.dim(`    sudo journalctl -u darhai -f      # logs (incl. the QR + admin login)`));
   } catch (e) {
     console.log(c.r('  Could not stage the unit file: ' + e.message));
   }
@@ -201,11 +213,11 @@ WantedBy=multi-user.target
 
 function start() {
   if (!existsSync(SERVER)) {
-    console.log(c.r(`Server payload missing at ${SERVER}. Reinstall: npm i -g getwayland`));
+    console.log(c.r(`Server payload missing at ${SERVER}. Reinstall: npm i -g darhai`));
     process.exit(1);
   }
   if (!hasBun()) {
-    console.log(c.r('bun runtime not found. Run `wayland setup` (it installs bun) or see https://bun.sh'));
+    console.log(c.r('bun runtime not found. Run `darhai setup` (it installs bun) or see https://bun.sh'));
     process.exit(1);
   }
   const env = { ...process.env, ...loadEnvFile() };
@@ -221,11 +233,11 @@ function start() {
 
 function help() {
   console.log(`
-  ${c.o('wayland')} - self-host Wayland's headless server
+  ${c.o('darhai')} - self-host Darhai's headless server
 
-  ${c.b('wayland setup')}   Paste a provider key (Flux recommended), wire it, get your login
-  ${c.b('wayland start')}   Run the server (reads the env from setup)
-  ${c.b('wayland help')}    This message
+  ${c.b('darhai setup')}   Paste a provider key (Flux recommended), wire it, get your login
+  ${c.b('darhai start')}   Run the server (reads the env from setup)
+  ${c.b('darhai help')}    This message
 
   Data dir: ${c.dim(DATA_DIR)}   ${c.dim('(override with DATA_DIR=…)')}
   Flux Router (free): ${c.o(FLUX_SIGNUP)}

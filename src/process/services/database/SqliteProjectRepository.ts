@@ -10,7 +10,7 @@ import type { IProject } from '@/common/types/project';
 import type { TChatConversation } from '@/common/config/storage';
 
 /**
- * SQLite-backed IProjectRepository. Delegates to the WaylandUIDatabase
+ * SQLite-backed IProjectRepository. Delegates to the DarhaiUIDatabase
  * singleton via getDatabase(); unwraps IQueryResult and throws on DB error so
  * the service layer sees a clean success/throw contract.
  */

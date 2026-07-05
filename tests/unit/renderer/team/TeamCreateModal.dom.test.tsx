@@ -98,7 +98,7 @@ vi.mock('@/common/config/storage', () => ({
   },
 }));
 
-vi.mock('@/renderer/components/base/WaylandModal', () => ({
+vi.mock('@/renderer/components/base/DarhaiModal', () => ({
   default: ({
     children,
     visible,

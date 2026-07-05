@@ -49,7 +49,7 @@ const SHARED_OPTIONS = {
  */
 async function bundleWaylandMcp(pkgName, outName, opts = {}) {
   const candidates = [
-    process.env.WAYLAND_MCP_SRC,
+    process.env.DARHAI_MCP_SRC,
     path.resolve(ROOT, '..', '..', 'waylandmcp', 'packages', pkgName),
     path.resolve(ROOT, '..', 'waylandmcp', 'packages', pkgName),
     path.join(require('os').homedir(), 'dev', 'waylandmcp', 'packages', pkgName),
@@ -58,7 +58,7 @@ async function bundleWaylandMcp(pkgName, outName, opts = {}) {
   const src = candidates.find((p) => fs.existsSync(path.join(p, 'src', 'index.ts')));
   if (!src) {
     console.warn(
-      `[build-mcp-servers] @wayland/${pkgName} source not found in any of: ${candidates.join(', ')} - skipping.`,
+      `[build-mcp-servers] @wayland/${pkgName} source not found in any of: ${candidates.join(', ')} - skipping.`
     );
     return;
   }

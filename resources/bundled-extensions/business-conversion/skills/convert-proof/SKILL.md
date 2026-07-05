@@ -24,13 +24,13 @@ negative_triggers:
 tags: [conversion, copy, donahoe-method, conversational-proof, proof, evidence]
 priority: 100
 version: 1.0.0
-author: Wayland Business Pack
+author: Darhai Business Pack
 license: MIT
 metadata:
   wayland:
     related_skills: [convert, convert-open, convert-three-locks, convert-bullets, convert-close, convert-voice, convert-proof-stack]
 attribution:
-  lineage: "The Donahoe Method (Wayland-owned operating system); references *Aristotle's three appeals - ethos, pathos, logos (Rhetoric, ~350 BCE)*, *Cialdini social proof (Influence, 1984)*, and *Halbert specificity-as-credibility canon (Boron Letters, 1984)*"
+  lineage: "The Donahoe Method (Дархай-owned operating system); references *Aristotle's three appeals - ethos, pathos, logos (Rhetoric, ~350 BCE)*, *Cialdini social proof (Influence, 1984)*, and *Halbert specificity-as-credibility canon (Boron Letters, 1984)*"
 ---
 
 # Convert Proof - Conversational Proof
@@ -304,7 +304,7 @@ Read every proof unit aloud. Does it sound like writing or like talking? Anythin
 
 ## Lineage
 
-Conversational Proof is part of **The Donahoe Method** (Wayland-owned operating system).
+Conversational Proof is part of **The Donahoe Method** (Дархай-owned operating system).
 
 Lineage references:
 - Three-appeals architecture (claim/evidence/reason ≈ logos / ethos / pathos) - *Aristotle's Rhetoric (~350 BCE)*

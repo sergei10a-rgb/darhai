@@ -21,7 +21,7 @@ const EditorSettings: React.FC = () => {
   return (
     <SettingsPageShell
       title={t('settings.sider.editor')}
-      subtitle={t('settings.editorPage.subtitle', 'How Markdown documents open, save, and render in Wayland.')}
+      subtitle={t('settings.editorPage.subtitle', 'How Markdown documents open, save, and render in Дархай.')}
     >
       <Card title={t('settings.editorPage.preferencesTitle')}>
         <PreferenceRow label={t('settings.editorPage.defaultMode')} help={t('settings.editorPage.defaultModeHelp')}>

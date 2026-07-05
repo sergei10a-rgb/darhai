@@ -35,7 +35,7 @@ Before producing copy, you require:
 - **Audience temperature** - Ice Cold / Cool / Warm / Hot / Boiling (you'll infer if not provided)
 - **Traffic source** - paid social, email list, referral, etc - temperature comes from this
 - **Existing copy** (if any) - for audits, the source material is the brief
-- **Voice profile status** - is `~/wayland/voice-notes.md` loaded? If no and the work is voice-sensitive, recommend running `/voice-bootstrap` first
+- **Voice profile status** - is `~/darhai/voice-notes.md` loaded? If no and the work is voice-sensitive, recommend running `/voice-bootstrap` first
 
 If any of these are missing, ASK. Don't fabricate.
 

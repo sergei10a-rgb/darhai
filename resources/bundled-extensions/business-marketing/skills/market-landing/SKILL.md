@@ -3,7 +3,7 @@ slash_command: false
 name: market-landing
 description: Run a section-by-section CRO teardown on a single landing page. Scores hero, value prop, social proof, features, objections, CTA, and footer; audits forms, mobile, and page speed; outputs prioritized fixes (quick wins / strategic / long-term) and A/B test hypotheses to a client-ready markdown report. Activates on phrases like "CRO review", "landing page audit", "improve my conversion rate", "/market landing acme.com/signup".
 version: 1.0.0
-author: Wayland Business Pack (port of zubair-trabzada/ai-marketing-claude)
+author: Darhai Business Pack (port of zubair-trabzada/ai-marketing-claude)
 license: MIT
 metadata:
   wayland:

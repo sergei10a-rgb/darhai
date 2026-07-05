@@ -131,8 +131,8 @@ export class VerificationGate {
 
     // Short-circuit before paying the spawn cost when IJFW is intentionally
     // unavailable (explicit opt-out or CI). Fail SOFT to advisory-complete.
-    if (process.env.WAYLAND_DISABLE_IJFW === '1' || process.env.CI) {
-      return this.failSoft(now, task, 'IJFW disabled (WAYLAND_DISABLE_IJFW / CI)');
+    if (process.env.DARHAI_DISABLE_IJFW === '1' || process.env.CI) {
+      return this.failSoft(now, task, 'IJFW disabled (DARHAI_DISABLE_IJFW / CI)');
     }
 
     const commitRange = buildCommitRange(task);
@@ -220,9 +220,7 @@ export class VerificationGate {
         failCount,
         checkedAt: now,
         ...(needsHuman ? { needsHuman: true } : {}),
-        note: needsHuman
-          ? 'cross-audit FAIL twice - needs human review'
-          : 'cross-audit FAIL - returned to in_progress',
+        note: needsHuman ? 'cross-audit FAIL twice - needs human review' : 'cross-audit FAIL - returned to in_progress',
       },
     };
   }
@@ -239,6 +237,10 @@ export class VerificationGate {
    * into a clean completion, nor defeat the needs_human escalation.
    */
   private failSoft(now: number, task: TeamTask, note: string): GateDecision {
-    return this.complete(now, { outcome: 'advisory', failCount: priorFailCount(task), note: `verification skipped: ${note}` });
+    return this.complete(now, {
+      outcome: 'advisory',
+      failCount: priorFailCount(task),
+      note: `verification skipped: ${note}`,
+    });
   }
 }

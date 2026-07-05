@@ -19,7 +19,7 @@ import React, { useMemo, useState } from 'react';
 import { Button, Input } from '@arco-design/web-react';
 import { X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import WaylandModal from '@renderer/components/base/WaylandModal';
+import DarhaiModal from '@renderer/components/base/DarhaiModal';
 import type { AssistantListItem } from '@/renderer/pages/settings/AssistantSettings/types';
 
 export type AddTeammatePickerProps = {
@@ -77,7 +77,7 @@ const AddTeammatePicker: React.FC<AddTeammatePickerProps> = ({
       : t('teams.launcher.pickerTitle', { defaultValue: 'Add a teammate' });
 
   return (
-    <WaylandModal
+    <DarhaiModal
       visible={visible}
       onCancel={handleCancel}
       style={{ width: 480 }}
@@ -126,11 +126,7 @@ const AddTeammatePicker: React.FC<AddTeammatePickerProps> = ({
           ) : (
             filtered.map((s) => {
               const name = s.nameI18n?.[localeKey] || s.nameI18n?.['en-US'] || s.name || s.id;
-              const desc =
-                s.descriptionI18n?.[localeKey] ||
-                s.descriptionI18n?.['en-US'] ||
-                s.description ||
-                '';
+              const desc = s.descriptionI18n?.[localeKey] || s.descriptionI18n?.['en-US'] || s.description || '';
               const handleKey = (event: React.KeyboardEvent<HTMLDivElement>) => {
                 if (event.key === 'Enter' || event.key === ' ') {
                   event.preventDefault();
@@ -148,16 +144,14 @@ const AddTeammatePicker: React.FC<AddTeammatePickerProps> = ({
                   data-testid={`teams-launcher-picker-option-${s.id}`}
                 >
                   <span className='text-13.5px font-500 text-t-primary'>{name}</span>
-                  {desc && (
-                    <span className='line-clamp-2 text-11.5px text-t-tertiary'>{desc}</span>
-                  )}
+                  {desc && <span className='line-clamp-2 text-11.5px text-t-tertiary'>{desc}</span>}
                 </div>
               );
             })
           )}
         </div>
       </div>
-    </WaylandModal>
+    </DarhaiModal>
   );
 };
 

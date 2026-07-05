@@ -7,7 +7,7 @@ steps:
     estSeconds: 30
     autoCompletedByInstall: true
     body: |
-      Calendly hosts the MCP server at `https://mcp.calendly.com` - Wayland
+      Calendly hosts the MCP server at `https://mcp.calendly.com` - Дархай
       connects over `streamable-http`. Nothing to download. Skip to Step 2
       to authorize.
   - id: authorize
@@ -19,10 +19,10 @@ steps:
       Calendly's OAuth consent screen.
 
       1. Sign in with the Calendly account whose event types and scheduled
-         events you want Wayland to read.
+         events you want Дархай to read.
       2. Calendly shows the requested access (event types, scheduled
          events, and invitees). Click **Authorize** to grant.
-      3. The tab redirects back to Wayland and the server status flips to
+      3. The tab redirects back to Дархай and the server status flips to
          Running.
 
       **Plan requirement:** Calendly API access requires a Standard,
@@ -30,7 +30,7 @@ steps:
 
       Tokens are stored in your local OS keychain. To revoke later, sign
       in at `calendly.com`, open **Account settings → Integrations** and
-      remove the Wayland connection from the connected-apps list.
+      remove the Darhai connection from the connected-apps list.
 ---
 
 # Calendly setup

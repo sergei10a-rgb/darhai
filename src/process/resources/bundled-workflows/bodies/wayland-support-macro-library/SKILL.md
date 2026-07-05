@@ -15,7 +15,7 @@ license: Apache-2.0
 type: workflow
 skills: "support-faq support-reply"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: support macros templates faq category-index step-by-step
   category: support

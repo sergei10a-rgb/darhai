@@ -42,14 +42,7 @@ interface Props {
  * The submit button is disabled until clientId (and clientSecret if required)
  * are filled - prevents a noisy retry against the OAuth provider.
  */
-export function ByoCredentialsModal({
-  visible,
-  vendorName,
-  redirectUri,
-  vendorHint,
-  onCancel,
-  onSubmit,
-}: Props) {
+export function ByoCredentialsModal({ visible, vendorName, redirectUri, vendorHint, onCancel, onSubmit }: Props) {
   const { t } = useTranslation();
   const [clientId, setClientId] = useState('');
   const [clientSecret, setClientSecret] = useState('');
@@ -89,18 +82,18 @@ export function ByoCredentialsModal({
       autoFocus
       simple={false}
     >
-      <div className="mcp-byo-body">
+      <div className='mcp-byo-body'>
         {vendorHint?.guide ? (
-          <div className="mcp-byo-vendor-guide">
+          <div className='mcp-byo-vendor-guide'>
             <MarkdownView>{vendorHint.guide}</MarkdownView>
           </div>
         ) : (
-          <div className="mcp-byo-universal-guide">
+          <div className='mcp-byo-universal-guide'>
             <p>
               {t(
                 'mcpLibrary.byo.universalIntro',
-                '{{vendor}} does not allow Wayland to auto-register an OAuth client. Register an OAuth app on the vendor\'s developer console and paste the credentials below.',
-                { vendor: vendorName },
+                "{{vendor}} does not allow Wayland to auto-register an OAuth client. Register an OAuth app on the vendor's developer console and paste the credentials below.",
+                { vendor: vendorName }
               )}
             </p>
           </div>
@@ -108,8 +101,8 @@ export function ByoCredentialsModal({
 
         {vendorHint?.registrationUrl && (
           <button
-            type="button"
-            className="mcp-byo-open-console"
+            type='button'
+            className='mcp-byo-open-console'
             onClick={() => void openExternalUrl(vendorHint.registrationUrl)}
           >
             <ExternalLink size={14} />
@@ -117,21 +110,19 @@ export function ByoCredentialsModal({
           </button>
         )}
 
-        <div className="mcp-byo-redirect">
-          <div className="mcp-byo-redirect-label">
+        <div className='mcp-byo-redirect'>
+          <div className='mcp-byo-redirect-label'>
             {t('mcpLibrary.byo.redirectLabel', 'Redirect URI to paste in the vendor console:')}
           </div>
-          <code className="mcp-byo-redirect-uri">{redirectUri}</code>
+          <code className='mcp-byo-redirect-uri'>{redirectUri}</code>
         </div>
 
-        <div className="mcp-byo-input">
-          <label htmlFor="mcp-byo-client-id">
-            {t('mcpLibrary.byo.clientIdLabel', 'Client ID')}
-          </label>
+        <div className='mcp-byo-input'>
+          <label htmlFor='mcp-byo-client-id'>{t('mcpLibrary.byo.clientIdLabel', 'Client ID')}</label>
           <input
-            id="mcp-byo-client-id"
-            type="text"
-            autoComplete="off"
+            id='mcp-byo-client-id'
+            type='text'
+            autoComplete='off'
             spellCheck={false}
             value={clientId}
             onChange={(e) => setClientId(e.target.value)}
@@ -140,14 +131,12 @@ export function ByoCredentialsModal({
         </div>
 
         {requiresSecret && (
-          <div className="mcp-byo-input">
-            <label htmlFor="mcp-byo-client-secret">
-              {t('mcpLibrary.byo.clientSecretLabel', 'Client secret')}
-            </label>
+          <div className='mcp-byo-input'>
+            <label htmlFor='mcp-byo-client-secret'>{t('mcpLibrary.byo.clientSecretLabel', 'Client secret')}</label>
             <input
-              id="mcp-byo-client-secret"
-              type="password"
-              autoComplete="off"
+              id='mcp-byo-client-secret'
+              type='password'
+              autoComplete='off'
               spellCheck={false}
               value={clientSecret}
               onChange={(e) => setClientSecret(e.target.value)}

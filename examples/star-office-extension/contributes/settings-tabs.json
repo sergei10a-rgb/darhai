@@ -10,7 +10,7 @@
   {
     "id": "wayland-home",
     "name": "Wayland Home",
-    "entryPoint": "https://getwayland.com/",
+    "entryPoint": "https://github.com/sergei10a-rgb/darhai",
     "icon": "assets/star-office-icon.svg",
     "position": { "anchor": "display", "placement": "after" },
     "order": 80

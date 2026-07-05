@@ -11,11 +11,11 @@
 // ===== File handling constants =====
 
 /** Timestamp separator for temporary files */
-export const WAYLAND_TIMESTAMP_SEPARATOR = '_wayland_';
+export const DARHAI_TIMESTAMP_SEPARATOR = '_wayland_';
 
 /** Regular expression for matching and stripping timestamp suffixes */
-export const WAYLAND_TIMESTAMP_REGEX = /_wayland_\d{13}(\.\w+)?$/;
-export const WAYLAND_FILES_MARKER = '[[AION_FILES]]';
+export const DARHAI_TIMESTAMP_REGEX = /_wayland_\d{13}(\.\w+)?$/;
+export const DARHAI_FILES_MARKER = '[[AION_FILES]]';
 
 // ===== Media type constants =====
 
@@ -54,7 +54,7 @@ export const DEFAULT_IMAGE_EXTENSION = '.png';
 /** WebUI default port: 25808 for production, 25809 for development, 25810 for multi-instance dev */
 export const WEBUI_DEFAULT_PORT = (() => {
   if (process.env.NODE_ENV === 'production') return 25808;
-  if (process.env.WAYLAND_MULTI_INSTANCE === '1') return 25810;
+  if (process.env.DARHAI_MULTI_INSTANCE === '1') return 25810;
   return 25809;
 })();
 

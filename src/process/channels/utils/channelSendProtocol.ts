@@ -10,7 +10,7 @@ import { existsSync, lstatSync, realpathSync, statSync } from 'fs';
 import { getDatabase } from '@process/services/database';
 import { getConfigPath, getDataPath } from '@process/utils';
 
-const CHANNEL_SEND_BLOCK_RE = /\[WAYLAND_CHANNEL_SEND\]\s*([\s\S]*?)\s*\[\/WAYLAND_CHANNEL_SEND\]/g;
+const CHANNEL_SEND_BLOCK_RE = /\[DARHAI_CHANNEL_SEND\]\s*([\s\S]*?)\s*\[\/DARHAI_CHANNEL_SEND\]/g;
 const MAX_MEDIA_BYTES = 200 * 1024 * 1024;
 const TEMP_WORKSPACE_REGEX = /-temp-\d+$/i;
 

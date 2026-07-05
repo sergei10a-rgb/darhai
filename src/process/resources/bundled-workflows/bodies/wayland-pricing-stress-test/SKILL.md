@@ -13,7 +13,7 @@ license: Apache-2.0
 type: workflow
 skills: "finance-pricing-review finance-forecast"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: business-finance pricing scenarios step-by-step cfo
   category: business-finance

@@ -70,7 +70,7 @@ const MemoryPane: React.FC = () => {
   return (
     <div className={styles.pane}>
       <div className={styles.head}>
-        <div className={styles.eyebrow}>Wayland Core</div>
+        <div className={styles.eyebrow}>Darhai Core</div>
         <h1 className={styles.title}>{t('settings.wcoreConfig.rail.memory', { defaultValue: 'Memory' })}</h1>
         <p className={styles.sub}>
           {t('settings.wcoreConfig.memory.subtitle', {

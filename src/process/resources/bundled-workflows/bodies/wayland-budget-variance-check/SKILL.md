@@ -13,7 +13,7 @@ license: Apache-2.0
 type: workflow
 skills: "finance-cashflow finance-budget finance-report"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: business-finance budget variance deterministic cfo
   category: business-finance

@@ -7,7 +7,13 @@
 import { ipcBridge } from '@/common';
 import type { MenuItemConstructorOptions } from 'electron';
 import { Menu, app } from 'electron';
+import i18n from '@process/services/i18n';
 
+/**
+ * Build and install the application menu using the main-process i18n instance.
+ * Call again after a language change to refresh the menu labels
+ * (same pattern as refreshTrayMenu in @process/utils/tray).
+ */
 export function setupApplicationMenu(): void {
   const isMac = process.platform === 'darwin';
 
@@ -31,7 +37,7 @@ export function setupApplicationMenu(): void {
   }
 
   template.push({
-    label: 'Edit',
+    label: i18n.t('common.appMenu.edit'),
     submenu: [
       { role: 'undo' },
       { role: 'redo' },
@@ -46,7 +52,7 @@ export function setupApplicationMenu(): void {
   });
 
   template.push({
-    label: 'View',
+    label: i18n.t('common.appMenu.view'),
     submenu: [
       { role: 'reload' },
       { role: 'forceReload' },
@@ -61,10 +67,10 @@ export function setupApplicationMenu(): void {
   });
 
   template.push({
-    label: 'Help',
+    label: i18n.t('common.appMenu.help'),
     submenu: [
       {
-        label: 'Check for Updates...',
+        label: i18n.t('common.appMenu.checkForUpdates'),
         click: () => {
           ipcBridge.update.open.emit({ source: 'menu' });
         },

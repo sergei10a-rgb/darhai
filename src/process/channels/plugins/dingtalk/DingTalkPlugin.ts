@@ -34,7 +34,7 @@ import type { DingTalkStreamMessage } from './DingTalkAdapter';
  * Default display name surfaced everywhere we present the bot identity.
  * Plugins can override via `credentials.displayName`. L2/L6: single source.
  */
-const DEFAULT_DISPLAY_NAME = 'Wayland DingTalk Bot';
+const DEFAULT_DISPLAY_NAME = 'Darhai DingTalk Bot';
 
 /**
  * Default DingTalk AI Card template ID. Plugins can override via

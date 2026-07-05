@@ -15,7 +15,7 @@ license: Apache-2.0
 type: workflow
 skills: "market-brand market-audit"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: marketing brand audit positioning voice step-by-step
   category: marketing

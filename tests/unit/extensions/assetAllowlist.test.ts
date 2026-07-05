@@ -9,29 +9,26 @@ import os from 'os';
 import path from 'path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import {
-  buildAssetAllowlist,
-  resolveAllowedAssetPath,
-} from '../../../src/process/extensions/protocol/assetAllowlist';
-import { WAYLAND_EXTENSIONS_PATH_ENV } from '../../../src/process/extensions/constants';
+import { buildAssetAllowlist, resolveAllowedAssetPath } from '../../../src/process/extensions/protocol/assetAllowlist';
+import { DARHAI_EXTENSIONS_PATH_ENV } from '../../../src/process/extensions/constants';
 
 describe('extensions/protocol/assetAllowlist', () => {
   let tempDir = '';
   let envRoot = '';
-  const originalEnv = process.env[WAYLAND_EXTENSIONS_PATH_ENV];
+  const originalEnv = process.env[DARHAI_EXTENSIONS_PATH_ENV];
 
   beforeEach(async () => {
     tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'wayland-asset-allowlist-'));
     envRoot = path.join(tempDir, 'allowed-ext');
     await fs.mkdir(envRoot, { recursive: true });
-    process.env[WAYLAND_EXTENSIONS_PATH_ENV] = envRoot;
+    process.env[DARHAI_EXTENSIONS_PATH_ENV] = envRoot;
   });
 
   afterEach(async () => {
     if (originalEnv === undefined) {
-      delete process.env[WAYLAND_EXTENSIONS_PATH_ENV];
+      delete process.env[DARHAI_EXTENSIONS_PATH_ENV];
     } else {
-      process.env[WAYLAND_EXTENSIONS_PATH_ENV] = originalEnv;
+      process.env[DARHAI_EXTENSIONS_PATH_ENV] = originalEnv;
     }
     await fs.rm(tempDir, { recursive: true, force: true });
   });

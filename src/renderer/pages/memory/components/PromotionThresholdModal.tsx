@@ -9,6 +9,7 @@
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button, Message, Modal, Slider, Switch } from '@arco-design/web-react';
 import { ipcBridge } from '@/common';
 import styles from './PromotionThresholdModal.module.css';
@@ -19,15 +20,10 @@ type Props = {
   onClose: () => void;
 };
 
-const SCORE_FORMULA = `+30 if type=decision or pattern
-+10 per project referencing this entry
-+5 per referencedBy hit
-+20 if tagged decision/pattern/global/design/architecture
-+15 if stored < 24h ago (decays over 30 days)`;
-
 // ===== Component =====
 
 const PromotionThresholdModal: React.FC<Props> = ({ onClose }) => {
+  const { t } = useTranslation();
   const [threshold, setThreshold] = useState<number>(90);
   const [autoPromote, setAutoPromote] = useState<boolean>(true);
   const [candidateCount, setCandidateCount] = useState<number>(0);
@@ -54,7 +50,7 @@ const PromotionThresholdModal: React.FC<Props> = ({ onClose }) => {
       void ipcBridge.memory.getPromotionCandidates.invoke().then((result) => {
         if (!result) return;
         // Count candidates that would qualify at the pending threshold.
-        const count = result.candidates.filter((c) => c.score !== undefined ? c.score >= value : true).length;
+        const count = result.candidates.filter((c) => (c.score !== undefined ? c.score >= value : true)).length;
         setCandidateCount(count);
       });
     }, 200);
@@ -62,11 +58,11 @@ const PromotionThresholdModal: React.FC<Props> = ({ onClose }) => {
 
   const handleSliderChange = useCallback(
     (value: number | number[]) => {
-      const v = Array.isArray(value) ? value[0] ?? 90 : value;
+      const v = Array.isArray(value) ? (value[0] ?? 90) : value;
       setThreshold(v);
       refreshCandidates(v);
     },
-    [refreshCandidates],
+    [refreshCandidates]
   );
 
   const handleSave = useCallback(async () => {
@@ -74,19 +70,19 @@ const PromotionThresholdModal: React.FC<Props> = ({ onClose }) => {
     try {
       await ipcBridge.memory.setPromotionThreshold.invoke({ threshold });
       await ipcBridge.memory.setAutoPromoteEnabled.invoke({ enabled: autoPromote });
-      Message.success('Saved');
+      Message.success(t('memory.archive.threshold_modal.save_success', 'Saved'));
       onClose();
     } catch {
-      Message.error('Failed to save settings');
+      Message.error(t('memory.archive.threshold_modal.save_error', 'Failed to save settings'));
     } finally {
       setSaving(false);
     }
-  }, [threshold, autoPromote, onClose]);
+  }, [threshold, autoPromote, onClose, t]);
 
   return (
     <Modal
       visible
-      title='Auto-Wiki Settings'
+      title={t('memory.archive.threshold_modal.title', 'Tune auto-promotion')}
       onCancel={onClose}
       footer={null}
       className={styles.modal}
@@ -96,32 +92,29 @@ const PromotionThresholdModal: React.FC<Props> = ({ onClose }) => {
         {/* Threshold slider */}
         <div className={styles.field} data-testid='threshold-field'>
           <div className={styles.labelRow}>
-            <span className={styles.label}>Promotion threshold</span>
+            <span className={styles.label}>
+              {t('memory.archive.threshold_modal.threshold_label', 'Promotion threshold')}
+            </span>
             <span className={styles.value} data-testid='threshold-value'>
               {threshold}
             </span>
           </div>
-          <Slider
-            min={0}
-            max={100}
-            value={threshold}
-            onChange={handleSliderChange}
-            data-testid='threshold-slider'
-          />
+          <Slider min={0} max={100} value={threshold} onChange={handleSliderChange} data-testid='threshold-slider' />
           <p className={styles.hint} data-testid='candidate-hint'>
-            {candidateCount} candidate{candidateCount !== 1 ? 's' : ''} at threshold {threshold}
+            {t('memory.archive.threshold_modal.live_preview', '{{count}} candidates at threshold {{value}}', {
+              count: candidateCount,
+              value: threshold,
+            })}
           </p>
         </div>
 
         {/* Auto-promote toggle */}
         <div className={styles.field} data-testid='auto-promote-field'>
           <div className={styles.switchRow}>
-            <span className={styles.label}>Auto-promote on schedule</span>
-            <Switch
-              checked={autoPromote}
-              onChange={setAutoPromote}
-              data-testid='auto-promote-switch'
-            />
+            <span className={styles.label}>
+              {t('memory.archive.threshold_modal.autopromo_label', 'Auto-promote on schedule')}
+            </span>
+            <Switch checked={autoPromote} onChange={setAutoPromote} data-testid='auto-promote-switch' />
           </div>
         </div>
 
@@ -133,30 +126,37 @@ const PromotionThresholdModal: React.FC<Props> = ({ onClose }) => {
             onClick={() => setFormulaOpen((o) => !o)}
             data-testid='formula-disclosure-btn'
           >
-            {formulaOpen ? 'Hide' : 'Show'} score formula
+            {`${formulaOpen ? t('common.hide', 'Hide') : t('common.show', 'Show')} ${t(
+              'memory.archive.threshold_modal.score_formula_title',
+              'Score formula'
+            )}`}
           </Button>
           {formulaOpen && (
             <pre className={styles.formula} data-testid='score-formula'>
-              {SCORE_FORMULA}
+              {[
+                t('memory.archive.threshold_modal.formula_decision', '+30 if type is decision or pattern'),
+                t('memory.archive.threshold_modal.formula_refs', '+10 per project that references this entry'),
+                t('memory.archive.threshold_modal.formula_referenced', '+5 per dereference hit'),
+                t(
+                  'memory.archive.threshold_modal.formula_tag',
+                  '+20 if tagged decision, pattern, global, design, or architecture'
+                ),
+                t(
+                  'memory.archive.threshold_modal.formula_recency',
+                  '+15 if stored < 24h ago (decays linearly over 30 days)'
+                ),
+              ].join('\n')}
             </pre>
           )}
         </div>
 
         {/* Actions */}
         <div className={styles.actions}>
-          <Button
-            onClick={onClose}
-            data-testid='cancel-btn'
-          >
-            Cancel
+          <Button onClick={onClose} data-testid='cancel-btn'>
+            {t('memory.archive.threshold_modal.cancel_btn', 'Cancel')}
           </Button>
-          <Button
-            type='primary'
-            loading={saving}
-            onClick={() => void handleSave()}
-            data-testid='save-btn'
-          >
-            Save
+          <Button type='primary' loading={saving} onClick={() => void handleSave()} data-testid='save-btn'>
+            {t('memory.archive.threshold_modal.save_btn', 'Save')}
           </Button>
         </div>
       </div>

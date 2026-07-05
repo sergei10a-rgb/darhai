@@ -24,13 +24,13 @@ negative_triggers:
 tags: [conversion, copy, donahoe-method, market-temperature, diagnostic]
 priority: 100
 version: 1.0.0
-author: Wayland Business Pack
+author: Darhai Business Pack
 license: MIT
 metadata:
   wayland:
     related_skills: [convert, convert-four-questions, convert-open, convert-three-locks, convert-sales-page, convert-vsl, convert-bridge-page]
 attribution:
-  lineage: "The Donahoe Method (Wayland-owned operating system); 5-temperature scale extends *the 5 awareness levels (popularized by Eugene Schwartz, Breakthrough Advertising, 1966)* and Bob Stone's traffic-temperature canon (Successful Direct Marketing Methods, 1975)"
+  lineage: "The Donahoe Method (Дархай-owned operating system); 5-temperature scale extends *the 5 awareness levels (popularized by Eugene Schwartz, Breakthrough Advertising, 1966)* and Bob Stone's traffic-temperature canon (Successful Direct Marketing Methods, 1975)"
 ---
 
 # Convert Temperature - Market Temperature Read
@@ -249,7 +249,7 @@ Last check: did you assume the audience was hotter than they actually are? Most 
 
 ## Lineage
 
-Market Temperature is part of **The Donahoe Method** (Wayland-owned operating system).
+Market Temperature is part of **The Donahoe Method** (Дархай-owned operating system).
 
 Lineage references:
 - The 5-level scale extends *the 5 awareness levels (popularized by Eugene Schwartz, Breakthrough Advertising, 1966)*

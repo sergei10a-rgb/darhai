@@ -7,7 +7,7 @@ steps:
     estSeconds: 30
     autoCompletedByInstall: true
     body: |
-      Wayland fetches the Snyk CLI on first launch via `npx snyk mcp -t stdio`
+      Дархай fetches the Snyk CLI on first launch via `npx snyk mcp -t stdio`
       and runs the bundled MCP server in stdio mode - no manual install
       needed. Requires Snyk CLI v1.1298.0 or later. If the server fails to
       start later, reinstall from this page.
@@ -32,7 +32,7 @@ steps:
       **Option B - Personal Access Token (recommended for shared accounts):**
 
       1. Open `https://app.snyk.io/account/personal-access-tokens`.
-      2. Click **Create token**, give it a name like *Wayland*, set an
+      2. Click **Create token**, give it a name like *Darhai*, set an
          expiry, and copy the value into `SNYK_TOKEN`.
 
       **Multi-org accounts:** if your Snyk account spans organizations,
@@ -47,5 +47,5 @@ steps:
 
 # Snyk setup
 
-The Snyk MCP server ships inside the Snyk CLI (v1.1298.0 or later). Wayland
+The Snyk MCP server ships inside the Snyk CLI (v1.1298.0 or later). Дархай
 runs it via `npx snyk mcp -t stdio`.

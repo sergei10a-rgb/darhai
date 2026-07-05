@@ -65,13 +65,13 @@ describe('Weixin channel send protocol', () => {
   it('extracts valid protocol blocks and keeps invalid blocks visible', () => {
     const parsed = extractChannelSendProtocol(`Done
 
-[WAYLAND_CHANNEL_SEND]
+[DARHAI_CHANNEL_SEND]
 {"type":"image","path":"./chart.png","caption":"Chart"}
-[/WAYLAND_CHANNEL_SEND]
+[/DARHAI_CHANNEL_SEND]
 
-[WAYLAND_CHANNEL_SEND]
+[DARHAI_CHANNEL_SEND]
 not-json
-[/WAYLAND_CHANNEL_SEND]`);
+[/DARHAI_CHANNEL_SEND]`);
 
     expect(parsed.visibleText).toContain('Done');
     expect(parsed.visibleText).toContain('not-json');

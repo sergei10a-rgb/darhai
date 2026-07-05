@@ -854,7 +854,7 @@ describe('WorkflowSessionService.start() - launch target consumption', () => {
     const wcoreModel: TProviderWithModel = {
       id: 'wcore',
       platform: 'wcore',
-      name: 'Wayland Core',
+      name: 'Darhai Core',
       baseUrl: '',
       apiKey: '',
       useModel: 'default',

@@ -113,7 +113,7 @@ const IjfwSettingsPanel: React.FC = () => {
           <Typography.Text type='secondary' className='text-12px'>
             {t('memory.settings.skip_description', {
               defaultValue:
-                'When enabled, Wayland will not install or upgrade IJFW. You can install manually later via the Memory page.',
+                'When enabled, Дархай will not install or upgrade IJFW. You can install manually later via the Memory page.',
             })}
           </Typography.Text>
         </div>
@@ -151,7 +151,7 @@ const IjfwSettingsPanel: React.FC = () => {
             data-testid='ijfw-settings-github-link'
             className='self-start !p-0'
           >
-            {t('memory.brand.github_link', { defaultValue: 'github.com/FerroxLabs/ijfw' })}
+            {t('memory.brand.github_link', { defaultValue: 'IJFW GitHub' })}
           </Button>
         </div>
       </div>

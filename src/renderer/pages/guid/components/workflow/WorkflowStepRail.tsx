@@ -282,7 +282,7 @@ export const WorkflowStepRail: React.FC<WorkflowStepRailProps> = ({
         <div className={styles.confirmBody}>
           {t('workflow.rail.confirmBody', {
             defaultValue:
-              'Wayland will spawn an autonomous worker to complete Step {{n}} in the background. You can keep chatting on the main session.',
+              'Дархай will spawn an autonomous worker to complete Step {{n}} in the background. You can keep chatting on the main session.',
             n: pendingStep ?? 0,
           })}
           <div className={styles.confirmEta}>

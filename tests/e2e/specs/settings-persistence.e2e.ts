@@ -105,8 +105,9 @@ async function launchSandboxedApp(sandbox: Sandbox): Promise<CdpApp> {
     cdpPort: sandbox.cdpPort,
     readyTimeoutMs: RELAUNCH_TIMEOUT_MS,
     env: {
-      WAYLAND_EXTENSIONS_PATH: process.env.WAYLAND_EXTENSIONS_PATH || path.join(path.resolve(__dirname, '../..'), 'examples'),
-      WAYLAND_EXTENSION_STATES_FILE: sandbox.extensionStatesFile,
+      DARHAI_EXTENSIONS_PATH:
+        process.env.DARHAI_EXTENSIONS_PATH || path.join(path.resolve(__dirname, '../..'), 'examples'),
+      DARHAI_EXTENSION_STATES_FILE: sandbox.extensionStatesFile,
     },
   });
 }
@@ -354,7 +355,7 @@ test.describe('Settings persistence across app restart', () => {
   // ── About / Update ────────────────────────────────────────────────────────
   // The auto-update settings page does not currently expose a dedicated
   // "channel" key in `IConfigStorageRefer` - auto-update is gated by
-  // WAYLAND_DISABLE_AUTO_UPDATE env var and the auto-update.get-status bridge
+  // DARHAI_DISABLE_AUTO_UPDATE env var and the auto-update.get-status bridge
   // (see security-audit-verification.e2e.ts:L17). The closest persisted
   // surface is the migration flag history, which is intentionally not
   // user-toggleable. We assert the namespace round-trips an arbitrary

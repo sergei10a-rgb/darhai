@@ -6,6 +6,7 @@
 
 import i18n from 'i18next';
 import { ProcessConfig } from '@process/utils/initStorage';
+import i18nConfig from '@/common/config/i18n-config.json';
 import {
   DEFAULT_LANGUAGE,
   normalizeLanguageCode,
@@ -61,21 +62,22 @@ export const i18nReady = (async (): Promise<void> => {
   });
 
   const language = await ProcessConfig.get('language');
-  if (language) {
-    await ensureAndSwitch(i18n, language, getLocaleModules);
-  }
+  // Mirror the renderer default (src/renderer/services/i18n/index.ts): a saved
+  // preference wins; fresh installs fall back to the product default language
+  // (mn-MN) instead of staying on the en-US fallback bundle, so the app menu,
+  // tray and main-process strings match the Mongolian-first renderer UI.
+  await ensureAndSwitch(i18n, language || i18nConfig.defaultLanguage, getLocaleModules);
 })().catch((error) => {
   console.error('[Main Process] Failed to initialize i18n:', error);
 });
 
 /**
- * Set initial language (called after storage is ready)
+ * Set initial language (called after storage is ready).
+ * Saved preference wins; otherwise the product default language applies.
  */
 export async function setInitialLanguage(language: string | undefined): Promise<void> {
   await i18nReady;
-  if (language) {
-    await ensureAndSwitch(i18n, language, getLocaleModules);
-  }
+  await ensureAndSwitch(i18n, language || i18nConfig.defaultLanguage, getLocaleModules);
 }
 
 /**

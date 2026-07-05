@@ -1,7 +1,7 @@
 /**
  * E2E (A2): /teams empty state.
  *
- * Boots an Electron app with WAYLAND_EXTENSIONS_PATH pointing at an empty
+ * Boots an Electron app with DARHAI_EXTENSIONS_PATH pointing at an empty
  * directory so the bundle's 24 launchers are absent. Asserts:
  *   - empty-state message renders ("No teams available yet.")
  *   - neither group section nor BuildMyOwn card render (both anchor on
@@ -53,12 +53,12 @@ async function launchAppWithoutBundle(): Promise<ElectronApplication> {
     cwd: projectRoot,
     env: {
       ...process.env,
-      WAYLAND_EXTENSIONS_PATH: emptyExtensionsDir,
-      WAYLAND_EXTENSION_STATES_FILE: extensionStatesFile,
-      WAYLAND_DISABLE_AUTO_UPDATE: '1',
-      WAYLAND_DISABLE_DEVTOOLS: '1',
-      WAYLAND_E2E_TEST: '1',
-      WAYLAND_CDP_PORT: '0',
+      DARHAI_EXTENSIONS_PATH: emptyExtensionsDir,
+      DARHAI_EXTENSION_STATES_FILE: extensionStatesFile,
+      DARHAI_DISABLE_AUTO_UPDATE: '1',
+      DARHAI_DISABLE_DEVTOOLS: '1',
+      DARHAI_E2E_TEST: '1',
+      DARHAI_CDP_PORT: '0',
       NODE_ENV: 'development',
     },
     timeout: 60_000,

@@ -185,7 +185,7 @@ const SettingsSider: React.FC<{ collapsed?: boolean; tooltipEnabled?: boolean }>
       },
       wcore: {
         id: 'wcore',
-        label: t('settings.wcoreConfig.navLabel', { defaultValue: 'Wayland Core' }),
+        label: t('settings.wcoreConfig.navLabel', { defaultValue: 'Darhai Core' }),
         icon: <Cpu />,
         path: 'wcore-config',
       },

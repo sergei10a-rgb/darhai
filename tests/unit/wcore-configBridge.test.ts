@@ -110,13 +110,13 @@ describe('resolveUserConfigPath', () => {
     process.env = { ...ORIGINAL };
   });
 
-  it('honors WAYLAND_HOME (config.toml directly inside it)', () => {
-    process.env.WAYLAND_HOME = dir;
+  it('honors DARHAI_HOME (config.toml directly inside it)', () => {
+    process.env.DARHAI_HOME = dir;
     expect(resolveUserConfigPath()).toBe(join(dir, 'config.toml'));
   });
 
-  it('falls back to XDG_DATA_HOME/wayland-core when WAYLAND_HOME is unset', () => {
-    delete process.env.WAYLAND_HOME;
+  it('falls back to XDG_DATA_HOME/wayland-core when DARHAI_HOME is unset', () => {
+    delete process.env.DARHAI_HOME;
     process.env.XDG_DATA_HOME = dir;
     expect(resolveUserConfigPath()).toBe(join(dir, 'wayland-core', 'config.toml'));
   });

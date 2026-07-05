@@ -6,7 +6,7 @@
 
 import { Copy } from 'lucide-react';
 import type { IMessageText } from '@/common/chat/chatLib';
-import { WAYLAND_FILES_MARKER } from '@/common/config/constants';
+import { DARHAI_FILES_MARKER } from '@/common/config/constants';
 import { useConversationContextSafe } from '@/renderer/hooks/context/ConversationContext';
 import { iconColors } from '@/renderer/styles/colors';
 import { Alert, Message, Tooltip } from '@arco-design/web-react';
@@ -81,12 +81,12 @@ import TeammateMessageAvatar from './TeammateMessageAvatar';
 const CODE_STYLE = { marginTop: 4, marginBlock: 4 };
 
 const parseFileMarker = (content: string) => {
-  const markerIndex = content.indexOf(WAYLAND_FILES_MARKER);
+  const markerIndex = content.indexOf(DARHAI_FILES_MARKER);
   if (markerIndex === -1) {
     return { text: content, files: [] as string[] };
   }
   const text = content.slice(0, markerIndex).trimEnd();
-  const afterMarker = content.slice(markerIndex + WAYLAND_FILES_MARKER.length).trim();
+  const afterMarker = content.slice(markerIndex + DARHAI_FILES_MARKER.length).trim();
   const files = afterMarker
     ? afterMarker
         .split('\n')

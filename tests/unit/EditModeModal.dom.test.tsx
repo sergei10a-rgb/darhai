@@ -132,9 +132,9 @@ vi.mock('@/renderer/utils/ui/ModalHOC', () => ({
   },
 }));
 
-// Mock WaylandModal to expose the onOk handler
+// Mock DarhaiModal to expose the onOk handler
 let capturedOnOk: (() => Promise<void>) | undefined;
-vi.mock('@/renderer/components/base/WaylandModal', () => ({
+vi.mock('@/renderer/components/base/DarhaiModal', () => ({
   default: ({ children, onOk, ...props }: any) => {
     capturedOnOk = onOk;
     return (

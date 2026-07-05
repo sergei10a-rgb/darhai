@@ -11,7 +11,7 @@ import React, { useMemo, useState } from 'react';
 /**
  * Collapsible panel component props
  */
-export interface WaylandCollapseProps {
+export interface DarhaiCollapseProps {
   children: React.ReactNode;
   /** Additional class name */
   className?: string;
@@ -34,7 +34,7 @@ export interface WaylandCollapseProps {
 /**
  * Collapsible panel item props
  */
-export interface WaylandCollapseItemProps {
+export interface DarhaiCollapseItemProps {
   /** Unique identifier */
   name: string;
   /** Panel header */
@@ -75,8 +75,8 @@ const DefaultIcon: React.FC<{ active: boolean }> = ({ active }) => (
 /**
  * Collapse item component (used for type checking and structure only)
  */
-const WaylandCollapseItem: React.FC<WaylandCollapseItemProps> = ({ children }) => <>{children}</>;
-WaylandCollapseItem.displayName = 'WaylandCollapseItem';
+const DarhaiCollapseItem: React.FC<DarhaiCollapseItemProps> = ({ children }) => <>{children}</>;
+DarhaiCollapseItem.displayName = 'DarhaiCollapseItem';
 
 /**
  * Collapsible panel component
@@ -86,31 +86,31 @@ WaylandCollapseItem.displayName = 'WaylandCollapseItem';
  * @example
  * ```tsx
  * // Basic usage
- * <WaylandCollapse defaultActiveKey={['1']}>
- *   <WaylandCollapse.Item name="1" header="Panel 1">
+ * <DarhaiCollapse defaultActiveKey={['1']}>
+ *   <DarhaiCollapse.Item name="1" header="Panel 1">
  *     Content 1
- *   </WaylandCollapse.Item>
- *   <WaylandCollapse.Item name="2" header="Panel 2">
+ *   </DarhaiCollapse.Item>
+ *   <DarhaiCollapse.Item name="2" header="Panel 2">
  *     Content 2
- *   </WaylandCollapse.Item>
- * </WaylandCollapse>
+ *   </DarhaiCollapse.Item>
+ * </DarhaiCollapse>
  *
  * // Accordion mode
- * <WaylandCollapse accordion defaultActiveKey="1">
- *   <WaylandCollapse.Item name="1" header="Panel 1">Content 1</WaylandCollapse.Item>
- *   <WaylandCollapse.Item name="2" header="Panel 2">Content 2</WaylandCollapse.Item>
- * </WaylandCollapse>
+ * <DarhaiCollapse accordion defaultActiveKey="1">
+ *   <DarhaiCollapse.Item name="1" header="Panel 1">Content 1</DarhaiCollapse.Item>
+ *   <DarhaiCollapse.Item name="2" header="Panel 2">Content 2</DarhaiCollapse.Item>
+ * </DarhaiCollapse>
  *
  * // Custom icon
- * <WaylandCollapse
+ * <DarhaiCollapse
  *   expandIcon={(active) => <Icon type={active ? 'up' : 'down'} />}
  *   expandIconPosition="right"
  * >
- *   <WaylandCollapse.Item name="1" header="Panel 1">Content 1</WaylandCollapse.Item>
- * </WaylandCollapse>
+ *   <DarhaiCollapse.Item name="1" header="Panel 1">Content 1</DarhaiCollapse.Item>
+ * </DarhaiCollapse>
  * ```
  */
-const WaylandCollapseComponent: React.FC<WaylandCollapseProps> & { Item: typeof WaylandCollapseItem } = ({
+const DarhaiCollapseComponent: React.FC<DarhaiCollapseProps> & { Item: typeof DarhaiCollapseItem } = ({
   children,
   className,
   defaultActiveKey,
@@ -128,8 +128,8 @@ const WaylandCollapseComponent: React.FC<WaylandCollapseProps> & { Item: typeof 
 
   // Extract and filter valid child panel items
   const items = useMemo(() => {
-    return React.Children.toArray(children).filter((child): child is React.ReactElement<WaylandCollapseItemProps> => {
-      return React.isValidElement(child) && child.type === WaylandCollapseItem;
+    return React.Children.toArray(children).filter((child): child is React.ReactElement<DarhaiCollapseItemProps> => {
+      return React.isValidElement(child) && child.type === DarhaiCollapseItem;
     });
   }, [children]);
 
@@ -221,6 +221,6 @@ const WaylandCollapseComponent: React.FC<WaylandCollapseProps> & { Item: typeof 
   );
 };
 
-WaylandCollapseComponent.Item = WaylandCollapseItem;
+DarhaiCollapseComponent.Item = DarhaiCollapseItem;
 
-export default WaylandCollapseComponent;
+export default DarhaiCollapseComponent;

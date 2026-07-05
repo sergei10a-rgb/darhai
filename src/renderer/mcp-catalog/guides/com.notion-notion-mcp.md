@@ -8,7 +8,7 @@ steps:
     autoCompletedByInstall: true
     body: |
       No local install needed. Notion hosts the MCP at
-      `https://mcp.notion.com/mcp` - Wayland connects over streamable
+      `https://mcp.notion.com/mcp` - Дархай connects over streamable
       HTTP the moment you finish sign-in.
   - id: authorize
     title: Sign in with Notion (OAuth)
@@ -23,13 +23,13 @@ steps:
       Click **Sign in with Notion** below. A browser tab opens.
 
       1. Sign in if you aren't already and pick the workspace you want
-         Wayland to act on (the dropdown is top-right of the consent
+         Дархай to act on (the dropdown is top-right of the consent
          screen).
       2. Click **Select pages** - Notion will show your sidebar tree.
          **Tick only the specific pages and databases** you want the
          agent to read and write. The MCP will reject calls to anything
          you didn't pick.
-      3. Click **Allow access**. The tab redirects back to Wayland and
+      3. Click **Allow access**. The tab redirects back to Дархай and
          the server status flips to Running.
 
       Granted scopes: **read_content**, **update_content**, and
@@ -40,17 +40,17 @@ steps:
     estSeconds: 30
     body: |
       Open a new chat and ask: *"Summarize the latest entries in my
-      <database name>."* Wayland will call the MCP and stream the
+      <database name>."* Дархай will call the MCP and stream the
       results back.
 
       **Manage or revoke access** any time inside Notion:
 
       1. Click **Settings** (top-left, under your workspace name).
       2. In the sidebar, click **My connections**.
-      3. Find **Wayland** in the list. Click **…** → **Edit access** to
+      3. Find **Darhai** in the list. Click **…** → **Edit access** to
          change which pages it can see, or **Disconnect** to revoke.
 
-      To add a new page later, return to **My connections → Wayland →
+      To add a new page later, return to **My connections → Darhai →
       Edit access → Add pages**.
 ---
 

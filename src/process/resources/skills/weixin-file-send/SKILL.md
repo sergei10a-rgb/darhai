@@ -23,15 +23,15 @@ Without the protocol block, the app will not actually send the file.
 Append one or more protocol blocks at the end of the final reply:
 
 ```text
-[WAYLAND_CHANNEL_SEND]
+[DARHAI_CHANNEL_SEND]
 {"type":"image","path":"./output/chart.png","caption":"Chart ready"}
-[/WAYLAND_CHANNEL_SEND]
+[/DARHAI_CHANNEL_SEND]
 ```
 
 ```text
-[WAYLAND_CHANNEL_SEND]
+[DARHAI_CHANNEL_SEND]
 {"type":"file","path":"./output/report.pdf","fileName":"report.pdf","caption":"Report ready"}
-[/WAYLAND_CHANNEL_SEND]
+[/DARHAI_CHANNEL_SEND]
 ```
 
 ## Rules
@@ -54,15 +54,15 @@ User-visible text with image:
 ```text
 I generated the chart and sent it below.
 
-[WAYLAND_CHANNEL_SEND]
+[DARHAI_CHANNEL_SEND]
 {"type":"image","path":"./output/chart.png","caption":"Sales chart"}
-[/WAYLAND_CHANNEL_SEND]
+[/DARHAI_CHANNEL_SEND]
 ```
 
 File only:
 
 ```text
-[WAYLAND_CHANNEL_SEND]
+[DARHAI_CHANNEL_SEND]
 {"type":"file","path":"./output/report.pdf","fileName":"report.pdf","caption":"Weekly report"}
-[/WAYLAND_CHANNEL_SEND]
+[/DARHAI_CHANNEL_SEND]
 ```

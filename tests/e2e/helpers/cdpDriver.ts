@@ -36,10 +36,7 @@ import { spawn, type ChildProcess } from 'node:child_process';
 import path from 'node:path';
 
 const APP_ROOT = path.resolve(__dirname, '../../..');
-const ELECTRON_BIN = path.join(
-  APP_ROOT,
-  'node_modules/electron/dist/Electron.app/Contents/MacOS/Electron'
-);
+const ELECTRON_BIN = path.join(APP_ROOT, 'node_modules/electron/dist/Electron.app/Contents/MacOS/Electron');
 
 export interface CdpAppOptions {
   userDataDir: string;
@@ -106,10 +103,10 @@ export async function launchAppViaCdp(opts: CdpAppOptions): Promise<CdpApp> {
     detached: process.platform !== 'win32',
     env: {
       ...process.env,
-      WAYLAND_E2E_TEST: '1',
-      WAYLAND_CDP_PORT: String(cdpPort),
-      WAYLAND_DISABLE_AUTO_UPDATE: '1',
-      WAYLAND_DISABLE_DEVTOOLS: '1',
+      DARHAI_E2E_TEST: '1',
+      DARHAI_CDP_PORT: String(cdpPort),
+      DARHAI_DISABLE_AUTO_UPDATE: '1',
+      DARHAI_DISABLE_DEVTOOLS: '1',
       NODE_ENV: 'development',
       ...opts.env,
     },
@@ -134,7 +131,11 @@ export async function launchAppViaCdp(opts: CdpAppOptions): Promise<CdpApp> {
   const ws = new (globalThis as { WebSocket: typeof WebSocket }).WebSocket(page.webSocketDebuggerUrl);
   await new Promise<void>((resolve, reject) => {
     ws.addEventListener('open', () => resolve(), { once: true });
-    ws.addEventListener('error', (e) => reject(new Error('CDP WS error: ' + ((e as ErrorEvent).message ?? 'unknown'))), { once: true });
+    ws.addEventListener(
+      'error',
+      (e) => reject(new Error('CDP WS error: ' + ((e as ErrorEvent).message ?? 'unknown'))),
+      { once: true }
+    );
   });
 
   let msgId = 0;

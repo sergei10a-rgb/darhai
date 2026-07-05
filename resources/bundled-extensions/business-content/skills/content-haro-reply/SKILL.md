@@ -27,7 +27,7 @@ negative_triggers:
 tags: [content, earned_media, haro, pr, expert_source, journalist_query, quoted]
 priority: 80
 version: 1.0.0
-author: Wayland Business Pack
+author: Darhai Business Pack
 license: MIT
 metadata:
   wayland:

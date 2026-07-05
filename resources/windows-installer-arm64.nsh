@@ -11,9 +11,9 @@ Function .onVerifyInstDir
     ; System is not ARM64
     MessageBox MB_OK|MB_ICONSTOP \
       "Installation package architecture mismatch$\n$\n\
-      This Wayland installer is designed for ARM64 architecture.$\n$\n\
+      This Darhai installer is designed for ARM64 architecture.$\n$\n\
       Your system does not support ARM64. Please download the appropriate version for your architecture.$\n$\n\
-      Download: https://github.com/FerroxLabs/wayland/releases"
+      Download: https://github.com/sergei10a-rgb/darhai/releases"
     Quit
   ${EndIf}
 FunctionEnd

@@ -15,7 +15,7 @@ license: Apache-2.0
 type: workflow
 skills: "ops-handbook"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: business-ops handbook operations decision-rights step-by-step
   category: Business Operations

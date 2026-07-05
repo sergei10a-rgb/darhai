@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Assemble the publishable `getwayland` payload from the app build.
+ * Assemble the publishable `darhai` payload from the app build.
  *
  *   1. build the web renderer + the headless server bundle (in ../../)
  *   2. copy dist-server/ and out/renderer/ into ./payload/
@@ -21,17 +21,26 @@ const PAYLOAD = join(PKG, 'payload');
 function run(cmd, args) {
   console.log(`\n$ ${cmd} ${args.join(' ')}`);
   const r = spawnSync(cmd, args, { cwd: APP, stdio: 'inherit' });
-  if (r.status !== 0) { console.error(`✗ ${cmd} ${args.join(' ')} failed`); process.exit(1); }
+  if (r.status !== 0) {
+    console.error(`✗ ${cmd} ${args.join(' ')} failed`);
+    process.exit(1);
+  }
 }
 
-console.log('Building Wayland headless payload…');
+console.log('Building Darhai headless payload…');
 run('bun', ['run', 'build:renderer:web']);
 run('bun', ['run', 'build:server']);
 
 const distServer = join(APP, 'dist-server');
 const renderer = join(APP, 'out', 'renderer');
-for (const [p, label] of [[distServer, 'dist-server'], [renderer, 'out/renderer']]) {
-  if (!existsSync(p)) { console.error(`✗ expected build output missing: ${label} (${p})`); process.exit(1); }
+for (const [p, label] of [
+  [distServer, 'dist-server'],
+  [renderer, 'out/renderer'],
+]) {
+  if (!existsSync(p)) {
+    console.error(`✗ expected build output missing: ${label} (${p})`);
+    process.exit(1);
+  }
 }
 
 rmSync(PAYLOAD, { recursive: true, force: true });

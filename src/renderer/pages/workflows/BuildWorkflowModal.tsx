@@ -9,7 +9,7 @@
  *
  * Workstream H1+H2: gives the Workflows library page a working "Build a
  * workflow" button instead of the placeholder window.alert that used to
- * sit on it. The modal mirrors BuildSkillModal 1:1 (same WaylandModal /
+ * sit on it. The modal mirrors BuildSkillModal 1:1 (same DarhaiModal /
  * Arco Modal recipe, same width 720, same canonical pill primary footer,
  * same TipTap markdown editor body) and routes through the same
  * `ipcBridge.skills.save` IPC, since skills and workflows share the
@@ -131,8 +131,7 @@ const BuildWorkflowModal: React.FC<BuildWorkflowModalProps> = ({ visible, onClos
     }
   };
 
-  const canSave =
-    !saving && name.trim().length > 0 && description.trim().length > 0 && body.trim().length > 0;
+  const canSave = !saving && name.trim().length > 0 && description.trim().length > 0 && body.trim().length > 0;
 
   const handleSave = async () => {
     setSaveError('');
@@ -160,9 +159,7 @@ const BuildWorkflowModal: React.FC<BuildWorkflowModalProps> = ({ visible, onClos
         onSaved();
       }
     } catch (err) {
-      setSaveError(
-        err instanceof Error ? err.message : t('builder.error.saveFailed', 'Failed to save workflow.')
-      );
+      setSaveError(err instanceof Error ? err.message : t('builder.error.saveFailed', 'Failed to save workflow.'));
     } finally {
       setSaving(false);
     }
@@ -242,9 +239,7 @@ const BuildWorkflowModal: React.FC<BuildWorkflowModalProps> = ({ visible, onClos
                   />
                 </div>
                 <div className='flex flex-col gap-6px flex-1'>
-                  <label className='text-13px font-medium text-t-primary'>
-                    {t('builder.form.tags.label', 'Tags')}
-                  </label>
+                  <label className='text-13px font-medium text-t-primary'>{t('builder.form.tags.label', 'Tags')}</label>
                   <Input
                     value={tagsRaw}
                     onChange={setTagsRaw}
@@ -276,25 +271,20 @@ const BuildWorkflowModal: React.FC<BuildWorkflowModalProps> = ({ visible, onClos
             <div className='flex flex-col gap-14px pt-12px'>
               <div className='flex flex-col gap-6px'>
                 <label className='text-13px font-medium text-t-primary'>
-                  {t(
-                    'builder.describe.label',
-                    'Describe the workflow in plain language - we will draft the SKILL.md.'
-                  )}
+                  {t('builder.describe.label', 'Describe the workflow in plain language - we will draft the SKILL.md.')}
                 </label>
                 <Input.TextArea
                   value={describePrompt}
                   onChange={setDescribePrompt}
                   placeholder={t(
                     'builder.describe.placeholder',
-                    'Every Monday at 9am, draft a weekly newsletter from the past week\'s notes…'
+                    "Every Monday at 9am, draft a weekly newsletter from the past week's notes…"
                   )}
                   autoSize={{ minRows: 4, maxRows: 8 }}
                 />
               </div>
 
-              {generateError && (
-                <span className='text-12px text-[rgb(var(--danger-6))]'>{generateError}</span>
-              )}
+              {generateError && <span className='text-12px text-[rgb(var(--danger-6))]'>{generateError}</span>}
 
               <div className='flex justify-end'>
                 <Button
@@ -324,24 +314,12 @@ const BuildWorkflowModal: React.FC<BuildWorkflowModalProps> = ({ visible, onClos
             {t('builder.actions.cancel', 'Cancel')}
           </Button>
           {savedVerdict && savedVerdict.verdict !== 'blocked' ? (
-            <Button
-              type='primary'
-              onClick={handleDoneAfterSave}
-              className=''
-            >
+            <Button type='primary' onClick={handleDoneAfterSave} className=''>
               {t('builder.actions.done', 'Done')}
             </Button>
           ) : (
-            <Button
-              type='primary'
-              loading={saving}
-              disabled={!canSave}
-              onClick={() => void handleSave()}
-              className=''
-            >
-              {saving
-                ? t('builder.actions.saving', 'Saving…')
-                : t('builder.actions.save', 'Save workflow')}
+            <Button type='primary' loading={saving} disabled={!canSave} onClick={() => void handleSave()} className=''>
+              {saving ? t('builder.actions.saving', 'Saving…') : t('builder.actions.save', 'Save workflow')}
             </Button>
           )}
         </div>

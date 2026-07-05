@@ -64,7 +64,7 @@ import { pickRecommendedAsset } from '@process/bridge/updateBridge';
 
 const asset = (name: string) => ({
   name,
-  url: `https://github.com/FerroxLabs/wayland/releases/download/v1.0.0/${name}`,
+  url: `https://github.com/sergei10a-rgb/darhai/releases/download/v1.0.0/${name}`,
   size: 1,
 });
 

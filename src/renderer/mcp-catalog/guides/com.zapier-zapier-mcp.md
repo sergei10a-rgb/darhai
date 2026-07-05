@@ -8,7 +8,7 @@ steps:
     autoCompletedByInstall: true
     body: |
       Zapier hosts the MCP server for you at `https://mcp.zapier.com` -
-      there's nothing to install locally. Wayland connects over streamable
+      there's nothing to install locally. Дархай connects over streamable
       HTTP and authorizes via OAuth in the next step. Zapier manages all
       downstream app credentials (Gmail, Slack, Salesforce, etc.) on its
       side, so you never paste per-app keys here.
@@ -23,12 +23,12 @@ steps:
 
       1. Click **Open Zapier MCP dashboard** above. Sign in with your
          Zapier account (or sign up - free tier works).
-      2. In the MCP dashboard, pick which **Actions** Wayland is allowed
-         to run. Each enabled action becomes a tool Wayland can call.
+      2. In the MCP dashboard, pick which **Actions** Дархай is allowed
+         to run. Each enabled action becomes a tool Дархай can call.
          Start narrow - you can add more later.
       3. Come back here and click **Connect Zapier**. A browser tab opens
          to Zapier's OAuth consent screen.
-      4. Approve the connection. The tab redirects back to Wayland and
+      4. Approve the connection. The tab redirects back to Дархай and
          the server status flips to Running.
 
       **Quota:** Zapier MCP is in open beta and uses your existing Zapier
@@ -39,6 +39,6 @@ steps:
 
 # Zapier setup
 
-Zapier MCP lets Wayland trigger actions across 9,000+ apps - Gmail, Slack,
+Zapier MCP lets Дархай trigger actions across 9,000+ apps - Gmail, Slack,
 Salesforce, Notion, and the rest - using the same Zapier connections you
 already have.

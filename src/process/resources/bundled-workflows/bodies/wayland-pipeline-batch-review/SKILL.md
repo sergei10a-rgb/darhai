@@ -15,7 +15,7 @@ license: Apache-2.0
 type: workflow
 skills: "sales-report sales-objections"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: sales pipeline-review batch stuck-deals forensics reporting
   category: sales

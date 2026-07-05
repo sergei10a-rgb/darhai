@@ -7,7 +7,7 @@ steps:
     estSeconds: 30
     autoCompletedByInstall: true
     body: |
-      Wayland connects to Hugging Face's hosted MCP at
+      Дархай connects to Hugging Face's hosted MCP at
       `https://huggingface.co/mcp` - nothing runs locally. Authentication is
       a Bearer token in the `Authorization` header, set up in the next step.
   - id: api-key
@@ -31,7 +31,7 @@ steps:
            repos / orgs and per-resource permissions.
          - **write** - only if your agent will push to repos or modify
            model cards.
-      4. Name it (e.g. *Wayland Desktop*), click **Generate token**, and
+      4. Name it (e.g. *Darhai Desktop*), click **Generate token**, and
          copy the `hf_...` value into the field above (you can't view it
          again after closing the dialog).
 

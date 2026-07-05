@@ -100,12 +100,12 @@ function buildAuthorizeUrl(challenge: string, state: string, redirectUri: string
 
 /** Minimal HTML served back to the browser once the callback lands. */
 function callbackHtml(ok: boolean): string {
-  const heading = ok ? 'You’re connected to Flux' : 'Sign-in didn’t complete';
+  const heading = ok ? 'Flux-тэй холбогдлоо' : 'Нэвтрэлт бүрэн дуусаагүй';
   const body = ok
-    ? 'You can close this tab and return to Wayland.'
-    : 'Something went wrong. Return to Wayland and try again.';
+    ? 'Энэ табыг хааж Дархай руу буцна уу.'
+    : 'Алдаа гарлаа. Дархай руу буцаад дахин оролдоно уу.';
   return `<!doctype html>
-<html lang="en">
+<html lang="mn">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -283,9 +283,9 @@ function narrowConnectError(error: string | undefined): ConnectFluxError {
 function safeDeviceLabel(): string {
   try {
     const host = hostname().trim();
-    return host ? host.slice(0, 60) : 'Wayland';
+    return host ? host.slice(0, 60) : 'Darhai';
   } catch {
-    return 'Wayland';
+    return 'Darhai';
   }
 }
 

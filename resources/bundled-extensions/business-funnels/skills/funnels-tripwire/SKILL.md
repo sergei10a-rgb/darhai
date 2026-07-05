@@ -28,7 +28,7 @@ negative_triggers:
 tags: [funnels, tripwire, low-ticket, ladder, buyer-id]
 priority: 90
 version: 1.0.0
-author: Wayland Business Pack
+author: Darhai Business Pack
 license: MIT
 metadata:
   wayland:

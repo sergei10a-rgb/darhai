@@ -143,7 +143,7 @@ describe('CDP configuration functions', () => {
     vi.resetModules();
     vi.clearAllMocks();
     process.env = { ...originalEnv };
-    delete process.env.WAYLAND_CDP_PORT;
+    delete process.env.DARHAI_CDP_PORT;
   });
 
   afterEach(() => {

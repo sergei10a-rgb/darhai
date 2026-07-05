@@ -35,7 +35,7 @@ export interface UpdateCheckResult {
 
 export interface UpdateCheckRequest {
   includePrerelease?: boolean;
-  /** Defaults to FerroxLabs/wayland when omitted */
+  /** Defaults to sergei10a-rgb/darhai when omitted */
   repo?: string;
 }
 

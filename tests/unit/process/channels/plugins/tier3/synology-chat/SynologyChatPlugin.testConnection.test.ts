@@ -39,7 +39,7 @@ describe('SynologyChatPlugin.testConnection - happy path', () => {
     const bodyStr = init.body as string;
     const params = new URLSearchParams(bodyStr);
     const inner = JSON.parse(params.get('payload')!) as { text: string };
-    expect(inner.text).toBe('Wayland test connection');
+    expect(inner.text).toBe('Darhai test connection');
   });
 });
 

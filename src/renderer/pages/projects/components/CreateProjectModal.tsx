@@ -7,7 +7,7 @@
 import { ipcBridge } from '@/common';
 import type { IProject, ICreateProjectParams } from '@/common/types/project';
 import ModalHOC from '@/renderer/utils/ui/ModalHOC';
-import WaylandModal from '@/renderer/components/base/WaylandModal';
+import DarhaiModal from '@/renderer/components/base/DarhaiModal';
 import { Button, Input } from '@arco-design/web-react';
 import { FolderOpen, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
@@ -68,7 +68,7 @@ const CreateProjectModal = ModalHOC<CreateProjectModalProps>(({ modalProps, moda
   };
 
   return (
-    <WaylandModal
+    <DarhaiModal
       visible={modalProps.visible}
       onCancel={modalCtrl.close}
       header={{ title: isEdit ? t('projects.modal.editTitle') : t('projects.modal.createTitle'), showClose: true }}
@@ -143,7 +143,7 @@ const CreateProjectModal = ModalHOC<CreateProjectModalProps>(({ modalProps, moda
           </div>
         </div>
       </div>
-    </WaylandModal>
+    </DarhaiModal>
   );
 });
 

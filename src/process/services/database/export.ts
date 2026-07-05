@@ -9,7 +9,7 @@
  * Use this file to import database functionality throughout the app
  */
 
-export { WaylandUIDatabase, getDatabase, closeDatabase } from './index';
+export { DarhaiUIDatabase, getDatabase, closeDatabase } from './index';
 export {
   runMigrations,
   rollbackMigrations,

@@ -8,8 +8,8 @@ import { getPlatformServices } from '@/common/platform';
 import { getDataPath } from '@process/utils';
 import * as path from 'path';
 import type { ExtensionSource } from './types';
-export const WAYLAND_EXTENSIONS_PATH_ENV = 'WAYLAND_EXTENSIONS_PATH';
-export const WAYLAND_STRICT_ENV_ENV = 'WAYLAND_STRICT_ENV';
+export const DARHAI_EXTENSIONS_PATH_ENV = 'DARHAI_EXTENSIONS_PATH';
+export const DARHAI_STRICT_ENV_ENV = 'DARHAI_STRICT_ENV';
 export const EXTENSION_MANIFEST_FILE = 'aion-extension.json';
 export const EXTENSIONS_DIR_NAME = 'extensions';
 export const PATH_SEPARATOR = process.platform === 'win32' ? ';' : ':';
@@ -23,7 +23,7 @@ export function getAppDataExtensionsDir(): string {
 }
 
 export function getEnvExtensionsDirs(): string[] {
-  const envPath = process.env[WAYLAND_EXTENSIONS_PATH_ENV];
+  const envPath = process.env[DARHAI_EXTENSIONS_PATH_ENV];
   if (!envPath) return [];
   return envPath.split(PATH_SEPARATOR).filter(Boolean);
 }
@@ -35,17 +35,17 @@ export function getEnvExtensionsDirs(): string[] {
 export const HUB_SUPPORTED_SCHEMA_VERSION = 1;
 
 /**
- * Remote mirror base URLs for the WaylandHub repository (tried in order).
- * Set WAYLAND_HUB_URL to prepend custom URLs (comma-separated, highest priority).
- * Example: WAYLAND_HUB_URL=http://localhost:3000/,http://staging.example.com/
+ * Remote mirror base URLs for the Darhai Hub repository (tried in order).
+ * Set DARHAI_HUB_URL to prepend custom URLs (comma-separated, highest priority).
+ * Example: DARHAI_HUB_URL=http://localhost:3000/,http://staging.example.com/
  */
 const HUB_DEFAULT_URLS = [
-  'https://raw.githubusercontent.com/FerroxLabs/waylandHub/dist-latest/',
-  'https://cdn.jsdelivr.net/gh/FerroxLabs/waylandHub@dist-latest/',
+  'https://raw.githubusercontent.com/sergei10a-rgb/darhaiHub/dist-latest/',
+  'https://cdn.jsdelivr.net/gh/sergei10a-rgb/darhaiHub@dist-latest/',
 ];
 
 function resolveHubRemoteUrls(): string[] {
-  const envUrls = process.env.WAYLAND_HUB_URL;
+  const envUrls = process.env.DARHAI_HUB_URL;
   if (!envUrls) return HUB_DEFAULT_URLS;
   const custom = envUrls
     .split(',')
@@ -85,16 +85,16 @@ export type ExtensionScanSource = { dir: string; source: ExtensionSource };
  * Returns the ordered list of extension directories to scan, with deduplication.
  *
  * Priority order:
- *   1. Environment variable (`WAYLAND_EXTENSIONS_PATH`) - highest
+ *   1. Environment variable (`DARHAI_EXTENSIONS_PATH`) - highest
  *   2. User data dir (`~/.wayland/extensions`)
  *   3. Electron appData dir
  *
- * E2E test mode (`WAYLAND_E2E_TEST=1`) only scans env dirs for hermetic runs.
+ * E2E test mode (`DARHAI_E2E_TEST=1`) only scans env dirs for hermetic runs.
  */
 export function getExtensionScanSources(): ExtensionScanSource[] {
   const sources: ExtensionScanSource[] = [];
   const seen = new Set<string>();
-  const isE2ETest = process.env.WAYLAND_E2E_TEST === '1';
+  const isE2ETest = process.env.DARHAI_E2E_TEST === '1';
 
   const push = (dir: string, source: ExtensionSource) => {
     const normalized = path.resolve(dir);

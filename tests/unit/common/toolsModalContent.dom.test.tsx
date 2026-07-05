@@ -51,10 +51,10 @@ const testState = vi.hoisted(() => ({
       command: 'node',
       args: ['/abs/builtin-mcp-image-gen.js'],
       env: {
-        WAYLAND_IMG_PLATFORM: 'new-api',
-        WAYLAND_IMG_BASE_URL: 'https://example.com',
-        WAYLAND_IMG_API_KEY: 'key',
-        WAYLAND_IMG_MODEL: 'grok-imagine-1.0',
+        DARHAI_IMG_PLATFORM: 'new-api',
+        DARHAI_IMG_BASE_URL: 'https://example.com',
+        DARHAI_IMG_API_KEY: 'key',
+        DARHAI_IMG_MODEL: 'grok-imagine-1.0',
       },
     },
   }),
@@ -162,11 +162,11 @@ vi.mock('@arco-design/web-react', () => {
   };
 });
 
-vi.mock('@/renderer/components/base/WaylandScrollArea', () => ({
+vi.mock('@/renderer/components/base/DarhaiScrollArea', () => ({
   default: ({ children }: React.PropsWithChildren) => <div>{children}</div>,
 }));
 
-vi.mock('@/renderer/components/base/WaylandSelect', () => {
+vi.mock('@/renderer/components/base/DarhaiSelect', () => {
   const Select = ({
     children,
     value,

@@ -15,7 +15,7 @@ license: Apache-2.0
 type: workflow
 skills: "funnels-evergreen funnels-cart-cycle-launch funnels-daily-pivot funnels-story-drip"
 metadata:
-  author: wayland
+  author: Дархай
   version: 1.0.0
   tags: marketing funnels evergreen automation step-by-step scarcity
   category: marketing

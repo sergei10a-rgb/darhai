@@ -371,7 +371,7 @@ function prepareWaylandCore() {
   // NO runtime download fallback - a build made with WCORE_SKIP=1 ships WITHOUT
   // the engine, so the Wayland-Core backend is unavailable in that build.
   // Release builds must NOT set this (see _build-reusable.yml).
-  if (process.env.WCORE_SKIP === '1' || process.env.WAYLAND_CORE_SKIP === '1') {
+  if (process.env.WCORE_SKIP === '1' || process.env.DARHAI_CORE_SKIP === '1') {
     const targetDir = path.join(projectRoot, 'resources', 'bundled-wayland-core', runtimeKey);
     ensureDirectory(targetDir);
     writeJson(path.join(targetDir, 'manifest.json'), {

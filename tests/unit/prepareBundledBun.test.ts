@@ -15,8 +15,8 @@ describe('prepareBundledBun', () => {
   const targetDir = path.join(projectRoot, 'resources', 'bundled-bun', runtimeKey);
   const baselineTargetDir = path.join(projectRoot, 'resources', 'bundled-bun', `${runtimeKey}-baseline`);
 
-  const originalCacheDir = process.env.WAYLAND_BUN_CACHE_DIR;
-  const originalVersion = process.env.WAYLAND_BUN_VERSION;
+  const originalCacheDir = process.env.DARHAI_BUN_CACHE_DIR;
+  const originalVersion = process.env.DARHAI_BUN_VERSION;
 
   let tempRoot: string | null = null;
   let targetBackupDir: string | null = null;
@@ -25,8 +25,8 @@ describe('prepareBundledBun', () => {
   let baselineExisted = false;
 
   afterEach(() => {
-    process.env.WAYLAND_BUN_CACHE_DIR = originalCacheDir;
-    process.env.WAYLAND_BUN_VERSION = originalVersion;
+    process.env.DARHAI_BUN_CACHE_DIR = originalCacheDir;
+    process.env.DARHAI_BUN_VERSION = originalVersion;
 
     if (fs.existsSync(targetDir)) {
       fs.rmSync(targetDir, { recursive: true, force: true });
@@ -103,8 +103,8 @@ describe('prepareBundledBun', () => {
       seedCache(`${runtimeKey}-baseline`, 'baseline');
     }
 
-    process.env.WAYLAND_BUN_CACHE_DIR = cacheRoot;
-    process.env.WAYLAND_BUN_VERSION = version;
+    process.env.DARHAI_BUN_CACHE_DIR = cacheRoot;
+    process.env.DARHAI_BUN_VERSION = version;
     return { cacheRoot, runtimeFileName };
   }
 

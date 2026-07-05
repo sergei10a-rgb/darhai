@@ -7,7 +7,7 @@
 import { Button, Checkbox } from '@arco-design/web-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import WaylandModal from '@renderer/components/base/WaylandModal';
+import DarhaiModal from '@renderer/components/base/DarhaiModal';
 
 type Props = {
   visible: boolean;
@@ -34,7 +34,7 @@ const PromoteToStandingModal: React.FC<Props> = ({ visible, teamName, onConfirm,
   const bothChecked = optIn1 && optIn2;
 
   return (
-    <WaylandModal
+    <DarhaiModal
       visible={visible}
       onCancel={onCancel}
       size='medium'
@@ -97,7 +97,7 @@ const PromoteToStandingModal: React.FC<Props> = ({ visible, teamName, onConfirm,
           </span>
         </Checkbox>
       </div>
-    </WaylandModal>
+    </DarhaiModal>
   );
 };
 
