@@ -28,6 +28,7 @@ import missionControl from './missionControl.json';
 import mcpLibrary from './mcpLibrary.json';
 import onboarding from './onboarding.json';
 import projects from './projects.json';
+import modelAdvisor from './modelAdvisor.json';
 
 export default {
   common,
@@ -59,4 +60,5 @@ export default {
   mcpLibrary,
   onboarding,
   projects,
+  modelAdvisor,
 };
