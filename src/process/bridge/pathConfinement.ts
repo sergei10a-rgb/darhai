@@ -72,7 +72,7 @@ const SENSITIVE_SEGMENTS = new Set([
 /**
  * Add a directory to the authorized-roots set after resolving it. Also registers
  * the realpath target when it differs, so a root that is itself a symlink (e.g.
- * the macOS CLI-safe `~/.wayland` symlink, whose real target the OS file picker
+ * the macOS CLI-safe `~/.darhai` symlink, whose real target the OS file picker
  * returns) is matched whether the candidate arrives in symlink or real form.
  */
 function addRoot(dir: string | undefined | null): void {

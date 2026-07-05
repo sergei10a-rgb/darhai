@@ -12,8 +12,8 @@
  *      chain (A1 IPC handler, preload binding, bridge fn) were broken, the
  *      call would throw or return undefined.
  *
- * The harness machine has a real `~/.wayland/CONSTITUTION.md` (~4900 bytes) and
- * no `~/.wayland/specialists/` dir, so reads are non-empty and the overlay for a
+ * The harness machine has a real `~/.darhai/CONSTITUTION.md` (~4900 bytes) and
+ * no `~/.darhai/specialists/` dir, so reads are non-empty and the overlay for a
  * nonexistent specialist is `null`.
  *
  * Idiom modeled on `teams-library-load.e2e.ts` (singleton fixture, hash-route
@@ -101,7 +101,7 @@ test.describe('Constitution wiring', () => {
             'readConstitutionWithOverlay not exposed on electronAPI - preload binding missing',
         };
       }
-      // No `~/.wayland/specialists/e2e-nonexistent-specialist-xyz.md` exists,
+      // No `~/.darhai/specialists/e2e-nonexistent-specialist-xyz.md` exists,
       // so overlay must come back null while constitution is still populated.
       const value = await api.readConstitutionWithOverlay('e2e-nonexistent-specialist-xyz');
       return { value };

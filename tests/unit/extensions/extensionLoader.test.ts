@@ -67,7 +67,7 @@ describe('extensions/ExtensionLoader', () => {
     process.chdir(projectRoot);
     process.env.DARHAI_EXTENSIONS_PATH = envDir;
 
-    createExtension(path.join(homeDir, '.wayland-dev', 'extensions'), 'ext-shadow', 'ext-shadow', '1.0.0');
+    createExtension(path.join(homeDir, '.darhai-dev', 'extensions'), 'ext-shadow', 'ext-shadow', '1.0.0');
     createExtension(envDir, 'ext-shadow', 'ext-shadow', '2.0.0');
     createExtension(path.join(projectRoot, 'examples'), 'dev-example', 'dev-example', '1.0.0');
 
@@ -93,7 +93,7 @@ describe('extensions/ExtensionLoader', () => {
     process.env.DARHAI_EXTENSIONS_PATH = envDir;
     process.env.DARHAI_E2E_TEST = '1';
 
-    createExtension(path.join(homeDir, '.wayland-dev', 'extensions'), 'user-only', 'user-only');
+    createExtension(path.join(homeDir, '.darhai-dev', 'extensions'), 'user-only', 'user-only');
     createExtension(appDataExtensionsDir, 'appdata-only', 'appdata-only');
     createExtension(path.join(projectRoot, 'examples'), 'dev-example', 'dev-example');
     createExtension(envDir, 'env-only', 'env-only');

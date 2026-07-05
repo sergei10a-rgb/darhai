@@ -1,7 +1,7 @@
 /**
  * Unit tests for readConstitutionWithOverlay - the Constitution +
  * per-specialist overlay reader. fs and electron are fully mocked
- * so no real ~/.wayland/ is touched.
+ * so no real ~/.darhai/ is touched.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { homedir } from 'os';
@@ -38,9 +38,8 @@ vi.mock('fs', () => ({
 
 // Path constants - must mirror the bridge's resolution logic.
 const HOME = homedir();
-const DARHAI_DIR = join(HOME, '.wayland');
+const DARHAI_DIR = join(HOME, '.darhai');
 const CONSTITUTION_PATH = join(DARHAI_DIR, 'CONSTITUTION.md');
-const LEGACY_SOUL_PATH = join(DARHAI_DIR, 'SOUL.md');
 const SPECIALISTS_DIR = join(DARHAI_DIR, 'specialists');
 
 const overlayPathFor = (id: string): string => join(SPECIALISTS_DIR, `${id}.md`);
@@ -57,7 +56,7 @@ describe('readConstitutionWithOverlay', () => {
   });
 
   it('returns empty constitution and null overlay when no files exist', async () => {
-    // No CONSTITUTION.md, no SOUL.md, no overlay (assistantId omitted).
+    // No CONSTITUTION.md, no overlay (assistantId omitted).
     fsMock.existsSync.mockReturnValue(false);
 
     const { readConstitutionWithOverlay } = await import('@process/bridge/constitutionBridge');
@@ -105,7 +104,7 @@ describe('readConstitutionWithOverlay', () => {
     expect(fsMock.existsSync).toHaveBeenCalledWith(overlayPathFor('foo'));
   });
 
-  it('returns overlay contents when ~/.wayland/specialists/<id>.md exists', async () => {
+  it('returns overlay contents when ~/.darhai/specialists/<id>.md exists', async () => {
     const body = 'CONSTITUTION_BODY';
     const overlayBody = 'OVERLAY_BODY for foo';
     const overlayPath = overlayPathFor('foo');
@@ -120,20 +119,6 @@ describe('readConstitutionWithOverlay', () => {
     const result = readConstitutionWithOverlay('foo');
 
     expect(result).toEqual({ constitution: body, overlay: overlayBody });
-  });
-
-  it('falls back to legacy ~/.wayland/SOUL.md when CONSTITUTION.md is missing', async () => {
-    const legacyBody = 'legacy SOUL.md body';
-    fsMock.existsSync.mockImplementation((p) => p === LEGACY_SOUL_PATH);
-    fsMock.readFileSync.mockImplementation((p) => {
-      if (p === LEGACY_SOUL_PATH) return legacyBody;
-      throw new Error(`unexpected readFileSync: ${String(p)}`);
-    });
-
-    const { readConstitutionWithOverlay } = await import('@process/bridge/constitutionBridge');
-    const result = readConstitutionWithOverlay();
-
-    expect(result).toEqual({ constitution: legacyBody, overlay: null });
   });
 
   it('blocks path-traversal assistantIds without calling existsSync on the dangerous path', async () => {
@@ -168,8 +153,8 @@ describe('readConstitutionWithOverlay', () => {
       // we ever construct an overlay path.
       for (const call of fsMock.existsSync.mock.calls) {
         const calledPath = String(call[0]);
-        // CONSTITUTION_PATH and LEGACY_SOUL_PATH are the only legitimate
-        // existsSync calls; the dangerous id must not appear anywhere.
+        // CONSTITUTION_PATH is the only legitimate existsSync call; the
+        // dangerous id must not appear anywhere.
         expect(calledPath.includes(id) && id.length > 0).toBe(false);
         // Also assert the overlay path was not probed.
         expect(calledPath).not.toContain('specialists');

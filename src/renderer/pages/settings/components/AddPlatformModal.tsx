@@ -295,7 +295,7 @@ const AddPlatformModal = ModalHOC<{
       setLastDetectionInput(null); // Reset detection record
       setModelProtocol('openai'); // Reset protocol selection
 
-      // Pre-fill from deep link data (wayland:// protocol)
+      // Pre-fill from deep link data (darhai:// protocol)
       if (deepLinkData?.baseUrl || deepLinkData?.apiKey) {
         // Default to new-api platform for deep links (typical one-api/new-api usage)
         form.setFieldValue('platform', deepLinkData.platform || 'new-api');

@@ -233,7 +233,7 @@ const ConstitutionSettings: React.FC = () => {
                 <span className='text-11px text-danger'>
                   {t(
                     'settings.constitutionPage.tokenError',
-                    'Past the adherence ceiling. Move sections into specialist overlays at ~/.wayland/specialists/<id>.md.'
+                    'Past the adherence ceiling. Move sections into specialist overlays at ~/.darhai/specialists/<id>.md.'
                   )}
                 </span>
               )}

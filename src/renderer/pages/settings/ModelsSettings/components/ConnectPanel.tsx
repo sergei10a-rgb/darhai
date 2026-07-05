@@ -76,7 +76,7 @@ const ConnectPanel: React.FC<Props> = ({
   const [errorKey, setErrorKey] = useState<string | null>(null);
   const [errorProvider, setErrorProvider] = useState<string | null>(null);
   // Ship-gate Fix C3 - show a subtle "from deep link" hint on the input when
-  // the key was pre-filled by a `wayland://add-provider?apiKey=…` URL.
+  // the key was pre-filled by a `darhai://add-provider?apiKey=…` URL.
   const [seededFromDeepLink, setSeededFromDeepLink] = useState(false);
 
   // Ship-gate Fix C3 - ModelsSettings stashes a non-cloud deep-link payload in

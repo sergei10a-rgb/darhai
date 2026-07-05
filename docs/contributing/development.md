@@ -115,7 +115,7 @@ This sets `DARHAI_MULTI_INSTANCE=1`, which:
 
 - Skips the Electron single-instance lock
 - Uses a separate userData directory (`Wayland-Dev-2`) to avoid database and config conflicts
-- Isolates data/config symlink paths (`~/.wayland-dev-2`, `~/.wayland-config-dev-2`)
+- Isolates data/config symlink paths (`~/.darhai-dev-2`, `~/.darhai-config-dev-2`)
 - Vite renderer, CDP, and WebUI proxy ports auto-increment to avoid collisions
 
 > **Note:** The multi-instance WebUI defaults to port 25810 (instead of 25809). When accessing WebUI in a browser, use an **incognito/private window** for the second instance - both instances share the `localhost` cookie jar, and their JWT secrets differ, causing authentication failures if the same browser session is reused.

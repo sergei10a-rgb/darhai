@@ -3,7 +3,7 @@
  * Constitution + Specialist Overlay + backend basePrompt into the
  * system-slot string injected by every backend.
  *
- * Bridge module is fully mocked; no real fs, no real ~/.wayland/.
+ * Bridge module is fully mocked; no real fs, no real ~/.darhai/.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 

@@ -8,7 +8,7 @@
  * Wayland Core profile-directory store (WS-2 P3, Design B - directory isolation).
  *
  * Manages the directory-isolated engine profiles under
- * `~/.wayland/profiles/<name>/`. Each named profile is its own folder; the
+ * `~/.darhai/profiles/<name>/`. Each named profile is its own folder; the
  * active profile is recorded in a small `.active` marker file at the profiles
  * root. The PATH resolution (sanitising, containment, native-vs-profile dir,
  * `DARHAI_HOME` target) lives in the dependency-light {@link ./profilePaths}

@@ -124,7 +124,7 @@ describe('WCoreConfig - Wayland Core configuration surface', () => {
     expect(screen.getByText('embedded · spawned in-process')).toBeTruthy();
     expect(screen.getByText('wayland-core · pinned')).toBeTruthy();
     expect(screen.getByText('Active Profile')).toBeTruthy();
-    expect(screen.getByText('~/.wayland/profiles/default')).toBeTruthy();
+    expect(screen.getByText('~/.darhai/profiles/default')).toBeTruthy();
   });
 
   it('renders the smart-defaults "configured in the engine" strip', () => {

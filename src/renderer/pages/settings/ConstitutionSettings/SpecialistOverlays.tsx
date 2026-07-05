@@ -17,7 +17,7 @@ type SpecialistEntry = { id: string; bytes: number };
 
 /**
  * Constitution settings section that manages per-specialist overlay files
- * (`~/.wayland/specialists/<id>.md`). Lists existing overlays and provides
+ * (`~/.darhai/specialists/<id>.md`). Lists existing overlays and provides
  * create / edit / delete flows. Rendered below the core Constitution editor.
  */
 const SpecialistOverlays: React.FC = () => {

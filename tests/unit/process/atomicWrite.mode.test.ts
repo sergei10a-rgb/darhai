@@ -52,7 +52,7 @@ describePosix('atomicWrite honors mode 0o600 (SEC-DATA-04)', () => {
   });
 
   it('writeFileSyncAtomic creates the file with the requested mode', () => {
-    const filePath = path.join(tmpDir, '.wayland-env');
+    const filePath = path.join(tmpDir, '.darhai-env');
     writeFileSyncAtomic(filePath, 'env-blob', { mode: 0o600 });
 
     const stat = statSync(filePath);

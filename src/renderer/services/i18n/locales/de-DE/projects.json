@@ -29,7 +29,7 @@
     "descriptionPlaceholder": "Worum geht es in diesem Projekt? (optional)",
     "workspaceLabel": "Workspace-Ordner",
     "chooseFolder": "Ordner wählen",
-    "workspaceHint": "Optional. Chats in diesem Projekt starten hier, und es wird ein .wayland/-Wissensordner erstellt, damit alle Chats denselben Kontext teilen.",
+    "workspaceHint": "Optional. Chats in diesem Projekt starten hier, und es wird ein .darhai/-Wissensordner erstellt, damit alle Chats denselben Kontext teilen.",
     "colorLabel": "Farbe"
   },
   "workspace": {
@@ -39,7 +39,7 @@
     "tabChats": "Chats",
     "tabFiles": "Dateien",
     "tabKnowledge": "Wissen",
-    "knowledgeHint": "Wissensordner: {{path}}/.wayland",
+    "knowledgeHint": "Wissensordner: {{path}}/.darhai",
     "emptyTitle": "Noch keine Chats in diesem Projekt",
     "emptyBody": "Starte einen Chat mit einem beliebigen Backend, Modell oder Assistenten. Er gehört zu diesem Projekt, und du kannst so viele gleichzeitig laufen lassen, wie du möchtest.",
     "untitledChat": "Unbenannter Chat",

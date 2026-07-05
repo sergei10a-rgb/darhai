@@ -449,7 +449,7 @@ const ENGINE_ENV_ALLOWLIST: readonly string[] = [
  *  3. `waylandHome` - the active profile's config dir (Design B). Forces the
  *     engine's `wayland_config_dir()` to that dir, so the spawn reads the
  *     active profile's OWN config.toml + memory.db + skills. Set explicitly for
- *     every profile (default -> native dir; named -> `~/.wayland/profiles/<n>`)
+ *     every profile (default -> native dir; named -> `~/.darhai/profiles/<n>`)
  *     so the live config file the panes edit and the file the engine reads can
  *     never diverge. Layered last so a stray `process.env.DARHAI_HOME` can't
  *     override the resolved profile dir.

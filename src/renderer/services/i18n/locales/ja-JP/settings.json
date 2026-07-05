@@ -2248,7 +2248,7 @@
     "loading": "読み込み中…",
     "tokenCount": "{{value}} トークン",
     "tokenWarning": "遵守上限（約 2,000 トークン）に近づいています。専門オーバーレイへの分割を検討してください。",
-    "tokenError": "遵守上限を超えています。セクションを ~/.wayland/specialists/<id>.md の専門オーバーレイに移動してください。"
+    "tokenError": "遵守上限を超えています。セクションを ~/.darhai/specialists/<id>.md の専門オーバーレイに移動してください。"
   },
   "constitutionSpecialists": {
     "title": "専門オーバーレイ",

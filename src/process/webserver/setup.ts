@@ -88,7 +88,7 @@ function normalizeOrigin(origin: string): string | null {
 }
 
 function parseAllowedOriginsEnv(): string[] {
-  return (process.env.DARHAI_ALLOWED_ORIGINS || process.env.WAYLAND_ALLOWED_ORIGINS || '')
+  return (process.env.DARHAI_ALLOWED_ORIGINS || '')
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean)

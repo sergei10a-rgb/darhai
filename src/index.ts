@@ -7,11 +7,6 @@
 // configureChromium sets app name (dev isolation) and Chromium flags - must run before
 // ANY module that calls app.getPath('userData'), because Electron caches the path on first call.
 import './process/utils/configureChromium';
-// One-time userData migration from the pre-rebrand 'Wayland' directory (packaged
-// builds only). Must run after configureChromium (userData path finalized) and
-// before ANY module that reads from userData - initStorage reads the env/config
-// files synchronously at import time.
-import './process/utils/userDataMigration';
 // Force IPv4-first DNS in the main process (side-effect import). Keeps outbound
 // connects fast/reliable; fixes the IMAP email channel hanging on a slow IPv6 path.
 import './process/utils/dnsOrder';
@@ -1073,7 +1068,7 @@ const handleAppReady = async (): Promise<void> => {
 };
 
 // ============ Protocol Registration ============
-// Register darhai:// (primary) and legacy wayland:// as default protocol clients
+// Register darhai:// as the default protocol client
 for (const scheme of PROTOCOL_SCHEMES) {
   if (process.defaultApp) {
     // Dev mode: need to pass execPath explicitly
@@ -1083,7 +1078,7 @@ for (const scheme of PROTOCOL_SCHEMES) {
   }
 }
 
-// macOS: handle darhai:// / wayland:// URLs via the open-url event
+// macOS: handle darhai:// URLs via the open-url event
 app.on('open-url', (event, url) => {
   event.preventDefault();
   handleDeepLinkUrl(url);

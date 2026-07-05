@@ -2273,7 +2273,7 @@
     "loading": "Carregando…",
     "tokenCount": "{{value}} tokens",
     "tokenWarning": "Aproximando-se do limite de aderência (~2.000 tokens). Considere dividir em overlays de especialistas.",
-    "tokenError": "Acima do limite de aderência. Mova seções para overlays de especialistas em ~/.wayland/specialists/<id>.md."
+    "tokenError": "Acima do limite de aderência. Mova seções para overlays de especialistas em ~/.darhai/specialists/<id>.md."
   },
   "constitutionSpecialists": {
     "title": "Overlays de Especialistas",

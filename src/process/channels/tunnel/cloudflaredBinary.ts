@@ -78,7 +78,7 @@ function resolveAssetSpec(platform: NodeJS.Platform, arch: string): AssetSpec | 
 
 /**
  * Directory we download managed binaries into. Uses the Electron userData dir
- * when available (main process), falling back to `~/.wayland/bin` for headless
+ * when available (main process), falling back to `~/.darhai/bin` for headless
  * / test contexts where `electron` is not importable.
  */
 async function resolveBinDir(): Promise<string> {
@@ -88,9 +88,9 @@ async function resolveBinDir(): Promise<string> {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const electron = require('electron') as { app?: { getPath?: (n: string) => string } };
     const userData = electron.app?.getPath?.('userData');
-    base = userData ?? path.join(os.homedir(), '.wayland');
+    base = userData ?? path.join(os.homedir(), '.darhai');
   } catch {
-    base = path.join(os.homedir(), '.wayland');
+    base = path.join(os.homedir(), '.darhai');
   }
   const binDir = path.join(base, 'bin');
   await fs.mkdir(binDir, { recursive: true });

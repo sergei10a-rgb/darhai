@@ -1,7 +1,7 @@
 import { readConstitutionWithOverlay } from '@process/bridge/constitutionBridge';
 
 export interface ComposePromptOptions {
-  /** Active assistant/specialist ID. Matches ~/.wayland/specialists/<id>.md. */
+  /** Active assistant/specialist ID. Matches ~/.darhai/specialists/<id>.md. */
   assistantId?: string;
   /** Existing backend-specific system prompt. Appended below Constitution + overlay. */
   basePrompt?: string;

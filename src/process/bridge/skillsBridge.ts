@@ -194,11 +194,11 @@ export function initSkillsBridge(): void {
       .replace(/^-+|-+$/g, '');
 
     // C3: scan BEFORE writing. The previous flow wrote the body to
-    // ~/.wayland/skills/<name>/SKILL.md, scanned it, and only skipped the
+    // ~/.darhai/skills/<name>/SKILL.md, scanned it, and only skipped the
     // SkillLibrary registration when blocked - leaving the body permanently
     // on the user's filesystem. Now the body never lands in the live skills
     // tree until the verdict is known. Blocked content goes straight to
-    // ~/.wayland/skills/.quarantine/<name>/SKILL.md instead.
+    // ~/.darhai/skills/.quarantine/<name>/SKILL.md instead.
     const [report] = await SkillGuard.scan([{ name: kebab, body, description, tags }], { llm: true });
 
     if (report.verdict === 'blocked') {
@@ -206,7 +206,7 @@ export function initSkillsBridge(): void {
       return { name: kebab, verdict: report.verdict, quarantinedAt };
     }
 
-    const destDir = path.join(homedir(), '.wayland', 'skills', kebab);
+    const destDir = path.join(homedir(), '.darhai', 'skills', kebab);
     await mkdir(destDir, { recursive: true });
     const destFile = path.join(destDir, 'SKILL.md');
     await writeFile(destFile, body, 'utf-8');

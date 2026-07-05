@@ -13,7 +13,7 @@ import { uuid } from '@/common/utils';
 import { bootstrapProjectKnowledge } from '@process/services/projectKnowledge/bootstrap';
 
 /**
- * Concrete IProjectService. Owns id/timestamp generation and the `.wayland/`
+ * Concrete IProjectService. Owns id/timestamp generation and the `.darhai/`
  * knowledge bootstrap; delegates persistence to an injected repository and
  * conversation re-parenting to the conversation service (so assign/remove ride
  * the same `extra` merge path everything else uses).
@@ -44,7 +44,7 @@ export class ProjectServiceImpl implements IProjectService {
       try {
         await bootstrapProjectKnowledge(created.workspace, created.name, created.description);
       } catch (err) {
-        console.error('[ProjectService] Failed to bootstrap .wayland/ knowledge:', err);
+        console.error('[ProjectService] Failed to bootstrap .darhai/ knowledge:', err);
       }
     }
     return created;
@@ -67,7 +67,7 @@ export class ProjectServiceImpl implements IProjectService {
         const project = await this.repo.getProject(id);
         if (project) await bootstrapProjectKnowledge(updates.workspace, project.name, project.description);
       } catch (err) {
-        console.error('[ProjectService] Failed to bootstrap .wayland/ on workspace update:', err);
+        console.error('[ProjectService] Failed to bootstrap .darhai/ on workspace update:', err);
       }
     }
   }

@@ -124,7 +124,7 @@ export class ConversationServiceImpl implements IConversationService {
   }
 
   /**
-   * Resolve the project's `.wayland/` knowledge and append it to this
+   * Resolve the project's `.darhai/` knowledge and append it to this
    * conversation's system-rules channel, in place on `params.extra`. No-op when
    * the chat is not in a project, the project has no workspace, or the knowledge
    * docs are still empty (unedited boilerplate injects nothing). Failures are
@@ -155,7 +155,7 @@ export class ConversationServiceImpl implements IConversationService {
     let conversation: TChatConversation;
 
     // Project knowledge auto-injection. When a chat is created inside a project
-    // (extra.projectId), append that project's substantive .wayland/ knowledge to
+    // (extra.projectId), append that project's substantive .darhai/ knowledge to
     // THIS conversation's system-rules channel. Per-conversation, never global,
     // so it can never leak into non-project chats. Covers gemini + wcore
     // (presetRules) and acp/Claude Code/Codex/Qwen (presetContext); backends with

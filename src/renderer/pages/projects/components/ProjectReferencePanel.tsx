@@ -22,7 +22,7 @@ const fmtSize = (bytes: number): string => {
 
 /**
  * Reference files as their own tab: material the AI can draw on (specs, brand
- * docs, data). Dropped into `.wayland/reference/`, available to chats in the
+ * docs, data). Dropped into `.darhai/reference/`, available to chats in the
  * project. A grid of cards plus a drop zone - no other concerns mixed in.
  */
 const ProjectReferencePanel: React.FC<{

@@ -23,37 +23,33 @@ export interface ConfigStore {
 
 /**
  * Returns candidate Electron config file paths for the current platform.
- * Candidates cover the rebranded packaged app ('Darhai'), the pre-rebrand
- * packaged app ('Wayland') and the dev app name ('Wayland-Dev', unchanged by
- * the rebrand), since the server cannot determine which Electron build the
- * user ran. Order matters: the first existing file wins, so the current
- * 'Darhai' install is preferred over legacy dirs.
+ * Covers the packaged 'Darhai' app and its '-Dev' dev build, since the server
+ * cannot determine which Electron build the user ran. Order matters: the first
+ * existing file wins, so the CLI-safe symlink and packaged install are preferred.
  */
 export function getElectronConfigCandidatePaths(): string[] {
   const home = os.homedir();
   if (process.platform === 'darwin') {
-    // The '.wayland-config' CLI-safe symlink (created by the desktop app)
+    // The '.darhai-config' CLI-safe symlink (created by the desktop app)
     // points at the active userData/config dir regardless of app name; the
     // real 'Darhai' path is listed too in case the symlink was never created.
     return [
-      path.join(home, '.wayland-config', 'wayland-config.txt'),
+      path.join(home, '.darhai-config', 'wayland-config.txt'),
       path.join(home, 'Library', 'Application Support', 'Darhai', 'config', 'wayland-config.txt'),
-      path.join(home, '.wayland-config-dev', 'wayland-config.txt'),
+      path.join(home, '.darhai-config-dev', 'wayland-config.txt'),
     ];
   }
   if (process.platform === 'win32') {
     const appData = process.env.APPDATA ?? path.join(home, 'AppData', 'Roaming');
     return [
       path.join(appData, 'Darhai', 'config', 'wayland-config.txt'),
-      path.join(appData, 'Wayland', 'config', 'wayland-config.txt'),
-      path.join(appData, 'Wayland-Dev', 'config', 'wayland-config.txt'),
+      path.join(appData, 'Darhai-Dev', 'config', 'wayland-config.txt'),
     ];
   }
   // Linux and other platforms
   return [
     path.join(home, '.config', 'Darhai', 'config', 'wayland-config.txt'),
-    path.join(home, '.config', 'Wayland', 'config', 'wayland-config.txt'),
-    path.join(home, '.config', 'Wayland-Dev', 'config', 'wayland-config.txt'),
+    path.join(home, '.config', 'Darhai-Dev', 'config', 'wayland-config.txt'),
   ];
 }
 
@@ -100,7 +96,7 @@ export async function migrateFromElectronConfig(configStore: ConfigStore): Promi
     // Decode - if result is empty, the file is missing/corrupted; do NOT set flag
     const sourceData = decodeConfigFile(sourcePath);
     if (Object.keys(sourceData).length === 0) {
-      console.warn('[Wayland] Config migration: source file appears empty or corrupted, will retry next startup');
+      console.warn('[Darhai] Config migration: source file appears empty or corrupted, will retry next startup');
       return;
     }
 
@@ -125,16 +121,16 @@ export async function migrateFromElectronConfig(configStore: ConfigStore): Promi
     }
 
     await configStore.set('migration.electronConfigImported', true);
-    console.log('[Wayland] Config migrated from Electron desktop config:', sourcePath);
+    console.log('[Darhai] Config migrated from Electron desktop config:', sourcePath);
   } catch (error) {
-    console.warn('[Wayland] Config migration from Electron failed:', error);
+    console.warn('[Darhai] Config migration from Electron failed:', error);
   }
 }
 
 /**
  * Manual import: copy whitelisted keys from a specified config file into the
  * server config store. Runs on every startup when IMPORT_CONFIG_FROM is set.
- * @param sourcePath - absolute path to an wayland-config.txt file
+ * @param sourcePath - absolute path to a wayland-config.txt file
  * @param overwrite  - if true, overwrite existing keys; if false, skip them
  * @param configStore - injected config store (uses ProcessConfig in production)
  */
@@ -147,13 +143,13 @@ export async function importConfigFromFile(
     // Warn on relative paths and resolve them
     if (!path.isAbsolute(sourcePath)) {
       const resolved = path.resolve(process.cwd(), sourcePath);
-      console.warn('[Wayland] IMPORT_CONFIG_FROM: relative path provided, resolving to:', resolved);
+      console.warn('[Darhai] IMPORT_CONFIG_FROM: relative path provided, resolving to:', resolved);
       sourcePath = resolved;
     }
 
     const sourceData = decodeConfigFile(sourcePath);
     if (Object.keys(sourceData).length === 0) {
-      console.warn('[Wayland] IMPORT_CONFIG_FROM: file is missing, empty, or corrupted:', sourcePath);
+      console.warn('[Darhai] IMPORT_CONFIG_FROM: file is missing, empty, or corrupted:', sourcePath);
       return;
     }
 
@@ -178,8 +174,8 @@ export async function importConfigFromFile(
       await configStore.set(key, sourceValue as IConfigStorageRefer[typeof key]);
     }
 
-    console.log('[Wayland] Config imported from:', sourcePath, '(overwrite:', overwrite, ')');
+    console.log('[Darhai] Config imported from:', sourcePath, '(overwrite:', overwrite, ')');
   } catch (error) {
-    console.warn('[Wayland] IMPORT_CONFIG_FROM failed:', error);
+    console.warn('[Darhai] IMPORT_CONFIG_FROM failed:', error);
   }
 }

@@ -2273,7 +2273,7 @@
     "loading": "Cargando…",
     "tokenCount": "{{value}} tokens",
     "tokenWarning": "Te acercas al límite de adherencia (~2000 tokens). Considera dividirla en superposiciones de especialistas.",
-    "tokenError": "Has superado el límite de adherencia. Mueve secciones a superposiciones de especialistas en ~/.wayland/specialists/<id>.md."
+    "tokenError": "Has superado el límite de adherencia. Mueve secciones a superposiciones de especialistas en ~/.darhai/specialists/<id>.md."
   },
   "constitutionSpecialists": {
     "title": "Superposiciones de especialistas",

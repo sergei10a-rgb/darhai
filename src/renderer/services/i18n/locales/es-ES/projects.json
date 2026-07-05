@@ -29,7 +29,7 @@
     "descriptionPlaceholder": "¿De qué trata este proyecto? (opcional)",
     "workspaceLabel": "Carpeta del espacio de trabajo",
     "chooseFolder": "Elegir carpeta",
-    "workspaceHint": "Opcional. Los chats de este proyecto comienzan aquí, y se crea una carpeta de conocimiento .wayland/ para que todos los chats compartan el mismo contexto.",
+    "workspaceHint": "Opcional. Los chats de este proyecto comienzan aquí, y se crea una carpeta de conocimiento .darhai/ para que todos los chats compartan el mismo contexto.",
     "colorLabel": "Color"
   },
   "workspace": {
@@ -39,7 +39,7 @@
     "tabChats": "Chats",
     "tabFiles": "Archivos",
     "tabKnowledge": "Conocimiento",
-    "knowledgeHint": "Carpeta de conocimiento: {{path}}/.wayland",
+    "knowledgeHint": "Carpeta de conocimiento: {{path}}/.darhai",
     "emptyTitle": "Aún no hay chats en este proyecto",
     "emptyBody": "Inicia un chat con cualquier backend, modelo o asistente. Vivirá dentro de este proyecto, y puedes ejecutar tantos como quieras a la vez.",
     "untitledChat": "Chat sin título",

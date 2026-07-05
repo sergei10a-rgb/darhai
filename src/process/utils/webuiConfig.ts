@@ -68,7 +68,7 @@ export const resolveWebUIPort = (
   const cliPort = parsePortValue(getSwitchValue('port') ?? getSwitchValue('webui-port'));
   if (cliPort) return cliPort;
 
-  const envPort = parsePortValue(process.env.DARHAI_PORT ?? process.env.WAYLAND_PORT ?? process.env.PORT);
+  const envPort = parsePortValue(process.env.DARHAI_PORT ?? process.env.PORT);
   if (envPort) return envPort;
 
   const configPort = parsePortValue(config.port);
@@ -78,13 +78,8 @@ export const resolveWebUIPort = (
 };
 
 export const resolveRemoteAccess = (config: WebUIUserConfig, isRemoteMode: boolean): boolean => {
-  const envRemote = parseBooleanEnv(
-    process.env.DARHAI_ALLOW_REMOTE ||
-      process.env.WAYLAND_ALLOW_REMOTE ||
-      process.env.DARHAI_REMOTE ||
-      process.env.WAYLAND_REMOTE
-  );
-  const hostHint = (process.env.DARHAI_HOST ?? process.env.WAYLAND_HOST)?.trim();
+  const envRemote = parseBooleanEnv(process.env.DARHAI_ALLOW_REMOTE || process.env.DARHAI_REMOTE);
+  const hostHint = process.env.DARHAI_HOST?.trim();
   const hostRequestsRemote = hostHint ? ['0.0.0.0', '::', '::0'].includes(hostHint) : false;
   const configRemote = config.allowRemote === true;
 

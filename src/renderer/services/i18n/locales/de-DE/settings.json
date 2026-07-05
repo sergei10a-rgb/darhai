@@ -2273,7 +2273,7 @@
     "loading": "Wird geladen…",
     "tokenCount": "{{value}} Tokens",
     "tokenWarning": "Nähert sich der Adhärenz-Obergrenze (~2.000 Tokens). Erwäge, den Inhalt in Spezialisten-Overlays aufzuteilen.",
-    "tokenError": "Adhärenz-Obergrenze überschritten. Verschiebe Abschnitte in Spezialisten-Overlays unter ~/.wayland/specialists/<id>.md."
+    "tokenError": "Adhärenz-Obergrenze überschritten. Verschiebe Abschnitte in Spezialisten-Overlays unter ~/.darhai/specialists/<id>.md."
   },
   "constitutionSpecialists": {
     "title": "Spezialisten-Overlays",

@@ -13,7 +13,7 @@ const originalEnv = { ...process.env };
 
 // The real CDP registry file persists across tests and may contain live entries
 // from running Wayland instances, causing port conflicts. Back it up and restore.
-const REAL_REGISTRY = path.join(os.homedir(), '.wayland-cdp-registry.json');
+const REAL_REGISTRY = path.join(os.homedir(), '.darhai-cdp-registry.json');
 let savedRegistry: string | null = null;
 
 function createSandbox(): string {
@@ -37,7 +37,7 @@ async function loadConfigureChromium(options: SetupOptions = {}) {
   fs.mkdirSync(userDataDir, { recursive: true });
 
   const configPath = path.join(userDataDir, 'cdp.config.json');
-  const registryPath = path.join(sandbox, '.wayland-cdp-registry.json');
+  const registryPath = path.join(sandbox, '.darhai-cdp-registry.json');
 
   if (options.config) {
     fs.writeFileSync(configPath, JSON.stringify(options.config, null, 2), 'utf-8');

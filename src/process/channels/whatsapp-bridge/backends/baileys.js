@@ -109,13 +109,13 @@ function normalizeIdentifier(value) {
  *
  * @param {Object} opts
  * @param {(method:string, params:object)=>void} opts.emit  upstream notification sink
- * @param {string} opts.sessionDir  parent-supplied session root (defaults to ~/.wayland/whatsapp)
+ * @param {string} opts.sessionDir  parent-supplied session root (defaults to ~/.darhai/whatsapp)
  * @returns {Promise<{handlers: Object, isConnected: () => boolean}>}
  */
 export async function createBackend({ emit, sessionDir }) {
   const authDir = sessionDir
     ? path.join(sessionDir, 'baileys')
-    : path.join(process.env.HOME || process.env.USERPROFILE || '.', '.wayland', 'whatsapp', 'baileys');
+    : path.join(process.env.HOME || process.env.USERPROFILE || '.', '.darhai', 'whatsapp', 'baileys');
   mkdirSync(authDir, { recursive: true });
 
   const logger = pino({ level: 'warn' });

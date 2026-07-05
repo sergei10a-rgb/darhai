@@ -34,7 +34,7 @@
  * ## Storage layout
  *
  * Each extension gets an isolated JSON file:
- *   ~/.wayland/extension-storage/{extensionName}.json
+ *   ~/.darhai/extension-storage/{extensionName}.json
  *
  * All operations are synchronous I/O wrapped in async interface to match the
  * sandbox message protocol. Data is small (per-extension config/state), so
@@ -52,7 +52,7 @@ const STORAGE_DIR_NAME = 'extension-storage';
  * Simple JSON-file-based KV storage for extensions.
  *
  * Each extension gets an isolated JSON file:
- *   ~/.wayland/extension-storage/{extensionName}.json
+ *   ~/.darhai/extension-storage/{extensionName}.json
  *
  * All operations are synchronous I/O wrapped in async interface to match the
  * sandbox message protocol. Data is small (per-extension config/state), so

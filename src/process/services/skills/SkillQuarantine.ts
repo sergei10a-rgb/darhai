@@ -19,7 +19,7 @@ export type SkillQuarantineIo = {
   writeFile: (p: string, body: string) => Promise<void>;
 };
 
-export const QUARANTINE_DIR = path.join(homedir(), '.wayland', 'skills', '.quarantine');
+export const QUARANTINE_DIR = path.join(homedir(), '.darhai', 'skills', '.quarantine');
 
 export const defaultSkillQuarantineIo: SkillQuarantineIo = {
   exists: async (p) => {

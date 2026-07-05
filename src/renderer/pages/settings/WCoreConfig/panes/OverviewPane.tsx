@@ -15,7 +15,7 @@ import styles from './Panes.module.css';
 /** Total provider catalog size: the headline "104 catalog" figure. */
 const CATALOG_SIZE = 104;
 /** The engine's default profile, as written to disk by wayland-core. */
-const DEFAULT_PROFILE_PATH = '~/.wayland/profiles/default';
+const DEFAULT_PROFILE_PATH = '~/.darhai/profiles/default';
 
 type OverviewPaneProps = {
   /** Engine version for the VERSION stat card (live, else the pinned build). */

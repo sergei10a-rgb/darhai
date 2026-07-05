@@ -107,7 +107,7 @@ export const resolveExtensionAssetUrl = (url: string | undefined): string | unde
  * - Electron: uses shell.openExternal via IPC (opens on local machine)
  * - WebUI: uses window.open in client browser (opens on remote client)
  *
- * Scheme is allowlisted (https:/http:/mailto: and the app's own wayland:
+ * Scheme is allowlisted (https:/http:/mailto: and the app's own darhai:
  * deep-link scheme) before opening; file:, smb:, ms-* , vbscript:, and any
  * custom-protocol URLs from model-rendered markdown links are rejected. Mirrors
  * the gate in the main-process shell bridges so the WebUI window.open path is

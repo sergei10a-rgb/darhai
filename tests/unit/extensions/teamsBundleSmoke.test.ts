@@ -6,7 +6,7 @@
  * Live smoke for the waylandteams specialist-bundle integration.
  *
  * Exercises the real ExtensionLoader + resolveAssistants + resolveSkills
- * against the bundle mounted at $HOME/.wayland-dev/extensions/. This is the
+ * against the bundle mounted at $HOME/.darhai-dev/extensions/. This is the
  * empirical verification of INTEGRATION.md §2 findings #4 and #5 - does the
  * extension actually load and resolve under the live schema, and do the
  * enabledSkills references reach the runtime config in the expected shape?
@@ -14,7 +14,7 @@
  * Skips automatically if the bundle isn't mounted, so CI without the dev mount
  * keeps passing. To run locally:
  *
- *   ln -snf ~/dev/waylandteams ~/.wayland-dev/extensions/waylandteams-specialist-bundle
+ *   ln -snf ~/dev/waylandteams ~/.darhai-dev/extensions/waylandteams-specialist-bundle
  *   bun run vitest run tests/unit/extensions/teamsBundleSmoke.test.ts
  */
 import fs from 'node:fs';
@@ -27,7 +27,7 @@ vi.mock('electron', () => ({
 }));
 
 const BUNDLE_DIR_NAME = 'waylandteams-specialist-bundle';
-const DEFAULT_EXT_DIR = path.join(os.homedir(), '.wayland-dev', 'extensions');
+const DEFAULT_EXT_DIR = path.join(os.homedir(), '.darhai-dev', 'extensions');
 const BUNDLE_DIR = path.join(DEFAULT_EXT_DIR, BUNDLE_DIR_NAME);
 const MANIFEST = path.join(BUNDLE_DIR, 'aion-extension.json');
 

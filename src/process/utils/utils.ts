@@ -87,22 +87,22 @@ const ensureCliSafeSymlink = (targetPath: string, symlinkName: string): string =
 
 /**
  * Get data path, using CLI-safe symlink on macOS.
- * Release builds use ~/.wayland; dev builds use ~/.wayland-dev.
+ * Release builds use ~/.darhai; dev builds use ~/.darhai-dev.
  */
 export const getDataPath = (): string => {
   const rootPath = getElectronPathOrFallback('userData');
   const dataPath = path.join(rootPath, 'wayland');
-  return ensureCliSafeSymlink(dataPath, getEnvAwareName('.wayland'));
+  return ensureCliSafeSymlink(dataPath, getEnvAwareName('.darhai'));
 };
 
 /**
  * Get config path, using CLI-safe symlink on macOS.
- * Release builds use ~/.wayland-config; dev builds use ~/.wayland-config-dev.
+ * Release builds use ~/.darhai-config; dev builds use ~/.darhai-config-dev.
  */
 export const getConfigPath = (): string => {
   const rootPath = getElectronPathOrFallback('userData');
   const configPath = path.join(rootPath, 'config');
-  return ensureCliSafeSymlink(configPath, getEnvAwareName('.wayland-config'));
+  return ensureCliSafeSymlink(configPath, getEnvAwareName('.darhai-config'));
 };
 
 /**
@@ -200,10 +200,10 @@ export async function readDirectoryRecursive(
     // the user-facing workspace tree. These are engine/tooling implementation
     // details (e.g. skill-symlink subdirs) or OS noise; they don't belong in
     // the file browser. Engine still reads them via its own filesystem access.
-    // EXCEPTION: `.wayland/` is a project's visible source-of-truth (instructions,
+    // EXCEPTION: `.darhai/` is a project's visible source-of-truth (instructions,
     // rules, decisions, reference) - it is shown so users can see exactly what
     // gets injected into every chat in the project.
-    if (item.startsWith('.') && item !== '.wayland') continue;
+    if (item.startsWith('.') && item !== '.darhai') continue;
     const itemPath = path.join(dirPath, item);
     if (fileService && fileService.shouldIgnoreFile(itemPath)) continue;
 

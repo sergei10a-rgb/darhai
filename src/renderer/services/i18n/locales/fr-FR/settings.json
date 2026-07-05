@@ -2273,7 +2273,7 @@
     "loading": "Chargement…",
     "tokenCount": "{{value}} tokens",
     "tokenWarning": "Approche du plafond d'adhérence (~2 000 tokens). Envisagez de répartir en surcouches de spécialistes.",
-    "tokenError": "Plafond d'adhérence dépassé. Déplacez des sections dans des surcouches de spécialistes à ~/.wayland/specialists/<id>.md."
+    "tokenError": "Plafond d'adhérence dépassé. Déplacez des sections dans des surcouches de spécialistes à ~/.darhai/specialists/<id>.md."
   },
   "constitutionSpecialists": {
     "title": "Surcouches de spécialistes",

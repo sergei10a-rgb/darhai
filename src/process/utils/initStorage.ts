@@ -55,7 +55,7 @@ const STORAGE_PATH = {
   config: 'wayland-config.txt',
   chatMessage: 'wayland-chat-message.txt',
   chat: 'wayland-chat.txt',
-  env: '.wayland-env',
+  env: '.darhai-env',
   assistants: 'assistants',
   skills: 'skills',
   builtinSkills: 'builtin-skills',

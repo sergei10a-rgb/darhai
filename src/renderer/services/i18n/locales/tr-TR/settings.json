@@ -2246,7 +2246,7 @@
     "loading": "Yükleniyor…",
     "tokenCount": "{{value}} token",
     "tokenWarning": "Uyum üst sınırına (~2,000 token) yaklaşılıyor. Bölümleri uzman katmanlarına ayırmayı düşünün.",
-    "tokenError": "Uyum üst sınırı aşıldı. Bölümleri ~/.wayland/specialists/<id>.md konumundaki uzman katmanlarına taşıyın."
+    "tokenError": "Uyum üst sınırı aşıldı. Bölümleri ~/.darhai/specialists/<id>.md konumundaki uzman katmanlarına taşıyın."
   },
   "constitutionSpecialists": {
     "title": "Uzman Katmanları",

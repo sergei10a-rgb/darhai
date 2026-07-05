@@ -23,8 +23,8 @@ function resolveStatesFile(): string {
 
 /**
  * Persisted state format on disk.
- * Stored under getDataPath(): ~/.wayland/extension-states.json (Electron release),
- * ~/.wayland-dev/extension-states.json (Electron macOS dev), or the platform-standard
+ * Stored under getDataPath(): ~/.darhai/extension-states.json (Electron release),
+ * ~/.darhai-dev/extension-states.json (Electron macOS dev), or the platform-standard
  * app data dir on Windows/Linux. Can be overridden via DARHAI_EXTENSION_STATES_FILE.
  */
 interface PersistedStates {

@@ -10,7 +10,7 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // profilePaths derives the profiles root from os.homedir(); point homedir at a
-// scratch dir so the tests never touch the real ~/.wayland.
+// scratch dir so the tests never touch the real ~/.darhai.
 let home: string;
 vi.mock('node:os', async (orig) => {
   const actual = await orig<typeof import('node:os')>();
@@ -62,9 +62,9 @@ describe('nativeConfigDir - mirrors engine wayland_config_dir precedence', () =>
 describe('resolveActiveConfigDir - the default<->named fork', () => {
   it('default profile resolves to the NATIVE config dir (backward compatible)', async () => {
     // No marker => default. Native dir derives from platform config base, not
-    // the profiles root, so it must NOT be under ~/.wayland/profiles.
+    // the profiles root, so it must NOT be under ~/.darhai/profiles.
     const dir = await resolveActiveConfigDir();
-    expect(dir).not.toContain(join('.wayland', 'profiles'));
+    expect(dir).not.toContain(join('.darhai', 'profiles'));
     expect(await getActiveProfile()).toBe(DEFAULT_PROFILE);
   });
 

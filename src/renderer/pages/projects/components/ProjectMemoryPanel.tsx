@@ -26,7 +26,7 @@ const substantive = (raw: string): string =>
 
 /**
  * Project memory: the running log of decisions for this project. It is the
- * project's own `.wayland/decisions.md` - which also rides into every chat in
+ * project's own `.darhai/decisions.md` - which also rides into every chat in
  * the project - surfaced as a readable feed with a one-line "add a decision"
  * composer and a full editor. Honest source of truth: what's on disk is what
  * chats see.

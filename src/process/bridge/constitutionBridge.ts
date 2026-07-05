@@ -5,14 +5,8 @@
  */
 
 /**
- * IPC bridge for the Wayland Constitution - the agent's behavioral spec,
- * loaded fresh on every turn. Canonical file is `~/.wayland/CONSTITUTION.md`.
- * Legacy `~/.wayland/SOUL.md` is read as a fallback and migrated on first
- * write, so users who installed before the rename keep their content.
- *
- * Ported from wayland-hermes/desktop/src/main/soul.ts - the new app uses
- * the same on-disk location so existing Constitutions are picked up
- * transparently.
+ * IPC bridge for the Darhai Constitution - the agent's behavioral spec,
+ * loaded fresh on every turn. Canonical file is `~/.darhai/CONSTITUTION.md`.
  */
 
 import { ipcMain } from 'electron';
@@ -21,9 +15,8 @@ import { homedir } from 'os';
 import { basename, join, resolve, sep } from 'path';
 import { enforceRateLimit } from './webuiDirectAuth';
 
-const DARHAI_HOME_DIR = '.wayland';
+const DARHAI_HOME_DIR = '.darhai';
 const CONSTITUTION_NAME = 'CONSTITUTION.md';
-const LEGACY_SOUL_NAME = 'SOUL.md';
 const SPECIALISTS_DIR = 'specialists';
 const ASSISTANT_ID_PATTERN = /^[A-Za-z0-9_-]+$/;
 
@@ -219,23 +212,21 @@ const DEFAULT_CONSTITUTION = `# Дархай — Үндсэн дүрэм
   файлын засвар л мөн.
 `;
 
-type ResolvedPaths = { dir: string; path: string; legacy: string };
+type ResolvedPaths = { dir: string; path: string };
 
 const resolveConstitutionPaths = (): ResolvedPaths => {
   const dir = join(homedir(), DARHAI_HOME_DIR);
   return {
     dir,
     path: join(dir, CONSTITUTION_NAME),
-    legacy: join(dir, LEGACY_SOUL_NAME),
   };
 };
 
 const readConstitution = (): string => {
-  const { path, legacy } = resolveConstitutionPaths();
-  const src = existsSync(path) ? path : existsSync(legacy) ? legacy : null;
-  if (!src) return '';
+  const { path } = resolveConstitutionPaths();
+  if (!existsSync(path)) return '';
   try {
-    return readFileSync(src, 'utf-8');
+    return readFileSync(path, 'utf-8');
   } catch {
     return '';
   }
@@ -243,7 +234,7 @@ const readConstitution = (): string => {
 
 const writeConstitution = (content: string): boolean => {
   if (!isValidWriteContent(content)) return false;
-  const { dir, path, legacy } = resolveConstitutionPaths();
+  const { dir, path } = resolveConstitutionPaths();
   try {
     mkdirSync(dir, { recursive: true });
     // Atomic write: write to .tmp then rename. Prevents a torn file if
@@ -251,15 +242,6 @@ const writeConstitution = (content: string): boolean => {
     const tmp = `${path}.tmp`;
     writeFileSync(tmp, content, 'utf-8');
     renameSync(tmp, path);
-    // One-shot migration: if the legacy SOUL.md still exists, remove it
-    // now that CONSTITUTION.md is canonical.
-    if (existsSync(legacy)) {
-      try {
-        unlinkSync(legacy);
-      } catch {
-        // non-fatal - leaving the legacy file around doesn't break anything
-      }
-    }
     return true;
   } catch (err) {
     console.error('[constitutionBridge] write failed:', err);
@@ -276,7 +258,7 @@ const resetConstitution = (): string => {
  * Read the active Constitution plus an optional per-specialist overlay.
  *
  * Overlays are opt-in by file existence at
- * `~/.wayland/specialists/<assistantId>.md`. The assistantId is restricted to
+ * `~/.darhai/specialists/<assistantId>.md`. The assistantId is restricted to
  * `[A-Za-z0-9_-]+` to prevent path traversal; anything else returns
  * `overlay: null` without throwing.
  */
@@ -301,7 +283,7 @@ export function readConstitutionWithOverlay(assistantId?: string): {
 }
 
 /**
- * List the per-specialist overlay files in `~/.wayland/specialists/`.
+ * List the per-specialist overlay files in `~/.darhai/specialists/`.
  *
  * Returns each `*.md` file as `{ id, bytes }` where `id` is the filename
  * without its extension. If the directory does not exist (no overlay was

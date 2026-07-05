@@ -2291,7 +2291,7 @@
     "loading": "Loading…",
     "tokenCount": "{{value}} tokens",
     "tokenWarning": "Approaching adherence ceiling (~2,000 tokens). Consider splitting into specialist overlays.",
-    "tokenError": "Past the adherence ceiling. Move sections into specialist overlays at ~/.wayland/specialists/<id>.md."
+    "tokenError": "Past the adherence ceiling. Move sections into specialist overlays at ~/.darhai/specialists/<id>.md."
   },
   "constitutionSpecialists": {
     "title": "Specialist Overlays",

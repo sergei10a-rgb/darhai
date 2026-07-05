@@ -14,13 +14,13 @@ import { getSystemDir } from '@process/utils/initStorage';
 
 const execFileAsync = promisify(execFile);
 
-const SNAPSHOT_DIRNAME = '.wayland-snapshots';
+const SNAPSHOT_DIRNAME = '.darhai-snapshots';
 const SNAPSHOT_PREFIX = 'wayland-snapshot-';
 
 /**
  * Resolve the root directory under which transient snapshot gitdirs live.
  *
- * Prefers `<workDir>/.wayland-snapshots` so snapshots land on the same drive
+ * Prefers `<workDir>/.darhai-snapshots` so snapshots land on the same drive
  * as the user-configured workspace (avoids filling the system drive on
  * Windows setups where C: is system and D: is workspace - upstream #2679).
  * Falls back to `os.tmpdir()` when the workDir lookup throws (e.g. before

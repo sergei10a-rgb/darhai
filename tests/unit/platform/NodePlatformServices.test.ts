@@ -16,9 +16,9 @@ describe('NodePlatformServices.paths', () => {
     expect(new NodePlatformServices().paths.getDataDir()).toBe('/custom/data');
   });
 
-  it('getDataDir falls back to homedir/.wayland-server', async () => {
+  it('getDataDir falls back to homedir/.darhai-server', async () => {
     const { NodePlatformServices } = await import('../../../src/common/platform/NodePlatformServices');
-    expect(new NodePlatformServices().paths.getDataDir()).toBe(path.join(os.homedir(), '.wayland-server'));
+    expect(new NodePlatformServices().paths.getDataDir()).toBe(path.join(os.homedir(), '.darhai-server'));
   });
 
   it('getLogsDir uses LOGS_DIR env var when set', async () => {
@@ -27,9 +27,9 @@ describe('NodePlatformServices.paths', () => {
     expect(new NodePlatformServices().paths.getLogsDir()).toBe('/custom/logs');
   });
 
-  it('getLogsDir falls back to homedir/.wayland-server/logs', async () => {
+  it('getLogsDir falls back to homedir/.darhai-server/logs', async () => {
     const { NodePlatformServices } = await import('../../../src/common/platform/NodePlatformServices');
-    expect(new NodePlatformServices().paths.getLogsDir()).toBe(path.join(os.homedir(), '.wayland-server', 'logs'));
+    expect(new NodePlatformServices().paths.getLogsDir()).toBe(path.join(os.homedir(), '.darhai-server', 'logs'));
   });
 
   it('getAppPath returns process.cwd()', async () => {

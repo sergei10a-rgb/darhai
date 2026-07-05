@@ -12,9 +12,9 @@ import { getPlatformServices } from '@/common/platform';
  * Used to isolate symlink and directory names between environments.
  *
  * @example
- * getEnvAwareName('.wayland')        // release → '.wayland',        dev → '.wayland-dev'
- * getEnvAwareName('.wayland-config') // release → '.wayland-config', dev → '.wayland-config-dev'
- * // with DARHAI_MULTI_INSTANCE=1:  dev → '.wayland-dev-2'
+ * getEnvAwareName('.darhai')        // release → '.darhai',        dev → '.darhai-dev'
+ * getEnvAwareName('.darhai-config') // release → '.darhai-config', dev → '.darhai-config-dev'
+ * // with DARHAI_MULTI_INSTANCE=1:  dev → '.darhai-dev-2'
  */
 export function getEnvAwareName(baseName: string): string {
   if (getPlatformServices().paths.isPackaged() === true) return baseName;

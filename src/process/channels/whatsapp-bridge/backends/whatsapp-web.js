@@ -28,7 +28,7 @@ const { Client, LocalAuth, MessageMedia } = wwebPkg;
 export async function createBackend({ emit, sessionDir }) {
   const dataPath = sessionDir
     ? path.join(sessionDir, 'whatsapp-web')
-    : path.join(process.env.HOME || process.env.USERPROFILE || '.', '.wayland', 'whatsapp', 'whatsapp-web');
+    : path.join(process.env.HOME || process.env.USERPROFILE || '.', '.darhai', 'whatsapp', 'whatsapp-web');
 
   let client = null;
   let connectionState = 'disconnected';

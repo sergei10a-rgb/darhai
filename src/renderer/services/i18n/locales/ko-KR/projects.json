@@ -29,14 +29,14 @@
     "descriptionPlaceholder": "What is this project about? (optional)",
     "workspaceLabel": "Workspace folder",
     "chooseFolder": "Choose folder",
-    "workspaceHint": "Optional. Chats in this project start here, and a .wayland/ knowledge folder is created so every chat shares the same context.",
+    "workspaceHint": "Optional. Chats in this project start here, and a .darhai/ knowledge folder is created so every chat shares the same context.",
     "colorLabel": "Color"
   },
   "workspace": {
     "loading": "Loading project...",
     "edit": "Edit",
     "newChat": "New chat in this project",
-    "knowledgeHint": "Knowledge folder: {{path}}/.wayland",
+    "knowledgeHint": "Knowledge folder: {{path}}/.darhai",
     "emptyTitle": "No chats in this project yet",
     "emptyBody": "Start a chat with any backend, model or assistant. It will live under this project, and you can run as many as you like at once.",
     "untitledChat": "Untitled chat",

@@ -100,7 +100,7 @@ describe('extensions/protocol/assetAllowlist', () => {
 
   it('allows assets reached via a symlinked extension dev-mount (manifest gated)', async () => {
     // Simulate the dev-mount pattern:
-    //   ln -s /path/to/repo  ~/.wayland-dev/extensions/my-bundle
+    //   ln -s /path/to/repo  ~/.darhai-dev/extensions/my-bundle
     // The bundle dir contains aion-extension.json, so widening the
     // allowlist to its canonical target is safe.
     const realBundle = path.join(tempDir, 'real-bundle');

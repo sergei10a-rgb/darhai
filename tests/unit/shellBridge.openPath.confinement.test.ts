@@ -77,14 +77,14 @@ beforeEach(async () => {
 
 describe('shellBridge.openPath - confinement (RT-R4-02)', () => {
   it('opens a legitimate in-root path (confinePath returns resolved form)', async () => {
-    confinePathMock.mockResolvedValue('/Users/me/Documents/Wayland-Memory-Drop');
+    confinePathMock.mockResolvedValue('/Users/me/Documents/Darhai-Memory-Drop');
 
-    const result = await openPathProvider.fn!({ path: '/Users/me/Documents/Wayland-Memory-Drop' });
+    const result = await openPathProvider.fn!({ path: '/Users/me/Documents/Darhai-Memory-Drop' });
 
     expect(result).toEqual({ ok: true });
-    expect(confinePathMock).toHaveBeenCalledWith('/Users/me/Documents/Wayland-Memory-Drop');
+    expect(confinePathMock).toHaveBeenCalledWith('/Users/me/Documents/Darhai-Memory-Drop');
     // The OS handler is invoked on the confined (resolved) path, never the raw input.
-    expect(shellMock.openPath).toHaveBeenCalledWith('/Users/me/Documents/Wayland-Memory-Drop');
+    expect(shellMock.openPath).toHaveBeenCalledWith('/Users/me/Documents/Darhai-Memory-Drop');
   });
 
   it('rejects a symlink-escape path and never calls shell.openPath', async () => {
@@ -110,12 +110,12 @@ describe('shellBridge.openPath - confinement (RT-R4-02)', () => {
   it('expands a leading ~ before confinement', async () => {
     confinePathMock.mockResolvedValue(null);
 
-    await openPathProvider.fn!({ path: '~/Documents/Wayland-Memory-Drop' });
+    await openPathProvider.fn!({ path: '~/Documents/Darhai-Memory-Drop' });
 
     // The argument handed to confinePath must be tilde-expanded, not the raw `~`.
     const arg = confinePathMock.mock.calls[0]?.[0] as string;
     expect(arg.startsWith('~')).toBe(false);
-    expect(arg.endsWith('/Documents/Wayland-Memory-Drop')).toBe(true);
+    expect(arg.endsWith('/Documents/Darhai-Memory-Drop')).toBe(true);
   });
 
   it('rejects an empty path before reaching confinePath', async () => {

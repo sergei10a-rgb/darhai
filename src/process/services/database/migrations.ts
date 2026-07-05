@@ -1883,7 +1883,7 @@ const migration_v42: IMigration = {
  * Migration v42 -> v43: Add projects table (umbrella scoping for conversations)
  *
  * A Project owns conversations as an umbrella: a workspace dir + optional
- * `.wayland/` knowledge + a name. Conversations are linked via `extra.projectId`
+ * `.darhai/` knowledge + a name. Conversations are linked via `extra.projectId`
  * (json_extract), NOT a dedicated column - mirroring the proven cronJobId /
  * presetAssistantId pattern - so this migration only needs to create the
  * project entity table. Deliberately omits Foundry's per-project execution

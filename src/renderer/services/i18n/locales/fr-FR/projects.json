@@ -29,7 +29,7 @@
     "descriptionPlaceholder": "De quoi parle ce projet ? (facultatif)",
     "workspaceLabel": "Dossier de l'espace de travail",
     "chooseFolder": "Choisir un dossier",
-    "workspaceHint": "Facultatif. Les conversations de ce projet démarrent ici, et un dossier de connaissances .wayland/ est créé pour que chaque conversation partage le même contexte.",
+    "workspaceHint": "Facultatif. Les conversations de ce projet démarrent ici, et un dossier de connaissances .darhai/ est créé pour que chaque conversation partage le même contexte.",
     "colorLabel": "Couleur"
   },
   "workspace": {
@@ -39,7 +39,7 @@
     "tabChats": "Conversations",
     "tabFiles": "Fichiers",
     "tabKnowledge": "Connaissances",
-    "knowledgeHint": "Dossier de connaissances : {{path}}/.wayland",
+    "knowledgeHint": "Dossier de connaissances : {{path}}/.darhai",
     "emptyTitle": "Aucune conversation dans ce projet pour l'instant",
     "emptyBody": "Démarrez une conversation avec n'importe quel backend, modèle ou assistant. Elle sera rattachée à ce projet, et vous pouvez en lancer autant que vous le souhaitez en même temps.",
     "untitledChat": "Conversation sans titre",

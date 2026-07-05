@@ -156,7 +156,7 @@ export const defaultBinaryPostInstallIo: BinaryPostInstallIo = {
  * - Looks up the manifest entry for the current platform/arch.
  * - Computes the cache path under `<userData>/voice/bin/<platform>-<arch>/`
  *   so the runtime + the Settings "Download Model" UI agree on a single
- *   tree (previous versions split between userData/voice/ and ~/.wayland/).
+ *   tree (previous versions split between userData/voice/ and ~/.darhai/).
  * - Delegates the atomic download (with SHA-256 verification) to VoiceAssetManager.
  * - After a fresh download: sets the executable bit and removes the macOS quarantine xattr.
  * - Returns the absolute path to the ready binary.

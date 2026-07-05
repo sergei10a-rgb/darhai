@@ -2247,7 +2247,7 @@
     "loading": "加载中…",
     "tokenCount": "{{value}} 个令牌",
     "tokenWarning": "即将达到遵循上限（约 2,000 个令牌）。请考虑拆分为专家叠加层。",
-    "tokenError": "已超过遵循上限。请将章节移至 ~/.wayland/specialists/<id>.md 中的专家叠加层。"
+    "tokenError": "已超过遵循上限。请将章节移至 ~/.darhai/specialists/<id>.md 中的专家叠加层。"
   },
   "constitutionSpecialists": {
     "title": "专家叠加层",

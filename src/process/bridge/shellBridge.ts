@@ -238,7 +238,7 @@ export function initShellBridge(): void {
   });
 
   ipcBridge.shell.openExternal.provider(async (url) => {
-    // Allowlist schemes (https:/http:/mailto: and the app's own wayland: deep-link
+    // Allowlist schemes (https:/http:/mailto: and the app's own darhai: deep-link
     // scheme); reject file:/smb:/ms-*/vbscript:/custom handlers so model-rendered
     // markdown links cannot drive the OS into opening local files or leaking creds.
     if (!isAllowedExternalUrl(url)) {

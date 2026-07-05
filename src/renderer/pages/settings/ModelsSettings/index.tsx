@@ -193,7 +193,7 @@ const ModelsSettingsInner: React.FC = () => {
   }, [detectKeys]);
 
   // Wave 3 Fix 12 - consume any pending deep-link payload on mount. A
-  // `wayland://add-provider?platform=...&apiKey=...` URL fires from the OS
+  // `darhai://add-provider?platform=...&apiKey=...` URL fires from the OS
   // shell, the main process navigates the renderer to `/settings/models`, and
   // we read the pre-fill data here. Cloud providers route into the Browse
   // modal's cloud form; non-cloud keys pre-fill the ConnectPanel via a

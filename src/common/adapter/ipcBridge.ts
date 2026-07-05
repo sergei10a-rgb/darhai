@@ -445,7 +445,7 @@ export const skills = {
     draft: buildProvider<{ skillMd: string }, { description: string }>('skills.build.draft'),
   },
   /**
-   * Write a new SKILL.md to ~/.wayland/skills/<kebab-name>/SKILL.md,
+   * Write a new SKILL.md to ~/.darhai/skills/<kebab-name>/SKILL.md,
    * scan it via SkillGuard, register in SkillLibrary, and return the verdict.
    */
   save: buildProvider<
@@ -887,7 +887,7 @@ export const excelPreview = {
 
 // Deep link protocol handling
 export const deepLink = {
-  /** Emitted when app is opened via darhai:// (or legacy wayland://) protocol URL */
+  /** Emitted when app is opened via darhai:// protocol URL */
   received: buildEmitter<{
     action: string; // e.g. 'add-provider'
     params: Record<string, string>; // parsed query params
@@ -1939,14 +1939,14 @@ export type IWcoreProfile = {
   /**
    * Absolute config dir the engine actually reads for this profile. `default`
    * maps to the native dir (`dirs::config_dir()/wayland-core`); named profiles
-   * to `~/.wayland/profiles/<name>/`. Surfaced so the UI shows the REAL path
+   * to `~/.darhai/profiles/<name>/`. Surfaced so the UI shows the REAL path
    * (Design B) instead of a fabricated `profiles/default`.
    */
   dir?: string;
 };
 
 /**
- * Wayland Core profile directories (`~/.wayland/profiles/<name>/`). HUMAN-ONLY -
+ * Wayland Core profile directories (`~/.darhai/profiles/<name>/`). HUMAN-ONLY -
  * create/clone/delete do filesystem mutation under the profiles root with a
  * strict name sanitizer + realpath containment (SEC-4); they are remote-denied.
  */
@@ -2473,7 +2473,7 @@ export const project = {
   assignConversation: buildProvider<void, { conversationId: string; projectId: string }>('project.assign-conversation'),
   /** Detach a conversation from its project (clears extra.projectId). */
   removeConversation: buildProvider<void, { conversationId: string }>('project.remove-conversation'),
-  /** Read the project's editable .wayland/ knowledge docs (instructions/rules/decisions). */
+  /** Read the project's editable .darhai/ knowledge docs (instructions/rules/decisions). */
   readKnowledge: buildProvider<{ context: string; rules: string; decisions: string }, { id: string }>(
     'project.read-knowledge'
   ),
@@ -2481,11 +2481,11 @@ export const project = {
   writeKnowledge: buildProvider<void, { id: string; kind: 'context' | 'rules' | 'decisions'; content: string }>(
     'project.write-knowledge'
   ),
-  /** List files dropped into .wayland/reference/. */
+  /** List files dropped into .darhai/reference/. */
   listReference: buildProvider<Array<{ name: string; path: string; size: number }>, { id: string }>(
     'project.list-reference'
   ),
-  /** Copy dropped files into .wayland/reference/; returns the updated list. */
+  /** Copy dropped files into .darhai/reference/; returns the updated list. */
   addReference: buildProvider<Array<{ name: string; path: string; size: number }>, { id: string; filePaths: string[] }>(
     'project.add-reference'
   ),
@@ -2528,7 +2528,7 @@ export const project = {
       constraints?: string;
     }
   >('project.generate-knowledge-draft'),
-  /** Append one dated decision to .wayland/decisions.md; returns the updated doc. */
+  /** Append one dated decision to .darhai/decisions.md; returns the updated doc. */
   appendDecision: buildProvider<{ decisions: string }, { id: string; text: string }>('project.append-decision'),
   /** Read IJFW's own per-project memory ({workspace}/.ijfw/memory/*.md) if present - read-only, attributed. */
   readIjfwMemory: buildProvider<

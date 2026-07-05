@@ -7,21 +7,18 @@
 import type { BrowserWindow } from 'electron';
 import { ipcBridge } from '@/common';
 
-/** Primary deep-link scheme registered by the app. */
+/** Primary (and only) deep-link scheme registered by the app. */
 export const PROTOCOL_SCHEME = 'darhai';
 
-/** Legacy scheme kept registered so existing wayland:// links keep working. */
-export const LEGACY_PROTOCOL_SCHEME = 'wayland';
-
-/** All schemes the app registers and accepts, primary first. */
-export const PROTOCOL_SCHEMES: readonly string[] = [PROTOCOL_SCHEME, LEGACY_PROTOCOL_SCHEME];
+/** All schemes the app registers and accepts. */
+export const PROTOCOL_SCHEMES: readonly string[] = [PROTOCOL_SCHEME];
 
 /** True when the given argv entry is a deep-link URL for any accepted scheme. */
 export const isDeepLinkArg = (arg: string): boolean =>
   PROTOCOL_SCHEMES.some((scheme) => arg.startsWith(`${scheme}://`));
 
 /**
- * Parse a darhai:// (or legacy wayland://) URL into action and params.
+ * Parse a darhai:// URL into action and params.
  * Supports two formats:
  *   1. darhai://add-provider?baseUrl=xxx&apiKey=xxx
  *   2. darhai://provider/add?v=1&data=<base64 JSON>  (one-api / new-api style)

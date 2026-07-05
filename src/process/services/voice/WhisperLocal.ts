@@ -40,7 +40,7 @@ export class WhisperLocalUnavailableError extends Error {
  *
  * Both the binary and the model live under the Electron userData voice
  * subtree, matching where voiceAssetRegistry downloads its assets to.
- * (Prior versions used ~/.wayland/voice/{bin,models}/ which was a separate
+ * (Prior versions used ~/.darhai/voice/{bin,models}/ which was a separate
  * tree that the Settings "Download Model" buttons never touched - a user
  * who downloaded the model via the UI would still hit "model not installed"
  * when actually dictating, because dictation looked in the wrong place.)

@@ -15,7 +15,7 @@ vi.mock('@/common/platform', () => ({
 }));
 
 vi.mock('@process/utils', () => ({
-  getDataPath: () => '/home/user/.wayland-dev',
+  getDataPath: () => '/home/user/.darhai-dev',
 }));
 
 // Must import after mocks
@@ -92,7 +92,7 @@ describe('extension constants', () => {
 
   describe('getUserExtensionsDir', () => {
     it('should return data path + extensions', () => {
-      expect(getUserExtensionsDir()).toBe(path.join('/home/user/.wayland-dev', 'extensions'));
+      expect(getUserExtensionsDir()).toBe(path.join('/home/user/.darhai-dev', 'extensions'));
     });
   });
 

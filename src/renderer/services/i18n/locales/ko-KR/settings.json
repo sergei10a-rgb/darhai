@@ -2248,7 +2248,7 @@
     "loading": "로딩 중…",
     "tokenCount": "{{value}} 토큰",
     "tokenWarning": "준수 한도(~2,000 토큰)에 근접하고 있습니다. 전문 오버레이로 분할하는 것을 고려하세요.",
-    "tokenError": "준수 한도를 초과했습니다. 섹션을 ~/.wayland/specialists/<id>.md의 전문 오버레이로 이동하세요."
+    "tokenError": "준수 한도를 초과했습니다. 섹션을 ~/.darhai/specialists/<id>.md의 전문 오버레이로 이동하세요."
   },
   "constitutionSpecialists": {
     "title": "전문 오버레이",

@@ -8,10 +8,10 @@ import fs from 'fs/promises';
 import path from 'path';
 
 /** Directory name for per-project knowledge, mounted at the project workspace root. */
-export const DARHAI_KNOWLEDGE_DIR = '.wayland';
+export const DARHAI_KNOWLEDGE_DIR = '.darhai';
 
 /**
- * Bootstrap a `.wayland/` knowledge folder at the project workspace root.
+ * Bootstrap a `.darhai/` knowledge folder at the project workspace root.
  *
  * Scoped per project (lives inside the project's own workspace dir) and only
  * read by conversations that carry that project's `projectId` - this is the
@@ -56,7 +56,7 @@ async function writeIfAbsent(filePath: string, content: string): Promise<void> {
   }
 }
 
-/** True if a workspace has a `.wayland/` knowledge folder with at least one readable file. */
+/** True if a workspace has a `.darhai/` knowledge folder with at least one readable file. */
 export async function hasProjectKnowledge(workspace: string): Promise<boolean> {
   if (!workspace || !workspace.trim()) return false;
   const root = path.join(workspace, DARHAI_KNOWLEDGE_DIR);

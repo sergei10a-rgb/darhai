@@ -136,7 +136,7 @@ export const SERVER_CONFIG = {
  */
 function detectHttps(req?: Request): boolean {
   if (
-    (process.env.DARHAI_HTTPS ?? process.env.WAYLAND_HTTPS) === 'true' ||
+    process.env.DARHAI_HTTPS === 'true' ||
     (process.env.NODE_ENV === 'production' && process.env.HTTPS === 'true')
   ) {
     return true;

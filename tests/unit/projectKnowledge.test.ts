@@ -92,7 +92,7 @@ describe('project knowledge', () => {
   it('guards reference removal against path traversal (cannot escape the dir)', async () => {
     // A sentinel one level above reference/ must survive a traversal attempt -
     // basename() collapses '../sentinel.txt' to 'sentinel.txt', which only ever
-    // resolves inside .wayland/reference/, so the real sentinel is untouched.
+    // resolves inside .darhai/reference/, so the real sentinel is untouched.
     const sentinel = path.join(ws, 'sentinel.txt');
     await fs.writeFile(sentinel, 'do-not-delete');
     await removeProjectReference(ws, '../sentinel.txt');

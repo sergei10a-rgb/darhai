@@ -29,8 +29,8 @@ export class KokoroLocalUnavailableError extends Error {
  * On-disk locations for the local Kokoro runtime. Task D2 (runtime binary
  * acquisition) downloads the binary and models into these exact paths.
  */
-export const KOKORO_BIN_DIR = path.join(homedir(), '.wayland', 'voice', 'bin', `${process.platform}-${process.arch}`);
-export const KOKORO_MODEL_DIR = path.join(homedir(), '.wayland', 'voice', 'kokoro-models');
+export const KOKORO_BIN_DIR = path.join(homedir(), '.darhai', 'voice', 'bin', `${process.platform}-${process.arch}`);
+export const KOKORO_MODEL_DIR = path.join(homedir(), '.darhai', 'voice', 'kokoro-models');
 
 const KOKORO_BINARY_NAME = process.platform === 'win32' ? 'kokoro-cli.exe' : 'kokoro-cli';
 

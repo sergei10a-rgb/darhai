@@ -134,7 +134,7 @@ const ProfilesPane: React.FC = () => {
                     </span>
                   )}
                 </div>
-                <div className={styles.profilePath}>{p.dir ? tildify(p.dir) : `~/.wayland/profiles/${p.name}`}</div>
+                <div className={styles.profilePath}>{p.dir ? tildify(p.dir) : `~/.darhai/profiles/${p.name}`}</div>
                 {(p.model || p.tools !== undefined || p.skills !== undefined || p.updatedAt) && (
                   <div className={styles.statChipsRow}>
                     {p.model && (

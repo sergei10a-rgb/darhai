@@ -25,7 +25,7 @@ import { SkillGuard } from './SkillGuard';
 import { SkillLibrary } from './SkillLibrary';
 import { SkillQuarantine, type SkillQuarantineIo } from './SkillQuarantine';
 
-export const IMPORTED_DIR = path.join(homedir(), '.wayland', 'skills', 'imported');
+export const IMPORTED_DIR = path.join(homedir(), '.darhai', 'skills', 'imported');
 
 // ---------------------------------------------------------------------------
 // IO seam - injected for tests; defaults to real Node.js ops
@@ -103,7 +103,7 @@ export const defaultSkillImportIo: SkillImportIo = {
 export type ImportedSkillResult = {
   /** Skill name derived from the directory basename. */
   name: string;
-  /** Absolute path inside ~/.wayland/skills/imported/<name>/ */
+  /** Absolute path inside ~/.darhai/skills/imported/<name>/ */
   destPath: string;
   /** Security scan report. */
   report: SkillSecurityReport;
@@ -183,7 +183,7 @@ export class SkillImport {
   // -------------------------------------------------------------------------
 
   /**
-   * Copy a skill folder into ~/.wayland/skills/imported/<basename>/.
+   * Copy a skill folder into ~/.darhai/skills/imported/<basename>/.
    * Rejects if srcPath itself is a symlink (TOCTOU hardening).
    */
   async importFolder(srcPath: string): Promise<ImportResult> {
@@ -294,7 +294,7 @@ export class SkillImport {
   // -------------------------------------------------------------------------
 
   /**
-   * Copy a single SKILL.md file into ~/.wayland/skills/imported/<basename>/SKILL.md.
+   * Copy a single SKILL.md file into ~/.darhai/skills/imported/<basename>/SKILL.md.
    */
   async importSingleSkillMd(srcPath: string): Promise<ImportResult> {
     const stat = await this.io.lstat(srcPath);

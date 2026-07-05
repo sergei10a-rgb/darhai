@@ -86,7 +86,7 @@ export type ExtensionScanSource = { dir: string; source: ExtensionSource };
  *
  * Priority order:
  *   1. Environment variable (`DARHAI_EXTENSIONS_PATH`) - highest
- *   2. User data dir (`~/.wayland/extensions`)
+ *   2. User data dir (`~/.darhai/extensions`)
  *   3. Electron appData dir
  *
  * E2E test mode (`DARHAI_E2E_TEST=1`) only scans env dirs for hermetic runs.

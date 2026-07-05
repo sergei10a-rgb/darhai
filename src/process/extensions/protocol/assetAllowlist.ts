@@ -60,7 +60,7 @@ export function buildAssetAllowlist(): string[] {
   push(getVoiceModelsDir());
 
   // Expand: when an extension dir contains symlinked children (the dev-mount
-  // pattern: `ln -s /path/to/repo ~/.wayland-dev/extensions/my-ext`), the
+  // pattern: `ln -s /path/to/repo ~/.darhai-dev/extensions/my-ext`), the
   // requested asset URL canonicalises to the symlink TARGET, which sits
   // outside the scan root after realpath resolution. Walk each scan root
   // and add the canonical target of any symlink whose target is a real

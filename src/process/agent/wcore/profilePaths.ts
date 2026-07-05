@@ -17,7 +17,7 @@
  * import cycle can form.
  *
  * ── The isolation model ────────────────────────────────────────────────────
- * Each profile is a self-contained config tree under `~/.wayland/profiles/<name>/`.
+ * Each profile is a self-contained config tree under `~/.darhai/profiles/<name>/`.
  * The engine reads its ENTIRE state (config.toml, memory.db, skills) relative to
  * `wayland_config_dir()`, which honours `$DARHAI_HOME` first
  * (`crates/wcore-config/src/config.rs` - `DARHAI_HOME` is the literal config
@@ -82,9 +82,9 @@ export function assertSafeProfileName(name: unknown): string {
   return name;
 }
 
-/** Absolute path to the profiles root (`~/.wayland/profiles`). */
+/** Absolute path to the profiles root (`~/.darhai/profiles`). */
 export function profilesRoot(): string {
-  return join(homedir(), '.wayland', 'profiles');
+  return join(homedir(), '.darhai', 'profiles');
 }
 
 /**
@@ -170,7 +170,7 @@ export function nativeConfigDir(): string {
 /**
  * Resolve the config DIRECTORY for the currently-active profile:
  *  - `default` (or unset)  -> {@link nativeConfigDir} (backward-compatible).
- *  - a named profile       -> `~/.wayland/profiles/<name>/` (isolated tree).
+ *  - a named profile       -> `~/.darhai/profiles/<name>/` (isolated tree).
  *
  * This is the single source of truth that BOTH the config bridge (what file the
  * panes edit) and the engine spawn (`DARHAI_HOME`) resolve through, so they can

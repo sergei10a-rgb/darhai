@@ -2248,7 +2248,7 @@
     "loading": "載入中…",
     "tokenCount": "{{value}} 個權杖",
     "tokenWarning": "即將達到遵循上限（約 2,000 個權杖）。請考慮拆分為專家疊加層。",
-    "tokenError": "已超過遵循上限。請將章節移至 ~/.wayland/specialists/<id>.md 中的專家疊加層。"
+    "tokenError": "已超過遵循上限。請將章節移至 ~/.darhai/specialists/<id>.md 中的專家疊加層。"
   },
   "constitutionSpecialists": {
     "title": "專家疊加層",

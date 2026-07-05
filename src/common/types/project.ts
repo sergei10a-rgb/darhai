@@ -21,7 +21,7 @@ export type IProject = {
   id: string;
   name: string;
   description?: string;
-  /** Optional working directory. When set, a `.wayland/` knowledge folder is bootstrapped here. */
+  /** Optional working directory. When set, a `.darhai/` knowledge folder is bootstrapped here. */
   workspace?: string;
   /** Icon-park / lucide icon name for the project tile. */
   icon?: string;

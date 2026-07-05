@@ -29,7 +29,7 @@
     "descriptionPlaceholder": "Sobre o que é este projeto? (opcional)",
     "workspaceLabel": "Pasta do workspace",
     "chooseFolder": "Escolher pasta",
-    "workspaceHint": "Opcional. As conversas deste projeto começam aqui, e uma pasta de conhecimento .wayland/ é criada para que todas as conversas compartilhem o mesmo contexto.",
+    "workspaceHint": "Opcional. As conversas deste projeto começam aqui, e uma pasta de conhecimento .darhai/ é criada para que todas as conversas compartilhem o mesmo contexto.",
     "colorLabel": "Cor"
   },
   "workspace": {
@@ -39,7 +39,7 @@
     "tabChats": "Conversas",
     "tabFiles": "Arquivos",
     "tabKnowledge": "Conhecimento",
-    "knowledgeHint": "Pasta de conhecimento: {{path}}/.wayland",
+    "knowledgeHint": "Pasta de conhecimento: {{path}}/.darhai",
     "emptyTitle": "Nenhuma conversa neste projeto ainda",
     "emptyBody": "Inicie uma conversa com qualquer backend, modelo ou assistente. Ela ficará dentro deste projeto, e você pode rodar quantas quiser ao mesmo tempo.",
     "untitledChat": "Conversa sem título",

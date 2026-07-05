@@ -32,7 +32,7 @@ afterEach(async () => {
 
 describe('listProfiles - per-profile stats from the isolated config tree', () => {
   it('reads model + tool count + skill count + dir for a named profile', async () => {
-    const dir = join(home, '.wayland', 'profiles', 'work');
+    const dir = join(home, '.darhai', 'profiles', 'work');
     await mkdir(join(dir, 'skills', 'alpha'), { recursive: true });
     await mkdir(join(dir, 'skills', 'beta'), { recursive: true });
     await writeFile(
@@ -41,7 +41,7 @@ describe('listProfiles - per-profile stats from the isolated config tree', () =>
       'utf-8'
     );
     // Make "work" the active profile.
-    await writeFile(join(home, '.wayland', 'profiles', '.active'), 'work\n', 'utf-8');
+    await writeFile(join(home, '.darhai', 'profiles', '.active'), 'work\n', 'utf-8');
 
     const profiles = await listProfiles();
     const work = profiles.find((p) => p.name === 'work');
@@ -56,7 +56,7 @@ describe('listProfiles - per-profile stats from the isolated config tree', () =>
   });
 
   it('OMITS stats (no fabricated zeros) for a profile with no config yet', async () => {
-    await mkdir(join(home, '.wayland', 'profiles', 'empty'), { recursive: true });
+    await mkdir(join(home, '.darhai', 'profiles', 'empty'), { recursive: true });
     const profiles = await listProfiles();
     const empty = profiles.find((p) => p.name === 'empty');
     expect(empty).toBeTruthy();

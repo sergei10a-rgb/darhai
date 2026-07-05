@@ -558,8 +558,6 @@ find /opt -name "Darhai" 2>/dev/null
 
 WebUI-н зан төлөвийг орчны хувьсагчаар тохируулж болно:
 
-> Хуучин WAYLAND_* нэрс мөн ажиллана (legacy).
-
 ```bash
 # Сонсох портыг өөрчлөх
 export DARHAI_PORT=8080

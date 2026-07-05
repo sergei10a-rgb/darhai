@@ -5,9 +5,7 @@
  *
  * Drop-folder watcher - monitors ~/Documents/Darhai-Memory/ (non-recursive,
  * depth 0) for incoming .md / .txt / .json files, ingests them into the current
- * IJFW memory directory, and deletes the originals. The pre-rebrand
- * ~/Documents/Wayland-Memory/ folder is also watched when it already exists
- * (backward compat - it is never created).
+ * IJFW memory directory, and deletes the originals.
  *
  * Safety: chokidar is constrained to depth 0 per HANDOFF §10 chokidar safety.
  */
@@ -20,26 +18,6 @@ import log from 'electron-log';
 
 function getDefaultDropFolder(): string {
   return path.join(os.homedir(), 'Documents', 'Darhai-Memory');
-}
-
-/** Pre-rebrand (Wayland) drop folder - only honoured when it already exists. */
-function getLegacyDropFolder(): string {
-  return path.join(os.homedir(), 'Documents', 'Wayland-Memory');
-}
-
-/**
- * Returns the legacy Wayland-Memory folder when the caller is operating on the
- * default drop folder AND the legacy directory exists on disk. Custom folders
- * (tests, explicit overrides) never get the legacy mirror.
- */
-function existingLegacyDropFolder(dropFolder: string): string | null {
-  if (dropFolder !== getDefaultDropFolder()) return null;
-  const legacy = getLegacyDropFolder();
-  try {
-    return fs.statSync(legacy).isDirectory() ? legacy : null;
-  } catch {
-    return null;
-  }
 }
 
 const INGEST_EXTENSIONS = new Set(['.md', '.txt', '.json']);
@@ -202,8 +180,7 @@ async function ingestFile(filePath: string, ijfwMemoryDir: string): Promise<void
 
 /**
  * Start watching the drop folder. Returns a handle to stop the watcher.
- * Creates the drop folder if absent. When operating on the default folder,
- * an already-existing legacy Wayland-Memory folder is watched as well.
+ * Creates the drop folder if absent.
  */
 export function startDropFolderWatcher(opts: {
   ijfwMemoryDir: string;
@@ -222,10 +199,7 @@ export function startDropFolderWatcher(opts: {
     onError(`Failed to create directories: ${String(err)}`);
   }
 
-  const legacyFolder = existingLegacyDropFolder(dropFolder);
-  const watchTargets = legacyFolder ? [dropFolder, legacyFolder] : [dropFolder];
-
-  const watcher = chokidar.watch(watchTargets, {
+  const watcher = chokidar.watch(dropFolder, {
     depth: 0,
     ignoreInitial: true,
     persistent: true,
@@ -303,8 +277,7 @@ async function processFolderInto(
 
 /**
  * Process all files currently in the drop folder (one-shot, no watching).
- * Creates the drop folder if absent. When operating on the default folder,
- * an already-existing legacy Wayland-Memory folder is processed as well.
+ * Creates the drop folder if absent.
  */
 export async function runDropFolderProcess(opts?: {
   dropFolder?: string;
@@ -323,11 +296,6 @@ export async function runDropFolderProcess(opts?: {
   }
 
   await processFolderInto(dropFolder, ijfwMemoryDir, result);
-
-  const legacyFolder = existingLegacyDropFolder(dropFolder);
-  if (legacyFolder) {
-    await processFolderInto(legacyFolder, ijfwMemoryDir, result);
-  }
 
   return result;
 }

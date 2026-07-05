@@ -11,9 +11,9 @@ import { confinePath } from '@process/bridge/pathConfinement';
 import { resolveWithinApprovedDirectory } from '@process/bridge/userApprovedPaths';
 
 /**
- * Read, write, inject and manage a project's `.wayland/` knowledge.
+ * Read, write, inject and manage a project's `.darhai/` knowledge.
  *
- * Knowledge lives at `{workspace}/.wayland/` and is scoped to ONE project (the
+ * Knowledge lives at `{workspace}/.darhai/` and is scoped to ONE project (the
  * deliberate fix for Foundry's "notebooks leaked into every chat" bug). It is
  * surfaced two ways:
  *   1. The project workspace UI (editable instructions / rules / decisions +
@@ -79,7 +79,7 @@ export async function readProjectKnowledge(workspace: string): Promise<ProjectKn
   return { context, rules, decisions };
 }
 
-/** Write one knowledge document, creating the `.wayland/` folder if needed. */
+/** Write one knowledge document, creating the `.darhai/` folder if needed. */
 export async function writeProjectKnowledge(workspace: string, kind: KnowledgeKind, content: string): Promise<void> {
   if (!workspace || !workspace.trim()) throw new Error('Project has no workspace folder');
   const root = knowledgeRoot(workspace);
@@ -130,7 +130,7 @@ const isNotFound = (err: unknown): boolean =>
 
 /**
  * Read the editable one-line summaries for each knowledge doc. Stored in
- * `.wayland/summaries.json` (separate from the docs so a doc edit never clobbers
+ * `.darhai/summaries.json` (separate from the docs so a doc edit never clobbers
  * its summary and vice-versa). Returns {} when absent.
  *
  * ENOENT (no file yet) and a *parse failure* are deliberately distinguished:
@@ -202,7 +202,7 @@ export async function writeProjectSummary(workspace: string, kind: KnowledgeKind
 }
 
 /**
- * Append one decision to `.wayland/decisions.md` as a dated bullet and return
+ * Append one decision to `.darhai/decisions.md` as a dated bullet and return
  * the updated document. This is the manual "+ Add decision" path for the Memory
  * tab; the decisions doc is also auto-injected into every chat in the project.
  */
@@ -261,7 +261,7 @@ export async function readProjectIjfwMemory(
   return { available: files.length > 0, files };
 }
 
-/** List files dropped into the project's `.wayland/reference/` folder. */
+/** List files dropped into the project's `.darhai/reference/` folder. */
 export async function listProjectReference(workspace: string): Promise<ReferenceFile[]> {
   if (!workspace || !workspace.trim()) return [];
   const dir = path.join(knowledgeRoot(workspace), REFERENCE_DIR);
@@ -292,7 +292,7 @@ const MAX_REFERENCE_FILES = 50;
 const MAX_REFERENCE_FILE_BYTES = 25 * 1024 * 1024; // 25 MB
 
 /**
- * Copy dropped files into `.wayland/reference/`. Returns the resulting file
+ * Copy dropped files into `.darhai/reference/`. Returns the resulting file
  * list. Name collisions are de-duplicated with a numeric suffix so a re-drop
  * never silently overwrites.
  *

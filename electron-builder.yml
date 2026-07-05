@@ -13,10 +13,8 @@ copyright: Copyright © 2026 Trade Canyon
 protocols:
   - name: Darhai Protocol
     schemes:
-      # darhai:// is the primary scheme; wayland:// stays registered for
-      # backward compatibility with existing deep links.
+      # darhai:// is the app's deep-link scheme.
       - darhai
-      - wayland
 
 asar:
   smartUnpack: true
@@ -295,7 +293,7 @@ linux:
       # executableName (Darhai), so the Icon key must match it.
       Icon: Darhai
       Categories: Office;Utility;
-      MimeType: x-scheme-handler/darhai;x-scheme-handler/wayland;
+      MimeType: x-scheme-handler/darhai;
 
 npmRebuild: false
 buildDependenciesFromSource: false
