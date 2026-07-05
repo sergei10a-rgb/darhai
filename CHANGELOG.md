@@ -1,6 +1,21 @@
 # Changelog
 
-All notable changes to the Wayland Electron app are documented in this file. Format follows [Keep a Changelog](https://keepachangelog.com/). Versions track the `v0.1.x-wayland-*` tag series on FerroxLabs/wayland.
+All notable changes to the Darhai (Дархай) Electron app are documented in this file. Format follows [Keep a Changelog](https://keepachangelog.com/). Entries below the fork section are inherited upstream history from Wayland by Ferrox Labs (the `v0.1.x-wayland-*` tag series) and are preserved unchanged for attribution.
+
+## Дархай (Darhai) fork
+
+### 2026-07-05
+
+- Апп-ыг бүхэлд нь монгол хэл рүү орчуулав — хэрэглэгчийн интерфэйс,
+  баримт бичиг, олон нийтэд харагдах бүх текст кирилл монголоор.
+- "Wayland" нэршлийг "Дархай (Darhai)" болгон бүрэн шинэчлэв
+  (бүтээгдэхүүний нэр, гүйцэтгэх файл, репозиторын хаяг).
+- Шинэ Дархай лого, брэндийн шинэчлэл.
+- CI цэвэрлэгээ: upstream-д хамааралтай ажиллахгүй workflow-уудыг
+  (npm publish, Homebrew bump, Discord sev1-alert) устгаж, үлдсэн
+  workflow-уудыг sergei10a-rgb/darhai репод тохируулан шинэчлэв.
+- Шинэчлэлтийн feed-ийг (update feed) Дархайн өөрийн release суваг руу
+  шилжүүлэв.
 
 ## [Unreleased]
 

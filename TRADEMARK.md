@@ -1,51 +1,45 @@
-# Wayland Trademark Policy
+# Дархай (Darhai) — нэр, брэндийн бодлого
 
-Wayland's **code** is free software under the [GNU AGPL-3.0](./LICENSE). Wayland's
-**name and logo** are trademarks of Ferrox Labs. Those are two different things,
-and this short policy explains the second one. The goal is simple: keep the
-project open and forkable, while making sure "Wayland" always points to the real
-thing.
+Дархайн **код** нь [GNU AGPL-3.0](./LICENSE) лицензтэй чөлөөт программ хангамж.
+Харин "Дархай / Darhai" **нэр болон лого** нь энэ төслийн брэнд бөгөөд лицензээс
+тусдаа ойлголт юм. Зорилго нь энгийн: төслийг нээлттэй, салбарлах (fork)
+боломжтой хэвээр байлгахын зэрэгцээ "Дархай" гэдэг нэр үргэлж жинхэнэ төслийг
+заадаг байх.
 
-## What you can do - freely, no permission needed
+## Зөвшөөрөл шаардахгүй, чөлөөтэй хийж болох зүйлс
 
-- **Use, run, study, modify, fork, and redistribute the code** under the terms of
-  the AGPL-3.0. That's the whole point.
-- **Self-host it**, including for your company or your clients.
-- **Build commercial products and services around it** (support, hosting,
-  integrations, consulting). The license, not the name, is what governs the code.
-- **Refer to Wayland by name truthfully** - "works with Wayland", "compatible with
-  Wayland", "built on Wayland", "a Wayland fork", "for Wayland". This is
-  *nominative use* and it's always allowed. You never need our blessing to tell
-  people, accurately, what your thing does.
+- **Кодыг ашиглах, ажиллуулах, судлах, өөрчлөх, салбарлах, дахин түгээх** —
+  AGPL-3.0-ийн нөхцөлийн дагуу. Энэ бол нээлттэй эхийн мөн чанар.
+- **Өөрийн байгууллага, үйлчлүүлэгчдэдээ зориулан өөрөө байршуулах** (self-host).
+- **Дархайг тойрсон арилжааны бүтээгдэхүүн, үйлчилгээ хөгжүүлэх** (дэмжлэг,
+  байршуулалт, интеграц, зөвлөх үйлчилгээ).
+- **Дархайг үнэн зөвөөр нэрлэн дурдах** — "Дархайтай ажилладаг", "Дархай дээр
+  суурилсан", "Дархайн салбарлалт" гэх мэт. Ийм байдлаар үнэн мэдээлэл өгөхөд
+  хэзээ ч зөвшөөрөл шаардахгүй.
 
-## What needs our permission
+## Зөвшөөрөл шаардах зүйлс
 
-- **Branding a fork, product, app, or hosted service with the "Wayland" name or
-  logo** in a way that suggests it *is* Wayland or is officially endorsed by us.
-- **Implying official affiliation, partnership, or endorsement** where none exists.
-- **Using the logo** as the mark of your own product.
+- Өөрийн салбарлалт, бүтээгдэхүүн, апп, үйлчилгээг "Дархай" нэр буюу логогоор
+  брэнджүүлж, түүнийг Дархай өөрөө мөн гэх, эсвэл албан ёсоор батламжлагдсан
+  мэт ойлголт төрүүлэх.
+- Байхгүй албан ёсны хамтын ажиллагаа, түншлэл, батламжийг байгаа мэт харуулах.
+- Логог өөрийн бүтээгдэхүүний тэмдэг болгон ашиглах.
 
-If you fork and ship your own thing, **give it your own name and logo.** You can
-absolutely say it's based on Wayland - just don't call it Wayland. Same rule every
-open-core project runs (GitLab, Grafana, Ghost, Discourse).
+Салбарлаад өөрийн бүтээгдэхүүн гаргаж байгаа бол **өөрийн нэр, логотой** гаргана
+уу. "Дархай дээр суурилсан" гэж хэлж болно — зөвхөн "Дархай" гэж бүү нэрлээрэй.
 
-## Scope - and a tip of the hat
+Холбоо барих: **sergei10a@gmail.com**
 
-This mark covers Wayland in the field of **AI agent software**, and that's the only
-field we care about it in. The name comes from Wayland the Smith - the master
-craftsman of Norse and Germanic legend who could forge anything - which fits a house
-of forge-themed tools rather than a coincidence borrowed from elsewhere.
+---
 
-A friendly tip of the hat to the **Wayland display server protocol** and
-freedesktop.org: different project, different world, no affiliation either way.
+## Хамааралгүй байдлын мэдэгдэл (Non-affiliation notice)
 
-We have no interest in policing community, educational, or good-faith use. This
-policy exists to stop confusion and impersonation - not to chill the ecosystem.
+"Wayland" нэр болон Wayland лого нь **Ferrox Labs**-ийн барааны тэмдэг юм.
+Дархай (Darhai) нь Ferrox Labs-ийн AGPL лицензээр нийтэлсэн Wayland-ийн эх
+кодод суурилсан **бие даасан салбарлалт** бөгөөд Ferrox Labs-тай ямар ч
+хамааралгүй, Ferrox Labs-ээр батламжлагдаагүй болно. Мөн Дархай нь
+freedesktop.org-ийн Wayland дэлгэцийн протоколтой ямар ч холбоогүй.
 
-## Asking permission
-
-Want to use the name or logo in a way that isn't covered above - a integration
-badge, a meetup, a "Powered by Wayland" mark, a commercial offering that leans on
-the brand? Just ask. We're friendly and we say yes to most reasonable requests.
-
-Contact: **sean@tradecanyon.com** (Ferrox Labs)
+> **English:** "Wayland" and the Wayland logo are trademarks of Ferrox Labs;
+> Darhai is an independent fork based on the AGPL-licensed source code and is
+> not affiliated with or endorsed by Ferrox Labs.

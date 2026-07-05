@@ -195,7 +195,7 @@ Detailed rules and guidelines are organized into Skills for better modularity:
 
 This repo runs a PR automation agent that periodically processes open PRs (review, fix, merge).
 
-- **How it runs**: `scripts/pr-automation.sh` runs as a daemon with a 30-second interval per cycle; logs default to `~/Library/Logs/Wayland/` and can be overridden via `LOG_DIR=...`
+- **How it runs**: `scripts/pr-automation.sh` runs as a daemon with a 30-second interval per cycle; logs default to `~/Library/Logs/Darhai/` and can be overridden via `LOG_DIR=...`
 - **State tracking**: via `bot:*` labels (`bot:reviewing`, `bot:fixing`, `bot:ready-to-fix`, `bot:ci-waiting`, `bot:needs-human-review`, `bot:ready-to-merge`, `bot:done`)
 - **Details**: [docs/contributing/pr-automation.md](docs/contributing/pr-automation.md)
 

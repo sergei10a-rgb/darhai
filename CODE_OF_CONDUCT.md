@@ -1,67 +1,69 @@
-# Code of Conduct
+# Хамтын нийгэмлэгийн ёс зүйн дүрэм
 
-## Our pledge
+## Бидний амлалт
 
-We — members, contributors, and maintainers of Wayland — pledge to make
-participation in our community a harassment-free experience for everyone,
-regardless of age, body size, visible or invisible disability, ethnicity, sex
-characteristics, gender identity and expression, level of experience,
-education, socio-economic status, nationality, personal appearance, race,
-religion, or sexual identity and orientation.
+Бид — Дархай (Darhai) төслийн гишүүд, хувь нэмэр оруулагчид, арчлагчид — нас,
+биеийн онцлог, ил болон далд хөгжлийн бэрхшээл, үндэс угсаа, хүйсийн шинж,
+хүйсийн баримжаа ба илэрхийлэл, туршлагын түвшин, боловсрол, нийгэм-эдийн
+засгийн байдал, иргэншил, гадаад төрх, арьсны өнгө, шашин шүтлэг, бэлгийн
+чиг баримжаанаас үл хамааран хэн бүхэнд дарамтгүй орчинд оролцох боломжийг
+олгохоо амлаж байна.
 
-We pledge to act and interact in ways that contribute to an open, welcoming,
-diverse, inclusive, and healthy community.
+Бид нээлттэй, найрсаг, олон талт, хүртээмжтэй, эрүүл хамтын нийгэмлэгийг
+бүрдүүлэхэд чиглэсэн байдлаар харилцаж, үйлдэл хийхээ амлаж байна.
 
-## Our standards
+## Бидний хэм хэмжээ
 
-Examples of behavior that contributes to a positive environment:
+Эерэг орчинг бүрдүүлэхэд хувь нэмэр оруулдаг зан үйлийн жишээ:
 
-- Being respectful of differing opinions, viewpoints, and experiences
-- Giving and gracefully accepting constructive feedback
-- Taking responsibility, apologizing to those affected by our mistakes, and
-  learning from the experience
-- Focusing on what is best for the community
+- Өөр үзэл бодол, байр суурь, туршлагыг хүндэтгэх
+- Бүтээлч санал шүүмжийг өгөх, мөн даруухнаар хүлээж авах
+- Алдаагаа хүлээн зөвшөөрч, нөлөөлөлд өртсөн хүмүүсээс уучлалт гуйж,
+  туршлагаасаа суралцах
+- Хамтын нийгэмлэгийн нийтлэг сайн сайхныг эн тэргүүнд тавих
 
-Examples of unacceptable behavior:
+Хүлээн зөвшөөрөхгүй зан үйлийн жишээ:
 
-- Sexualized language or imagery, and sexual attention or advances of any kind
-- Trolling, insulting or derogatory comments, and personal or political attacks
-- Public or private harassment
-- Publishing others' private information (physical or email address) without
-  explicit permission
-- Spamming the issue tracker, Discord, or community channels
-- Other conduct which could reasonably be considered inappropriate in a
-  professional setting
+- Бэлгийн агуулгатай үг хэллэг, дүрслэл ашиглах, аливаа хэлбэрийн бэлгийн
+  дарамт үзүүлэх
+- Өдөөн хатгах (троллинг), доромжлох, гутаан доромжилсон сэтгэгдэл бичих, хувь хүн рүү болон
+  улс төрийн шинжтэй дайралт хийх
+- Нийтийн болон хувийн орчинд дарамтлах
+- Бусдын хувийн мэдээллийг (гэрийн болон и-мэйл хаяг гэх мэт) зөвшөөрөлгүйгээр
+  нийтлэх
+- Issue tracker болон хамтын нийгэмлэгийн сувгуудыг спамдах
+- Мэргэжлийн орчинд зохисгүй гэж үзэж болох бусад үйлдэл
 
-## Scope
+## Хамрах хүрээ
 
-This Code of Conduct applies within all community spaces — the GitHub
-repository (issues, pull requests, discussions), the Wayland Discord server,
-and any space where someone represents the project — and also applies when an
-individual is officially representing the community in public spaces.
+Энэхүү ёс зүйн дүрэм нь хамтын нийгэмлэгийн бүх орон зайд — GitHub репозитор
+(issue, pull request, discussions) болон хэн нэгэн төслийг төлөөлж буй аливаа
+орчинд — үйлчилнэ. Мөн хувь хүн хамтын нийгэмлэгийг олон нийтийн өмнө албан
+ёсоор төлөөлж байх үед нэгэн адил үйлчилнэ.
 
-## Enforcement
+## Хэрэгжилт
 
-This is a small, free, open-source project run by a tiny team. We enforce this
-Code of Conduct pragmatically and in good faith.
+Энэ бол цөөн хүнтэй багийн хөгжүүлдэг жижиг, үнэгүй, нээлттэй эхийн төсөл.
+Бид энэхүү дүрмийг бодитой, шударга байдлаар хэрэгжүүлнэ.
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported to the maintainers at **sean@tradecanyon.com**. All complaints will be
-reviewed and investigated promptly and fairly. Maintainers are obligated to
-respect the privacy and security of the reporter of any incident.
+Доромжилсон, дарамталсан болон бусад хүлээн зөвшөөрөхгүй зан үйлийг
+**sergei10a@gmail.com** хаягаар арчлагчид мэдээлж болно. Бүх гомдлыг цаг
+алдалгүй, шударгаар хянан шийдвэрлэнэ. Арчлагчид мэдээлэгчийн нууцлал,
+аюулгүй байдлыг хамгаалах үүрэгтэй.
 
-Maintainers will follow these guidelines in determining consequences:
+Арчлагчид хариуцлага тооцохдоо дараах удирдамжийг баримтална:
 
-1. **Correction** — a private warning and clarity about the violation.
-2. **Warning** — consequences for continued behavior; a period of no
-   interaction with those involved.
-3. **Temporary ban** — a temporary ban from community interaction.
-4. **Permanent ban** — for a pattern of violation or egregious behavior.
+1. **Залруулга** — хувийн сануулга өгч, зөрчлийн талаар тодорхой тайлбарлана.
+2. **Анхааруулга** — зан үйл үргэлжилбэл хариуцлага тооцох ба холбогдох
+   хүмүүстэй тодорхой хугацаанд харилцахыг хориглоно.
+3. **Түр хориг** — хамтын нийгэмлэгийн харилцаанаас түр хугацаагаар хасна.
+4. **Бүрмөсөн хориг** — зөрчил давтагдсан буюу ноцтой тохиолдолд бүрмөсөн
+   хасна.
 
-## Attribution
+## Эх сурвалж
 
-This Code of Conduct is adapted from the [Contributor Covenant][homepage],
-version 2.1, available at
+Энэхүү ёс зүйн дүрмийг [Contributor Covenant][homepage]-ийн 2.1 хувилбараас
+хөрвүүлэн боловсруулав:
 https://www.contributor-covenant.org/version/2/1/code_of_conduct.html.
 
 [homepage]: https://www.contributor-covenant.org

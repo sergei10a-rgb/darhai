@@ -1,8 +1,8 @@
-# Wayland Code Review Style Guide
+# Darhai Code Review Style Guide
 
 ## Overview
 
-This document defines the coding standards and best practices for the Wayland project. The AI code reviewer should use these guidelines when reviewing pull requests.
+This document defines the coding standards and best practices for the Darhai project. The AI code reviewer should use these guidelines when reviewing pull requests.
 
 ## Technology Stack
 

@@ -1,5 +1,14 @@
-# Security
+# Аюулгүй байдал
 
-## Auto-update integrity
+## Эмзэг байдал мэдээлэх
 
-Auto-update `.deb` verification currently relies on GitHub release authentication + HTTPS download integrity. GPG-signed `.deb.sig` artifacts are tracked for the **v0.1.3+ release-infra chain** (requires a long-lived signing key plus a CI signing job, out-of-scope for v0.1.2-safety). See `src/process/services/autoUpdaterService.ts` for the download site where the GPG verification hook will be installed.
+Аюулгүй байдлын эмзэг байдал илрүүлсэн бол олон нийтэд нээлттэй issue **бүү** нээгээрэй. Дараах сувгуудын аль нэгээр нууцлалтайгаар мэдээлнэ үү:
+
+- **GitHub Security Advisories** (санал болгож буй арга): [Хувийн зөвлөмж илгээх](https://github.com/sergei10a-rgb/darhai/security/advisories/new)
+- **И-мэйл**: <sergei10a@gmail.com>
+
+Мэдээлэлдээ нөлөөлөлд өртсөн хувилбар, асуудлыг давтах алхмууд, болзошгүй нөлөөллийг багтаана уу. Хүлээн авсан мэдээллийг аль болох түргэн хугацаанд хянаж хариу өгнө.
+
+## Автомат шинэчлэлтийн бүрэн бүтэн байдал
+
+Автомат шинэчлэлтийн `.deb` баталгаажуулалт одоогоор GitHub release-ийн нэвтрэлт + HTTPS татацын бүрэн бүтэн байдалд тулгуурладаг. GPG-гарын үсэгтэй `.deb.sig` артефактууд **v0.1.3+ release-infra гинж**-д төлөвлөгдсөн (урт хугацааны signing түлхүүр болон CI signing job шаардлагатай тул v0.1.2-safety-ийн хамрах хүрээнээс гадуур). GPG баталгаажуулалтын hook суурилагдах татацын байршлыг `src/process/services/autoUpdaterService.ts` файлаас үзнэ үү.

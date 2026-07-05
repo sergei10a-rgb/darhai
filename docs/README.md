@@ -1,33 +1,31 @@
-# Wayland Docs
+# Дархайн баримт бичиг
 
-Documentation is organized by reader intent, not by document type.
+Баримт бичгийг баримтын төрлөөр бус, уншигчийн зорилгоор нь ангилсан.
 
-| Directory                       | For whom                 | What lives here                                                                                                               |
-| ------------------------------- | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| [`guides/`](guides)             | Users & operators        | How to deploy, test, and run the product. Server deployment, WebUI, Hub testing, CDP debugging.                               |
-| [`contributing/`](contributing) | Contributors             | Dev environment setup, file-structure conventions, PR automation workflow.                                                    |
-| [`architecture/`](architecture) | Engineers & architects   | System architecture overview, subsystem deep-dives (ACP, queue, team mode), and supporting research notes.                    |
-| [`specs/`](specs)               | Engineering-driven specs | Feature design docs, requirements, implementation plans (ACP rewrite, extension market, remote agent, wake prompt, PR notes). |
-| [`prds/`](prds)                 | Product team             | Formal Product Requirement Documents maintained by the product team. **Do not reorganize without their consent.**             |
-| [`readme/`](readme)             | Global users             | Translated copies of the root `readme.md` (Chinese, Japanese, Korean, Spanish, etc.).                                         |
-| [`audit/`](audit)               | Engineers & operators    | Versioned audit reports - security, performance, reliability, smoke-flow, dep-hygiene, threat-model. With screenshots.        |
+| Хавтас                          | Хэнд зориулагдсан        | Юу багтсан                                                                                                    |
+| ------------------------------- | ------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| [`guides/`](guides)             | Хэрэглэгч, операторууд   | Бүтээгдэхүүнийг ашиглах, байршуулах, турших зааврууд: хэрэглэгчийн гарын авлага, сервер байршуулалт, WebUI, Hub тест, CDP дебаг. |
+| [`contributing/`](contributing) | Хувь нэмэр оруулагчид    | Хөгжүүлэлтийн орчны тохиргоо, файлын бүтцийн дүрэм, PR автоматжуулалтын урсгал.                                 |
+| [`architecture/`](architecture) | Инженер, архитекторууд   | Системийн архитектурын тойм, дэд системийн задаргаа (ACP, queue, team mode) болон судалгааны тэмдэглэлүүд.       |
+| [`legal/`](legal)               | Бүх уншигч               | Гуравдагч талын лиценз болон attribution мэдэгдлүүд.                                                            |
 
-## Quick pointers
+## Түргэн заалтууд
 
-- New to the project? Start with [`architecture/overview.md`](architecture/overview.md).
-- Setting up a dev environment? See [`contributing/development.md`](contributing/development.md).
-- Writing code? The entry point for code-style, linting, formatting, and commit rules is [`AGENTS.md`](../AGENTS.md) at the repo root.
-- Deploying a server? [`guides/deploy-server.md`](guides/deploy-server.md).
+- Дархайтай шинээр танилцаж байна уу? [«Танилцуулга»](introduction.md)-аас эхэлнэ үү.
+- Аппыг хэрхэн ашиглах вэ? [«Хэрэглэгчийн гарын авлага»](guides/user-manual.md).
+- Кодын бүтэцтэй танилцах уу? [`architecture/overview.md`](architecture/overview.md)-ээс эхэлнэ үү.
+- Хөгжүүлэлтийн орчин тохируулах уу? [`contributing/development.md`](contributing/development.md).
+- Код бичих гэж байна уу? Кодын стиль, lint, форматлалт, commit дүрмийн эхлэл цэг нь репогийн үндсэн [`AGENTS.md`](../AGENTS.md).
+- Сервер байршуулах уу? [`guides/deploy-server.md`](guides/deploy-server.md).
+- Төслийн цаашдын төлөвлөгөө? [`ROADMAP.md`](ROADMAP.md).
+- Аюулгүй байдлын асуудал мэдээлэх үү? [`SECURITY.md`](SECURITY.md).
 
-## Where to put new docs
+## Шинэ баримтыг хаана байрлуулах вэ
 
-| Content type                                               | Destination                 |
-| ---------------------------------------------------------- | --------------------------- |
-| User/ops-facing how-to                                     | `guides/`                   |
-| Contributor convention, workflow, or tooling rule          | `contributing/`             |
-| System or subsystem design, technical analysis             | `architecture/`             |
-| Exploratory research, analysis reports                     | `architecture/research/`    |
-| Feature requirements / design drafts driven by engineering | `specs/<feature-name>/`     |
-| Formal PRD owned by product team                           | `prds/` (coordinate first)  |
-| README translation                                         | `readme/readme_<locale>.md` |
-| Audit report (security/perf/reliability/etc.)              | `audit/`                    |
+| Контентын төрөл                                        | Байршил                  |
+| ------------------------------------------------------ | ------------------------ |
+| Хэрэглэгч/операторт зориулсан заавар                   | `guides/`                |
+| Хувь нэмэр оруулагчийн дүрэм, урсгал, хэрэгслийн журам | `contributing/`          |
+| Систем, дэд системийн дизайн, техникийн шинжилгээ      | `architecture/`          |
+| Судалгаа, шинжилгээний тайлан                          | `architecture/research/` |
+| Лиценз, эрх зүйн мэдэгдэл                              | `legal/`                 |

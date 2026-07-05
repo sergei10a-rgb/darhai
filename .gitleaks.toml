@@ -1,11 +1,11 @@
-# Gitleaks configuration for Wayland.
+# Gitleaks configuration for Darhai.
 #
 # Extends the default ruleset. The allowlist below covers values that a scan
 # flags but which were manually reviewed and confirmed NON-SECRET: documentation
 # placeholders, teaching examples in skill content, and dummy keys in unit-test
 # fixtures. Real provider credentials are never committed (keys live in the OS
 # keychain at runtime). Reviewed 2026-06-06 against the full pushable history.
-title = "Wayland gitleaks config"
+title = "Darhai gitleaks config"
 
 [extend]
 useDefault = true
@@ -16,11 +16,11 @@ description = "Reviewed documentation placeholders, skill teaching examples, and
 # Literal placeholders / obviously-fake dummy values used in docs and tests.
 regexes = [
   '''YOUR_API_KEY''',
-  '''claude-3-5-sonnet''',          # a model name, not a key
-  '''sk-proj-abc123''',             # test fixture dummy
-  '''test-fal-key-abc123''',        # test fixture dummy
-  '''T3BlbkFJabcdefghijklmnopqrst''',# test fixture dummy OpenAI key marker
-  '''\.valid\.sig''',               # test fixture dummy JWT signature
+  '''claude-3-5-sonnet''', # a model name, not a key
+  '''sk-proj-abc123''', # test fixture dummy
+  '''test-fal-key-abc123''', # test fixture dummy
+  '''T3BlbkFJabcdefghijklmnopqrst''', # test fixture dummy OpenAI key marker
+  '''\.valid\.sig''', # test fixture dummy JWT signature
 ]
 
 # Documentation and skill-content paths whose examples are intentional and
