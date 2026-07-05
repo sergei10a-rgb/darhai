@@ -5,7 +5,7 @@
   },
   "pitch": {
     "headline": "Sizi takip eden bellek",
-    "lede": "Wayland; üzerinde çalıştığınız, karar verdiğiniz ve yayınladığınız şeyleri hatırlar. Her asistan bağlamı alır -- yeniden açıklamanıza gerek kalmaz. Ferrox Labs tarafından geliştirilen açık kaynaklı bellek motoru IJFW ile çalışır.",
+    "lede": "Darhai; üzerinde çalıştığınız, karar verdiğiniz ve yayınladığınız şeyleri hatırlar. Her asistan bağlamı alır -- yeniden açıklamanıza gerek kalmaz. Ferrox Labs tarafından geliştirilen açık kaynaklı bellek motoru IJFW ile çalışır.",
     "bullet1": "Sohbetler, projeler ve CLI'lar arasında kalıcı",
     "bullet2": "Aranabilir, dışa aktarılabilir, size ait",
     "bullet3": "Kurulumdan sonra sıfır ayar",
@@ -23,7 +23,7 @@
   "brand": {
     "tagline": "IJFW Memory by Ferrox Labs",
     "footer": "IJFW (açık kaynak) tarafından sağlanmıştır, Ferrox Labs",
-    "github_link": "github.com/FerroxLabs/ijfw"
+    "github_link": "IJFW GitHub"
   },
   "installing": {
     "title": "Bellek yükleniyor",
@@ -37,7 +37,7 @@
   "upgrading": {
     "title": "Bellek yükseltiliyor",
     "subtitle": "{{version}} sonraki başlatma için hazırlanıyor",
-    "pending_message": "Yükseltme hazır. Wayland yeniden başlatıldığında etkinleşecek.",
+    "pending_message": "Yükseltme hazır. Darhai yeniden başlatıldığında etkinleşecek.",
     "restart_now": "Şimdi yeniden başlat"
   },
   "failed": {
@@ -45,7 +45,7 @@
     "retry": "Yeniden dene",
     "details_toggle": "Ayrıntıları göster",
     "details_hide": "Ayrıntıları gizle",
-    "support_link": "Yardım için github.com/FerroxLabs/ijfw adresini ziyaret edin"
+    "support_link": "IJFW engine help: github.com/FerroxLabs/ijfw"
   },
   "error": {
     "spawn_error": "Yükleyici başlatılamadı. npm'in PATH'inizde olduğundan emin olun.",
@@ -53,11 +53,11 @@
     "invalid_target_version": "Kayıt defterinden geçersiz bir sürüm numarası geldi. Daha sonra yeniden deneyin.",
     "unsafe_ownership": "Bekleyen kurulum klasörünün sahipliği güvenli olmadığı için reddedildi. Kurtarmak için yeniden yükleyin.",
     "stage_pending_failed": "Yeni kurulum hazırlanamadı. Disk alanını kontrol edip yeniden deneyin.",
-    "stage_swap_failed": "Yeni kuruluma geçilemedi. Yeniden denemek için Wayland'i yeniden başlatın.",
+    "stage_swap_failed": "Yeni kuruluma geçilemedi. Yeniden denemek için Darhai'i yeniden başlatın.",
     "upgrade_failed_no_rollback": "Yükseltme başarısız oldu ve önceki sürüm geri yüklenemedi. Kurtarmak için yeniden yükleyin.",
     "upgrade_failed_rolled_back": "Yükseltme başarısız oldu ancak önceki sürümünüz çalışmaya devam ediyor. Daha sonra yeniden deneyin veya ayrıntılara bakın.",
     "rollback_also_failed": "Hem yeni sürüm hem de geri alma başarısız oldu. Kurtarmak için yeniden yükleyin.",
-    "mcp_crashed": "Bellek çöktü. Kurtarmak için Wayland'i yeniden başlatın.",
+    "mcp_crashed": "Bellek çöktü. Kurtarmak için Darhai'i yeniden başlatın.",
     "mcp_error": "Bellek bir hata döndürdü. Yeniden deneyin.",
     "timeout": "Bellek zamanında yanıt vermedi. Yeniden deneyin.",
     "validation_failed": "Bu istek, Belleğin beklediği biçime uymadı.",
@@ -97,15 +97,15 @@
   "settings": {
     "panel_title": "IJFW Memory (Ferrox Labs)",
     "skip_label": "IJFW otomatik kurulumu atla",
-    "skip_description": "Etkin olduğunda Wayland, IJFW'yi yüklemez veya yükseltmez. Daha sonra Bellek sayfası üzerinden elle yükleyebilirsiniz.",
+    "skip_description": "Etkin olduğunda Darhai, IJFW'yi yüklemez veya yükseltmez. Daha sonra Bellek sayfası üzerinden elle yükleyebilirsiniz.",
     "manual_install_hint": "Elle yüklemek için bir terminalde `npx -y @ijfw/install@latest` komutunu çalıştırın",
     "about_title": "IJFW Memory",
     "about_body": "Ferrox Labs tarafından geliştirilen açık kaynaklı kalıcı bellek motoru."
   },
   "prelude": {
     "installing_notice": "IJFW yükleniyor. Harici CLI'lar (Claude Code, Codex, Gemini CLI) kurulum tamamlandıktan sonra bunu algılayacak.",
-    "disabled_notice": "IJFW, Wayland Ayarları'nda devre dışı. Harici CLI'larla bellek paylaşmak için yeniden etkinleştirin.",
-    "failed_notice": "IJFW kurulumu başarısız oldu. Yeniden denemek için Wayland'deki Bellek sayfasını ziyaret edin."
+    "disabled_notice": "IJFW, Darhai Ayarları'nda devre dışı. Harici CLI'larla bellek paylaşmak için yeniden etkinleştirin.",
+    "failed_notice": "IJFW kurulumu başarısız oldu. Yeniden denemek için Darhai'deki Bellek sayfasını ziyaret edin."
   },
   "home": {
     "wiki_title": "Wiki",
@@ -169,7 +169,9 @@
         "autoSync": "30 dakikada bir otomatik senkronizasyon",
         "lastSync": "son senkronizasyon {{when}} önce"
       },
-      "emergingLabel": "Gelişen"
+      "emergingLabel": "Gelişen",
+      "viewToggleLabel": "Görünüm değiştirme",
+      "topicFilterLabel": "Konu filtresi"
     },
     "orphan": {
       "references": "{{count}} başvuru",
@@ -212,7 +214,8 @@
       "statusLastSync": "son senkronizasyon {{when}} önce",
       "loading": "Yükleniyor…",
       "notFound": "Kavram bulunamadı.",
-      "notFoundBack": "← Wiki'ye dön"
+      "notFoundBack": "← Wiki'ye dön",
+      "backLabel": "Wiki'ye dön"
     },
     "list_empty": "Henüz wiki kaydı yok. Başlamak için bir anıyı yükseltin.",
     "select_prompt": "İçeriğini görüntülemek için bir kayıt seçin.",
@@ -224,7 +227,8 @@
     "export_queued": "Dışa aktarma sıraya alındı -- indirme özelliği yakında geliyor",
     "export_err": "Kayıt dışa aktarılamadı",
     "share_ok": "README paylaşımı sıraya alındı",
-    "share_err": "README paylaşılamadı"
+    "share_err": "README paylaşılamadı",
+    "graphLabel": "Bilgi grafiği"
   },
   "crossProject": {
     "scope_label_app": "Arama kapsamı: tüm projeler (uygulama kapsamı)",
@@ -388,7 +392,8 @@
       "formula_recency": "+15 depolanma süresi 24 saatten azsa (30 günde doğrusal azalır)",
       "save_btn": "Kaydet",
       "cancel_btn": "İptal",
-      "save_success": "Kaydedildi"
+      "save_success": "Kaydedildi",
+      "save_error": "Ayarlar kaydedilemedi"
     },
     "errors": {
       "load_failed": "Bellek yüklenemedi. {{reason}}",
@@ -432,13 +437,30 @@
       },
       "dropFolder": {
         "title": "Klasöre bırak",
-        "hint": ".md / .txt / .json dosyalarını ~/Documents/Wayland-Memory/ içine bırakın",
+        "hint": ".md / .txt / .json dosyalarını ~/Documents/Darhai-Memory/ içine bırakın",
         "count": "{{count}} dosya işlendi",
         "openBtn": "Klasörü aç",
         "processBtn": "Şimdi işle",
         "success": "{{count}} dosya işlendi · {{errors}} hata",
         "error": "İşleme başarısız oldu. Tekrar deneyin."
       }
+    },
+    "regionLabel": "Bellek arşivi",
+    "composer": {
+      "title": "Her şeyi hatırla…",
+      "placeholder": "Hatırlatmanızı yazın… (markdown olur)",
+      "errorEmpty": "İçerik boş olamaz.",
+      "errorTooLong": "İçerik {{max}} karakter sınırını aşıyor.",
+      "errorUnknown": "Kaydedilemedi.",
+      "toastSaved": "Hatırlatma kaydedildi",
+      "addTag": "Etiket ekle",
+      "tagPlaceholder": "etiket…",
+      "removeTag": "{{tag}} etiketini kaldır",
+      "dropZone": "veya almak için bir dosya bırakın",
+      "dropZoneLabel": "Almak için bir dosya bırakın",
+      "hint": "hatırlamak için",
+      "submit": "Hatırla",
+      "charCount": "{{count}} karakter"
     }
   }
 }

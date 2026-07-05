@@ -45,7 +45,7 @@
     "title": "{{vendor}} verbinden - OAuth-Anmeldedaten einfügen",
     "submit": "Speichern & anmelden",
     "cancel": "Abbrechen",
-    "universalIntro": "{{vendor}} erlaubt Wayland nicht, automatisch einen OAuth-Client zu registrieren. Registrieren Sie eine OAuth-App in der Entwicklerkonsole des Anbieters und fügen Sie die Anmeldedaten unten ein.",
+    "universalIntro": "{{vendor}} erlaubt Darhai nicht, automatisch einen OAuth-Client zu registrieren. Registrieren Sie eine OAuth-App in der Entwicklerkonsole des Anbieters und fügen Sie die Anmeldedaten unten ein.",
     "openConsole": "{{vendor}}-Entwicklerkonsole öffnen",
     "redirectLabel": "Redirect-URI zum Einfügen in die Anbieterkonsole:",
     "clientIdLabel": "Client ID",
@@ -53,5 +53,16 @@
     "clientSecretLabel": "Client Secret",
     "clientSecretPlaceholder": "Fügen Sie das client_secret ein",
     "saveFailed": "Anmeldedaten konnten nicht gespeichert werden: {{error}}"
+  },
+  "maintainer": {
+    "official": "Offiziell",
+    "community": "Community",
+    "wayland": "Von Darhai entwickelt"
+  },
+  "verifiedPill": "Von Darhai verifiziert",
+  "browse": {
+    "title": "MCP-Bibliothek",
+    "subtitle": "Kuratierte Konnektoren. Stöbern, mit einem Klick installieren und der Einrichtungsanleitung folgen.",
+    "searchPlaceholder": "MCPs durchsuchen…"
   }
 }

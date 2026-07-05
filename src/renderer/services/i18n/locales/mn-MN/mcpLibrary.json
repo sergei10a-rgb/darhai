@@ -45,13 +45,24 @@
     "title": "{{vendor}} холбох - OAuth итгэмжлэлийг буулгана уу",
     "submit": "Хадгалж нэвтрэх",
     "cancel": "Цуцлах",
-    "universalIntro": "{{vendor}} нь Дархай-д OAuth клиентийг автоматаар бүртгэхийг зөвшөөрдөггүй. Үйлдвэрлэгчийн хөгжүүлэгчийн консол дээр OAuth апп бүртгэж, доорх итгэмжлэлийг буулгана уу.",
+    "universalIntro": "{{vendor}} нь Дархайд OAuth клиентийг автоматаар бүртгэхийг зөвшөөрдөггүй. Нийлүүлэгчийн хөгжүүлэгчийн консол дээр OAuth апп бүртгэж, доорх итгэмжлэлийг буулгана уу.",
     "openConsole": "{{vendor}} хөгжүүлэгчийн консол нээх",
-    "redirectLabel": "Үйлдвэрлэгчийн консол дээр буулгах Redirect URI:",
+    "redirectLabel": "Нийлүүлэгчийн консол дээр буулгах Redirect URI:",
     "clientIdLabel": "Клиент ID",
-    "clientIdPlaceholder": "Үйлдвэрлэгчийн консолоос client_id-г буулгана уу",
+    "clientIdPlaceholder": "Нийлүүлэгчийн консолоос client_id-г буулгана уу",
     "clientSecretLabel": "Клиент нууц түлхүүр",
     "clientSecretPlaceholder": "client_secret-г буулгана уу",
     "saveFailed": "Итгэмжлэлийг хадгалж чадсангүй: {{error}}"
+  },
+  "maintainer": {
+    "official": "Албан ёсны",
+    "community": "Нийгэмлэг",
+    "wayland": "Дархай бүтээв"
+  },
+  "verifiedPill": "Дархай баталгаажуулсан",
+  "browse": {
+    "title": "MCP сан",
+    "subtitle": "Шалгарсан холбогчид. Үзээд, нэг товшилтоор суулгаж, тохиргооны зааврыг дагаарай.",
+    "searchPlaceholder": "MCP хайх…"
   }
 }

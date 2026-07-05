@@ -16,7 +16,7 @@
     "clearWorkspace": "Видалити папку",
     "openFolder": "Відкрити папку",
     "none": "Немає",
-    "quickActionsTitle": "Що вміє Wayland?",
+    "quickActionsTitle": "Що вміє Darhai?",
     "quickActionFeedback": "Є відгуки або пропозиції?",
     "quickActionStar": "Подобається? Поставте нам зірку!"
   },
@@ -189,7 +189,10 @@
       "vscode": "VS Code",
       "terminal": "Термінал",
       "explorer": "Провідник"
-    }
+    },
+    "toggleLabel": "Показати/сховати робочу область",
+    "collapseLabel": "Згорнути робочу область",
+    "expandLabel": "Розгорнути робочу область"
   },
   "minimap": {
     "searchAria": "Пошук по діалогу",
@@ -330,5 +333,9 @@
       "sublabel": "Працює з вашим наявним входом у Claude Code — без додаткових ключів.",
       "action": "Використати"
     }
+  },
+  "openclaw": {
+    "runtimeCheckFailed": "Не вдалося перевірити середовище виконання агента",
+    "runtimeMismatch": "Перевірка зміни агента не вдалася: {{details}}"
   }
 }

@@ -5,7 +5,7 @@
   },
   "pitch": {
     "headline": "Une mémoire qui vous suit",
-    "lede": "Wayland se souvient de ce sur quoi vous avez travaillé, décidé et livré. Chaque assistant reçoit le contexte -- sans avoir à tout réexpliquer. Propulsé par IJFW, un moteur de mémoire open source de Ferrox Labs.",
+    "lede": "Darhai se souvient de ce sur quoi vous avez travaillé, décidé et livré. Chaque assistant reçoit le contexte -- sans avoir à tout réexpliquer. Propulsé par IJFW, un moteur de mémoire open source de Ferrox Labs.",
     "bullet1": "Persistante entre les discussions, les projets et les CLI",
     "bullet2": "Cherchable, exportable, à vous",
     "bullet3": "Aucune configuration après l'installation",
@@ -23,7 +23,7 @@
   "brand": {
     "tagline": "IJFW Memory par Ferrox Labs",
     "footer": "Propulsé par IJFW (open source) de Ferrox Labs",
-    "github_link": "github.com/FerroxLabs/ijfw"
+    "github_link": "IJFW GitHub"
   },
   "installing": {
     "title": "Installation de Memory",
@@ -37,7 +37,7 @@
   "upgrading": {
     "title": "Mise à jour de Memory",
     "subtitle": "Préparation de {{version}} pour le prochain démarrage",
-    "pending_message": "Mise à jour prête. Elle s'activera au redémarrage de Wayland.",
+    "pending_message": "Mise à jour prête. Elle s'activera au redémarrage de Darhai.",
     "restart_now": "Redémarrer maintenant"
   },
   "failed": {
@@ -45,7 +45,7 @@
     "retry": "Réessayer",
     "details_toggle": "Afficher les détails",
     "details_hide": "Masquer les détails",
-    "support_link": "Consultez github.com/FerroxLabs/ijfw pour obtenir de l'aide"
+    "support_link": "IJFW engine help: github.com/FerroxLabs/ijfw"
   },
   "error": {
     "spawn_error": "Impossible de lancer l'installateur. Vérifiez que npm est dans votre PATH.",
@@ -53,11 +53,11 @@
     "invalid_target_version": "Numéro de version invalide depuis le registre. Réessayez plus tard.",
     "unsafe_ownership": "Le dossier d'installation en attente a des droits de propriété non sûrs et a été rejeté. Réinstallez pour récupérer.",
     "stage_pending_failed": "Impossible de préparer la nouvelle installation. Vérifiez l'espace disque et réessayez.",
-    "stage_swap_failed": "Impossible de basculer vers la nouvelle installation. Redémarrez Wayland pour réessayer.",
+    "stage_swap_failed": "Impossible de basculer vers la nouvelle installation. Redémarrez Darhai pour réessayer.",
     "upgrade_failed_no_rollback": "La mise à jour a échoué et la version précédente n'a pas pu être restaurée. Réinstallez pour récupérer.",
     "upgrade_failed_rolled_back": "La mise à jour a échoué mais votre version précédente fonctionne toujours. Réessayez plus tard ou consultez les détails.",
     "rollback_also_failed": "La nouvelle version et la restauration ont toutes deux échoué. Réinstallez pour récupérer.",
-    "mcp_crashed": "Memory a planté. Redémarrez Wayland pour récupérer.",
+    "mcp_crashed": "Memory a planté. Redémarrez Darhai pour récupérer.",
     "mcp_error": "Memory a renvoyé une erreur. Réessayez.",
     "timeout": "Memory n'a pas répondu à temps. Réessayez.",
     "validation_failed": "Cette requête ne correspond pas à ce que Memory attend.",
@@ -97,15 +97,15 @@
   "settings": {
     "panel_title": "IJFW Memory (Ferrox Labs)",
     "skip_label": "Ignorer la configuration automatique d'IJFW",
-    "skip_description": "Lorsque cette option est activée, Wayland n'installera ni ne mettra à jour IJFW. Vous pourrez l'installer manuellement plus tard depuis la page Mémoire.",
+    "skip_description": "Lorsque cette option est activée, Darhai n'installera ni ne mettra à jour IJFW. Vous pourrez l'installer manuellement plus tard depuis la page Mémoire.",
     "manual_install_hint": "Pour installer manuellement : exécutez `npx -y @ijfw/install@latest` dans un terminal",
     "about_title": "IJFW Memory",
     "about_body": "Un moteur de mémoire persistante open source de Ferrox Labs."
   },
   "prelude": {
     "installing_notice": "IJFW est en cours d'installation. Les CLI externes (Claude Code, Codex, Gemini CLI) le prendront en charge une fois l'installation terminée.",
-    "disabled_notice": "IJFW est désactivé dans les Paramètres de Wayland. Réactivez-le pour partager la mémoire avec les CLI externes.",
-    "failed_notice": "L'installation d'IJFW a échoué. Rendez-vous sur la page Mémoire dans Wayland pour réessayer."
+    "disabled_notice": "IJFW est désactivé dans les Paramètres de Darhai. Réactivez-le pour partager la mémoire avec les CLI externes.",
+    "failed_notice": "L'installation d'IJFW a échoué. Rendez-vous sur la page Mémoire dans Darhai pour réessayer."
   },
   "home": {
     "wiki_title": "Wiki",
@@ -180,7 +180,9 @@
         "autoSync": "synchronisation auto toutes les 30 min",
         "lastSync": "dernière synchro il y a {{when}}"
       },
-      "emergingLabel": "Émergent"
+      "emergingLabel": "Émergent",
+      "viewToggleLabel": "Basculer la vue",
+      "topicFilterLabel": "Filtre par sujet"
     },
     "orphan": {
       "references": "{{count}} références",
@@ -223,8 +225,10 @@
       "statusLastSync": "dernière synchro il y a {{when}}",
       "loading": "Chargement…",
       "notFound": "Concept introuvable.",
-      "notFoundBack": "← Retour au Wiki"
-    }
+      "notFoundBack": "← Retour au Wiki",
+      "backLabel": "Retour au wiki"
+    },
+    "graphLabel": "Graphe de connaissances"
   },
   "crossProject": {
     "scope_label_app": "Recherche : tous les projets (portée application)",
@@ -388,7 +392,8 @@
       "formula_recency": "+15 si stocké il y a moins de 24 h (décroît linéairement sur 30 jours)",
       "save_btn": "Enregistrer",
       "cancel_btn": "Annuler",
-      "save_success": "Enregistré"
+      "save_success": "Enregistré",
+      "save_error": "Échec de l'enregistrement des paramètres"
     },
     "errors": {
       "load_failed": "Impossible de charger la mémoire. {{reason}}",
@@ -432,13 +437,30 @@
       },
       "dropFolder": {
         "title": "Dossier de dépôt",
-        "hint": "Déposez des fichiers .md / .txt / .json dans ~/Documents/Wayland-Memory/",
+        "hint": "Déposez des fichiers .md / .txt / .json dans ~/Documents/Darhai-Memory/",
         "count": "{{count}} fichiers traités",
         "openBtn": "Ouvrir le dossier",
         "processBtn": "Traiter maintenant",
         "success": "{{count}} fichiers traités · {{errors}} erreurs",
         "error": "Le traitement a échoué. Réessayez."
       }
+    },
+    "regionLabel": "Archive de mémoire",
+    "composer": {
+      "title": "Mémorisez n'importe quoi…",
+      "placeholder": "Saisissez votre mémo… (markdown OK)",
+      "errorEmpty": "Le contenu ne peut pas être vide.",
+      "errorTooLong": "Le contenu dépasse la limite de {{max}} caractères.",
+      "errorUnknown": "Échec de l'enregistrement.",
+      "toastSaved": "Mémo enregistré",
+      "addTag": "Ajouter une étiquette",
+      "tagPlaceholder": "étiquette…",
+      "removeTag": "Supprimer l'étiquette {{tag}}",
+      "dropZone": "ou déposez un fichier à importer",
+      "dropZoneLabel": "Déposez un fichier à importer",
+      "hint": "pour mémoriser",
+      "submit": "Mémoriser",
+      "charCount": "{{count}} caractères"
     }
   }
 }

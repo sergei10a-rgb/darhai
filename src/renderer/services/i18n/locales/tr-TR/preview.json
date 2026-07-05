@@ -112,12 +112,42 @@
     "printedToConsole": "Öğe bilgisi konsola yazıldı",
     "inspectElement": "Öğeyi İncele",
     "inspectElementEnable": "Öğe denetçisini etkinleştir",
-    "inspectElementDisable": "Öğe denetçisini devre dışı bırak"
+    "inspectElementDisable": "Öğe denetçisini devre dışı bırak",
+    "iframeTitle": "HTML önizleme"
   },
   "ppt": {
     "loading": "PPT önizlemesi başlatılıyor...",
     "installing": "Önizleme bileşeni yükleniyor...",
     "startFailed": "PPT önizlemesi başlatılamadı",
     "installHint": "officecli'nin yüklü olduğundan emin olun: npm run postinstall"
+  },
+  "markdownEditor": {
+    "toolbar": {
+      "heading1": "Başlık 1",
+      "heading2": "Başlık 2",
+      "heading3": "Başlık 3",
+      "bold": "Kalın (⌘B)",
+      "italic": "İtalik (⌘I)",
+      "strikethrough": "Üstü çizili",
+      "inlineCode": "Satır içi kod",
+      "bulletedList": "Madde işaretli liste",
+      "numberedList": "Numaralı liste",
+      "blockquote": "Alıntı",
+      "link": "Bağlantı",
+      "horizontalRule": "Yatay çizgi",
+      "undo": "Geri al (⌘Z)",
+      "redo": "Yinele (⌘⇧Z)",
+      "addBlockBelow": "Altına blok ekle",
+      "dragToReorder": "Sıralamak için sürükle"
+    },
+    "formattingLabel": "Markdown biçimlendirme",
+    "inlineFormattingLabel": "Satır içi biçimlendirme",
+    "linkPrompt": "Bağlantı URL'si (kaldırmak için boş bırakın)",
+    "placeholderHeading": "Başlık",
+    "placeholderEmpty": "Komutlar için '/' tuşuna basın veya yazmaya başlayın…"
+  },
+  "slashMenu": {
+    "label": "Eğik çizgi komutları",
+    "empty": "Eşleşen komut yok"
   }
 }

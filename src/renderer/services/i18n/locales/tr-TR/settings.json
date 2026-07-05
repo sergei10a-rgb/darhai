@@ -1,11 +1,206 @@
 {
+  "channelConflict": {
+    "title": "{{platform}} Channel Conflict Detected",
+    "headline": "OpenClaw is handling {{platform}} messages, not Дархай.",
+    "credsAlso": "Your {{platform}} bot credentials are also configured in OpenClaw. This means:",
+    "effectNoSwitch": "✗ Switching agents in Дархай will have no effect",
+    "effectProcessed": "✗ Messages are processed by OpenClaw's agent",
+    "effectStillWork": "✓ Messages still work (via OpenClaw)",
+    "toUse": "To use Дархай Channels and switch agents:",
+    "option1": "Option 1: Disable OpenClaw {{platform}} (Recommended)",
+    "option1Edit": "Edit:",
+    "option1Set": "Set:",
+    "option1Restart": "Then restart OpenClaw and Дархай.",
+    "option2": "Option 2: Use a different bot",
+    "option2Body": "Create a new {{platform}} bot with different credentials for Дархай.",
+    "option3": "Option 3: Keep using OpenClaw",
+    "option3Body": "Disable {{platform}} in Дархай Channels and continue using OpenClaw's integration.",
+    "helpDisable": "Help me disable OpenClaw {{platform}}",
+    "ignore": "Ignore (I know what I'm doing)",
+    "bannerText": "⚠️ OpenClaw {{platform}} conflict detected - Agent switching won't work.",
+    "learnMore": "Learn more"
+  },
+  "channelGuide": {
+    "title": "How to set up",
+    "slack": {
+      "step1": "Click \"Create New App\" then \"From scratch\". Name it and pick your workspace.",
+      "step1Link": "Open api.slack.com/apps",
+      "step2": "In the left nav open \"OAuth & Permissions\". Under Bot Token Scopes add chat:write, app_mentions:read, channels:history, channels:read, im:history, im:read, users:read. Then click \"Install to Workspace\" and copy the Bot User OAuth Token (starts with xoxb-).",
+      "step3": "Open \"Basic Information\" then App-Level Tokens then \"Generate Token and Scopes\". Add the connections:write scope and Generate. Copy the token (starts with xapp-).",
+      "step4": "In the left nav open \"Socket Mode\" and toggle Enable Socket Mode on.",
+      "step5": "Open \"Event Subscriptions\" and toggle it on. Under \"Subscribe to bot events\" add message.channels, message.im, app_mention, then Save. IMPORTANT: reinstall the app to the workspace after adding events, or events will not arrive.",
+      "step6": "Paste the Bot token (xoxb-) and App token (xapp-) here, choose transport Socket Mode, then Test & Enable.",
+      "step7": "Invite the bot to a channel with /invite @YourBot, or DM it."
+    },
+    "telegram": {
+      "step1": "In Telegram, open a chat with @BotFather.",
+      "step1Link": "Open @BotFather in Telegram",
+      "step2": "Send /newbot, then choose a name and a username ending in \"bot\".",
+      "step3": "BotFather replies with an HTTP API token (looks like 123456:ABC-DEF...). Copy it.",
+      "step4": "Paste the token here and Test & Enable. Then message your bot."
+    },
+    "discord": {
+      "step1": "Open the Discord developer portal and create a New Application. Name it.",
+      "step1Link": "Open discord.com/developers/applications",
+      "step2": "In the left nav open \"Bot\", then Reset/Copy Token. Copy the bot token.",
+      "step3": "On the same Bot page, enable BOTH privileged intents: \"Message Content Intent\" and \"Server Members Intent\". Save.",
+      "step4": "In the left nav open \"OAuth2\" then URL Generator. Scopes: bot. Bot permissions: Send Messages, Read Message History. Open the generated URL to invite the bot to your server.",
+      "step5": "Paste the bot token here and Test & Enable."
+    },
+    "emailImap": {
+      "step1": "Type your email address in IMAP User. Common providers (Gmail, Outlook, iCloud, Yahoo, Proton, Fastmail) auto-fill the host and ports.",
+      "step2": "You need an APP PASSWORD, not your normal login. It requires 2-Step Verification / 2FA enabled on the account first.",
+      "step2Gmail": "Gmail app passwords (enable 2-Step Verification first)",
+      "step2Outlook": "Outlook / Microsoft Advanced security options",
+      "step2Icloud": "iCloud App-Specific Passwords",
+      "step2Workspace": "Google Workspace admin: enable IMAP org-wide",
+      "step3": "Also enable IMAP in your mailbox if your provider has a toggle (Gmail: Settings then Forwarding and POP/IMAP then Enable IMAP).",
+      "step4": "Paste the app password into IMAP Password and Test & Enable. Replies go back to whoever emails the inbox."
+    },
+    "signal": {
+      "step1": "Install signal-cli: on macOS run `brew install signal-cli` (it pulls Java automatically).",
+      "step2": "Connect a number. Easiest is to LINK as a secondary device to your existing Signal: run `signal-cli link -n \"Darhai\"`, it prints a sgnl:// URI / QR; on your phone go to Signal then Settings then Linked Devices then + and scan it. (Alternatively register a fresh number with `signal-cli -a +1XXXXXXXXXX register` then `verify`.)",
+      "step3": "Enter your phone number in E.164 format (+1...) here, set cliPath only if signal-cli is not on PATH, then Test & Enable."
+    },
+    "whatsapp": {
+      "step1": "Pick a Backend. Easiest is Baileys (or WhatsApp Web.js): choose it, then scan the QR code with WhatsApp on your phone (Settings then Linked Devices then Link a Device). No tokens needed. Meta Business is for verified business accounts and templated messaging.",
+      "step2": "For the Meta Business backend (official WhatsApp Cloud API): in the Meta for Developers console create an app, add the WhatsApp product, then under WhatsApp then API Setup copy the temporary Access Token and the Phone Number ID. The form requires only Access Token and Phone Number ID; Business Account ID, Verify Token, and App Secret are optional (needed only if you wire Meta's webhook back).",
+      "step2Link": "Open Meta for Developers"
+    },
+    "smsTwilio": {
+      "step1": "In the Twilio Console, copy your Account SID and Auth Token from the dashboard.",
+      "step1Link": "Open console.twilio.com",
+      "step2": "Get a Twilio phone number (Phone Numbers then Manage then Buy a number) with SMS capability, in E.164 format (+1...). Or create a Messaging Service and use its SID.",
+      "step3": "Paste Account SID, Auth Token, and the From number (or Messaging Service SID) here.",
+      "step4": "Inbound SMS needs a public URL for Twilio's webhook. Enable the tunnel option (or paste your own https URL) and set that URL as the \"A Message Comes In\" webhook on your Twilio number."
+    },
+    "googleChat": {
+      "step1": "In Google Cloud Console, pick or create a project and enable the Google Chat API and Cloud Pub/Sub API.",
+      "step1Link": "Open Google Cloud Console",
+      "step2": "Create a service account, download its JSON key, and paste the JSON here.",
+      "step3": "For inbound with NO public URL, use Pub/Sub: create a Pub/Sub topic, grant chat-api-push@system.gserviceaccount.com the Pub/Sub Publisher role on it, create a pull subscription, and grant your service account the Pub/Sub Subscriber role on the subscription. In the Chat API Configuration then Connection settings, choose Cloud Pub/Sub and enter your topic. Set Inbound transport to \"Pub/Sub pull\" here and enter the subscription path.",
+      "step4": "Add the bot to a space or DM it."
+    },
+    "matrix": {
+      "step1": "Decide which homeserver hosts the bot. Use https://matrix.org for the public flagship server, or your own homeserver URL. The form pre-fills https://matrix.org.",
+      "step2": "Create a dedicated account for the bot on that homeserver (register a new user, e.g. @mybot). Its full Matrix ID, including the server suffix (e.g. @mybot:matrix.org), goes in the User ID (mxid) field.",
+      "step2Link": "Open app.element.io to register an account",
+      "step3": "Get an access token for that account. In Element: click the account name (top-left) then All settings then Help & About, scroll to Advanced and reveal Access Token. Copy it (starts with syt_).",
+      "step4": "Paste the Homeserver URL, User ID (mxid) and Access Token here, then Test & Enable. Invite the bot account to a room to talk to it."
+    },
+    "msTeams": {
+      "step1": "In the Azure Portal, create an Azure Bot resource (Create a resource then Azure Bot). Choose \"Multi Tenant\" or \"Single Tenant\" and let it create a Microsoft App ID.",
+      "step1Link": "Open the Azure Portal",
+      "step2": "Open the bot then Configuration to find the Microsoft App ID (a GUID). This is the App ID (MicrosoftAppId) field.",
+      "step3": "Open the app registration (Configuration then \"Manage Password\", or App Registrations then your app then Certificates & secrets) and create a New client secret. Copy the secret VALUE immediately. This is the App Password (Client Secret) field.",
+      "step4": "In the bot resource open Channels and add the \"Microsoft Teams\" channel. Copy the Inbound Webhook URL shown here and paste it as the bot Messaging endpoint in Azure (Configuration), so Teams delivers messages to Дархай.",
+      "step5": "Paste the App ID and Client Secret here and Test & Enable."
+    },
+    "line": {
+      "step1": "In the LINE Developers Console, create a provider, then create a channel with type \"Messaging API\".",
+      "step1Link": "Open the LINE Developers Console",
+      "step2": "Open the channel then Basic settings and copy the Channel secret. This is the Channel Secret field.",
+      "step3": "Open the Messaging API tab, scroll to \"Channel access token (long-lived)\" and click Issue. Copy it. This is the Channel Access Token field.",
+      "step4": "Paste both values here and Test & Enable. Then copy the Inbound Webhook URL shown here, paste it into the Messaging API tab's Webhook URL field, and turn \"Use webhook\" on (set the URL first, then enable). Add the bot as a friend via its QR code to chat."
+    },
+    "imessage": {
+      "step1": "This channel runs locally on this Mac and reads the Messages app database directly. It needs no tokens, but it does need macOS Full Disk Access. Sign in to iMessage in the Messages app first.",
+      "step2": "Grant Full Disk Access: open System Settings then Privacy & Security then Full Disk Access, and enable Darhai (toggle it on, restart the app if prompted).",
+      "step2Link": "Open Full Disk Access settings",
+      "step3": "Optionally set a Poll interval and an Allowed handles allowlist (phone numbers / emails to accept from; blank allows all). Then Test & Enable. Note: text only, attachments are dropped."
+    },
+    "lark": {
+      "step1": "Choose your Domain here: Feishu for mainland China (feishu.cn) or Lark for international (larksuite.com). Then open the matching developer console and create a \"Custom App\" (Enterprise self-built app).",
+      "step1Feishu": "Open Feishu Open Platform (China)",
+      "step1Lark": "Open Lark Developer (International)",
+      "step2": "Open the app then Credentials & Basic Info and copy the App ID (starts with cli_) and App Secret into the matching fields here.",
+      "step3": "Under Permissions & Scopes add the bot/messaging scopes (im:message, im:message.group_at_msg, im:chat), enable the Bot feature, then create and publish a version so the credentials become active.",
+      "step4": "Optional: if you enabled event encryption, copy the Encrypt Key and Verification Token from Event Subscriptions into the optional fields here. Then Test & Enable."
+    },
+    "dingtalk": {
+      "step1": "In the DingTalk Open Platform, go to Application Development then create an internal Enterprise app (DingTalk app).",
+      "step1Link": "Open DingTalk Open Platform",
+      "step2": "Open the app then Credentials & Basic Info and copy the Client ID (formerly AppKey) and Client Secret (formerly AppSecret) into the matching fields here.",
+      "step3": "Add a Bot to the app and select Stream Mode for receiving messages (no public URL needed). Under Version Management, create and publish a version to activate the credentials.",
+      "step4": "Paste Client ID and Client Secret here (Webhook Secret is optional) and Test & Enable."
+    },
+    "wechat": {
+      "step1": "This channel connects to personal WeChat by scanning a QR code. No developer app, AppID, or tokens are required.",
+      "step2": "Click \"Scan to Login\" here to show a QR code, then in WeChat on your phone tap the + (top-right) then Scan, and scan it to link this session.",
+      "step3": "Once connected, pick the Agent and Default Model for WeChat conversations. Keep this Mac online for the session to stay linked."
+    },
+    "wecom": {
+      "step1": "In the WeCom (WeChat Work) app, go to Workspace then Smart Robot then Create Robot then Manual Creation, and choose API Mode.",
+      "step1Link": "Open the WeCom admin console",
+      "step2": "Recommended: pick the \"Long Connection (WS)\" connection mode here. In the robot setup choose \"Use Long Connection (WebSocket)\", then copy its Bot ID and Secret into the Bot ID and Secret fields. No public URL is required.",
+      "step3": "Alternatively pick \"Encrypted Callback (Webhook)\" mode: set a Callback Token and a 43-character EncodingAESKey in the robot's callback config, copy the Callback URL shown here into that config, and enter your CorpID (Admin Console then My Company shows the CorpID at the bottom). Paste Token, EncodingAESKey, and CorpID here.",
+      "step4": "Test & Enable, then message the robot in WeCom."
+    },
+    "mattermost": {
+      "step1": "Enter your Mattermost Server URL (e.g. https://mattermost.example.com). For self-hosted servers, ensure Bot Accounts and Personal Access Tokens are enabled in the System Console (Integrations).",
+      "step2": "Create a bot account: System Console then Integrations then Bot Accounts then Add Bot Account. Give it a username and create it, then copy the Access Token it shows once (you cannot view it again).",
+      "step2Link": "Mattermost bot accounts documentation",
+      "step3": "Paste the Server URL and Access Token here. Team ID is optional (set it to scope the bot to one team). Then Test & Enable and add the bot to a channel."
+    },
+    "nextcloudTalk": {
+      "step1": "Enter the base URL of your Nextcloud instance (e.g. https://cloud.example.com). The Talk app must be installed on that Nextcloud.",
+      "step2": "Use a Nextcloud account for the bot (a dedicated user is recommended). Enter that account login name in the Username field.",
+      "step3": "Sign in to Nextcloud as that account and create an App Password: Settings then Personal then Security then Devices & sessions then \"Create new app password\". Copy it into the App Password field. Do not use the normal login password.",
+      "step3Link": "Nextcloud session/app-password management docs",
+      "step4": "Test & Enable, then add that account to a Talk conversation to chat with it."
+    },
+    "irc": {
+      "step1": "Enter the IRC Server (default irc.libera.chat) and Port (default 6697, with TLS on). Choose a Bot Nick.",
+      "step2": "Optional but recommended on Libera.Chat: register your nick so it is reserved. Connect once with that nick, then message NickServ: /msg NickServ REGISTER yourpassword your@email. Put that password in the optional Password field to log in via SASL/NickServ on connect.",
+      "step2Link": "Libera.Chat nick registration guide",
+      "step3": "Enter the Channels to join (comma-separated, e.g. #darhai-bots). Username and Real name are optional (they default to the nick). Then Test & Enable."
+    },
+    "nostr": {
+      "step1": "You need a Nostr private key (nsec) for the bot identity. Generate a fresh keypair in any Nostr client (Damus, Amethyst, Primal) or a key generator, and back up the nsec safely. Anyone with the nsec can post as the bot.",
+      "step1Link": "About Nostr keys (nsec / npub)",
+      "step2": "Paste the Private Key (nsec1... or 64-char hex) into the Private Key field.",
+      "step3": "Enter one or more Relays as comma-separated wss:// URLs (e.g. wss://relay.damus.io, wss://nos.lol). Optionally restrict who can message the bot via Allowed Senders (npub or hex). Then Test & Enable."
+    },
+    "twitch": {
+      "step1": "Decide which Twitch account the bot posts as (a dedicated bot account is recommended). Its Twitch username is the Bot Username field.",
+      "step2": "Generate a chat OAuth token for that account with the chat:read and chat:edit scopes (e.g. via twitchtokengenerator.com while logged in as the bot account). Copy the token into the OAuth Token field (an oauth: prefix or a bare token both work).",
+      "step2Link": "Open twitchtokengenerator.com",
+      "step3": "Enter the Channels to join (your channel names, comma-separated). Then Test & Enable.",
+      "step4": "Optional: to auto-refresh the chat token, register an app at the Twitch Developer Console and fill the advanced Client ID, Client Secret, and Refresh Token fields.",
+      "step4Link": "Open the Twitch Developer Console"
+    },
+    "synologyChat": {
+      "step1": "In the Synology Chat client (web or desktop), open the user-profile menu then Integration. You will create one Incoming webhook (replies go out) and one Outgoing webhook (messages come in).",
+      "step1Link": "Synology Chat integration docs",
+      "step2": "Create an Incoming Webhook, pick a channel, and copy its webhook URL into the Incoming Webhook URL field here (Дархай POSTs replies there).",
+      "step3": "Create an Outgoing Webhook. Copy the Inbound Webhook URL shown here into its \"URL\" field, then copy the Outgoing webhook's Token into the Webhook Token field here (used to verify inbound deliveries).",
+      "step4": "For a LAN NAS with a self-signed certificate, enable \"Allow self-signed certificate\". Then Test & Enable."
+    },
+    "bluebubbles": {
+      "step1": "On a Mac that is signed in to iMessage, install and run the BlueBubbles Server app. Complete its setup wizard.",
+      "step1Link": "BlueBubbles server setup guide",
+      "step2": "In the BlueBubbles Server app, set a Server Password (save it with the disk icon) and note the server address under Connection settings. For LAN use http://<mac-ip>:1234. For remote access, enable a proxy (Cloudflare Tunnel or ngrok) and use the URL it gives you.",
+      "step3": "Paste the Server URL and Server Password here and Test & Enable."
+    },
+    "webhook": {
+      "step1": "This is a generic HTTP channel. Enter the Outbound URL: the https endpoint of your own service that should receive the agent's replies (Дархай POSTs each reply there as JSON).",
+      "step2": "Optional: set an Outbound Secret. Дархай sends it so your service can verify the request is genuinely from Дархай.",
+      "step3": "Test & Enable. Then copy the Inbound Webhook URL shown here and have your service POST inbound messages to it (use Rotate to mint a new URL if it leaks)."
+    },
+    "emailAgentMail": {
+      "step1": "AgentMail provides hosted email inboxes built for AI agents. Create an account and an inbox in the AgentMail dashboard.",
+      "step1Link": "Open the AgentMail dashboard",
+      "step2": "In the dashboard open API Keys then Create New API Key and copy it (starts with am_) into the API Key field. Enter the provisioned inbox address (e.g. agent@workspace.agentmail.to) in the Inbox Address field.",
+      "step3": "Test & Enable. Then copy the Inbound Webhook URL shown here into the AgentMail dashboard's Webhook URL field so new mail reaches Дархай. Optionally paste AgentMail's signing secret (whsec_...) into Webhook Secret to verify deliveries."
+    }
+  },
   "title": "Ayarlar",
   "skillsHub": {
     "title": "Beceri Merkezi",
     "description": "AI ajanı becerilerini merkezi olarak yönetin. Bir kez yükleyin, tüm asistanlarda kullanın.",
     "mySkillsTitle": "Becerilerim",
     "discoveredTitle": "Harici Beceriler Keşfedildi",
-    "discoveryAlert": "CLI araçlarından beceriler tespit edildi. İçe aktararak Wayland'de kullanabilirsiniz.",
+    "discoveryAlert": "CLI araçlarından beceriler tespit edildi. İçe aktararak Darhai'de kullanabilirsiniz.",
     "importAll": "Tümünü İçe Aktar",
     "importAllSuccess": "{{count}} beceri içe aktarıldı",
     "noSkills": "Beceri bulunamadı. Başlamak için bazılarını içe aktarın.",
@@ -159,7 +354,7 @@
   "autoPreviewOfficeFiles": "Yeni Office Dosyalarını Otomatik Önizle",
   "autoPreviewOfficeFilesDesc": "Geçerli çalışma alanında yeni oluşturulan Word, Excel ve PowerPoint dosyalarını otomatik olarak açar. Office geçici kilit dosyaları yok sayılır.",
   "startOnBoot": "Açılışta Başlat",
-  "startOnBootDesc": "macOS veya Windows oturumu açtığınızda Wayland'yi otomatik olarak başlatır.",
+  "startOnBootDesc": "macOS veya Windows oturumu açtığınızda Darhai'yi otomatik olarak başlatır.",
   "startOnBootUnsupported": "Yalnızca paketlenmiş macOS ve Windows uygulamalarında kullanılabilir.",
   "startOnBootUpdateFailed": "Açılışta başlat ayarı güncellenemedi",
   "closeToTray": "Tepsiye Kapat",
@@ -201,7 +396,7 @@
   "deleteInvalidKeys": "Geçersiz Anahtarları Sil",
   "testAllKeys": "Tüm Anahtarları Test Et",
   "addModelPlaceholder": "Model ID seçin veya girin",
-  "customModelSupportNote": "Not: Wayland Core ve Gemini CLI Agent şu anda özel modelleri destekliyor.",
+  "customModelSupportNote": "Not: Darhai Core ve Gemini CLI Agent şu anda özel modelleri destekliyor.",
   "addModelHint": "Bir model ID seçin veya yazın, bu sağlayıcıya eklenecektir.",
   "addModelSelectedHint": "Model eklemeye hazır: {{model}}",
   "currentModelsLabel": "Mevcut Modeller",
@@ -252,8 +447,8 @@
   "channels": {
     "label": "Kanallar",
     "telegram": {
-      "help": "Wayland AI asistanınızla Telegram üzerinden sohbet edin. Başlamak için @BotFather ile bir bot oluşturun.",
-      "howToTalk": "Telegram'i acin, botunuzu bulun ve herhangi bir mesaj gonderin. Wayland tam orada yanit verir."
+      "help": "Darhai AI asistanınızla Telegram üzerinden sohbet edin. Başlamak için @BotFather ile bir bot oluşturun.",
+      "howToTalk": "Telegram'i acin, botunuzu bulun ve herhangi bir mesaj gonderin. Darhai tam orada yanit verir."
     },
     "slack": {
       "comingSoonTitle": "Slack desteği {{phase}} aşamasında geliyor",
@@ -292,7 +487,7 @@
           "required": "Events API aktarımı bir imzalama gizli anahtarı gerektirir"
         }
       },
-      "howToTalk": "Slack'i acin, bota yazin veya bir kanalda ondan bahsedin. Wayland tam orada yanit verir."
+      "howToTalk": "Slack'i acin, bota yazin veya bir kanalda ondan bahsedin. Darhai tam orada yanit verir."
     },
     "discord": {
       "comingSoonTitle": "Discord desteği yakında geliyor",
@@ -323,7 +518,7 @@
           "help": "İsteğe bağlı. Yalnızca daha sonra Gateway yerine HTTP etkileşim uç noktasına geçerseniz gereklidir."
         }
       },
-      "howToTalk": "Discord'u acin, bota ozel mesaj atin veya bir sunucu kanalinda ondan bahsedin. Wayland tam orada yanit verir."
+      "howToTalk": "Discord'u acin, bota ozel mesaj atin veya bir sunucu kanalinda ondan bahsedin. Darhai tam orada yanit verir."
     },
     "webhook": {
       "comingSoonTitle": "Webhook kanalı {{phase}} aşamasında geliyor",
@@ -404,11 +599,11 @@
         "label": "Hesap modu",
         "personal": "Kisisel (yalnizca siz)",
         "dedicated": "Adanmis (digerleri konusabilir)",
-        "personalHelp": "Wayland kendi WhatsApp hesabinizi baglar. Yalnizca siz, kendinize mesaj sohbetiniz uzerinden onunla konusabilirsiniz. Diger kisilerden gelen mesajlar yok sayilir.",
-        "dedicatedHelp": "Ajaniniz icin olusturulmus ayri bir WhatsApp numarasi kullanin. Wayland sahibi oldugunuzu bilsin diye kisisel numaranizi girin; diger kisiler onunla konusmak icin eslesebilir.",
+        "personalHelp": "Darhai kendi WhatsApp hesabinizi baglar. Yalnizca siz, kendinize mesaj sohbetiniz uzerinden onunla konusabilirsiniz. Diger kisilerden gelen mesajlar yok sayilir.",
+        "dedicatedHelp": "Ajaniniz icin olusturulmus ayri bir WhatsApp numarasi kullanin. Darhai sahibi oldugunuzu bilsin diye kisisel numaranizi girin; diger kisiler onunla konusmak icin eslesebilir.",
         "ownerNumbers": {
           "label": "Kisisel numaraniz",
-          "help": "Kendi WhatsApp numaranizi tam uluslararasi bicimde girin. Wayland bu numaralardan gelen mesajlari sahibinin mesajlari olarak taninir. Birden fazla numarayi virgulle ayirin.",
+          "help": "Kendi WhatsApp numaranizi tam uluslararasi bicimde girin. Darhai bu numaralardan gelen mesajlari sahibinin mesajlari olarak taninir. Birden fazla numarayi virgulle ayirin.",
           "savedHidden": "Kayitli numaralar gizli. Degistirmek icin yeniden girin.",
           "placeholder": "+15551234567"
         }
@@ -493,7 +688,7 @@
           "help": "Paketlenmiş çalışma zamanını veya PATH'inizdeki signal-cli'yi kullanmak için boş bırakın."
         }
       },
-      "howToTalk": "Signal'i acin ve Kendine Not sohbetinizi kontrol edin. Wayland orada az once merhaba dedi; sohbete yanit verin."
+      "howToTalk": "Signal'i acin ve Kendine Not sohbetinizi kontrol edin. Darhai orada az once merhaba dedi; sohbete yanit verin."
     },
     "matrix": {
       "comingSoonTitle": "Matrix {{phase}} aşamasında geliyor",
@@ -537,7 +732,7 @@
       "pluginEnabled": "MS Teams eklentisi etkinleştirildi",
       "enableFailed": "Eklenti etkinleştirilemedi",
       "testAndEnable": "Test Et ve Etkinleştir",
-      "setupHint": "Botunuzu Azure Portal'da kaydedin: Azure Bot Service → Create resource → Microsoft Teams kanalını yapılandırın → mesajlaşma uç noktasını Wayland webhook URL'nize ayarlayın → App ID ile istemci gizli anahtarını buraya kopyalayın.",
+      "setupHint": "Botunuzu Azure Portal'da kaydedin: Azure Bot Service → Create resource → Microsoft Teams kanalını yapılandırın → mesajlaşma uç noktasını Darhai webhook URL'nize ayarlayın → App ID ile istemci gizli anahtarını buraya kopyalayın.",
       "credentials": {
         "appId": {
           "label": "App ID (MicrosoftAppId)",
@@ -589,7 +784,7 @@
     "imessage": {
       "comingSoonTitle": "iMessage {{phase}} aşamasında geliyor",
       "comingSoonBody": "Yalnızca macOS, deneysel. Messages.app'e AppleScript köprüsü. Apple, betikle yapılan gönderimleri sessizce hız sınırladığından mesajlaşma kısıtlanır.",
-      "howToTalk": "Mac'inizin izin verilen kimligine bir iMessage gonderin. Wayland tam orada yanit verir."
+      "howToTalk": "Mac'inizin izin verilen kimligine bir iMessage gonderin. Darhai tam orada yanit verir."
     },
     "viber": {
       "comingSoonTitle": "Viber {{phase}} aşamasında geliyor",
@@ -874,13 +1069,13 @@
           "help": "Bağlantı noktası = 587 olduğunda STARTTLS, bağlantı noktası = 465 olduğunda örtük TLS."
         }
       },
-      "howToTalk": "Kendi gelen kutunuzu kontrol edin. Wayland az once size e-posta gonderdi; istediginiz zaman o e-postaya yanit verin."
+      "howToTalk": "Kendi gelen kutunuzu kontrol edin. Darhai az once size e-posta gonderdi; istediginiz zaman o e-postaya yanit verin."
     },
     "welcome": {
-      "message": "Merhaba, ben Wayland. Baglandim. Istediginiz zaman bu mesaja yanit verin, size yardimci olayim."
+      "message": "Merhaba, ben Darhai. Baglandim. Istediginiz zaman bu mesaja yanit verin, size yardimci olayim."
     }
   },
-  "webui.description": "Wayland'nizi \"7/24 Uzaktan Asistan\" olarak kullanın - görevleri istediğiniz zaman, istediğiniz yerden herhangi bir uzak cihazdan düzenleyin.",
+  "webui.description": "Darhai'nizi \"7/24 Uzaktan Asistan\" olarak kullanın - görevleri istediğiniz zaman, istediğiniz yerden herhangi bir uzak cihazdan düzenleyin.",
   "webui.steps": "Adım 1. Web Arayüzünü açın; Adım 2. Erişim URL'sini kopyalayın; Adım 3. Uzak tarayıcıda açın",
   "webui.configuration": "Web Arayüzü Yapılandırması",
   "webui.enable": "Web Arayüzünü Etkinleştir",
@@ -958,13 +1153,13 @@
   "webui.passwordHint": "Şifre ilk açılışta konsolda gösterilir. Sıfırlamak için \"Şifreyi Değiştir\"i kullanın",
   "webui.checkConsoleForPassword": "İlk şifre için uygulama konsolunu kontrol edin",
   "webui.browserNotSupported": "Web Arayüzü ayarları tarayıcıda kullanılamaz",
-  "webui.browserNotSupportedDesc": "Güvenlik nedeniyle, Web Arayüzü ayarları sadece masaüstü uygulamasında yönetilebilir. Yapılandırmak için lütfen Wayland masaüstü uygulamasında ayarlar panelini açın.",
+  "webui.browserNotSupportedDesc": "Güvenlik nedeniyle, Web Arayüzü ayarları sadece masaüstü uygulamasında yönetilebilir. Yapılandırmak için lütfen Darhai masaüstü uygulamasında ayarlar panelini açın.",
   "webui.passwordHidden": "******",
   "webui.passwordOnlyFirstTime": "Şifre sadece ilk açılışta gösterilir ve sonrasında gizlenir",
   "webui.resetPasswordWarning": "Lütfen sıfırlanan şifreyi güvenli bir yerde saklayın!",
-  "webui.featureRemoteDesc": "WebUI'yi etkinleştirerek telefonunuzdan veya uzak tarayıcıdan Wayland'ye erişebilirsiniz.",
+  "webui.featureRemoteDesc": "WebUI'yi etkinleştirerek telefonunuzdan veya uzak tarayıcıdan Darhai'ye erişebilirsiniz.",
   "webui.featureChannelsTitle": "Messaging Control",
-  "webui.featureChannelsDesc": "Telegram, Lark, DingTalk ve WeChat'i bağlayarak IM uygulamalarından Wayland ile etkileşime geçin.",
+  "webui.featureChannelsDesc": "Telegram, Lark, DingTalk ve WeChat'i bağlayarak IM uygulamalarından Darhai ile etkileşime geçin.",
   "webui.goToChannels": "Channels'a Git",
   "webui.pairedDevices.title": "Paired Devices",
   "webui.pairedDevices.empty": "No devices paired yet",
@@ -1028,24 +1223,24 @@
   "assistant.step4": "Onaylandıktan sonra, Telegram üzerinden Gemini ile sohbet etmeye başlayabilirsiniz!",
   "channels.title": "Kanallar",
   "channels.telegramTitle": "Telegram",
-  "channels.telegramDesc": "Telegram üzerinden Wayland asistanı ile sohbet edin",
+  "channels.telegramDesc": "Telegram üzerinden Darhai asistanı ile sohbet edin",
   "channels.slackTitle": "Slack",
-  "channels.slackDesc": "Slack üzerinden Wayland asistanı ile sohbet edin",
+  "channels.slackDesc": "Slack üzerinden Darhai asistanı ile sohbet edin",
   "channels.discordTitle": "Discord",
-  "channels.discordDesc": "Discord üzerinden Wayland asistanı ile sohbet edin",
+  "channels.discordDesc": "Discord üzerinden Darhai asistanı ile sohbet edin",
   "channels.larkTitle": "Lark",
-  "channels.larkDesc": "Lark üzerinden Wayland asistanı ile sohbet edin",
+  "channels.larkDesc": "Lark üzerinden Darhai asistanı ile sohbet edin",
   "channels.dingtalkTitle": "DingTalk",
-  "channels.dingtalkDesc": "Chat with Wayland assistant via DingTalk",
+  "channels.dingtalkDesc": "Chat with Darhai assistant via DingTalk",
   "channels.weixinTitle": "WeChat",
-  "channels.weixinDesc": "WeChat üzerinden Wayland asistanı ile sohbet edin",
+  "channels.weixinDesc": "WeChat üzerinden Darhai asistanı ile sohbet edin",
   "channels.wecomTitle": "WeCom",
-  "channels.wecomDesc": "WeCom (Kurumsal WeChat) AI botu ile Wayland asistanı ile sohbet edin",
+  "channels.wecomDesc": "WeCom (Kurumsal WeChat) AI botu ile Darhai asistanı ile sohbet edin",
   "channels.comingSoon": "Çok Yakında",
   "channels.comingSoonDesc": "{{channel}} desteği çok yakında",
   "channels.notConfigured": "Yapılandırılmadı",
   "channels.configured": "Yapılandırıldı",
-  "channels.guide": "Mesajlaşma uygulamalarını bağlayın, Wayland ile her an sohbet edin.",
+  "channels.guide": "Mesajlaşma uygulamalarını bağlayın, Darhai ile her an sohbet edin.",
   "channels.selectFirst": "Bir kanal seçin ve kimlik bilgilerini yapılandırın.",
   "channels.enableAfterConfig": "Yapılandırmadan sonra kanalı etkinleştirin ve AI Agent ile sohbet etmeye başlayın.",
   "channels.extension.requiredField": "Lütfen zorunlu alanı doldurun: {{field}}",
@@ -1128,7 +1323,7 @@
   "mcpImportSuccess": "İçe aktarma başarılı",
   "mcpImportFailed": "İçe aktarma başarısız",
   "mcpJsonInvalid": "Geçersiz JSON formatı",
-  "mcpImportDescription": "Wayland, CLI Ajanınızda yüklü MCP'yi otomatik olarak alacak ve tek tıkla içe aktaracaktır",
+  "mcpImportDescription": "Darhai, CLI Ajanınızda yüklü MCP'yi otomatik olarak alacak ve tek tıkla içe aktaracaktır",
   "mcpStepSelectAgent": "Ajan Seç",
   "mcpStepFetchTools": "MCP Getir",
   "mcpStepImportSuccess": "İçe Aktarma Başarılı",
@@ -1511,8 +1706,8 @@
     "marketUpdate": "Güncelle",
     "marketEmpty": "Yüklenebilir Agent bulunamadı. Ağ bağlantınızı kontrol edin ve GitHub'a erişilebildiğinden emin olun.",
     "marketContributionHint": "Burada yeni bir Agent görmek mi istiyorsunuz?",
-    "marketContributionAction": "WaylandHub'a PR gönderin",
-    "marketComingSoon": "WaylandHub market is coming soon.",
+    "marketContributionAction": "Darhai Hub'a PR gönderin",
+    "marketComingSoon": "Darhai Hub market is coming soon.",
     "detectCustomAgent": "Özel Ajan Tanı",
     "editCustomAgent": "Özel Ajanı Düzenle",
     "localAgentsEmpty": "Yerel ajan algılanmadı",
@@ -1570,7 +1765,7 @@
     "notFound": "Bulunamadı",
     "version": "Sürüm",
     "path": "Yol",
-    "providerNote": "Sağlayıcı ve API anahtarı ayarları Modeller sayfasında yönetilir. Wayland Core destekler: Anthropic, OpenAI, AWS Bedrock."
+    "providerNote": "Sağlayıcı ve API anahtarı ayarları Modeller sayfasında yönetilir. Darhai Core destekler: Anthropic, OpenAI, AWS Bedrock."
   },
   "shared": {
     "saving": "Kaydediliyor…",
@@ -1626,7 +1821,7 @@
     "footerText": "Daha fazla kanal uzantılarla eklenebilir.",
     "browseExtensions": "Uzantılara göz at →",
     "channelsMovedHint": "Kanallar Entegrasyonlar bölümüne taşındı →",
-    "subtitle": "Wayland'ı mesajlaşma platformlarına bağlayın. Her bağlantının kendi kurulumu, kimlik bilgileri ve durumu vardır.",
+    "subtitle": "Darhai'ı mesajlaşma platformlarına bağlayın. Her bağlantının kendi kurulumu, kimlik bilgileri ve durumu vardır.",
     "tier1Tab": "Kademe 1",
     "tier2Tab": "Kademe 2",
     "tier3Tab": "Kademe 3",
@@ -1666,7 +1861,7 @@
       "keyLabel": "Bir API anahtarı yapıştır",
       "keyPlaceholder": "Herhangi bir sağlayıcının anahtarını yapıştırın…",
       "connect": "Bağlan",
-      "hintDefault": "Wayland sağlayıcıyı kendisi tanır, birini seçmenize gerek yok.",
+      "hintDefault": "Darhai sağlayıcıyı kendisi tanır, birini seçmenize gerek yok.",
       "hintAmbiguous": "OpenAI biçiminde bir anahtar gibi görünüyor, sağlayıcıyı doğrulamak için bağlanın.",
       "recognized": "Tanındı:",
       "cloudHint": "bu sağlayıcı Gözat'tan bir kimlik bilgisi formu gerektirir.",
@@ -1709,7 +1904,7 @@
       "errorUnrecognized": "Bu anahtar {{provider}} için tanınmadı.",
       "errorNoModels": "{{provider}} bağlandı ancak hiç model döndürmedi. Birazdan tekrar deneyin.",
       "errorUnknown": "{{provider}} hizmetine bağlanılamadı. Lütfen tekrar deneyin.",
-      "trust": "Wayland'in arkasındaki ekip Ferrox Labs'ten."
+      "trust": "Ferrox Labs'ın açık kaynaklı Wayland teknolojisi üzerine kuruludur."
     },
     "detected": {
       "found": "Bu makinede bir {{provider}} API anahtarı bulundu. Kullanılsın mı?",
@@ -1921,7 +2116,7 @@
   },
   "mcpPage": {
     "title": "MCP Sunucuları",
-    "subtitle": "Wayland'ı Model Context Protocol ile harici araç sunucularına bağlayın. Ajanlarınız arasında MCP sunucuları ekleyin, yapılandırın ve eşitleyin."
+    "subtitle": "Darhai'ı Model Context Protocol ile harici araç sunucularına bağlayın. Ajanlarınız arasında MCP sunucuları ekleyin, yapılandırın ve eşitleyin."
   },
   "imageGenPage": {
     "title": "Görsel Oluşturma",
@@ -1938,11 +2133,11 @@
   },
   "notificationsPage": {
     "title": "Bildirimler",
-    "subtitle": "Wayland'ın sizi ne zaman ve nasıl uyaracağı.",
+    "subtitle": "Darhai'ın sizi ne zaman ve nasıl uyaracağı.",
     "comingSoon": "Kategori başına anahtarlar, sessiz saatler ve ses denetimleri sonraki sürümde geliyor.",
     "systemTitle": "Sistem bildirimleri",
     "master": "Ana anahtar",
-    "masterHelp": "Kapalıyken Wayland hiçbir sistem bildirimi göndermez. Aşağıdaki diğer kurallar yok sayılır.",
+    "masterHelp": "Kapalıyken Darhai hiçbir sistem bildirimi göndermez. Aşağıdaki diğer kurallar yok sayılır.",
     "agentFinished": "Ajan bittiğinde bildir",
     "agentFinishedHelp": "Uzun süren bir görev veya ekip başlatıcı tamamlandığında tetiklenir.",
     "scheduledTask": "Zamanlanmış görev tetiklendiğinde bildir",
@@ -1974,7 +2169,7 @@
     "open": "Aç",
     "clear": "Temizle",
     "clearConfirmTitle": "Dizin temizlensin mi?",
-    "clearConfirmBody": "Bu işlem içindeki dosyaları kalıcı olarak kaldırır. Wayland gerektiğinde bunları yeniden oluşturur.",
+    "clearConfirmBody": "Bu işlem içindeki dosyaları kalıcı olarak kaldırır. Darhai gerektiğinde bunları yeniden oluşturur.",
     "backupTitle": "Yedekle ve geri yükle",
     "exportIncludeKeys": "API anahtarlarını dışa aktarmaya dahil et",
     "exportPassphraseLabel": "Şifreleme parolası",
@@ -1983,7 +2178,7 @@
     "restore": "Yedekten geri yükle",
     "syncTitle": "Eşitleme (E2EE)",
     "syncComingSoon": "Bir klasöre veya aktarıcıya uçtan uca şifreli eşitleme.",
-    "resetTitle": "Wayland'i sıfırla",
+    "resetTitle": "Darhai'i sıfırla",
     "resetDescription": "Tüm konuşmaları, ayarları ve önbelleğe alınmış verileri kalıcı olarak sil.",
     "resetAction": "Her şeyi sıfırla",
     "resetConfirmTitle": "Her şey sıfırlansın mı?",
@@ -2040,7 +2235,7 @@
     "title": "Beceriler ve Araçlar"
   },
   "constitutionPage": {
-    "subtitle": "Wayland'in kuralları. Her turda yeniden yüklenir, düzenlemeler yeniden başlatma olmadan anında uygulanır. Geçersiz kılmaların nasıl çalıştığı için §11'e bakın.",
+    "subtitle": "Darhai'in kuralları. Her turda yeniden yüklenir, düzenlemeler yeniden başlatma olmadan anında uygulanır. Geçersiz kılmaların nasıl çalıştığı için §11'e bakın.",
     "tocTitle": "Bölümler",
     "tocEmpty": "Henüz bölüm yok",
     "reset": "Sıfırla",
@@ -2077,7 +2272,7 @@
     "yourAgents": "Ajanlarınız",
     "moreDetected": "Daha fazla algılanan · {{count}}",
     "remoteAgents": "Uzak ajanlar",
-    "empty": "Henüz ajan algılanmadı. Bir model bağlandığında Wayland Core her zaman kullanılabilir.",
+    "empty": "Henüz ajan algılanmadı. Bir model bağlandığında Darhai Core her zaman kullanılabilir.",
     "loadErrorsTitle": "Bazı ajanlar yüklenemedi",
     "badge": {
       "active": "Etkin",
@@ -2087,7 +2282,7 @@
       "label": "Araç çubuğunda göster",
       "show": "Ajan araç çubuğunda göster",
       "hide": "Ajan araç çubuğundan gizle",
-      "lockedTooltip": "Wayland Core her zaman araç çubuğunda kalır, böylece sohbet edecek bir ajanınız her zaman olur."
+      "lockedTooltip": "Darhai Core her zaman araç çubuğunda kalır, böylece sohbet edecek bir ajanınız her zaman olur."
     },
     "scope": {
       "any": "Bağladığınız her modeli çalıştırır",
@@ -2099,7 +2294,7 @@
       "mistral": "Mistral modellerini çalıştırır"
     },
     "about": {
-      "wcore": "Waylandın kendi motoru. Modeller sayfanızdaki her sağlayıcıyı kullanır.",
+      "wcore": "Darhaiın kendi motoru. Modeller sayfanızdaki her sağlayıcıyı kullanır.",
       "claude": "Anthropicin kodlama ajanı. Kendi hesabıyla oturum açar, GPT veya Gemini çalıştıramaz.",
       "codex": "OpenAInin kodlama ajanı. Kendi hesabıyla oturum açar, Claude veya Gemini çalıştıramaz."
     },
@@ -2121,9 +2316,9 @@
     "fluxSetup": {
       "title": "{{tool}} aracını Flux üzerinden yönlendir",
       "absentBody": "{{tool}} bu makinede algılanmadı. Önce yükleyin, ardından Flux üzerinden yönlendirmek için geri dönün.",
-      "unconfiguredBody": "{{tool}} aracını Flux üzerinden yönlendirmek için ayarlayın. Wayland, {{configPath}} konumundaki {{tool}} yapılandırmasına bir Flux sağlayıcısı yazar ve önce mevcut dosyanın yedeğini alır.",
+      "unconfiguredBody": "{{tool}} aracını Flux üzerinden yönlendirmek için ayarlayın. Darhai, {{configPath}} konumundaki {{tool}} yapılandırmasına bir Flux sağlayıcısı yazar ve önce mevcut dosyanın yedeğini alır.",
       "routedBody": "{{tool}} Flux üzerinden yönlendiriliyor.",
-      "driftedBody": "{{tool}} Flux yapılandırması Wayland dışında değiştirildi. Wayland ayarlarını geri yüklemek için yeniden uygulayın veya Flux'u {{tool}} aracından kaldırın.",
+      "driftedBody": "{{tool}} Flux yapılandırması Darhai dışında değiştirildi. Darhai ayarlarını geri yüklemek için yeniden uygulayın veya Flux'u {{tool}} aracından kaldırın.",
       "notConnected": "Önce Flux Router'ı bağlayın, ardından {{tool}} aracını ayarlayın.",
       "genericError": "Kurulum tamamlanmadı.",
       "setup": "{{tool}} aracını Flux için ayarla",
@@ -2166,8 +2361,8 @@
     "subtitle": "Sohbet kutusu için konuşmadan metne ve metinden konuşmaya ayarları. Ses girişini ve çıkışını etkinleştirmek için bölümleri açın."
   },
   "wcoreConfig": {
-    "navLabel": "Wayland Core",
-    "title": "Wayland Core",
+    "navLabel": "Darhai Core",
+    "title": "Darhai Core",
     "tagline": "Forged to run. Hardened to last. Built to evolve.",
     "back": "Settings",
     "railGroup": "Engine",
@@ -2188,8 +2383,8 @@
     "overview": {
       "title": "Overview",
       "subtitle": "The engine behind every chat, workflow and agent. It is already running with smart defaults — this surface is where you tune what is under the hood.",
-      "inheritedTitle": "Allocated by Wayland Desktop",
-      "inheritedBody": "For this session, Desktop hands the engine your model (as an override) and injects Skills + Assistants/Constitution through its system prompt. Your Desktop MCP library is NOT passed through — only Wayland’s own operational MCPs are.",
+      "inheritedTitle": "Allocated by Darhai Desktop",
+      "inheritedBody": "For this session, Desktop hands the engine your model (as an override) and injects Skills + Assistants/Constitution through its system prompt. Your Desktop MCP library is NOT passed through — only Darhai’s own operational MCPs are.",
       "readOnly": "read-only",
       "manageInDesktop": "Manage in Desktop Settings",
       "inheritModels": "Models (override)",
@@ -2222,14 +2417,14 @@
       "allocatedSession": "Allocated by Desktop · this session",
       "skillsDetail": "Injected via system prompt · {{allocated}}",
       "assistantsDetail": "Injected via system prompt · {{allocated}}",
-      "mcpDetail": "Wayland operational MCPs · your Desktop MCP library is separate",
-      "engineOwnedLine": "Tools, Memory, Security and Profiles are the engine’s own — written to ~/.wayland-core/config.toml and shared with the Wayland Core CLI."
+      "mcpDetail": "Darhai operational MCPs · your Desktop MCP library is separate",
+      "engineOwnedLine": "Tools, Memory, Security and Profiles are the engine’s own — written to ~/.wayland-core/config.toml and shared with the Darhai Core CLI."
     },
     "services": {
-      "subtitle": "The engine tool backends — web search, vision, voice, image. Wayland ships working out of the box; plug in a key to unlock higher limits.",
+      "subtitle": "The engine tool backends — web search, vision, voice, image. Darhai ships working out of the box; plug in a key to unlock higher limits.",
       "webSearchGroup": "Web Search",
       "ddgTitle": "DuckDuckGo · active — free web search is on",
-      "ddgBody": "No key needed — Wayland searches the web right now. Add a key below only to go faster or run higher volume.",
+      "ddgBody": "No key needed — Darhai searches the web right now. Add a key below only to go faster or run higher volume.",
       "connected": "Connected",
       "getFreeKey": "Get a free key",
       "keyPlaceholder": "Paste API key…",
@@ -2392,9 +2587,9 @@
       "rawEngine": "Raw engine mode",
       "rawEngineDesc": "Run the embedded engine on its own config — don’t override with Desktop’s model & skills.",
       "headlessTitle": "Headless server mode",
-      "headlessBody": "Run Wayland Core as a long-lived server (one container per tenant) and reach it over LAN, Tailscale, or the hosted Pro tier."
+      "headlessBody": "Run Darhai Core as a long-lived server (one container per tenant) and reach it over LAN, Tailscale, or the hosted Pro tier."
     },
     "scopeWritesTo": "Writes to",
-    "scopeSharedCli": "— used by the Wayland Core CLI too."
+    "scopeSharedCli": "— used by the Darhai Core CLI too."
   }
 }

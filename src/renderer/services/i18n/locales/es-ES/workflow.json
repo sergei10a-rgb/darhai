@@ -21,7 +21,17 @@
     "confirmTitle": "¿Ejecutar el paso {{n}} de forma autónoma?",
     "confirmOk": "Ejecutar de forma autónoma",
     "confirmCancel": "Cancelar",
-    "confirmBody": "Wayland generará un trabajador autónomo para completar el paso {{n}} en segundo plano. Puedes seguir chateando en la sesión principal.",
+    "confirmBody": "Darhai generará un trabajador autónomo para completar el paso {{n}} en segundo plano. Puedes seguir chateando en la sesión principal.",
     "confirmEta": "Tiempo estimado: 4-8 minutos."
+  },
+  "header": {
+    "completedIn": "Completado en {{duration}}",
+    "agentDriving": "Agente al mando",
+    "stepOf": "Paso {{current}} de {{total}}",
+    "pauseAutoAdvance": "Pausar avance automático",
+    "resumeAutoAdvance": "Reanudar avance automático",
+    "endWorkflow": "Finalizar flujo de trabajo",
+    "deleteWorkflow": "Eliminar flujo de trabajo",
+    "skillCount": "{{count}} habilidad(es)"
   }
 }

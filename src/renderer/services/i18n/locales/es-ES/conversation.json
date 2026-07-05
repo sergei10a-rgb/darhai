@@ -16,7 +16,7 @@
     "clearWorkspace": "Quitar carpeta",
     "openFolder": "Abrir carpeta",
     "none": "Ninguno",
-    "quickActionsTitle": "¿Qué puede hacer Wayland?",
+    "quickActionsTitle": "¿Qué puede hacer Darhai?",
     "quickActionFeedback": "¿Tienes comentarios o sugerencias?",
     "quickActionStar": "¿Te gustamos? ¡Danos una estrella!"
   },
@@ -189,7 +189,10 @@
       "vscode": "VS Code",
       "terminal": "Terminal",
       "explorer": "Explorador de archivos"
-    }
+    },
+    "toggleLabel": "Alternar espacio de trabajo",
+    "collapseLabel": "Contraer espacio de trabajo",
+    "expandLabel": "Expandir espacio de trabajo"
   },
   "minimap": {
     "searchAria": "Buscar en la conversación",
@@ -330,5 +333,9 @@
       "sublabel": "Ejecuta con tu inicio de sesión actual de Claude Code, sin claves adicionales que gestionar.",
       "action": "Usar"
     }
+  },
+  "openclaw": {
+    "runtimeCheckFailed": "No se pudo validar el entorno del agente",
+    "runtimeMismatch": "Falló la validación del cambio de agente: {{details}}"
   }
 }

@@ -10,7 +10,7 @@
   "filters": {
     "allSources": "Tüm kaynaklar",
     "source": {
-      "wayland-library": "Wayland kitaplığı",
+      "wayland-library": "Darhai kitaplığı",
       "team": "Ekip",
       "user": "Becerilerim",
       "imported": "İçe aktarılan",
@@ -157,7 +157,7 @@
     }
   },
   "detail": {
-    "whenLoaded": "Wayland bunu yüklediğinde",
+    "whenLoaded": "Darhai bunu yüklediğinde",
     "metadata": "Meta veri",
     "body": "Gövde",
     "quarantined": "Bu beceri karantinaya alındı ve yüklenemiyor."

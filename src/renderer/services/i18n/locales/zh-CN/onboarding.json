@@ -1,6 +1,6 @@
 {
-  "brand": "Wayland",
-  "welcome": "欢迎使用 Wayland",
+  "brand": "Darhai",
+  "welcome": "欢迎使用 Darhai",
   "footer": {
     "manage": "检测仅运行一次。可随时在 设置 → 提供商 中更改。",
     "noLockIn": "以上选项都不会把你锁定。",
@@ -22,7 +22,7 @@
     "errorUnrecognized": "这看起来不像 Flux Router 密钥，应以 sk-flux- 开头。",
     "errorNoModels": "已连接，但未返回任何模型。请稍后重试。",
     "errorUnknown": "连接出错，请重试。",
-    "trust": "来自 Ferrox Labs，Wayland 背后的团队。"
+    "trust": "基于 Ferrox Labs 的开源 Wayland 技术构建。"
   },
   "scenarioA": {
     "greeting": "{{name}}，你已就绪",
@@ -34,7 +34,7 @@
     "ghost": "在接下来的 10 轮中试用"
   },
   "scenarioB": {
-    "greeting": "欢迎使用 Wayland",
+    "greeting": "欢迎使用 Darhai",
     "sub": "选一种方式开始。其余的随时再加。",
     "heroTag": "推荐",
     "heroTitle": "Flux Router",
@@ -89,7 +89,7 @@
       "almost": "Almost there…"
     },
     "logoAlt": {
-      "wordmark": "Wayland"
+      "wordmark": "Darhai"
     },
     "flux": {
       "title": "Get the best answer. Pay the right price. And get it done faster.",
@@ -114,7 +114,7 @@
     },
     "quickstart": {
       "headline": "First - what should I call you",
-      "sub": "So Wayland knows what to call you. Next we'll see what's already on your machine.",
+      "sub": "So Darhai knows what to call you. Next we'll see what's already on your machine.",
       "googleButton": "Continue with Google",
       "freeNote": "Free with your Google account · basic Gemini limits · nothing to pay",
       "changeLater": "You can change everything later.",

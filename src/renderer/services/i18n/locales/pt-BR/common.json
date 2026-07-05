@@ -58,10 +58,10 @@
   "historyBack": "Voltar",
   "more": "Mais",
   "refresh": "Atualizar",
-  "tray.showWindow": "Mostrar Wayland",
+  "tray.showWindow": "Mostrar Darhai",
   "tray.newChat": "Novo chat",
   "tray.closeToTray": "Ocultar na bandeja",
-  "tray.about": "Sobre o Wayland",
+  "tray.about": "Sobre o Darhai",
   "tray.restart": "Reiniciar app",
   "tray.quit": "Sair",
   "tray.runningTasks": "Tarefas em execução",
@@ -84,7 +84,7 @@
   "processing": "Processando...",
   "optional": "(opcional)",
   "clear": "Limpar",
-  "brand": "Wayland",
+  "brand": "Darhai",
   "brandTagline": "AI Agent",
   "unit": {
     "minute_short": "min",
@@ -109,5 +109,24 @@
       "explain": "Explicar um tópico",
       "plan": "Esboçar um plano"
     }
-  }
+  },
+  "appMenu": {
+    "edit": "Editar",
+    "view": "Exibir",
+    "help": "Ajuda",
+    "checkForUpdates": "Verificar atualizações..."
+  },
+  "webview": {
+    "urlPlaceholder": "Digite a URL...",
+    "resetZoom": "Redefinir zoom",
+    "fit": "Ajustar"
+  },
+  "windowControls": {
+    "minimize": "Minimizar",
+    "maximize": "Maximizar",
+    "restore": "Restaurar"
+  },
+  "collapseSidebar": "Recolher barra lateral",
+  "clearSearch": "Limpar busca",
+  "moreActions": "Mais ações"
 }

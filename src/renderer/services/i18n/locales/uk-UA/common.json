@@ -58,10 +58,10 @@
   "historyBack": "Назад",
   "more": "Більше",
   "refresh": "Оновити",
-  "tray.showWindow": "Показати Wayland",
+  "tray.showWindow": "Показати Darhai",
   "tray.newChat": "Новий чат",
   "tray.closeToTray": "Згорнути в трей",
-  "tray.about": "Про Wayland",
+  "tray.about": "Про Darhai",
   "tray.restart": "Перезапустити програму",
   "tray.quit": "Вийти",
   "tray.runningTasks": "Запущені завдання",
@@ -85,7 +85,7 @@
   "processing": "Обробка...",
   "optional": "(необов'язково)",
   "clear": "Очистити",
-  "brand": "Wayland",
+  "brand": "Darhai",
   "brandTagline": "AI Agent",
   "unit": {
     "minute_short": "хв",
@@ -110,5 +110,24 @@
       "explain": "[TODO:translate] Explain a topic",
       "plan": "[TODO:translate] Draft a plan"
     }
-  }
+  },
+  "appMenu": {
+    "edit": "Правка",
+    "view": "Вигляд",
+    "help": "Довідка",
+    "checkForUpdates": "Перевірити оновлення..."
+  },
+  "webview": {
+    "urlPlaceholder": "Введіть URL...",
+    "resetZoom": "Скинути масштаб",
+    "fit": "Вписати"
+  },
+  "windowControls": {
+    "minimize": "Згорнути",
+    "maximize": "Розгорнути",
+    "restore": "Відновити"
+  },
+  "collapseSidebar": "Згорнути бічну панель",
+  "clearSearch": "Очистити пошук",
+  "moreActions": "Інші дії"
 }

@@ -21,7 +21,7 @@
   "filters": {
     "allSources": "Toutes les sources",
     "source": {
-      "wayland-library": "Bibliothèque Wayland",
+      "wayland-library": "Bibliothèque Darhai",
       "team": "Équipe",
       "user": "Mes compétences",
       "imported": "Importées",
@@ -173,7 +173,7 @@
     }
   },
   "detail": {
-    "whenLoaded": "Quand Wayland charge ceci",
+    "whenLoaded": "Quand Darhai charge ceci",
     "metadata": "Métadonnées",
     "body": "Corps",
     "quarantined": "Cette compétence est en quarantaine et ne peut pas être chargée."

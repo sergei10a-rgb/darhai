@@ -45,7 +45,7 @@
     "title": "Connecter {{vendor}} - collez les identifiants OAuth",
     "submit": "Enregistrer et se connecter",
     "cancel": "Annuler",
-    "universalIntro": "{{vendor}} n'autorise pas Wayland à enregistrer automatiquement un client OAuth. Enregistrez une application OAuth sur la console développeur du fournisseur et collez les identifiants ci-dessous.",
+    "universalIntro": "{{vendor}} n'autorise pas Darhai à enregistrer automatiquement un client OAuth. Enregistrez une application OAuth sur la console développeur du fournisseur et collez les identifiants ci-dessous.",
     "openConsole": "Ouvrir la console développeur {{vendor}}",
     "redirectLabel": "URI de redirection à coller dans la console du fournisseur :",
     "clientIdLabel": "Client ID",
@@ -53,5 +53,16 @@
     "clientSecretLabel": "Secret client",
     "clientSecretPlaceholder": "Collez le client_secret",
     "saveFailed": "Échec de l'enregistrement des identifiants : {{error}}"
+  },
+  "maintainer": {
+    "official": "Officiel",
+    "community": "Communauté",
+    "wayland": "Créé par Darhai"
+  },
+  "verifiedPill": "Vérifié par Darhai",
+  "browse": {
+    "title": "Bibliothèque MCP",
+    "subtitle": "Connecteurs sélectionnés. Parcourez, installez en un clic et suivez le guide de configuration.",
+    "searchPlaceholder": "Rechercher des MCP…"
   }
 }

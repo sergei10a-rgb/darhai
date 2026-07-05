@@ -11,7 +11,7 @@
     "connecting": "{{agent}}-д холбогдож байна...",
     "connected": "{{agent}}-д холбогдлоо",
     "authenticated": "{{agent}}-тэй баталгаажлаа",
-    "session_active": "{{agent}}-тэй идэвхтэй сесс",
+    "session_active": "{{agent}}-тэй идэвхтэй сешн",
     "error": "Холболтын алдаа",
     "unknown": "Тодорхойгүй төлөв"
   },

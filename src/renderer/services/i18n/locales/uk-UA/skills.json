@@ -10,7 +10,7 @@
   "filters": {
     "allSources": "Усі джерела",
     "source": {
-      "wayland-library": "Бібліотека Wayland",
+      "wayland-library": "Бібліотека Darhai",
       "team": "Команда",
       "user": "Мої навички",
       "imported": "Імпортовані",
@@ -157,7 +157,7 @@
     }
   },
   "detail": {
-    "whenLoaded": "Коли Wayland завантажує це",
+    "whenLoaded": "Коли Darhai завантажує це",
     "metadata": "Метадані",
     "body": "Вміст",
     "quarantined": "Цю навичку поміщено в карантин і вона не може бути завантажена."

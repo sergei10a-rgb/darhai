@@ -5,7 +5,7 @@
   },
   "pitch": {
     "headline": "跟著你走的記憶",
-    "lede": "Wayland 記得你做過什麼、決定過什麼、發佈過什麼。每位助手都能拿到這些脈絡 -- 不必再說明一次。由 Ferrox Labs 出品的開源記憶引擎 IJFW 提供支援。",
+    "lede": "Darhai 記得你做過什麼、決定過什麼、發佈過什麼。每位助手都能拿到這些脈絡 -- 不必再說明一次。由 Ferrox Labs 出品的開源記憶引擎 IJFW 提供支援。",
     "bullet1": "在聊天、專案和命令列工具間持續保留",
     "bullet2": "可搜尋、可匯出，完全屬於你",
     "bullet3": "安裝後無需任何設定",
@@ -23,7 +23,7 @@
   "brand": {
     "tagline": "IJFW Memory by Ferrox Labs",
     "footer": "由 IJFW（開源）提供支援，出品方：Ferrox Labs",
-    "github_link": "github.com/FerroxLabs/ijfw"
+    "github_link": "IJFW GitHub"
   },
   "installing": {
     "title": "正在安裝記憶",
@@ -37,7 +37,7 @@
   "upgrading": {
     "title": "正在升級記憶",
     "subtitle": "已為下次啟動準備 {{version}}",
-    "pending_message": "升級已就緒。Wayland 重新啟動後將生效。",
+    "pending_message": "升級已就緒。Darhai 重新啟動後將生效。",
     "restart_now": "立即重新啟動"
   },
   "failed": {
@@ -45,7 +45,7 @@
     "retry": "重試",
     "details_toggle": "顯示詳情",
     "details_hide": "隱藏詳情",
-    "support_link": "需要協助？請造訪 github.com/FerroxLabs/ijfw"
+    "support_link": "IJFW engine help: github.com/FerroxLabs/ijfw"
   },
   "error": {
     "spawn_error": "無法啟動安裝程式。請確認 npm 在你的 PATH 中。",
@@ -53,11 +53,11 @@
     "invalid_target_version": "登錄回傳了無效的版本號。請稍後再試。",
     "unsafe_ownership": "待安裝資料夾的擁有權不安全，已被拒絕。請重新安裝以還原。",
     "stage_pending_failed": "無法暫存新安裝。請檢查磁碟空間後重試。",
-    "stage_swap_failed": "無法切換至新安裝。請重新啟動 Wayland 後重試。",
+    "stage_swap_failed": "無法切換至新安裝。請重新啟動 Darhai 後重試。",
     "upgrade_failed_no_rollback": "升級失敗，且無法還原至上一版本。請重新安裝以還原。",
     "upgrade_failed_rolled_back": "升級失敗，但上一版本仍可正常運作。請稍後重試或查看詳細資訊。",
     "rollback_also_failed": "新版本和還原皆失敗。請重新安裝以還原。",
-    "mcp_crashed": "記憶當機了。請重新啟動 Wayland 以還原。",
+    "mcp_crashed": "記憶當機了。請重新啟動 Darhai 以還原。",
     "mcp_error": "記憶回傳了錯誤。請重試。",
     "timeout": "記憶未能及時回應。請重試。",
     "validation_failed": "該請求不符合記憶期望的格式。",
@@ -97,15 +97,15 @@
   "settings": {
     "panel_title": "IJFW Memory（Ferrox Labs）",
     "skip_label": "略過 IJFW 自動設定",
-    "skip_description": "啟用後，Wayland 將不會安裝或升級 IJFW。你之後可以透過記憶頁面手動安裝。",
+    "skip_description": "啟用後，Darhai 將不會安裝或升級 IJFW。你之後可以透過記憶頁面手動安裝。",
     "manual_install_hint": "手動安裝：在終端機中執行 `npx -y @ijfw/install@latest`",
     "about_title": "IJFW Memory",
     "about_body": "由 Ferrox Labs 出品的開源持久化記憶引擎。"
   },
   "prelude": {
     "installing_notice": "IJFW 正在安裝。外部命令列工具（Claude Code、Codex、Gemini CLI）會在安裝完成後識別它。",
-    "disabled_notice": "IJFW 已在 Wayland 設定中關閉。請重新啟用以與外部命令列共享記憶。",
-    "failed_notice": "IJFW 安裝失敗。請在 Wayland 的記憶頁面重試。"
+    "disabled_notice": "IJFW 已在 Darhai 設定中關閉。請重新啟用以與外部命令列共享記憶。",
+    "failed_notice": "IJFW 安裝失敗。請在 Darhai 的記憶頁面重試。"
   },
   "home": {
     "wiki_title": "Wiki",
@@ -169,7 +169,9 @@
         "autoSync": "每 30 分鐘自動同步",
         "lastSync": "上次同步 {{when}} 前"
       },
-      "emergingLabel": "新興"
+      "emergingLabel": "新興",
+      "viewToggleLabel": "檢視切換",
+      "topicFilterLabel": "主題篩選"
     },
     "orphan": {
       "references": "{{count}} 次引用",
@@ -212,7 +214,8 @@
       "statusLastSync": "上次同步 {{when}} 前",
       "loading": "載入中…",
       "notFound": "找不到該概念。",
-      "notFoundBack": "← 返回 Wiki"
+      "notFoundBack": "← 返回 Wiki",
+      "backLabel": "返回維基"
     },
     "list_empty": "尚無 wiki 條目。請從提升記憶開始。",
     "select_prompt": "選擇一個條目以檢視其內容。",
@@ -224,7 +227,8 @@
     "export_queued": "匯出已排入佇列 - 下載功能即將推出",
     "export_err": "無法匯出此條目",
     "share_ok": "README 分享已排入佇列",
-    "share_err": "無法分享 README"
+    "share_err": "無法分享 README",
+    "graphLabel": "知識圖譜"
   },
   "crossProject": {
     "scope_label_app": "搜尋: 所有專案（應用範圍）",
@@ -388,7 +392,8 @@
       "formula_recency": "+15 儲存時間不足 24 小時（30 天內線性衰減）",
       "save_btn": "儲存",
       "cancel_btn": "取消",
-      "save_success": "已儲存"
+      "save_success": "已儲存",
+      "save_error": "儲存設定失敗"
     },
     "errors": {
       "load_failed": "無法載入記憶。{{reason}}",
@@ -432,13 +437,30 @@
       },
       "dropFolder": {
         "title": "拖放資料夾",
-        "hint": "將 .md / .txt / .json 檔案拖放至 ~/Documents/Wayland-Memory/",
+        "hint": "將 .md / .txt / .json 檔案拖放至 ~/Documents/Darhai-Memory/",
         "count": "已處理 {{count}} 個檔案",
         "openBtn": "開啟資料夾",
         "processBtn": "立即處理",
         "success": "已處理 {{count}} 個檔案 · {{errors}} 個錯誤",
         "error": "處理失敗，請重試。"
       }
+    },
+    "regionLabel": "記憶封存",
+    "composer": {
+      "title": "記住任何內容…",
+      "placeholder": "輸入要記住的內容…（支援 Markdown）",
+      "errorEmpty": "內容不能為空。",
+      "errorTooLong": "內容超過 {{max}} 字元限制。",
+      "errorUnknown": "儲存失敗。",
+      "toastSaved": "已儲存",
+      "addTag": "新增標籤",
+      "tagPlaceholder": "標籤…",
+      "removeTag": "移除標籤 {{tag}}",
+      "dropZone": "或拖入檔案以匯入",
+      "dropZoneLabel": "拖入檔案以匯入",
+      "hint": "記住",
+      "submit": "記住",
+      "charCount": "{{count}} 個字元"
     }
   }
 }

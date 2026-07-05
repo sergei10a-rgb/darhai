@@ -92,7 +92,7 @@
   },
   "cmdk": {
     "label": "Командын самбар",
-    "placeholder": "Туслах, чат, prompt хайх…",
+    "placeholder": "Туслах, чат, промпт хайх…",
     "noResults": "Үр дүн алга",
     "groups": {
       "bestMatch": "Хамгийн тохирох",
@@ -100,7 +100,7 @@
       "specialists": "Мэргэжилтнүүд",
       "builtins": "Суурилуулсан",
       "recents": "Сүүлийн чатууд",
-      "prompts": "Эхлэх prompt-ууд"
+      "prompts": "Эхлэх промптууд"
     },
     "prompts": {
       "brainstorm": "Санаа гаргах",
@@ -109,5 +109,24 @@
       "explain": "Сэдэв тайлбарлах",
       "plan": "Төлөвлөгөө боловсруулах"
     }
-  }
+  },
+  "appMenu": {
+    "edit": "Засах",
+    "view": "Харах",
+    "help": "Тусламж",
+    "checkForUpdates": "Шинэчлэлт шалгах..."
+  },
+  "webview": {
+    "urlPlaceholder": "URL оруулна уу...",
+    "resetZoom": "Томруулалтыг анхны байдалд оруулах",
+    "fit": "Багтаах"
+  },
+  "windowControls": {
+    "minimize": "Хураах",
+    "maximize": "Дэлгэц дүүргэх",
+    "restore": "Сэргээх"
+  },
+  "collapseSidebar": "Хажуугийн самбарыг хураах",
+  "clearSearch": "Хайлтыг цэвэрлэх",
+  "moreActions": "Бусад үйлдэл"
 }

@@ -21,7 +21,17 @@
     "confirmTitle": "Run Step {{n}} autonomously?",
     "confirmOk": "Run autonomously",
     "confirmCancel": "Cancel",
-    "confirmBody": "Wayland will spawn an autonomous worker to complete Step {{n}} in the background. You can keep chatting on the main session.",
+    "confirmBody": "Darhai will spawn an autonomous worker to complete Step {{n}} in the background. You can keep chatting on the main session.",
     "confirmEta": "ETA: 4-8 minutes."
+  },
+  "header": {
+    "completedIn": "於 {{duration}} 內完成",
+    "agentDriving": "智慧代理驅動中",
+    "stepOf": "第 {{current}} 步，共 {{total}} 步",
+    "pauseAutoAdvance": "暫停自動推進",
+    "resumeAutoAdvance": "恢復自動推進",
+    "endWorkflow": "結束工作流程",
+    "deleteWorkflow": "刪除工作流程",
+    "skillCount": "{{count}} 個技能"
   }
 }

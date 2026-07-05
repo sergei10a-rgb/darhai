@@ -5,7 +5,7 @@
   },
   "pitch": {
     "headline": "Gedächtnis, das dir folgt",
-    "lede": "Wayland merkt sich, woran du gearbeitet, was du entschieden und was du ausgeliefert hast. Jeder Assistent erhält den Kontext -- kein erneutes Erklären. Angetrieben von IJFW, einer Open-Source-Gedächtnis-Engine von Ferrox Labs.",
+    "lede": "Darhai merkt sich, woran du gearbeitet, was du entschieden und was du ausgeliefert hast. Jeder Assistent erhält den Kontext -- kein erneutes Erklären. Angetrieben von IJFW, einer Open-Source-Gedächtnis-Engine von Ferrox Labs.",
     "bullet1": "Dauerhaft über Chats, Projekte und CLIs hinweg",
     "bullet2": "Durchsuchbar, exportierbar, deins",
     "bullet3": "Keine Einrichtung nach der Installation",
@@ -23,7 +23,7 @@
   "brand": {
     "tagline": "IJFW Memory von Ferrox Labs",
     "footer": "Angetrieben von IJFW (Open Source) von Ferrox Labs",
-    "github_link": "github.com/FerroxLabs/ijfw"
+    "github_link": "IJFW GitHub"
   },
   "installing": {
     "title": "Gedächtnis wird installiert",
@@ -37,7 +37,7 @@
   "upgrading": {
     "title": "Gedächtnis wird aktualisiert",
     "subtitle": "{{version}} wird für den nächsten Start vorbereitet",
-    "pending_message": "Aktualisierung bereit. Wird beim Neustart von Wayland aktiviert.",
+    "pending_message": "Aktualisierung bereit. Wird beim Neustart von Darhai aktiviert.",
     "restart_now": "Jetzt neu starten"
   },
   "failed": {
@@ -45,7 +45,7 @@
     "retry": "Erneut versuchen",
     "details_toggle": "Details anzeigen",
     "details_hide": "Details ausblenden",
-    "support_link": "Besuche github.com/FerroxLabs/ijfw für Hilfe"
+    "support_link": "IJFW engine help: github.com/FerroxLabs/ijfw"
   },
   "error": {
     "spawn_error": "Der Installer konnte nicht gestartet werden. Stelle sicher, dass npm in deinem PATH liegt.",
@@ -53,11 +53,11 @@
     "invalid_target_version": "Ungültige Versionsnummer aus der Registry. Versuche es später erneut.",
     "unsafe_ownership": "Der ausstehende Installationsordner hat unsichere Besitzrechte und wurde abgelehnt. Neuinstallation zur Wiederherstellung.",
     "stage_pending_failed": "Die neue Installation konnte nicht vorbereitet werden. Prüfe den Speicherplatz und versuche es erneut.",
-    "stage_swap_failed": "Die neue Installation konnte nicht eingespielt werden. Starte Wayland neu, um es erneut zu versuchen.",
+    "stage_swap_failed": "Die neue Installation konnte nicht eingespielt werden. Starte Darhai neu, um es erneut zu versuchen.",
     "upgrade_failed_no_rollback": "Die Aktualisierung schlug fehl und die vorherige Version konnte nicht wiederhergestellt werden. Neuinstallation zur Wiederherstellung.",
     "upgrade_failed_rolled_back": "Die Aktualisierung schlug fehl, aber deine vorherige Version funktioniert weiterhin. Versuche es später erneut oder prüfe die Details.",
     "rollback_also_failed": "Sowohl die neue Version als auch das Zurücksetzen schlugen fehl. Neuinstallation zur Wiederherstellung.",
-    "mcp_crashed": "Gedächtnis ist abgestürzt. Starte Wayland neu, um es wiederherzustellen.",
+    "mcp_crashed": "Gedächtnis ist abgestürzt. Starte Darhai neu, um es wiederherzustellen.",
     "mcp_error": "Gedächtnis hat einen Fehler zurückgegeben. Versuche es erneut.",
     "timeout": "Gedächtnis hat nicht rechtzeitig geantwortet. Versuche es erneut.",
     "validation_failed": "Diese Anfrage entsprach nicht dem, was Gedächtnis erwartet.",
@@ -97,15 +97,15 @@
   "settings": {
     "panel_title": "IJFW Memory (Ferrox Labs)",
     "skip_label": "Automatische IJFW-Einrichtung überspringen",
-    "skip_description": "Wenn aktiviert, installiert oder aktualisiert Wayland IJFW nicht. Du kannst es später manuell über die Gedächtnis-Seite installieren.",
+    "skip_description": "Wenn aktiviert, installiert oder aktualisiert Darhai IJFW nicht. Du kannst es später manuell über die Gedächtnis-Seite installieren.",
     "manual_install_hint": "Manuelle Installation: Führe `npx -y @ijfw/install@latest` in einem Terminal aus",
     "about_title": "IJFW Memory",
     "about_body": "Eine Open-Source-Engine für dauerhaftes Gedächtnis von Ferrox Labs."
   },
   "prelude": {
     "installing_notice": "IJFW wird installiert. Externe CLIs (Claude Code, Codex, Gemini CLI) übernehmen es, sobald die Installation abgeschlossen ist.",
-    "disabled_notice": "IJFW ist in den Wayland-Einstellungen deaktiviert. Aktiviere es erneut, um das Gedächtnis mit externen CLIs zu teilen.",
-    "failed_notice": "IJFW-Installation fehlgeschlagen. Öffne die Gedächtnis-Seite in Wayland, um es erneut zu versuchen."
+    "disabled_notice": "IJFW ist in den Darhai-Einstellungen deaktiviert. Aktiviere es erneut, um das Gedächtnis mit externen CLIs zu teilen.",
+    "failed_notice": "IJFW-Installation fehlgeschlagen. Öffne die Gedächtnis-Seite in Darhai, um es erneut zu versuchen."
   },
   "home": {
     "wiki_title": "Wiki",
@@ -180,7 +180,9 @@
         "autoSync": "automatische Synchronisierung alle 30 Min.",
         "lastSync": "letzte Synchronisierung vor {{when}}"
       },
-      "emergingLabel": "Aufkommend"
+      "emergingLabel": "Aufkommend",
+      "viewToggleLabel": "Ansicht wechseln",
+      "topicFilterLabel": "Themenfilter"
     },
     "orphan": {
       "references": "{{count}} Referenzen",
@@ -223,8 +225,10 @@
       "statusLastSync": "letzte Synchronisierung vor {{when}}",
       "loading": "Wird geladen…",
       "notFound": "Konzept nicht gefunden.",
-      "notFoundBack": "← Zurück zum Wiki"
-    }
+      "notFoundBack": "← Zurück zum Wiki",
+      "backLabel": "Zurück zum Wiki"
+    },
+    "graphLabel": "Wissensgraph"
   },
   "crossProject": {
     "scope_label_app": "Suche: Alle Projekte (App-Bereich)",
@@ -388,7 +392,8 @@
       "formula_recency": "+15, wenn vor < 24 Std. gespeichert (verfällt linear über 30 Tage)",
       "save_btn": "Speichern",
       "cancel_btn": "Abbrechen",
-      "save_success": "Gespeichert"
+      "save_success": "Gespeichert",
+      "save_error": "Einstellungen konnten nicht gespeichert werden"
     },
     "errors": {
       "load_failed": "Gedächtnis konnte nicht geladen werden. {{reason}}",
@@ -432,13 +437,30 @@
       },
       "dropFolder": {
         "title": "Ablageordner",
-        "hint": "Lege .md- / .txt- / .json-Dateien in ~/Documents/Wayland-Memory/ ab",
+        "hint": "Lege .md- / .txt- / .json-Dateien in ~/Documents/Darhai-Memory/ ab",
         "count": "{{count}} Dateien verarbeitet",
         "openBtn": "Ordner öffnen",
         "processBtn": "Jetzt verarbeiten",
         "success": "{{count}} Dateien verarbeitet · {{errors}} Fehler",
         "error": "Verarbeitung fehlgeschlagen. Versuche es erneut."
       }
+    },
+    "regionLabel": "Erinnerungsarchiv",
+    "composer": {
+      "title": "Merke dir alles…",
+      "placeholder": "Erinnerung eingeben… (Markdown möglich)",
+      "errorEmpty": "Inhalt darf nicht leer sein.",
+      "errorTooLong": "Inhalt überschreitet das Limit von {{max}} Zeichen.",
+      "errorUnknown": "Speichern fehlgeschlagen.",
+      "toastSaved": "Erinnerung gespeichert",
+      "addTag": "Tag hinzufügen",
+      "tagPlaceholder": "Tag…",
+      "removeTag": "Tag {{tag}} entfernen",
+      "dropZone": "oder Datei hierher ziehen",
+      "dropZoneLabel": "Datei zum Importieren ablegen",
+      "hint": "zum Merken",
+      "submit": "Merken",
+      "charCount": "{{count}} Zeichen"
     }
   }
 }

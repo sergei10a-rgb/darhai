@@ -112,12 +112,42 @@
     "printedToConsole": "Información del elemento registrada en la consola",
     "inspectElement": "Inspeccionar elemento",
     "inspectElementEnable": "Activar inspector de elementos",
-    "inspectElementDisable": "Desactivar inspector de elementos"
+    "inspectElementDisable": "Desactivar inspector de elementos",
+    "iframeTitle": "Vista previa HTML"
   },
   "ppt": {
     "loading": "Iniciando la vista previa de PPT...",
     "installing": "Instalando el componente de vista previa...",
     "startFailed": "No se pudo iniciar la vista previa de PPT",
     "installHint": "Asegúrate de que officecli esté instalado: npm run postinstall"
+  },
+  "markdownEditor": {
+    "toolbar": {
+      "heading1": "Encabezado 1",
+      "heading2": "Encabezado 2",
+      "heading3": "Encabezado 3",
+      "bold": "Negrita (⌘B)",
+      "italic": "Cursiva (⌘I)",
+      "strikethrough": "Tachado",
+      "inlineCode": "Código en línea",
+      "bulletedList": "Lista con viñetas",
+      "numberedList": "Lista numerada",
+      "blockquote": "Cita",
+      "link": "Enlace",
+      "horizontalRule": "Línea horizontal",
+      "undo": "Deshacer (⌘Z)",
+      "redo": "Rehacer (⌘⇧Z)",
+      "addBlockBelow": "Añadir bloque debajo",
+      "dragToReorder": "Arrastra para reordenar"
+    },
+    "formattingLabel": "Formato Markdown",
+    "inlineFormattingLabel": "Formato en línea",
+    "linkPrompt": "URL del enlace (vacío para eliminar)",
+    "placeholderHeading": "Encabezado",
+    "placeholderEmpty": "Pulsa '/' para comandos o simplemente escribe…"
+  },
+  "slashMenu": {
+    "label": "Comandos de barra",
+    "empty": "Ningún comando coincide"
   }
 }

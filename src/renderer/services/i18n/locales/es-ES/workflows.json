@@ -39,6 +39,6 @@
   "bodyFallback": "El agente carga este flujo de trabajo como su primera directiva y te guía paso a paso. Puedes interrumpirlo o cambiar de rumbo en cualquier momento.",
   "noDescription": "No se proporcionó ninguna descripción.",
   "launch": {
-    "placeholder": "El sistema de lanzamiento está en desarrollo. Pronto podrás elegir un motor (Wayland Core / Gemini / Claude / Codex) y el flujo de trabajo se cargará como la primera directiva del agente en un chat nuevo."
+    "placeholder": "El sistema de lanzamiento está en desarrollo. Pronto podrás elegir un motor (Darhai Core / Gemini / Claude / Codex) y el flujo de trabajo se cargará como la primera directiva del agente en un chat nuevo."
   }
 }

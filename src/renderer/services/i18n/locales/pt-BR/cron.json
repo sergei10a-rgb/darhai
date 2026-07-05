@@ -53,10 +53,10 @@
   },
   "page": {
     "newTask": "Nova tarefa",
-    "description": "Execute tarefas em um agendamento. Você também pode pedir ao Wayland em qualquer conversa para criar uma para você.",
+    "description": "Execute tarefas em um agendamento. Você também pode pedir ao Darhai em qualquer conversa para criar uma para você.",
     "awakeBanner": "Tarefas agendadas só são executadas enquanto seu computador está ligado.",
     "keepAwake": "Manter ativo",
-    "keepAwakeTooltip": "Quando ativado, o Wayland impedirá que seu computador entre em suspensão",
+    "keepAwakeTooltip": "Quando ativado, o Darhai impedirá que seu computador entre em suspensão",
     "createTask": "Criar tarefa agendada",
     "editTask": "Editar tarefa agendada",
     "createSuccess": "Tarefa criada com sucesso",

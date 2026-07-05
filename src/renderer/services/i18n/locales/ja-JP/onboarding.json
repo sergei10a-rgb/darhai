@@ -1,6 +1,6 @@
 {
-  "brand": "Wayland",
-  "welcome": "Wayland へようこそ",
+  "brand": "Darhai",
+  "welcome": "Darhai へようこそ",
   "footer": {
     "manage": "検出は一度だけ実行されました。設定 → プロバイダー でいつでも変更できます。",
     "noLockIn": "いずれの選択肢もあなたを縛りません。",
@@ -22,7 +22,7 @@
     "errorUnrecognized": "これは Flux Router のキーではないようです。sk-flux- で始まる必要があります。",
     "errorNoModels": "接続されましたが、モデルが返されませんでした。しばらくしてから再試行してください。",
     "errorUnknown": "接続中に問題が発生しました。再試行してください。",
-    "trust": "Wayland を手がける Ferrox Labs より。"
+    "trust": "Ferrox Labs のオープンソース技術 Wayland を基盤としています。"
   },
   "scenarioA": {
     "greeting": "{{name}}さん、すでに準備万端です",
@@ -34,7 +34,7 @@
     "ghost": "次の 10 ターンで試す"
   },
   "scenarioB": {
-    "greeting": "Wayland へようこそ",
+    "greeting": "Darhai へようこそ",
     "sub": "入り方を 1 つ選んでください。残りはいつでも追加できます。",
     "heroTag": "おすすめ",
     "heroTitle": "Flux Router",
@@ -89,7 +89,7 @@
       "almost": "Almost there…"
     },
     "logoAlt": {
-      "wordmark": "Wayland"
+      "wordmark": "Darhai"
     },
     "flux": {
       "title": "Get the best answer. Pay the right price. And get it done faster.",
@@ -114,7 +114,7 @@
     },
     "quickstart": {
       "headline": "First - what should I call you",
-      "sub": "So Wayland knows what to call you. Next we'll see what's already on your machine.",
+      "sub": "So Darhai knows what to call you. Next we'll see what's already on your machine.",
       "googleButton": "Continue with Google",
       "freeNote": "Free with your Google account · basic Gemini limits · nothing to pay",
       "changeLater": "You can change everything later.",

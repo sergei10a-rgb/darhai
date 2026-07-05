@@ -58,10 +58,10 @@
   "historyBack": "뒤로",
   "more": "더보기",
   "refresh": "새로고침",
-  "tray.showWindow": "Wayland 표시",
+  "tray.showWindow": "Darhai 표시",
   "tray.newChat": "새 채팅",
   "tray.closeToTray": "트레이에 숨기기",
-  "tray.about": "Wayland 소개",
+  "tray.about": "Darhai 소개",
   "tray.restart": "앱 재시작",
   "tray.quit": "종료",
   "tray.runningTasks": "실행 중인 작업",
@@ -84,7 +84,7 @@
   "processing": "처리 중...",
   "optional": "(선택 사항)",
   "clear": "지우기",
-  "brand": "Wayland",
+  "brand": "Darhai",
   "brandTagline": "AI Agent",
   "cmdk": {
     "label": "[TODO:translate] Command palette",
@@ -109,5 +109,24 @@
   "unit": {
     "minute_short": "분",
     "second_short": "초"
-  }
+  },
+  "appMenu": {
+    "edit": "편집",
+    "view": "보기",
+    "help": "도움말",
+    "checkForUpdates": "업데이트 확인..."
+  },
+  "webview": {
+    "urlPlaceholder": "URL 입력...",
+    "resetZoom": "확대/축소 재설정",
+    "fit": "맞춤"
+  },
+  "windowControls": {
+    "minimize": "최소화",
+    "maximize": "최대화",
+    "restore": "이전 크기로"
+  },
+  "collapseSidebar": "사이드바 접기",
+  "clearSearch": "검색 지우기",
+  "moreActions": "추가 작업"
 }

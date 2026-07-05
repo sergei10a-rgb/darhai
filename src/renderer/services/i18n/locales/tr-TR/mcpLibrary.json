@@ -46,7 +46,7 @@
     "title": "{{vendor}} bağlan - OAuth kimlik bilgilerini yapıştır",
     "submit": "Kaydet ve giriş yap",
     "cancel": "İptal",
-    "universalIntro": "{{vendor}}, Wayland'in bir OAuth istemcisini otomatik kaydetmesine izin vermiyor. Sağlayıcının geliştirici konsolunda bir OAuth uygulaması kaydedin ve kimlik bilgilerini aşağıya yapıştırın.",
+    "universalIntro": "{{vendor}}, Darhai'in bir OAuth istemcisini otomatik kaydetmesine izin vermiyor. Sağlayıcının geliştirici konsolunda bir OAuth uygulaması kaydedin ve kimlik bilgilerini aşağıya yapıştırın.",
     "openConsole": "{{vendor}} geliştirici konsolunu aç",
     "redirectLabel": "Sağlayıcı konsoluna yapıştırılacak yönlendirme URL'si:",
     "clientIdLabel": "İstemci ID",
@@ -54,5 +54,16 @@
     "clientSecretLabel": "İstemci gizli anahtarı",
     "clientSecretPlaceholder": "client_secret'i yapıştırın",
     "saveFailed": "Kimlik bilgileri kaydedilemedi: {{error}}"
+  },
+  "maintainer": {
+    "official": "Resmî",
+    "community": "Topluluk",
+    "wayland": "Darhai tarafından geliştirildi"
+  },
+  "verifiedPill": "Darhai doğrulandı",
+  "browse": {
+    "title": "MCP Kitaplığı",
+    "subtitle": "Seçilmiş bağlayıcılar. Göz atın, tek tıkla kurun ve kurulum kılavuzunu izleyin.",
+    "searchPlaceholder": "MCP ara…"
   }
 }

@@ -39,6 +39,6 @@
   "bodyFallback": "L'agent charge ce workflow comme première directive et vous guide étape par étape. Vous pouvez interrompre ou changer de direction à tout moment.",
   "noDescription": "Aucune description fournie.",
   "launch": {
-    "placeholder": "Le câblage de lancement est en cours. Bientôt, vous choisirez un moteur (Wayland Core / Gemini / Claude / Codex), et le workflow se chargera comme première directive de l'agent dans une nouvelle conversation."
+    "placeholder": "Le câblage de lancement est en cours. Bientôt, vous choisirez un moteur (Darhai Core / Gemini / Claude / Codex), et le workflow se chargera comme première directive de l'agent dans une nouvelle conversation."
   }
 }

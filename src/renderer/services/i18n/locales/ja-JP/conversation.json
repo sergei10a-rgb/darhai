@@ -16,7 +16,7 @@
     "clearWorkspace": "フォルダーを解除",
     "openFolder": "Open Folder",
     "none": "None",
-    "quickActionsTitle": "Wayland で何ができる？",
+    "quickActionsTitle": "Darhai で何ができる？",
     "quickActionFeedback": "フィードバックや提案は？",
     "quickActionStar": "気に入った？スターをください！"
   },
@@ -189,7 +189,10 @@
       "vscode": "VS Code",
       "terminal": "ターミナル",
       "explorer": "エクスプローラー"
-    }
+    },
+    "toggleLabel": "ワークスペースを切り替え",
+    "collapseLabel": "ワークスペースを折りたたむ",
+    "expandLabel": "ワークスペースを展開"
   },
   "minimap": {
     "searchAria": "会話を検索",
@@ -330,5 +333,9 @@
       "sublabel": "既存の Claude Code ログインで実行——追加のキー管理は不要です。",
       "action": "使う"
     }
+  },
+  "openclaw": {
+    "runtimeCheckFailed": "エージェントランタイムを検証できませんでした",
+    "runtimeMismatch": "エージェント切り替えの検証に失敗しました: {{details}}"
   }
 }

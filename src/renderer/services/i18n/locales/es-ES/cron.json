@@ -53,10 +53,10 @@
   },
   "page": {
     "newTask": "Nueva tarea",
-    "description": "Ejecuta tareas de forma programada. También puedes pedirle a Wayland en cualquier conversación que cree una por ti.",
+    "description": "Ejecuta tareas de forma programada. También puedes pedirle a Darhai en cualquier conversación que cree una por ti.",
     "awakeBanner": "Las tareas programadas solo se ejecutan mientras el ordenador está encendido.",
     "keepAwake": "Mantener activo",
-    "keepAwakeTooltip": "Cuando está activado, Wayland evitará que el ordenador entre en suspensión",
+    "keepAwakeTooltip": "Cuando está activado, Darhai evitará que el ordenador entre en suspensión",
     "createTask": "Crear tarea programada",
     "editTask": "Editar tarea programada",
     "createSuccess": "Tarea creada correctamente",

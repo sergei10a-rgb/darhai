@@ -112,12 +112,42 @@
     "printedToConsole": "已在控制台打印元素信息",
     "inspectElement": "审核元素",
     "inspectElementEnable": "开启审核元素",
-    "inspectElementDisable": "关闭审核元素"
+    "inspectElementDisable": "关闭审核元素",
+    "iframeTitle": "HTML 预览"
   },
   "ppt": {
     "loading": "正在启动 PPT 预览...",
     "installing": "正在安装预览组件...",
     "startFailed": "启动 PPT 预览失败",
     "installHint": "请确保已安装 officecli：npm run postinstall"
+  },
+  "markdownEditor": {
+    "toolbar": {
+      "heading1": "标题 1",
+      "heading2": "标题 2",
+      "heading3": "标题 3",
+      "bold": "加粗 (⌘B)",
+      "italic": "斜体 (⌘I)",
+      "strikethrough": "删除线",
+      "inlineCode": "行内代码",
+      "bulletedList": "无序列表",
+      "numberedList": "有序列表",
+      "blockquote": "引用",
+      "link": "链接",
+      "horizontalRule": "分割线",
+      "undo": "撤销 (⌘Z)",
+      "redo": "重做 (⌘⇧Z)",
+      "addBlockBelow": "在下方添加块",
+      "dragToReorder": "拖动以重新排序"
+    },
+    "formattingLabel": "Markdown 格式",
+    "inlineFormattingLabel": "行内格式",
+    "linkPrompt": "链接 URL（留空以移除）",
+    "placeholderHeading": "标题",
+    "placeholderEmpty": "按 '/' 打开命令，或直接开始输入…"
+  },
+  "slashMenu": {
+    "label": "斜杠命令",
+    "empty": "没有匹配的命令"
   }
 }

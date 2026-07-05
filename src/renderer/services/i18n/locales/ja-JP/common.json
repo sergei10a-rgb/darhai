@@ -58,10 +58,10 @@
   "historyBack": "戻る",
   "more": "その他",
   "refresh": "更新",
-  "tray.showWindow": "Wayland を表示",
+  "tray.showWindow": "Darhai を表示",
   "tray.newChat": "新しいチャット",
   "tray.closeToTray": "トレイに隠す",
-  "tray.about": "Wayland について",
+  "tray.about": "Darhai について",
   "tray.restart": "アプリを再起動",
   "tray.quit": "終了",
   "tray.runningTasks": "実行中のタスク",
@@ -84,7 +84,7 @@
   "processing": "処理中...",
   "optional": "（任意）",
   "clear": "クリア",
-  "brand": "Wayland",
+  "brand": "Darhai",
   "brandTagline": "AI Agent",
   "cmdk": {
     "label": "[TODO:translate] Command palette",
@@ -109,5 +109,24 @@
   "unit": {
     "minute_short": "分",
     "second_short": "秒"
-  }
+  },
+  "appMenu": {
+    "edit": "編集",
+    "view": "表示",
+    "help": "ヘルプ",
+    "checkForUpdates": "アップデートを確認..."
+  },
+  "webview": {
+    "urlPlaceholder": "URLを入力...",
+    "resetZoom": "ズームをリセット",
+    "fit": "フィット"
+  },
+  "windowControls": {
+    "minimize": "最小化",
+    "maximize": "最大化",
+    "restore": "元に戻す"
+  },
+  "collapseSidebar": "サイドバーを折りたたむ",
+  "clearSearch": "検索をクリア",
+  "moreActions": "その他の操作"
 }

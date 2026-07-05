@@ -112,12 +112,42 @@
     "printedToConsole": "Информация об элементе выведена в консоль",
     "inspectElement": "Инспектировать элемент",
     "inspectElementEnable": "Включить инспектор элементов",
-    "inspectElementDisable": "Отключить инспектор элементов"
+    "inspectElementDisable": "Отключить инспектор элементов",
+    "iframeTitle": "Предпросмотр HTML"
   },
   "ppt": {
     "loading": "Запуск предпросмотра PPT...",
     "installing": "Установка компонента предпросмотра...",
     "startFailed": "Не удалось запустить предпросмотр PPT",
     "installHint": "Убедитесь, что officecli установлен: npm run postinstall"
+  },
+  "markdownEditor": {
+    "toolbar": {
+      "heading1": "Заголовок 1",
+      "heading2": "Заголовок 2",
+      "heading3": "Заголовок 3",
+      "bold": "Жирный (⌘B)",
+      "italic": "Курсив (⌘I)",
+      "strikethrough": "Зачёркнутый",
+      "inlineCode": "Встроенный код",
+      "bulletedList": "Маркированный список",
+      "numberedList": "Нумерованный список",
+      "blockquote": "Цитата",
+      "link": "Ссылка",
+      "horizontalRule": "Горизонтальная линия",
+      "undo": "Отменить (⌘Z)",
+      "redo": "Повторить (⌘⇧Z)",
+      "addBlockBelow": "Добавить блок ниже",
+      "dragToReorder": "Перетащите для изменения порядка"
+    },
+    "formattingLabel": "Форматирование Markdown",
+    "inlineFormattingLabel": "Строчное форматирование",
+    "linkPrompt": "URL ссылки (пусто — удалить)",
+    "placeholderHeading": "Заголовок",
+    "placeholderEmpty": "Нажмите «/» для команд или просто начните печатать…"
+  },
+  "slashMenu": {
+    "label": "Слэш-команды",
+    "empty": "Нет подходящих команд"
   }
 }

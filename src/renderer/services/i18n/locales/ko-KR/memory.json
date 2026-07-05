@@ -5,7 +5,7 @@
   },
   "pitch": {
     "headline": "당신을 따라다니는 메모리",
-    "lede": "Wayland는 당신이 작업한 것, 결정한 것, 출시한 것을 기억합니다. 모든 어시스턴트가 컨텍스트를 공유하므로 다시 설명할 필요가 없습니다. Ferrox Labs가 개발한 오픈소스 메모리 엔진 IJFW이 구동합니다.",
+    "lede": "Darhai는 당신이 작업한 것, 결정한 것, 출시한 것을 기억합니다. 모든 어시스턴트가 컨텍스트를 공유하므로 다시 설명할 필요가 없습니다. Ferrox Labs가 개발한 오픈소스 메모리 엔진 IJFW이 구동합니다.",
     "bullet1": "채팅, 프로젝트, CLI 전반에 걸쳐 유지됩니다",
     "bullet2": "검색 가능하고, 내보내기 가능하며, 당신의 것입니다",
     "bullet3": "설치 후 별도의 설정이 필요하지 않습니다",
@@ -23,7 +23,7 @@
   "brand": {
     "tagline": "IJFW Memory by Ferrox Labs",
     "footer": "Powered by IJFW (오픈소스) by Ferrox Labs",
-    "github_link": "github.com/FerroxLabs/ijfw"
+    "github_link": "IJFW GitHub"
   },
   "installing": {
     "title": "메모리 설치 중",
@@ -37,7 +37,7 @@
   "upgrading": {
     "title": "메모리 업그레이드 중",
     "subtitle": "다음 부팅을 위해 {{version}}을(를) 준비하고 있습니다",
-    "pending_message": "업그레이드가 준비되었습니다. Wayland를 재시작하면 활성화됩니다.",
+    "pending_message": "업그레이드가 준비되었습니다. Darhai를 재시작하면 활성화됩니다.",
     "restart_now": "지금 재시작"
   },
   "failed": {
@@ -45,7 +45,7 @@
     "retry": "재시도",
     "details_toggle": "세부 정보 표시",
     "details_hide": "세부 정보 숨기기",
-    "support_link": "도움말은 github.com/FerroxLabs/ijfw를 방문하세요"
+    "support_link": "IJFW engine help: github.com/FerroxLabs/ijfw"
   },
   "error": {
     "spawn_error": "설치 프로그램을 시작할 수 없습니다. npm이 PATH에 있는지 확인하세요.",
@@ -53,11 +53,11 @@
     "invalid_target_version": "레지스트리에서 가져온 버전 번호가 잘못되었습니다. 나중에 다시 시도하세요.",
     "unsafe_ownership": "보류 중인 설치 폴더의 소유권이 안전하지 않아 거부되었습니다. 재설치하여 복구하세요.",
     "stage_pending_failed": "새 설치를 준비할 수 없습니다. 디스크 공간을 확인한 후 다시 시도하세요.",
-    "stage_swap_failed": "새 설치로 전환할 수 없습니다. Wayland를 재시작하여 다시 시도하세요.",
+    "stage_swap_failed": "새 설치로 전환할 수 없습니다. Darhai를 재시작하여 다시 시도하세요.",
     "upgrade_failed_no_rollback": "업그레이드에 실패했고 이전 버전을 복원할 수 없습니다. 재설치하여 복구하세요.",
     "upgrade_failed_rolled_back": "업그레이드에 실패했지만 이전 버전은 계속 동작합니다. 나중에 다시 시도하거나 세부 정보를 확인하세요.",
     "rollback_also_failed": "새 버전과 롤백 모두 실패했습니다. 재설치하여 복구하세요.",
-    "mcp_crashed": "메모리가 충돌했습니다. Wayland를 재시작하여 복구하세요.",
+    "mcp_crashed": "메모리가 충돌했습니다. Darhai를 재시작하여 복구하세요.",
     "mcp_error": "메모리가 오류를 반환했습니다. 다시 시도하세요.",
     "timeout": "메모리가 제 시간에 응답하지 않았습니다. 다시 시도하세요.",
     "validation_failed": "해당 요청이 메모리가 기대하는 형식과 일치하지 않습니다.",
@@ -97,15 +97,15 @@
   "settings": {
     "panel_title": "IJFW Memory (Ferrox Labs)",
     "skip_label": "IJFW 자동 설정 건너뛰기",
-    "skip_description": "활성화하면 Wayland가 IJFW를 설치하거나 업그레이드하지 않습니다. 나중에 메모리 페이지를 통해 수동으로 설치할 수 있습니다.",
+    "skip_description": "활성화하면 Darhai가 IJFW를 설치하거나 업그레이드하지 않습니다. 나중에 메모리 페이지를 통해 수동으로 설치할 수 있습니다.",
     "manual_install_hint": "수동으로 설치하려면 터미널에서 `npx -y @ijfw/install@latest`를 실행하세요",
     "about_title": "IJFW Memory",
     "about_body": "Ferrox Labs가 개발한 오픈소스 영구 메모리 엔진입니다."
   },
   "prelude": {
     "installing_notice": "IJFW를 설치하고 있습니다. 외부 CLI (Claude Code, Codex, Gemini CLI)는 설치 완료 후 인식됩니다.",
-    "disabled_notice": "IJFW가 Wayland 설정에서 비활성화되어 있습니다. 외부 CLI와 메모리를 공유하려면 다시 활성화하세요.",
-    "failed_notice": "IJFW 설치에 실패했습니다. Wayland의 메모리 페이지에서 다시 시도하세요."
+    "disabled_notice": "IJFW가 Darhai 설정에서 비활성화되어 있습니다. 외부 CLI와 메모리를 공유하려면 다시 활성화하세요.",
+    "failed_notice": "IJFW 설치에 실패했습니다. Darhai의 메모리 페이지에서 다시 시도하세요."
   },
   "home": {
     "wiki_title": "Wiki",
@@ -169,7 +169,9 @@
         "autoSync": "30분마다 자동 동기화",
         "lastSync": "마지막 동기화 {{when}} 전"
       },
-      "emergingLabel": "신흥"
+      "emergingLabel": "신흥",
+      "viewToggleLabel": "보기 전환",
+      "topicFilterLabel": "주제 필터"
     },
     "orphan": {
       "references": "{{count}}개 참조",
@@ -212,7 +214,8 @@
       "statusLastSync": "마지막 동기화 {{when}} 전",
       "loading": "로딩 중…",
       "notFound": "개념을 찾을 수 없습니다.",
-      "notFoundBack": "← Wiki로 돌아가기"
+      "notFoundBack": "← Wiki로 돌아가기",
+      "backLabel": "위키로 돌아가기"
     },
     "list_empty": "아직 위키 항목이 없습니다. 메모리를 승격하여 시작하세요.",
     "select_prompt": "내용을 보려면 항목을 선택하세요.",
@@ -224,7 +227,8 @@
     "export_queued": "내보내기가 대기열에 추가되었습니다 -- 다운로드 기능은 곧 제공됩니다",
     "export_err": "항목을 내보내지 못했습니다",
     "share_ok": "README 공유가 대기열에 추가되었습니다",
-    "share_err": "README를 공유하지 못했습니다"
+    "share_err": "README를 공유하지 못했습니다",
+    "graphLabel": "지식 그래프"
   },
   "crossProject": {
     "scope_label_app": "검색 중: 모든 프로젝트 (앱 범위)",
@@ -388,7 +392,8 @@
       "formula_recency": "+15 저장된 지 24시간 미만인 경우(30일에 걸쳐 선형 감소)",
       "save_btn": "저장",
       "cancel_btn": "취소",
-      "save_success": "저장됨"
+      "save_success": "저장됨",
+      "save_error": "설정을 저장하지 못했습니다"
     },
     "errors": {
       "load_failed": "메모리를 로드할 수 없습니다. {{reason}}",
@@ -432,13 +437,30 @@
       },
       "dropFolder": {
         "title": "폴더에 끌어다 놓기",
-        "hint": ".md / .txt / .json 파일을 ~/Documents/Wayland-Memory/에 끌어다 놓으세요",
+        "hint": ".md / .txt / .json 파일을 ~/Documents/Darhai-Memory/에 끌어다 놓으세요",
         "count": "{{count}}개 파일 처리됨",
         "openBtn": "폴더 열기",
         "processBtn": "지금 처리",
         "success": "{{count}}개 파일 처리됨 · 오류 {{errors}}개",
         "error": "처리에 실패했습니다. 다시 시도하세요."
       }
+    },
+    "regionLabel": "메모리 아카이브",
+    "composer": {
+      "title": "무엇이든 기억하세요…",
+      "placeholder": "기억할 내용을 입력하세요… (마크다운 가능)",
+      "errorEmpty": "내용은 비워둘 수 없습니다.",
+      "errorTooLong": "내용이 {{max}}자 제한을 초과했습니다.",
+      "errorUnknown": "저장하지 못했습니다.",
+      "toastSaved": "기억이 저장되었습니다",
+      "addTag": "태그 추가",
+      "tagPlaceholder": "태그…",
+      "removeTag": "{{tag}} 태그 제거",
+      "dropZone": "또는 파일을 끌어다 놓아 가져오기",
+      "dropZoneLabel": "파일을 끌어다 놓아 가져오기",
+      "hint": "눌러 기억",
+      "submit": "기억하기",
+      "charCount": "{{count}}자"
     }
   }
 }
