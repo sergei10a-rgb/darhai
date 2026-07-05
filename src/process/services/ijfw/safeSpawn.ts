@@ -37,7 +37,8 @@ export function __setTrustedNpmCliResolver(fn: (() => Promise<string>) | null): 
 }
 
 async function defaultResolveTrustedNpm(): Promise<string> {
-  // SEC-007: resolve via process.execPath sibling, NOT bare PATH.
+  const isWin = process.platform === 'win32';
+  // SEC-007: resolve via known absolute install locations, NOT bare PATH.
   const candidates = [
     path.join(
       path.dirname(process.execPath),
@@ -52,15 +53,35 @@ async function defaultResolveTrustedNpm(): Promise<string> {
     '/usr/local/lib/node_modules/npm/bin/npm-cli.js',
     '/opt/homebrew/lib/node_modules/npm/bin/npm-cli.js',
   ];
+  if (isWin) {
+    // The Node.js Windows installer (and the nvm-windows symlink) place npm at
+    // <ProgramFiles>\nodejs\node_modules\npm; a per-user global prefix lives
+    // under %APPDATA%\npm. These are absolute, admin/user-controlled paths -
+    // still not a bare PATH lookup, so SEC-007's intent is preserved.
+    const npmRel = ['node_modules', 'npm', 'bin', 'npm-cli.js'];
+    const programFiles = process.env.ProgramFiles || 'C:\\Program Files';
+    const programFilesX86 = process.env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)';
+    candidates.push(
+      path.join(programFiles, 'nodejs', ...npmRel),
+      path.join(programFilesX86, 'nodejs', ...npmRel),
+    );
+    if (process.env.APPDATA) candidates.push(path.join(process.env.APPDATA, 'npm', ...npmRel));
+  }
   for (const candidate of candidates) {
     try {
       const real = await fs.promises.realpath(candidate);
       const stat = await fs.promises.lstat(real);
-      // Reject world-writable npm CLIs.
-      if ((stat.mode & 0o002) !== 0) continue;
-      // Reject CLIs owned by anyone other than current uid (where applicable).
-      const currentUid = process.getuid?.();
-      if (currentUid !== undefined && stat.uid !== currentUid && stat.uid !== 0) continue;
+      // Unix permission hardening (SEC-007). Windows fs.Stats has no comparable
+      // uid/mode semantics (a normal file reports the world-writable bit), so
+      // these checks would reject every valid Windows npm; the absolute
+      // ProgramFiles path is the trust anchor there instead.
+      if (!isWin) {
+        // Reject world-writable npm CLIs.
+        if ((stat.mode & 0o002) !== 0) continue;
+        // Reject CLIs owned by anyone other than current uid (where applicable).
+        const currentUid = process.getuid?.();
+        if (currentUid !== undefined && stat.uid !== currentUid && stat.uid !== 0) continue;
+      }
       return real;
     } catch {
       /* try next */
