@@ -2,33 +2,49 @@
 
 Дархайг бүтээхэд тусалж байгаад баярлалаа.
 
-## License & contributor agreement (read before your first PR)
+## Лиценз ба хувь нэмрийн нөхцөл (эхний PR-ээ илгээхээсээ өмнө уншина уу)
 
-Дархай is licensed under **AGPL-3.0-or-later** (see `LICENSE`). To keep a
-sustainable open-core project - a freely self-hostable core plus a commercial
-hosted/Pro tier - we ask every contributor to agree to a lightweight CLA:
+Дархай нь **AGPL-3.0-or-later** лицензтэй (`LICENSE` файлыг харна уу).
+Тусдаа CLA (гэрээ) шаардлагагүй — хувь нэмрийн нөхцөл энгийн:
 
-> By submitting a contribution, you certify that you wrote it (or have the right
-> to submit it), and you grant **Ferrox Labs** a perpetual, worldwide,
-> royalty-free license to use, modify, sublicense, and **relicense** your
-> contribution - including under the AGPL and under a separate commercial
-> license - while you retain copyright to your own work.
+> Та хувь нэмэр (PR) илгээснээр уг кодыг өөрөө бичсэн (эсвэл илгээх эрхтэй)
+> гэдгээ баталж, түүнийгээ Дархай төсөлд **AGPL-3.0-or-later** лицензийн
+> нөхцөлөөр оруулж байгааг зөвшөөрч байна. Өөрийн бичсэн кодын зохиогчийн
+> эрх танд хэвээр үлдэнэ.
 
-This is what lets us offer the hosted Pro version without forcing every
-contributor's work into a proprietary fork. It's the same model GitLab,
-Grafana, and Sentry use. We'll wire up a CLA-assistant bot on the repo so this
-is a one-click acknowledgement on your first PR.
+## Хөгжүүлэлтийн орчин бэлтгэх
 
-## Ground rules
+```bash
+git clone https://github.com/sergei10a-rgb/darhai.git
+cd darhai
+bun install
+```
 
-- One logical change per PR; keep diffs surgical.
-- Match the existing code style and conventions (see `AGENTS.md`).
-- Tests/typecheck must pass before review.
-- Don't add features beyond the issue/scope you're addressing.
+PR илгээхээсээ өмнө CI-тай ижил шалгалтыг локал дээрээ ажиллуулна:
 
-## Trademark
+```bash
+# Нэг удаагийн суулгалт
+npm install -g @j178/prek
 
-Дархай (Darhai) is a fork built on Wayland. "Wayland" and the Wayland marks are
-trademarks of Ferrox Labs. The AGPL covers the **code**, not the **name** - this
-fork uses its own name "Дархай / Darhai" in line with that policy. Full policy,
-including the permitted nominative uses, is in [TRADEMARK.md](./TRADEMARK.md).
+# CI-тай яг ижил шалгалт (зөвхөн шалгана - автоматаар засахгүй)
+prek run --from-ref origin/main --to-ref HEAD
+```
+
+Бусад команд (`bun run lint:fix`, `bun run format`, `bunx tsc --noEmit`,
+`bun run test` гэх мэт) болон кодын дүрмийг [AGENTS.md](./AGENTS.md)-ээс
+харна уу.
+
+## Үндсэн дүрэм
+
+- Нэг PR-д нэг логик өөрчлөлт; diff-ээ аль болох цомхон байлга.
+- Одоо байгаа кодын хэв маяг, дүрмийг дага (`AGENTS.md`-г үз).
+- Тест болон type check хяналтад орохоос өмнө амжилттай байх ёстой.
+- Тухайн issue буюу хамрах хүрээнээс гадуур боломж бүү нэм.
+
+## Барааны тэмдэг
+
+Дархай (Darhai) нь Wayland дээр суурилсан бие даасан салбарлалт (fork) юм.
+"Wayland" нэр болон түүний лого нь Ferrox Labs-ийн барааны тэмдэг. AGPL нь
+**кодыг** хамардаг болохоос **нэрийг** хамардаггүй тул энэ салбарлалт өөрийн
+"Дархай / Darhai" нэрийг хэрэглэдэг. Дэлгэрэнгүйг
+[TRADEMARK.md](./TRADEMARK.md)-ээс үзнэ үү.

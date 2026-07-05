@@ -1,8 +1,12 @@
 # Third-party notices
 
-Wayland is built on, and includes substantial source code from, the following Apache-2.0
-licensed project. This notice satisfies the attribution requirement of the Apache License,
-Version 2.0, Section 4(c).
+Darhai (Дархай) is a derivative work of **Wayland** by Ferrox Labs
+(https://github.com/FerroxLabs/wayland, AGPL-3.0-or-later), which is itself built on,
+and includes substantial source code from, **AionUi**. The full chain of attribution —
+Darhai → Wayland → AionUi — is preserved below; the sections that follow are the
+upstream notices kept intact. References to "Wayland" in these notices describe the
+upstream project this fork derives from. This notice satisfies the attribution
+requirement of the Apache License, Version 2.0, Section 4(c).
 
 ## AionUi
 
@@ -45,6 +49,7 @@ root of this repository.
 
 ### How to update this file
 
-When Wayland adds, removes, or substantially modifies its dependency on an Apache-2.0
-or similarly attribution-required upstream, edit this file. Do not edit `LICENSE` -
-that is the canonical license text and must remain unchanged.
+When Darhai adds, removes, or substantially modifies its dependency on an Apache-2.0
+or similarly attribution-required upstream, edit this file. Never remove an existing
+upstream notice. Do not edit `LICENSE` - that is the canonical license text and must
+remain unchanged.

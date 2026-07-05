@@ -1,201 +1,201 @@
-# Wayland WebUI Mode - Startup Guide
+# Дархай WebUI горим — эхлүүлэх заавар
 
-Wayland supports WebUI mode, allowing you to access the application through a web browser. This guide covers how to start WebUI mode on all supported platforms.
+Дархай нь WebUI горимыг дэмждэг бөгөөд ингэснээр аппликэйшнд веб браузераар хандах боломжтой. Энэ заавар дэмжигдсэн бүх платформ дээр WebUI горимыг хэрхэн эхлүүлэхийг тайлбарлана.
 
-## Table of Contents
+## Агуулга
 
-- [What is WebUI Mode?](#what-is-webui-mode)
+- [WebUI горим гэж юу вэ?](#webui-горим-гэж-юу-вэ)
 - [Windows](#windows)
 - [macOS](#macos)
 - [Linux](#linux)
 - [Android (Termux)](#android-termux)
-- [Remote Access](#remote-access)
-- [Troubleshooting](#troubleshooting)
+- [Алсын хандалт](#алсын-хандалт)
+- [Алдаа засах](#алдаа-засах)
 
 ---
 
-## What is WebUI Mode?
+## WebUI горим гэж юу вэ?
 
-WebUI mode starts Wayland with an embedded web server, allowing you to:
+WebUI горим нь Дархайг суулгасан веб сервертэй нь хамт эхлүүлж, дараах боломжуудыг олгоно:
 
-- Access the application through any modern web browser
-- Use Wayland from remote devices on the same network (with `--remote` flag)
-- Run the application headless on servers
+- Орчин үеийн дурын веб браузераар аппликэйшнд хандах
+- Нэг сүлжээнд байгаа бусад төхөөрөмжөөс Дархайг ашиглах (`--remote` флагтай)
+- Сервер дээр дэлгэцгүй (headless) горимоор ажиллуулах
 
-Default access URL: `http://localhost:3000` (port may vary, check the application output)
+Анхдагч хандалтын URL: `http://localhost:3000` (порт өөр байж болно, аппликэйшний гаралтыг шалгана уу)
 
 ---
 
 ## Windows
 
-### Method 1: Command Line (Recommended)
+### Арга 1: Командын мөр (санал болгож буй)
 
-Open **Command Prompt** or **PowerShell** and run:
+**Command Prompt** эсвэл **PowerShell** нээгээд ажиллуулна:
 
 ```cmd
-# Using full path
-"C:\Program Files\Wayland\Wayland.exe" --webui
+# Бүтэн замаар
+"C:\Program Files\Дархай\Darhai.exe" --webui
 
-# Or if Wayland is in your PATH
-Wayland.exe --webui
+# Эсвэл Darhai таны PATH-д байгаа бол
+Darhai.exe --webui
 ```
 
-### Method 2: Create a Desktop Shortcut
+### Арга 2: Дэсктоп товчлол үүсгэх
 
-1. Right-click on desktop → **New** → **Shortcut**
-2. Enter target location:
+1. Дэсктоп дээр хулганы баруун товч → **New** → **Shortcut**
+2. Байршлыг оруулна:
    ```
-   "C:\Program Files\Wayland\Wayland.exe" --webui
+   "C:\Program Files\Дархай\Darhai.exe" --webui
    ```
-3. Name it **Wayland WebUI**
-4. Click **Finish**
-5. Double-click the shortcut to launch
+3. **Darhai WebUI** гэж нэрлэнэ
+4. **Finish** дарна
+5. Товчлол дээр давхар товшиж эхлүүлнэ
 
-### Method 3: Create a Batch File
+### Арга 3: Batch файл үүсгэх
 
-Create `start-wayland-webui.bat`:
+`start-darhai-webui.bat` файл үүсгэнэ:
 
 ```batch
 @echo off
-"C:\Program Files\Wayland\Wayland.exe" --webui
+"C:\Program Files\Дархай\Darhai.exe" --webui
 pause
 ```
 
-Double-click the batch file to start WebUI mode.
+Batch файл дээр давхар товшиход WebUI горим эхэлнэ.
 
 ---
 
 ## macOS
 
-### Method 1: Terminal Command (Recommended)
+### Арга 1: Terminal команд (санал болгож буй)
 
-Open **Terminal** and run:
+**Terminal** нээгээд ажиллуулна:
 
 ```bash
-# Using full path
-/Applications/Wayland.app/Contents/MacOS/Wayland --webui
+# Бүтэн замаар
+/Applications/Дархай.app/Contents/MacOS/Darhai --webui
 
-# Or using open command
-open -a Wayland --args --webui
+# Эсвэл open командаар
+open -a Дархай --args --webui
 ```
 
-### Method 2: Create Shell Script
+### Арга 2: Shell скрипт үүсгэх
 
-Create `start-wayland-webui.sh`:
+`start-darhai-webui.sh` файл үүсгэнэ:
 
 ```bash
 #!/bin/bash
-/Applications/Wayland.app/Contents/MacOS/Wayland --webui
+/Applications/Дархай.app/Contents/MacOS/Darhai --webui
 ```
 
-Make it executable and run:
+Ажиллуулах эрх өгөөд ажиллуулна:
 
 ```bash
-chmod +x start-wayland-webui.sh
-./start-wayland-webui.sh
+chmod +x start-darhai-webui.sh
+./start-darhai-webui.sh
 ```
 
-### Method 3: Create Automator Application
+### Арга 3: Automator аппликэйшн үүсгэх
 
-1. Open **Automator**
-2. Choose **Application**
-3. Add **Run Shell Script** action
-4. Enter:
+1. **Automator** нээнэ
+2. **Application** сонгоно
+3. **Run Shell Script** үйлдэл нэмнэ
+4. Дараахыг оруулна:
    ```bash
-   /Applications/Wayland.app/Contents/MacOS/Wayland --webui
+   /Applications/Дархай.app/Contents/MacOS/Darhai --webui
    ```
-5. Save as **Wayland WebUI.app**
-6. Double-click to launch
+5. **Darhai WebUI.app** нэрээр хадгална
+6. Давхар товшиж эхлүүлнэ
 
-### Method 4: Add to Dock
+### Арга 4: Dock-д нэмэх
 
-1. Create an Automator app (Method 3)
-2. Drag **Wayland WebUI.app** to your Dock
-3. Click the Dock icon to start WebUI mode anytime
+1. Automator апп үүсгэнэ (Арга 3)
+2. **Darhai WebUI.app**-ыг Dock руугаа чирнэ
+3. Dock дээрх дүрс дээр товшиход WebUI горим хэзээ ч эхэлнэ
 
 ---
 
 ## Linux
 
-### Method 1: Command Line (Recommended)
+### Арга 1: Командын мөр (санал болгож буй)
 
-#### For .deb Installation
-
-```bash
-# Using system path
-wayland --webui
-
-# Or using full path
-/opt/Wayland/wayland --webui
-```
-
-#### For AppImage
+#### .deb суулгацын хувьд
 
 ```bash
-# Make AppImage executable (first time only)
-chmod +x Wayland-*.AppImage
+# Системийн замаар
+Darhai --webui
 
-# Run with --webui flag
-./Wayland-*.AppImage --webui
+# Эсвэл бүтэн замаар
+/opt/Дархай/Darhai --webui
 ```
 
-### Method 2: Create Desktop Entry
+#### AppImage-ийн хувьд
 
-Create `~/.local/share/applications/wayland-webui.desktop`:
+```bash
+# AppImage-д ажиллуулах эрх өгөх (зөвхөн эхний удаа)
+chmod +x Darhai-*.AppImage
+
+# --webui флагтай ажиллуулах
+./Darhai-*.AppImage --webui
+```
+
+### Арга 2: Desktop entry үүсгэх
+
+`~/.local/share/applications/darhai-webui.desktop` файл үүсгэнэ:
 
 ```ini
 [Desktop Entry]
-Name=Wayland WebUI
-Comment=Start Wayland in WebUI mode
-Exec=/opt/Wayland/wayland --webui
-Icon=wayland
+Name=Darhai WebUI
+Comment=Дархайг WebUI горимд эхлүүлэх
+Exec=/usr/bin/Darhai --webui
+Icon=Darhai
 Terminal=false
 Type=Application
 Categories=Utility;Office;
 ```
 
-Make it executable:
+Ажиллуулах эрх өгнө:
 
 ```bash
-chmod +x ~/.local/share/applications/wayland-webui.desktop
+chmod +x ~/.local/share/applications/darhai-webui.desktop
 ```
 
-The launcher will appear in your application menu.
+Аппликэйшний цэсэнд эхлүүлэгч гарч ирнэ.
 
-### Method 3: Create Shell Script
+### Арга 3: Shell скрипт үүсгэх
 
-Create `~/bin/start-wayland-webui.sh`:
+`~/bin/start-darhai-webui.sh` файл үүсгэнэ:
 
 ```bash
 #!/bin/bash
-/opt/Wayland/wayland --webui
+/opt/Дархай/Darhai --webui
 ```
 
-Make it executable:
+Ажиллуулах эрх өгнө:
 
 ```bash
-chmod +x ~/bin/start-wayland-webui.sh
+chmod +x ~/bin/start-darhai-webui.sh
 ```
 
-Run it:
+Ажиллуулна:
 
 ```bash
-start-wayland-webui.sh
+start-darhai-webui.sh
 ```
 
-### Method 4: Systemd Service (Background)
+### Арга 4: Systemd үйлчилгээ (арын горим)
 
-Create `/etc/systemd/system/wayland-webui.service`:
+`/etc/systemd/system/darhai-webui.service` файл үүсгэнэ:
 
 ```ini
 [Unit]
-Description=Wayland WebUI Service
+Description=Darhai WebUI Service
 After=network.target
 
 [Service]
 Type=simple
 User=YOUR_USERNAME
-ExecStart=/opt/Wayland/wayland --webui --remote
+ExecStart=/usr/bin/Darhai --webui --remote
 Restart=on-failure
 RestartSec=10
 
@@ -203,65 +203,65 @@ RestartSec=10
 WantedBy=multi-user.target
 ```
 
-Enable and start the service:
+Үйлчилгээг идэвхжүүлж эхлүүлнэ:
 
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable wayland-webui.service
-sudo systemctl start wayland-webui.service
+sudo systemctl enable darhai-webui.service
+sudo systemctl start darhai-webui.service
 
-# Check status
-sudo systemctl status wayland-webui.service
+# Төлөв шалгах
+sudo systemctl status darhai-webui.service
 ```
 
 ---
 
 ## Android (Termux)
 
-**Important Note**: Electron desktop mode is **not supported** on Android. However, you can run Wayland in WebUI mode using Termux with a prooted Linux environment.
+**Чухал тэмдэглэл**: Android дээр Electron дэсктоп горим **дэмжигдэхгүй**. Гэхдээ Termux + proot Linux орчин ашиглан Дархайг WebUI горимд ажиллуулж болно.
 
-> **Community Contribution**: This guide is contributed by [@Manamama](https://github.com/Manamama). Special thanks for making Wayland accessible on Android devices! 🙏
+> **Нийгэмлэгийн хувь нэмэр**: Энэ зааврыг [@Manamama](https://github.com/Manamama) upstream Wayland төсөлд зориулж бичсэн бөгөөд Android дээр ажиллуулах боломжийг нээж өгсөнд нь баярлалаа! 🙏
 >
-> **Original Tutorial**: [Running Wayland WebUI on Android via Termux + Proot Ubuntu](https://gist.github.com/Manamama/b4f903c279b5e73bdad4c2c0a58d5ddd)
+> **Эх заавар**: [Running Wayland WebUI on Android via Termux + Proot Ubuntu](https://gist.github.com/Manamama/b4f903c279b5e73bdad4c2c0a58d5ddd)
 >
-> **Related Issues**: [#217 - Android Support Discussion](https://github.com/FerroxLabs/wayland/issues/217)
+> **Холбогдох хэлэлцүүлэг**: [upstream Wayland төслийн асуудал #217 — Android дэмжлэг](https://github.com/FerroxLabs/wayland/issues/217)
 
-### Prerequisites
+### Урьдчилсан шаардлага
 
-- **Termux** from [F-Droid](https://f-droid.org/en/packages/com.termux/) (Google Play version is outdated and not recommended)
-- **~5 GB free storage**
-- **Internet connection**
-- **Android 7.0+** (tested on Android 14)
+- **Termux** — [F-Droid](https://f-droid.org/en/packages/com.termux/)-оос (Google Play дээрх хувилбар хуучирсан тул санал болгохгүй)
+- **~5 GB сул зай**
+- **Интернэт холболт**
+- **Android 7.0+** (Android 14 дээр туршигдсан)
 
-### Installation Steps
+### Суулгах алхмууд
 
-#### 1. Install Termux and Update Packages
+#### 1. Termux суулгаж багцуудыг шинэчлэх
 
 ```bash
-# Update package list
+# Багцын жагсаалтыг шинэчлэх
 pkg update -y
 
-# Install proot-distro
+# proot-distro суулгах
 pkg install proot-distro -y
 ```
 
-#### 2. Install Ubuntu via Proot
+#### 2. Proot-оор Ubuntu суулгах
 
 ```bash
-# Install Ubuntu rootfs
+# Ubuntu rootfs суулгах
 proot-distro install ubuntu
 
-# Login to Ubuntu environment
+# Ubuntu орчинд нэвтрэх
 proot-distro login ubuntu
 ```
 
-#### 3. Install System Dependencies
+#### 3. Системийн хамаарлуудыг суулгах
 
 ```bash
-# Update Ubuntu package list
+# Ubuntu-ийн багцын жагсаалтыг шинэчлэх
 apt update
 
-# Install required dependencies
+# Шаардлагатай хамаарлуудыг суулгах
 apt install -y \
     wget \
     libgtk-3-0 \
@@ -271,7 +271,7 @@ apt install -y \
     libxshmfence1 \
     ca-certificates
 
-# Optional: Install additional libraries if needed
+# Сонголт: шаардлагатай бол нэмэлт сангуудыг суулгах
 apt install -y \
     libx11-xcb1 \
     libxcomposite1 \
@@ -281,49 +281,43 @@ apt install -y \
     libcups2
 ```
 
-#### 4. Download and Install Wayland
+#### 4. Дархайг татаж суулгах
 
 ```bash
-# Download the ARM64 .deb package (replace VERSION with the actual version)
-# Check latest version at: https://github.com/FerroxLabs/wayland/releases
-wget https://github.com/FerroxLabs/wayland/releases/download/vVERSION/Wayland_VERSION_arm64.deb
+# ARM64 .deb багцыг татах (VERSION-ийг бодит хувилбараар солино)
+# Хамгийн сүүлийн хувилбар: https://github.com/sergei10a-rgb/darhai/releases
+wget https://github.com/sergei10a-rgb/darhai/releases/download/vVERSION/Darhai-VERSION-linux-arm64.deb
 
-# Example (replace VERSION with the release tag, e.g. v1.5.2):
-wget https://github.com/FerroxLabs/wayland/releases/download/vVERSION/Wayland_VERSION_arm64.deb
+# Багцыг суулгах
+apt install -y ./Darhai-*.deb
 
-# Install the package
-apt install -y ./Wayland_*.deb
-
-# Verify installation
-which Wayland
+# Суулгацыг шалгах
+which Darhai
 ```
 
-#### 5. Launch Wayland WebUI
+#### 5. Дархай WebUI-г эхлүүлэх
 
 ```bash
-# Start Wayland in WebUI mode
-# Termux/proot cannot run Chromium's sandbox helper, so opt out explicitly:
-WAYLAND_DISABLE_SANDBOX=1 Wayland --webui
+# Дархайг WebUI горимд эхлүүлэх
+# Termux/proot нь Chromium-ийн sandbox helper-ийг ажиллуулж чадахгүй тул шууд идэвхгүй болгоно:
+DARHAI_DISABLE_SANDBOX=1 Darhai --webui
 ```
 
-**Important**: Termux/proot does not provide the kernel namespaces Chromium's
-sandbox needs. Setting `WAYLAND_DISABLE_SANDBOX=1` (or passing `--no-sandbox`)
-is required only inside Termux/proot. Do not set this on a normal Linux host -
-Wayland uses the Chromium sandbox by default and that is the secure path.
+**Чухал**: Termux/proot нь Chromium-ийн sandbox-д шаардлагатай kernel namespace-уудыг өгдөггүй. `DARHAI_DISABLE_SANDBOX=1` тохируулах (эсвэл `--no-sandbox` өгөх) нь **зөвхөн Termux/proot дотор** шаардлагатай. Энгийн Linux хост дээр үүнийг бүү тохируулаарай — Дархай анхдагчаар Chromium sandbox-ийг ашигладаг бөгөөд энэ нь аюулгүй зам юм.
 
-#### 6. Access the WebUI
+#### 6. WebUI-д хандах
 
-Once started, open your browser and navigate to:
+Эхэлсний дараа браузераа нээгээд дараах хаяг руу орно:
 
 ```
 http://localhost:25808
 ```
 
-**Note**: The default port is 25808. Check the terminal output if a different port is used.
+**Тэмдэглэл**: Анхдагч порт нь 25808. Өөр порт ашиглагдсан бол терминалын гаралтыг шалгана уу.
 
-### Expected Warnings (Non-Fatal)
+### Хүлээгдэх анхааруулгууд (аюулгүй)
 
-You may see the following warnings in the terminal - these are normal and can be ignored:
+Терминал дээр дараах анхааруулгууд гарч болно — эдгээр нь хэвийн бөгөөд үл тоомсорлож болно:
 
 ```
 [WARNING] Could not connect to session bus: Using X11 for dbus-daemon autolaunch was disabled at compile time
@@ -331,137 +325,137 @@ You may see the following warnings in the terminal - these are normal and can be
 [WARNING] Multiple instances of the app detected, but not running on display server
 ```
 
-These errors are related to D-Bus and X server, which are not needed for WebUI mode.
+Эдгээр алдаа нь D-Bus болон X сервертэй холбоотой бөгөөд WebUI горимд хэрэггүй.
 
-### Remote Access on LAN
+### LAN дээрх алсын хандалт
 
-To access Wayland from other devices on your local network:
+Дотоод сүлжээний бусад төхөөрөмжөөс Дархайд хандахын тулд:
 
 ```bash
-# Start with --remote flag (Termux/proot: sandbox must be opted-out)
-WAYLAND_DISABLE_SANDBOX=1 Wayland --webui --remote
+# --remote флагтай эхлүүлэх (Termux/proot: sandbox-ийг идэвхгүй болгох шаардлагатай)
+DARHAI_DISABLE_SANDBOX=1 Darhai --webui --remote
 
-# Find your Android device's IP address
-# In Termux (outside proot):
-# ifconfig or ip addr show
+# Android төхөөрөмжийнхөө IP хаягийг олох
+# Termux дотор (proot-ын гадна):
+# ifconfig эсвэл ip addr show
 ```
 
-Access from other devices: `http://YOUR_ANDROID_IP:25808`
+Бусад төхөөрөмжөөс хандах: `http://YOUR_ANDROID_IP:25808`
 
-### Troubleshooting
+### Асуудал шийдвэрлэх (Termux)
 
-#### Port Already in Use
+#### Порт ашиглагдаж байна
 
-If port 25808 is occupied:
+25808 порт эзлэгдсэн бол:
 
 ```bash
-# Specify a different port (Termux/proot: sandbox must be opted-out)
-WAYLAND_DISABLE_SANDBOX=1 Wayland --webui --port 8080
+# Өөр порт заах (Termux/proot: sandbox-ийг идэвхгүй болгох шаардлагатай)
+DARHAI_DISABLE_SANDBOX=1 Darhai --webui --port 8080
 ```
 
-#### Permission Denied Errors
+#### Permission denied алдаа
 
 ```bash
-# Ensure the binary has execute permissions
-chmod +x /opt/Wayland/wayland
+# Binary-д ажиллуулах эрх байгаа эсэхийг шалгах
+chmod +x /opt/Дархай/Darhai
 ```
 
-#### Out of Memory
+#### Санах ой хүрэлцэхгүй байна
 
-Wayland requires sufficient RAM. Close other apps if you encounter memory issues.
+Дархайд хангалттай RAM хэрэгтэй. Санах ойн асуудал гарвал бусад аппуудыг хаана уу.
 
-#### Cannot Access from Browser
+#### Браузераас хандаж чадахгүй байна
 
-1. Check if Wayland is running: look for "Server started" message
-2. Try using Termux's built-in browser or Chrome
-3. Clear browser cache
+1. Дархай ажиллаж байгаа эсэхийг шалгана: "Server started" мессежийг хайна
+2. Termux-ийн суулгасан браузер эсвэл Chrome ашиглаж үзнэ
+3. Браузерын кэшийг цэвэрлэнэ
 
-### Performance Tips
+### Гүйцэтгэлийн зөвлөмжүүд
 
-1. **Use a lightweight browser** - Chrome or Firefox Focus recommended
-2. **Close background apps** - Free up RAM for better performance
-3. **Use WiFi** - More stable than mobile data for remote access
-4. **Keep device charged** - Running Wayland consumes battery
+1. **Хөнгөн браузер ашигла** — Chrome эсвэл Firefox Focus санал болгоно
+2. **Арын аппуудыг хаа** — RAM чөлөөлж гүйцэтгэлийг сайжруулна
+3. **WiFi ашигла** — алсын хандалтад мобайл датанаас тогтвортой
+4. **Төхөөрөмжөө цэнэглэ** — Дархай ажиллах үед батарей их зарцуулна
 
-### Tested Environment
+### Туршигдсан орчин
 
-- **Device**: Android 14
-- **Termux Version**: 0.118.0
-- **Wayland Version**: Latest release (e.g. 1.5.2)
-- **Proot-distro**: Ubuntu (latest)
+- **Төхөөрөмж**: Android 14
+- **Termux хувилбар**: 0.118.0
+- **Дархай хувилбар**: Хамгийн сүүлийн release
+- **Proot-distro**: Ubuntu (хамгийн сүүлийн)
 
-### Creating a Startup Script
+### Эхлүүлэх скрипт үүсгэх
 
-For convenience, create a script to launch Wayland quickly:
+Хялбар байлгах үүднээс Дархайг түргэн эхлүүлэх скрипт үүсгэж болно:
 
 ```bash
-# Create script in Ubuntu (proot)
-cat > ~/start-wayland.sh << 'EOF'
+# Ubuntu (proot) дотор скрипт үүсгэх
+cat > ~/start-darhai.sh << 'EOF'
 #!/bin/bash
-echo "Starting Wayland WebUI..."
-# Termux/proot: Chromium sandbox is unavailable, opt out explicitly.
-WAYLAND_DISABLE_SANDBOX=1 Wayland --webui --remote
+echo "Starting Darhai WebUI..."
+# Termux/proot: Chromium sandbox боломжгүй тул шууд идэвхгүй болгоно.
+DARHAI_DISABLE_SANDBOX=1 Darhai --webui --remote
 EOF
 
-# Make executable
-chmod +x ~/start-wayland.sh
+# Ажиллуулах эрх өгөх
+chmod +x ~/start-darhai.sh
 
-# Run anytime
-./start-wayland.sh
+# Хүссэн үедээ ажиллуулах
+./start-darhai.sh
 ```
 
-### Quick Start Command (One-liner)
+### Нэг мөрөнд эхлүүлэх команд
 
-From Termux main shell:
+Termux-ийн үндсэн shell-ээс:
 
 ```bash
-proot-distro login ubuntu -- bash -c "WAYLAND_DISABLE_SANDBOX=1 Wayland --webui --remote"
+proot-distro login ubuntu -- bash -c "DARHAI_DISABLE_SANDBOX=1 Darhai --webui --remote"
 ```
 
-### Feedback and Improvements
+### Санал хүсэлт, сайжруулалт
 
-If you encounter issues or have suggestions for improving Android support:
+Асуудал тулгарвал эсвэл Android дэмжлэгийг сайжруулах саналтай бол:
 
-1. Check the [original community guide](https://gist.github.com/Manamama/b4f903c279b5e73bdad4c2c0a58d5ddd)
-2. Report issues at [GitHub Issues #217](https://github.com/FerroxLabs/wayland/issues/217)
-3. Share your experience to help other Android users!
+1. [Эх нийгэмлэгийн зааврыг](https://gist.github.com/Manamama/b4f903c279b5e73bdad4c2c0a58d5ddd) шалгана уу
+2. Асуудлаа [GitHub Issues](https://github.com/sergei10a-rgb/darhai/issues) дээр мэдэгдэнэ үү
+3. Туршлагаа хуваалцаж бусад Android хэрэглэгчдэд тусална уу!
 
 ---
 
-## Remote Access
+## Алсын хандалт
 
-To allow access from other devices on your network, use the `--remote` flag:
+Сүлжээний бусад төхөөрөмжөөс хандахыг зөвшөөрөхийн тулд `--remote` флаг ашиглана:
 
 ### Windows
 
 ```cmd
-Wayland.exe --webui --remote
+Darhai.exe --webui --remote
 ```
 
 ### macOS
 
 ```bash
-/Applications/Wayland.app/Contents/MacOS/Wayland --webui --remote
+/Applications/Дархай.app/Contents/MacOS/Darhai --webui --remote
 ```
 
 ### Linux
 
 ```bash
-wayland --webui --remote
+Darhai --webui --remote
 ```
 
-**Security Note**: Remote mode allows network access. Use only on trusted networks. Consider setting up authentication and firewall rules for production use.
+**Аюулгүй байдлын тэмдэглэл**: Remote горим сүлжээний хандалтыг нээдэг. Зөвхөн итгэлтэй сүлжээнд ашиглана уу. Production орчинд нэвтрэлт болон firewall дүрэм тохируулахыг анхаарна уу.
 
-**CORS Allowlist (required for browser access from another device):** For safety, remote mode no longer auto-adds every detected network interface (Tailscale, VPN, Docker bridges, NAT'd interfaces) to the CORS allowlist. You must opt in by listing the exact origins the browser will use, comma-separated, in the `WAYLAND_ALLOWED_ORIGINS` environment variable. Example:
+**CORS зөвшөөрлийн жагсаалт (өөр төхөөрөмжийн браузераас хандахад заавал шаардлагатай):** Аюулгүй байдлын үүднээс remote горим нь илэрсэн бүх сүлжээний интерфэйсийг (Tailscale, VPN, Docker bridge, NAT-тай интерфэйс) CORS зөвшөөрлийн жагсаалтад автоматаар нэмэхээ больсон. Браузерын ашиглах яг тодорхой origin-уудыг таслалаар тусгаарлан `DARHAI_ALLOWED_ORIGINS` орчны хувьсагчид зааж өгөх ёстой. Жишээ:
 
 ```bash
-export WAYLAND_ALLOWED_ORIGINS="http://192.168.1.42:3000,http://wayland.tailnet-abc.ts.net:3000"
-wayland --webui --remote
+export DARHAI_ALLOWED_ORIGINS="http://192.168.1.42:3000,http://darhai.tailnet-abc.ts.net:3000"
+Darhai --webui --remote
 ```
 
-If `WAYLAND_ALLOWED_ORIGINS` is unset, remote mode falls back to localhost-only and a `[security] remote mode without WAYLAND_ALLOWED_ORIGINS: only localhost allowed` warning is logged on startup.
+`DARHAI_ALLOWED_ORIGINS` тохируулаагүй бол remote горим зөвхөн localhost хандалтад шилжиж, эхлэх үед `[security] remote mode without DARHAI_ALLOWED_ORIGINS: only localhost allowed` гэсэн анхааруулга лог хөтлөгдөнө.
 
-### Finding Your Local IP Address
+### Дотоод IP хаягаа олох
 
 **Windows:**
 
@@ -469,46 +463,46 @@ If `WAYLAND_ALLOWED_ORIGINS` is unset, remote mode falls back to localhost-only 
 ipconfig
 ```
 
-Look for "IPv4 Address" under your active network adapter.
+Идэвхтэй сүлжээний адаптерийн доорх "IPv4 Address"-ийг харна.
 
 **macOS/Linux:**
 
 ```bash
 ifconfig
-# or
+# эсвэл
 ip addr show
 ```
 
-Look for `inet` address (e.g., `192.168.1.100`).
+`inet` хаягийг харна (жишээ нь: `192.168.1.100`).
 
-Access from other devices: `http://YOUR_IP_ADDRESS:3000`
+Бусад төхөөрөмжөөс хандах: `http://YOUR_IP_ADDRESS:3000`
 
 ---
 
-## Troubleshooting
+## Алдаа засах
 
-### Port Already in Use
+### Порт ашиглагдаж байна
 
-If port 3000 is already in use, the application will automatically try the next available port. Check the console output for the actual port number.
+3000 порт эзлэгдсэн бол аппликэйшн дараагийн сул портыг автоматаар оролдоно. Бодит портын дугаарыг консолын гаралтаас шалгана уу.
 
-### Cannot Access from Browser
+### Браузераас хандаж чадахгүй байна
 
-1. **Check if the application started successfully**
-   - Look for "Server started on port XXXX" message in the console
+1. **Аппликэйшн амжилттай эхэлсэн эсэхийг шалгана**
+   - Консол дээр "Server started on port XXXX" мессежийг хайна
 
-2. **Try a different browser**
-   - Chrome, Firefox, Safari, or Edge
+2. **Өөр браузер туршина**
+   - Chrome, Firefox, Safari эсвэл Edge
 
-3. **Clear browser cache**
-   - Press `Ctrl+Shift+Delete` (Windows/Linux) or `Cmd+Shift+Delete` (macOS)
+3. **Браузерын кэшийг цэвэрлэнэ**
+   - `Ctrl+Shift+Delete` (Windows/Linux) эсвэл `Cmd+Shift+Delete` (macOS) дарна
 
-### Firewall Blocking Access
+### Firewall хандалтыг хааж байна
 
 **Windows:**
 
 ```cmd
-# Allow through Windows Firewall
-netsh advfirewall firewall add rule name="Wayland WebUI" dir=in action=allow protocol=TCP localport=3000
+# Windows Firewall-д зөвшөөрөх
+netsh advfirewall firewall add rule name="Darhai WebUI" dir=in action=allow protocol=TCP localport=3000
 ```
 
 **Linux (UFW):**
@@ -518,82 +512,84 @@ sudo ufw allow 3000/tcp
 ```
 
 **macOS:**
-Go to **System Preferences** → **Security & Privacy** → **Firewall** → **Firewall Options** → Add Wayland
+**System Preferences** → **Security & Privacy** → **Firewall** → **Firewall Options** руу орж Дархайг нэмнэ
 
-### Application Not Found
+### Аппликэйшн олдохгүй байна
 
-**Find application location:**
+**Аппликэйшний байршлыг олох:**
 
 **Windows:**
 
 ```cmd
-where Wayland.exe
+where Darhai.exe
 ```
 
 **macOS:**
 
 ```bash
-mdfind -name "Wayland.app"
+mdfind -name "Дархай.app"
 ```
 
 **Linux:**
 
 ```bash
-which wayland
-# or
-find /opt -name "wayland" 2>/dev/null
+which Darhai
+# эсвэл
+find /opt -name "Darhai" 2>/dev/null
 ```
 
-### View Logs
+### Лог харах
 
 **Windows (PowerShell):**
 
 ```powershell
-& "C:\Program Files\Wayland\Wayland.exe" --webui 2>&1 | Tee-Object -FilePath wayland.log
+& "C:\Program Files\Дархай\Darhai.exe" --webui 2>&1 | Tee-Object -FilePath darhai.log
 ```
 
 **macOS/Linux:**
 
 ```bash
-/path/to/wayland --webui 2>&1 | tee wayland.log
+/path/to/Darhai --webui 2>&1 | tee darhai.log
 ```
 
 ---
 
-## Environment Variables
+## Орчны хувьсагчид
 
-You can customize WebUI behavior with environment variables:
+WebUI-н зан төлөвийг орчны хувьсагчаар тохируулж болно:
+
+> Хуучин WAYLAND_* нэрс мөн ажиллана (legacy).
 
 ```bash
-# Override the listening port
-export WAYLAND_PORT=8080
+# Сонсох портыг өөрчлөх
+export DARHAI_PORT=8080
 
-# Allow remote access without passing --remote
-export WAYLAND_ALLOW_REMOTE=true
+# --remote флаг өгөлгүйгээр алсын хандалтыг зөвшөөрөх
+export DARHAI_ALLOW_REMOTE=true
 
-# Optional host hint (0.0.0.0 behaves the same as WAYLAND_ALLOW_REMOTE=true)
-export WAYLAND_HOST=0.0.0.0
+# Нэмэлт host заалт (0.0.0.0 нь DARHAI_ALLOW_REMOTE=true-тэй адилхан)
+export DARHAI_HOST=0.0.0.0
 
-# Then start the application
-wayland --webui
+# Дараа нь аппликэйшнийг эхлүүлэх
+Darhai --webui
 
-# You can also pass the port directly via CLI
-wayland --webui --port 8080
+# Портыг CLI-гээр шууд өгч бас болно
+Darhai --webui --port 8080
 ```
 
 ---
 
-## User Configuration File
+## Хэрэглэгчийн тохиргооны файл
 
-From v1.5.0+, you can store persistent WebUI preferences in `webui.config.json` located in your Electron user-data folder:
+WebUI-н байнгын тохиргоог Electron-ы user-data хавтас доторх `webui.config.json` файлд хадгалж болно:
 
-| Platform | Location                                                 |
+| Платформ | Байршил                                                  |
 | -------- | -------------------------------------------------------- |
-| Windows  | `%APPDATA%/Wayland/webui.config.json`                     |
-| macOS    | `~/Library/Application Support/Wayland/webui.config.json` |
-| Linux    | `~/.config/Wayland/webui.config.json`                     |
+| Windows  | `%APPDATA%/Darhai/webui.config.json`                      |
+| macOS    | `~/Library/Application Support/Darhai/webui.config.json`  |
+| Linux    | `~/.config/Darhai/webui.config.json`                      |
 
-Example file:
+Жишээ файл:
 
 ```json
 {
@@ -602,110 +598,110 @@ Example file:
 }
 ```
 
-Settings from CLI flags take priority, followed by environment variables, then the user config file.
+Тохиргооны давуу эрэмбэ: эхлээд CLI флагууд, дараа нь орчны хувьсагчид, эцэст нь хэрэглэгчийн тохиргооны файл.
 
 ---
 
-## Command Line Options Summary
+## Командын мөрийн сонголтуудын хураангуй
 
-| Option             | Description                 |
-| ------------------ | --------------------------- |
-| `--webui`          | Start in WebUI mode         |
-| `--remote`         | Allow remote network access |
-| `--webui --remote` | Combine both flags          |
+| Сонголт            | Тайлбар                              |
+| ------------------ | ------------------------------------ |
+| `--webui`          | WebUI горимд эхлүүлэх                |
+| `--remote`         | Алсын сүлжээний хандалтыг зөвшөөрөх  |
+| `--webui --remote` | Хоёр флагийг хослуулах               |
 
 ---
 
-## Reset Admin Password
+## Админ нууц үг сэргээх
 
-If you forgot your admin password in WebUI mode, you can reset it using the `--resetpass` command.
+WebUI горимд админ нууц үгээ мартсан бол `--resetpass` командаар сэргээж болно.
 
-### Using --resetpass Command
+### --resetpass команд ашиглах
 
-**IMPORTANT:** The --resetpass command resets the password and generates a new random one. All existing JWT tokens will be invalidated.
+**ЧУХАЛ:** `--resetpass` команд нууц үгийг сэргээж, шинэ санамсаргүй нууц үг үүсгэнэ. Одоо байгаа бүх JWT токен хүчингүй болно.
 
 **Windows:**
 
 ```cmd
-# Using full path
-"C:\Program Files\Wayland\Wayland.exe" --resetpass
+# Бүтэн замаар
+"C:\Program Files\Дархай\Darhai.exe" --resetpass
 
-# Or for a specific user
-"C:\Program Files\Wayland\Wayland.exe" --resetpass username
+# Эсвэл тодорхой хэрэглэгчид
+"C:\Program Files\Дархай\Darhai.exe" --resetpass username
 ```
 
 **macOS:**
 
 ```bash
-# Using full path
-/Applications/Wayland.app/Contents/MacOS/Wayland --resetpass
+# Бүтэн замаар
+/Applications/Дархай.app/Contents/MacOS/Darhai --resetpass
 
-# Or for a specific user
-/Applications/Wayland.app/Contents/MacOS/Wayland --resetpass username
+# Эсвэл тодорхой хэрэглэгчид
+/Applications/Дархай.app/Contents/MacOS/Darhai --resetpass username
 ```
 
 **Linux:**
 
 ```bash
-# Using system path
-wayland --resetpass
+# Системийн замаар
+Darhai --resetpass
 
-# Or for a specific user
-wayland --resetpass username
+# Эсвэл тодорхой хэрэглэгчид
+Darhai --resetpass username
 
-# Or using full path
-/opt/Wayland/wayland --resetpass
+# Эсвэл бүтэн замаар
+/opt/Дархай/Darhai --resetpass
 ```
 
-### What happens when you run --resetpass:
+### --resetpass ажиллах үед юу болох вэ:
 
-1. The command connects to the database
-2. Finds the specified user (default: `admin`)
-3. Generates a new random 12-character password
-4. Updates the password hash in the database
-5. Rotates the JWT secret (invalidating all previous tokens)
-6. Displays the new password in the terminal
+1. Команд өгөгдлийн санд холбогдоно
+2. Заасан хэрэглэгчийг олно (анхдагч: `admin`)
+3. 12 тэмдэгттэй шинэ санамсаргүй нууц үг үүсгэнэ
+4. Өгөгдлийн сан дахь нууц үгийн hash-ийг шинэчилнэ
+5. JWT secret-ийг сольж, өмнөх бүх токеныг хүчингүй болгоно
+6. Шинэ нууц үгийг терминал дээр харуулна
 
-### After running --resetpass:
+### --resetpass ажиллуулсны дараа:
 
-1. The command will display your new password - **copy it immediately**
-2. Refresh your browser (Cmd+R or Ctrl+R)
-3. You will be redirected to the login page
-4. Login with the new password shown in the terminal
+1. Команд шинэ нууц үгийг харуулна — **шууд хуулж авна уу**
+2. Браузераа сэргээнэ (Cmd+R эсвэл Ctrl+R)
+3. Нэвтрэх хуудас руу шилжинэ
+4. Терминал дээр гарсан шинэ нууц үгээр нэвтэрнэ
 
-### Development Environment Only
+### Зөвхөн хөгжүүлэлтийн орчинд
 
-If you're in a development environment with Node.js, you can also use:
+Node.js-тэй хөгжүүлэлтийн орчинд байгаа бол дараахыг бас ашиглаж болно:
 
 ```bash
-# In the project directory
+# Төслийн хавтас дотор
 npm run resetpass
 
-# Or for a specific user
+# Эсвэл тодорхой хэрэглэгчид
 npm run resetpass -- username
 ```
 
 ---
 
-## Additional Resources
+## Нэмэлт материал
 
-- [Main README](../../readme.md)
-- [GitHub Issues](https://github.com/ferroxlabs/wayland/issues)
-
----
-
-## Support
-
-If you encounter any issues:
-
-1. Check the [Troubleshooting](#troubleshooting) section
-2. Search [existing issues](https://github.com/FerroxLabs/wayland/issues)
-3. Create a [new issue](https://github.com/FerroxLabs/wayland/issues/new) with:
-   - Your OS and version
-   - Wayland version
-   - Steps to reproduce
-   - Error messages or logs
+- [Үндсэн README](../../readme.md)
+- [GitHub Issues](https://github.com/sergei10a-rgb/darhai/issues)
 
 ---
 
-**Happy using Wayland in WebUI mode!** 🚀
+## Тусламж
+
+Асуудал тулгарвал:
+
+1. [Алдаа засах](#алдаа-засах) хэсгийг шалгана уу
+2. [Одоо байгаа асуудлуудаас](https://github.com/sergei10a-rgb/darhai/issues) хайна уу
+3. [Шинэ асуудал](https://github.com/sergei10a-rgb/darhai/issues/new) нээхдээ дараах мэдээллийг хавсаргана уу:
+   - Үйлдлийн систем, хувилбар
+   - Дархайн хувилбар
+   - Давтах алхмууд
+   - Алдааны мессеж эсвэл лог
+
+---
+
+**Дархайг WebUI горимд ашиглах таатай байг!** 🚀

@@ -1,34 +1,34 @@
-# WSL2 Workaround
+# WSL2 түр шийдэл
 
-**Status:** Documented workaround. Full WSL2 / legacy-CPU support is tracked for the v0.1.3 platform-fixes chain.
+**Төлөв:** Баримтжуулсан түр шийдэл. Бүрэн WSL2 / хуучин CPU-гийн дэмжлэг **v0.1.3 platform-fixes** гинжид төлөвлөгдсөн.
 
-## Symptom
+## Шинж тэмдэг
 
-Running Wayland on WSL2 currently exhibits two distinct failure modes:
+Дархайг WSL2 дээр ажиллуулахад одоогоор хоёр өөр төрлийн алдаа илэрдэг:
 
-1. **Electron deadlock under WSL2.** Launching the bundled Electron app inside a WSL2 distro hangs during startup - typically before the main window appears - and never recovers. The root cause is a combination of WSLg's Wayland/X11 compositor behavior and Electron's sandbox + `xdg-settings` probing.
-2. **SIGILL on non-AVX CPUs.** The bundled `bun` binary shipped with Wayland is compiled with AVX instructions. On older or virtualized CPUs that do not expose AVX (some WSL2 hosts, older bare-metal Linux boxes, certain cloud micro-VMs), invoking the bundled runtime crashes immediately with `SIGILL: illegal instruction`.
+1. **WSL2 доторх Electron deadlock.** Багцалсан Electron аппыг WSL2 distro дотор эхлүүлэхэд ихэвчлэн үндсэн цонх гарч ирэхээс өмнө гацаж, дахин сэргэдэггүй. Үндсэн шалтгаан нь WSLg-ийн Wayland/X11 compositor-ийн зан төлөв болон Electron-ы sandbox + `xdg-settings` шалгалтын хослол юм.
+2. **AVX-гүй CPU дээрх SIGILL.** Дархайтай хамт ирдэг `bun` binary нь AVX instruction ашиглан хөрвүүлэгдсэн. AVX дэмждэггүй хуучин эсвэл виртуалчлагдсан CPU дээр (зарим WSL2 хост, хуучин bare-metal Linux машин, зарим үүлэн micro-VM) багцалсан runtime-ийг дуудмагц `SIGILL: illegal instruction` алдаагаар шууд унадаг.
 
-## Workaround
+## Түр шийдэл
 
-Run Wayland in **WebUI mode** with the sandbox disabled and provide a no-op `xdg-settings` so Electron's startup probe completes:
+Дархайг sandbox-гүйгээр **WebUI горимд** ажиллуулж, Electron-ы эхлүүлэх шалгалт дуусахын тулд юу ч хийдэггүй (no-op) `xdg-settings` өгнө:
 
 ```bash
-# 1. Provide a mock xdg-settings on PATH (no-op, exits 0)
+# 1. PATH дээр хуурамч xdg-settings тавих (no-op, 0 кодоор гарна)
 sudo tee /usr/local/bin/xdg-settings >/dev/null <<'EOF'
 #!/bin/sh
 exit 0
 EOF
 sudo chmod +x /usr/local/bin/xdg-settings
 
-# 2. Launch the app with --webui and --no-sandbox
-wayland --webui --no-sandbox
+# 2. Аппыг --webui болон --no-sandbox флагтай эхлүүлэх
+Darhai --webui --no-sandbox
 ```
 
-This bypasses the Electron deadlock by routing the UI through the WebUI server, and avoids the `xdg-settings` probe that hangs under WSLg.
+Ингэснээр UI-г WebUI серверээр дамжуулан Electron-ы deadlock-оос зайлсхийж, WSLg дор гацдаг `xdg-settings` шалгалтыг тойрч гарна.
 
-For the SIGILL case, use a system-installed `bun` (built without AVX requirements) on `PATH` ahead of the bundled binary, or run Wayland on a host that exposes AVX.
+SIGILL-ийн тохиолдолд багцалсан binary-гийн өмнө `PATH` дээр системд суулгасан `bun` (AVX шаардлагагүй build) тавих, эсвэл Дархайг AVX дэмждэг хост дээр ажиллуулна.
 
-## Status
+## Төлөв
 
-This is a documented workaround only - no automatic detection or fallback ships in v0.1.2-safety. Full WSL2 and legacy-CPU support (sandbox-mode autodetection, non-AVX runtime fallback, native WSLg integration) is tracked for the **v0.1.3 platform-fixes** chain.
+Энэ бол зөвхөн баримтжуулсан түр шийдэл — v0.1.2-safety-д автомат илрүүлэлт болон fallback ороогүй. Бүрэн WSL2 болон хуучин CPU-гийн дэмжлэг (sandbox горимын авто илрүүлэлт, AVX-гүй runtime fallback, уугуул WSLg интеграц) **v0.1.3 platform-fixes** гинжид төлөвлөгдсөн.

@@ -21,7 +21,7 @@ Rules for organizing files and directories across the entire Electron project.
 
 ## Project Layout (`src/`)
 
-Wayland is a multi-process Electron app with three core layers: **renderer**, **main process**, and **preload/shared**.
+Darhai is a multi-process Electron app with three core layers: **renderer**, **main process**, and **preload/shared**.
 
 ### Target Structure
 
@@ -245,7 +245,7 @@ src/renderer/
 
 ```
 src/renderer/components/
-├── base/           # UI primitives - WaylandModal, WaylandSelect, FlexFullContainer, etc.
+├── base/           # UI primitives - DarhaiModal, WaylandSelect, FlexFullContainer, etc.
 ├── chat/           # Conversation/message domain (example, not exhaustive)
 ├── agent/          # Agent selection/configuration domain
 ├── settings/       # Settings domain

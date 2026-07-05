@@ -1,17 +1,28 @@
 # Third-Party Notices
 
-This document records the upstream codebases that the Wayland desktop app
-inherits from and the licenses that govern those contributions. It satisfies
-the attribution requirements of the Apache License, Version 2.0 for derivative
-works.
+This document records the upstream codebases that the Darhai (Дархай) desktop app
+inherits from and the licenses that govern those contributions.
 
-The Wayland desktop app (this repository) is © 2026 Ferrox Labs and is
-distributed under the Apache License, Version 2.0. See [`/LICENSE`](../../LICENSE)
-for the full license text.
+Darhai (Дархай) is a derivative work of **Wayland** by Ferrox Labs
+(<https://github.com/FerroxLabs/wayland>), which is itself built on, and includes
+substantial source code from, **AionUi**. The full chain of attribution —
+Darhai → Wayland (Ferrox Labs) → AionUi — is preserved below; the sections that
+follow keep the upstream notices intact. References to "Wayland" in these notices
+describe the upstream project this fork derives from. This document satisfies the
+attribution requirements of the Apache License, Version 2.0 for derivative works.
+See [`/LICENSE`](../../LICENSE) for the license governing this repository.
 
-The current codebase has been substantively modified from its upstream and
+The current codebase has been substantively modified from its upstreams and
 constitutes a new work for copyright purposes. The notices below preserve the
 original copyright statements as required by the Apache License.
+
+## Wayland (Ferrox Labs)
+
+The upstream Wayland desktop app is © 2026 Ferrox Labs and is
+distributed under the Apache License, Version 2.0.
+
+Wayland's Rust engine (`wayland-core`) is a separate fork of `iOfficeAI/aionrs`
+maintained in its own repository under the same Apache License, Version 2.0.
 
 ## AionUi
 
@@ -32,9 +43,6 @@ originally published by AionUi.
 > WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 > License for the specific language governing permissions and limitations
 > under the License.
-
-Wayland's Rust engine (`wayland-core`) is a separate fork of `iOfficeAI/aionrs`
-maintained in its own repository under the same Apache License, Version 2.0.
 
 ## OpenClaw
 

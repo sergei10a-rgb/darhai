@@ -11,8 +11,8 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/FerroxLabs/wayland.git
-cd Wayland
+git clone https://github.com/sergei10a-rgb/darhai.git
+cd darhai
 
 # Install dependencies
 bun install
@@ -105,13 +105,13 @@ bun start
 
 ## Multi-Instance Development
 
-When you have two clones of the repository (e.g. `Wayland` and `Wayland-refactor`) and need to run both simultaneously, the second instance can be started with:
+When you have two clones of the repository (e.g. `darhai` and `darhai-refactor`) and need to run both simultaneously, the second instance can be started with:
 
 ```bash
 bun run start:multi
 ```
 
-This sets `WAYLAND_MULTI_INSTANCE=1`, which:
+This sets `DARHAI_MULTI_INSTANCE=1`, which:
 
 - Skips the Electron single-instance lock
 - Uses a separate userData directory (`Wayland-Dev-2`) to avoid database and config conflicts
@@ -140,7 +140,7 @@ prek run --from-ref origin/main --to-ref HEAD
 
 ## Build System
 
-Wayland uses **electron-vite** for fast bundling:
+Darhai uses **electron-vite** for fast bundling:
 
 - **Main process**: bundled with Vite (ESM)
 - **Renderer process**: bundled with Vite (React + TypeScript)

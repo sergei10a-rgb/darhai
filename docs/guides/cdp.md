@@ -1,22 +1,22 @@
-# CDP (Chrome DevTools Protocol) for MCP Development
+# CDP (Chrome DevTools Protocol) — MCP хөгжүүлэлтэд
 
-Wayland supports CDP for external debugging tools integration. In development mode (`just dev`), CDP is enabled by default on port 9230.
+Дархай нь гадны дебаг хэрэгслүүдийг холбох зорилгоор CDP-г дэмждэг. Хөгжүүлэлтийн горимд (`just dev`) CDP нь 9230 порт дээр анхдагчаар идэвхтэй байдаг.
 
-## Enable CDP in Production
+## Production орчинд CDP идэвхжүүлэх
 
-1. Open Wayland Settings → System → Developer Debug
-2. Enable "Enable Remote Debugging (CDP)"
-3. Restart the app
+1. Дархайн Тохиргоо → Систем → Хөгжүүлэгчийн дебаг (Developer Debug) хэсгийг нээнэ
+2. «Enable Remote Debugging (CDP)» тохиргоог идэвхжүүлнэ
+3. Аппаа дахин эхлүүлнэ
 
-## Configure MCP chrome-devtools
+## MCP chrome-devtools тохируулах
 
-Add this to your IDE's MCP configuration. The configuration file location depends on your IDE:
+Дараах тохиргоог IDE-ийнхээ MCP тохиргоонд нэмнэ. Тохиргооны файлын байршил IDE-ээс хамаарна:
 
-| IDE                | Config Path                                                                                                                          |
+| IDE                | Тохиргооны зам                                                                                                                       |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
 | **Cursor**         | `~/.cursor/mcp.json`                                                                                                                 |
 | **VS Code**        | `~/.vscode/mcp.json`                                                                                                                 |
-| **Claude Desktop** | `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows) |
+| **Claude Desktop** | `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) эсвэл `%APPDATA%\Claude\claude_desktop_config.json` (Windows) |
 | **Codebuddy**      | `~/.codebuddy/mcp.json`                                                                                                              |
 
 ```json
@@ -30,92 +30,30 @@ Add this to your IDE's MCP configuration. The configuration file location depend
 }
 ```
 
-## Other AI-Friendly Development Tools
+## Бусад AI-д ээлтэй хөгжүүлэлтийн хэрэгслүүд
 
-Wayland can integrate with other MCP tools for enhanced development experience:
+Хөгжүүлэлтийн туршлагыг сайжруулахын тулд Дархайг бусад MCP хэрэгслүүдтэй холбож болно:
 
-| Tool               | Purpose                                             | Config                                    |
-| ------------------ | --------------------------------------------------- | ----------------------------------------- |
-| **Playwright MCP** | Browser automation (alternative to chrome-devtools) | `"@playwright/mcp@latest"`                |
-| **Puppeteer MCP**  | Browser automation                                  | `"@puppeteer/mcp@latest"`                 |
-| **Filesystem MCP** | File operations                                     | `@modelcontextprotocol/server-filesystem` |
-| **Git MCP**        | Git repository operations                           | `@modelcontextprotocol/server-git`        |
+| Хэрэгсэл           | Зориулалт                                            | Тохиргоо                                  |
+| ------------------ | ---------------------------------------------------- | ----------------------------------------- |
+| **Playwright MCP** | Браузерын автоматжуулалт (chrome-devtools-ийн хувилбар) | `"@playwright/mcp@latest"`             |
+| **Puppeteer MCP**  | Браузерын автоматжуулалт                             | `"@puppeteer/mcp@latest"`                 |
+| **Filesystem MCP** | Файлын үйлдлүүд                                      | `@modelcontextprotocol/server-filesystem` |
+| **Git MCP**        | Git репозиторийн үйлдлүүд                            | `@modelcontextprotocol/server-git`        |
 
-See [MCP Servers](https://github.com/modelcontextprotocol/servers) for more tools.
+Бусад хэрэгслийг [MCP Servers](https://github.com/modelcontextprotocol/servers) хуудаснаас үзнэ үү.
 
-## Usage with MCP
+## MCP-тэй ашиглах
 
-Once configured, you can use MCP tools to interact with Wayland:
+Тохируулсны дараа MCP хэрэгслүүдээр Дархайтай харьцаж болно:
 
-- `list_pages` - List all open pages in Wayland
-- `take_snapshot` - Get accessibility tree snapshot of current page
-- `click`, `fill`, `hover` - Interact with UI elements
-- `navigate_page` - Navigate to URLs
+- `list_pages` — Дархайд нээлттэй бүх хуудсыг жагсаана
+- `take_snapshot` — идэвхтэй хуудасны accessibility tree snapshot-ийг авна
+- `click`, `fill`, `hover` — UI элементүүдтэй харьцана
+- `navigate_page` — URL руу шилжинэ
 
-## Inspect with Chrome DevTools
+## Chrome DevTools-оор шалгах
 
-1. Open `http://127.0.0.1:9230/json` in Chrome
-2. Click on a page to inspect it with DevTools
-3. Or use Chrome's `chrome://inspect` → Configure → add `127.0.0.1:9230`
-
----
-
-# CDP (Chrome DevTools Protocol) for MCP Development
-
-Wayland supports CDP for external debugging tools integration. In development mode (`just dev`), CDP is enabled by default on port 9230.
-
-## Enable CDP in Production
-
-1. Open Wayland Settings → System → Developer Debug
-2. Enable "Enable Remote Debugging (CDP)"
-3. Restart the app
-
-## Configure MCP chrome-devtools
-
-Add this to your IDE's MCP configuration. The configuration file location depends on your IDE:
-
-| IDE                | Config Path                                                                                                                          |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
-| **Cursor**         | `~/.cursor/mcp.json`                                                                                                                 |
-| **VS Code**        | `~/.vscode/mcp.json`                                                                                                                 |
-| **Claude Desktop** | `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows) |
-| **Codebuddy**      | `~/.codebuddy/mcp.json`                                                                                                              |
-
-```json
-{
-  "mcpServers": {
-    "chrome-devtools": {
-      "command": "npx",
-      "args": ["-y", "chrome-devtools-mcp@0.16.0", "--browser-url=http://127.0.0.1:9230"]
-    }
-  }
-}
-```
-
-## Other AI-Friendly Development Tools
-
-Wayland can integrate with other MCP tools for enhanced development experience:
-
-| Tool               | Purpose                                             | Config                                    |
-| ------------------ | --------------------------------------------------- | ----------------------------------------- |
-| **Playwright MCP** | Browser automation (alternative to chrome-devtools) | `"@playwright/mcp@latest"`                |
-| **Puppeteer MCP**  | Browser automation                                  | `"@puppeteer/mcp@latest"`                 |
-| **Filesystem MCP** | File operations                                     | `@modelcontextprotocol/server-filesystem` |
-| **Git MCP**        | Git repository operations                           | `@modelcontextprotocol/server-git`        |
-
-See [MCP Servers](https://github.com/modelcontextprotocol/servers) for more tools.
-
-## Usage with MCP
-
-Once configured, you can use MCP tools to interact with Wayland:
-
-- `list_pages` - List all open pages in Wayland
-- `take_snapshot` - Get accessibility tree snapshot of current page
-- `click`, `fill`, `hover` - Interact with UI elements
-- `navigate_page` - Navigate to URLs
-
-## Inspect with Chrome DevTools
-
-1. Open `http://127.0.0.1:9230/json` in Chrome
-2. Click on a page to inspect it with DevTools
-3. Or use Chrome's `chrome://inspect` → Configure → add `127.0.0.1:9230`
+1. Chrome дээр `http://127.0.0.1:9230/json` хаягийг нээнэ
+2. Аль нэг хуудсан дээр товшиж DevTools-оор шалгана
+3. Эсвэл Chrome-ийн `chrome://inspect` → Configure → `127.0.0.1:9230` нэмнэ
