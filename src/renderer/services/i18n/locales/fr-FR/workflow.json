@@ -21,7 +21,17 @@
     "confirmTitle": "Exécuter l'étape {{n}} de façon autonome ?",
     "confirmOk": "Exécuter de façon autonome",
     "confirmCancel": "Annuler",
-    "confirmBody": "Wayland va lancer un agent autonome pour terminer l'étape {{n}} en arrière-plan. Vous pouvez continuer à discuter dans la session principale.",
+    "confirmBody": "Darhai va lancer un agent autonome pour terminer l'étape {{n}} en arrière-plan. Vous pouvez continuer à discuter dans la session principale.",
     "confirmEta": "Durée estimée : 4 à 8 minutes."
+  },
+  "header": {
+    "completedIn": "Terminé en {{duration}}",
+    "agentDriving": "Agent aux commandes",
+    "stepOf": "Étape {{current}} sur {{total}}",
+    "pauseAutoAdvance": "Suspendre l'avance auto",
+    "resumeAutoAdvance": "Reprendre l'avance auto",
+    "endWorkflow": "Terminer le flux de travail",
+    "deleteWorkflow": "Supprimer le flux de travail",
+    "skillCount": "{{count}} compétence(s)"
   }
 }

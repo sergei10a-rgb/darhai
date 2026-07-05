@@ -112,12 +112,42 @@
     "printedToConsole": "Элементийн мэдээлэл консолд бүртгэгдсэн",
     "inspectElement": "Элемент шалгах",
     "inspectElementEnable": "Элемент шалгагч идэвхжүүлэх",
-    "inspectElementDisable": "Элемент шалгагч идэвхгүй болгох"
+    "inspectElementDisable": "Элемент шалгагч идэвхгүй болгох",
+    "iframeTitle": "HTML урьдчилан харах"
   },
   "ppt": {
     "loading": "PPT урьдчилан үзэлт эхлүүлж байна...",
     "installing": "Урьдчилан үзэх бүрэлдэхүүн суулгаж байна...",
     "startFailed": "PPT урьдчилан үзэлтийг эхлүүлж чадсангүй",
     "installHint": "officecli суулгасан эсэхийг шалгана уу: npm run postinstall"
+  },
+  "markdownEditor": {
+    "toolbar": {
+      "heading1": "Гарчиг 1",
+      "heading2": "Гарчиг 2",
+      "heading3": "Гарчиг 3",
+      "bold": "Тод (⌘B)",
+      "italic": "Налуу (⌘I)",
+      "strikethrough": "Дундуур зураас",
+      "inlineCode": "Мөр доторх код",
+      "bulletedList": "Цэгтэй жагсаалт",
+      "numberedList": "Дугаарласан жагсаалт",
+      "blockquote": "Ишлэл",
+      "link": "Холбоос",
+      "horizontalRule": "Хөндлөн зураас",
+      "undo": "Буцаах (⌘Z)",
+      "redo": "Дахин хийх (⌘⇧Z)",
+      "addBlockBelow": "Доор блок нэмэх",
+      "dragToReorder": "Чирж эрэмбэлэх"
+    },
+    "formattingLabel": "Markdown форматлалт",
+    "inlineFormattingLabel": "Мөр доторх форматлалт",
+    "linkPrompt": "Холбоосын URL (хоосон бол устгана)",
+    "placeholderHeading": "Гарчиг",
+    "placeholderEmpty": "'/' дарж команд нээх эсвэл шууд бичээрэй…"
+  },
+  "slashMenu": {
+    "label": "Slash командууд",
+    "empty": "Тохирох команд алга"
   }
 }

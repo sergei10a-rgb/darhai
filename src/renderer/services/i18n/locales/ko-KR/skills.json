@@ -10,7 +10,7 @@
   "filters": {
     "allSources": "모든 소스",
     "source": {
-      "wayland-library": "Wayland 라이브러리",
+      "wayland-library": "Darhai 라이브러리",
       "team": "팀",
       "user": "내 스킬",
       "imported": "가져온 항목",
@@ -157,7 +157,7 @@
     }
   },
   "detail": {
-    "whenLoaded": "Wayland가 이것을 불러올 때",
+    "whenLoaded": "Darhai가 이것을 불러올 때",
     "metadata": "메타데이터",
     "body": "본문",
     "quarantined": "이 스킬은 격리되어 불러올 수 없습니다."

@@ -1,6 +1,6 @@
 {
-  "brand": "Wayland",
-  "welcome": "Wayland에 오신 것을 환영합니다",
+  "brand": "Darhai",
+  "welcome": "Darhai에 오신 것을 환영합니다",
   "footer": {
     "manage": "감지는 한 번만 실행되었습니다. 설정 → 공급자 에서 언제든지 변경할 수 있습니다.",
     "noLockIn": "위 선택지 중 어느 것도 당신을 묶어 두지 않습니다.",
@@ -22,7 +22,7 @@
     "errorUnrecognized": "Flux Router 키가 아닌 것 같습니다. sk-flux- 로 시작해야 합니다.",
     "errorNoModels": "연결되었지만 모델이 반환되지 않았습니다. 잠시 후 다시 시도하세요.",
     "errorUnknown": "연결 중 문제가 발생했습니다. 다시 시도하세요.",
-    "trust": "Wayland을 만든 팀, Ferrox Labs에서."
+    "trust": "Ferrox Labs의 오픈소스 Wayland 기술을 기반으로 합니다."
   },
   "scenarioA": {
     "greeting": "{{name}}님, 이미 준비되었습니다",
@@ -34,7 +34,7 @@
     "ghost": "다음 10번의 턴에서 사용해 보기"
   },
   "scenarioB": {
-    "greeting": "Wayland에 오신 것을 환영합니다",
+    "greeting": "Darhai에 오신 것을 환영합니다",
     "sub": "들어가는 방법을 하나 고르세요. 나머지는 언제든 추가할 수 있습니다.",
     "heroTag": "추천",
     "heroTitle": "Flux Router",
@@ -89,7 +89,7 @@
       "almost": "Almost there…"
     },
     "logoAlt": {
-      "wordmark": "Wayland"
+      "wordmark": "Darhai"
     },
     "flux": {
       "title": "Get the best answer. Pay the right price. And get it done faster.",
@@ -114,7 +114,7 @@
     },
     "quickstart": {
       "headline": "First - what should I call you",
-      "sub": "So Wayland knows what to call you. Next we'll see what's already on your machine.",
+      "sub": "So Darhai knows what to call you. Next we'll see what's already on your machine.",
       "googleButton": "Continue with Google",
       "freeNote": "Free with your Google account · basic Gemini limits · nothing to pay",
       "changeLater": "You can change everything later.",

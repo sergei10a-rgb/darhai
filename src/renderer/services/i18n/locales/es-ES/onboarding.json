@@ -1,6 +1,6 @@
 {
-  "brand": "Wayland",
-  "welcome": "Te damos la bienvenida a Wayland",
+  "brand": "Darhai",
+  "welcome": "Te damos la bienvenida a Darhai",
   "footer": {
     "manage": "La detección se ejecutó una vez. Cambia lo que quieras en Ajustes → Proveedores.",
     "noLockIn": "Ninguna de estas opciones te ata.",
@@ -22,7 +22,7 @@
     "errorUnrecognized": "Esa clave no se aceptó como clave de Flux Router. Vuelve a comprobarla e inténtalo de nuevo.",
     "errorNoModels": "Conectado, pero no se obtuvo ningún modelo. Inténtalo de nuevo en un momento.",
     "errorUnknown": "Algo salió mal al conectar. Inténtalo de nuevo.",
-    "trust": "De Ferrox Labs, el equipo detrás de Wayland."
+    "trust": "Basado en la tecnología de código abierto Wayland de Ferrox Labs."
   },
   "scenarioA": {
     "greeting": "{{name}}, ya está todo conectado",
@@ -34,7 +34,7 @@
     "ghost": "Pruébalo en los próximos 10 turnos"
   },
   "scenarioB": {
-    "greeting": "Te damos la bienvenida a Wayland",
+    "greeting": "Te damos la bienvenida a Darhai",
     "sub": "Elige una forma de entrar. Añade el resto cuando quieras.",
     "heroTag": "Recomendado",
     "heroTitle": "Flux Router",
@@ -89,7 +89,7 @@
       "almost": "Almost there…"
     },
     "logoAlt": {
-      "wordmark": "Wayland"
+      "wordmark": "Darhai"
     },
     "flux": {
       "title": "Get the best answer. Pay the right price. And get it done faster.",
@@ -114,7 +114,7 @@
     },
     "quickstart": {
       "headline": "First - what should I call you",
-      "sub": "So Wayland knows what to call you. Next we'll see what's already on your machine.",
+      "sub": "So Darhai knows what to call you. Next we'll see what's already on your machine.",
       "googleButton": "Continue with Google",
       "freeNote": "Free with your Google account · basic Gemini limits · nothing to pay",
       "changeLater": "You can change everything later.",

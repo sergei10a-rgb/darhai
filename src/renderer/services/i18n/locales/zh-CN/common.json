@@ -58,10 +58,10 @@
   "historyBack": "后退",
   "more": "更多",
   "refresh": "刷新",
-  "tray.showWindow": "显示 Wayland",
+  "tray.showWindow": "显示 Darhai",
   "tray.newChat": "新建对话",
   "tray.closeToTray": "隐藏到托盘",
-  "tray.about": "关于 Wayland",
+  "tray.about": "关于 Darhai",
   "tray.restart": "重启应用",
   "tray.quit": "退出",
   "tray.runningTasks": "运行中的任务",
@@ -84,7 +84,7 @@
   "processing": "处理中...",
   "optional": "（可选）",
   "clear": "清除",
-  "brand": "Wayland",
+  "brand": "Darhai",
   "brandTagline": "AI Agent",
   "cmdk": {
     "label": "[TODO:translate] Command palette",
@@ -109,5 +109,24 @@
   "unit": {
     "minute_short": "分",
     "second_short": "秒"
-  }
+  },
+  "appMenu": {
+    "edit": "编辑",
+    "view": "视图",
+    "help": "帮助",
+    "checkForUpdates": "检查更新..."
+  },
+  "webview": {
+    "urlPlaceholder": "输入网址...",
+    "resetZoom": "重置缩放",
+    "fit": "适应"
+  },
+  "windowControls": {
+    "minimize": "最小化",
+    "maximize": "最大化",
+    "restore": "还原"
+  },
+  "collapseSidebar": "折叠侧边栏",
+  "clearSearch": "清除搜索",
+  "moreActions": "更多操作"
 }

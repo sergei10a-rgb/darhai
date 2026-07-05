@@ -46,7 +46,7 @@
     "title": "Підключити {{vendor}} - вставте облікові дані OAuth",
     "submit": "Зберегти й увійти",
     "cancel": "Скасувати",
-    "universalIntro": "{{vendor}} не дозволяє Wayland автоматично реєструвати OAuth-клієнт. Зареєструйте OAuth-додаток у консолі розробника постачальника та вставте облікові дані нижче.",
+    "universalIntro": "{{vendor}} не дозволяє Darhai автоматично реєструвати OAuth-клієнт. Зареєструйте OAuth-додаток у консолі розробника постачальника та вставте облікові дані нижче.",
     "openConsole": "Відкрити консоль розробника {{vendor}}",
     "redirectLabel": "Redirect URI для вставлення в консоль постачальника:",
     "clientIdLabel": "Client ID",
@@ -54,5 +54,16 @@
     "clientSecretLabel": "Client Secret",
     "clientSecretPlaceholder": "Вставте client_secret",
     "saveFailed": "Не вдалося зберегти облікові дані: {{error}}"
+  },
+  "maintainer": {
+    "official": "Офіційний",
+    "community": "Спільнота",
+    "wayland": "Створено Darhai"
+  },
+  "verifiedPill": "Перевірено Darhai",
+  "browse": {
+    "title": "Бібліотека MCP",
+    "subtitle": "Відібрані конектори. Переглядайте, встановлюйте одним кліком і дотримуйтесь інструкції з налаштування.",
+    "searchPlaceholder": "Пошук MCP…"
   }
 }

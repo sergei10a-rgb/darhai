@@ -1,4 +1,199 @@
 {
+  "channelConflict": {
+    "title": "{{platform}} сувгийн зөрчил илэрлээ",
+    "headline": "{{platform}} мессежүүдийг Дархай биш, OpenClaw боловсруулж байна.",
+    "credsAlso": "Таны {{platform}} ботын нэвтрэх мэдээлэл OpenClaw-д мөн тохируулагдсан байна. Энэ нь:",
+    "effectNoSwitch": "✗ Дархай дотор агент солих нь нөлөө үзүүлэхгүй",
+    "effectProcessed": "✗ Мессежүүдийг OpenClaw-ийн агент боловсруулна",
+    "effectStillWork": "✓ Мессежүүд ажилласан хэвээр (OpenClaw-оор)",
+    "toUse": "Дархайн Сувгуудыг ашиглаж агент солихын тулд:",
+    "option1": "Сонголт 1: OpenClaw {{platform}}-г идэвхгүй болгох (Зөвлөнө)",
+    "option1Edit": "Засах:",
+    "option1Set": "Тохируулах:",
+    "option1Restart": "Дараа нь OpenClaw болон Дархайг дахин эхлүүлнэ үү.",
+    "option2": "Сонголт 2: Өөр бот ашиглах",
+    "option2Body": "Дархайд зориулж өөр нэвтрэх мэдээлэлтэй шинэ {{platform}} бот үүсгэнэ үү.",
+    "option3": "Сонголт 3: OpenClaw-г үргэлжлүүлэн ашиглах",
+    "option3Body": "Дархайн Сувгуудад {{platform}}-г идэвхгүй болгоод OpenClaw-ийн интеграцыг үргэлжлүүлэн ашиглана уу.",
+    "helpDisable": "OpenClaw {{platform}}-г идэвхгүй болгоход туслаарай",
+    "ignore": "Үл хэрэгс (би юу хийж байгаагаа мэднэ)",
+    "bannerText": "⚠️ OpenClaw {{platform}} зөрчил илэрлээ — агент солих ажиллахгүй.",
+    "learnMore": "Дэлгэрэнгүй"
+  },
+  "channelGuide": {
+    "title": "Хэрхэн тохируулах вэ",
+    "slack": {
+      "step1": "\"Create New App\", дараа нь \"From scratch\"-ийг дарна уу. Нэр өгөөд workspace-ээ сонгоно уу.",
+      "step1Link": "api.slack.com/apps нээх",
+      "step2": "Зүүн цэснээс \"OAuth & Permissions\"-ийг нээнэ үү. Bot Token Scopes хэсэгт chat:write, app_mentions:read, channels:history, channels:read, im:history, im:read, users:read эрхүүдийг нэмнэ үү. Дараа нь \"Install to Workspace\" дараад Bot User OAuth Token-ийг (xoxb--ээр эхэлнэ) хуулна уу.",
+      "step3": "\"Basic Information\" → App-Level Tokens → \"Generate Token and Scopes\"-ийг нээнэ үү. connections:write эрхийг нэмээд Generate дарна уу. Токеныг (xapp--аар эхэлнэ) хуулна уу.",
+      "step4": "Зүүн цэснээс \"Socket Mode\"-ийг нээж Enable Socket Mode-ийг асаана уу.",
+      "step5": "\"Event Subscriptions\"-ийг нээж асаана уу. \"Subscribe to bot events\" хэсэгт message.channels, message.im, app_mention нэмээд Save дарна уу. ЧУХАЛ: event нэмсний дараа аппыг workspace-д дахин суулгаагүй бол event ирэхгүй.",
+      "step6": "Bot токен (xoxb-) болон App токеныг (xapp-) энд буулгаад, transport-оор Socket Mode-ийг сонгож, Test & Enable дарна уу.",
+      "step7": "/invite @YourBot коммандаар ботоо суваг руу урих эсвэл шууд DM бичнэ үү."
+    },
+    "telegram": {
+      "step1": "Telegram дотор @BotFather-тэй чат нээнэ үү.",
+      "step1Link": "Telegram дээр @BotFather-ийг нээх",
+      "step2": "/newbot илгээгээд нэр болон \"bot\"-оор төгссөн хэрэглэгчийн нэр сонгоно уу.",
+      "step3": "BotFather HTTP API токеноор (123456:ABC-DEF... маягийн) хариулна. Түүнийг хуулна уу.",
+      "step4": "Токеныг энд буулгаад Test & Enable дарна уу. Дараа нь ботдоо мессеж бичээрэй."
+    },
+    "discord": {
+      "step1": "Discord-ийн хөгжүүлэгчийн портал нээж New Application үүсгэнэ үү. Нэр өгнө үү.",
+      "step1Link": "discord.com/developers/applications нээх",
+      "step2": "Зүүн цэснээс \"Bot\"-ийг нээгээд Reset/Copy Token дарж бот токеныг хуулна уу.",
+      "step3": "Мөн Bot хуудсан дээр \"Message Content Intent\", \"Server Members Intent\" гэсэн ХОЁУЛАНГ нь асаагаад Save дарна уу.",
+      "step4": "Зүүн цэснээс \"OAuth2\" → URL Generator-ийг нээнэ үү. Scopes: bot. Bot permissions: Send Messages, Read Message History. Үүссэн URL-ийг нээж ботоо сервертээ урина уу.",
+      "step5": "Бот токеныг энд буулгаад Test & Enable дарна уу."
+    },
+    "emailImap": {
+      "step1": "IMAP User талбарт имэйл хаягаа бичнэ үү. Түгээмэл үйлчилгээнүүд (Gmail, Outlook, iCloud, Yahoo, Proton, Fastmail) host болон портуудыг автоматаар бөглөнө.",
+      "step2": "Ердийн нууц үг биш, АППЫН НУУЦ ҮГ (app password) хэрэгтэй. Үүний тулд бүртгэл дээрээ эхлээд 2 шаттай баталгаажуулалт (2FA) идэвхжүүлсэн байх ёстой.",
+      "step2Gmail": "Gmail аппын нууц үг (эхлээд 2 шаттай баталгаажуулалт асаана)",
+      "step2Outlook": "Outlook / Microsoft нэмэлт аюулгүй байдлын тохиргоо",
+      "step2Icloud": "iCloud апп-тусгай нууц үг",
+      "step2Workspace": "Google Workspace админ: IMAP-ийг байгууллага даяар асаах",
+      "step3": "Мөн үйлчилгээ тань тохируулгатай бол шуудангийн хайрцагтаа IMAP-ийг идэвхжүүлнэ үү (Gmail: Settings → Forwarding and POP/IMAP → Enable IMAP).",
+      "step4": "Аппын нууц үгийг IMAP Password талбарт буулгаад Test & Enable дарна уу. Хариултууд тухайн хайрцаг руу бичсэн хүнд очно."
+    },
+    "signal": {
+      "step1": "signal-cli суулгана уу: macOS дээр `brew install signal-cli` (Java-г автоматаар татна).",
+      "step2": "Дугаар холбоно уу. Хамгийн хялбар нь одоогийн Signal-даа хоёрдогч төхөөрөмж болгож ХОЛБОХ: `signal-cli link -n \"Darhai\"` ажиллуулбал sgnl:// URI / QR хэвлэнэ; утсан дээрээ Signal → Settings → Linked Devices → + дараад уншуулна уу. (Эсвэл шинэ дугаарыг `signal-cli -a +1XXXXXXXXXX register`, дараа нь `verify` коммандаар бүртгэнэ.)",
+      "step3": "Утасны дугаараа E.164 форматаар (+1...) энд оруулаад, signal-cli PATH дээр байхгүй үед л cliPath-ийг зааж, Test & Enable дарна уу."
+    },
+    "whatsapp": {
+      "step1": "Backend сонгоно уу. Хамгийн хялбар нь Baileys (эсвэл WhatsApp Web.js): түүнийг сонгоод утасны WhatsApp-аараа QR кодыг уншуулна уу (Settings → Linked Devices → Link a Device). Токен шаардлагагүй. Meta Business нь баталгаажсан бизнес бүртгэл болон загварчилсан мессежид зориулагдсан.",
+      "step2": "Meta Business backend-ийн хувьд (албан ёсны WhatsApp Cloud API): Meta for Developers консол дээр апп үүсгэж, WhatsApp бүтээгдэхүүн нэмээд, WhatsApp → API Setup хэсгээс түр Access Token болон Phone Number ID-г хуулна уу. Форм зөвхөн Access Token болон Phone Number ID шаардана; Business Account ID, Verify Token, App Secret нь сонголттой (зөвхөн Meta-гийн webhook-ийг буцааж холбоход хэрэгтэй).",
+      "step2Link": "Meta for Developers нээх"
+    },
+    "smsTwilio": {
+      "step1": "Twilio Console-ийн хяналтын самбараас Account SID болон Auth Token-ийг хуулна уу.",
+      "step1Link": "console.twilio.com нээх",
+      "step2": "SMS чадамжтай Twilio утасны дугаар аваарай (Phone Numbers → Manage → Buy a number), E.164 форматаар (+1...). Эсвэл Messaging Service үүсгээд түүний SID-г ашиглана уу.",
+      "step3": "Account SID, Auth Token болон From дугаарыг (эсвэл Messaging Service SID) энд буулгана уу.",
+      "step4": "Ирж буй SMS-д Twilio-гийн webhook-д зориулсан нийтийн URL хэрэгтэй. Tunnel сонголтыг асаах (эсвэл өөрийн https URL-ээ буулгах) бөгөөд тэр URL-ийг Twilio дугаарынхаа \"A Message Comes In\" webhook болгон тохируулна уу."
+    },
+    "googleChat": {
+      "step1": "Google Cloud Console дээр төсөл сонгох буюу үүсгээд Google Chat API болон Cloud Pub/Sub API-г идэвхжүүлнэ үү.",
+      "step1Link": "Google Cloud Console нээх",
+      "step2": "Service account үүсгэж, түүний JSON түлхүүрийг татаад JSON-ийг энд буулгана уу.",
+      "step3": "Нийтийн URL-гүйгээр мессеж хүлээн авахын тулд Pub/Sub ашиглана: Pub/Sub topic үүсгэж, chat-api-push@system.gserviceaccount.com-д тухайн topic дээр Pub/Sub Publisher эрх олгож, pull subscription үүсгээд, service account-даа тухайн subscription дээр Pub/Sub Subscriber эрх олгоно уу. Chat API Configuration → Connection settings хэсэгт Cloud Pub/Sub-ийг сонгож topic-оо оруулна уу. Энд Inbound transport-ийг \"Pub/Sub pull\" болгож subscription замыг оруулна уу.",
+      "step4": "Ботыг space-д нэмэх эсвэл DM бичнэ үү."
+    },
+    "matrix": {
+      "step1": "Ботыг аль homeserver дээр байршуулахаа шийднэ үү. Нийтийн гол сервер бол https://matrix.org, эсвэл өөрийн homeserver URL-ээ ашиглана. Форм https://matrix.org-ийг урьдчилан бөглөсөн байгаа.",
+      "step2": "Тухайн homeserver дээр ботод зориулсан тусдаа бүртгэл үүсгэнэ үү (шинэ хэрэглэгч бүртгэх, ж: @mybot). Серверийн дагавартай бүрэн Matrix ID нь (ж: @mybot:matrix.org) User ID (mxid) талбарт орно.",
+      "step2Link": "Бүртгэл үүсгэхийн тулд app.element.io нээх",
+      "step3": "Тухайн бүртгэлийн access token авна уу. Element дотор: бүртгэлийн нэр (зүүн дээд) → All settings → Help & About, доош гүйлгэж Advanced хэсгээс Access Token-ийг ил гаргана. Хуулна уу (syt_-ээр эхэлнэ).",
+      "step4": "Homeserver URL, User ID (mxid), Access Token-ийг энд буулгаад Test & Enable дарна уу. Боттой ярихын тулд бот бүртгэлийг өрөөнд урина уу."
+    },
+    "msTeams": {
+      "step1": "Azure Portal дээр Azure Bot resource үүсгэнэ үү (Create a resource → Azure Bot). \"Multi Tenant\" эсвэл \"Single Tenant\"-ийг сонгож Microsoft App ID үүсгүүлнэ үү.",
+      "step1Link": "Azure Portal нээх",
+      "step2": "Бот → Configuration-ийг нээж Microsoft App ID-г (GUID) олно уу. Энэ нь App ID (MicrosoftAppId) талбар.",
+      "step3": "App registration-ийг нээж (Configuration → \"Manage Password\", эсвэл App Registrations → таны апп → Certificates & secrets) New client secret үүсгэнэ үү. Secret-ийн VALUE-г даруй хуулна уу. Энэ нь App Password (Client Secret) талбар.",
+      "step4": "Бот resource дотор Channels-ийг нээж \"Microsoft Teams\" сувгийг нэмнэ үү. Энд харагдах Inbound Webhook URL-ийг хуулж Azure (Configuration) дахь ботын Messaging endpoint болгон буулгаснаар Teams мессежүүдийг Дархай руу дамжуулна.",
+      "step5": "App ID болон Client Secret-ийг энд буулгаад Test & Enable дарна уу."
+    },
+    "line": {
+      "step1": "LINE Developers Console дээр provider үүсгээд \"Messaging API\" төрлийн суваг үүсгэнэ үү.",
+      "step1Link": "LINE Developers Console нээх",
+      "step2": "Суваг → Basic settings-ийг нээж Channel secret-ийг хуулна уу. Энэ нь Channel Secret талбар.",
+      "step3": "Messaging API таб нээж \"Channel access token (long-lived)\" хүртэл гүйлгээд Issue дарна уу. Хуулна уу. Энэ нь Channel Access Token талбар.",
+      "step4": "Хоёр утгыг энд буулгаад Test & Enable дарна уу. Дараа нь энд харагдах Inbound Webhook URL-ийг хуулж Messaging API табын Webhook URL талбарт буулгаад \"Use webhook\"-ийг асаана уу (эхлээд URL-ээ тохируулж, дараа нь асаана). Чатлахын тулд ботыг QR кодоор нь найз болгон нэмнэ үү."
+    },
+    "imessage": {
+      "step1": "Энэ суваг энэ Mac дээр локал ажиллаж Messages аппын өгөгдлийн санг шууд уншина. Токен шаардахгүй ч macOS-ийн Full Disk Access эрх хэрэгтэй. Эхлээд Messages аппдаа iMessage-д нэвтэрнэ үү.",
+      "step2": "Full Disk Access олгоно уу: System Settings → Privacy & Security → Full Disk Access-ийг нээж Darhai-г идэвхжүүлнэ үү (асаагаад, шаардвал аппыг дахин эхлүүлнэ).",
+      "step2Link": "Full Disk Access тохиргоог нээх",
+      "step3": "Сонголтоор Poll interval болон Allowed handles цагаан жагсаалт (хүлээн авах дугаар/имэйлүүд; хоосон бол бүгдийг зөвшөөрнө) тохируулна уу. Дараа нь Test & Enable. Анхаар: зөвхөн текст, хавсралт хаягдана."
+    },
+    "lark": {
+      "step1": "Domain-оо энд сонгоно уу: эх газрын Хятадад Feishu (feishu.cn), олон улсад Lark (larksuite.com). Дараа нь тохирох хөгжүүлэгчийн консолыг нээж \"Custom App\" (Enterprise self-built app) үүсгэнэ үү.",
+      "step1Feishu": "Feishu нээлттэй платформ нээх (Хятад)",
+      "step1Lark": "Lark Developer нээх (Олон улс)",
+      "step2": "Апп → Credentials & Basic Info-г нээж App ID (cli_-ээр эхэлнэ) болон App Secret-ийг энд тохирох талбаруудад хуулна уу.",
+      "step3": "Permissions & Scopes хэсэгт бот/мессежийн эрхүүдийг (im:message, im:message.group_at_msg, im:chat) нэмж, Bot боломжийг асаагаад, хувилбар үүсгэн нийтэлж credentials-ийг идэвхжүүлнэ үү.",
+      "step4": "Сонголттой: event шифрлэлт асаасан бол Event Subscriptions-оос Encrypt Key болон Verification Token-ийг энд сонголттой талбаруудад хуулна уу. Дараа нь Test & Enable."
+    },
+    "dingtalk": {
+      "step1": "DingTalk нээлттэй платформ дээр Application Development руу орж дотоод Enterprise апп (DingTalk app) үүсгэнэ үү.",
+      "step1Link": "DingTalk нээлттэй платформ нээх",
+      "step2": "Апп → Credentials & Basic Info-г нээж Client ID (хуучин AppKey) болон Client Secret-ийг (хуучин AppSecret) энд тохирох талбаруудад хуулна уу.",
+      "step3": "Аппдаа Bot нэмээд мессеж хүлээн авахдаа Stream Mode-ийг сонгоно уу (нийтийн URL шаардлагагүй). Version Management хэсэгт хувилбар үүсгэн нийтэлж credentials-ийг идэвхжүүлнэ үү.",
+      "step4": "Client ID болон Client Secret-ийг энд буулгаад (Webhook Secret сонголттой) Test & Enable дарна уу."
+    },
+    "wechat": {
+      "step1": "Энэ суваг QR код уншуулж хувийн WeChat-тай холбогдоно. Хөгжүүлэгчийн апп, AppID, токен шаардлагагүй.",
+      "step2": "Энд \"Scan to Login\" дарж QR код гаргаад, утасны WeChat дээрээ + (баруун дээд) → Scan дарж уншуулан энэ session-ийг холбоно уу.",
+      "step3": "Холбогдсоны дараа WeChat харилцан ярианд ашиглах Agent болон Default Model-ээ сонгоно уу. Session холбоотой байлгахын тулд энэ Mac-ийг онлайн байлгаарай."
+    },
+    "wecom": {
+      "step1": "WeCom (WeChat Work) апп дотор Workspace → Smart Robot → Create Robot → Manual Creation руу орж API Mode-ийг сонгоно уу.",
+      "step1Link": "WeCom админ консол нээх",
+      "step2": "Зөвлөмж: энд \"Long Connection (WS)\" холболтын горимыг сонгоно уу. Робот тохиргоонд \"Use Long Connection (WebSocket)\"-ийг сонгоод Bot ID болон Secret-ийг нь Bot ID, Secret талбаруудад хуулна уу. Нийтийн URL шаардлагагүй.",
+      "step3": "Эсвэл \"Encrypted Callback (Webhook)\" горим: роботын callback тохиргоонд Callback Token болон 43 тэмдэгтийн EncodingAESKey тохируулж, энд харагдах Callback URL-ийг тэр тохиргоонд хуулж, CorpID-гээ оруулна уу (Admin Console → My Company хуудасны доод хэсэгт CorpID харагдана). Token, EncodingAESKey, CorpID-г энд буулгана уу.",
+      "step4": "Test & Enable дараад WeCom дотор роботод мессеж бичнэ үү."
+    },
+    "mattermost": {
+      "step1": "Mattermost Server URL-ээ оруулна уу (ж: https://mattermost.example.com). Өөрөө байршуулсан серверийн хувьд System Console (Integrations) дотор Bot Accounts болон Personal Access Tokens идэвхтэй эсэхийг шалгана уу.",
+      "step2": "Бот бүртгэл үүсгэнэ үү: System Console → Integrations → Bot Accounts → Add Bot Account. Хэрэглэгчийн нэр өгч үүсгээд, нэг л удаа харагдах Access Token-ийг хуулна уу (дахин харах боломжгүй).",
+      "step2Link": "Mattermost бот бүртгэлийн баримт бичиг",
+      "step3": "Server URL болон Access Token-ийг энд буулгана уу. Team ID сонголттой (ботыг нэг багт хязгаарлана). Дараа нь Test & Enable дараад ботыг суваг руу нэмнэ үү."
+    },
+    "nextcloudTalk": {
+      "step1": "Nextcloud инстансынхаа үндсэн URL-ийг оруулна уу (ж: https://cloud.example.com). Тухайн Nextcloud дээр Talk апп суусан байх ёстой.",
+      "step2": "Ботод зориулж Nextcloud бүртгэл ашиглана уу (тусдаа хэрэглэгч байх нь зүйтэй). Тухайн бүртгэлийн нэвтрэх нэрийг Username талбарт оруулна уу.",
+      "step3": "Тэр бүртгэлээр Nextcloud-д нэвтэрч App Password үүсгэнэ үү: Settings → Personal → Security → Devices & sessions → \"Create new app password\". App Password талбарт хуулна уу. Ердийн нэвтрэх нууц үгийг бүү ашигла.",
+      "step3Link": "Nextcloud session/app-password удирдлагын баримт",
+      "step4": "Test & Enable дараад тухайн бүртгэлийг Talk харилцан ярианд нэмж чатлана уу."
+    },
+    "irc": {
+      "step1": "IRC Server (үндсэн: irc.libera.chat) болон Port (үндсэн: 6697, TLS асаалттай) оруулна уу. Bot Nick сонгоно уу.",
+      "step2": "Сонголттой ч Libera.Chat дээр зөвлөнө: nick-ээ бүртгэж нөөцөлнө үү. Тэр nick-ээр нэг удаа холбогдоод NickServ-д /msg NickServ REGISTER yourpassword your@email гэж бичнэ. Тэр нууц үгийг сонголттой Password талбарт хийвэл холбогдох үед SASL/NickServ-ээр нэвтэрнэ.",
+      "step2Link": "Libera.Chat nick бүртгэлийн заавар",
+      "step3": "Нэгдэх сувгуудаа оруулна уу (таслалаар, ж: #darhai-bots). Username, Real name сонголттой (үндсэндээ nick-ийг ашиглана). Дараа нь Test & Enable."
+    },
+    "nostr": {
+      "step1": "Ботын identity-д Nostr хувийн түлхүүр (nsec) хэрэгтэй. Дурын Nostr клиент (Damus, Amethyst, Primal) эсвэл түлхүүр үүсгэгчээр шинэ хос түлхүүр үүсгээд nsec-ээ найдвартай нөөцөлнө үү. nsec-тэй хэн ч ботын нэрийн өмнөөс нийтэлж чадна.",
+      "step1Link": "Nostr түлхүүрийн тухай (nsec / npub)",
+      "step2": "Private Key талбарт хувийн түлхүүрээ (nsec1... эсвэл 64 тэмдэгтийн hex) буулгана уу.",
+      "step3": "Нэг буюу хэд хэдэн Relay-г таслалаар тусгаарласан wss:// URL хэлбэрээр оруулна уу (ж: wss://relay.damus.io, wss://nos.lol). Сонголтоор Allowed Senders (npub эсвэл hex)-ээр хэн бичиж болохыг хязгаарлана. Дараа нь Test & Enable."
+    },
+    "twitch": {
+      "step1": "Бот аль Twitch бүртгэлээр бичихийг шийднэ үү (тусдаа бот бүртгэл байх нь зүйтэй). Түүний Twitch хэрэглэгчийн нэр нь Bot Username талбар.",
+      "step2": "Тухайн бүртгэлд chat:read болон chat:edit эрхтэй chat OAuth токен үүсгэнэ үү (ж: бот бүртгэлээрээ нэвтэрсэн үедээ twitchtokengenerator.com-оор). Токеныг OAuth Token талбарт хуулна уу (oauth: угтвартай ч, угтваргүй ч болно).",
+      "step2Link": "twitchtokengenerator.com нээх",
+      "step3": "Нэгдэх Channels-ээ оруулна уу (өөрийн сувгийн нэрс, таслалаар). Дараа нь Test & Enable.",
+      "step4": "Сонголттой: chat токеныг автоматаар сэргээхийн тулд Twitch Developer Console дээр апп бүртгэж, нэмэлт Client ID, Client Secret, Refresh Token талбаруудыг бөглөнө үү.",
+      "step4Link": "Twitch Developer Console нээх"
+    },
+    "synologyChat": {
+      "step1": "Synology Chat клиент (веб эсвэл десктоп) дотор хэрэглэгчийн profile цэс → Integration-ийг нээнэ үү. Нэг Incoming webhook (хариулт гарна) болон нэг Outgoing webhook (мессеж орж ирнэ) үүсгэнэ.",
+      "step1Link": "Synology Chat integration баримт",
+      "step2": "Incoming Webhook үүсгэж, суваг сонгоод, түүний webhook URL-ийг энд Incoming Webhook URL талбарт хуулна уу (Дархай хариултуудыг тийш POST хийнэ).",
+      "step3": "Outgoing Webhook үүсгэнэ үү. Энд харагдах Inbound Webhook URL-ийг түүний \"URL\" талбарт хуулж, дараа нь Outgoing webhook-ийн Token-ийг энд Webhook Token талбарт хуулна уу (ирсэн хүргэлтүүдийг баталгаажуулахад ашиглана).",
+      "step4": "Өөрөө гарын үсэг зурсан сертификаттай LAN NAS-ийн хувьд \"Allow self-signed certificate\"-ийг асаана уу. Дараа нь Test & Enable."
+    },
+    "bluebubbles": {
+      "step1": "iMessage-д нэвтэрсэн Mac дээр BlueBubbles Server аппыг суулгаж ажиллуулна уу. Тохиргооны wizard-ийг нь дуусгана уу.",
+      "step1Link": "BlueBubbles сервер тохируулах заавар",
+      "step2": "BlueBubbles Server апп дотор Server Password тохируулж (диск дүрсээр хадгална), Connection settings доорх серверийн хаягийг тэмдэглэнэ үү. LAN-д http://<mac-ip>:1234. Алсаас хандахад proxy (Cloudflare Tunnel эсвэл ngrok) идэвхжүүлж, өгсөн URL-ийг нь ашиглана уу.",
+      "step3": "Server URL болон Server Password-ийг энд буулгаад Test & Enable дарна уу."
+    },
+    "webhook": {
+      "step1": "Энэ бол ерөнхий HTTP суваг. Outbound URL-д агентын хариултуудыг хүлээн авах өөрийн үйлчилгээний https endpoint-ийг оруулна уу (Дархай хариулт бүрийг тийш JSON хэлбэрээр POST хийнэ).",
+      "step2": "Сонголттой: Outbound Secret тохируулна уу. Дархай түүнийг илгээснээр таны үйлчилгээ хүсэлт үнэхээр Дархайгаас ирснийг баталгаажуулж чадна.",
+      "step3": "Test & Enable. Дараа нь энд харагдах Inbound Webhook URL-ийг хуулж, үйлчилгээгээрээ ирэх мессежүүдийг тийш POST хийлгэнэ үү (URL алдагдвал Rotate-оор шинийг үүсгэнэ)."
+    },
+    "emailAgentMail": {
+      "step1": "AgentMail нь AI агентад зориулсан hosted имэйл хайрцаг олгодог. AgentMail самбар дээр бүртгэл болон inbox үүсгэнэ үү.",
+      "step1Link": "AgentMail самбар нээх",
+      "step2": "Самбар дээр API Keys → Create New API Key-г нээж түлхүүрийг (am_-аар эхэлнэ) API Key талбарт хуулна уу. Олгогдсон inbox хаягийг (ж: agent@workspace.agentmail.to) Inbox Address талбарт оруулна уу.",
+      "step3": "Test & Enable. Дараа нь энд харагдах Inbound Webhook URL-ийг AgentMail самбарын Webhook URL талбарт хуулснаар шинэ мэйл Дархайд ирнэ. Сонголтоор AgentMail-ийн signing secret-ийг (whsec_...) Webhook Secret-д буулгаж хүргэлтүүдийг баталгаажуулна."
+    }
+  },
   "title": "Тохиргоо",
   "commandPalette": {
     "placeholder": "Тохиргоо хайх…",
@@ -26,7 +221,7 @@
     "description": "AI агентын ур чадварыг төвлөрсөн байдлаар удирдах. Нэг удаа суулгаад бүх туслахад ашиглах.",
     "mySkillsTitle": "Миний ур чадварууд",
     "discoveredTitle": "Илрүүлсэн гадны ур чадварууд",
-    "discoveryAlert": "Таны CLI хэрэгслүүдээс ур чадвар илрүүлсэн. Дархай-д ашиглахын тулд импортлоно уу.",
+    "discoveryAlert": "Таны CLI хэрэгслүүдээс ур чадвар илрүүлсэн. Дархайд ашиглахын тулд импортлоно уу.",
     "importAll": "Бүгдийг импортлох",
     "importAllSuccess": "{{count}} ур чадвар импортлогдсон",
     "noSkills": "Ур чадвар олдсонгүй. Эхлэхийн тулд хэдийг импортлоно уу.",
@@ -180,12 +375,12 @@
   "autoPreviewOfficeFiles": "Шинэ Office файлуудыг автоматаар урьдчилан үзэх",
   "autoPreviewOfficeFilesDesc": "Одоогийн ажлын талбарт шинээр үүсгэсэн Word, Excel, PowerPoint файлуудыг автоматаар нээх. Office-ийн түр зуурын түгжээний файлуудыг үл тоомсорлоно.",
   "startOnBoot": "Ачаалахад эхлүүлэх",
-  "startOnBootDesc": "macOS, Windows эсвэл Linux-д нэвтрэх үед Дархай-г автоматаар эхлүүлэх.",
+  "startOnBootDesc": "macOS, Windows эсвэл Linux-д нэвтрэх үед Дархайг автоматаар эхлүүлэх.",
   "startOnBootUnsupported": "Зөвхөн багцалсан macOS, Windows, Linux апп-уудад боломжтой.",
   "startOnBootUpdateFailed": "Ачаалахад эхлүүлэх тохиргоог шинэчилж чадсангүй",
   "closeToTray": "Tray руу хаах",
   "notification": "Мэдэгдэл",
-  "cronNotificationEnabled": "Хуваарьт даалгавар дуусгах",
+  "cronNotificationEnabled": "Хуваарьт даалгавар дууссан үед",
   "promptTimeout": "LLM промптын хүлээх хугацаа (с)",
   "groupAiCore": "AI цөм",
   "groupApp": "Програм",
@@ -296,7 +491,7 @@
         "transport": {
           "label": "Тээвэр",
           "help": "Socket Mode нь Slack-ийн эхлүүлсэн гарах WebSocket-ийг нээдэг, нийтийн URL шаардлагагүй. Events API нь гарын үсгийн нууцаар баталгаажуулсан орох HTTPS webhook ашигладаг.",
-          "socket": "Socket Mode",
+          "socket": "Socket горим",
           "events": "Events API"
         },
         "botToken": {
@@ -437,7 +632,7 @@
         "label": "Орох вебхүкийн URL",
         "help": "Энэ URL-ийг Meta Business → WhatsApp → Configuration → Webhook callback URL-д оруулна уу.",
         "tunnelPlaceholder": "(Phase 4-д tunnel тохируулна)",
-        "notMinted": "<not-minted>",
+        "notMinted": "<үүсгээгүй>",
         "copyButton": "Хуулах",
         "rotateButton": "Шинэчлэх",
         "rotateSuccess": "Webhook URL шинэчлэгдлээ",
@@ -456,8 +651,8 @@
           "help": "Account SID-ийг Twilio Console самбараас олно. \"AC\"-ээр эхэлнэ."
         },
         "authToken": {
-          "label": "Auth Token",
-          "placeholder": "auth token",
+          "label": "Auth токен",
+          "placeholder": "auth токен",
           "help": "Auth токенийг нууц үг шиг хадгал, Twilio webhook бүрт түүгээр гарын үсэг зурдаг."
         },
         "fromNumber": {
@@ -476,7 +671,7 @@
         "label": "Орох вебхүкийн URL",
         "help": "Энэ URL-ийг Twilio дугаарын \"A Message Comes In\" webhook талбарт оруулна (POST).",
         "tunnelPlaceholder": "(Phase 4-д tunnel тохируулна)",
-        "notMinted": "<not-minted>",
+        "notMinted": "<үүсгээгүй>",
         "copyButton": "Хуулах",
         "rotateButton": "Шинэчлэх",
         "rotateSuccess": "Webhook URL шинэчлэгдлээ",
@@ -571,7 +766,7 @@
         "label": "Орох вебхүкийн URL",
         "help": "Үүнийг Azure Bot Service дахь Messaging Endpoint болгож тохируулна уу.",
         "copyButton": "Хуулах",
-        "notMinted": "<not-minted>"
+        "notMinted": "<үүсгээгүй>"
       }
     },
     "line": {
@@ -598,7 +793,7 @@
         "label": "Орох вебхүкийн URL",
         "help": "Энэ URL-ийг LINE Developers Console → Messaging API → Webhook URL-д оруулна уу.",
         "copyButton": "Хуулах",
-        "notMinted": "<not-minted>"
+        "notMinted": "<үүсгээгүй>"
       }
     },
     "imessage": {
@@ -648,7 +843,7 @@
           "required": "Ботын хэрэглэгчийн нэрийг оруулна уу"
         },
         "oauthToken": {
-          "label": "OAuth Token",
+          "label": "OAuth токен",
           "help": "chat:read + chat:edit scope бүхий ботын OAuth токен. twitchtokengenerator.com дээр авна.",
           "required": "OAuth токенийг оруулна уу"
         },
@@ -699,7 +894,7 @@
         "label": "Орох вебхүкийн URL",
         "help": "Энэ URL-ийг Google Cloud Console → Google Chat API → Configuration → App URL-д оруулна уу.",
         "copyButton": "Хуулах",
-        "notMinted": "<not-minted>"
+        "notMinted": "<үүсгээгүй>"
       }
     },
     "nextcloudTalk": {
@@ -762,7 +957,7 @@
         "label": "Орох вебхүкийн URL",
         "help": "Энэ URL-ийг Synology Chat → Outgoing Webhooks → Outgoing URL-д оруулна уу.",
         "copyButton": "Хуулах",
-        "notMinted": "<not-minted>"
+        "notMinted": "<үүсгээгүй>"
       }
     },
     "irc": {
@@ -818,7 +1013,7 @@
         "label": "Орох вебхүкийн URL",
         "help": "Энэ URL-ийг AgentMail самбарын \"Webhook URL\" талбарт оруулна уу.",
         "tunnelPlaceholder": "(Phase 4-д tunnel тохируулна)",
-        "notMinted": "<not-minted>",
+        "notMinted": "<үүсгээгүй>",
         "copyButton": "Хуулах",
         "rotateButton": "Шинэчлэх",
         "rotateSuccess": "Webhook URL шинэчлэгдлээ",
@@ -835,15 +1030,15 @@
       "testAndEnable": "Шалгаж идэвхжүүлэх",
       "howToTalk": "Өөрийн inbox-оо шалга. Дархай дөнгөж сая танд имэйл бичсэн; тэр имэйл рүү хүссэн үедээ хариулна уу.",
       "sections": {
-        "imap": "IMAP (inbound)",
-        "smtp": "SMTP (outbound)"
+        "imap": "IMAP (ирэх)",
+        "smtp": "SMTP (гарах)"
       },
       "credentials": {
         "imapHost": {
-          "label": "IMAP Host",
+          "label": "IMAP хост",
           "placeholder": "imap.gmail.com",
           "help": "IMAP серверийнхээ hostname, жишээ нь imap.gmail.com.",
-          "required": "IMAP host шаардлагатай"
+          "required": "IMAP хост шаардлагатай"
         },
         "imapPort": {
           "label": "IMAP порт",
@@ -869,9 +1064,9 @@
           "help": "Идэвхтэй үед SMTP нь IMAP хэрэглэгч + нууц үгийг дахин ашиглана. Тусдаа SMTP нэвтрэлт оруулахын тулд унтраана уу."
         },
         "smtpHost": {
-          "label": "SMTP Host",
+          "label": "SMTP хост",
           "placeholder": "smtp.gmail.com",
-          "help": "IMAP host-ийг дахин ашиглахын тулд хоосон үлдээнэ үү."
+          "help": "IMAP хостыг дахин ашиглахын тулд хоосон үлдээнэ үү."
         },
         "smtpPort": {
           "label": "SMTP порт",
@@ -892,7 +1087,7 @@
       }
     }
   },
-  "webui.description": "Дархай-г \"24/7 Алсын туслах\" болгон ашиглаарай - даалгавруудыг хаанаас ч, хэзээ ч, аливаа алсын төхөөрөмжөөс зохион байгуулна.",
+  "webui.description": "Дархайг \"24/7 Алсын туслах\" болгон ашиглаарай - даалгавруудыг хаанаас ч, хэзээ ч, аливаа алсын төхөөрөмжөөс зохион байгуулна.",
   "webui.steps": "Алхам 1. WebUI асаах; Алхам 2. Хандах URL хуулах; Алхам 3. Алсын хөтөч дээр нээх",
   "webui.configuration": "WebUI тохиргоо",
   "webui.enable": "WebUI идэвхжүүлэх",
@@ -976,7 +1171,7 @@
   "webui.resetPasswordWarning": "Сэргээсэн нууц үгээ найдвартай хадгална уу!",
   "webui.featureRemoteDesc": "Утас буюу алсын хөтөч Дархай руу хандах боломжтой болгохын тулд WebUI идэвхжүүлнэ үү.",
   "webui.featureChannelsTitle": "Мессежийн удирдлага",
-  "webui.featureChannelsDesc": "IM аппуудаас Дархай-тай харилцахын тулд Telegram, Lark, DingTalk, WeChat холбоно уу.",
+  "webui.featureChannelsDesc": "IM аппуудаас Дархайтай харилцахын тулд Telegram, Lark, DingTalk, WeChat холбоно уу.",
   "webui.goToChannels": "Сувгууд руу очих",
   "webui.pairedDevices.title": "Холбосон төхөөрөмжүүд",
   "webui.pairedDevices.empty": "Холбосон төхөөрөмж одоогоор алга",
@@ -1147,7 +1342,7 @@
   "mcpError": "Алдаа",
   "mcpTesting": "Шалгаж байна",
   "mcpOneKeyImport": "Нэг товчоор импортлох",
-  "mcpImportFromCLI": "MCP хэрэгсэл сканнердах",
+  "mcpImportFromCLI": "MCP хэрэгслүүдийг скан хийх",
   "mcpSelectCLI": "CLI сонгох",
   "mcpNoServersFound": "MCP сервер олдсонгүй",
   "mcpImportSuccess": "Импорт амжилттай",
@@ -1538,8 +1733,8 @@
     "marketUpdate": "Шинэчлэх",
     "marketEmpty": "Суулгах боломжтой агент олдсонгүй. Сүлжээний холболтоо шалгаж, GitHub-д хүрэх боломжтой эсэхийг баталгаажуулна уу.",
     "marketContributionHint": "Энд шинэ Агент жагсаахыг хүсэж байна уу?",
-    "marketContributionAction": "WaylandHub дээр PR нээх",
-    "marketComingSoon": "WaylandHub зах зээл удахгүй гарна.",
+    "marketContributionAction": "Дархай Hub дээр PR нээх",
+    "marketComingSoon": "Дархай Hub зах зээл удахгүй гарна.",
     "detectCustomAgent": "Тусгай агент илрүүлэх",
     "editCustomAgent": "Тусгай агент засварлах",
     "localAgentsEmpty": "Локал агент илрүүлсэнгүй",
@@ -1638,7 +1833,7 @@
   },
   "channelsIndex": {
     "title": "Сувгууд",
-    "subtitle": "Дархай-г мессеж солилцох платформуудтай холбоно уу. Холболт бүр өөрийн тохиргоо, нэвтрэх мэдээлэл, төлөвтэй.",
+    "subtitle": "Дархайг мессеж солилцох платформуудтай холбоно уу. Холболт бүр өөрийн тохиргоо, нэвтрэх мэдээлэл, төлөвтэй.",
     "tier1Tab": "1-р түвшин",
     "tier2Tab": "2-р түвшин",
     "tier3Tab": "3-р түвшин",
@@ -1753,7 +1948,7 @@
       "keyLabel": "Flux Router түлхүүр",
       "keyPlaceholder": "Flux Router түлхүүрээ буулгана уу (sk-flux-…)",
       "routing": "Flux Router чиглүүлж байна.",
-      "metricsTurns": "Сүүлийн {{count}} ээлж:",
+      "metricsTurns": "Сүүлийн {{count}} эргэлт:",
       "histogram": "Тэргүүлэх {{flagship}} · Жижиг {{small}} · Локал {{local}}",
       "activeConfirmation": "Flux Router холбогдсон · {{count}} загвар · хүсэлт бүрд чиглүүлнэ",
       "errorUnauthorized": "Тэр {{provider}} түлхүүр татгалзагдлаа. Түлхүүрээ шалгаад дахин оролдоно уу.",
@@ -1762,7 +1957,7 @@
       "errorUnrecognized": "Тэр түлхүүрийг {{provider}}-д таньсангүй.",
       "errorNoModels": "{{provider}} холбогдсон ч загвар буцаасангүй. Хэсэг хугацааны дараа дахин оролдоно уу.",
       "errorUnknown": "{{provider}}-д холбогдож чадсангүй. Дахин оролдоно уу.",
-      "trust": "Дархай-н цаад баг болох Ferrox Labs-аас."
+      "trust": "Ferrox Labs-ын бүтээсэн Wayland нээлттэй эхийн технологид суурилсан."
     },
     "detected": {
       "found": "Энэ компьютер дээр {{provider}} API түлхүүр олдлоо. Үүнийг ашиглах уу?",
@@ -1816,13 +2011,13 @@
       "rolePrevious": "Санал болгосон",
       "capImage": "Зураг",
       "capAudio": "Аудио",
-      "capEmbedding": "Embedding",
+      "capEmbedding": "Эмбеддинг",
       "capOther": "Бусад",
       "tagChat": "Чат",
       "tagVision": "Хараа",
       "tagImage": "Зураг",
       "tagAudio": "Аудио",
-      "tagEmbeddings": "Embeddings",
+      "tagEmbeddings": "Эмбеддинг",
       "tagReasoning": "Эргэцүүлэл",
       "tagTools": "Хэрэгсэл",
       "tagResearch": "Судалгаа",
@@ -1896,11 +2091,11 @@
       },
       "fields": {
         "accessKeyId": {
-          "label": "Access Key ID",
+          "label": "Хандалтын түлхүүрийн ID",
           "placeholder": "AKIA…"
         },
         "secretAccessKey": {
-          "label": "Secret Access Key",
+          "label": "Нууц хандалтын түлхүүр",
           "placeholder": "Secret access key-ээ буулгана уу…"
         },
         "region": {
@@ -1962,7 +2157,7 @@
   },
   "mcpPage": {
     "title": "MCP серверүүд",
-    "subtitle": "Дархай-г Model Context Protocol-оор гадаад хэрэгслийн серверүүдтэй холбоно уу. Агентуудынхаа дунд MCP серверүүдийг нэмэх, тохируулах, синхрончлох."
+    "subtitle": "Дархайг Model Context Protocol-оор гадаад хэрэгслийн серверүүдтэй холбоно уу. Агентуудынхаа дунд MCP серверүүдийг нэмэх, тохируулах, синхрончлох."
   },
   "imageGenPage": {
     "title": "Зураг үүсгэх",
@@ -2028,7 +2223,7 @@
     "restore": "Нөөцлөлтөөс сэргээх",
     "syncTitle": "Синхрончлол (E2EE)",
     "syncComingSoon": "Хавтас эсвэл реле рүү төгсгөл хүртэл шифрлэгдсэн синхрончлол.",
-    "resetTitle": "Дархай-г шинэчлэх",
+    "resetTitle": "Дархайг шинэчлэх",
     "resetDescription": "Бүх яриа, тохиргоо, кэшлэгдсэн өгөгдлийг бүрмөсөн устгана.",
     "resetAction": "Бүгдийг шинэчлэх",
     "resetConfirmTitle": "Бүгдийг шинэчлэх үү?",
@@ -2085,7 +2280,7 @@
     "title": "Ур чадвар ба хэрэгсэл"
   },
   "constitutionPage": {
-    "subtitle": "Дархай-н дүрэм. Ээлж бүрд шинээр ачаалагдана, засвар тэр даруй хэрэгжинэ, дахин эхлүүлэх шаардлагагүй. Override хэрхэн ажилладгийг §11-ээс үзнэ үү.",
+    "subtitle": "Дархайн дүрэм. Эргэлт бүрд шинээр ачаалагдана, засвар тэр даруй хэрэгжинэ, дахин эхлүүлэх шаардлагагүй. Override хэрхэн ажилладгийг §11-ээс үзнэ үү.",
     "tocTitle": "Хэсгүүд",
     "tocEmpty": "Одоогоор хэсэг алга",
     "reset": "Шинэчлэх",
@@ -2144,7 +2339,7 @@
       "mistral": "Mistral загваруудыг ажиллуулна"
     },
     "about": {
-      "wcore": "Дархай-н өөрийн хөдөлгүүр. Таны Загварууд хуудсан дахь бүх нийлүүлэгчийг ашиглана.",
+      "wcore": "Дархайн өөрийн хөдөлгүүр. Таны Загварууд хуудсан дахь бүх нийлүүлэгчийг ашиглана.",
       "claude": "Anthropic-ийн кодын агент. Өөрийн бүртгэлээр нэвтэрдэг, GPT эсвэл Gemini ажиллуулж чадахгүй.",
       "codex": "OpenAI-ийн кодын агент. Өөрийн бүртгэлээр нэвтэрдэг, Claude эсвэл Gemini ажиллуулж чадахгүй."
     },
@@ -2168,7 +2363,7 @@
       "absentBody": "{{tool}} энэ компьютер дээр илрүүлсэнгүй. Эхлээд суулгаад дараа нь Flux-аар чиглүүлэхээр буцаж ирнэ үү.",
       "unconfiguredBody": "{{tool}}-г Flux-аар чиглүүлэхээр тохируулна уу. Дархай нь {{tool}}-н {{configPath}} дахь тохиргоонд Flux нийлүүлэгчийг бичиж, одоо байгаа файлыг эхлээд нөөцлөнө.",
       "routedBody": "{{tool}} Flux-аар чиглүүлж байна.",
-      "driftedBody": "{{tool}}-н Flux тохиргоо Дархай-гаас гадуур өөрчлөгдсөн. Дархай-н тохиргоог сэргээхийн тулд дахин хэрэгжүүлэх, эсвэл {{tool}}-оос Flux-г хасна уу.",
+      "driftedBody": "{{tool}}-н Flux тохиргоо Дархайгаас гадуур өөрчлөгдсөн. Дархайн тохиргоог сэргээхийн тулд дахин хэрэгжүүлэх, эсвэл {{tool}}-оос Flux-г хасна уу.",
       "notConnected": "Эхлээд Flux Router-г холбоод дараа нь {{tool}}-г тохируулна уу.",
       "genericError": "Тохиргоо дуусаагүй.",
       "setup": "{{tool}}-г Flux-д тохируулах",
@@ -2208,7 +2403,7 @@
       "title": "Тойм",
       "subtitle": "Бүх чат, ажлын урсгал, агентын ард байгаа хөдөлгүүр. Ухаалаг үндсэн тохиргоотойгоор аль хэдийн ажиллаж байна. Энэ хэсэг нь капотын доорхыг тааруулах газар юм.",
       "inheritedTitle": "Дархай Desktop-оор хуваарилагдсан",
-      "inheritedBody": "Энэ сешний хувьд Desktop нь хөдөлгүүрт таны загварыг (давхар тохиргоо болгон) дамжуулж, системийн заавраараа Ур чадвар + Туслах/Үндсэн дүрмийг оруулна. Таны Desktop MCP сан дамжуулагддаггүй; зөвхөн Дархай-н өөрийн ажиллагааны MCP-ууд дамжина.",
+      "inheritedBody": "Энэ сешний хувьд Desktop нь хөдөлгүүрт таны загварыг (давхар тохиргоо болгон) дамжуулж, системийн заавраараа Ур чадвар + Туслах/Үндсэн дүрмийг оруулна. Таны Desktop MCP сан дамжуулагддаггүй; зөвхөн Дархайн өөрийн ажиллагааны MCP-ууд дамжина.",
       "readOnly": "зөвхөн унших",
       "manageInDesktop": "Desktop тохиргоонд удирдах",
       "inheritModels": "Загварууд (давхар тохиргоо)",
@@ -2241,7 +2436,7 @@
       "allocatedSession": "Desktop-оор хуваарилагдсан · энэ сешн",
       "skillsDetail": "Системийн зааврын дамжуулсан · {{allocated}}",
       "assistantsDetail": "Системийн зааврын дамжуулсан · {{allocated}}",
-      "mcpDetail": "Дархай-н ажиллагааны MCP-ууд · таны Desktop MCP сан тусдаа",
+      "mcpDetail": "Дархайн ажиллагааны MCP-ууд · таны Desktop MCP сан тусдаа",
       "engineOwnedLine": "Хэрэгслүүд, Санах ой, Аюулгүй байдал, Профайлууд нь хөдөлгүүрийн өөрийнх: ~/.wayland-core/config.toml-д бичигдэж, Дархай Core CLI-тэй хуваалцагдана."
     },
     "services": {

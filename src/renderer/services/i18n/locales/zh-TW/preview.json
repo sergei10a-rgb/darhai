@@ -112,12 +112,42 @@
     "printedToConsole": "已在主控台輸出元素資訊",
     "inspectElement": "檢查元素",
     "inspectElementEnable": "啟用元素檢查",
-    "inspectElementDisable": "停用元素檢查"
+    "inspectElementDisable": "停用元素檢查",
+    "iframeTitle": "HTML 預覽"
   },
   "ppt": {
     "loading": "正在啟動 PPT 預覽...",
     "installing": "正在安裝預覽元件...",
     "startFailed": "啟動 PPT 預覽失敗",
     "installHint": "請確認已安裝 officecli：npm run postinstall"
+  },
+  "markdownEditor": {
+    "toolbar": {
+      "heading1": "標題 1",
+      "heading2": "標題 2",
+      "heading3": "標題 3",
+      "bold": "粗體 (⌘B)",
+      "italic": "斜體 (⌘I)",
+      "strikethrough": "刪除線",
+      "inlineCode": "行內程式碼",
+      "bulletedList": "項目符號清單",
+      "numberedList": "編號清單",
+      "blockquote": "引用",
+      "link": "連結",
+      "horizontalRule": "分隔線",
+      "undo": "復原 (⌘Z)",
+      "redo": "取消復原 (⌘⇧Z)",
+      "addBlockBelow": "在下方新增區塊",
+      "dragToReorder": "拖曳以重新排序"
+    },
+    "formattingLabel": "Markdown 格式",
+    "inlineFormattingLabel": "行內格式",
+    "linkPrompt": "連結 URL（留空以移除）",
+    "placeholderHeading": "標題",
+    "placeholderEmpty": "按「/」開啟命令，或直接開始輸入…"
+  },
+  "slashMenu": {
+    "label": "斜線命令",
+    "empty": "沒有相符的命令"
   }
 }

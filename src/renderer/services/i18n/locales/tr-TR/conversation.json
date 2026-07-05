@@ -16,7 +16,7 @@
     "clearWorkspace": "Klasörü kaldır",
     "openFolder": "Klasör Aç",
     "none": "Hiçbiri",
-    "quickActionsTitle": "Wayland neler yapabilir?",
+    "quickActionsTitle": "Darhai neler yapabilir?",
     "quickActionFeedback": "Geri bildirim veya öneriniz mi var?",
     "quickActionStar": "Bizi beğendiniz mi? Yıldız verin!"
   },
@@ -184,7 +184,10 @@
       "vscode": "VS Code",
       "terminal": "Terminal",
       "explorer": "Dosya Gezgini"
-    }
+    },
+    "toggleLabel": "Çalışma alanını aç/kapat",
+    "collapseLabel": "Çalışma alanını daralt",
+    "expandLabel": "Çalışma alanını genişlet"
   },
   "minimap": {
     "searchAria": "Sohbeti ara",
@@ -332,5 +335,9 @@
       "sublabel": "Mevcut Claude Code oturumunla çalıştır — yönetilecek ek anahtar yok.",
       "action": "Kullan"
     }
+  },
+  "openclaw": {
+    "runtimeCheckFailed": "Ajan çalışma zamanı doğrulanamadı",
+    "runtimeMismatch": "Ajan geçişi doğrulaması başarısız: {{details}}"
   }
 }

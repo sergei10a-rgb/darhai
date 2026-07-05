@@ -10,7 +10,7 @@
   "filters": {
     "allSources": "Все источники",
     "source": {
-      "wayland-library": "Библиотека Wayland",
+      "wayland-library": "Библиотека Darhai",
       "team": "Команда",
       "user": "Мои навыки",
       "imported": "Импортированные",
@@ -157,7 +157,7 @@
     }
   },
   "detail": {
-    "whenLoaded": "Когда Wayland загружает это",
+    "whenLoaded": "Когда Darhai загружает это",
     "metadata": "Метаданные",
     "body": "Содержимое",
     "quarantined": "Этот навык помещён в карантин и не может быть загружен."

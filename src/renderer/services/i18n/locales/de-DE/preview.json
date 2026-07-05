@@ -112,12 +112,42 @@
     "printedToConsole": "Elementinformationen in der Konsole protokolliert",
     "inspectElement": "Element untersuchen",
     "inspectElementEnable": "Element-Inspektor aktivieren",
-    "inspectElementDisable": "Element-Inspektor deaktivieren"
+    "inspectElementDisable": "Element-Inspektor deaktivieren",
+    "iframeTitle": "HTML-Vorschau"
   },
   "ppt": {
     "loading": "PPT-Vorschau wird gestartet...",
     "installing": "Vorschaukomponente wird installiert...",
     "startFailed": "PPT-Vorschau konnte nicht gestartet werden",
     "installHint": "Stellen Sie sicher, dass officecli installiert ist: npm run postinstall"
+  },
+  "markdownEditor": {
+    "toolbar": {
+      "heading1": "Überschrift 1",
+      "heading2": "Überschrift 2",
+      "heading3": "Überschrift 3",
+      "bold": "Fett (⌘B)",
+      "italic": "Kursiv (⌘I)",
+      "strikethrough": "Durchgestrichen",
+      "inlineCode": "Inline-Code",
+      "bulletedList": "Aufzählung",
+      "numberedList": "Nummerierte Liste",
+      "blockquote": "Zitat",
+      "link": "Link",
+      "horizontalRule": "Trennlinie",
+      "undo": "Rückgängig (⌘Z)",
+      "redo": "Wiederholen (⌘⇧Z)",
+      "addBlockBelow": "Block darunter einfügen",
+      "dragToReorder": "Zum Sortieren ziehen"
+    },
+    "formattingLabel": "Markdown-Formatierung",
+    "inlineFormattingLabel": "Inline-Formatierung",
+    "linkPrompt": "Link-URL (leer lassen zum Entfernen)",
+    "placeholderHeading": "Überschrift",
+    "placeholderEmpty": "„/“ für Befehle drücken oder einfach lostippen…"
+  },
+  "slashMenu": {
+    "label": "Slash-Befehle",
+    "empty": "Keine passenden Befehle"
   }
 }

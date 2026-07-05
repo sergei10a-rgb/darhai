@@ -10,7 +10,7 @@
   "filters": {
     "allSources": "全部來源",
     "source": {
-      "wayland-library": "Wayland 函式庫",
+      "wayland-library": "Darhai 函式庫",
       "team": "團隊",
       "user": "我的技能",
       "imported": "已匯入",
@@ -157,7 +157,7 @@
     }
   },
   "detail": {
-    "whenLoaded": "Wayland 載入時",
+    "whenLoaded": "Darhai 載入時",
     "metadata": "中繼資料",
     "body": "主體",
     "quarantined": "此技能已被隔離，無法載入。"

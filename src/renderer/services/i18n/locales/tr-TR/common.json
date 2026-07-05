@@ -58,10 +58,10 @@
   "historyBack": "Geri",
   "more": "Daha Fazla",
   "refresh": "Yenile",
-  "tray.showWindow": "Wayland'yi Göster",
+  "tray.showWindow": "Darhai'yi Göster",
   "tray.newChat": "Yeni Sohbet",
   "tray.closeToTray": "Tepsiye Gizle",
-  "tray.about": "Wayland Hakkında",
+  "tray.about": "Darhai Hakkında",
   "tray.restart": "Uygulamayı Yeniden Başlat",
   "tray.quit": "Çıkış",
   "tray.runningTasks": "Çalışan Görevler",
@@ -84,7 +84,7 @@
   "processing": "İşleniyor...",
   "optional": "(isteğe bağlı)",
   "clear": "Temizle",
-  "brand": "Wayland",
+  "brand": "Darhai",
   "brandTagline": "AI Agent",
   "cmdk": {
     "label": "[TODO:translate] Command palette",
@@ -109,5 +109,24 @@
   "unit": {
     "minute_short": "dk",
     "second_short": "sn"
-  }
+  },
+  "appMenu": {
+    "edit": "Düzenle",
+    "view": "Görünüm",
+    "help": "Yardım",
+    "checkForUpdates": "Güncellemeleri denetle..."
+  },
+  "webview": {
+    "urlPlaceholder": "URL girin...",
+    "resetZoom": "Yakınlaştırmayı sıfırla",
+    "fit": "Sığdır"
+  },
+  "windowControls": {
+    "minimize": "Simge durumuna küçült",
+    "maximize": "Ekranı kapla",
+    "restore": "Geri yükle"
+  },
+  "collapseSidebar": "Kenar çubuğunu daralt",
+  "clearSearch": "Aramayı temizle",
+  "moreActions": "Diğer işlemler"
 }

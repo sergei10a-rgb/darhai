@@ -21,7 +21,7 @@
     }
   },
   "accordion": {
-    "scheduled": "Товлогдсон даалгавар",
+    "scheduled": "Хуваарьт даалгавар",
     "workflows": "Ажлын урсгал",
     "teams": "Багууд",
     "recentChats": "Сүүлийн чатууд",
@@ -30,7 +30,7 @@
     "recentlyLaunched": "Саяхан эхлүүлсэн",
     "myTeams": "Миний багууд",
     "seeAllWorkflows": "Бүх ажлын урсгалыг харах →",
-    "seeAllScheduled": "Бүх товлогдсоныг харах →",
+    "seeAllScheduled": "Бүх хуваарьт даалгаврыг харах →",
     "seeAllChats": "Бүх чатыг харах →",
     "showMore": "Өөр {{count}}-г харах →"
   }

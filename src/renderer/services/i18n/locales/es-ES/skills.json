@@ -21,7 +21,7 @@
   "filters": {
     "allSources": "Todas las fuentes",
     "source": {
-      "wayland-library": "Biblioteca de Wayland",
+      "wayland-library": "Biblioteca de Darhai",
       "team": "Equipo",
       "user": "Mis skills",
       "imported": "Importados",
@@ -173,7 +173,7 @@
     }
   },
   "detail": {
-    "whenLoaded": "Cuando Wayland carga esto",
+    "whenLoaded": "Cuando Darhai carga esto",
     "metadata": "Metadatos",
     "body": "Cuerpo",
     "quarantined": "Este skill está en cuarentena y no se puede cargar."

@@ -5,7 +5,7 @@
   },
   "pitch": {
     "headline": "跟着你走的记忆",
-    "lede": "Wayland 记得你做过什么、决定过什么、发布过什么。每个助手都能拿到这些上下文 -- 不用再解释一遍。由 Ferrox Labs 出品的开源记忆引擎 IJFW 提供支持。",
+    "lede": "Darhai 记得你做过什么、决定过什么、发布过什么。每个助手都能拿到这些上下文 -- 不用再解释一遍。由 Ferrox Labs 出品的开源记忆引擎 IJFW 提供支持。",
     "bullet1": "在聊天、项目和命令行之间持续保留",
     "bullet2": "可搜索、可导出，完全属于你",
     "bullet3": "安装后无需任何设置",
@@ -23,7 +23,7 @@
   "brand": {
     "tagline": "IJFW Memory by Ferrox Labs",
     "footer": "由 IJFW（开源）提供支持，出品方：Ferrox Labs",
-    "github_link": "github.com/FerroxLabs/ijfw"
+    "github_link": "IJFW GitHub"
   },
   "installing": {
     "title": "正在安装记忆",
@@ -37,7 +37,7 @@
   "upgrading": {
     "title": "正在升级记忆",
     "subtitle": "已为下次启动准备 {{version}}",
-    "pending_message": "升级已就绪。Wayland 重启后将生效。",
+    "pending_message": "升级已就绪。Darhai 重启后将生效。",
     "restart_now": "立即重启"
   },
   "failed": {
@@ -45,7 +45,7 @@
     "retry": "重试",
     "details_toggle": "显示详情",
     "details_hide": "隐藏详情",
-    "support_link": "需要帮助？访问 github.com/FerroxLabs/ijfw"
+    "support_link": "IJFW engine help: github.com/FerroxLabs/ijfw"
   },
   "error": {
     "spawn_error": "无法启动安装程序。请确认 npm 在你的 PATH 中。",
@@ -53,11 +53,11 @@
     "invalid_target_version": "注册表返回了无效的版本号。请稍后再试。",
     "unsafe_ownership": "待安装文件夹的所有权不安全已被拒绝。请重新安装以恢复。",
     "stage_pending_failed": "无法暂存新安装。请检查磁盘空间后重试。",
-    "stage_swap_failed": "无法切换到新安装。请重启 Wayland 后重试。",
+    "stage_swap_failed": "无法切换到新安装。请重启 Darhai 后重试。",
     "upgrade_failed_no_rollback": "升级失败且无法恢复到上一版本。请重新安装以恢复。",
     "upgrade_failed_rolled_back": "升级失败，但上一版本仍可正常使用。请稍后重试或查看详情。",
     "rollback_also_failed": "新版本和回滚均失败。请重新安装以恢复。",
-    "mcp_crashed": "记忆崩溃了。请重启 Wayland 以恢复。",
+    "mcp_crashed": "记忆崩溃了。请重启 Darhai 以恢复。",
     "mcp_error": "记忆返回了错误。请重试。",
     "timeout": "记忆未能及时响应。请重试。",
     "validation_failed": "该请求不符合记忆期望的格式。",
@@ -97,15 +97,15 @@
   "settings": {
     "panel_title": "IJFW Memory（Ferrox Labs）",
     "skip_label": "跳过 IJFW 自动设置",
-    "skip_description": "启用后，Wayland 将不会安装或升级 IJFW。你之后可以通过记忆页面手动安装。",
+    "skip_description": "启用后，Darhai 将不会安装或升级 IJFW。你之后可以通过记忆页面手动安装。",
     "manual_install_hint": "手动安装：在终端中运行 `npx -y @ijfw/install@latest`",
     "about_title": "IJFW Memory",
     "about_body": "由 Ferrox Labs 出品的开源持久化记忆引擎。"
   },
   "prelude": {
     "installing_notice": "IJFW 正在安装。外部命令行工具（Claude Code、Codex、Gemini CLI）会在安装完成后识别它。",
-    "disabled_notice": "IJFW 已在 Wayland 设置中关闭。重新启用以与外部命令行共享记忆。",
-    "failed_notice": "IJFW 安装失败。请在 Wayland 的记忆页面重试。"
+    "disabled_notice": "IJFW 已在 Darhai 设置中关闭。重新启用以与外部命令行共享记忆。",
+    "failed_notice": "IJFW 安装失败。请在 Darhai 的记忆页面重试。"
   },
   "home": {
     "wiki_title": "Wiki",
@@ -169,7 +169,9 @@
         "autoSync": "每 30 分钟自动同步",
         "lastSync": "上次同步 {{when}} 前"
       },
-      "emergingLabel": "新兴"
+      "emergingLabel": "新兴",
+      "viewToggleLabel": "视图切换",
+      "topicFilterLabel": "主题筛选"
     },
     "orphan": {
       "references": "{{count}} 次引用",
@@ -212,7 +214,8 @@
       "statusLastSync": "上次同步 {{when}} 前",
       "loading": "加载中…",
       "notFound": "未找到该概念。",
-      "notFoundBack": "← 返回 Wiki"
+      "notFoundBack": "← 返回 Wiki",
+      "backLabel": "返回维基"
     },
     "list_empty": "暂无 wiki 条目。提升一条记忆即可开始。",
     "select_prompt": "选择一个条目以查看其内容。",
@@ -224,7 +227,8 @@
     "export_queued": "导出已加入队列--下载功能即将上线",
     "export_err": "无法导出该条目",
     "share_ok": "README 分享已加入队列",
-    "share_err": "无法分享 README"
+    "share_err": "无法分享 README",
+    "graphLabel": "知识图谱"
   },
   "crossProject": {
     "scope_label_app": "搜索: 所有项目（应用范围）",
@@ -388,7 +392,8 @@
       "formula_recency": "+15 存储时间不足 24 小时（30 天内线性衰减）",
       "save_btn": "保存",
       "cancel_btn": "取消",
-      "save_success": "已保存"
+      "save_success": "已保存",
+      "save_error": "保存设置失败"
     },
     "errors": {
       "load_failed": "无法加载记忆。{{reason}}",
@@ -432,13 +437,30 @@
       },
       "dropFolder": {
         "title": "拖放文件夹",
-        "hint": "将 .md / .txt / .json 文件拖放到 ~/Documents/Wayland-Memory/",
+        "hint": "将 .md / .txt / .json 文件拖放到 ~/Documents/Darhai-Memory/",
         "count": "已处理 {{count}} 个文件",
         "openBtn": "打开文件夹",
         "processBtn": "立即处理",
         "success": "已处理 {{count}} 个文件 · {{errors}} 个错误",
         "error": "处理失败。请重试。"
       }
+    },
+    "regionLabel": "记忆归档",
+    "composer": {
+      "title": "记住任何内容…",
+      "placeholder": "输入要记住的内容…（支持 Markdown）",
+      "errorEmpty": "内容不能为空。",
+      "errorTooLong": "内容超过 {{max}} 字符限制。",
+      "errorUnknown": "保存失败。",
+      "toastSaved": "已保存",
+      "addTag": "添加标签",
+      "tagPlaceholder": "标签…",
+      "removeTag": "移除标签 {{tag}}",
+      "dropZone": "或拖入文件以导入",
+      "dropZoneLabel": "拖入文件以导入",
+      "hint": "记住",
+      "submit": "记住",
+      "charCount": "{{count}} 个字符"
     }
   }
 }

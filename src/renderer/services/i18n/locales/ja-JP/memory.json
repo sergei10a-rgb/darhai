@@ -5,7 +5,7 @@
   },
   "pitch": {
     "headline": "あなたについてくるメモリ",
-    "lede": "Wayland は、これまで取り組んだこと、決定したこと、リリースしたことを記憶しています。すべてのアシスタントが文脈を共有するため、説明し直す必要はありません。Ferrox Labs によるオープンソースのメモリエンジン IJFW を搭載しています。",
+    "lede": "Darhai は、これまで取り組んだこと、決定したこと、リリースしたことを記憶しています。すべてのアシスタントが文脈を共有するため、説明し直す必要はありません。Ferrox Labs によるオープンソースのメモリエンジン IJFW を搭載しています。",
     "bullet1": "チャット、プロジェクト、CLI をまたいで持続します",
     "bullet2": "検索可能、エクスポート可能、あなたのものです",
     "bullet3": "インストール後の設定は不要です",
@@ -23,7 +23,7 @@
   "brand": {
     "tagline": "IJFW Memory by Ferrox Labs",
     "footer": "Powered by IJFW（オープンソース）by Ferrox Labs",
-    "github_link": "github.com/FerroxLabs/ijfw"
+    "github_link": "IJFW GitHub"
   },
   "installing": {
     "title": "メモリをインストール中",
@@ -37,7 +37,7 @@
   "upgrading": {
     "title": "メモリをアップグレード中",
     "subtitle": "{{version}} を次回起動時のためにステージングしています",
-    "pending_message": "アップグレードの準備が完了しました。Wayland を再起動するとアクティブになります。",
+    "pending_message": "アップグレードの準備が完了しました。Darhai を再起動するとアクティブになります。",
     "restart_now": "今すぐ再起動"
   },
   "failed": {
@@ -45,7 +45,7 @@
     "retry": "再試行",
     "details_toggle": "詳細を表示",
     "details_hide": "詳細を隠す",
-    "support_link": "サポートは github.com/FerroxLabs/ijfw をご覧ください"
+    "support_link": "IJFW engine help: github.com/FerroxLabs/ijfw"
   },
   "error": {
     "spawn_error": "インストーラーを起動できませんでした。npm が PATH に含まれているか確認してください。",
@@ -53,11 +53,11 @@
     "invalid_target_version": "レジストリから取得したバージョン番号が無効です。しばらくしてから再試行してください。",
     "unsafe_ownership": "保留中のインストールフォルダの所有権が安全でないため、拒否されました。再インストールして復旧してください。",
     "stage_pending_failed": "新しいインストールをステージングできませんでした。ディスク容量を確認してから再試行してください。",
-    "stage_swap_failed": "新しいインストールへの切り替えができませんでした。Wayland を再起動して再試行してください。",
+    "stage_swap_failed": "新しいインストールへの切り替えができませんでした。Darhai を再起動して再試行してください。",
     "upgrade_failed_no_rollback": "アップグレードに失敗し、以前のバージョンを復元できませんでした。再インストールして復旧してください。",
     "upgrade_failed_rolled_back": "アップグレードに失敗しましたが、以前のバージョンは引き続き動作しています。後ほど再試行するか、詳細をご確認ください。",
     "rollback_also_failed": "新しいバージョンとロールバックの両方が失敗しました。再インストールして復旧してください。",
-    "mcp_crashed": "メモリがクラッシュしました。Wayland を再起動して復旧してください。",
+    "mcp_crashed": "メモリがクラッシュしました。Darhai を再起動して復旧してください。",
     "mcp_error": "メモリがエラーを返しました。再試行してください。",
     "timeout": "メモリが時間内に応答しませんでした。再試行してください。",
     "validation_failed": "そのリクエストはメモリが想定する形式と一致しませんでした。",
@@ -97,15 +97,15 @@
   "settings": {
     "panel_title": "IJFW Memory（Ferrox Labs）",
     "skip_label": "IJFW の自動セットアップをスキップ",
-    "skip_description": "有効にすると、Wayland は IJFW をインストールまたはアップグレードしません。後でメモリページから手動でインストールできます。",
+    "skip_description": "有効にすると、Darhai は IJFW をインストールまたはアップグレードしません。後でメモリページから手動でインストールできます。",
     "manual_install_hint": "手動でインストールするには、ターミナルで `npx -y @ijfw/install@latest` を実行してください",
     "about_title": "IJFW Memory",
     "about_body": "Ferrox Labs によるオープンソースの永続メモリエンジンです。"
   },
   "prelude": {
     "installing_notice": "IJFW のインストールが進行中です。外部 CLI（Claude Code、Codex、Gemini CLI）はインストール完了後に連携します。",
-    "disabled_notice": "IJFW は Wayland の設定で無効化されています。外部 CLI とメモリを共有するには再度有効にしてください。",
-    "failed_notice": "IJFW のインストールに失敗しました。Wayland のメモリページから再試行してください。"
+    "disabled_notice": "IJFW は Darhai の設定で無効化されています。外部 CLI とメモリを共有するには再度有効にしてください。",
+    "failed_notice": "IJFW のインストールに失敗しました。Darhai のメモリページから再試行してください。"
   },
   "home": {
     "wiki_title": "Wiki",
@@ -169,7 +169,9 @@
         "autoSync": "30分ごとに自動同期",
         "lastSync": "最終同期 {{when}} 前"
       },
-      "emergingLabel": "新興"
+      "emergingLabel": "新興",
+      "viewToggleLabel": "表示切り替え",
+      "topicFilterLabel": "トピックフィルター"
     },
     "orphan": {
       "references": "{{count}} 件の参照",
@@ -212,7 +214,8 @@
       "statusLastSync": "最終同期 {{when}} 前",
       "loading": "読み込み中…",
       "notFound": "コンセプトが見つかりません。",
-      "notFoundBack": "← Wikiに戻る"
+      "notFoundBack": "← Wikiに戻る",
+      "backLabel": "Wikiに戻る"
     },
     "list_empty": "ウィキの項目はまだありません。メモリをプロモートして始めましょう。",
     "select_prompt": "項目を選択すると内容が表示されます。",
@@ -224,7 +227,8 @@
     "export_queued": "エクスポートを受け付けました。ダウンロード機能は近日公開予定です。",
     "export_err": "項目をエクスポートできませんでした",
     "share_ok": "READMEの共有を受け付けました",
-    "share_err": "READMEを共有できませんでした"
+    "share_err": "READMEを共有できませんでした",
+    "graphLabel": "ナレッジグラフ"
   },
   "crossProject": {
     "scope_label_app": "検索範囲: すべてのプロジェクト (アプリ全体)",
@@ -388,7 +392,8 @@
       "formula_recency": "+15 保存から 24 時間未満（30 日で線形減衰）",
       "save_btn": "保存",
       "cancel_btn": "キャンセル",
-      "save_success": "保存しました"
+      "save_success": "保存しました",
+      "save_error": "設定を保存できませんでした"
     },
     "errors": {
       "load_failed": "メモリを読み込めませんでした。{{reason}}",
@@ -432,13 +437,30 @@
       },
       "dropFolder": {
         "title": "ドロップフォルダ",
-        "hint": ".md / .txt / .json ファイルを ~/Documents/Wayland-Memory/ にドロップ",
+        "hint": ".md / .txt / .json ファイルを ~/Documents/Darhai-Memory/ にドロップ",
         "count": "{{count}} 件のファイルを処理しました",
         "openBtn": "フォルダを開く",
         "processBtn": "今すぐ処理",
         "success": "{{count}} 件のファイルを処理しました · {{errors}} 件のエラー",
         "error": "処理に失敗しました。もう一度お試しください。"
       }
+    },
+    "regionLabel": "メモリーアーカイブ",
+    "composer": {
+      "title": "何でも記憶…",
+      "placeholder": "メモリーを入力…（Markdown可）",
+      "errorEmpty": "内容を空にすることはできません。",
+      "errorTooLong": "内容が{{max}}文字の上限を超えています。",
+      "errorUnknown": "保存に失敗しました。",
+      "toastSaved": "メモリーを保存しました",
+      "addTag": "タグを追加",
+      "tagPlaceholder": "タグ…",
+      "removeTag": "タグ {{tag}} を削除",
+      "dropZone": "またはファイルをドロップして取り込み",
+      "dropZoneLabel": "ファイルをドロップして取り込み",
+      "hint": "で記憶",
+      "submit": "記憶する",
+      "charCount": "{{count}}文字"
     }
   }
 }

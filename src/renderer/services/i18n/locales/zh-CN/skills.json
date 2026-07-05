@@ -10,7 +10,7 @@
   "filters": {
     "allSources": "全部来源",
     "source": {
-      "wayland-library": "Wayland 库",
+      "wayland-library": "Darhai 库",
       "team": "团队",
       "user": "我的技能",
       "imported": "已导入",
@@ -157,7 +157,7 @@
     }
   },
   "detail": {
-    "whenLoaded": "Wayland 加载时",
+    "whenLoaded": "Darhai 加载时",
     "metadata": "元数据",
     "body": "主体",
     "quarantined": "此技能已被隔离，无法加载。"

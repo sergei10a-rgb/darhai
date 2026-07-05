@@ -112,12 +112,42 @@
     "printedToConsole": "Infos de l'élément consignées dans la console",
     "inspectElement": "Inspecter l'élément",
     "inspectElementEnable": "Activer l'inspecteur d'éléments",
-    "inspectElementDisable": "Désactiver l'inspecteur d'éléments"
+    "inspectElementDisable": "Désactiver l'inspecteur d'éléments",
+    "iframeTitle": "Aperçu HTML"
   },
   "ppt": {
     "loading": "Démarrage de l'aperçu PPT...",
     "installing": "Installation du composant d'aperçu...",
     "startFailed": "Échec du démarrage de l'aperçu PPT",
     "installHint": "Assurez-vous qu'officecli est installé : npm run postinstall"
+  },
+  "markdownEditor": {
+    "toolbar": {
+      "heading1": "Titre 1",
+      "heading2": "Titre 2",
+      "heading3": "Titre 3",
+      "bold": "Gras (⌘B)",
+      "italic": "Italique (⌘I)",
+      "strikethrough": "Barré",
+      "inlineCode": "Code en ligne",
+      "bulletedList": "Liste à puces",
+      "numberedList": "Liste numérotée",
+      "blockquote": "Citation",
+      "link": "Lien",
+      "horizontalRule": "Ligne horizontale",
+      "undo": "Annuler (⌘Z)",
+      "redo": "Rétablir (⌘⇧Z)",
+      "addBlockBelow": "Ajouter un bloc en dessous",
+      "dragToReorder": "Glisser pour réorganiser"
+    },
+    "formattingLabel": "Mise en forme Markdown",
+    "inlineFormattingLabel": "Mise en forme en ligne",
+    "linkPrompt": "URL du lien (laisser vide pour supprimer)",
+    "placeholderHeading": "Titre",
+    "placeholderEmpty": "Appuyez sur « / » pour les commandes, ou commencez à écrire…"
+  },
+  "slashMenu": {
+    "label": "Commandes slash",
+    "empty": "Aucune commande correspondante"
   }
 }

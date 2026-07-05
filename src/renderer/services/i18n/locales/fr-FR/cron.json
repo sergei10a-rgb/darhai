@@ -53,10 +53,10 @@
   },
   "page": {
     "newTask": "Nouvelle tâche",
-    "description": "Exécutez des tâches selon une planification. Vous pouvez aussi demander à Wayland d'en créer une pour vous dans n'importe quelle conversation.",
+    "description": "Exécutez des tâches selon une planification. Vous pouvez aussi demander à Darhai d'en créer une pour vous dans n'importe quelle conversation.",
     "awakeBanner": "Les tâches planifiées ne s'exécutent que lorsque votre ordinateur est allumé.",
     "keepAwake": "Garder allumé",
-    "keepAwakeTooltip": "Lorsque cette option est activée, Wayland empêchera votre ordinateur de se mettre en veille",
+    "keepAwakeTooltip": "Lorsque cette option est activée, Darhai empêchera votre ordinateur de se mettre en veille",
     "createTask": "Créer une tâche planifiée",
     "editTask": "Modifier la tâche planifiée",
     "createSuccess": "Tâche créée avec succès",

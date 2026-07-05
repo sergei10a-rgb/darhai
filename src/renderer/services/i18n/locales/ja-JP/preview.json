@@ -112,12 +112,42 @@
     "printedToConsole": "要素情報をコンソールに出力しました",
     "inspectElement": "要素を検証",
     "inspectElementEnable": "要素インスペクターを有効化",
-    "inspectElementDisable": "要素インスペクターを無効化"
+    "inspectElementDisable": "要素インスペクターを無効化",
+    "iframeTitle": "HTMLプレビュー"
   },
   "ppt": {
     "loading": "PPTプレビューを起動中...",
     "installing": "プレビューコンポーネントをインストール中...",
     "startFailed": "PPTプレビューの起動に失敗しました",
     "installHint": "officecliがインストールされていることを確認してください: npm run postinstall"
+  },
+  "markdownEditor": {
+    "toolbar": {
+      "heading1": "見出し 1",
+      "heading2": "見出し 2",
+      "heading3": "見出し 3",
+      "bold": "太字 (⌘B)",
+      "italic": "斜体 (⌘I)",
+      "strikethrough": "取り消し線",
+      "inlineCode": "インラインコード",
+      "bulletedList": "箇条書き",
+      "numberedList": "番号付きリスト",
+      "blockquote": "引用",
+      "link": "リンク",
+      "horizontalRule": "水平線",
+      "undo": "元に戻す (⌘Z)",
+      "redo": "やり直す (⌘⇧Z)",
+      "addBlockBelow": "下にブロックを追加",
+      "dragToReorder": "ドラッグして並べ替え"
+    },
+    "formattingLabel": "Markdown書式",
+    "inlineFormattingLabel": "インライン書式",
+    "linkPrompt": "リンクURL（空欄で削除）",
+    "placeholderHeading": "見出し",
+    "placeholderEmpty": "「/」でコマンドを表示、またはそのまま入力…"
+  },
+  "slashMenu": {
+    "label": "スラッシュコマンド",
+    "empty": "一致するコマンドがありません"
   }
 }

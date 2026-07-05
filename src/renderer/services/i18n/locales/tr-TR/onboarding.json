@@ -1,6 +1,6 @@
 {
-  "brand": "Wayland",
-  "welcome": "Wayland'e hoş geldiniz",
+  "brand": "Darhai",
+  "welcome": "Darhai'e hoş geldiniz",
   "footer": {
     "manage": "Algılama bir kez çalıştı. Her şeyi Ayarlar → Sağlayıcılar bölümünden değiştirebilirsiniz.",
     "noLockIn": "Bu seçeneklerin hiçbiri sizi bağlamaz.",
@@ -22,7 +22,7 @@
     "errorUnrecognized": "Bu bir Flux Router anahtarına benzemiyor. sk-flux- ile başlamalı.",
     "errorNoModels": "Bağlandı ama hiç model gelmedi. Birazdan tekrar deneyin.",
     "errorUnknown": "Bağlanırken bir sorun oluştu. Tekrar deneyin.",
-    "trust": "Wayland'in arkasındaki ekip Ferrox Labs'ten."
+    "trust": "Ferrox Labs'ın açık kaynaklı Wayland teknolojisi üzerine kuruludur."
   },
   "scenarioA": {
     "greeting": "{{name}}, zaten hazırsınız",
@@ -34,7 +34,7 @@
     "ghost": "Sonraki 10 turda deneyin"
   },
   "scenarioB": {
-    "greeting": "Wayland'e hoş geldiniz",
+    "greeting": "Darhai'e hoş geldiniz",
     "sub": "Bir giriş yolu seçin. Gerisini istediğiniz zaman ekleyin.",
     "heroTag": "Önerilen",
     "heroTitle": "Flux Router",
@@ -89,7 +89,7 @@
       "almost": "Almost there…"
     },
     "logoAlt": {
-      "wordmark": "Wayland"
+      "wordmark": "Darhai"
     },
     "flux": {
       "title": "Get the best answer. Pay the right price. And get it done faster.",
@@ -114,7 +114,7 @@
     },
     "quickstart": {
       "headline": "First - what should I call you",
-      "sub": "So Wayland knows what to call you. Next we'll see what's already on your machine.",
+      "sub": "So Darhai knows what to call you. Next we'll see what's already on your machine.",
       "googleButton": "Continue with Google",
       "freeNote": "Free with your Google account · basic Gemini limits · nothing to pay",
       "changeLater": "You can change everything later.",

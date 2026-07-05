@@ -112,12 +112,42 @@
     "printedToConsole": "Інформацію про елемент виведено в консоль",
     "inspectElement": "Інспектувати елемент",
     "inspectElementEnable": "Увімкнути інспектор елементів",
-    "inspectElementDisable": "Вимкнути інспектор елементів"
+    "inspectElementDisable": "Вимкнути інспектор елементів",
+    "iframeTitle": "Попередній перегляд HTML"
   },
   "ppt": {
     "loading": "Запуск перегляду PPT...",
     "installing": "Встановлення компонента перегляду...",
     "startFailed": "Не вдалося запустити перегляд PPT",
     "installHint": "Переконайтеся, що officecli встановлено: npm run postinstall"
+  },
+  "markdownEditor": {
+    "toolbar": {
+      "heading1": "Заголовок 1",
+      "heading2": "Заголовок 2",
+      "heading3": "Заголовок 3",
+      "bold": "Жирний (⌘B)",
+      "italic": "Курсив (⌘I)",
+      "strikethrough": "Закреслений",
+      "inlineCode": "Вбудований код",
+      "bulletedList": "Маркований список",
+      "numberedList": "Нумерований список",
+      "blockquote": "Цитата",
+      "link": "Посилання",
+      "horizontalRule": "Горизонтальна лінія",
+      "undo": "Скасувати (⌘Z)",
+      "redo": "Повторити (⌘⇧Z)",
+      "addBlockBelow": "Додати блок нижче",
+      "dragToReorder": "Перетягніть для зміни порядку"
+    },
+    "formattingLabel": "Форматування Markdown",
+    "inlineFormattingLabel": "Рядкове форматування",
+    "linkPrompt": "URL посилання (порожнє — видалити)",
+    "placeholderHeading": "Заголовок",
+    "placeholderEmpty": "Натисніть «/» для команд або просто почніть друкувати…"
+  },
+  "slashMenu": {
+    "label": "Слеш-команди",
+    "empty": "Немає відповідних команд"
   }
 }

@@ -5,7 +5,7 @@
   },
   "pitch": {
     "headline": "Una memoria que te acompaña",
-    "lede": "Wayland recuerda en qué has trabajado, qué has decidido y qué has publicado. Cada asistente recibe el contexto, sin tener que explicarlo todo de nuevo. Funciona con IJFW, un motor de memoria de código abierto de Ferrox Labs.",
+    "lede": "Darhai recuerda en qué has trabajado, qué has decidido y qué has publicado. Cada asistente recibe el contexto, sin tener que explicarlo todo de nuevo. Funciona con IJFW, un motor de memoria de código abierto de Ferrox Labs.",
     "bullet1": "Persistente entre chats, proyectos y CLIs",
     "bullet2": "Buscable, exportable, tuya",
     "bullet3": "Sin configuración tras la instalación",
@@ -23,7 +23,7 @@
   "brand": {
     "tagline": "IJFW Memory de Ferrox Labs",
     "footer": "Funciona con IJFW (código abierto) de Ferrox Labs",
-    "github_link": "github.com/FerroxLabs/ijfw"
+    "github_link": "IJFW GitHub"
   },
   "installing": {
     "title": "Instalando Memoria",
@@ -37,7 +37,7 @@
   "upgrading": {
     "title": "Actualizando Memoria",
     "subtitle": "Preparando {{version}} para el próximo arranque",
-    "pending_message": "Actualización lista. Se activará cuando Wayland se reinicie.",
+    "pending_message": "Actualización lista. Se activará cuando Darhai se reinicie.",
     "restart_now": "Reiniciar ahora"
   },
   "failed": {
@@ -45,7 +45,7 @@
     "retry": "Reintentar",
     "details_toggle": "Mostrar detalles",
     "details_hide": "Ocultar detalles",
-    "support_link": "Visita github.com/FerroxLabs/ijfw para obtener ayuda"
+    "support_link": "IJFW engine help: github.com/FerroxLabs/ijfw"
   },
   "error": {
     "spawn_error": "No se pudo iniciar el instalador. Comprueba que npm está en tu PATH.",
@@ -53,11 +53,11 @@
     "invalid_target_version": "Número de versión no válido en el registro. Inténtalo de nuevo más tarde.",
     "unsafe_ownership": "La carpeta de instalación pendiente tiene una propiedad insegura y fue rechazada. Reinstala para recuperarla.",
     "stage_pending_failed": "No se pudo preparar la nueva instalación. Comprueba el espacio en disco e inténtalo de nuevo.",
-    "stage_swap_failed": "No se pudo aplicar la nueva instalación. Reinicia Wayland para reintentar.",
+    "stage_swap_failed": "No se pudo aplicar la nueva instalación. Reinicia Darhai para reintentar.",
     "upgrade_failed_no_rollback": "La actualización falló y no se pudo restaurar la versión anterior. Reinstala para recuperarla.",
     "upgrade_failed_rolled_back": "La actualización falló, pero tu versión anterior sigue funcionando. Inténtalo de nuevo más tarde o revisa los detalles.",
     "rollback_also_failed": "Tanto la nueva versión como la restauración fallaron. Reinstala para recuperarla.",
-    "mcp_crashed": "Memoria se bloqueó. Reinicia Wayland para recuperarla.",
+    "mcp_crashed": "Memoria se bloqueó. Reinicia Darhai para recuperarla.",
     "mcp_error": "Memoria devolvió un error. Inténtalo de nuevo.",
     "timeout": "Memoria no respondió a tiempo. Inténtalo de nuevo.",
     "validation_failed": "Esa solicitud no coincide con lo que Memoria espera.",
@@ -97,15 +97,15 @@
   "settings": {
     "panel_title": "IJFW Memory (Ferrox Labs)",
     "skip_label": "Omitir la configuración automática de IJFW",
-    "skip_description": "Cuando está activado, Wayland no instalará ni actualizará IJFW. Puedes instalarlo manualmente más tarde desde la página de Memoria.",
+    "skip_description": "Cuando está activado, Darhai no instalará ni actualizará IJFW. Puedes instalarlo manualmente más tarde desde la página de Memoria.",
     "manual_install_hint": "Para instalar manualmente: ejecuta `npx -y @ijfw/install@latest` en un terminal",
     "about_title": "IJFW Memory",
     "about_body": "Un motor de memoria persistente de código abierto de Ferrox Labs."
   },
   "prelude": {
     "installing_notice": "IJFW se está instalando. Las CLIs externas (Claude Code, Codex, Gemini CLI) lo detectarán cuando finalice la instalación.",
-    "disabled_notice": "IJFW está desactivado en los Ajustes de Wayland. Vuelve a activarlo para compartir la memoria con las CLIs externas.",
-    "failed_notice": "La instalación de IJFW falló. Ve a la página de Memoria en Wayland para reintentar."
+    "disabled_notice": "IJFW está desactivado en los Ajustes de Darhai. Vuelve a activarlo para compartir la memoria con las CLIs externas.",
+    "failed_notice": "La instalación de IJFW falló. Ve a la página de Memoria en Darhai para reintentar."
   },
   "home": {
     "wiki_title": "Wiki",
@@ -180,7 +180,9 @@
         "autoSync": "sincronización automática cada 30 min",
         "lastSync": "última sincronización hace {{when}}"
       },
-      "emergingLabel": "Emergente"
+      "emergingLabel": "Emergente",
+      "viewToggleLabel": "Cambiar vista",
+      "topicFilterLabel": "Filtro de temas"
     },
     "orphan": {
       "references": "{{count}} referencias",
@@ -223,8 +225,10 @@
       "statusLastSync": "última sincronización hace {{when}}",
       "loading": "Cargando…",
       "notFound": "Concepto no encontrado.",
-      "notFoundBack": "← Volver a la Wiki"
-    }
+      "notFoundBack": "← Volver a la Wiki",
+      "backLabel": "Volver al wiki"
+    },
+    "graphLabel": "Grafo de conocimiento"
   },
   "crossProject": {
     "scope_label_app": "Buscando: Todos los proyectos (alcance de la app)",
@@ -388,7 +392,8 @@
       "formula_recency": "+15 si se almacenó hace < 24 h (decae linealmente a lo largo de 30 días)",
       "save_btn": "Guardar",
       "cancel_btn": "Cancelar",
-      "save_success": "Guardado"
+      "save_success": "Guardado",
+      "save_error": "No se pudieron guardar los ajustes"
     },
     "errors": {
       "load_failed": "No se pudo cargar la memoria. {{reason}}",
@@ -432,13 +437,30 @@
       },
       "dropFolder": {
         "title": "Carpeta de arrastre",
-        "hint": "Suelta archivos .md / .txt / .json en ~/Documents/Wayland-Memory/",
+        "hint": "Suelta archivos .md / .txt / .json en ~/Documents/Darhai-Memory/",
         "count": "{{count}} archivos procesados",
         "openBtn": "Abrir carpeta",
         "processBtn": "Procesar ahora",
         "success": "{{count}} archivos procesados · {{errors}} errores",
         "error": "El procesamiento falló. Inténtalo de nuevo."
       }
+    },
+    "regionLabel": "Archivo de memoria",
+    "composer": {
+      "title": "Recuerda lo que sea…",
+      "placeholder": "Escribe tu recuerdo… (markdown OK)",
+      "errorEmpty": "El contenido no puede estar vacío.",
+      "errorTooLong": "El contenido supera el límite de {{max}} caracteres.",
+      "errorUnknown": "No se pudo guardar.",
+      "toastSaved": "Recuerdo guardado",
+      "addTag": "Añadir etiqueta",
+      "tagPlaceholder": "etiqueta…",
+      "removeTag": "Eliminar etiqueta {{tag}}",
+      "dropZone": "o suelta un archivo para importarlo",
+      "dropZoneLabel": "Suelta un archivo para importarlo",
+      "hint": "para recordar",
+      "submit": "Recordar",
+      "charCount": "{{count}} caracteres"
     }
   }
 }

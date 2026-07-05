@@ -16,7 +16,7 @@
     "clearWorkspace": "移除資料夾",
     "openFolder": "Open Folder",
     "none": "None",
-    "quickActionsTitle": "Wayland 能做什麼？",
+    "quickActionsTitle": "Darhai 能做什麼？",
     "quickActionFeedback": "想吐槽或提建議?",
     "quickActionStar": "喜歡我們？點個星吧"
   },
@@ -189,7 +189,10 @@
       "vscode": "VS Code",
       "terminal": "終端機",
       "explorer": "檔案總管"
-    }
+    },
+    "toggleLabel": "切換工作區",
+    "collapseLabel": "收合工作區",
+    "expandLabel": "展開工作區"
   },
   "minimap": {
     "searchAria": "搜尋對話",
@@ -330,5 +333,9 @@
       "sublabel": "基於你現有的 Claude Code 登入執行——無需額外管理金鑰。",
       "action": "使用"
     }
+  },
+  "openclaw": {
+    "runtimeCheckFailed": "無法驗證智慧代理執行環境",
+    "runtimeMismatch": "智慧代理切換驗證失敗：{{details}}"
   }
 }

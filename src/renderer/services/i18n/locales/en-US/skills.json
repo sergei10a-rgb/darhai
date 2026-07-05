@@ -21,7 +21,7 @@
   "filters": {
     "allSources": "All sources",
     "source": {
-      "wayland-library": "Wayland library",
+      "wayland-library": "Darhai library",
       "team": "Team",
       "user": "My skills",
       "imported": "Imported",
@@ -173,7 +173,7 @@
     }
   },
   "detail": {
-    "whenLoaded": "When Wayland loads this",
+    "whenLoaded": "When Darhai loads this",
     "metadata": "Metadata",
     "body": "Body",
     "quarantined": "This skill is quarantined and cannot be loaded."

@@ -10,7 +10,7 @@
   "filters": {
     "allSources": "すべてのソース",
     "source": {
-      "wayland-library": "Wayland ライブラリ",
+      "wayland-library": "Darhai ライブラリ",
       "team": "チーム",
       "user": "マイスキル",
       "imported": "インポート済み",
@@ -157,7 +157,7 @@
     }
   },
   "detail": {
-    "whenLoaded": "Waylandがこれを読み込むとき",
+    "whenLoaded": "Darhaiがこれを読み込むとき",
     "metadata": "メタデータ",
     "body": "本体",
     "quarantined": "このスキルは隔離されており、読み込むことができません。"

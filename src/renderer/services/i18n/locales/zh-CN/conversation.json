@@ -16,7 +16,7 @@
     "clearWorkspace": "移除已选文件夹",
     "openFolder": "打开文件夹",
     "none": "无",
-    "quickActionsTitle": "Wayland 能做什么？",
+    "quickActionsTitle": "Darhai 能做什么？",
     "quickActionFeedback": "想吐槽或提建议?",
     "quickActionStar": "喜欢我们？点个星吧"
   },
@@ -189,7 +189,10 @@
       "vscode": "VS Code",
       "terminal": "终端",
       "explorer": "文件资源管理器"
-    }
+    },
+    "toggleLabel": "切换工作区",
+    "collapseLabel": "收起工作区",
+    "expandLabel": "展开工作区"
   },
   "minimap": {
     "searchAria": "搜索会话",
@@ -330,5 +333,9 @@
       "sublabel": "基于你现有的 Claude Code 登录运行——无需额外管理密钥。",
       "action": "使用"
     }
+  },
+  "openclaw": {
+    "runtimeCheckFailed": "无法验证智能体运行环境",
+    "runtimeMismatch": "智能体切换校验失败：{{details}}"
   }
 }

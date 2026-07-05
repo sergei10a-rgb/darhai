@@ -16,7 +16,7 @@
     "clearWorkspace": "폴더 제거",
     "openFolder": "폴더 열기",
     "none": "없음",
-    "quickActionsTitle": "Wayland로 무엇을 할 수 있나요?",
+    "quickActionsTitle": "Darhai로 무엇을 할 수 있나요?",
     "quickActionFeedback": "피드백이나 제안이 있으신가요?",
     "quickActionStar": "마음에 드시나요? 별을 주세요!"
   },
@@ -189,7 +189,10 @@
       "vscode": "VS Code",
       "terminal": "터미널",
       "explorer": "파일 탐색기"
-    }
+    },
+    "toggleLabel": "워크스페이스 전환",
+    "collapseLabel": "워크스페이스 접기",
+    "expandLabel": "워크스페이스 펼치기"
   },
   "minimap": {
     "searchAria": "대화 검색",
@@ -330,5 +333,9 @@
       "sublabel": "기존 Claude Code 로그인으로 실행 — 별도 키 관리가 필요 없습니다.",
       "action": "사용"
     }
+  },
+  "openclaw": {
+    "runtimeCheckFailed": "에이전트 런타임을 확인하지 못했습니다",
+    "runtimeMismatch": "에이전트 전환 검증 실패: {{details}}"
   }
 }

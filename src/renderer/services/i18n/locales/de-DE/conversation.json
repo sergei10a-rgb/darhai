@@ -16,7 +16,7 @@
     "clearWorkspace": "Ordner entfernen",
     "openFolder": "Ordner öffnen",
     "none": "Keine",
-    "quickActionsTitle": "Was kann Wayland?",
+    "quickActionsTitle": "Was kann Darhai?",
     "quickActionFeedback": "Feedback oder Vorschläge?",
     "quickActionStar": "Gefällt es dir? Gib uns einen Stern!"
   },
@@ -189,7 +189,10 @@
       "vscode": "VS Code",
       "terminal": "Terminal",
       "explorer": "Datei-Explorer"
-    }
+    },
+    "toggleLabel": "Arbeitsbereich umschalten",
+    "collapseLabel": "Arbeitsbereich einklappen",
+    "expandLabel": "Arbeitsbereich ausklappen"
   },
   "minimap": {
     "searchAria": "Gespräch durchsuchen",
@@ -330,5 +333,9 @@
       "sublabel": "Läuft über deine bestehende Claude-Code-Anmeldung – kein zusätzlicher Schlüssel nötig.",
       "action": "Verwenden"
     }
+  },
+  "openclaw": {
+    "runtimeCheckFailed": "Agent-Laufzeit konnte nicht überprüft werden",
+    "runtimeMismatch": "Agentenwechsel-Prüfung fehlgeschlagen: {{details}}"
   }
 }

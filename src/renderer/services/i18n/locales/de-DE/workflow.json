@@ -21,7 +21,17 @@
     "confirmTitle": "Schritt {{n}} autonom ausführen?",
     "confirmOk": "Autonom ausführen",
     "confirmCancel": "Abbrechen",
-    "confirmBody": "Wayland startet einen autonomen Worker, um Schritt {{n}} im Hintergrund abzuschließen. Du kannst in der Hauptsitzung weiterchatten.",
+    "confirmBody": "Darhai startet einen autonomen Worker, um Schritt {{n}} im Hintergrund abzuschließen. Du kannst in der Hauptsitzung weiterchatten.",
     "confirmEta": "Voraussichtliche Dauer: 4–8 Minuten."
+  },
+  "header": {
+    "completedIn": "Abgeschlossen in {{duration}}",
+    "agentDriving": "Agent steuert",
+    "stepOf": "Schritt {{current}} von {{total}}",
+    "pauseAutoAdvance": "Auto-Fortschritt pausieren",
+    "resumeAutoAdvance": "Auto-Fortschritt fortsetzen",
+    "endWorkflow": "Workflow beenden",
+    "deleteWorkflow": "Workflow löschen",
+    "skillCount": "{{count}} Skill(s)"
   }
 }
