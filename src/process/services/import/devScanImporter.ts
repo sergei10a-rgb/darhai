@@ -51,23 +51,63 @@ async function readRegistryPaths(): Promise<Set<string>> {
 // ===== Scanner =====
 
 /**
- * Candidate dev roots to scan for IJFW projects. Includes the common per-user
- * dev folders plus, on Windows, drive-level roots (e.g. C:\claude). Roots that
- * do not exist are skipped silently by the scanner.
+ * System / non-project directory names skipped while walking drive roots so a
+ * full-drive scan stays fast and never descends into OS trees. Matched
+ * case-insensitively. No real project folder is named any of these.
+ */
+const SKIP_DIR_NAMES = new Set([
+  'windows',
+  'program files',
+  'program files (x86)',
+  'programdata',
+  '$recycle.bin',
+  'system volume information',
+  'recovery',
+  'perflogs',
+  'msocache',
+  'appdata',
+  'node_modules',
+  '$windows.~bt',
+  '$windows.~ws',
+  'onedrivetemp',
+  'windows.old',
+]);
+
+/**
+ * Fixed drive / mount roots to scan. On Windows: every existing drive letter
+ * C..Z. On POSIX: common mount parents. This lets the scanner find IJFW
+ * projects on ANY drive without hardcoding folder names.
+ */
+function driveRoots(): string[] {
+  if (process.platform === 'win32') {
+    const roots: string[] = [];
+    for (let code = 'C'.charCodeAt(0); code <= 'Z'.charCodeAt(0); code++) {
+      const root = `${String.fromCharCode(code)}:\\`;
+      try {
+        if (fs.existsSync(root)) roots.push(root);
+      } catch {
+        // unreadable drive - skip
+      }
+    }
+    return roots;
+  }
+  return ['/home', '/Users', '/mnt', '/media', '/Volumes', '/opt', '/srv'].filter((p) => {
+    try {
+      return fs.existsSync(p);
+    } catch {
+      return false;
+    }
+  });
+}
+
+/**
+ * Roots the scanner walks (depth 1 AND 2 beneath each). The home directory
+ * catches ~/dev, ~/projects, ~/code ... layouts; every fixed drive root catches
+ * projects kept anywhere on any drive. Location-agnostic by design - it does not
+ * guess folder names, it walks wherever drives and home lead (skipping OS dirs).
  */
 function candidateDevRoots(): string[] {
-  const home = os.homedir();
-  const roots = new Set<string>();
-  for (const name of ['dev', 'Dev', 'projects', 'Projects', 'code', 'Code', 'src', 'repos', 'workspace', 'work']) {
-    roots.add(path.join(home, name));
-  }
-  if (process.platform === 'win32') {
-    const drive = process.env.SystemDrive ? process.env.SystemDrive + path.sep : 'C:\\';
-    for (const name of ['claude', 'dev', 'projects', 'code', 'src', 'work']) {
-      roots.add(path.join(drive, name));
-    }
-  }
-  return [...roots];
+  return [...new Set<string>([os.homedir(), ...driveRoots()])];
 }
 
 async function isDir(p: string): Promise<boolean> {
@@ -89,6 +129,7 @@ async function childDirs(parent: string): Promise<string[]> {
   const out: string[] = [];
   for (const e of entries) {
     if (!e.isDirectory() || e.name.startsWith('.')) continue;
+    if (SKIP_DIR_NAMES.has(e.name.toLowerCase())) continue;
     const full = path.join(parent, e.name);
     try {
       if ((await fs.promises.lstat(full)).isSymbolicLink()) continue;
