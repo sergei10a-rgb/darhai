@@ -87,17 +87,29 @@ export function ImportDrawer({ open, onClose }: ImportDrawerProps): React.ReactE
     return () => document.removeEventListener('keydown', handleKey);
   }, [open, onClose]);
 
-  // On open: probe obsidian vaults (best-effort)
+  // On open: auto-detect Obsidian vaults from obsidian.json + ~/Documents.
   useEffect(() => {
     if (!open) return;
-
-    // Probe obsidian - the obsidianDetectVaults verb is NOT exposed in ipcBridge,
-    // so we fall back to "idle" (show "Click to scan").
-    // DEVIATION: ipcBridge.memory.import.obsidianDetectVaults does not exist.
-    // Wave 2 / W1b must add this verb if vault detection is needed.
-    setObsidianStatus('idle');
+    let cancelled = false;
+    setObsidianStatus('checking');
     setObsidianVaults([]);
     setSelectedVault(null);
+    void ipcBridge.memory.import.obsidianDetectVaults
+      .invoke()
+      .then((res) => {
+        if (cancelled || !mountedRef.current) return;
+        const vaults = res.vaults ?? [];
+        setObsidianVaults(vaults);
+        setSelectedVault(vaults.length > 0 ? vaults[0].path : null);
+        setObsidianStatus(vaults.length > 0 ? 'idle' : 'unavailable');
+      })
+      .catch(() => {
+        if (cancelled || !mountedRef.current) return;
+        setObsidianStatus('idle');
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [open]);
 
   // ── claude-mem import ────────────────────────────────────────────────────
@@ -109,10 +121,7 @@ export function ImportDrawer({ open, onClose }: ImportDrawerProps): React.ReactE
       setClaudeMemStatus('ready');
       setClaudeMemCount(result.count);
       Message.success(
-        t(
-          'archive.import.claudeMem.success',
-          `Imported ${result.count} entries · ${result.errors.length} errors`,
-        ),
+        t('archive.import.claudeMem.success', `Imported ${result.count} entries · ${result.errors.length} errors`)
       );
       // Fire refresh event for any listening list components
       window.dispatchEvent(new CustomEvent('wayland:memory:imported'));
@@ -132,12 +141,19 @@ export function ImportDrawer({ open, onClose }: ImportDrawerProps): React.ReactE
       if (!mountedRef.current) return;
       setObsidianStatus('ready');
       setObsidianCount(result.count);
-      Message.success(
-        t(
-          'archive.import.obsidian.success',
-          `Imported ${result.count} entries · ${result.errors.length} errors`,
-        ),
-      );
+      if (result.capped && result.total) {
+        Message.info(
+          t('archive.import.obsidian.capped', {
+            count: result.count,
+            total: result.total,
+            defaultValue: 'Imported the {{count}} most recent of {{total}} notes',
+          })
+        );
+      } else {
+        Message.success(
+          t('archive.import.obsidian.success', `Imported ${result.count} entries · ${result.errors.length} errors`)
+        );
+      }
       window.dispatchEvent(new CustomEvent('wayland:memory:imported'));
     } catch {
       if (!mountedRef.current) return;
@@ -157,8 +173,8 @@ export function ImportDrawer({ open, onClose }: ImportDrawerProps): React.ReactE
       Message.success(
         t(
           'archive.import.devScan.success',
-          `Imported ${result.count} entries from ${result.projectsFound ?? 0} projects`,
-        ),
+          `Imported ${result.count} entries from ${result.projectsFound ?? 0} projects`
+        )
       );
       window.dispatchEvent(new CustomEvent('wayland:memory:imported'));
     } catch {
@@ -184,10 +200,7 @@ export function ImportDrawer({ open, onClose }: ImportDrawerProps): React.ReactE
       setDropStatus('ready');
       setDropCount(result.count);
       Message.success(
-        t(
-          'archive.import.dropFolder.success',
-          `Processed ${result.count} files · ${result.errors.length} errors`,
-        ),
+        t('archive.import.dropFolder.success', `Processed ${result.count} files · ${result.errors.length} errors`)
       );
       window.dispatchEvent(new CustomEvent('wayland:memory:imported'));
     } catch {
@@ -208,11 +221,16 @@ export function ImportDrawer({ open, onClose }: ImportDrawerProps): React.ReactE
 
   function statusPillLabel(status: ImportStatus): string {
     switch (status) {
-      case 'ready': return t('archive.import.status.ready', 'ready');
-      case 'checking': return t('archive.import.status.checking', 'checking');
-      case 'importing': return t('archive.import.status.importing', 'importing');
-      case 'unavailable': return t('archive.import.status.unavailable', 'unavailable');
-      default: return t('archive.import.status.idle', 'idle');
+      case 'ready':
+        return t('archive.import.status.ready', 'ready');
+      case 'checking':
+        return t('archive.import.status.checking', 'checking');
+      case 'importing':
+        return t('archive.import.status.importing', 'importing');
+      case 'unavailable':
+        return t('archive.import.status.unavailable', 'unavailable');
+      default:
+        return t('archive.import.status.idle', 'idle');
     }
   }
 
@@ -248,10 +266,10 @@ export function ImportDrawer({ open, onClose }: ImportDrawerProps): React.ReactE
             {/* Card 1 - claude-mem */}
             <div className={styles.card} data-testid='import-card-claudemem'>
               <div className={styles.cardTopRow}>
-                <div className={styles.iconTile} aria-hidden>🧠</div>
-                <span className={styles.cardTitle}>
-                  {t('archive.import.claudeMem.title', 'claude-mem')}
-                </span>
+                <div className={styles.iconTile} aria-hidden>
+                  🧠
+                </div>
+                <span className={styles.cardTitle}>{t('archive.import.claudeMem.title', 'Claude')}</span>
                 {claudeMemStatus !== 'idle' && (
                   <span className={statusPillClass(claudeMemStatus)} data-testid='import-pill-claudemem'>
                     {statusPillLabel(claudeMemStatus)}
@@ -261,14 +279,19 @@ export function ImportDrawer({ open, onClose }: ImportDrawerProps): React.ReactE
               <p className={styles.subline} data-testid='import-subline-claudemem'>
                 {claudeMemCount !== null
                   ? t('archive.import.claudeMem.count', `~${claudeMemCount} entries imported`)
-                  : t('archive.import.claudeMem.hint', 'Click to import from ~/.claude-mem/claude-mem.db')}
+                  : t(
+                      'archive.import.claudeMem.hint',
+                      'Import from Claude Code memory (~/.claude/projects) and claude-mem'
+                    )}
               </p>
               <Button
                 type='primary'
                 long
                 loading={claudeMemStatus === 'importing'}
                 disabled={claudeMemStatus === 'importing'}
-                onClick={() => { void handleClaudeMemImport(); }}
+                onClick={() => {
+                  void handleClaudeMemImport();
+                }}
                 data-testid='import-btn-claudemem'
               >
                 {claudeMemStatus === 'importing'
@@ -280,10 +303,10 @@ export function ImportDrawer({ open, onClose }: ImportDrawerProps): React.ReactE
             {/* Card 2 - Obsidian vault */}
             <div className={styles.card} data-testid='import-card-obsidian'>
               <div className={styles.cardTopRow}>
-                <div className={styles.iconTile} aria-hidden>📓</div>
-                <span className={styles.cardTitle}>
-                  {t('archive.import.obsidian.title', 'Obsidian vault')}
-                </span>
+                <div className={styles.iconTile} aria-hidden>
+                  📓
+                </div>
+                <span className={styles.cardTitle}>{t('archive.import.obsidian.title', 'Obsidian vault')}</span>
                 {obsidianStatus !== 'idle' && (
                   <span className={statusPillClass(obsidianStatus)} data-testid='import-pill-obsidian'>
                     {statusPillLabel(obsidianStatus)}
@@ -334,7 +357,9 @@ export function ImportDrawer({ open, onClose }: ImportDrawerProps): React.ReactE
                 long
                 loading={obsidianStatus === 'importing'}
                 disabled={obsidianStatus === 'importing' || (obsidianVaults.length > 0 && !selectedVault)}
-                onClick={() => { void handleObsidianImport(); }}
+                onClick={() => {
+                  void handleObsidianImport();
+                }}
                 data-testid='import-btn-obsidian'
               >
                 {obsidianStatus === 'importing'
@@ -346,10 +371,10 @@ export function ImportDrawer({ open, onClose }: ImportDrawerProps): React.ReactE
             {/* Card 3 - ~/dev scan */}
             <div className={styles.card} data-testid='import-card-devscan'>
               <div className={styles.cardTopRow}>
-                <div className={styles.iconTile} aria-hidden>📁</div>
-                <span className={styles.cardTitle}>
-                  {t('archive.import.devScan.title', '~/dev scan')}
-                </span>
+                <div className={styles.iconTile} aria-hidden>
+                  📁
+                </div>
+                <span className={styles.cardTitle}>{t('archive.import.devScan.title', 'Dev projects')}</span>
                 {devStatus !== 'idle' && (
                   <span className={statusPillClass(devStatus)} data-testid='import-pill-devscan'>
                     {statusPillLabel(devStatus)}
@@ -359,14 +384,16 @@ export function ImportDrawer({ open, onClose }: ImportDrawerProps): React.ReactE
               <p className={styles.subline} data-testid='import-subline-devscan'>
                 {devCount !== null
                   ? t('archive.import.devScan.count', `~${devCount} entries imported`)
-                  : t('archive.import.devScan.hint', 'Scans ~/dev for IJFW memory directories')}
+                  : t('archive.import.devScan.hint', 'Scans common dev folders for IJFW projects')}
               </p>
               <Button
                 type='primary'
                 long
                 loading={devStatus === 'importing'}
                 disabled={devStatus === 'importing'}
-                onClick={() => { void handleDevScanImport(); }}
+                onClick={() => {
+                  void handleDevScanImport();
+                }}
                 data-testid='import-btn-devscan'
               >
                 {devStatus === 'importing'
@@ -378,10 +405,10 @@ export function ImportDrawer({ open, onClose }: ImportDrawerProps): React.ReactE
             {/* Card 4 - Drop folder */}
             <div className={styles.card} data-testid='import-card-dropfolder'>
               <div className={styles.cardTopRow}>
-                <div className={styles.iconTile} aria-hidden>📥</div>
-                <span className={styles.cardTitle}>
-                  {t('archive.import.dropFolder.title', 'Drop folder')}
-                </span>
+                <div className={styles.iconTile} aria-hidden>
+                  📥
+                </div>
+                <span className={styles.cardTitle}>{t('archive.import.dropFolder.title', 'Drop folder')}</span>
                 {dropStatus !== 'idle' && (
                   <span className={statusPillClass(dropStatus)} data-testid='import-pill-dropfolder'>
                     {statusPillLabel(dropStatus)}
@@ -397,19 +424,16 @@ export function ImportDrawer({ open, onClose }: ImportDrawerProps): React.ReactE
                 {DROP_FOLDER_PATH}
               </p>
               <div className={styles.cardBottomRow}>
-                <Button
-                  type='secondary'
-                  long
-                  onClick={handleOpenFolder}
-                  data-testid='import-btn-openfolder'
-                >
+                <Button type='secondary' long onClick={handleOpenFolder} data-testid='import-btn-openfolder'>
                   {t('archive.import.dropFolder.openBtn', 'Open folder')}
                 </Button>
                 <Button
                   type='primary'
                   loading={dropStatus === 'importing'}
                   disabled={dropStatus === 'importing'}
-                  onClick={() => { void handleProcessDropFolder(); }}
+                  onClick={() => {
+                    void handleProcessDropFolder();
+                  }}
                   data-testid='import-btn-dropfolder'
                 >
                   {dropStatus === 'importing'

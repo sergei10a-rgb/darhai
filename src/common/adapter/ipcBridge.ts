@@ -2388,8 +2388,13 @@ export const memory = {
   /** Import verbs - stubs until W1a wires the actual importers. */
   import: {
     claudeMem: buildProvider<{ count: number; errors: string[] }, void>('memory.import.claude-mem'),
-    obsidianVault: buildProvider<{ count: number; errors: string[] }, { vaultPath: string }>(
-      'memory.import.obsidian-vault'
+    obsidianVault: buildProvider<
+      { count: number; errors: string[]; total?: number; capped?: boolean },
+      { vaultPath: string }
+    >('memory.import.obsidian-vault'),
+    /** Auto-detect Obsidian vaults (obsidian.json + ~/Documents scan). */
+    obsidianDetectVaults: buildProvider<{ vaults: { path: string; mdCount: number }[] }, void>(
+      'memory.import.obsidian-detect-vaults'
     ),
     scanDevDir: buildProvider<{ count: number; projectsFound: number; errors: string[] }, void>(
       'memory.import.scan-dev-dir'

@@ -51,78 +51,96 @@ async function readRegistryPaths(): Promise<Set<string>> {
 // ===== Scanner =====
 
 /**
- * Walk ~/dev/ exactly 2 levels deep for .ijfw/memory/ directories.
+ * Candidate dev roots to scan for IJFW projects. Includes the common per-user
+ * dev folders plus, on Windows, drive-level roots (e.g. C:\claude). Roots that
+ * do not exist are skipped silently by the scanner.
  */
-export async function scanForMemoryDirs(): Promise<DevMemoryCandidate[]> {
-  const devDir = path.join(os.homedir(), 'dev');
-  const candidates: DevMemoryCandidate[] = [];
-
-  try {
-    await fs.promises.access(devDir);
-  } catch {
-    return candidates;
+function candidateDevRoots(): string[] {
+  const home = os.homedir();
+  const roots = new Set<string>();
+  for (const name of ['dev', 'Dev', 'projects', 'Projects', 'code', 'Code', 'src', 'repos', 'workspace', 'work']) {
+    roots.add(path.join(home, name));
   }
-
-  const registryPaths = await readRegistryPaths();
-
-  /**
-   * Filter directory entries to non-hidden, non-symlink directories.
-   */
-  async function filterDirs(parentDir: string, entries: fs.Dirent[]): Promise<string[]> {
-    const result: string[] = [];
-    for (const e of entries) {
-      if (!e.isDirectory() || e.name.startsWith('.')) continue;
-      const fullPath = path.join(parentDir, e.name);
-      try {
-        const lstat = await fs.promises.lstat(fullPath);
-        if (lstat.isSymbolicLink()) continue;
-      } catch {
-        continue;
-      }
-      result.push(fullPath);
+  if (process.platform === 'win32') {
+    const drive = process.env.SystemDrive ? process.env.SystemDrive + path.sep : 'C:\\';
+    for (const name of ['claude', 'dev', 'projects', 'code', 'src', 'work']) {
+      roots.add(path.join(drive, name));
     }
-    return result;
   }
+  return [...roots];
+}
 
-  let level1Dirs: string[] = [];
+async function isDir(p: string): Promise<boolean> {
   try {
-    const entries = await fs.promises.readdir(devDir, { withFileTypes: true });
-    level1Dirs = await filterDirs(devDir, entries);
+    return (await fs.promises.lstat(p)).isDirectory();
   } catch {
-    return candidates;
+    return false;
   }
+}
 
-  for (const dir1 of level1Dirs) {
-    let level2Dirs: string[] = [];
+/** Immediate non-hidden, non-symlink subdirectories of `parent`. */
+async function childDirs(parent: string): Promise<string[]> {
+  let entries: fs.Dirent[];
+  try {
+    entries = await fs.promises.readdir(parent, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+  const out: string[] = [];
+  for (const e of entries) {
+    if (!e.isDirectory() || e.name.startsWith('.')) continue;
+    const full = path.join(parent, e.name);
     try {
-      const entries = await fs.promises.readdir(dir1, { withFileTypes: true });
-      level2Dirs = await filterDirs(dir1, entries);
+      if ((await fs.promises.lstat(full)).isSymbolicLink()) continue;
     } catch {
       continue;
     }
+    out.push(full);
+  }
+  return out;
+}
 
-    for (const dir2 of level2Dirs) {
-      const memoryDir = path.join(dir2, '.ijfw', 'memory');
-      try {
-        await fs.promises.access(memoryDir);
-      } catch {
-        continue;
+/**
+ * Scan the candidate dev roots for `.ijfw/memory/` directories at depth 1 AND
+ * depth 2 beneath each root - i.e. both `<root>/<proj>/.ijfw/memory` (projects
+ * living directly under a root, e.g. C:\claude\darhai) and
+ * `<root>/<group>/<proj>/.ijfw/memory` (grouped layouts). Deduplicates by
+ * resolved project path so a project reachable via two roots is listed once.
+ */
+export async function scanForMemoryDirs(): Promise<DevMemoryCandidate[]> {
+  const registryPaths = await readRegistryPaths();
+  const seen = new Set<string>();
+  const candidates: DevMemoryCandidate[] = [];
+
+  async function consider(projectDir: string): Promise<void> {
+    const resolved = path.resolve(projectDir);
+    if (seen.has(resolved)) return;
+    const memoryDir = path.join(projectDir, '.ijfw', 'memory');
+    if (!(await isDir(memoryDir))) return;
+    seen.add(resolved);
+
+    let mdFiles: string[] = [];
+    try {
+      const memEntries = await fs.promises.readdir(memoryDir);
+      mdFiles = memEntries.filter((n) => n.endsWith('.md'));
+    } catch {
+      // unreadable - still list as candidate
+    }
+    candidates.push({
+      path: projectDir,
+      projectName: path.basename(projectDir),
+      memoryCount: mdFiles.length,
+      alreadyInRegistry: registryPaths.has(resolved),
+    });
+  }
+
+  for (const root of candidateDevRoots()) {
+    if (!(await isDir(root))) continue;
+    for (const dir1 of await childDirs(root)) {
+      await consider(dir1); // depth 1: <root>/<proj>
+      for (const dir2 of await childDirs(dir1)) {
+        await consider(dir2); // depth 2: <root>/<group>/<proj>
       }
-
-      let mdFiles: string[] = [];
-      try {
-        const memEntries = await fs.promises.readdir(memoryDir);
-        mdFiles = memEntries.filter((n) => n.endsWith('.md'));
-      } catch {
-        // unreadable - still list as candidate
-      }
-
-      candidates.push({
-        path: dir2,
-        projectName: path.basename(dir2),
-        memoryCount: mdFiles.length,
-        alreadyInRegistry: registryPaths.has(path.resolve(dir2)),
-      });
     }
   }
 
@@ -137,7 +155,9 @@ function buildFrontmatter(fields: Record<string, string | string[] | number>): s
     if (Array.isArray(val)) {
       lines.push(`${key}: [${val.map((v) => String(v)).join(', ')}]`);
     } else {
-      const escaped = String(val).replace(/[\r\n]+/g, ' ').slice(0, 500);
+      const escaped = String(val)
+        .replace(/[\r\n]+/g, ' ')
+        .slice(0, 500);
       lines.push(`${key}: ${escaped}`);
     }
   }
@@ -151,10 +171,9 @@ function buildFrontmatter(fields: Record<string, string | string[] | number>): s
  */
 export async function runDevScanImport(
   paths: string[],
-  opts?: { ijfwMemoryDir?: string },
+  opts?: { ijfwMemoryDir?: string }
 ): Promise<DevScanImportResult> {
-  const targetMemDir =
-    opts?.ijfwMemoryDir ?? path.join(os.homedir(), '.ijfw', 'memory');
+  const targetMemDir = opts?.ijfwMemoryDir ?? path.join(os.homedir(), '.ijfw', 'memory');
   const result: DevScanImportResult = { imported: 0, skipped: 0, projectsFound: 0, errors: [] };
 
   try {

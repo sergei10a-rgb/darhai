@@ -16,7 +16,9 @@ import { z } from 'zod';
 import { ipcBridge } from '@/common';
 import { getIjfwArchiveService } from '@process/services/memory/ijfwArchiveService';
 import { runClaudeMemImport } from '@process/services/import/claudeMemImporter';
-import { runObsidianImport } from '@process/services/import/obsidianImporter';
+import { runClaudeNativeImport } from '@process/services/import/claudeNativeImporter';
+import { runObsidianImport, detectVaults } from '@process/services/import/obsidianImporter';
+import { detectConfiguredVaults, getConfiguredVaultPaths } from '@process/services/import/obsidianVaultConfig';
 import { runDevScanImport, scanForMemoryDirs } from '@process/services/import/devScanImporter';
 import {
   runDropFolderProcess,
@@ -38,6 +40,16 @@ const ingestFileItemSchema = z.object({
 const ingestFilesSchema = z.object({
   files: z.array(ingestFileItemSchema).min(1).max(50),
 });
+
+/**
+ * Cap for a single Obsidian vault import. A session-archive vault can hold tens
+ * of thousands of notes; we import the most-recent N to keep the memory store
+ * bounded. The renderer surfaces the cap when it applies.
+ */
+const OBSIDIAN_MAX_FILES = 2000;
+
+/** Error notes that just mean "this source is not present" - not real failures. */
+const ABSENT_SOURCE_NOTE = [/not found/i, /No Claude Code memory found/i];
 
 // ── Drop folder watcher handle (singleton) ───────────────────────────────────
 
@@ -61,15 +73,28 @@ function resolveMemoryDir(): string {
 }
 
 export function initImportBridge(): void {
-  // ── claude-mem importer ──────────────────────────────────────────────────
+  // ── claude importer (native memory + claude-mem DB) ──────────────────────
+  // The "Claude" source imports from BOTH Claude Code's native memory files
+  // (~/.claude/projects/*/memory/*.md - what most users actually have) and the
+  // third-party claude-mem SQLite tool. Either may be legitimately absent; a
+  // "source not present" note is filtered out so it is not shown as an error.
   ipcBridge.memory.import.claudeMem.provider(async () => {
     try {
       const memDir = resolveMemoryDir();
-      const { imported, skipped, errors } = await runClaudeMemImport({ ijfwMemoryDir: memDir });
-      log.info('[import] claudeMem done', { imported, skipped, errorCount: errors.length });
+      const nativeResult = await runClaudeNativeImport({ ijfwMemoryDir: memDir });
+      const dbResult = await runClaudeMemImport({ ijfwMemoryDir: memDir });
+      const imported = nativeResult.imported + dbResult.imported;
+      const errors = [...nativeResult.errors, ...dbResult.errors].filter(
+        (e) => !ABSENT_SOURCE_NOTE.some((rx) => rx.test(e))
+      );
+      log.info('[import] claude done', {
+        nativeImported: nativeResult.imported,
+        dbImported: dbResult.imported,
+        errorCount: errors.length,
+      });
       return { count: imported, errors };
     } catch (err) {
-      log.error('[import] claudeMem threw', { err });
+      log.error('[import] claude threw', { err });
       return { count: 0, errors: [String(err)] };
     }
   });
@@ -92,19 +117,68 @@ export function initImportBridge(): void {
         vaultPath = path.join(os.homedir(), vaultPath.slice(2));
       }
       vaultPath = path.resolve(vaultPath);
-      // Restrict to home dir subtree
+      // Allow a vault inside the home dir subtree OR one Obsidian itself has
+      // registered (obsidian.json), which the user may legitimately keep outside
+      // home (e.g. C:\claude\Main memory). Any other path is rejected.
       const homeDir = os.homedir();
-      if (!vaultPath.startsWith(homeDir + path.sep) && vaultPath !== homeDir) {
-        log.warn('[import] obsidianVault path outside homedir', { vaultPath });
-        return { count: 0, errors: ['vault path must be within home directory'] };
+      const insideHome = vaultPath === homeDir || vaultPath.startsWith(homeDir + path.sep);
+      if (!insideHome) {
+        const configured = await getConfiguredVaultPaths();
+        let real = vaultPath;
+        try {
+          real = await fs.promises.realpath(vaultPath);
+        } catch {
+          // keep lexical path
+        }
+        if (!configured.has(vaultPath) && !configured.has(real)) {
+          log.warn('[import] obsidianVault path not allowed', { vaultPath });
+          return {
+            count: 0,
+            errors: ['vault path must be within home directory or a configured Obsidian vault'],
+          };
+        }
       }
       const memDir = resolveMemoryDir();
-      const { imported, skipped, errors } = await runObsidianImport(vaultPath, { ijfwMemoryDir: memDir });
-      log.info('[import] obsidianVault done', { vaultPath, imported, skipped, errorCount: errors.length });
-      return { count: imported, errors };
+      const { imported, skipped, errors, total, capped } = await runObsidianImport(vaultPath, {
+        ijfwMemoryDir: memDir,
+        maxFiles: OBSIDIAN_MAX_FILES,
+      });
+      log.info('[import] obsidianVault done', {
+        vaultPath,
+        imported,
+        skipped,
+        total,
+        capped,
+        errorCount: errors.length,
+      });
+      return { count: imported, errors, total, capped };
     } catch (err) {
       log.error('[import] obsidianVault threw', { err });
       return { count: 0, errors: [String(err)] };
+    }
+  });
+
+  // ── obsidian vault auto-detection ────────────────────────────────────────
+  // Merges vaults registered in Obsidian's own config (obsidian.json - the
+  // authoritative list, covers vaults outside ~/Documents) with a shallow
+  // ~/Documents scan. Deduped by resolved path.
+  ipcBridge.memory.import.obsidianDetectVaults.provider(async () => {
+    try {
+      const [configured, documents] = await Promise.all([detectConfiguredVaults(), detectVaults()]);
+      const byPath = new Map<string, { path: string; mdCount: number }>();
+      for (const v of documents) {
+        byPath.set(path.resolve(v.path), { path: v.path, mdCount: v.mdFileCount });
+      }
+      for (const v of configured) {
+        // Configured entries win (fresher count, authoritative source).
+        byPath.set(path.resolve(v.path), { path: v.path, mdCount: v.mdCount });
+      }
+      const vaults = [...byPath.values()];
+      log.info('[import] obsidianDetectVaults', { count: vaults.length });
+      return { vaults };
+    } catch (err) {
+      log.error('[import] obsidianDetectVaults threw', { err });
+      return { vaults: [] };
     }
   });
 

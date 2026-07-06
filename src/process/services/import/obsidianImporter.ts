@@ -24,6 +24,10 @@ export type ObsidianImportResult = {
   imported: number;
   skipped: number;
   errors: string[];
+  /** Total .md files found in the vault (before any maxFiles cap). */
+  total: number;
+  /** True when the import was capped to `maxFiles` most-recent files. */
+  capped: boolean;
 };
 
 // ===== Vault detection =====
@@ -264,7 +268,7 @@ async function walkMdFiles(dir: string, skip: string[]): Promise<string[]> {
  */
 export async function runObsidianImport(
   rawVaultPath: string,
-  opts?: { ijfwMemoryDir?: string }
+  opts?: { ijfwMemoryDir?: string; maxFiles?: number }
 ): Promise<ObsidianImportResult> {
   // Expand tilde in main process (renderer must not pass unexpanded paths).
   let vaultPath = rawVaultPath;
@@ -278,7 +282,7 @@ export async function runObsidianImport(
   vaultPath = path.resolve(vaultPath);
 
   const memDir = opts?.ijfwMemoryDir ?? path.join(os.homedir(), '.ijfw', 'memory');
-  const result: ObsidianImportResult = { imported: 0, skipped: 0, errors: [] };
+  const result: ObsidianImportResult = { imported: 0, skipped: 0, errors: [], total: 0, capped: false };
 
   try {
     await fs.promises.access(vaultPath);
@@ -303,6 +307,28 @@ export async function runObsidianImport(
   } catch (err) {
     result.errors.push(`Failed to walk vault: ${String(err)}`);
     return result;
+  }
+
+  result.total = mdFiles.length;
+
+  // Cap huge vaults (e.g. a session archive with tens of thousands of notes) to
+  // the most-recently-modified `maxFiles` so the import stays bounded and the
+  // memory store is not flooded. Only stat when a cap is actually needed.
+  const maxFiles = opts?.maxFiles;
+  if (typeof maxFiles === 'number' && maxFiles > 0 && mdFiles.length > maxFiles) {
+    const withMtime: Array<{ p: string; m: number }> = [];
+    for (const p of mdFiles) {
+      let m = 0;
+      try {
+        m = (await fs.promises.stat(p)).mtimeMs;
+      } catch {
+        // unreadable - treat as oldest.
+      }
+      withMtime.push({ p, m });
+    }
+    withMtime.sort((a, b) => b.m - a.m);
+    mdFiles = withMtime.slice(0, maxFiles).map((x) => x.p);
+    result.capped = true;
   }
 
   for (const filePath of mdFiles) {
