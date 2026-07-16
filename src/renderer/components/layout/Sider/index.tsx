@@ -19,6 +19,7 @@ import {
   SiderSessionsEntry,
   SiderTeamsEntry,
   SiderToolbar,
+  SiderToolsGroup,
   SiderWorkflowsEntry,
 } from './SiderNav';
 import SiderFooter from './SiderFooter';
@@ -170,6 +171,16 @@ const Sider: React.FC<SiderProps> = ({ onSessionClick, collapsed = false }) => {
   const tooltipEnabled = collapsed && !isMobile;
   const siderTooltipProps = getSiderTooltipProps(tooltipEnabled);
 
+  // True when the current route belongs to an entry inside the "Tools" group -
+  // used for the group header's active tint while the group is collapsed.
+  const isToolsChildActive =
+    pathname === '/assistants' ||
+    pathname.startsWith('/workflows') ||
+    pathname.startsWith('/scheduled') ||
+    pathname.startsWith('/teams') ||
+    pathname.startsWith('/mission-control') ||
+    pathname.startsWith('/model-advisor');
+
   const workspaceHistoryProps = {
     collapsed,
     tooltipEnabled,
@@ -216,19 +227,19 @@ const Sider: React.FC<SiderProps> = ({ onSessionClick, collapsed = false }) => {
           onNewChat={handleNewChat}
           onToggleBatchMode={() => setIsBatchMode((prev) => !prev)}
         />
-        <SiderSessionsEntry
-          isMobile={isMobile}
-          isActive={pathname.startsWith('/conversations')}
-          collapsed={collapsed}
-          siderTooltipProps={siderTooltipProps}
-          onClick={() => handleTopZoneNav('/conversations')}
-        />
         <SiderSearchEntry
           isMobile={isMobile}
           collapsed={collapsed}
           siderTooltipProps={siderTooltipProps}
           onConversationSelect={handleConversationSelect}
           onSessionClick={onSessionClick}
+        />
+        <SiderSessionsEntry
+          isMobile={isMobile}
+          isActive={pathname.startsWith('/conversations')}
+          collapsed={collapsed}
+          siderTooltipProps={siderTooltipProps}
+          onClick={() => handleTopZoneNav('/conversations')}
         />
         <SiderProjectsEntry
           isMobile={isMobile}
@@ -237,60 +248,68 @@ const Sider: React.FC<SiderProps> = ({ onSessionClick, collapsed = false }) => {
           siderTooltipProps={siderTooltipProps}
           onClick={() => handleTopZoneNav('/projects')}
         />
-        <SiderAssistantsEntry
-          isMobile={isMobile}
-          isActive={pathname === '/assistants'}
-          collapsed={collapsed}
-          siderTooltipProps={siderTooltipProps}
-          onClick={handleAssistantsClick}
-        />
-        <SiderFluxRouterEntry
-          isMobile={isMobile}
-          collapsed={collapsed}
-          siderTooltipProps={siderTooltipProps}
-          onClick={() => handleTopZoneNav('/settings/models')}
-        />
-        <SiderWorkflowsEntry
-          isMobile={isMobile}
-          isActive={pathname.startsWith('/workflows')}
-          collapsed={collapsed}
-          siderTooltipProps={siderTooltipProps}
-          onClick={() => handleTopZoneNav('/workflows')}
-        />
-        <SiderScheduledEntry
-          isMobile={isMobile}
-          isActive={pathname.startsWith('/scheduled')}
-          collapsed={collapsed}
-          siderTooltipProps={siderTooltipProps}
-          onClick={() => handleTopZoneNav('/scheduled')}
-        />
-        <SiderTeamsEntry
-          isMobile={isMobile}
-          isActive={pathname.startsWith('/teams')}
-          collapsed={collapsed}
-          siderTooltipProps={siderTooltipProps}
-          onClick={() => handleTopZoneNav('/teams')}
-        />
         <SiderMemoryEntry
           isMobile={isMobile}
           isActive={pathname.startsWith('/memory') || pathname.startsWith('/wiki')}
           collapsed={collapsed}
           siderTooltipProps={siderTooltipProps}
+          onClick={() => handleTopZoneNav('/memory')}
         />
-        <SiderMissionControlEntry
+        <SiderToolsGroup
           isMobile={isMobile}
-          isActive={pathname.startsWith('/mission-control')}
           collapsed={collapsed}
           siderTooltipProps={siderTooltipProps}
-          onClick={() => handleTopZoneNav('/mission-control')}
-        />
-        <SiderModelAdvisorEntry
-          isMobile={isMobile}
-          isActive={pathname.startsWith('/model-advisor')}
-          collapsed={collapsed}
-          siderTooltipProps={siderTooltipProps}
-          onClick={() => handleTopZoneNav('/model-advisor')}
-        />
+          isChildActive={isToolsChildActive}
+        >
+          <SiderAssistantsEntry
+            isMobile={isMobile}
+            isActive={pathname === '/assistants'}
+            collapsed={collapsed}
+            siderTooltipProps={siderTooltipProps}
+            onClick={handleAssistantsClick}
+          />
+          <SiderFluxRouterEntry
+            isMobile={isMobile}
+            collapsed={collapsed}
+            siderTooltipProps={siderTooltipProps}
+            onClick={() => handleTopZoneNav('/settings/models')}
+          />
+          <SiderWorkflowsEntry
+            isMobile={isMobile}
+            isActive={pathname.startsWith('/workflows')}
+            collapsed={collapsed}
+            siderTooltipProps={siderTooltipProps}
+            onClick={() => handleTopZoneNav('/workflows')}
+          />
+          <SiderScheduledEntry
+            isMobile={isMobile}
+            isActive={pathname.startsWith('/scheduled')}
+            collapsed={collapsed}
+            siderTooltipProps={siderTooltipProps}
+            onClick={() => handleTopZoneNav('/scheduled')}
+          />
+          <SiderTeamsEntry
+            isMobile={isMobile}
+            isActive={pathname.startsWith('/teams')}
+            collapsed={collapsed}
+            siderTooltipProps={siderTooltipProps}
+            onClick={() => handleTopZoneNav('/teams')}
+          />
+          <SiderMissionControlEntry
+            isMobile={isMobile}
+            isActive={pathname.startsWith('/mission-control')}
+            collapsed={collapsed}
+            siderTooltipProps={siderTooltipProps}
+            onClick={() => handleTopZoneNav('/mission-control')}
+          />
+          <SiderModelAdvisorEntry
+            isMobile={isMobile}
+            isActive={pathname.startsWith('/model-advisor')}
+            collapsed={collapsed}
+            siderTooltipProps={siderTooltipProps}
+            onClick={() => handleTopZoneNav('/model-advisor')}
+          />
+        </SiderToolsGroup>
       </div>
 
       <div className={classNames('overflow-y-auto', siderStyles.scrollArea, siderStyles.scrollZone)}>

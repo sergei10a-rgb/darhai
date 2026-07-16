@@ -33,5 +33,9 @@
     "seeAllScheduled": "查看所有任務 →",
     "seeAllChats": "查看所有對話 →",
     "showMore": "再顯示 {{count}} 個 →"
-  }
+  },
+  "tools": "工具",
+  "archive": "封存",
+  "wiki": "維基",
+  "emergingConcepts": "{{count}} 個新興概念"
 }

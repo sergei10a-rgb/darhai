@@ -28,9 +28,10 @@
  */
 
 import React, { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button, Input, Message } from '@arco-design/web-react';
 import type { RefInputType } from '@arco-design/web-react/es/Input/interface';
-import { Archive, Search, Import as ImportIcon, Settings2, Plus } from 'lucide-react';
+import { Archive, BookOpen, Search, Import as ImportIcon, Settings2, Plus } from 'lucide-react';
 import { ipcBridge } from '@/common';
 import { memory as memoryBridge, ijfw as ijfwBridge } from '@/common/adapter/ipcBridge';
 import type { IjfwStatusPayload } from '@/common/adapter/ipcBridge';
@@ -102,6 +103,7 @@ const DEFAULT_THRESHOLD = 90;
 
 const FullPanelShell: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   const [filter, setFilter] = useState<ListFilter>(DEFAULT_FILTER);
   const [timeWindow, setTimeWindow] = useState<TimeWindow>('all');
@@ -398,6 +400,18 @@ const FullPanelShell: React.FC = () => {
               {projects[0]?.basename ?? t('archive.topbar.allProjects', 'All projects')}
             </span>
           </span>
+
+          {/* Wiki switcher - Memory is a single sidebar row, Wiki lives here */}
+          <Button
+            type='text'
+            size='small'
+            icon={<BookOpen size={14} aria-hidden />}
+            onClick={() => navigate('/wiki')}
+            data-testid='memory-goto-wiki'
+            className={styles.switcherBtn}
+          >
+            {t('sider.wiki', 'Wiki')}
+          </Button>
 
           {/* Type chips (no-deferment #1) */}
           <TopbarChips typeCounts={typeCounts} activeType={activeChipType} onFilterChange={handleChipFilter} />

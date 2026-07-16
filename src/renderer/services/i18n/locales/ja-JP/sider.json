@@ -33,5 +33,9 @@
     "seeAllScheduled": "すべてのスケジュールを表示 →",
     "seeAllChats": "すべてのチャットを表示 →",
     "showMore": "さらに {{count}} 件を表示 →"
-  }
+  },
+  "tools": "ツール",
+  "archive": "アーカイブ",
+  "wiki": "ウィキ",
+  "emergingConcepts": "{{count}}件の新しい概念"
 }

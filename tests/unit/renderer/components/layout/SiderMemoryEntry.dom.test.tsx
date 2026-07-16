@@ -7,13 +7,14 @@
 // @vitest-environment jsdom
 
 /**
- * Task 3.3 - DOM tests for the SiderMemoryEntry navigation row.
+ * DOM tests for the SiderMemoryEntry navigation row.
  *
- * Mirrors the patterns established by `SiderScheduledEntry` /
- * `SiderWorkflowsEntry` / `SiderTeamsEntry`:
+ * The entry is a plain nav row (the Archive/Wiki submenu moved into the memory
+ * pages themselves as a header switcher). Mirrors the patterns of the other
+ * Sider entry DOM tests:
  *   - Click invokes the supplied `onClick` handler.
  *   - Collapsed mode renders an icon-only row (tested via testid).
- *   - Expanded mode renders the literal label.
+ *   - Expanded mode renders the i18n label key.
  *   - Active class is applied when `isActive` is true.
  */
 
@@ -21,24 +22,13 @@ import React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-// Wave 7 H4: the entry now resolves its label via `useTranslation()`. Mock
-// react-i18next so the test asserts on the i18n key path explicitly - if the
-// component is wired to a wrong key, the test fails. Mirrors the pattern used
-// by other Sider sub-component DOM tests.
+// The entry resolves its label via `useTranslation()`. Mock react-i18next so
+// the test asserts on the i18n key path explicitly - if the component is wired
+// to a wrong key, the test fails.
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string) => key,
   }),
-}));
-
-// The entry uses react-router-dom's useLocation/useNavigate to highlight the
-// active route. Mock them so the component renders outside a <Router>. The
-// pathname is held in a hoisted object so individual tests can drive the
-// route-derived active styling.
-const routerState = vi.hoisted(() => ({ pathname: '/' }));
-vi.mock('react-router-dom', () => ({
-  useLocation: () => ({ pathname: routerState.pathname }),
-  useNavigate: () => vi.fn(),
 }));
 
 // The entry fetches the wiki orphan count on mount; stub the bridge so the
@@ -65,9 +55,6 @@ afterEach(() => {
 });
 
 describe('SiderMemoryEntry', () => {
-  // Wave 7 H4: assertion is now on the i18n key path. The mocked t() returns
-  // the key, so the rendered text is `sider.memory` - proves the component
-  // resolves through i18n instead of a hardcoded literal.
   it('renders the sider.memory label when expanded', () => {
     render(
       <SiderMemoryEntry
@@ -96,29 +83,31 @@ describe('SiderMemoryEntry', () => {
     expect(screen.queryByText('sider.memory')).toBeNull();
   });
 
-  it('toggles the expandable children when the parent row is clicked', () => {
-    localStorage.removeItem('wayland.sidebar.memory.expanded');
-    routerState.pathname = '/';
-    render(<SiderMemoryEntry isMobile={false} isActive={false} collapsed={false} siderTooltipProps={tooltipProps} />);
-    const row = screen.getByTestId('sider-memory-entry');
-    // Starts collapsed (not on a memory/wiki route): no child rows yet.
-    expect(row.getAttribute('aria-expanded')).toBe('false');
-    expect(screen.queryByTestId('sider-memory-archive-entry')).toBeNull();
-    // Clicking the parent expands and reveals the Archive + Wiki children.
-    fireEvent.click(row);
-    expect(row.getAttribute('aria-expanded')).toBe('true');
-    expect(screen.getByTestId('sider-memory-archive-entry')).toBeTruthy();
-    expect(screen.getByTestId('sider-memory-wiki-entry')).toBeTruthy();
+  it('invokes onClick when the row is clicked', () => {
+    const onClick = vi.fn();
+    render(
+      <SiderMemoryEntry
+        isMobile={false}
+        isActive={false}
+        collapsed={false}
+        siderTooltipProps={tooltipProps}
+        onClick={onClick}
+      />
+    );
+    fireEvent.click(screen.getByTestId('sider-memory-entry'));
+    expect(onClick).toHaveBeenCalledTimes(1);
   });
 
-  it('highlights the Archive child with primary styling when on the /memory route', () => {
-    localStorage.removeItem('wayland.sidebar.memory.expanded');
-    // On a memory route the group auto-expands and the matching child row
-    // takes the primary-tinted active styling.
-    routerState.pathname = '/memory';
-    render(<SiderMemoryEntry isMobile={false} isActive collapsed={false} siderTooltipProps={tooltipProps} />);
-    const archive = screen.getByTestId('sider-memory-archive-entry');
-    expect(archive.className).toContain('text-primary');
-    routerState.pathname = '/';
+  it('applies the primary active styling when isActive is true', () => {
+    render(
+      <SiderMemoryEntry
+        isMobile={false}
+        isActive
+        collapsed={false}
+        siderTooltipProps={tooltipProps}
+        onClick={vi.fn()}
+      />
+    );
+    expect(screen.getByTestId('sider-memory-entry').className).toContain('text-primary');
   });
 });

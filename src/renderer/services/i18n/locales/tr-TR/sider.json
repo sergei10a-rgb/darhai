@@ -33,5 +33,9 @@
     "seeAllScheduled": "Tüm zamanlanmışları gör →",
     "seeAllChats": "Tüm sohbetleri gör →",
     "showMore": "{{count}} tane daha göster →"
-  }
+  },
+  "tools": "Araçlar",
+  "archive": "Arşiv",
+  "wiki": "Wiki",
+  "emergingConcepts": "{{count}} yeni kavram"
 }

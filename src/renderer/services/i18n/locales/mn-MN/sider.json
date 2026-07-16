@@ -35,5 +35,7 @@
     "showMore": "Өөр {{count}}-г харах →"
   },
   "archive": "Архив",
-  "wiki": "Вики"
+  "wiki": "Вики",
+  "tools": "Хэрэгслүүд",
+  "emergingConcepts": "Төлөвшиж буй {{count}} ойлголт"
 }

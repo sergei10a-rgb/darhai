@@ -33,5 +33,9 @@
     "seeAllScheduled": "See all scheduled →",
     "seeAllChats": "See all chats →",
     "showMore": "Show {{count}} more →"
-  }
+  },
+  "tools": "Tools",
+  "archive": "Archive",
+  "wiki": "Wiki",
+  "emergingConcepts": "{{count}} emerging concepts"
 }

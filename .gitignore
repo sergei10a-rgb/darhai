@@ -174,7 +174,7 @@ ${env.ELECTRON_CACHE}/
 # Agent Kit
 .agent
 .codebuddy/
-wiki/
+/wiki/
 
 # Local design docs and screenshots
 desdoc/

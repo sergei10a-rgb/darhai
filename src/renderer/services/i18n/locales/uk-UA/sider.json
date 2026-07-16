@@ -33,5 +33,9 @@
     "seeAllScheduled": "Усі заплановані →",
     "seeAllChats": "Усі чати →",
     "showMore": "Показати ще {{count}} →"
-  }
+  },
+  "tools": "Інструменти",
+  "archive": "Архів",
+  "wiki": "Вікі",
+  "emergingConcepts": "{{count}} нових концепцій"
 }

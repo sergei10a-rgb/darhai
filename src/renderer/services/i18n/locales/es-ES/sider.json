@@ -33,5 +33,9 @@
     "seeAllScheduled": "Ver todas las tareas programadas →",
     "seeAllChats": "Ver todos los chats →",
     "showMore": "Ver {{count}} más →"
-  }
+  },
+  "tools": "Herramientas",
+  "archive": "Archivo",
+  "wiki": "Wiki",
+  "emergingConcepts": "{{count}} conceptos emergentes"
 }

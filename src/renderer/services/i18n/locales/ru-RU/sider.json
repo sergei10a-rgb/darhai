@@ -33,5 +33,9 @@
     "seeAllScheduled": "Все запланированные →",
     "seeAllChats": "Все чаты →",
     "showMore": "Показать ещё {{count}} →"
-  }
+  },
+  "tools": "Инструменты",
+  "archive": "Архив",
+  "wiki": "Вики",
+  "emergingConcepts": "{{count}} новых концепций"
 }

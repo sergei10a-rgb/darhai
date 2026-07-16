@@ -14,7 +14,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Spin, Message } from '@arco-design/web-react';
-import { BookOpen, Search, Settings } from 'lucide-react';
+import { Archive, BookOpen, Search, Settings } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { wiki as wikiBridge } from '@/common/adapter/ipcBridge';
 import type { WikiConcept, WikiState, WikiTopicTag } from '@/common/types/memory';
@@ -196,6 +196,16 @@ export function WikiHomePage(): React.ReactElement {
           </span>
           <span className={styles.logoLabel}>{t('wiki.home.title', 'Wiki')}</span>
         </div>
+        {/* Archive switcher - Memory is a single sidebar row, Archive lives at /memory */}
+        <Button
+          size='small'
+          className={styles.synthesizeBtn}
+          icon={<Archive size={13} aria-hidden />}
+          onClick={() => navigate('/memory')}
+          data-testid='wiki-goto-archive'
+        >
+          {t('sider.archive', 'Archive')}
+        </Button>
         <span className={styles.countLabel}>
           {t('wiki.home.conceptCount', '{{count}} concepts synthesized from {{memories}} memories', {
             count: allConcepts.length,
