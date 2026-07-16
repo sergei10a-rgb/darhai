@@ -1825,7 +1825,8 @@
     "skills": "Habilidades y herramientas",
     "agents": "Agentes",
     "constitution": "Constitución",
-    "groupEngine": "ENGINE"
+    "groupEngine": "ENGINE",
+    "ecc": "Arnés ECC"
   },
   "channelsIndex": {
     "title": "Canales",
@@ -2597,5 +2598,14 @@
   "semanticSearchDescription": "Clasifica habilidades y memoria por significado, no solo por palabras clave. Funciona sin conexión; recurre a la búsqueda por palabras clave cuando el modelo local no está disponible.",
   "semanticSearchActive": "Búsqueda semántica activa",
   "semanticSearchFallback": "Usando búsqueda por palabras clave (modelo semántico no disponible)",
-  "semanticSearchIndexing": "Creando índice semántico…"
+  "semanticSearchIndexing": "Creando índice semántico…",
+  "ecc": {
+    "title": "Arnés de agentes ECC",
+    "installed": "Instalado",
+    "notInstalled": "Aún no instalado",
+    "aboutBody": "Reglas, habilidades y agentes revisores profesionales para el motor Claude. Se incluye con Darhai y se instala automáticamente en el primer arranque; una instalación ECC existente nunca se modifica.",
+    "gateGuardLabel": "GateGuard (puerta de verificación de hechos)",
+    "gateGuardDescription": "Cuando está activado, el agente Claude debe exponer sus evidencias antes de la primera edición de cada archivo. Más estricto pero más lento; sus mensajes aparecen en inglés. Se aplica a los agentes nuevos.",
+    "toggleError": "No se pudo guardar el ajuste. Inténtalo de nuevo."
+  }
 }

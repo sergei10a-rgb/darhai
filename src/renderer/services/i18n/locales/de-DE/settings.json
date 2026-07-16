@@ -1825,7 +1825,8 @@
     "skills": "Skills & Tools",
     "agents": "Agenten",
     "constitution": "Constitution",
-    "groupEngine": "ENGINE"
+    "groupEngine": "ENGINE",
+    "ecc": "ECC-Harness"
   },
   "channelsIndex": {
     "title": "Kanäle",
@@ -2597,5 +2598,14 @@
   "semanticSearchDescription": "Ordnet Skills und Speicher nach Bedeutung, nicht nur nach Schlüsselwörtern. Funktioniert offline; greift auf die Schlüsselwortsuche zurück, wenn das lokale Modell nicht verfügbar ist.",
   "semanticSearchActive": "Semantische Suche aktiv",
   "semanticSearchFallback": "Schlüsselwortsuche wird verwendet (semantisches Modell nicht verfügbar)",
-  "semanticSearchIndexing": "Semantischer Index wird erstellt…"
+  "semanticSearchIndexing": "Semantischer Index wird erstellt…",
+  "ecc": {
+    "title": "ECC-Agenten-Harness",
+    "installed": "Installiert",
+    "notInstalled": "Noch nicht installiert",
+    "aboutBody": "Professionelle Regeln, Skills und Reviewer-Agenten für die Claude-Engine. Wird mit Darhai ausgeliefert und installiert sich beim ersten Start automatisch - eine vorhandene ECC-Installation wird nie verändert.",
+    "gateGuardLabel": "GateGuard (Fakten-Gate)",
+    "gateGuardDescription": "Wenn aktiviert, muss der Claude-Agent vor der ersten Änderung jeder Datei seine Belege nennen. Strenger, aber langsamer; die Meldungen erscheinen auf Englisch. Gilt für neu gestartete Agenten.",
+    "toggleError": "Einstellung konnte nicht gespeichert werden. Bitte erneut versuchen."
+  }
 }

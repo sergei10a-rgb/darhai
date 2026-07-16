@@ -304,6 +304,9 @@ const REMOTE_DENIED_KEYS: ReadonlySet<string> = new Set([
   'storage:openDir',
   'storage:resetAll',
   'storage:importBackup',
+  // --- ecc harness: persisted config mutation (silently weakens agent gates) ---
+  'ecc.set-gate-guard',
+
   // --- app.* / process control that writes or executes ---
   'app.set-start-on-boot',
   'app.set-zoom-factor',

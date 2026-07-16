@@ -1825,7 +1825,8 @@
     "skills": "Compétences et outils",
     "agents": "Agents",
     "constitution": "Constitution",
-    "groupEngine": "ENGINE"
+    "groupEngine": "ENGINE",
+    "ecc": "Harnais ECC"
   },
   "channelsIndex": {
     "title": "Canaux",
@@ -2597,5 +2598,14 @@
   "semanticSearchDescription": "Classe les compétences et la mémoire par sens, pas seulement par mots-clés. Fonctionne hors ligne ; revient à la recherche par mots-clés lorsque le modèle local est indisponible.",
   "semanticSearchActive": "Recherche sémantique active",
   "semanticSearchFallback": "Utilisation de la recherche par mots-clés (modèle sémantique indisponible)",
-  "semanticSearchIndexing": "Création de l’index sémantique…"
+  "semanticSearchIndexing": "Création de l’index sémantique…",
+  "ecc": {
+    "title": "Harnais d'agents ECC",
+    "installed": "Installé",
+    "notInstalled": "Pas encore installé",
+    "aboutBody": "Règles, compétences et agents relecteurs professionnels pour le moteur Claude. Livré avec Darhai et installé automatiquement au premier lancement - une installation ECC existante n'est jamais modifiée.",
+    "gateGuardLabel": "GateGuard (garde-fou factuel)",
+    "gateGuardDescription": "Lorsqu'il est activé, l'agent Claude doit exposer ses preuves avant la première modification de chaque fichier. Plus strict mais plus lent ; ses messages sont en anglais. S'applique aux nouveaux agents.",
+    "toggleError": "Impossible d'enregistrer le réglage. Réessayez."
+  }
 }

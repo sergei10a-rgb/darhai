@@ -1802,7 +1802,8 @@
     "constitution": "Anayasa",
     "images": "Görsel Üretme",
     "voice": "Ses",
-    "groupEngine": "ENGINE"
+    "groupEngine": "ENGINE",
+    "ecc": "ECC altyapısı"
   },
   "channelsIndex": {
     "title": "Kanallar",
@@ -2596,5 +2597,14 @@
   "semanticSearchDescription": "Becerileri ve belleği yalnızca anahtar kelimelere göre değil, anlama göre sıralar. Çevrimdışı çalışır; yerel model kullanılamadığında anahtar kelime aramasına geri döner.",
   "semanticSearchActive": "Anlamsal arama etkin",
   "semanticSearchFallback": "Anahtar kelime araması kullanılıyor (anlamsal model kullanılamıyor)",
-  "semanticSearchIndexing": "Anlamsal dizin oluşturuluyor…"
+  "semanticSearchIndexing": "Anlamsal dizin oluşturuluyor…",
+  "ecc": {
+    "title": "ECC ajan altyapısı",
+    "installed": "Yüklü",
+    "notInstalled": "Henüz yüklü değil",
+    "aboutBody": "Claude motoru için profesyonel kurallar, beceriler ve inceleme ajanları. Darhai ile birlikte gelir ve ilk açılışta kendini otomatik kurar - mevcut bir ECC kurulumu asla değiştirilmez.",
+    "gateGuardLabel": "GateGuard (kanıt zorunlu kapı)",
+    "gateGuardDescription": "Açıkken Claude ajanı her dosyanın ilk düzenlemesinden önce kanıtlarını belirtmek zorundadır. Daha katı ama daha yavaştır; mesajları İngilizcedir. Yeni başlatılan ajanlara uygulanır.",
+    "toggleError": "Ayar kaydedilemedi. Tekrar deneyin."
+  }
 }

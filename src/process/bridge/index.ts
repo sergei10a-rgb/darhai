@@ -40,6 +40,7 @@ import { initWebuiBridge } from './webuiBridge';
 import { initConstitutionBridge } from './constitutionBridge';
 import { initOnboardingBridge } from './onboardingBridge';
 import { initIjfwBridge } from './ijfwBridge';
+import { initEccBridge } from './eccBridge';
 import { initIjfwDropBridge } from './ijfwDropBridge';
 import { initMemoryArchiveBridge, initPromotionSweep } from './memoryArchiveBridge';
 import { initWikiBridge } from './wikiBridge';
@@ -112,6 +113,7 @@ export function initAllBridges(deps: BridgeDependencies): void {
   initFluxConnectorBridge();
   initIjfwBridge();
   initIjfwDropBridge();
+  initEccBridge();
   initMemoryArchiveBridge();
   initPromotionSweep();
   initWikiBridge();
@@ -209,6 +211,7 @@ export {
   initWorkspaceSnapshotBridge,
   initIjfwBridge,
   initIjfwDropBridge,
+  initEccBridge,
   initWikiBridge,
   initImportBridge,
 };

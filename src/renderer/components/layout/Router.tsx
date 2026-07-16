@@ -55,6 +55,7 @@ const ProjectsListPage = React.lazy(() => import('@renderer/pages/projects/Proje
 const ProjectWorkspacePage = React.lazy(() => import('@renderer/pages/projects/ProjectWorkspacePage'));
 const ConversationsListPage = React.lazy(() => import('@renderer/pages/conversations/ConversationsListPage'));
 const IjfwSettingsPanel = React.lazy(() => import('@renderer/pages/settings/IjfwSettingsPanel'));
+const EccSettingsPanel = React.lazy(() => import('@renderer/pages/settings/EccSettingsPanel'));
 const WikiHomePage = React.lazy(() =>
   import('@renderer/pages/wiki/WikiHomePage').then((m) => ({ default: m.WikiHomePage }))
 );
@@ -148,6 +149,7 @@ const PanelRoute: React.FC<{ layout: React.ReactElement }> = ({ layout }) => {
             <Route path='/settings/storage' element={withRouteFallback(StorageSettings)} />
             {/* IJFW MEMORY (Decision 3b: the ONLY Skip toggle in the app) */}
             <Route path='/settings/ijfw' element={withRouteFallback(IjfwSettingsPanel)} />
+            <Route path='/settings/ecc' element={withRouteFallback(EccSettingsPanel)} />
             {/* ABOUT */}
             <Route path='/settings/about' element={withRouteFallback(SystemSettings)} />
             <Route

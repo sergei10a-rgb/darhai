@@ -48,6 +48,7 @@ import { IpcAgentEventEmitter } from './IpcAgentEventEmitter';
 import { hasCronCommands } from './CronCommandDetector';
 import { skillSuggestWatcher } from '@process/services/cron/SkillSuggestWatcher';
 import { getCostRecorder } from '@process/services/cost/CostRecorder';
+import { ensureWorkspaceEccHooks, isGateGuardEnabled } from '@process/services/eccSystemService';
 import { extractAndStripThinkTags } from './ThinkTagDetector';
 import type { AgentKillReason } from './IAgentManager';
 import { hasNativeSkillSupport } from '@/common/types/acpTypes';
@@ -566,6 +567,18 @@ ${collectedResponses.join('\n')}`;
     // auto-injected keys, which in turn win over the inherited shell env.
     const providerEnv = await this.buildConnectedProviderEnv();
     const mergedEnv: Record<string, string> = { ...providerEnv, ...resolved.customEnv };
+
+    // ECC GateGuard toggle (Settings, default ON): only when the user turned
+    // the gate off - and did not set the variable themselves via a custom
+    // agent env - silence the fact-forcing gate for spawned claude agents.
+    if (data.backend === 'claude' && mergedEnv.ECC_GATEGUARD === undefined) {
+      try {
+        const gateGuardOn = await isGateGuardEnabled();
+        if (!gateGuardOn) mergedEnv.ECC_GATEGUARD = 'off';
+      } catch {
+        // Config unreadable - keep the default (gate stays on).
+      }
+    }
 
     // Flux routing (openai-surface generic backends + claude via the anthropic
     // surface; codex/codebuddy route separately).
@@ -1195,6 +1208,15 @@ ${collectedResponses.join('\n')}`;
 
     this.bootstrapping = true;
     const bootstrapPromise = (async () => {
+      // ECC quality hooks are active by default for claude agents: materialize
+      // them into the Darhai-owned conversation workspace's machine-local
+      // settings (.claude/settings.local.json). User-chosen directories
+      // (customWorkspace) are never written to, matching the convention of
+      // every other workspace-mutation path. Non-fatal on any failure.
+      if (data.backend === 'claude' && !data.customWorkspace && typeof data.workspace === 'string' && data.workspace) {
+        await ensureWorkspaceEccHooks(data.workspace);
+      }
+
       const { cliPath, customArgs, customEnv, yoloMode } = await this.resolveAgentCliConfig(data);
 
       const agentConfig = {

@@ -1803,7 +1803,8 @@
     "constitution": "章程",
     "images": "图像生成",
     "voice": "语音",
-    "groupEngine": "ENGINE"
+    "groupEngine": "ENGINE",
+    "ecc": "ECC 工具链"
   },
   "channelsIndex": {
     "title": "消息渠道",
@@ -2597,5 +2598,14 @@
   "semanticSearchDescription": "按含义而不仅仅是关键词对技能和记忆进行排序。可离线运行；当本地模型不可用时回退到关键词搜索。",
   "semanticSearchActive": "语义搜索已启用",
   "semanticSearchFallback": "正在使用关键词搜索（语义模型不可用）",
-  "semanticSearchIndexing": "正在构建语义索引…"
+  "semanticSearchIndexing": "正在构建语义索引…",
+  "ecc": {
+    "title": "ECC 代理工具链",
+    "installed": "已安装",
+    "notInstalled": "尚未安装",
+    "aboutBody": "为 Claude 引擎提供专业规则、技能和审查代理。随 Darhai 一同发布并在首次启动时自动安装——绝不会修改已有的 ECC 安装。",
+    "gateGuardLabel": "GateGuard（事实强制门）",
+    "gateGuardDescription": "开启后，Claude 代理在首次编辑每个文件前必须先陈述依据。更严格但更慢，提示为英文。对新启动的代理生效。",
+    "toggleError": "无法保存设置，请重试。"
+  }
 }

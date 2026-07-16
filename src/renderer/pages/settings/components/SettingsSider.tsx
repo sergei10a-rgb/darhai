@@ -5,6 +5,7 @@ import {
   Cable,
   Cpu,
   Globe,
+  ShieldCheck,
   Image as ImageIcon,
   Info,
   Mic,
@@ -54,6 +55,7 @@ export const BUILTIN_TAB_IDS = [
   'notifications',
   'storage',
   'ijfw',
+  'ecc',
   // ABOUT
   'about',
 ] as const;
@@ -272,6 +274,12 @@ const SettingsSider: React.FC<{ collapsed?: boolean; tooltipEnabled?: boolean }>
         label: t('memory.settings.panel_title', { defaultValue: 'IJFW Memory' }),
         icon: <Brain />,
         path: 'ijfw',
+      },
+      ecc: {
+        id: 'ecc',
+        label: t('settings.sider.ecc', { defaultValue: 'ECC harness' }),
+        icon: <ShieldCheck />,
+        path: 'ecc',
       },
       about: {
         id: 'about',

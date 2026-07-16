@@ -39,6 +39,7 @@ vi.mock('@/common', () => ({
       import: {
         claudeMem: { provider: (h: Handler) => providers.set('claudeMem', h) },
         obsidianVault: { provider: (h: Handler) => providers.set('obsidianVault', h) },
+        obsidianDetectVaults: { provider: (h: Handler) => providers.set('obsidianDetectVaults', h) },
         scanDevDir: { provider: (h: Handler) => providers.set('scanDevDir', h) },
         processDropFolder: { provider: (h: Handler) => providers.set('processDropFolder', h) },
         getDropFolderStatus: { provider: (h: Handler) => providers.set('getDropFolderStatus', h) },
@@ -53,7 +54,15 @@ vi.mock('@process/services/import/claudeMemImporter', () => ({
   runClaudeMemImport: vi.fn().mockResolvedValue({ imported: 0, skipped: 0, errors: [] }),
 }));
 vi.mock('@process/services/import/obsidianImporter', () => ({
-  runObsidianImport: vi.fn().mockResolvedValue({ imported: 0, skipped: 0, errors: [] }),
+  runObsidianImport: vi.fn().mockResolvedValue({ imported: 0, skipped: 0, errors: [], total: 0, capped: false }),
+  detectVaults: vi.fn().mockResolvedValue([]),
+}));
+vi.mock('@process/services/import/claudeNativeImporter', () => ({
+  runClaudeNativeImport: vi.fn().mockResolvedValue({ imported: 0, skipped: 0, errors: [] }),
+}));
+vi.mock('@process/services/import/obsidianVaultConfig', () => ({
+  detectConfiguredVaults: vi.fn().mockResolvedValue([]),
+  getConfiguredVaultPaths: vi.fn().mockResolvedValue(new Set()),
 }));
 vi.mock('@process/services/import/devScanImporter', () => ({
   scanForMemoryDirs: vi.fn().mockResolvedValue([]),
@@ -93,7 +102,11 @@ describe('importBridge - memory.ingest-files', () => {
 
   afterEach(() => {
     for (const dir of tmpDirs) {
-      try { fs.rmSync(dir, { recursive: true, force: true }); } catch { /* ignore */ }
+      try {
+        fs.rmSync(dir, { recursive: true, force: true });
+      } catch {
+        /* ignore */
+      }
     }
     tmpDirs.length = 0;
   });
@@ -102,12 +115,12 @@ describe('importBridge - memory.ingest-files', () => {
     const handler = providers.get('ingestFiles');
     expect(handler, 'ingestFiles provider must be registered').toBeDefined();
 
-    const result = await handler!({
+    const result = (await handler!({
       files: [
         { name: 'note.md', content: 'Hello world' },
         { name: 'thoughts.txt', content: 'A plain text note' },
       ],
-    }) as { ok: boolean; ingested: number; errors: string[] };
+    })) as { ok: boolean; ingested: number; errors: string[] };
 
     expect(result.ok).toBe(true);
     expect(result.ingested).toBe(2);
@@ -130,11 +143,9 @@ describe('importBridge - memory.ingest-files', () => {
   it('rejects names containing ".." (path traversal)', async () => {
     const handler = providers.get('ingestFiles')!;
 
-    const result = await handler({
-      files: [
-        { name: '../etc/passwd', content: 'bad' },
-      ],
-    }) as { ok: boolean; ingested: number; errors: string[] };
+    const result = (await handler({
+      files: [{ name: '../etc/passwd', content: 'bad' }],
+    })) as { ok: boolean; ingested: number; errors: string[] };
 
     expect(result.ingested).toBe(0);
     expect(result.errors.length).toBeGreaterThan(0);
@@ -149,11 +160,9 @@ describe('importBridge - memory.ingest-files', () => {
   it('rejects names containing forward slashes', async () => {
     const handler = providers.get('ingestFiles')!;
 
-    const result = await handler({
-      files: [
-        { name: 'sub/secret.md', content: 'bad' },
-      ],
-    }) as { ok: boolean; ingested: number; errors: string[] };
+    const result = (await handler({
+      files: [{ name: 'sub/secret.md', content: 'bad' }],
+    })) as { ok: boolean; ingested: number; errors: string[] };
 
     expect(result.ingested).toBe(0);
     expect(result.errors.length).toBeGreaterThan(0);
@@ -162,7 +171,7 @@ describe('importBridge - memory.ingest-files', () => {
   it('returns ok:false for invalid args', async () => {
     const handler = providers.get('ingestFiles')!;
 
-    const result = await handler({ files: [] }) as { ok: boolean; ingested: number; errors: string[] };
+    const result = (await handler({ files: [] })) as { ok: boolean; ingested: number; errors: string[] };
     expect(result.ok).toBe(false);
   });
 
@@ -170,9 +179,9 @@ describe('importBridge - memory.ingest-files', () => {
     const handler = providers.get('ingestFiles')!;
     const mdWithFrontmatter = '---\ntype: decision\n---\nKeep this.';
 
-    const result = await handler({
+    const result = (await handler({
       files: [{ name: 'existing.md', content: mdWithFrontmatter }],
-    }) as { ok: boolean; ingested: number; errors: string[] };
+    })) as { ok: boolean; ingested: number; errors: string[] };
 
     expect(result.ingested).toBe(1);
 

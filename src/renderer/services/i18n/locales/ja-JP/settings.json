@@ -1804,7 +1804,8 @@
     "constitution": "憲章",
     "images": "画像生成",
     "voice": "音声",
-    "groupEngine": "ENGINE"
+    "groupEngine": "ENGINE",
+    "ecc": "ECC ハーネス"
   },
   "channelsIndex": {
     "title": "チャンネル",
@@ -2598,5 +2599,14 @@
   "semanticSearchDescription": "キーワードだけでなく意味でスキルとメモリをランク付けします。オフラインで動作し、ローカルモデルが利用できない場合はキーワード検索にフォールバックします。",
   "semanticSearchActive": "セマンティック検索が有効",
   "semanticSearchFallback": "キーワード検索を使用中（セマンティックモデルが利用不可）",
-  "semanticSearchIndexing": "セマンティックインデックスを構築中…"
+  "semanticSearchIndexing": "セマンティックインデックスを構築中…",
+  "ecc": {
+    "title": "ECC エージェントハーネス",
+    "installed": "インストール済み",
+    "notInstalled": "未インストール",
+    "aboutBody": "Claude エンジン向けのプロ仕様のルール・スキル・レビューエージェント。Darhai に同梱され、初回起動時に自動インストールされます。既存の ECC 環境は変更されません。",
+    "gateGuardLabel": "GateGuard（事実確認ゲート）",
+    "gateGuardDescription": "オンにすると、Claude エージェントは各ファイルの最初の編集前に根拠の提示を求められます。より厳格ですが遅くなり、メッセージは英語です。新しく起動するエージェントに適用されます。",
+    "toggleError": "設定を保存できませんでした。もう一度お試しください。"
+  }
 }

@@ -1643,6 +1643,14 @@ export const ijfw = {
   dropQuarantine: buildProvider<{ ok: true } | { ok: false; error: string }, { name: string }>('ijfw.drop-quarantine'),
 };
 
+/** Bundled ECC agent harness (rules/skills/agents) + GateGuard toggle. */
+export const ecc = {
+  /** Snapshot: bundle present, ~/.claude install detected, GateGuard state. */
+  getStatus: buildProvider<{ bundled: boolean; installed: boolean; gateGuardEnabled: boolean }, void>('ecc.get-status'),
+  /** Persist the Settings GateGuard toggle (default off). */
+  setGateGuard: buildProvider<{ ok: true }, { enabled: boolean }>('ecc.set-gate-guard'),
+};
+
 export type IjfwDropEntry = { name: string; size: number; mtimeMs: number };
 
 export type IjfwDropIngestResult =

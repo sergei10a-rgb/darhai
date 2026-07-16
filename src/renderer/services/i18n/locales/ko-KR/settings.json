@@ -1804,7 +1804,8 @@
     "constitution": "헌장",
     "images": "이미지 생성",
     "voice": "음성",
-    "groupEngine": "ENGINE"
+    "groupEngine": "ENGINE",
+    "ecc": "ECC 하네스"
   },
   "channelsIndex": {
     "title": "채널",
@@ -2598,5 +2599,14 @@
   "semanticSearchDescription": "키워드뿐 아니라 의미로 스킬과 메모리를 순위화합니다. 오프라인에서 작동하며, 로컬 모델을 사용할 수 없을 때 키워드 검색으로 대체됩니다.",
   "semanticSearchActive": "의미 검색 활성화됨",
   "semanticSearchFallback": "키워드 검색 사용 중 (의미 모델 사용 불가)",
-  "semanticSearchIndexing": "의미 인덱스 생성 중…"
+  "semanticSearchIndexing": "의미 인덱스 생성 중…",
+  "ecc": {
+    "title": "ECC 에이전트 하네스",
+    "installed": "설치됨",
+    "notInstalled": "아직 설치되지 않음",
+    "aboutBody": "Claude 엔진을 위한 전문 규칙, 스킬, 리뷰 에이전트. Darhai와 함께 제공되며 첫 실행 시 자동으로 설치됩니다. 기존 ECC 설치는 절대 수정되지 않습니다.",
+    "gateGuardLabel": "GateGuard(사실 강제 게이트)",
+    "gateGuardDescription": "켜면 Claude 에이전트는 각 파일의 첫 편집 전에 근거를 제시해야 합니다. 더 엄격하지만 느려지며 메시지는 영어로 표시됩니다. 새로 시작하는 에이전트에 적용됩니다.",
+    "toggleError": "설정을 저장하지 못했습니다. 다시 시도하세요."
+  }
 }

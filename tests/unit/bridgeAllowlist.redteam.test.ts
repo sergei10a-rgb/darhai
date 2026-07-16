@@ -32,6 +32,21 @@ describe('isAllowedForRemote - fs/project arbitrary-path providers denied', () =
  * secret, and test-plugin makes an outbound call with caller-supplied creds.
  * Consistent with the channel.*-pairing trio.
  */
+/**
+ * The ECC GateGuard toggle persists a config mutation that changes the env of
+ * every future claude agent spawn (an attacker could silently weaken the
+ * quality gate). Mutation stays local-only; the read-only status stays remote.
+ */
+describe('isAllowedForRemote - ecc harness providers', () => {
+  it('denies subscribe-ecc.set-gate-guard for remote callers', () => {
+    expect(isAllowedForRemote('subscribe-ecc.set-gate-guard')).toBe(false);
+  });
+
+  it('still allows the read-only ecc.get-status for remote callers', () => {
+    expect(isAllowedForRemote('subscribe-ecc.get-status')).toBe(true);
+  });
+});
+
 describe('isAllowedForRemote - channel config/auth providers denied', () => {
   const deniedKeys: ReadonlyArray<string> = [
     'channel.enable-plugin',

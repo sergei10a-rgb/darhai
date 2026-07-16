@@ -1829,7 +1829,8 @@
     "skills": "Skills & Tools",
     "agents": "Agents",
     "constitution": "Constitution",
-    "groupEngine": "ENGINE"
+    "groupEngine": "ENGINE",
+    "ecc": "ECC harness"
   },
   "channelsIndex": {
     "title": "Channels",
@@ -2615,5 +2616,14 @@
   "semanticSearchDescription": "Rank skills and memory by meaning, not just keywords. Works offline; falls back to keyword search when the local model is unavailable.",
   "semanticSearchActive": "Semantic search active",
   "semanticSearchFallback": "Using keyword search (semantic model unavailable)",
-  "semanticSearchIndexing": "Building semantic index…"
+  "semanticSearchIndexing": "Building semantic index…",
+  "ecc": {
+    "title": "ECC agent harness",
+    "installed": "Installed",
+    "notInstalled": "Not installed yet",
+    "aboutBody": "Professional rules, skills, and reviewer agents for the Claude engine. Ships with Darhai and installs itself automatically on first launch - an existing ECC install is never modified.",
+    "gateGuardLabel": "GateGuard (fact-forcing gate)",
+    "gateGuardDescription": "When on, the Claude agent must state its evidence (callers, schemas, your instruction) before the first edit of each file. Stricter output, but slower and its prompts are in English. Applies to newly started agents.",
+    "toggleError": "Could not save the setting. Try again."
+  }
 }

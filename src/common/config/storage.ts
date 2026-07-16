@@ -178,6 +178,24 @@ export interface IConfigStorageRefer {
    * never spawns `npx @ijfw/install`. Wave 6 wires the Settings toggle.
    */
   'ijfw.skipSetup'?: boolean;
+  /**
+   * When false, eccSystemService.seedEccIfAbsent() skips installing the
+   * bundled ECC harness into ~/.claude. Default (absent) = install.
+   */
+  'ecc.autoInstall'?: boolean;
+  /**
+   * GateGuard toggle for the bundled ECC harness. Default (absent) = true:
+   * the fact-forcing gate runs like the rest of the ECC quality hooks. An
+   * explicit false makes Darhai inject ECC_GATEGUARD=off into claude spawns.
+   */
+  'ecc.gateGuardEnabled'?: boolean;
+  /**
+   * Sentinel set before the bundled ECC installer runs and cleared after the
+   * completion marker is verified. Lets a killed/interrupted seed retry on
+   * the next launch instead of mistaking its partial artifacts for a
+   * user-managed install.
+   */
+  'ecc.seedInProgress'?: boolean;
   /** Persisted app-wide UI zoom factor for Display settings */
   'ui.zoomFactor'?: number;
   /** Auto-enable WebUI in desktop mode */

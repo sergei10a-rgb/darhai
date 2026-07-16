@@ -459,6 +459,9 @@ try {
   // 5b-ijfw. Stage the IJFW (Memory) MCP server so it ships in the installer and
   // seeds ~/.ijfw/mcp-server on first run - no runtime npm/network required.
   execSync('node scripts/prepareIjfw.js', { stdio: 'inherit', env: process.env });
+  // 5a2. Prepare bundled ECC harness (rules/skills/agents) - eccSystemService
+  // installs it into ~/.claude on first run; hooks stay inert by default.
+  execSync('node scripts/prepareEcc.js', { stdio: 'inherit', env: process.env });
   // 5b. Prepare wayland-core binary (Rust CLI for agent integration)
   prepareWaylandCore();
   // 5c. Prepare the bundled voice STT model (Whisper-tiny ONNX, ~43 MB) so
