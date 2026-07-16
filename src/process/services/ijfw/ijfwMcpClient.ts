@@ -20,7 +20,7 @@ import * as path from 'node:path';
 import log from 'electron-log';
 
 import { encode, decode, DecodeError, MAX_LINE_BYTES } from './mcpWireProtocol';
-import { buildChildEnv } from './envAllowlist';
+import { resolveIjfwNodeRuntime } from './nodeRuntime';
 import { resolveEntry } from './entryResolver';
 import { jsonRpcResponseSchema } from './ipcSchemas';
 import type { IjfwErrorReason, IjfwInvokeResult } from '@/common/types/ijfw';
@@ -320,9 +320,9 @@ class IjfwMcpClient {
   private async spawnChild(): Promise<ChildProcess> {
     const mcpServerDir = path.join(os.homedir(), '.ijfw', 'mcp-server');
     const entry = await resolveEntry(mcpServerDir);
-    const env = buildChildEnv({ ELECTRON_RUN_AS_NODE: '1' });
-    const child = spawn(process.execPath, [entry], {
-      env,
+    const rt = resolveIjfwNodeRuntime();
+    const child = spawn(rt.command, [...rt.prefixArgs, entry], {
+      env: rt.env,
       stdio: ['pipe', 'pipe', 'pipe'],
     });
 

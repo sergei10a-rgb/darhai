@@ -14,12 +14,20 @@ vi.mock('node:child_process', () => ({
   spawn: vi.fn(),
 }));
 
+// Control the runtime resolution: default null = no bundled bun, so safeSpawn
+// falls back to Electron-as-Node (the dev path). Tests that exercise the
+// packaged bun path set a directory via mockReturnValue.
+vi.mock('@process/utils/shellEnv', () => ({
+  getBundledBunDir: vi.fn(() => null),
+}));
+
 import * as childProcess from 'node:child_process';
 // eslint-disable-next-line import/first
-import {
-  __setTrustedNpmCliResolver,
-  safeSpawn,
-} from '@process/services/ijfw/safeSpawn';
+import { getBundledBunDir } from '@process/utils/shellEnv';
+// eslint-disable-next-line import/first
+import { __setTrustedNpmCliResolver, safeSpawn } from '@process/services/ijfw/safeSpawn';
+
+const getBundledBunDirMock = getBundledBunDir as unknown as ReturnType<typeof vi.fn>;
 
 function makeFakeChild() {
   const child = new EventEmitter() as EventEmitter & { stdout: null; stderr: null; stdin: null };
@@ -45,10 +53,10 @@ describe('ijfw/safeSpawn', () => {
     process.env.PATH = '/usr/bin';
     process.env.HOME = '/Users/test';
     process.env.NODE_ENV = 'test';
+    getBundledBunDirMock.mockReset();
+    getBundledBunDirMock.mockReturnValue(null); // dev path (Electron-as-Node)
     (childProcess.spawn as unknown as ReturnType<typeof vi.fn>).mockReset();
-    (childProcess.spawn as unknown as ReturnType<typeof vi.fn>).mockImplementation(() =>
-      makeFakeChild(),
-    );
+    (childProcess.spawn as unknown as ReturnType<typeof vi.fn>).mockImplementation(() => makeFakeChild());
   });
 
   afterEach(() => {
@@ -83,11 +91,36 @@ describe('ijfw/safeSpawn', () => {
     expect(argv.slice(1)).toEqual(['cowsay', 'hello']);
   });
 
-  it('forces ELECTRON_RUN_AS_NODE=1 in the child env', async () => {
+  it('forces ELECTRON_RUN_AS_NODE=1 in the child env (dev / Electron-as-Node path)', async () => {
     await safeSpawn({ cmd: 'node', args: ['x'] });
     const calls = (childProcess.spawn as unknown as ReturnType<typeof vi.fn>).mock.calls;
     const opts = calls[0][2] as { env: NodeJS.ProcessEnv };
     expect(opts.env.ELECTRON_RUN_AS_NODE).toBe('1');
+  });
+
+  it('uses the bundled bun binary and omits ELECTRON_RUN_AS_NODE when a bundle is present', async () => {
+    const bunDir = path.join(trustedNpmDir, 'bun');
+    getBundledBunDirMock.mockReturnValue(bunDir);
+    await safeSpawn({ cmd: 'node', args: ['--version'] });
+    const calls = (childProcess.spawn as unknown as ReturnType<typeof vi.fn>).mock.calls;
+    const [argv0, argv, opts] = calls[0] as [string, string[], { env: NodeJS.ProcessEnv }];
+    const expectedBun = path.join(bunDir, process.platform === 'win32' ? 'bun.exe' : 'bun');
+    expect(argv0).toBe(expectedBun);
+    expect(argv).toEqual(['--version']);
+    // The RunAsNode fuse makes ELECTRON_RUN_AS_NODE a no-op in packaged builds;
+    // bun is a real runtime and does not need it.
+    expect(opts.env.ELECTRON_RUN_AS_NODE).toBeUndefined();
+  });
+
+  it('runs the trusted npm cli under bun when a bundle is present', async () => {
+    const bunDir = path.join(trustedNpmDir, 'bun');
+    getBundledBunDirMock.mockReturnValue(bunDir);
+    await safeSpawn({ cmd: 'npm', args: ['install', 'foo'] });
+    const calls = (childProcess.spawn as unknown as ReturnType<typeof vi.fn>).mock.calls;
+    const [argv0, argv] = calls[0] as [string, string[]];
+    expect(argv0).toBe(path.join(bunDir, process.platform === 'win32' ? 'bun.exe' : 'bun'));
+    expect(argv[0]).toBe(trustedNpmCli);
+    expect(argv.slice(1)).toEqual(['install', 'foo']);
   });
 
   it('passes the buildChildEnv-filtered env, not raw process.env', async () => {
@@ -108,9 +141,9 @@ describe('ijfw/safeSpawn', () => {
   });
 
   it('throws when extraEnv contains an invalid key', async () => {
-    await expect(
-      safeSpawn({ cmd: 'node', args: ['x'], extraEnv: { 'bad-key': 'v' } }),
-    ).rejects.toThrow(/invalid env key/);
+    await expect(safeSpawn({ cmd: 'node', args: ['x'], extraEnv: { 'bad-key': 'v' } })).rejects.toThrow(
+      /invalid env key/
+    );
   });
 
   it('passes cwd through to spawn options', async () => {
@@ -124,8 +157,6 @@ describe('ijfw/safeSpawn', () => {
     __setTrustedNpmCliResolver(async () => {
       throw new Error('Could not resolve trusted npm');
     });
-    await expect(safeSpawn({ cmd: 'npm', args: ['x'] })).rejects.toThrow(
-      /trusted npm/i,
-    );
+    await expect(safeSpawn({ cmd: 'npm', args: ['x'] })).rejects.toThrow(/trusted npm/i);
   });
 });

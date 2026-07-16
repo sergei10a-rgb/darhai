@@ -31,6 +31,7 @@ import { ipcBridge } from '@/common';
 import type { IjfwLifecycleStatus, IjfwStatusPayload } from '@/common/adapter/ipcBridge';
 import type { IjfwErrorReason } from '@/common/types/ijfw';
 import { buildChildEnv } from '@process/services/ijfw/envAllowlist';
+import { resolveIjfwNodeRuntime } from '@process/services/ijfw/nodeRuntime';
 import { safeSpawn } from '@process/services/ijfw/safeSpawn';
 import { writeAtomic, moveWithExdevFallback, ijfwCacheKey } from '@process/services/ijfw/atomicFile';
 import { acquireLock, releaseLock, type LockMetadata } from '@process/services/ijfw/installLock';
@@ -597,9 +598,10 @@ async function spawnTestVerify(mcpServerDir: string): Promise<boolean> {
   return new Promise<boolean>((resolve) => {
     let child: ChildProcess;
     try {
-      child = spawn(process.execPath, [entry], {
+      const rt = resolveIjfwNodeRuntime();
+      child = spawn(rt.command, [...rt.prefixArgs, entry], {
         stdio: ['pipe', 'pipe', 'pipe'],
-        env: buildChildEnv({ ELECTRON_RUN_AS_NODE: '1' }),
+        env: rt.env,
       });
     } catch (err) {
       log.warn('[ijfw] spawnTestVerify - spawn threw', { err });

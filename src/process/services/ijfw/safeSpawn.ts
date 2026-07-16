@@ -12,7 +12,7 @@
 import { spawn, type ChildProcess } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { buildChildEnv } from './envAllowlist';
+import { resolveIjfwNodeRuntime } from './nodeRuntime';
 
 export type Cmd = 'npm' | 'npx' | 'node';
 
@@ -40,16 +40,7 @@ async function defaultResolveTrustedNpm(): Promise<string> {
   const isWin = process.platform === 'win32';
   // SEC-007: resolve via known absolute install locations, NOT bare PATH.
   const candidates = [
-    path.join(
-      path.dirname(process.execPath),
-      '..',
-      'libnode',
-      'lib',
-      'node_modules',
-      'npm',
-      'bin',
-      'npm-cli.js',
-    ),
+    path.join(path.dirname(process.execPath), '..', 'libnode', 'lib', 'node_modules', 'npm', 'bin', 'npm-cli.js'),
     '/usr/local/lib/node_modules/npm/bin/npm-cli.js',
     '/opt/homebrew/lib/node_modules/npm/bin/npm-cli.js',
   ];
@@ -61,10 +52,7 @@ async function defaultResolveTrustedNpm(): Promise<string> {
     const npmRel = ['node_modules', 'npm', 'bin', 'npm-cli.js'];
     const programFiles = process.env.ProgramFiles || 'C:\\Program Files';
     const programFilesX86 = process.env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)';
-    candidates.push(
-      path.join(programFiles, 'nodejs', ...npmRel),
-      path.join(programFilesX86, 'nodejs', ...npmRel),
-    );
+    candidates.push(path.join(programFiles, 'nodejs', ...npmRel), path.join(programFilesX86, 'nodejs', ...npmRel));
     if (process.env.APPDATA) candidates.push(path.join(process.env.APPDATA, 'npm', ...npmRel));
   }
   for (const candidate of candidates) {
@@ -99,28 +87,27 @@ async function resolveTrustedNpmCli(): Promise<string> {
 }
 
 export async function safeSpawn(opts: SafeSpawnOptions): Promise<ChildProcess> {
-  let argv0: string;
-  let argv: string[];
-
+  // The JS entry to run under the resolved Node runtime. `node` runs the script
+  // directly; `npm`/`npx` run the trusted CLI shim (SEC-007 absolute path).
+  let jsArgs: string[];
   if (opts.cmd === 'node') {
-    argv0 = process.execPath;
-    argv = [...opts.args];
+    jsArgs = [...opts.args];
   } else if (opts.cmd === 'npm') {
     const npmCli = await resolveTrustedNpmCli();
-    argv0 = process.execPath;
-    argv = [npmCli, ...opts.args];
+    jsArgs = [npmCli, ...opts.args];
   } else {
     const npmCli = await resolveTrustedNpmCli();
     const npxCli = path.join(path.dirname(npmCli), 'npx-cli.js');
-    argv0 = process.execPath;
-    argv = [npxCli, ...opts.args];
+    jsArgs = [npxCli, ...opts.args];
   }
 
-  const env = buildChildEnv({ ...opts.extraEnv, ELECTRON_RUN_AS_NODE: '1' });
+  // Bundled bun in packaged builds (RunAsNode fuse makes Electron-as-Node
+  // unusable there); Electron-as-Node in dev. buildChildEnv is applied inside.
+  const rt = resolveIjfwNodeRuntime(opts.extraEnv);
 
-  return spawn(argv0, argv, {
+  return spawn(rt.command, [...rt.prefixArgs, ...jsArgs], {
     stdio: ['pipe', 'pipe', 'pipe'],
     cwd: opts.cwd,
-    env,
+    env: rt.env,
   });
 }

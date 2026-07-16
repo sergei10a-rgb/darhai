@@ -27,6 +27,12 @@ vi.mock('@process/services/ijfw/entryResolver', () => ({
   resolveEntry: vi.fn(async () => '/tmp/fake-ijfw-entry.js'),
 }));
 
+// No bundled bun in the test env → resolveIjfwNodeRuntime uses the Electron-as-
+// Node path deterministically (and avoids getPlatformServices in getBundledBunDir).
+vi.mock('@process/utils/shellEnv', () => ({
+  getBundledBunDir: () => null,
+}));
+
 // Build a fake ChildProcess we can drive from inside each test. Tracks all
 // writes via `writeSpy` and exposes signal capture via `killSignals[]`.
 type FakeChild = EventEmitter & {
@@ -146,8 +152,8 @@ describe('ijfwMcpClient', () => {
           jsonrpc: '2.0',
           id: parsed.id,
           result: mcpEnvelope({ hits: [] }),
-        }),
-      ),
+        })
+      )
     );
 
     const result = await promise;
@@ -212,15 +218,11 @@ describe('ijfwMcpClient', () => {
     // Resolve both. Use the real MCP envelope shape (Codex B2 unwrap).
     currentChild!.stdout.emit(
       'data',
-      Buffer.from(
-        encodeNewline({ jsonrpc: '2.0', id: first.id, result: mcpEnvelope('A') }),
-      ),
+      Buffer.from(encodeNewline({ jsonrpc: '2.0', id: first.id, result: mcpEnvelope('A') }))
     );
     currentChild!.stdout.emit(
       'data',
-      Buffer.from(
-        encodeNewline({ jsonrpc: '2.0', id: second.id, result: mcpEnvelope('B') }),
-      ),
+      Buffer.from(encodeNewline({ jsonrpc: '2.0', id: second.id, result: mcpEnvelope('B') }))
     );
 
     const [r1, r2] = await Promise.all([p1, p2]);
@@ -266,8 +268,8 @@ describe('ijfwMcpClient', () => {
           jsonrpc: '2.0',
           id: written.id,
           result: mcpEnvelope({ ok: true }),
-        }),
-      ),
+        })
+      )
     );
     const result = await promise;
     expect(result.ok).toBe(true);
@@ -289,8 +291,8 @@ describe('ijfwMcpClient', () => {
           jsonrpc: '2.0',
           id: sent.id,
           result: mcpEnvelope({ facts: [] }),
-        }),
-      ),
+        })
+      )
     );
     const result = await promise;
     expect(result.ok).toBe(true);
@@ -311,8 +313,8 @@ describe('ijfwMcpClient', () => {
           jsonrpc: '2.0',
           id: sent.id,
           result: mcpEnvelope({ entries: [] }),
-        }),
-      ),
+        })
+      )
     );
     const result = await promise;
     expect(result.ok).toBe(true);
@@ -342,8 +344,8 @@ describe('ijfwMcpClient', () => {
             content: [{ type: 'text', text: 'server crashed in tool handler' }],
             isError: true,
           },
-        }),
-      ),
+        })
+      )
     );
     const result = await promise;
     expect(result.ok).toBe(false);
@@ -368,8 +370,8 @@ describe('ijfwMcpClient', () => {
             content: [{ type: 'text', text: 'not-json-payload' }],
             isError: false,
           },
-        }),
-      ),
+        })
+      )
     );
     const result = await promise;
     expect(result.ok).toBe(true);
@@ -451,8 +453,8 @@ describe('ijfwMcpClient', () => {
           jsonrpc: '2.0',
           id: written.id,
           error: { code: -32601, message: 'method not found' },
-        }),
-      ),
+        })
+      )
     );
 
     const result = await promise;
