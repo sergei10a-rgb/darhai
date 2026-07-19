@@ -238,3 +238,6 @@ design-mockups/
 resources/bundled-ijfw
 # resources/bundled-ecc is VENDORED (committed) - the audited ECC payload ships
 # as an inseparable part of Darhai; refresh it via `node scripts/prepareEcc.js --refresh`.
+
+# IJFW session scratch (any depth) - never tracked
+.ijfw/

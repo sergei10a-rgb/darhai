@@ -1,0 +1,334 @@
+{
+  "no_counterpart": [
+    "using-git-worktrees"
+  ],
+  "verdicts": [
+    {
+      "skill": "brainstorming",
+      "counterparts": [
+        {
+          "name": "ijfw-spec-phase",
+          "pool": "ijfw",
+          "path": "C:\\Users\\serge\\.ijfw\\claude\\skills\\ijfw-spec-phase",
+          "reason": "Fires when requirements are ambiguous before any planning/execution and locks WHAT before HOW via a falsifiable SPEC.md — the same pre-implementation intent/requirements exploration gate."
+        },
+        {
+          "name": "ijfw-workflow",
+          "pool": "ijfw",
+          "path": "C:\\Users\\serge\\.ijfw\\claude\\skills\\ijfw-workflow",
+          "reason": "Explicitly triggers on 'brainstorm' and any project-level build/create ask and runs its own Discovery phase — competes for the identical trigger."
+        },
+        {
+          "name": "intent-driven-development",
+          "pool": "ecc",
+          "path": "C:\\claude\\darhai\\resources\\bundled-ecc\\skills\\intent-driven-development",
+          "reason": "Turns ambiguous/high-impact requests into scoped, verifiable acceptance criteria before implementation — same 'clarify before building' role."
+        }
+      ],
+      "verdict": {
+        "winner": "merge",
+        "rationale_mn": "superpowers brainstorming нь ярилцлагын процессын хувьд хамгийн бүрэн: HARD-GATE, 9 алхамт Checklist, «Propose 2-3 approaches», Spec Self-Review + User Review Gate нь тодорхой, engine-үл хамаарах бөгөөд visual-companion нь зөвхөн opt-in тул жижиг локал загварт ч хөнгөн. Гэхдээ түүний spec-д шалгагдахуйц шалгуурын формат дутуу — үүнийг ecc intent-driven-development-ийн «Write Acceptance Criteria» (AC-NNN: Scenario/Action/Expected/Must not/Verification/Priority), «Discovered facts vs Product/business constraints» дүрэм, «Pass/Fail Rubric» хэсгүүд яг нөхнө. ijfw-spec-phase болон ijfw-workflow хоёул IJFW-ийн MCP/CLI/state (`ijfw_memory_recall`, `ijfw-discuss-phase` agent, `populateDisciplineBlock`, `.ijfw/state`)-д хатуу уягдсан тул Darhai-ийн wcore/Ollama/LM Studio орчинд шууд зөөгдөхгүй — хасна.",
+        "merge_plan": "Base = superpowers brainstorming SKILL.md (HARD-GATE, Checklist, Process Flow, Spec Self-Review, User Review Gate хэвээр); терминал төлвийн «invoke writing-plans»-ийг Darhai-ийн plan skill-ийн нэрээр солино, spec замыг Darhai-ийн docs байршилд тохируулна. Graft from ecc intent-driven-development: AC-NNN acceptance-criteria формат (Scenario/Action/Expected/Must not/Verification/Priority), «Discovered facts vs Product/business constraints — кодоос бизнес дүрэм бүү тааварла» дүрэм, Pass/Fail Rubric-ийг brainstorming-ийн «Write design doc» хэсэгт шигтгэж, spec-ийн шалгуур бүрийг falsifiable болгоно. Мөн ijfw-workflow Move 1-ийн «vague ask → verifiable goal» жишээ мөрүүдийг (5 жишээ) clarifying-questions хэсэгт нэг догол болгон авч, ijfw хоёр skill-ийг бүхэлд нь хасна; visual-companion.md-г optional reference хэвээр үлдээж локал-модель профайлд ачаалахгүй байхаар тэмдэглэнэ.",
+        "confidence": "high"
+      }
+    },
+    {
+      "skill": "dispatching-parallel-agents",
+      "counterparts": [
+        {
+          "name": "parallel-execution-optimizer",
+          "pool": "ecc",
+          "path": "C:\\claude\\darhai\\resources\\bundled-ecc\\skills\\parallel-execution-optimizer",
+          "reason": "Same core purpose: run independent work faster via concurrent agents, batched tool calls, and isolated lanes."
+        },
+        {
+          "name": "claude-devfleet",
+          "pool": "ecc",
+          "path": "C:\\claude\\darhai\\resources\\bundled-ecc\\skills\\claude-devfleet",
+          "reason": "Dispatch parallel agents in isolated worktrees and monitor them — same purpose bound to the DevFleet tool."
+        },
+        {
+          "name": "dmux-workflows",
+          "pool": "ecc",
+          "path": "C:\\claude\\darhai\\resources\\bundled-ecc\\skills\\dmux-workflows",
+          "reason": "Patterns for running multiple agent sessions in parallel (tmux-pane mechanism) — same trigger 'run agents in parallel'."
+        }
+      ],
+      "verdict": {
+        "winner": "merge",
+        "rationale_mn": "Superpowers-ийн скилл \"Agent Prompt Structure\", \"Common Mistakes\" (❌/✅ хос), \"When NOT to Use\", \"Verification\" гэсэн тодорхой, хөдөлгүүрээс хамааралгүй аргачлалтай тул суурь болгоход хамгийн тохиромжтой; харин ECC-ийн parallel-execution-optimizer-т байдаг \"Lane Matrix\" (write surface мөргөлдөөний хүснэгт) болон \"Execution Rules\"/\"Failure Modes\" нь superpowers-т огт байхгүй бодит нэмэлт юм. claude-devfleet нь localhost:18801 MCP сервер, dmux-workflows нь tmux/dmux болон ECC-ийн scripts/orchestrate-worktrees.js-ээс хатуу хамааралтай тул Darhai-ийн олон хөдөлгүүрт (wcore, LM Studio/Ollama, claude CLI) огт тохирохгүй, хоёуланг нь хаяна. Token хэмнэлтийн үүднээс superpowers-ийн \"Real Example from Session\", \"Real-World Impact\", dot график зэрэг давхардсан хэсгүүдийг мөн тайрах хэрэгтэй.",
+        "merge_plan": "Base = superpowers dispatching-parallel-agents, trimmed for token economy (drop the dot digraph, \"Real Example from Session\", and \"Real-World Impact\" sections; rewrite the \"multiple dispatch calls in one response\" line as engine-neutral \"issue all dispatches concurrently\"). Graft from ecc:parallel-execution-optimizer: the \"Lane Matrix\" write-surface collision table, the \"Execution Rules\" bullets (batch reads, gate destructive/shared-write work, poll long-running lanes), and the \"Failure Modes\" list appended to Common Mistakes. Drop claude-devfleet and dmux-workflows entirely — both are tool-bound (external MCP server / tmux) and non-portable across Darhai engines.",
+        "confidence": "high"
+      }
+    },
+    {
+      "skill": "executing-plans",
+      "counterparts": [
+        {
+          "name": "plan-orchestrate",
+          "pool": "ecc",
+          "path": "C:\\claude\\darhai\\resources\\bundled-ecc\\skills\\plan-orchestrate",
+          "reason": "Reads a written plan, decomposes it into steps, and produces the per-step agent chain to drive it through execution — competes for the 'I have a plan, now run it' trigger."
+        },
+        {
+          "name": "ijfw-execute (command, not skill)",
+          "pool": "ijfw",
+          "path": "C:\\Users\\serge\\.ijfw\\claude\\commands\\ijfw-execute.md",
+          "reason": "Command file (not a skill dir): jumps to the Execute phase of an approved plan, sequential-with-verification or parallel dispatch with human checkpoints — a true functional duplicate."
+        }
+      ],
+      "verdict": {
+        "winner": "merge",
+        "rationale_mn": "Superpowers-ийн executing-plans нь цомхон (~65 мөр), engine-үл хамаарах жинхэнэ гүйцэтгэлийн процесс: «Load and Review Plan», «Execute Tasks», «When to Stop and Ask for Help» гэсэн тодорхой зогсох нөхцөлтэй тул жижиг локал загварт ч токен хэмнэлттэй ажиллана. ECC plan-orchestrate нь төлөвлөгөө огт ГҮЙЦЭТГЭДЭГГҮЙ — «Generative only — never invokes /orchestrate» гэж өөрөө зарлаад, /everything-claude-code:orchestrate slash-команд, ECC agent catalogue, plugin-зам илрүүлэлтэд бүрэн уягдсан ~264 мөр тул Darhai-ийн wcore/LM Studio/Ollama орчинд ажиллахгүй, шууд хасна. ijfw-execute бие даасан биш («This command invokes ijfw-workflow at the Execute phase directly», .ijfw/state хамааралтай) ч superpowers-т дутуу байгаа ганц үнэ цэнтэй механизмтай: «completion contracts with max-iter=3» гэсэн хязгаартай давталт + stagnation илрүүлэлт + «Ledger gate». Тиймээс superpowers-ийг суурь болгож, ijfw-ээс зөвхөн энэ retry/ledger хэсгийг ерөнхийлж залгах нь зөв.",
+        "merge_plan": "Base: superpowers executing-plans SKILL.md. Graft from ijfw-execute.md two named sections, generalized: (1) the \"completion contracts with max-iter=3\" rule — per-task acceptance criteria with at most 3 retry iterations feeding failure output back in, halting on stagnation (two identical failure sets), replacing the vague \"Verification fails repeatedly\" stop condition; (2) the \"Ledger gate\" — before starting, check a plain project-local issues file (not .ijfw/state) and halt if unresolved issues from a prior run exist. In the base, strip Claude-Code-only coupling: the announce line and the hard cross-references to superpowers:finishing-a-development-branch / using-git-worktrees / subagent-driven-development become optional engine-neutral pointers; drop ecc plan-orchestrate entirely (its value is inseparable from the ECC /orchestrate slash command and agent catalogue).",
+        "confidence": "high"
+      }
+    },
+    {
+      "skill": "finishing-a-development-branch",
+      "counterparts": [
+        {
+          "name": "ijfw-ship",
+          "pool": "ijfw",
+          "path": "C:\\Users\\serge\\.ijfw\\claude\\skills\\ijfw-ship",
+          "reason": "Owns the 'ship it / wrap this up' moment when work is complete; for software runs test → tag → push → publish with a SHIP gate — same completion/integration decision point."
+        }
+      ],
+      "verdict": {
+        "winner": "superpowers",
+        "rationale_mn": "A (finishing-a-development-branch) нь branch дуусгах мөчийг бүрэн, бетон алхмаар хамардаг: \"Step 1: Verify Tests\"-ийн зогсоох нөхцөл, GIT_DIR/GIT_COMMON-оор орчин таних, яг 4 сонголтот цэс, мөн \"Common Mistakes\"/\"Red Flags\" хэсэгт worktree-г дотроос нь устгах, branch-ийг worktree-ээс өмнө устгах зэрэг бодит эвдрэлийн горимуудыг нарийн хамарсан; цэвэр git+shell тул wcore, Ollama/LM Studio, claude CLI аль ч engine дээр өөрчлөлтгүй ажиллана. B (ijfw-ship) нь үнэндээ өөр ойлголт — release/publish (tag+publish, KDP, campaign send) бөгөөд \"Ledger gate\"-ийн .ijfw/state/execute-issues.json, \"SHIP gate\"-ийн .ijfw/memory/brief.md, ijfw-release-eng агент, v1.5.0 gate-result схем зэрэг ijfw экосистемд хатуу уяастай тул Darhai-д зөөхөд өртөг өндөр, харин ном/кампанит ажлын checklist нь энэ ойлголтод илүүдэл token зардал. B-ийн ганц үнэ цэнэтэй push-word санаа нь A-ийн typed-\"discard\" баталгаажуулалт болон \"never force-push\" дүрэмтэй давхцаж байгаа тул merge хийх шаардлагагүй; software release тал нь Darhai-ийн өөрийн pr-ship/bump-version skill-үүдтэй ч давхардана.",
+        "confidence": "high"
+      }
+    },
+    {
+      "skill": "receiving-code-review",
+      "counterparts": [
+        {
+          "name": "ijfw-receiving-review",
+          "pool": "ijfw",
+          "path": "C:\\Users\\serge\\.ijfw\\claude\\skills\\ijfw-receiving-review",
+          "reason": "Near-verbatim duplicate: respond to review feedback with technical rigor, no blind agreement or performative pushback."
+        }
+      ],
+      "verdict": {
+        "winner": "merge",
+        "rationale_mn": "Хоёулаа нэг зорилготой бөгөөд бие биенээ нөхдөг: ijfw-ийн «Three legitimate replies», «Technical-rigor red flags» (§4), «Severity calibration» (§5), «Done When» checklist нь баталгаажуулалтын арга зүйгээр илүү хурц, 40% шахуу товч тул local жижиг моделд тохиромжтой. Харин superpowers-ийн «Handling Unclear Feedback» (бүх санал тодорхой болтол хэсэгчлэн хэрэгжүүлэхгүй), «Implementation Order» (blocking→simple→complex, тус бүрийг тестлэх), «Forbidden Responses»-ийн «You're absolutely right!» гэх мэт хэллэгийн шууд хориг, «Gracefully Correcting Your Pushback» хэсгүүд ijfw-д огт байхгүй практик үнэ цэнтэй. ijfw-ийн §7 memory болон ijfw-review/cross-audit лавлагаа, superpowers-ийн gh-CLI хэсэг, «your human partner» хэллэгүүд нь Darhai-д зориулж цэвэрлэх шаардлагатай сул талууд.",
+        "merge_plan": "Base = ijfw-receiving-review (leaner, sharper: three-reply structure, evidence bars, red flags, severity calibration, Done When). Graft from superpowers: \"Handling Unclear Feedback\" (clarify all items before implementing any), \"Implementation Order\" (blocking→simple→complex, test each fix individually), a condensed \"Forbidden Responses\"/no-gratitude phrase-ban list, and \"Gracefully Correcting Your Pushback\". Strip ijfw-specific machinery from the base (genericize §5 severity vocabulary, drop or genericize §7 ijfw-memory-audit references, remove See-also links) and drop superpowers' gh-CLI \"GitHub Thread Replies\" section and \"your human partner\" phrasing.",
+        "confidence": "high"
+      }
+    },
+    {
+      "skill": "requesting-code-review",
+      "counterparts": [
+        {
+          "name": "ijfw-review",
+          "pool": "ijfw",
+          "path": "C:\\Users\\serge\\.ijfw\\claude\\skills\\ijfw-review",
+          "reason": "Owns the 'review / code review / PR review' trigger for any artifact and produces a severity-tagged REVIEW.md — same 'get my work reviewed' purpose."
+        },
+        {
+          "name": "code-reviewer (agent-profile)",
+          "pool": "library",
+          "path": "C:\\claude\\darhai\\src\\process\\resources\\skills-library\\bodies\\agents\\engineering\\code-reviewer",
+          "reason": "Senior code reviewer persona invoked when a code review of PRs/changes is wanted — competes for the same request."
+        },
+        {
+          "name": "code-reviewer (skill)",
+          "pool": "library",
+          "path": "C:\\claude\\darhai\\src\\process\\resources\\skills-library\\bodies\\skills\\software-engineering\\code-reviewer",
+          "reason": "Code review methodology with checklists and severity classification — same trigger, methodology-reference form."
+        },
+        {
+          "name": "conduct-code-review-round",
+          "pool": "library",
+          "path": "C:\\claude\\darhai\\src\\process\\resources\\skills-library\\bodies\\workflows\\conduct-code-review-round",
+          "reason": "Workflow that chains four reviewer skills into a structured code-review round — a packaged version of 'dispatch a code review'."
+        }
+      ],
+      "verdict": {
+        "winner": "merge",
+        "confidence": "high",
+        "rationale_mn": "A (superpowers) нь ревьюгийн бүтэн мөчлөгийг — \"When to Request Review\", git SHA-гаар context бэлдэх, engine-үл-хамаарсан reviewer template (code-reviewer.md), \"Act on feedback\", \"Red Flags\" — хамгийн цомхон, локал загварт ч тохирох хэлбэрээр өгдөг тул суурь болно. Гэхдээ template-ийн \"What to Check\" чеклист нь гүехэн бол library-ийн code-reviewer skill-д \"Deep Review Checklist\" болон \"Reviewing AI-Generated Code\" гэсэн Darhai-д чухал гүн хэсгүүд бий ч, \"@Supersede\" (зөв нь @Override) алдаа, өөрийн протоколтой зөрчилдсөн generic \"Output Format\" boilerplate зэрэг доголдолтой тул бүхлээрээ авах боломжгүй. ijfw-review нь gate-result JSON, .planning зам, project-type-detector гэх IJFW машинерид хатуу уягдсан; conduct-code-review-round нь номын санд огт байхгүй 4 skill (code-review-patterns г.м)-ээс хамаардаг тул шууд ажиллахгүй. Иймд A-г суурь болгож нэрлэсэн хэсгүүдийг залгах нь хамгийн зөв.",
+        "merge_plan": "Base = superpowers requesting-code-review (SKILL.md + code-reviewer.md), \"dispatch a general-purpose subagent\" гэснийг \"Darhai-ийн engine-ээр subagent эсвэл inline ревью хийлгэ\" гэж нэг өгүүлбэрээр engine-neutral болгоно. Graft 1: library bodies/skills/software-engineering/code-reviewer-ийн \"Deep Review Checklist\" (Logic/Security/Performance/Testing асуултууд, ~40 мөр) болон \"Reviewing AI-Generated Code\" (5 мөр) хэсгийг code-reviewer.md-ийн \"What to Check\" дотор нэгтгэнэ (@Supersede→@Override гэж засаад, хэл-тус-бүрийн anti-pattern жагсаалт болон \"Output Format\" boilerplate-ыг ОРХИНО). Graft 2: ijfw-review-ийн \"Artifact-write contract\"-аас зөвхөн «ревью бүр REVIEW.md-д хадгалагдана» гэсэн санааг (gate-result JSON болон .planning замгүйгээр) авна; agent-profile persona болон conduct-code-review-round-ыг бүхэлд нь хаяна."
+      }
+    },
+    {
+      "skill": "subagent-driven-development",
+      "counterparts": [
+        {
+          "name": "team-agent-orchestration",
+          "pool": "ecc",
+          "path": "C:\\claude\\darhai\\resources\\bundled-ecc\\skills\\team-agent-orchestration",
+          "reason": "Executes development via agent squads with work items, ownership, and merge gates — same per-task-agent + review-gate execution model."
+        },
+        {
+          "name": "orch-pipeline",
+          "pool": "ecc",
+          "path": "C:\\claude\\darhai\\resources\\bundled-ecc\\skills\\orch-pipeline",
+          "reason": "Engine of the ECC orch-* family: gated Research→Plan→TDD→Review→Commit agent pipeline — same 'implement the plan through subagents with reviews' purpose."
+        },
+        {
+          "name": "team-coordinator",
+          "pool": "library",
+          "path": "C:\\claude\\darhai\\src\\process\\resources\\skills-library\\bodies\\agents\\orchestration\\team-coordinator",
+          "reason": "Engineering-manager persona that decomposes a large request and orchestrates multi-agent pipelines — overlapping dispatch-and-coordinate role."
+        }
+      ],
+      "verdict": {
+        "winner": "superpowers",
+        "rationale_mn": "Superpowers-ийн SDD нь гүйцэтгэлийн бүрэн, туршигдсан арга зүй: 4 статусын протокол («Handling Implementer Status»), spec+quality хос дүгнэлттэй ревью («task-reviewer-prompt.md»), бодит session-ийн алдаанаас гаргасан «Constructing Reviewer Prompts» дүрмүүд, compaction давсан «Durable Progress» ledger, мөн Дархайн олон-engine орчинд (локал хямд загвар vs claude CLI) шууд буудаг «Model Selection» хэсэгтэй. Харин team-agent-orchestration зөвхөн Kanban-харагдацын хүрээ бөгөөд гүйцэтгэлийн механик (prompt template, ревью-давталт) огт байхгүй; orch-pipeline нь ECC-ийн агент/slash-командуудад (planner, tdd-guide, /feature-dev, /gan-build) хатуу уяатай intake-ангилагч тул өөр давхаргын ойлголт; team-coordinator-ийн ~40% нь persona/Success Metrics падинг бөгөөд параллель wave загвар нь энэ ойлголтын дараалсан-нэг-агент сахилгатай зөрчилддөг. A-гийн Claude-Code уялдаа нимгэн: скриптүүд нь энгийн bash+git бөгөөд bash-гүй fallback нь SKILL.md дотор бичигдсэн, superpowers: хөндлөн-лавлагаануудыг нэрлэж солиход л хангалттай.",
+        "confidence": "high"
+      }
+    },
+    {
+      "skill": "systematic-debugging",
+      "counterparts": [
+        {
+          "name": "ijfw-debug",
+          "pool": "ijfw",
+          "path": "C:\\Users\\serge\\.ijfw\\claude\\skills\\ijfw-debug",
+          "reason": "Root-cause analysis with reproduce-first and hypothesis tracking on 'broken / not working / fix this bug' — same debugging discipline."
+        },
+        {
+          "name": "debugger",
+          "pool": "library",
+          "path": "C:\\claude\\darhai\\src\\process\\resources\\skills-library\\bodies\\skills\\software-engineering\\debugger",
+          "reason": "Systematic debugging methodology (scientific method, binary-search isolation, root-cause analysis) — direct purpose duplicate."
+        }
+      ],
+      "verdict": {
+        "winner": "merge",
+        "rationale_mn": "Superpowers-ийн systematic-debugging нь «Iron Law», 4 фаз, «Red Flags», «Common Rationalizations» хүснэгт, мөн root-cause-tracing/defense-in-depth/condition-based-waiting лавлах файлуудтай, engine-үл хамаарсан хамгийн сахилга баттай процесс тул суурь болно. Library-ийн debugger-т А-д огт байхгүй үнэ цэнтэй хэсгүүд бий («Binary Search Debugging»-ийн git bisect, «Stack Trace Reading», «Intermittent Bug Strategies») ч «When to Use»/«Output Format»/«Example» хэсгүүд нь «implement debugger for a medium-scale production application» гэх мэт эвдэрхий автомат boilerplate тул суурь болж чадахгүй. ijfw-debug маш нягт ч 6 алхмын 3 нь ijfw_memory_recall/ijfw_memory_store MCP-ээс шууд хамааралтай; харин «Two-strikes session reset» алхам ба SYMPTOM/ROOT CAUSE/FIX/VERIFIED output формат нь агент-төрөлхийн шилдэг санаа тул залгаж авах нь зүйтэй.",
+        "merge_plan": "Base = superpowers systematic-debugging (SKILL.md + its three reference files), stripping the test-pressure/CREATION-LOG artifacts and rewording the two superpowers:* cross-skill references to engine-neutral phrasing. Graft from the library debugger: \"Binary Search Debugging\" (incl. git bisect), \"Stack Trace Reading\", and \"Intermittent Bug Strategies\" into a new on-demand reference file (references/isolation-techniques.md), discarding its boilerplate When-to-Use/Output-Format/Example/Edge-Cases sections and the token-heavy language tables. Graft from ijfw-debug: the \"Two-strikes session reset\" step rewritten without ijfw_memory_* calls, plus its 5-line SYMPTOM/ROOT CAUSE/FIX/VERIFIED/FOLLOW-UPS output format appended to Phase 4.",
+        "confidence": "high"
+      }
+    },
+    {
+      "skill": "test-driven-development",
+      "counterparts": [
+        {
+          "name": "tdd-workflow",
+          "pool": "ecc",
+          "path": "C:\\claude\\darhai\\resources\\bundled-ecc\\skills\\tdd-workflow",
+          "reason": "Enforces test-first RED/GREEN development for features, bugfixes, and refactors — direct duplicate (adds an 80% coverage mandate)."
+        },
+        {
+          "name": "ijfw-tdd",
+          "pool": "ijfw",
+          "path": "C:\\Users\\serge\\.ijfw\\claude\\skills\\ijfw-tdd",
+          "reason": "RED-GREEN-REFACTOR enforcement 'when implementing a feature or bugfix before writing implementation code' — near-verbatim duplicate."
+        },
+        {
+          "name": "tdd-workflow (library)",
+          "pool": "library",
+          "path": "C:\\claude\\darhai\\src\\process\\resources\\skills-library\\bodies\\skills\\testing-quality\\tdd-workflow",
+          "reason": "Expert-level TDD workflow guidance in the bundled skills library — same name and core purpose."
+        }
+      ],
+      "verdict": {
+        "winner": "merge",
+        "rationale_mn": "Superpowers-ийн хувилбар нь агентын сахилга батад хамгийн хүчтэй — \"The Iron Law\", verify-RED/verify-GREEN гарцууд, \"Common Rationalizations\" ба \"Red Flags\" хүснэгтүүд нь LLM-ийн өөрийгөө хуурах бүх замыг таглаж, engine-agnostic тул Darhai-ийн wcore/локал загваруудад шууд тохирно. ECC-ийн tdd-workflow нь Next.js/Supabase/Playwright-ийн буруу стекийн жишээгээр бөглөрсөн, бүр өөрийн E2E жишээндээ `waitForTimeout(600)` хэрэглэж өөрийн дүрмээ зөрчсөн; 80% coverage шаардлага нь Darhai-ийн өөрийн `testing` skill-тэй давхардана. Гэхдээ ijfw-tdd-ийн \"Move 1: RED\" доторх «ажиллуулахын өмнө хүлээгдэж буй failure message-ээ бичээд харьцуул» гэсэн арга, library хувилбарын \"Manage Test Doubles Correctly\" хэсгийн «mock commands / stub queries», «өөрийн эзэмшдэггүй type-ийг бүү mock-ло» гэсэн хоёр дүрэм нь A-д байхгүй жинхэнэ сайжруулалт тул залгах нь зүйтэй.",
+        "merge_plan": "Base = superpowers test-driven-development (SKILL.md + testing-anti-patterns.md, progressive disclosure kept). Graft 1: from ijfw-tdd \"Move 1: RED\" — the predict-the-expected-failure-message-before-running step, inserted into the \"Verify RED - Watch It Fail\" section (~4 lines). Graft 2: from the library tdd-workflow \"Manage Test Doubles Correctly\" — the two rules \"mock commands, stub queries\" and \"never mock types you do not own (wrap in an owned interface)\", appended to testing-anti-patterns.md. Drop everything else: ecc's coverage mandate, git checkpoints, and stack-specific mock/E2E boilerplate (covered by Darhai's own testing skill), ijfw's multi-domain examples, and the library skill's advisory Output Format and worked example.",
+        "confidence": "high"
+      }
+    },
+    {
+      "skill": "using-superpowers",
+      "counterparts": [
+        {
+          "name": "ijfw-core",
+          "pool": "ijfw",
+          "path": "C:\\Users\\serge\\.ijfw\\claude\\skills\\ijfw-core",
+          "reason": "IJFW's always-active meta layer owning routing and discipline for every response — competes for the same 'framework dispatcher active at conversation start' role."
+        },
+        {
+          "name": "ecc-guide",
+          "pool": "ecc",
+          "path": "C:\\claude\\darhai\\resources\\bundled-ecc\\skills\\ecc-guide",
+          "reason": "Partial overlap: meta-guide to finding and using ECC's skills/agents/commands, though it is user-facing help rather than a mandatory invocation gate."
+        }
+      ],
+      "verdict": {
+        "winner": "superpowers",
+        "rationale_mn": "using-superpowers нь яг энэ үүргийн цэвэр диспетчер: «The Rule» (хариу өгөхөөс ӨМНӨ skill дуудах), 12 мөрт «Red Flags» rationalization-хүснэгт, мөн «Platform Adaptation» хэсэг нь Codex/Pi/Antigravity reference файлуудаар engine бүрд tool-mapping хийдэг тул Дархайн олон-engine (wcore, Ollama/LM Studio, claude CLI) шаардлагад шууд тохирно — darhai-tools.md нэмэхэд л болно. ijfw-core-ийн диспетчерт хамаарах хэсэг нь ганц «Workflow Routing (MANDATORY)» 3 мөр бөгөөд бүх ажлыг ijfw:ijfw-workflow руу түгжиж, superpowers:brainstorming-ийг хориглодог; үлдсэн нь ijfw_memory_prelude/ijfw_run MCP, Haiku/Sonnet/Opus routing гэх hard dependency-тэй тул локал загварт утгагүй. ecc-guide бол ECC repo-гийн node scripts/install-plan.js дээр суурилсан хэрэглэгчийн туслах гарын авлага — invocation gate биш, өөр зориулалттай. Тиймээс А ялж, B-гээс залгах зүйл алга (B1-ийн Output Rules нь тусдаа «efficiency layer» ойлголт).",
+        "confidence": "high"
+      }
+    },
+    {
+      "skill": "verification-before-completion",
+      "counterparts": [
+        {
+          "name": "verification-loop",
+          "pool": "ecc",
+          "path": "C:\\claude\\darhai\\resources\\bundled-ecc\\skills\\verification-loop",
+          "reason": "Comprehensive verification system for sessions before claiming success — same evidence-before-claims purpose."
+        },
+        {
+          "name": "ijfw-verify",
+          "pool": "ijfw",
+          "path": "C:\\Users\\serge\\.ijfw\\claude\\skills\\ijfw-verify",
+          "reason": "'Iron Law' gate requiring fresh verification evidence in the same message as any completion claim — direct duplicate, additionally wired into IJFW runtime hooks."
+        }
+      ],
+      "verdict": {
+        "winner": "merge",
+        "rationale_mn": "Superpowers-ийн хувилбар нь «Iron Law», 5 алхамт «Gate Function», «Common Failures» ба «Rationalization Prevention» хүснэгтүүдтэй, ямар ч engine-ээс хамааралгүй, хамгийн бага token зардалтай тул суурь болгоход тохиромжтой. ECC-ийн verification-loop нь npm/tsc/ruff гэх мэт стек-тусгай командууд болон `/verify` slash-командад түшиглэсэн өнгөц QA чеклист тул Darhai-ийн олон engine орчинд нийцгүй. ijfw-verify нь агуулгаараа superpowers-ийн шууд удам боловч тал хувь нь verification-gate.js, ijfw_state MCP, .ijfw/wave-* зэрэг IJFW runtime-д хатуу хамааралтай; гэхдээ «Confidence declaration» (VERIFIED/LIKELY/GUESSING/ISSUE) ба «Spirit over letter — anti-loophole clause» гэсэн хоёр хэсэг нь engine-үл хамаарах жинхэнэ сайжруулалт тул тэдгээрийг л залгаж авах нь зүйтэй.",
+        "merge_plan": "Base = superpowers verification-before-completion SKILL.md unchanged as the core. Graft from ijfw-verify only two sections, stripped of all IJFW paths/tooling: (1) the \"Confidence declaration\" four-tag scheme (VERIFIED/LIKELY/GUESSING/ISSUE, only VERIFIED clears the gate), appended after \"Key Patterns\"; (2) a condensed \"Spirit over letter — anti-loophole clause\" listing disallowed workarounds (citing exit codes without the command, \"see above\" references, trusting agent reports without checking artifacts, local tag without push verification). Drop ecc verification-loop entirely; its build/lint/test phase checklist is stack-specific and already covered by Darhai's own testing/oss-pr skills.",
+        "confidence": "high"
+      }
+    },
+    {
+      "skill": "writing-plans",
+      "counterparts": [
+        {
+          "name": "blueprint",
+          "pool": "ecc",
+          "path": "C:\\claude\\darhai\\resources\\bundled-ecc\\skills\\blueprint",
+          "reason": "Turns an objective into a step-by-step plan with self-contained context briefs so a fresh agent can execute cold — the same zero-context implementation-plan authoring purpose."
+        },
+        {
+          "name": "ijfw-plan",
+          "pool": "ijfw",
+          "path": "C:\\Users\\serge\\.ijfw\\claude\\skills\\ijfw-plan",
+          "reason": "Produces a falsifiable PLAN.md with task breakdown, dependency waves, and success criteria on 'plan this / break this down' — direct duplicate."
+        }
+      ],
+      "verdict": {
+        "winner": "merge",
+        "rationale_mn": "superpowers-ийн writing-plans нь жинхэнэ ажиллах аргачлал: \"Task Right-Sizing\", \"Bite-Sized Task Granularity\", бүрэн загвартай \"Task Structure\", \"No Placeholders\" алдааны жагсаалт, \"Self-Review\" checklist — бүгд ямар ч engine дээр ажиллана, зөвхөн \"Execution Handoff\" хэсгийн superpowers-ийн бусад skill-рүү заасан текстэн лавлагааг л засах хэрэгтэй. ECC blueprint нь аргачлал биш README: \"How It Works\" 5 мөрөн тойм, амласан \"anti-pattern catalog\"/\"plan mutation protocol\" нь файлд огт байхгүй, \"Installation\"/\"Requirements\" хэсгүүд агентад хэрэггүй. ijfw-plan-д үнэ цэнэтэй \"Dependency Wave Table\", falsifiable \"Success Criteria\", \"Out of Scope\" хэсгүүд бий ч \"Pre-dispatch gate (mechanical, MUST RUN)\" нь plan-checker.js + ijfw_state MCP + ijfw-plan-checker агент гэсэн IJFW-ийн машинд хатуу уягдсан тул Darhai-ийн LM Studio/Ollama орчинд шууд эвдэрнэ. Тиймээс superpowers-ийг суурь болгож, ijfw-ээс зөвхөн бүтцийн хэсгүүдийг залгах нь оновчтой.",
+        "merge_plan": "Base = superpowers writing-plans SKILL.md (plus its plan-document-reviewer-prompt.md as an optional reviewer template). Graft from ijfw-plan: (1) the \"Dependency Wave Table\" section for explicit parallel/serial wave ordering, (2) the falsifiable \"Success Criteria\" list plus per-task Depends/Risk fields, (3) the \"Out of Scope (Deferred)\" section and the four multi-domain deliverable examples so plans work for non-code work too. Strip all IJFW gate machinery (validatePlan JS, ijfw-plan-checker agent, gate-result schema, .ijfw paths) and replace the superpowers \"Execution Handoff\" cross-skill references (subagent-driven-development/executing-plans/using-git-worktrees) with engine-neutral wording; drop ecc blueprint entirely.",
+        "confidence": "high"
+      }
+    },
+    {
+      "skill": "writing-skills",
+      "counterparts": [
+        {
+          "name": "skill-creator",
+          "pool": "builtin",
+          "path": "C:\\claude\\darhai\\src\\process\\resources\\skills\\_builtin\\skill-creator",
+          "reason": "Darhai's shipped built-in guide for creating/updating skills — direct duplicate of the authoring purpose."
+        },
+        {
+          "name": "ijfw-writing-skills",
+          "pool": "ijfw",
+          "path": "C:\\Users\\serge\\.ijfw\\claude\\skills\\ijfw-writing-skills",
+          "reason": "Authoring discipline for new skills, triggered on 'create/write a new skill' — direct duplicate (IJFW-flavored)."
+        },
+        {
+          "name": "skill-scout",
+          "pool": "ecc",
+          "path": "C:\\claude\\darhai\\resources\\bundled-ecc\\skills\\skill-scout",
+          "reason": "Triggers on the same 'user wants to create/build a skill' moment, mandating search-before-create — overlapping front half of the authoring workflow."
+        }
+      ],
+      "verdict": {
+        "winner": "merge",
+        "rationale_mn": "skill-creator (Darhai builtin) суурь болоход хамгийн тохиромжтой: «Progressive Disclosure», «Degrees of Freedom» зарчим, 6 алхамт тодорхой процесс, engine-үл хамаарах init_skill.py/package_skill.py скриптүүдтэй, 2.5 мянган үг тул жижиг локал загварт ч дийлдэнэ. Superpowers-ийн writing-skills заах чанараараа илүү гүн («Match the Form to the Failure», SDO-ийн «description = хэзээ хэрэглэхийг л бич, workflow-г бүү товчил» гэсэн туршилтаар нотлогдсон дүрэм, rationalization table) боловч 14 мянган үгийн ачаалал, superpowers:test-driven-development хатуу хамаарал, subagent pressure-test аргачлал нь LM Studio/Ollama жижиг загварт тохирохгүй. ijfw-writing-skills нь since:/narration-hook/lint скрипт зэрэг IJFW дотоод механизмд уягдсан, skill-scout нь authoring биш зөвхөн хайлтын урд хагас тул аль нь ч суурь болж чадахгүй. Тиймээс skill-creator суурь дээр superpowers-ийн шилдэг хэсгүүдийг залгах нь Дархайд хамгийн зөв.",
+        "merge_plan": "Base = Darhai builtin skill-creator (SKILL.md + scripts/ + references/), keeping its 6-step process, Progressive Disclosure, Degrees of Freedom, and the engine-agnostic Python scripts. Graft from superpowers writing-skills: (1) the \"Skill Discovery Optimization\" description rules — replace skill-creator's frontmatter guidance with \"description = triggering conditions only, NEVER summarize workflow\" plus its good/bad YAML examples; (2) the \"Match the Form to the Failure\" table and a condensed \"RED-GREEN-REFACTOR for Skills\" as a new Step 5.5 \"Verify\" (baseline-then-verify on real tasks, rationalization-table idea), dropping subagent pressure-test machinery, persuasion-principles.md, and graphviz/render-graphs.js. Optionally fold skill-scout's Step 2 local-search commands into skill-creator Step 1 as a mandatory \"search existing skills before creating\" gate.",
+        "confidence": "high"
+      }
+    }
+  ],
+  "notes": "IJFW pool location (verified): IJFW skills do NOT ship to Darhai end users. (1) C:\\claude\\darhai\\resources\\bundled-ijfw contains only mcp-server (bin/src/templates/tools) — no skills directory. (2) C:\\claude\\darhai\\.claude\\skills contains only Darhai repo-dev skills (architecture, bump-version, i18n, oss-pr, pr-*) — no IJFW skills. (3) installed_plugins.json records ijfw@ijfw at C:\\Users\\serge\\.claude\\plugins\\cache\\ijfw\\ijfw\\1.6.3 but that directory does not exist; the live source per known_marketplaces.json is the local directory marketplace C:\\Users\\serge\\.ijfw\\claude (skills/, commands/, agents/, hooks/, rules/) — dev-machine only. All ijfw counterpart paths above point there. There is also a Codex-format mirror at C:\\claude\\darhai\\.codex\\skills\\ijfw-* inside the repo, but .codex is agent-dev tooling, not part of the app's shipped resource bundles. Library pool: index.json entry paths (e.g. skills/software-engineering/debugger/SKILL.md) resolve against C:\\claude\\darhai\\src\\process\\resources\\skills-library\\bodies\\; all returned library paths verified to contain SKILL.md. The 2105-entry library is overwhelmingly consumer/domain content — only the five entries listed are true process duplicates. using-git-worktrees: no counterpart in any pool, but the Darhai host exposes native EnterWorktree/ExitWorktree tools, which is exactly the 'platform-native isolation tool' this skill defers to before falling back to raw git worktrees — vendoring should account for that. Near-misses deliberately excluded (related topic, not same core purpose): ecc git-workflow (branching/merge reference vs a finish-the-branch workflow), ecc agent-introspection-debugging (AI-agent-failure self-debug, not code debugging), ecc skill-stocktake (fleet-wide skill audit vs authoring one skill), ecc council (decision debate, not brainstorming requirements), ecc language-scoped variants django/laravel/quarkus/springboot-tdd and -verification (extend rather than duplicate the generic workflow), ijfw-preflight (release gate, subsumed by ijfw-ship), library code-review-patterns (fourth overlapping code-review reference; weakest of the set), library root-cause-analysis-expert (business-process RCA). Also note: Darhai repo-dev skills pr-ship/oss-pr/pr-review in C:\\claude\\darhai\\.claude\\skills functionally overlap finishing-a-development-branch and requesting-code-review, and the user-global find-skills skill overlaps using-superpowers, but none of these are in the four requested pools. ijfw-execute is a command file, not a skill directory — included under executing-plans because it is a genuine functional duplicate."
+}
