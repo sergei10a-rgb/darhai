@@ -155,7 +155,7 @@ function smokeInstall(staging) {
   run(
     process.execPath,
     [path.join(OUT_DIR, 'scripts', 'install-apply.js'), '--profile', 'full', '--target', 'claude'],
-    { env, stdio: 'pipe' },
+    { env, stdio: 'pipe' }
   );
   const hooksJsonPath = path.join(fakeHome, '.claude', 'hooks', 'hooks.json');
   const mustExist = [
@@ -199,7 +199,7 @@ function main() {
     if (!fs.existsSync(path.join(OUT_DIR, 'scripts', 'install-apply.js'))) {
       throw new Error(
         'resources/bundled-ecc is not vendored. Run `node scripts/prepareEcc.js --refresh` ' +
-          '(optionally with ECC_LOCAL_SOURCE=<checkout>) and commit the result.',
+          '(optionally with ECC_LOCAL_SOURCE=<checkout>) and commit the result.'
       );
     }
 
