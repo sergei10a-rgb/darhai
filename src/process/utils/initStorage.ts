@@ -1087,7 +1087,10 @@ const initStorage = async () => {
 
     // 5.2.2 Check whether migration is needed: add default enabled skills for builtin assistants
     // Check if migration needed: add default enabled skills for builtin assistants
-    const BUILTIN_SKILLS_MIGRATION_KEY = 'migration.builtinDefaultSkillsAdded_v2';
+    // v3: phase-1 superpowers merge added the 12 development-process skills to
+    // cowork/planning-with-files defaults; bump re-runs the fill for assistants
+    // whose enabledSkills is still empty (non-empty user lists are preserved).
+    const BUILTIN_SKILLS_MIGRATION_KEY = 'migration.builtinDefaultSkillsAdded_v3';
     const builtinSkillsMigrationDone = await configFile.get(BUILTIN_SKILLS_MIGRATION_KEY).catch(() => false);
     const needsBuiltinSkillsMigration = !builtinSkillsMigrationDone;
 

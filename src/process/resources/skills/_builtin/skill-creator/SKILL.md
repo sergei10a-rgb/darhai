@@ -1,6 +1,6 @@
 ---
 name: skill-creator
-description: Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Claude's capabilities with specialized knowledge, workflows, or tool integrations.
+description: Use when creating a new skill, updating an existing skill, or verifying and packaging a skill before deployment.
 license: Complete terms in LICENSE.txt
 ---
 
@@ -10,9 +10,9 @@ This skill provides guidance for creating effective skills.
 
 ## About Skills
 
-Skills are modular, self-contained packages that extend Claude's capabilities by providing
+Skills are modular, self-contained packages that extend an agent's capabilities by providing
 specialized knowledge, workflows, and tools. Think of them as "onboarding guides" for specific
-domains or tasks-they transform Claude from a general-purpose agent into a specialized agent
+domains or tasks-they transform a general-purpose agent into a specialized agent
 equipped with procedural knowledge that no model can fully possess.
 
 ### What Skills Provide
@@ -26,9 +26,9 @@ equipped with procedural knowledge that no model can fully possess.
 
 ### Concise is Key
 
-The context window is a public good. Skills share the context window with everything else Claude needs: system prompt, conversation history, other Skills' metadata, and the actual user request.
+The context window is a public good. Skills share the context window with everything else the agent needs: system prompt, conversation history, other Skills' metadata, and the actual user request.
 
-**Default assumption: Claude is already very smart.** Only add context Claude doesn't already have. Challenge each piece of information: "Does Claude really need this explanation?" and "Does this paragraph justify its token cost?"
+**Default assumption: the agent is already very smart.** Only add context the agent doesn't already have. Challenge each piece of information: "Does the agent really need this explanation?" and "Does this paragraph justify its token cost?"
 
 Prefer concise examples over verbose explanations.
 
@@ -42,7 +42,7 @@ Match the level of specificity to the task's fragility and variability:
 
 **Low freedom (specific scripts, few parameters)**: Use when operations are fragile and error-prone, consistency is critical, or a specific sequence must be followed.
 
-Think of Claude as exploring a path: a narrow bridge with cliffs needs specific guardrails (low freedom), while an open field allows many routes (high freedom).
+Think of the agent as exploring a path: a narrow bridge with cliffs needs specific guardrails (low freedom), while an open field allows many routes (high freedom).
 
 ### Anatomy of a Skill
 
@@ -65,7 +65,7 @@ skill-name/
 
 Every SKILL.md consists of:
 
-- **Frontmatter** (YAML): Contains `name` and `description` fields. These are the only fields that Claude reads to determine when the skill gets used, thus it is very important to be clear and comprehensive in describing what the skill is, and when it should be used.
+- **Frontmatter** (YAML): Contains `name` and `description` fields. These are the only fields the agent reads to determine when the skill gets used, so the description must state clearly when the skill should be used (see Step 4 for the rules).
 - **Body** (Markdown): Instructions and guidance for using the skill. Only loaded AFTER the skill triggers (if at all).
 
 #### Bundled Resources (optional)
@@ -77,27 +77,27 @@ Executable code (Python/Bash/etc.) for tasks that require deterministic reliabil
 - **When to include**: When the same code is being rewritten repeatedly or deterministic reliability is needed
 - **Example**: `scripts/rotate_pdf.py` for PDF rotation tasks
 - **Benefits**: Token efficient, deterministic, may be executed without loading into context
-- **Note**: Scripts may still need to be read by Claude for patching or environment-specific adjustments
+- **Note**: Scripts may still need to be read by the agent for patching or environment-specific adjustments
 
 ##### References (`references/`)
 
-Documentation and reference material intended to be loaded as needed into context to inform Claude's process and thinking.
+Documentation and reference material intended to be loaded as needed into context to inform the agent's process and thinking.
 
-- **When to include**: For documentation that Claude should reference while working
+- **When to include**: For documentation that the agent should reference while working
 - **Examples**: `references/finance.md` for financial schemas, `references/mnda.md` for company NDA template, `references/policies.md` for company policies, `references/api_docs.md` for API specifications
 - **Use cases**: Database schemas, API documentation, domain knowledge, company policies, detailed workflow guides
-- **Benefits**: Keeps SKILL.md lean, loaded only when Claude determines it's needed
+- **Benefits**: Keeps SKILL.md lean, loaded only when the agent determines it's needed
 - **Best practice**: If files are large (>10k words), include grep search patterns in SKILL.md
 - **Avoid duplication**: Information should live in either SKILL.md or references files, not both. Prefer references files for detailed information unless it's truly core to the skill-this keeps SKILL.md lean while making information discoverable without hogging the context window. Keep only essential procedural instructions and workflow guidance in SKILL.md; move detailed reference material, schemas, and examples to references files.
 
 ##### Assets (`assets/`)
 
-Files not intended to be loaded into context, but rather used within the output Claude produces.
+Files not intended to be loaded into context, but rather used within the output the agent produces.
 
 - **When to include**: When the skill needs files that will be used in the final output
 - **Examples**: `assets/logo.png` for brand assets, `assets/slides.pptx` for PowerPoint templates, `assets/frontend-template/` for HTML/React boilerplate, `assets/font.ttf` for typography
 - **Use cases**: Templates, images, icons, boilerplate code, fonts, sample documents that get copied or modified
-- **Benefits**: Separates output resources from documentation, enables Claude to use files without loading them into context
+- **Benefits**: Separates output resources from documentation, enables the agent to use files without loading them into context
 
 #### What to Not Include in a Skill
 
@@ -117,7 +117,7 @@ Skills use a three-level loading system to manage context efficiently:
 
 1. **Metadata (name + description)** - Always in context (~100 words)
 2. **SKILL.md body** - When skill triggers (<5k words)
-3. **Bundled resources** - As needed by Claude (Unlimited because scripts can be executed without reading into context window)
+3. **Bundled resources** - As needed by the agent (Unlimited because scripts can be executed without reading into context window)
 
 #### Progressive Disclosure Patterns
 
@@ -142,7 +142,7 @@ Extract text with pdfplumber:
 - **Examples**: See [EXAMPLES.md](EXAMPLES.md) for common patterns
 ```
 
-Claude loads FORMS.md, REFERENCE.md, or EXAMPLES.md only when needed.
+The agent loads FORMS.md, REFERENCE.md, or EXAMPLES.md only when needed.
 
 **Pattern 2: Domain-specific organization**
 
@@ -158,7 +158,7 @@ bigquery-skill/
     └── marketing.md (campaigns, attribution)
 ```
 
-When a user asks about sales metrics, Claude only reads sales.md.
+When a user asks about sales metrics, the agent only reads sales.md.
 
 Similarly, for skills supporting multiple frameworks or variants, organize by variant:
 
@@ -171,7 +171,7 @@ cloud-deploy/
     └── azure.md (Azure deployment patterns)
 ```
 
-When the user chooses AWS, Claude only reads aws.md.
+When the user chooses AWS, the agent only reads aws.md.
 
 **Pattern 3: Conditional details**
 
@@ -192,29 +192,49 @@ For simple edits, modify the XML directly.
 **For OOXML details**: See [OOXML.md](OOXML.md)
 ```
 
-Claude reads REDLINING.md or OOXML.md only when the user needs those features.
+The agent reads REDLINING.md or OOXML.md only when the user needs those features.
 
 **Important guidelines:**
 
 - **Avoid deeply nested references** - Keep references one level deep from SKILL.md. All reference files should link directly from SKILL.md.
-- **Structure longer reference files** - For files longer than 100 lines, include a table of contents at the top so Claude can see the full scope when previewing.
+- **Structure longer reference files** - For files longer than 100 lines, include a table of contents at the top so the agent can see the full scope when previewing.
 
 ## Skill Creation Process
 
 Skill creation involves these steps:
 
-1. Understand the skill with concrete examples
+1. Search existing skills, then understand the skill with concrete examples
 2. Plan reusable skill contents (scripts, references, assets)
 3. Initialize the skill (run init_skill.py)
 4. Edit the skill (implement resources and write SKILL.md)
 5. Package the skill (run package_skill.py)
+   - 5.5. Verify the skill on real tasks before deployment
 6. Iterate based on real usage
 
 Follow these steps in order, skipping only if there is a clear reason why they are not applicable.
 
-### Step 1: Understanding the Skill with Concrete Examples
+### Step 1: Search Existing Skills, Then Understand with Concrete Examples
 
-Skip this step only when the skill's usage patterns are already clearly understood. It remains valuable even when working with an existing skill.
+#### Search before creating (mandatory gate)
+
+Before creating any new skill, check whether one already exists. Duplicating an existing skill wastes effort and splits future improvements across copies.
+
+1. Extract 3-5 search keywords plus synonyms from the request (task, triggers, domain, tools).
+2. Search the workspace skill directories: grep skill names and `SKILL.md` frontmatter descriptions for the keywords.
+3. Search the full skill library (see the using-skills skill for how the library is reached) with a short task-shaped query.
+4. Present the outcome before proceeding:
+
+| Option       | Meaning                                                           |
+| ------------ | ----------------------------------------------------------------- |
+| Use existing | A matching skill covers the need - use it as-is                   |
+| Extend       | A close match exists - update or extend it instead of duplicating |
+| Create fresh | No close match - proceed with creation                            |
+
+Only create a new skill after the search finds no close match or the user explicitly chooses to create from scratch.
+
+#### Understand with concrete examples
+
+Skip this only when the skill's usage patterns are already clearly understood. It remains valuable even when working with an existing skill.
 
 To create an effective skill, clearly understand concrete examples of how the skill will be used. This understanding can come from either direct user examples or generated examples that are validated with user feedback.
 
@@ -278,7 +298,7 @@ After initialization, customize or remove the generated SKILL.md and example fil
 
 ### Step 4: Edit the Skill
 
-When editing the (newly-generated or existing) skill, remember that the skill is being created for another instance of Claude to use. Include information that would be beneficial and non-obvious to Claude. Consider what procedural knowledge, domain-specific details, or reusable assets would help another Claude instance execute these tasks more effectively.
+When editing the (newly-generated or existing) skill, remember that the skill is being created for another agent to use. Include information that would be beneficial and non-obvious to the agent. Consider what procedural knowledge, domain-specific details, or reusable assets would help another agent execute these tasks more effectively.
 
 #### Learn Proven Design Patterns
 
@@ -305,17 +325,41 @@ Any example files and directories not needed for the skill should be deleted. Th
 
 Write the YAML frontmatter with `name` and `description`:
 
-- `name`: The skill name
-- `description`: This is the primary triggering mechanism for your skill, and helps Claude understand when to use the skill.
-  - Include both what the Skill does and specific triggers/contexts for when to use it.
-  - Include all "when to use" information here - Not in the body. The body is only loaded after triggering, so "When to Use This Skill" sections in the body are not helpful to Claude.
-  - Example description for a `docx` skill: "Comprehensive document creation, editing, and analysis with support for tracked changes, comments, formatting preservation, and text extraction. Use when Claude needs to work with professional documents (.docx files) for: (1) Creating new documents, (2) Modifying or editing content, (3) Working with tracked changes, (4) Adding comments, or any other document tasks"
+- `name`: The skill name. Use letters, numbers, and hyphens only; it must match the skill's directory name. Prefer active, verb-first names (`condition-based-waiting`, not `async-test-helpers`); gerunds (-ing) work well for processes.
+- `description`: The primary triggering mechanism for the skill. It must describe ONLY when to use the skill - the triggering conditions, symptoms, and situations. **NEVER summarize the skill's process or workflow in the description.**
+
+**Why the workflow ban matters:** the agent reads the description to decide which skill to load. If the description summarizes the workflow, the agent may follow the description as a shortcut instead of reading the skill body - and the summary is always lossier than the body. A description saying "code review between tasks" caused an agent to do ONE review even though the skill body required TWO. When the description was reduced to triggering conditions only, the agent read the body and followed it correctly.
+
+Description rules:
+
+- Start with "Use when..." to focus on triggering conditions
+- Use concrete triggers, symptoms, and situations that signal this skill applies (error messages, symptoms, tool names an agent would search for)
+- Describe the _problem_ (race conditions, inconsistent behavior), not language-specific symptoms (setTimeout, sleep) - unless the skill itself is technology-specific, in which case make that explicit
+- Write in third person (the description is injected into the system prompt)
+- Include all "when to use" information here, not in the body - the body is only loaded after triggering
+
+```yaml
+# BAD: Summarizes workflow - agents may follow this instead of reading the skill
+description: Use when executing plans - dispatches subagent per task with code review between tasks
+
+# BAD: Too much process detail
+description: Use for TDD - write test first, watch it fail, write minimal code, refactor
+
+# BAD: Too abstract, no triggers
+description: For async testing
+
+# GOOD: Triggering conditions only, no workflow summary
+description: Use when executing implementation plans with independent tasks in the current session
+
+# GOOD: Describes the problem, technology-agnostic
+description: Use when tests have race conditions, timing dependencies, or pass/fail inconsistently
+```
 
 Do not include any other fields in YAML frontmatter.
 
 ##### Body
 
-Write instructions for using the skill and its bundled resources.
+Write instructions for using the skill and its bundled resources. One excellent, complete example beats many mediocre ones - do not implement the same example in five languages.
 
 ### Step 5: Packaging a Skill
 
@@ -343,6 +387,52 @@ The packaging script will:
 
 If validation fails, the script will report the errors and exit without creating a package. Fix any validation errors and run the packaging command again.
 
+### Step 5.5: Verify the Skill
+
+Validation checks structure; it does not check that the skill actually changes behavior. Verify on real tasks before deployment. This is test-driven development applied to documentation (see the test-driven-development skill for the underlying RED-GREEN-REFACTOR discipline).
+
+**Core principle:** If you didn't watch an agent fail without the skill, you don't know if the skill teaches the right thing.
+
+- **RED (baseline):** Run a representative task in a fresh session or subagent WITHOUT the skill. Record what actually goes wrong - the choices made and the rationalizations used, verbatim. If the baseline does not exhibit the failure, there is nothing to fix: stop, don't write the guidance.
+- **GREEN (minimal skill):** Write or edit the skill to address those specific observed failures - not hypothetical ones. Re-run the same task WITH the skill and confirm the behavior changes.
+- **REFACTOR (close loopholes):** If the agent finds a new rationalization or workaround, add an explicit counter and re-test until the skill holds.
+
+This applies to edits of existing skills as much as to new skills. Do not batch-create several skills and verify none of them; verify each before moving on.
+
+| Excuse for skipping verification             | Reality                                                    |
+| -------------------------------------------- | ---------------------------------------------------------- |
+| "The skill is obviously clear"               | Clear to the author ≠ clear to other agents                |
+| "It's just a reference"                      | References have gaps and unclear sections - test retrieval |
+| "Verification can wait until issues surface" | By then agents have already failed with it in production   |
+| "No time to test"                            | Debugging a bad skill in production costs far more         |
+
+#### Match the Form to the Failure
+
+Before writing guidance, classify the baseline failure. The form that fixes one failure type backfires on another.
+
+| Baseline failure                                                                  | Right form                                                                         | Wrong form                                          |
+| --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | --------------------------------------------------- |
+| Skips/violates a rule under pressure (knows better, does it anyway)               | Prohibition + rationalization table + red flags                                    | Soft guidance ("prefer...", "consider...")          |
+| Complies, but output has the wrong shape (bloated, buried verdict, restated spec) | Positive recipe or contract: state what the output IS - its parts, in order        | Prohibition list ("don't restate", "never narrate") |
+| Omits a required element from something they already produce                      | Structural: REQUIRED field or slot in the template they fill in                    | Prose reminders near the template                   |
+| Behavior should depend on a condition                                             | Conditional keyed to an observable predicate ("if the brief exists, reference it") | Unconditional rule + exemption clauses              |
+
+Prohibitions backfire on shaping problems: under a competing incentive, agents negotiate with "don't X". A recipe leaves nothing to negotiate - the output matches the stated shape or it doesn't.
+
+Rules for whichever form you pick:
+
+- **No nuance clauses.** "Don't X unless it matters" reopens the negotiation. Express a real exception as its own conditional on an observable predicate.
+- **Exemption clauses don't scope.** "This limit doesn't apply to code blocks" still suppresses code blocks. If part of the output must be exempt, restructure so the rule can't reach it.
+
+#### Bulletproofing Discipline Skills
+
+Skills that enforce a rule (test-first, verify-before-claiming-done) must resist rationalization under pressure. For those skills:
+
+- **Close every loophole explicitly.** Don't just state the rule - forbid the specific workarounds observed in baseline testing ("Don't keep it as reference", "Don't adapt it while testing", "Delete means delete").
+- **Cut off spirit-vs-letter arguments early:** "Violating the letter of the rules is violating the spirit of the rules."
+- **Build a rationalization table** from every excuse observed in testing, each paired with the reality that refutes it.
+- **Add a red-flags list** of thoughts that signal the agent is about to rationalize, so it can self-check and stop.
+
 ### Step 6: Iterate
 
 After testing the skill, users may request improvements. Often this happens right after using the skill, with fresh context of how the skill performed.
@@ -352,4 +442,4 @@ After testing the skill, users may request improvements. Often this happens righ
 1. Use the skill on real tasks
 2. Notice struggles or inefficiencies
 3. Identify how SKILL.md or bundled resources should be updated
-4. Implement changes and test again
+4. Implement changes and test again (Step 5.5 applies to edits too)

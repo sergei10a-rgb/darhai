@@ -244,7 +244,10 @@ export interface IConfigStorageRefer {
   /** @deprecated Use migration.builtinDefaultSkillsAdded_v2 instead */
   'migration.coworkDefaultSkillsAdded'?: boolean;
   // Migration flag: add default enabled skills for all builtin assistants
+  /** @deprecated Use migration.builtinDefaultSkillsAdded_v3 instead */
   'migration.builtinDefaultSkillsAdded_v2'?: boolean;
+  // Migration flag: add default enabled skills (incl. process skills) for all builtin assistants
+  'migration.builtinDefaultSkillsAdded_v3'?: boolean;
   // Migration flag: add promptsI18n for all builtin assistants
   'migration.promptsI18nAdded'?: boolean;
   /** Migration flag: split 'assistants' into presets-only + 'acp.customAgents' (user-defined customs). */

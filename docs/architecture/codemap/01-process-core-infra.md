@@ -137,7 +137,7 @@ Preload bundle is loaded at `path.join(__dirname, '../preload/index.js')` (src/i
 
 **Config keys touched here** (via `ProcessConfig`): `mcp.config`, `tools.imageGenerationModel`,
 `assistants`, `acp.customAgents`, `migration.assistantsSplitCustom`, `migration.assistantEnabledFixed`,
-`migration.builtinDefaultSkillsAdded_v2`, `migration.promptsI18nAdded` (initStorage.ts:981-1217),
+`migration.builtinDefaultSkillsAdded_v3`, `migration.promptsI18nAdded` (initStorage.ts:981-1217),
 `system.closeToTray`, `system.firstRunDefaultsApplied` (firstRunDefaults.ts:24-48),
 `system.credentialsCryptoMigrated_v1` (credentialMigration.ts:28), `ui.zoomFactor` (src/index.ts:821),
 `language` (src/index.ts:984), `ambient.enabled` (src/index.ts:933), `webui.desktop.enabled|allowRemote|port`

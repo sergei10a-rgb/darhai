@@ -35,6 +35,29 @@ export type AssistantPreset = {
   promptsI18n?: Record<string, string[]>;
 };
 
+/**
+ * Development-process skills (phase-1 superpowers merge, mn.6) enabled by
+ * default for the general-purpose coding/autonomous assistants. Top-level
+ * builtin skills are opt-in per assistant; listing them here makes them
+ * active by default via getBuiltinAssistants() → enabledSkills.
+ * `_builtin/*` skills (using-skills, skill-creator, cron, office-cli) are
+ * auto-injected for every agent and must NOT be listed here.
+ */
+export const PROCESS_SKILL_NAMES: string[] = [
+  'brainstorming',
+  'writing-plans',
+  'executing-plans',
+  'subagent-driven-development',
+  'dispatching-parallel-agents',
+  'test-driven-development',
+  'systematic-debugging',
+  'requesting-code-review',
+  'receiving-code-review',
+  'verification-before-completion',
+  'using-git-worktrees',
+  'finishing-a-development-branch',
+];
+
 export const ASSISTANT_PRESETS: AssistantPreset[] = [
   {
     id: 'word-creator',
@@ -612,8 +635,7 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
         'Помогает установить, подключить и диагностировать визуализацию Star-Office-UI для предпросмотра в Aion.',
       'uk-UA':
         'Допомагає встановлювати, підключати та діагностувати візуалізацію Star-Office-UI для попереднього перегляду в Aion.',
-      'mn-MN':
-        'Aion урьдчилан харах горимд зориулсан Star-Office-UI дүрслэлийг суулгаж, холбож, алдааг нь оношилно.',
+      'mn-MN': 'Aion урьдчилан харах горимд зориулсан Star-Office-UI дүрслэлийг суулгаж, холбож, алдааг нь оношилно.',
     },
     promptsI18n: {
       'en-US': [
@@ -706,7 +728,14 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
       'zh-CN': 'cowork-skills.zh-CN.md',
       'ru-RU': 'cowork-skills.ru-RU.md',
     },
-    defaultEnabledSkills: ['skill-creator', 'officecli-pptx', 'officecli-docx', 'pdf', 'officecli-xlsx'],
+    defaultEnabledSkills: [
+      'skill-creator',
+      'officecli-pptx',
+      'officecli-docx',
+      'pdf',
+      'officecli-xlsx',
+      ...PROCESS_SKILL_NAMES,
+    ],
     nameI18n: {
       'en-US': 'Cowork',
       'zh-CN': 'Cowork',
@@ -913,6 +942,7 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
       'en-US': 'planning-with-files.md',
       'zh-CN': 'planning-with-files.zh-CN.md',
     },
+    defaultEnabledSkills: [...PROCESS_SKILL_NAMES],
     nameI18n: {
       'en-US': 'Planning with Files',
       'zh-CN': '文件规划助手',
