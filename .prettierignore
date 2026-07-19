@@ -1,1 +1,4 @@
 mobile/
+# Vendored third-party ECC harness payload - ship the exact audited bytes,
+# never reformat them (oxfmt/oxlint both skip resources/bundled-ecc).
+resources/bundled-ecc/
