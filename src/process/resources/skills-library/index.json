@@ -74113,5 +74113,2217 @@
    "scannerVersion": 0,
    "llmScanned": false
   }
+ },
+ {
+  "name": "engineering-coding-style",
+  "description": "Coding-style standards conventions and rules. Use when writing or reviewing code for coding style. ALWAYS create new objects, NEVER mutate existing ones:",
+  "category": "software-engineering",
+  "tags": [
+   "general",
+   "coding-style",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "general coding-style standards best-practices",
+   "category": "software-engineering",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/software-engineering/engineering-coding-style/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "engineering-security",
+  "description": "Security standards conventions and rules. Use when writing or reviewing code for security. Before ANY commit:",
+  "category": "security",
+  "tags": [
+   "general",
+   "security",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "general security standards best-practices",
+   "category": "security",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/security/engineering-security/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "engineering-testing",
+  "description": "Testing standards conventions and rules. Use when writing or reviewing code for testing. Test Types (ALL required):",
+  "category": "testing-quality",
+  "tags": [
+   "general",
+   "testing",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "general testing standards best-practices",
+   "category": "testing-quality",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/testing-quality/engineering-testing/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "angular-coding-style",
+  "description": "angular coding style conventions and rules. Use when writing or reviewing angular code for coding style. Always check the project's Angular version before writing code — features differ significantly between versions. Run `ng version` or inspect `package.json`. When creating a new pro",
+  "category": "web-development",
+  "tags": [
+   "angular",
+   "coding-style",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "angular coding-style standards best-practices",
+   "category": "web-development",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/web-development/angular-coding-style/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "angular-patterns",
+  "description": "angular patterns conventions and rules. Use when writing or reviewing angular code for patterns. Smart (container) components own data fetching and state. Dumb (presentational) components receive inputs and emit outputs only — no service injection.",
+  "category": "web-development",
+  "tags": [
+   "angular",
+   "patterns",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "angular patterns standards best-practices",
+   "category": "web-development",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/web-development/angular-patterns/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "angular-security",
+  "description": "angular security conventions and rules. Use when writing or reviewing angular code for security. Angular auto-sanitizes bound values. Never bypass the sanitizer on user-controlled input.",
+  "category": "security",
+  "tags": [
+   "angular",
+   "security",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "angular security standards best-practices",
+   "category": "security",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/security/angular-security/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "angular-testing",
+  "description": "angular testing conventions and rules. Use when writing or reviewing angular code for testing. Use the test runner configured by the project. Check `angular.json` and `package.json`; Angular projects commonly use Vitest, Jest, or Jasmine + Karma.",
+  "category": "testing-quality",
+  "tags": [
+   "angular",
+   "testing",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "angular testing standards best-practices",
+   "category": "testing-quality",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/testing-quality/angular-testing/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "arkts-coding-style",
+  "description": "arkts coding style conventions and rules. Use when writing or reviewing arkts code for coding style. ArkTS is a strict, statically-typed subset of TypeScript. Violating these constraints causes **compilation failures**.",
+  "category": "software-engineering",
+  "tags": [
+   "arkts",
+   "coding-style",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "arkts coding-style standards best-practices",
+   "category": "software-engineering",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/software-engineering/arkts-coding-style/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "arkts-patterns",
+  "description": "arkts patterns conventions and rules. Use when writing or reviewing arkts code for patterns. **MUST use** ArkUI State Management V2. V1 decorators are deprecated and must not be used.",
+  "category": "software-engineering",
+  "tags": [
+   "arkts",
+   "patterns",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "arkts patterns standards best-practices",
+   "category": "software-engineering",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/software-engineering/arkts-patterns/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "arkts-security",
+  "description": "arkts security conventions and rules. Use when writing or reviewing arkts code for security. All system API calls requiring permissions must be declared:",
+  "category": "security",
+  "tags": [
+   "arkts",
+   "security",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "arkts security standards best-practices",
+   "category": "security",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/security/arkts-security/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "arkts-testing",
+  "description": "arkts testing conventions and rules. Use when writing or reviewing arkts code for testing. HarmonyOS uses the built-in test framework with `@ohos.test` capabilities:",
+  "category": "testing-quality",
+  "tags": [
+   "arkts",
+   "testing",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "arkts testing standards best-practices",
+   "category": "testing-quality",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/testing-quality/arkts-testing/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "cpp-coding-style",
+  "description": "cpp coding style conventions and rules. Use when writing or reviewing cpp code for coding style. - Prefer **modern C++ features** over C-style constructs",
+  "category": "software-engineering",
+  "tags": [
+   "cpp",
+   "coding-style",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "cpp coding-style standards best-practices",
+   "category": "software-engineering",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/software-engineering/cpp-coding-style/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "cpp-patterns",
+  "description": "cpp patterns conventions and rules. Use when writing or reviewing cpp code for patterns. Tie resource lifetime to object lifetime:",
+  "category": "software-engineering",
+  "tags": [
+   "cpp",
+   "patterns",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "cpp patterns standards best-practices",
+   "category": "software-engineering",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/software-engineering/cpp-patterns/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "cpp-security",
+  "description": "cpp security conventions and rules. Use when writing or reviewing cpp code for security. - Never use raw `new`/`delete` — use smart pointers",
+  "category": "security",
+  "tags": [
+   "cpp",
+   "security",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "cpp security standards best-practices",
+   "category": "security",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/security/cpp-security/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "csharp-coding-style",
+  "description": "csharp coding style conventions and rules. Use when writing or reviewing csharp code for coding style. - Follow current .NET conventions and enable nullable reference types",
+  "category": "software-engineering",
+  "tags": [
+   "csharp",
+   "coding-style",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "csharp coding-style standards best-practices",
+   "category": "software-engineering",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/software-engineering/csharp-coding-style/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "csharp-patterns",
+  "description": "csharp patterns conventions and rules. Use when writing or reviewing csharp code for patterns. public sealed record ApiResponse<T>(",
+  "category": "software-engineering",
+  "tags": [
+   "csharp",
+   "patterns",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "csharp patterns standards best-practices",
+   "category": "software-engineering",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/software-engineering/csharp-patterns/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "csharp-security",
+  "description": "csharp security conventions and rules. Use when writing or reviewing csharp code for security. - Never hardcode API keys, tokens, or connection strings in source code",
+  "category": "security",
+  "tags": [
+   "csharp",
+   "security",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "csharp security standards best-practices",
+   "category": "security",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/security/csharp-security/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "csharp-testing",
+  "description": "csharp testing conventions and rules. Use when writing or reviewing csharp code for testing. - Prefer **xUnit** for unit and integration tests",
+  "category": "testing-quality",
+  "tags": [
+   "csharp",
+   "testing",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "csharp testing standards best-practices",
+   "category": "testing-quality",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/testing-quality/csharp-testing/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "dart-coding-style",
+  "description": "dart coding style conventions and rules. Use when writing or reviewing dart code for coding style. - **dart format** for all `.dart` files — enforced in CI (`dart format --set-exit-if-changed .`)",
+  "category": "software-engineering",
+  "tags": [
+   "dart",
+   "coding-style",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "dart coding-style standards best-practices",
+   "category": "software-engineering",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/software-engineering/dart-coding-style/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "dart-patterns",
+  "description": "dart patterns conventions and rules. Use when writing or reviewing dart code for patterns. abstract interface class UserRepository {",
+  "category": "software-engineering",
+  "tags": [
+   "dart",
+   "patterns",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "dart patterns standards best-practices",
+   "category": "software-engineering",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/software-engineering/dart-patterns/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "dart-security",
+  "description": "dart security conventions and rules. Use when writing or reviewing dart code for security. - Never hardcode API keys, tokens, or credentials in Dart source",
+  "category": "security",
+  "tags": [
+   "dart",
+   "security",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "dart security standards best-practices",
+   "category": "security",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/security/dart-security/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "dart-testing",
+  "description": "dart testing conventions and rules. Use when writing or reviewing dart code for testing. - **flutter_test** / **dart:test** — built-in test runner",
+  "category": "testing-quality",
+  "tags": [
+   "dart",
+   "testing",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "dart testing standards best-practices",
+   "category": "testing-quality",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/testing-quality/dart-testing/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "fsharp-coding-style",
+  "description": "fsharp coding style conventions and rules. Use when writing or reviewing fsharp code for coding style. - Follow standard F# conventions and leverage the type system for correctness",
+  "category": "software-engineering",
+  "tags": [
+   "fsharp",
+   "coding-style",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "fsharp coding-style standards best-practices",
+   "category": "software-engineering",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/software-engineering/fsharp-coding-style/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "fsharp-patterns",
+  "description": "fsharp patterns conventions and rules. Use when writing or reviewing fsharp code for patterns. Use `Result<'T, 'TError>` with railway-oriented programming instead of exceptions for expected failures.",
+  "category": "software-engineering",
+  "tags": [
+   "fsharp",
+   "patterns",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "fsharp patterns standards best-practices",
+   "category": "software-engineering",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/software-engineering/fsharp-patterns/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "fsharp-security",
+  "description": "fsharp security conventions and rules. Use when writing or reviewing fsharp code for security. - Never hardcode API keys, tokens, or connection strings in source code",
+  "category": "security",
+  "tags": [
+   "fsharp",
+   "security",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "fsharp security standards best-practices",
+   "category": "security",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/security/fsharp-security/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "golang-coding-style",
+  "description": "golang coding style conventions and rules. Use when writing or reviewing golang code for coding style. - **gofmt** and **goimports** are mandatory — no style debates",
+  "category": "software-engineering",
+  "tags": [
+   "golang",
+   "coding-style",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "golang coding-style standards best-practices",
+   "category": "software-engineering",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/software-engineering/golang-coding-style/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "golang-patterns",
+  "description": "golang patterns conventions and rules. Use when writing or reviewing golang code for patterns. type Option func(*Server)",
+  "category": "software-engineering",
+  "tags": [
+   "golang",
+   "patterns",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "golang patterns standards best-practices",
+   "category": "software-engineering",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/software-engineering/golang-patterns/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "golang-security",
+  "description": "golang security conventions and rules. Use when writing or reviewing golang code for security. apiKey := os.Getenv(\"OPENAI_API_KEY\")",
+  "category": "security",
+  "tags": [
+   "golang",
+   "security",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "golang security standards best-practices",
+   "category": "security",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/security/golang-security/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "golang-testing",
+  "description": "golang testing conventions and rules. Use when writing or reviewing golang code for testing. Use the standard `go test` with **table-driven tests**.",
+  "category": "testing-quality",
+  "tags": [
+   "golang",
+   "testing",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "golang testing standards best-practices",
+   "category": "testing-quality",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/testing-quality/golang-testing/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "java-coding-style",
+  "description": "java coding style conventions and rules. Use when writing or reviewing java code for coding style. - **google-java-format** or **Checkstyle** (Google or Sun style) for enforcement",
+  "category": "software-engineering",
+  "tags": [
+   "java",
+   "coding-style",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "java coding-style standards best-practices",
+   "category": "software-engineering",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/software-engineering/java-coding-style/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "java-patterns",
+  "description": "java patterns conventions and rules. Use when writing or reviewing java code for patterns. Encapsulate data access behind an interface:",
+  "category": "software-engineering",
+  "tags": [
+   "java",
+   "patterns",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "java patterns standards best-practices",
+   "category": "software-engineering",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/software-engineering/java-patterns/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "java-security",
+  "description": "java security conventions and rules. Use when writing or reviewing java code for security. - Never hardcode API keys, tokens, or credentials in source code",
+  "category": "security",
+  "tags": [
+   "java",
+   "security",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "java security standards best-practices",
+   "category": "security",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/security/java-security/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "java-testing",
+  "description": "java testing conventions and rules. Use when writing or reviewing java code for testing. - **JUnit 5** (`@Test`, `@ParameterizedTest`, `@Nested`, `@DisplayName`)",
+  "category": "testing-quality",
+  "tags": [
+   "java",
+   "testing",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "java testing standards best-practices",
+   "category": "testing-quality",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/testing-quality/java-testing/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "kotlin-coding-style",
+  "description": "kotlin coding style conventions and rules. Use when writing or reviewing kotlin code for coding style. - **ktlint** or **Detekt** for style enforcement",
+  "category": "software-engineering",
+  "tags": [
+   "kotlin",
+   "coding-style",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "kotlin coding-style standards best-practices",
+   "category": "software-engineering",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/software-engineering/kotlin-coding-style/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "kotlin-security",
+  "description": "kotlin security conventions and rules. Use when writing or reviewing kotlin code for security. - Never hardcode API keys, tokens, or credentials in source code",
+  "category": "security",
+  "tags": [
+   "kotlin",
+   "security",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "kotlin security standards best-practices",
+   "category": "security",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/security/kotlin-security/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "nuxt-coding-style",
+  "description": "nuxt coding style conventions and rules. Use when writing or reviewing nuxt code for coding style. - Default `srcDir` is `app/`. Framework files live at `app/pages/`, `app/layouts/`, `app/middleware/`, `app/plugins/`, `app/app.config.ts`. `nuxt.config.ts` and `server/` stay at p",
+  "category": "web-development",
+  "tags": [
+   "nuxt",
+   "coding-style",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "nuxt coding-style standards best-practices",
+   "category": "web-development",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/web-development/nuxt-coding-style/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "nuxt-patterns",
+  "description": "nuxt patterns conventions and rules. Use when writing or reviewing nuxt code for patterns. Load-bearing. Pick by render timing, not habit.",
+  "category": "web-development",
+  "tags": [
+   "nuxt",
+   "patterns",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "nuxt patterns standards best-practices",
+   "category": "web-development",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/web-development/nuxt-patterns/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "nuxt-security",
+  "description": "nuxt security conventions and rules. Use when writing or reviewing nuxt code for security. - Root `runtimeConfig` keys are server-only. `runtimeConfig.public` serializes into EVERY page payload (client-visible).",
+  "category": "security",
+  "tags": [
+   "nuxt",
+   "security",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "nuxt security standards best-practices",
+   "category": "security",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/security/nuxt-security/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "nuxt-testing",
+  "description": "nuxt testing conventions and rules. Use when writing or reviewing nuxt code for testing. Package: `@nuxt/test-utils`. Vitest-first for unit and component tests, with built-in Playwright browser E2E support. nuxt-vitest and vitest-environment-nuxt are superseded and fol",
+  "category": "testing-quality",
+  "tags": [
+   "nuxt",
+   "testing",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "nuxt testing standards best-practices",
+   "category": "testing-quality",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/testing-quality/nuxt-testing/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "perl-coding-style",
+  "description": "perl coding style conventions and rules. Use when writing or reviewing perl code for coding style. - Always `use v5.36` (enables `strict`, `warnings`, `say`, subroutine signatures)",
+  "category": "software-engineering",
+  "tags": [
+   "perl",
+   "coding-style",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "perl coding-style standards best-practices",
+   "category": "software-engineering",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/software-engineering/perl-coding-style/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "php-coding-style",
+  "description": "php coding style conventions and rules. Use when writing or reviewing php code for coding style. - Follow **PSR-12** formatting and naming conventions.",
+  "category": "web-development",
+  "tags": [
+   "php",
+   "coding-style",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "php coding-style standards best-practices",
+   "category": "web-development",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/web-development/php-coding-style/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "php-patterns",
+  "description": "php patterns conventions and rules. Use when writing or reviewing php code for patterns. - Keep controllers focused on transport: auth, validation, serialization, status codes.",
+  "category": "web-development",
+  "tags": [
+   "php",
+   "patterns",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "php patterns standards best-practices",
+   "category": "web-development",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/web-development/php-patterns/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "php-security",
+  "description": "php security conventions and rules. Use when writing or reviewing php code for security. - Validate request input at the framework boundary (`FormRequest`, Symfony Validator, or explicit DTO validation).",
+  "category": "security",
+  "tags": [
+   "php",
+   "security",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "php security standards best-practices",
+   "category": "security",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/security/php-security/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "php-testing",
+  "description": "php testing conventions and rules. Use when writing or reviewing php code for testing. Use **PHPUnit** as the default test framework. If **Pest** is configured in the project, prefer Pest for new tests and avoid mixing frameworks.",
+  "category": "testing-quality",
+  "tags": [
+   "php",
+   "testing",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "php testing standards best-practices",
+   "category": "testing-quality",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/testing-quality/php-testing/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "python-coding-style",
+  "description": "python coding style conventions and rules. Use when writing or reviewing python code for coding style. - Follow **PEP 8** conventions",
+  "category": "software-engineering",
+  "tags": [
+   "python",
+   "coding-style",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "python coding-style standards best-practices",
+   "category": "software-engineering",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/software-engineering/python-coding-style/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "python-fastapi",
+  "description": "python fastapi conventions and rules. Use when writing or reviewing python code for fastapi. Use these rules for FastAPI projects alongside the general Python rules.",
+  "category": "software-engineering",
+  "tags": [
+   "python",
+   "fastapi",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "python fastapi standards best-practices",
+   "category": "software-engineering",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/software-engineering/python-fastapi/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "python-patterns",
+  "description": "python patterns conventions and rules. Use when writing or reviewing python code for patterns. from typing import Protocol",
+  "category": "software-engineering",
+  "tags": [
+   "python",
+   "patterns",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "python patterns standards best-practices",
+   "category": "software-engineering",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/software-engineering/python-patterns/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "python-security",
+  "description": "python security conventions and rules. Use when writing or reviewing python code for security. import os",
+  "category": "security",
+  "tags": [
+   "python",
+   "security",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "python security standards best-practices",
+   "category": "security",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/security/python-security/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "python-testing",
+  "description": "python testing conventions and rules. Use when writing or reviewing python code for testing. Use **pytest** as the testing framework.",
+  "category": "testing-quality",
+  "tags": [
+   "python",
+   "testing",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "python testing standards best-practices",
+   "category": "testing-quality",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/testing-quality/python-testing/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "react-coding-style",
+  "description": "react coding style conventions and rules. Use when writing or reviewing react code for coding style. - `.tsx` for any file containing JSX, even one-liner snippets",
+  "category": "web-development",
+  "tags": [
+   "react",
+   "coding-style",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "react coding-style standards best-practices",
+   "category": "web-development",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/web-development/react-coding-style/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "react-hooks",
+  "description": "react hooks conventions and rules. Use when writing or reviewing react code for hooks. Enforce `eslint-plugin-react-hooks` with `react-hooks/rules-of-hooks` set to error.",
+  "category": "web-development",
+  "tags": [
+   "react",
+   "hooks",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "react hooks standards best-practices",
+   "category": "web-development",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/web-development/react-hooks/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "react-patterns",
+  "description": "react patterns conventions and rules. Use when writing or reviewing react code for patterns. Container components own data fetching, state, and side effects. Presentational components receive props and render — no service calls, no hooks beyond local UI state.",
+  "category": "web-development",
+  "tags": [
+   "react",
+   "patterns",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "react patterns standards best-practices",
+   "category": "web-development",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/web-development/react-patterns/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "react-security",
+  "description": "react security conventions and rules. Use when writing or reviewing react code for security. CRITICAL. The prop name is deliberately scary — treat every usage as a code review halt.",
+  "category": "security",
+  "tags": [
+   "react",
+   "security",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "react security standards best-practices",
+   "category": "security",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/security/react-security/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "react-testing",
+  "description": "react testing conventions and rules. Use when writing or reviewing react code for testing. - **React Testing Library (RTL)** — the standard for component testing. Tests behavior through the rendered DOM.",
+  "category": "testing-quality",
+  "tags": [
+   "react",
+   "testing",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "react testing standards best-practices",
+   "category": "testing-quality",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/testing-quality/react-testing/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "ruby-coding-style",
+  "description": "ruby coding style conventions and rules. Use when writing or reviewing ruby code for coding style. - Target **Ruby 3.3+** for new Rails work unless the project already pins an older supported runtime.",
+  "category": "software-engineering",
+  "tags": [
+   "ruby",
+   "coding-style",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "ruby coding-style standards best-practices",
+   "category": "software-engineering",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/software-engineering/ruby-coding-style/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "ruby-patterns",
+  "description": "ruby patterns conventions and rules. Use when writing or reviewing ruby code for patterns. - Start with plain Rails MVC and Active Record conventions for small and medium features.",
+  "category": "software-engineering",
+  "tags": [
+   "ruby",
+   "patterns",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "ruby patterns standards best-practices",
+   "category": "software-engineering",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/software-engineering/ruby-patterns/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "ruby-security",
+  "description": "ruby security conventions and rules. Use when writing or reviewing ruby code for security. - Keep CSRF protection enabled for state-changing browser requests.",
+  "category": "security",
+  "tags": [
+   "ruby",
+   "security",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "ruby security standards best-practices",
+   "category": "security",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/security/ruby-security/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "ruby-testing",
+  "description": "ruby testing conventions and rules. Use when writing or reviewing ruby code for testing. - Use **Minitest** when the Rails app follows the default Rails test stack.",
+  "category": "testing-quality",
+  "tags": [
+   "ruby",
+   "testing",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "ruby testing standards best-practices",
+   "category": "testing-quality",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/testing-quality/ruby-testing/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "rust-coding-style",
+  "description": "rust coding style conventions and rules. Use when writing or reviewing rust code for coding style. - **rustfmt** for enforcement — always run `cargo fmt` before committing",
+  "category": "software-engineering",
+  "tags": [
+   "rust",
+   "coding-style",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "rust coding-style standards best-practices",
+   "category": "software-engineering",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/software-engineering/rust-coding-style/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "rust-patterns",
+  "description": "rust patterns conventions and rules. Use when writing or reviewing rust code for patterns. Encapsulate data access behind a trait:",
+  "category": "software-engineering",
+  "tags": [
+   "rust",
+   "patterns",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "rust patterns standards best-practices",
+   "category": "software-engineering",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/software-engineering/rust-patterns/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "rust-security",
+  "description": "rust security conventions and rules. Use when writing or reviewing rust code for security. - Never hardcode API keys, tokens, or credentials in source code",
+  "category": "security",
+  "tags": [
+   "rust",
+   "security",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "rust security standards best-practices",
+   "category": "security",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/security/rust-security/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "rust-testing",
+  "description": "rust testing conventions and rules. Use when writing or reviewing rust code for testing. - **`#[test]`** with `#[cfg(test)]` modules for unit tests",
+  "category": "testing-quality",
+  "tags": [
+   "rust",
+   "testing",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "rust testing standards best-practices",
+   "category": "testing-quality",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/testing-quality/rust-testing/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "swift-coding-style",
+  "description": "swift coding style conventions and rules. Use when writing or reviewing swift code for coding style. - **SwiftFormat** for auto-formatting, **SwiftLint** for style enforcement",
+  "category": "software-engineering",
+  "tags": [
+   "swift",
+   "coding-style",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "swift coding-style standards best-practices",
+   "category": "software-engineering",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/software-engineering/swift-coding-style/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "swift-patterns",
+  "description": "swift patterns conventions and rules. Use when writing or reviewing swift code for patterns. Define small, focused protocols. Use protocol extensions for shared defaults:",
+  "category": "software-engineering",
+  "tags": [
+   "swift",
+   "patterns",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "swift patterns standards best-practices",
+   "category": "software-engineering",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/software-engineering/swift-patterns/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "swift-security",
+  "description": "swift security conventions and rules. Use when writing or reviewing swift code for security. - Use **Keychain Services** for sensitive data (tokens, passwords, keys) — never `UserDefaults`",
+  "category": "security",
+  "tags": [
+   "swift",
+   "security",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "swift security standards best-practices",
+   "category": "security",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/security/swift-security/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "swift-testing",
+  "description": "swift testing conventions and rules. Use when writing or reviewing swift code for testing. Use **Swift Testing** (`import Testing`) for new tests. Use `@Test` and `#expect`:",
+  "category": "testing-quality",
+  "tags": [
+   "swift",
+   "testing",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "swift testing standards best-practices",
+   "category": "testing-quality",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/testing-quality/swift-testing/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "typescript-coding-style",
+  "description": "typescript coding style conventions and rules. Use when writing or reviewing typescript code for coding style. Use types to make public APIs, shared models, and component props explicit, readable, and reusable.",
+  "category": "software-engineering",
+  "tags": [
+   "typescript",
+   "coding-style",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "typescript coding-style standards best-practices",
+   "category": "software-engineering",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/software-engineering/typescript-coding-style/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "typescript-patterns",
+  "description": "typescript patterns conventions and rules. Use when writing or reviewing typescript code for patterns. interface ApiResponse<T> {",
+  "category": "software-engineering",
+  "tags": [
+   "typescript",
+   "patterns",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "typescript patterns standards best-practices",
+   "category": "software-engineering",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/software-engineering/typescript-patterns/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "typescript-security",
+  "description": "typescript security conventions and rules. Use when writing or reviewing typescript code for security. // NEVER: Hardcoded secrets",
+  "category": "security",
+  "tags": [
+   "typescript",
+   "security",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "typescript security standards best-practices",
+   "category": "security",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/security/typescript-security/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "typescript-testing",
+  "description": "typescript testing conventions and rules. Use when writing or reviewing typescript code for testing. Use **Playwright** as the E2E testing framework for critical user flows.",
+  "category": "testing-quality",
+  "tags": [
+   "typescript",
+   "testing",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "typescript testing standards best-practices",
+   "category": "testing-quality",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/testing-quality/typescript-testing/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "vue-coding-style",
+  "description": "vue coding style conventions and rules. Use when writing or reviewing vue code for coding style. - Always `<script setup lang=\"ts\">` with the Composition API. No Options API in new code.",
+  "category": "web-development",
+  "tags": [
+   "vue",
+   "coding-style",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "vue coding-style standards best-practices",
+   "category": "web-development",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/web-development/vue-coding-style/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "vue-patterns",
+  "description": "vue patterns conventions and rules. Use when writing or reviewing vue code for patterns. - The composable (`useXxx`) is the reusable-logic unit. In Feature-Sliced Design it lives in the slice `model` segment.",
+  "category": "web-development",
+  "tags": [
+   "vue",
+   "patterns",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "vue patterns standards best-practices",
+   "category": "web-development",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/web-development/vue-patterns/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "vue-security",
+  "description": "vue security conventions and rules. Use when writing or reviewing vue code for security. - Text interpolation `{{ }}` and dynamic attribute bindings (`:title`) are auto-escaped. The vectors below are NOT protected.",
+  "category": "security",
+  "tags": [
+   "vue",
+   "security",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "vue security standards best-practices",
+   "category": "security",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/security/vue-security/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "vue-testing",
+  "description": "vue testing conventions and rules. Use when writing or reviewing vue code for testing. - Vitest (Vite-native runner) plus `@vue/test-utils`. `create-vue` scaffolds `@vitejs/plugin-vue`.",
+  "category": "testing-quality",
+  "tags": [
+   "vue",
+   "testing",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "vue testing standards best-practices",
+   "category": "testing-quality",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/testing-quality/vue-testing/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "web-coding-style",
+  "description": "web coding style conventions and rules. Use when writing or reviewing web code for coding style. Organize by feature or surface area, not by file type:",
+  "category": "web-development",
+  "tags": [
+   "web",
+   "coding-style",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "web coding-style standards best-practices",
+   "category": "web-development",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/web-development/web-coding-style/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "web-design-quality",
+  "description": "web design quality conventions and rules. Use when writing or reviewing web code for design quality. Do not ship generic template-looking UI. Frontend output should look intentional, opinionated, and specific to the product.",
+  "category": "web-development",
+  "tags": [
+   "web",
+   "design-quality",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "web design-quality standards best-practices",
+   "category": "web-development",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/web-development/web-design-quality/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "web-patterns",
+  "description": "web patterns conventions and rules. Use when writing or reviewing web code for patterns. Use compound components when related UI shares state and interaction semantics:",
+  "category": "web-development",
+  "tags": [
+   "web",
+   "patterns",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "web patterns standards best-practices",
+   "category": "web-development",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/web-development/web-patterns/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "web-security",
+  "description": "web security conventions and rules. Use when writing or reviewing web code for security. Always configure a production CSP.",
+  "category": "security",
+  "tags": [
+   "web",
+   "security",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "web security standards best-practices",
+   "category": "security",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/security/web-security/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
+ },
+ {
+  "name": "web-testing",
+  "description": "web testing conventions and rules. Use when writing or reviewing web code for testing. - Screenshot key breakpoints: 320, 768, 1024, 1440",
+  "category": "testing-quality",
+  "tags": [
+   "web",
+   "testing",
+   "standards",
+   "best-practices"
+  ],
+  "metadata": {
+   "author": "darhai",
+   "version": "1.0.0",
+   "tags": "web testing standards best-practices",
+   "category": "testing-quality",
+   "difficulty": "intermediate"
+  },
+  "path": "skills/testing-quality/web-testing/SKILL.md",
+  "source": "wayland-library",
+  "type": "skill",
+  "security": {
+   "verdict": "unscanned",
+   "findings": [],
+   "scannedAt": 0,
+   "scannerVersion": 0,
+   "llmScanned": false
+  }
  }
 ]

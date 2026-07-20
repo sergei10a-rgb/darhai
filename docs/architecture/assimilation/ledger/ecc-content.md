@@ -28,10 +28,24 @@ Total library entries: 2105 → **2391**. All authored `darhai`, `source: waylan
 
 Every dropped item carries its evidence in `ecc-classification.md`. No silent omissions.
 
-## Rules (114) — NOT in this commit
+## Rules (114) — phase 2c
 
-3 core / 84 conditional / 27 drop. Deferred to the rules workstream (core → constitution
-overlay `constitution/composePrompt.ts`; conditional → project-knowledge per project type).
+3 core + 84 conditional = 87 keep; 27 drop. **Design decision:** ECC rules carry a
+`paths:` glob frontmatter for a path-triggered rule system Darhai does not have, and
+`projectKnowledge` is reserved for the USER's own per-project `.darhai/rules.md` (not
+pre-baked standards). So the 87 keeps were converted into **skills-library reference
+skills** (same corpus as the ECC skills), retrievable when an agent works in that
+language — no prompt-composition change, no constitution bloat, zero risk.
+
+| Rule tier | Kept | Target | Naming |
+| --- | --- | --- | --- |
+| core (common/*) | 3 | `skills/{software-engineering,security,testing-quality}/engineering-<topic>/` | `engineering-coding-style`, `engineering-security`, `engineering-testing` |
+| conditional (lang/*) | 84 → **79 written** | `skills/<category>/<lang>-<topic>/` | `typescript-coding-style`, `python-security`, … |
+
+79 written + 8 name-collisions with phase-2b skills (`cpp-testing`, `kotlin-patterns`,
+`perl-*`, `web-performance`, `fsharp-testing`, `kotlin-testing` — the rule content is
+already covered by the identically-named imported skill, so deduped, not lost).
+Library grows 2391 → **2470**. `paths:` frontmatter dropped, bodies de-branded.
 
 ## De-brand sweep
 
