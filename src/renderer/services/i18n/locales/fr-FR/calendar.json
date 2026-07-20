@@ -1,0 +1,85 @@
+{
+  "sidebarLabel": "Calendrier",
+  "pageTitle": "Calendrier",
+  "description": "Visualisez vos événements en un coup d’œil et recevez un rappel avant qu’ils commencent.",
+  "newEvent": "Nouvel événement",
+  "today": "Aujourd’hui",
+  "view": {
+    "month": "Mois",
+    "agenda": "Agenda"
+  },
+  "footer": {
+    "count": "{{count}} événements"
+  },
+  "empty": {
+    "title": "Aucun événement pour l’instant",
+    "hint": "Créez votre premier événement pour organiser votre journée."
+  },
+  "agenda": {
+    "empty": "Aucun événement à venir",
+    "allDay": "Toute la journée"
+  },
+  "month": {
+    "more": "+{{count}} de plus"
+  },
+  "composer": {
+    "createTitle": "Nouvel événement",
+    "editTitle": "Modifier l’événement",
+    "titlePlaceholder": "Titre de l’événement",
+    "allDay": "Toute la journée",
+    "starts": "Début",
+    "ends": "Fin",
+    "startPlaceholder": "Début",
+    "endPlaceholder": "Fin",
+    "repeatLabel": "Répéter",
+    "reminderLabel": "Rappel",
+    "colorLabel": "Couleur",
+    "locationLabel": "Lieu",
+    "locationPlaceholder": "Ajouter un lieu",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Ajouter une description...",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer"
+  },
+  "repeat": {
+    "none": "Ne se répète pas",
+    "daily": "Tous les jours",
+    "weekly": "Toutes les semaines",
+    "weekdays": "En semaine",
+    "monthly": "Tous les mois",
+    "yearly": "Tous les ans"
+  },
+  "remind": {
+    "none": "Aucun rappel",
+    "atTime": "À l’heure de l’événement",
+    "min5": "5 minutes avant",
+    "min10": "10 minutes avant",
+    "min15": "15 minutes avant",
+    "min30": "30 minutes avant",
+    "hour1": "1 heure avant",
+    "hour2": "2 heures avant",
+    "day1": "1 jour avant"
+  },
+  "color": {
+    "none": "Par défaut",
+    "red": "Rouge",
+    "orange": "Orange",
+    "yellow": "Jaune",
+    "green": "Vert",
+    "blue": "Bleu",
+    "purple": "Violet"
+  },
+  "reminderToast": {
+    "title": "Rappel d’événement"
+  },
+  "reminder": {
+    "notifTitle": "Rappel d’événement"
+  },
+  "deleteConfirm": {
+    "title": "Supprimer l’événement ?",
+    "content": "Cet événement sera définitivement supprimé.",
+    "ok": "Supprimer",
+    "cancel": "Annuler"
+  }
+}

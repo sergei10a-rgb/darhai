@@ -1113,6 +1113,8 @@ type CleanupModules = {
   // Stop the note reminder scanner from before-quit so its interval cannot
   // outlive the app's quit sequence (same class as the cron timer teardown).
   notes: typeof import('@process/services/notes/noteServiceSingleton');
+  // Stop the calendar reminder scanner from before-quit (same class as notes).
+  calendar: typeof import('@process/services/calendar/calendarServiceSingleton');
 };
 let _cleanupModulesPromise: Promise<CleanupModules> | undefined;
 
@@ -1128,6 +1130,7 @@ const prefetchCleanupModules = (): Promise<CleanupModules> => {
     import('@process/services/cron/cronServiceSingleton'),
     import('@process/bridge/fileWatchBridge'),
     import('@process/services/notes/noteServiceSingleton'),
+    import('@process/services/calendar/calendarServiceSingleton'),
   ]).then(
     ([
       ambient,
@@ -1140,6 +1143,7 @@ const prefetchCleanupModules = (): Promise<CleanupModules> => {
       cron,
       fileWatch,
       notes,
+      calendar,
     ]) => ({
       ambient,
       channels,
@@ -1151,6 +1155,7 @@ const prefetchCleanupModules = (): Promise<CleanupModules> => {
       cron,
       fileWatch,
       notes,
+      calendar,
     })
   );
 };
@@ -1342,6 +1347,17 @@ app.on('before-quit', async () => {
       PER_STEP_TIMEOUT_MS
     );
 
+    // Stop the calendar reminder scanner alongside the note scanner so its
+    // interval cannot fire a notification mid-quit.
+    const calendarStep = withTimeout(
+      'calendarService.shutdown',
+      (async () => {
+        if (!mods.calendar) return;
+        mods.calendar.calendarService.shutdown();
+      })(),
+      PER_STEP_TIMEOUT_MS
+    );
+
     // Worker processes after DB + cron (M18 made workerTaskManager.clear() properly
     // await per-agent kill() with its own 3.5s bound).
     const workerStep = withTimeout('workerTaskManager.clear', workerTaskManager.clear(), PER_STEP_TIMEOUT_MS);
@@ -1419,6 +1435,7 @@ app.on('before-quit', async () => {
       databaseStep,
       cronStep,
       notesStep,
+      calendarStep,
       workerStep,
       ambientStep,
       teamStep,

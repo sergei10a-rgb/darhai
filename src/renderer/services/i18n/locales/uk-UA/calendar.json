@@ -1,0 +1,85 @@
+{
+  "sidebarLabel": "Календар",
+  "pageTitle": "Календар",
+  "description": "Переглядайте свої події одразу та отримуйте нагадування перед початком.",
+  "newEvent": "Нова подія",
+  "today": "Сьогодні",
+  "view": {
+    "month": "Місяць",
+    "agenda": "Порядок денний"
+  },
+  "footer": {
+    "count": "{{count}} подій"
+  },
+  "empty": {
+    "title": "Подій ще немає",
+    "hint": "Створіть першу подію, щоб спланувати день."
+  },
+  "agenda": {
+    "empty": "Немає майбутніх подій",
+    "allDay": "Весь день"
+  },
+  "month": {
+    "more": "+{{count}} ще"
+  },
+  "composer": {
+    "createTitle": "Нова подія",
+    "editTitle": "Редагувати подію",
+    "titlePlaceholder": "Назва події",
+    "allDay": "Весь день",
+    "starts": "Початок",
+    "ends": "Кінець",
+    "startPlaceholder": "Початок",
+    "endPlaceholder": "Кінець",
+    "repeatLabel": "Повтор",
+    "reminderLabel": "Нагадування",
+    "colorLabel": "Колір",
+    "locationLabel": "Місце",
+    "locationPlaceholder": "Додати місце",
+    "descriptionLabel": "Опис",
+    "descriptionPlaceholder": "Додати опис...",
+    "save": "Зберегти",
+    "cancel": "Скасувати",
+    "delete": "Видалити"
+  },
+  "repeat": {
+    "none": "Не повторюється",
+    "daily": "Щодня",
+    "weekly": "Щотижня",
+    "weekdays": "У будні",
+    "monthly": "Щомісяця",
+    "yearly": "Щороку"
+  },
+  "remind": {
+    "none": "Без нагадування",
+    "atTime": "У момент події",
+    "min5": "За 5 хвилин",
+    "min10": "За 10 хвилин",
+    "min15": "За 15 хвилин",
+    "min30": "За 30 хвилин",
+    "hour1": "За 1 годину",
+    "hour2": "За 2 години",
+    "day1": "За 1 день"
+  },
+  "color": {
+    "none": "За замовчуванням",
+    "red": "Червоний",
+    "orange": "Помаранчевий",
+    "yellow": "Жовтий",
+    "green": "Зелений",
+    "blue": "Синій",
+    "purple": "Фіолетовий"
+  },
+  "reminderToast": {
+    "title": "Нагадування про подію"
+  },
+  "reminder": {
+    "notifTitle": "Нагадування про подію"
+  },
+  "deleteConfirm": {
+    "title": "Видалити подію?",
+    "content": "Цю подію буде видалено назавжди.",
+    "ok": "Видалити",
+    "cancel": "Скасувати"
+  }
+}

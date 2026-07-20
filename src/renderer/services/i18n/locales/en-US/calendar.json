@@ -1,0 +1,85 @@
+{
+  "sidebarLabel": "Calendar",
+  "pageTitle": "Calendar",
+  "description": "See your events at a glance and get a nudge before they start.",
+  "newEvent": "New event",
+  "today": "Today",
+  "view": {
+    "month": "Month",
+    "agenda": "Agenda"
+  },
+  "footer": {
+    "count": "{{count}} events"
+  },
+  "empty": {
+    "title": "No events yet",
+    "hint": "Create your first event to plan your day."
+  },
+  "agenda": {
+    "empty": "No upcoming events",
+    "allDay": "All day"
+  },
+  "month": {
+    "more": "+{{count}} more"
+  },
+  "composer": {
+    "createTitle": "New event",
+    "editTitle": "Edit event",
+    "titlePlaceholder": "Event title",
+    "allDay": "All day",
+    "starts": "Starts",
+    "ends": "Ends",
+    "startPlaceholder": "Start",
+    "endPlaceholder": "End",
+    "repeatLabel": "Repeat",
+    "reminderLabel": "Reminder",
+    "colorLabel": "Color",
+    "locationLabel": "Location",
+    "locationPlaceholder": "Add a location",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Add a description...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete"
+  },
+  "repeat": {
+    "none": "Does not repeat",
+    "daily": "Daily",
+    "weekly": "Weekly",
+    "weekdays": "Every weekday",
+    "monthly": "Monthly",
+    "yearly": "Yearly"
+  },
+  "remind": {
+    "none": "No reminder",
+    "atTime": "At time of event",
+    "min5": "5 minutes before",
+    "min10": "10 minutes before",
+    "min15": "15 minutes before",
+    "min30": "30 minutes before",
+    "hour1": "1 hour before",
+    "hour2": "2 hours before",
+    "day1": "1 day before"
+  },
+  "color": {
+    "none": "Default",
+    "red": "Red",
+    "orange": "Orange",
+    "yellow": "Yellow",
+    "green": "Green",
+    "blue": "Blue",
+    "purple": "Purple"
+  },
+  "reminderToast": {
+    "title": "Event reminder"
+  },
+  "reminder": {
+    "notifTitle": "Event reminder"
+  },
+  "deleteConfirm": {
+    "title": "Delete event?",
+    "content": "This event will be permanently deleted.",
+    "ok": "Delete",
+    "cancel": "Cancel"
+  }
+}

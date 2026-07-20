@@ -1,0 +1,85 @@
+{
+  "sidebarLabel": "Календарь",
+  "pageTitle": "Календарь",
+  "description": "Смотрите свои события сразу и получайте напоминание перед их началом.",
+  "newEvent": "Новое событие",
+  "today": "Сегодня",
+  "view": {
+    "month": "Месяц",
+    "agenda": "Повестка"
+  },
+  "footer": {
+    "count": "{{count}} событий"
+  },
+  "empty": {
+    "title": "Пока нет событий",
+    "hint": "Создайте первое событие, чтобы спланировать день."
+  },
+  "agenda": {
+    "empty": "Нет предстоящих событий",
+    "allDay": "Весь день"
+  },
+  "month": {
+    "more": "+{{count}} ещё"
+  },
+  "composer": {
+    "createTitle": "Новое событие",
+    "editTitle": "Изменить событие",
+    "titlePlaceholder": "Название события",
+    "allDay": "Весь день",
+    "starts": "Начало",
+    "ends": "Конец",
+    "startPlaceholder": "Начало",
+    "endPlaceholder": "Конец",
+    "repeatLabel": "Повтор",
+    "reminderLabel": "Напоминание",
+    "colorLabel": "Цвет",
+    "locationLabel": "Место",
+    "locationPlaceholder": "Добавить место",
+    "descriptionLabel": "Описание",
+    "descriptionPlaceholder": "Добавить описание...",
+    "save": "Сохранить",
+    "cancel": "Отмена",
+    "delete": "Удалить"
+  },
+  "repeat": {
+    "none": "Не повторяется",
+    "daily": "Ежедневно",
+    "weekly": "Еженедельно",
+    "weekdays": "По будням",
+    "monthly": "Ежемесячно",
+    "yearly": "Ежегодно"
+  },
+  "remind": {
+    "none": "Без напоминания",
+    "atTime": "В момент события",
+    "min5": "За 5 минут",
+    "min10": "За 10 минут",
+    "min15": "За 15 минут",
+    "min30": "За 30 минут",
+    "hour1": "За 1 час",
+    "hour2": "За 2 часа",
+    "day1": "За 1 день"
+  },
+  "color": {
+    "none": "По умолчанию",
+    "red": "Красный",
+    "orange": "Оранжевый",
+    "yellow": "Жёлтый",
+    "green": "Зелёный",
+    "blue": "Синий",
+    "purple": "Фиолетовый"
+  },
+  "reminderToast": {
+    "title": "Напоминание о событии"
+  },
+  "reminder": {
+    "notifTitle": "Напоминание о событии"
+  },
+  "deleteConfirm": {
+    "title": "Удалить событие?",
+    "content": "Это событие будет удалено безвозвратно.",
+    "ok": "Удалить",
+    "cancel": "Отмена"
+  }
+}

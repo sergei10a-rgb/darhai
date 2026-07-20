@@ -1,0 +1,85 @@
+{
+  "sidebarLabel": "行事曆",
+  "pageTitle": "行事曆",
+  "description": "一眼掌握你的行程，並在開始前收到提醒。",
+  "newEvent": "新增行程",
+  "today": "今天",
+  "view": {
+    "month": "月",
+    "agenda": "行程"
+  },
+  "footer": {
+    "count": "{{count}} 個行程"
+  },
+  "empty": {
+    "title": "尚無行程",
+    "hint": "建立你的第一個行程來規劃這一天。"
+  },
+  "agenda": {
+    "empty": "沒有即將開始的行程",
+    "allDay": "全天"
+  },
+  "month": {
+    "more": "+{{count}} 更多"
+  },
+  "composer": {
+    "createTitle": "新增行程",
+    "editTitle": "編輯行程",
+    "titlePlaceholder": "行程標題",
+    "allDay": "全天",
+    "starts": "開始",
+    "ends": "結束",
+    "startPlaceholder": "開始",
+    "endPlaceholder": "結束",
+    "repeatLabel": "重複",
+    "reminderLabel": "提醒",
+    "colorLabel": "顏色",
+    "locationLabel": "地點",
+    "locationPlaceholder": "新增地點",
+    "descriptionLabel": "描述",
+    "descriptionPlaceholder": "新增描述…",
+    "save": "儲存",
+    "cancel": "取消",
+    "delete": "刪除"
+  },
+  "repeat": {
+    "none": "不重複",
+    "daily": "每天",
+    "weekly": "每週",
+    "weekdays": "工作日",
+    "monthly": "每月",
+    "yearly": "每年"
+  },
+  "remind": {
+    "none": "不提醒",
+    "atTime": "行程開始時",
+    "min5": "提前 5 分鐘",
+    "min10": "提前 10 分鐘",
+    "min15": "提前 15 分鐘",
+    "min30": "提前 30 分鐘",
+    "hour1": "提前 1 小時",
+    "hour2": "提前 2 小時",
+    "day1": "提前 1 天"
+  },
+  "color": {
+    "none": "預設",
+    "red": "紅色",
+    "orange": "橘色",
+    "yellow": "黃色",
+    "green": "綠色",
+    "blue": "藍色",
+    "purple": "紫色"
+  },
+  "reminderToast": {
+    "title": "行程提醒"
+  },
+  "reminder": {
+    "notifTitle": "行程提醒"
+  },
+  "deleteConfirm": {
+    "title": "刪除行程？",
+    "content": "此行程將被永久刪除。",
+    "ok": "刪除",
+    "cancel": "取消"
+  }
+}

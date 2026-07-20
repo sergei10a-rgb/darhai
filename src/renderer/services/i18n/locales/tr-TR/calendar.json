@@ -1,0 +1,85 @@
+{
+  "sidebarLabel": "Takvim",
+  "pageTitle": "Takvim",
+  "description": "Etkinliklerini tek bakışta gör ve başlamadan önce hatırlatma al.",
+  "newEvent": "Yeni etkinlik",
+  "today": "Bugün",
+  "view": {
+    "month": "Ay",
+    "agenda": "Ajanda"
+  },
+  "footer": {
+    "count": "{{count}} etkinlik"
+  },
+  "empty": {
+    "title": "Henüz etkinlik yok",
+    "hint": "Gününü planlamak için ilk etkinliğini oluştur."
+  },
+  "agenda": {
+    "empty": "Yaklaşan etkinlik yok",
+    "allDay": "Tüm gün"
+  },
+  "month": {
+    "more": "+{{count}} daha"
+  },
+  "composer": {
+    "createTitle": "Yeni etkinlik",
+    "editTitle": "Etkinliği düzenle",
+    "titlePlaceholder": "Etkinlik başlığı",
+    "allDay": "Tüm gün",
+    "starts": "Başlangıç",
+    "ends": "Bitiş",
+    "startPlaceholder": "Başlangıç",
+    "endPlaceholder": "Bitiş",
+    "repeatLabel": "Yinele",
+    "reminderLabel": "Hatırlatıcı",
+    "colorLabel": "Renk",
+    "locationLabel": "Konum",
+    "locationPlaceholder": "Konum ekle",
+    "descriptionLabel": "Açıklama",
+    "descriptionPlaceholder": "Açıklama ekle...",
+    "save": "Kaydet",
+    "cancel": "İptal",
+    "delete": "Sil"
+  },
+  "repeat": {
+    "none": "Yinelenmez",
+    "daily": "Her gün",
+    "weekly": "Her hafta",
+    "weekdays": "Hafta içi",
+    "monthly": "Her ay",
+    "yearly": "Her yıl"
+  },
+  "remind": {
+    "none": "Hatırlatma yok",
+    "atTime": "Etkinlik saatinde",
+    "min5": "5 dakika önce",
+    "min10": "10 dakika önce",
+    "min15": "15 dakika önce",
+    "min30": "30 dakika önce",
+    "hour1": "1 saat önce",
+    "hour2": "2 saat önce",
+    "day1": "1 gün önce"
+  },
+  "color": {
+    "none": "Varsayılan",
+    "red": "Kırmızı",
+    "orange": "Turuncu",
+    "yellow": "Sarı",
+    "green": "Yeşil",
+    "blue": "Mavi",
+    "purple": "Mor"
+  },
+  "reminderToast": {
+    "title": "Etkinlik hatırlatıcısı"
+  },
+  "reminder": {
+    "notifTitle": "Etkinlik hatırlatıcısı"
+  },
+  "deleteConfirm": {
+    "title": "Etkinlik silinsin mi?",
+    "content": "Bu etkinlik kalıcı olarak silinecek.",
+    "ok": "Sil",
+    "cancel": "İptal"
+  }
+}

@@ -315,6 +315,14 @@ const REMOTE_DENIED_KEYS: ReadonlySet<string> = new Set([
   'note.toggle-archive',
   'note.toggle-item',
   'note.reorder',
+  // --- Calendar (Odysseus "calendar"): every mutating verb writes persisted user
+  //     content. A paired-device WebSocket caller must never create/edit/delete an
+  //     event - only the trusted local user owns their calendar. The read verbs
+  //     (calendar.list / calendar.get) follow the cron read policy and stay allowed
+  //     for the paired UI. ---
+  'calendar.create',
+  'calendar.update',
+  'calendar.delete',
   // --- Storage destructive / disk operations ---
   'storage:changeDir',
   'storage:clearDir',

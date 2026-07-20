@@ -2266,6 +2266,58 @@ const migration_v51: IMigration = {
 };
 
 /**
+ * Migration v51 -> v52: Add the `calendar_events` table for the Calendar surface
+ * (Odysseus assimilation "calendar"). Events carry a UTC epoch-ms start/end, an
+ * optional iCal RRULE recurrence string, and an optional lead-time reminder that
+ * fires through Darhai's existing native-notification path
+ * (CalendarReminderScanner) - the same plumbing the Notes reminder uses. The
+ * CronService scheduler is NOT reused or touched.
+ *
+ * Every statement is `IF NOT EXISTS` so up() is idempotent and survives a re-run
+ * from version 0 (crash recovery / re-entrancy), matching migration_v51.
+ */
+const migration_v52: IMigration = {
+  version: 52,
+  name: 'Add calendar_events table for the Calendar surface',
+  up: (db) => {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS calendar_events (
+        id                  TEXT PRIMARY KEY,
+        user_id             TEXT NOT NULL,
+        calendar_id         TEXT,
+        title               TEXT NOT NULL DEFAULT '',
+        description         TEXT,
+        location            TEXT,
+        start_ms            INTEGER NOT NULL,
+        end_ms              INTEGER NOT NULL,
+        all_day             INTEGER NOT NULL DEFAULT 0,
+        rrule               TEXT,
+        color               TEXT,
+        reminder_lead_ms    INTEGER,
+        last_reminded_at_ms INTEGER,
+        created_at_ms       INTEGER NOT NULL,
+        updated_at_ms       INTEGER NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+    db.exec('CREATE INDEX IF NOT EXISTS idx_calendar_events_user_id ON calendar_events(user_id)');
+    // Composite index backs the range query (list a user's events overlapping a window).
+    db.exec('CREATE INDEX IF NOT EXISTS idx_calendar_events_user_range ON calendar_events(user_id, start_ms, end_ms)');
+    // Recurring rows are fetched by (dtstart < end) regardless of window; index rrule so
+    // the "has recurrence" branch stays cheap.
+    db.exec('CREATE INDEX IF NOT EXISTS idx_calendar_events_rrule ON calendar_events(rrule)');
+    console.log('[Migration v52] Added calendar_events table');
+  },
+  down: (db) => {
+    db.exec('DROP INDEX IF EXISTS idx_calendar_events_rrule');
+    db.exec('DROP INDEX IF EXISTS idx_calendar_events_user_range');
+    db.exec('DROP INDEX IF EXISTS idx_calendar_events_user_id');
+    db.exec('DROP TABLE IF EXISTS calendar_events');
+    console.log('[Migration v52] Rolled back: dropped calendar_events table');
+  },
+};
+
+/**
  * All migrations in order
  */
 // prettier-ignore
@@ -2278,7 +2330,7 @@ export const ALL_MIGRATIONS: IMigration[] = [
   migration_v31, migration_v32, migration_v33, migration_v34, migration_v35, migration_v36,
   migration_v37, migration_v38, migration_v39, migration_v40, migration_v41, migration_v42,
   migration_v43, migration_v44, migration_v45, migration_v46, migration_v47,
-  migration_v48, migration_v49, migration_v50, migration_v51,
+  migration_v48, migration_v49, migration_v50, migration_v51, migration_v52,
 ];
 
 /**

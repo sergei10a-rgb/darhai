@@ -1,0 +1,85 @@
+{
+  "sidebarLabel": "Kalender",
+  "pageTitle": "Kalender",
+  "description": "Sieh deine Termine auf einen Blick und erhalte einen Hinweis, bevor sie beginnen.",
+  "newEvent": "Neuer Termin",
+  "today": "Heute",
+  "view": {
+    "month": "Monat",
+    "agenda": "Agenda"
+  },
+  "footer": {
+    "count": "{{count}} Termine"
+  },
+  "empty": {
+    "title": "Noch keine Termine",
+    "hint": "Erstelle deinen ersten Termin, um den Tag zu planen."
+  },
+  "agenda": {
+    "empty": "Keine anstehenden Termine",
+    "allDay": "Ganztägig"
+  },
+  "month": {
+    "more": "+{{count}} weitere"
+  },
+  "composer": {
+    "createTitle": "Neuer Termin",
+    "editTitle": "Termin bearbeiten",
+    "titlePlaceholder": "Termintitel",
+    "allDay": "Ganztägig",
+    "starts": "Beginn",
+    "ends": "Ende",
+    "startPlaceholder": "Beginn",
+    "endPlaceholder": "Ende",
+    "repeatLabel": "Wiederholen",
+    "reminderLabel": "Erinnerung",
+    "colorLabel": "Farbe",
+    "locationLabel": "Ort",
+    "locationPlaceholder": "Ort hinzufügen",
+    "descriptionLabel": "Beschreibung",
+    "descriptionPlaceholder": "Beschreibung hinzufügen...",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen"
+  },
+  "repeat": {
+    "none": "Keine Wiederholung",
+    "daily": "Täglich",
+    "weekly": "Wöchentlich",
+    "weekdays": "An Wochentagen",
+    "monthly": "Monatlich",
+    "yearly": "Jährlich"
+  },
+  "remind": {
+    "none": "Keine Erinnerung",
+    "atTime": "Zur Terminzeit",
+    "min5": "5 Minuten vorher",
+    "min10": "10 Minuten vorher",
+    "min15": "15 Minuten vorher",
+    "min30": "30 Minuten vorher",
+    "hour1": "1 Stunde vorher",
+    "hour2": "2 Stunden vorher",
+    "day1": "1 Tag vorher"
+  },
+  "color": {
+    "none": "Standard",
+    "red": "Rot",
+    "orange": "Orange",
+    "yellow": "Gelb",
+    "green": "Grün",
+    "blue": "Blau",
+    "purple": "Lila"
+  },
+  "reminderToast": {
+    "title": "Terminerinnerung"
+  },
+  "reminder": {
+    "notifTitle": "Terminerinnerung"
+  },
+  "deleteConfirm": {
+    "title": "Termin löschen?",
+    "content": "Dieser Termin wird dauerhaft gelöscht.",
+    "ok": "Löschen",
+    "cancel": "Abbrechen"
+  }
+}

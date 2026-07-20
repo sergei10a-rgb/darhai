@@ -1,0 +1,103 @@
+/**
+ * Month grid styles. Semantic tokens only. The Arco Calendar cell is fully
+ * overridden via dateRender, so the day cell is styled here.
+ */
+
+.cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 84px;
+  padding: 6px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background-color var(--duration-fast, 150ms) ease;
+}
+
+.cell:hover {
+  background-color: var(--color-fill-2);
+}
+
+.dayNum {
+  align-self: flex-end;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-2);
+  line-height: 1;
+}
+
+.today {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  color: var(--color-white);
+  background-color: rgb(var(--primary-6));
+}
+
+.chips {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  overflow: hidden;
+}
+
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--color-text-1);
+  background-color: var(--color-fill-2);
+  border-left: 3px solid rgb(var(--primary-6));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background-color var(--duration-fast, 150ms) ease;
+}
+
+.chip:hover {
+  background-color: var(--color-fill-3);
+}
+
+.chipTime {
+  color: var(--color-text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.chipTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.more {
+  font-size: 11px;
+  color: var(--color-text-3);
+  padding-left: 6px;
+}
+
+/* Semantic accent colors keyed off the event color token. */
+.colorRed {
+  border-left-color: rgb(var(--red-6));
+}
+.colorOrange {
+  border-left-color: rgb(var(--orange-6));
+}
+.colorYellow {
+  border-left-color: rgb(var(--yellow-6));
+}
+.colorGreen {
+  border-left-color: rgb(var(--green-6));
+}
+.colorBlue {
+  border-left-color: rgb(var(--blue-6));
+}
+.colorPurple {
+  border-left-color: rgb(var(--purple-6));
+}

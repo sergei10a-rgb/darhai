@@ -319,6 +319,9 @@ export interface IConfigStorageRefer {
   // Fire a native notification when a note's due-date reminder comes up
   // (default ON: only an explicit false disables, mirroring notificationEnabled)
   'system.noteReminderEnabled'?: boolean;
+  // Fire a native notification when a calendar event's lead-time reminder comes up
+  // (default ON: only an explicit false disables, mirroring noteReminderEnabled)
+  'system.calendarReminderEnabled'?: boolean;
   // Prevent system sleep to ensure scheduled tasks run
   'system.keepAwake'?: boolean;
   // Route all agent requests through Flux Router (consent gate; default false until first connect)

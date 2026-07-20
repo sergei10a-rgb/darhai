@@ -31,6 +31,7 @@ import projects from './projects.json';
 import modelAdvisor from './modelAdvisor.json';
 import compare from './compare.json';
 import notes from './notes.json';
+import calendar from './calendar.json';
 import workflows from './workflows.json';
 import models from './models.json';
 
@@ -67,6 +68,7 @@ export default {
   modelAdvisor,
   compare,
   notes,
+  calendar,
   workflows,
   models,
 };

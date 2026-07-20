@@ -1,0 +1,85 @@
+{
+  "sidebarLabel": "カレンダー",
+  "pageTitle": "カレンダー",
+  "description": "予定をひと目で確認し、開始前にリマインドを受け取れます。",
+  "newEvent": "新しい予定",
+  "today": "今日",
+  "view": {
+    "month": "月",
+    "agenda": "予定リスト"
+  },
+  "footer": {
+    "count": "{{count}} 件の予定"
+  },
+  "empty": {
+    "title": "予定はまだありません",
+    "hint": "最初の予定を作成して一日を計画しましょう。"
+  },
+  "agenda": {
+    "empty": "今後の予定はありません",
+    "allDay": "終日"
+  },
+  "month": {
+    "more": "他 +{{count}} 件"
+  },
+  "composer": {
+    "createTitle": "新しい予定",
+    "editTitle": "予定を編集",
+    "titlePlaceholder": "予定のタイトル",
+    "allDay": "終日",
+    "starts": "開始",
+    "ends": "終了",
+    "startPlaceholder": "開始",
+    "endPlaceholder": "終了",
+    "repeatLabel": "繰り返し",
+    "reminderLabel": "リマインダー",
+    "colorLabel": "色",
+    "locationLabel": "場所",
+    "locationPlaceholder": "場所を追加",
+    "descriptionLabel": "説明",
+    "descriptionPlaceholder": "説明を追加…",
+    "save": "保存",
+    "cancel": "キャンセル",
+    "delete": "削除"
+  },
+  "repeat": {
+    "none": "繰り返さない",
+    "daily": "毎日",
+    "weekly": "毎週",
+    "weekdays": "平日",
+    "monthly": "毎月",
+    "yearly": "毎年"
+  },
+  "remind": {
+    "none": "リマインドなし",
+    "atTime": "予定の時刻",
+    "min5": "5分前",
+    "min10": "10分前",
+    "min15": "15分前",
+    "min30": "30分前",
+    "hour1": "1時間前",
+    "hour2": "2時間前",
+    "day1": "1日前"
+  },
+  "color": {
+    "none": "既定",
+    "red": "赤",
+    "orange": "オレンジ",
+    "yellow": "黄",
+    "green": "緑",
+    "blue": "青",
+    "purple": "紫"
+  },
+  "reminderToast": {
+    "title": "予定のリマインダー"
+  },
+  "reminder": {
+    "notifTitle": "予定のリマインダー"
+  },
+  "deleteConfirm": {
+    "title": "予定を削除しますか？",
+    "content": "この予定は完全に削除されます。",
+    "ok": "削除",
+    "cancel": "キャンセル"
+  }
+}

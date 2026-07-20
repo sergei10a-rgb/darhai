@@ -1107,6 +1107,37 @@ export const note = {
   onReminderFired: buildEmitter<import('@/common/types/notes').NoteReminderFiredEvent>('note.reminder-fired'),
 };
 
+/**
+ * Calendar + reminders (Odysseus assimilation "calendar"). A first-class calendar
+ * surface with dated events, iCal RRULE recurrence, and lead-time reminders that
+ * fire through the existing native-notification path. Every mutating verb
+ * (create/update/delete) is remote-denied (see bridgeAllowlist REMOTE_DENIED_KEYS)
+ * - only the trusted local user edits their calendar. The read verbs (list/get)
+ * follow the cron read policy and stay allowed.
+ */
+export const calendar = {
+  // Query
+  list: buildProvider<
+    import('@/common/types/calendar').CalendarOccurrence[],
+    { userId: string; startMs: number; endMs: number }
+  >('calendar.list'),
+  get: buildProvider<import('@/common/types/calendar').CalendarEvent | null, { eventId: string }>('calendar.get'),
+  // CRUD (all remote-denied)
+  create: buildProvider<
+    import('@/common/types/calendar').CalendarEvent,
+    import('@/common/types/calendar').CreateCalendarEventParams
+  >('calendar.create'),
+  update: buildProvider<
+    import('@/common/types/calendar').CalendarEvent,
+    { eventId: string; updates: import('@/common/types/calendar').UpdateCalendarEventParams }
+  >('calendar.update'),
+  delete: buildProvider<void, { eventId: string }>('calendar.delete'),
+  // Events
+  onEventChanged: buildEmitter<import('@/common/types/calendar').CalendarEventChangedEvent>('calendar.event-changed'),
+  onReminderFired:
+    buildEmitter<import('@/common/types/calendar').CalendarReminderFiredEvent>('calendar.reminder-fired'),
+};
+
 /** Mission Control - unified task ledger (team tasks + cron jobs). */
 export const missionControl = {
   snapshot: buildProvider<import('@/common/types/missionControl').MissionControlSnapshot, { userId: string }>(

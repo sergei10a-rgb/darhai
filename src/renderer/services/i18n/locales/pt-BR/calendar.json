@@ -1,0 +1,85 @@
+{
+  "sidebarLabel": "Agenda",
+  "pageTitle": "Agenda",
+  "description": "Veja seus eventos de relance e receba um aviso antes de começarem.",
+  "newEvent": "Novo evento",
+  "today": "Hoje",
+  "view": {
+    "month": "Mês",
+    "agenda": "Compromissos"
+  },
+  "footer": {
+    "count": "{{count}} eventos"
+  },
+  "empty": {
+    "title": "Nenhum evento ainda",
+    "hint": "Crie seu primeiro evento para planejar o dia."
+  },
+  "agenda": {
+    "empty": "Nenhum evento próximo",
+    "allDay": "Dia inteiro"
+  },
+  "month": {
+    "more": "+{{count}} mais"
+  },
+  "composer": {
+    "createTitle": "Novo evento",
+    "editTitle": "Editar evento",
+    "titlePlaceholder": "Título do evento",
+    "allDay": "Dia inteiro",
+    "starts": "Início",
+    "ends": "Término",
+    "startPlaceholder": "Início",
+    "endPlaceholder": "Término",
+    "repeatLabel": "Repetir",
+    "reminderLabel": "Lembrete",
+    "colorLabel": "Cor",
+    "locationLabel": "Local",
+    "locationPlaceholder": "Adicionar local",
+    "descriptionLabel": "Descrição",
+    "descriptionPlaceholder": "Adicionar uma descrição...",
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "delete": "Excluir"
+  },
+  "repeat": {
+    "none": "Não se repete",
+    "daily": "Todos os dias",
+    "weekly": "Toda semana",
+    "weekdays": "Em dias úteis",
+    "monthly": "Todo mês",
+    "yearly": "Todo ano"
+  },
+  "remind": {
+    "none": "Sem lembrete",
+    "atTime": "Na hora do evento",
+    "min5": "5 minutos antes",
+    "min10": "10 minutos antes",
+    "min15": "15 minutos antes",
+    "min30": "30 minutos antes",
+    "hour1": "1 hora antes",
+    "hour2": "2 horas antes",
+    "day1": "1 dia antes"
+  },
+  "color": {
+    "none": "Padrão",
+    "red": "Vermelho",
+    "orange": "Laranja",
+    "yellow": "Amarelo",
+    "green": "Verde",
+    "blue": "Azul",
+    "purple": "Roxo"
+  },
+  "reminderToast": {
+    "title": "Lembrete de evento"
+  },
+  "reminder": {
+    "notifTitle": "Lembrete de evento"
+  },
+  "deleteConfirm": {
+    "title": "Excluir evento?",
+    "content": "Este evento será excluído permanentemente.",
+    "ok": "Excluir",
+    "cancel": "Cancelar"
+  }
+}

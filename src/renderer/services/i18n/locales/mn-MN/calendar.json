@@ -1,0 +1,85 @@
+{
+  "sidebarLabel": "Хуанли",
+  "pageTitle": "Хуанли",
+  "description": "Үйл явдлуудаа нэг дороос хараад, эхлэхээс өмнө сануулга авна.",
+  "newEvent": "Шинэ үйл явдал",
+  "today": "Өнөөдөр",
+  "view": {
+    "month": "Сар",
+    "agenda": "Хөтөлбөр"
+  },
+  "footer": {
+    "count": "{{count}} үйл явдал"
+  },
+  "empty": {
+    "title": "Одоохондоо үйл явдал алга",
+    "hint": "Өдрөө төлөвлөхийн тулд эхний үйл явдлаа үүсгээрэй."
+  },
+  "agenda": {
+    "empty": "Удахгүй болох үйл явдал алга",
+    "allDay": "Өдөржин"
+  },
+  "month": {
+    "more": "+{{count}} илүү"
+  },
+  "composer": {
+    "createTitle": "Шинэ үйл явдал",
+    "editTitle": "Үйл явдал засах",
+    "titlePlaceholder": "Үйл явдлын гарчиг",
+    "allDay": "Өдөржин",
+    "starts": "Эхлэх",
+    "ends": "Дуусах",
+    "startPlaceholder": "Эхлэх",
+    "endPlaceholder": "Дуусах",
+    "repeatLabel": "Давталт",
+    "reminderLabel": "Сануулга",
+    "colorLabel": "Өнгө",
+    "locationLabel": "Байршил",
+    "locationPlaceholder": "Байршил нэмэх",
+    "descriptionLabel": "Тайлбар",
+    "descriptionPlaceholder": "Тайлбар нэмэх...",
+    "save": "Хадгалах",
+    "cancel": "Цуцлах",
+    "delete": "Устгах"
+  },
+  "repeat": {
+    "none": "Давтагдахгүй",
+    "daily": "Өдөр бүр",
+    "weekly": "Долоо хоног бүр",
+    "weekdays": "Ажлын өдрүүд",
+    "monthly": "Сар бүр",
+    "yearly": "Жил бүр"
+  },
+  "remind": {
+    "none": "Сануулгагүй",
+    "atTime": "Үйл явдлын цагт",
+    "min5": "5 минутын өмнө",
+    "min10": "10 минутын өмнө",
+    "min15": "15 минутын өмнө",
+    "min30": "30 минутын өмнө",
+    "hour1": "1 цагийн өмнө",
+    "hour2": "2 цагийн өмнө",
+    "day1": "1 өдрийн өмнө"
+  },
+  "color": {
+    "none": "Үндсэн",
+    "red": "Улаан",
+    "orange": "Улбар шар",
+    "yellow": "Шар",
+    "green": "Ногоон",
+    "blue": "Цэнхэр",
+    "purple": "Ягаан"
+  },
+  "reminderToast": {
+    "title": "Үйл явдлын сануулга"
+  },
+  "reminder": {
+    "notifTitle": "Үйл явдлын сануулга"
+  },
+  "deleteConfirm": {
+    "title": "Үйл явдлыг устгах уу?",
+    "content": "Энэ үйл явдал бүрмөсөн устгагдана.",
+    "ok": "Устгах",
+    "cancel": "Цуцлах"
+  }
+}

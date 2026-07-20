@@ -1,0 +1,85 @@
+{
+  "sidebarLabel": "日历",
+  "pageTitle": "日历",
+  "description": "一目了然地查看日程，并在开始前收到提醒。",
+  "newEvent": "新建日程",
+  "today": "今天",
+  "view": {
+    "month": "月",
+    "agenda": "日程"
+  },
+  "footer": {
+    "count": "{{count}} 个日程"
+  },
+  "empty": {
+    "title": "暂无日程",
+    "hint": "创建你的第一个日程来规划这一天。"
+  },
+  "agenda": {
+    "empty": "没有即将开始的日程",
+    "allDay": "全天"
+  },
+  "month": {
+    "more": "+{{count}} 更多"
+  },
+  "composer": {
+    "createTitle": "新建日程",
+    "editTitle": "编辑日程",
+    "titlePlaceholder": "日程标题",
+    "allDay": "全天",
+    "starts": "开始",
+    "ends": "结束",
+    "startPlaceholder": "开始",
+    "endPlaceholder": "结束",
+    "repeatLabel": "重复",
+    "reminderLabel": "提醒",
+    "colorLabel": "颜色",
+    "locationLabel": "地点",
+    "locationPlaceholder": "添加地点",
+    "descriptionLabel": "描述",
+    "descriptionPlaceholder": "添加描述…",
+    "save": "保存",
+    "cancel": "取消",
+    "delete": "删除"
+  },
+  "repeat": {
+    "none": "不重复",
+    "daily": "每天",
+    "weekly": "每周",
+    "weekdays": "工作日",
+    "monthly": "每月",
+    "yearly": "每年"
+  },
+  "remind": {
+    "none": "不提醒",
+    "atTime": "日程开始时",
+    "min5": "提前 5 分钟",
+    "min10": "提前 10 分钟",
+    "min15": "提前 15 分钟",
+    "min30": "提前 30 分钟",
+    "hour1": "提前 1 小时",
+    "hour2": "提前 2 小时",
+    "day1": "提前 1 天"
+  },
+  "color": {
+    "none": "默认",
+    "red": "红色",
+    "orange": "橙色",
+    "yellow": "黄色",
+    "green": "绿色",
+    "blue": "蓝色",
+    "purple": "紫色"
+  },
+  "reminderToast": {
+    "title": "日程提醒"
+  },
+  "reminder": {
+    "notifTitle": "日程提醒"
+  },
+  "deleteConfirm": {
+    "title": "删除日程？",
+    "content": "此日程将被永久删除。",
+    "ok": "删除",
+    "cancel": "取消"
+  }
+}

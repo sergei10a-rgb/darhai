@@ -1,0 +1,85 @@
+{
+  "sidebarLabel": "Calendario",
+  "pageTitle": "Calendario",
+  "description": "Consulta tus eventos de un vistazo y recibe un aviso antes de que empiecen.",
+  "newEvent": "Nuevo evento",
+  "today": "Hoy",
+  "view": {
+    "month": "Mes",
+    "agenda": "Agenda"
+  },
+  "footer": {
+    "count": "{{count}} eventos"
+  },
+  "empty": {
+    "title": "Aún no hay eventos",
+    "hint": "Crea tu primer evento para planificar el día."
+  },
+  "agenda": {
+    "empty": "No hay eventos próximos",
+    "allDay": "Todo el día"
+  },
+  "month": {
+    "more": "+{{count}} más"
+  },
+  "composer": {
+    "createTitle": "Nuevo evento",
+    "editTitle": "Editar evento",
+    "titlePlaceholder": "Título del evento",
+    "allDay": "Todo el día",
+    "starts": "Empieza",
+    "ends": "Termina",
+    "startPlaceholder": "Inicio",
+    "endPlaceholder": "Fin",
+    "repeatLabel": "Repetir",
+    "reminderLabel": "Recordatorio",
+    "colorLabel": "Color",
+    "locationLabel": "Ubicación",
+    "locationPlaceholder": "Añadir ubicación",
+    "descriptionLabel": "Descripción",
+    "descriptionPlaceholder": "Añadir una descripción...",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar"
+  },
+  "repeat": {
+    "none": "No se repite",
+    "daily": "Cada día",
+    "weekly": "Cada semana",
+    "weekdays": "Días laborables",
+    "monthly": "Cada mes",
+    "yearly": "Cada año"
+  },
+  "remind": {
+    "none": "Sin recordatorio",
+    "atTime": "A la hora del evento",
+    "min5": "5 minutos antes",
+    "min10": "10 minutos antes",
+    "min15": "15 minutos antes",
+    "min30": "30 minutos antes",
+    "hour1": "1 hora antes",
+    "hour2": "2 horas antes",
+    "day1": "1 día antes"
+  },
+  "color": {
+    "none": "Predeterminado",
+    "red": "Rojo",
+    "orange": "Naranja",
+    "yellow": "Amarillo",
+    "green": "Verde",
+    "blue": "Azul",
+    "purple": "Morado"
+  },
+  "reminderToast": {
+    "title": "Recordatorio de evento"
+  },
+  "reminder": {
+    "notifTitle": "Recordatorio de evento"
+  },
+  "deleteConfirm": {
+    "title": "¿Eliminar el evento?",
+    "content": "Este evento se eliminará de forma permanente.",
+    "ok": "Eliminar",
+    "cancel": "Cancelar"
+  }
+}
