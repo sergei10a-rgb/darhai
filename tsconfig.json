@@ -30,6 +30,7 @@
     "src/renderer/types.d.ts"
   ],
   "exclude": [
+    "src/process/resources/skills-library/bodies",
     "src/process/services/database/drivers/BunSqliteDriver.ts",
     "src/process/services/database/drivers/BunSqliteDriver.bun.test.ts",
     "src/process/services/database/migration_v41.bun.test.ts",
