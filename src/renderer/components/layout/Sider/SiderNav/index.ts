@@ -1,5 +1,6 @@
 export { default as SiderActiveTeams } from './SiderActiveTeams';
 export { default as SiderAssistantsEntry } from './SiderAssistantsEntry';
+export { default as SiderCompareEntry } from './SiderCompareEntry';
 export { default as SiderFluxRouterEntry } from './SiderFluxRouterEntry';
 export { default as SiderMemoryEntry } from './SiderMemoryEntry';
 export { default as SiderMissionControlEntry } from './SiderMissionControlEntry';

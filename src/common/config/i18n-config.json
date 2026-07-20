@@ -49,6 +49,7 @@
     "onboarding",
     "models",
     "projects",
-    "modelAdvisor"
+    "modelAdvisor",
+    "compare"
   ]
 }

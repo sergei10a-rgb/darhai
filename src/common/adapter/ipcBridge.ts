@@ -1100,6 +1100,18 @@ export const hwfit = {
 };
 
 /**
+ * Compare (Odysseus #6): run one prompt through several selected models and
+ * return the outputs side by side. `run` spends tokens + makes outbound calls,
+ * so it is remote-denied (see bridgeAllowlist). The renderer passes only the
+ * non-secret `{ providerId, modelId }` refs; the key is resolved main-side.
+ */
+export const compare = {
+  run: buildProvider<import('@/common/types/compare').CompareResult, import('@/common/types/compare').CompareRequest>(
+    'compare.run'
+  ),
+};
+
+/**
  * v0.6.2.6 - payload returned by cron.confirmProposal when action='edit'.
  * The renderer uses this to open CreateTaskDialog pre-filled so the user
  * can tweak the proposed cron before saving.

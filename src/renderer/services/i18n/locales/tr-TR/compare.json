@@ -1,0 +1,36 @@
+{
+  "sidebarLabel": "Compare",
+  "pageTitle": "Compare models",
+  "description": "Run the same prompt through several models and see the answers side by side. Find which local model is best for your work.",
+  "prompt": {
+    "label": "Prompt",
+    "placeholder": "Type the prompt you want to compare across models..."
+  },
+  "models": {
+    "label": "Models",
+    "placeholder": "Pick up to 6 models to compare",
+    "empty": "No connected models yet. Connect a provider in Settings → Models first."
+  },
+  "blind": {
+    "label": "Blind mode",
+    "hint": "Hide which model produced which answer until you reveal it."
+  },
+  "run": "Run compare",
+  "running": "Running...",
+  "reveal": "Reveal models",
+  "hide": "Hide models",
+  "noUsableModel": "None of the selected models can be called. Connect a provider with an API key in Settings → Models.",
+  "empty": {
+    "title": "Nothing to compare yet",
+    "hint": "Enter a prompt, pick a few models, and run to see their answers side by side."
+  },
+  "result": {
+    "alias": "Model {{letter}}",
+    "ms": "{{ms}} ms",
+    "error": "Failed",
+    "emptyOutput": "(empty response)"
+  },
+  "footer": {
+    "count": "{{count}} models available"
+  }
+}

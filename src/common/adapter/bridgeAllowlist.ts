@@ -298,6 +298,11 @@ const REMOTE_DENIED_KEYS: ReadonlySet<string> = new Set([
   'hwfit.scan-hardware',
   'hwfit.rank-models',
   'hwfit.catalog-size',
+  // --- Compare (Odysseus #6): runs a prompt through several models at once.
+  //     Spends tokens and makes outbound provider calls (fan-out amplification),
+  //     so a paired-device WebSocket caller must never drive it - only the
+  //     trusted local user compares models. The local renderer UI is unaffected. ---
+  'compare.run',
   // --- Storage destructive / disk operations ---
   'storage:changeDir',
   'storage:clearDir',
