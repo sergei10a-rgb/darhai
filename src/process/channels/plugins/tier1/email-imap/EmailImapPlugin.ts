@@ -25,12 +25,15 @@ import type {
   BotInfo,
   IChannelPluginConfig,
   IPluginCapabilities,
+  IUnifiedIncomingMessage,
   IUnifiedOutgoingMessage,
   PluginType,
 } from '../../../types';
 import { BasePlugin } from '../../BasePlugin';
 import { EmailImapWorkerClient } from './EmailImapWorkerClient';
 import type { ResolvedCredentials } from './EmailImapShared';
+import { emailTriageService } from '@process/services/emailTriage/emailTriageServiceSingleton';
+import { readTriageConfig } from '@process/services/emailTriage/TriageService';
 
 export type { ResolvedCredentials } from './EmailImapShared';
 
@@ -59,17 +62,51 @@ export class EmailImapPlugin extends BasePlugin {
     this.worker = worker;
 
     // Inbound messages arrive from the worker already projected into the
-    // unified shape; track the sender and hand off to the channel bus.
+    // unified shape. handleInbound decides between the AI-triage path and the
+    // legacy agent-turn path (see its doc comment for the draft-only seam).
     worker.onMessage((message) => {
-      this.activeUsers.add(message.user.id);
-      void this.emitMessage(message).catch((err) =>
-        console.error('[email-imapPlugin] emit failed:', err)
-      );
+      void this.handleInbound(message);
     });
 
     // connect() resolves on the first successful connect (or rejects with a
     // human-readable reason); the worker owns IDLE/poll/reconnect after that.
     await worker.connect(this.creds);
+  }
+
+  /**
+   * Route one inbound email. This is the DRAFT-ONLY safety seam.
+   *
+   * When AI triage is enabled for this account, the email is triaged and
+   * persisted and we RETURN EARLY - `emitMessage` is never called. That matters
+   * because email-imap is a CHANNEL_AUTO_APPROVE source: an emitted email would
+   * become an agent turn that auto-approves tools and replies over SMTP.
+   * Triaging before `emitMessage` keeps the whole feature structurally off the
+   * send path - a drafted reply is only ever sent later by an explicit human
+   * "Send draft" action.
+   *
+   * When triage is disabled the legacy path is unchanged: the email is handed to
+   * the channel bus exactly as before.
+   */
+  private async handleInbound(message: IUnifiedIncomingMessage): Promise<void> {
+    this.activeUsers.add(message.user.id);
+
+    const triageConfig = readTriageConfig(this.config?.config);
+    if (triageConfig.triageEnabled) {
+      try {
+        await emailTriageService.triageInbound(message, {
+          pluginId: this.config?.id ?? this.type,
+          account: this.creds?.imap.user ?? '',
+          config: triageConfig,
+        });
+      } catch (err) {
+        console.error('[email-imapPlugin] triage failed:', err);
+      }
+      // Early return - do NOT emitMessage. Keeps triaged email off the send path.
+      return;
+    }
+
+    // Legacy path (triage off): hand off to the channel bus / agent turn.
+    await this.emitMessage(message).catch((err) => console.error('[email-imapPlugin] emit failed:', err));
   }
 
   protected async onStop(): Promise<void> {

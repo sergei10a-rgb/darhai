@@ -22,6 +22,7 @@ import { SmsTwilioPlugin } from '../plugins/tier1/sms/SmsTwilioPlugin';
 import { WhatsAppPlugin } from '../plugins/tier1/whatsapp/WhatsAppPlugin';
 import { EmailAgentMailPlugin } from '../plugins/tier1/email-agentmail/EmailAgentMailPlugin';
 import { EmailImapPlugin } from '../plugins/tier1/email-imap/EmailImapPlugin';
+import { readTriageConfig } from '@process/services/emailTriage/TriageService';
 import { MatrixPlugin } from '../plugins/tier2/matrix/MatrixPlugin';
 import { LinePlugin } from '../plugins/tier2/line/LinePlugin';
 import { WebhookPlugin } from '../plugins/tier1/webhook/WebhookPlugin';
@@ -264,10 +265,7 @@ export class ChannelManager {
       try {
         await plugin.handleWebhookPayload(event.payload, event.headers, event.pluginInstanceId);
       } catch (err) {
-        console.error(
-          `[ChannelManager] Plugin ${event.pluginInstanceId} threw on webhook delivery:`,
-          err
-        );
+        console.error(`[ChannelManager] Plugin ${event.pluginInstanceId} threw on webhook delivery:`, err);
       }
     });
   }
@@ -440,8 +438,7 @@ export class ChannelManager {
       // them and silently fall back to defaults. Keep the whole block together
       // in credentials. Passwords are whitespace-stripped to match the form +
       // resolveCredentials (Gmail/Outlook app passwords paste with spaces).
-      const stripPw = (v: unknown): string | undefined =>
-        typeof v === 'string' ? v.replace(/\s+/g, '') : undefined;
+      const stripPw = (v: unknown): string | undefined => (typeof v === 'string' ? v.replace(/\s+/g, '') : undefined);
       const str = (v: unknown): string | undefined => (typeof v === 'string' ? v.trim() : undefined);
       const num = (v: unknown): number | undefined => (typeof v === 'number' ? v : undefined);
       const bool = (v: unknown): boolean | undefined => (typeof v === 'boolean' ? v : undefined);
@@ -459,6 +456,12 @@ export class ChannelManager {
         smtpUser: str(config.smtpUser),
         smtpPassword: stripPw(config.smtpPassword),
       };
+      // Triage feature flags live in RUNTIME config (not credentials): they gate
+      // the AI triage overlay, not the mailbox connection. Read the six booleans
+      // off the incoming form config so they persist in assistant_plugins.config;
+      // all default to false, so an account that never opts in behaves exactly
+      // like the legacy (pre-triage) path.
+      pluginRuntimeConfig = { ...pluginRuntimeConfig, ...readTriageConfig(config) };
     } else {
       // Extension or unknown plugin type:
       // - prefer manifest-declared credential/config fields
@@ -471,7 +474,10 @@ export class ChannelManager {
           }
         | undefined;
 
-      const nextCredentials: Record<string, string | number | boolean | readonly string[] | readonly number[] | undefined> = {
+      const nextCredentials: Record<
+        string,
+        string | number | boolean | readonly string[] | readonly number[] | undefined
+      > = {
         ...credentials,
       };
       // pluginRuntimeConfig stays scalar-only - array-typed fields like IRC

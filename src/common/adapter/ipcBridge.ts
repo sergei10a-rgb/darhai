@@ -1201,6 +1201,29 @@ export const research = {
   onRunChanged: buildEmitter<import('@/common/types/research').ResearchRunChangedEvent>('research.run-changed'),
 };
 
+/**
+ * Email AI Triage (Odysseus assimilation "email pollers"). The triage passes run
+ * automatically at the plugin ingress; this surface is read-only plus one
+ * human-gated action. `sendDraft` is the ONLY verb that can send an email - it
+ * routes a reviewed draft through the existing EmailImapPlugin.sendMessage SMTP
+ * path and is remote-denied (see bridgeAllowlist REMOTE_DENIED_KEYS). `list`/`get`
+ * are read verbs and stay allowed for the paired UI.
+ */
+export const emailTriage = {
+  list: buildProvider<import('@/common/types/emailTriage').EmailTriageEntry[], { pluginId: string }>(
+    'email-triage.list'
+  ),
+  get: buildProvider<import('@/common/types/emailTriage').EmailTriageEntry | null, { messageId: string }>(
+    'email-triage.get'
+  ),
+  /** Human-gated send: dispatch a reviewed draft via the existing SMTP path (remote-denied). */
+  sendDraft: buildProvider<{ messageId: string }, import('@/common/types/emailTriage').SendDraftParams>(
+    'email-triage.send-draft'
+  ),
+  // Events
+  onUpdated: buildEmitter<import('@/common/types/emailTriage').EmailTriageUpdatedEvent>('email-triage.updated'),
+};
+
 /** Mission Control - unified task ledger (team tasks + cron jobs). */
 export const missionControl = {
   snapshot: buildProvider<import('@/common/types/missionControl').MissionControlSnapshot, { userId: string }>(

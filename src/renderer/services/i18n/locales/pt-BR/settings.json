@@ -1079,7 +1079,70 @@
           "help": "STARTTLS quando porta = 587, TLS implícito quando porta = 465."
         }
       },
-      "howToTalk": "Verifique sua propria caixa de entrada. O Darhai acabou de te enviar um e-mail; responda a esse e-mail quando quiser."
+      "howToTalk": "Verifique sua propria caixa de entrada. O Darhai acabou de te enviar um e-mail; responda a esse e-mail quando quiser.",
+      "triage": {
+        "viewTitle": "Caixa triada",
+        "empty": "Ainda não há e-mails triados. Quando a triagem está ativada, os e-mails recebidos aparecem aqui.",
+        "noSubject": "(sem assunto)",
+        "from": "De",
+        "summaryLabel": "Resumo",
+        "draftLabel": "Rascunho de resposta",
+        "draftPlaceholder": "O rascunho da resposta aparece aqui. Edite-o antes de enviar.",
+        "sendDraft": "Enviar rascunho",
+        "sent": "Rascunho enviado",
+        "sendFailed": "Falha ao enviar o rascunho",
+        "spamFlag": "Spam",
+        "urgency": {
+          "critical": "Crítica",
+          "high": "Alta",
+          "medium": "Média",
+          "low": "Baixa",
+          "none": "Nenhuma"
+        },
+        "tags": {
+          "work": "Trabalho",
+          "personal": "Pessoal",
+          "finance": "Finanças",
+          "bills": "Contas",
+          "receipt": "Recibo",
+          "travel": "Viagem",
+          "newsletter": "Newsletter",
+          "promo": "Promoção",
+          "notification": "Notificação",
+          "security": "Segurança",
+          "social": "Social",
+          "shopping": "Compras",
+          "calendar": "Agenda"
+        },
+        "config": {
+          "sectionTitle": "Triagem por IA",
+          "draftSafetyNote": "A triagem classifica e resume os e-mails recebidos e pode redigir uma resposta. Os rascunhos NUNCA são enviados automaticamente - você revisa e envia cada um.",
+          "enable": {
+            "label": "Ativar triagem por IA",
+            "help": "Executar a triagem por IA nos e-mails recebidos em vez de encaminhá-los ao agente."
+          },
+          "urgent": {
+            "label": "Detectar urgência",
+            "help": "Atribuir um nível de urgência a cada e-mail."
+          },
+          "tag": {
+            "label": "Marcar e-mails",
+            "help": "Atribuir marcadores de tema a cada e-mail."
+          },
+          "spam": {
+            "label": "Sinalizar spam",
+            "help": "Sinalizar e-mails promocionais / em massa / de phishing como spam."
+          },
+          "summary": {
+            "label": "Resumir e-mails",
+            "help": "Produzir um resumo curto de cada e-mail."
+          },
+          "draft": {
+            "label": "Redigir respostas",
+            "help": "Redigir uma resposta para cada e-mail. Os rascunhos são salvos para sua revisão e nunca enviados automaticamente."
+          }
+        }
+      }
     },
     "welcome": {
       "message": "Oi, e o Darhai. Estou conectado. Responda a esta mensagem quando quiser e eu vou te ajudar."

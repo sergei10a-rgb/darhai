@@ -12,6 +12,9 @@ import { Alert, Button, Input, InputNumber, Message, Switch } from '@arco-design
 import React, { useCallback, useRef, useState } from 'react';
 import { detectEmailProvider, type EmailProviderPreset } from '@/common/channels/emailProviderPresets';
 import { useTranslation } from 'react-i18next';
+import { DEFAULT_TRIAGE_CONFIG, type TriageConfig } from '@/common/types/emailTriage';
+import { PreferenceRow } from './PreferenceRow';
+import EmailImapTriageToggles from './EmailImapTriageToggles';
 
 /**
  * Strip every whitespace character from an app password. Gmail/Outlook display
@@ -20,30 +23,6 @@ import { useTranslation } from 'react-i18next';
  * input means a verbatim paste authenticates regardless of provider quirks.
  */
 const stripAppPassword = (value: string): string => value.replace(/\s+/g, '');
-
-/**
- * Preference row layout - mirrors EmailAgentMailConfigForm so the Settings
- * page reads consistently across email channels.
- */
-const PreferenceRow: React.FC<{
-  label: string;
-  description?: React.ReactNode;
-  required?: boolean;
-  children: React.ReactNode;
-}> = ({ label, description, required, children }) => (
-  <div className='flex items-center justify-between gap-24px py-12px'>
-    <div className='flex-1'>
-      <div className='flex items-center gap-8px'>
-        <span className='text-14px text-t-primary'>
-          {label}
-          {required && <span className='text-red-500 ml-2px'>*</span>}
-        </span>
-      </div>
-      {description && <div className='text-12px text-t-tertiary mt-2px'>{description}</div>}
-    </div>
-    <div className='flex items-center'>{children}</div>
-  </div>
-);
 
 type EmailImapConfigFormProps = {
   pluginStatus: IChannelPluginStatus | null;
@@ -72,6 +51,11 @@ const EmailImapConfigForm: React.FC<EmailImapConfigFormProps> = ({
   const [smtpUser, setSmtpUser] = useState('');
   const [smtpPassword, setSmtpPassword] = useState('');
   const [smtpTls, setSmtpTls] = useState(true);
+
+  // AI triage feature flags (Odysseus "email pollers"). All default OFF: triage
+  // is an opt-in overlay and while it is off the mailbox behaves exactly as
+  // before. triageEnabled is the master switch; the rest select which passes run.
+  const [triage, setTriage] = useState<TriageConfig>(DEFAULT_TRIAGE_CONFIG);
 
   const [testing, setTesting] = useState(false);
 
@@ -163,7 +147,10 @@ const EmailImapConfigForm: React.FC<EmailImapConfigFormProps> = ({
 
       const enableResult = await channel.enablePlugin.invoke({
         pluginId: 'email-imap',
-        config: credentials,
+        // Triage flags travel alongside the credentials in the enable config;
+        // ChannelManager routes the six booleans into assistant_plugins.config
+        // (runtime config), separate from the encrypted credential block.
+        config: { ...credentials, ...triage },
       });
       if (enableResult.success) {
         Message.success(t('settings.channels.emailImap.pluginEnabled', 'Email (IMAP) enabled'));
@@ -187,6 +174,7 @@ const EmailImapConfigForm: React.FC<EmailImapConfigFormProps> = ({
     smtpUser,
     smtpPassword,
     smtpTls,
+    triage,
     t,
   ]);
 
@@ -357,6 +345,8 @@ const EmailImapConfigForm: React.FC<EmailImapConfigFormProps> = ({
       >
         <Switch checked={smtpTls} onChange={(value) => setSmtpTls(value)} />
       </PreferenceRow>
+
+      <EmailImapTriageToggles value={triage} onChange={setTriage} />
 
       <div className='flex justify-end'>
         <Button type='primary' loading={testing} onClick={() => void handleTestAndEnable()}>

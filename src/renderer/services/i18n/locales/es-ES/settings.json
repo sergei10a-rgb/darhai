@@ -1079,7 +1079,70 @@
           "help": "STARTTLS cuando el puerto = 587, TLS implícito cuando el puerto = 465."
         }
       },
-      "howToTalk": "Revisa tu propia bandeja de entrada. Darhai acaba de enviarte un correo; responde a ese correo cuando quieras."
+      "howToTalk": "Revisa tu propia bandeja de entrada. Darhai acaba de enviarte un correo; responde a ese correo cuando quieras.",
+      "triage": {
+        "viewTitle": "Bandeja triada",
+        "empty": "Aún no hay correo triado. Cuando el triaje está activado, el correo entrante aparece aquí.",
+        "noSubject": "(sin asunto)",
+        "from": "De",
+        "summaryLabel": "Resumen",
+        "draftLabel": "Borrador de respuesta",
+        "draftPlaceholder": "El borrador de respuesta aparece aquí. Edítalo antes de enviarlo.",
+        "sendDraft": "Enviar borrador",
+        "sent": "Borrador enviado",
+        "sendFailed": "No se pudo enviar el borrador",
+        "spamFlag": "Spam",
+        "urgency": {
+          "critical": "Crítica",
+          "high": "Alta",
+          "medium": "Media",
+          "low": "Baja",
+          "none": "Ninguna"
+        },
+        "tags": {
+          "work": "Trabajo",
+          "personal": "Personal",
+          "finance": "Finanzas",
+          "bills": "Facturas",
+          "receipt": "Recibo",
+          "travel": "Viajes",
+          "newsletter": "Boletín",
+          "promo": "Promoción",
+          "notification": "Notificación",
+          "security": "Seguridad",
+          "social": "Social",
+          "shopping": "Compras",
+          "calendar": "Calendario"
+        },
+        "config": {
+          "sectionTitle": "Triaje con IA",
+          "draftSafetyNote": "El triaje clasifica y resume el correo entrante y puede redactar una respuesta. Los borradores NUNCA se envían automáticamente: tú revisas y envías cada uno.",
+          "enable": {
+            "label": "Activar triaje con IA",
+            "help": "Ejecutar el triaje con IA en el correo entrante en lugar de enviarlo al agente."
+          },
+          "urgent": {
+            "label": "Detectar urgencia",
+            "help": "Asignar un nivel de urgencia a cada correo."
+          },
+          "tag": {
+            "label": "Etiquetar correos",
+            "help": "Asignar etiquetas temáticas a cada correo."
+          },
+          "spam": {
+            "label": "Marcar spam",
+            "help": "Marcar como spam el correo promocional / masivo / de phishing."
+          },
+          "summary": {
+            "label": "Resumir correos",
+            "help": "Generar un breve resumen de cada correo."
+          },
+          "draft": {
+            "label": "Redactar respuestas",
+            "help": "Redactar una respuesta para cada correo. Los borradores se guardan para tu revisión y nunca se envían automáticamente."
+          }
+        }
+      }
     },
     "welcome": {
       "message": "Hola, soy Darhai. Estoy conectado. Responde a este mensaje cuando quieras y te ayudare."

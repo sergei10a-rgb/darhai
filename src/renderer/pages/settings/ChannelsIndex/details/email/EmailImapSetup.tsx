@@ -10,6 +10,7 @@ import type { IChannelPluginStatus } from '@process/channels/types';
 import EmailImapConfigForm from '@renderer/components/settings/SettingsModal/contents/channels/email/EmailImapConfigForm';
 import { useChannelModelSelection } from '@renderer/hooks/settings/useChannelModelSelection';
 import ChannelDetailLayout from '../../ChannelDetailLayout';
+import EmailImapTriageView from './EmailImapTriageView';
 
 const EmailImapSetup: React.FC = () => {
   const [pluginStatus, setPluginStatus] = useState<IChannelPluginStatus | null>(null);
@@ -43,7 +44,12 @@ const EmailImapSetup: React.FC = () => {
       displayName='Email (IMAP / SMTP)'
       pluginId={pluginStatus?.id ?? 'email-imap_default'}
     >
-      <EmailImapConfigForm pluginStatus={pluginStatus} modelSelection={modelSelection} onStatusChange={setPluginStatus} />
+      <EmailImapConfigForm
+        pluginStatus={pluginStatus}
+        modelSelection={modelSelection}
+        onStatusChange={setPluginStatus}
+      />
+      {pluginStatus?.enabled && <EmailImapTriageView pluginId={pluginStatus.id ?? 'email-imap_default'} />}
     </ChannelDetailLayout>
   );
 };

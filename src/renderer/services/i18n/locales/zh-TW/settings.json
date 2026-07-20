@@ -1069,7 +1069,70 @@
           "help": "連接埠為 587 時使用 STARTTLS，為 465 時使用隱式 TLS。"
         }
       },
-      "howToTalk": "查看你自己的收件匣。Darhai 剛寄了一封郵件給你；隨時回覆那封郵件即可。"
+      "howToTalk": "查看你自己的收件匣。Darhai 剛寄了一封郵件給你；隨時回覆那封郵件即可。",
+      "triage": {
+        "viewTitle": "已分揀收件匣",
+        "empty": "尚無已分揀的郵件。開啟分揀後，收到的郵件會顯示在這裡。",
+        "noSubject": "(無主旨)",
+        "from": "寄件者",
+        "summaryLabel": "摘要",
+        "draftLabel": "回覆草稿",
+        "draftPlaceholder": "回覆草稿顯示在此處。傳送前可編輯。",
+        "sendDraft": "傳送草稿",
+        "sent": "草稿已傳送",
+        "sendFailed": "傳送草稿失敗",
+        "spamFlag": "垃圾郵件",
+        "urgency": {
+          "critical": "緊急",
+          "high": "高",
+          "medium": "中",
+          "low": "低",
+          "none": "無"
+        },
+        "tags": {
+          "work": "工作",
+          "personal": "個人",
+          "finance": "財務",
+          "bills": "帳單",
+          "receipt": "收據",
+          "travel": "出行",
+          "newsletter": "訂閱郵件",
+          "promo": "促銷",
+          "notification": "通知",
+          "security": "安全",
+          "social": "社交",
+          "shopping": "購物",
+          "calendar": "行事曆"
+        },
+        "config": {
+          "sectionTitle": "AI 分揀",
+          "draftSafetyNote": "分揀會對收到的郵件進行分類與摘要，並可草擬回覆。草稿絕不會自動傳送——由您逐一審閱並傳送。",
+          "enable": {
+            "label": "啟用 AI 分揀",
+            "help": "對收到的郵件執行 AI 分揀，而非轉交給代理人。"
+          },
+          "urgent": {
+            "label": "辨識緊急程度",
+            "help": "為每封郵件指定緊急程度。"
+          },
+          "tag": {
+            "label": "為郵件加上標籤",
+            "help": "為每封郵件指定主題標籤。"
+          },
+          "spam": {
+            "label": "標記垃圾郵件",
+            "help": "將促銷 / 群發 / 釣魚郵件標記為垃圾郵件。"
+          },
+          "summary": {
+            "label": "摘要郵件",
+            "help": "為每封郵件產生簡短摘要。"
+          },
+          "draft": {
+            "label": "草擬回覆",
+            "help": "為每封郵件草擬回覆。草稿會儲存供您審閱，絕不會自動傳送。"
+          }
+        }
+      }
     },
     "welcome": {
       "message": "你好，我是 Darhai。我已連線。隨時回覆這則訊息，我會幫你。"

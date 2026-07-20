@@ -1079,7 +1079,70 @@
           "help": "STARTTLS lorsque le port = 587, TLS implicite lorsque le port = 465."
         }
       },
-      "howToTalk": "Consultez votre propre boite de reception. Darhai vient de vous envoyer un e-mail; repondez a cet e-mail quand vous voulez."
+      "howToTalk": "Consultez votre propre boite de reception. Darhai vient de vous envoyer un e-mail; repondez a cet e-mail quand vous voulez.",
+      "triage": {
+        "viewTitle": "Boîte triée",
+        "empty": "Aucun e-mail trié pour l'instant. Lorsque le tri est activé, les e-mails entrants apparaissent ici.",
+        "noSubject": "(sans objet)",
+        "from": "De",
+        "summaryLabel": "Résumé",
+        "draftLabel": "Brouillon de réponse",
+        "draftPlaceholder": "Le brouillon de réponse apparaît ici. Modifiez-le avant de l'envoyer.",
+        "sendDraft": "Envoyer le brouillon",
+        "sent": "Brouillon envoyé",
+        "sendFailed": "Échec de l'envoi du brouillon",
+        "spamFlag": "Spam",
+        "urgency": {
+          "critical": "Critique",
+          "high": "Élevée",
+          "medium": "Moyenne",
+          "low": "Faible",
+          "none": "Aucune"
+        },
+        "tags": {
+          "work": "Travail",
+          "personal": "Personnel",
+          "finance": "Finances",
+          "bills": "Factures",
+          "receipt": "Reçu",
+          "travel": "Voyage",
+          "newsletter": "Newsletter",
+          "promo": "Promo",
+          "notification": "Notification",
+          "security": "Sécurité",
+          "social": "Social",
+          "shopping": "Achats",
+          "calendar": "Calendrier"
+        },
+        "config": {
+          "sectionTitle": "Tri par IA",
+          "draftSafetyNote": "Le tri classe et résume les e-mails entrants et peut rédiger une réponse. Les brouillons ne sont JAMAIS envoyés automatiquement : vous vérifiez et envoyez chacun vous-même.",
+          "enable": {
+            "label": "Activer le tri par IA",
+            "help": "Exécuter le tri par IA sur les e-mails entrants au lieu de les transmettre à l'agent."
+          },
+          "urgent": {
+            "label": "Détecter l'urgence",
+            "help": "Attribuer un niveau d'urgence à chaque e-mail."
+          },
+          "tag": {
+            "label": "Étiqueter les e-mails",
+            "help": "Attribuer des étiquettes thématiques à chaque e-mail."
+          },
+          "spam": {
+            "label": "Signaler le spam",
+            "help": "Signaler comme spam les e-mails promotionnels / de masse / d'hameçonnage."
+          },
+          "summary": {
+            "label": "Résumer les e-mails",
+            "help": "Produire un bref résumé de chaque e-mail."
+          },
+          "draft": {
+            "label": "Rédiger des réponses",
+            "help": "Rédiger une réponse pour chaque e-mail. Les brouillons sont enregistrés pour votre relecture et ne sont jamais envoyés automatiquement."
+          }
+        }
+      }
     },
     "welcome": {
       "message": "Bonjour, c'est Darhai. Je suis connecte. Repondez a ce message quand vous voulez et je vous aiderai."

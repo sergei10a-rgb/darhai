@@ -351,6 +351,13 @@ const REMOTE_DENIED_KEYS: ReadonlySet<string> = new Set([
   //     follow the cron read policy and stay allowed for the paired UI. ---
   'research.start',
   'research.cancel',
+  // --- Email AI Triage (Odysseus "email pollers"): send-draft is the single verb
+  //     that turns a stored draft into a real outbound email over SMTP. It is a
+  //     human-gated action for the trusted local user only; a paired-device
+  //     WebSocket caller must never dispatch an email on the user's behalf, so it
+  //     is remote-denied. The read verbs (email-triage.list / email-triage.get)
+  //     follow the cron read policy and stay allowed for the paired UI. ---
+  'email-triage.send-draft',
   // --- Storage destructive / disk operations ---
   'storage:changeDir',
   'storage:clearDir',

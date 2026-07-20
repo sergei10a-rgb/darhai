@@ -1069,7 +1069,70 @@
           "help": "Bağlantı noktası = 587 olduğunda STARTTLS, bağlantı noktası = 465 olduğunda örtük TLS."
         }
       },
-      "howToTalk": "Kendi gelen kutunuzu kontrol edin. Darhai az once size e-posta gonderdi; istediginiz zaman o e-postaya yanit verin."
+      "howToTalk": "Kendi gelen kutunuzu kontrol edin. Darhai az once size e-posta gonderdi; istediginiz zaman o e-postaya yanit verin.",
+      "triage": {
+        "viewTitle": "Ayıklanmış gelen kutusu",
+        "empty": "Henüz ayıklanmış e-posta yok. Ayıklama açıkken gelen e-postalar burada görünür.",
+        "noSubject": "(konu yok)",
+        "from": "Gönderen",
+        "summaryLabel": "Özet",
+        "draftLabel": "Yanıt taslağı",
+        "draftPlaceholder": "Yanıt taslağı burada görünür. Göndermeden önce düzenleyin.",
+        "sendDraft": "Taslağı gönder",
+        "sent": "Taslak gönderildi",
+        "sendFailed": "Taslak gönderilemedi",
+        "spamFlag": "Spam",
+        "urgency": {
+          "critical": "Kritik",
+          "high": "Yüksek",
+          "medium": "Orta",
+          "low": "Düşük",
+          "none": "Yok"
+        },
+        "tags": {
+          "work": "İş",
+          "personal": "Kişisel",
+          "finance": "Finans",
+          "bills": "Faturalar",
+          "receipt": "Makbuz",
+          "travel": "Seyahat",
+          "newsletter": "Bülten",
+          "promo": "Promosyon",
+          "notification": "Bildirim",
+          "security": "Güvenlik",
+          "social": "Sosyal",
+          "shopping": "Alışveriş",
+          "calendar": "Takvim"
+        },
+        "config": {
+          "sectionTitle": "Yapay zeka ayıklaması",
+          "draftSafetyNote": "Ayıklama gelen e-postaları sınıflandırır, özetler ve bir yanıt taslağı hazırlayabilir. Taslaklar ASLA otomatik gönderilmez; her birini kendiniz gözden geçirip gönderirsiniz.",
+          "enable": {
+            "label": "Yapay zeka ayıklamasını etkinleştir",
+            "help": "Gelen e-postaları aracıya iletmek yerine yapay zeka ayıklaması çalıştır."
+          },
+          "urgent": {
+            "label": "Aciliyeti belirle",
+            "help": "Her e-postaya bir aciliyet düzeyi ata."
+          },
+          "tag": {
+            "label": "E-postaları etiketle",
+            "help": "Her e-postaya konu etiketleri ata."
+          },
+          "spam": {
+            "label": "Spam işaretle",
+            "help": "Tanıtım / toplu / kimlik avı e-postalarını spam olarak işaretle."
+          },
+          "summary": {
+            "label": "E-postaları özetle",
+            "help": "Her e-postanın kısa bir özetini oluştur."
+          },
+          "draft": {
+            "label": "Yanıt taslakları oluştur",
+            "help": "Her e-posta için bir yanıt taslağı hazırla. Taslaklar incelemeniz için saklanır ve asla otomatik gönderilmez."
+          }
+        }
+      }
     },
     "welcome": {
       "message": "Merhaba, ben Darhai. Baglandim. Istediginiz zaman bu mesaja yanit verin, size yardimci olayim."

@@ -1069,7 +1069,70 @@
           "help": "端口为 587 时使用 STARTTLS，端口为 465 时使用隐式 TLS。"
         }
       },
-      "howToTalk": "查看你自己的收件箱。Darhai 刚给你发了邮件；随时回复那封邮件即可。"
+      "howToTalk": "查看你自己的收件箱。Darhai 刚给你发了邮件；随时回复那封邮件即可。",
+      "triage": {
+        "viewTitle": "已分拣收件箱",
+        "empty": "暂无已分拣的邮件。开启分拣后，收到的邮件会显示在这里。",
+        "noSubject": "(无主题)",
+        "from": "发件人",
+        "summaryLabel": "摘要",
+        "draftLabel": "回复草稿",
+        "draftPlaceholder": "回复草稿显示在此处。发送前可编辑。",
+        "sendDraft": "发送草稿",
+        "sent": "草稿已发送",
+        "sendFailed": "发送草稿失败",
+        "spamFlag": "垃圾邮件",
+        "urgency": {
+          "critical": "紧急",
+          "high": "高",
+          "medium": "中",
+          "low": "低",
+          "none": "无"
+        },
+        "tags": {
+          "work": "工作",
+          "personal": "个人",
+          "finance": "财务",
+          "bills": "账单",
+          "receipt": "收据",
+          "travel": "出行",
+          "newsletter": "订阅邮件",
+          "promo": "促销",
+          "notification": "通知",
+          "security": "安全",
+          "social": "社交",
+          "shopping": "购物",
+          "calendar": "日历"
+        },
+        "config": {
+          "sectionTitle": "AI 分拣",
+          "draftSafetyNote": "分拣会对收到的邮件进行分类和摘要，并可起草回复。草稿绝不会自动发送——由您逐一审阅并发送。",
+          "enable": {
+            "label": "启用 AI 分拣",
+            "help": "对收到的邮件执行 AI 分拣，而不是转交给智能体。"
+          },
+          "urgent": {
+            "label": "识别紧急程度",
+            "help": "为每封邮件分配紧急程度。"
+          },
+          "tag": {
+            "label": "为邮件打标签",
+            "help": "为每封邮件分配主题标签。"
+          },
+          "spam": {
+            "label": "标记垃圾邮件",
+            "help": "将促销 / 群发 / 钓鱼邮件标记为垃圾邮件。"
+          },
+          "summary": {
+            "label": "总结邮件",
+            "help": "为每封邮件生成简短摘要。"
+          },
+          "draft": {
+            "label": "起草回复",
+            "help": "为每封邮件起草回复。草稿会保存供您审阅，绝不会自动发送。"
+          }
+        }
+      }
     },
     "welcome": {
       "message": "你好，我是 Darhai。我已连接。随时回复这条消息，我会帮你。"

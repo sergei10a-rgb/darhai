@@ -1084,6 +1084,69 @@
           "label": "SMTP TLS",
           "help": "STARTTLS when port = 587, implicit TLS when port = 465."
         }
+      },
+      "triage": {
+        "viewTitle": "Triaged inbox",
+        "empty": "No triaged email yet. When triage is on, incoming email appears here.",
+        "noSubject": "(no subject)",
+        "from": "From",
+        "summaryLabel": "Summary",
+        "draftLabel": "Draft reply",
+        "draftPlaceholder": "The drafted reply appears here. Edit it before sending.",
+        "sendDraft": "Send draft",
+        "sent": "Draft sent",
+        "sendFailed": "Failed to send draft",
+        "spamFlag": "Spam",
+        "urgency": {
+          "critical": "Critical",
+          "high": "High",
+          "medium": "Medium",
+          "low": "Low",
+          "none": "None"
+        },
+        "tags": {
+          "work": "Work",
+          "personal": "Personal",
+          "finance": "Finance",
+          "bills": "Bills",
+          "receipt": "Receipt",
+          "travel": "Travel",
+          "newsletter": "Newsletter",
+          "promo": "Promo",
+          "notification": "Notification",
+          "security": "Security",
+          "social": "Social",
+          "shopping": "Shopping",
+          "calendar": "Calendar"
+        },
+        "config": {
+          "sectionTitle": "AI triage",
+          "draftSafetyNote": "Triage classifies and summarizes incoming email and can draft a reply. Drafts are NEVER sent automatically - you review and send each one yourself.",
+          "enable": {
+            "label": "Enable AI triage",
+            "help": "Run AI triage on incoming email instead of routing it to the agent."
+          },
+          "urgent": {
+            "label": "Detect urgency",
+            "help": "Assign an urgency level to each email."
+          },
+          "tag": {
+            "label": "Tag emails",
+            "help": "Assign topic tags to each email."
+          },
+          "spam": {
+            "label": "Flag spam",
+            "help": "Flag promotional / bulk / phishing mail as spam."
+          },
+          "summary": {
+            "label": "Summarize emails",
+            "help": "Produce a short bullet summary of each email."
+          },
+          "draft": {
+            "label": "Draft replies",
+            "help": "Draft a reply for each email. Drafts are stored for your review and never sent automatically."
+          }
+        }
       }
     }
   },

@@ -2422,6 +2422,50 @@ const migration_v54: IMigration = {
 };
 
 /**
+ * Migration v54 -> v55: Add the `email_triage` table for the Email AI Triage surface
+ * (Odysseus assimilation "email pollers"). One row per inbound email, keyed by its
+ * RFC-822 Message-ID: the classifier verdict (urgency / tags / spam), the summary, and
+ * the DRAFT reply. `draft_reply` is stored only - the triage layer NEVER sends. A
+ * dedicated table keeps the triaged-inbox list clean and mirrors the research_runs /
+ * notes / documents pattern rather than overloading the message rows.
+ *
+ * There is no FK to users: triage is keyed by Message-ID and scoped by plugin_id (the
+ * single email-imap account), not by app user. Every statement is `IF NOT EXISTS` so
+ * up() is idempotent and survives a re-run from version 0, matching migration_v54.
+ */
+const migration_v55: IMigration = {
+  version: 55,
+  name: 'Add email_triage table for the Email AI Triage surface',
+  up: (db) => {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS email_triage (
+        message_id     TEXT PRIMARY KEY,
+        plugin_id      TEXT NOT NULL DEFAULT '',
+        account        TEXT NOT NULL DEFAULT '',
+        from_addr      TEXT NOT NULL DEFAULT '',
+        subject        TEXT NOT NULL DEFAULT '',
+        urgency        TEXT NOT NULL DEFAULT 'none', /* critical|high|medium|low|none */
+        tags           TEXT NOT NULL DEFAULT '[]',   /* json string[] */
+        spam_verdict   INTEGER NOT NULL DEFAULT 0,
+        spam_reason    TEXT NOT NULL DEFAULT '',
+        summary        TEXT NOT NULL DEFAULT '',
+        draft_reply    TEXT NOT NULL DEFAULT '',      /* stored only - never auto-sent */
+        model_used     TEXT NOT NULL DEFAULT '',
+        triaged_at_ms  INTEGER NOT NULL
+      )
+    `);
+    // Composite index backs the triaged-inbox list (a plugin's entries, newest first).
+    db.exec('CREATE INDEX IF NOT EXISTS idx_email_triage_plugin_triaged ON email_triage(plugin_id, triaged_at_ms)');
+    console.log('[Migration v55] Added email_triage table');
+  },
+  down: (db) => {
+    db.exec('DROP INDEX IF EXISTS idx_email_triage_plugin_triaged');
+    db.exec('DROP TABLE IF EXISTS email_triage');
+    console.log('[Migration v55] Rolled back: dropped email_triage table');
+  },
+};
+
+/**
  * All migrations in order
  */
 // prettier-ignore
@@ -2435,7 +2479,7 @@ export const ALL_MIGRATIONS: IMigration[] = [
   migration_v37, migration_v38, migration_v39, migration_v40, migration_v41, migration_v42,
   migration_v43, migration_v44, migration_v45, migration_v46, migration_v47,
   migration_v48, migration_v49, migration_v50, migration_v51, migration_v52, migration_v53,
-  migration_v54,
+  migration_v54, migration_v55,
 ];
 
 /**

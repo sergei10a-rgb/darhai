@@ -1079,7 +1079,70 @@
           "help": "STARTTLS bei Port = 587, implizites TLS bei Port = 465."
         }
       },
-      "howToTalk": "Sieh in deinem eigenen Postfach nach. Darhai hat dir gerade eine E-Mail geschickt; antworte jederzeit darauf."
+      "howToTalk": "Sieh in deinem eigenen Postfach nach. Darhai hat dir gerade eine E-Mail geschickt; antworte jederzeit darauf.",
+      "triage": {
+        "viewTitle": "Triagierter Posteingang",
+        "empty": "Noch keine triagierten E-Mails. Wenn die Triage aktiviert ist, erscheinen eingehende E-Mails hier.",
+        "noSubject": "(kein Betreff)",
+        "from": "Von",
+        "summaryLabel": "Zusammenfassung",
+        "draftLabel": "Antwortentwurf",
+        "draftPlaceholder": "Der Antwortentwurf erscheint hier. Bearbeiten Sie ihn vor dem Senden.",
+        "sendDraft": "Entwurf senden",
+        "sent": "Entwurf gesendet",
+        "sendFailed": "Entwurf konnte nicht gesendet werden",
+        "spamFlag": "Spam",
+        "urgency": {
+          "critical": "Kritisch",
+          "high": "Hoch",
+          "medium": "Mittel",
+          "low": "Niedrig",
+          "none": "Keine"
+        },
+        "tags": {
+          "work": "Arbeit",
+          "personal": "Privat",
+          "finance": "Finanzen",
+          "bills": "Rechnungen",
+          "receipt": "Beleg",
+          "travel": "Reise",
+          "newsletter": "Newsletter",
+          "promo": "Werbung",
+          "notification": "Benachrichtigung",
+          "security": "Sicherheit",
+          "social": "Sozial",
+          "shopping": "Einkauf",
+          "calendar": "Kalender"
+        },
+        "config": {
+          "sectionTitle": "KI-Triage",
+          "draftSafetyNote": "Die Triage kategorisiert und fasst eingehende E-Mails zusammen und kann eine Antwort entwerfen. Entwürfe werden NIEMALS automatisch gesendet - Sie prüfen und senden jeden selbst.",
+          "enable": {
+            "label": "KI-Triage aktivieren",
+            "help": "KI-Triage auf eingehende E-Mails anwenden, statt sie an den Agenten weiterzuleiten."
+          },
+          "urgent": {
+            "label": "Dringlichkeit erkennen",
+            "help": "Jeder E-Mail eine Dringlichkeitsstufe zuweisen."
+          },
+          "tag": {
+            "label": "E-Mails taggen",
+            "help": "Jeder E-Mail Themen-Tags zuweisen."
+          },
+          "spam": {
+            "label": "Spam markieren",
+            "help": "Werbe- / Massen- / Phishing-Mails als Spam markieren."
+          },
+          "summary": {
+            "label": "E-Mails zusammenfassen",
+            "help": "Eine kurze Zusammenfassung jeder E-Mail erstellen."
+          },
+          "draft": {
+            "label": "Antworten entwerfen",
+            "help": "Für jede E-Mail eine Antwort entwerfen. Entwürfe werden zur Prüfung gespeichert und nie automatisch gesendet."
+          }
+        }
+      }
     },
     "welcome": {
       "message": "Hallo, hier ist Darhai. Ich bin verbunden. Antworte jederzeit auf diese Nachricht und ich helfe dir."
