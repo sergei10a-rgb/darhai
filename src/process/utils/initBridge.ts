@@ -11,6 +11,7 @@ import { SqliteChannelRepository } from '@process/services/database/SqliteChanne
 import { SqliteConversationRepository } from '@process/services/database/SqliteConversationRepository';
 import { ConversationServiceImpl } from '@process/services/ConversationServiceImpl';
 import { cronService } from '@process/services/cron/cronServiceSingleton';
+import { noteService } from '@process/services/notes/noteServiceSingleton';
 import { workerTaskManager } from '@process/task/workerTaskManagerSingleton';
 import { TeamSessionService, SqliteTeamRepository } from '@process/team';
 import { initTeamGuideService } from '@process/team/mcp/guide/teamGuideSingleton';
@@ -118,6 +119,13 @@ void cronReadyPromise.then(() => {
 void import('@process/services/cron/cronReadiness').then(({ setCronReadyPromise }) => {
   setCronReadyPromise(cronReadyPromise);
 });
+
+// Start the note reminder scanner (Odysseus #9). Independent of the cron
+// scheduler: it sweeps notes with a due-date reminder once a minute and fires
+// through the shared native-notification path. The scan reads the DB lazily via
+// getDatabase(), so starting it here (before DB resolve completes) is safe - the
+// first sweep is 60s out. Stopped in before-quit via the notes cleanup step.
+noteService.start();
 
 // Start in-process Wayland Core MCP server for team-guide tools (aion_create_team)
 void initTeamGuideService(teamSessionService).catch((error) => {

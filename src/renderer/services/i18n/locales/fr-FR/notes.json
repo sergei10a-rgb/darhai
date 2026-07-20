@@ -1,0 +1,71 @@
+{
+  "sidebarLabel": "Notes",
+  "pageTitle": "Notes",
+  "description": "Notez des idées et des listes, et recevez un rappel à l'échéance.",
+  "newNote": "Nouvelle note",
+  "showArchived": "Afficher les archives",
+  "footer": {
+    "count": "{{count}} notes"
+  },
+  "empty": {
+    "title": "Aucune note pour l'instant",
+    "hint": "Créez votre première note pour vos idées, tâches et rappels."
+  },
+  "card": {
+    "untitled": "(sans titre)",
+    "pin": "Épingler",
+    "unpin": "Désépingler",
+    "edit": "Modifier",
+    "archive": "Archiver",
+    "unarchive": "Désarchiver",
+    "delete": "Supprimer",
+    "checklistProgress": "{{done}}/{{total}} faits"
+  },
+  "composer": {
+    "createTitle": "Nouvelle note",
+    "editTitle": "Modifier la note",
+    "titlePlaceholder": "Titre",
+    "contentPlaceholder": "Écrire une note...",
+    "typeNote": "Note",
+    "typeTodo": "Liste",
+    "checklistLabel": "Liste",
+    "addItem": "Ajouter un élément",
+    "itemPlaceholder": "Élément de la liste",
+    "colorLabel": "Couleur",
+    "labelLabel": "Étiquette",
+    "labelPlaceholder": "ex. travail, personnel",
+    "dueLabel": "Rappel",
+    "duePlaceholder": "Choisir une date et une heure",
+    "repeatLabel": "Répéter",
+    "save": "Enregistrer",
+    "cancel": "Annuler"
+  },
+  "repeat": {
+    "none": "Ne se répète pas",
+    "daily": "Tous les jours",
+    "weekly": "Toutes les semaines",
+    "monthly": "Tous les mois",
+    "yearly": "Tous les ans"
+  },
+  "color": {
+    "none": "Par défaut",
+    "red": "Rouge",
+    "orange": "Orange",
+    "yellow": "Jaune",
+    "green": "Vert",
+    "blue": "Bleu",
+    "purple": "Violet"
+  },
+  "reminderToast": {
+    "title": "Rappel de note"
+  },
+  "reminder": {
+    "notifTitle": "Rappel de note"
+  },
+  "deleteConfirm": {
+    "title": "Supprimer la note ?",
+    "content": "Cette note sera définitivement supprimée.",
+    "ok": "Supprimer",
+    "cancel": "Annuler"
+  }
+}

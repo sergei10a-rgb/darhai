@@ -1,0 +1,71 @@
+{
+  "sidebarLabel": "笔记",
+  "pageTitle": "笔记",
+  "description": "随手记下笔记和清单，到期时会有提醒。",
+  "newNote": "新建笔记",
+  "showArchived": "显示归档",
+  "footer": {
+    "count": "{{count}} 条笔记"
+  },
+  "empty": {
+    "title": "还没有笔记",
+    "hint": "创建第一条笔记，记录想法、待办和提醒。"
+  },
+  "card": {
+    "untitled": "(无标题)",
+    "pin": "置顶",
+    "unpin": "取消置顶",
+    "edit": "编辑",
+    "archive": "归档",
+    "unarchive": "取消归档",
+    "delete": "删除",
+    "checklistProgress": "已完成 {{done}}/{{total}}"
+  },
+  "composer": {
+    "createTitle": "新建笔记",
+    "editTitle": "编辑笔记",
+    "titlePlaceholder": "标题",
+    "contentPlaceholder": "写点什么...",
+    "typeNote": "笔记",
+    "typeTodo": "清单",
+    "checklistLabel": "清单",
+    "addItem": "添加条目",
+    "itemPlaceholder": "清单条目",
+    "colorLabel": "颜色",
+    "labelLabel": "标签",
+    "labelPlaceholder": "例如：工作、个人",
+    "dueLabel": "提醒",
+    "duePlaceholder": "选择日期和时间",
+    "repeatLabel": "重复",
+    "save": "保存",
+    "cancel": "取消"
+  },
+  "repeat": {
+    "none": "不重复",
+    "daily": "每天",
+    "weekly": "每周",
+    "monthly": "每月",
+    "yearly": "每年"
+  },
+  "color": {
+    "none": "默认",
+    "red": "红色",
+    "orange": "橙色",
+    "yellow": "黄色",
+    "green": "绿色",
+    "blue": "蓝色",
+    "purple": "紫色"
+  },
+  "reminderToast": {
+    "title": "笔记提醒"
+  },
+  "reminder": {
+    "notifTitle": "笔记提醒"
+  },
+  "deleteConfirm": {
+    "title": "删除这条笔记？",
+    "content": "该笔记将被永久删除。",
+    "ok": "删除",
+    "cancel": "取消"
+  }
+}

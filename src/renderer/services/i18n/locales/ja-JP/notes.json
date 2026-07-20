@@ -1,0 +1,71 @@
+{
+  "sidebarLabel": "メモ",
+  "pageTitle": "メモ",
+  "description": "メモやチェックリストを書き留め、期限が来たら通知します。",
+  "newNote": "新しいメモ",
+  "showArchived": "アーカイブを表示",
+  "footer": {
+    "count": "{{count}} 件のメモ"
+  },
+  "empty": {
+    "title": "メモがまだありません",
+    "hint": "アイデアやタスク、リマインダーを記録する最初のメモを作成しましょう。"
+  },
+  "card": {
+    "untitled": "(無題)",
+    "pin": "ピン留め",
+    "unpin": "ピン留め解除",
+    "edit": "編集",
+    "archive": "アーカイブ",
+    "unarchive": "アーカイブ解除",
+    "delete": "削除",
+    "checklistProgress": "{{done}}/{{total}} 完了"
+  },
+  "composer": {
+    "createTitle": "新しいメモ",
+    "editTitle": "メモを編集",
+    "titlePlaceholder": "タイトル",
+    "contentPlaceholder": "メモを入力...",
+    "typeNote": "メモ",
+    "typeTodo": "チェックリスト",
+    "checklistLabel": "チェックリスト",
+    "addItem": "項目を追加",
+    "itemPlaceholder": "リスト項目",
+    "colorLabel": "色",
+    "labelLabel": "ラベル",
+    "labelPlaceholder": "例: 仕事、プライベート",
+    "dueLabel": "リマインダー",
+    "duePlaceholder": "日時を選択",
+    "repeatLabel": "繰り返し",
+    "save": "保存",
+    "cancel": "キャンセル"
+  },
+  "repeat": {
+    "none": "繰り返さない",
+    "daily": "毎日",
+    "weekly": "毎週",
+    "monthly": "毎月",
+    "yearly": "毎年"
+  },
+  "color": {
+    "none": "デフォルト",
+    "red": "赤",
+    "orange": "オレンジ",
+    "yellow": "黄",
+    "green": "緑",
+    "blue": "青",
+    "purple": "紫"
+  },
+  "reminderToast": {
+    "title": "メモのリマインダー"
+  },
+  "reminder": {
+    "notifTitle": "メモのリマインダー"
+  },
+  "deleteConfirm": {
+    "title": "メモを削除しますか？",
+    "content": "このメモは完全に削除されます。",
+    "ok": "削除",
+    "cancel": "キャンセル"
+  }
+}

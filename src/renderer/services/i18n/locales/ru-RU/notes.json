@@ -1,0 +1,71 @@
+{
+  "sidebarLabel": "Заметки",
+  "pageTitle": "Заметки",
+  "description": "Записывайте заметки и списки и получайте напоминание к сроку.",
+  "newNote": "Новая заметка",
+  "showArchived": "Показать архив",
+  "footer": {
+    "count": "{{count}} заметок"
+  },
+  "empty": {
+    "title": "Заметок пока нет",
+    "hint": "Создайте первую заметку для идей, задач и напоминаний."
+  },
+  "card": {
+    "untitled": "(без названия)",
+    "pin": "Закрепить",
+    "unpin": "Открепить",
+    "edit": "Изменить",
+    "archive": "В архив",
+    "unarchive": "Из архива",
+    "delete": "Удалить",
+    "checklistProgress": "{{done}}/{{total}} выполнено"
+  },
+  "composer": {
+    "createTitle": "Новая заметка",
+    "editTitle": "Изменить заметку",
+    "titlePlaceholder": "Заголовок",
+    "contentPlaceholder": "Написать заметку...",
+    "typeNote": "Заметка",
+    "typeTodo": "Список",
+    "checklistLabel": "Список",
+    "addItem": "Добавить пункт",
+    "itemPlaceholder": "Пункт списка",
+    "colorLabel": "Цвет",
+    "labelLabel": "Метка",
+    "labelPlaceholder": "напр. работа, личное",
+    "dueLabel": "Напоминание",
+    "duePlaceholder": "Выберите дату и время",
+    "repeatLabel": "Повтор",
+    "save": "Сохранить",
+    "cancel": "Отмена"
+  },
+  "repeat": {
+    "none": "Не повторять",
+    "daily": "Ежедневно",
+    "weekly": "Еженедельно",
+    "monthly": "Ежемесячно",
+    "yearly": "Ежегодно"
+  },
+  "color": {
+    "none": "По умолчанию",
+    "red": "Красный",
+    "orange": "Оранжевый",
+    "yellow": "Жёлтый",
+    "green": "Зелёный",
+    "blue": "Синий",
+    "purple": "Фиолетовый"
+  },
+  "reminderToast": {
+    "title": "Напоминание о заметке"
+  },
+  "reminder": {
+    "notifTitle": "Напоминание о заметке"
+  },
+  "deleteConfirm": {
+    "title": "Удалить заметку?",
+    "content": "Эта заметка будет удалена безвозвратно.",
+    "ok": "Удалить",
+    "cancel": "Отмена"
+  }
+}

@@ -1075,6 +1075,38 @@ export const cron = {
   ),
 };
 
+/**
+ * Notes + reminders (Odysseus assimilation #9). A first-class notes surface with
+ * checklist items, pin/archive, and due-date reminders that fire through the
+ * existing native-notification path. Every mutating verb (create/update/delete/
+ * togglePin/toggleArchive/toggleItem/reorder) is remote-denied (see
+ * bridgeAllowlist REMOTE_DENIED_KEYS) - only the trusted local user edits notes.
+ * The read verbs (list/get) follow the cron read policy and stay allowed.
+ */
+export const note = {
+  // Query
+  list: buildProvider<import('@/common/types/notes').Note[], { userId: string; includeArchived?: boolean }>(
+    'note.list'
+  ),
+  get: buildProvider<import('@/common/types/notes').Note | null, { noteId: string }>('note.get'),
+  // CRUD + mutations (all remote-denied)
+  create: buildProvider<import('@/common/types/notes').Note, import('@/common/types/notes').CreateNoteParams>(
+    'note.create'
+  ),
+  update: buildProvider<
+    import('@/common/types/notes').Note,
+    { noteId: string; updates: import('@/common/types/notes').UpdateNoteParams }
+  >('note.update'),
+  delete: buildProvider<void, { noteId: string }>('note.delete'),
+  togglePin: buildProvider<import('@/common/types/notes').Note, { noteId: string }>('note.toggle-pin'),
+  toggleArchive: buildProvider<import('@/common/types/notes').Note, { noteId: string }>('note.toggle-archive'),
+  toggleItem: buildProvider<import('@/common/types/notes').Note, { noteId: string; index: number }>('note.toggle-item'),
+  reorder: buildProvider<void, { userId: string; orderedIds: string[] }>('note.reorder'),
+  // Events
+  onNoteChanged: buildEmitter<import('@/common/types/notes').NoteChangedEvent>('note.note-changed'),
+  onReminderFired: buildEmitter<import('@/common/types/notes').NoteReminderFiredEvent>('note.reminder-fired'),
+};
+
 /** Mission Control - unified task ledger (team tasks + cron jobs). */
 export const missionControl = {
   snapshot: buildProvider<import('@/common/types/missionControl').MissionControlSnapshot, { userId: string }>(

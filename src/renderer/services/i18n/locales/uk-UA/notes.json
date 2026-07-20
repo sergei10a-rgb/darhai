@@ -1,0 +1,71 @@
+{
+  "sidebarLabel": "Нотатки",
+  "pageTitle": "Нотатки",
+  "description": "Записуйте нотатки та списки й отримуйте нагадування до строку.",
+  "newNote": "Нова нотатка",
+  "showArchived": "Показати архів",
+  "footer": {
+    "count": "{{count}} нотаток"
+  },
+  "empty": {
+    "title": "Нотаток ще немає",
+    "hint": "Створіть першу нотатку для ідей, завдань і нагадувань."
+  },
+  "card": {
+    "untitled": "(без назви)",
+    "pin": "Закріпити",
+    "unpin": "Відкріпити",
+    "edit": "Редагувати",
+    "archive": "В архів",
+    "unarchive": "З архіву",
+    "delete": "Видалити",
+    "checklistProgress": "{{done}}/{{total}} виконано"
+  },
+  "composer": {
+    "createTitle": "Нова нотатка",
+    "editTitle": "Редагувати нотатку",
+    "titlePlaceholder": "Заголовок",
+    "contentPlaceholder": "Написати нотатку...",
+    "typeNote": "Нотатка",
+    "typeTodo": "Список",
+    "checklistLabel": "Список",
+    "addItem": "Додати пункт",
+    "itemPlaceholder": "Пункт списку",
+    "colorLabel": "Колір",
+    "labelLabel": "Мітка",
+    "labelPlaceholder": "напр. робота, особисте",
+    "dueLabel": "Нагадування",
+    "duePlaceholder": "Виберіть дату й час",
+    "repeatLabel": "Повтор",
+    "save": "Зберегти",
+    "cancel": "Скасувати"
+  },
+  "repeat": {
+    "none": "Не повторювати",
+    "daily": "Щодня",
+    "weekly": "Щотижня",
+    "monthly": "Щомісяця",
+    "yearly": "Щороку"
+  },
+  "color": {
+    "none": "За замовчуванням",
+    "red": "Червоний",
+    "orange": "Помаранчевий",
+    "yellow": "Жовтий",
+    "green": "Зелений",
+    "blue": "Синій",
+    "purple": "Фіолетовий"
+  },
+  "reminderToast": {
+    "title": "Нагадування про нотатку"
+  },
+  "reminder": {
+    "notifTitle": "Нагадування про нотатку"
+  },
+  "deleteConfirm": {
+    "title": "Видалити нотатку?",
+    "content": "Цю нотатку буде видалено назавжди.",
+    "ok": "Видалити",
+    "cancel": "Скасувати"
+  }
+}

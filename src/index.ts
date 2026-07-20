@@ -1110,6 +1110,9 @@ type CleanupModules = {
   // L16 (AUDIT-05 F18): shut down cron timers from before-quit so scheduled
   // work cannot outlive the app's quit sequence.
   cron: typeof import('@process/services/cron/cronServiceSingleton');
+  // Stop the note reminder scanner from before-quit so its interval cannot
+  // outlive the app's quit sequence (same class as the cron timer teardown).
+  notes: typeof import('@process/services/notes/noteServiceSingleton');
 };
 let _cleanupModulesPromise: Promise<CleanupModules> | undefined;
 
@@ -1124,17 +1127,32 @@ const prefetchCleanupModules = (): Promise<CleanupModules> => {
     import('@process/services/database/export'),
     import('@process/services/cron/cronServiceSingleton'),
     import('@process/bridge/fileWatchBridge'),
-  ]).then(([ambient, channels, webuiBridge, webserverAdapter, officeWatch, pptPreview, database, cron, fileWatch]) => ({
-    ambient,
-    channels,
-    webuiBridge,
-    webserverAdapter,
-    officeWatch,
-    pptPreview,
-    database,
-    cron,
-    fileWatch,
-  }));
+    import('@process/services/notes/noteServiceSingleton'),
+  ]).then(
+    ([
+      ambient,
+      channels,
+      webuiBridge,
+      webserverAdapter,
+      officeWatch,
+      pptPreview,
+      database,
+      cron,
+      fileWatch,
+      notes,
+    ]) => ({
+      ambient,
+      channels,
+      webuiBridge,
+      webserverAdapter,
+      officeWatch,
+      pptPreview,
+      database,
+      cron,
+      fileWatch,
+      notes,
+    })
+  );
 };
 
 // Ensure we don't miss the ready event when running in CLI/WebUI mode
@@ -1313,6 +1331,17 @@ app.on('before-quit', async () => {
       PER_STEP_TIMEOUT_MS
     );
 
+    // Stop the note reminder scanner alongside the cron timers so its interval
+    // cannot fire a notification mid-quit.
+    const notesStep = withTimeout(
+      'noteService.shutdown',
+      (async () => {
+        if (!mods.notes) return;
+        mods.notes.noteService.shutdown();
+      })(),
+      PER_STEP_TIMEOUT_MS
+    );
+
     // Worker processes after DB + cron (M18 made workerTaskManager.clear() properly
     // await per-agent kill() with its own 3.5s bound).
     const workerStep = withTimeout('workerTaskManager.clear', workerTaskManager.clear(), PER_STEP_TIMEOUT_MS);
@@ -1389,6 +1418,7 @@ app.on('before-quit', async () => {
     await Promise.allSettled([
       databaseStep,
       cronStep,
+      notesStep,
       workerStep,
       ambientStep,
       teamStep,

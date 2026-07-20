@@ -1,0 +1,71 @@
+{
+  "sidebarLabel": "메모",
+  "pageTitle": "메모",
+  "description": "메모와 체크리스트를 적어 두고 기한이 되면 알림을 받으세요.",
+  "newNote": "새 메모",
+  "showArchived": "보관함 표시",
+  "footer": {
+    "count": "메모 {{count}}개"
+  },
+  "empty": {
+    "title": "아직 메모가 없습니다",
+    "hint": "아이디어, 할 일, 알림을 담을 첫 메모를 만들어 보세요."
+  },
+  "card": {
+    "untitled": "(제목 없음)",
+    "pin": "고정",
+    "unpin": "고정 해제",
+    "edit": "편집",
+    "archive": "보관",
+    "unarchive": "보관 해제",
+    "delete": "삭제",
+    "checklistProgress": "{{done}}/{{total}} 완료"
+  },
+  "composer": {
+    "createTitle": "새 메모",
+    "editTitle": "메모 편집",
+    "titlePlaceholder": "제목",
+    "contentPlaceholder": "메모 작성...",
+    "typeNote": "메모",
+    "typeTodo": "체크리스트",
+    "checklistLabel": "체크리스트",
+    "addItem": "항목 추가",
+    "itemPlaceholder": "목록 항목",
+    "colorLabel": "색상",
+    "labelLabel": "라벨",
+    "labelPlaceholder": "예: 업무, 개인",
+    "dueLabel": "알림",
+    "duePlaceholder": "날짜 및 시간 선택",
+    "repeatLabel": "반복",
+    "save": "저장",
+    "cancel": "취소"
+  },
+  "repeat": {
+    "none": "반복 안 함",
+    "daily": "매일",
+    "weekly": "매주",
+    "monthly": "매월",
+    "yearly": "매년"
+  },
+  "color": {
+    "none": "기본",
+    "red": "빨강",
+    "orange": "주황",
+    "yellow": "노랑",
+    "green": "초록",
+    "blue": "파랑",
+    "purple": "보라"
+  },
+  "reminderToast": {
+    "title": "메모 알림"
+  },
+  "reminder": {
+    "notifTitle": "메모 알림"
+  },
+  "deleteConfirm": {
+    "title": "메모를 삭제할까요?",
+    "content": "이 메모는 영구적으로 삭제됩니다.",
+    "ok": "삭제",
+    "cancel": "취소"
+  }
+}

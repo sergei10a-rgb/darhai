@@ -34,6 +34,7 @@ import onboarding from './onboarding.json';
 import projects from './projects.json';
 import modelAdvisor from './modelAdvisor.json';
 import compare from './compare.json';
+import notes from './notes.json';
 import workflows from './workflows.json';
 import models from './models.json';
 import conversations from './conversations.json';
@@ -72,6 +73,7 @@ export default {
   projects,
   modelAdvisor,
   compare,
+  notes,
   workflows,
   models,
   conversations,

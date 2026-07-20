@@ -5,6 +5,7 @@ export { default as SiderFluxRouterEntry } from './SiderFluxRouterEntry';
 export { default as SiderMemoryEntry } from './SiderMemoryEntry';
 export { default as SiderMissionControlEntry } from './SiderMissionControlEntry';
 export { default as SiderModelAdvisorEntry } from './SiderModelAdvisorEntry';
+export { default as SiderNotesEntry } from './SiderNotesEntry';
 export { default as SiderProjectsEntry } from './SiderProjectsEntry';
 export { default as SiderScheduledEntry } from './SiderScheduledEntry';
 export { default as SiderSearchEntry } from './SiderSearchEntry';

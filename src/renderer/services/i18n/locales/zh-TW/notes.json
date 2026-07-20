@@ -1,0 +1,71 @@
+{
+  "sidebarLabel": "筆記",
+  "pageTitle": "筆記",
+  "description": "隨手記下筆記和清單，到期時會有提醒。",
+  "newNote": "新增筆記",
+  "showArchived": "顯示封存",
+  "footer": {
+    "count": "{{count}} 則筆記"
+  },
+  "empty": {
+    "title": "還沒有筆記",
+    "hint": "建立第一則筆記，記錄想法、待辦與提醒。"
+  },
+  "card": {
+    "untitled": "(無標題)",
+    "pin": "置頂",
+    "unpin": "取消置頂",
+    "edit": "編輯",
+    "archive": "封存",
+    "unarchive": "取消封存",
+    "delete": "刪除",
+    "checklistProgress": "已完成 {{done}}/{{total}}"
+  },
+  "composer": {
+    "createTitle": "新增筆記",
+    "editTitle": "編輯筆記",
+    "titlePlaceholder": "標題",
+    "contentPlaceholder": "寫點什麼...",
+    "typeNote": "筆記",
+    "typeTodo": "清單",
+    "checklistLabel": "清單",
+    "addItem": "新增項目",
+    "itemPlaceholder": "清單項目",
+    "colorLabel": "顏色",
+    "labelLabel": "標籤",
+    "labelPlaceholder": "例如：工作、個人",
+    "dueLabel": "提醒",
+    "duePlaceholder": "選擇日期與時間",
+    "repeatLabel": "重複",
+    "save": "儲存",
+    "cancel": "取消"
+  },
+  "repeat": {
+    "none": "不重複",
+    "daily": "每天",
+    "weekly": "每週",
+    "monthly": "每月",
+    "yearly": "每年"
+  },
+  "color": {
+    "none": "預設",
+    "red": "紅色",
+    "orange": "橙色",
+    "yellow": "黃色",
+    "green": "綠色",
+    "blue": "藍色",
+    "purple": "紫色"
+  },
+  "reminderToast": {
+    "title": "筆記提醒"
+  },
+  "reminder": {
+    "notifTitle": "筆記提醒"
+  },
+  "deleteConfirm": {
+    "title": "刪除這則筆記？",
+    "content": "此筆記將被永久刪除。",
+    "ok": "刪除",
+    "cancel": "取消"
+  }
+}

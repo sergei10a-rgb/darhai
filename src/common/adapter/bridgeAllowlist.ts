@@ -303,6 +303,18 @@ const REMOTE_DENIED_KEYS: ReadonlySet<string> = new Set([
   //     so a paired-device WebSocket caller must never drive it - only the
   //     trusted local user compares models. The local renderer UI is unaffected. ---
   'compare.run',
+  // --- Notes (Odysseus #9): every mutating verb writes persisted user content.
+  //     A paired-device WebSocket caller must never create/edit/delete/reorder a
+  //     note or flip its pin/archive/checklist state - only the trusted local
+  //     user owns their notes. The read verbs (note.list / note.get) follow the
+  //     cron read policy and stay allowed for the paired UI. ---
+  'note.create',
+  'note.update',
+  'note.delete',
+  'note.toggle-pin',
+  'note.toggle-archive',
+  'note.toggle-item',
+  'note.reorder',
   // --- Storage destructive / disk operations ---
   'storage:changeDir',
   'storage:clearDir',

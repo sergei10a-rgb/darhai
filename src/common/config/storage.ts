@@ -316,6 +316,9 @@ export interface IConfigStorageRefer {
   'system.notificationEnabled'?: boolean;
   // Show system notification when a scheduled task completes
   'system.cronNotificationEnabled'?: boolean;
+  // Fire a native notification when a note's due-date reminder comes up
+  // (default ON: only an explicit false disables, mirroring notificationEnabled)
+  'system.noteReminderEnabled'?: boolean;
   // Prevent system sleep to ensure scheduled tasks run
   'system.keepAwake'?: boolean;
   // Route all agent requests through Flux Router (consent gate; default false until first connect)

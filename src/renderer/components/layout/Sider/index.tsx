@@ -16,6 +16,7 @@ import {
   SiderMissionControlEntry,
   SiderModelAdvisorEntry,
   SiderCompareEntry,
+  SiderNotesEntry,
   SiderSearchEntry,
   SiderSessionsEntry,
   SiderTeamsEntry,
@@ -181,7 +182,8 @@ const Sider: React.FC<SiderProps> = ({ onSessionClick, collapsed = false }) => {
     pathname.startsWith('/teams') ||
     pathname.startsWith('/mission-control') ||
     pathname.startsWith('/model-advisor') ||
-    pathname.startsWith('/compare');
+    pathname.startsWith('/compare') ||
+    pathname.startsWith('/notes');
 
   const workspaceHistoryProps = {
     collapsed,
@@ -317,6 +319,13 @@ const Sider: React.FC<SiderProps> = ({ onSessionClick, collapsed = false }) => {
             collapsed={collapsed}
             siderTooltipProps={siderTooltipProps}
             onClick={() => handleTopZoneNav('/compare')}
+          />
+          <SiderNotesEntry
+            isMobile={isMobile}
+            isActive={pathname.startsWith('/notes')}
+            collapsed={collapsed}
+            siderTooltipProps={siderTooltipProps}
+            onClick={() => handleTopZoneNav('/notes')}
           />
         </SiderToolsGroup>
       </div>

@@ -2216,6 +2216,56 @@ const migration_v50: IMigration = {
 };
 
 /**
+ * Migration v50 -> v51: Add the `notes` table for the Notes + reminders surface
+ * (Odysseus assimilation #9). Notes carry optional checklist items (JSON), a
+ * pin/archive flag, and an optional due-date reminder that fires through
+ * Darhai's existing native-notification path (NoteReminderScanner). This is the
+ * notes half of Odysseus's "notes + tasks + scheduler" - the scheduler/tasks
+ * half already exists as CronService and is untouched.
+ *
+ * Every statement is `IF NOT EXISTS` so up() is idempotent and survives a re-run
+ * from version 0 (crash recovery / re-entrancy), matching migration_v43.
+ */
+const migration_v51: IMigration = {
+  version: 51,
+  name: 'Add notes table for the Notes + reminders surface',
+  up: (db) => {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS notes (
+        id                  TEXT PRIMARY KEY,
+        user_id             TEXT NOT NULL,
+        title               TEXT,
+        content             TEXT,
+        items               TEXT, /* JSON-encoded NoteChecklistItem[] */
+        note_type           TEXT NOT NULL DEFAULT 'note',
+        color               TEXT,
+        label               TEXT,
+        pinned              INTEGER NOT NULL DEFAULT 0,
+        archived            INTEGER NOT NULL DEFAULT 0,
+        due_date_ms         INTEGER,
+        repeat              TEXT NOT NULL DEFAULT 'none',
+        last_reminded_at_ms INTEGER,
+        sort_order          INTEGER NOT NULL DEFAULT 0,
+        created_at_ms       INTEGER NOT NULL,
+        updated_at_ms       INTEGER NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+    db.exec('CREATE INDEX IF NOT EXISTS idx_notes_user_id ON notes(user_id)');
+    db.exec('CREATE INDEX IF NOT EXISTS idx_notes_due_date_ms ON notes(due_date_ms)');
+    db.exec('CREATE INDEX IF NOT EXISTS idx_notes_pinned_sort ON notes(pinned, sort_order)');
+    console.log('[Migration v51] Added notes table');
+  },
+  down: (db) => {
+    db.exec('DROP INDEX IF EXISTS idx_notes_pinned_sort');
+    db.exec('DROP INDEX IF EXISTS idx_notes_due_date_ms');
+    db.exec('DROP INDEX IF EXISTS idx_notes_user_id');
+    db.exec('DROP TABLE IF EXISTS notes');
+    console.log('[Migration v51] Rolled back: dropped notes table');
+  },
+};
+
+/**
  * All migrations in order
  */
 // prettier-ignore
@@ -2228,7 +2278,7 @@ export const ALL_MIGRATIONS: IMigration[] = [
   migration_v31, migration_v32, migration_v33, migration_v34, migration_v35, migration_v36,
   migration_v37, migration_v38, migration_v39, migration_v40, migration_v41, migration_v42,
   migration_v43, migration_v44, migration_v45, migration_v46, migration_v47,
-  migration_v48, migration_v49, migration_v50,
+  migration_v48, migration_v49, migration_v50, migration_v51,
 ];
 
 /**

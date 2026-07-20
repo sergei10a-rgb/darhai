@@ -1,0 +1,71 @@
+{
+  "sidebarLabel": "Notas",
+  "pageTitle": "Notas",
+  "description": "Anote notas e listas e receba um aviso quando algo vencer.",
+  "newNote": "Nova nota",
+  "showArchived": "Mostrar arquivadas",
+  "footer": {
+    "count": "{{count}} notas"
+  },
+  "empty": {
+    "title": "Ainda não há notas",
+    "hint": "Crie sua primeira nota para registrar ideias, tarefas e lembretes."
+  },
+  "card": {
+    "untitled": "(sem título)",
+    "pin": "Fixar",
+    "unpin": "Desafixar",
+    "edit": "Editar",
+    "archive": "Arquivar",
+    "unarchive": "Desarquivar",
+    "delete": "Excluir",
+    "checklistProgress": "{{done}}/{{total}} concluídos"
+  },
+  "composer": {
+    "createTitle": "Nova nota",
+    "editTitle": "Editar nota",
+    "titlePlaceholder": "Título",
+    "contentPlaceholder": "Escreva uma nota...",
+    "typeNote": "Nota",
+    "typeTodo": "Lista",
+    "checklistLabel": "Lista",
+    "addItem": "Adicionar item",
+    "itemPlaceholder": "Item da lista",
+    "colorLabel": "Cor",
+    "labelLabel": "Rótulo",
+    "labelPlaceholder": "ex.: trabalho, pessoal",
+    "dueLabel": "Lembrete",
+    "duePlaceholder": "Escolha data e hora",
+    "repeatLabel": "Repetir",
+    "save": "Salvar",
+    "cancel": "Cancelar"
+  },
+  "repeat": {
+    "none": "Não se repete",
+    "daily": "Diariamente",
+    "weekly": "Semanalmente",
+    "monthly": "Mensalmente",
+    "yearly": "Anualmente"
+  },
+  "color": {
+    "none": "Padrão",
+    "red": "Vermelho",
+    "orange": "Laranja",
+    "yellow": "Amarelo",
+    "green": "Verde",
+    "blue": "Azul",
+    "purple": "Roxo"
+  },
+  "reminderToast": {
+    "title": "Lembrete de nota"
+  },
+  "reminder": {
+    "notifTitle": "Lembrete de nota"
+  },
+  "deleteConfirm": {
+    "title": "Excluir a nota?",
+    "content": "Esta nota será excluída permanentemente.",
+    "ok": "Excluir",
+    "cancel": "Cancelar"
+  }
+}

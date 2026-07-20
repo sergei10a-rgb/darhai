@@ -1,0 +1,129 @@
+/**
+ * Note card styles. Color accents use Arco palette tokens (var(--<color>-6)),
+ * everything else uses semantic theme tokens so light/dark both resolve.
+ */
+
+.card {
+  --note-accent: var(--color-border-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 8px);
+  padding: var(--space-3, 12px) var(--space-4, 16px);
+  border: 1px solid var(--color-border-2);
+  border-left: 3px solid var(--note-accent);
+  border-radius: 10px;
+  background: var(--color-bg-2);
+  transition:
+    box-shadow var(--duration-fast, 150ms) ease,
+    transform var(--duration-fast, 150ms) ease;
+}
+
+.card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.pinned {
+  background: var(--color-fill-1, var(--color-bg-2));
+}
+
+.colorRed {
+  --note-accent: var(--red-6);
+}
+
+.colorOrange {
+  --note-accent: var(--orange-6);
+}
+
+.colorYellow {
+  --note-accent: var(--gold-6);
+}
+
+.colorGreen {
+  --note-accent: var(--green-6);
+}
+
+.colorBlue {
+  --note-accent: var(--arcoblue-6, var(--blue-6));
+}
+
+.colorPurple {
+  --note-accent: var(--purple-6);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2, 8px);
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-1);
+  word-break: break-word;
+  flex: 1;
+  min-width: 0;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  opacity: 0.6;
+  transition: opacity var(--duration-fast, 150ms) ease;
+}
+
+.card:hover .headerActions {
+  opacity: 1;
+}
+
+.content {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text-2);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.checklist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1, 4px);
+}
+
+.checklistItem {
+  font-size: 13px;
+  color: var(--color-text-1);
+}
+
+.itemDone {
+  text-decoration: line-through;
+  color: var(--color-text-3);
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2, 8px);
+  margin-top: var(--space-1, 4px);
+}
+
+.meta {
+  font-size: 12px;
+  color: var(--color-text-3);
+}
+
+.due {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--color-text-2);
+}

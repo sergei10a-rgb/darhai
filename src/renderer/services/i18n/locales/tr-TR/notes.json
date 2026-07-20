@@ -1,0 +1,71 @@
+{
+  "sidebarLabel": "Notlar",
+  "pageTitle": "Notlar",
+  "description": "Notlar ve kontrol listeleri tutun, zamanı gelince hatırlatma alın.",
+  "newNote": "Yeni not",
+  "showArchived": "Arşivi göster",
+  "footer": {
+    "count": "{{count}} not"
+  },
+  "empty": {
+    "title": "Henüz not yok",
+    "hint": "Fikirleri, görevleri ve hatırlatmaları yakalamak için ilk notunuzu oluşturun."
+  },
+  "card": {
+    "untitled": "(başlıksız)",
+    "pin": "Sabitle",
+    "unpin": "Sabitlemeyi kaldır",
+    "edit": "Düzenle",
+    "archive": "Arşivle",
+    "unarchive": "Arşivden çıkar",
+    "delete": "Sil",
+    "checklistProgress": "{{done}}/{{total}} tamam"
+  },
+  "composer": {
+    "createTitle": "Yeni not",
+    "editTitle": "Notu düzenle",
+    "titlePlaceholder": "Başlık",
+    "contentPlaceholder": "Bir not yazın...",
+    "typeNote": "Not",
+    "typeTodo": "Kontrol listesi",
+    "checklistLabel": "Kontrol listesi",
+    "addItem": "Öğe ekle",
+    "itemPlaceholder": "Liste öğesi",
+    "colorLabel": "Renk",
+    "labelLabel": "Etiket",
+    "labelPlaceholder": "örn. iş, kişisel",
+    "dueLabel": "Hatırlatma",
+    "duePlaceholder": "Tarih ve saat seçin",
+    "repeatLabel": "Yinele",
+    "save": "Kaydet",
+    "cancel": "İptal"
+  },
+  "repeat": {
+    "none": "Yinelenmez",
+    "daily": "Günlük",
+    "weekly": "Haftalık",
+    "monthly": "Aylık",
+    "yearly": "Yıllık"
+  },
+  "color": {
+    "none": "Varsayılan",
+    "red": "Kırmızı",
+    "orange": "Turuncu",
+    "yellow": "Sarı",
+    "green": "Yeşil",
+    "blue": "Mavi",
+    "purple": "Mor"
+  },
+  "reminderToast": {
+    "title": "Not hatırlatması"
+  },
+  "reminder": {
+    "notifTitle": "Not hatırlatması"
+  },
+  "deleteConfirm": {
+    "title": "Not silinsin mi?",
+    "content": "Bu not kalıcı olarak silinecek.",
+    "ok": "Sil",
+    "cancel": "İptal"
+  }
+}

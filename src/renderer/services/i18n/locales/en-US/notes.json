@@ -1,0 +1,71 @@
+{
+  "sidebarLabel": "Notes",
+  "pageTitle": "Notes",
+  "description": "Jot notes and checklists, and get a nudge when something is due.",
+  "newNote": "New note",
+  "showArchived": "Show archived",
+  "footer": {
+    "count": "{{count}} notes"
+  },
+  "empty": {
+    "title": "No notes yet",
+    "hint": "Create your first note to capture ideas, todos, and reminders."
+  },
+  "card": {
+    "untitled": "(untitled)",
+    "pin": "Pin",
+    "unpin": "Unpin",
+    "edit": "Edit",
+    "archive": "Archive",
+    "unarchive": "Unarchive",
+    "delete": "Delete",
+    "checklistProgress": "{{done}}/{{total}} done"
+  },
+  "composer": {
+    "createTitle": "New note",
+    "editTitle": "Edit note",
+    "titlePlaceholder": "Title",
+    "contentPlaceholder": "Write a note...",
+    "typeNote": "Note",
+    "typeTodo": "Checklist",
+    "checklistLabel": "Checklist",
+    "addItem": "Add item",
+    "itemPlaceholder": "List item",
+    "colorLabel": "Color",
+    "labelLabel": "Label",
+    "labelPlaceholder": "e.g. work, personal",
+    "dueLabel": "Reminder",
+    "duePlaceholder": "Pick a date & time",
+    "repeatLabel": "Repeat",
+    "save": "Save",
+    "cancel": "Cancel"
+  },
+  "repeat": {
+    "none": "Does not repeat",
+    "daily": "Daily",
+    "weekly": "Weekly",
+    "monthly": "Monthly",
+    "yearly": "Yearly"
+  },
+  "color": {
+    "none": "Default",
+    "red": "Red",
+    "orange": "Orange",
+    "yellow": "Yellow",
+    "green": "Green",
+    "blue": "Blue",
+    "purple": "Purple"
+  },
+  "reminderToast": {
+    "title": "Note reminder"
+  },
+  "reminder": {
+    "notifTitle": "Note reminder"
+  },
+  "deleteConfirm": {
+    "title": "Delete note?",
+    "content": "This note will be permanently deleted.",
+    "ok": "Delete",
+    "cancel": "Cancel"
+  }
+}

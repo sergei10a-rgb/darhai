@@ -1,0 +1,71 @@
+{
+  "sidebarLabel": "Тэмдэглэл",
+  "pageTitle": "Тэмдэглэл",
+  "description": "Тэмдэглэл, хийх жагсаалт хөтөлж, хугацаа болоход сануулга авна.",
+  "newNote": "Шинэ тэмдэглэл",
+  "showArchived": "Архивыг харах",
+  "footer": {
+    "count": "{{count}} тэмдэглэл"
+  },
+  "empty": {
+    "title": "Одоохондоо тэмдэглэл алга",
+    "hint": "Санаа, хийх ажил, сануулгаа тэмдэглэхийн тулд эхний тэмдэглэлээ үүсгээрэй."
+  },
+  "card": {
+    "untitled": "(нэргүй)",
+    "pin": "Бэхлэх",
+    "unpin": "Бэхлэлт цуцлах",
+    "edit": "Засах",
+    "archive": "Архивлах",
+    "unarchive": "Архиваас гаргах",
+    "delete": "Устгах",
+    "checklistProgress": "{{done}}/{{total}} хийсэн"
+  },
+  "composer": {
+    "createTitle": "Шинэ тэмдэглэл",
+    "editTitle": "Тэмдэглэл засах",
+    "titlePlaceholder": "Гарчиг",
+    "contentPlaceholder": "Тэмдэглэл бичих...",
+    "typeNote": "Тэмдэглэл",
+    "typeTodo": "Хийх жагсаалт",
+    "checklistLabel": "Хийх жагсаалт",
+    "addItem": "Зүйл нэмэх",
+    "itemPlaceholder": "Жагсаалтын зүйл",
+    "colorLabel": "Өнгө",
+    "labelLabel": "Шошго",
+    "labelPlaceholder": "жишээ нь: ажил, хувийн",
+    "dueLabel": "Сануулга",
+    "duePlaceholder": "Огноо ба цаг сонгох",
+    "repeatLabel": "Давталт",
+    "save": "Хадгалах",
+    "cancel": "Цуцлах"
+  },
+  "repeat": {
+    "none": "Давтахгүй",
+    "daily": "Өдөр бүр",
+    "weekly": "Долоо хоног бүр",
+    "monthly": "Сар бүр",
+    "yearly": "Жил бүр"
+  },
+  "color": {
+    "none": "Үндсэн",
+    "red": "Улаан",
+    "orange": "Улбар шар",
+    "yellow": "Шар",
+    "green": "Ногоон",
+    "blue": "Цэнхэр",
+    "purple": "Ягаан"
+  },
+  "reminderToast": {
+    "title": "Тэмдэглэлийн сануулга"
+  },
+  "reminder": {
+    "notifTitle": "Тэмдэглэлийн сануулга"
+  },
+  "deleteConfirm": {
+    "title": "Тэмдэглэлийг устгах уу?",
+    "content": "Энэ тэмдэглэл бүрмөсөн устгагдана.",
+    "ok": "Устгах",
+    "cancel": "Цуцлах"
+  }
+}

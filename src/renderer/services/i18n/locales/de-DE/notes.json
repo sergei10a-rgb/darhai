@@ -1,0 +1,71 @@
+{
+  "sidebarLabel": "Notizen",
+  "pageTitle": "Notizen",
+  "description": "Notizen und Checklisten festhalten und rechtzeitig erinnert werden.",
+  "newNote": "Neue Notiz",
+  "showArchived": "Archiv anzeigen",
+  "footer": {
+    "count": "{{count}} Notizen"
+  },
+  "empty": {
+    "title": "Noch keine Notizen",
+    "hint": "Erstelle deine erste Notiz für Ideen, Aufgaben und Erinnerungen."
+  },
+  "card": {
+    "untitled": "(ohne Titel)",
+    "pin": "Anheften",
+    "unpin": "Lösen",
+    "edit": "Bearbeiten",
+    "archive": "Archivieren",
+    "unarchive": "Aus Archiv holen",
+    "delete": "Löschen",
+    "checklistProgress": "{{done}}/{{total}} erledigt"
+  },
+  "composer": {
+    "createTitle": "Neue Notiz",
+    "editTitle": "Notiz bearbeiten",
+    "titlePlaceholder": "Titel",
+    "contentPlaceholder": "Notiz schreiben...",
+    "typeNote": "Notiz",
+    "typeTodo": "Checkliste",
+    "checklistLabel": "Checkliste",
+    "addItem": "Element hinzufügen",
+    "itemPlaceholder": "Listenelement",
+    "colorLabel": "Farbe",
+    "labelLabel": "Label",
+    "labelPlaceholder": "z. B. Arbeit, privat",
+    "dueLabel": "Erinnerung",
+    "duePlaceholder": "Datum & Uhrzeit wählen",
+    "repeatLabel": "Wiederholen",
+    "save": "Speichern",
+    "cancel": "Abbrechen"
+  },
+  "repeat": {
+    "none": "Keine Wiederholung",
+    "daily": "Täglich",
+    "weekly": "Wöchentlich",
+    "monthly": "Monatlich",
+    "yearly": "Jährlich"
+  },
+  "color": {
+    "none": "Standard",
+    "red": "Rot",
+    "orange": "Orange",
+    "yellow": "Gelb",
+    "green": "Grün",
+    "blue": "Blau",
+    "purple": "Lila"
+  },
+  "reminderToast": {
+    "title": "Notiz-Erinnerung"
+  },
+  "reminder": {
+    "notifTitle": "Notiz-Erinnerung"
+  },
+  "deleteConfirm": {
+    "title": "Notiz löschen?",
+    "content": "Diese Notiz wird dauerhaft gelöscht.",
+    "ok": "Löschen",
+    "cancel": "Abbrechen"
+  }
+}

@@ -50,6 +50,7 @@
     "models",
     "projects",
     "modelAdvisor",
-    "compare"
+    "compare",
+    "notes"
   ]
 }
