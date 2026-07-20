@@ -14,6 +14,10 @@ export const BUILTIN_SEARCH_SKILLS_ID = 'builtin-search-skills';
 export const BUILTIN_SEARCH_SKILLS_NAME = 'wayland-search-skills';
 export const BUILTIN_SEARCH_SKILLS_TOOL_NAME = 'wayland_search_skills';
 
+export const BUILTIN_WEB_SEARCH_ID = 'builtin-web-search';
+export const BUILTIN_WEB_SEARCH_NAME = 'wayland-web-search';
+export const BUILTIN_WEB_SEARCH_TOOL_NAME = 'web_search';
+
 // Bundled @wayland MCP servers shipped with the installer (no npm publish).
 // Each catalog entry's transport stores the bare filename as args[0]; the
 // spawn layer rewrites it to an absolute path via `getMcpScriptPath()`.
@@ -90,4 +94,21 @@ export function isBuiltinSearchSkillsTransport(transport?: {
   }
 
   return (transport.args || []).some((arg) => typeof arg === 'string' && arg.includes('builtin-mcp-search-skills.js'));
+}
+
+export function isBuiltinWebSearchName(name?: string | null): boolean {
+  if (!name) return false;
+  return name === BUILTIN_WEB_SEARCH_NAME;
+}
+
+export function isBuiltinWebSearchTransport(transport?: {
+  type?: string;
+  command?: string;
+  args?: string[] | null;
+}): boolean {
+  if (!transport || transport.type !== 'stdio' || transport.command !== 'node') {
+    return false;
+  }
+
+  return (transport.args || []).some((arg) => typeof arg === 'string' && arg.includes('builtin-mcp-web-search.js'));
 }

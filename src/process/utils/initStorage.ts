@@ -42,6 +42,8 @@ import {
   BUILTIN_IMAGE_GEN_NAME,
   BUILTIN_SEARCH_SKILLS_ID,
   BUILTIN_SEARCH_SKILLS_NAME,
+  BUILTIN_WEB_SEARCH_ID,
+  BUILTIN_WEB_SEARCH_NAME,
 } from '../resources/builtinMcp/constants';
 import { getMcpScriptPath, inspectMcpScripts } from './mcpScriptDir';
 import { getAppDataExtensionsDir, EXTENSION_MANIFEST_FILE } from '../extensions/constants';
@@ -702,6 +704,43 @@ const getBuiltinMcpScriptPath = (scriptName: string): string => {
 };
 
 /**
+ * Web-search provider ids in preference order (Tavily first, then Brave, then
+ * Exa). Must stay in sync with `WEB_SEARCH_PROVIDER_ORDER` in the web-search
+ * server factory; the subprocess picks the first present key in this order.
+ */
+const WEB_SEARCH_PROVIDER_IDS = ['tavily', 'brave', 'exa'] as const;
+
+/**
+ * Resolve the `{ENV_NAME: key}` map forwarded into the web-search subprocess,
+ * reading only the web-search provider keys from the encrypted `ToolKeyStore`
+ * (least privilege - voice/image keys are never forwarded here). Tolerant of a
+ * DB that is not yet ready: returns `{}` so the server still registers and
+ * self-reports "no key configured" at call time. Never logs key material.
+ */
+const resolveWebSearchSpawnEnv = async (): Promise<Record<string, string>> => {
+  const env: Record<string, string> = {};
+  try {
+    const { getToolKeyStore, TOOL_KEY_ENV_MAP } = await import('@process/agent/wcore/toolKeyStore');
+    const store = await getToolKeyStore();
+    for (const id of WEB_SEARCH_PROVIDER_IDS) {
+      const key = store.getToolKey(id);
+      if (key) env[TOOL_KEY_ENV_MAP[id]] = key;
+    }
+  } catch {
+    // DB unavailable or not yet initialized - degrade to no keys (offline-tolerant).
+  }
+  return env;
+};
+
+/** Shallow string-map equality (used to detect a changed spawn env across boots). */
+const envEquals = (a: Record<string, string>, b: Record<string, string>): boolean => {
+  const aKeys = Object.keys(a);
+  const bKeys = Object.keys(b);
+  if (aKeys.length !== bKeys.length) return false;
+  return aKeys.every((k) => a[k] === b[k]);
+};
+
+/**
  * Ensure built-in MCP servers exist in mcp.config.
  * - Creates missing entries with enabled: false
  * - Updates command path if app location changed
@@ -878,6 +917,75 @@ const ensureBuiltinMcpServers = async (): Promise<void> => {
         createdAt: now,
         updatedAt: now,
         originalJson: buildSearchSkillsOriginalJson(searchSkillsScriptPath),
+      };
+      mcpServers.push(newServer);
+      changed = true;
+    }
+
+    // ── Built-in web-search MCP server ───────────────────────────────────────
+    // Exposes ONE tool (`web_search`) to every backend that speaks MCP. The
+    // provider is chosen inside the subprocess by whichever search key is
+    // present in its env; those keys are resolved HERE from the encrypted
+    // `ToolKeyStore` (the same rail the wcore engine uses - not a new store) and
+    // refreshed on every boot so key add/remove propagates. Enabled by default:
+    // it is silent unless the agent calls it and self-reports a clear error when
+    // no key is configured (offline-tolerant).
+    const webSearchScriptPath = getBuiltinMcpScriptPath('builtin-mcp-web-search');
+    const webSearchEnv = await resolveWebSearchSpawnEnv();
+    const webSearchExistingIdx = mcpServers.findIndex((s) => s.builtin === true && s.id === BUILTIN_WEB_SEARCH_ID);
+
+    const buildWebSearchOriginalJson = (scriptPathValue: string, env: Record<string, string>) =>
+      JSON.stringify(
+        {
+          [BUILTIN_WEB_SEARCH_NAME]: {
+            command: 'node',
+            args: [scriptPathValue],
+            env,
+          },
+        },
+        null,
+        2
+      );
+
+    if (webSearchExistingIdx >= 0) {
+      const existing = mcpServers[webSearchExistingIdx];
+      if (existing.transport.type === 'stdio' && existing.transport.command === 'node') {
+        const currentArgsFirst = (existing.transport.args || [])[0];
+        const needsPathUpdate = currentArgsFirst !== webSearchScriptPath;
+        const needsEnvUpdate = !envEquals(existing.transport.env ?? {}, webSearchEnv);
+
+        if (needsPathUpdate || needsEnvUpdate) {
+          const updatedTransport: IMcpServer['transport'] = {
+            ...existing.transport,
+            args: [webSearchScriptPath],
+            env: webSearchEnv,
+          };
+          mcpServers[webSearchExistingIdx] = {
+            ...existing,
+            transport: updatedTransport,
+            originalJson: buildWebSearchOriginalJson(webSearchScriptPath, webSearchEnv),
+            updatedAt: now,
+          };
+          changed = true;
+        }
+      }
+    } else {
+      const newServer: IMcpServer = {
+        id: BUILTIN_WEB_SEARCH_ID,
+        name: BUILTIN_WEB_SEARCH_NAME,
+        description:
+          'Built-in tool that lets agents search the public web by natural language and returns ranked results (title, url, snippet). Uses a search key configured in Settings.',
+        enabled: true,
+        builtin: true,
+        transport: {
+          type: 'stdio',
+          command: 'node',
+          args: [webSearchScriptPath],
+          env: webSearchEnv,
+        },
+        createdAt: now,
+        updatedAt: now,
+        originalJson: buildWebSearchOriginalJson(webSearchScriptPath, webSearchEnv),
       };
       mcpServers.push(newServer);
       changed = true;
