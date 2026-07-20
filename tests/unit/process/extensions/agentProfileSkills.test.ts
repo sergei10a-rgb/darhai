@@ -30,7 +30,7 @@ const assistants = JSON.parse(
 ) as Array<{ id?: string; appId?: string; name?: string; kind?: string; enabledSkills?: string[] }>;
 
 describe('agent-profile curated skills', () => {
-  it('covers all 25 agent-profiles', () => {
+  it('covers every agent-profile in the library', () => {
     const profiles = index.filter((e) => e.type === 'agent-profile').map((e) => e.name);
     for (const p of profiles) {
       expect(agentProfileSkills[p], `agent-profile '${p}' has no curated skill set`).toBeDefined();
