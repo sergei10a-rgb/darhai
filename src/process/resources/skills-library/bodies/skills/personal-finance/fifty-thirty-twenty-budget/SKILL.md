@@ -6,7 +6,7 @@ description: |
   Do NOT use for zero-based budgeting (use zero-based-budget), variable income budgets (use variable-income-budget), or investment allocation.
 license: Apache-2.0
 metadata:
-  author: foundry-skills
+  author: darhai
   version: "1.0.0"
   tags: "budgeting personal-finance expenses savings"
   category: "personal-finance"

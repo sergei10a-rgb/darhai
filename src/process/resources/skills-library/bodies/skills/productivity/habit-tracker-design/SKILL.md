@@ -10,7 +10,7 @@ description: |
   `okr-builder`), or enterprise habit/culture programs.
 license: Apache-2.0
 metadata:
-  author: foundry-skills
+  author: darhai
   version: "1.0.0"
   tags: "goal-setting automation checklist"
   category: "productivity"

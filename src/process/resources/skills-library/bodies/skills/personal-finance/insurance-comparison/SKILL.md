@@ -12,7 +12,7 @@ description: |
   insurance requirements (use home-buying-checklist).
 license: Apache-2.0
 metadata:
-  author: foundry-skills
+  author: darhai
   version: "1.0.0"
   tags: "insurance personal-finance analysis planning"
   category: "personal-finance"

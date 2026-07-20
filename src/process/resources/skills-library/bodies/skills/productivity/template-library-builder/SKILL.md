@@ -10,7 +10,7 @@ description: |
   or business process documentation (use business operations skills instead).
 license: Apache-2.0
 metadata:
-  author: foundry-skills
+  author: darhai
   version: "1.0.0"
   tags: "automation template planning"
   category: "productivity"

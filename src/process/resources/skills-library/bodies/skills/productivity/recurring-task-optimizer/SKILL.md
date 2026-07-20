@@ -10,7 +10,7 @@ description: |
   operations skills instead).
 license: Apache-2.0
 metadata:
-  author: foundry-skills
+  author: darhai
   version: "1.0.0"
   tags: "automation time-management optimization"
   category: "productivity"

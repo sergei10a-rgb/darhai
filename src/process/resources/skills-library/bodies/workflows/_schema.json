@@ -48,8 +48,8 @@
       "properties": {
         "author": {
           "type": "string",
-          "const": "foundry-skills",
-          "description": "Workflow author identifier. Always 'foundry-skills' for curated library workflows."
+          "const": "darhai",
+          "description": "Workflow author identifier. Always 'darhai' for curated library workflows."
         },
         "version": {
           "type": "string",

@@ -9,7 +9,7 @@ description: |
   existing pull requests.
 license: Apache-2.0
 metadata:
-  author: foundry-skills
+  author: darhai
   version: "1.0.0"
   tags: "architecture api-design design-patterns database best-practices"
   category: "engineering"

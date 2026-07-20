@@ -13,7 +13,7 @@ description: |
   directly).
 license: Apache-2.0
 metadata:
-  author: foundry-skills
+  author: darhai
   version: "1.0.0"
   tags: "entrepreneurship strategy proposal planning step-by-step"
   category: "business-operations"

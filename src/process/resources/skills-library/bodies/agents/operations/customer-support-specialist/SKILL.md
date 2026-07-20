@@ -10,7 +10,7 @@ description: |
   debugging, infrastructure troubleshooting, or direct code fixes.
 license: Apache-2.0
 metadata:
-  author: foundry-skills
+  author: darhai
   version: "1.0.0"
   tags: "template analysis report best-practices"
   category: "operations"

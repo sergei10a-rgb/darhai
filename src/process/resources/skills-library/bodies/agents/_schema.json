@@ -35,8 +35,8 @@
       "properties": {
         "author": {
           "type": "string",
-          "const": "foundry-skills",
-          "description": "Agent profile author identifier. Always 'foundry-skills' for curated library agents."
+          "const": "darhai",
+          "description": "Agent profile author identifier. Always 'darhai' for curated library agents."
         },
         "version": {
           "type": "string",

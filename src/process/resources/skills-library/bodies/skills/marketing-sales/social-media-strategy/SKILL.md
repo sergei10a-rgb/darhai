@@ -10,7 +10,7 @@ description: |
   (use email-campaign), or full marketing strategy (use marketing-strategy).
 license: Apache-2.0
 metadata:
-  author: foundry-skills
+  author: darhai
   version: "1.0.0"
   tags: "marketing social-media planning strategy"
   category: "marketing-sales"

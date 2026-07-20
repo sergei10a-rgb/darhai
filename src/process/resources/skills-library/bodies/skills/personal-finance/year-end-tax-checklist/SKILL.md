@@ -12,7 +12,7 @@ description: |
   payments (use quarterly-tax-estimator).
 license: Apache-2.0
 metadata:
-  author: foundry-skills
+  author: darhai
   version: "1.0.0"
   tags: "tax-planning personal-finance planning checklist"
   category: "personal-finance"

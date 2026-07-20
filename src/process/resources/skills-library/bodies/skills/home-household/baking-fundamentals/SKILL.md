@@ -11,7 +11,7 @@ description: |
   (use cooking-techniques).
 license: Apache-2.0
 metadata:
-  author: foundry-skills
+  author: darhai
   version: "1.0.0"
   tags: "cooking step-by-step teaching"
   category: "home-household"

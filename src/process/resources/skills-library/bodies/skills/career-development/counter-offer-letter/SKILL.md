@@ -12,7 +12,7 @@ description: |
   (use salary-negotiation-script with raise scenario).
 license: Apache-2.0
 metadata:
-  author: foundry-skills
+  author: darhai
   version: "1.0.0"
   tags: "salary-negotiation career email writing template"
   category: "career-development"

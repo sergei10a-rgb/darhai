@@ -10,7 +10,7 @@ description: |
   or managing pregnancy health (those are medical topics).
 license: Apache-2.0
 metadata:
-  author: foundry-skills
+  author: darhai
   version: "1.0.0"
   tags: "parenting planning checklist step-by-step"
   category: "life-event"

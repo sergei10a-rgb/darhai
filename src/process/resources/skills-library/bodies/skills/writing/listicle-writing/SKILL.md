@@ -9,7 +9,7 @@ description: |
   (use `editorial-calendar`).
 license: Apache-2.0
 metadata:
-  author: foundry-skills
+  author: darhai
   version: "1.0.0"
   tags: "blog-post writing content-marketing"
   category: "writing"

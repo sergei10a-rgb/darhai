@@ -13,7 +13,7 @@ description: |
   or commercial office moves.
 license: Apache-2.0
 metadata:
-  author: foundry-skills
+  author: darhai
   version: "1.0.0"
   tags: "checklist planning strategy"
   category: "family-relationships"

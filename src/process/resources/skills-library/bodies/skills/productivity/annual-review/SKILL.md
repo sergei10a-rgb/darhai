@@ -10,7 +10,7 @@ description: |
   or single-goal assessment (use `smart-goal-builder` instead).
 license: Apache-2.0
 metadata:
-  author: foundry-skills
+  author: darhai
   version: "1.0.0"
   tags: "goal-setting planning template"
   category: "productivity"

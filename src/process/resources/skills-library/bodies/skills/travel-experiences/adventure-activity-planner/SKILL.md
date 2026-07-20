@@ -11,7 +11,7 @@ description: |
   skills), or competitive sports preparation (use hobbies-crafts skills).
 license: Apache-2.0
 metadata:
-  author: foundry-skills
+  author: darhai
   version: "1.0.0"
   tags: "travel planning checklist step-by-step"
   category: "travel-experiences"

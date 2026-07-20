@@ -12,7 +12,7 @@ description: |
   (use tutorial-writing skill).
 license: Apache-2.0
 metadata:
-  author: foundry-skills
+  author: darhai
   version: "1.0.0"
   tags: "teaching curriculum step-by-step planning"
   category: "creative-project"

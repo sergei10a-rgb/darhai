@@ -9,7 +9,7 @@ description: |
   or one-off professional emails (use `professional-email`).
 license: Apache-2.0
 metadata:
-  author: foundry-skills
+  author: darhai
   version: "1.0.0"
   tags: "newsletter writing email"
   category: "writing"

@@ -6,7 +6,7 @@ description: |
   Do NOT use for interest-optimized payoff (use debt-avalanche-planner), debt consolidation evaluation (use debt-consolidation-analysis), or business debt management.
 license: Apache-2.0
 metadata:
-  author: foundry-skills
+  author: darhai
   version: "1.0.0"
   tags: "debt-management personal-finance budgeting planning"
   category: "personal-finance"

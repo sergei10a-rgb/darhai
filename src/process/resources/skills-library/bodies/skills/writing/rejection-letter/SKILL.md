@@ -9,7 +9,7 @@ description: |
   improvement plans (use `pip-writing`).
 license: Apache-2.0
 metadata:
-  author: foundry-skills
+  author: darhai
   version: "1.0.0"
   tags: "writing email business-writing"
   category: "writing"

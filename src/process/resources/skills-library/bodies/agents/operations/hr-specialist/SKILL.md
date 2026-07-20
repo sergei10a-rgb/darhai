@@ -11,7 +11,7 @@ description: |
   system configuration.
 license: Apache-2.0
 metadata:
-  author: foundry-skills
+  author: darhai
   version: "1.0.0"
   tags: "planning analysis template report best-practices"
   category: "operations"

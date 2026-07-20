@@ -6,7 +6,7 @@ description: |
   Do NOT use for hypothesis testing (use hypothesis-testing), data cleaning operations (use data-cleaning-protocol), or building predictive models (use regression-guide).
 license: Apache-2.0
 metadata:
-  author: foundry-skills
+  author: darhai
   version: "1.0.0"
   tags: "data-science analysis statistics"
   category: "data-analysis"

@@ -40,8 +40,8 @@
       "properties": {
         "author": {
           "type": "string",
-          "const": "foundry-skills",
-          "description": "Skill author identifier. Always 'foundry-skills' for curated library skills."
+          "const": "darhai",
+          "description": "Skill author identifier. Always 'darhai' for curated library skills."
         },
         "version": {
           "type": "string",

@@ -11,7 +11,7 @@ description: |
   foreign currency, or travel budget planning (use budget-travel-planner).
 license: Apache-2.0
 metadata:
-  author: foundry-skills
+  author: darhai
   version: "1.0.0"
   tags: "travel checklist planning guide"
   category: "travel-experiences"

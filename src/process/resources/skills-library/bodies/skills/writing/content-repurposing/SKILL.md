@@ -10,7 +10,7 @@ description: |
   `content-brief`).
 license: Apache-2.0
 metadata:
-  author: foundry-skills
+  author: darhai
   version: "1.0.0"
   tags: "content-marketing writing template"
   category: "writing"
