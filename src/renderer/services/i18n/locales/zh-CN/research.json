@@ -1,0 +1,58 @@
+{
+  "sidebarLabel": "研究",
+  "pageTitle": "深度研究",
+  "description": "提出问题，让 AI 智能体进行多轮网络调研，并撰写带引用的报告。",
+  "footer": {
+    "count": "{{count}} 项研究"
+  },
+  "query": {
+    "label": "研究问题",
+    "placeholder": "例如：为小团队比较最好的开源向量数据库——性能、成本与自托管的难易程度。"
+  },
+  "settings": {
+    "category": "报告类型",
+    "rounds": "深度",
+    "roundsCount": "{{count}} 轮"
+  },
+  "category": {
+    "auto": "自动",
+    "general": "通用",
+    "product": "产品",
+    "comparison": "对比",
+    "howto": "教程",
+    "factcheck": "事实核查"
+  },
+  "phase": {
+    "planning": "规划中",
+    "searching": "搜索中",
+    "reading": "阅读中",
+    "synthesizing": "综合中",
+    "writing": "撰写中"
+  },
+  "status": {
+    "done": "完成",
+    "error": "错误",
+    "cancelled": "已取消"
+  },
+  "meta": {
+    "rounds": "{{count}} 轮",
+    "sources": "{{count}} 个来源"
+  },
+  "start": "开始研究",
+  "running": "研究中…",
+  "cancel": "取消",
+  "errorWithReason": "研究失败：{{reason}}",
+  "errorGeneric": "研究失败。",
+  "cancelledNotice": "此研究已取消。",
+  "report": {
+    "empty": "未生成报告。"
+  },
+  "recent": {
+    "title": "最近的研究",
+    "empty": "暂无研究。"
+  },
+  "empty": {
+    "title": "开始一次深度研究",
+    "hint": "在上方提问，Darhai 将搜索、阅读来源并撰写带引用的报告。"
+  }
+}

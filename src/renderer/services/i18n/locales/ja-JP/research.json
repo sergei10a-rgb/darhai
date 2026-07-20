@@ -1,0 +1,58 @@
+{
+  "sidebarLabel": "リサーチ",
+  "pageTitle": "ディープリサーチ",
+  "description": "質問を入力すると、AI エージェントが多段階の Web 調査を行い、出典付きのレポートを作成します。",
+  "footer": {
+    "count": "{{count}} 件のリサーチ"
+  },
+  "query": {
+    "label": "リサーチの質問",
+    "placeholder": "例：小規模チーム向けに最適なオープンソースのベクトルデータベースを比較——性能、コスト、セルフホストのしやすさ。"
+  },
+  "settings": {
+    "category": "レポートの種類",
+    "rounds": "深さ",
+    "roundsCount": "{{count}} ラウンド"
+  },
+  "category": {
+    "auto": "自動",
+    "general": "一般",
+    "product": "製品",
+    "comparison": "比較",
+    "howto": "ハウツー",
+    "factcheck": "ファクトチェック"
+  },
+  "phase": {
+    "planning": "計画中",
+    "searching": "検索中",
+    "reading": "読み込み中",
+    "synthesizing": "統合中",
+    "writing": "執筆中"
+  },
+  "status": {
+    "done": "完了",
+    "error": "エラー",
+    "cancelled": "キャンセル"
+  },
+  "meta": {
+    "rounds": "{{count}} ラウンド",
+    "sources": "{{count}} 件の出典"
+  },
+  "start": "リサーチを開始",
+  "running": "リサーチ中…",
+  "cancel": "キャンセル",
+  "errorWithReason": "リサーチに失敗しました：{{reason}}",
+  "errorGeneric": "リサーチに失敗しました。",
+  "cancelledNotice": "このリサーチはキャンセルされました。",
+  "report": {
+    "empty": "レポートは作成されませんでした。"
+  },
+  "recent": {
+    "title": "最近のリサーチ",
+    "empty": "まだリサーチはありません。"
+  },
+  "empty": {
+    "title": "ディープリサーチを開始",
+    "hint": "上で質問すると、Darhai が検索し、出典を読み、出典付きのレポートを作成します。"
+  }
+}

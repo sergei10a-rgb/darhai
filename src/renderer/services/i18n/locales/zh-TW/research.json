@@ -1,0 +1,58 @@
+{
+  "sidebarLabel": "研究",
+  "pageTitle": "深度研究",
+  "description": "提出問題，讓 AI 智能體進行多輪網路調查，並撰寫附引用的報告。",
+  "footer": {
+    "count": "{{count}} 項研究"
+  },
+  "query": {
+    "label": "研究問題",
+    "placeholder": "例如：為小型團隊比較最佳的開源向量資料庫——效能、成本與自架的難易度。"
+  },
+  "settings": {
+    "category": "報告類型",
+    "rounds": "深度",
+    "roundsCount": "{{count}} 輪"
+  },
+  "category": {
+    "auto": "自動",
+    "general": "一般",
+    "product": "產品",
+    "comparison": "比較",
+    "howto": "教學",
+    "factcheck": "事實查核"
+  },
+  "phase": {
+    "planning": "規劃中",
+    "searching": "搜尋中",
+    "reading": "閱讀中",
+    "synthesizing": "綜合中",
+    "writing": "撰寫中"
+  },
+  "status": {
+    "done": "完成",
+    "error": "錯誤",
+    "cancelled": "已取消"
+  },
+  "meta": {
+    "rounds": "{{count}} 輪",
+    "sources": "{{count}} 個來源"
+  },
+  "start": "開始研究",
+  "running": "研究中…",
+  "cancel": "取消",
+  "errorWithReason": "研究失敗：{{reason}}",
+  "errorGeneric": "研究失敗。",
+  "cancelledNotice": "此研究已取消。",
+  "report": {
+    "empty": "未產生報告。"
+  },
+  "recent": {
+    "title": "最近的研究",
+    "empty": "尚無研究。"
+  },
+  "empty": {
+    "title": "開始一次深度研究",
+    "hint": "在上方提問，Darhai 將搜尋、閱讀來源並撰寫附引用的報告。"
+  }
+}

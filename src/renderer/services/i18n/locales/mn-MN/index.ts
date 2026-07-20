@@ -38,6 +38,7 @@ import notes from './notes.json';
 import calendar from './calendar.json';
 import workflows from './workflows.json';
 import models from './models.json';
+import research from './research.json';
 import conversations from './conversations.json';
 import archive from './archive.json';
 import wiki from './wiki.json';
@@ -78,6 +79,7 @@ export default {
   calendar,
   workflows,
   models,
+  research,
   conversations,
   archive,
   wiki,

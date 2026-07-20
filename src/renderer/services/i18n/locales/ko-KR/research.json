@@ -1,0 +1,58 @@
+{
+  "sidebarLabel": "리서치",
+  "pageTitle": "심층 리서치",
+  "description": "질문을 입력하면 AI 에이전트가 여러 단계의 웹 조사를 수행하고 출처가 포함된 보고서를 작성합니다.",
+  "footer": {
+    "count": "{{count}}건의 리서치"
+  },
+  "query": {
+    "label": "리서치 질문",
+    "placeholder": "예: 소규모 팀을 위한 최고의 오픈소스 벡터 데이터베이스 비교 — 성능, 비용, 셀프 호스팅 용이성."
+  },
+  "settings": {
+    "category": "보고서 유형",
+    "rounds": "깊이",
+    "roundsCount": "{{count}}회"
+  },
+  "category": {
+    "auto": "자동",
+    "general": "일반",
+    "product": "제품",
+    "comparison": "비교",
+    "howto": "방법 안내",
+    "factcheck": "팩트체크"
+  },
+  "phase": {
+    "planning": "계획 중",
+    "searching": "검색 중",
+    "reading": "읽는 중",
+    "synthesizing": "종합 중",
+    "writing": "작성 중"
+  },
+  "status": {
+    "done": "완료",
+    "error": "오류",
+    "cancelled": "취소됨"
+  },
+  "meta": {
+    "rounds": "{{count}}회",
+    "sources": "출처 {{count}}개"
+  },
+  "start": "리서치 시작",
+  "running": "리서치 중…",
+  "cancel": "취소",
+  "errorWithReason": "리서치에 실패했습니다: {{reason}}",
+  "errorGeneric": "리서치에 실패했습니다.",
+  "cancelledNotice": "이 리서치는 취소되었습니다.",
+  "report": {
+    "empty": "작성된 보고서가 없습니다."
+  },
+  "recent": {
+    "title": "최근 리서치",
+    "empty": "아직 리서치가 없습니다."
+  },
+  "empty": {
+    "title": "심층 리서치 시작",
+    "hint": "위에 질문을 입력하면 Darhai가 검색하고 출처를 읽어 출처가 포함된 보고서를 작성합니다."
+  }
+}

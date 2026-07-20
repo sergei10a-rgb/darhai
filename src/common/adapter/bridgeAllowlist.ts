@@ -344,6 +344,13 @@ const REMOTE_DENIED_KEYS: ReadonlySet<string> = new Set([
   'documents.delete',
   'documents.ai-edit',
   'documents.ai-suggest',
+  // --- Deep Research (Odysseus "deep research"): a run spends the user's search +
+  //     LLM keys and makes many outbound calls (fan-out amplification); cancel stops
+  //     a run. A paired-device WebSocket caller must never drive or stop a run - only
+  //     the trusted local user. The read verbs (research.get-run / research.list-runs)
+  //     follow the cron read policy and stay allowed for the paired UI. ---
+  'research.start',
+  'research.cancel',
   // --- Storage destructive / disk operations ---
   'storage:changeDir',
   'storage:clearDir',

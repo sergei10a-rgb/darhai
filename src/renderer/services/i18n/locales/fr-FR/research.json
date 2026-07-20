@@ -1,0 +1,58 @@
+{
+  "sidebarLabel": "Recherche",
+  "pageTitle": "Recherche approfondie",
+  "description": "Posez une question et laissez un agent IA mener une investigation web en plusieurs étapes, puis rédiger un rapport sourcé.",
+  "footer": {
+    "count": "{{count}} recherches"
+  },
+  "query": {
+    "label": "Question de recherche",
+    "placeholder": "ex. Comparez les meilleures bases de données vectorielles open source pour une petite équipe — performance, coût et facilité d’auto-hébergement."
+  },
+  "settings": {
+    "category": "Type de rapport",
+    "rounds": "Profondeur",
+    "roundsCount": "{{count}} tours"
+  },
+  "category": {
+    "auto": "Auto",
+    "general": "Général",
+    "product": "Produit",
+    "comparison": "Comparaison",
+    "howto": "Tutoriel",
+    "factcheck": "Vérification"
+  },
+  "phase": {
+    "planning": "Planification",
+    "searching": "Recherche",
+    "reading": "Lecture",
+    "synthesizing": "Synthèse",
+    "writing": "Rédaction"
+  },
+  "status": {
+    "done": "Terminé",
+    "error": "Erreur",
+    "cancelled": "Annulé"
+  },
+  "meta": {
+    "rounds": "{{count}} tours",
+    "sources": "{{count}} sources"
+  },
+  "start": "Lancer la recherche",
+  "running": "Recherche en cours…",
+  "cancel": "Annuler",
+  "errorWithReason": "La recherche a échoué : {{reason}}",
+  "errorGeneric": "La recherche a échoué.",
+  "cancelledNotice": "Cette recherche a été annulée.",
+  "report": {
+    "empty": "Aucun rapport produit."
+  },
+  "recent": {
+    "title": "Recherches récentes",
+    "empty": "Aucune recherche pour l’instant."
+  },
+  "empty": {
+    "title": "Lancez une recherche approfondie",
+    "hint": "Posez une question ci-dessus et Darhai cherchera, lira des sources et rédigera un rapport sourcé."
+  }
+}

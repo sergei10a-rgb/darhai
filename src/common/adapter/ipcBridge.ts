@@ -1179,6 +1179,28 @@ export const documents = {
     buildEmitter<import('@/common/types/documents').DocumentChangedEvent>('documents.document-changed'),
 };
 
+/**
+ * Deep Research (Odysseus assimilation "deep research"). An LLM-planned iterative
+ * research loop (plan -> search -> read -> synthesize -> report). `start` spends the
+ * user's search + LLM keys and makes many outbound calls, and `cancel` stops a run;
+ * both are remote-denied (see bridgeAllowlist REMOTE_DENIED_KEYS) - only the trusted
+ * local user drives a run. The read verbs (getRun / listRuns) follow the cron read
+ * policy and stay allowed for the paired UI.
+ */
+export const research = {
+  /** Launch a run; returns its id immediately (progress follows via onRunChanged). */
+  start: buildProvider<
+    { runId: string },
+    { userId: string; params: import('@/common/types/research').StartResearchParams }
+  >('research.start'),
+  getRun: buildProvider<import('@/common/types/research').ResearchRun | null, { runId: string }>('research.get-run'),
+  listRuns: buildProvider<import('@/common/types/research').ResearchRun[], { userId: string }>('research.list-runs'),
+  /** Cooperatively stop an in-flight run (remote-denied). */
+  cancel: buildProvider<void, { runId: string }>('research.cancel'),
+  // Events
+  onRunChanged: buildEmitter<import('@/common/types/research').ResearchRunChangedEvent>('research.run-changed'),
+};
+
 /** Mission Control - unified task ledger (team tasks + cron jobs). */
 export const missionControl = {
   snapshot: buildProvider<import('@/common/types/missionControl').MissionControlSnapshot, { userId: string }>(

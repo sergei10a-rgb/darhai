@@ -1,0 +1,58 @@
+{
+  "sidebarLabel": "Araştırma",
+  "pageTitle": "Derin Araştırma",
+  "description": "Bir soru sorun; yapay zeka aracısı çok adımlı bir web araştırması yürütsün ve kaynaklı bir rapor yazsın.",
+  "footer": {
+    "count": "{{count}} araştırma"
+  },
+  "query": {
+    "label": "Araştırma sorusu",
+    "placeholder": "örn. Küçük bir ekip için en iyi açık kaynak vektör veritabanlarını karşılaştır — performans, maliyet ve kendi sunucunda barındırma kolaylığı."
+  },
+  "settings": {
+    "category": "Rapor türü",
+    "rounds": "Derinlik",
+    "roundsCount": "{{count}} tur"
+  },
+  "category": {
+    "auto": "Otomatik",
+    "general": "Genel",
+    "product": "Ürün",
+    "comparison": "Karşılaştırma",
+    "howto": "Nasıl yapılır",
+    "factcheck": "Doğrulama"
+  },
+  "phase": {
+    "planning": "Planlanıyor",
+    "searching": "Aranıyor",
+    "reading": "Okunuyor",
+    "synthesizing": "Sentezleniyor",
+    "writing": "Yazılıyor"
+  },
+  "status": {
+    "done": "Tamamlandı",
+    "error": "Hata",
+    "cancelled": "İptal edildi"
+  },
+  "meta": {
+    "rounds": "{{count}} tur",
+    "sources": "{{count}} kaynak"
+  },
+  "start": "Araştırmayı başlat",
+  "running": "Araştırılıyor…",
+  "cancel": "İptal",
+  "errorWithReason": "Araştırma başarısız oldu: {{reason}}",
+  "errorGeneric": "Araştırma başarısız oldu.",
+  "cancelledNotice": "Bu araştırma iptal edildi.",
+  "report": {
+    "empty": "Rapor oluşturulmadı."
+  },
+  "recent": {
+    "title": "Son araştırmalar",
+    "empty": "Henüz araştırma yok."
+  },
+  "empty": {
+    "title": "Derin bir araştırma başlat",
+    "hint": "Yukarıya bir soru yazın; Darhai arayacak, kaynakları okuyacak ve kaynaklı bir rapor yazacaktır."
+  }
+}

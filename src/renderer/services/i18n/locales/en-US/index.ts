@@ -38,6 +38,7 @@ import notes from './notes.json';
 import calendar from './calendar.json';
 import workflows from './workflows.json';
 import models from './models.json';
+import research from './research.json';
 
 export default {
   common,
@@ -75,4 +76,5 @@ export default {
   calendar,
   workflows,
   models,
+  research,
 };

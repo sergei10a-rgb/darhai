@@ -50,6 +50,7 @@ const ComparePage = React.lazy(() => import('@renderer/pages/compare'));
 const NotesPage = React.lazy(() => import('@renderer/pages/notes/NotesPage'));
 const CalendarPage = React.lazy(() => import('@renderer/pages/calendar/CalendarPage'));
 const DocumentsPage = React.lazy(() => import('@renderer/pages/documents/DocumentsPage'));
+const ResearchPage = React.lazy(() => import('@renderer/pages/research/ResearchPage'));
 const TaskDetailPage = React.lazy(() => import('@renderer/pages/cron/ScheduledTasksPage/TaskDetailPage'));
 const TeamIndex = React.lazy(() => import('@renderer/pages/team'));
 const TeamsLibraryPage = React.lazy(() => import('@renderer/pages/teams/TeamsLibraryPage'));
@@ -181,6 +182,7 @@ const PanelRoute: React.FC<{ layout: React.ReactElement }> = ({ layout }) => {
             <Route path='/notes' element={withRouteFallback(NotesPage)} />
             <Route path='/calendar' element={withRouteFallback(CalendarPage)} />
             <Route path='/documents' element={withRouteFallback(DocumentsPage)} />
+            <Route path='/research' element={withRouteFallback(ResearchPage)} />
             <Route path='/scheduled/:jobId' element={withRouteFallback(TaskDetailPage)} />
             <Route path='/assistants' element={withRouteFallback(AssistantsLibraryPage)} />
             <Route path='/workflows' element={withRouteFallback(WorkflowsLibraryPage)} />

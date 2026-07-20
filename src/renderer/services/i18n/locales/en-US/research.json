@@ -1,0 +1,58 @@
+{
+  "sidebarLabel": "Research",
+  "pageTitle": "Deep Research",
+  "description": "Ask a question and let an AI agent run a multi-step web investigation, then write a cited report.",
+  "footer": {
+    "count": "{{count}} runs"
+  },
+  "query": {
+    "label": "Research question",
+    "placeholder": "e.g. Compare the best open-source vector databases for a small team — performance, cost, and ease of self-hosting."
+  },
+  "settings": {
+    "category": "Report type",
+    "rounds": "Depth",
+    "roundsCount": "{{count}} rounds"
+  },
+  "category": {
+    "auto": "Auto",
+    "general": "General",
+    "product": "Product",
+    "comparison": "Comparison",
+    "howto": "How-to",
+    "factcheck": "Fact-check"
+  },
+  "phase": {
+    "planning": "Planning",
+    "searching": "Searching",
+    "reading": "Reading",
+    "synthesizing": "Synthesizing",
+    "writing": "Writing"
+  },
+  "status": {
+    "done": "Done",
+    "error": "Error",
+    "cancelled": "Cancelled"
+  },
+  "meta": {
+    "rounds": "{{count}} rounds",
+    "sources": "{{count}} sources"
+  },
+  "start": "Start research",
+  "running": "Researching…",
+  "cancel": "Cancel",
+  "errorWithReason": "Research failed: {{reason}}",
+  "errorGeneric": "Research failed.",
+  "cancelledNotice": "This research run was cancelled.",
+  "report": {
+    "empty": "No report was produced."
+  },
+  "recent": {
+    "title": "Recent research",
+    "empty": "No research yet."
+  },
+  "empty": {
+    "title": "Start a deep research run",
+    "hint": "Ask a question above and Darhai will search, read sources, and write a cited report."
+  }
+}

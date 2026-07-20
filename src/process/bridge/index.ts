@@ -66,6 +66,7 @@ import { initCompareBridge } from './compareBridge';
 import { initNoteBridge } from './noteBridge';
 import { initCalendarBridge } from './calendarBridge';
 import { initDocumentsBridge } from './documentsBridge';
+import { initResearchBridge } from './researchBridge';
 import { initStorageBridge } from '@process/storage/storageIpc';
 import { initNicknamesBridge } from '@process/storage/nicknamesIpc';
 import { initSyncIpc } from '@process/sync/syncIpc';
@@ -144,6 +145,7 @@ export function initAllBridges(deps: BridgeDependencies): void {
   initNoteBridge();
   initCalendarBridge();
   initDocumentsBridge();
+  initResearchBridge();
   // A DB / migration failure during registration would otherwise become an
   // unhandled rejection and the `modelRegistry` namespace would silently never
   // register - log it so the failure is at least visible.
@@ -221,6 +223,7 @@ export {
   initNoteBridge,
   initCalendarBridge,
   initDocumentsBridge,
+  initResearchBridge,
   initWindowControlsBridge,
   initWeixinLoginBridge,
   initWorkspaceSnapshotBridge,

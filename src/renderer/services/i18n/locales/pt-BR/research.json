@@ -1,0 +1,58 @@
+{
+  "sidebarLabel": "Pesquisa",
+  "pageTitle": "Pesquisa profunda",
+  "description": "Faça uma pergunta e deixe um agente de IA conduzir uma investigação web em várias etapas e escrever um relatório com citações.",
+  "footer": {
+    "count": "{{count}} pesquisas"
+  },
+  "query": {
+    "label": "Pergunta de pesquisa",
+    "placeholder": "ex. Compare os melhores bancos de dados vetoriais de código aberto para uma equipe pequena — desempenho, custo e facilidade de auto-hospedagem."
+  },
+  "settings": {
+    "category": "Tipo de relatório",
+    "rounds": "Profundidade",
+    "roundsCount": "{{count}} rodadas"
+  },
+  "category": {
+    "auto": "Auto",
+    "general": "Geral",
+    "product": "Produto",
+    "comparison": "Comparação",
+    "howto": "Tutorial",
+    "factcheck": "Verificação"
+  },
+  "phase": {
+    "planning": "Planejando",
+    "searching": "Pesquisando",
+    "reading": "Lendo",
+    "synthesizing": "Sintetizando",
+    "writing": "Escrevendo"
+  },
+  "status": {
+    "done": "Concluído",
+    "error": "Erro",
+    "cancelled": "Cancelado"
+  },
+  "meta": {
+    "rounds": "{{count}} rodadas",
+    "sources": "{{count}} fontes"
+  },
+  "start": "Iniciar pesquisa",
+  "running": "Pesquisando…",
+  "cancel": "Cancelar",
+  "errorWithReason": "A pesquisa falhou: {{reason}}",
+  "errorGeneric": "A pesquisa falhou.",
+  "cancelledNotice": "Esta pesquisa foi cancelada.",
+  "report": {
+    "empty": "Nenhum relatório foi produzido."
+  },
+  "recent": {
+    "title": "Pesquisas recentes",
+    "empty": "Ainda não há pesquisas."
+  },
+  "empty": {
+    "title": "Inicie uma pesquisa profunda",
+    "hint": "Faça uma pergunta acima e o Darhai vai pesquisar, ler fontes e escrever um relatório com citações."
+  }
+}

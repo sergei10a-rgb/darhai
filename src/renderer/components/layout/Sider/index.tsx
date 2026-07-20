@@ -19,6 +19,7 @@ import {
   SiderNotesEntry,
   SiderCalendarEntry,
   SiderDocumentsEntry,
+  SiderResearchEntry,
   SiderSearchEntry,
   SiderSessionsEntry,
   SiderTeamsEntry,
@@ -344,6 +345,13 @@ const Sider: React.FC<SiderProps> = ({ onSessionClick, collapsed = false }) => {
             collapsed={collapsed}
             siderTooltipProps={siderTooltipProps}
             onClick={() => handleTopZoneNav('/documents')}
+          />
+          <SiderResearchEntry
+            isMobile={isMobile}
+            isActive={pathname.startsWith('/research')}
+            collapsed={collapsed}
+            siderTooltipProps={siderTooltipProps}
+            onClick={() => handleTopZoneNav('/research')}
           />
         </SiderToolsGroup>
       </div>

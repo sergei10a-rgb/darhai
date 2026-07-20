@@ -1,0 +1,58 @@
+{
+  "sidebarLabel": "Recherche",
+  "pageTitle": "Tiefenrecherche",
+  "description": "Stelle eine Frage und lass einen KI-Agenten eine mehrstufige Web-Recherche durchführen und einen belegten Bericht schreiben.",
+  "footer": {
+    "count": "{{count}} Recherchen"
+  },
+  "query": {
+    "label": "Recherchefrage",
+    "placeholder": "z. B. Vergleiche die besten Open-Source-Vektordatenbanken für ein kleines Team — Leistung, Kosten und einfaches Self-Hosting."
+  },
+  "settings": {
+    "category": "Berichtstyp",
+    "rounds": "Tiefe",
+    "roundsCount": "{{count}} Runden"
+  },
+  "category": {
+    "auto": "Auto",
+    "general": "Allgemein",
+    "product": "Produkt",
+    "comparison": "Vergleich",
+    "howto": "Anleitung",
+    "factcheck": "Faktencheck"
+  },
+  "phase": {
+    "planning": "Planung",
+    "searching": "Suche",
+    "reading": "Lesen",
+    "synthesizing": "Zusammenführen",
+    "writing": "Schreiben"
+  },
+  "status": {
+    "done": "Fertig",
+    "error": "Fehler",
+    "cancelled": "Abgebrochen"
+  },
+  "meta": {
+    "rounds": "{{count}} Runden",
+    "sources": "{{count}} Quellen"
+  },
+  "start": "Recherche starten",
+  "running": "Recherchiere…",
+  "cancel": "Abbrechen",
+  "errorWithReason": "Recherche fehlgeschlagen: {{reason}}",
+  "errorGeneric": "Recherche fehlgeschlagen.",
+  "cancelledNotice": "Diese Recherche wurde abgebrochen.",
+  "report": {
+    "empty": "Es wurde kein Bericht erstellt."
+  },
+  "recent": {
+    "title": "Letzte Recherchen",
+    "empty": "Noch keine Recherchen."
+  },
+  "empty": {
+    "title": "Starte eine Tiefenrecherche",
+    "hint": "Stelle oben eine Frage und Darhai sucht, liest Quellen und schreibt einen belegten Bericht."
+  }
+}

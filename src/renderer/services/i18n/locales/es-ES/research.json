@@ -1,0 +1,58 @@
+{
+  "sidebarLabel": "Investigación",
+  "pageTitle": "Investigación profunda",
+  "description": "Haz una pregunta y deja que un agente de IA realice una investigación web de varios pasos y redacte un informe con citas.",
+  "footer": {
+    "count": "{{count}} investigaciones"
+  },
+  "query": {
+    "label": "Pregunta de investigación",
+    "placeholder": "p. ej. Compara las mejores bases de datos vectoriales de código abierto para un equipo pequeño: rendimiento, coste y facilidad de autohospedaje."
+  },
+  "settings": {
+    "category": "Tipo de informe",
+    "rounds": "Profundidad",
+    "roundsCount": "{{count}} rondas"
+  },
+  "category": {
+    "auto": "Auto",
+    "general": "General",
+    "product": "Producto",
+    "comparison": "Comparación",
+    "howto": "Guía práctica",
+    "factcheck": "Verificación"
+  },
+  "phase": {
+    "planning": "Planificando",
+    "searching": "Buscando",
+    "reading": "Leyendo",
+    "synthesizing": "Sintetizando",
+    "writing": "Redactando"
+  },
+  "status": {
+    "done": "Listo",
+    "error": "Error",
+    "cancelled": "Cancelado"
+  },
+  "meta": {
+    "rounds": "{{count}} rondas",
+    "sources": "{{count}} fuentes"
+  },
+  "start": "Iniciar investigación",
+  "running": "Investigando…",
+  "cancel": "Cancelar",
+  "errorWithReason": "La investigación falló: {{reason}}",
+  "errorGeneric": "La investigación falló.",
+  "cancelledNotice": "Esta investigación fue cancelada.",
+  "report": {
+    "empty": "No se generó ningún informe."
+  },
+  "recent": {
+    "title": "Investigaciones recientes",
+    "empty": "Aún no hay investigaciones."
+  },
+  "empty": {
+    "title": "Inicia una investigación profunda",
+    "hint": "Escribe una pregunta arriba y Darhai buscará, leerá fuentes y redactará un informe con citas."
+  }
+}

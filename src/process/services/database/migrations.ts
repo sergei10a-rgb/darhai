@@ -2378,6 +2378,50 @@ const migration_v53: IMigration = {
 };
 
 /**
+ * Migration v53 -> v54: Add the `research_runs` table for the Deep Research surface
+ * (Odysseus assimilation "deep research"). One row per research run: the query, its
+ * live status through the plan->search->read->synthesize->write loop, and (when done)
+ * the markdown report + cited sources (JSON `[{title,url}]`). A dedicated table keeps
+ * the queryable recent-runs list clean and mirrors the notes / calendar / documents
+ * pattern, rather than overloading the workflow-session rows.
+ *
+ * Every statement is `IF NOT EXISTS` so up() is idempotent and survives a re-run
+ * from version 0 (crash recovery / re-entrancy), matching migration_v53.
+ */
+const migration_v54: IMigration = {
+  version: 54,
+  name: 'Add research_runs table for the Deep Research surface',
+  up: (db) => {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS research_runs (
+        id                  TEXT PRIMARY KEY,
+        user_id             TEXT NOT NULL,
+        query               TEXT NOT NULL DEFAULT '',
+        category            TEXT NOT NULL DEFAULT 'auto', /* auto|general|product|comparison|howto|factcheck */
+        status              TEXT NOT NULL DEFAULT 'planning', /* planning|searching|reading|synthesizing|writing|done|error|cancelled */
+        rounds              INTEGER NOT NULL DEFAULT 0,
+        report              TEXT NOT NULL DEFAULT '',
+        sources             TEXT NOT NULL DEFAULT '[]', /* json [{title,url}] */
+        error               TEXT,
+        created_at_ms       INTEGER NOT NULL,
+        updated_at_ms       INTEGER NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+    db.exec('CREATE INDEX IF NOT EXISTS idx_research_runs_user_id ON research_runs(user_id)');
+    // Composite index backs the recent-runs list (a user's runs ordered by recency).
+    db.exec('CREATE INDEX IF NOT EXISTS idx_research_runs_user_updated ON research_runs(user_id, updated_at_ms)');
+    console.log('[Migration v54] Added research_runs table');
+  },
+  down: (db) => {
+    db.exec('DROP INDEX IF EXISTS idx_research_runs_user_updated');
+    db.exec('DROP INDEX IF EXISTS idx_research_runs_user_id');
+    db.exec('DROP TABLE IF EXISTS research_runs');
+    console.log('[Migration v54] Rolled back: dropped research_runs table');
+  },
+};
+
+/**
  * All migrations in order
  */
 // prettier-ignore
@@ -2391,6 +2435,7 @@ export const ALL_MIGRATIONS: IMigration[] = [
   migration_v37, migration_v38, migration_v39, migration_v40, migration_v41, migration_v42,
   migration_v43, migration_v44, migration_v45, migration_v46, migration_v47,
   migration_v48, migration_v49, migration_v50, migration_v51, migration_v52, migration_v53,
+  migration_v54,
 ];
 
 /**

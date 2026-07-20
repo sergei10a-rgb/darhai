@@ -9,6 +9,7 @@ export { default as SiderMissionControlEntry } from './SiderMissionControlEntry'
 export { default as SiderModelAdvisorEntry } from './SiderModelAdvisorEntry';
 export { default as SiderNotesEntry } from './SiderNotesEntry';
 export { default as SiderProjectsEntry } from './SiderProjectsEntry';
+export { default as SiderResearchEntry } from './SiderResearchEntry';
 export { default as SiderScheduledEntry } from './SiderScheduledEntry';
 export { default as SiderSearchEntry } from './SiderSearchEntry';
 export { default as SiderSessionsEntry } from './SiderSessionsEntry';
