@@ -1262,6 +1262,18 @@ export const compare = {
 };
 
 /**
+ * Fusion (OmniRoute idea): fan a prompt across a panel of models, then a judge
+ * model synthesizes the best answer. Remote-denied - panel fan-out plus a judge
+ * call spends even more tokens than compare. Same non-secret refs; keys resolved
+ * main-side.
+ */
+export const fusion = {
+  run: buildProvider<import('@/common/types/compare').FusionResult, import('@/common/types/compare').FusionRequest>(
+    'fusion.run'
+  ),
+};
+
+/**
  * Cookbook serve: download a recommended GGUF + auto-serve it as a local,
  * keyless OpenAI-compatible provider (the download/serve extension of the
  * read-only hwfit advisor). Every verb is remote-denied wholesale (the

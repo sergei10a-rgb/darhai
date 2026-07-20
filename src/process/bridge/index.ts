@@ -64,6 +64,7 @@ import { initMissionControlBridge } from './missionControlBridge';
 import { initHwfitBridge } from './hwfitBridge';
 import { initCookbookBridge } from './cookbookBridge';
 import { initCompareBridge } from './compareBridge';
+import { initFusionBridge } from './fusionBridge';
 import { initNoteBridge } from './noteBridge';
 import { initCalendarBridge } from './calendarBridge';
 import { initDocumentsBridge } from './documentsBridge';
@@ -145,6 +146,7 @@ export function initAllBridges(deps: BridgeDependencies): void {
   initHwfitBridge();
   initCookbookBridge();
   initCompareBridge();
+  initFusionBridge();
   initNoteBridge();
   initCalendarBridge();
   initDocumentsBridge();
@@ -224,6 +226,7 @@ export {
   initHwfitBridge,
   initCookbookBridge,
   initCompareBridge,
+  initFusionBridge,
   initNoteBridge,
   initCalendarBridge,
   initDocumentsBridge,

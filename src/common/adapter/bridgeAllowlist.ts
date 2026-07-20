@@ -312,6 +312,10 @@ const REMOTE_DENIED_KEYS: ReadonlySet<string> = new Set([
   //     so a paired-device WebSocket caller must never drive it - only the
   //     trusted local user compares models. The local renderer UI is unaffected. ---
   'compare.run',
+  // --- Fusion (OmniRoute idea): panel fan-out + a judge synthesis call. Spends
+  //     even more tokens than compare, so a paired-device WebSocket caller must
+  //     never drive it - local user only. ---
+  'fusion.run',
   // --- Notes (Odysseus #9): every mutating verb writes persisted user content.
   //     A paired-device WebSocket caller must never create/edit/delete/reorder a
   //     note or flip its pin/archive/checklist state - only the trusted local

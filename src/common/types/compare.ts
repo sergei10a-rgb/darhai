@@ -64,3 +64,31 @@ export type CompareResult = {
    */
   noUsableModel: boolean;
 };
+
+/**
+ * A Fusion request (OmniRoute idea): fan the SAME prompt out across a panel of
+ * models (exactly like Compare), then have a judge model synthesize the single
+ * best answer from the panel. Carries no secrets - same non-secret refs as
+ * Compare; the judge is auto-selected as the best available local model.
+ */
+export type FusionRequest = {
+  prompt: string;
+  modelRefs: CompareModelRef[];
+};
+
+/**
+ * The Fusion result: the raw panel runs (so the UI can still show each model's
+ * answer), plus the judge's synthesized answer and which model judged.
+ */
+export type FusionResult = {
+  /** Each panel model's answer (same shape Compare returns). */
+  runs: CompareRunResult[];
+  /** The judge's synthesized best answer (empty when the judge could not run). */
+  synthesis: string;
+  /** Display label of the model that synthesized, or `''`. */
+  judgeLabel: string;
+  /** True when not a single panel ref resolved to a callable model. */
+  noUsableModel: boolean;
+  /** A short error code / message when the judge step failed (panel still returned). */
+  judgeError?: string;
+};
