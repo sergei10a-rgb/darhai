@@ -10,6 +10,8 @@ import type { CompressionMode } from '@/common/types/compression';
 import { compress } from '@process/services/compression';
 import { googleAuthGeminiComplete, isGoogleAuthGeminiAvailable } from './geminiOAuth';
 import { getCompressionMode } from './compressionMode';
+import { resilientFetch } from './resilientFetch';
+import { isProviderCircuitOpen, isModelLockedOut } from '@process/services/resilience';
 
 /**
  * A minimal one-shot LLM completion for cheap background tasks (e.g. the project
@@ -22,8 +24,6 @@ import { getCompressionMode } from './compressionMode';
  * provider labels itself. Routing is by endpoint host, not platform label, so a
  * Claude model served through an OpenAI-compatible proxy is still hit correctly.
  */
-
-const FETCH_TIMEOUT_MS = 20_000;
 
 /** Name fragments that indicate a small/cheap/fast model, best first. */
 const FAST_HINTS = [
@@ -77,6 +77,11 @@ const usableModels = (providers: IProvider[]): PickedModel[] => {
     const models = Array.isArray(p.model) ? p.model : [];
     for (const modelId of models) {
       if (p.modelEnabled && p.modelEnabled[modelId] === false) continue;
+      // Resilience filter (OmniRoute idea, native): skip a candidate whose provider
+      // circuit is open or whose (provider, model) is under a 429 lockout. Because
+      // the pickers then fall through to the next candidate, cross-provider
+      // auto-fallback happens for free with no extra routing code.
+      if (isProviderCircuitOpen(p.id) || isModelLockedOut(p.id, modelId)) continue;
       out.push({ provider: p, modelId });
     }
   }
@@ -145,16 +150,6 @@ export async function hasUsableModel(): Promise<boolean> {
   return isGoogleAuthGeminiAvailable();
 }
 
-const fetchWithTimeout = async (url: string, init: RequestInit, timeoutMs = FETCH_TIMEOUT_MS): Promise<Response> => {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    return await fetch(url, { ...init, signal: controller.signal });
-  } finally {
-    clearTimeout(timer);
-  }
-};
-
 const joinUrl = (base: string, suffix: string): string => `${base.replace(/\/+$/, '')}${suffix}`;
 
 /**
@@ -204,43 +199,52 @@ export async function oneShotComplete(
   const { flavor, base } = endpoint;
 
   if (flavor === 'anthropic') {
-    const res = await fetchWithTimeout(
-      joinUrl(base, '/v1/messages'),
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': provider.apiKey,
-          'anthropic-version': '2023-06-01',
-          'User-Agent': 'Wayland/1.0',
+    const res = await resilientFetch({
+      provider,
+      modelId,
+      flavor: 'anthropic',
+      timeoutMs,
+      buildRequest: (apiKey) => ({
+        url: joinUrl(base, '/v1/messages'),
+        init: {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': apiKey,
+            'anthropic-version': '2023-06-01',
+            'User-Agent': 'Wayland/1.0',
+          },
+          body: JSON.stringify({
+            model: modelId,
+            max_tokens: maxTokens,
+            messages: [{ role: 'user', content: effectivePrompt }],
+          }),
         },
-        body: JSON.stringify({
-          model: modelId,
-          max_tokens: maxTokens,
-          messages: [{ role: 'user', content: effectivePrompt }],
-        }),
-      },
-      timeoutMs
-    );
+      }),
+    });
     const data = (await res.json()) as { content?: Array<{ text?: string }>; error?: { message?: string } };
     if (!res.ok) throw new Error(`${res.status}: ${data.error?.message || 'request failed'}`);
     return (data.content?.[0]?.text || '').trim();
   }
 
   if (flavor === 'gemini') {
-    const url = joinUrl(base, `/v1beta/models/${modelId}:generateContent?key=${provider.apiKey}`);
-    const res = await fetchWithTimeout(
-      url,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'User-Agent': 'Wayland/1.0' },
-        body: JSON.stringify({
-          contents: [{ role: 'user', parts: [{ text: effectivePrompt }] }],
-          generationConfig: { maxOutputTokens: maxTokens },
-        }),
-      },
-      timeoutMs
-    );
+    const res = await resilientFetch({
+      provider,
+      modelId,
+      flavor: 'gemini',
+      timeoutMs,
+      buildRequest: (apiKey) => ({
+        url: joinUrl(base, `/v1beta/models/${modelId}:generateContent?key=${apiKey}`),
+        init: {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'User-Agent': 'Wayland/1.0' },
+          body: JSON.stringify({
+            contents: [{ role: 'user', parts: [{ text: effectivePrompt }] }],
+            generationConfig: { maxOutputTokens: maxTokens },
+          }),
+        },
+      }),
+    });
     const data = (await res.json()) as {
       candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
       error?: { message?: string };
@@ -250,23 +254,28 @@ export async function oneShotComplete(
   }
 
   // OpenAI-compatible
-  const res = await fetchWithTimeout(
-    joinUrl(base, '/chat/completions'),
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${provider.apiKey}`,
-        'User-Agent': 'Wayland/1.0',
+  const res = await resilientFetch({
+    provider,
+    modelId,
+    flavor: 'openai',
+    timeoutMs,
+    buildRequest: (apiKey) => ({
+      url: joinUrl(base, '/chat/completions'),
+      init: {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+          'User-Agent': 'Wayland/1.0',
+        },
+        body: JSON.stringify({
+          model: modelId,
+          max_tokens: maxTokens,
+          messages: [{ role: 'user', content: effectivePrompt }],
+        }),
       },
-      body: JSON.stringify({
-        model: modelId,
-        max_tokens: maxTokens,
-        messages: [{ role: 'user', content: effectivePrompt }],
-      }),
-    },
-    timeoutMs
-  );
+    }),
+  });
   const data = (await res.json()) as {
     choices?: Array<{ message?: { content?: string } }>;
     error?: { message?: string };
