@@ -190,8 +190,25 @@ export const PROVIDER_META: Record<NativeProviderId, ProviderMeta> = {
   },
 };
 
+/**
+ * Metadata for the opt-in OmniRoute gateway provider (Phase 7b). Not part of
+ * {@link PROVIDER_META} (it must never appear in the Browse picker - the user
+ * connects it only through the disclosure card in Settings), but resolved by
+ * {@link providerMeta} so the Connected list shows the relay-marked name
+ * (owner condition 2) instead of the raw id.
+ */
+const OMNIROUTE_GATEWAY_META: ProviderMeta = {
+  id: 'omniroute-gateway',
+  displayName: 'OmniRoute Gateway (гадаад дамжуулагч)',
+  mono: 'OG',
+  bg: '#8250df',
+  darkText: false,
+  group: 'open',
+};
+
 /** Look up provider metadata, falling back to a generic tile for unknown ids. */
 export function providerMeta(id: ProviderId): ProviderMeta {
+  if (id === OMNIROUTE_GATEWAY_META.id) return OMNIROUTE_GATEWAY_META;
   return (
     PROVIDER_META[id as NativeProviderId] ?? {
       id,

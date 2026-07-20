@@ -18,6 +18,7 @@ import ConnectPanel from './components/ConnectPanel';
 import ConnectedRow from './components/ConnectedRow';
 import EmptyState from './components/EmptyState';
 import FluxRouterHero from './components/FluxRouterHero';
+import OmniRouteGatewayCard from './components/OmniRouteGatewayCard';
 import ManageProvider from './ManageProvider';
 import { isCloudProvider } from './providerCatalog';
 import styles from './ModelsSettings.module.css';
@@ -420,6 +421,10 @@ const ModelsSettingsInner: React.FC = () => {
           onChange={(checked) => void handleAutoRefreshChange(checked)}
         />
       </div>
+
+      {/* Opt-in external relay (Phase 7b): full Mongolian disclosure card,
+          default OFF - see OmniRouteGatewayCard for the 4 owner conditions. */}
+      <OmniRouteGatewayCard />
 
       <BrowseModal visible={browseOpen} onClose={handleBrowseClose} initialProvider={browseInitialProvider} />
     </SettingsPageShell>

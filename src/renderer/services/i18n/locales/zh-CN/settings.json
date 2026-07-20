@@ -2670,5 +2670,32 @@
     "gateGuardLabel": "GateGuard（事实强制门）",
     "gateGuardDescription": "开启后，Claude 代理在首次编辑每个文件前必须先陈述依据。更严格但更慢，提示为英文。对新启动的代理生效。",
     "toggleError": "无法保存设置，请重试。"
+  },
+  "omnirouteGateway": {
+    "title": "OmniRoute 网关（外部中继）",
+    "intro": "OmniRoute 是一个由您自己在本机运行的 OpenAI 兼容聚合器，可汇聚多个免费来源。启用后，Дархай 只会连接您填写的地址——绝不会自行安装或运行任何程序。",
+    "benefitsTitle": "优势",
+    "benefit1": "将多个免费来源聚合到一处",
+    "benefit2": "可降低付费 API 成本",
+    "benefit3": "某个来源失效时自动切换",
+    "benefit4": "附带提示词压缩等额外优化",
+    "risksTitle": "风险",
+    "risk1": "您的提示词会经由第三方服务中继——存在隐私风险",
+    "risk2": "免费的\"Claude/GPT\"质量可能不及官方 Anthropic/OpenAI",
+    "risk3": "可能违反提供方服务条款，账号有被封风险",
+    "risk4": "回复可能有损（lossy）",
+    "manualOnlyNote": "即使启用，它也绝不会成为默认模型：Дархай 不会自动选择它——请在每个会话中通过模型选择器手动选择。",
+    "howTo": "运行您自己的网关：npm i -g omniroute 安装后即在 http://localhost:20128 提供服务。",
+    "baseUrlLabel": "网关地址（/v1）",
+    "apiKeyLabel": "API 密钥（可选）",
+    "apiKeyPlaceholder": "OmniRoute 控制台签发的密钥（没有则留空）",
+    "apiKeySetHint": "已保存密钥——留空即保留",
+    "testButton": "测试连接",
+    "testOk": "已连接——找到 {{count}} 个模型",
+    "testFail": "无法连接（{{error}}）。请确认网关正在运行。",
+    "invalidUrl": "地址无效——请输入 http(s) URL。",
+    "saveButton": "保存",
+    "saved": "已保存",
+    "saveError": "无法保存设置，请重试。"
   }
 }

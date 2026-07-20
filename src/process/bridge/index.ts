@@ -43,6 +43,7 @@ import { initIjfwBridge } from './ijfwBridge';
 import { initEccBridge } from './eccBridge';
 import { initCompressionBridge } from './compressionBridge';
 import { initRoutingBridge } from './routingBridge';
+import { initOmnirouteGatewayBridge } from './omnirouteGatewayBridge';
 import { initIjfwDropBridge } from './ijfwDropBridge';
 import { initMemoryArchiveBridge, initPromotionSweep } from './memoryArchiveBridge';
 import { initWikiBridge } from './wikiBridge';
@@ -126,6 +127,7 @@ export function initAllBridges(deps: BridgeDependencies): void {
   initEccBridge();
   initCompressionBridge();
   initRoutingBridge();
+  initOmnirouteGatewayBridge();
   initMemoryArchiveBridge();
   initPromotionSweep();
   initWikiBridge();
@@ -242,6 +244,7 @@ export {
   initEccBridge,
   initCompressionBridge,
   initRoutingBridge,
+  initOmnirouteGatewayBridge,
   initWikiBridge,
   initImportBridge,
 };

@@ -219,6 +219,27 @@ export interface IConfigStorageRefer {
    * Read via ProcessConfig.get like the compression mode + ECC gate.
    */
   'routing.strategy'?: RoutingStrategy;
+  /**
+   * OmniRoute-gateway opt-in master switch (Phase 7b). Default (absent) =
+   * false: Darhai NEVER enables the external relay on its own - the user opts
+   * in from the Settings card after reading the Mongolian benefit/risk
+   * disclosure. Enabling only REGISTERS the `omniroute-gateway` provider; it
+   * is never auto-picked (see `usableModels` in oneShot.ts).
+   */
+  'omnirouteGateway.enabled'?: boolean;
+  /**
+   * The user-confirmed OmniRoute gateway `/v1` endpoint. Default (absent) =
+   * `http://localhost:20128/v1` - the port a locally-run `omniroute` binds.
+   * The user runs their OWN gateway; Darhai never installs or spawns it and
+   * only ever connects to the URL stored here.
+   */
+  'omnirouteGateway.baseUrl'?: string;
+  /**
+   * Optional gateway API key (the OmniRoute dashboard can issue one). Empty /
+   * absent = keyless local gateway. Never returned to the renderer - the
+   * bridge exposes only a `hasApiKey` boolean.
+   */
+  'omnirouteGateway.apiKey'?: string;
   /** Persisted app-wide UI zoom factor for Display settings */
   'ui.zoomFactor'?: number;
   /** Auto-enable WebUI in desktop mode */

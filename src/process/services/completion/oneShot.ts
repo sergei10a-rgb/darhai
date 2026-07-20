@@ -5,6 +5,8 @@
  */
 
 import { getMergedModelProviders } from '@process/bridge/modelBridge';
+import { isExactMirrorRowFor } from '@process/providers/legacyModelConfigBridge';
+import { OMNIROUTE_GATEWAY_PROVIDER_ID } from '@/common/types/omnirouteGateway';
 import type { IProvider } from '@/common/config/storage';
 import type { CompressionMode } from '@/common/types/compression';
 import { compress } from '@process/services/compression';
@@ -75,6 +77,15 @@ const usableModels = (providers: IProvider[]): PickedModel[] => {
   const out: PickedModel[] = [];
   for (const p of providers) {
     if (p.enabled === false) continue;
+    // OmniRoute gateway (Phase 7b), owner condition 3: the external relay is
+    // EXPLICIT-selection-only. Every automatic pick (pickCheapestFastModel /
+    // pickBestModel / all routing strategies) enumerates through this
+    // function, so skipping the gateway here guarantees no background
+    // one-shot call (title-gen, research, triage, ...) ever routes a prompt
+    // through the relay silently. Only an explicit `opts.model` or the user's
+    // per-conversation model selection - both of which bypass this
+    // enumeration - can use it.
+    if (isExactMirrorRowFor(p, OMNIROUTE_GATEWAY_PROVIDER_ID)) continue;
     if (!p.apiKey || !p.apiKey.trim()) continue; // needs a key to call
     if (!resolveEndpoint(p)) continue; // no reachable endpoint - skip
     const models = Array.isArray(p.model) ? p.model : [];

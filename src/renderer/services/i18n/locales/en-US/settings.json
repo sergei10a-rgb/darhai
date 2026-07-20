@@ -2688,5 +2688,32 @@
     "gateGuardLabel": "GateGuard (fact-forcing gate)",
     "gateGuardDescription": "When on, the Claude agent must state its evidence (callers, schemas, your instruction) before the first edit of each file. Stricter output, but slower and its prompts are in English. Applies to newly started agents.",
     "toggleError": "Could not save the setting. Try again."
+  },
+  "omnirouteGateway": {
+    "title": "OmniRoute Gateway (external relay)",
+    "intro": "OmniRoute is an OpenAI-compatible aggregator you run YOURSELF on your machine, pooling multiple free sources. When enabled, Darhai only connects to the address you set - it never installs or runs anything itself.",
+    "benefitsTitle": "Benefits",
+    "benefit1": "Aggregates multiple free-tier sources in one place",
+    "benefit2": "Can reduce paid API costs",
+    "benefit3": "Automatic fallback when one source fails",
+    "benefit4": "Extra optimizations such as prompt compression",
+    "risksTitle": "Risks",
+    "risk1": "Your prompts RELAY through third-party services - a privacy risk",
+    "risk2": "Free \"Claude/GPT\" may not match official Anthropic/OpenAI quality",
+    "risk3": "Provider terms-of-service and account-ban risk",
+    "risk4": "Responses may be lossy",
+    "manualOnlyNote": "Even when enabled it NEVER becomes the default model: Darhai will not auto-select it - you pick it per conversation from the model picker.",
+    "howTo": "Run your own gateway: install with npm i -g omniroute and it serves at http://localhost:20128.",
+    "baseUrlLabel": "Gateway address (/v1)",
+    "apiKeyLabel": "API key (optional)",
+    "apiKeyPlaceholder": "Key issued by the OmniRoute dashboard (leave empty if none)",
+    "apiKeySetHint": "A key is stored - leave empty to keep it",
+    "testButton": "Test connection",
+    "testOk": "Connected - {{count}} models found",
+    "testFail": "Could not connect ({{error}}). Check that your gateway is running.",
+    "invalidUrl": "Invalid address - enter an http(s) URL.",
+    "saveButton": "Save",
+    "saved": "Saved",
+    "saveError": "Could not save the settings. Try again."
   }
 }

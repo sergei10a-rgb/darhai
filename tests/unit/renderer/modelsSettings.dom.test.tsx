@@ -79,11 +79,19 @@ vi.mock('../../../src/common/adapter/ipcBridge', () => ({
   },
 }));
 
-// `@/common` barrel - GoogleButton imports `ipcBridge` from here.
+// `@/common` barrel - GoogleButton imports `ipcBridge` from here, and the
+// OmniRouteGatewayCard (Phase 7b) reads its config surface on mount.
 vi.mock('../../../src/common', () => ({
   ipcBridge: {
     googleAuth: {
       login: { invoke: (...a: unknown[]) => mockGoogleLogin(...a) },
+    },
+    omnirouteGateway: {
+      getConfig: {
+        invoke: vi.fn().mockResolvedValue({ enabled: false, baseUrl: 'http://localhost:20128/v1', hasApiKey: false }),
+      },
+      setConfig: { invoke: vi.fn().mockResolvedValue({ ok: true }) },
+      testConnection: { invoke: vi.fn().mockResolvedValue({ ok: false, error: 'unreachable' }) },
     },
   },
 }));

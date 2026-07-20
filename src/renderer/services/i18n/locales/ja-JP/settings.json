@@ -2671,5 +2671,32 @@
     "gateGuardLabel": "GateGuard（事実確認ゲート）",
     "gateGuardDescription": "オンにすると、Claude エージェントは各ファイルの最初の編集前に根拠の提示を求められます。より厳格ですが遅くなり、メッセージは英語です。新しく起動するエージェントに適用されます。",
     "toggleError": "設定を保存できませんでした。もう一度お試しください。"
+  },
+  "omnirouteGateway": {
+    "title": "OmniRoute ゲートウェイ（外部リレー）",
+    "intro": "OmniRoute は、複数の無料ソースを束ねる OpenAI 互換アグリゲーターで、ご自身のマシンで自分で実行するものです。有効にすると、Дархай は指定されたアドレスにのみ接続します。自らインストールや実行は一切行いません。",
+    "benefitsTitle": "メリット",
+    "benefit1": "複数の無料ソースを一か所に集約",
+    "benefit2": "有料 API のコストを削減できる可能性",
+    "benefit3": "ソース障害時の自動フェイルオーバー",
+    "benefit4": "プロンプト圧縮などの追加最適化",
+    "risksTitle": "リスク",
+    "risk1": "プロンプトが第三者サービスを経由して中継されます - プライバシーリスク",
+    "risk2": "無料の「Claude/GPT」は公式 Anthropic/OpenAI の品質に及ばない可能性",
+    "risk3": "プロバイダーの利用規約違反・アカウント停止のリスク",
+    "risk4": "応答が劣化（lossy）する可能性",
+    "manualOnlyNote": "有効にしても既定のモデルには決してなりません。Дархай が自動選択することはなく、会話ごとにモデルピッカーから自分で選びます。",
+    "howTo": "自分のゲートウェイを実行: npm i -g omniroute でインストールすると http://localhost:20128 で起動します。",
+    "baseUrlLabel": "ゲートウェイアドレス（/v1）",
+    "apiKeyLabel": "API キー（任意）",
+    "apiKeyPlaceholder": "OmniRoute ダッシュボードが発行したキー（なければ空欄）",
+    "apiKeySetHint": "キーは保存済みです - 変更しない場合は空欄のまま",
+    "testButton": "接続テスト",
+    "testOk": "接続しました - {{count}} 個のモデルが見つかりました",
+    "testFail": "接続できませんでした（{{error}}）。ゲートウェイが起動しているか確認してください。",
+    "invalidUrl": "アドレスが無効です - http(s) URL を入力してください。",
+    "saveButton": "保存",
+    "saved": "保存しました",
+    "saveError": "設定を保存できませんでした。もう一度お試しください。"
   }
 }

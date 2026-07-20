@@ -378,6 +378,15 @@ const REMOTE_DENIED_KEYS: ReadonlySet<string> = new Set([
   //     background completion selects). A paired-device WebSocket caller must
   //     never flip it; the read (routing.get-strategy) stays allowed. ---
   'routing.set-strategy',
+  // --- OmniRoute gateway (Phase 7b): `set-config` registers/deregisters the
+  //     external-relay provider AND stores a credential (the gateway API key);
+  //     `test-connection` makes an outbound fetch from the HOST to a
+  //     caller-supplied URL. A paired-device WebSocket caller must never flip
+  //     the relay on, plant a credential, or drive host-side probes. The read
+  //     (omniroute-gateway.get-config) stays allowed - it discloses only
+  //     enabled/baseUrl/hasApiKey, never the key itself. ---
+  'omniroute-gateway.set-config',
+  'omniroute-gateway.test-connection',
 
   // --- app.* / process control that writes or executes ---
   'app.set-start-on-boot',

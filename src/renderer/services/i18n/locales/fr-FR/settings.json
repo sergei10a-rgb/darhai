@@ -2670,5 +2670,32 @@
     "gateGuardLabel": "GateGuard (garde-fou factuel)",
     "gateGuardDescription": "Lorsqu'il est activé, l'agent Claude doit exposer ses preuves avant la première modification de chaque fichier. Plus strict mais plus lent ; ses messages sont en anglais. S'applique aux nouveaux agents.",
     "toggleError": "Impossible d'enregistrer le réglage. Réessayez."
+  },
+  "omnirouteGateway": {
+    "title": "OmniRoute Gateway (relais externe)",
+    "intro": "OmniRoute est un agrégateur compatible OpenAI que VOUS exécutez vous-même sur votre machine, regroupant plusieurs sources gratuites. Une fois activé, Darhai se connecte uniquement à l'adresse indiquée - il n'installe ni n'exécute jamais rien lui-même.",
+    "benefitsTitle": "Avantages",
+    "benefit1": "Regroupe plusieurs sources gratuites en un seul endroit",
+    "benefit2": "Peut réduire les coûts des API payantes",
+    "benefit3": "Bascule automatique en cas de panne d'une source",
+    "benefit4": "Optimisations supplémentaires comme la compression des prompts",
+    "risksTitle": "Risques",
+    "risk1": "Vos prompts TRANSITENT par des services tiers - risque pour la confidentialité",
+    "risk2": "Le « Claude/GPT » gratuit peut ne pas égaler la qualité officielle Anthropic/OpenAI",
+    "risk3": "Risque de violation des CGU du fournisseur et de blocage de compte",
+    "risk4": "Les réponses peuvent être dégradées (lossy)",
+    "manualOnlyNote": "Même activé, il ne devient JAMAIS le modèle par défaut : Darhai ne le sélectionne pas automatiquement - vous le choisissez par conversation dans le sélecteur de modèles.",
+    "howTo": "Exécutez votre propre gateway : installez avec npm i -g omniroute, il sert sur http://localhost:20128.",
+    "baseUrlLabel": "Adresse du gateway (/v1)",
+    "apiKeyLabel": "Clé API (facultative)",
+    "apiKeyPlaceholder": "Clé émise par le tableau de bord OmniRoute (vide si aucune)",
+    "apiKeySetHint": "Une clé est enregistrée - laissez vide pour la conserver",
+    "testButton": "Tester la connexion",
+    "testOk": "Connecté - {{count}} modèles trouvés",
+    "testFail": "Connexion impossible ({{error}}). Vérifiez que votre gateway est démarré.",
+    "invalidUrl": "Adresse invalide - saisissez une URL http(s).",
+    "saveButton": "Enregistrer",
+    "saved": "Enregistré",
+    "saveError": "Impossible d'enregistrer les réglages. Réessayez."
   }
 }

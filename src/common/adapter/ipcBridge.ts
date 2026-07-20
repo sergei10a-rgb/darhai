@@ -19,6 +19,11 @@ import type { IjfwErrorReason, IjfwInvokeResult, IjfwRuntimeModePublic } from '.
 import type { CompressionMode } from '../types/compression';
 import type { RoutingStrategy } from '../types/routing';
 import type {
+  OmnirouteGatewayConfigView,
+  OmnirouteGatewaySetConfigParams,
+  OmnirouteGatewayTestResult,
+} from '../types/omnirouteGateway';
+import type {
   CodexSetupResult,
   CodexStatusResult,
   FluxConnectorReport,
@@ -1909,6 +1914,30 @@ export const routing = {
   getStrategy: buildProvider<RoutingStrategy, void>('routing.get-strategy'),
   /** Persist the Settings routing strategy. */
   setStrategy: buildProvider<{ ok: true }, { strategy: RoutingStrategy }>('routing.set-strategy'),
+};
+
+/**
+ * OmniRoute-gateway opt-in toggle (Phase 7b). Mirrors the `compression` /
+ * `routing` namespaces: a local config read/write pair plus a connection probe.
+ * `set-config` and `test-connection` are remote-denied in the bridge allowlist
+ * (`set-config` registers/deregisters a provider + stores a credential;
+ * `test-connection` makes an outbound fetch from the host); `get-config` stays
+ * readable but never discloses the stored API key (only `hasApiKey`).
+ *
+ * Default is DISABLED - Darhai never turns the external relay on by itself
+ * (owner condition 1); the user opts in from the Settings card.
+ */
+export const omnirouteGateway = {
+  /** Current gateway config view (enabled / baseUrl / hasApiKey - never the key). */
+  getConfig: buildProvider<OmnirouteGatewayConfigView, void>('omniroute-gateway.get-config'),
+  /** Persist the Settings card state and (de)register the gateway provider. */
+  setConfig: buildProvider<{ ok: boolean; error?: string }, OmnirouteGatewaySetConfigParams>(
+    'omniroute-gateway.set-config'
+  ),
+  /** Probe `{baseUrl}/models` and report reachability + model count. */
+  testConnection: buildProvider<OmnirouteGatewayTestResult, { baseUrl: string; apiKey?: string }>(
+    'omniroute-gateway.test-connection'
+  ),
 };
 
 export type IjfwDropEntry = { name: string; size: number; mtimeMs: number };

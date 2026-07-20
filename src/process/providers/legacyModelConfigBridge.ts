@@ -39,13 +39,20 @@
  */
 
 import type { IProvider } from '@/common/config/storage';
+import { OMNIROUTE_GATEWAY_DISPLAY_NAME, OMNIROUTE_GATEWAY_PROVIDER_ID } from '@/common/types/omnirouteGateway';
 import { uuid } from '@/common/utils';
 import { ProcessConfig } from '@process/utils/initStorage';
 import { Curator } from './catalog/Curator';
 import type { CatalogModel, ProviderId } from './types';
 import type { ProviderRepository, RegistryOverride } from './storage/ProviderRepository';
 
-const BRIDGE_TAG_KEY = '__waylandModelRegistryBridge';
+/**
+ * The property that marks a legacy `model.config` row as bridge-owned.
+ * Exported so tests/fixtures can build recognizable rows without copying the
+ * literal. The historical name is part of persisted user data - renaming it
+ * would orphan every existing bridge row, so it stays as-is.
+ */
+export const BRIDGE_TAG_KEY = '__waylandModelRegistryBridge';
 /**
  * Per-provider tag value: `v2:<providerId>`. Wave-4 ship-gate Fix C4 - the
  * original `'v2'` constant caused the dedup to key on legacy `platform`, which
@@ -80,6 +87,10 @@ function platformFor(providerId: ProviderId): string {
 
 /** Map a `ProviderId` to a human display name. */
 function displayNameFor(providerId: ProviderId): string {
+  // Owner condition 2 (visible marking): the OmniRoute gateway must be marked
+  // as an external relay in Mongolian EVERYWHERE its label appears - the
+  // legacy pickers (conversation header, model selector) render this name.
+  if (providerId === OMNIROUTE_GATEWAY_PROVIDER_ID) return OMNIROUTE_GATEWAY_DISPLAY_NAME;
   // Title-case the providerId, replacing dashes with spaces.
   return providerId
     .split('-')
@@ -108,6 +119,21 @@ function isV2BridgeRowForProvider(row: IProvider, providerId: ProviderId, platfo
   // fires once per provider on the first rekey after upgrade.
   if (tag === LEGACY_V2_TAG_VALUE && row.platform === platform) return true;
   return false;
+}
+
+/**
+ * True when a merged legacy provider row is THE mirror row for `providerId`,
+ * matched by the exact `v2:<providerId>` tag only. Unlike
+ * {@link isV2BridgeRowForProvider} this deliberately does NOT accept the
+ * legacy bare-`'v2'` tag - that tag can belong to ANY provider sharing the
+ * platform, and the callers of this helper (e.g. the oneShot auto-pick guard
+ * that must skip the OmniRoute gateway and ONLY the gateway) need identity,
+ * not platform-level heuristics. Every row the gateway flow writes carries
+ * the exact per-provider tag, so the match is complete for those callers.
+ */
+export function isExactMirrorRowFor(row: IProvider, providerId: ProviderId): boolean {
+  const tag = (row as unknown as Record<string, unknown>)[BRIDGE_TAG_KEY];
+  return typeof tag === 'string' && tag === bridgeTagValue(providerId);
 }
 
 // ─── Promise mutex ────────────────────────────────────────────────────────────
@@ -172,9 +198,10 @@ export function mirrorConnectOrRekey(repo: ProviderRepository, providerId: Provi
 
     const apiKey = typeof stored.creds.key === 'string' ? stored.creds.key : '';
     // `ollama-local` is keyless by design (a local Ollama daemon needs no key),
-    // so its mirror row legitimately carries an empty `apiKey`. Every other
-    // provider with no key has nothing useful to mirror and is skipped.
-    if (!apiKey && providerId !== 'ollama-local') return;
+    // so its mirror row legitimately carries an empty `apiKey`. The OmniRoute
+    // gateway (Phase 7b) may equally run keyless on the user's machine. Every
+    // other provider with no key has nothing useful to mirror and is skipped.
+    if (!apiKey && providerId !== 'ollama-local' && providerId !== OMNIROUTE_GATEWAY_PROVIDER_ID) return;
 
     const baseUrl = typeof stored.creds.baseUrl === 'string' ? stored.creds.baseUrl : '';
     const modelIds = selectMirrorModelIds(repo.getRegistryCatalog(providerId), repo.listRegistryOverrides(providerId));

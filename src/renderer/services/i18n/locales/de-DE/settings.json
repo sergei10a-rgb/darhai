@@ -2670,5 +2670,32 @@
     "gateGuardLabel": "GateGuard (Fakten-Gate)",
     "gateGuardDescription": "Wenn aktiviert, muss der Claude-Agent vor der ersten Änderung jeder Datei seine Belege nennen. Strenger, aber langsamer; die Meldungen erscheinen auf Englisch. Gilt für neu gestartete Agenten.",
     "toggleError": "Einstellung konnte nicht gespeichert werden. Bitte erneut versuchen."
+  },
+  "omnirouteGateway": {
+    "title": "OmniRoute Gateway (externes Relais)",
+    "intro": "OmniRoute ist ein OpenAI-kompatibler Aggregator, den SIE SELBST auf Ihrem Rechner betreiben und der mehrere kostenlose Quellen bündelt. Ist er aktiviert, verbindet sich Darhai nur mit der angegebenen Adresse - es installiert oder startet niemals selbst etwas.",
+    "benefitsTitle": "Vorteile",
+    "benefit1": "Bündelt mehrere kostenlose Quellen an einem Ort",
+    "benefit2": "Kann Kosten für bezahlte APIs senken",
+    "benefit3": "Automatischer Fallback, wenn eine Quelle ausfällt",
+    "benefit4": "Zusätzliche Optimierungen wie Prompt-Kompression",
+    "risksTitle": "Risiken",
+    "risk1": "Ihre Prompts werden über Drittdienste WEITERGELEITET - ein Datenschutzrisiko",
+    "risk2": "Kostenloses \"Claude/GPT\" erreicht evtl. nicht die offizielle Anthropic/OpenAI-Qualität",
+    "risk3": "Risiko von AGB-Verstößen beim Anbieter und Kontosperrung",
+    "risk4": "Antworten können verlustbehaftet sein",
+    "manualOnlyNote": "Auch aktiviert wird es NIE zum Standardmodell: Darhai wählt es nicht automatisch - Sie wählen es pro Unterhaltung im Modell-Auswahlmenü.",
+    "howTo": "Eigenes Gateway betreiben: mit npm i -g omniroute installieren, es läuft auf http://localhost:20128.",
+    "baseUrlLabel": "Gateway-Adresse (/v1)",
+    "apiKeyLabel": "API-Schlüssel (optional)",
+    "apiKeyPlaceholder": "Vom OmniRoute-Dashboard ausgestellter Schlüssel (leer lassen, wenn keiner)",
+    "apiKeySetHint": "Ein Schlüssel ist gespeichert - leer lassen, um ihn zu behalten",
+    "testButton": "Verbindung testen",
+    "testOk": "Verbunden - {{count}} Modelle gefunden",
+    "testFail": "Verbindung fehlgeschlagen ({{error}}). Prüfen Sie, ob Ihr Gateway läuft.",
+    "invalidUrl": "Ungültige Adresse - geben Sie eine http(s)-URL ein.",
+    "saveButton": "Speichern",
+    "saved": "Gespeichert",
+    "saveError": "Einstellungen konnten nicht gespeichert werden. Versuchen Sie es erneut."
   }
 }

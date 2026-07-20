@@ -2670,5 +2670,32 @@
     "gateGuardLabel": "GateGuard (porta de verificação de fatos)",
     "gateGuardDescription": "Quando ativado, o agente Claude precisa declarar suas evidências antes da primeira edição de cada arquivo. Mais rigoroso, porém mais lento; as mensagens aparecem em inglês. Vale para agentes recém-iniciados.",
     "toggleError": "Não foi possível salvar a configuração. Tente novamente."
+  },
+  "omnirouteGateway": {
+    "title": "OmniRoute Gateway (retransmissor externo)",
+    "intro": "O OmniRoute é um agregador compatível com OpenAI que VOCÊ MESMO executa na sua máquina, reunindo várias fontes gratuitas. Quando ativado, o Darhai só se conecta ao endereço definido - ele nunca instala nem executa nada por conta própria.",
+    "benefitsTitle": "Benefícios",
+    "benefit1": "Agrega várias fontes gratuitas em um só lugar",
+    "benefit2": "Pode reduzir custos de APIs pagas",
+    "benefit3": "Failover automático quando uma fonte falha",
+    "benefit4": "Otimizações extras, como compressão de prompts",
+    "risksTitle": "Riscos",
+    "risk1": "Seus prompts são RETRANSMITIDOS por serviços de terceiros - risco de privacidade",
+    "risk2": "O \"Claude/GPT\" gratuito pode não igualar a qualidade oficial da Anthropic/OpenAI",
+    "risk3": "Risco de violar os termos do provedor e de banimento de conta",
+    "risk4": "As respostas podem ter perdas",
+    "manualOnlyNote": "Mesmo ativado, ele NUNCA vira o modelo padrão: o Darhai não o seleciona automaticamente - você o escolhe por conversa no seletor de modelos.",
+    "howTo": "Execute seu próprio gateway: instale com npm i -g omniroute e ele atende em http://localhost:20128.",
+    "baseUrlLabel": "Endereço do gateway (/v1)",
+    "apiKeyLabel": "Chave de API (opcional)",
+    "apiKeyPlaceholder": "Chave emitida pelo painel do OmniRoute (vazio se não houver)",
+    "apiKeySetHint": "Há uma chave salva - deixe vazio para mantê-la",
+    "testButton": "Testar conexão",
+    "testOk": "Conectado - {{count}} modelos encontrados",
+    "testFail": "Não foi possível conectar ({{error}}). Verifique se o seu gateway está rodando.",
+    "invalidUrl": "Endereço inválido - insira uma URL http(s).",
+    "saveButton": "Salvar",
+    "saved": "Salvo",
+    "saveError": "Não foi possível salvar as configurações. Tente novamente."
   }
 }

@@ -2669,5 +2669,32 @@
     "gateGuardLabel": "GateGuard (kanıt zorunlu kapı)",
     "gateGuardDescription": "Açıkken Claude ajanı her dosyanın ilk düzenlemesinden önce kanıtlarını belirtmek zorundadır. Daha katı ama daha yavaştır; mesajları İngilizcedir. Yeni başlatılan ajanlara uygulanır.",
     "toggleError": "Ayar kaydedilemedi. Tekrar deneyin."
+  },
+  "omnirouteGateway": {
+    "title": "OmniRoute Ağ Geçidi (harici aktarıcı)",
+    "intro": "OmniRoute, birden çok ücretsiz kaynağı bir araya getiren ve KENDİ makinenizde kendinizin çalıştırdığı OpenAI uyumlu bir toplayıcıdır. Etkinleştirildiğinde Дархай yalnızca belirttiğiniz adrese bağlanır - kendisi asla bir şey kurmaz veya çalıştırmaz.",
+    "benefitsTitle": "Avantajlar",
+    "benefit1": "Birden çok ücretsiz kaynağı tek yerde toplar",
+    "benefit2": "Ücretli API maliyetlerini azaltabilir",
+    "benefit3": "Bir kaynak düştüğünde otomatik geçiş (fallback)",
+    "benefit4": "İstem sıkıştırma gibi ek iyileştirmeler",
+    "risksTitle": "Riskler",
+    "risk1": "İstemleriniz üçüncü taraf hizmetler üzerinden AKTARILIR - gizlilik riski",
+    "risk2": "Ücretsiz \"Claude/GPT\" resmi Anthropic/OpenAI kalitesine ulaşamayabilir",
+    "risk3": "Sağlayıcı hizmet şartlarını ihlal ve hesap kapatılma riski",
+    "risk4": "Yanıtlar kayıplı (lossy) olabilir",
+    "manualOnlyNote": "Etkin olsa bile ASLA varsayılan model olmaz: Дархай onu otomatik seçmez - her konuşmada model seçiciden kendiniz seçersiniz.",
+    "howTo": "Kendi ağ geçidinizi çalıştırın: npm i -g omniroute ile kurun; http://localhost:20128 üzerinde çalışır.",
+    "baseUrlLabel": "Ağ geçidi adresi (/v1)",
+    "apiKeyLabel": "API anahtarı (isteğe bağlı)",
+    "apiKeyPlaceholder": "OmniRoute panosunun verdiği anahtar (yoksa boş bırakın)",
+    "apiKeySetHint": "Bir anahtar kayıtlı - korumak için boş bırakın",
+    "testButton": "Bağlantıyı test et",
+    "testOk": "Bağlandı - {{count}} model bulundu",
+    "testFail": "Bağlanılamadı ({{error}}). Ağ geçidinizin çalıştığını kontrol edin.",
+    "invalidUrl": "Geçersiz adres - bir http(s) URL girin.",
+    "saveButton": "Kaydet",
+    "saved": "Kaydedildi",
+    "saveError": "Ayarlar kaydedilemedi. Yeniden deneyin."
   }
 }
