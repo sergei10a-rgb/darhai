@@ -370,6 +370,11 @@ const REMOTE_DENIED_KEYS: ReadonlySet<string> = new Set([
   'storage:importBackup',
   // --- ecc harness: persisted config mutation (silently weakens agent gates) ---
   'ecc.set-gate-guard',
+  // --- native pre-tool guard: persisted config mutation that gates AGENT TOOL
+  //     EXECUTION at the WCore / ACP approval seams. Disabling it drops the
+  //     destructive-command DENY floor, so a paired-device WebSocket caller must
+  //     never flip it; the read (hookGuard.get-status) stays allowed. ---
+  'hookGuard.set-enabled',
   // --- prompt compression: persisted config mutation (changes how prompts are
   //     transformed before every model call). A paired-device WebSocket caller
   //     must never flip it; the read (compression.get-mode) stays allowed. ---

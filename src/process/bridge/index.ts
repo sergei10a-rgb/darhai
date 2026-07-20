@@ -41,6 +41,7 @@ import { initConstitutionBridge } from './constitutionBridge';
 import { initOnboardingBridge } from './onboardingBridge';
 import { initIjfwBridge } from './ijfwBridge';
 import { initEccBridge } from './eccBridge';
+import { initHookGuardBridge } from './hookGuardBridge';
 import { initCompressionBridge } from './compressionBridge';
 import { initRoutingBridge } from './routingBridge';
 import { initOmnirouteGatewayBridge } from './omnirouteGatewayBridge';
@@ -125,6 +126,7 @@ export function initAllBridges(deps: BridgeDependencies): void {
   initIjfwBridge();
   initIjfwDropBridge();
   initEccBridge();
+  initHookGuardBridge();
   initCompressionBridge();
   initRoutingBridge();
   initOmnirouteGatewayBridge();
@@ -242,6 +244,7 @@ export {
   initIjfwBridge,
   initIjfwDropBridge,
   initEccBridge,
+  initHookGuardBridge,
   initCompressionBridge,
   initRoutingBridge,
   initOmnirouteGatewayBridge,

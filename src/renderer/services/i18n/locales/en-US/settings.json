@@ -2687,6 +2687,8 @@
     "aboutBody": "Professional rules, skills, and reviewer agents for the Claude engine. Ships with Darhai and installs itself automatically on first launch - an existing ECC install is never modified.",
     "gateGuardLabel": "GateGuard (fact-forcing gate)",
     "gateGuardDescription": "When on, the Claude agent must state its evidence (callers, schemas, your instruction) before the first edit of each file. Stricter output, but slower and its prompts are in English. Applies to newly started agents.",
+    "hookGuardLabel": "Dangerous-command guard",
+    "hookGuardDescription": "When on, Darhai blocks obviously destructive commands (rm -rf /, mkfs, DROP TABLE, ...) before any agent tool runs, and warns on writes that look like they contain a secret. Applies to all built-in agents.",
     "toggleError": "Could not save the setting. Try again."
   },
   "omnirouteGateway": {

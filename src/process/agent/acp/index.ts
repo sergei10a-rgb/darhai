@@ -36,6 +36,8 @@ import { getEnhancedEnv, normalizeNpxArgsForBundledBun, resolveNpxPath } from '@
 import { readClaudeModelInfoFromCcSwitch } from '@process/services/ccSwitchModelSource';
 import { AcpConnection } from './AcpConnection';
 import { AcpApprovalStore, createAcpApprovalKey } from './ApprovalStore';
+import { getHookGuardConfig, normalizeAcp, safeEvaluate } from '@process/agent/guard';
+import type { GuardRule } from '@process/agent/guard';
 import { CLAUDE_YOLO_SESSION_MODE, CODEBUDDY_YOLO_SESSION_MODE, QWEN_YOLO_SESSION_MODE } from './constants';
 import { buildAcpModelInfo } from './modelInfo';
 import { buildBuiltinAcpSessionMcpServers, buildTeamMcpServer, type AcpSessionMcpServer } from './mcpSessionConfig';
@@ -171,6 +173,13 @@ export class AcpAgent {
     { kind?: string; title?: string; rawInput?: Record<string, unknown> }
   >();
 
+  // Native pre-tool guard (Phase 3) cache. Enabled flag + additive ruleset are
+  // read from config and refreshed per turn; the built-in destructive floor +
+  // secret warn rules always apply regardless. Defaults keep the floor active
+  // before the first async config read resolves.
+  private guardEnabled = true;
+  private guardRules: GuardRule[] = [];
+
   // Whether usage_update session notifications have been received (if so, skip PromptResponse.usage fallback)
   private hasReceivedUsageUpdate = false;
   // Turn-level observability for "thought shown but no answer rendered" cases.
@@ -200,6 +209,22 @@ export class AcpAgent {
     this.adapter = new AcpAdapter(this.id, this.extra.backend);
 
     this.setupConnectionHandlers();
+
+    // Prime the pre-tool guard cache (fire-and-forget); refreshed per turn in
+    // sendMessage. Failure keeps the enabled default so the floor stays active.
+    void this.refreshGuardConfig();
+  }
+
+  /** Refresh the pre-tool guard enabled flag + additive ruleset from config. */
+  private async refreshGuardConfig(): Promise<void> {
+    try {
+      const cfg = await getHookGuardConfig();
+      this.guardEnabled = cfg.enabled;
+      this.guardRules = cfg.rules;
+    } catch {
+      // Keep the prior cache - fail-safe: the built-in destructive floor stays
+      // active with whatever enabled state we last read (default: enabled).
+    }
   }
 
   private setupConnectionHandlers(): void {
@@ -665,6 +690,10 @@ export class AcpAgent {
     try {
       this.turnHasThought = false;
       this.turnHasContent = false;
+
+      // Refresh the pre-tool guard cache so a toggled setting takes effect from
+      // this turn's permission requests onward (fail-open: keeps prior cache).
+      await this.refreshGuardConfig();
 
       // Auto-reconnect if connection is lost (e.g., after unexpected process exit)
       if (!this.connection.isConnected || !this.connection.hasActiveSession) {
@@ -1146,6 +1175,22 @@ export class AcpAgent {
       }
       const requestId = data.toolCall.toolCallId; // Use toolCallId as requestId
 
+      // Native pre-tool guard (Phase 3): runs BEFORE the ApprovalStore allow
+      // cache, so a cached "always allow" can never bypass the hard
+      // destructive-command floor. Fail-open via safeEvaluate.
+      if (this.guardEnabled) {
+        const verdict = safeEvaluate(normalizeAcp(data.toolCall), 'pre', this.guardRules);
+        if (verdict.action === 'deny') {
+          this.emitGuardNotice(verdict.message ?? '');
+          resolve({ optionId: this.resolveRejectOptionId(data) });
+          return;
+        }
+        if (verdict.action === 'warn') {
+          this.emitGuardNotice(verdict.message ?? '');
+          // fall through to the normal permission flow
+        }
+      }
+
       // Check ApprovalStore for cached "always allow" decision
       // Workaround for claude-agent-acp bug: it returns updatedPermissions but doesn't check suggestions
       const approvalKey = createAcpApprovalKey(data.toolCall);
@@ -1437,6 +1482,37 @@ export class AcpAgent {
     };
 
     this.emitMessage(errorMessage);
+  }
+
+  /**
+   * Resolve the option id the ACP backend maps to a rejection. Prefer the
+   * request's own `reject_once` option, then any `reject_*` option, and finally
+   * the literal `reject_once` that AcpConnection uses as its default-reject id
+   * (it maps any optionId containing "reject" to a rejected outcome).
+   */
+  private resolveRejectOptionId(data: AcpPermissionRequest): string {
+    const options = data.options ?? [];
+    const rejectOnce = options.find((o) => o.kind === 'reject_once');
+    if (rejectOnce) return rejectOnce.optionId;
+    const anyReject = options.find((o) => typeof o.kind === 'string' && o.kind.includes('reject'));
+    if (anyReject) return anyReject.optionId;
+    return 'reject_once';
+  }
+
+  /** Surface a guard deny/warn to the user via the shared tips-message path. */
+  private emitGuardNotice(message: string): void {
+    if (!message) return;
+    this.emitMessage({
+      id: uuid(),
+      conversation_id: this.id,
+      type: 'tips',
+      position: 'center',
+      createdAt: Date.now(),
+      content: {
+        content: message,
+        type: 'warning',
+      },
+    });
   }
 
   private extractThoughtSubject(content: string): string {

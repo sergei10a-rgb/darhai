@@ -2669,6 +2669,8 @@
     "aboutBody": "Regras, habilidades e agentes revisores profissionais para o motor Claude. Acompanha o Darhai e se instala automaticamente na primeira execução - uma instalação ECC existente nunca é modificada.",
     "gateGuardLabel": "GateGuard (porta de verificação de fatos)",
     "gateGuardDescription": "Quando ativado, o agente Claude precisa declarar suas evidências antes da primeira edição de cada arquivo. Mais rigoroso, porém mais lento; as mensagens aparecem em inglês. Vale para agentes recém-iniciados.",
+    "hookGuardLabel": "Proteção contra comandos perigosos",
+    "hookGuardDescription": "Quando ativada, o Darhai bloqueia comandos claramente destrutivos (rm -rf /, mkfs, DROP TABLE, ...) antes de qualquer ferramenta do agente ser executada e avisa sobre gravações que parecem conter um segredo. Aplica-se a todos os agentes integrados.",
     "toggleError": "Não foi possível salvar a configuração. Tente novamente."
   },
   "omnirouteGateway": {

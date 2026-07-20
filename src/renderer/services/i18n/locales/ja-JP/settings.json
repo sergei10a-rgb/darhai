@@ -2670,6 +2670,8 @@
     "aboutBody": "Claude エンジン向けのプロ仕様のルール・スキル・レビューエージェント。Darhai に同梱され、初回起動時に自動インストールされます。既存の ECC 環境は変更されません。",
     "gateGuardLabel": "GateGuard（事実確認ゲート）",
     "gateGuardDescription": "オンにすると、Claude エージェントは各ファイルの最初の編集前に根拠の提示を求められます。より厳格ですが遅くなり、メッセージは英語です。新しく起動するエージェントに適用されます。",
+    "hookGuardLabel": "危険なコマンドの保護",
+    "hookGuardDescription": "オンにすると、Darhai はエージェントのツールが実行される前に明らかに破壊的なコマンド（rm -rf /、mkfs、DROP TABLE など）をブロックし、機密情報を含むと思われる書き込みに警告します。すべての組み込みエージェントに適用されます。",
     "toggleError": "設定を保存できませんでした。もう一度お試しください。"
   },
   "omnirouteGateway": {

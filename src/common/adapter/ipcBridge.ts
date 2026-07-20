@@ -1882,6 +1882,20 @@ export const ecc = {
 };
 
 /**
+ * Native pre-tool guard toggle (Phase 3). Mirrors the `ecc` namespace: a local
+ * config read/write pair, `set-enabled` is remote-denied in the bridge
+ * allowlist. Unlike GateGuard (a Claude-CLI shell hook), this gates AGENT TOOL
+ * EXECUTION at Darhai's own WCore / ACP approval seams. Default = enabled: the
+ * built-in destructive-command DENY floor + secret/risky WARN rules always run.
+ */
+export const hookGuard = {
+  /** Current enabled state (defaults to true when unset). */
+  getStatus: buildProvider<{ enabled: boolean }, void>('hookGuard.get-status'),
+  /** Persist the Settings pre-tool guard toggle. */
+  setEnabled: buildProvider<{ ok: true }, { enabled: boolean }>('hookGuard.set-enabled'),
+};
+
+/**
  * Prompt token-compression mode toggle. Mirrors the `ecc` namespace: a local
  * config read/write pair, `set-mode` is remote-denied in the bridge allowlist.
  * Default mode is the lossless `lite`.

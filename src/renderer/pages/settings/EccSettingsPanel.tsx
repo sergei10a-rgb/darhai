@@ -26,6 +26,8 @@ const EccSettingsPanel: React.FC = () => {
   const [gateGuardEnabled, setGateGuardEnabled] = useState(true);
   const [installed, setInstalled] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(false);
+  const [hookGuardEnabled, setHookGuardEnabled] = useState(true);
+  const [hookGuardLoading, setHookGuardLoading] = useState(false);
 
   useEffect(() => {
     let disposed = false;
@@ -39,10 +41,45 @@ const EccSettingsPanel: React.FC = () => {
       .catch((err: unknown) => {
         console.error('[EccSettingsPanel] getStatus failed:', err);
       });
+    void ipcBridge.hookGuard.getStatus
+      .invoke()
+      .then((status) => {
+        if (disposed || !status) return;
+        setHookGuardEnabled(status.enabled === true);
+      })
+      .catch((err: unknown) => {
+        console.error('[EccSettingsPanel] hookGuard.getStatus failed:', err);
+      });
     return () => {
       disposed = true;
     };
   }, []);
+
+  const handleHookGuardToggle = useCallback(
+    async (next: boolean) => {
+      if (hookGuardLoading) return;
+      const previous = hookGuardEnabled;
+      setHookGuardEnabled(next);
+      setHookGuardLoading(true);
+      try {
+        const result = await ipcBridge.hookGuard.setEnabled.invoke({ enabled: next });
+        if (!result?.ok) {
+          setHookGuardEnabled(previous);
+          Message.error(t('settings.ecc.toggleError', { defaultValue: 'Could not save the setting. Try again.' }));
+        }
+      } catch (err) {
+        setHookGuardEnabled(previous);
+        Message.error(
+          err instanceof Error
+            ? err.message
+            : t('settings.ecc.toggleError', { defaultValue: 'Could not save the setting. Try again.' })
+        );
+      } finally {
+        setHookGuardLoading(false);
+      }
+    },
+    [hookGuardLoading, hookGuardEnabled, t]
+  );
 
   const handleToggle = useCallback(
     async (next: boolean) => {
@@ -116,6 +153,28 @@ const EccSettingsPanel: React.FC = () => {
             {t('settings.ecc.gateGuardDescription', {
               defaultValue:
                 'When on, the Claude agent must state its evidence (callers, schemas, your instruction) before the first edit of each file. Stricter output, but slower and its prompts are in English. Applies to newly started agents.',
+            })}
+          </Typography.Text>
+        </div>
+
+        <div className='flex flex-col gap-12px p-16px rd-12px bg-aou-1'>
+          <div className='flex items-center justify-between gap-16px'>
+            <Typography.Text className='text-14px font-medium'>
+              {t('settings.ecc.hookGuardLabel', { defaultValue: 'Dangerous-command guard' })}
+            </Typography.Text>
+            <Switch
+              checked={hookGuardEnabled}
+              loading={hookGuardLoading}
+              onChange={(value: boolean) => {
+                void handleHookGuardToggle(value);
+              }}
+              data-testid='ecc-settings-hookguard-switch'
+            />
+          </div>
+          <Typography.Text type='secondary' className='text-12px'>
+            {t('settings.ecc.hookGuardDescription', {
+              defaultValue:
+                'When on, Darhai blocks obviously destructive commands (rm -rf /, mkfs, DROP TABLE, ...) before any agent tool runs, and warns on writes that look like they contain a secret. Applies to all built-in agents.',
             })}
           </Typography.Text>
         </div>

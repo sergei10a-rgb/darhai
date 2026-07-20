@@ -199,6 +199,21 @@ export interface IConfigStorageRefer {
    */
   'ecc.seedInProgress'?: boolean;
   /**
+   * Native pre-tool guard config (Phase 3). Unlike `ecc.gateGuardEnabled` (a
+   * Claude-CLI shell-hook toggle that does NOT apply to Darhai's own WCore /
+   * ACP / Gemini backends), this gates AGENT TOOL EXECUTION at Darhai's real
+   * approval seams with a pure regex evaluator. Default (absent) = enabled: the
+   * built-in destructive-command DENY floor + secret/risky WARN rules live in
+   * code (`src/process/agent/guard/defaultRules.ts`) and always apply; `rules`
+   * is an OPTIONAL additive layer on top. An explicit `enabled: false` skips
+   * evaluation entirely (allow all). Read via the guard `getHookGuardConfig`
+   * accessor, mirroring the compression-mode + GateGuard accessor pairs.
+   */
+  'agent.hookGuard'?: {
+    enabled: boolean;
+    rules?: import('@process/agent/guard/types').GuardRule[];
+  };
+  /**
    * Prompt token-compression mode applied at the single stateless completion
    * primitive (`oneShotComplete`) so every background caller shrinks its token
    * cost before the provider call. Default (absent) = `lite`, a LOSSLESS

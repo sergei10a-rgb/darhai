@@ -2668,6 +2668,8 @@
     "aboutBody": "Claude motoru için profesyonel kurallar, beceriler ve inceleme ajanları. Darhai ile birlikte gelir ve ilk açılışta kendini otomatik kurar - mevcut bir ECC kurulumu asla değiştirilmez.",
     "gateGuardLabel": "GateGuard (kanıt zorunlu kapı)",
     "gateGuardDescription": "Açıkken Claude ajanı her dosyanın ilk düzenlemesinden önce kanıtlarını belirtmek zorundadır. Daha katı ama daha yavaştır; mesajları İngilizcedir. Yeni başlatılan ajanlara uygulanır.",
+    "hookGuardLabel": "Tehlikeli komut koruması",
+    "hookGuardDescription": "Açık olduğunda Darhai, herhangi bir aracı aracı çalışmadan önce açıkça yıkıcı komutları (rm -rf /, mkfs, DROP TABLE, ...) engeller ve gizli bilgi içeriyor gibi görünen yazma işlemlerinde uyarır. Tüm yerleşik aracılara uygulanır.",
     "toggleError": "Ayar kaydedilemedi. Tekrar deneyin."
   },
   "omnirouteGateway": {

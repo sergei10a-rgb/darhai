@@ -2670,6 +2670,8 @@
     "aboutBody": "Claude 엔진을 위한 전문 규칙, 스킬, 리뷰 에이전트. Darhai와 함께 제공되며 첫 실행 시 자동으로 설치됩니다. 기존 ECC 설치는 절대 수정되지 않습니다.",
     "gateGuardLabel": "GateGuard(사실 강제 게이트)",
     "gateGuardDescription": "켜면 Claude 에이전트는 각 파일의 첫 편집 전에 근거를 제시해야 합니다. 더 엄격하지만 느려지며 메시지는 영어로 표시됩니다. 새로 시작하는 에이전트에 적용됩니다.",
+    "hookGuardLabel": "위험 명령 보호",
+    "hookGuardDescription": "켜면 Darhai가 에이전트 도구가 실행되기 전에 명백히 파괴적인 명령(rm -rf /, mkfs, DROP TABLE 등)을 차단하고, 비밀 값을 포함한 것으로 보이는 쓰기에 경고합니다. 모든 기본 에이전트에 적용됩니다.",
     "toggleError": "설정을 저장하지 못했습니다. 다시 시도하세요."
   },
   "omnirouteGateway": {

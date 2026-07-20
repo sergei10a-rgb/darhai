@@ -2670,6 +2670,8 @@
     "aboutBody": "為 Claude 引擎提供專業規則、技能與審查代理。隨 Darhai 一同發佈並在首次啟動時自動安裝——絕不會修改既有的 ECC 安裝。",
     "gateGuardLabel": "GateGuard（事實強制門）",
     "gateGuardDescription": "開啟後，Claude 代理在首次編輯每個檔案前必須先陳述依據。更嚴格但較慢，提示為英文。對新啟動的代理生效。",
+    "hookGuardLabel": "危險指令防護",
+    "hookGuardDescription": "開啟後，Darhai 會在任何代理工具執行前攔截明顯具破壞性的指令（rm -rf /、mkfs、DROP TABLE 等），並對疑似包含密鑰的寫入發出警告。適用於所有內建代理。",
     "toggleError": "無法儲存設定，請重試。"
   },
   "omnirouteGateway": {

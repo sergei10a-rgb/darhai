@@ -3318,6 +3318,8 @@ export type I18nKey =
   | 'settings.ecc.aboutBody'
   | 'settings.ecc.gateGuardDescription'
   | 'settings.ecc.gateGuardLabel'
+  | 'settings.ecc.hookGuardDescription'
+  | 'settings.ecc.hookGuardLabel'
   | 'settings.ecc.installed'
   | 'settings.ecc.notInstalled'
   | 'settings.ecc.title'

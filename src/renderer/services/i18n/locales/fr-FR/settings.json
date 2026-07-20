@@ -2669,6 +2669,8 @@
     "aboutBody": "Règles, compétences et agents relecteurs professionnels pour le moteur Claude. Livré avec Darhai et installé automatiquement au premier lancement - une installation ECC existante n'est jamais modifiée.",
     "gateGuardLabel": "GateGuard (garde-fou factuel)",
     "gateGuardDescription": "Lorsqu'il est activé, l'agent Claude doit exposer ses preuves avant la première modification de chaque fichier. Plus strict mais plus lent ; ses messages sont en anglais. S'applique aux nouveaux agents.",
+    "hookGuardLabel": "Protection contre les commandes dangereuses",
+    "hookGuardDescription": "Lorsqu'elle est activée, Darhai bloque les commandes manifestement destructrices (rm -rf /, mkfs, DROP TABLE, ...) avant l'exécution de tout outil de l'agent et avertit en cas d'écritures qui semblent contenir un secret. S'applique à tous les agents intégrés.",
     "toggleError": "Impossible d'enregistrer le réglage. Réessayez."
   },
   "omnirouteGateway": {

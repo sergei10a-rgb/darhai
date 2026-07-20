@@ -2669,6 +2669,8 @@
     "aboutBody": "Professionelle Regeln, Skills und Reviewer-Agenten für die Claude-Engine. Wird mit Darhai ausgeliefert und installiert sich beim ersten Start automatisch - eine vorhandene ECC-Installation wird nie verändert.",
     "gateGuardLabel": "GateGuard (Fakten-Gate)",
     "gateGuardDescription": "Wenn aktiviert, muss der Claude-Agent vor der ersten Änderung jeder Datei seine Belege nennen. Strenger, aber langsamer; die Meldungen erscheinen auf Englisch. Gilt für neu gestartete Agenten.",
+    "hookGuardLabel": "Schutz vor gefährlichen Befehlen",
+    "hookGuardDescription": "Wenn aktiviert, blockiert Darhai offensichtlich zerstörerische Befehle (rm -rf /, mkfs, DROP TABLE, ...) vor der Ausführung eines Agent-Tools und warnt bei Schreibvorgängen, die ein Geheimnis zu enthalten scheinen. Gilt für alle integrierten Agenten.",
     "toggleError": "Einstellung konnte nicht gespeichert werden. Bitte erneut versuchen."
   },
   "omnirouteGateway": {

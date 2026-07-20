@@ -16,6 +16,8 @@ import { BaseApprovalStore, type IApprovalKey } from '@/common/chat/approval';
 import { ToolConfirmationOutcome } from '../agent/gemini/cli/tools/tools';
 import { WCoreAgent, type StdioMcpOption } from '@process/agent/wcore';
 import type { WCoreCapabilities } from '@process/agent/wcore/protocol';
+import { getHookGuardConfig, normalizeWcore, safeEvaluate } from '@process/agent/guard';
+import type { GuardRule, GuardVerdict, WCoreToolLike } from '@process/agent/guard';
 import { buildSystemInstructionsWithSkillsIndex } from './agentUtils';
 import { getDatabase } from '@process/services/database';
 import { ProviderRepository } from '@process/providers/storage/ProviderRepository';
@@ -126,6 +128,13 @@ export class WCoreManager extends BaseAgentManager<WCoreManagerData, string> {
   private currentMsgId: string | null = null;
   private currentMsgContent: string = '';
 
+  // Native pre-tool guard (Phase 3) cache. Enabled + additive ruleset are read
+  // from config and refreshed per turn; the built-in destructive floor + secret
+  // warn rules always apply regardless of this ruleset. Defaults keep the floor
+  // active from t=0 (before the first async config read completes).
+  private guardEnabled = true;
+  private guardRules: GuardRule[] = [];
+
   // Heartbeat state
   private heartbeatInterval: ReturnType<typeof setInterval> | null = null;
   private readonly heartbeatIntervalMs = 30_000;
@@ -155,6 +164,10 @@ export class WCoreManager extends BaseAgentManager<WCoreManagerData, string> {
 
     // enableFork=false skips auto-init in ForkTask, so init manually
     this.init();
+
+    // Prime the pre-tool guard cache (fire-and-forget); refreshed per turn in
+    // sendMessage. Failure keeps the enabled default so the floor stays active.
+    void this.refreshGuardConfig();
 
     // Start the agent bootstrap - store promise so sendMessage can await it
     this.agentReady = this.start().catch(() => {});
@@ -319,6 +332,9 @@ export class WCoreManager extends BaseAgentManager<WCoreManagerData, string> {
     this._lastActivityAt = Date.now();
     // Wait for agent bootstrap to complete before sending
     await this.agentReady;
+    // Refresh the pre-tool guard cache so a toggled setting takes effect from
+    // this turn's tool requests onward (fail-open: keeps the prior cache).
+    await this.refreshGuardConfig();
     this._messageSentAt = Date.now();
     mainLog('[WCoreManager]', `message sent: msg_id=${data.msg_id}`);
     if (this.agent) {
@@ -345,10 +361,73 @@ export class WCoreManager extends BaseAgentManager<WCoreManagerData, string> {
     return false;
   }
 
+  /** Refresh the pre-tool guard enabled flag + additive ruleset from config. */
+  private async refreshGuardConfig(): Promise<void> {
+    try {
+      const cfg = await getHookGuardConfig();
+      this.guardEnabled = cfg.enabled;
+      this.guardRules = cfg.rules;
+    } catch {
+      // Keep the prior cache - fail-safe: the built-in destructive floor stays
+      // active with whatever enabled state we last read (default: enabled).
+    }
+  }
+
+  /**
+   * Build a WCore tool view from a pending confirmation. The raw `args` are not
+   * carried on the transformed confirmation, so reconstruct the guard-relevant
+   * fields from `confirmationDetails`: exec -> command, edit -> file_path.
+   */
+  private guardToolFromConfirmation(content: IMessageToolGroup['content'][number]): WCoreToolLike {
+    const cd = content.confirmationDetails;
+    const args: Record<string, unknown> = {};
+    if (cd?.type === 'exec') {
+      args.command = cd.command;
+    } else if (cd?.type === 'edit') {
+      args.file_path = cd.fileName;
+    }
+    return { name: content.name, category: cd?.type, args };
+  }
+
+  /**
+   * Evaluate the native pre-tool guard for a pending confirmation. Returns the
+   * verdict, or `null` when the guard is disabled (skip = allow all). Always
+   * fail-open via safeEvaluate.
+   */
+  private evaluateGuard(content: IMessageToolGroup['content'][number]): GuardVerdict | null {
+    if (!this.guardEnabled) return null;
+    return safeEvaluate(normalizeWcore(this.guardToolFromConfirmation(content)), 'pre', this.guardRules);
+  }
+
+  /** Surface a guard deny/warn to the user via the existing system-message path. */
+  private emitGuardNotice(message: string): void {
+    if (!message) return;
+    ipcBridge.conversation.responseStream.emit({
+      type: 'system',
+      conversation_id: this.conversation_id,
+      msg_id: uuid(),
+      data: message,
+    });
+  }
+
   private handleConformationMessage(message: IMessageToolGroup) {
     const confirmingTools = message.content.filter((c) => c.status === 'Confirming');
 
     for (const content of confirmingTools) {
+      // Native pre-tool guard (Phase 3): runs BEFORE tryAutoApprove and the
+      // approval-store cache, so neither yolo mode nor a prior "always allow"
+      // can bypass the hard destructive-command floor.
+      const verdict = this.evaluateGuard(content);
+      if (verdict?.action === 'deny') {
+        this.agent?.denyTool(content.callId, verdict.message ?? 'Blocked by Darhai guard');
+        this.emitGuardNotice(verdict.message ?? '');
+        continue;
+      }
+      if (verdict?.action === 'warn') {
+        this.emitGuardNotice(verdict.message ?? '');
+        // fall through to the normal approval flow
+      }
+
       // Check mode-based auto-approval
       if (this.tryAutoApprove(content)) continue;
 
@@ -757,9 +836,7 @@ export class WCoreManager extends BaseAgentManager<WCoreManagerData, string> {
       // Wayland Core has no subscription/OAuth fallback, so a dead key is fatal
       // for the turn and the provider must be marked unhealthy.
       if (data.type === 'error') {
-        this.maybeInvalidateProviderKeyOnAuthError(
-          typeof data.data === 'string' ? data.data : String(data.data ?? '')
-        );
+        this.maybeInvalidateProviderKeyOnAuthError(typeof data.data === 'string' ? data.data : String(data.data ?? ''));
       }
 
       // System-level events (empty msg_id) are not part of a conversation turn.
