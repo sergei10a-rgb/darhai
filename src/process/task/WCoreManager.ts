@@ -205,7 +205,7 @@ export class WCoreManager extends BaseAgentManager<WCoreManagerData, string> {
     const rawEngineMode = (await ProcessConfig.get('wcore.rawEngineMode').catch(() => false)) === true;
 
     // Prepend Wayland Constitution + specialist overlay AND inject the
-    // builtin-skills index + `wayland_search_skills` MCP advert into the
+    // builtin-skills index + `darhai_search_skills` MCP advert into the
     // system prompt. wcore delivers these via `init_history` as
     // `[Assistant System Rules]\n...` on the first turn. The helper returns
     // undefined when there is nothing to inject (no Constitution, no preset,

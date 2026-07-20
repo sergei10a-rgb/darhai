@@ -54,7 +54,7 @@ type VendoredAgentProfile = {
   /**
    * Curated skills pre-attached to this agent-profile's workspace. Without
    * this, the 25 agent-profiles ran on persona prompt alone - the full
-   * library stayed reachable only on-demand via `wayland_search_skills`, so
+   * library stayed reachable only on-demand via `darhai_search_skills`, so
    * they never had their core toolkit in hand. BM25-derived + hand-audited.
    */
   enabledSkills?: string[];

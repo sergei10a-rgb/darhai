@@ -22,7 +22,7 @@ import { SkillGuard } from './SkillGuard';
 // ProcessConfig and mainLogger are intentionally NOT imported at the module
 // level: pulling them in drags `@/common` + initStorage (with the database
 // driver layer) into bundles that don't need them - notably the
-// `wayland_search_skills` MCP stdio subprocess. Use lazy dynamic imports or a
+// `darhai_search_skills` MCP stdio subprocess. Use lazy dynamic imports or a
 // plain `console.warn` here instead.
 
 const TAG = '[SkillLibrary]';
@@ -35,7 +35,7 @@ const TAG = '[SkillLibrary]';
  * `resources/skills-library/**\/*` so it ends up at
  * `app.asar.unpacked/resources/skills-library/`. The main process bundle
  * itself lives in `out/main/` (or `out/main/chunks/` when code-split), and
- * the same dir holds the stdio subprocess bundle for `wayland_search_skills`.
+ * the same dir holds the stdio subprocess bundle for `darhai_search_skills`.
  *
  * We probe a small list of candidates with `existsSync(index.json)` and
  * return the first hit. This handles three environments without an explicit

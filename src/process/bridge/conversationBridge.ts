@@ -144,7 +144,7 @@ export function initConversationBridge(
       // Persist a lightweight skills summary at creation time so the UI can
       // display basic skill info immediately without waiting for the first message.
       // We store only the pinned skill NAMES + a total count - the library is
-      // never snapshotted here; it is reached on-demand via wayland_search_skills.
+      // never snapshotted here; it is reached on-demand via darhai_search_skills.
       try {
         const extra = createParams.extra as {
           enabledSkills?: string[];

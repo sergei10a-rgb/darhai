@@ -296,7 +296,7 @@ const SkillDetailDrawer: React.FC<Props> = ({ entry, open, onClose, onTogglePin,
           <Typography.Text className='text-12px' style={{ color: 'var(--text-secondary)' }}>
             {t('detail.installExplain', {
               defaultValue:
-                'Installed skills are loaded into every chat. Skills that are not installed are still found on-demand - relevant ones are surfaced automatically each turn, or via wayland_search_skills.',
+                'Installed skills are loaded into every chat. Skills that are not installed are still found on-demand - relevant ones are surfaced automatically each turn, or via darhai_search_skills.',
             })}
           </Typography.Text>
         </div>

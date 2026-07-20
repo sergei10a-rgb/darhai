@@ -268,7 +268,7 @@ export class GeminiAgentManager extends BaseAgentManager<
         const effectiveYoloMode = this.forceYoloMode ?? this.currentMode === 'yolo';
 
         // Build the full system prompt: presetRules + skills index + the
-        // `wayland_search_skills` MCP advert + (when solo) the team-guide
+        // `darhai_search_skills` MCP advert + (when solo) the team-guide
         // prompt, all prepended with the Wayland Constitution and optional
         // specialist overlay. The helper returns undefined when there is
         // nothing to inject - in that case we keep the prior "no presetRules"

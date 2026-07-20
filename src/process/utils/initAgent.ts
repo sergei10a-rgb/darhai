@@ -45,7 +45,7 @@ export type WorkspaceSkillEntry = {
  * Symlinks into CLI-native skills directories for auto-discovery.
  * The BOUNDED SET rule: only _builtin auto-skills + pinned skills +
  * assistant's own enabledSkills are symlinked.  Library-only entries
- * are NEVER symlinked - they are reached on-demand via wayland_search_skills.
+ * are NEVER symlinked - they are reached on-demand via darhai_search_skills.
  *
  * Defense-in-depth: skills with security.verdict === 'blocked' are never
  * symlinked regardless of any other setting (B8 quarantines them physically;

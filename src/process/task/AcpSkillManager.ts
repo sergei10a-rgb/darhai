@@ -551,10 +551,10 @@ export class AcpSkillManager {
  *
  * Only the always-on set (builtin + pinned + assistant enabledSkills) is listed here.
  * When the full skill library is available, a one-line note directs the agent to call
- * `wayland_search_skills` for anything else - the library is never dumped inline.
+ * `darhai_search_skills` for anything else - the library is never dumped inline.
  *
  * @param skills - always-on skill entries to list
- * @param hasLibrary - when true, append the wayland_search_skills discovery note
+ * @param hasLibrary - when true, append the darhai_search_skills discovery note
  */
 export function buildSkillsIndexText(skills: SkillIndex[], hasLibrary = false): string {
   if (skills.length === 0 && !hasLibrary) return '';
@@ -562,7 +562,7 @@ export function buildSkillsIndexText(skills: SkillIndex[], hasLibrary = false): 
   const lines = skills.map((s) => `- ${s.name}: ${s.description}`);
   const listBlock = lines.length > 0 ? `\n\n${lines.join('\n')}` : '';
   const searchNote = hasLibrary
-    ? '\n\nFor skills not listed above, call `wayland_search_skills` to search the full library.'
+    ? '\n\nFor skills not listed above, call `darhai_search_skills` to search the full library.'
     : '';
 
   return `[Available Skills]

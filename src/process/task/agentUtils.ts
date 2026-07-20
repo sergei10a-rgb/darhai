@@ -22,12 +22,12 @@ import { composeWorkflowSystemPrompt } from '@process/services/workflow/composeW
 import { getWorkflowSessionService } from '@process/services/workflow/workflowSessionServiceSingleton';
 
 /**
- * One-line advertisement for the wayland_search_skills MCP tool.
+ * One-line advertisement for the darhai_search_skills MCP tool.
  * Injected into every backend's system prompt when the skill library is non-empty.
  * Single source of truth - do not copy-paste into individual managers.
  */
 export function searchSkillsAdvertText(): string {
-  return 'Use the `wayland_search_skills` tool to discover skills from the full library on demand.';
+  return 'Use the `darhai_search_skills` tool to discover skills from the full library on demand.';
 }
 
 /**
@@ -227,7 +227,7 @@ export async function buildTurnSkillContext(
 
   const advertBlock =
     combinedAdvert.length > 0
-      ? `[Relevant skills for this request]\nThese skills may help. Load full instructions with the wayland_search_skills tool (or read the skill's SKILL.md) when useful:\n${combinedAdvert
+      ? `[Relevant skills for this request]\nThese skills may help. Load full instructions with the darhai_search_skills tool (or read the skill's SKILL.md) when useful:\n${combinedAdvert
           .map((h) => `- ${h.name}: ${h.description}`)
           .join('\n')}`
       : '';
@@ -463,7 +463,7 @@ export async function prepareFirstMessageWithSkillsIndex(
     const skillsDir = getSkillsDir();
     const builtinSkillsCopyDir = getBuiltinSkillsCopyDir();
     const builtinSkillsDir = builtinSkillsCopyDir + '/_builtin';
-    // Pass hasLib so the index text includes the wayland_search_skills discovery note
+    // Pass hasLib so the index text includes the darhai_search_skills discovery note
     const indexText = buildSkillsIndexText(skillsIndex, hasLib);
 
     // Tell Agent where skills files are located for on-demand reading
@@ -549,7 +549,7 @@ export async function buildSystemInstructionsWithSkillsIndex(config: FirstMessag
   if (skillManager.hasAnySkills() || hasLib) {
     const excludeSet = new Set(config.excludeBuiltinSkills ?? []);
     const skillsIndex = skillManager.getSkillsIndex().filter((s) => !excludeSet.has(s.name));
-    // Pass hasLib so the index text includes the wayland_search_skills discovery note
+    // Pass hasLib so the index text includes the darhai_search_skills discovery note
     const indexText = buildSkillsIndexText(skillsIndex, hasLib);
     if (indexText.length > 0) {
       instructions.push(indexText);

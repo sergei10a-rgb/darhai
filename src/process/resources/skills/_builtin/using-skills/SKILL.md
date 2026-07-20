@@ -28,7 +28,7 @@ Then announce "Using [skill] to [purpose]" and follow the skill exactly. If it h
 Two channels:
 
 1. **Workspace skills** — the process skills below plus any skills enabled for this assistant are available as markdown in your workspace skill directories. Read the skill's `SKILL.md` directly; no special invocation mechanism is needed.
-2. **Full skill library** — thousands of additional skills are reachable only through the `wayland_search_skills` MCP tool. Search it with a short task-shaped query (Cyrillic queries work too); matching skill bodies are returned inline. If your workspace has no skill for the task, search the library before improvising.
+2. **Full skill library** — thousands of additional skills are reachable only through the `darhai_search_skills` MCP tool. Search it with a short task-shaped query (Cyrillic queries work too); matching skill bodies are returned inline. If your workspace has no skill for the task, search the library before improvising.
 
 ## Process Skill Routing
 
