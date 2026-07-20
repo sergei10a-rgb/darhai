@@ -6,7 +6,10 @@
 
 import { getMergedModelProviders } from '@process/bridge/modelBridge';
 import type { IProvider } from '@/common/config/storage';
+import type { CompressionMode } from '@/common/types/compression';
+import { compress } from '@process/services/compression';
 import { googleAuthGeminiComplete, isGoogleAuthGeminiAvailable } from './geminiOAuth';
+import { getCompressionMode } from './compressionMode';
 
 /**
  * A minimal one-shot LLM completion for cheap background tasks (e.g. the project
@@ -155,20 +158,41 @@ const fetchWithTimeout = async (url: string, init: RequestInit, timeoutMs = FETC
 const joinUrl = (base: string, suffix: string): string => `${base.replace(/\/+$/, '')}${suffix}`;
 
 /**
+ * Apply token compression to the prompt before send. Defensive by design: `off`
+ * short-circuits, and any throw or empty/whitespace-only result falls back to
+ * the original prompt so compression can never break a completion.
+ */
+function maybeCompress(prompt: string, mode: CompressionMode): string {
+  if (mode === 'off') return prompt;
+  try {
+    const { text } = compress(prompt, mode);
+    return text.trim().length > 0 ? text : prompt;
+  } catch {
+    return prompt;
+  }
+}
+
+/**
  * Make a single completion call. Routes by endpoint host so a Claude/Gemini
  * model served via an OpenAI-compatible proxy is still called the right way.
  */
 export async function oneShotComplete(
   prompt: string,
-  opts?: { maxTokens?: number; model?: PickedModel; timeoutMs?: number }
+  opts?: { maxTokens?: number; model?: PickedModel; timeoutMs?: number; compressionMode?: CompressionMode }
 ): Promise<string> {
   const picked = opts?.model ?? (await pickCheapestFastModel());
+  // Token compression seam (OmniRoute idea, native): shrink the prompt before
+  // send so every one-shot caller (Compare, Deep Research, title-gen, project-
+  // knowledge, onboarding, ...) benefits. Per-call override wins; otherwise the
+  // configured mode is used, defaulting to the lossless `lite`.
+  const mode = opts?.compressionMode ?? (await getCompressionMode());
+  const effectivePrompt = maybeCompress(prompt, mode);
   if (!picked) {
     // No keyed model. Fall back to Google-auth Gemini for users who connected via
     // "Continue with Google" (the primary onboarding path): they have no API key,
     // so the key-based provider scan never surfaces their Gemini models.
     if (isGoogleAuthGeminiAvailable()) {
-      return googleAuthGeminiComplete(prompt, { maxTokens: opts?.maxTokens, timeoutMs: opts?.timeoutMs });
+      return googleAuthGeminiComplete(effectivePrompt, { maxTokens: opts?.maxTokens, timeoutMs: opts?.timeoutMs });
     }
     throw new Error('no-usable-model');
   }
@@ -190,7 +214,11 @@ export async function oneShotComplete(
           'anthropic-version': '2023-06-01',
           'User-Agent': 'Wayland/1.0',
         },
-        body: JSON.stringify({ model: modelId, max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }] }),
+        body: JSON.stringify({
+          model: modelId,
+          max_tokens: maxTokens,
+          messages: [{ role: 'user', content: effectivePrompt }],
+        }),
       },
       timeoutMs
     );
@@ -207,7 +235,7 @@ export async function oneShotComplete(
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'User-Agent': 'Wayland/1.0' },
         body: JSON.stringify({
-          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+          contents: [{ role: 'user', parts: [{ text: effectivePrompt }] }],
           generationConfig: { maxOutputTokens: maxTokens },
         }),
       },
@@ -231,7 +259,11 @@ export async function oneShotComplete(
         Authorization: `Bearer ${provider.apiKey}`,
         'User-Agent': 'Wayland/1.0',
       },
-      body: JSON.stringify({ model: modelId, max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }] }),
+      body: JSON.stringify({
+        model: modelId,
+        max_tokens: maxTokens,
+        messages: [{ role: 'user', content: effectivePrompt }],
+      }),
     },
     timeoutMs
   );

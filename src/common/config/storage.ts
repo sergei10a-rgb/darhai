@@ -5,6 +5,7 @@
  */
 
 import type { AcpBackend, AcpBackendAll, AcpBackendConfig } from '@/common/types/acpTypes';
+import type { CompressionMode } from '@/common/types/compression';
 import type { SpeechToTextConfig } from '@/common/types/speech';
 import type { TextToSpeechConfig } from '@/common/types/ttsTypes';
 // C1: route through wrapped buildStorage so every namespace's storage.{get,set,clear,remove}
@@ -196,6 +197,17 @@ export interface IConfigStorageRefer {
    * user-managed install.
    */
   'ecc.seedInProgress'?: boolean;
+  /**
+   * Prompt token-compression mode applied at the single stateless completion
+   * primitive (`oneShotComplete`) so every background caller shrinks its token
+   * cost before the provider call. Default (absent) = `lite`, a LOSSLESS
+   * formatting normalization (strip ANSI escapes + insignificant whitespace)
+   * that never removes a word or alters a code token / URL / JSON value - a
+   * safe immediate cost win. `off` disables; `balanced`/`aggressive` add
+   * terminal-chrome + prose-filler removal (prose-only; guarded spans are
+   * always preserved). Read via ProcessConfig.get like the ECC gate.
+   */
+  'compression.mode'?: CompressionMode;
   /** Persisted app-wide UI zoom factor for Display settings */
   'ui.zoomFactor'?: number;
   /** Auto-enable WebUI in desktop mode */

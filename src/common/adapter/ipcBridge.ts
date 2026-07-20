@@ -16,6 +16,7 @@ import type { SlashCommandItem } from '../chat/slash/types';
 import type { IMcpServer, IProvider, TChatConversation, TProviderWithModel, ICssTheme } from '../config/storage';
 import type { PreviewHistoryTarget, PreviewSnapshotInfo } from '../types/preview';
 import type { IjfwErrorReason, IjfwInvokeResult, IjfwRuntimeModePublic } from '../types/ijfw';
+import type { CompressionMode } from '../types/compression';
 import type {
   CodexSetupResult,
   CodexStatusResult,
@@ -1860,6 +1861,23 @@ export const ecc = {
   getStatus: buildProvider<{ bundled: boolean; installed: boolean; gateGuardEnabled: boolean }, void>('ecc.get-status'),
   /** Persist the Settings GateGuard toggle (default off). */
   setGateGuard: buildProvider<{ ok: true }, { enabled: boolean }>('ecc.set-gate-guard'),
+};
+
+/**
+ * Prompt token-compression mode toggle. Mirrors the `ecc` namespace: a local
+ * config read/write pair, `set-mode` is remote-denied in the bridge allowlist.
+ * Default mode is the lossless `lite`.
+ *
+ * secondary: a Settings mode selector (off / lite / balanced / aggressive) can
+ * bind to these providers; all user-facing labels must go through i18n
+ * (mn-MN included). The config key + bridge are live now so the feature is
+ * toggleable ahead of the UI.
+ */
+export const compression = {
+  /** Current compression mode from config (defaults to `lite`). */
+  getMode: buildProvider<CompressionMode, void>('compression.get-mode'),
+  /** Persist the Settings compression mode. */
+  setMode: buildProvider<{ ok: true }, { mode: CompressionMode }>('compression.set-mode'),
 };
 
 export type IjfwDropEntry = { name: string; size: number; mtimeMs: number };

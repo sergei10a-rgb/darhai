@@ -366,6 +366,10 @@ const REMOTE_DENIED_KEYS: ReadonlySet<string> = new Set([
   'storage:importBackup',
   // --- ecc harness: persisted config mutation (silently weakens agent gates) ---
   'ecc.set-gate-guard',
+  // --- prompt compression: persisted config mutation (changes how prompts are
+  //     transformed before every model call). A paired-device WebSocket caller
+  //     must never flip it; the read (compression.get-mode) stays allowed. ---
+  'compression.set-mode',
 
   // --- app.* / process control that writes or executes ---
   'app.set-start-on-boot',

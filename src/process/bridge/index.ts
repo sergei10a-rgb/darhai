@@ -41,6 +41,7 @@ import { initConstitutionBridge } from './constitutionBridge';
 import { initOnboardingBridge } from './onboardingBridge';
 import { initIjfwBridge } from './ijfwBridge';
 import { initEccBridge } from './eccBridge';
+import { initCompressionBridge } from './compressionBridge';
 import { initIjfwDropBridge } from './ijfwDropBridge';
 import { initMemoryArchiveBridge, initPromotionSweep } from './memoryArchiveBridge';
 import { initWikiBridge } from './wikiBridge';
@@ -121,6 +122,7 @@ export function initAllBridges(deps: BridgeDependencies): void {
   initIjfwBridge();
   initIjfwDropBridge();
   initEccBridge();
+  initCompressionBridge();
   initMemoryArchiveBridge();
   initPromotionSweep();
   initWikiBridge();
@@ -233,6 +235,7 @@ export {
   initIjfwBridge,
   initIjfwDropBridge,
   initEccBridge,
+  initCompressionBridge,
   initWikiBridge,
   initImportBridge,
 };
