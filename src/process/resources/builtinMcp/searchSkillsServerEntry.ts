@@ -5,7 +5,7 @@
  */
 
 /**
- * Stdio MCP subprocess entrypoint for `wayland_search_skills`.
+ * Stdio MCP subprocess entrypoint for `darhai_search_skills`.
  *
  * Bundled by `scripts/build-mcp-servers.js` into
  * `out/main/builtin-mcp-search-skills.js`, packaged as `app.asar.unpacked`,
@@ -80,7 +80,7 @@ async function main(): Promise<void> {
           content: [
             {
               type: 'text' as const,
-              text: `wayland_search_skills error: ${message}`,
+              text: `${BUILTIN_SEARCH_SKILLS_TOOL_NAME} error: ${message}`,
             },
           ],
           isError: true,

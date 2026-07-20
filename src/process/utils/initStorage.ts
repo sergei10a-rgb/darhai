@@ -41,6 +41,7 @@ import {
   BUILTIN_IMAGE_GEN_LEGACY_NAMES,
   BUILTIN_IMAGE_GEN_NAME,
   BUILTIN_SEARCH_SKILLS_ID,
+  BUILTIN_SEARCH_SKILLS_LEGACY_NAMES,
   BUILTIN_SEARCH_SKILLS_NAME,
   BUILTIN_WEB_SEARCH_ID,
   BUILTIN_WEB_SEARCH_NAME,
@@ -858,7 +859,7 @@ const ensureBuiltinMcpServers = async (): Promise<void> => {
     // Exposes the second channel of the two-channel skill architecture: native
     // backends ship only `_builtin + pinned + enabledSkills` natively (~30
     // skills); the full 2,105-entry library is reachable ONLY via the
-    // `wayland_search_skills` tool. Enabled by default - the tool is silent
+    // `darhai_search_skills` tool. Enabled by default - the tool is silent
     // unless the agent calls it, and is what makes the library searchable at
     // all on ACP/Gemini/wcore backends.
     const searchSkillsScriptPath = getBuiltinMcpScriptPath('builtin-mcp-search-skills');
@@ -880,20 +881,29 @@ const ensureBuiltinMcpServers = async (): Promise<void> => {
       );
 
     if (searchSkillsExistingIdx >= 0) {
-      // Update command path in case app location changed.
+      // Update the command path if the app location changed, and migrate a
+      // legacy display name (e.g. a shipped 'wayland-search-skills' entry) to
+      // the current 'darhai-search-skills' name IN PLACE. The lookup keys on the
+      // stable id, so a legacy-named row is found and renamed - never duplicated.
       const existing = mcpServers[searchSkillsExistingIdx];
+      const needsNameMigration =
+        existing.name !== BUILTIN_SEARCH_SKILLS_NAME &&
+        BUILTIN_SEARCH_SKILLS_LEGACY_NAMES.includes(
+          existing.name as (typeof BUILTIN_SEARCH_SKILLS_LEGACY_NAMES)[number]
+        );
       const needsPathUpdate =
         existing.transport.type === 'stdio' &&
         existing.transport.command === 'node' &&
         (existing.transport.args || [])[0] !== searchSkillsScriptPath;
 
-      if (needsPathUpdate && existing.transport.type === 'stdio') {
-        const updatedTransport: IMcpServer['transport'] = {
-          ...existing.transport,
-          args: [searchSkillsScriptPath],
-        };
+      if (needsNameMigration || needsPathUpdate) {
+        const updatedTransport: IMcpServer['transport'] =
+          needsPathUpdate && existing.transport.type === 'stdio'
+            ? { ...existing.transport, args: [searchSkillsScriptPath] }
+            : existing.transport;
         mcpServers[searchSkillsExistingIdx] = {
           ...existing,
+          name: needsNameMigration ? BUILTIN_SEARCH_SKILLS_NAME : existing.name,
           transport: updatedTransport,
           originalJson: buildSearchSkillsOriginalJson(searchSkillsScriptPath),
           updatedAt: now,
@@ -905,7 +915,7 @@ const ensureBuiltinMcpServers = async (): Promise<void> => {
         id: BUILTIN_SEARCH_SKILLS_ID,
         name: BUILTIN_SEARCH_SKILLS_NAME,
         description:
-          'Built-in tool that lets agents search the full Wayland skill library (~2,000+ entries) by natural language. Returns matching skill bodies inline.',
+          'Built-in tool that lets agents search the full Darhai skill library (~2,000+ entries) by natural language. Returns matching skill bodies inline.',
         enabled: true,
         builtin: true,
         transport: {

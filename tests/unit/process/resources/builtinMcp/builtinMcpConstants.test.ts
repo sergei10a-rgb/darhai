@@ -6,12 +6,14 @@
 
 import { describe, expect, it } from 'vitest';
 import {
+  BUILTIN_IMAGE_GEN_NAME,
   BUILTIN_SEARCH_SKILLS_ID,
   BUILTIN_SEARCH_SKILLS_NAME,
   BUILTIN_SEARCH_SKILLS_TOOL_NAME,
   BUILTIN_WEB_SEARCH_ID,
   BUILTIN_WEB_SEARCH_NAME,
   BUILTIN_WEB_SEARCH_TOOL_NAME,
+  isBuiltinImageGenName,
   isBuiltinSearchSkillsName,
   isBuiltinSearchSkillsTransport,
   isBuiltinWebSearchName,
@@ -23,17 +25,26 @@ import { TOOL_KEY_ENV_MAP } from '@process/agent/wcore/toolKeyStore';
 describe('builtinMcp/constants - search-skills', () => {
   it('exposes the canonical id, server name, and MCP tool name', () => {
     expect(BUILTIN_SEARCH_SKILLS_ID).toBe('builtin-search-skills');
-    expect(BUILTIN_SEARCH_SKILLS_NAME).toBe('wayland-search-skills');
-    expect(BUILTIN_SEARCH_SKILLS_TOOL_NAME).toBe('wayland_search_skills');
+    expect(BUILTIN_SEARCH_SKILLS_NAME).toBe('darhai-search-skills');
+    expect(BUILTIN_SEARCH_SKILLS_TOOL_NAME).toBe('darhai_search_skills');
   });
 
   describe('isBuiltinSearchSkillsName', () => {
     it('matches the canonical name', () => {
       expect(isBuiltinSearchSkillsName(BUILTIN_SEARCH_SKILLS_NAME)).toBe(true);
+      expect(isBuiltinSearchSkillsName('darhai-search-skills')).toBe(true);
+    });
+
+    it('matches the shipped legacy names for backward-compat resolution', () => {
+      // Pre-rename (v0.9.7-mn.1) configs stored the server under these names.
+      // They must still resolve so the catalog migration renames in place.
+      expect(isBuiltinSearchSkillsName('wayland-search-skills')).toBe(true);
+      expect(isBuiltinSearchSkillsName(BUILTIN_SEARCH_SKILLS_ID)).toBe(true);
     });
 
     it('rejects other names', () => {
       expect(isBuiltinSearchSkillsName('wayland-image-generation')).toBe(false);
+      expect(isBuiltinSearchSkillsName('darhai-image-generation')).toBe(false);
       expect(isBuiltinSearchSkillsName('some-user-mcp')).toBe(false);
       expect(isBuiltinSearchSkillsName(undefined)).toBe(false);
       expect(isBuiltinSearchSkillsName(null)).toBe(false);
@@ -85,6 +96,35 @@ describe('builtinMcp/constants - search-skills', () => {
       expect(isBuiltinSearchSkillsTransport({ type: 'stdio', command: 'node', args: [] })).toBe(false);
       expect(isBuiltinSearchSkillsTransport({ type: 'stdio', command: 'node', args: null })).toBe(false);
       expect(isBuiltinSearchSkillsTransport(undefined)).toBe(false);
+    });
+  });
+});
+
+describe('builtinMcp/constants - image-generation', () => {
+  it('uses the canonical darhai name', () => {
+    expect(BUILTIN_IMAGE_GEN_NAME).toBe('darhai-image-generation');
+  });
+
+  describe('isBuiltinImageGenName', () => {
+    it('matches the canonical name', () => {
+      expect(isBuiltinImageGenName(BUILTIN_IMAGE_GEN_NAME)).toBe(true);
+      expect(isBuiltinImageGenName('darhai-image-generation')).toBe(true);
+    });
+
+    it('matches the shipped legacy names for backward-compat resolution', () => {
+      // Pre-rename configs stored the server under these names; they must keep
+      // resolving so the catalog migration renames in place (no duplicate row).
+      expect(isBuiltinImageGenName('wayland-image-generation')).toBe(true);
+      expect(isBuiltinImageGenName('Wayland Image Generation')).toBe(true);
+      expect(isBuiltinImageGenName('builtin-image-gen')).toBe(true);
+    });
+
+    it('rejects unrelated names', () => {
+      expect(isBuiltinImageGenName('darhai-search-skills')).toBe(false);
+      expect(isBuiltinImageGenName('some-user-mcp')).toBe(false);
+      expect(isBuiltinImageGenName(undefined)).toBe(false);
+      expect(isBuiltinImageGenName(null)).toBe(false);
+      expect(isBuiltinImageGenName('')).toBe(false);
     });
   });
 });

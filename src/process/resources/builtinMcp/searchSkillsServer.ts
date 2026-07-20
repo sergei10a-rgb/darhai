@@ -5,7 +5,7 @@
  */
 
 /**
- * Built-in MCP server factory for wayland_search_skills.
+ * Built-in MCP server factory for darhai_search_skills.
  * Returns an object with a single tool `call` method - not a stdio server.
  * Intended to be wired into the builtin MCP catalog by the caller.
  *
@@ -16,6 +16,7 @@
 import type { SkillIndexEntry } from '@/common/types/skillTypes';
 import { SkillLibrary } from '@process/services/skills/SkillLibrary';
 import { SkillRetriever } from '@process/services/skills/SkillRetriever';
+import { BUILTIN_SEARCH_SKILLS_TOOL_NAME } from './constants';
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -56,7 +57,7 @@ export const createSearchSkillsServer = (deps: SearchSkillsDeps = {}) => {
   };
 
   return {
-    name: 'wayland_search_skills',
+    name: BUILTIN_SEARCH_SKILLS_TOOL_NAME,
 
     async call({ query, limit = 25 }: { query: string; limit?: number }): Promise<SearchSkillsResult> {
       await ensureIndex();
