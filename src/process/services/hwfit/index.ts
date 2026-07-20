@@ -25,4 +25,13 @@ export function rankCatalog(system: HardwareProfile, options: RankOptions = {}):
 
 export { scanHardware, clearHardwareCache } from './hardwareDetect';
 export { getCatalog, getCatalogSize } from './modelCatalog';
-export type { CatalogModel, FitResult, HardwareProfile, RankOptions, SortKey, UseCase } from './types';
+export type {
+  CatalogModel,
+  FitResult,
+  HardwareBackend,
+  HardwarePlatform,
+  HardwareProfile,
+  RankOptions,
+  SortKey,
+  UseCase,
+} from './types';

@@ -67,5 +67,30 @@
   },
   "footer": {
     "count": "{{shown}} of {{total}} models"
+  },
+  "cookbook": {
+    "column": "Локальний запуск",
+    "download": "Завантажити",
+    "serve": "Запустити",
+    "stop": "Зупинити",
+    "cancel": "Скасувати",
+    "retry": "Повторити",
+    "copyCommand": "Копіювати команду",
+    "locate": "Вказати файл",
+    "copied": "Команду скопійовано в буфер обміну",
+    "needsBackend": "Локальний сервер не знайдено. Встановіть ollama або vllm, скопіюйте команду для самостійного запуску або вкажіть бінарний файл llama-server.",
+    "backendTip": "Рушій запуску для вашого обладнання",
+    "backend": {
+      "vllm": "vLLM",
+      "ollama": "Ollama",
+      "llamaServer": "llama.cpp",
+      "none": "Немає"
+    },
+    "status": {
+      "downloading": "Завантаження",
+      "starting": "Запуск",
+      "ready": "Активно · :{{port}}",
+      "error": "Помилка"
+    }
   }
 }

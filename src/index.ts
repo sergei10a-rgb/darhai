@@ -1115,6 +1115,9 @@ type CleanupModules = {
   notes: typeof import('@process/services/notes/noteServiceSingleton');
   // Stop the calendar reminder scanner from before-quit (same class as notes).
   calendar: typeof import('@process/services/calendar/calendarServiceSingleton');
+  // Kill any spawned llama-server (cookbook serve) from before-quit so it does
+  // not leak and hold the GPU after the app quits.
+  cookbook: typeof import('@process/services/cookbook/cookbookServeSingleton');
 };
 let _cleanupModulesPromise: Promise<CleanupModules> | undefined;
 
@@ -1131,6 +1134,7 @@ const prefetchCleanupModules = (): Promise<CleanupModules> => {
     import('@process/bridge/fileWatchBridge'),
     import('@process/services/notes/noteServiceSingleton'),
     import('@process/services/calendar/calendarServiceSingleton'),
+    import('@process/services/cookbook/cookbookServeSingleton'),
   ]).then(
     ([
       ambient,
@@ -1144,6 +1148,7 @@ const prefetchCleanupModules = (): Promise<CleanupModules> => {
       fileWatch,
       notes,
       calendar,
+      cookbook,
     ]) => ({
       ambient,
       channels,
@@ -1156,6 +1161,7 @@ const prefetchCleanupModules = (): Promise<CleanupModules> => {
       fileWatch,
       notes,
       calendar,
+      cookbook,
     })
   );
 };
@@ -1291,6 +1297,7 @@ app.on('before-quit', async () => {
       safeImport('database', () => import('@process/services/database/export')),
       safeImport('cron', () => import('@process/services/cron/cronServiceSingleton')),
       safeImport('fileWatch', () => import('@process/bridge/fileWatchBridge')),
+      safeImport('cookbook', () => import('@process/services/cookbook/cookbookServeSingleton')),
     ]);
     const out: Partial<CleanupModules> = {};
     for (const [k, v] of entries) {
@@ -1354,6 +1361,17 @@ app.on('before-quit', async () => {
       (async () => {
         if (!mods.calendar) return;
         mods.calendar.calendarService.shutdown();
+      })(),
+      PER_STEP_TIMEOUT_MS
+    );
+
+    // Kill any spawned llama-server (cookbook serve) so it does not outlive the
+    // app and hold the GPU. stopAll() is SIGTERM -> 5s -> SIGKILL internally.
+    const cookbookStep = withTimeout(
+      'cookbookServe.stopAll',
+      (async () => {
+        if (!mods.cookbook) return;
+        await mods.cookbook.cookbookServe.stopAll();
       })(),
       PER_STEP_TIMEOUT_MS
     );
@@ -1436,6 +1454,7 @@ app.on('before-quit', async () => {
       cronStep,
       notesStep,
       calendarStep,
+      cookbookStep,
       workerStep,
       ambientStep,
       teamStep,

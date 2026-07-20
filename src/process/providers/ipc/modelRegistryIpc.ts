@@ -1002,6 +1002,10 @@ const CHAT_START_PLATFORM: Partial<Record<ProviderId, string>> = {
   // Local Ollama daemon - dispatched as the OpenAI-compatible protocol against
   // its hardcoded loopback `/v1` endpoint, with no API key (keyless local).
   'ollama-local': 'openai-compatible',
+  // Cookbook-served local model (llama-server) - dispatched as the
+  // OpenAI-compatible protocol against its loopback `/v1` endpoint (the dynamic
+  // port lives in the stored creds.baseUrl), keyless. Mirrors ollama-local.
+  'cookbook-local': 'openai-compatible',
   // Azure intentionally absent - the legacy dispatch has no Azure arm; a
   // future Azure chat-start will need its own dispatcher work.
 };
@@ -1077,6 +1081,7 @@ const CHAT_START_NAME: Partial<Record<ProviderId, string>> = {
   'flux-router': 'Flux Router',
   'openai-compatible': 'OpenAI Compatible',
   'ollama-local': 'Ollama (Local)',
+  'cookbook-local': 'Cookbook (Local)',
 };
 
 /**

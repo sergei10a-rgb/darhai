@@ -9,11 +9,14 @@ import { useTranslation } from 'react-i18next';
 import { Table, Tag, Tooltip } from '@arco-design/web-react';
 import type { ColumnProps } from '@arco-design/web-react/es/Table';
 import type { HwfitFitLevel, HwfitResult } from '@/common/types/hwfit';
+import CookbookServeControls from './CookbookServeControls';
+import type { CookbookController } from './useCookbookServe';
 import styles from './ModelAdvisor.module.css';
 
 type ModelTableProps = {
   results: HwfitResult[];
   loading: boolean;
+  cookbook: CookbookController;
 };
 
 /** Arco Tag color per fit level (semantic, not decorative). */
@@ -24,7 +27,7 @@ const FIT_COLOR: Record<HwfitFitLevel, string> = {
   too_tight: 'red',
 };
 
-const ModelTable: React.FC<ModelTableProps> = ({ results, loading }) => {
+const ModelTable: React.FC<ModelTableProps> = ({ results, loading, cookbook }) => {
   const { t } = useTranslation();
 
   const columns = useMemo<ColumnProps<HwfitResult>[]>(
@@ -102,8 +105,15 @@ const ModelTable: React.FC<ModelTableProps> = ({ results, loading }) => {
         sorter: (a: HwfitResult, b: HwfitResult) => a.score - b.score,
         render: (score: number) => <span className={styles.scoreValue}>{score}</span>,
       },
+      {
+        title: t('modelAdvisor.cookbook.column'),
+        dataIndex: 'ggufSources',
+        width: 260,
+        render: (_: unknown, row: HwfitResult) =>
+          row.ggufSources.length > 0 ? <CookbookServeControls modelId={row.name} controller={cookbook} /> : null,
+      },
     ],
-    [t]
+    [t, cookbook]
   );
 
   return (

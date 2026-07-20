@@ -67,5 +67,30 @@
   },
   "footer": {
     "count": "{{shown}} of {{total}} models"
+  },
+  "cookbook": {
+    "column": "本地运行",
+    "download": "下载",
+    "serve": "运行",
+    "stop": "停止",
+    "cancel": "取消",
+    "retry": "重试",
+    "copyCommand": "复制命令",
+    "locate": "定位程序",
+    "copied": "命令已复制到剪贴板",
+    "needsBackend": "未找到本地服务器。请安装 ollama 或 vllm，复制命令自行运行，或指定 llama-server 可执行文件。",
+    "backendTip": "为你的硬件选择的运行后端",
+    "backend": {
+      "vllm": "vLLM",
+      "ollama": "Ollama",
+      "llamaServer": "llama.cpp",
+      "none": "无"
+    },
+    "status": {
+      "downloading": "下载中",
+      "starting": "启动中",
+      "ready": "运行中 · :{{port}}",
+      "error": "失败"
+    }
   }
 }

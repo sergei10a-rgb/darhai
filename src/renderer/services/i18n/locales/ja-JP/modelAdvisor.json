@@ -67,5 +67,30 @@
   },
   "footer": {
     "count": "{{shown}} of {{total}} models"
+  },
+  "cookbook": {
+    "column": "ローカル実行",
+    "download": "ダウンロード",
+    "serve": "起動",
+    "stop": "停止",
+    "cancel": "キャンセル",
+    "retry": "再試行",
+    "copyCommand": "コマンドをコピー",
+    "locate": "バイナリを指定",
+    "copied": "コマンドをクリップボードにコピーしました",
+    "needsBackend": "ローカルサーバーが見つかりません。ollama または vllm をインストールするか、コマンドをコピーして自分で実行するか、llama-server バイナリを指定してください。",
+    "backendTip": "ハードウェアに合わせた実行バックエンド",
+    "backend": {
+      "vllm": "vLLM",
+      "ollama": "Ollama",
+      "llamaServer": "llama.cpp",
+      "none": "なし"
+    },
+    "status": {
+      "downloading": "ダウンロード中",
+      "starting": "起動中",
+      "ready": "稼働中 · :{{port}}",
+      "error": "失敗"
+    }
   }
 }

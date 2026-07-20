@@ -67,5 +67,30 @@
   },
   "footer": {
     "count": "{{shown}} of {{total}} models"
+  },
+  "cookbook": {
+    "column": "로컬 실행",
+    "download": "다운로드",
+    "serve": "실행",
+    "stop": "중지",
+    "cancel": "취소",
+    "retry": "다시 시도",
+    "copyCommand": "명령 복사",
+    "locate": "바이너리 지정",
+    "copied": "명령을 클립보드에 복사했습니다",
+    "needsBackend": "로컬 서버를 찾을 수 없습니다. ollama 또는 vllm을 설치하거나, 명령을 복사해 직접 실행하거나, llama-server 바이너리를 지정하세요.",
+    "backendTip": "하드웨어에 맞는 실행 백엔드",
+    "backend": {
+      "vllm": "vLLM",
+      "ollama": "Ollama",
+      "llamaServer": "llama.cpp",
+      "none": "없음"
+    },
+    "status": {
+      "downloading": "다운로드 중",
+      "starting": "시작 중",
+      "ready": "실행 중 · :{{port}}",
+      "error": "실패"
+    }
   }
 }

@@ -61,6 +61,7 @@ import { initHubBridge } from './hubBridge';
 import { initTeamBridge } from './teamBridge';
 import { initMissionControlBridge } from './missionControlBridge';
 import { initHwfitBridge } from './hwfitBridge';
+import { initCookbookBridge } from './cookbookBridge';
 import { initCompareBridge } from './compareBridge';
 import { initNoteBridge } from './noteBridge';
 import { initCalendarBridge } from './calendarBridge';
@@ -137,6 +138,7 @@ export function initAllBridges(deps: BridgeDependencies): void {
   initTeamBridge(deps.teamSessionService);
   initMissionControlBridge(deps.teamSessionService);
   initHwfitBridge();
+  initCookbookBridge();
   initCompareBridge();
   initNoteBridge();
   initCalendarBridge();
@@ -212,6 +214,7 @@ export {
   initHubBridge,
   initTeamBridge,
   initHwfitBridge,
+  initCookbookBridge,
   initCompareBridge,
   initNoteBridge,
   initCalendarBridge,

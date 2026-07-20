@@ -67,5 +67,30 @@
   },
   "footer": {
     "count": "{{shown}} of {{total}} models"
+  },
+  "cookbook": {
+    "column": "Lokal bereitstellen",
+    "download": "Herunterladen",
+    "serve": "Starten",
+    "stop": "Stoppen",
+    "cancel": "Abbrechen",
+    "retry": "Erneut versuchen",
+    "copyCommand": "Befehl kopieren",
+    "locate": "Binärdatei suchen",
+    "copied": "Befehl in die Zwischenablage kopiert",
+    "needsBackend": "Kein lokaler Server gefunden. Installiere ollama oder vllm, kopiere den Befehl, um ihn selbst auszuführen, oder wähle eine llama-server-Binärdatei.",
+    "backendTip": "Ausführungs-Backend für deine Hardware",
+    "backend": {
+      "vllm": "vLLM",
+      "ollama": "Ollama",
+      "llamaServer": "llama.cpp",
+      "none": "Keiner"
+    },
+    "status": {
+      "downloading": "Wird heruntergeladen",
+      "starting": "Startet",
+      "ready": "Aktiv · :{{port}}",
+      "error": "Fehlgeschlagen"
+    }
   }
 }

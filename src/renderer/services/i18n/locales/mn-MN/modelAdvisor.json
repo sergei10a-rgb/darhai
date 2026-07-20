@@ -67,5 +67,30 @@
   },
   "footer": {
     "count": "{{total}} загвараас {{shown}} нь"
+  },
+  "cookbook": {
+    "column": "Локал ажиллуулах",
+    "download": "Татах",
+    "serve": "Ажиллуулах",
+    "stop": "Зогсоох",
+    "cancel": "Цуцлах",
+    "retry": "Дахин оролдох",
+    "copyCommand": "Командыг хуулах",
+    "locate": "Файл зааж өгөх",
+    "copied": "Командыг санах ойд хууллаа",
+    "needsBackend": "Локал сервер олдсонгүй. ollama эсвэл vllm суулгах, командыг хуулж өөрөө ажиллуулах, эсвэл llama-server файлыг зааж өгнө үү.",
+    "backendTip": "Таны тоног төхөөрөмжид сонгогдсон ажиллуулах сервер",
+    "backend": {
+      "vllm": "vLLM",
+      "ollama": "Ollama",
+      "llamaServer": "llama.cpp",
+      "none": "Байхгүй"
+    },
+    "status": {
+      "downloading": "Татаж байна",
+      "starting": "Эхлүүлж байна",
+      "ready": "Идэвхтэй · :{{port}}",
+      "error": "Амжилтгүй"
+    }
   }
 }

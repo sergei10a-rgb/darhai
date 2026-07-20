@@ -1175,6 +1175,56 @@ export const compare = {
 };
 
 /**
+ * Cookbook serve: download a recommended GGUF + auto-serve it as a local,
+ * keyless OpenAI-compatible provider (the download/serve extension of the
+ * read-only hwfit advisor). Every verb is remote-denied wholesale (the
+ * `cookbook.` prefix in bridgeAllowlist REMOTE_DENIED_PREFIXES): a multi-GB
+ * download + subprocess spawn is a host-side DoS/exec class a paired-device
+ * WebSocket caller must never drive. Only the trusted local user serves models.
+ */
+export const cookbook = {
+  /** Every download the UI should know about (in-memory + cached on disk). */
+  listDownloads: buildProvider<import('@/common/types/cookbook').CookbookDownloadInfo[], void>(
+    'cookbook.list-downloads'
+  ),
+  /** Resolve + download a model's GGUF build (progress via onDownloadProgress). */
+  download: buildProvider<
+    import('@/common/types/cookbook').CookbookDownloadInfo,
+    import('@/common/types/cookbook').CookbookModelRequest
+  >('cookbook.download'),
+  /** Cancel an in-flight download. */
+  cancelDownload: buildProvider<{ cancelled: boolean }, import('@/common/types/cookbook').CookbookCancelRequest>(
+    'cookbook.cancel-download'
+  ),
+  /** Serve + register the model through the hardware-selected (or overridden) backend. */
+  serve: buildProvider<
+    import('@/common/types/cookbook').CookbookServeStatus,
+    import('@/common/types/cookbook').CookbookServeRequest
+  >('cookbook.serve'),
+  /** Stop the active serve and flip the provider offline. */
+  stopServe: buildProvider<import('@/common/types/cookbook').CookbookServeStatus, void>('cookbook.stop-serve'),
+  /** Current serve status. */
+  serveStatus: buildProvider<import('@/common/types/cookbook').CookbookServeStatus, void>('cookbook.serve-status'),
+  /** Detect an installed local backend (raw probe: ollama / llama-server / vllm / none). */
+  detectBackend: buildProvider<import('@/common/types/cookbook').CookbookBackend, void>('cookbook.detect-backend'),
+  /** Hardware-adaptive backend choice for this host (chosen + viable overrides). */
+  backendOptions: buildProvider<import('@/common/types/cookbook').CookbookBackendSelection, void>(
+    'cookbook.backend-options'
+  ),
+  /** Point the serve path at a user-located llama-server binary. */
+  locateBackend: buildProvider<
+    import('@/common/types/cookbook').CookbookLocateBackendResult,
+    import('@/common/types/cookbook').CookbookLocateBackendRequest
+  >('cookbook.locate-backend'),
+  /** Streaming download progress (cumulative bytes). */
+  onDownloadProgress: buildEmitter<import('@/common/types/cookbook').CookbookDownloadProgress>(
+    'cookbook.on-download-progress'
+  ),
+  /** Serve-status changes (idle/downloading/starting/ready/error/...). */
+  onServeStatus: buildEmitter<import('@/common/types/cookbook').CookbookServeStatus>('cookbook.on-serve-status'),
+};
+
+/**
  * v0.6.2.6 - payload returned by cron.confirmProposal when action='edit'.
  * The renderer uses this to open CreateTaskDialog pre-filled so the user
  * can tweak the proposed cron before saving.

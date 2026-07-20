@@ -67,5 +67,30 @@
   },
   "footer": {
     "count": "{{shown}} of {{total}} models"
+  },
+  "cookbook": {
+    "column": "Servir local",
+    "download": "Descargar",
+    "serve": "Servir",
+    "stop": "Detener",
+    "cancel": "Cancelar",
+    "retry": "Reintentar",
+    "copyCommand": "Copiar comando",
+    "locate": "Localizar binario",
+    "copied": "Comando copiado al portapapeles",
+    "needsBackend": "No se encontró un servidor local. Instala ollama o vllm, copia el comando para ejecutarlo tú mismo, o selecciona un binario llama-server.",
+    "backendTip": "Backend de servicio para tu hardware",
+    "backend": {
+      "vllm": "vLLM",
+      "ollama": "Ollama",
+      "llamaServer": "llama.cpp",
+      "none": "Ninguno"
+    },
+    "status": {
+      "downloading": "Descargando",
+      "starting": "Iniciando",
+      "ready": "Activo · :{{port}}",
+      "error": "Falló"
+    }
   }
 }

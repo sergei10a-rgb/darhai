@@ -140,6 +140,15 @@ const REMOTE_DENIED_PREFIXES: readonly string[] = [
   // later. byConversation/series in particular disclose per-conversation usage
   // and a fine-grained activity timeline. Local-renderer-only surface.
   'cost.',
+  // Cookbook serve (download + auto-serve local models). The whole cookbook.*
+  // namespace is remote-denied: `download` pulls a multi-GB GGUF and `serve`
+  // spawns a llama-server / runs `ollama pull` on the host - a host-side
+  // DoS/exec class a paired-device WebSocket caller must never drive. Even the
+  // read verbs (list-downloads / serve-status / detect-backend) are denied for
+  // consistency; they expose host-side install + model-cache state. The
+  // renderer-local Model Advisor UI is unaffected; only remote WS callers are
+  // blocked (matches how hwfit.* is denied wholesale).
+  'cookbook.',
 ];
 // Note: fs provider keys are registered WITHOUT an `fs.` prefix on the wire
 // (e.g. `write-file`, `remove-entry`), so the dangerous fs surface is enumerated

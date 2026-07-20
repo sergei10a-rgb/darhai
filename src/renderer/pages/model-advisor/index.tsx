@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { Cpu } from 'lucide-react';
 import PageShell from '@/renderer/components/layout/PageShell';
 import { useModelAdvisor } from './useModelAdvisor';
+import { useCookbookServe } from './useCookbookServe';
 import HardwarePanel from './HardwarePanel';
 import AdvisorToolbar from './AdvisorToolbar';
 import ModelTable from './ModelTable';
@@ -34,6 +35,7 @@ const ModelAdvisorPage: React.FC = () => {
     setOverride,
     rescan,
   } = useModelAdvisor();
+  const cookbook = useCookbookServe();
 
   const [gpuOnly, setGpuOnly] = useState(true);
   const [rescanning, setRescanning] = useState(false);
@@ -94,7 +96,7 @@ const ModelAdvisorPage: React.FC = () => {
           <span className={styles.emptyHint}>{t('modelAdvisor.empty.hint')}</span>
         </div>
       ) : (
-        <ModelTable results={results} loading={rankLoading} />
+        <ModelTable results={results} loading={rankLoading} cookbook={cookbook} />
       )}
 
       <div className={styles.footer}>
