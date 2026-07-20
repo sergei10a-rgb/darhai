@@ -22,7 +22,7 @@
     "errorUnrecognized": "Flux Router 키가 아닌 것 같습니다. sk-flux- 로 시작해야 합니다.",
     "errorNoModels": "연결되었지만 모델이 반환되지 않았습니다. 잠시 후 다시 시도하세요.",
     "errorUnknown": "연결 중 문제가 발생했습니다. 다시 시도하세요.",
-    "trust": "Ferrox Labs의 오픈소스 Wayland 기술을 기반으로 합니다."
+    "trust": "오픈소스 기술을 기반으로 합니다."
   },
   "scenarioA": {
     "greeting": "{{name}}님, 이미 준비되었습니다",

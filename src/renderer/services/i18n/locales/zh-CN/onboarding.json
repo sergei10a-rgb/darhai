@@ -22,7 +22,7 @@
     "errorUnrecognized": "这看起来不像 Flux Router 密钥，应以 sk-flux- 开头。",
     "errorNoModels": "已连接，但未返回任何模型。请稍后重试。",
     "errorUnknown": "连接出错，请重试。",
-    "trust": "基于 Ferrox Labs 的开源 Wayland 技术构建。"
+    "trust": "基于开源技术构建。"
   },
   "scenarioA": {
     "greeting": "{{name}}，你已就绪",

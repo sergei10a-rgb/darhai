@@ -22,7 +22,7 @@
     "errorUnrecognized": "これは Flux Router のキーではないようです。sk-flux- で始まる必要があります。",
     "errorNoModels": "接続されましたが、モデルが返されませんでした。しばらくしてから再試行してください。",
     "errorUnknown": "接続中に問題が発生しました。再試行してください。",
-    "trust": "Ferrox Labs のオープンソース技術 Wayland を基盤としています。"
+    "trust": "オープンソース技術を基盤としています。"
   },
   "scenarioA": {
     "greeting": "{{name}}さん、すでに準備万端です",

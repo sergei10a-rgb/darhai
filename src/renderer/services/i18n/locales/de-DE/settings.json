@@ -2003,7 +2003,7 @@
       "errorUnrecognized": "Dieser Schlüssel wurde für {{provider}} nicht erkannt.",
       "errorNoModels": "{{provider}} verbunden, aber keine Modelle zurückgegeben. Versuche es gleich noch einmal.",
       "errorUnknown": "Verbindung zu {{provider}} fehlgeschlagen. Bitte versuche es erneut.",
-      "trust": "Basiert auf der Open-Source-Technologie Wayland von Ferrox Labs."
+      "trust": "Basiert auf Open-Source-Technologie."
     },
     "detected": {
       "found": "Ein {{provider}}-API-Schlüssel auf diesem Gerät gefunden. Verwenden?",

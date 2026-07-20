@@ -22,7 +22,7 @@
     "errorUnrecognized": "That key was not accepted as a Flux Router key. Double-check it and try again.",
     "errorNoModels": "Connected, but no models came back. Try again in a moment.",
     "errorUnknown": "Something went wrong connecting. Try again.",
-    "trust": "Built on the open-source Wayland technology by Ferrox Labs."
+    "trust": "Built on open-source technology."
   },
   "scenarioA": {
     "greeting": "{{name}}, you're already wired",

@@ -2021,7 +2021,7 @@
       "errorUnrecognized": "That key was not recognized for {{provider}}.",
       "errorNoModels": "{{provider}} connected but returned no models. Try again in a moment.",
       "errorUnknown": "Couldn't connect to {{provider}}. Please try again.",
-      "trust": "Built on the open-source Wayland technology by Ferrox Labs."
+      "trust": "Built on open-source technology."
     },
     "detected": {
       "found": "Found a {{provider}} API key on this machine. Use it?",

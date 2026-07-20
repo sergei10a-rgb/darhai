@@ -5,7 +5,7 @@
   },
   "pitch": {
     "headline": "跟著你走的記憶",
-    "lede": "Darhai 記得你做過什麼、決定過什麼、發佈過什麼。每位助手都能拿到這些脈絡 -- 不必再說明一次。由 Ferrox Labs 出品的開源記憶引擎 IJFW 提供支援。",
+    "lede": "Darhai 記得你做過什麼、決定過什麼、發佈過什麼。每位助手都能拿到這些脈絡 -- 不必再說明一次。由 Darhai 內建的記憶引擎提供支援。",
     "bullet1": "在聊天、專案和命令列工具間持續保留",
     "bullet2": "可搜尋、可匯出，完全屬於你",
     "bullet3": "安裝後無需任何設定",
@@ -16,14 +16,14 @@
   "setting_up": {
     "title": "正在設定記憶",
     "subtitle": "只會發生一次，並在背景完成。你可以繼續工作。",
-    "brand_line": "IJFW Memory by Ferrox Labs",
+    "brand_line": "Darhai Memory",
     "taking_longer": "仍在設定中... 網路較慢時最多可能需要一分鐘。",
     "help": "遇到問題？前往設定手動重試。"
   },
   "brand": {
-    "tagline": "IJFW Memory by Ferrox Labs",
-    "footer": "由 IJFW（開源）提供支援，出品方：Ferrox Labs",
-    "github_link": "IJFW GitHub"
+    "tagline": "Darhai Memory",
+    "footer": "Darhai 內建記憶引擎",
+    "github_link": "Darhai GitHub"
   },
   "installing": {
     "title": "正在安裝記憶",
@@ -45,7 +45,7 @@
     "retry": "重試",
     "details_toggle": "顯示詳情",
     "details_hide": "隱藏詳情",
-    "support_link": "IJFW engine help: github.com/FerroxLabs/ijfw"
+    "support_link": "Darhai 記憶說明：github.com/sergei10a-rgb/darhai"
   },
   "error": {
     "spawn_error": "無法啟動安裝程式。請確認 npm 在你的 PATH 中。",
@@ -78,7 +78,7 @@
   },
   "panel": {
     "header_breadcrumb": "記憶",
-    "subtitle": "IJFW Memory by Ferrox Labs",
+    "subtitle": "Darhai Memory",
     "button_drop": "丟棄",
     "button_history": "紀錄",
     "button_add": "新增記憶",
@@ -95,17 +95,17 @@
     "banner": "記憶目前處於降級模式 -- 聊天仍可使用，但增強功能已關閉"
   },
   "settings": {
-    "panel_title": "IJFW Memory（Ferrox Labs）",
-    "skip_label": "略過 IJFW 自動設定",
-    "skip_description": "啟用後，Darhai 將不會安裝或升級 IJFW。你之後可以透過記憶頁面手動安裝。",
-    "manual_install_hint": "手動安裝：在終端機中執行 `npx -y @ijfw/install@latest`",
-    "about_title": "IJFW Memory",
-    "about_body": "由 Ferrox Labs 出品的開源持久化記憶引擎。"
+    "panel_title": "Darhai Memory",
+    "skip_label": "略過記憶引擎自動設定",
+    "skip_description": "啟用後，Darhai 不會自動設定或升級其記憶引擎。你之後可以透過記憶頁面進行設定。",
+    "manual_install_hint": "Darhai 會自動設定其記憶引擎；你可以從記憶頁面重新執行設定。",
+    "about_title": "Darhai Memory",
+    "about_body": "Darhai 內建的持久化記憶引擎。"
   },
   "prelude": {
-    "installing_notice": "IJFW 正在安裝。外部命令列工具（Claude Code、Codex、Gemini CLI）會在安裝完成後識別它。",
-    "disabled_notice": "IJFW 已在 Darhai 設定中關閉。請重新啟用以與外部命令列共享記憶。",
-    "failed_notice": "IJFW 安裝失敗。請在 Darhai 的記憶頁面重試。"
+    "installing_notice": "Darhai 的記憶引擎正在設定。外部命令列工具（Claude Code、Codex、Gemini CLI）會在設定完成後識別它。",
+    "disabled_notice": "Darhai 的記憶引擎已在設定中關閉。請重新啟用以與外部命令列共享記憶。",
+    "failed_notice": "Darhai 的記憶引擎設定失敗。請在 Darhai 的記憶頁面重試。"
   },
   "home": {
     "wiki_title": "Wiki",
@@ -254,7 +254,7 @@
   "archive": {
     "topbar": {
       "title": "記憶",
-      "subtitle": "IJFW · Ferrox Labs",
+      "subtitle": "Darhai Memory",
       "streak_pill": "{{sessions}} 次工作階段 · 最長連續 {{longestDays}} 天",
       "streak_empty": "尚無工作階段記錄",
       "import_btn": "匯入…",
@@ -431,7 +431,7 @@
       },
       "devScan": {
         "title": "~/dev 掃描",
-        "hint": "掃描 ~/dev 以尋找 IJFW 記憶目錄",
+        "hint": "掃描 ~/dev 以尋找現有的記憶目錄",
         "count": "已匯入約 {{count}} 筆項目",
         "btn": "匯入",
         "success": "已從 {{projects}} 個專案匯入 {{count}} 筆項目",

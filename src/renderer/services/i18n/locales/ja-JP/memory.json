@@ -5,7 +5,7 @@
   },
   "pitch": {
     "headline": "あなたについてくるメモリ",
-    "lede": "Darhai は、これまで取り組んだこと、決定したこと、リリースしたことを記憶しています。すべてのアシスタントが文脈を共有するため、説明し直す必要はありません。Ferrox Labs によるオープンソースのメモリエンジン IJFW を搭載しています。",
+    "lede": "Darhai は、これまで取り組んだこと、決定したこと、リリースしたことを記憶しています。すべてのアシスタントが文脈を共有するため、説明し直す必要はありません。Darhai 独自の組み込みメモリエンジンで動作します。",
     "bullet1": "チャット、プロジェクト、CLI をまたいで持続します",
     "bullet2": "検索可能、エクスポート可能、あなたのものです",
     "bullet3": "インストール後の設定は不要です",
@@ -16,14 +16,14 @@
   "setting_up": {
     "title": "メモリをセットアップ中",
     "subtitle": "一度だけバックグラウンドで実行されます。作業はそのまま続けられます。",
-    "brand_line": "IJFW Memory by Ferrox Labs",
+    "brand_line": "Darhai Memory",
     "taking_longer": "セットアップを続行中... 通信環境によっては最大 1 分ほどかかります。",
     "help": "問題が起きましたか？ 設定画面から手動で再試行できます。"
   },
   "brand": {
-    "tagline": "IJFW Memory by Ferrox Labs",
-    "footer": "Powered by IJFW（オープンソース）by Ferrox Labs",
-    "github_link": "IJFW GitHub"
+    "tagline": "Darhai Memory",
+    "footer": "Darhai の組み込みメモリエンジン",
+    "github_link": "Darhai GitHub"
   },
   "installing": {
     "title": "メモリをインストール中",
@@ -45,7 +45,7 @@
     "retry": "再試行",
     "details_toggle": "詳細を表示",
     "details_hide": "詳細を隠す",
-    "support_link": "IJFW engine help: github.com/FerroxLabs/ijfw"
+    "support_link": "Darhai メモリのヘルプ: github.com/sergei10a-rgb/darhai"
   },
   "error": {
     "spawn_error": "インストーラーを起動できませんでした。npm が PATH に含まれているか確認してください。",
@@ -78,7 +78,7 @@
   },
   "panel": {
     "header_breadcrumb": "メモリ",
-    "subtitle": "IJFW Memory by Ferrox Labs",
+    "subtitle": "Darhai Memory",
     "button_drop": "ドロップ",
     "button_history": "履歴",
     "button_add": "メモリを追加",
@@ -95,17 +95,17 @@
     "banner": "メモリは現在縮退モードで動作しています。チャットは引き続き利用できますが、補強機能はオフです"
   },
   "settings": {
-    "panel_title": "IJFW Memory（Ferrox Labs）",
-    "skip_label": "IJFW の自動セットアップをスキップ",
-    "skip_description": "有効にすると、Darhai は IJFW をインストールまたはアップグレードしません。後でメモリページから手動でインストールできます。",
-    "manual_install_hint": "手動でインストールするには、ターミナルで `npx -y @ijfw/install@latest` を実行してください",
-    "about_title": "IJFW Memory",
-    "about_body": "Ferrox Labs によるオープンソースの永続メモリエンジンです。"
+    "panel_title": "Darhai Memory",
+    "skip_label": "メモリエンジンの自動セットアップをスキップ",
+    "skip_description": "有効にすると、Darhai はメモリエンジンを自動でセットアップまたはアップグレードしません。後でメモリページからセットアップできます。",
+    "manual_install_hint": "Darhai はメモリエンジンを自動でセットアップします。メモリページからセットアップを再実行できます。",
+    "about_title": "Darhai Memory",
+    "about_body": "Darhai の組み込み永続メモリエンジンです。"
   },
   "prelude": {
-    "installing_notice": "IJFW のインストールが進行中です。外部 CLI（Claude Code、Codex、Gemini CLI）はインストール完了後に連携します。",
-    "disabled_notice": "IJFW は Darhai の設定で無効化されています。外部 CLI とメモリを共有するには再度有効にしてください。",
-    "failed_notice": "IJFW のインストールに失敗しました。Darhai のメモリページから再試行してください。"
+    "installing_notice": "Darhai のメモリエンジンをセットアップしています。外部 CLI（Claude Code、Codex、Gemini CLI）はセットアップ完了後に連携します。",
+    "disabled_notice": "Darhai のメモリエンジンは設定で無効化されています。外部 CLI とメモリを共有するには再度有効にしてください。",
+    "failed_notice": "Darhai のメモリエンジンのセットアップに失敗しました。Darhai のメモリページから再試行してください。"
   },
   "home": {
     "wiki_title": "Wiki",
@@ -254,7 +254,7 @@
   "archive": {
     "topbar": {
       "title": "メモリ",
-      "subtitle": "IJFW · Ferrox Labs",
+      "subtitle": "Darhai Memory",
       "streak_pill": "{{sessions}} セッション · 最長 {{longestDays}} 日連続",
       "streak_empty": "まだセッションがありません",
       "import_btn": "インポート…",
@@ -431,7 +431,7 @@
       },
       "devScan": {
         "title": "~/dev スキャン",
-        "hint": "~/dev をスキャンして IJFW メモリディレクトリを検索します",
+        "hint": "~/dev をスキャンして既存のメモリディレクトリを検索します",
         "count": "約 {{count}} 件のエントリをインポートしました",
         "btn": "インポート",
         "success": "{{projects}} 件のプロジェクトから {{count}} 件のエントリをインポートしました",

@@ -2003,7 +2003,7 @@
       "errorUnrecognized": "No se reconoció esa clave para {{provider}}.",
       "errorNoModels": "{{provider}} se conectó pero no devolvió modelos. Inténtalo de nuevo en un momento.",
       "errorUnknown": "No se pudo conectar a {{provider}}. Inténtalo de nuevo.",
-      "trust": "Basado en la tecnología de código abierto Wayland de Ferrox Labs."
+      "trust": "Basado en tecnología de código abierto."
     },
     "detected": {
       "found": "Se encontró una clave de API de {{provider}} en este equipo. ¿Usarla?",

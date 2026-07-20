@@ -1970,7 +1970,7 @@
       "errorUnrecognized": "そのキーは {{provider}} 用として認識されませんでした。",
       "errorNoModels": "{{provider}} に接続しましたが、モデルが返されませんでした。しばらくして再試行してください。",
       "errorUnknown": "{{provider}} に接続できませんでした。再試行してください。",
-      "trust": "Ferrox Labs のオープンソース技術 Wayland を基盤としています。"
+      "trust": "オープンソース技術を基盤としています。"
     },
     "detected": {
       "found": "このマシンで {{provider}} API キーが見つかりました。使用しますか？",

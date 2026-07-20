@@ -22,7 +22,7 @@
     "errorUnrecognized": "Dieser Key wurde nicht als Flux-Router-Key akzeptiert. Prüfe ihn und versuche es erneut.",
     "errorNoModels": "Verbunden, aber es kamen keine Modelle zurück. Versuche es gleich noch einmal.",
     "errorUnknown": "Beim Verbinden ist etwas schiefgelaufen. Versuche es erneut.",
-    "trust": "Basiert auf der Open-Source-Technologie Wayland von Ferrox Labs."
+    "trust": "Basiert auf Open-Source-Technologie."
   },
   "scenarioA": {
     "greeting": "{{name}}, du bist schon startklar",

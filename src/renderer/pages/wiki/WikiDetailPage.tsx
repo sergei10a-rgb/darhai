@@ -190,7 +190,7 @@ export function WikiDetailPage({ slug, onBack, onNavigate }: WikiDetailPageProps
   }
 
   const linkedFrom = concept.linkedFromConcepts;
-  const filePath = `~/dev/darhai/.ijfw/wiki/${concept.slug}.md`;
+  const filePath = `~/dev/darhai/.darhai/wiki/${concept.slug}.md`;
 
   return (
     <div className={styles.page}>

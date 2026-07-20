@@ -1970,7 +1970,7 @@
       "errorUnrecognized": "無法為 {{provider}} 辨識該金鑰。",
       "errorNoModels": "{{provider}} 已連接但未返回任何模型。請稍後重試。",
       "errorUnknown": "無法連接 {{provider}}。請重試。",
-      "trust": "基於 Ferrox Labs 的開源 Wayland 技術打造。"
+      "trust": "基於開源技術打造。"
     },
     "detected": {
       "found": "在本機上發現一個 {{provider}} API 金鑰。使用它嗎？",

@@ -5,7 +5,7 @@
   },
   "pitch": {
     "headline": "Пам'ять, що йде за вами",
-    "lede": "Darhai пам'ятає, над чим ви працювали, які рішення ухвалювали і що випускали. Кожен асистент отримує контекст -- не потрібно пояснювати наново. Працює на IJFW, відкритому рушії пам'яті від Ferrox Labs.",
+    "lede": "Darhai пам'ятає, над чим ви працювали, які рішення ухвалювали і що випускали. Кожен асистент отримує контекст -- не потрібно пояснювати наново. Працює на власному вбудованому рушії пам'яті Darhai.",
     "bullet1": "Зберігається між чатами, проєктами та CLI",
     "bullet2": "З можливістю пошуку, експорту і повністю у вашому розпорядженні",
     "bullet3": "Жодних налаштувань після встановлення",
@@ -16,14 +16,14 @@
   "setting_up": {
     "title": "Налаштовуємо Пам'ять",
     "subtitle": "Це відбувається один раз, у фоновому режимі. Ви можете продовжувати працювати.",
-    "brand_line": "IJFW Memory by Ferrox Labs",
+    "brand_line": "Darhai Memory",
     "taking_longer": "Налаштування триває... за повільного з'єднання це може зайняти до хвилини.",
     "help": "Виникли проблеми? Відкрийте Налаштування, щоб повторити вручну."
   },
   "brand": {
-    "tagline": "IJFW Memory by Ferrox Labs",
-    "footer": "На базі IJFW (відкритий код) від Ferrox Labs",
-    "github_link": "IJFW GitHub"
+    "tagline": "Darhai Memory",
+    "footer": "Вбудований рушій пам'яті Darhai",
+    "github_link": "Darhai GitHub"
   },
   "installing": {
     "title": "Встановлення Пам'яті",
@@ -45,7 +45,7 @@
     "retry": "Повторити",
     "details_toggle": "Показати подробиці",
     "details_hide": "Сховати подробиці",
-    "support_link": "IJFW engine help: github.com/FerroxLabs/ijfw"
+    "support_link": "Довідка з пам'яті Darhai: github.com/sergei10a-rgb/darhai"
   },
   "error": {
     "spawn_error": "Не вдалося запустити інсталятор. Переконайтеся, що npm доступний у PATH.",
@@ -78,7 +78,7 @@
   },
   "panel": {
     "header_breadcrumb": "Пам'ять",
-    "subtitle": "IJFW Memory by Ferrox Labs",
+    "subtitle": "Darhai Memory",
     "button_drop": "Скинути",
     "button_history": "Історія",
     "button_add": "Додати запис",
@@ -95,17 +95,17 @@
     "banner": "Пам'ять зараз працює у деградованому режимі -- чат продовжує працювати, але збагачення вимкнено"
   },
   "settings": {
-    "panel_title": "IJFW Memory (Ferrox Labs)",
-    "skip_label": "Пропустити автоматичне налаштування IJFW",
-    "skip_description": "Коли увімкнено, Darhai не встановлюватиме і не оновлюватиме IJFW. Ви зможете встановити вручну пізніше через сторінку Пам'яті.",
-    "manual_install_hint": "Для встановлення вручну виконайте в терміналі: `npx -y @ijfw/install@latest`",
-    "about_title": "IJFW Memory",
-    "about_body": "Відкритий рушій постійної пам'яті від Ferrox Labs."
+    "panel_title": "Darhai Memory",
+    "skip_label": "Пропустити автоматичне налаштування рушія пам'яті",
+    "skip_description": "Коли увімкнено, Darhai не налаштовуватиме й не оновлюватиме свій рушій пам'яті автоматично. Ви зможете налаштувати його пізніше через сторінку Пам'яті.",
+    "manual_install_hint": "Darhai налаштовує свій рушій пам'яті автоматично; ви можете повторно запустити налаштування на сторінці Пам'яті.",
+    "about_title": "Darhai Memory",
+    "about_body": "Вбудований рушій постійної пам'яті Darhai."
   },
   "prelude": {
-    "installing_notice": "IJFW встановлюється. Зовнішні CLI (Claude Code, Codex, Gemini CLI) підхоплять його після завершення встановлення.",
-    "disabled_notice": "IJFW вимкнено в Налаштуваннях Darhai. Увімкніть його знову, щоб ділитися пам'яттю з зовнішніми CLI.",
-    "failed_notice": "Встановлення IJFW не вдалося. Відкрийте сторінку Пам'яті у Darhai, щоб повторити спробу."
+    "installing_notice": "Рушій пам'яті Darhai налаштовується. Зовнішні CLI (Claude Code, Codex, Gemini CLI) підхоплять його після завершення налаштування.",
+    "disabled_notice": "Рушій пам'яті Darhai вимкнено в Налаштуваннях. Увімкніть його знову, щоб ділитися пам'яттю із зовнішніми CLI.",
+    "failed_notice": "Не вдалося налаштувати рушій пам'яті Darhai. Відкрийте сторінку Пам'яті у Darhai, щоб повторити спробу."
   },
   "home": {
     "wiki_title": "Wiki",
@@ -254,7 +254,7 @@
   "archive": {
     "topbar": {
       "title": "Пам'ять",
-      "subtitle": "IJFW · Ferrox Labs",
+      "subtitle": "Darhai Memory",
       "streak_pill": "{{sessions}} сесій · {{longestDays}} дн. макс. серія",
       "streak_empty": "Сесій ще немає",
       "import_btn": "Імпорт…",
@@ -431,7 +431,7 @@
       },
       "devScan": {
         "title": "Сканування ~/dev",
-        "hint": "Сканує ~/dev на наявність каталогів пам'яті IJFW",
+        "hint": "Сканує ~/dev на наявність наявних каталогів пам'яті",
         "count": "~{{count}} записів імпортовано",
         "btn": "Імпортувати",
         "success": "Імпортовано {{count}} записів із {{projects}} проєктів",

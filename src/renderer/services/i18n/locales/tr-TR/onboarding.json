@@ -22,7 +22,7 @@
     "errorUnrecognized": "Bu bir Flux Router anahtarına benzemiyor. sk-flux- ile başlamalı.",
     "errorNoModels": "Bağlandı ama hiç model gelmedi. Birazdan tekrar deneyin.",
     "errorUnknown": "Bağlanırken bir sorun oluştu. Tekrar deneyin.",
-    "trust": "Ferrox Labs'ın açık kaynaklı Wayland teknolojisi üzerine kuruludur."
+    "trust": "Açık kaynaklı teknoloji üzerine kuruludur."
   },
   "scenarioA": {
     "greeting": "{{name}}, zaten hazırsınız",

@@ -22,7 +22,7 @@
     "errorUnrecognized": "Essa chave não foi aceita como chave do Flux Router. Confira e tente novamente.",
     "errorNoModels": "Conectado, mas nenhum modelo retornou. Tente novamente em instantes.",
     "errorUnknown": "Algo deu errado ao conectar. Tente novamente.",
-    "trust": "Baseado na tecnologia de código aberto Wayland da Ferrox Labs."
+    "trust": "Baseado em tecnologia de código aberto."
   },
   "scenarioA": {
     "greeting": "{{name}}, você já está conectado",

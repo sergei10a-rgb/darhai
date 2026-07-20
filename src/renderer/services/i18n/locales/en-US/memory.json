@@ -5,7 +5,7 @@
   },
   "pitch": {
     "headline": "Memory that follows you",
-    "lede": "Darhai remembers what you've worked on, decided, and shipped. Every assistant gets the context -- no re-explaining. Powered by IJFW, an open-source memory engine by Ferrox Labs.",
+    "lede": "Darhai remembers what you've worked on, decided, and shipped. Every assistant gets the context -- no re-explaining. Powered by Darhai's own built-in memory engine.",
     "bullet1": "Persistent across chats, projects, and CLIs",
     "bullet2": "Searchable, exportable, yours",
     "bullet3": "Zero setup after install",
@@ -16,14 +16,14 @@
   "setting_up": {
     "title": "Setting up Memory",
     "subtitle": "This happens once, in the background. You can keep working.",
-    "brand_line": "IJFW Memory by Ferrox Labs",
+    "brand_line": "Darhai Memory",
     "taking_longer": "Still setting up... this can take up to a minute on slow connections.",
     "help": "Trouble? Visit Settings to retry manually."
   },
   "brand": {
-    "tagline": "IJFW Memory by Ferrox Labs",
-    "footer": "Powered by IJFW (open source) by Ferrox Labs",
-    "github_link": "IJFW GitHub"
+    "tagline": "Darhai Memory",
+    "footer": "Darhai's built-in memory engine",
+    "github_link": "Darhai GitHub"
   },
   "installing": {
     "title": "Installing Memory",
@@ -45,7 +45,7 @@
     "retry": "Retry",
     "details_toggle": "Show details",
     "details_hide": "Hide details",
-    "support_link": "IJFW engine help: github.com/FerroxLabs/ijfw"
+    "support_link": "Darhai memory help: github.com/sergei10a-rgb/darhai"
   },
   "error": {
     "spawn_error": "Couldn't start the installer. Check that npm is on your PATH.",
@@ -78,7 +78,7 @@
   },
   "panel": {
     "header_breadcrumb": "Memory",
-    "subtitle": "IJFW Memory by Ferrox Labs",
+    "subtitle": "Darhai Memory",
     "button_drop": "Drop",
     "button_history": "History",
     "button_add": "Add memory",
@@ -95,17 +95,17 @@
     "banner": "Memory is currently in degraded mode -- chat still works, but enrichment is off"
   },
   "settings": {
-    "panel_title": "IJFW Memory (Ferrox Labs)",
-    "skip_label": "Skip IJFW automatic setup",
-    "skip_description": "When enabled, Darhai will not install or upgrade IJFW. You can install manually later via the Memory page.",
-    "manual_install_hint": "To install manually: run `npx -y @ijfw/install@latest` in a terminal",
-    "about_title": "IJFW Memory",
-    "about_body": "An open-source persistent memory engine by Ferrox Labs."
+    "panel_title": "Darhai Memory",
+    "skip_label": "Skip automatic memory-engine setup",
+    "skip_description": "When enabled, Darhai will not set up or upgrade its memory engine automatically. You can set it up later from the Memory page.",
+    "manual_install_hint": "Darhai sets up its memory engine automatically; you can re-run setup from the Memory page.",
+    "about_title": "Darhai Memory",
+    "about_body": "Darhai's built-in persistent memory engine."
   },
   "prelude": {
-    "installing_notice": "IJFW is being installed. External CLIs (Claude Code, Codex, Gemini CLI) will pick it up after install completes.",
-    "disabled_notice": "IJFW is disabled in Darhai Settings. Re-enable to share memory with external CLIs.",
-    "failed_notice": "IJFW install failed. Visit the Memory page in Darhai to retry."
+    "installing_notice": "Darhai's memory engine is being set up. External CLIs (Claude Code, Codex, Gemini CLI) will pick it up after setup completes.",
+    "disabled_notice": "Darhai's memory engine is disabled in Settings. Re-enable to share memory with external CLIs.",
+    "failed_notice": "Darhai's memory-engine setup failed. Visit the Memory page in Darhai to retry."
   },
   "home": {
     "wiki_title": "Wiki",
@@ -254,7 +254,7 @@
   "archive": {
     "topbar": {
       "title": "Memory",
-      "subtitle": "IJFW · Ferrox Labs",
+      "subtitle": "Darhai Memory",
       "streak_pill": "{{sessions}} sessions · {{longestDays}}d longest streak",
       "streak_empty": "No sessions yet",
       "import_btn": "Import…",
@@ -431,7 +431,7 @@
       },
       "devScan": {
         "title": "~/dev scan",
-        "hint": "Scans ~/dev for IJFW memory directories",
+        "hint": "Scans ~/dev for existing memory directories",
         "count": "~{{count}} entries imported",
         "btn": "Import",
         "success": "Imported {{count}} entries from {{projects}} projects",

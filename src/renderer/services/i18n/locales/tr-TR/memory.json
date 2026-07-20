@@ -5,7 +5,7 @@
   },
   "pitch": {
     "headline": "Sizi takip eden bellek",
-    "lede": "Darhai; üzerinde çalıştığınız, karar verdiğiniz ve yayınladığınız şeyleri hatırlar. Her asistan bağlamı alır -- yeniden açıklamanıza gerek kalmaz. Ferrox Labs tarafından geliştirilen açık kaynaklı bellek motoru IJFW ile çalışır.",
+    "lede": "Darhai; üzerinde çalıştığınız, karar verdiğiniz ve yayınladığınız şeyleri hatırlar. Her asistan bağlamı alır -- yeniden açıklamanıza gerek kalmaz. Darhai'nin kendi yerleşik bellek motoruyla çalışır.",
     "bullet1": "Sohbetler, projeler ve CLI'lar arasında kalıcı",
     "bullet2": "Aranabilir, dışa aktarılabilir, size ait",
     "bullet3": "Kurulumdan sonra sıfır ayar",
@@ -16,14 +16,14 @@
   "setting_up": {
     "title": "Bellek kuruluyor",
     "subtitle": "Bu yalnızca bir kez, arka planda gerçekleşir. Çalışmaya devam edebilirsiniz.",
-    "brand_line": "IJFW Memory by Ferrox Labs",
+    "brand_line": "Darhai Memory",
     "taking_longer": "Kurulum hâlâ sürüyor... yavaş bağlantılarda bir dakika kadar sürebilir.",
     "help": "Sorun mu var? Ayarlar'dan elle yeniden deneyin."
   },
   "brand": {
-    "tagline": "IJFW Memory by Ferrox Labs",
-    "footer": "IJFW (açık kaynak) tarafından sağlanmıştır, Ferrox Labs",
-    "github_link": "IJFW GitHub"
+    "tagline": "Darhai Memory",
+    "footer": "Darhai'nin yerleşik bellek motoru",
+    "github_link": "Darhai GitHub"
   },
   "installing": {
     "title": "Bellek yükleniyor",
@@ -45,7 +45,7 @@
     "retry": "Yeniden dene",
     "details_toggle": "Ayrıntıları göster",
     "details_hide": "Ayrıntıları gizle",
-    "support_link": "IJFW engine help: github.com/FerroxLabs/ijfw"
+    "support_link": "Darhai bellek yardımı: github.com/sergei10a-rgb/darhai"
   },
   "error": {
     "spawn_error": "Yükleyici başlatılamadı. npm'in PATH'inizde olduğundan emin olun.",
@@ -78,7 +78,7 @@
   },
   "panel": {
     "header_breadcrumb": "Bellek",
-    "subtitle": "IJFW Memory by Ferrox Labs",
+    "subtitle": "Darhai Memory",
     "button_drop": "Bırak",
     "button_history": "Geçmiş",
     "button_add": "Bellek ekle",
@@ -95,17 +95,17 @@
     "banner": "Bellek şu anda düşük performans modunda -- sohbet çalışmaya devam ediyor ancak zenginleştirme kapalı"
   },
   "settings": {
-    "panel_title": "IJFW Memory (Ferrox Labs)",
-    "skip_label": "IJFW otomatik kurulumu atla",
-    "skip_description": "Etkin olduğunda Darhai, IJFW'yi yüklemez veya yükseltmez. Daha sonra Bellek sayfası üzerinden elle yükleyebilirsiniz.",
-    "manual_install_hint": "Elle yüklemek için bir terminalde `npx -y @ijfw/install@latest` komutunu çalıştırın",
-    "about_title": "IJFW Memory",
-    "about_body": "Ferrox Labs tarafından geliştirilen açık kaynaklı kalıcı bellek motoru."
+    "panel_title": "Darhai Memory",
+    "skip_label": "Bellek motorunun otomatik kurulumunu atla",
+    "skip_description": "Etkin olduğunda Darhai, bellek motorunu otomatik olarak kurmaz veya güncellemez. Daha sonra Bellek sayfasından kurabilirsiniz.",
+    "manual_install_hint": "Darhai, bellek motorunu otomatik olarak kurar; kurulumu Bellek sayfasından yeniden çalıştırabilirsiniz.",
+    "about_title": "Darhai Memory",
+    "about_body": "Darhai'nin yerleşik kalıcı bellek motoru."
   },
   "prelude": {
-    "installing_notice": "IJFW yükleniyor. Harici CLI'lar (Claude Code, Codex, Gemini CLI) kurulum tamamlandıktan sonra bunu algılayacak.",
-    "disabled_notice": "IJFW, Darhai Ayarları'nda devre dışı. Harici CLI'larla bellek paylaşmak için yeniden etkinleştirin.",
-    "failed_notice": "IJFW kurulumu başarısız oldu. Yeniden denemek için Darhai'deki Bellek sayfasını ziyaret edin."
+    "installing_notice": "Darhai'nin bellek motoru kuruluyor. Harici CLI'lar (Claude Code, Codex, Gemini CLI) kurulum tamamlandıktan sonra bunu algılayacak.",
+    "disabled_notice": "Darhai'nin bellek motoru Ayarlar'da devre dışı. Harici CLI'larla bellek paylaşmak için yeniden etkinleştirin.",
+    "failed_notice": "Darhai'nin bellek motoru kurulumu başarısız oldu. Yeniden denemek için Darhai'deki Bellek sayfasını ziyaret edin."
   },
   "home": {
     "wiki_title": "Wiki",
@@ -254,7 +254,7 @@
   "archive": {
     "topbar": {
       "title": "Bellek",
-      "subtitle": "IJFW · Ferrox Labs",
+      "subtitle": "Darhai Memory",
       "streak_pill": "{{sessions}} oturum · en uzun {{longestDays}} günlük seri",
       "streak_empty": "Henüz oturum yok",
       "import_btn": "İçe aktar…",
@@ -431,7 +431,7 @@
       },
       "devScan": {
         "title": "~/dev taraması",
-        "hint": "IJFW bellek dizinleri için ~/dev tarar",
+        "hint": "Mevcut bellek dizinleri için ~/dev tarar",
         "count": "~{{count}} kayıt içe aktarıldı",
         "btn": "İçe aktar",
         "success": "{{projects}} projeden {{count}} kayıt içe aktarıldı",

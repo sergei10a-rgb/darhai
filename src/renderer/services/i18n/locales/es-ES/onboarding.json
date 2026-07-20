@@ -22,7 +22,7 @@
     "errorUnrecognized": "Esa clave no se aceptó como clave de Flux Router. Vuelve a comprobarla e inténtalo de nuevo.",
     "errorNoModels": "Conectado, pero no se obtuvo ningún modelo. Inténtalo de nuevo en un momento.",
     "errorUnknown": "Algo salió mal al conectar. Inténtalo de nuevo.",
-    "trust": "Basado en la tecnología de código abierto Wayland de Ferrox Labs."
+    "trust": "Basado en tecnología de código abierto."
   },
   "scenarioA": {
     "greeting": "{{name}}, ya está todo conectado",

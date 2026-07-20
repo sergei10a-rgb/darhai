@@ -5,7 +5,7 @@
   },
   "pitch": {
     "headline": "Gedächtnis, das dir folgt",
-    "lede": "Darhai merkt sich, woran du gearbeitet, was du entschieden und was du ausgeliefert hast. Jeder Assistent erhält den Kontext -- kein erneutes Erklären. Angetrieben von IJFW, einer Open-Source-Gedächtnis-Engine von Ferrox Labs.",
+    "lede": "Darhai merkt sich, woran du gearbeitet, was du entschieden und was du ausgeliefert hast. Jeder Assistent erhält den Kontext -- kein erneutes Erklären. Angetrieben von Darhais eigener integrierter Gedächtnis-Engine.",
     "bullet1": "Dauerhaft über Chats, Projekte und CLIs hinweg",
     "bullet2": "Durchsuchbar, exportierbar, deins",
     "bullet3": "Keine Einrichtung nach der Installation",
@@ -16,14 +16,14 @@
   "setting_up": {
     "title": "Gedächtnis wird eingerichtet",
     "subtitle": "Das geschieht einmalig im Hintergrund. Du kannst weiterarbeiten.",
-    "brand_line": "IJFW Memory von Ferrox Labs",
+    "brand_line": "Darhai Memory",
     "taking_longer": "Einrichtung läuft noch... bei langsamen Verbindungen kann dies bis zu einer Minute dauern.",
     "help": "Probleme? Öffne die Einstellungen, um es manuell erneut zu versuchen."
   },
   "brand": {
-    "tagline": "IJFW Memory von Ferrox Labs",
-    "footer": "Angetrieben von IJFW (Open Source) von Ferrox Labs",
-    "github_link": "IJFW GitHub"
+    "tagline": "Darhai Memory",
+    "footer": "Darhais integrierte Gedächtnis-Engine",
+    "github_link": "Darhai GitHub"
   },
   "installing": {
     "title": "Gedächtnis wird installiert",
@@ -45,7 +45,7 @@
     "retry": "Erneut versuchen",
     "details_toggle": "Details anzeigen",
     "details_hide": "Details ausblenden",
-    "support_link": "IJFW engine help: github.com/FerroxLabs/ijfw"
+    "support_link": "Darhai-Gedächtnis-Hilfe: github.com/sergei10a-rgb/darhai"
   },
   "error": {
     "spawn_error": "Der Installer konnte nicht gestartet werden. Stelle sicher, dass npm in deinem PATH liegt.",
@@ -78,7 +78,7 @@
   },
   "panel": {
     "header_breadcrumb": "Gedächtnis",
-    "subtitle": "IJFW Memory von Ferrox Labs",
+    "subtitle": "Darhai Memory",
     "button_drop": "Ablegen",
     "button_history": "Verlauf",
     "button_add": "Gedächtnis hinzufügen",
@@ -95,17 +95,17 @@
     "banner": "Gedächtnis läuft derzeit im eingeschränkten Modus -- der Chat funktioniert weiterhin, aber die Anreicherung ist deaktiviert"
   },
   "settings": {
-    "panel_title": "IJFW Memory (Ferrox Labs)",
-    "skip_label": "Automatische IJFW-Einrichtung überspringen",
-    "skip_description": "Wenn aktiviert, installiert oder aktualisiert Darhai IJFW nicht. Du kannst es später manuell über die Gedächtnis-Seite installieren.",
-    "manual_install_hint": "Manuelle Installation: Führe `npx -y @ijfw/install@latest` in einem Terminal aus",
-    "about_title": "IJFW Memory",
-    "about_body": "Eine Open-Source-Engine für dauerhaftes Gedächtnis von Ferrox Labs."
+    "panel_title": "Darhai Memory",
+    "skip_label": "Automatische Einrichtung der Gedächtnis-Engine überspringen",
+    "skip_description": "Wenn aktiviert, richtet Darhai seine Gedächtnis-Engine nicht automatisch ein und aktualisiert sie nicht. Du kannst sie später über die Gedächtnis-Seite einrichten.",
+    "manual_install_hint": "Darhai richtet seine Gedächtnis-Engine automatisch ein; du kannst die Einrichtung über die Gedächtnis-Seite erneut ausführen.",
+    "about_title": "Darhai Memory",
+    "about_body": "Darhais integrierte Engine für dauerhaftes Gedächtnis."
   },
   "prelude": {
-    "installing_notice": "IJFW wird installiert. Externe CLIs (Claude Code, Codex, Gemini CLI) übernehmen es, sobald die Installation abgeschlossen ist.",
-    "disabled_notice": "IJFW ist in den Darhai-Einstellungen deaktiviert. Aktiviere es erneut, um das Gedächtnis mit externen CLIs zu teilen.",
-    "failed_notice": "IJFW-Installation fehlgeschlagen. Öffne die Gedächtnis-Seite in Darhai, um es erneut zu versuchen."
+    "installing_notice": "Darhais Gedächtnis-Engine wird eingerichtet. Externe CLIs (Claude Code, Codex, Gemini CLI) übernehmen sie, sobald die Einrichtung abgeschlossen ist.",
+    "disabled_notice": "Darhais Gedächtnis-Engine ist in den Einstellungen deaktiviert. Aktiviere sie erneut, um das Gedächtnis mit externen CLIs zu teilen.",
+    "failed_notice": "Die Einrichtung von Darhais Gedächtnis-Engine ist fehlgeschlagen. Öffne die Gedächtnis-Seite in Darhai, um es erneut zu versuchen."
   },
   "home": {
     "wiki_title": "Wiki",
@@ -254,7 +254,7 @@
   "archive": {
     "topbar": {
       "title": "Gedächtnis",
-      "subtitle": "IJFW · Ferrox Labs",
+      "subtitle": "Darhai Memory",
       "streak_pill": "{{sessions}} Sitzungen · {{longestDays}} T längste Serie",
       "streak_empty": "Noch keine Sitzungen",
       "import_btn": "Importieren…",
@@ -431,7 +431,7 @@
       },
       "devScan": {
         "title": "~/dev-Scan",
-        "hint": "Scannt ~/dev nach IJFW-Gedächtnisverzeichnissen",
+        "hint": "Scannt ~/dev nach vorhandenen Gedächtnisverzeichnissen",
         "count": "~{{count}} Einträge importiert",
         "btn": "Importieren",
         "success": "{{count}} Einträge aus {{projects}} Projekten importiert",

@@ -643,7 +643,7 @@ const createWindow = ({ showOnReady = true }: { showOnReady?: boolean } = {}): v
         try {
           await ijfwSystemService.applyPendingUpgrade();
         } catch (err) {
-          console.error('[Wayland] ijfw applyPendingUpgrade failed:', err);
+          console.error('[Darhai] ijfw applyPendingUpgrade failed:', err);
         }
         // Subscribe to ~/.ijfw - emit not_installed if the user removes the
         // install out from under us, and shut down the MCP client so a stale
@@ -651,20 +651,20 @@ const createWindow = ({ showOnReady = true }: { showOnReady?: boolean } = {}): v
         try {
           ijfwSystemService.startHealthWatcher();
         } catch (err) {
-          console.error('[Wayland] ijfw startHealthWatcher failed:', err);
+          console.error('[Darhai] ijfw startHealthWatcher failed:', err);
         }
         // Defer bootstrap by 5s so first-paint is not blocked by npm view.
         setTimeout(() => {
           void ijfwSystemService.bootstrap().catch((err) => {
-            console.error('[Wayland] ijfw bootstrap failed:', err);
+            console.error('[Darhai] ijfw bootstrap failed:', err);
           });
         }, 5000);
       })
       .catch((error) => {
-        console.error('[Wayland] Failed to initialize ijfwSystemService:', error);
+        console.error('[Darhai] Failed to initialize ijfwSystemService:', error);
       });
   } else {
-    console.log('[Wayland] IJFW system service disabled via env/CI guard');
+    console.log('[Darhai] IJFW system service disabled via env/CI guard');
   }
 
   // Load the renderer: dev server URL in development, built HTML file in production

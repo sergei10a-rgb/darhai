@@ -1968,7 +1968,7 @@
       "errorUnrecognized": "Bu anahtar {{provider}} için tanınmadı.",
       "errorNoModels": "{{provider}} bağlandı ancak hiç model döndürmedi. Birazdan tekrar deneyin.",
       "errorUnknown": "{{provider}} hizmetine bağlanılamadı. Lütfen tekrar deneyin.",
-      "trust": "Ferrox Labs'ın açık kaynaklı Wayland teknolojisi üzerine kuruludur."
+      "trust": "Açık kaynaklı teknoloji üzerine kuruludur."
     },
     "detected": {
       "found": "Bu makinede bir {{provider}} API anahtarı bulundu. Kullanılsın mı?",

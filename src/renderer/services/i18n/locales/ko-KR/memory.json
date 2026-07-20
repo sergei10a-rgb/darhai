@@ -5,7 +5,7 @@
   },
   "pitch": {
     "headline": "당신을 따라다니는 메모리",
-    "lede": "Darhai는 당신이 작업한 것, 결정한 것, 출시한 것을 기억합니다. 모든 어시스턴트가 컨텍스트를 공유하므로 다시 설명할 필요가 없습니다. Ferrox Labs가 개발한 오픈소스 메모리 엔진 IJFW이 구동합니다.",
+    "lede": "Darhai는 당신이 작업한 것, 결정한 것, 출시한 것을 기억합니다. 모든 어시스턴트가 컨텍스트를 공유하므로 다시 설명할 필요가 없습니다. Darhai의 자체 내장 메모리 엔진으로 구동됩니다.",
     "bullet1": "채팅, 프로젝트, CLI 전반에 걸쳐 유지됩니다",
     "bullet2": "검색 가능하고, 내보내기 가능하며, 당신의 것입니다",
     "bullet3": "설치 후 별도의 설정이 필요하지 않습니다",
@@ -16,14 +16,14 @@
   "setting_up": {
     "title": "메모리를 설정하는 중",
     "subtitle": "한 번만 백그라운드에서 진행됩니다. 작업을 계속하셔도 됩니다.",
-    "brand_line": "IJFW Memory by Ferrox Labs",
+    "brand_line": "Darhai Memory",
     "taking_longer": "아직 설정 중입니다... 느린 연결에서는 최대 1분이 걸릴 수 있습니다.",
     "help": "문제가 있나요? 설정에서 수동으로 다시 시도하세요."
   },
   "brand": {
-    "tagline": "IJFW Memory by Ferrox Labs",
-    "footer": "Powered by IJFW (오픈소스) by Ferrox Labs",
-    "github_link": "IJFW GitHub"
+    "tagline": "Darhai Memory",
+    "footer": "Darhai의 내장 메모리 엔진",
+    "github_link": "Darhai GitHub"
   },
   "installing": {
     "title": "메모리 설치 중",
@@ -45,7 +45,7 @@
     "retry": "재시도",
     "details_toggle": "세부 정보 표시",
     "details_hide": "세부 정보 숨기기",
-    "support_link": "IJFW engine help: github.com/FerroxLabs/ijfw"
+    "support_link": "Darhai 메모리 도움말: github.com/sergei10a-rgb/darhai"
   },
   "error": {
     "spawn_error": "설치 프로그램을 시작할 수 없습니다. npm이 PATH에 있는지 확인하세요.",
@@ -78,7 +78,7 @@
   },
   "panel": {
     "header_breadcrumb": "메모리",
-    "subtitle": "IJFW Memory by Ferrox Labs",
+    "subtitle": "Darhai Memory",
     "button_drop": "드롭",
     "button_history": "기록",
     "button_add": "메모리 추가",
@@ -95,17 +95,17 @@
     "banner": "메모리가 현재 저하 모드로 동작 중입니다. 채팅은 계속 작동하지만 보강 기능은 꺼져 있습니다"
   },
   "settings": {
-    "panel_title": "IJFW Memory (Ferrox Labs)",
-    "skip_label": "IJFW 자동 설정 건너뛰기",
-    "skip_description": "활성화하면 Darhai가 IJFW를 설치하거나 업그레이드하지 않습니다. 나중에 메모리 페이지를 통해 수동으로 설치할 수 있습니다.",
-    "manual_install_hint": "수동으로 설치하려면 터미널에서 `npx -y @ijfw/install@latest`를 실행하세요",
-    "about_title": "IJFW Memory",
-    "about_body": "Ferrox Labs가 개발한 오픈소스 영구 메모리 엔진입니다."
+    "panel_title": "Darhai Memory",
+    "skip_label": "메모리 엔진 자동 설정 건너뛰기",
+    "skip_description": "활성화하면 Darhai가 메모리 엔진을 자동으로 설정하거나 업그레이드하지 않습니다. 나중에 메모리 페이지에서 설정할 수 있습니다.",
+    "manual_install_hint": "Darhai는 메모리 엔진을 자동으로 설정합니다. 메모리 페이지에서 설정을 다시 실행할 수 있습니다.",
+    "about_title": "Darhai Memory",
+    "about_body": "Darhai의 내장 영구 메모리 엔진입니다."
   },
   "prelude": {
-    "installing_notice": "IJFW를 설치하고 있습니다. 외부 CLI (Claude Code, Codex, Gemini CLI)는 설치 완료 후 인식됩니다.",
-    "disabled_notice": "IJFW가 Darhai 설정에서 비활성화되어 있습니다. 외부 CLI와 메모리를 공유하려면 다시 활성화하세요.",
-    "failed_notice": "IJFW 설치에 실패했습니다. Darhai의 메모리 페이지에서 다시 시도하세요."
+    "installing_notice": "Darhai의 메모리 엔진을 설정하고 있습니다. 외부 CLI (Claude Code, Codex, Gemini CLI)는 설정 완료 후 인식됩니다.",
+    "disabled_notice": "Darhai의 메모리 엔진이 설정에서 비활성화되어 있습니다. 외부 CLI와 메모리를 공유하려면 다시 활성화하세요.",
+    "failed_notice": "Darhai의 메모리 엔진 설정에 실패했습니다. Darhai의 메모리 페이지에서 다시 시도하세요."
   },
   "home": {
     "wiki_title": "Wiki",
@@ -254,7 +254,7 @@
   "archive": {
     "topbar": {
       "title": "메모리",
-      "subtitle": "IJFW · Ferrox Labs",
+      "subtitle": "Darhai Memory",
       "streak_pill": "{{sessions}}회 세션 · 최장 {{longestDays}}일 연속",
       "streak_empty": "아직 세션이 없습니다",
       "import_btn": "가져오기…",
@@ -431,7 +431,7 @@
       },
       "devScan": {
         "title": "~/dev 검색",
-        "hint": "~/dev에서 IJFW 메모리 디렉터리를 검색합니다",
+        "hint": "~/dev에서 기존 메모리 디렉터리를 검색합니다",
         "count": "약 {{count}}개 항목 가져옴",
         "btn": "가져오기",
         "success": "{{projects}}개 프로젝트에서 {{count}}개 항목 가져옴",

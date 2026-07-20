@@ -1970,7 +1970,7 @@
       "errorUnrecognized": "해당 키를 {{provider}}용으로 인식하지 못했습니다.",
       "errorNoModels": "{{provider}}에 연결했지만 모델이 반환되지 않았습니다. 잠시 후 다시 시도하세요.",
       "errorUnknown": "{{provider}}에 연결할 수 없습니다. 다시 시도하세요.",
-      "trust": "Ferrox Labs의 오픈소스 Wayland 기술을 기반으로 합니다."
+      "trust": "오픈소스 기술을 기반으로 합니다."
     },
     "detected": {
       "found": "이 컴퓨터에서 {{provider}} API 키를 찾았습니다. 사용하시겠습니까?",

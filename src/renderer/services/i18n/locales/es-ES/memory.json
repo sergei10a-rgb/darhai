@@ -5,7 +5,7 @@
   },
   "pitch": {
     "headline": "Una memoria que te acompaña",
-    "lede": "Darhai recuerda en qué has trabajado, qué has decidido y qué has publicado. Cada asistente recibe el contexto, sin tener que explicarlo todo de nuevo. Funciona con IJFW, un motor de memoria de código abierto de Ferrox Labs.",
+    "lede": "Darhai recuerda en qué has trabajado, qué has decidido y qué has publicado. Cada asistente recibe el contexto, sin tener que explicarlo todo de nuevo. Funciona con el motor de memoria integrado de Darhai.",
     "bullet1": "Persistente entre chats, proyectos y CLIs",
     "bullet2": "Buscable, exportable, tuya",
     "bullet3": "Sin configuración tras la instalación",
@@ -16,14 +16,14 @@
   "setting_up": {
     "title": "Configurando Memoria",
     "subtitle": "Esto ocurre una sola vez, en segundo plano. Puedes seguir trabajando.",
-    "brand_line": "IJFW Memory de Ferrox Labs",
+    "brand_line": "Darhai Memory",
     "taking_longer": "Aún configurando... esto puede tardar hasta un minuto en conexiones lentas.",
     "help": "¿Problemas? Ve a Ajustes para reintentar manualmente."
   },
   "brand": {
-    "tagline": "IJFW Memory de Ferrox Labs",
-    "footer": "Funciona con IJFW (código abierto) de Ferrox Labs",
-    "github_link": "IJFW GitHub"
+    "tagline": "Darhai Memory",
+    "footer": "Motor de memoria integrado de Darhai",
+    "github_link": "Darhai GitHub"
   },
   "installing": {
     "title": "Instalando Memoria",
@@ -45,7 +45,7 @@
     "retry": "Reintentar",
     "details_toggle": "Mostrar detalles",
     "details_hide": "Ocultar detalles",
-    "support_link": "IJFW engine help: github.com/FerroxLabs/ijfw"
+    "support_link": "Ayuda de memoria de Darhai: github.com/sergei10a-rgb/darhai"
   },
   "error": {
     "spawn_error": "No se pudo iniciar el instalador. Comprueba que npm está en tu PATH.",
@@ -78,7 +78,7 @@
   },
   "panel": {
     "header_breadcrumb": "Memoria",
-    "subtitle": "IJFW Memory de Ferrox Labs",
+    "subtitle": "Darhai Memory",
     "button_drop": "Soltar",
     "button_history": "Historial",
     "button_add": "Añadir memoria",
@@ -95,17 +95,17 @@
     "banner": "Memoria está actualmente en modo degradado: el chat sigue funcionando, pero el enriquecimiento está desactivado"
   },
   "settings": {
-    "panel_title": "IJFW Memory (Ferrox Labs)",
-    "skip_label": "Omitir la configuración automática de IJFW",
-    "skip_description": "Cuando está activado, Darhai no instalará ni actualizará IJFW. Puedes instalarlo manualmente más tarde desde la página de Memoria.",
-    "manual_install_hint": "Para instalar manualmente: ejecuta `npx -y @ijfw/install@latest` en un terminal",
-    "about_title": "IJFW Memory",
-    "about_body": "Un motor de memoria persistente de código abierto de Ferrox Labs."
+    "panel_title": "Darhai Memory",
+    "skip_label": "Omitir la configuración automática del motor de memoria",
+    "skip_description": "Cuando está activado, Darhai no configurará ni actualizará su motor de memoria automáticamente. Puedes configurarlo más tarde desde la página de Memoria.",
+    "manual_install_hint": "Darhai configura su motor de memoria automáticamente; puedes volver a ejecutar la configuración desde la página de Memoria.",
+    "about_title": "Darhai Memory",
+    "about_body": "El motor de memoria persistente integrado de Darhai."
   },
   "prelude": {
-    "installing_notice": "IJFW se está instalando. Las CLIs externas (Claude Code, Codex, Gemini CLI) lo detectarán cuando finalice la instalación.",
-    "disabled_notice": "IJFW está desactivado en los Ajustes de Darhai. Vuelve a activarlo para compartir la memoria con las CLIs externas.",
-    "failed_notice": "La instalación de IJFW falló. Ve a la página de Memoria en Darhai para reintentar."
+    "installing_notice": "Se está configurando el motor de memoria de Darhai. Las CLIs externas (Claude Code, Codex, Gemini CLI) lo detectarán cuando finalice la configuración.",
+    "disabled_notice": "El motor de memoria de Darhai está desactivado en los Ajustes. Vuelve a activarlo para compartir la memoria con las CLIs externas.",
+    "failed_notice": "La configuración del motor de memoria de Darhai falló. Ve a la página de Memoria en Darhai para reintentar."
   },
   "home": {
     "wiki_title": "Wiki",
@@ -254,7 +254,7 @@
   "archive": {
     "topbar": {
       "title": "Memoria",
-      "subtitle": "IJFW · Ferrox Labs",
+      "subtitle": "Darhai Memory",
       "streak_pill": "{{sessions}} sesiones · racha más larga de {{longestDays}} d",
       "streak_empty": "Aún no hay sesiones",
       "import_btn": "Importar…",
@@ -431,7 +431,7 @@
       },
       "devScan": {
         "title": "Análisis de ~/dev",
-        "hint": "Analiza ~/dev en busca de directorios de memoria de IJFW",
+        "hint": "Analiza ~/dev en busca de directorios de memoria existentes",
         "count": "~{{count}} entradas importadas",
         "btn": "Importar",
         "success": "{{count}} entradas importadas de {{projects}} proyectos",
