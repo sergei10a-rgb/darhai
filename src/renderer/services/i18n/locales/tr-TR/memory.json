@@ -383,6 +383,8 @@
       "threshold_label": "Yükseltme eşiği",
       "autopromo_label": "Zamanlamaya göre otomatik yükselt",
       "autopromo_help": "Açık olduğunda, eşiği aşan ve 10 dakikalık kuyruğu geçen adaylar otomatik olarak wiki'ye yazılır.",
+      "autoextract_label": "Konuşmalardan belleği otomatik çıkar",
+      "autoextract_help": "Açık olduğunda, konuşmalarınızdaki kalıcı bilgiler otomatik olarak belleğe kaydedilir. Varsayılan olarak kapalıdır; tüm veriler cihazınızda kalır.",
       "live_preview": "Eşik {{value}}'da {{count}} aday",
       "score_formula_title": "Puan formülü",
       "formula_decision": "+30 tür karar veya kalıpsa",

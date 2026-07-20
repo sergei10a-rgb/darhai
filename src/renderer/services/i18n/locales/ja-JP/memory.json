@@ -383,6 +383,8 @@
       "threshold_label": "プロモート閾値",
       "autopromo_label": "スケジュールで自動プロモート",
       "autopromo_help": "オンにすると、閾値を超えて 10 分のキューを通過した候補が自動的に Wiki に書き込まれます。",
+      "autoextract_label": "会話からメモリを自動抽出",
+      "autoextract_help": "オンにすると、会話から長期的に役立つ事実を自動的にメモリへ保存します。既定ではオフです。すべてのデータは端末内に保持されます。",
       "live_preview": "閾値 {{value}} で {{count}} 件の候補",
       "score_formula_title": "スコア計算式",
       "formula_decision": "+30 タイプが決定またはパターンの場合",

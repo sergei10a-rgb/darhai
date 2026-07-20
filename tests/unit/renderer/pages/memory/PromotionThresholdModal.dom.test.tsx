@@ -31,12 +31,19 @@ vi.mock('@/common', () => {
   const getPromotionCandidates = vi.fn();
   const setPromotionThreshold = vi.fn();
   const setAutoPromoteEnabled = vi.fn();
+  // Odysseus #2: the modal also reads/writes the auto-extract toggle on its own
+  // settings file. Stub both verbs so the on-mount read and the save-path write
+  // hit real mocks (matching ipcBridge.memory's actual surface).
+  const getAutoExtractEnabled = vi.fn();
+  const setAutoExtractEnabled = vi.fn();
   return {
     ipcBridge: {
       memory: {
         getPromotionCandidates: { invoke: getPromotionCandidates },
         setPromotionThreshold: { invoke: setPromotionThreshold },
         setAutoPromoteEnabled: { invoke: setAutoPromoteEnabled },
+        getAutoExtractEnabled: { invoke: getAutoExtractEnabled },
+        setAutoExtractEnabled: { invoke: setAutoExtractEnabled },
       },
     },
   };
@@ -150,6 +157,8 @@ function getIpcMocks() {
     getPromotionCandidates: mem['getPromotionCandidates']!.invoke,
     setPromotionThreshold: mem['setPromotionThreshold']!.invoke,
     setAutoPromoteEnabled: mem['setAutoPromoteEnabled']!.invoke,
+    getAutoExtractEnabled: mem['getAutoExtractEnabled']!.invoke,
+    setAutoExtractEnabled: mem['setAutoExtractEnabled']!.invoke,
   };
 }
 
@@ -181,6 +190,8 @@ describe('PromotionThresholdModal', () => {
     m.getPromotionCandidates.mockResolvedValue(defaultCandidates(90, 3));
     m.setPromotionThreshold.mockResolvedValue(undefined);
     m.setAutoPromoteEnabled.mockResolvedValue(undefined);
+    m.getAutoExtractEnabled.mockResolvedValue(false);
+    m.setAutoExtractEnabled.mockResolvedValue(undefined);
   });
 
   it('renders the modal', async () => {
@@ -233,6 +244,8 @@ describe('PromotionThresholdModal', () => {
     await waitFor(() => {
       expect(m.setPromotionThreshold).toHaveBeenCalledTimes(1);
       expect(m.setAutoPromoteEnabled).toHaveBeenCalledTimes(1);
+      // Odysseus #2: the save path also persists the auto-extract toggle.
+      expect(m.setAutoExtractEnabled).toHaveBeenCalledTimes(1);
     });
   });
 

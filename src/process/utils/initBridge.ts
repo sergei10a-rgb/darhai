@@ -41,6 +41,7 @@ import { setWorkflowSessionService } from '@process/services/workflow/workflowSe
 import { SkillLibrary } from '@process/services/skills/SkillLibrary';
 import { ProcessConfig } from '@process/utils/initStorage';
 import { agentRegistry } from '@process/agent/AgentRegistry';
+import { createMemoryExtractor } from '@process/services/memory/memoryExtractor';
 import { resolveDefaultLaunchTarget } from '@process/utils/workflowLaunchTargetResolver';
 import type { TProviderWithModel } from '@/common/config/storage';
 
@@ -307,6 +308,20 @@ void getDatabase()
           console.warn('[initBridge] workflow autonomous-completion listener failed:', err);
         }
       })();
+    });
+
+    // Memory auto-extraction (Odysseus #2, native). Reuses the SAME turnCompleted
+    // seam as the workflow completion listener above. The extractor is a strict
+    // no-op unless the user opted in: onTurnCompleted checks the toggle
+    // (getAutoExtractEnabled, default OFF) FIRST, so with the toggle off there are
+    // ZERO LLM calls and ZERO writes. It loads the transcript by sessionId via the
+    // same repo the DB uses, extracts durable facts with a cheap model, and
+    // APPENDS survivors through ijfwArchiveService.quickAdd (injection-safe on
+    // write). Fire-and-forget: it never throws across the listener or blocks the
+    // turn - mirrors the swallow-and-continue contract above.
+    const memoryExtractor = createMemoryExtractor(repo);
+    ipcBridge.conversation?.turnCompleted?.on?.((event) => {
+      memoryExtractor.onTurnCompleted(event);
     });
 
     // BUG-6 GAP-A watchdog. The completion listener above is purely event-driven:

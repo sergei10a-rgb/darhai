@@ -2685,6 +2685,10 @@ export const memory = {
   setPromotionThreshold: buildProvider<void, { threshold: number }>('memory.set-promotion-threshold'),
   /** Enable or disable auto-promotion on schedule (added W3). */
   setAutoPromoteEnabled: buildProvider<void, { enabled: boolean }>('memory.set-auto-promote-enabled'),
+  /** Read the memory auto-extract toggle (Odysseus #2, native). Default OFF. */
+  getAutoExtractEnabled: buildProvider<boolean, void>('memory.get-auto-extract-enabled'),
+  /** Enable or disable auto-extraction of durable facts from conversations (remote-denied). */
+  setAutoExtractEnabled: buildProvider<void, { enabled: boolean }>('memory.set-auto-extract-enabled'),
   /** Undo a recent promotion within the 24h grace window (added W3). */
   undoPromotion: buildProvider<{ ok: boolean; error?: string }, { id: string }>('memory.undo-promotion'),
   /** Trigger an immediate promotion sweep (added W3). */

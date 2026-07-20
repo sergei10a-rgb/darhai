@@ -383,6 +383,8 @@
       "threshold_label": "Seuil de promotion",
       "autopromo_label": "Promouvoir automatiquement selon le planning",
       "autopromo_help": "Lorsque cette option est activée, les candidats qui franchissent le seuil et survivent à la file d'attente de 10 min sont écrits automatiquement dans le wiki.",
+      "autoextract_label": "Extraire automatiquement la mémoire des conversations",
+      "autoextract_help": "Lorsque cette option est activée, les faits durables de vos conversations sont enregistrés automatiquement dans la mémoire. Désactivée par défaut ; toutes les données restent sur votre appareil.",
       "live_preview": "{{count}} candidats au seuil {{value}}",
       "score_formula_title": "Formule de score",
       "formula_decision": "+30 si le type est décision ou modèle",

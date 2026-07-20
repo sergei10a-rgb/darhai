@@ -26,6 +26,8 @@ const PromotionThresholdModal: React.FC<Props> = ({ onClose }) => {
   const { t } = useTranslation();
   const [threshold, setThreshold] = useState<number>(90);
   const [autoPromote, setAutoPromote] = useState<boolean>(true);
+  // Odysseus #2: auto-extract durable facts from conversations. OPT-IN, default OFF.
+  const [autoExtract, setAutoExtract] = useState<boolean>(false);
   const [candidateCount, setCandidateCount] = useState<number>(0);
   const [formulaOpen, setFormulaOpen] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
@@ -40,6 +42,10 @@ const PromotionThresholdModal: React.FC<Props> = ({ onClose }) => {
       if (typeof result.autoPromoteEnabled === 'boolean') {
         setAutoPromote(result.autoPromoteEnabled);
       }
+    });
+    // Auto-extract toggle is stored separately (its own settings file).
+    void ipcBridge.memory.getAutoExtractEnabled.invoke().then((enabled) => {
+      if (typeof enabled === 'boolean') setAutoExtract(enabled);
     });
   }, []);
 
@@ -70,6 +76,7 @@ const PromotionThresholdModal: React.FC<Props> = ({ onClose }) => {
     try {
       await ipcBridge.memory.setPromotionThreshold.invoke({ threshold });
       await ipcBridge.memory.setAutoPromoteEnabled.invoke({ enabled: autoPromote });
+      await ipcBridge.memory.setAutoExtractEnabled.invoke({ enabled: autoExtract });
       Message.success(t('memory.archive.threshold_modal.save_success', 'Saved'));
       onClose();
     } catch {
@@ -77,7 +84,7 @@ const PromotionThresholdModal: React.FC<Props> = ({ onClose }) => {
     } finally {
       setSaving(false);
     }
-  }, [threshold, autoPromote, onClose, t]);
+  }, [threshold, autoPromote, autoExtract, onClose, t]);
 
   return (
     <Modal
@@ -116,6 +123,22 @@ const PromotionThresholdModal: React.FC<Props> = ({ onClose }) => {
             </span>
             <Switch checked={autoPromote} onChange={setAutoPromote} data-testid='auto-promote-switch' />
           </div>
+        </div>
+
+        {/* Auto-extract toggle (Odysseus #2). Opt-in, default OFF. */}
+        <div className={styles.field} data-testid='auto-extract-field'>
+          <div className={styles.switchRow}>
+            <span className={styles.label}>
+              {t('memory.archive.threshold_modal.autoextract_label', 'Auto-extract memory from conversations')}
+            </span>
+            <Switch checked={autoExtract} onChange={setAutoExtract} data-testid='auto-extract-switch' />
+          </div>
+          <p className={styles.hint}>
+            {t(
+              'memory.archive.threshold_modal.autoextract_help',
+              'When on, durable facts from your conversations are saved to memory automatically. Off by default; all data stays on your device.'
+            )}
+          </p>
         </div>
 
         {/* Score formula disclosure */}

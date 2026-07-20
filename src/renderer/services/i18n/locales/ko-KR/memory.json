@@ -383,6 +383,8 @@
       "threshold_label": "승격 임계값",
       "autopromo_label": "일정에 따라 자동 승격",
       "autopromo_help": "활성화하면 임계값을 초과하고 10분 대기열을 통과한 후보가 자동으로 Wiki에 기록됩니다.",
+      "autoextract_label": "대화에서 메모리 자동 추출",
+      "autoextract_help": "켜면 대화에서 오래 유용한 사실을 자동으로 메모리에 저장합니다. 기본값은 꺼짐이며, 모든 데이터는 기기에만 저장됩니다.",
       "live_preview": "임계값 {{value}}에서 {{count}}개 후보",
       "score_formula_title": "점수 계산식",
       "formula_decision": "+30 결정 또는 패턴 유형인 경우",

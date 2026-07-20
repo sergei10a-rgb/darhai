@@ -383,6 +383,8 @@
       "threshold_label": "升級閾值",
       "autopromo_label": "依排程自動升級",
       "autopromo_help": "開啟後，超過閾值且通過 10 分鐘等待佇列的候選項將自動寫入 Wiki。",
+      "autoextract_label": "從對話中自動擷取記憶",
+      "autoextract_help": "開啟後，會自動從你的對話中擷取持久事實並儲存到記憶中。預設為關閉；所有資料僅保留在你的裝置上。",
       "live_preview": "閾值 {{value}} 下共有 {{count}} 個候選",
       "score_formula_title": "評分公式",
       "formula_decision": "+30 類型為決策或模式",

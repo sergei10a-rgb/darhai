@@ -368,6 +368,11 @@ const REMOTE_DENIED_KEYS: ReadonlySet<string> = new Set([
   'storage:openDir',
   'storage:resetAll',
   'storage:importBackup',
+  // --- Memory auto-extract (Odysseus #2): persisted config mutation that turns
+  //     on auto-writing durable facts from conversations into the user's
+  //     persistent memory. A paired-device WebSocket caller must never flip it;
+  //     the read (memory.get-auto-extract-enabled) stays allowed. ---
+  'memory.set-auto-extract-enabled',
   // --- ecc harness: persisted config mutation (silently weakens agent gates) ---
   'ecc.set-gate-guard',
   // --- native pre-tool guard: persisted config mutation that gates AGENT TOOL

@@ -383,6 +383,8 @@
       "threshold_label": "Limite de promoção",
       "autopromo_label": "Promover automaticamente conforme agendamento",
       "autopromo_help": "Quando ativado, as candidatas que ultrapassam o limite e sobrevivem à fila de 10 min são gravadas na wiki automaticamente.",
+      "autoextract_label": "Extrair memória das conversas automaticamente",
+      "autoextract_help": "Quando ativado, fatos duradouros das suas conversas são salvos na memória automaticamente. Desativado por padrão; todos os dados permanecem no seu dispositivo.",
       "live_preview": "{{count}} candidatas no limite {{value}}",
       "score_formula_title": "Fórmula da pontuação",
       "formula_decision": "+30 se o tipo for decisão ou padrão",

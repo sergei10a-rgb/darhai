@@ -383,6 +383,8 @@
       "threshold_label": "Beförderungsschwelle",
       "autopromo_label": "Planmäßig automatisch befördern",
       "autopromo_help": "Wenn aktiviert, werden Kandidaten, die den Schwellenwert überschreiten und die 10-minütige Warteschlange überstehen, automatisch ins Wiki geschrieben.",
+      "autoextract_label": "Erinnerungen automatisch aus Gesprächen extrahieren",
+      "autoextract_help": "Wenn aktiviert, werden dauerhafte Fakten aus deinen Gesprächen automatisch im Speicher gesichert. Standardmäßig aus; alle Daten bleiben auf deinem Gerät.",
       "live_preview": "{{count}} Kandidaten bei Schwellenwert {{value}}",
       "score_formula_title": "Bewertungsformel",
       "formula_decision": "+30, wenn Typ Entscheidung oder Muster ist",

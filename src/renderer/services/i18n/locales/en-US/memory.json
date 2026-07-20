@@ -383,6 +383,8 @@
       "threshold_label": "Promotion threshold",
       "autopromo_label": "Auto-promote on schedule",
       "autopromo_help": "When on, candidates that cross the threshold and survive the 10-min queue are written to the wiki automatically.",
+      "autoextract_label": "Auto-extract memory from conversations",
+      "autoextract_help": "When on, durable facts from your conversations are saved to memory automatically. Off by default; all data stays on your device.",
       "live_preview": "{{count}} candidates at threshold {{value}}",
       "score_formula_title": "Score formula",
       "formula_decision": "+30 if type is decision or pattern",

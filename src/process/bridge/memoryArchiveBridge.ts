@@ -16,6 +16,7 @@ import { ipcBridge } from '@/common';
 import { getIjfwArchiveService } from '@process/services/memory/ijfwArchiveService';
 import { promoteEntry, undoPromotion } from '@process/services/memory/wikiWriter';
 import { startPromotionSweep } from '@process/services/memory/promotionSweep';
+import { getAutoExtractEnabled, setAutoExtractEnabled } from '@process/services/memory/memoryExtractSettings';
 import { readSourceContext } from '@process/services/memory/sourceReader';
 import type { ListFilter } from '@/common/types/memory';
 import type { SweepHandle } from '@process/services/memory/promotionSweep';
@@ -48,6 +49,8 @@ const quickAddSchema = z.object({
 const thresholdSchema = z.object({ threshold: z.number().int().min(0).max(100) });
 
 const autoPromoteSchema = z.object({ enabled: z.boolean() });
+
+const autoExtractSchema = z.object({ enabled: z.boolean() });
 
 const undoSchema = z.object({ id: z.string().min(1).max(64) });
 
@@ -200,6 +203,25 @@ export function initMemoryArchiveBridge(): void {
       sweepHandle.setAutoPromoteEnabled(parsed.data.enabled);
     }
     log.info('[memory-archive] setAutoPromoteEnabled', { enabled: parsed.data.enabled });
+  });
+
+  // Memory auto-extract toggle (Odysseus #2, native). Read is safe for the
+  // renderer; the write is remote-denied in bridgeAllowlist so only the trusted
+  // local user can flip auto-writing durable facts into their persistent memory.
+  ipcBridge.memory.getAutoExtractEnabled.provider(async () => {
+    try {
+      return getAutoExtractEnabled();
+    } catch (err) {
+      log.error('[memory-archive] getAutoExtractEnabled failed', { err });
+      return false;
+    }
+  });
+
+  ipcBridge.memory.setAutoExtractEnabled.provider(async (args) => {
+    const parsed = autoExtractSchema.safeParse(args);
+    if (!parsed.success) return;
+    setAutoExtractEnabled(parsed.data.enabled);
+    log.info('[memory-archive] setAutoExtractEnabled', { enabled: parsed.data.enabled });
   });
 
   ipcBridge.memory.undoPromotion.provider(async (args) => {

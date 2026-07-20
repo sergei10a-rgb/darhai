@@ -58,8 +58,17 @@ export type SweepHandle = {
 
 // ===== Settings persistence =====
 
+/**
+ * Directory that holds the memory-archive settings files. Exported so sibling
+ * memory features (e.g. the auto-extract toggle) persist alongside the
+ * promotion settings without re-hardcoding the app config path.
+ */
+export function memoryArchiveConfigDir(): string {
+  return path.join(os.homedir(), '.config', 'wayland-dev');
+}
+
 function settingsPath(): string {
-  return path.join(os.homedir(), '.config', 'wayland-dev', 'memory-archive-settings.json');
+  return path.join(memoryArchiveConfigDir(), 'memory-archive-settings.json');
 }
 
 function loadSettings(): SweepSettings {
@@ -68,8 +77,7 @@ function loadSettings(): SweepSettings {
     const parsed = JSON.parse(raw) as Partial<SweepSettings>;
     return {
       threshold: typeof parsed.threshold === 'number' ? parsed.threshold : 90,
-      autoPromoteEnabled:
-        typeof parsed.autoPromoteEnabled === 'boolean' ? parsed.autoPromoteEnabled : true,
+      autoPromoteEnabled: typeof parsed.autoPromoteEnabled === 'boolean' ? parsed.autoPromoteEnabled : true,
     };
   } catch {
     return { threshold: 90, autoPromoteEnabled: true };

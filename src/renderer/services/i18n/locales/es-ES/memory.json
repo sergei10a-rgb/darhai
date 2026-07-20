@@ -383,6 +383,8 @@
       "threshold_label": "Umbral de promoción",
       "autopromo_label": "Promover automáticamente según programación",
       "autopromo_help": "Cuando está activado, los candidatos que superan el umbral y sobreviven a la cola de 10 min se escriben en la wiki automáticamente.",
+      "autoextract_label": "Extraer memoria de las conversaciones automáticamente",
+      "autoextract_help": "Cuando está activado, los datos duraderos de tus conversaciones se guardan en la memoria automáticamente. Desactivado por defecto; todos los datos permanecen en tu dispositivo.",
       "live_preview": "{{count}} candidatos en el umbral {{value}}",
       "score_formula_title": "Fórmula de puntuación",
       "formula_decision": "+30 si el tipo es decisión o patrón",

@@ -383,6 +383,8 @@
       "threshold_label": "升级阈值",
       "autopromo_label": "按计划自动升级",
       "autopromo_help": "开启后，超过阈值且通过 10 分钟等待队列的候选项将自动写入 Wiki。",
+      "autoextract_label": "从对话中自动提取记忆",
+      "autoextract_help": "开启后，会自动从你的对话中提取持久事实并保存到记忆中。默认关闭；所有数据仅保留在你的设备上。",
       "live_preview": "阈值 {{value}} 下共有 {{count}} 个候选",
       "score_formula_title": "评分公式",
       "formula_decision": "+30 类型为决策或模式",

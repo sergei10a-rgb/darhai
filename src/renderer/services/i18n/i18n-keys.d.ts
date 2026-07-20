@@ -1220,6 +1220,8 @@ export type I18nKey =
   | 'memory.archive.statusbar.last_dream'
   | 'memory.archive.statusbar.no_dream'
   | 'memory.archive.statusbar.spend_today'
+  | 'memory.archive.threshold_modal.autoextract_help'
+  | 'memory.archive.threshold_modal.autoextract_label'
   | 'memory.archive.threshold_modal.autopromo_help'
   | 'memory.archive.threshold_modal.autopromo_label'
   | 'memory.archive.threshold_modal.cancel_btn'
