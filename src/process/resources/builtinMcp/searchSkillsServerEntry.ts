@@ -25,7 +25,7 @@ import { z } from 'zod';
 import { BUILTIN_SEARCH_SKILLS_NAME, BUILTIN_SEARCH_SKILLS_TOOL_NAME } from './constants';
 import { createSearchSkillsServer } from './searchSkillsServer';
 
-const TOOL_DESCRIPTION = `Search the full Wayland skill library (~2,000+ entries) by natural-language query and return the matching skill bodies inline.
+const TOOL_DESCRIPTION = `Search the full Darhai skill library (~2,000+ entries) by natural-language query and return the matching skill bodies inline.
 
 When to use:
 - The user's task hints at a domain not covered by the small set of skills already loaded in your context (those advertised in the system prompt).

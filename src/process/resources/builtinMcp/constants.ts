@@ -15,7 +15,7 @@ export const BUILTIN_SEARCH_SKILLS_NAME = 'wayland-search-skills';
 export const BUILTIN_SEARCH_SKILLS_TOOL_NAME = 'wayland_search_skills';
 
 export const BUILTIN_WEB_SEARCH_ID = 'builtin-web-search';
-export const BUILTIN_WEB_SEARCH_NAME = 'wayland-web-search';
+export const BUILTIN_WEB_SEARCH_NAME = 'darhai-web-search';
 export const BUILTIN_WEB_SEARCH_TOOL_NAME = 'web_search';
 
 // Bundled @wayland MCP servers shipped with the installer (no npm publish).

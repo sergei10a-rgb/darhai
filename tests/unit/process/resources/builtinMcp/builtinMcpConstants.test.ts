@@ -92,7 +92,7 @@ describe('builtinMcp/constants - search-skills', () => {
 describe('builtinMcp/constants - web-search', () => {
   it('exposes the canonical id, server name, and MCP tool name', () => {
     expect(BUILTIN_WEB_SEARCH_ID).toBe('builtin-web-search');
-    expect(BUILTIN_WEB_SEARCH_NAME).toBe('wayland-web-search');
+    expect(BUILTIN_WEB_SEARCH_NAME).toBe('darhai-web-search');
     expect(BUILTIN_WEB_SEARCH_TOOL_NAME).toBe('web_search');
   });
 
