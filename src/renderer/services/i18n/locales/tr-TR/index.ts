@@ -32,6 +32,7 @@ import modelAdvisor from './modelAdvisor.json';
 import compare from './compare.json';
 import notes from './notes.json';
 import calendar from './calendar.json';
+import documents from './documents.json';
 import workflows from './workflows.json';
 import models from './models.json';
 import research from './research.json';
@@ -70,6 +71,7 @@ export default {
   compare,
   notes,
   calendar,
+  documents,
   workflows,
   models,
   research,
