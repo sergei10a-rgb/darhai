@@ -6,6 +6,7 @@
 
 import type { AcpBackend, AcpBackendAll, AcpBackendConfig } from '@/common/types/acpTypes';
 import type { CompressionMode } from '@/common/types/compression';
+import type { RoutingStrategy } from '@/common/types/routing';
 import type { SpeechToTextConfig } from '@/common/types/speech';
 import type { TextToSpeechConfig } from '@/common/types/ttsTypes';
 // C1: route through wrapped buildStorage so every namespace's storage.{get,set,clear,remove}
@@ -208,6 +209,16 @@ export interface IConfigStorageRefer {
    * always preserved). Read via ProcessConfig.get like the ECC gate.
    */
   'compression.mode'?: CompressionMode;
+  /**
+   * Model-routing strategy applied at the single stateless completion primitive
+   * (`oneShotComplete`) when the caller does not pin a model. Default (absent) =
+   * `auto`, which maps to the EXISTING name-heuristic ordering, so with no value
+   * set the model selection is byte-identical to before routing existed. Other
+   * values (`cost-optimized`, `weighted`, `p2c`, `round-robin`, `least-used`)
+   * opt into a native scoring strategy over the same usable-model enumeration.
+   * Read via ProcessConfig.get like the compression mode + ECC gate.
+   */
+  'routing.strategy'?: RoutingStrategy;
   /** Persisted app-wide UI zoom factor for Display settings */
   'ui.zoomFactor'?: number;
   /** Auto-enable WebUI in desktop mode */

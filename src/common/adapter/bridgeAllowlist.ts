@@ -374,6 +374,10 @@ const REMOTE_DENIED_KEYS: ReadonlySet<string> = new Set([
   //     transformed before every model call). A paired-device WebSocket caller
   //     must never flip it; the read (compression.get-mode) stays allowed. ---
   'compression.set-mode',
+  // --- model routing: persisted config mutation (changes which model every
+  //     background completion selects). A paired-device WebSocket caller must
+  //     never flip it; the read (routing.get-strategy) stays allowed. ---
+  'routing.set-strategy',
 
   // --- app.* / process control that writes or executes ---
   'app.set-start-on-boot',

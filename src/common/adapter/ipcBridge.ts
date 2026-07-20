@@ -17,6 +17,7 @@ import type { IMcpServer, IProvider, TChatConversation, TProviderWithModel, ICss
 import type { PreviewHistoryTarget, PreviewSnapshotInfo } from '../types/preview';
 import type { IjfwErrorReason, IjfwInvokeResult, IjfwRuntimeModePublic } from '../types/ijfw';
 import type { CompressionMode } from '../types/compression';
+import type { RoutingStrategy } from '../types/routing';
 import type {
   CodexSetupResult,
   CodexStatusResult,
@@ -1890,6 +1891,24 @@ export const compression = {
   getMode: buildProvider<CompressionMode, void>('compression.get-mode'),
   /** Persist the Settings compression mode. */
   setMode: buildProvider<{ ok: true }, { mode: CompressionMode }>('compression.set-mode'),
+};
+
+/**
+ * Model-routing strategy toggle. Mirrors the `compression` namespace: a local
+ * config read/write pair, `set-strategy` is remote-denied in the bridge
+ * allowlist. Default strategy is `auto` (the existing name-heuristic ordering),
+ * so an unset value selects models exactly as before routing existed.
+ *
+ * secondary: a Settings strategy selector (auto / cost-optimized / weighted /
+ * p2c / round-robin / least-used) can bind to these providers; all user-facing
+ * labels must go through i18n (mn-MN included). The config key + bridge are live
+ * now so the feature is toggleable ahead of the UI.
+ */
+export const routing = {
+  /** Current routing strategy from config (defaults to `auto`). */
+  getStrategy: buildProvider<RoutingStrategy, void>('routing.get-strategy'),
+  /** Persist the Settings routing strategy. */
+  setStrategy: buildProvider<{ ok: true }, { strategy: RoutingStrategy }>('routing.set-strategy'),
 };
 
 export type IjfwDropEntry = { name: string; size: number; mtimeMs: number };

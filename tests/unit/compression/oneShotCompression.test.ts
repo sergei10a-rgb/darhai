@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
   getMergedModelProviders: vi.fn(),
   compress: vi.fn(),
   getCompressionMode: vi.fn(),
+  getRoutingStrategy: vi.fn(),
   isGoogleAuthGeminiAvailable: vi.fn(),
   googleAuthGeminiComplete: vi.fn(),
 }));
@@ -25,6 +26,9 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@process/bridge/modelBridge', () => ({ getMergedModelProviders: mocks.getMergedModelProviders }));
 vi.mock('@process/services/compression', () => ({ compress: mocks.compress }));
 vi.mock('@process/services/completion/compressionMode', () => ({ getCompressionMode: mocks.getCompressionMode }));
+// The routing accessor pulls the storage graph; every case here pins `opts.model`
+// so routing never runs - mock it to keep the seam import light and hermetic.
+vi.mock('@process/services/completion/routingStrategy', () => ({ getRoutingStrategy: mocks.getRoutingStrategy }));
 vi.mock('@process/services/completion/geminiOAuth', () => ({
   isGoogleAuthGeminiAvailable: mocks.isGoogleAuthGeminiAvailable,
   googleAuthGeminiComplete: mocks.googleAuthGeminiComplete,
@@ -50,8 +54,11 @@ beforeEach(() => {
   mocks.getMergedModelProviders.mockReset();
   mocks.compress.mockReset();
   mocks.getCompressionMode.mockReset();
+  mocks.getRoutingStrategy.mockReset();
   mocks.isGoogleAuthGeminiAvailable.mockReset();
   mocks.googleAuthGeminiComplete.mockReset();
+
+  mocks.getRoutingStrategy.mockResolvedValue('auto');
 
   mocks.isGoogleAuthGeminiAvailable.mockReturnValue(false);
   mocks.getCompressionMode.mockResolvedValue('lite');

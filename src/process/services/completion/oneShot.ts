@@ -10,8 +10,11 @@ import type { CompressionMode } from '@/common/types/compression';
 import { compress } from '@process/services/compression';
 import { googleAuthGeminiComplete, isGoogleAuthGeminiAvailable } from './geminiOAuth';
 import { getCompressionMode } from './compressionMode';
+import { getRoutingStrategy } from './routingStrategy';
 import { resilientFetch } from './resilientFetch';
 import { isProviderCircuitOpen, isModelLockedOut } from '@process/services/resilience';
+import { pickModel, usageCounter, type RoundRobinCursor, type RoutingCandidate } from '@process/services/routing';
+import { getModelPricing, type IModelPricing } from '@process/services/cost/ModelPricing';
 
 /**
  * A minimal one-shot LLM completion for cheap background tasks (e.g. the project
@@ -88,7 +91,12 @@ const usableModels = (providers: IProvider[]): PickedModel[] => {
   return out;
 };
 
-const fastRank = (modelId: string): number => {
+/**
+ * Name-heuristic rank (lower = preferred fast/cheap model). Exported so the
+ * routing dispatcher's `priority`/`auto` strategy reproduces this exact ordering
+ * and `least-used` can break ties by it - the strategies never re-derive it.
+ */
+export const fastRank = (modelId: string): number => {
   for (let i = 0; i < FAST_HINTS.length; i++) {
     if (FAST_HINTS[i].test(modelId)) return i;
   }
@@ -150,6 +158,66 @@ export async function hasUsableModel(): Promise<boolean> {
   return isGoogleAuthGeminiAvailable();
 }
 
+// ─── Routing seam (OmniRoute idea, native) ─────────────────────────────────────
+// A configurable strategy chooses which usable model is picked when the caller
+// does not pin one. Default `auto` maps to `pickCheapestFastModel` unchanged, so
+// with no config set the selection is byte-identical to before routing existed.
+
+/** One million - the token base the models.dev cost is denominated in (USD/M). */
+const TOKENS_PER_MILLION = 1_000_000;
+
+/** Process-lifetime cursor so the `round-robin` strategy advances across calls. */
+const routingCursor: RoundRobinCursor = { value: 0 };
+
+/**
+ * Look up a model's per-million pricing from the existing pricing authority
+ * (`ModelPricing`, backed by the bundled models.dev snapshot). Reuses the app's
+ * cost data - never fetches pricing anew. Returns `undefined` when the model is
+ * not priced, so the cost strategy sorts it last rather than treating it as free.
+ */
+function priceOf(pricing: IModelPricing, modelId: string): RoutingCandidate['pricing'] {
+  const inUSDPerMillion = pricing.priceTokens(modelId, { input: TOKENS_PER_MILLION, output: 0 });
+  const outUSDPerMillion = pricing.priceTokens(modelId, { input: 0, output: TOKENS_PER_MILLION });
+  if (inUSDPerMillion === undefined && outUSDPerMillion === undefined) return undefined;
+  return { inUSDPerMillion, outUSDPerMillion };
+}
+
+/**
+ * Resolve the model to complete with when the caller did not pin `opts.model`.
+ * `auto` (the default) is the pre-routing path verbatim; any other strategy runs
+ * the native dispatcher over the same `usableModels` enumeration. Either way the
+ * final selection is recorded so `least-used` / `round-robin` have live history.
+ */
+async function resolvePickedModel(): Promise<PickedModel | null> {
+  const strategy = await getRoutingStrategy();
+
+  if (strategy === 'auto') {
+    const picked = await pickCheapestFastModel();
+    if (picked) usageCounter.recordUse(picked.provider.id, picked.modelId);
+    return picked;
+  }
+
+  const providers = await getMergedModelProviders();
+  const models = usableModels(providers);
+  if (models.length === 0) return null;
+
+  // Pricing is only needed by the cost strategy; other strategies skip the
+  // snapshot read entirely so the pick path stays lean.
+  const pricing = strategy === 'cost-optimized' ? getModelPricing() : null;
+  const candidates: RoutingCandidate[] = models.map((m) => {
+    const p = pricing ? priceOf(pricing, m.modelId) : undefined;
+    return p ? { provider: m.provider, modelId: m.modelId, pricing: p } : { provider: m.provider, modelId: m.modelId };
+  });
+
+  const picked = pickModel(strategy, candidates, {
+    rank: fastRank,
+    loadOf: (c) => usageCounter.getCount(c.provider.id, c.modelId),
+    roundRobinCursor: routingCursor,
+  });
+  if (picked) usageCounter.recordUse(picked.provider.id, picked.modelId);
+  return picked;
+}
+
 const joinUrl = (base: string, suffix: string): string => `${base.replace(/\/+$/, '')}${suffix}`;
 
 /**
@@ -175,7 +243,7 @@ export async function oneShotComplete(
   prompt: string,
   opts?: { maxTokens?: number; model?: PickedModel; timeoutMs?: number; compressionMode?: CompressionMode }
 ): Promise<string> {
-  const picked = opts?.model ?? (await pickCheapestFastModel());
+  const picked = opts?.model ?? (await resolvePickedModel());
   // Token compression seam (OmniRoute idea, native): shrink the prompt before
   // send so every one-shot caller (Compare, Deep Research, title-gen, project-
   // knowledge, onboarding, ...) benefits. Per-call override wins; otherwise the
