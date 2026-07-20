@@ -1,0 +1,61 @@
+{
+  "sidebarLabel": "Documentos",
+  "pageTitle": "Documentos",
+  "description": "Escribe y conserva documentos vivos, y deja que la IA los mejore o sugiera cambios.",
+  "newDocument": "Nuevo documento",
+  "footer": {
+    "count": "{{count}} documentos"
+  },
+  "list": {
+    "title": "Biblioteca"
+  },
+  "empty": {
+    "title": "Ningún documento abierto",
+    "hint": "Crea tu primer documento para empezar a escribir."
+  },
+  "editor": {
+    "empty": "Elige un documento de la biblioteca o crea uno nuevo."
+  },
+  "tab": {
+    "untitled": "Sin título"
+  },
+  "titlePlaceholder": "Título del documento",
+  "language": {
+    "label": "Tipo",
+    "markdown": "Markdown",
+    "html": "HTML",
+    "csv": "CSV",
+    "code": "Código"
+  },
+  "saved": "Guardado",
+  "saving": "Guardando…",
+  "dirty": "Sin guardar",
+  "delete": "Eliminar",
+  "deleteConfirm": {
+    "title": "¿Eliminar documento?",
+    "content": "Este documento y su historial de versiones se eliminarán permanentemente.",
+    "ok": "Eliminar",
+    "cancel": "Cancelar"
+  },
+  "ai": {
+    "improve": "Mejorar",
+    "suggest": "Sugerir",
+    "placeholder": "Describe lo que quieres cambiar…",
+    "applied": "Edición de IA aplicada",
+    "noChange": "No hay cambios que hacer",
+    "failed": "La solicitud de IA falló"
+  },
+  "suggestions": {
+    "title": "Sugerencias",
+    "accept": "Aceptar",
+    "reject": "Rechazar",
+    "acceptAll": "Aceptar todo",
+    "rejectAll": "Rechazar todo"
+  },
+  "toast": {
+    "createFailed": "No se pudo crear el documento",
+    "saveFailed": "No se pudo guardar el documento",
+    "deleted": "Documento eliminado",
+    "deleteFailed": "No se pudo eliminar el documento"
+  }
+}

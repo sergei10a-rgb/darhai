@@ -1,0 +1,61 @@
+{
+  "sidebarLabel": "文件",
+  "pageTitle": "文件",
+  "description": "撰寫並保存活文件，讓 AI 幫你改進或提出修改建議。",
+  "newDocument": "新增文件",
+  "footer": {
+    "count": "{{count}} 個文件"
+  },
+  "list": {
+    "title": "文件庫"
+  },
+  "empty": {
+    "title": "未開啟文件",
+    "hint": "建立你的第一個文件開始寫作。"
+  },
+  "editor": {
+    "empty": "從文件庫中選擇一個文件，或新增一個。"
+  },
+  "tab": {
+    "untitled": "未命名"
+  },
+  "titlePlaceholder": "文件標題",
+  "language": {
+    "label": "類型",
+    "markdown": "Markdown",
+    "html": "HTML",
+    "csv": "CSV",
+    "code": "程式碼"
+  },
+  "saved": "已儲存",
+  "saving": "儲存中…",
+  "dirty": "未儲存",
+  "delete": "刪除",
+  "deleteConfirm": {
+    "title": "刪除文件？",
+    "content": "此文件及其版本歷史將被永久刪除。",
+    "ok": "刪除",
+    "cancel": "取消"
+  },
+  "ai": {
+    "improve": "改進",
+    "suggest": "建議",
+    "placeholder": "描述你想要修改的內容…",
+    "applied": "已套用 AI 修改",
+    "noChange": "沒有需要修改的內容",
+    "failed": "AI 請求失敗"
+  },
+  "suggestions": {
+    "title": "建議",
+    "accept": "接受",
+    "reject": "拒絕",
+    "acceptAll": "全部接受",
+    "rejectAll": "全部拒絕"
+  },
+  "toast": {
+    "createFailed": "無法建立文件",
+    "saveFailed": "無法儲存文件",
+    "deleted": "文件已刪除",
+    "deleteFailed": "無法刪除文件"
+  }
+}

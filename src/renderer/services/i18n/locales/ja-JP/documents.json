@@ -1,0 +1,61 @@
+{
+  "sidebarLabel": "ドキュメント",
+  "pageTitle": "ドキュメント",
+  "description": "生きたドキュメントを書いて保存し、AI に改善や修正の提案をしてもらいましょう。",
+  "newDocument": "新規ドキュメント",
+  "footer": {
+    "count": "{{count}} 件のドキュメント"
+  },
+  "list": {
+    "title": "ライブラリ"
+  },
+  "empty": {
+    "title": "開いているドキュメントがありません",
+    "hint": "最初のドキュメントを作成して書き始めましょう。"
+  },
+  "editor": {
+    "empty": "ライブラリからドキュメントを選ぶか、新規作成してください。"
+  },
+  "tab": {
+    "untitled": "無題"
+  },
+  "titlePlaceholder": "ドキュメントのタイトル",
+  "language": {
+    "label": "種類",
+    "markdown": "Markdown",
+    "html": "HTML",
+    "csv": "CSV",
+    "code": "コード"
+  },
+  "saved": "保存済み",
+  "saving": "保存中…",
+  "dirty": "未保存",
+  "delete": "削除",
+  "deleteConfirm": {
+    "title": "ドキュメントを削除しますか？",
+    "content": "このドキュメントとそのバージョン履歴は完全に削除されます。",
+    "ok": "削除",
+    "cancel": "キャンセル"
+  },
+  "ai": {
+    "improve": "改善",
+    "suggest": "提案",
+    "placeholder": "変更したい内容を入力してください…",
+    "applied": "AI 編集を適用しました",
+    "noChange": "変更する箇所がありません",
+    "failed": "AI リクエストが失敗しました"
+  },
+  "suggestions": {
+    "title": "提案",
+    "accept": "採用",
+    "reject": "却下",
+    "acceptAll": "すべて採用",
+    "rejectAll": "すべて却下"
+  },
+  "toast": {
+    "createFailed": "ドキュメントを作成できませんでした",
+    "saveFailed": "ドキュメントを保存できませんでした",
+    "deleted": "ドキュメントを削除しました",
+    "deleteFailed": "ドキュメントを削除できませんでした"
+  }
+}

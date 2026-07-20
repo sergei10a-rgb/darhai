@@ -2318,6 +2318,66 @@ const migration_v52: IMigration = {
 };
 
 /**
+ * Migration v52 -> v53: Add the `documents` + `document_versions` tables for the
+ * Documents surface (Odysseus assimilation "documents"). A document is a persistent
+ * living entity - the current head content plus a version-history trail. `documents`
+ * holds the head + metadata; `document_versions` holds each snapshot with a `source`
+ * ('user' | 'ai') so a manual save and an AI edit are distinguishable. Content is
+ * edited through the REUSED Preview editors; only persistence is new here.
+ *
+ * Every statement is `IF NOT EXISTS` so up() is idempotent and survives a re-run
+ * from version 0 (crash recovery / re-entrancy), matching migration_v52.
+ */
+const migration_v53: IMigration = {
+  version: 53,
+  name: 'Add documents + document_versions tables for the Documents surface',
+  up: (db) => {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS documents (
+        id                  TEXT PRIMARY KEY,
+        user_id             TEXT NOT NULL,
+        title               TEXT NOT NULL DEFAULT '',
+        language            TEXT NOT NULL DEFAULT 'markdown', /* 'markdown'|'html'|'csv'|'code' */
+        content             TEXT NOT NULL DEFAULT '',
+        version_count       INTEGER NOT NULL DEFAULT 1,
+        archived            INTEGER NOT NULL DEFAULT 0,
+        created_at_ms       INTEGER NOT NULL,
+        updated_at_ms       INTEGER NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+    db.exec('CREATE INDEX IF NOT EXISTS idx_documents_user_id ON documents(user_id)');
+    // Composite index backs the library list (a user's docs ordered by recency).
+    db.exec('CREATE INDEX IF NOT EXISTS idx_documents_user_updated ON documents(user_id, updated_at_ms)');
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS document_versions (
+        id                  TEXT PRIMARY KEY,
+        document_id         TEXT NOT NULL,
+        version_number      INTEGER NOT NULL,
+        content             TEXT NOT NULL DEFAULT '',
+        summary             TEXT,
+        source              TEXT NOT NULL DEFAULT 'user', /* 'user'|'ai' */
+        created_at_ms       INTEGER NOT NULL,
+        FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE
+      )
+    `);
+    // Composite index backs the version lookup (a document's versions by number).
+    db.exec(
+      'CREATE INDEX IF NOT EXISTS idx_document_versions_doc_number ON document_versions(document_id, version_number)'
+    );
+    console.log('[Migration v53] Added documents + document_versions tables');
+  },
+  down: (db) => {
+    db.exec('DROP INDEX IF EXISTS idx_document_versions_doc_number');
+    db.exec('DROP TABLE IF EXISTS document_versions');
+    db.exec('DROP INDEX IF EXISTS idx_documents_user_updated');
+    db.exec('DROP INDEX IF EXISTS idx_documents_user_id');
+    db.exec('DROP TABLE IF EXISTS documents');
+    console.log('[Migration v53] Rolled back: dropped documents + document_versions tables');
+  },
+};
+
+/**
  * All migrations in order
  */
 // prettier-ignore
@@ -2330,7 +2390,7 @@ export const ALL_MIGRATIONS: IMigration[] = [
   migration_v31, migration_v32, migration_v33, migration_v34, migration_v35, migration_v36,
   migration_v37, migration_v38, migration_v39, migration_v40, migration_v41, migration_v42,
   migration_v43, migration_v44, migration_v45, migration_v46, migration_v47,
-  migration_v48, migration_v49, migration_v50, migration_v51, migration_v52,
+  migration_v48, migration_v49, migration_v50, migration_v51, migration_v52, migration_v53,
 ];
 
 /**

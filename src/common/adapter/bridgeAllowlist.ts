@@ -332,6 +332,18 @@ const REMOTE_DENIED_KEYS: ReadonlySet<string> = new Set([
   'calendar.create',
   'calendar.update',
   'calendar.delete',
+  // --- Documents (Odysseus "documents"): every mutating verb writes persisted
+  //     user content, and the AI verbs (ai-edit / ai-suggest) spend model tokens +
+  //     make outbound provider calls. A paired-device WebSocket caller must never
+  //     create/edit/delete a document or drive an AI edit/suggest - only the trusted
+  //     local user owns their documents. The read verbs (documents.list /
+  //     documents.get) follow the cron read policy and stay allowed for the paired
+  //     UI. Distinct from the untouched `document.convert` namespace. ---
+  'documents.create',
+  'documents.update',
+  'documents.delete',
+  'documents.ai-edit',
+  'documents.ai-suggest',
   // --- Storage destructive / disk operations ---
   'storage:changeDir',
   'storage:clearDir',

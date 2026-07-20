@@ -1,0 +1,61 @@
+{
+  "sidebarLabel": "Documents",
+  "pageTitle": "Documents",
+  "description": "Write and keep living documents, and let AI improve or suggest edits.",
+  "newDocument": "New document",
+  "footer": {
+    "count": "{{count}} documents"
+  },
+  "list": {
+    "title": "Library"
+  },
+  "empty": {
+    "title": "No document open",
+    "hint": "Create your first document to start writing."
+  },
+  "editor": {
+    "empty": "Pick a document from the library, or create a new one."
+  },
+  "tab": {
+    "untitled": "Untitled"
+  },
+  "titlePlaceholder": "Document title",
+  "language": {
+    "label": "Type",
+    "markdown": "Markdown",
+    "html": "HTML",
+    "csv": "CSV",
+    "code": "Code"
+  },
+  "saved": "Saved",
+  "saving": "Saving…",
+  "dirty": "Unsaved",
+  "delete": "Delete",
+  "deleteConfirm": {
+    "title": "Delete document?",
+    "content": "This document and its version history will be permanently deleted.",
+    "ok": "Delete",
+    "cancel": "Cancel"
+  },
+  "ai": {
+    "improve": "Improve",
+    "suggest": "Suggest",
+    "placeholder": "Describe what you want to change…",
+    "applied": "AI edit applied",
+    "noChange": "No changes to make",
+    "failed": "The AI request failed"
+  },
+  "suggestions": {
+    "title": "Suggestions",
+    "accept": "Accept",
+    "reject": "Reject",
+    "acceptAll": "Accept all",
+    "rejectAll": "Reject all"
+  },
+  "toast": {
+    "createFailed": "Could not create the document",
+    "saveFailed": "Could not save the document",
+    "deleted": "Document deleted",
+    "deleteFailed": "Could not delete the document"
+  }
+}

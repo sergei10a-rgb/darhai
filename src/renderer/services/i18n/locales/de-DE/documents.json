@@ -1,0 +1,61 @@
+{
+  "sidebarLabel": "Dokumente",
+  "pageTitle": "Dokumente",
+  "description": "Schreibe und bewahre lebende Dokumente und lass die KI sie verbessern oder Änderungen vorschlagen.",
+  "newDocument": "Neues Dokument",
+  "footer": {
+    "count": "{{count}} Dokumente"
+  },
+  "list": {
+    "title": "Bibliothek"
+  },
+  "empty": {
+    "title": "Kein Dokument geöffnet",
+    "hint": "Erstelle dein erstes Dokument, um mit dem Schreiben zu beginnen."
+  },
+  "editor": {
+    "empty": "Wähle ein Dokument aus der Bibliothek oder erstelle ein neues."
+  },
+  "tab": {
+    "untitled": "Ohne Titel"
+  },
+  "titlePlaceholder": "Dokumenttitel",
+  "language": {
+    "label": "Typ",
+    "markdown": "Markdown",
+    "html": "HTML",
+    "csv": "CSV",
+    "code": "Code"
+  },
+  "saved": "Gespeichert",
+  "saving": "Speichern…",
+  "dirty": "Nicht gespeichert",
+  "delete": "Löschen",
+  "deleteConfirm": {
+    "title": "Dokument löschen?",
+    "content": "Dieses Dokument und sein Versionsverlauf werden dauerhaft gelöscht.",
+    "ok": "Löschen",
+    "cancel": "Abbrechen"
+  },
+  "ai": {
+    "improve": "Verbessern",
+    "suggest": "Vorschlagen",
+    "placeholder": "Beschreibe, was du ändern möchtest…",
+    "applied": "KI-Bearbeitung angewendet",
+    "noChange": "Keine Änderungen nötig",
+    "failed": "Die KI-Anfrage ist fehlgeschlagen"
+  },
+  "suggestions": {
+    "title": "Vorschläge",
+    "accept": "Übernehmen",
+    "reject": "Ablehnen",
+    "acceptAll": "Alle übernehmen",
+    "rejectAll": "Alle ablehnen"
+  },
+  "toast": {
+    "createFailed": "Dokument konnte nicht erstellt werden",
+    "saveFailed": "Dokument konnte nicht gespeichert werden",
+    "deleted": "Dokument gelöscht",
+    "deleteFailed": "Dokument konnte nicht gelöscht werden"
+  }
+}

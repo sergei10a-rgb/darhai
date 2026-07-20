@@ -1,0 +1,61 @@
+{
+  "sidebarLabel": "文档",
+  "pageTitle": "文档",
+  "description": "撰写并保存活文档，让 AI 帮你改进或提出修改建议。",
+  "newDocument": "新建文档",
+  "footer": {
+    "count": "{{count}} 个文档"
+  },
+  "list": {
+    "title": "文档库"
+  },
+  "empty": {
+    "title": "未打开文档",
+    "hint": "创建你的第一个文档开始写作。"
+  },
+  "editor": {
+    "empty": "从文档库中选择一个文档，或新建一个。"
+  },
+  "tab": {
+    "untitled": "无标题"
+  },
+  "titlePlaceholder": "文档标题",
+  "language": {
+    "label": "类型",
+    "markdown": "Markdown",
+    "html": "HTML",
+    "csv": "CSV",
+    "code": "代码"
+  },
+  "saved": "已保存",
+  "saving": "保存中…",
+  "dirty": "未保存",
+  "delete": "删除",
+  "deleteConfirm": {
+    "title": "删除文档？",
+    "content": "该文档及其版本历史将被永久删除。",
+    "ok": "删除",
+    "cancel": "取消"
+  },
+  "ai": {
+    "improve": "改进",
+    "suggest": "建议",
+    "placeholder": "描述你想要修改的内容…",
+    "applied": "已应用 AI 修改",
+    "noChange": "没有需要修改的内容",
+    "failed": "AI 请求失败"
+  },
+  "suggestions": {
+    "title": "建议",
+    "accept": "接受",
+    "reject": "拒绝",
+    "acceptAll": "全部接受",
+    "rejectAll": "全部拒绝"
+  },
+  "toast": {
+    "createFailed": "无法创建文档",
+    "saveFailed": "无法保存文档",
+    "deleted": "文档已删除",
+    "deleteFailed": "无法删除文档"
+  }
+}

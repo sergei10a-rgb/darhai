@@ -1,0 +1,61 @@
+{
+  "sidebarLabel": "Documents",
+  "pageTitle": "Documents",
+  "description": "Rédigez et conservez des documents vivants, et laissez l'IA les améliorer ou proposer des modifications.",
+  "newDocument": "Nouveau document",
+  "footer": {
+    "count": "{{count}} documents"
+  },
+  "list": {
+    "title": "Bibliothèque"
+  },
+  "empty": {
+    "title": "Aucun document ouvert",
+    "hint": "Créez votre premier document pour commencer à écrire."
+  },
+  "editor": {
+    "empty": "Choisissez un document dans la bibliothèque ou créez-en un nouveau."
+  },
+  "tab": {
+    "untitled": "Sans titre"
+  },
+  "titlePlaceholder": "Titre du document",
+  "language": {
+    "label": "Type",
+    "markdown": "Markdown",
+    "html": "HTML",
+    "csv": "CSV",
+    "code": "Code"
+  },
+  "saved": "Enregistré",
+  "saving": "Enregistrement…",
+  "dirty": "Non enregistré",
+  "delete": "Supprimer",
+  "deleteConfirm": {
+    "title": "Supprimer le document ?",
+    "content": "Ce document et son historique de versions seront supprimés définitivement.",
+    "ok": "Supprimer",
+    "cancel": "Annuler"
+  },
+  "ai": {
+    "improve": "Améliorer",
+    "suggest": "Suggérer",
+    "placeholder": "Décrivez ce que vous voulez changer…",
+    "applied": "Modification IA appliquée",
+    "noChange": "Aucune modification à apporter",
+    "failed": "La requête IA a échoué"
+  },
+  "suggestions": {
+    "title": "Suggestions",
+    "accept": "Accepter",
+    "reject": "Rejeter",
+    "acceptAll": "Tout accepter",
+    "rejectAll": "Tout rejeter"
+  },
+  "toast": {
+    "createFailed": "Impossible de créer le document",
+    "saveFailed": "Impossible d'enregistrer le document",
+    "deleted": "Document supprimé",
+    "deleteFailed": "Impossible de supprimer le document"
+  }
+}

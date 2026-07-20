@@ -1,0 +1,61 @@
+{
+  "sidebarLabel": "문서",
+  "pageTitle": "문서",
+  "description": "살아있는 문서를 작성하고 보관하며, AI가 개선하거나 수정을 제안하도록 하세요.",
+  "newDocument": "새 문서",
+  "footer": {
+    "count": "문서 {{count}}개"
+  },
+  "list": {
+    "title": "라이브러리"
+  },
+  "empty": {
+    "title": "열린 문서가 없습니다",
+    "hint": "첫 문서를 만들어 작성을 시작하세요."
+  },
+  "editor": {
+    "empty": "라이브러리에서 문서를 선택하거나 새로 만드세요."
+  },
+  "tab": {
+    "untitled": "제목 없음"
+  },
+  "titlePlaceholder": "문서 제목",
+  "language": {
+    "label": "유형",
+    "markdown": "Markdown",
+    "html": "HTML",
+    "csv": "CSV",
+    "code": "코드"
+  },
+  "saved": "저장됨",
+  "saving": "저장 중…",
+  "dirty": "저장 안 됨",
+  "delete": "삭제",
+  "deleteConfirm": {
+    "title": "문서를 삭제할까요?",
+    "content": "이 문서와 버전 기록이 영구적으로 삭제됩니다.",
+    "ok": "삭제",
+    "cancel": "취소"
+  },
+  "ai": {
+    "improve": "개선",
+    "suggest": "제안",
+    "placeholder": "변경하고 싶은 내용을 입력하세요…",
+    "applied": "AI 편집이 적용되었습니다",
+    "noChange": "변경할 내용이 없습니다",
+    "failed": "AI 요청이 실패했습니다"
+  },
+  "suggestions": {
+    "title": "제안",
+    "accept": "수락",
+    "reject": "거절",
+    "acceptAll": "모두 수락",
+    "rejectAll": "모두 거절"
+  },
+  "toast": {
+    "createFailed": "문서를 만들 수 없습니다",
+    "saveFailed": "문서를 저장할 수 없습니다",
+    "deleted": "문서가 삭제되었습니다",
+    "deleteFailed": "문서를 삭제할 수 없습니다"
+  }
+}

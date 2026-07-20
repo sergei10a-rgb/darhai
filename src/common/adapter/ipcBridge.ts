@@ -1138,6 +1138,47 @@ export const calendar = {
     buildEmitter<import('@/common/types/calendar').CalendarReminderFiredEvent>('calendar.reminder-fired'),
 };
 
+/**
+ * Documents (Odysseus assimilation "documents"). A persistent document library +
+ * dedicated workspace that REUSES the existing Preview editors for the editing
+ * surface. Every mutating verb (create/update/delete) is remote-denied (see
+ * bridgeAllowlist REMOTE_DENIED_KEYS) - only the trusted local user owns their
+ * documents. The AI verbs (ai-edit / ai-suggest) spend model tokens + make
+ * outbound calls, so they are remote-denied too. The read verbs (list/get) follow
+ * the cron read policy and stay allowed. Distinct from the untouched
+ * `document.convert` namespace (doc-format conversion).
+ */
+export const documents = {
+  // Query
+  list: buildProvider<
+    import('@/common/types/documents').DocumentEntity[],
+    { userId: string; includeArchived?: boolean }
+  >('documents.list'),
+  get: buildProvider<import('@/common/types/documents').DocumentEntity | null, { documentId: string }>('documents.get'),
+  // CRUD (all remote-denied)
+  create: buildProvider<
+    import('@/common/types/documents').DocumentEntity,
+    import('@/common/types/documents').CreateDocumentParams
+  >('documents.create'),
+  update: buildProvider<
+    import('@/common/types/documents').DocumentEntity,
+    { documentId: string; updates: import('@/common/types/documents').UpdateDocumentParams }
+  >('documents.update'),
+  delete: buildProvider<void, { documentId: string }>('documents.delete'),
+  // AI edit / suggest (remote-denied - spends model tokens + makes outbound calls)
+  aiEdit: buildProvider<
+    import('@/common/types/documents').AiEditResult,
+    import('@/common/types/documents').AiEditRequest
+  >('documents.ai-edit'),
+  aiSuggest: buildProvider<
+    import('@/common/types/documents').AiSuggestion[],
+    import('@/common/types/documents').AiEditRequest
+  >('documents.ai-suggest'),
+  // Events
+  onDocumentChanged:
+    buildEmitter<import('@/common/types/documents').DocumentChangedEvent>('documents.document-changed'),
+};
+
 /** Mission Control - unified task ledger (team tasks + cron jobs). */
 export const missionControl = {
   snapshot: buildProvider<import('@/common/types/missionControl').MissionControlSnapshot, { userId: string }>(

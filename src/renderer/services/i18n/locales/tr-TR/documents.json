@@ -1,0 +1,61 @@
+{
+  "sidebarLabel": "Belgeler",
+  "pageTitle": "Belgeler",
+  "description": "Yaşayan belgeler yazın ve saklayın; yapay zekânın onları geliştirmesine veya değişiklik önermesine izin verin.",
+  "newDocument": "Yeni belge",
+  "footer": {
+    "count": "{{count}} belge"
+  },
+  "list": {
+    "title": "Kitaplık"
+  },
+  "empty": {
+    "title": "Açık belge yok",
+    "hint": "Yazmaya başlamak için ilk belgenizi oluşturun."
+  },
+  "editor": {
+    "empty": "Kitaplıktan bir belge seçin veya yeni bir tane oluşturun."
+  },
+  "tab": {
+    "untitled": "Başlıksız"
+  },
+  "titlePlaceholder": "Belge başlığı",
+  "language": {
+    "label": "Tür",
+    "markdown": "Markdown",
+    "html": "HTML",
+    "csv": "CSV",
+    "code": "Kod"
+  },
+  "saved": "Kaydedildi",
+  "saving": "Kaydediliyor…",
+  "dirty": "Kaydedilmedi",
+  "delete": "Sil",
+  "deleteConfirm": {
+    "title": "Belge silinsin mi?",
+    "content": "Bu belge ve sürüm geçmişi kalıcı olarak silinecek.",
+    "ok": "Sil",
+    "cancel": "İptal"
+  },
+  "ai": {
+    "improve": "İyileştir",
+    "suggest": "Öner",
+    "placeholder": "Neyi değiştirmek istediğinizi açıklayın…",
+    "applied": "Yapay zekâ düzenlemesi uygulandı",
+    "noChange": "Yapılacak değişiklik yok",
+    "failed": "Yapay zekâ isteği başarısız oldu"
+  },
+  "suggestions": {
+    "title": "Öneriler",
+    "accept": "Kabul et",
+    "reject": "Reddet",
+    "acceptAll": "Tümünü kabul et",
+    "rejectAll": "Tümünü reddet"
+  },
+  "toast": {
+    "createFailed": "Belge oluşturulamadı",
+    "saveFailed": "Belge kaydedilemedi",
+    "deleted": "Belge silindi",
+    "deleteFailed": "Belge silinemedi"
+  }
+}
