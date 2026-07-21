@@ -27,6 +27,9 @@ const mocks = vi.hoisted(() => ({
   initStarOfficeBridge: vi.fn(),
   initSpeechToTextBridge: vi.fn(),
   initHubBridge: vi.fn(),
+  initProjectBridge: vi.fn(),
+  initTeamBridge: vi.fn(),
+  initSkillsBridge: vi.fn(),
   initializeRegistry: vi.fn(async () => {}),
   loggerConfig: vi.fn(),
 }));
@@ -35,9 +38,9 @@ vi.mock('@office-ai/platform', () => ({
   logger: {
     config: (...args: unknown[]) => mocks.loggerConfig(...args),
   },
-  // C1: unmocked imports (e.g. TeamSessionService -> @/common -> ipcBridge)
-  // call buildProvider/buildEmitter through the allowlist wrapper at module
-  // load. These stubs make those calls inert during the unit test.
+  // C1: any import that reaches @/common -> ipcBridge calls
+  // buildProvider/buildEmitter through the allowlist wrapper at module load.
+  // These stubs make those calls inert during the unit test.
   bridge: {
     buildProvider: vi.fn(() => ({ provider: vi.fn(), invoke: vi.fn() })),
     buildEmitter: vi.fn(() => ({ emit: vi.fn(), on: vi.fn() })),
@@ -151,6 +154,21 @@ vi.mock('@process/bridge/speechToTextBridge', () => ({
 }));
 vi.mock('@process/bridge/hubBridge', () => ({
   initHubBridge: (...args: unknown[]) => mocks.initHubBridge(...args),
+}));
+vi.mock('@process/bridge/projectBridge', () => ({
+  initProjectBridge: (...args: unknown[]) => mocks.initProjectBridge(...args),
+}));
+vi.mock('@process/bridge/teamBridge', () => ({
+  initTeamBridge: (...args: unknown[]) => mocks.initTeamBridge(...args),
+}));
+vi.mock('@process/bridge/skillsBridge', () => ({
+  initSkillsBridge: (...args: unknown[]) => mocks.initSkillsBridge(...args),
+}));
+vi.mock('@process/team/repository/SqliteTeamRepository', () => ({
+  SqliteTeamRepository: vi.fn(),
+}));
+vi.mock('@process/team/TeamSessionService', () => ({
+  TeamSessionService: vi.fn(),
 }));
 
 describe('initBridgeStandalone', () => {

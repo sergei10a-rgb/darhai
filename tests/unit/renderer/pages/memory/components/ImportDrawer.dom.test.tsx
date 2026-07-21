@@ -29,6 +29,9 @@ import type { Mock } from 'vitest';
 vi.mock('@/common', () => {
   const claudeMemInvoke = vi.fn().mockResolvedValue({ count: 5, errors: [] });
   const obsidianVaultInvoke = vi.fn().mockResolvedValue({ count: 3, errors: [] });
+  // ImportDrawer auto-detects vaults on open; default to none found so the
+  // "no vault selected" cases below stay valid.
+  const obsidianDetectVaultsInvoke = vi.fn().mockResolvedValue({ vaults: [] });
   const scanDevDirInvoke = vi.fn().mockResolvedValue({ count: 10, projectsFound: 2, errors: [] });
   const processDropFolderInvoke = vi.fn().mockResolvedValue({ count: 2, errors: [] });
   const openExternalInvoke = vi.fn().mockResolvedValue(undefined);
@@ -39,6 +42,7 @@ vi.mock('@/common', () => {
         import: {
           claudeMem: { invoke: claudeMemInvoke },
           obsidianVault: { invoke: obsidianVaultInvoke },
+          obsidianDetectVaults: { invoke: obsidianDetectVaultsInvoke },
           scanDevDir: { invoke: scanDevDirInvoke },
           processDropFolder: { invoke: processDropFolderInvoke },
         },
@@ -107,6 +111,7 @@ type ImportBridge = {
     import: {
       claudeMem: { invoke: Mock };
       obsidianVault: { invoke: Mock };
+      obsidianDetectVaults: { invoke: Mock };
       scanDevDir: { invoke: Mock };
       processDropFolder: { invoke: Mock };
     };

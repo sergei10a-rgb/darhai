@@ -44,6 +44,30 @@ vi.mock('@/common/config/storage', () => ({
   },
 }));
 
+// The 13 locale barrels statically pull in the full translation payload
+// (37 modules x 13 languages = ~490 JSON modules, 4+ MB). This suite fully
+// mocks i18next and never asserts on translation *content* - it only exercises
+// the localStorage guards and the language-selection flow. Loading the real
+// barrels therefore adds pure transform cost, which pushes the first test past
+// the 10s default timeout once the whole suite runs in parallel.
+// Barrel/module integrity and key coverage are covered by
+// tests/integration/i18n.test.ts and scripts/check-i18n.js.
+const localeStub = vi.hoisted(() => () => ({ default: { common: { ok: 'ok' } } }));
+
+vi.mock('@/renderer/services/i18n/locales/en-US/index', localeStub);
+vi.mock('@/renderer/services/i18n/locales/es-ES/index', localeStub);
+vi.mock('@/renderer/services/i18n/locales/pt-BR/index', localeStub);
+vi.mock('@/renderer/services/i18n/locales/de-DE/index', localeStub);
+vi.mock('@/renderer/services/i18n/locales/fr-FR/index', localeStub);
+vi.mock('@/renderer/services/i18n/locales/zh-CN/index', localeStub);
+vi.mock('@/renderer/services/i18n/locales/ja-JP/index', localeStub);
+vi.mock('@/renderer/services/i18n/locales/zh-TW/index', localeStub);
+vi.mock('@/renderer/services/i18n/locales/ko-KR/index', localeStub);
+vi.mock('@/renderer/services/i18n/locales/tr-TR/index', localeStub);
+vi.mock('@/renderer/services/i18n/locales/ru-RU/index', localeStub);
+vi.mock('@/renderer/services/i18n/locales/uk-UA/index', localeStub);
+vi.mock('@/renderer/services/i18n/locales/mn-MN/index', localeStub);
+
 vi.mock('@/common', () => ({
   ipcBridge: {
     systemSettings: {
