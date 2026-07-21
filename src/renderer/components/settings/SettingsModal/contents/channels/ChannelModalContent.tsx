@@ -64,34 +64,53 @@ const useChannelModelSelection = (configKey: ChannelModelConfigKey): GeminiModel
   const { providers } = useModelProviderList();
   const [resolvedInitialModel, setResolvedInitialModel] = useState<TProviderWithModel | undefined>(undefined);
   const [restored, setRestored] = useState(false);
-  const retryCountRef = useRef(0);
+  const attemptRef = useRef(0);
+  // A restore read is in flight for this channel. `providers` gets a fresh array
+  // reference on every SWR revalidation (and the resilience/gateway layer makes
+  // those more frequent), so the effect can re-run before the pending read
+  // resolves. Without this guard each burst of revalidations fires a redundant
+  // ConfigStorage.get - and in the success path restores more than once.
+  const inFlightRef = useRef(false);
+  // Synchronous mirror of "we are done trying". `restored` is React state and
+  // lags a render behind the async read, so a re-render that lands between the
+  // read resolving and the state committing would otherwise fire another get.
+  const settledRef = useRef(false);
 
   // Cap retries to prevent infinite re-runs when a saved provider ID is stale
-  // (e.g. provider deleted, or agent switched to a non-gemini backend).
-  // The Google Auth provider typically loads within 1-2 SWR cycles, so 5 is generous.
+  // (e.g. provider deleted, or transiently filtered out by the circuit-breaker /
+  // lockout / gateway layer). The Google Auth provider typically loads within
+  // 1-2 SWR cycles, so 5 is generous.
   const MAX_RESTORE_RETRIES = 5;
 
   useEffect(() => {
-    if (restored || providers.length === 0) return;
+    if (restored || settledRef.current || inFlightRef.current || providers.length === 0) return;
+
+    if (attemptRef.current >= MAX_RESTORE_RETRIES) {
+      // Provider stayed missing across the retry budget - give up so we stop
+      // reading ConfigStorage on every subsequent revalidation.
+      settledRef.current = true;
+      setRestored(true);
+      return;
+    }
+
+    attemptRef.current += 1;
+    inFlightRef.current = true;
 
     const restore = async () => {
       try {
         const saved = (await ConfigStorage.get(configKey)) as { id: string; useModel: string } | undefined;
         if (!saved?.id || !saved?.useModel) {
           // Nothing saved - mark restored so we don't keep retrying
+          settledRef.current = true;
           setRestored(true);
           return;
         }
 
         const provider = providers.find((p) => p.id === saved.id);
         if (!provider) {
-          retryCountRef.current += 1;
-          if (retryCountRef.current >= MAX_RESTORE_RETRIES) {
-            // Provider is permanently missing - give up to avoid infinite retries
-            setRestored(true);
-          }
-          // The Google Auth provider may load after API-key providers;
-          // leaving restored=false lets this effect re-run when providers update.
+          // The Google Auth provider may load after API-key providers, so a later
+          // revalidation can still surface it; leaving restored=false lets this
+          // effect re-run. Bounded by the attempt cap checked above.
           return;
         }
 
@@ -105,10 +124,14 @@ const useChannelModelSelection = (configKey: ChannelModelConfigKey): GeminiModel
             useModel: saved.useModel,
           } as TProviderWithModel);
         }
+        settledRef.current = true;
         setRestored(true);
       } catch (error) {
         console.error(`[ChannelSettings] Failed to restore model for ${configKey}:`, error);
+        settledRef.current = true;
         setRestored(true);
+      } finally {
+        inFlightRef.current = false;
       }
     };
 
@@ -124,11 +147,7 @@ const useChannelModelSelection = (configKey: ChannelModelConfigKey): GeminiModel
 
         // Derive platform from configKey and sync to channel system
         const platform = configKey.replace('assistant.', '').replace('.defaultModel', '') as
-          | 'telegram'
-          | 'lark'
-          | 'dingtalk'
-          | 'weixin'
-          | 'wecom';
+          'telegram' | 'lark' | 'dingtalk' | 'weixin' | 'wecom';
         const agentKey = `assistant.${platform}.agent` as const;
         const currentAgent = await ConfigStorage.get(agentKey);
         await channel.syncChannelSettings

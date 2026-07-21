@@ -117,14 +117,26 @@ vi.mock('../../src/renderer/components/settings/SettingsModal/contents/channels/
 }));
 
 describe('useChannelModelSelection restore retry limit', () => {
+  // ConfigStorage.get is also read once at module init by unrelated hooks
+  // (useTheme -> 'theme', useColorScheme -> 'colorScheme'). Those fire in
+  // whichever test loads the modules first, so count only the channel model
+  // restore reads to keep the retry-cap assertions precise and order-independent.
+  const restoreGetCount = () =>
+    mockConfigStorageGet.mock.calls.filter(
+      ([key]) => typeof key === 'string' && (key as string).endsWith('.defaultModel')
+    ).length;
+
   beforeEach(() => {
+    // Guard against a prior test file leaving fake timers active in the shared
+    // worker: async act() and the React scheduler rely on real setTimeout, and
+    // frozen timers would hang every act() call in this file.
+    vi.useRealTimers();
     vi.clearAllMocks();
     mockProviders = [];
   });
 
   // Unmount the previous test's component so its retry effects can't leak calls
-  // into the next test (under full-suite scheduling this double-counted
-  // ConfigStorage.get). vi.clearAllMocks resets call counts, not the mounted DOM.
+  // into the next test. vi.clearAllMocks resets call counts, not the mounted DOM.
   afterEach(() => {
     cleanup();
   });
@@ -139,32 +151,47 @@ describe('useChannelModelSelection restore retry limit', () => {
     const { default: ChannelModalContent } =
       await import('@/renderer/components/settings/SettingsModal/contents/channels/ChannelModalContent');
 
-    await act(async () => {
-      render(<ChannelModalContent />);
+    // Render with the SYNCHRONOUS act form. The async `await act(async ...)`
+    // form parks on the React scheduler's macrotask queue, which can starve for
+    // longer than the test timeout when the full suite saturates the workers -
+    // that is exactly how this test used to hang. The sync form flushes effects
+    // on exit, and vi.waitFor below absorbs the async restore() continuations
+    // without depending on scheduler latency.
+    let rerender: (ui: React.ReactElement) => void = () => {};
+    act(() => {
+      ({ rerender } = render(<ChannelModalContent />));
     });
 
     // The hook runs for 5 channels (telegram, lark, dingtalk, weixin, wecom).
     // Initial render triggers the first attempt for each channel.
     // The saved provider 'deleted-provider' won't be found in mockProviders.
-    const initialCallCount = mockConfigStorageGet.mock.calls.length;
-    expect(initialCallCount).toBeGreaterThan(0);
+    await vi.waitFor(() => expect(restoreGetCount()).toBeGreaterThan(0), { timeout: 8000 });
 
-    // Simulate multiple SWR revalidations by triggering re-renders with
-    // the same providers reference (effects re-run on providers change).
-    // Each re-render should increment the retry count until the limit is hit.
+    // Simulate repeated SWR revalidations. Each revalidation yields a fresh
+    // `providers` array reference, which is a dependency of the restore effect,
+    // so the effect genuinely re-runs on every re-render. A stale saved provider
+    // is never found, so without the retry cap this would call ConfigStorage.get
+    // on every one of these re-renders (5 channels x 10 = 50+ extra calls).
+    //
+    // Drive the re-render with a synchronous act() and flush the resulting
+    // restore() microtask with `await Promise.resolve()`. Using the async
+    // act(async () => ...) form here relies on the React scheduler's macrotask
+    // queue, which does not settle within the test timeout under full-suite
+    // worker load - that is what hung this test.
     for (let i = 0; i < 10; i++) {
-      // Create a new providers array reference to trigger the useEffect
+      // A new providers array reference is what a real SWR revalidation produces.
       mockProviders = [{ id: 'provider-1', name: 'Provider One', model: ['model-a', 'model-b'] }];
-      await act(async () => {
-        // Force re-render by triggering state updates
-        await new Promise((resolve) => setTimeout(resolve, 0));
+      act(() => {
+        rerender(<ChannelModalContent />);
       });
+      // eslint-disable-next-line no-await-in-loop
+      await Promise.resolve();
     }
 
     // After MAX_RESTORE_RETRIES (5), the effect should stop calling ConfigStorage.get.
     // With 5 channels × at most 5 retries each = at most 25 calls.
-    // Without the fix, this would be 5 × 10+ = 50+ calls.
-    const totalCalls = mockConfigStorageGet.mock.calls.length;
+    // Without the cap, this would be 5 × 10+ = 50+ calls.
+    const totalCalls = restoreGetCount();
     expect(totalCalls).toBeLessThanOrEqual(5 * 5);
   });
 
@@ -176,12 +203,26 @@ describe('useChannelModelSelection restore retry limit', () => {
     const { default: ChannelModalContent } =
       await import('@/renderer/components/settings/SettingsModal/contents/channels/ChannelModalContent');
 
-    await act(async () => {
-      render(<ChannelModalContent />);
+    // Sync act + waitFor: see the comment in the stale-provider test above for
+    // why the async act form is off-limits here.
+    let rerender: (ui: React.ReactElement) => void = () => {};
+    act(() => {
+      ({ rerender } = render(<ChannelModalContent />));
     });
 
     // Each of the 5 channels should call ConfigStorage.get exactly once
     // (restored=true after finding the provider, so no retries)
-    expect(mockConfigStorageGet).toHaveBeenCalledTimes(5);
+    await vi.waitFor(() => expect(restoreGetCount()).toBe(5), { timeout: 8000 });
+
+    // Idempotence: a fresh providers array reference (what a real SWR
+    // revalidation produces) must NOT trigger another read once every channel
+    // has settled.
+    mockProviders = [{ id: 'provider-1', name: 'Provider One', model: ['model-a', 'model-b'] }];
+    act(() => {
+      rerender(<ChannelModalContent />);
+    });
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(restoreGetCount()).toBe(5);
   });
 });
