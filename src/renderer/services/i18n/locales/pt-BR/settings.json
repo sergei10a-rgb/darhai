@@ -1983,28 +1983,6 @@
       "undecryptableHint": "Sua chave salva para este provedor está ilegível. Insira-a novamente.",
       "fromDeepLink": "De deep link"
     },
-    "flux": {
-      "name": "Flux Router",
-      "recommended": "Recomendado",
-      "headline": "Uma chave. Todos os modelos. Roteado por requisição.",
-      "body": "Pare de pagar tarifas de modelos topo de linha para cada consulta. O Flux Router escolhe o modelo certo para cada uma.",
-      "connect": "Conectar o Flux Router",
-      "connecting": "Conectando…",
-      "getKey": "Obtenha uma chave em fluxrouter.ai",
-      "keyLabel": "Chave do Flux Router",
-      "keyPlaceholder": "Cole sua chave do Flux Router (sk-flux-…)",
-      "routing": "O Flux Router está roteando.",
-      "metricsTurns": "Últimos {{count}} turnos:",
-      "histogram": "Topo de linha {{flagship}} · Pequeno {{small}} · Local {{local}}",
-      "activeConfirmation": "Flux Router conectado · {{count}} modelos · roteado por requisição",
-      "errorUnauthorized": "Essa chave do {{provider}} foi rejeitada. Verifique a chave e tente novamente.",
-      "errorNoCredit": "Conectado, mas essa chave do {{provider}} não tem crédito utilizável. Adicione faturamento para rotear modelos.",
-      "errorOffline": "Não foi possível acessar o {{provider}}. Você parece estar offline. Verifique sua conexão e tente novamente.",
-      "errorUnrecognized": "Essa chave não foi reconhecida para o {{provider}}.",
-      "errorNoModels": "{{provider}} conectado, mas não retornou modelos. Tente novamente em instantes.",
-      "errorUnknown": "Não foi possível conectar ao {{provider}}. Tente novamente.",
-      "trust": "Baseado em tecnologia de código aberto."
-    },
     "detected": {
       "found": "Encontramos uma chave de API do {{provider}} nesta máquina. Usá-la?",
       "use": "Usar",
@@ -2180,8 +2158,6 @@
       "searchPlaceholder": "Buscar modelos, por nome ou provedor",
       "searchMatches": "{{count}} correspondências",
       "searchNoMatches": "Nenhum modelo corresponde à sua busca.",
-      "sectionFluxHero": "Flux Auto",
-      "sectionFluxHeroSubtitle": "Uma chave, melhor modelo por tarefa. Mude quando quiser.",
       "sectionRecommended": "Recomendados",
       "sectionRecommendedSubtitle": "modelos topo de linha por provedor",
       "sectionFrequentlyUsed": "Usados com frequência",
@@ -2388,41 +2364,6 @@
       "wcore": "O motor próprio do Darhai. Usa todos os provedores na sua página de Modelos.",
       "claude": "O agente de codificação da Anthropic. Faz login com a própria conta; não pode rodar GPT ou Gemini.",
       "codex": "O agente de codificação da OpenAI. Faz login com a própria conta; não pode rodar Claude ou Gemini."
-    },
-    "flux": {
-      "title": "Flux Router",
-      "desc": "Permite que qualquer agente roteie por todos os modelos e provedores que você conectou, não apenas os seus próprios.",
-      "statusConnected": "Conectado",
-      "statusDisconnected": "Não conectado",
-      "routeToggleLabel": "Rotear todos os agentes pelo Flux",
-      "routeToggleHelp": "Cada agente escolhe o modelo mais adequado entre seus provedores conectados. Desative para devolver cada agente à sua própria conexão.",
-      "connectCta": "Conectar o Flux na página de Modelos"
-    },
-    "fluxCompat": {
-      "ready": "Flux pronto",
-      "setup": "Configurar Flux",
-      "nativeOnly": "Somente nativo",
-      "nativeOnlyTooltip": "Conecta-se pelo próprio provedor, por isso não pode ser roteado pelo Flux."
-    },
-    "fluxSetup": {
-      "title": "Rotear {{tool}} pelo Flux",
-      "absentBody": "{{tool}} não foi detectado nesta máquina. Instale-o primeiro e volte para roteá-lo pelo Flux.",
-      "unconfiguredBody": "Configure o {{tool}} para roteá-lo pelo Flux. O Darhai grava um provedor Flux na configuração do {{tool}} em {{configPath}} e faz backup do arquivo existente primeiro.",
-      "routedBody": "O {{tool}} está sendo roteado pelo Flux.",
-      "driftedBody": "A configuração Flux do {{tool}} foi alterada fora do Darhai. Reaplique para restaurar as configurações do Darhai ou remova o Flux do {{tool}}.",
-      "notConnected": "Conecte o Flux Router primeiro e depois configure o {{tool}}.",
-      "genericError": "A configuração não foi concluída.",
-      "setup": "Configurar o {{tool}} para o Flux",
-      "reapply": "Reaplicar",
-      "remove": "Remover o Flux do {{tool}}",
-      "close": "Fechar",
-      "setupDone": "O {{tool}} agora está sendo roteado pelo Flux.",
-      "removeDone": "O Flux foi removido do {{tool}}.",
-      "report": {
-        "changesLabel": "O que mudou",
-        "backupLabel": "Backup em",
-        "rollbackLabel": "Para desfazer, execute"
-      }
     }
   },
   "wcoreConfig": {

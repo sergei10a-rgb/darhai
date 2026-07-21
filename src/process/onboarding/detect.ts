@@ -37,9 +37,6 @@ const PROBE_TIMEOUT_MS = 2000;
 /** Timeout (ms) for the macOS `dscl` real-name lookup. */
 const REAL_NAME_TIMEOUT_MS = 1000;
 
-/** Flux Desktop daemon base URL (local loopback). */
-const FLUX_DAEMON_BASE = 'http://127.0.0.1:7878';
-
 /** Ollama daemon tags endpoint (local loopback). */
 const OLLAMA_TAGS_URL = 'http://127.0.0.1:11434/api/tags';
 
@@ -121,30 +118,6 @@ async function probeOllama(): Promise<DetectionResult['ollama']> {
     .map((m) => (m && typeof m === 'object' ? (m as { name?: unknown }).name : undefined))
     .filter((n): n is string => typeof n === 'string' && n.length > 0);
   return { running: true, models: names };
-}
-
-/**
- * Flux Desktop daemon probe. The daemon is considered running if its
- * `socket-token` file exists OR its version endpoint responds. Never throws.
- */
-async function probeFluxDesktop(): Promise<DetectionResult['fluxDesktop']> {
-  const tokenExists = (() => {
-    try {
-      return existsSync(join(homedir(), '.flux', 'socket-token'));
-    } catch {
-      return false;
-    }
-  })();
-
-  const body = await fetchJsonWithTimeout(`${FLUX_DAEMON_BASE}/api/version`, PROBE_TIMEOUT_MS);
-  const version =
-    body && typeof body === 'object' && typeof (body as { version?: unknown }).version === 'string'
-      ? (body as { version: string }).version
-      : undefined;
-
-  const running = tokenExists || body !== null;
-  if (!running) return { running: false };
-  return version ? { running, version } : { running };
 }
 
 /**
@@ -235,24 +208,6 @@ async function probeName(): Promise<string> {
 }
 
 /**
- * Whether `flux-router` is already a connected provider in the registry.
- *
- * Reads the model-registry repository directly. The repository is `null` until
- * the registry IPC has initialised, and the whole call is guarded so an
- * uninitialised registry degrades to `false` rather than throwing. Never throws.
- */
-function probeFluxConnected(): boolean {
-  try {
-    const repo = getModelRegistryRepository();
-    if (!repo) return false;
-    const provider = repo.getRegistryProvider('flux-router');
-    return provider?.state === 'connected';
-  } catch {
-    return false;
-  }
-}
-
-/**
  * Auto-register a detected local Ollama daemon as the `ollama-local` provider.
  *
  * Runs the idempotent registry upsert + catalog write, then mirrors the row to
@@ -281,13 +236,12 @@ function autoWireOllama(ollama: DetectionResult['ollama']): void {
  * gates on the slowest probe - the orchestrator itself never rejects.
  */
 export async function runOnboardingDetection(): Promise<DetectionResult> {
-  const [name, clis, agents, envKeys, ollama, fluxDesktop] = await Promise.all([
+  const [name, clis, agents, envKeys, ollama] = await Promise.all([
     probeName(),
     probeClis(),
     probeAgents(),
     probeEnvKeys(),
     probeOllama(),
-    probeFluxDesktop(),
   ]);
 
   // Auto-wire a detected local Ollama daemon into the model registry so it is
@@ -303,15 +257,5 @@ export async function runOnboardingDetection(): Promise<DetectionResult> {
     envKeys,
     claudePro: probeClaudePro(clis),
     ollama,
-    fluxDesktop,
-    fluxConnected: probeFluxConnected(),
   };
-}
-
-/**
- * Fetch the Flux Desktop daemon routing metrics. Returns the parsed JSON when
- * the daemon responds 2xx, or `null` on any failure. Never fabricates stats.
- */
-export async function fetchFluxMetrics(): Promise<unknown | null> {
-  return fetchJsonWithTimeout(`${FLUX_DAEMON_BASE}/api/metrics`, PROBE_TIMEOUT_MS);
 }

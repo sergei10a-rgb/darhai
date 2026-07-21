@@ -6,7 +6,6 @@ import type { IModelRegistryConnectResult } from '@/common/adapter/ipcBridge';
 import type { ConnectError, ProviderId } from '@process/providers/types';
 import type { CatalogProviderEntry } from '@process/providers/catalog/catalogProvider';
 import { useModelRegistry } from '@renderer/hooks/useModelRegistry';
-import FluxRouterMark from '@renderer/components/icons/FluxRouterMark';
 import CloudCredentialForm, { isCloudFormProvider, type CloudProviderId } from './CloudCredentialForm';
 import {
   PROVIDER_GROUP_ORDER,
@@ -250,19 +249,13 @@ const BrowseModal: React.FC<Props> = ({ visible, onClose, initialProvider }) => 
         onClick={() => handlePick(provider)}
         aria-label={t('settings.modelsPage.browse.connectAria', { provider: provider.displayName })}
       >
-        {provider.id === 'flux-router' ? (
-          <span className={styles.tileAvatar} style={{ background: '#141414' }} aria-hidden>
-            <FluxRouterMark size={17} />
-          </span>
-        ) : (
-          <span
-            className={styles.tileAvatar}
-            style={{ background: provider.bg, color: provider.darkText ? '#1a1a1a' : '#fff' }}
-            aria-hidden
-          >
-            {provider.mono}
-          </span>
-        )}
+        <span
+          className={styles.tileAvatar}
+          style={{ background: provider.bg, color: provider.darkText ? '#1a1a1a' : '#fff' }}
+          aria-hidden
+        >
+          {provider.mono}
+        </span>
         <span className={styles.tileText}>
           <span className={styles.tileName}>{provider.displayName}</span>
           {cloud && <span className={styles.tileSub}>{t('settings.modelsPage.browse.cloudTag')}</span>}

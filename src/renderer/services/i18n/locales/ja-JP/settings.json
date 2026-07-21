@@ -1950,28 +1950,6 @@
       "undecryptableHint": "Your saved key for this provider is unreadable. Please re-enter it.",
       "fromDeepLink": "ディープリンクから"
     },
-    "flux": {
-      "name": "Flux Router",
-      "recommended": "おすすめ",
-      "headline": "ひとつのキーで、すべてのモデルを。リクエストごとに最適ルーティング。",
-      "body": "すべてのクエリにフラッグシップ料金を払うのはもう終わり。Flux Router が毎回最適なモデルを選びます。",
-      "connect": "Flux Router を接続",
-      "connecting": "接続中…",
-      "getKey": "fluxrouter.ai でキーを取得",
-      "keyLabel": "Flux Router キー",
-      "keyPlaceholder": "Flux Router キーを貼り付け（sk-flux-…）",
-      "routing": "Flux Router がルーティング中。",
-      "metricsTurns": "直近 {{count}} ターン：",
-      "histogram": "フラッグシップ {{flagship}} · 小型 {{small}} · ローカル {{local}}",
-      "activeConfirmation": "Flux Router 接続済み · {{count}} モデル · リクエストごとにルーティング",
-      "errorUnauthorized": "その {{provider}} キーは拒否されました。キーを確認して再試行してください。",
-      "errorNoCredit": "接続しましたが、その {{provider}} キーには利用可能なクレジットがありません。モデルをルーティングするには請求情報を追加してください。",
-      "errorOffline": "{{provider}} に到達できません。オフラインのようです。接続を確認して再試行してください。",
-      "errorUnrecognized": "そのキーは {{provider}} 用として認識されませんでした。",
-      "errorNoModels": "{{provider}} に接続しましたが、モデルが返されませんでした。しばらくして再試行してください。",
-      "errorUnknown": "{{provider}} に接続できませんでした。再試行してください。",
-      "trust": "オープンソース技術を基盤としています。"
-    },
     "detected": {
       "found": "このマシンで {{provider}} API キーが見つかりました。使用しますか？",
       "use": "使用する",
@@ -2147,8 +2125,6 @@
       "searchPlaceholder": "モデルを検索、名前またはプロバイダーで",
       "searchMatches": "{{count}} 件一致",
       "searchNoMatches": "一致するモデルが見つかりません。",
-      "sectionFluxHero": "Flux Auto",
-      "sectionFluxHeroSubtitle": "1つのキーで最適モデルを自動選択。いつでも変更可能。",
       "sectionRecommended": "おすすめ",
       "sectionRecommendedSubtitle": "プロバイダーごとのフラッグシップ",
       "sectionFrequentlyUsed": "よく使うモデル",
@@ -2363,41 +2339,6 @@
       "wcore": "Darhai 独自のエンジン。「モデル」ページのすべてのプロバイダーを活用します。",
       "claude": "Anthropic のコーディングエージェント。独自のアカウントでサインインします、GPT や Gemini は実行できません。",
       "codex": "OpenAI のコーディングエージェント。独自のアカウントでサインインします、Claude や Gemini は実行できません。"
-    },
-    "flux": {
-      "title": "Flux Router",
-      "desc": "どのエージェントも、自身のものだけでなく接続したすべてのモデルとプロバイダーにルーティングできます。",
-      "statusConnected": "接続済み",
-      "statusDisconnected": "未接続",
-      "routeToggleLabel": "すべてのエージェントを Flux 経由でルーティング",
-      "routeToggleHelp": "各エージェントが接続済みのプロバイダーから最適なモデルを選びます。オフにすると、各エージェントは自身の接続に戻ります。",
-      "connectCta": "モデルページで Flux を接続"
-    },
-    "fluxCompat": {
-      "ready": "Flux 対応",
-      "setup": "Flux セットアップ",
-      "nativeOnly": "ネイティブのみ",
-      "nativeOnlyTooltip": "独自のプロバイダー経由で接続するため、Flux 経由でルーティングできません。"
-    },
-    "fluxSetup": {
-      "title": "{{tool}} を Flux 経由でルーティング",
-      "absentBody": "このマシンで {{tool}} が検出されません。先にインストールしてから、Flux 経由でルーティングするために戻ってきてください。",
-      "unconfiguredBody": "{{tool}} を Flux 経由でルーティングするようにセットアップします。Darhai は {{configPath}} の {{tool}} の設定に Flux プロバイダーを書き込み、既存のファイルを先にバックアップします。",
-      "routedBody": "{{tool}} は Flux 経由でルーティングされています。",
-      "driftedBody": "{{tool}} の Flux 設定が Darhai の外で変更されました。Darhai の設定を復元するには再適用するか、{{tool}} から Flux を削除してください。",
-      "notConnected": "先に Flux Router を接続してから {{tool}} をセットアップしてください。",
-      "genericError": "セットアップが完了しませんでした。",
-      "setup": "{{tool}} を Flux 用にセットアップ",
-      "reapply": "再適用",
-      "remove": "{{tool}} から Flux を削除",
-      "close": "閉じる",
-      "setupDone": "{{tool}} は Flux 経由でルーティングされるようになりました。",
-      "removeDone": "{{tool}} から Flux が削除されました。",
-      "report": {
-        "changesLabel": "変更点",
-        "backupLabel": "バックアップ先",
-        "rollbackLabel": "元に戻すには実行"
-      }
     }
   },
   "commandPalette": {

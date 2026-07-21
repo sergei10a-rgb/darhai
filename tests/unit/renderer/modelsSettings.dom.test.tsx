@@ -371,7 +371,6 @@ describe('recognizeKey', () => {
   // representative sample key for each.
   const recognizedCases: Array<[ProviderId, string]> = [
     ['anthropic', 'sk-ant-api03-abcdef'],
-    ['flux-router', 'sk-flux-abcdef'],
     ['openrouter', 'sk-or-v1-abcdef'],
     ['openai', 'sk-proj-abcdef'],
     ['google-gemini', 'AIzaSyAbcdef'],

@@ -15,13 +15,10 @@ vi.mock('@/common', () => ({
   ipcBridge: {},
 }));
 
-// The Flux default-routing probe (resolvePreferredAcpModelId -> shouldDefaultToFluxAuto)
-// calls these IPC providers; without a mock their .invoke() never resolves and ACP
-// cases hang. Default to "Flux off" so model selection stays deterministic.
+// Model resolution reads the registry via this IPC provider; without a mock its
+// .invoke() never resolves and ACP cases hang. Empty registry keeps selection
+// deterministic.
 vi.mock('@/common/adapter/ipcBridge', () => ({
-  systemSettings: {
-    getRouteThroughFlux: { invoke: vi.fn(async () => false) },
-  },
   modelRegistry: {
     list: { invoke: vi.fn(async () => []) },
   },

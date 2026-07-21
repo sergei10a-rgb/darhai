@@ -1915,28 +1915,6 @@
       "undecryptableHint": "Your saved key for this provider is unreadable. Please re-enter it.",
       "fromDeepLink": "З deep-link"
     },
-    "flux": {
-      "name": "Flux Router",
-      "recommended": "Рекомендовано",
-      "headline": "Один ключ. Усі моделі. Маршрутизація під кожен запит.",
-      "body": "Припиніть платити за флагманськими тарифами за кожен запит. Flux Router щоразу обирає відповідну модель.",
-      "connect": "Підключити Flux Router",
-      "connecting": "Підключення…",
-      "getKey": "Отримати ключ на fluxrouter.ai",
-      "keyLabel": "Ключ Flux Router",
-      "keyPlaceholder": "Вставте ваш ключ Flux Router (sk-flux-…)",
-      "routing": "Flux Router виконує маршрутизацію.",
-      "metricsTurns": "Останні {{count}} ходів:",
-      "histogram": "Флагман {{flagship}} · Мала {{small}} · Локальна {{local}}",
-      "activeConfirmation": "Flux Router підключено · моделей: {{count}} · маршрутизація для кожного запиту",
-      "errorUnauthorized": "Ключ {{provider}} відхилено. Перевірте ключ і повторіть спробу.",
-      "errorNoCredit": "Підключено, але ключ {{provider}} не має доступного балансу. Додайте платіжні дані, щоб маршрутизувати моделі.",
-      "errorOffline": "Не вдалося зв'язатися з {{provider}}. Схоже, ви офлайн. Перевірте підключення та повторіть спробу.",
-      "errorUnrecognized": "Цей ключ не розпізнано для {{provider}}.",
-      "errorNoModels": "{{provider}} підключено, але не повернуто жодної моделі. Повторіть спробу трохи згодом.",
-      "errorUnknown": "Не вдалося підключитися до {{provider}}. Повторіть спробу.",
-      "trust": "Засновано на відкритих технологіях."
-    },
     "detected": {
       "found": "На цьому комп'ютері знайдено API-ключ {{provider}}. Використати його?",
       "use": "Використати",
@@ -2112,8 +2090,6 @@
       "searchPlaceholder": "Пошук моделей, за назвою або постачальником",
       "searchMatches": "Збігів: {{count}}",
       "searchNoMatches": "Немає моделей, що відповідають пошуку.",
-      "sectionFluxHero": "Flux Auto",
-      "sectionFluxHeroSubtitle": "Один ключ, найкраща модель для завдання. Змінюйте будь-коли.",
       "sectionRecommended": "Рекомендовані",
       "sectionRecommendedSubtitle": "флагмани кожного постачальника",
       "sectionFrequentlyUsed": "Часто використовувані",
@@ -2328,41 +2304,6 @@
       "wcore": "Власний рушій Darhai. Використовує кожного постачальника на сторінці «Моделі».",
       "claude": "Кодинг-агент Anthropic. Входить через власний обліковий запис, не може запускати GPT або Gemini.",
       "codex": "Кодинг-агент OpenAI. Входить через власний обліковий запис, не може запускати Claude або Gemini."
-    },
-    "flux": {
-      "title": "Flux Router",
-      "desc": "Дозволяє будь-якому агенту маршрутизувати запити по всіх підключених моделях і постачальниках, а не лише своїх.",
-      "statusConnected": "Підключено",
-      "statusDisconnected": "Не підключено",
-      "routeToggleLabel": "Маршрутизувати всіх агентів через Flux",
-      "routeToggleHelp": "Кожен агент обирає найкращу модель серед підключених постачальників. Вимкніть, щоб повернути кожного агента до власного підключення.",
-      "connectCta": "Підключити Flux на сторінці моделей"
-    },
-    "fluxCompat": {
-      "ready": "Flux готовий",
-      "setup": "Налаштування Flux",
-      "nativeOnly": "Лише нативно",
-      "nativeOnlyTooltip": "Підключається через власного провайдера, тому не може маршрутизуватися через Flux."
-    },
-    "fluxSetup": {
-      "title": "Маршрутизувати {{tool}} через Flux",
-      "absentBody": "{{tool}} не виявлено на цьому комп'ютері. Спершу встановіть його, а потім поверніться, щоб маршрутизувати через Flux.",
-      "unconfiguredBody": "Налаштуйте {{tool}} для маршрутизації через Flux. Darhai записує провайдер Flux у конфігурацію {{tool}} за шляхом {{configPath}} і спершу створює резервну копію наявного файлу.",
-      "routedBody": "{{tool}} маршрутизується через Flux.",
-      "driftedBody": "Конфігурацію Flux в {{tool}} було змінено поза межами Darhai. Застосуйте її повторно, щоб відновити налаштування Darhai, або вилучіть Flux з {{tool}}.",
-      "notConnected": "Спершу під'єднайте Flux Router, потім налаштуйте {{tool}}.",
-      "genericError": "Налаштування не завершено.",
-      "setup": "Налаштувати {{tool}} для Flux",
-      "reapply": "Застосувати знову",
-      "remove": "Вилучити Flux з {{tool}}",
-      "close": "Закрити",
-      "setupDone": "{{tool}} тепер маршрутизується через Flux.",
-      "removeDone": "Flux вилучено з {{tool}}.",
-      "report": {
-        "changesLabel": "Що змінилося",
-        "backupLabel": "Резервна копія в",
-        "rollbackLabel": "Щоб скасувати, виконайте"
-      }
     }
   },
   "commandPalette": {

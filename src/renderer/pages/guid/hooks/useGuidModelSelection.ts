@@ -113,17 +113,6 @@ export const resolveSafeDefault = (modelList: IProvider[]): ModelChoice | null =
 };
 
 /**
- * Flux Router's Autopilot model. When connected, it is the recommended
- * cold-start default - but only below real usage signals, so a user who has
- * actually picked something keeps their choice.
- */
-const FLUX_AUTO_MODEL = 'flux-auto';
-export const resolveFluxAuto = (modelList: IProvider[]): ModelChoice | null => {
-  const provider = modelList.find((p) => p.model?.includes(FLUX_AUTO_MODEL));
-  return provider ? { provider, useModel: FLUX_AUTO_MODEL } : null;
-};
-
-/**
  * Resolve the persisted default-model pin to a concrete provider+model, or
  * null if it no longer exists. New format is `{ id: ProviderId, useModel }`;
  * the legacy format is a bare model-name string.
@@ -302,13 +291,7 @@ export const useGuidModelSelection = (agentKey: ProviderAgentKey = 'gemini'): Gu
         savedPin && !isLikelyExperimentalModel(savedPin.useModel) && !isExperimentalProvider(savedPin.provider)
           ? savedPin
           : null;
-      // Flux Router's Autopilot is the recommended default when connected, but
-      // it sits below real usage signals and a chosen pin - only above the
-      // generic safe default. So a brand-new user with Flux connected lands on
-      // flux-auto, while anyone who has actually picked a model keeps it.
-      const fluxAuto = resolveFluxAuto(modelList);
-      const chosen =
-        recentMatch ?? savedNonExperimental ?? frequentMatch ?? fluxAuto ?? resolveSafeDefault(modelList) ?? savedPin;
+      const chosen = recentMatch ?? savedNonExperimental ?? frequentMatch ?? resolveSafeDefault(modelList) ?? savedPin;
       if (!chosen) return;
 
       const defaultModel: IProvider | undefined = chosen.provider;

@@ -9,7 +9,6 @@
     "selectModel": "Model Seç",
     "useCliModel": "Model Seç",
     "modelSwitchNotSupported": "Model listesi ilk bağlantıdan sonra kullanılabilir olacaktır. Bağlanmak ve mevcut modelleri yüklemek için önce bir mesaj gönderin.",
-    "fluxGroupLabel": "Flux",
     "nativeModelsGroupLabel": "Ajan modelleri",
     "specifyWorkspace": "Klasörde Sohbet Et",
     "currentWorkspace": "Mevcut Çalışma Alanı",
@@ -311,20 +310,12 @@
     "loaded": "Yüklenen Beceriler"
   },
   "routingBadge": {
-    "flux": "Flux uzerinden yonlendirme",
     "native": "Yerel baglanti",
-    "unknown": "Bu aracin kendi girisi kullaniliyor",
-    "fluxError": "Flux kullanilamiyor",
-    "fluxErrorNotice": "Bu tur icin Flux yonlendirmesi basarisiz oldu. Flux baglantinizi kontrol edin veya model degistirin."
+    "unknown": "Bu aracin kendi girisi kullaniliyor"
   },
   "activation": {
     "title": "Ajanlarını uyandır",
     "subtitle": "Görevleri çalıştırmaya başlamak için bir model sağlayıcısı bağla. Sana uyan yolu seç.",
-    "flux": {
-      "label": "Flux Router’ı bağla",
-      "sublabel": "Ücretsiz anahtar ve 1 $ başlangıç kredisi. Kart gerekmez — her görevi en uygun uzman modele yönlendirir.",
-      "action": "Bağlan"
-    },
     "ownKey": {
       "label": "Kendi anahtarımı kullan",
       "sublabel": "OpenAI, Anthropic, Google veya 100’den fazla sağlayıcının API anahtarını kullan.",

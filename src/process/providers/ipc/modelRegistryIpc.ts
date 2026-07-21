@@ -69,8 +69,6 @@ import { CatalogAssembler, MODELS_DEV_PROVIDER_KEY } from '../catalog/CatalogAss
 import { Curator } from '../catalog/Curator';
 import { ProviderCatalogStore, loadBaselineProviderCatalog } from '../catalog/providerCatalogStore';
 import type { CatalogProviderEntry } from '../catalog/catalogProvider';
-import { FLUX_PROVIDER_ID } from '@/common/config/flux';
-import { injectFluxVirtualModels } from '../catalog/fluxVirtualModels';
 import { ConnectionTester } from '../detection/ConnectionTester';
 import { KeyDiscovery } from '../detection/KeyDiscovery';
 import { ModelsDevClient } from '../enrichment/ModelsDevClient';
@@ -388,9 +386,8 @@ export function createModelRegistryHandlers(deps: ModelRegistryDeps): ModelRegis
       }
 
       const { models, sourceErrors } = await assembler.assemble(sources, registry);
-      const finalModels = providerId === FLUX_PROVIDER_ID ? injectFluxVirtualModels(models) : models;
-      repo.replaceRegistryCatalog(providerId, finalModels);
-      return { ok: true, models: finalModels.length, sourceErrors };
+      repo.replaceRegistryCatalog(providerId, models);
+      return { ok: true, models: models.length, sourceErrors };
     } catch {
       return { ok: false, models: 0, sourceErrors: 0 };
     }
@@ -997,7 +994,6 @@ const CHAT_START_PLATFORM: Partial<Record<ProviderId, string>> = {
   deepgram: 'openai-compatible',
   assemblyai: 'openai-compatible',
   elevenlabs: 'openai-compatible',
-  'flux-router': 'openai-compatible',
   'openai-compatible': 'openai-compatible',
   // Local Ollama daemon - dispatched as the OpenAI-compatible protocol against
   // its hardcoded loopback `/v1` endpoint, with no API key (keyless local).
@@ -1041,7 +1037,6 @@ const CHAT_START_BASE_URL: Partial<Record<ProviderId, string>> = {
   deepgram: 'https://api.deepgram.com/v1',
   assemblyai: 'https://api.assemblyai.com/v2',
   elevenlabs: 'https://api.elevenlabs.io/v1',
-  'flux-router': 'https://api.fluxrouter.ai/v1',
   // Hardcoded local Ollama OpenAI-compatible endpoint. Never user-overridable -
   // the keyless allowance is anchored to this fixed loopback host.
   'ollama-local': 'http://127.0.0.1:11434/v1',
@@ -1078,7 +1073,6 @@ const CHAT_START_NAME: Partial<Record<ProviderId, string>> = {
   deepgram: 'Deepgram',
   assemblyai: 'AssemblyAI',
   elevenlabs: 'ElevenLabs',
-  'flux-router': 'Flux Router',
   'openai-compatible': 'OpenAI Compatible',
   'ollama-local': 'Ollama (Local)',
   'cookbook-local': 'Cookbook (Local)',
@@ -1096,9 +1090,7 @@ const CHAT_START_NAME: Partial<Record<ProviderId, string>> = {
  *    than the generic Open-Models redirect.
  */
 type ChatStartBuildResult =
-  | { kind: 'payload'; payload: IModelRegistryChatStartPayload }
-  | { kind: 'unsupported' }
-  | { kind: 'undecryptable' };
+  { kind: 'payload'; payload: IModelRegistryChatStartPayload } | { kind: 'unsupported' } | { kind: 'undecryptable' };
 
 function buildChatStartPayload(
   providerId: ProviderId,
@@ -1772,12 +1764,12 @@ export async function getProviderCatalog(): Promise<CatalogProviderEntry[]> {
  * stores the catalog, mirrors into the legacy `model.config`, and revalidates
  * any open model picker by emitting `listChanged`.
  *
- * Exposed so main-process flows that mint credentials themselves (e.g. the Flux
- * one-click OAuth onboarding) can reuse the exact connect+persist+mirror logic
- * instead of duplicating it. Returns `{ ok: false, error: 'unknown' }` if called
- * before `initModelRegistryIpc` has captured the production handlers.
+ * Exposed so main-process flows that mint credentials themselves can reuse the
+ * exact connect+persist+mirror logic instead of duplicating it. Returns
+ * `{ ok: false, error: 'unknown' }` if called before `initModelRegistryIpc` has
+ * captured the production handlers.
  *
- * @param providerId The registry provider to connect (e.g. `'flux-router'`).
+ * @param providerId The registry provider to connect (e.g. `'anthropic'`).
  * @param creds The credentials to persist (bare key, fields, or discovery flag).
  */
 export async function connectModelRegistryProvider(

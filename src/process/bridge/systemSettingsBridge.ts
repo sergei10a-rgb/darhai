@@ -95,17 +95,6 @@ export function initSystemSettingsBridge(): void {
     }
   });
 
-  // Get "route through Flux" setting
-  ipcBridge.systemSettings.getRouteThroughFlux.provider(async () => {
-    const value = await ProcessConfig.get('system.routeThroughFlux');
-    return value ?? false;
-  });
-
-  // Set "route through Flux"
-  ipcBridge.systemSettings.setRouteThroughFlux.provider(async ({ enabled }) => {
-    await ProcessConfig.set('system.routeThroughFlux', enabled);
-  });
-
   // Language change notification, sync main process i18n and notify tray rebuild
   ipcBridge.systemSettings.changeLanguage.provider(async ({ language }) => {
     // Broadcast to all renderers FIRST (desktop + WebUI) for real-time sync.

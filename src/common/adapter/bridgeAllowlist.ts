@@ -271,12 +271,10 @@ const REMOTE_DENIED_KEYS: ReadonlySet<string> = new Set([
   'webui.revoke-device',
   // --- Onboarding credential writes. connect-pasted-key persists a
   //     caller-supplied provider key (remote credential injection / overwrite of
-  //     the legitimate key); connect-flux mints + persists a Flux provider
-  //     credential via OAuth. Same class as modelRegistry.connect /
+  //     the legitimate key). Same class as modelRegistry.connect /
   //     wcoreToolKeys.set (already denied). The read-only onboarding.infer-focus
   //     stays allowed. ---
   'onboarding.connect-pasted-key',
-  'onboarding.connect-flux',
   // --- Cost observability (WS-D / WS-F). The whole cost.* namespace is already
   //     denied to remote callers via the `cost.` prefix above; these exact keys
   //     are enumerated for documentation + defence-in-depth. byConversation +

@@ -4,74 +4,14 @@
   "footer": {
     "manage": "Обнаружение выполнено один раз. Изменить всё можно в Настройки → Провайдеры.",
     "noLockIn": "Ни один из этих вариантов вас не связывает.",
-    "keysKeepWorking": "В любом случае ваши ключи продолжают работать. Flux Router стоит сверху и никогда не встаёт на пути.",
     "skip": "Пропустить пока"
-  },
-  "connect": {
-    "title": "Подключить Flux Router",
-    "subtitle": "Вставьте ключ Flux Router. Один ключ, все модели, маршрутизация на каждый запрос.",
-    "keyLabel": "Ключ Flux Router",
-    "keyPlaceholder": "sk-...",
-    "getKey": "Получить ключ на fluxrouter.ai",
-    "submit": "Подключить",
-    "connecting": "Подключение...",
-    "back": "Назад",
-    "errorUnauthorized": "Ключ отклонён. Проверьте его и повторите попытку.",
-    "errorNoCredit": "На этом аккаунте пока нет средств. Пополните на fluxrouter.ai и повторите попытку.",
-    "errorOffline": "Не удалось связаться с Flux Router. Проверьте подключение и повторите попытку.",
-    "errorUnrecognized": "Это не похоже на ключ Flux Router. Он должен начинаться с sk-flux-.",
-    "errorNoModels": "Подключено, но модели не вернулись. Повторите попытку чуть позже.",
-    "errorUnknown": "Что-то пошло не так при подключении. Повторите попытку.",
-    "trust": "Основано на открытых технологиях."
-  },
-  "scenarioA": {
-    "greeting": "{{name}}, вы уже готовы",
-    "subGeneric": "Ваши инструменты обнаружены и активны.",
-    "sutherlandLede": "Закрепите один флагман, и он будет отвечать на всё. Даже на мелочи, которым он не нужен.",
-    "sutherlandBody": "Мы рекомендуем Flux Router. Он подбирает правильную модель для каждого запроса из того, что у вас уже есть: ваши подписки, локальный Ollama, ваш ключ Anthropic. То же качество там, где это важно, и более лёгкие модели там, где нет. Вы перестаёте выбирать. Выбирает он. Вы пишете.",
-    "microTrust": "Сложные задачи маршрутизируются вверх и никогда вниз. Нижнюю границу вы задаёте в Настройках.",
-    "primary": "Настроить Flux Router",
-    "ghost": "Попробовать в следующих 10 ходах"
-  },
-  "scenarioB": {
-    "greeting": "Добро пожаловать в Darhai",
-    "sub": "Выберите один способ входа. Остальное добавите когда угодно.",
-    "heroTag": "Рекомендуется",
-    "heroTitle": "Flux Router",
-    "heroBody": "Один ключ. Все модели. Он подбирает нужную для каждого запроса, чтобы вы не гадали. Дешевле, а делает больше.",
-    "heroFoot": "Оплата по факту · без подписки · без минимума",
-    "heroCta": "Подключить Flux Router",
-    "pasteKeyTitle": "Вставьте ключ провайдера",
-    "pasteKeyBody": "Anthropic, OpenAI, Google, DeepSeek, Moonshot и другие. Умный определитель ключей сам распознает, чей это ключ.",
-    "pasteKeyFoot": "Проверяется перед сохранением",
-    "ollamaTitle": "Установить Ollama",
-    "ollamaBody": "Локальные модели на вашей машине. Подходит, если у вас есть GPU и вы не хотите, чтобы данные покидали устройство.",
-    "ollamaFoot": "минимум 16 ГБ видеопамяти · открывает ollama.com"
-  },
-  "scenarioC": {
-    "greeting": "{{name}}, ваши ключи работают",
-    "subGeneric": "Обнаружены и активны. Сейчас всё работает. Flux Router маршрутизирует между вашими ключами на каждый запрос. Ваши ключи, ваш счёт.",
-    "sutherlandLede": "Каждый ключ работает. Мы всё же поставили бы Flux Router сверху, и вот почему.",
-    "sutherlandBody": "Сейчас каждый запрос оплачивается по флагманским ставкам, даже те, которым это не нужно. Flux Router запускает Haiku на вашем ключе, когда уместен Haiku, и GPT-5, когда уместен GPT-5. Примерно 1/20 стоимости на вопросах, которым флагман не нужен, и то же качество там, где нужен.",
-    "microTrust": "Промпты идут напрямую к провайдеру. Flux Router видит решение о маршруте, а не текст сообщения.",
-    "primary": "Добавить Flux Router сверху",
-    "ghost": "Продолжить выбирать вручную"
-  },
-  "scenarioD": {
-    "greeting": "{{name}}, всё работает как часы",
-    "sub": "Flux Desktop активен. Ваша маршрутизация идёт через Flux Router.",
-    "body": "Правильная модель в каждом ходе. Сложное идёт вверх, мелочь на более лёгкие модели.",
-    "primary": "Начать чат",
-    "dismiss": "Закрыть"
   },
   "chips": {
     "cli": "{{name}} · CLI",
     "claudePro": "Claude Code · Pro",
     "ollama": "Ollama · {{count}} локальных моделей",
     "ollama_one": "Ollama · {{count}} локальная модель",
-    "envKey": "Ключ {{name}} · в окружении",
-    "fluxRouter": "Flux Router · активен",
-    "fluxDesktop": "Flux Desktop · служба :7878"
+    "envKey": "Ключ {{name}} · в окружении"
   },
   "flow": {
     "personas": {
@@ -91,13 +31,6 @@
     "logoAlt": {
       "wordmark": "Darhai"
     },
-    "flux": {
-      "title": "Get the best answer. Pay the right price. And get it done faster.",
-      "body": "Flux Router is the #1 smart router - the only one that matches every prompt to its best-fit model across 40+ premium models. One key, one bill, the same quality you would get going direct.",
-      "cta": "Set up Flux Router →",
-      "retryCta": "Try again",
-      "getKeyCta": "Get your Flux key"
-    },
     "key": {
       "placeholder": "Paste a provider key, then press Enter",
       "ariaConnect": "Connect key",
@@ -108,9 +41,7 @@
     },
     "errors": {
       "googleFailed": "Could not connect Google. Please try again.",
-      "geminiFailed": "Signed in with Google, but loading Gemini models failed. Please try again.",
-      "fluxFailed": "Flux did not finish connecting. Try again.",
-      "fluxFallback": "Couldn’t open the Flux sign-in. Paste your Flux key below instead, or grab one from fluxrouter.ai."
+      "geminiFailed": "Signed in with Google, but loading Gemini models failed. Please try again."
     },
     "quickstart": {
       "headline": "First - what should I call you",
@@ -140,7 +71,6 @@
       "claudePro": "Claude Pro",
       "envKey": "{{label}} key",
       "ollama": "Ollama · {{count}} local",
-      "flux": "Flux Router",
       "gemini": "Gemini · Google"
     },
     "outcome": {
@@ -158,15 +88,10 @@
       "cliNote": "We can see they're installed, not whether they're signed in. If one isn't, we'll walk you through it in a single step. No broken first message.",
       "readyHeadline": "you're all ready to go",
       "readySub": "Gemini is live through your Google account. That's everything you need to start right now.",
-      "readyFluxBody": "Free Gemini gets you started. Flux is the upgrade: One key, one bill, 40+ premium models with the best-fit match on every prompt. Same quality you would get going direct.",
       "readyPasteLabel": "Already have a provider key? Paste it and we'll detect it.",
       "coldHeadline": "Let's get you a model",
       "coldSubFailed": "We found {{label}} but couldn't verify {{them}}. Pick a working option below.",
       "coldSub": "One choice and you're in. Add more anytime.",
-      "doorFluxTitle": "Flux Router",
-      "doorFluxRecommended": "Recommended",
-      "doorFluxBody": "One key, every model. The right tool for each job, smart-routed.",
-      "doorFluxFoot": "Free to start · no card · opens your browser",
       "doorGoogleTitle": "Continue with Google",
       "doorGoogleBody": "Free with your Google account. Gemini in your picker, and we'll greet you by name.",
       "doorGoogleFoot": "Genuinely free · basic limits",

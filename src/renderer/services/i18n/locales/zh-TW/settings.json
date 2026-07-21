@@ -1950,28 +1950,6 @@
       "undecryptableHint": "Your saved key for this provider is unreadable. Please re-enter it.",
       "fromDeepLink": "來自深層連結"
     },
-    "flux": {
-      "name": "Flux Router",
-      "recommended": "推薦",
-      "headline": "一把金鑰，所有模型，依每個請求智慧路由。",
-      "body": "不再為每個查詢都支付旗艦級費用。Flux Router 每次都會為你挑選合適的模型。",
-      "connect": "連接 Flux Router",
-      "connecting": "連接中…",
-      "getKey": "在 fluxrouter.ai 取得金鑰",
-      "keyLabel": "Flux Router 金鑰",
-      "keyPlaceholder": "貼上你的 Flux Router 金鑰（sk-flux-…）",
-      "routing": "Flux Router 正在路由。",
-      "metricsTurns": "最近 {{count}} 輪：",
-      "histogram": "旗艦 {{flagship}} · 小型 {{small}} · 本機 {{local}}",
-      "activeConfirmation": "Flux Router 已連接 · {{count}} 個模型 · 依請求路由",
-      "errorUnauthorized": "該 {{provider}} 金鑰被拒絕。請檢查金鑰後重試。",
-      "errorNoCredit": "已連接，但該 {{provider}} 金鑰沒有可用額度。請新增帳單以路由模型。",
-      "errorOffline": "無法連接 {{provider}}。你似乎處於離線狀態。請檢查網路後重試。",
-      "errorUnrecognized": "無法為 {{provider}} 辨識該金鑰。",
-      "errorNoModels": "{{provider}} 已連接但未返回任何模型。請稍後重試。",
-      "errorUnknown": "無法連接 {{provider}}。請重試。",
-      "trust": "基於開源技術打造。"
-    },
     "detected": {
       "found": "在本機上發現一個 {{provider}} API 金鑰。使用它嗎？",
       "use": "使用",
@@ -2147,8 +2125,6 @@
       "searchPlaceholder": "搜尋模型，依名稱或供應商",
       "searchMatches": "{{count}} 筆符合",
       "searchNoMatches": "沒有符合的模型。",
-      "sectionFluxHero": "Flux Auto",
-      "sectionFluxHeroSubtitle": "一個金鑰，每項任務最佳模型。隨時更換。",
       "sectionRecommended": "推薦",
       "sectionRecommendedSubtitle": "各供應商旗艦",
       "sectionFrequentlyUsed": "常用",
@@ -2363,41 +2339,6 @@
       "wcore": "Darhai 自研引擎。調用你「模型」頁面上的每個提供商。",
       "claude": "Anthropic 的編程智能體。使用自己的帳號登入，無法運行 GPT 或 Gemini。",
       "codex": "OpenAI 的編程智能體。使用自己的帳號登入，無法運行 Claude 或 Gemini。"
-    },
-    "flux": {
-      "title": "Flux Router",
-      "desc": "讓任何智能體都能跨你已連接的所有模型和提供商進行路由，而不只是它自己的。",
-      "statusConnected": "已連接",
-      "statusDisconnected": "未連接",
-      "routeToggleLabel": "讓所有智能體透過 Flux 路由",
-      "routeToggleHelp": "每個智能體都會在你已連接的提供商中選擇最合適的模型。關閉後，每個智能體將回到使用自己的連接。",
-      "connectCta": "在模型頁面連接 Flux"
-    },
-    "fluxCompat": {
-      "ready": "支援 Flux",
-      "setup": "Flux 設定",
-      "nativeOnly": "僅原生",
-      "nativeOnlyTooltip": "透過自有服務商連接，因此無法經由 Flux 路由。"
-    },
-    "fluxSetup": {
-      "title": "透過 Flux 路由 {{tool}}",
-      "absentBody": "本機未偵測到 {{tool}}。請先安裝它，然後再回來透過 Flux 進行路由。",
-      "unconfiguredBody": "設定 {{tool}} 以透過 Flux 路由。Darhai 會在 {{configPath}} 的 {{tool}} 設定中寫入一個 Flux 服務商，並會先備份現有檔案。",
-      "routedBody": "{{tool}} 正在透過 Flux 路由。",
-      "driftedBody": "{{tool}} 的 Flux 設定在 Darhai 之外被更改。重新套用以還原 Darhai 的設定，或從 {{tool}} 中移除 Flux。",
-      "notConnected": "請先連接 Flux Router，然後再設定 {{tool}}。",
-      "genericError": "設定未完成。",
-      "setup": "為 Flux 設定 {{tool}}",
-      "reapply": "重新套用",
-      "remove": "從 {{tool}} 移除 Flux",
-      "close": "關閉",
-      "setupDone": "{{tool}} 現在透過 Flux 路由。",
-      "removeDone": "已從 {{tool}} 移除 Flux。",
-      "report": {
-        "changesLabel": "變更內容",
-        "backupLabel": "備份至",
-        "rollbackLabel": "若要復原，請執行"
-      }
     }
   },
   "commandPalette": {

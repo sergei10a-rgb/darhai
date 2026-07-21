@@ -1948,28 +1948,6 @@
       "undecryptableHint": "Your saved key for this provider is unreadable. Please re-enter it.",
       "fromDeepLink": "Derin bağlantıdan"
     },
-    "flux": {
-      "name": "Flux Router",
-      "recommended": "Önerilen",
-      "headline": "Tek anahtar. Her model. İstek başına yönlendirme.",
-      "body": "Her sorgu için amiral gemisi ücreti ödemeyi bırakın. Flux Router her seferinde doğru modeli seçer.",
-      "connect": "Flux Router'ı bağla",
-      "connecting": "Bağlanıyor…",
-      "getKey": "fluxrouter.ai adresinden anahtar alın",
-      "keyLabel": "Flux Router anahtarı",
-      "keyPlaceholder": "Flux Router anahtarınızı yapıştırın (sk-flux-…)",
-      "routing": "Flux Router yönlendiriyor.",
-      "metricsTurns": "Son {{count}} tur:",
-      "histogram": "Amiral gemisi {{flagship}} · Küçük {{small}} · Yerel {{local}}",
-      "activeConfirmation": "Flux Router bağlı · {{count}} model · istek başına yönlendirme",
-      "errorUnauthorized": "Bu {{provider}} anahtarı reddedildi. Anahtarı kontrol edip tekrar deneyin.",
-      "errorNoCredit": "Bağlandı, ancak bu {{provider}} anahtarında kullanılabilir kredi yok. Modelleri yönlendirmek için fatura bilgisi ekleyin.",
-      "errorOffline": "{{provider}} hizmetine ulaşılamadı. Çevrimdışı görünüyorsunuz. Bağlantınızı kontrol edip tekrar deneyin.",
-      "errorUnrecognized": "Bu anahtar {{provider}} için tanınmadı.",
-      "errorNoModels": "{{provider}} bağlandı ancak hiç model döndürmedi. Birazdan tekrar deneyin.",
-      "errorUnknown": "{{provider}} hizmetine bağlanılamadı. Lütfen tekrar deneyin.",
-      "trust": "Açık kaynaklı teknoloji üzerine kuruludur."
-    },
     "detected": {
       "found": "Bu makinede bir {{provider}} API anahtarı bulundu. Kullanılsın mı?",
       "use": "Kullan",
@@ -2145,8 +2123,6 @@
       "searchPlaceholder": "Modelleri ara, ad veya sağlayıcıya göre",
       "searchMatches": "{{count}} eşleşme",
       "searchNoMatches": "Aramanızla eşleşen model yok.",
-      "sectionFluxHero": "Flux Auto",
-      "sectionFluxHeroSubtitle": "Bir anahtar, görev başına en iyi model. İstediğinizde değiştirin.",
       "sectionRecommended": "Önerilen",
       "sectionRecommendedSubtitle": "sağlayıcı başına amiral gemisi",
       "sectionFrequentlyUsed": "Sık kullanılan",
@@ -2361,41 +2337,6 @@
       "wcore": "Darhaiın kendi motoru. Modeller sayfanızdaki her sağlayıcıyı kullanır.",
       "claude": "Anthropicin kodlama ajanı. Kendi hesabıyla oturum açar, GPT veya Gemini çalıştıramaz.",
       "codex": "OpenAInin kodlama ajanı. Kendi hesabıyla oturum açar, Claude veya Gemini çalıştıramaz."
-    },
-    "flux": {
-      "title": "Flux Router",
-      "desc": "Herhangi bir ajanın yalnızca kendi modelleri değil, bağladığınız tüm modeller ve sağlayıcılar arasında yönlendirme yapmasını sağlar.",
-      "statusConnected": "Bağlı",
-      "statusDisconnected": "Bağlı değil",
-      "routeToggleLabel": "Tüm ajanları Flux üzerinden yönlendir",
-      "routeToggleHelp": "Her ajan, bağladığınız sağlayıcılar arasından en uygun modeli seçer. Kapatınca her ajan kendi bağlantısına döner.",
-      "connectCta": "Modeller sayfasında Flux'u bağla"
-    },
-    "fluxCompat": {
-      "ready": "Flux hazır",
-      "setup": "Flux kurulumu",
-      "nativeOnly": "Yalnızca yerel",
-      "nativeOnlyTooltip": "Kendi sağlayıcısı üzerinden bağlandığı için Flux üzerinden yönlendirilemez."
-    },
-    "fluxSetup": {
-      "title": "{{tool}} aracını Flux üzerinden yönlendir",
-      "absentBody": "{{tool}} bu makinede algılanmadı. Önce yükleyin, ardından Flux üzerinden yönlendirmek için geri dönün.",
-      "unconfiguredBody": "{{tool}} aracını Flux üzerinden yönlendirmek için ayarlayın. Darhai, {{configPath}} konumundaki {{tool}} yapılandırmasına bir Flux sağlayıcısı yazar ve önce mevcut dosyanın yedeğini alır.",
-      "routedBody": "{{tool}} Flux üzerinden yönlendiriliyor.",
-      "driftedBody": "{{tool}} Flux yapılandırması Darhai dışında değiştirildi. Darhai ayarlarını geri yüklemek için yeniden uygulayın veya Flux'u {{tool}} aracından kaldırın.",
-      "notConnected": "Önce Flux Router'ı bağlayın, ardından {{tool}} aracını ayarlayın.",
-      "genericError": "Kurulum tamamlanmadı.",
-      "setup": "{{tool}} aracını Flux için ayarla",
-      "reapply": "Yeniden uygula",
-      "remove": "Flux'u {{tool}} aracından kaldır",
-      "close": "Kapat",
-      "setupDone": "{{tool}} artık Flux üzerinden yönlendiriliyor.",
-      "removeDone": "Flux, {{tool}} aracından kaldırıldı.",
-      "report": {
-        "changesLabel": "Neler değişti",
-        "backupLabel": "Yedeklenen konum",
-        "rollbackLabel": "Geri almak için çalıştırın"
-      }
     }
   },
   "commandPalette": {

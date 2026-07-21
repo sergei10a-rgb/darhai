@@ -5,7 +5,6 @@
  */
 
 import { isCodexNoSandboxMode } from '@/common/types/codex/codexModes';
-import { FLUX_AUTO_MODEL, FLUX_SURFACE } from '@/common/config/flux';
 import { mkdir, readFile, writeFile } from 'fs/promises';
 import { homedir } from 'os';
 import { dirname, join, posix, win32 } from 'path';
@@ -77,50 +76,4 @@ export async function writeCodexSandboxMode(sandboxMode: CodexSandboxMode): Prom
 
   await mkdir(dirname(path), { recursive: true });
   await writeFile(path, nextContent, 'utf8');
-}
-
-/**
- * Materialize a Wayland-scoped CODEX_HOME for flux-routed codex spawns and
- * return its directory path. The directory carries a self-contained
- * `config.toml` that BOTH defines the `[model_providers.flux]` provider AND
- * selects it globally (top-level `model = "flux-auto"` + `model_provider =
- * "flux"`). Pointing CODEX_HOME at this dir (only for flux-routed spawns) makes
- * codex route through Flux WITHOUT pinning the user's real `~/.codex/config.toml`
- * to flux - native model picks keep using the user's own config.
- *
- * codex reads its bearer from the `FLUX_API_KEY` env var at request time, so no
- * key is written into this file (R13-safe: the secret stays out of config).
- *
- * `userDataDir` is the app's userData path (the caller passes
- * `app.getPath('userData')`); kept as a parameter so this stays unit-testable
- * without importing electron here.
- */
-export async function materializeFluxCodexHome(
-  userDataDir: string,
-  sandboxMode: SupportedCodexSandboxMode = 'workspace-write',
-  baseURL: string = FLUX_SURFACE.responses
-): Promise<string> {
-  const codexHomeDir = join(userDataDir, 'flux-codex-home');
-  const configPath = join(codexHomeDir, 'config.toml');
-  const content = [
-    '# Wayland-managed CODEX_HOME for Flux-routed codex spawns.',
-    "# Selects Flux globally within this scoped home; the user's real ~/.codex",
-    '# config is never modified. Regenerated on each Flux-routed spawn.',
-    `model = "${FLUX_AUTO_MODEL}"`,
-    'model_provider = "flux"',
-    'model_context_window = 200000',
-    `sandbox_mode = "${sandboxMode}"`,
-    'suppress_unstable_features_warning = true',
-    '',
-    '[model_providers.flux]',
-    'name = "Flux"',
-    `base_url = "${baseURL}"`,
-    'env_key = "FLUX_API_KEY"',
-    'wire_api = "responses"',
-    '',
-  ].join('\n');
-
-  await mkdir(codexHomeDir, { recursive: true });
-  await writeFile(configPath, content, 'utf8');
-  return codexHomeDir;
 }

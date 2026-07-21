@@ -727,17 +727,16 @@ export class WCoreManager extends BaseAgentManager<WCoreManagerData, string> {
    * showing it connected and the next spawn does not reuse the dead key.
    * Mirrors AcpAgentManager.maybeInvalidateProviderKeyOnAuthError but keyed on
    * the single provider this wcore turn used (`this.model.id`). Deliberately
-   * narrow: only fires on unambiguous key failures (not transient 429/5xx), and
-   * never touches the Flux route. Reversible: re-keying the provider runs a
-   * connection test and restores `connected`.
+   * narrow: only fires on unambiguous key failures (not transient 429/5xx).
+   * Reversible: re-keying the provider runs a connection test and restores
+   * `connected`.
    */
   private maybeInvalidateProviderKeyOnAuthError(text: string): void {
     if (this.authKeyInvalidated) return;
     if (!isProviderKeyAuthFailure(text)) return;
     const providerId = this.model?.id;
-    // No provider id, or the turn was routed through Flux (whose key is not this
-    // provider's): leave provider state untouched.
-    if (!providerId || providerId === 'flux-router') return;
+    // No provider id: leave provider state untouched.
+    if (!providerId) return;
     this.authKeyInvalidated = true;
 
     void (async () => {

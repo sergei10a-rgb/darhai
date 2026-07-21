@@ -10,9 +10,7 @@ import type { IResponseMessage } from '@/common/adapter/ipcBridge';
 import type { TokenUsageData } from '@/common/config/storage';
 import { useAddOrUpdateMessage } from '@/renderer/pages/conversation/Messages/hooks';
 import type { ThoughtData } from '@/renderer/components/chat/ThoughtDisplay';
-import { Message } from '@arco-design/web-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 
 type UseAcpMessageReturn = {
   thought: ThoughtData;
@@ -26,13 +24,10 @@ type UseAcpMessageReturn = {
   tokenUsage: TokenUsageData | null;
   contextLimit: number;
   hasThinkingMessage: boolean;
-  routing: 'flux' | 'native' | 'unknown';
-  fluxTurnError: boolean;
 };
 
 export const useAcpMessage = (conversation_id: string): UseAcpMessageReturn => {
   const addOrUpdateMessage = useAddOrUpdateMessage();
-  const { t } = useTranslation();
   const [running, setRunning] = useState(false);
   const [hasHydratedRunningState, setHasHydratedRunningState] = useState(false);
   const [thought, setThought] = useState<ThoughtData>({
@@ -67,11 +62,7 @@ export const useAcpMessage = (conversation_id: string): UseAcpMessageReturn => {
     backend: string;
     modelId: string;
     sessionMode?: string;
-    routing?: 'flux' | 'native' | 'unknown';
   } | null>(null);
-
-  const [routing, setRouting] = useState<'flux' | 'native' | 'unknown'>('unknown');
-  const [fluxTurnError, setFluxTurnError] = useState(false);
 
   // Throttle thought updates to reduce render frequency
   const thoughtThrottleRef = useRef<{
@@ -268,16 +259,12 @@ export const useAcpMessage = (conversation_id: string): UseAcpMessageReturn => {
         case 'request_trace':
           {
             const trace = message.data as Record<string, unknown>;
-            const traceRouting = (trace.routing as 'flux' | 'native' | 'unknown') ?? 'unknown';
             requestTraceRef.current = {
               startTime: Number(trace.timestamp) || Date.now(),
               backend: String(trace.backend || 'unknown'),
               modelId: String(trace.modelId || 'unknown'),
               sessionMode: trace.sessionMode as string | undefined,
-              routing: traceRouting,
             };
-            setRouting(traceRouting);
-            setFluxTurnError(false);
             console.log(
               `%c[RequestTrace]%c START | ${trace.backend} → ${trace.modelId} | ${new Date().toISOString()}`,
               'color: #1890ff; font-weight: bold',
@@ -294,7 +281,7 @@ export const useAcpMessage = (conversation_id: string): UseAcpMessageReturn => {
           setAiProcessing(false);
           aiProcessingRef.current = false;
           addOrUpdateMessage(transformedMessage);
-          // Log request error and surface flux-specific failure notice
+          // Log the request error for the request lifecycle trace.
           if (requestTraceRef.current) {
             const duration = Date.now() - requestTraceRef.current.startTime;
             console.log(
@@ -303,10 +290,6 @@ export const useAcpMessage = (conversation_id: string): UseAcpMessageReturn => {
               'color: inherit',
               message.data
             );
-            if (requestTraceRef.current.routing === 'flux') {
-              setFluxTurnError(true);
-              Message.warning(t('conversation.routingBadge.fluxErrorNotice'));
-            }
             requestTraceRef.current = null;
           }
           break;
@@ -320,7 +303,7 @@ export const useAcpMessage = (conversation_id: string): UseAcpMessageReturn => {
           break;
       }
     },
-    [conversation_id, addOrUpdateMessage, throttledSetThought, setThought, setRunning, setAiProcessing, setAcpStatus, setRouting, setFluxTurnError, t]
+    [conversation_id, addOrUpdateMessage, throttledSetThought, setThought, setRunning, setAiProcessing, setAcpStatus]
   );
 
   useEffect(() => {
@@ -413,7 +396,5 @@ export const useAcpMessage = (conversation_id: string): UseAcpMessageReturn => {
     tokenUsage,
     contextLimit,
     hasThinkingMessage,
-    routing,
-    fluxTurnError,
   };
 };

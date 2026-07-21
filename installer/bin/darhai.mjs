@@ -2,16 +2,15 @@
 /**
  * darhai - self-host Darhai's headless server on any Linux box / VPS.
  *
- *   darhai setup   Interactive: paste a provider key (Flux recommended) → writes
- *                   env, ensures the bun runtime, prints your login + QR.
+ *   darhai setup   Interactive: paste a provider key → writes env, ensures the
+ *                   bun runtime, prints your login + QR.
  *   darhai start   Run the server (foreground). Reads the env written by setup.
  *   darhai help
  *
  * Design: the server reads provider credentials from the environment, so the
- * key never touches the OS keychain (which isn't available headless). Flux is
- * an OpenAI-compatible endpoint, so a Flux key is wired as the OpenAI provider
- * pointed at https://api.fluxrouter.ai/v1 with model flux-auto - no wcore binary
- * required. (wcore, if present, is fetched by postinstall as an enhancement.)
+ * key never touches the OS keychain (which isn't available headless). An
+ * OpenAI / Anthropic / Gemini key is enough - no wcore binary required. (wcore,
+ * if present, is fetched by postinstall as an enhancement.)
  */
 import { spawn, spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -25,8 +24,6 @@ const PAYLOAD = join(PKG_ROOT, 'payload');
 const SERVER = join(PAYLOAD, 'dist-server', 'server.mjs');
 const DATA_DIR = process.env.DATA_DIR || join(homedir(), '.darhai-server');
 const ENV_FILE = join(DATA_DIR, 'darhai.env');
-const FLUX_OPENAI_BASE = 'https://api.fluxrouter.ai/v1';
-const FLUX_SIGNUP = 'https://fluxrouter.ai';
 
 const c = {
   b: (s) => `\x1b[1m${s}\x1b[0m`,
@@ -46,17 +43,10 @@ function ask(question) {
   );
 }
 
-/** Map a pasted key to the env vars the server reads. Flux is the default lens. */
+/** Map a pasted key to the env vars the server reads. */
 function keyToEnv(rawKey, providerHint) {
   const key = rawKey.replace(/\s+/g, '');
   const hint = (providerHint || '').toLowerCase();
-  const isFlux = hint === 'flux' || /^sk-flux/i.test(key);
-  if (isFlux) {
-    return {
-      provider: 'Flux Router',
-      env: { OPENAI_API_KEY: key, OPENAI_BASE_URL: FLUX_OPENAI_BASE, OPENAI_MODEL: 'flux-auto' },
-    };
-  }
   if (hint === 'anthropic' || /^sk-ant-/i.test(key)) return { provider: 'Anthropic', env: { ANTHROPIC_API_KEY: key } };
   if (hint === 'gemini' || /^AIza/i.test(key)) return { provider: 'Google Gemini', env: { GEMINI_API_KEY: key } };
   if (hint === 'openai' || /^sk-/i.test(key)) return { provider: 'OpenAI', env: { OPENAI_API_KEY: key } };
@@ -143,15 +133,14 @@ async function setup() {
   }
   if (!(await ensureBun())) process.exit(1);
 
-  console.log(c.dim(`  Bring a model. Flux Router is the easy path - one key, every model,`));
-  console.log(c.dim(`  best-fit routing. Free account: ${c.o(FLUX_SIGNUP)}\n`));
-  let entry = await ask('  Paste your Flux key (or any OpenAI / Anthropic / Gemini key), or Enter to skip: ');
+  console.log(c.dim(`  Bring a model. Paste an OpenAI / Anthropic / Gemini API key.\n`));
+  let entry = await ask('  Paste your OpenAI / Anthropic / Gemini key, or Enter to skip: ');
 
   let resolved = null;
   if (entry) {
     resolved = keyToEnv(entry);
     if (!resolved) {
-      const which = (await ask('  Which provider is this key for? [flux/openai/anthropic/gemini] ')).toLowerCase();
+      const which = (await ask('  Which provider is this key for? [openai/anthropic/gemini] ')).toLowerCase();
       resolved = keyToEnv(entry, which);
     }
   }
@@ -235,12 +224,11 @@ function help() {
   console.log(`
   ${c.o('darhai')} - self-host Darhai's headless server
 
-  ${c.b('darhai setup')}   Paste a provider key (Flux recommended), wire it, get your login
+  ${c.b('darhai setup')}   Paste a provider key, wire it, get your login
   ${c.b('darhai start')}   Run the server (reads the env from setup)
   ${c.b('darhai help')}    This message
 
   Data dir: ${c.dim(DATA_DIR)}   ${c.dim('(override with DATA_DIR=…)')}
-  Flux Router (free): ${c.o(FLUX_SIGNUP)}
 `);
 }
 

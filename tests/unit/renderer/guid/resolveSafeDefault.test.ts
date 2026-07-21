@@ -5,11 +5,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import {
-  isExperimentalProvider,
-  resolveFluxAuto,
-  resolveSafeDefault,
-} from '@renderer/pages/guid/hooks/useGuidModelSelection';
+import { isExperimentalProvider, resolveSafeDefault } from '@renderer/pages/guid/hooks/useGuidModelSelection';
 import type { IProvider } from '@/common/storage/types';
 
 const provider = (over: Partial<IProvider> & { model: string[] }): IProvider =>
@@ -23,7 +19,7 @@ describe('isExperimentalProvider', () => {
     expect(isExperimentalProvider({ platform: 'openai', name: 'GPT Beta' })).toBe(true);
   });
   it('passes a normal provider', () => {
-    expect(isExperimentalProvider({ platform: 'flux-router', name: 'Flux Router' })).toBe(false);
+    expect(isExperimentalProvider({ platform: 'anthropic', name: 'Anthropic' })).toBe(false);
   });
 });
 
@@ -31,11 +27,11 @@ describe('resolveSafeDefault', () => {
   it('never returns an experimental provider when a real one exists', () => {
     const list = [
       provider({ platform: 'antigravity', model: ['gemini-3-pro'] }), // dead preview, normal model name
-      provider({ platform: 'flux-router', model: ['flux-auto', 'flux-fast'] }),
+      provider({ platform: 'anthropic', model: ['claude-opus', 'claude-sonnet'] }),
     ];
     const chosen = resolveSafeDefault(list);
-    expect(chosen?.provider.platform).toBe('flux-router');
-    expect(chosen?.useModel).toBe('flux-auto');
+    expect(chosen?.provider.platform).toBe('anthropic');
+    expect(chosen?.useModel).toBe('claude-opus');
   });
 
   it('skips experimental MODEL names within a real provider', () => {
@@ -52,21 +48,5 @@ describe('resolveSafeDefault', () => {
 
   it('returns null for an empty list', () => {
     expect(resolveSafeDefault([])).toBeNull();
-  });
-});
-
-describe('resolveFluxAuto', () => {
-  it('returns flux-auto when a provider carries it', () => {
-    const list = [
-      provider({ platform: 'openai', model: ['gpt-5'] }),
-      provider({ platform: 'flux-router', model: ['flux-fast', 'flux-auto', 'flux-reasoning'] }),
-    ];
-    const chosen = resolveFluxAuto(list);
-    expect(chosen?.useModel).toBe('flux-auto');
-    expect(chosen?.provider.platform).toBe('flux-router');
-  });
-
-  it('returns null when flux-auto is not present (Flux not connected)', () => {
-    expect(resolveFluxAuto([provider({ platform: 'openai', model: ['gpt-5'] })])).toBeNull();
   });
 });

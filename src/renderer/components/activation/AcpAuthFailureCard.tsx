@@ -6,7 +6,7 @@
 
 import type { AcpAuthRemedy } from '@/renderer/pages/conversation/platforms/acp/acpAuthFailure';
 import { Button } from '@arco-design/web-react';
-import { Close, Key, Lightning, Right, Terminal } from '@icon-park/react';
+import { Close, Key, Right, Terminal } from '@icon-park/react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import styles from './AcpAuthFailureCard.module.css';
@@ -16,8 +16,6 @@ export type AcpAuthFailureCardProps = {
   remedy: AcpAuthRemedy;
   /** Open Settings so the user adds a provider API key. Shown when remedy.providerKeyLabel is set. */
   onAddKey?: () => void;
-  /** Route the backend through Flux Router instead. Shown when remedy.fluxRoutable. */
-  onRouteThroughFlux?: () => void;
   /** Copy the CLI login command / open docs. Shown when remedy.cliLoginCmd is set. */
   onCliLogin?: () => void;
   /** Optional dismiss handler - hides the card. */
@@ -30,43 +28,24 @@ type ActionConfig = {
   label: string;
   subLabel: string;
   action: string;
-  /** The Flux path is the recommended primary path - rendered tinted. */
+  /** The primary action is rendered tinted. */
   primary: boolean;
   onSelect: () => void;
 };
 
 /**
  * In-thread failure card shown when an ACP CLI cannot authenticate. The remedy
- * descriptor drives which fixes appear: route through Flux (primary, when the
- * backend is Flux-routable), add a provider API key (when one applies), or run
- * the CLI's login command. The title and explainer adapt to whether the vendor
- * blocks subscription OAuth logins inside third-party tools.
+ * descriptor drives which fixes appear: add a provider API key (when one
+ * applies), or run the CLI's login command. The title and explainer adapt to
+ * whether the vendor blocks subscription OAuth logins inside third-party tools.
  *
  * Presentational only - every action is a callback prop; the card owns no IPC
  * and no navigation.
  */
-const AcpAuthFailureCard: React.FC<AcpAuthFailureCardProps> = ({
-  remedy,
-  onAddKey,
-  onRouteThroughFlux,
-  onCliLogin,
-  onDismiss,
-}) => {
+const AcpAuthFailureCard: React.FC<AcpAuthFailureCardProps> = ({ remedy, onAddKey, onCliLogin, onDismiss }) => {
   const { t } = useTranslation();
 
   const actions: ActionConfig[] = [];
-
-  if (remedy.fluxRoutable && onRouteThroughFlux) {
-    actions.push({
-      key: 'flux',
-      icon: <Lightning theme='filled' />,
-      label: t('conversation.acpAuthFailure.flux.label'),
-      subLabel: t('conversation.acpAuthFailure.flux.sublabel'),
-      action: t('conversation.acpAuthFailure.flux.action'),
-      primary: true,
-      onSelect: onRouteThroughFlux,
-    });
-  }
 
   if (remedy.providerKeyLabel && onAddKey) {
     actions.push({
@@ -75,7 +54,7 @@ const AcpAuthFailureCard: React.FC<AcpAuthFailureCardProps> = ({
       label: t('conversation.acpAuthFailure.addKey.label', { provider: remedy.providerKeyLabel }),
       subLabel: t('conversation.acpAuthFailure.addKey.sublabel'),
       action: t('conversation.acpAuthFailure.addKey.action'),
-      primary: false,
+      primary: true,
       onSelect: onAddKey,
     });
   }

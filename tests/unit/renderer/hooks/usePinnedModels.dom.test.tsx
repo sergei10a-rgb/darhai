@@ -25,17 +25,17 @@ describe('usePinnedModels', () => {
   beforeEach(() => store.clear());
 
   it('pinKey builds providerId:modelId', () => {
-    expect(pinKey('flux-router', 'flux-auto')).toBe('flux-router:flux-auto');
+    expect(pinKey('openai', 'gpt-5')).toBe('openai:gpt-5');
   });
 
   it('loads existing pins when enabled', async () => {
-    store.set('pinnedModels', ['flux-router:flux-auto']);
+    store.set('pinnedModels', ['openai:gpt-5']);
     const { result } = renderHook(() => usePinnedModels(true));
-    await waitFor(() => expect(result.current.pinned.has('flux-router:flux-auto')).toBe(true));
+    await waitFor(() => expect(result.current.pinned.has('openai:gpt-5')).toBe(true));
   });
 
   it('does not load while disabled', async () => {
-    store.set('pinnedModels', ['flux-router:flux-auto']);
+    store.set('pinnedModels', ['openai:gpt-5']);
     const { result } = renderHook(() => usePinnedModels(false));
     // Give any stray effect a tick; should stay empty.
     await new Promise((r) => setTimeout(r, 0));
@@ -46,12 +46,12 @@ describe('usePinnedModels', () => {
     const { result } = renderHook(() => usePinnedModels(true));
     await waitFor(() => expect(result.current.pinned.size).toBe(0));
 
-    act(() => result.current.toggle('flux-router:flux-auto'));
-    await waitFor(() => expect(result.current.pinned.has('flux-router:flux-auto')).toBe(true));
-    expect(store.get('pinnedModels')).toEqual(['flux-router:flux-auto']);
+    act(() => result.current.toggle('openai:gpt-5'));
+    await waitFor(() => expect(result.current.pinned.has('openai:gpt-5')).toBe(true));
+    expect(store.get('pinnedModels')).toEqual(['openai:gpt-5']);
 
-    act(() => result.current.toggle('flux-router:flux-auto'));
-    await waitFor(() => expect(result.current.pinned.has('flux-router:flux-auto')).toBe(false));
+    act(() => result.current.toggle('openai:gpt-5'));
+    await waitFor(() => expect(result.current.pinned.has('openai:gpt-5')).toBe(false));
     expect(store.get('pinnedModels')).toEqual([]);
   });
 });

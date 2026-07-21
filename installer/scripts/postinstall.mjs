@@ -6,7 +6,7 @@
  * <platform>-<arch>/wayland-core), so `darhai start` (cwd=payload) finds it.
  *
  * NON-FATAL: if the download fails (offline, unsupported arch), we warn and move
- * on - the Flux / OpenAI-compatible path runs fine without the wcore binary.
+ * on - the OpenAI-compatible / API-key path runs fine without the wcore binary.
  */
 import { spawnSync } from 'node:child_process';
 import { chmodSync, existsSync, mkdirSync, readdirSync, renameSync, rmSync } from 'node:fs';
@@ -33,7 +33,7 @@ const triple = TRIPLES[runtimeKey];
 
 function warn(msg) {
   console.log(
-    `\n  [darhai] ${msg}\n  The Flux / API-key path works without it; the Wayland Core agent will be unavailable until then.\n`
+    `\n  [darhai] ${msg}\n  The API-key path works without it; the Wayland Core agent will be unavailable until then.\n`
   );
 }
 

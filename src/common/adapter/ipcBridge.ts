@@ -24,13 +24,6 @@ import type {
   OmnirouteGatewayTestResult,
 } from '../types/omnirouteGateway';
 import type {
-  CodexSetupResult,
-  CodexStatusResult,
-  FluxConnectorReport,
-  OpencodeSetupResult,
-  OpencodeStatusResult,
-} from '../types/fluxConnector';
-import type {
   UpdateCheckRequest,
   UpdateCheckResult,
   UpdateDownloadProgressEvent,
@@ -38,7 +31,7 @@ import type {
   UpdateDownloadResult,
   AutoUpdateStatus,
 } from '../update/updateTypes';
-import type { ConnectFluxResult, ConnectPastedKeyResult } from '../types/onboarding';
+import type { ConnectPastedKeyResult } from '../types/onboarding';
 import type { ProtocolDetectionRequest, ProtocolDetectionResponse } from '../utils/protocolDetector';
 import type { SpeechToTextRequest, SpeechToTextResult } from '../types/speech';
 import type { DownloadResult, VoiceAsset } from '../types/voiceAsset';
@@ -533,14 +526,6 @@ export const googleAuth = {
 
 export const onboarding = {
   /**
-   * One-click Flux Router connect via OAuth 2.0 Authorization Code + PKCE.
-   * Opens the system browser, runs a loopback listener, exchanges the code for a
-   * freshly-minted `sk-flux` key, and persists it through the model-registry
-   * connect path. Resolves with `{ ok: true }` on success or a stable error
-   * reason - it never rejects, so the renderer can branch on the result alone.
-   */
-  connectFlux: buildProvider<ConnectFluxResult, void>('onboarding.connect-flux'),
-  /**
    * Connect a single pasted API key. The provider is auto-detected with the
    * real `ProviderDetector` + `SkRaceResolver`, so a bare `sk-` key shared by
    * OpenAI/DeepSeek/Moonshot/Qwen is probed live and connected to its true
@@ -929,8 +914,6 @@ export const systemSettings = {
   ),
   getKeepAwake: buildProvider<boolean, void>('system-settings:get-keep-awake'),
   setKeepAwake: buildProvider<void, { enabled: boolean }>('system-settings:set-keep-awake'),
-  getRouteThroughFlux: buildProvider<boolean, void>('system-settings:get-route-through-flux'),
-  setRouteThroughFlux: buildProvider<void, { enabled: boolean }>('system-settings:set-route-through-flux'),
   changeLanguage: buildProvider<void, { language: string }>('system-settings:change-language'),
   // Broadcast language change to all renderers (desktop + WebUI) for real-time sync
   languageChanged: buildEmitter<{ language: string }>('system-settings:language-changed'),
@@ -938,16 +921,6 @@ export const systemSettings = {
   setSaveUploadToWorkspace: buildProvider<void, { enabled: boolean }>('system-settings:set-save-upload-to-workspace'),
   getAutoPreviewOfficeFiles: buildProvider<boolean, void>('system-settings:get-auto-preview-office-files'),
   setAutoPreviewOfficeFiles: buildProvider<void, { enabled: boolean }>('system-settings:set-auto-preview-office-files'),
-};
-
-// Flux compatibility-layer connectors (opencode, etc.)
-export const fluxConnector = {
-  opencodeStatus: buildProvider<OpencodeStatusResult, void>('flux-connector:opencode-status'),
-  setupOpencode: buildProvider<OpencodeSetupResult, void>('flux-connector:setup-opencode'),
-  removeOpencode: buildProvider<FluxConnectorReport, void>('flux-connector:remove-opencode'),
-  codexStatus: buildProvider<CodexStatusResult, void>('flux-connector:codex-status'),
-  setupCodex: buildProvider<CodexSetupResult, void>('flux-connector:setup-codex'),
-  removeCodex: buildProvider<FluxConnectorReport, void>('flux-connector:remove-codex'),
 };
 
 // Ambient Mode - M1 bubble window (AC-M1-5 / AC-M1-10 / AC-M1-11 / AC-M1-13)
@@ -1534,13 +1507,7 @@ export interface IConversationTurnCompletedEvent {
   sessionId: string;
   status: 'pending' | 'running' | 'finished';
   state:
-    | 'ai_generating'
-    | 'ai_waiting_input'
-    | 'ai_waiting_confirmation'
-    | 'initializing'
-    | 'stopped'
-    | 'error'
-    | 'unknown';
+    'ai_generating' | 'ai_waiting_input' | 'ai_waiting_confirmation' | 'initializing' | 'stopped' | 'error' | 'unknown';
   detail: string;
   canSendMessage: boolean;
   runtime: {
@@ -1957,8 +1924,7 @@ export const omnirouteGateway = {
 export type IjfwDropEntry = { name: string; size: number; mtimeMs: number };
 
 export type IjfwDropIngestResult =
-  | { ok: true; name: string }
-  | { ok: false; error: string; errorReason: IjfwErrorReason };
+  { ok: true; name: string } | { ok: false; error: string; errorReason: IjfwErrorReason };
 
 // --- Models & Providers redesign (Wave 0 contract) ------------------------
 // New two-tier model registry. Distinct from the legacy `providers` namespace

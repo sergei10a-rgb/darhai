@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ipcBridge } from '@/common';
 import type { ConversationContextValue } from '@/renderer/hooks/context/ConversationContext';
 import { ConversationProvider } from '@/renderer/hooks/context/ConversationContext';
 import type { StepStatus, StepTransitionSource } from '@/common/types/workflowTypes';
@@ -35,8 +34,7 @@ const WCoreChat: React.FC<{
   workflowSessionId?: string;
   workflowTotalSteps?: number | null;
   workflowApplyStepMarker?:
-    | ((stepN: number, status: StepStatus, source?: StepTransitionSource) => Promise<void>)
-    | null;
+    ((stepN: number, status: StepStatus, source?: StepTransitionSource) => Promise<void>) | null;
 }> = ({
   conversation_id,
   workspace,
@@ -75,17 +73,7 @@ const WCoreChat: React.FC<{
   // working inference provider is configured (WS-4). A held first message
   // auto-fires once a provider connects.
   const engineAsleep = !readiness.ready && !readiness.loading;
-  const handleConnectFlux = useCallback(() => {
-    // Fire-and-forget: the one-click PKCE flow runs in main; on success the model
-    // registry emits listChanged, readiness flips, the card unmounts, and the
-    // held message auto-fires from WCoreSendBox.
-    void ipcBridge.onboarding.connectFlux.invoke();
-  }, []);
   const goToModels = useCallback(() => navigate('/settings/models'), [navigate]);
-  const onAuthRouteThroughFlux = useCallback(async () => {
-    const res = await ipcBridge.onboarding.connectFlux.invoke();
-    if (res.ok) setAuthRemedy(null);
-  }, []);
   const updateLocalImage = LocalImageView.useUpdateLocalImage();
   useEffect(() => {
     updateLocalImage({ root: workspace });
@@ -109,17 +97,12 @@ const WCoreChat: React.FC<{
         </FlexFullContainer>
         {engineAsleep && (
           <div className='max-w-800px w-full mx-auto mb-8px'>
-            <ActivationCard onConnectFlux={handleConnectFlux} onUseOwnKey={goToModels} onUseClaudeCode={goToModels} />
+            <ActivationCard onUseOwnKey={goToModels} onUseClaudeCode={goToModels} />
           </div>
         )}
         {authRemedy && (
           <div className='max-w-800px w-full mx-auto mb-12px'>
-            <AcpAuthFailureCard
-              remedy={authRemedy}
-              onAddKey={goToModels}
-              onRouteThroughFlux={onAuthRouteThroughFlux}
-              onDismiss={() => setAuthRemedy(null)}
-            />
+            <AcpAuthFailureCard remedy={authRemedy} onAddKey={goToModels} onDismiss={() => setAuthRemedy(null)} />
           </div>
         )}
         <ConversationChatConfirm conversation_id={conversation_id}>

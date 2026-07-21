@@ -25,27 +25,24 @@ describe('looksLikeAuthFailure', () => {
 });
 
 describe('classifyAcpAuthFailure', () => {
-  it('classifies claude as subscription-blocked, flux-routable, Anthropic key', () => {
+  it('classifies claude as subscription-blocked, Anthropic key', () => {
     const remedy = classifyAcpAuthFailure('claude', 'Invalid API key');
     expect(remedy).not.toBeNull();
     expect(remedy?.subscriptionOAuthBlocked).toBe(true);
-    expect(remedy?.fluxRoutable).toBe(true);
     expect(remedy?.providerKeyLabel).toBe('Anthropic');
     expect(remedy?.backendLabel).toBe('Claude Code');
   });
 
-  it('classifies codex as subscription-blocked, flux-routable, OpenAI key, with cliLogin', () => {
+  it('classifies codex as subscription-blocked, OpenAI key, with cliLogin', () => {
     const remedy = classifyAcpAuthFailure('codex', 'authentication failed');
     expect(remedy?.subscriptionOAuthBlocked).toBe(true);
-    expect(remedy?.fluxRoutable).toBe(true);
     expect(remedy?.providerKeyLabel).toBe('OpenAI');
     expect(remedy?.cliLoginCmd).toBe('codex login');
     expect(remedy?.backendLabel).toBe('Codex');
   });
 
-  it('classifies a vendor CLI (droid) as not flux-routable, not blocked, with default login cmd', () => {
+  it('classifies a vendor CLI (droid) as not blocked, with default login cmd', () => {
     const remedy = classifyAcpAuthFailure('droid', 'unauthorized');
-    expect(remedy?.fluxRoutable).toBe(false);
     expect(remedy?.subscriptionOAuthBlocked).toBe(false);
     expect(remedy?.cliLoginCmd).toBe('droid login');
     expect(remedy?.providerKeyLabel).toBeUndefined();
@@ -56,11 +53,10 @@ describe('classifyAcpAuthFailure', () => {
     expect(classifyAcpAuthFailure('claude', 'network timeout while reading file')).toBeNull();
   });
 
-  it('classifies wcore as flux-routable, no CLI login, with a tailored explainer', () => {
+  it('classifies wcore with no CLI login and a tailored explainer', () => {
     const remedy = classifyAcpAuthFailure('wcore', 'API error 401: invalid x-api-key');
     expect(remedy).not.toBeNull();
     expect(remedy?.backendLabel).toBe('Darhai Core');
-    expect(remedy?.fluxRoutable).toBe(true);
     // No CLI login and no subscription fallback for the engine.
     expect(remedy?.cliLoginCmd).toBeUndefined();
     expect(remedy?.subscriptionOAuthBlocked).toBe(false);
@@ -73,14 +69,12 @@ describe('getAcpAuthRemedy', () => {
     const remedy = getAcpAuthRemedy('qwen');
     expect(remedy.backend).toBe('qwen');
     expect(remedy.backendLabel).toBe('Qwen Code');
-    expect(remedy.fluxRoutable).toBe(true);
     expect(remedy.cliLoginCmd).toBe('qwen');
   });
 
   it('Title-cases an unknown backend id', () => {
     const remedy = getAcpAuthRemedy('hermes');
     expect(remedy.backendLabel).toBe('Hermes');
-    expect(remedy.fluxRoutable).toBe(false);
     expect(remedy.cliLoginCmd).toBe('hermes login');
   });
 

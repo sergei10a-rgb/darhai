@@ -2001,28 +2001,6 @@
       "undecryptableHint": "Your saved key for this provider is unreadable. Please re-enter it.",
       "fromDeepLink": "From deep link"
     },
-    "flux": {
-      "name": "Flux Router",
-      "recommended": "Recommended",
-      "headline": "One key. Every model. Routed per request.",
-      "body": "Stop paying flagship rates for every query. Flux Router picks the right model for each one.",
-      "connect": "Connect Flux Router",
-      "connecting": "Connecting…",
-      "getKey": "Get a key at fluxrouter.ai",
-      "keyLabel": "Flux Router key",
-      "keyPlaceholder": "Paste your Flux Router key (sk-flux-…)",
-      "routing": "Flux Router is routing.",
-      "metricsTurns": "Last {{count}} turns:",
-      "histogram": "Flagship {{flagship}} · Small {{small}} · Local {{local}}",
-      "activeConfirmation": "Flux Router connected · {{count}} models · routed per request",
-      "errorUnauthorized": "That {{provider}} key was rejected. Check the key and try again.",
-      "errorNoCredit": "Connected, but that {{provider}} key has no usable credit. Add billing to route models.",
-      "errorOffline": "Couldn't reach {{provider}}. You appear to be offline. Check your connection and retry.",
-      "errorUnrecognized": "That key was not recognized for {{provider}}.",
-      "errorNoModels": "{{provider}} connected but returned no models. Try again in a moment.",
-      "errorUnknown": "Couldn't connect to {{provider}}. Please try again.",
-      "trust": "Built on open-source technology."
-    },
     "detected": {
       "found": "Found a {{provider}} API key on this machine. Use it?",
       "use": "Use it",
@@ -2198,8 +2176,6 @@
       "searchPlaceholder": "Search models, by name or provider",
       "searchMatches": "{{count}} matches",
       "searchNoMatches": "No models match your search.",
-      "sectionFluxHero": "Flux Auto",
-      "sectionFluxHeroSubtitle": "One key, best model per task. Change anytime.",
       "sectionRecommended": "Recommended",
       "sectionRecommendedSubtitle": "flagships per provider",
       "sectionFrequentlyUsed": "Frequently used",
@@ -2406,41 +2382,6 @@
       "wcore": "Darhai’s own engine. Draws on every provider on your Models page.",
       "claude": "Anthropic’s coding agent. Signs in with its own account, it cannot run GPT or Gemini.",
       "codex": "OpenAI’s coding agent. Signs in with its own account, it cannot run Claude or Gemini."
-    },
-    "flux": {
-      "title": "Flux Router",
-      "desc": "Lets any agent route across every model and provider you have connected, not just its own.",
-      "statusConnected": "Connected",
-      "statusDisconnected": "Not connected",
-      "routeToggleLabel": "Route all agents through Flux",
-      "routeToggleHelp": "Every agent picks the best-fit model across your connected providers. Turn it off to return each agent to its own connection.",
-      "connectCta": "Connect Flux on the Models page"
-    },
-    "fluxCompat": {
-      "ready": "Flux ready",
-      "setup": "Flux setup",
-      "nativeOnly": "Native only",
-      "nativeOnlyTooltip": "Connects through its own provider, so it cannot route through Flux."
-    },
-    "fluxSetup": {
-      "title": "Route {{tool}} through Flux",
-      "absentBody": "{{tool}} is not detected on this machine. Install it first, then come back to route it through Flux.",
-      "unconfiguredBody": "Set up {{tool}} to route through Flux. Darhai writes a Flux provider into {{tool}}'s config at {{configPath}} and backs up the existing file first.",
-      "routedBody": "{{tool}} is routing through Flux.",
-      "driftedBody": "{{tool}}'s Flux config was changed outside Darhai. Re-apply to restore Darhai's settings, or remove Flux from {{tool}}.",
-      "notConnected": "Connect Flux Router first, then set up {{tool}}.",
-      "genericError": "Setup did not complete.",
-      "setup": "Set up {{tool}} for Flux",
-      "reapply": "Re-apply",
-      "remove": "Remove Flux from {{tool}}",
-      "close": "Close",
-      "setupDone": "{{tool}} is now routing through Flux.",
-      "removeDone": "Flux was removed from {{tool}}.",
-      "report": {
-        "changesLabel": "What changed",
-        "backupLabel": "Backed up to",
-        "rollbackLabel": "To undo, run"
-      }
     }
   },
   "wcoreConfig": {

@@ -35,44 +35,7 @@ export type DetectionResult = {
     running: boolean;
     models: string[];
   };
-  /** Flux Desktop daemon state. */
-  fluxDesktop: {
-    running: boolean;
-    version?: string;
-  };
-  /** Whether `flux-router` is already a connected provider in the registry. */
-  fluxConnected: boolean;
 };
-
-/**
- * Validated shape of the Flux Desktop daemon `/api/metrics` payload, shared by
- * the Models hero and the sidebar status widget so both surfaces read one
- * contract. The IPC method is typed `unknown | null`; consumers narrow into
- * this via their `parseFluxMetrics` and never fabricate numbers.
- */
-export type FluxMetrics = {
-  /** Total routed turns the daemon has observed. */
-  totalTurns: number;
-  /** Last-N routing histogram: flagship (h), small (s), local Ollama (o). */
-  histogram: { h: number; s: number; o: number };
-  /** Pre-formatted savings line from the daemon, if known. */
-  savings?: string;
-  /** Share of recent turns served by local Ollama (0-100), if known. */
-  ollamaSharePct?: number;
-};
-
-/**
- * Result of the one-click Flux Router OAuth connect (`ipcBridge.onboarding.connectFlux`).
- *
- * On success the freshly-minted `sk-flux` key has already been persisted through
- * the model-registry connect path (tested, saved to the OS keychain, catalog
- * built) - the renderer only needs to advance the onboarding. On failure the
- * `error` is a stable, renderer-safe reason the UI maps to a message; it never
- * carries the key or any raw network detail.
- */
-export type ConnectFluxResult =
-  | { ok: true }
-  | { ok: false; error: 'cancelled' | 'timeout' | 'unauthorized' | 'no-credit' | 'offline' | 'unknown' };
 
 /**
  * Result of connecting a single pasted API key during onboarding
@@ -89,57 +52,3 @@ export type ConnectFluxResult =
 export type ConnectPastedKeyResult =
   | { ok: true; providerId: string }
   | { ok: false; error: 'unrecognized' | 'no-match' | 'needs-fields' | 'failed'; providerId?: string };
-
-/**
- * Onboarding scenario the overlay renders, selected from live detection.
- *
- *  - `D` - Flux already wired: Flux is a connected provider AND Flux Desktop
- *    is running. Show the "you're fully wired, here's your live routing" state.
- *  - `C` - Direct keys, no Flux: the user has direct provider API keys in their
- *    environment but has not connected Flux. Pitch "your keys already work, add
- *    Flux on top".
- *  - `A` - Power user, no direct keys: CLIs / Claude subscription / local
- *    Ollama present (and at least one meaningful signal) but no direct provider
- *    keys and no Flux. Pitch "you're already wired, route it through Flux".
- *  - `B` - Cold start: nothing meaningful detected.
- */
-export type OnboardingScenario = 'A' | 'B' | 'C' | 'D';
-
-/**
- * Pure classifier - maps a `DetectionResult` to the onboarding scenario.
- *
- * Precedence (highest wins):
- *   1. D  - `fluxConnected`. A connected Flux key is sufficient on its own;
- *           Flux Desktop is not required (Phase 1 has no Desktop dependency).
- *   2. B  - nothing meaningful detected: no CLIs, no env keys, no Ollama,
- *           no Flux Desktop, no Claude Pro, and Flux not connected.
- *   3. C  - direct provider API keys present (`envKeys.length > 0`) and Flux
- *           not connected. "Your keys work, add Flux on top."
- *   4. A  - otherwise: a power-user signal (CLIs / Claude Pro / Ollama) exists
- *           but no direct env keys and Flux not connected. "You're already
- *           wired, route through Flux."
- *
- * The C-vs-A split is driven solely by whether direct provider API keys exist:
- * env keys ⇒ C (keys-first pitch); else the remaining non-cold signals ⇒ A.
- *
- * Pure function: no side effects, no I/O. Safe to call from the renderer.
- */
-export function classifyScenario(d: DetectionResult): OnboardingScenario {
-  // 1. Flux fully wired - a connected key is sufficient; Flux Desktop not required.
-  if (d.fluxConnected) return 'D';
-
-  // Reached only when Flux is not connected (the line above returned for that case),
-  // so `fluxConnected` is necessarily false here and is omitted from the signal check.
-  const hasEnvKeys = d.envKeys.length > 0;
-  const hasPowerSignal = d.clis.length > 0 || d.claudePro || d.ollama.running;
-  const hasAnySignal = hasEnvKeys || hasPowerSignal || d.fluxDesktop.running;
-
-  // 2. Cold start - nothing meaningful detected.
-  if (!hasAnySignal) return 'B';
-
-  // 3. Direct provider API keys present ⇒ keys-first pitch.
-  if (hasEnvKeys) return 'C';
-
-  // 4. Power-user signals but no direct keys ⇒ already-wired pitch.
-  return 'A';
-}

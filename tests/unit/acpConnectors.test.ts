@@ -370,35 +370,6 @@ describe('connectClaude - detached process group', () => {
     );
   });
 
-  it('merges customEnv (Flux surface) LAST, overriding cc-switch native ANTHROPIC env', async () => {
-    Object.defineProperty(process, 'platform', { value: 'linux', configurable: true });
-    ccSwitchMock.readClaudeProviderEnvFromCcSwitch.mockReturnValue({
-      ANTHROPIC_BASE_URL: 'http://localhost:4000',
-      ANTHROPIC_AUTH_TOKEN: 'sk-native-token',
-    });
-
-    const setup = vi.fn().mockResolvedValue(undefined);
-    const cleanup = vi.fn().mockResolvedValue(undefined);
-
-    await connectClaude('/cwd', { setup, cleanup }, {
-      ANTHROPIC_BASE_URL: 'https://api.fluxrouter.ai/anthropic',
-      ANTHROPIC_AUTH_TOKEN: 'sk-flux-key',
-      ANTHROPIC_MODEL: 'flux-auto',
-    });
-
-    expect(mockSpawn).toHaveBeenCalledWith(
-      '/bundled/bun',
-      expect.arrayContaining(['x', '--bun', '@agentclientprotocol/claude-agent-acp@0.33.1']),
-      expect.objectContaining({
-        env: expect.objectContaining({
-          ANTHROPIC_BASE_URL: 'https://api.fluxrouter.ai/anthropic',
-          ANTHROPIC_AUTH_TOKEN: 'sk-flux-key',
-          ANTHROPIC_MODEL: 'flux-auto',
-        }),
-      })
-    );
-  });
-
   it('does not detach on Windows', async () => {
     Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
 

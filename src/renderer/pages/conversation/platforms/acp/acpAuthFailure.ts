@@ -33,8 +33,6 @@ export type AcpAuthRemedy = {
   providerKeyLabel?: string;
   /** A shell command the user can run to re-authenticate the CLI, e.g. 'codex login'. */
   cliLoginCmd?: string;
-  /** True when this backend can be routed through Flux Router instead. */
-  fluxRoutable: boolean;
   /**
    * i18n key for the explainer line. Defaults (when omitted) to the
    * subscription/generic pair driven by `subscriptionOAuthBlocked`. Set it when
@@ -72,36 +70,30 @@ const BACKEND_REMEDIES: Record<string, Partial<AcpAuthRemedy>> = {
     backendLabel: 'Claude Code',
     subscriptionOAuthBlocked: true,
     providerKeyLabel: 'Anthropic',
-    fluxRoutable: true,
   },
   codex: {
     backendLabel: 'Codex',
     subscriptionOAuthBlocked: true,
     providerKeyLabel: 'OpenAI',
     cliLoginCmd: 'codex login',
-    fluxRoutable: true,
   },
   qwen: {
     backendLabel: 'Qwen Code',
     cliLoginCmd: 'qwen',
-    fluxRoutable: true,
   },
   goose: {
     backendLabel: 'Goose',
     cliLoginCmd: 'goose',
-    fluxRoutable: true,
   },
   opencode: {
     backendLabel: 'OpenCode',
     cliLoginCmd: 'opencode auth login',
-    fluxRoutable: true,
   },
   wcore: {
     backendLabel: 'Darhai Core',
-    fluxRoutable: true,
-    // No CLI login and no subscription fallback - the only fixes are a working
-    // provider key or the Flux route. Keep cliLoginCmd undefined so buildRemedy
-    // does not synthesize a "wcore login" command.
+    // No CLI login and no subscription fallback - the only fix is a working
+    // provider key. Keep cliLoginCmd undefined so buildRemedy does not
+    // synthesize a "wcore login" command.
     cliLoginCmd: undefined,
     explainerKey: 'conversation.acpAuthFailure.wcoreExplainer',
   },
@@ -118,7 +110,6 @@ function buildRemedy(backend: string, runtimeOverrides?: Partial<AcpAuthRemedy>)
     subscriptionOAuthBlocked: override.subscriptionOAuthBlocked ?? false,
     providerKeyLabel: override.providerKeyLabel,
     cliLoginCmd: 'cliLoginCmd' in override ? override.cliLoginCmd : `${backend} login`,
-    fluxRoutable: override.fluxRoutable ?? false,
     explainerKey: override.explainerKey,
     ...runtimeOverrides,
   };

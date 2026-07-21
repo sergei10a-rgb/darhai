@@ -23,7 +23,6 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ipcBridge } from '@/common';
-import { FLUX_AUTO_MODEL, FLUX_PROVIDER_ID } from '@/common/config/flux';
 import { ConfigStorage } from '@/common/config/storage';
 import type { DetectionResult } from '@/common/types/onboarding';
 import type { ProviderId } from '@process/providers/types';
@@ -39,11 +38,7 @@ import openaiLogo from '@renderer/assets/logos/openai.svg';
 import openrouterLogo from '@renderer/assets/logos/openrouter.svg';
 import { resolveFocusSelection, type FocusPersonaId } from './focusMap';
 import { providerLabel } from './providerLabel';
-import { openExternalUrl } from '@renderer/utils/platform';
 import styles from './Onboarding.module.css';
-
-/** Where to grab a Flux key by hand when the one-click OAuth handoff can't start. */
-const FLUX_KEY_URL = 'https://fluxrouter.ai/home/api-keys';
 
 type OnboardingFlowProps = {
   detection: DetectionResult;
@@ -88,30 +83,6 @@ const SCAN_LINE_KEYS = [
   'onboarding.flow.scanLines.almost',
 ];
 
-/**
- * Flux Router brand mark - the official routing glyph (two endpoints joined by a
- * routed path). Strokes `currentColor` so it inherits the tile's brand orange.
- * Source: brand/svg/marks/flux-mark.svg.
- */
-const FluxMark: React.FC<{ size?: number }> = ({ size = 24 }) => (
-  <svg
-    viewBox='0 0 24 24'
-    width={size}
-    height={size}
-    fill='none'
-    stroke='currentColor'
-    strokeWidth={2}
-    strokeLinecap='round'
-    strokeLinejoin='round'
-    aria-hidden
-    focusable='false'
-  >
-    <circle cx='6' cy='19' r='3' />
-    <path d='M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15' />
-    <circle cx='18' cy='5' r='3' />
-  </svg>
-);
-
 /** "a, b and c". */
 const joinList = (arr: string[]): string =>
   arr.length <= 1 ? (arr[0] ?? '') : `${arr.slice(0, -1).join(', ')} and ${arr[arr.length - 1]}`;
@@ -133,9 +104,6 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ detection, onFinish }) 
   const [busy, setBusy] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
-  // Set true once the Flux one-click sign-in fails to start (e.g. the fluxrouter.ai
-  // handoff is down). Surfaces the manual key-paste path so onboarding never dead-ends.
-  const [fluxFallback, setFluxFallback] = useState(false);
   const [scanDone, setScanDone] = useState(false);
   const [scanLog, setScanLog] = useState(0);
   const [picks, setPicks] = useState<FocusPersonaId[]>([]);
@@ -153,8 +121,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ detection, onFinish }) 
   // Detection-derived shape (the warm/cold fork is decided by the real machine).
   const hasKeys = detection.envKeys.length > 0;
   const hasOllama = detection.ollama.running && detection.ollama.models.length > 0;
-  const fluxConnected = detection.fluxConnected;
-  const warm = hasKeys || hasOllama || fluxConnected;
+  const warm = hasKeys || hasOllama;
   // Installed execution engines beyond the always-present bundled ones (Wayland
   // Core, Gemini CLI) - a detected Claude Code / Qwen / Kimi / OpenClaw / … means
   // the user can chat now, so it counts toward the ready (cli-only) fork.
@@ -200,44 +167,6 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ detection, onFinish }) 
       clearInterval(logTimer);
     };
   }, [screen, detection.envKeys]);
-
-  const connectFlux = useCallback(async () => {
-    if (busy) return;
-    setBusy('flux');
-    setErrorMsg(null);
-    try {
-      const res = await ipcBridge.onboarding.connectFlux.invoke();
-      if (res.ok) {
-        // First-run "just works": pin Flux Auto as the default for provider-backed
-        // agents and turn the global routing toggle ON. Both writes hit the shared
-        // wayland-config store the model resolver reads. Failures here are
-        // non-fatal: the connection already succeeded, so never block onboarding.
-        try {
-          const pin = { id: FLUX_PROVIDER_ID, useModel: FLUX_AUTO_MODEL };
-          await ConfigStorage.set('wcore.defaultModel', pin);
-          await ConfigStorage.set('gemini.defaultModel', pin);
-          await ipcBridge.systemSettings.setRouteThroughFlux.invoke({ enabled: true });
-        } catch (err) {
-          console.warn('[OnboardingFlow] flux first-run pin failed', err);
-        }
-        setBusy(null);
-        setScreen('interests');
-        return;
-      }
-      // A non-cancel failure means the one-click handoff couldn't complete (the
-      // fluxrouter.ai sign-in is the usual culprit). Don't dead-end - reveal the
-      // manual key-paste fallback alongside an actionable message.
-      if ('error' in res && res.error !== 'cancelled') {
-        setFluxFallback(true);
-        setErrorMsg(t('onboarding.flow.errors.fluxFallback'));
-      }
-      setBusy(null);
-    } catch {
-      setFluxFallback(true);
-      setErrorMsg(t('onboarding.flow.errors.fluxFallback'));
-      setBusy(null);
-    }
-  }, [busy, t]);
 
   /**
    * Connect a pasted key. The provider is auto-detected in the main process via
@@ -318,10 +247,10 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ detection, onFinish }) 
   const failedLabel = useMemo(() => joinList(wireFailed.map((p) => providerLabel(p))), [wireFailed]);
 
   // The outcome may claim "wired up" only when something genuinely connected -
-  // a real provider, Ollama, or Flux. Detected-but-unverified keys do NOT count,
-  // so an all-failed auto-wire falls through to an honest recovery branch instead
-  // of a false "you're all wired up".
-  const wiredWarm = wiredProviders.length > 0 || hasOllama || fluxConnected;
+  // a real provider or Ollama. Detected-but-unverified keys do NOT count, so an
+  // all-failed auto-wire falls through to an honest recovery branch instead of a
+  // false "you're all wired up".
+  const wiredWarm = wiredProviders.length > 0 || hasOllama;
 
   const hi = (base: string) => (name ? `${name}, ${base}` : base.charAt(0).toUpperCase() + base.slice(1));
 
@@ -379,10 +308,8 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ detection, onFinish }) 
         label: t('onboarding.flow.chips.ollama', { count: detection.ollama.models.length }),
         logo: ollamaLogo,
       });
-    if (fluxConnected)
-      out.push({ key: 'flux', label: t('onboarding.flow.chips.flux'), logo: PROVIDER_LOGO['flux-router'] });
     return out;
-  }, [wiredProviders, detection.ollama.models.length, hasOllama, fluxConnected, addedProviders, t]);
+  }, [wiredProviders, detection.ollama.models.length, hasOllama, addedProviders, t]);
 
   const Header: React.FC<{ step: 0 | 1 | 2 }> = ({ step }) => (
     <div className={styles.top}>
@@ -456,30 +383,6 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ detection, onFinish }) 
     ) : errorMsg ? (
       <p className={styles.keyErr}>{errorMsg}</p>
     ) : null;
-
-  const fluxBanner = (title: string, body: string) => (
-    <>
-      <div className={styles.fluxbig}>
-        <span className={styles.fbIc}>
-          {busy === 'flux' ? <Loader2 size={22} className={styles.spinDark} /> : <FluxMark />}
-        </span>
-        <span className={styles.fbMain}>
-          <span className={styles.fbTitle}>{title}</span> <span className={styles.fbBody}>{body}</span>
-        </span>
-        <button type='button' className={styles.fbCta} onClick={() => void connectFlux()} disabled={busy !== null}>
-          {t(fluxFallback ? 'onboarding.flow.flux.retryCta' : 'onboarding.flow.flux.cta')}
-        </button>
-      </div>
-      {fluxFallback && (
-        <button type='button' className={styles.fluxGetKey} onClick={() => void openExternalUrl(FLUX_KEY_URL)}>
-          {t('onboarding.flow.flux.getKeyCta')} <ArrowRight size={14} />
-        </button>
-      )}
-    </>
-  );
-
-  const FLUX_TITLE = t('onboarding.flow.flux.title');
-  const FLUX_BODY = t('onboarding.flow.flux.body');
 
   // ---------------- screens ----------------
 
@@ -630,7 +533,6 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ detection, onFinish }) 
               )}
               {keyStatus()}
             </div>
-            <div style={{ marginTop: 16 }}>{fluxBanner(FLUX_TITLE, FLUX_BODY)}</div>
           </>
         ) : cliOnly ? (
           <>
@@ -645,7 +547,6 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ detection, onFinish }) 
               </span>
               <span>{t('onboarding.flow.outcome.cliNote')}</span>
             </div>
-            <div style={{ marginTop: 14 }}>{fluxBanner(FLUX_TITLE, FLUX_BODY)}</div>
           </>
         ) : (
           // no provider connected yet → pick a model
@@ -666,26 +567,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ detection, onFinish }) 
                 : t('onboarding.flow.outcome.coldSub')}
             </p>
             <div className={`${styles.block} ${styles.doors}`}>
-              <button
-                type='button'
-                className={`${styles.door} ${styles.doorHero}`}
-                onClick={() => void connectFlux()}
-                disabled={busy !== null}
-              >
-                <span className={styles.dIc}>
-                  {busy === 'flux' ? <Loader2 size={20} className={styles.spinDark} /> : <FluxMark size={20} />}
-                </span>
-                <span className={styles.dMain}>
-                  <span className={styles.dTitleRow}>
-                    <span className={styles.dTitle}>{t('onboarding.flow.outcome.doorFluxTitle')}</span>
-                    <span className={styles.rec}>{t('onboarding.flow.outcome.doorFluxRecommended')}</span>
-                  </span>
-                  <span className={styles.dBody}>{t('onboarding.flow.outcome.doorFluxBody')}</span>
-                  <span className={styles.dFoot}>{t('onboarding.flow.outcome.doorFluxFoot')}</span>
-                </span>
-                <ArrowRight size={18} className={styles.dArrow} />
-              </button>
-              <div style={{ marginTop: 2 }}>
+              <div>
                 {keyField(
                   async (v) => {
                     if (await connectKey(v)) {

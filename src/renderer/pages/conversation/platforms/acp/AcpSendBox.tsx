@@ -119,8 +119,6 @@ const AcpSendBox: React.FC<{
     tokenUsage,
     contextLimit,
     hasThinkingMessage,
-    routing,
-    fluxTurnError,
   } = useAcpMessage(conversation_id);
   const { t } = useTranslation();
   const teamPermission = useTeamPermission();
@@ -212,9 +210,9 @@ const AcpSendBox: React.FC<{
       } catch (error: unknown) {
         const errorMsg = error instanceof Error ? error.message : String(error);
         if (classifyAcpAuthFailure(backend, errorMsg)) {
-          // The CLI could not authenticate. Surface the remedy card (route
-          // through Flux, add a provider key, or run the CLI login command)
-          // instead of the raw auth tip.
+          // The CLI could not authenticate. Surface the remedy card (add a
+          // provider key, or run the CLI login command) instead of the raw auth
+          // tip.
           emitter.emit('acp.auth.failed.card', { conversation_id, backend });
           setAiProcessing(false);
           throw error;
@@ -398,21 +396,6 @@ Please check your local CLI tool authentication status`,
               compact={!!teamId}
               initialConfigOptions={cachedConfigOptions}
             />
-            {routing === 'flux' && !fluxTurnError && (
-              <Tag color='arcoblue' size='small'>
-                {t('conversation.routingBadge.flux')}
-              </Tag>
-            )}
-            {fluxTurnError && (
-              <Tag color='red' size='small'>
-                {t('conversation.routingBadge.fluxError')}
-              </Tag>
-            )}
-            {routing === 'unknown' && (
-              <Tag color='orange' size='small'>
-                {t('conversation.routingBadge.unknown')}
-              </Tag>
-            )}
           </div>
         }
         prefix={

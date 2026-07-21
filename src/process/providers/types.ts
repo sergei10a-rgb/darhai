@@ -35,7 +35,6 @@ export type NativeProviderId =
   | 'assemblyai'
   | 'elevenlabs'
   | 'azure'
-  | 'flux-router'
   | 'openai-compatible'
   | 'ollama-local';
 

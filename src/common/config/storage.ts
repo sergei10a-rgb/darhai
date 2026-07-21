@@ -275,7 +275,7 @@ export interface IConfigStorageRefer {
   /**
    * User-pinned models for the composer model picker, as `providerId:modelId`
    * keys. Surfaced in a dedicated "Pinned" zone at the top of the picker so a
-   * subset of a large catalog (e.g. Flux Router's many models) stays one click
+   * subset of a large provider catalog stays one click
    * away. A UI preference, not provider state, so it lives in config not the DB.
    */
   pinnedModels?: string[];
@@ -383,8 +383,6 @@ export interface IConfigStorageRefer {
   'system.calendarReminderEnabled'?: boolean;
   // Prevent system sleep to ensure scheduled tasks run
   'system.keepAwake'?: boolean;
-  // Route all agent requests through Flux Router (consent gate; default false until first connect)
-  'system.routeThroughFlux'?: boolean;
   // Automatically preview newly created Office files in the current workspace
   'system.autoPreviewOfficeFiles'?: boolean;
   // Per-channel assistant default-model and agent selections
@@ -864,10 +862,7 @@ export interface IMcpServerTransportStreamableHTTP {
 }
 
 export type IMcpServerTransport =
-  | IMcpServerTransportStdio
-  | IMcpServerTransportSSE
-  | IMcpServerTransportHTTP
-  | IMcpServerTransportStreamableHTTP;
+  IMcpServerTransportStdio | IMcpServerTransportSSE | IMcpServerTransportHTTP | IMcpServerTransportStreamableHTTP;
 
 /**
  * MCP server provenance. Used by the MCP Library UI to group servers into

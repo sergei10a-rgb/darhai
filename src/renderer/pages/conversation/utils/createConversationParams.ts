@@ -6,11 +6,8 @@
 
 import { ConfigStorage } from '@/common/config/storage';
 import type { ICreateConversationParams } from '@/common/adapter/ipcBridge';
-import { modelRegistry, systemSettings } from '@/common/adapter/ipcBridge';
 import type { TProviderWithModel } from '@/common/config/storage';
 import type { AcpBackend } from '@/common/types/acpTypes';
-import { getFluxCompat } from '@/common/types/acpTypes';
-import { FLUX_AUTO_MODEL, FLUX_PROVIDER_ID } from '@/common/config/flux';
 import { DEFAULT_CODEX_MODELS } from '@/common/types/codex/codexModels';
 import { resolveLocaleKey } from '@/common/utils';
 import { loadPresetAssistantResources } from '@/common/utils/presetAssistantResources';
@@ -80,37 +77,7 @@ async function resolvePreferredAcpModelId(backend: string): Promise<string | und
     return DEFAULT_CODEX_MODELS[0]?.id;
   }
 
-  // Toggle default role (R5): with no explicit per-chat pin, a Flux-capable
-  // backend defaults its model to flux-auto when "Route all agents through Flux"
-  // is on AND Flux is connected, so the toggle still routes new chats through
-  // Flux. The user can override per chat via the picker; an explicit native pick
-  // is written into preferredModelId/cachedModels above and wins here, matching
-  // the resolveFluxRouting rule (explicit native pick stays native).
-  if (await shouldDefaultToFluxAuto(backend)) {
-    return FLUX_AUTO_MODEL;
-  }
-
   return undefined;
-}
-
-/**
- * Whether a brand-new chat for `backend` should default its model to flux-auto.
- * True only when the backend is Flux-routable (not vendor-locked), the global
- * "route through Flux" toggle is on, and the flux-router provider is connected.
- * Any failure resolves false so model selection is never broken by a flux probe.
- */
-async function shouldDefaultToFluxAuto(backend: string): Promise<boolean> {
-  if (getFluxCompat(backend) === undefined || getFluxCompat(backend) === 'vendor') {
-    return false;
-  }
-  try {
-    const routeThroughFlux = await systemSettings.getRouteThroughFlux.invoke();
-    if (!routeThroughFlux) return false;
-    const providers = await modelRegistry.list.invoke();
-    return Array.isArray(providers) && providers.some((p) => p.providerId === FLUX_PROVIDER_ID);
-  } catch {
-    return false;
-  }
 }
 
 /**

@@ -96,30 +96,6 @@ describe('LegacyConnectorFactory', () => {
       expect(result).toBe(child);
     });
 
-    it('threads config.env (the Flux routing surface) into the npx connector', async () => {
-      // Regression: the V2 factory previously called connectFn(cwd, hooks) and
-      // dropped config.env, so a flux-routed claude spawn never received
-      // ANTHROPIC_BASE_URL / CLAUDE_CONFIG_DIR and the bridge hit native Anthropic.
-      const child = makeFakeChild();
-      mocks.connectClaude.mockImplementation(
-        async (_cwd: string, hooks: { setup: (r: unknown) => Promise<void> }) => {
-          await hooks.setup({ child, isDetached: true });
-        }
-      );
-      const env = {
-        ANTHROPIC_BASE_URL: 'https://api.fluxrouter.ai/anthropic',
-        ANTHROPIC_MODEL: 'flux-auto',
-        CLAUDE_CONFIG_DIR: '/tmp/flux-claude-home',
-      };
-
-      const factory = new LegacyConnectorFactory();
-      factory.create(makeConfig({ agentBackend: 'claude', env }), makeHandlers());
-
-      const { spawnFn } = mockProcessAcpClientInstances[0];
-      await spawnFn();
-      expect(mocks.connectClaude).toHaveBeenCalledWith('/tmp/test', expect.any(Object), env);
-    });
-
     it('uses connectClaude for claude backend', async () => {
       const child = makeFakeChild();
       mocks.connectClaude.mockImplementation(async (_cwd: string, hooks: { setup: (r: unknown) => Promise<void> }) => {

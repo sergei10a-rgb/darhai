@@ -269,15 +269,6 @@ export interface AcpBackendConfig {
    * Builtin skills (in _builtin/ directory) are auto-injected by default; skills in this list will be excluded.
    */
   disabledBuiltinSkills?: string[];
-
-  /**
-   * Whether this backend can route through Flux.
-   * - 'env': routes through Flux via env injection (ready now).
-   * - 'setup': routes after the Flux setup assistant writes its config.
-   * - 'vendor': locked to its own service, not Flux-routable.
-   * Unset means no Flux compatibility is claimed (no chip shown).
-   */
-  fluxCompat?: 'env' | 'setup' | 'vendor';
 }
 
 // All backend configurations - including temporarily disabled ones
@@ -290,8 +281,6 @@ export const ACP_BACKENDS_ALL: Record<AcpBackendAll, AcpBackendConfig> = {
     enabled: true,
     supportsStreaming: false,
     skillsDirs: ['.claude/skills'],
-    // Routes through Flux per-spawn via the Anthropic surface (ANTHROPIC_BASE_URL).
-    fluxCompat: 'env',
   },
   // gemini: not an ACP agent - handled by AgentRegistry as a dedicated DetectedAgentKind
   // gemini: {
@@ -314,9 +303,6 @@ export const ACP_BACKENDS_ALL: Record<AcpBackendAll, AcpBackendConfig> = {
     supportsStreaming: false,
     acpArgs: [], // codex-acp is ACP by default, no flag needed
     skillsDirs: ['.codex/skills'],
-    // Needs the config-writing setup connector: codex routes through Flux's
-    // Responses surface via a [model_providers.flux] table in its TOML config.
-    fluxCompat: 'setup',
   },
   qwen: {
     id: 'qwen',
@@ -328,7 +314,6 @@ export const ACP_BACKENDS_ALL: Record<AcpBackendAll, AcpBackendConfig> = {
     supportsStreaming: true,
     acpArgs: ['--acp'], // Use --acp instead of deprecated --experimental-acp
     skillsDirs: ['.qwen/skills'],
-    fluxCompat: 'env',
   },
   codebuddy: {
     id: 'codebuddy',
@@ -350,7 +335,6 @@ export const ACP_BACKENDS_ALL: Record<AcpBackendAll, AcpBackendConfig> = {
     supportsStreaming: false,
     acpArgs: ['acp'], // goose uses a subcommand rather than a flag
     skillsDirs: ['.goose/skills'],
-    fluxCompat: 'env',
   },
   auggie: {
     id: 'auggie',
@@ -360,7 +344,6 @@ export const ACP_BACKENDS_ALL: Record<AcpBackendAll, AcpBackendConfig> = {
     enabled: true, // ✅ Augment Code CLI, launched via `auggie --acp`
     supportsStreaming: false,
     acpArgs: ['--acp'], // auggie uses the --acp flag
-    fluxCompat: 'vendor',
   },
   kimi: {
     id: 'kimi',
@@ -381,7 +364,6 @@ export const ACP_BACKENDS_ALL: Record<AcpBackendAll, AcpBackendConfig> = {
     supportsStreaming: false,
     acpArgs: ['acp'], // opencode uses the acp subcommand
     skillsDirs: ['.opencode/skills'],
-    fluxCompat: 'setup',
   },
   droid: {
     id: 'droid',
@@ -393,7 +375,6 @@ export const ACP_BACKENDS_ALL: Record<AcpBackendAll, AcpBackendConfig> = {
     supportsStreaming: false,
     acpArgs: ['exec', '--output-format', 'acp'],
     skillsDirs: ['.factory/skills'],
-    fluxCompat: 'vendor',
   },
   copilot: {
     id: 'copilot',
@@ -403,7 +384,6 @@ export const ACP_BACKENDS_ALL: Record<AcpBackendAll, AcpBackendConfig> = {
     enabled: true, // ✅ GitHub Copilot CLI, launched via `copilot --acp --stdio`
     supportsStreaming: false,
     acpArgs: ['--acp', '--stdio'], // copilot uses --acp --stdio to start ACP mode
-    fluxCompat: 'vendor',
   },
   qoder: {
     id: 'qoder',
@@ -413,7 +393,6 @@ export const ACP_BACKENDS_ALL: Record<AcpBackendAll, AcpBackendConfig> = {
     enabled: true, // ✅ Qoder CLI, launched via `qodercli --acp`
     supportsStreaming: false,
     acpArgs: ['--acp'], // qoder uses the --acp flag
-    fluxCompat: 'setup',
   },
   vibe: {
     id: 'vibe',
@@ -424,7 +403,6 @@ export const ACP_BACKENDS_ALL: Record<AcpBackendAll, AcpBackendConfig> = {
     supportsStreaming: false,
     acpArgs: [],
     skillsDirs: ['.vibe/skills'],
-    fluxCompat: 'vendor',
   },
   cursor: {
     id: 'cursor',
@@ -437,7 +415,6 @@ export const ACP_BACKENDS_ALL: Record<AcpBackendAll, AcpBackendConfig> = {
     supportsStreaming: false,
     acpArgs: ['acp'], // Cursor uses `agent acp` subcommand
     skillsDirs: ['.cursor/skills'],
-    fluxCompat: 'vendor',
   },
   kiro: {
     id: 'kiro',
@@ -447,7 +424,6 @@ export const ACP_BACKENDS_ALL: Record<AcpBackendAll, AcpBackendConfig> = {
     enabled: true, // ✅ Kiro CLI, launched via `kiro-cli acp`
     supportsStreaming: false,
     acpArgs: ['acp'], // Kiro uses `kiro-cli acp` subcommand
-    fluxCompat: 'vendor',
   },
   hermes: {
     id: 'hermes',
@@ -514,25 +490,6 @@ export function hasNativeSkillSupport(agentTypeOrBackend: string | undefined): b
 export function getSkillsDirsForBackend(agentTypeOrBackend: string | undefined): string[] | undefined {
   if (!agentTypeOrBackend) return undefined;
   return ACP_BACKENDS_ALL[agentTypeOrBackend as AcpBackendAll]?.skillsDirs ?? NON_ACP_SKILLS_DIRS[agentTypeOrBackend];
-}
-
-/**
- * Flux compatibility for non-ACP agents (handled outside ACP_BACKENDS_ALL).
- * wcore and gemini route through Flux via env injection (ready now).
- */
-const NON_ACP_FLUX_COMPAT: Record<string, AcpBackendConfig['fluxCompat']> = {
-  wcore: 'env',
-  gemini: 'env',
-};
-
-/**
- * Resolve the Flux compatibility for any backend id (ACP or non-ACP).
- * Single source of truth for the Agents-page Flux status chip.
- * Returns undefined when no Flux compatibility is classified (no chip shown).
- */
-export function getFluxCompat(agentTypeOrBackend: string | undefined): AcpBackendConfig['fluxCompat'] {
-  if (!agentTypeOrBackend) return undefined;
-  return ACP_BACKENDS_ALL[agentTypeOrBackend as AcpBackendAll]?.fluxCompat ?? NON_ACP_FLUX_COMPAT[agentTypeOrBackend];
 }
 
 // ACP Error Type System - structured error handling
@@ -1023,11 +980,7 @@ export interface AcpSessionModes {
 
 /** Unified model info that abstracts over both stable and unstable APIs */
 export type AcpModelInfoSourceDetail =
-  | 'cc-switch'
-  | 'acp-config-option'
-  | 'acp-models'
-  | 'persisted-model'
-  | 'codex-stream';
+  'cc-switch' | 'acp-config-option' | 'acp-models' | 'persisted-model' | 'codex-stream';
 
 export interface AcpModelInfo {
   /** Currently active model ID */
@@ -1185,7 +1138,4 @@ export interface AcpFileWriteMessage {
  * TypeScript can automatically narrow the type based on the method field.
  */
 export type AcpIncomingMessage =
-  | AcpSessionUpdateNotification
-  | AcpPermissionRequestMessage
-  | AcpFileReadMessage
-  | AcpFileWriteMessage;
+  AcpSessionUpdateNotification | AcpPermissionRequestMessage | AcpFileReadMessage | AcpFileWriteMessage;

@@ -9,7 +9,6 @@
     "selectModel": "Sélectionner un modèle",
     "useCliModel": "Sélectionner un modèle",
     "modelSwitchNotSupported": "La liste des modèles sera disponible après la première connexion. Envoyez un message pour vous connecter et charger les modèles disponibles.",
-    "fluxGroupLabel": "Flux",
     "nativeModelsGroupLabel": "Modèles de l'agent",
     "specifyWorkspace": "Discuter dans un dossier",
     "currentWorkspace": "Espace de travail actuel",
@@ -309,20 +308,12 @@
     "loaded": "Compétences chargées"
   },
   "routingBadge": {
-    "flux": "Acheminement via Flux",
     "native": "Connexion native",
-    "unknown": "Utilisation de la session propre de cet outil",
-    "fluxError": "Flux indisponible",
-    "fluxErrorNotice": "L'acheminement via Flux a echoue pour ce tour. Verifiez votre connexion Flux ou changez de modele."
+    "unknown": "Utilisation de la session propre de cet outil"
   },
   "activation": {
     "title": "Réveillez vos agents",
     "subtitle": "Connectez un fournisseur de modèles pour commencer à exécuter des tâches. Choisissez la voie qui vous convient.",
-    "flux": {
-      "label": "Connecter Flux Router",
-      "sublabel": "Clé gratuite avec 1 $ de crédit de démarrage. Sans carte — chaque tâche est routée vers le modèle spécialisé le plus adapté.",
-      "action": "Connecter"
-    },
     "ownKey": {
       "label": "Utiliser ma propre clé",
       "sublabel": "Apportez une clé API d’OpenAI, Anthropic, Google ou de plus de 100 fournisseurs.",

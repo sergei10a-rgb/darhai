@@ -15,8 +15,9 @@ import styles from './OnboardingOverlay.module.css';
  * First-run onboarding overlay.
  *
  * Shows once on first launch: gated on `ConfigStorage.onboardingCompleted`.
- * Renders the scenario (A/B/C/D) chosen from live detection, lets the user
- * connect Flux Router or skip, then sets the flag so it never shows again.
+ * Renders the guided first-run flow from live detection, lets the user connect
+ * a provider (Google / detected CLI / pasted key / free Gemini key) or skip,
+ * then sets the flag so it never shows again.
  *
  * Mounted inside `ProtectedLayout` (post-auth) so unauthenticated cold boots
  * land on /login without the overlay flashing over the login screen.

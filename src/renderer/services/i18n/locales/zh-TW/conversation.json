@@ -9,7 +9,6 @@
     "selectModel": "選擇模型",
     "useCliModel": "選擇模型",
     "modelSwitchNotSupported": "首次連接後將顯示可用模型列表。請先發送訊息以連接並載入可用模型。",
-    "fluxGroupLabel": "Flux",
     "nativeModelsGroupLabel": "代理模型",
     "specifyWorkspace": "關聯資料夾",
     "currentWorkspace": "目前工作空間",
@@ -309,20 +308,12 @@
     "loaded": "已載入技能"
   },
   "routingBadge": {
-    "flux": "透過 Flux 路由",
     "native": "原生連線",
-    "unknown": "使用此工具自身的登入",
-    "fluxError": "Flux 不可用",
-    "fluxErrorNotice": "本輪 Flux 路由失敗。請檢查 Flux 連線或切換模型。"
+    "unknown": "使用此工具自身的登入"
   },
   "activation": {
     "title": "喚醒你的智慧代理",
     "subtitle": "連接一個模型供應商即可開始執行任務。選擇最適合你的方式。",
-    "flux": {
-      "label": "連接 Flux Router",
-      "sublabel": "免費金鑰並贈送 1 美元啟動額度。無需綁卡——將每個任務路由到最合適的專長模型。",
-      "action": "連接"
-    },
     "ownKey": {
       "label": "使用我自己的金鑰",
       "sublabel": "使用來自 OpenAI、Anthropic、Google 等 100 多家供應商的 API 金鑰。",

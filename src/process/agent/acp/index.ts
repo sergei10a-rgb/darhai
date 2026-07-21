@@ -27,7 +27,6 @@ import type {
   ToolCallUpdate,
 } from '@/common/types/acpTypes';
 import { AcpErrorType, createAcpError } from '@/common/types/acpTypes';
-import { isFluxModelId } from '@/common/config/flux';
 import { spawn } from 'child_process';
 import { promises as fs } from 'fs';
 import * as path from 'path';
@@ -380,16 +379,7 @@ export class AcpAgent {
       // local Claude slot model (`default` / `opus` / `haiku`).
       // Do not send the relay's underlying model name (for example glm-5.1x)
       // to ACP, because claude-agent-acp only accepts slot ids.
-      // When the chat routes through Flux, the model is carried by the spawn env
-      // (ANTHROPIC_MODEL=flux-auto for claude, OPENAI_MODEL=flux-auto for the
-      // openai-surface backends). The bridge resolves it at init; sending a local
-      // claude slot (default/opus) here would override flux-auto with an id the
-      // Flux surface rejects (HTTP 400). So skip the in-place set_model entirely
-      // for a Flux-routed spawn.
-      const fluxRoutedSpawn = isFluxModelId(this.extra.currentModelId);
-      if (fluxRoutedSpawn) {
-        // Model already selected via ANTHROPIC_MODEL/OPENAI_MODEL=flux-auto.
-      } else if (this.extra.backend === 'claude') {
+      if (this.extra.backend === 'claude') {
         const configuredModel = readClaudeModelInfoFromCcSwitch()?.currentModelId ?? getClaudeModelSlot();
         if (configuredModel) {
           try {
@@ -593,15 +583,6 @@ export class AcpAgent {
       throw new Error('No model info available');
     }
 
-    // A Flux id is carried by the spawn env (ANTHROPIC_MODEL/OPENAI_MODEL=
-    // flux-auto), not by an in-place set_model. Pushing it through the bridge
-    // makes the claude binary validate it against its catalog and reject it.
-    // Record the override (so getModelInfo reflects the pick) and skip the call.
-    if (isFluxModelId(modelId)) {
-      this.userModelOverride = modelId;
-      return this.getModelInfo();
-    }
-
     // Always use session/set_model for direct CLI control.
     // Falls back to session/set_config_option only for non-Claude backends
     // that don't support the unstable_setSessionModel method.
@@ -754,11 +735,7 @@ export class AcpAgent {
       // Re-assert model override before sending prompt.
       // This ensures the CLI subprocess uses the correct model even if it
       // lost the override state (e.g., after internal compaction or restart).
-      // EXCEPT a Flux id: it is carried by the spawn env (ANTHROPIC_MODEL=
-      // flux-auto), and pushing it through set_model makes the claude binary
-      // validate it against its catalog/endpoint and reject it ("model flux-auto
-      // may not exist"). Skip the re-assert for Flux ids.
-      if (this.userModelOverride && !isFluxModelId(this.userModelOverride)) {
+      if (this.userModelOverride) {
         const currentInfo = this.getModelInfo();
         const expected = this.userModelOverride;
         if (currentInfo?.currentModelId !== expected) {

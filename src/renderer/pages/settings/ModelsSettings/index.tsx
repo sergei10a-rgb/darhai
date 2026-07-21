@@ -17,7 +17,6 @@ import BrowseModal from './BrowseModal';
 import ConnectPanel from './components/ConnectPanel';
 import ConnectedRow from './components/ConnectedRow';
 import EmptyState from './components/EmptyState';
-import FluxRouterHero from './components/FluxRouterHero';
 import OmniRouteGatewayCard from './components/OmniRouteGatewayCard';
 import ManageProvider from './ManageProvider';
 import { isCloudProvider } from './providerCatalog';
@@ -254,26 +253,6 @@ const ModelsSettingsInner: React.FC = () => {
 
   const connectKey = useCallback((providerId: ProviderId, key: string) => connect(providerId, { key }), [connect]);
 
-  // Flux Router is the recommended provider - connect it from the hero.
-  const connectFluxKey = useCallback((key: string) => connect('flux-router', { key }), [connect]);
-
-  // Whether `flux-router` is already a connected provider - drives the hero's
-  // reinforcement-vs-recommendation state. Read straight from the registry list
-  // the page already loads (no extra detection call).
-  const fluxConnected = useMemo(() => providers.some((p) => p.providerId === 'flux-router'), [providers]);
-
-  // Pin Flux Router to the top of the connected list; the rest keep their
-  // existing (registry insertion) order. Stable single-key sort.
-  const orderedProviders = useMemo(
-    () =>
-      providers.toSorted((a, b) => {
-        if (a.providerId === 'flux-router') return b.providerId === 'flux-router' ? 0 : -1;
-        if (b.providerId === 'flux-router') return 1;
-        return 0;
-      }),
-    [providers]
-  );
-
   const useDetected = useCallback(
     async (dk: IModelRegistryDetectedKey) => {
       const res = await connect(dk.providerId, { useDiscovered: true });
@@ -375,8 +354,6 @@ const ModelsSettingsInner: React.FC = () => {
       breadcrumb={[{ label: t('settings.modelsPage.crumbAiModels') }, { label: t('settings.modelsPage.title') }]}
       actions={headerActions}
     >
-      <FluxRouterHero connected={fluxConnected} onConnectKey={connectFluxKey} />
-
       <ConnectPanel
         detectedKeys={visibleDetected}
         onConnectKey={connectKey}
@@ -404,7 +381,7 @@ const ModelsSettingsInner: React.FC = () => {
 
       {providers.length > 0 && (
         <div className={styles.connectedList}>
-          {orderedProviders.map((p) => (
+          {providers.map((p) => (
             <ConnectedRow key={p.providerId} provider={p} onManage={handleManage} onFix={handleFix} />
           ))}
         </div>

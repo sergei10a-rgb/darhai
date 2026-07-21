@@ -20,7 +20,6 @@ const LABELS: Record<string, string> = {
   deepseek: 'DeepSeek',
   moonshot: 'Moonshot',
   mistral: 'Mistral',
-  'flux-router': 'Flux Router',
   xai: 'xAI',
   together: 'Together',
   fireworks: 'Fireworks',

@@ -20,8 +20,7 @@ import type {
   AcpBackendConfig,
   AcpSessionConfigOption,
 } from '@/common/types/acpTypes';
-import { ACP_BACKENDS_ALL, getCurrentWrapperVersion, getFluxCompat } from '@/common/types/acpTypes';
-import { isFluxModelId } from '@/common/config/flux';
+import { ACP_BACKENDS_ALL, getCurrentWrapperVersion } from '@/common/types/acpTypes';
 import { ExtensionRegistry } from '@process/extensions';
 import { getDatabase } from '@process/services/database';
 import { ProviderRepository } from '@process/providers/storage/ProviderRepository';
@@ -36,13 +35,9 @@ import { cronBusyGuard } from '@process/services/cron/CronBusyGuard';
 import { mainWarn, mainError } from '@process/utils/mainLogger';
 import {
   getCodexSandboxModeForSessionMode,
-  materializeFluxCodexHome,
-  normalizeCodexSandboxMode,
   type CodexSandboxMode,
   writeCodexSandboxMode,
 } from '@process/task/codexConfig';
-import { materializeFluxClaudeConfigDir } from '@process/task/claudeConfig';
-import { app } from 'electron';
 import BaseAgentManager from './BaseAgentManager';
 import { IpcAgentEventEmitter } from './IpcAgentEventEmitter';
 import { hasCronCommands } from './CronCommandDetector';
@@ -62,8 +57,6 @@ import { composePrompt } from '@process/services/constitution/composePrompt';
 import { shouldInjectTeamGuideMcp } from '@process/team/prompts/teamGuideCapability.ts';
 import { extractTextFromMessage, processCronInMessage } from './MessageMiddleware';
 import { ConversationTurnCompletionService } from './ConversationTurnCompletionService';
-import { resolveFluxRouting, type FluxRoutingResult, type RoutingDecision } from '@process/task/fluxRouting';
-import { readConnectedFluxKey } from '@process/connectors/fluxKey';
 
 interface AcpAgentManagerData {
   workspace?: string;
@@ -580,44 +573,6 @@ ${collectedResponses.join('\n')}`;
       }
     }
 
-    // Flux routing (openai-surface generic backends + claude via the anthropic
-    // surface; codex/codebuddy route separately).
-    const decision = await this.computeFluxRouting(data.backend, data.currentModelId ?? undefined);
-    this.lastRouting = decision.routing;
-    if (decision.routing === 'flux') {
-      for (const k of decision.stripKeys) delete mergedEnv[k];
-      Object.assign(mergedEnv, decision.env);
-
-      // codex selects its provider from CODEX_HOME/config.toml, not from env.
-      // Point flux-routed codex spawns at a Wayland-scoped CODEX_HOME whose
-      // config selects model_provider=flux + flux-auto, so the user's real
-      // ~/.codex config stays native for non-flux model picks.
-      if (data.backend === 'codex') {
-        try {
-          const sandboxMode = normalizeCodexSandboxMode(data.sandboxMode);
-          const codexHome = await materializeFluxCodexHome(app.getPath('userData'), sandboxMode);
-          mergedEnv.CODEX_HOME = codexHome;
-        } catch (err) {
-          mainWarn('[AcpAgentManager]', 'materializeFluxCodexHome failed', err);
-        }
-      }
-
-      // claude's bridge only accepts the (non-SDK) `flux-auto` id when it is in
-      // the `availableModels` allowlist of <CLAUDE_CONFIG_DIR>/settings.json.
-      // Point flux-routed claude spawns at a Wayland-scoped CLAUDE_CONFIG_DIR
-      // (seeded from the user's real settings.json) that lists the Flux ids, so
-      // ANTHROPIC_MODEL=flux-auto resolves instead of falling back to the
-      // `default` slot (which the Flux Anthropic surface rejects). The user's
-      // real ~/.claude is never modified.
-      if (data.backend === 'claude') {
-        try {
-          mergedEnv.CLAUDE_CONFIG_DIR = await materializeFluxClaudeConfigDir(app.getPath('userData'));
-        } catch (err) {
-          mainWarn('[AcpAgentManager]', 'materializeFluxClaudeConfigDir failed', err);
-        }
-      }
-    }
-
     if (Object.keys(mergedEnv).length > 0) {
       return { ...resolved, customEnv: mergedEnv };
     }
@@ -710,33 +665,6 @@ ${collectedResponses.join('\n')}`;
         mainWarn('[AcpAgentManager]', 'maybeInvalidateProviderKeyOnAuthError failed', err);
       }
     })();
-  }
-
-  /** Routing decision for the most recent spawn - surfaced on request_trace (badge). */
-  private lastRouting: RoutingDecision = 'unknown';
-
-  /**
-   * Compute the Flux routing decision for a given backend + selected model using
-   * the SAME inputs the spawn path (`resolveAgentCliConfig`) uses. Centralizing
-   * this keeps the spawn-time env and the model-change boundary check in lockstep:
-   * a model switch that would change `routing` (native<->flux) is exactly a switch
-   * that would change the injected env, so the agent must be re-spawned.
-   */
-  private async computeFluxRouting(backend: string, selectedModelId: string | undefined): Promise<FluxRoutingResult> {
-    const fluxKey = await this.readFluxKey();
-    const routeThroughFlux = (await ProcessConfig.get('system.routeThroughFlux')) ?? false;
-    return resolveFluxRouting({
-      backend,
-      selectedModelId,
-      fluxConnected: Boolean(fluxKey),
-      fluxKey,
-      routeThroughFlux: Boolean(routeThroughFlux),
-    });
-  }
-
-  /** The connected flux-router key, or undefined when not connected (R13 safety gate). */
-  private async readFluxKey(): Promise<string | undefined> {
-    return readConnectedFluxKey();
   }
 
   /**
@@ -950,7 +878,6 @@ ${collectedResponses.join('\n')}`;
           modelId: modelInfo?.currentModelId || this.persistedModelId || 'unknown',
           cliPath: this.options?.cliPath,
           sessionMode: this.currentMode,
-          routing: this.lastRouting,
           timestamp: Date.now(),
         },
       });
@@ -1165,15 +1092,7 @@ ${collectedResponses.join('\n')}`;
     if (this.persistedModelId) {
       const currentInfo = this.agent.getModelInfo();
       const isModelAvailable = currentInfo?.availableModels?.some((m) => m.id === this.persistedModelId);
-      // A Flux model id (flux-auto, ...) on a Flux-capable backend is carried by
-      // the spawn env (ANTHROPIC_MODEL/OPENAI_MODEL=flux-auto), not by an in-place
-      // set_model. The backend's native catalog (opus/sonnet/...) never lists it,
-      // so DO NOT clear it as "unavailable" and DO NOT re-send it via set_model
-      // (the claude bridge rejects an unlisted id). The env already selected it.
-      const isFluxOnFluxBackend = isFluxModelId(this.persistedModelId) && Boolean(getFluxCompat(this.options.backend));
-      if (isFluxOnFluxBackend) {
-        // Keep persistedModelId as-is; the env carries the route.
-      } else if (!isModelAvailable) {
+      if (!isModelAvailable) {
         mainWarn('[AcpAgentManager]', `Persisted model ${this.persistedModelId} is not in available models, clearing`);
         this.persistedModelId = null;
       } else if (currentInfo?.currentModelId !== this.persistedModelId) {
@@ -1243,8 +1162,7 @@ ${collectedResponses.join('\n')}`;
           pendingConfigOptions: data.pendingConfigOptions,
           // Forward team MCP stdio config so AcpAgent.loadBuiltinSessionMcpServers() can inject it
           teamMcpStdioConfig: (data as unknown as Record<string, unknown>).teamMcpStdioConfig as
-            | { name: string; command: string; args: string[]; env: Array<{ name: string; value: string }> }
-            | undefined,
+            { name: string; command: string; args: string[]; env: Array<{ name: string; value: string }> } | undefined,
         },
         onSessionIdUpdate: (sessionId: string) => {
           // Save ACP session ID to database for resume support
@@ -1703,16 +1621,6 @@ ${collectedResponses.join('\n')}`;
   /**
    * Switch model for the underlying ACP agent.
    * Persists the model ID to database for resume support.
-   *
-   * Flux routing is injected as process env AT SPAWN (ANTHROPIC_BASE_URL for
-   * claude, the OpenAI/Responses surface for the others). An in-place
-   * `set_model` only tells the already-running CLI to use a different model id;
-   * it cannot change that env. So when a model switch crosses the routing
-   * boundary (native<->flux), the CLI is still pointed at the wrong endpoint and
-   * the request fails (e.g. asking api.anthropic.com for `flux-auto`). In that
-   * case we re-spawn the agent so `resolveAgentCliConfig` re-injects the correct
-   * env. Same-routing switches (flux-auto->flux-reasoning, sonnet->opus) keep the
-   * cheap in-place path.
    */
   async setModel(modelId: string): Promise<AcpModelInfo | null> {
     if (!this.agent) {
@@ -1724,28 +1632,6 @@ ${collectedResponses.join('\n')}`;
     }
     if (!this.agent) return null;
 
-    // Detect a routing-boundary crossing: does the NEW model route differently
-    // than what is currently live? `this.lastRouting` was set by the spawn that
-    // produced the running agent. `unknown` means the backend is not Flux-routable
-    // at all (env can't be changed by a re-spawn), so never re-spawn for it.
-    const nextRouting = (await this.computeFluxRouting(this.options.backend, modelId)).routing;
-    const crossesRoutingBoundary =
-      nextRouting !== 'unknown' && this.lastRouting !== 'unknown' && nextRouting !== this.lastRouting;
-
-    if (crossesRoutingBoundary) {
-      return this.respawnForRoutingChange(modelId);
-    }
-
-    // Same-routing switch TO a Flux id (e.g. the chat is already flux-routed and
-    // the user re-picks Flux Auto): the model is carried by the spawn env
-    // (ANTHROPIC_MODEL/OPENAI_MODEL=flux-auto). The claude bridge rejects an
-    // unlisted id via set_model, so persist + skip the in-place call.
-    if (isFluxModelId(modelId)) {
-      this.persistedModelId = modelId;
-      await this.saveModelId(modelId);
-      return this.getModelInfo();
-    }
-
     const result = await this.agent.setModelByConfigOption(modelId);
     if (result) {
       this.persistedModelId = result.currentModelId;
@@ -1756,55 +1642,6 @@ ${collectedResponses.join('\n')}`;
       }
     }
     return result;
-  }
-
-  /**
-   * Tear down the running agent and re-create it with the new model so
-   * `resolveAgentCliConfig` injects the correct Flux/native env. Conversation
-   * continuity is preserved by the existing session-resume path: the persisted
-   * `acpSessionId` (+ pinned wrapper version) is reloaded from the DB into
-   * `this.options`, so the fresh spawn resumes the same ACP session (or, on a
-   * wrapper-version mismatch, takes AcpAgentV2's self-healing history-replay
-   * path). The new model is persisted BEFORE re-spawn so initAgent's
-   * `this.persistedModelId` carries it into `agentConfig.extra.currentModelId`.
-   */
-  private async respawnForRoutingChange(modelId: string): Promise<AcpModelInfo | null> {
-    // Persist the new model first so the re-spawn picks it up.
-    this.persistedModelId = modelId;
-    this.options.currentModelId = modelId;
-    await this.saveModelId(modelId);
-
-    // Reload the latest resume markers so the fresh spawn resumes this session
-    // (these are written async by saveAcpSessionId during the prior session).
-    try {
-      const db = await getDatabase();
-      const result = db.getConversation(this.conversation_id);
-      if (result.success && result.data && result.data.type === 'acp') {
-        const extra = (result.data.extra ?? {}) as {
-          acpSessionId?: string;
-          acpSessionUpdatedAt?: number;
-          acpWrapperVersion?: string;
-        };
-        this.options.acpSessionId = extra.acpSessionId ?? this.options.acpSessionId;
-        this.options.acpSessionUpdatedAt = extra.acpSessionUpdatedAt ?? this.options.acpSessionUpdatedAt;
-        this.options.acpWrapperVersion = extra.acpWrapperVersion ?? this.options.acpWrapperVersion;
-      }
-    } catch (err) {
-      mainWarn('[AcpAgentManager]', 'respawnForRoutingChange: failed to reload resume markers', err);
-    }
-
-    // Tear down the current CLI process + worker (same path kill() uses), then
-    // clear the cached bootstrap so initAgent spawns a fresh agent.
-    try {
-      await (this.agent?.kill?.() ?? Promise.resolve());
-    } catch (err) {
-      mainWarn('[AcpAgentManager]', 'respawnForRoutingChange: agent.kill failed', err);
-    }
-    this.bootstrap = undefined;
-    this.bootstrapping = false;
-
-    await this.initAgent(this.options);
-    return this.getModelInfo();
   }
 
   /**

@@ -1983,28 +1983,6 @@
       "undecryptableHint": "Dein gespeicherter Schlüssel für diesen Anbieter ist unlesbar. Bitte gib ihn erneut ein.",
       "fromDeepLink": "Aus Deep Link"
     },
-    "flux": {
-      "name": "Flux Router",
-      "recommended": "Empfohlen",
-      "headline": "Ein Schlüssel. Jedes Modell. Pro Anfrage geroutet.",
-      "body": "Zahle nicht für jede Anfrage Flaggschiff-Preise. Flux Router wählt für jede das richtige Modell.",
-      "connect": "Flux Router verbinden",
-      "connecting": "Wird verbunden…",
-      "getKey": "Hol dir einen Schlüssel unter fluxrouter.ai",
-      "keyLabel": "Flux-Router-Schlüssel",
-      "keyPlaceholder": "Füge deinen Flux-Router-Schlüssel ein (sk-flux-…)",
-      "routing": "Flux Router routet.",
-      "metricsTurns": "Letzte {{count}} Runden:",
-      "histogram": "Flaggschiff {{flagship}} · Klein {{small}} · Lokal {{local}}",
-      "activeConfirmation": "Flux Router verbunden · {{count}} Modelle · pro Anfrage geroutet",
-      "errorUnauthorized": "Dieser {{provider}}-Schlüssel wurde abgelehnt. Prüfe den Schlüssel und versuche es erneut.",
-      "errorNoCredit": "Verbunden, aber dieser {{provider}}-Schlüssel hat kein nutzbares Guthaben. Füge eine Abrechnung hinzu, um Modelle zu routen.",
-      "errorOffline": "{{provider}} konnte nicht erreicht werden. Du scheinst offline zu sein. Prüfe deine Verbindung und versuche es erneut.",
-      "errorUnrecognized": "Dieser Schlüssel wurde für {{provider}} nicht erkannt.",
-      "errorNoModels": "{{provider}} verbunden, aber keine Modelle zurückgegeben. Versuche es gleich noch einmal.",
-      "errorUnknown": "Verbindung zu {{provider}} fehlgeschlagen. Bitte versuche es erneut.",
-      "trust": "Basiert auf Open-Source-Technologie."
-    },
     "detected": {
       "found": "Ein {{provider}}-API-Schlüssel auf diesem Gerät gefunden. Verwenden?",
       "use": "Verwenden",
@@ -2180,8 +2158,6 @@
       "searchPlaceholder": "Modelle suchen, nach Name oder Anbieter",
       "searchMatches": "{{count}} Treffer",
       "searchNoMatches": "Keine Modelle entsprechen deiner Suche.",
-      "sectionFluxHero": "Flux Auto",
-      "sectionFluxHeroSubtitle": "Ein Schlüssel, bestes Modell pro Aufgabe. Jederzeit änderbar.",
       "sectionRecommended": "Empfohlen",
       "sectionRecommendedSubtitle": "Flaggschiffe pro Anbieter",
       "sectionFrequentlyUsed": "Häufig verwendet",
@@ -2388,41 +2364,6 @@
       "wcore": "Darhais eigene Engine. Greift auf jeden Anbieter auf deiner Modelle-Seite zu.",
       "claude": "Anthropics Coding-Agent. Meldet sich mit eigenem Konto an, kann GPT oder Gemini nicht ausführen.",
       "codex": "OpenAIs Coding-Agent. Meldet sich mit eigenem Konto an, kann Claude oder Gemini nicht ausführen."
-    },
-    "flux": {
-      "title": "Flux Router",
-      "desc": "Lässt jeden Agenten über alle von dir verbundenen Modelle und Anbieter routen, nicht nur über seine eigenen.",
-      "statusConnected": "Verbunden",
-      "statusDisconnected": "Nicht verbunden",
-      "routeToggleLabel": "Alle Agenten über Flux routen",
-      "routeToggleHelp": "Jeder Agent wählt das am besten passende Modell aus deinen verbundenen Anbietern. Schalte es aus, um jeden Agenten auf seine eigene Verbindung zurückzusetzen.",
-      "connectCta": "Flux auf der Modelle-Seite verbinden"
-    },
-    "fluxCompat": {
-      "ready": "Flux bereit",
-      "setup": "Flux einrichten",
-      "nativeOnly": "Nur nativ",
-      "nativeOnlyTooltip": "Verbindet über den eigenen Anbieter und kann daher nicht über Flux geroutet werden."
-    },
-    "fluxSetup": {
-      "title": "{{tool}} über Flux routen",
-      "absentBody": "{{tool}} wurde auf diesem Rechner nicht gefunden. Installiere es zuerst und komme dann zurück, um es über Flux zu routen.",
-      "unconfiguredBody": "Richte {{tool}} ein, um es über Flux zu routen. Darhai schreibt einen Flux-Provider in die {{tool}}-Konfiguration unter {{configPath}} und sichert die vorhandene Datei zuvor.",
-      "routedBody": "{{tool}} wird über Flux geroutet.",
-      "driftedBody": "Die Flux-Konfiguration von {{tool}} wurde außerhalb von Darhai geändert. Wende sie erneut an, um Darhais Einstellungen wiederherzustellen, oder entferne Flux aus {{tool}}.",
-      "notConnected": "Verbinde zuerst den Flux Router und richte dann {{tool}} ein.",
-      "genericError": "Die Einrichtung wurde nicht abgeschlossen.",
-      "setup": "{{tool}} für Flux einrichten",
-      "reapply": "Erneut anwenden",
-      "remove": "Flux aus {{tool}} entfernen",
-      "close": "Schließen",
-      "setupDone": "{{tool}} wird jetzt über Flux geroutet.",
-      "removeDone": "Flux wurde aus {{tool}} entfernt.",
-      "report": {
-        "changesLabel": "Was sich geändert hat",
-        "backupLabel": "Gesichert unter",
-        "rollbackLabel": "Zum Rückgängigmachen ausführen"
-      }
     }
   },
   "wcoreConfig": {

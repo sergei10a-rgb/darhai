@@ -1,25 +1,5 @@
 {
   "memory": "Санах ой",
-  "fluxRouter": {
-    "label": "Flux төлөв",
-    "connect": {
-      "body": "Бүх асуулга флагман загвар руу чиглэж байна. Flux Router хүсэлт бүрд тохирох загварыг сонгоно.",
-      "action": "Flux Router холбох"
-    },
-    "install": {
-      "body": "Codex, Cursor, Claude Code хараахан чиглүүлэгдээгүй байна. Flux Desktop гурвуулангийг нэг товшилтоор холбоно.",
-      "action": "Flux Desktop суулгах",
-      "sub": "fluxrouter.ai/download"
-    },
-    "ollama": {
-      "body": "Дотоод Ollama өнгөрсөн долоо хоногт {{pct}}%-ийг хийсэн. Таны төхөөрөмж дийлэхгүй болоход Flux Router үлдсэнийг авна.",
-      "action": "Нөөц тохируулах"
-    },
-    "wired": {
-      "body": "Сүүлийн 100: H{{h}} · S{{s}} · O{{o}}",
-      "action": "Эргэлт бүр хаашаа явсныг харах"
-    }
-  },
   "accordion": {
     "scheduled": "Хуваарьт даалгавар",
     "workflows": "Ажлын урсгал",

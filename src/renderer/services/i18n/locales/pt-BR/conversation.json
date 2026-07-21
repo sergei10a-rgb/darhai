@@ -9,7 +9,6 @@
     "selectModel": "Selecionar modelo",
     "useCliModel": "Selecionar modelo",
     "modelSwitchNotSupported": "A lista de modelos ficará disponível após a primeira conexão. Envie uma mensagem para conectar e carregar os modelos disponíveis.",
-    "fluxGroupLabel": "Flux",
     "nativeModelsGroupLabel": "Modelos do agente",
     "specifyWorkspace": "Conversar na pasta",
     "currentWorkspace": "Espaço de trabalho atual",
@@ -309,20 +308,12 @@
     "loaded": "Habilidades carregadas"
   },
   "routingBadge": {
-    "flux": "Roteando via Flux",
     "native": "Conexao nativa",
-    "unknown": "Usando o login proprio desta ferramenta",
-    "fluxError": "Flux indisponivel",
-    "fluxErrorNotice": "O roteamento via Flux falhou neste turno. Verifique sua conexao com o Flux ou troque de modelo."
+    "unknown": "Usando o login proprio desta ferramenta"
   },
   "activation": {
     "title": "Desperte seus agentes",
     "subtitle": "Conecte um provedor de modelos para começar a executar tarefas. Escolha o caminho ideal para você.",
-    "flux": {
-      "label": "Conectar o Flux Router",
-      "sublabel": "Chave gratuita com US$ 1 de crédito inicial. Sem cartão — encaminha cada tarefa para o modelo especialista mais adequado.",
-      "action": "Conectar"
-    },
     "ownKey": {
       "label": "Usar minha própria chave",
       "sublabel": "Use uma chave de API da OpenAI, Anthropic, Google ou de mais de 100 provedores.",

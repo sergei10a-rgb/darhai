@@ -84,12 +84,11 @@ describe('NATIVE_COLLISION_IDS', () => {
   it('contains the native provider ids', () => {
     expect(NATIVE_COLLISION_IDS.has('openai')).toBe(true);
     expect(NATIVE_COLLISION_IDS.has('anthropic')).toBe(true);
-    expect(NATIVE_COLLISION_IDS.has('flux-router')).toBe(true);
     expect(NATIVE_COLLISION_IDS.has('novita-ai')).toBe(false);
   });
 
-  it('has the full 33-member native set', () => {
-    expect(NATIVE_COLLISION_IDS.size).toBe(33);
+  it('has the full 32-member native set', () => {
+    expect(NATIVE_COLLISION_IDS.size).toBe(32);
   });
 
   it('includes the native ollama-local id (so a bundled local catalog row is dropped as a collision)', () => {

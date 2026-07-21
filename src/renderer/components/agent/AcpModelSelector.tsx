@@ -8,10 +8,7 @@ import { ipcBridge } from '@/common';
 import type { IResponseMessage } from '@/common/adapter/ipcBridge';
 import { ConfigStorage } from '@/common/config/storage';
 import type { IProvider } from '@/common/config/storage';
-import { FLUX_MODEL_DISPLAY, FLUX_MODEL_IDS, isFluxModelId, type FluxModelId } from '@/common/config/flux';
-import { getFluxCompat } from '@/common/types/acpTypes';
 import type { AcpModelInfo } from '@/common/types/acpTypes';
-import { useFluxConnected } from '@/renderer/hooks/useFluxConnected';
 import { getModelDisplayLabel } from '@/renderer/utils/model/agentLogo';
 import { formatAcpModelDisplayLabel, getAcpModelSourceLabel } from '@/renderer/utils/model/modelSource';
 import { Button, Dropdown, Menu, Tooltip } from '@arco-design/web-react';
@@ -19,27 +16,6 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import useSWR from 'swr';
 import MarqueePillLabel from './MarqueePillLabel';
-
-/**
- * The four Flux virtual models, in canonical picker order (auto first).
- * Selecting one routes that chat through Flux: the process side keys on the
- * selected model id being a Flux id, so the renderer only needs to make these
- * appear, be selectable, and persist through the normal `setModel` path.
- */
-const FLUX_PICKER_MODELS: ReadonlyArray<{ id: FluxModelId; label: string }> = FLUX_MODEL_IDS.map((id) => ({
-  id,
-  label: FLUX_MODEL_DISPLAY[id],
-}));
-
-/**
- * Whether this backend can route through Flux. `getFluxCompat` returns 'env' or
- * 'setup' for Flux-capable backends (and covers wcore/gemini), 'vendor' for
- * backends locked to their own service, and undefined when unclassified.
- */
-function isFluxCapableBackend(backend: string | undefined): boolean {
-  const compat = getFluxCompat(backend);
-  return compat === 'env' || compat === 'setup';
-}
 
 function isSameModelInfo(a: AcpModelInfo | null | undefined, b: AcpModelInfo | null | undefined): boolean {
   if (a === b) return true;
@@ -82,10 +58,6 @@ const AcpModelSelector: React.FC<{
 }> = ({ conversationId, backend, initialModelId }) => {
   const { t } = useTranslation();
   const [modelInfo, setModelInfo] = useState<AcpModelInfo | null>(null);
-  const fluxConnected = useFluxConnected();
-  // Flux models appear at the top of the picker only for Flux-capable backends
-  // and only while the flux-router provider is actually connected.
-  const showFlux = isFluxCapableBackend(backend) && fluxConnected;
   // Track whether user has manually switched model via dropdown
   const hasUserChangedModel = useRef(false);
   // Track the last conversationId to detect tab switches
@@ -247,14 +219,13 @@ const AcpModelSelector: React.FC<{
   const handleSelectModel = useCallback(
     (modelId: string) => {
       hasUserChangedModel.current = true;
-      const fluxLabel = isFluxModelId(modelId) ? FLUX_MODEL_DISPLAY[modelId as FluxModelId] : undefined;
       setModelInfo((prev) => {
         if (!prev) return prev;
         const selectedModel = prev.availableModels.find((model) => model.id === modelId);
         return {
           ...prev,
           currentModelId: modelId,
-          currentModelLabel: selectedModel?.label || fluxLabel || modelId,
+          currentModelLabel: selectedModel?.label || modelId,
         };
       });
       ipcBridge.acpConversation.setModel
@@ -272,10 +243,7 @@ const AcpModelSelector: React.FC<{
   );
 
   const defaultModelLabel = t('common.defaultModel');
-  const currentIsFlux = isFluxModelId(modelInfo?.currentModelId);
-  const rawDisplayLabel = currentIsFlux
-    ? FLUX_MODEL_DISPLAY[modelInfo!.currentModelId as FluxModelId]
-    : modelInfo?.currentModelLabel || modelInfo?.currentModelId || '';
+  const rawDisplayLabel = modelInfo?.currentModelLabel || modelInfo?.currentModelId || '';
   const displayLabel = getModelDisplayLabel({
     selectedValue: modelInfo?.currentModelId,
     selectedLabel: rawDisplayLabel,
@@ -309,61 +277,6 @@ const AcpModelSelector: React.FC<{
       healthStatus === 'healthy' ? 'bg-green-500' : healthStatus === 'unhealthy' ? 'bg-red-500' : 'bg-gray-400';
     return <div className={`w-6px h-6px rounded-full shrink-0 ${healthColor}`} />;
   };
-
-  // Flux-capable backend + connected Flux provider: render a switchable dropdown
-  // with the Flux tiers at the top (selecting one routes the chat through Flux)
-  // and the agent's own native models below, unchanged. This wraps all native
-  // states (null / read-only / switchable) so Flux is always selectable here.
-  if (showFlux) {
-    const nativeModels = modelInfo?.availableModels ?? [];
-    return (
-      <Dropdown
-        trigger='click'
-        droplist={
-          <Menu>
-            <Menu.ItemGroup title={t('conversation.welcome.fluxGroupLabel')}>
-              {FLUX_PICKER_MODELS.map((model) => (
-                <Menu.Item
-                  key={model.id}
-                  className={model.id === modelInfo?.currentModelId ? 'bg-2!' : ''}
-                  onClick={() => handleSelectModel(model.id)}
-                >
-                  <div className='flex items-center gap-8px w-full'>
-                    <span>{model.label}</span>
-                  </div>
-                </Menu.Item>
-              ))}
-            </Menu.ItemGroup>
-            {nativeModels.length > 0 && (
-              <Menu.ItemGroup title={t('conversation.welcome.nativeModelsGroupLabel')}>
-                {nativeModels.map((model) => (
-                  <Menu.Item
-                    key={model.id}
-                    className={model.id === modelInfo?.currentModelId ? 'bg-2!' : ''}
-                    onClick={() => handleSelectModel(model.id)}
-                  >
-                    <div className='flex items-center gap-8px w-full'>
-                      {healthDot(model.id)}
-                      <span>{model.label}</span>
-                    </div>
-                  </Menu.Item>
-                ))}
-              </Menu.ItemGroup>
-            )}
-          </Menu>
-        }
-      >
-        <Button className='sendbox-model-btn header-model-btn agent-mode-compact-pill' shape='round' size='small'>
-          <span className='flex items-center gap-6px min-w-0 leading-none'>
-            {!currentIsFlux && currentModelHealth.status !== 'unknown' && (
-              <div className={`w-6px h-6px rounded-full shrink-0 ${currentModelHealth.color}`} />
-            )}
-            <MarqueePillLabel>{currentIsFlux ? displayLabel : buttonLabel}</MarqueePillLabel>
-          </span>
-        </Button>
-      </Dropdown>
-    );
-  }
 
   // State 1: No model info - show disabled "Use CLI model" button
   if (!modelInfo) {

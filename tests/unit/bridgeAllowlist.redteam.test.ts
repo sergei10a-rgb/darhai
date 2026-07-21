@@ -104,16 +104,12 @@ describe('isAllowedForRemote - webui admin/auth providers denied', () => {
 /**
  * Onboarding credential-write providers must NOT be reachable by a remote
  * caller: connect-pasted-key persists an attacker-supplied provider key
- * (injection / overwrite), connect-flux mints + persists a Flux credential.
- * The read-only onboarding.infer-focus stays allowed.
+ * (injection / overwrite). The read-only onboarding.infer-focus stays allowed.
  */
 describe('isAllowedForRemote - onboarding credential writes denied', () => {
-  it.each(['onboarding.connect-pasted-key', 'onboarding.connect-flux'])(
-    'denies subscribe-%s for remote callers',
-    (key) => {
-      expect(isAllowedForRemote(`subscribe-${key}`)).toBe(false);
-    }
-  );
+  it.each(['onboarding.connect-pasted-key'])('denies subscribe-%s for remote callers', (key) => {
+    expect(isAllowedForRemote(`subscribe-${key}`)).toBe(false);
+  });
 
   it('still allows the read-only onboarding.infer-focus for remote callers', () => {
     expect(isAllowedForRemote('subscribe-onboarding.infer-focus')).toBe(true);

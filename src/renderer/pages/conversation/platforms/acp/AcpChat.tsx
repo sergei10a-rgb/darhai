@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ipcBridge } from '@/common';
 import { ConversationProvider } from '@/renderer/hooks/context/ConversationContext';
 import type { AcpBackend } from '@/common/types/acpTypes';
 import type { StepStatus, StepTransitionSource } from '@/common/types/workflowTypes';
@@ -38,8 +37,7 @@ const AcpChat: React.FC<{
   workflowSessionId?: string;
   workflowTotalSteps?: number | null;
   workflowApplyStepMarker?:
-    | ((stepN: number, status: StepStatus, source?: StepTransitionSource) => Promise<void>)
-    | null;
+    ((stepN: number, status: StepStatus, source?: StepTransitionSource) => Promise<void>) | null;
 }> = ({
   conversation_id,
   workspace,
@@ -79,11 +77,6 @@ const AcpChat: React.FC<{
     navigate('/settings/models');
   }, [navigate]);
 
-  const onRouteThroughFlux = useCallback(async () => {
-    const res = await ipcBridge.onboarding.connectFlux.invoke();
-    if (res.ok) setAuthRemedy(null);
-  }, []);
-
   const onCliLogin = useCallback(async () => {
     if (!authRemedy?.cliLoginCmd) return;
     await copyText(authRemedy.cliLoginCmd);
@@ -112,7 +105,6 @@ const AcpChat: React.FC<{
             <AcpAuthFailureCard
               remedy={authRemedy}
               onAddKey={onAddKey}
-              onRouteThroughFlux={onRouteThroughFlux}
               onCliLogin={onCliLogin}
               onDismiss={() => setAuthRemedy(null)}
             />

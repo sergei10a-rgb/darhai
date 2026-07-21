@@ -9,7 +9,6 @@
     "selectModel": "モデルを選択",
     "useCliModel": "モデルを選択",
     "modelSwitchNotSupported": "初回接続後に利用可能なモデルリストが表示されます。まずメッセージを送信して接続し、利用可能なモデルを読み込んでください。",
-    "fluxGroupLabel": "Flux",
     "nativeModelsGroupLabel": "エージェントのモデル",
     "specifyWorkspace": "フォルダーでチャット",
     "currentWorkspace": "現在のワークスペース",
@@ -309,20 +308,12 @@
     "loaded": "ロード済みスキル"
   },
   "routingBadge": {
-    "flux": "Flux 経由でルーティング",
     "native": "ネイティブ接続",
-    "unknown": "このツール自身のログインを使用",
-    "fluxError": "Flux 利用不可",
-    "fluxErrorNotice": "このターンで Flux ルーティングに失敗しました。Flux 接続を確認するか、モデルを切り替えてください。"
+    "unknown": "このツール自身のログインを使用"
   },
   "activation": {
     "title": "エージェントを起動する",
     "subtitle": "モデルプロバイダーを接続してタスクの実行を開始しましょう。自分に合った方法を選んでください。",
-    "flux": {
-      "label": "Flux Router を接続",
-      "sublabel": "無料キーと 1 ドルのスタータークレジット付き。カード不要——各タスクを最適な専門モデルへルーティングします。",
-      "action": "接続"
-    },
     "ownKey": {
       "label": "自分のキーを使う",
       "sublabel": "OpenAI、Anthropic、Google など 100 以上のプロバイダーの API キーを利用できます。",

@@ -4,7 +4,7 @@ Self-host **Darhai** - your always-on AI agent - on any Linux box or VPS. Headle
 
 ```bash
 npm install -g darhai
-darhai setup     # paste a Flux key (free at fluxrouter.ai) or any OpenAI / Anthropic / Gemini key
+darhai setup     # paste an OpenAI / Anthropic / Gemini API key
 darhai start     # then open http://<your-box-ip>:3000 - scan the QR / log in
 ```
 
@@ -14,7 +14,7 @@ First boot prints a **QR code + admin login** right in your terminal. Scan it fr
 
 ## What `darhai setup` does
 
-- Asks for one provider key. **Flux Router** is the easy path - one key, every model, best-fit routing (free account at [fluxrouter.ai](https://fluxrouter.ai)). It's wired as an OpenAI-compatible endpoint (`https://api.fluxrouter.ai/v1`, model `flux-auto`), so **no engine binary is required**. Bring your own OpenAI / Anthropic / Gemini key instead if you prefer.
+- Asks for one provider key - an **OpenAI / Anthropic / Gemini** API key. It's wired straight into the server environment, so **no engine binary is required**.
 - Stores the key as an **environment variable** in `~/.darhai-server/darhai.env` - it never touches the OS keychain (which isn't available headless).
 - Ensures the **bun** runtime (offers to install it).
 - Optionally installs a **systemd** service so it runs 24/7 and restarts on reboot.
@@ -41,7 +41,7 @@ Override the data dir with `DATA_DIR=…`, the port with `PORT=…`.
 
 ## Notes
 
-- The **Wayland Core** engine (`aionrs`) is fetched per-platform on install (Linux/macOS x64+arm64). If the download is skipped, the Flux / API-key path still works - only the Wayland Core agent is unavailable until the engine is present.
+- The **Wayland Core** engine (`aionrs`) is fetched per-platform on install (Linux/macOS x64+arm64). If the download is skipped, the API-key path still works - only the Wayland Core agent is unavailable until the engine is present.
 - Adding a _new_ key from the web UI on a headless box is a known fast-follow (in-app key storage needs a headless secret backend); for now, add keys by re-running `darhai setup`.
 
 AGPL-3.0-or-later · [sergei10a-rgb/darhai](https://github.com/sergei10a-rgb/darhai)

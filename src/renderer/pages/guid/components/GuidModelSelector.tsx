@@ -9,9 +9,6 @@ import { Button, Dropdown, Input, Menu, Message, Tooltip } from '@arco-design/we
 import { ipcBridge } from '@/common';
 import type { IProvider, TProviderWithModel } from '@/common/config/storage';
 import type { CuratedModel, ProviderId } from '@process/providers/types';
-import { FLUX_MODEL_DISPLAY, FLUX_MODEL_IDS, isFluxModelId, type FluxModelId } from '@/common/config/flux';
-import { getFluxCompat } from '@/common/types/acpTypes';
-import { useFluxConnected } from '@/renderer/hooks/useFluxConnected';
 import { marqueeProviderRank } from '@renderer/utils/model/marquee';
 import { useModelRegistry } from '@/renderer/hooks/useModelRegistry';
 import { useUsageTelemetry } from '@/renderer/hooks/usage/useUsageTelemetry';
@@ -20,7 +17,6 @@ import { useRecentlyUsedModels } from '@/renderer/hooks/usage/useRecentlyUsedMod
 import { pinKey, usePinnedModels } from '@/renderer/hooks/usage/usePinnedModels';
 import { resolveAgentScope } from '@/renderer/pages/settings/AgentSettings/agentScopes';
 import { iconColors } from '@/renderer/styles/colors';
-import FluxRouterMark from '@/renderer/components/icons/FluxRouterMark';
 import { getModelDisplayLabel } from '@/renderer/utils/model/agentLogo';
 import { formatAcpModelDisplayLabel, getAcpModelSourceLabel } from '@/renderer/utils/model/modelSource';
 import type { AcpModelInfo } from '../types';
@@ -116,7 +112,6 @@ const PROVIDER_DISPLAY_NAME: Partial<Record<ProviderId, string>> = {
   elevenlabs: 'ElevenLabs',
   azure: 'Azure',
   'openai-compatible': 'OpenAI-Compatible',
-  'flux-router': 'Flux Router',
 };
 
 function providerDisplayName(id: ProviderId): string {
@@ -490,17 +485,7 @@ const GuidModelSelector: React.FC<GuidModelSelectorProps> = ({
   );
 
   // ── ACP model state (CLI agents) ─────────────────────────────────────────
-  // Flux tiers appear atop the ACP picker for Flux-capable backends while the
-  // flux-router provider is connected, so a connected user can pick Flux Auto
-  // here at launch (mirrors the in-chat AcpModelSelector).
-  const fluxConnected = useFluxConnected();
-  const showAcpFlux = React.useMemo(() => {
-    const compat = getFluxCompat(agentKey);
-    return fluxConnected && (compat === 'env' || compat === 'setup');
-  }, [agentKey, fluxConnected]);
-
   const acpSelectedLabel = React.useMemo(() => {
-    if (isFluxModelId(selectedAcpModel)) return FLUX_MODEL_DISPLAY[selectedAcpModel as FluxModelId];
     return (
       currentAcpCachedModelInfo?.availableModels?.find((m) => m.id === selectedAcpModel)?.label ||
       currentAcpCachedModelInfo?.currentModelLabel ||
@@ -582,28 +567,6 @@ const GuidModelSelector: React.FC<GuidModelSelectorProps> = ({
           trigger='click'
           droplist={
             <Menu selectedKeys={selectedAcpModel ? [selectedAcpModel] : []}>
-              {showAcpFlux && (
-                <Menu.ItemGroup title={t('conversation.welcome.fluxGroupLabel')}>
-                  {FLUX_MODEL_IDS.map((fluxId) => (
-                    <Menu.Item
-                      key={fluxId}
-                      onClick={() => {
-                        setSelectedAcpModel(fluxId);
-                        recordTelemetry({
-                          eventType: 'guid.model_selected',
-                          cliBackend: agentKey,
-                          metadata: { modelId: fluxId, source: 'flux' },
-                        });
-                      }}
-                    >
-                      <div className='flex items-center gap-8px w-full'>
-                        <FluxRouterMark size={14} className='shrink-0' />
-                        <span className='flex-1 min-w-0 truncate'>{FLUX_MODEL_DISPLAY[fluxId]}</span>
-                      </div>
-                    </Menu.Item>
-                  ))}
-                </Menu.ItemGroup>
-              )}
               {scopeCaptionItem}
               {currentAcpCachedModelInfo.availableModels.map((model) => {
                 const tier = acpTierFor(model.id, model.label);
@@ -788,14 +751,6 @@ export const ModelSelectorPanel: React.FC<ModelSelectorPanelProps> = ({
       (a, b) => marqueeProviderRank(a.providerId) - marqueeProviderRank(b.providerId)
     );
   }, [recommended]);
-  const fluxHero = React.useMemo(() => {
-    if (!filtered) return [];
-    const order = FLUX_MODEL_IDS;
-    return filtered
-      .filter((m) => isFluxModelId(m.id))
-      .toSorted((a, b) => order.indexOf(a.id as FluxModelId) - order.indexOf(b.id as FluxModelId));
-  }, [filtered]);
-
   const allByProvider = React.useMemo(() => {
     if (!filtered) return [];
     // Alpha-sort within each provider for the All section.
@@ -948,29 +903,6 @@ export const ModelSelectorPanel: React.FC<ModelSelectorPanelProps> = ({
           </div>
         ) : (
           <>
-            {/* Zone -1 - Flux Auto hero (only when Flux models are present) */}
-            {fluxHero.length > 0 && (
-              <div className={styles.section}>
-                <div className={styles.sectionHead}>
-                  <span>{t('settings.modelsPage.homePicker.sectionFluxHero')}</span>
-                  <span className={styles.sectionHeadMeta}>
-                    {t('settings.modelsPage.homePicker.sectionFluxHeroSubtitle')}
-                  </span>
-                </div>
-                {fluxHero.map((model) => (
-                  <ModelRow
-                    key={`flux-${model.providerId}:${model.id}`}
-                    model={model}
-                    selected={isSelected(model)}
-                    query={query}
-                    onPick={onPick}
-                    pinned={isPinned(model)}
-                    onTogglePin={onTogglePin}
-                  />
-                ))}
-              </div>
-            )}
-
             {/* Zone 0 - Pinned (hidden until the user pins something) */}
             {filteredPinned.length > 0 && (
               <div className={styles.section}>
@@ -1125,11 +1057,6 @@ export const ModelSelectorPanel: React.FC<ModelSelectorPanelProps> = ({
 // ─── Row primitives ────────────────────────────────────────────────────────
 
 const ProviderDot: React.FC<{ providerId: ProviderId }> = ({ providerId }) => {
-  // Flux Router is the hero product - anchor its group with the real brand
-  // mark instead of a generic colour dot.
-  if (providerId === 'flux-router') {
-    return <FluxRouterMark size={14} className='shrink-0' />;
-  }
   const color = PROVIDER_DOT_COLOR[providerId] ?? 'var(--primary)';
   return <span className={styles.providerDot} style={{ background: color }} aria-hidden />;
 };

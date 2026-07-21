@@ -39,7 +39,6 @@ const PROVIDER_LABELS: Record<string, string> = {
   openai: 'OpenAI',
   gemini: 'Gemini',
   google: 'Gemini',
-  flux: 'Flux',
 };
 const labelProvider = (id: string): string =>
   PROVIDER_LABELS[id.toLowerCase()] ?? id.charAt(0).toUpperCase() + id.slice(1);

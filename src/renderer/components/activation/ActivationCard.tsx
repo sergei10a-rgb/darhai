@@ -5,20 +5,15 @@
  */
 
 import { Button } from '@arco-design/web-react';
-import { Key, Lightning, Right, Terminal } from '@icon-park/react';
+import { Key, Right, Terminal } from '@icon-park/react';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import styles from './ActivationCard.module.css';
 
 /** Which activation path the user chose - used for telemetry / analytics. */
-export type ActivationPath = 'flux' | 'own-key' | 'claude-code';
+export type ActivationPath = 'own-key' | 'claude-code';
 
 export type ActivationCardProps = {
-  /**
-   * Wake the engine by connecting Flux Router (the free, card-free path with a
-   * starter credit). The full PKCE/OAuth main-side flow is wired by the caller.
-   */
-  onConnectFlux: () => void;
   /** Open the existing Browse / connect flow so the user adds their own key. */
   onUseOwnKey: () => void;
   /** Select Claude Code as the backend. */
@@ -37,25 +32,20 @@ type PathConfig = {
   labelKey: string;
   subLabelKey: string;
   actionKey: string;
-  /** The Flux path is the recommended primary path - rendered first + tinted. */
+  /** The primary path is rendered first + tinted. */
   primary: boolean;
   onSelect: () => void;
 };
 
 /**
- * In-thread activation card offering three ranked paths to wake the engine when
- * no working inference provider is configured (see `useProviderReadiness`).
+ * In-thread activation card offering ranked paths to wake the engine when no
+ * working inference provider is configured (see `useProviderReadiness`).
  *
  * Presentational only - every action is a callback prop; the card owns no IPC,
- * no registry state, and no navigation. The Flux row is the recommended primary
- * path (free key, +$1 starter credit, card-free).
+ * no registry state, and no navigation. "Use your own key" is the recommended
+ * primary path.
  */
-const ActivationCard: React.FC<ActivationCardProps> = ({
-  onConnectFlux,
-  onUseOwnKey,
-  onUseClaudeCode,
-  onPathSelected,
-}) => {
+const ActivationCard: React.FC<ActivationCardProps> = ({ onUseOwnKey, onUseClaudeCode, onPathSelected }) => {
   const { t } = useTranslation();
 
   const select = useCallback(
@@ -68,21 +58,12 @@ const ActivationCard: React.FC<ActivationCardProps> = ({
 
   const paths: PathConfig[] = [
     {
-      path: 'flux',
-      icon: <Lightning theme='filled' />,
-      labelKey: 'conversation.activation.flux.label',
-      subLabelKey: 'conversation.activation.flux.sublabel',
-      actionKey: 'conversation.activation.flux.action',
-      primary: true,
-      onSelect: () => select('flux', onConnectFlux),
-    },
-    {
       path: 'own-key',
       icon: <Key />,
       labelKey: 'conversation.activation.ownKey.label',
       subLabelKey: 'conversation.activation.ownKey.sublabel',
       actionKey: 'conversation.activation.ownKey.action',
-      primary: false,
+      primary: true,
       onSelect: () => select('own-key', onUseOwnKey),
     },
     {

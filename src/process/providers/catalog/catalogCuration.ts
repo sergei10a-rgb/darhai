@@ -56,7 +56,6 @@ const NATIVE_ID_MAP: Record<NativeProviderId, true> = {
   assemblyai: true,
   elevenlabs: true,
   azure: true,
-  'flux-router': true,
   'openai-compatible': true,
   'ollama-local': true,
 };
@@ -70,11 +69,7 @@ export const NATIVE_COLLISION_IDS: ReadonlySet<string> = new Set(Object.keys(NAT
 
 /** Why a catalog entry is not selectable as a desktop catalog provider. */
 export type CatalogIneligibleReason =
-  | 'local-only'
-  | 'templated'
-  | 'anthropic-wire'
-  | 'missing-fields'
-  | 'native-collision';
+  'local-only' | 'templated' | 'anthropic-wire' | 'missing-fields' | 'native-collision';
 
 /** Result of {@link isCatalogEligible}. `reason` is present iff `eligible` is false. */
 export type CatalogEligibility = { eligible: true } | { eligible: false; reason: CatalogIneligibleReason };

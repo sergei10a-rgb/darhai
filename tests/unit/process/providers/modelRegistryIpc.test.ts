@@ -548,7 +548,7 @@ describe('modelRegistry IPC - getCatalog', () => {
 });
 
 describe('modelRegistry IPC - curatedForAgent', () => {
-  // Connect two providers (openai + flux-router) each with one enriched model
+  // Connect two providers (openai + deepseek) each with one enriched model
   // so the Curator recommends them.
   function twoProviderRepo(): Fakes {
     const fakes = makeFakes();
@@ -560,7 +560,7 @@ describe('modelRegistry IPC - curatedForAgent', () => {
       creds: { key: 'k' },
     });
     repo.upsertRegistryProvider({
-      providerId: 'flux-router',
+      providerId: 'deepseek',
       connectedVia: 'api-key',
       state: 'connected',
       creds: { key: 'k' },
@@ -568,11 +568,11 @@ describe('modelRegistry IPC - curatedForAgent', () => {
     repo.replaceRegistryCatalog('openai', [
       catalogModel({ id: 'gpt-4o', providerId: 'openai', family: 'gpt-4o', releaseDate: '2024-05-01', enriched: true }),
     ]);
-    repo.replaceRegistryCatalog('flux-router', [
+    repo.replaceRegistryCatalog('deepseek', [
       catalogModel({
-        id: 'flux-auto',
-        providerId: 'flux-router',
-        family: 'flux-auto',
+        id: 'deepseek-chat',
+        providerId: 'deepseek',
+        family: 'deepseek-chat',
         releaseDate: '2024-05-01',
         enriched: true,
       }),
@@ -585,16 +585,16 @@ describe('modelRegistry IPC - curatedForAgent', () => {
     const h = createModelRegistryHandlers(deps);
     const ids = (await h.curatedForAgent({ agentKey: 'wcore' })).map((m) => m.id);
     expect(ids).toContain('gpt-4o');
-    expect(ids).toContain('flux-auto');
+    expect(ids).toContain('deepseek-chat');
   });
 
   it('gemini unions every connected provider (AionCLI is multi-provider)', async () => {
     const { deps } = twoProviderRepo();
     const h = createModelRegistryHandlers(deps);
     const ids = (await h.curatedForAgent({ agentKey: 'gemini' })).map((m) => m.id);
-    // The fix: a connected non-Google provider (Flux Router) must surface under
+    // The fix: a connected non-Google provider (DeepSeek) must surface under
     // the gemini agent, not be filtered to google-gemini only.
-    expect(ids).toContain('flux-auto');
+    expect(ids).toContain('deepseek-chat');
     expect(ids).toContain('gpt-4o');
   });
 
@@ -602,7 +602,7 @@ describe('modelRegistry IPC - curatedForAgent', () => {
     const { deps } = twoProviderRepo();
     const h = createModelRegistryHandlers(deps);
     // anthropic is not connected in this repo, so claude returns nothing
-    // (it must NOT union openai/flux-router).
+    // (it must NOT union openai/deepseek).
     expect(await h.curatedForAgent({ agentKey: 'claude' })).toEqual([]);
   });
 });

@@ -50,8 +50,6 @@ const emptyDetection = (): DetectionResult => ({
   envKeys: [],
   claudePro: false,
   ollama: { running: false, models: [] },
-  fluxDesktop: { running: false },
-  fluxConnected: false,
 });
 
 describe('OnboardingOverlay', () => {

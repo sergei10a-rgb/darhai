@@ -15,8 +15,6 @@
  *    ("runs any model you connect", "Runs Claude models", "Runs GPT models")
  *  - there is NO "family" jargon and no padlock metaphor anywhere on the page
  *  - the remote agents section renders
- *  - the Flux Router card renders live connection status plus the
- *    route-through-Flux toggle (connected) or a Connect CTA (not connected)
  *  - a sub-detector load error surfaces its own warning
  *
  * `ipcBridge` is mocked; the file name uses the `.dom.test.tsx` suffix so it
@@ -72,12 +70,9 @@ vi.mock('react-i18next', () => ({
   Trans: ({ i18nKey }: { i18nKey: string }) => React.createElement('span', null, i18nKey),
 }));
 
-// `acp.get-available-agents` / `acp.get-load-errors` IPC surface, plus the
-// `system-settings:*-route-through-flux` pair the Flux Router card reads/writes.
+// `acp.get-available-agents` / `acp.get-load-errors` IPC surface.
 const mockGetAvailableAgents = vi.fn();
 const mockGetLoadErrors = vi.fn();
-const mockGetRouteThroughFlux = vi.fn();
-const mockSetRouteThroughFlux = vi.fn();
 
 vi.mock('../../../src/common', () => ({
   ipcBridge: {
@@ -85,28 +80,7 @@ vi.mock('../../../src/common', () => ({
       getAvailableAgents: { invoke: (...a: unknown[]) => mockGetAvailableAgents(...a) },
       getLoadErrors: { invoke: (...a: unknown[]) => mockGetLoadErrors(...a) },
     },
-    systemSettings: {
-      getRouteThroughFlux: { invoke: (...a: unknown[]) => mockGetRouteThroughFlux(...a) },
-      setRouteThroughFlux: { invoke: (...a: unknown[]) => mockSetRouteThroughFlux(...a) },
-    },
   },
-}));
-
-// The Flux Router card reads the connected-provider list from the model
-// registry (same source of truth as the Models page hero) and navigates to the
-// Models page from its not-connected CTA. Mock both so the card can drive its
-// connected / not-connected branches from a single `mockProviders` fixture.
-let mockProviders: Array<{ providerId: string }> = [];
-let mockLoading = false;
-const mockReload = vi.fn(async () => undefined);
-const mockNavigate = vi.fn();
-
-vi.mock('../../../src/renderer/hooks/useModelRegistry', () => ({
-  useModelRegistry: () => ({ providers: mockProviders, loading: mockLoading, reload: mockReload }),
-}));
-
-vi.mock('react-router-dom', () => ({
-  useNavigate: () => mockNavigate,
 }));
 
 // The per-agent "show in toolbar" toggle reads / writes the persisted hidden
@@ -184,13 +158,6 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockGetAvailableAgents.mockResolvedValue(agentsOk(AGENTS));
   mockGetLoadErrors.mockResolvedValue({ success: true, data: [] });
-  mockGetRouteThroughFlux.mockResolvedValue(false);
-  mockSetRouteThroughFlux.mockResolvedValue(undefined);
-  // Default fixture: Flux is connected so the card renders its toggle. The
-  // not-connected test resets this to an empty list. `loading` starts resolved
-  // (false) so the card renders its real surface instead of the loading Spin.
-  mockProviders = [{ providerId: 'flux-router' }];
-  mockLoading = false;
   mockHiddenStore = [];
 });
 
@@ -225,34 +192,6 @@ describe('AgentsSettings (Packet 2D)', () => {
     expect(screen.getByText('Runs Qwen models')).toBeTruthy();
   });
 
-  it('shows the Flux status chip per backend from the registry classification', async () => {
-    render(<AgentsSettings />);
-    await waitFor(() => expect(screen.getByText('Darhai Core')).toBeTruthy());
-
-    // `wcore`, `claude`, `gemini`, `qwen` are classified `env` -> "Flux ready"
-    // chips (several render, so assert on the count, not a single match).
-    expect(screen.getAllByText('Flux ready').length).toBeGreaterThanOrEqual(2);
-    // `vibe` is classified `vendor` -> "Native only" chip.
-    expect(screen.getByText('Native only')).toBeTruthy();
-    // `codex` is classified `setup` -> "Flux setup" chip.
-    expect(screen.getByText('Flux setup')).toBeTruthy();
-  });
-
-  it('renders no Flux chip for a backend with no fluxCompat classification', async () => {
-    // `codebuddy` carries no fluxCompat, so its card must not show any chip.
-    // (The always-present Wayland Core hero is `env`, so scope the assertion to
-    // the codebuddy card rather than the whole page.)
-    mockGetAvailableAgents.mockResolvedValue(agentsOk([{ backend: 'codebuddy', name: 'CodeBuddy' }]));
-    render(<AgentsSettings />);
-    await waitFor(() => expect(screen.getByText('CodeBuddy')).toBeTruthy());
-
-    const card = screen.getByText('CodeBuddy').closest('[data-testid="agent-tile"]');
-    expect(card).toBeTruthy();
-    expect(card!.textContent).not.toContain('Flux ready');
-    expect(card!.textContent).not.toContain('Flux setup');
-    expect(card!.textContent).not.toContain('Native only');
-  });
-
   it('maps the `vibe` backend to the Mistral scope copy', async () => {
     render(<AgentsSettings />);
     await waitFor(() => expect(screen.getByText('Darhai Core')).toBeTruthy());
@@ -280,53 +219,6 @@ describe('AgentsSettings (Packet 2D)', () => {
 
     expect(screen.getByText('Remote agents')).toBeTruthy();
     expect(screen.getByTestId('remote-agents')).toBeTruthy();
-  });
-
-  it('renders the Flux Router card with a working route-through toggle when connected', async () => {
-    mockGetRouteThroughFlux.mockResolvedValue(true);
-    render(<AgentsSettings />);
-    await waitFor(() => expect(screen.getByText('Darhai Core')).toBeTruthy());
-
-    const card = await screen.findByTestId('flux-router-card');
-    expect(card.textContent).toContain('Flux Router');
-    // Live status reflects the connected registry provider - no "Coming" copy.
-    expect(card.textContent).toContain('Connected');
-    expect(card.textContent).not.toContain('Coming');
-    expect(card.textContent).toContain('Route all agents through Flux');
-
-    // The toggle reflects the persisted flag (loaded as `true`) and persists a
-    // change through the system-settings bridge.
-    const toggle = await screen.findByTestId('flux-route-toggle');
-    await waitFor(() => expect(toggle.getAttribute('aria-checked')).toBe('true'));
-
-    await act(async () => {
-      toggle.click();
-    });
-    await waitFor(() => expect(mockSetRouteThroughFlux).toHaveBeenCalledWith({ enabled: false }));
-    // The toggle's DOM must reflect the new value, guarding against a regression
-    // that drops the `setRouteEnabled(enabled)` state update after a successful
-    // persist.
-    await waitFor(() => expect(toggle.getAttribute('aria-checked')).toBe('false'));
-  });
-
-  it('shows a Connect affordance and no toggle when Flux is not connected', async () => {
-    mockProviders = [];
-    render(<AgentsSettings />);
-    await waitFor(() => expect(screen.getByText('Darhai Core')).toBeTruthy());
-
-    const card = await screen.findByTestId('flux-router-card');
-    expect(card.textContent).toContain('Not connected');
-    // No active toggle until Flux is connected.
-    expect(screen.queryByTestId('flux-route-toggle')).toBeNull();
-
-    // The not-connected CTA directs the user to the Models page to connect.
-    expect(card.textContent).toContain('Connect Flux on the Models page');
-    const cta = card.querySelector('button');
-    expect(cta).toBeTruthy();
-    await act(async () => {
-      cta!.click();
-    });
-    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/settings/models'));
   });
 
   it('surfaces a sub-detector load error in its own warning', async () => {

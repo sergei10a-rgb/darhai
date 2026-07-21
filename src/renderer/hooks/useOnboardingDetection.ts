@@ -13,7 +13,6 @@ import type { DetectionResult } from '@/common/types/onboarding';
  */
 type OnboardingApi = {
   onboardingDetect: () => Promise<DetectionResult>;
-  onboardingFluxMetrics: () => Promise<unknown | null>;
 };
 
 /** Read the onboarding-scoped methods off the global preload bridge. */

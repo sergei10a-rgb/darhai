@@ -63,7 +63,6 @@
  */
 
 import type { CatalogModel, CuratedModel } from '../types';
-import { isFluxModelId } from '@/common/config/flux';
 
 /**
  * The recency window - a family flagship is only eligible for `recommended`
@@ -307,14 +306,6 @@ function isFamilyEligible(orderedFamily: CatalogModel[], referenceDate: Date | n
  * Inside an ineligible family every model is unrecommended.
  */
 function curateOne(model: CatalogModel, rank: number, familyEligible: boolean): CuratedModel {
-  // The four Flux tier aliases (flux-auto/reasoning/standard/fast) are the
-  // hero product: always selectable, never gated on models.dev enrichment.
-  // Surfaced via the dedicated picker zone, so kept out of the generic
-  // "recommended" set (recommended:false). Scoped to the tier ids only -
-  // the rest of the flux-router catalog follows normal curation.
-  if (isFluxModelId(model.id)) {
-    return { ...model, recommended: false, enabled: true, role: 'flagship' };
-  }
   if (familyEligible && rank === 0 && !isKnownLegacy(model.id)) {
     return { ...model, recommended: true, enabled: true, role: 'flagship' };
   }
