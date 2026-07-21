@@ -2144,8 +2144,8 @@
     "agents": "Агентууд",
     "constitution": "Үндсэн дүрэм",
     "groupEngine": "ХӨДӨЛГҮҮР",
-    "mcpLibrary": "MCP Library",
-    "ecc": "ECC harness"
+    "mcpLibrary": "MCP сан",
+    "ecc": "ECC иж бүрдэл"
   },
   "channelsIndex": {
     "title": "Сувгууд",
@@ -2946,8 +2946,8 @@
   },
   "extensionSkills": "Өргөтгөлийн скиллүүд",
   "extensionSkillsBadge": "Өргөтгөл",
-  "mcpModalDeprecatedBody": "Шинэ MCP Library дотор MCP серверүүдийг үзэж, суулгаж, удирдана.",
-  "mcpModalOpenLibraryCTA": "MCP Library нээх",
+  "mcpModalDeprecatedBody": "Шинэ MCP сан дотор MCP серверүүдийг үзэж, суулгаж, удирдана.",
+  "mcpModalOpenLibraryCTA": "MCP сан нээх",
   "speechToTextDownloadProgressNotReported": "Татаж байна… (явцын мэдээлэл удахгүй нэмэгдэнэ)",
   "speechToTextModelInstalled": "Суулгасан",
   "speechToTextRedownload": "Дахин татах",
@@ -2978,7 +2978,7 @@
   "voiceProviderKeyDeferCTA": "Провайдерууд нээх →",
   "voiceProviderKeyDeferTitle": "OpenAI түлхүүрээ Провайдеруудад тохируул",
   "ecc": {
-    "title": "ECC агент harness",
+    "title": "ECC агентын иж бүрдэл",
     "installed": "Суулгагдсан",
     "notInstalled": "Хараахан суулгаагүй",
     "aboutBody": "Claude хөдөлгүүрт зориулсан мэргэжлийн дүрэм, скилл, reviewer агентууд. Дархайтай хамт ирж, анхны ажиллуулахад автоматаар суудаг — таны урьд нь суулгасан ECC-г хэзээ ч өөрчлөхгүй.",

@@ -15,6 +15,7 @@ import {
   Radio,
   ScrollText,
   Server,
+  ShieldCheck,
   Sparkles,
   Zap,
 } from 'lucide-react';
@@ -146,6 +147,12 @@ export function getBuiltinSettingsNavItems(isDesktop: boolean, t: TranslateFn): 
       label: t('memory.settings.panel_title', { defaultValue: 'IJFW Memory' }),
       icon: <Brain size={16} />,
       path: 'ijfw',
+    },
+    ecc: {
+      id: 'ecc',
+      label: t('settings.sider.ecc', { defaultValue: 'ECC harness' }),
+      icon: <ShieldCheck size={16} />,
+      path: 'ecc',
     },
     about: { id: 'about', label: t('settings.about'), icon: <Info size={16} />, path: 'about' },
   };

@@ -45,6 +45,7 @@ describe('getBuiltinSettingsNavItems', () => {
       'notifications',
       'storage',
       'ijfw',
+      'ecc',
       'about',
     ]);
 
@@ -66,6 +67,7 @@ describe('getBuiltinSettingsNavItems', () => {
       'Notifications',
       'Storage',
       'IJFW Memory',
+      'ECC harness',
       'About',
     ]);
   });
