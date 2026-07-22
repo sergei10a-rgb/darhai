@@ -87,11 +87,14 @@ export const OMNIROUTE_DASHBOARD_URL = 'http://localhost:20128';
 export const OMNIROUTE_HEALTH_URL = 'http://localhost:20128/v1/models';
 
 /**
- * Pinned OmniRoute package installed by the one-click flow. Pinned (not
- * `latest`) so a surprise upstream release cannot silently break install/run;
- * bump deliberately after verifying a new version.
+ * OmniRoute package spec installed by the one-click flow. A caret range on the
+ * current 3.x line (npm latest is 3.8.48 as of 2026-07) rather than an exact
+ * pin: OmniRoute publishes very frequently, so an exact pin goes stale within
+ * days and risks a 404 if that version is ever unpublished, while the caret
+ * keeps installs fresh yet bounded to the tested major. Bump the floor after
+ * verifying a newer release.
  */
-export const OMNIROUTE_PINNED_PACKAGE = 'omniroute@3.8.49';
+export const OMNIROUTE_PINNED_PACKAGE = 'omniroute@^3.8.48';
 
 /** Which runtime the one-click flow used to install/run OmniRoute. */
 export type OmnirouteRuntimeKind = 'bun' | 'node';
