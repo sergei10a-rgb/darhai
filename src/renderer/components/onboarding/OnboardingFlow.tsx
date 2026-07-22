@@ -90,6 +90,19 @@ const joinList = (arr: string[]): string =>
 const accentStyle = (accent: string): React.CSSProperties =>
   ({ ['--accent' as string]: accent }) as React.CSSProperties;
 
+/** Inline Google "G" mark for the "Continue with Google" hero. Brand colors are intentional literals. */
+const GoogleMark: React.FC = () => (
+  <svg viewBox='0 0 24 24' width={22} height={22} aria-hidden focusable='false'>
+    <path fill='#4285F4' d='M22.5 12.2c0-.7-.1-1.4-.2-2H12v4h5.9a5 5 0 0 1-2.2 3.3v2.7h3.5c2-1.9 3.3-4.7 3.3-8Z' />
+    <path
+      fill='#34A853'
+      d='M12 23c3 0 5.5-1 7.3-2.7l-3.5-2.7c-1 .7-2.3 1.1-3.8 1.1-2.9 0-5.4-2-6.3-4.6H2v2.8A11 11 0 0 0 12 23Z'
+    />
+    <path fill='#FBBC05' d='M5.7 14.1a6.6 6.6 0 0 1 0-4.2V7.1H2a11 11 0 0 0 0 9.8l3.7-2.8Z' />
+    <path fill='#EA4335' d='M12 5.4c1.6 0 3 .6 4.2 1.6l3.1-3.1A11 11 0 0 0 2 7.1l3.7 2.8C6.6 7.3 9.1 5.4 12 5.4Z' />
+  </svg>
+);
+
 /**
  * First-run onboarding. Google-first quick start (the universal floor: even a
  * single click wires Google + Gemini + Wayland Core and tells us their name),
@@ -117,6 +130,9 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ detection, onFinish }) 
   // "wired and tested" outcome is driven by these, never by the detected list.
   const [wiredProviders, setWiredProviders] = useState<string[]>([]);
   const [wireFailed, setWireFailed] = useState<string[]>([]);
+  // Dedicated error for the "Continue with Google" hero, shown inline under the
+  // door so it never collides with the paste-field's own status line.
+  const [googleErr, setGoogleErr] = useState<string | null>(null);
 
   // Detection-derived shape (the warm/cold fork is decided by the real machine).
   const hasKeys = detection.envKeys.length > 0;
@@ -204,6 +220,47 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ detection, onFinish }) 
     },
     [t]
   );
+
+  /**
+   * The zero-AI floor: one click signs the user in with Google and registers the
+   * free Gemini (Google-auth) provider, so a fresh machine with no keys/CLIs/models
+   * is operational immediately. Reuses the existing `googleAuth.login` OAuth flow
+   * and the `google-gemini` + `{ useGoogleAuth: true }` registry connect (same
+   * wiring the Settings → Models "Continue with Google" button uses). On success
+   * we adopt the account's first name (if the user skipped naming) and advance to
+   * the focus pick - the same proceed path the other doors take.
+   */
+  const connectGoogle = useCallback(async () => {
+    setBusy('google');
+    setGoogleErr(null);
+    try {
+      const res = await ipcBridge.googleAuth.login.invoke({});
+      if (!res.success) {
+        setGoogleErr(t('onboarding.flow.errors.googleFailed'));
+        return;
+      }
+      const connected = await ipcBridge.modelRegistry.connect
+        .invoke({ providerId: 'google-gemini', creds: { useGoogleAuth: true } })
+        .then((r) => r.ok === true)
+        .catch(() => false);
+      if (!connected) {
+        setGoogleErr(t('onboarding.flow.errors.geminiFailed'));
+        return;
+      }
+      // Greet the user by name (doorGoogleBody's promise) when they skipped the
+      // name field - the OAuth profile already knows it.
+      const first = res.data?.firstName?.trim();
+      if (first && !name.trim()) {
+        setName(first);
+        void ConfigStorage.set('user.displayName', first);
+      }
+      setScreen('interests');
+    } catch {
+      setGoogleErr(t('onboarding.flow.errors.googleFailed'));
+    } finally {
+      setBusy(null);
+    }
+  }, [name, t]);
 
   const togglePick = useCallback((id: FocusPersonaId) => {
     setPicks((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -549,7 +606,8 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ detection, onFinish }) 
             </div>
           </>
         ) : (
-          // no provider connected yet → pick a model
+          // no provider connected yet → lead with one-click Google (free Gemini),
+          // paste-a-provider-key demoted to a secondary door below the hero.
           <>
             <h1 className={styles.headline}>
               {t('onboarding.flow.outcome.coldHeadline')}
@@ -567,7 +625,30 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ detection, onFinish }) 
                 : t('onboarding.flow.outcome.coldSub')}
             </p>
             <div className={`${styles.block} ${styles.doors}`}>
+              {/* PRIMARY hero: one-click Google → free Gemini, no key, no card. */}
+              <button
+                type='button'
+                className={`${styles.door} ${styles.doorHero}`}
+                onClick={() => void connectGoogle()}
+                disabled={busy !== null}
+              >
+                <span className={`${styles.dIc} ${styles.dIcWhite}`}>
+                  {busy === 'google' ? <Loader2 size={22} className={styles.spinDark} /> : <GoogleMark />}
+                </span>
+                <span className={styles.dMain}>
+                  <span className={styles.dTitleRow}>
+                    <span className={styles.dTitle}>{t('onboarding.flow.outcome.doorGoogleTitle')}</span>
+                  </span>
+                  <span className={styles.dBody}>{t('onboarding.flow.outcome.doorGoogleBody')}</span>
+                  <span className={styles.dFoot}>{t('onboarding.flow.outcome.doorGoogleFoot')}</span>
+                </span>
+                <ArrowRight size={18} className={styles.dArrow} />
+              </button>
+              {googleErr && <p className={styles.keyErr}>{googleErr}</p>}
+
+              {/* SECONDARY: already have a provider key? paste it. */}
               <div>
+                <p className={styles.addlabel}>{t('onboarding.flow.outcome.readyPasteLabel')}</p>
                 {keyField(
                   async (v) => {
                     if (await connectKey(v)) {
