@@ -8,10 +8,17 @@
  * OmniRoute-gateway orchestration: persist the Settings-card state and keep the
  * `omniroute-gateway` provider registration in sync with it.
  *
- * Connect-only by design (owner condition 4): this service NEVER installs,
- * spawns, embeds, or hosts OmniRoute. The only network call it ever makes is a
- * bounded `GET {baseUrl}/models` against the URL the user confirmed - either to
- * populate the catalog on enable or when the user presses "test connection".
+ * Connect-only by design: this service NEVER connects a free provider or writes
+ * OmniRoute's provider/relay config on the user's behalf. The only network call
+ * it ever makes is a bounded `GET {baseUrl}/models` against the URL the user
+ * confirmed - either to populate the catalog on enable or on "test connection".
+ *
+ * C2 update to the boundary: Darhai may now INSTALL + SPAWN + open OmniRoute's
+ * dashboard as a convenience (see OmnirouteRuntimeManager), but that lifecycle
+ * lives OUTSIDE this file. This service only registers Darhai's OWN
+ * `omniroute-gateway` provider at the (local) endpoint - it still NEVER connects
+ * a provider inside OmniRoute for the user; that stays the user's own action in
+ * OmniRoute's dashboard.
  *
  * Enable = registry upsert + catalog + legacy mirror (so the provider appears
  * in the per-conversation model pickers, marked as an external relay). Disable

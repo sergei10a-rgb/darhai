@@ -22,6 +22,8 @@ import type {
   OmnirouteGatewayConfigView,
   OmnirouteGatewaySetConfigParams,
   OmnirouteGatewayTestResult,
+  OmnirouteInstallProgress,
+  OmnirouteRuntimeStatus,
 } from '../types/omnirouteGateway';
 import type {
   UpdateCheckRequest,
@@ -1507,7 +1509,13 @@ export interface IConversationTurnCompletedEvent {
   sessionId: string;
   status: 'pending' | 'running' | 'finished';
   state:
-    'ai_generating' | 'ai_waiting_input' | 'ai_waiting_confirmation' | 'initializing' | 'stopped' | 'error' | 'unknown';
+    | 'ai_generating'
+    | 'ai_waiting_input'
+    | 'ai_waiting_confirmation'
+    | 'initializing'
+    | 'stopped'
+    | 'error'
+    | 'unknown';
   detail: string;
   canSendMessage: boolean;
   runtime: {
@@ -1919,12 +1927,36 @@ export const omnirouteGateway = {
   testConnection: buildProvider<OmnirouteGatewayTestResult, { baseUrl: string; apiKey?: string }>(
     'omniroute-gateway.test-connection'
   ),
+
+  // ── C2: one-click auto-install + run (convenience runtime) ────────────────
+  // Darhai installs + runs the user's OmniRoute + opens its dashboard, then the
+  // USER connects providers there. install/start/stop/open-dashboard are all
+  // remote-denied in the bridge allowlist (host-side install/exec/open); the
+  // runtime-status read stays allowed (like get-config). Registering Darhai's
+  // own gateway provider (set-config) is done in the bridge after health is
+  // green - this manager never connects a provider on the user's behalf.
+
+  /** Install OmniRoute globally in the background (progress via onInstallProgress). */
+  install: buildProvider<OmnirouteRuntimeStatus, void>('omniroute-gateway.install'),
+  /** Spawn the installed OmniRoute headless + wait for `/v1/models` health. */
+  start: buildProvider<OmnirouteRuntimeStatus, void>('omniroute-gateway.start'),
+  /** Stop the Darhai-managed OmniRoute process. */
+  stop: buildProvider<OmnirouteRuntimeStatus, void>('omniroute-gateway.stop'),
+  /** Current runtime status (state / port / dashboardUrl / needsRuntime). */
+  runtimeStatus: buildProvider<OmnirouteRuntimeStatus, void>('omniroute-gateway.runtime-status'),
+  /** Open OmniRoute's OWN dashboard so the user connects a provider there. */
+  openDashboard: buildProvider<{ ok: boolean }, void>('omniroute-gateway.open-dashboard'),
+  /** Streaming install/start progress lines. */
+  onInstallProgress: buildEmitter<OmnirouteInstallProgress>('omniroute-gateway.on-install-progress'),
+  /** Runtime-status changes (idle/installing/installed/starting/running/stopped/error). */
+  onRuntimeStatus: buildEmitter<OmnirouteRuntimeStatus>('omniroute-gateway.on-runtime-status'),
 };
 
 export type IjfwDropEntry = { name: string; size: number; mtimeMs: number };
 
 export type IjfwDropIngestResult =
-  { ok: true; name: string } | { ok: false; error: string; errorReason: IjfwErrorReason };
+  | { ok: true; name: string }
+  | { ok: false; error: string; errorReason: IjfwErrorReason };
 
 // --- Models & Providers redesign (Wave 0 contract) ------------------------
 // New two-tier model registry. Distinct from the legacy `providers` namespace

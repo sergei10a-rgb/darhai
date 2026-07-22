@@ -92,6 +92,18 @@ vi.mock('../../../src/common', () => ({
       },
       setConfig: { invoke: vi.fn().mockResolvedValue({ ok: true }) },
       testConnection: { invoke: vi.fn().mockResolvedValue({ ok: false, error: 'unreachable' }) },
+      // C2 one-click runtime verbs + emitters (the card seeds status on mount).
+      runtimeStatus: {
+        invoke: vi
+          .fn()
+          .mockResolvedValue({ state: 'idle', port: null, dashboardUrl: null, runtime: null, needsRuntime: false }),
+      },
+      install: { invoke: vi.fn().mockResolvedValue({ state: 'installed', needsRuntime: false }) },
+      start: { invoke: vi.fn().mockResolvedValue({ state: 'running', port: 20128 }) },
+      stop: { invoke: vi.fn().mockResolvedValue({ state: 'stopped' }) },
+      openDashboard: { invoke: vi.fn().mockResolvedValue({ ok: true }) },
+      onRuntimeStatus: { on: vi.fn(() => vi.fn()) },
+      onInstallProgress: { on: vi.fn(() => vi.fn()) },
     },
   },
 }));

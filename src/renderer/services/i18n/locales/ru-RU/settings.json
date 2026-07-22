@@ -2640,6 +2640,25 @@
     "invalidUrl": "Неверный адрес — введите http(s) URL.",
     "saveButton": "Сохранить",
     "saved": "Сохранено",
-    "saveError": "Не удалось сохранить настройки. Попробуйте ещё раз."
+    "saveError": "Не удалось сохранить настройки. Попробуйте ещё раз.",
+    "autoInstall": {
+      "sectionTitle": "One-click setup (recommended)",
+      "sectionIntro": "Darhai installs OmniRoute for you, runs it in the background, and opens its dashboard. You never touch a terminal.",
+      "installButton": "Install & run OmniRoute for me",
+      "installing": "Installing…",
+      "installed": "Installed",
+      "starting": "Starting…",
+      "running": "Running",
+      "stopped": "Stopped",
+      "errorLabel": "Error",
+      "openDashboard": "Open OmniRoute dashboard",
+      "stopButton": "Stop",
+      "connectYourselfNote": "In OmniRoute's dashboard, connect a free provider yourself (for example a no-signup source). Darhai never connects a provider for you — that choice, and its terms-of-service, stay yours.",
+      "needsRuntime": "Installing OmniRoute needs Node.js (or a built-in runtime). Install Node.js, then try again.",
+      "installNodeLink": "Install Node.js",
+      "installFailed": "Install failed ({{error}}).",
+      "startFailed": "Could not start OmniRoute ({{error}}).",
+      "advancedTitle": "Advanced: connect to an OmniRoute you run yourself"
+    }
   }
 }

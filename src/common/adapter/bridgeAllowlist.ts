@@ -395,6 +395,16 @@ const REMOTE_DENIED_KEYS: ReadonlySet<string> = new Set([
   //     enabled/baseUrl/hasApiKey, never the key itself. ---
   'omniroute-gateway.set-config',
   'omniroute-gateway.test-connection',
+  // C2 one-click runtime: `install` runs a host-side global package install,
+  // `start`/`stop` spawn/kill a Next.js server on the host, and `open-dashboard`
+  // opens a browser URL on the host. A paired-device WebSocket caller must never
+  // drive host-side install/exec/open, so all four are remote-denied. The read
+  // (omniroute-gateway.runtime-status) stays allowed - it discloses only
+  // state/port/needsRuntime, no credential or exec capability.
+  'omniroute-gateway.install',
+  'omniroute-gateway.start',
+  'omniroute-gateway.stop',
+  'omniroute-gateway.open-dashboard',
 
   // --- app.* / process control that writes or executes ---
   'app.set-start-on-boot',

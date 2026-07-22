@@ -30,4 +30,28 @@ describe('isAllowedForRemote - omniroute-gateway policy', () => {
   it('allows the read-only subscribe-omniroute-gateway.get-config', () => {
     expect(isAllowedForRemote('subscribe-omniroute-gateway.get-config')).toBe(true);
   });
+
+  // C2 one-click runtime: install runs a host-side global package install,
+  // start/stop spawn/kill a Next.js server on the host, and open-dashboard opens
+  // a browser URL. A paired-device WebSocket caller must never drive any of
+  // these host-side install/exec/open verbs.
+  it('denies subscribe-omniroute-gateway.install', () => {
+    expect(isAllowedForRemote('subscribe-omniroute-gateway.install')).toBe(false);
+  });
+
+  it('denies subscribe-omniroute-gateway.start', () => {
+    expect(isAllowedForRemote('subscribe-omniroute-gateway.start')).toBe(false);
+  });
+
+  it('denies subscribe-omniroute-gateway.stop', () => {
+    expect(isAllowedForRemote('subscribe-omniroute-gateway.stop')).toBe(false);
+  });
+
+  it('denies subscribe-omniroute-gateway.open-dashboard', () => {
+    expect(isAllowedForRemote('subscribe-omniroute-gateway.open-dashboard')).toBe(false);
+  });
+
+  it('allows the read-only subscribe-omniroute-gateway.runtime-status', () => {
+    expect(isAllowedForRemote('subscribe-omniroute-gateway.runtime-status')).toBe(true);
+  });
 });

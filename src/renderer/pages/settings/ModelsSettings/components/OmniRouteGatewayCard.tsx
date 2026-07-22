@@ -5,8 +5,8 @@
  */
 
 /**
- * OmniRouteGatewayCard - the opt-in card for connecting a USER-RUN OmniRoute
- * gateway (Phase 7b). Hosted on the Models & Providers settings page.
+ * OmniRouteGatewayCard - the opt-in card for a USER-RUN OmniRoute gateway.
+ * Hosted on the Models & Providers settings page.
  *
  * Owner conditions the card embodies:
  *  1. Honest Mongolian disclosure, default OFF - benefits AND risks are always
@@ -14,23 +14,53 @@
  *     flips it.
  *  2. Visible marking - the title carries the relay marking; the registered
  *     provider name repeats it in every model picker.
- *  3. Explicit selection only - the card states that enabling never makes the
- *     relay a default; the user picks it per conversation.
- *  4. User-run gateway - a how-to line tells the user to run `omniroute`
- *     themselves; Darhai only connects to the URL confirmed here.
+ *  3. Explicit selection only - enabling never makes the relay a default; the
+ *     user picks it per conversation.
+ *
+ * C2 (one-click auto-install + run): the primary action installs + runs the
+ * user's OmniRoute in the background and opens OmniRoute's OWN dashboard. The
+ * LIABILITY BOUNDARY holds: Darhai installs/runs/opens only - the USER connects
+ * a free provider themselves in OmniRoute's dashboard. The manual baseUrl/apiKey
+ * fields remain as the advanced / bring-your-own path below the one-click action.
  */
 
-import { Button, Input, Message, Switch, Typography } from '@arco-design/web-react';
+import { Button, Input, Message, Switch, Tag, Typography } from '@arco-design/web-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ipcBridge } from '@/common';
-import type { OmnirouteGatewayTestResult } from '@/common/types/omnirouteGateway';
+import type { OmnirouteGatewayTestResult, OmnirouteRuntimeStatus } from '@/common/types/omnirouteGateway';
 import { OMNIROUTE_GATEWAY_DEFAULT_BASE_URL } from '@/common/types/omnirouteGateway';
+
+const NODEJS_DOWNLOAD_URL = 'https://nodejs.org';
 
 /** Map a service error token onto a localized message. */
 function errorText(t: ReturnType<typeof useTranslation>['t'], token: string): string {
   if (token === 'invalid-base-url') return t('settings.omnirouteGateway.invalidUrl');
   return t('settings.omnirouteGateway.testFail', { error: token });
+}
+
+/** Status-pill descriptor (text + Arco color) for a runtime state. */
+function runtimePill(
+  t: ReturnType<typeof useTranslation>['t'],
+  status: OmnirouteRuntimeStatus | null
+): { text: string; color: string } | null {
+  if (!status) return null;
+  switch (status.state) {
+    case 'installing':
+      return { text: t('settings.omnirouteGateway.autoInstall.installing'), color: 'arcoblue' };
+    case 'installed':
+      return { text: t('settings.omnirouteGateway.autoInstall.installed'), color: 'gray' };
+    case 'starting':
+      return { text: t('settings.omnirouteGateway.autoInstall.starting'), color: 'arcoblue' };
+    case 'running':
+      return { text: t('settings.omnirouteGateway.autoInstall.running'), color: 'green' };
+    case 'stopped':
+      return { text: t('settings.omnirouteGateway.autoInstall.stopped'), color: 'gray' };
+    case 'error':
+      return { text: t('settings.omnirouteGateway.autoInstall.errorLabel'), color: 'red' };
+    default:
+      return null;
+  }
 }
 
 const OmniRouteGatewayCard: React.FC = () => {
@@ -42,6 +72,11 @@ const OmniRouteGatewayCard: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<OmnirouteGatewayTestResult | null>(null);
+
+  // C2 one-click runtime state.
+  const [runtime, setRuntime] = useState<OmnirouteRuntimeStatus | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [progressLine, setProgressLine] = useState('');
 
   useEffect(() => {
     let disposed = false;
@@ -56,8 +91,34 @@ const OmniRouteGatewayCard: React.FC = () => {
       .catch((err: unknown) => {
         console.error('[OmniRouteGatewayCard] getConfig failed:', err);
       });
+    void ipcBridge.omnirouteGateway.runtimeStatus
+      .invoke()
+      .then((status) => {
+        if (!disposed && status) setRuntime(status);
+      })
+      .catch(() => {
+        /* runtime status is best-effort; the card still works without it */
+      });
     return () => {
       disposed = true;
+    };
+  }, []);
+
+  // Live runtime-status + install-progress from the main process.
+  useEffect(() => {
+    const offStatus = ipcBridge.omnirouteGateway.onRuntimeStatus.on((status: OmnirouteRuntimeStatus) => {
+      setRuntime(status);
+      if (status.state === 'running') setEnabled(true);
+      if (status.state === 'running' || status.state === 'stopped' || status.state === 'error') {
+        setProgressLine('');
+      }
+    });
+    const offProgress = ipcBridge.omnirouteGateway.onInstallProgress.on((p) => {
+      setProgressLine(p.message);
+    });
+    return () => {
+      offStatus();
+      offProgress();
     };
   }, []);
 
@@ -128,6 +189,66 @@ const OmniRouteGatewayCard: React.FC = () => {
     }
   }, [apiKey, baseUrl, testing]);
 
+  /** One-click: install, then start, then open OmniRoute's OWN dashboard. */
+  const handleInstallAndRun = useCallback(async () => {
+    if (busy) return;
+    setBusy(true);
+    setProgressLine('');
+    try {
+      const installed = await ipcBridge.omnirouteGateway.install.invoke();
+      if (installed) setRuntime(installed);
+      if (!installed || installed.state === 'error') {
+        Message.error(
+          t('settings.omnirouteGateway.autoInstall.installFailed', { error: installed?.error ?? 'unknown' })
+        );
+        return;
+      }
+      const started = await ipcBridge.omnirouteGateway.start.invoke();
+      if (started) setRuntime(started);
+      if (!started || started.state !== 'running') {
+        Message.error(t('settings.omnirouteGateway.autoInstall.startFailed', { error: started?.error ?? 'unknown' }));
+        return;
+      }
+      setEnabled(true);
+      // Open OmniRoute's OWN dashboard - the USER connects a provider there.
+      await ipcBridge.omnirouteGateway.openDashboard.invoke();
+      Message.success(t('settings.omnirouteGateway.autoInstall.running'));
+    } catch (err) {
+      Message.error(err instanceof Error ? err.message : t('settings.omnirouteGateway.saveError'));
+    } finally {
+      setBusy(false);
+    }
+  }, [busy, t]);
+
+  const handleOpenDashboard = useCallback(async () => {
+    try {
+      await ipcBridge.omnirouteGateway.openDashboard.invoke();
+    } catch {
+      /* opening the dashboard is best-effort */
+    }
+  }, []);
+
+  const handleStop = useCallback(async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const status = await ipcBridge.omnirouteGateway.stop.invoke();
+      if (status) setRuntime(status);
+    } finally {
+      setBusy(false);
+    }
+  }, [busy]);
+
+  const handleInstallNode = useCallback(() => {
+    void ipcBridge.shell.openExternal.invoke(NODEJS_DOWNLOAD_URL).catch((err: unknown) => {
+      console.error('[OmniRouteGatewayCard] openExternal failed:', err);
+    });
+  }, []);
+
+  const isRunning = runtime?.state === 'running';
+  const isWorking = busy || runtime?.state === 'installing' || runtime?.state === 'starting';
+  const pill = runtimePill(t, runtime);
+
   return (
     <div
       className='flex flex-col gap-12px p-16px rd-12px bg-aou-1'
@@ -175,6 +296,89 @@ const OmniRouteGatewayCard: React.FC = () => {
 
       <Typography.Text type='secondary' className='text-12px'>
         {t('settings.omnirouteGateway.manualOnlyNote')}
+      </Typography.Text>
+
+      {/* C2: one-click auto-install + run (recommended path) */}
+      <div className='flex flex-col gap-8px p-12px rd-8px bg-aou-2' data-testid='omniroute-gateway-autoinstall'>
+        <div className='flex items-center justify-between gap-12px'>
+          <Typography.Text className='text-13px font-medium'>
+            {t('settings.omnirouteGateway.autoInstall.sectionTitle')}
+          </Typography.Text>
+          {pill && (
+            <Tag color={pill.color} size='small' data-testid='omniroute-gateway-runtime-status'>
+              {pill.text}
+            </Tag>
+          )}
+        </div>
+
+        <Typography.Text type='secondary' className='text-12px'>
+          {t('settings.omnirouteGateway.autoInstall.sectionIntro')}
+        </Typography.Text>
+
+        <Typography.Text type='secondary' className='text-12px'>
+          {t('settings.omnirouteGateway.autoInstall.connectYourselfNote')}
+        </Typography.Text>
+
+        <div className='flex items-center gap-8px flex-wrap'>
+          {!isRunning && (
+            <Button
+              size='small'
+              type='primary'
+              loading={isWorking}
+              onClick={() => void handleInstallAndRun()}
+              data-testid='omniroute-gateway-install-run'
+            >
+              {t('settings.omnirouteGateway.autoInstall.installButton')}
+            </Button>
+          )}
+          {isRunning && (
+            <>
+              <Button
+                size='small'
+                type='primary'
+                onClick={() => void handleOpenDashboard()}
+                data-testid='omniroute-gateway-open-dashboard'
+              >
+                {t('settings.omnirouteGateway.autoInstall.openDashboard')}
+              </Button>
+              <Button
+                size='small'
+                status='danger'
+                loading={busy}
+                onClick={() => void handleStop()}
+                data-testid='omniroute-gateway-stop'
+              >
+                {t('settings.omnirouteGateway.autoInstall.stopButton')}
+              </Button>
+            </>
+          )}
+        </div>
+
+        {isWorking && progressLine.length > 0 && (
+          <Typography.Text
+            type='secondary'
+            className='text-11px font-mono truncate'
+            data-testid='omniroute-gateway-progress'
+          >
+            {progressLine}
+          </Typography.Text>
+        )}
+
+        {runtime?.needsRuntime === true && (
+          <div className='flex flex-col gap-4px'>
+            <Typography.Text type='warning' className='text-12px'>
+              {t('settings.omnirouteGateway.autoInstall.needsRuntime')}
+            </Typography.Text>
+            <Button size='mini' type='text' onClick={handleInstallNode} data-testid='omniroute-gateway-install-node'>
+              {t('settings.omnirouteGateway.autoInstall.installNodeLink')}
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* Advanced / bring-your-own: point Darhai at an OmniRoute you run yourself. */}
+      <Typography.Text type='secondary' className='text-12px font-medium'>
+        {t('settings.omnirouteGateway.autoInstall.advancedTitle')}
       </Typography.Text>
 
       <Typography.Text type='secondary' className='text-12px'>

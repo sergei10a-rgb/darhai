@@ -65,3 +65,66 @@ export type OmnirouteGatewaySetConfigParams = {
 
 /** Result of a Settings-card "test connection" probe against the gateway. */
 export type OmnirouteGatewayTestResult = { ok: true; modelCount: number } | { ok: false; error: string };
+
+// ── C2: one-click auto-install + run (convenience runtime) ──────────────────
+//
+// Darhai can, as a CONVENIENCE, install + run the user's own OmniRoute in the
+// background and open OmniRoute's OWN dashboard. The liability boundary is:
+// Darhai installs/spawns/opens the dashboard, but NEVER connects a free provider
+// or writes OmniRoute's provider/relay config - the user does that themselves in
+// OmniRoute's dashboard (so the ToS/relay choice + liability stay the user's).
+// Registering Darhai's own `omniroute-gateway` provider at localhost:20128/v1
+// (see applyOmnirouteGatewayConfig) is separate and allowed - it only points
+// Darhai's gateway at the user's local OmniRoute.
+
+/** The fixed local port OmniRoute binds (dashboard + OpenAI-compatible `/v1`). */
+export const OMNIROUTE_RUNTIME_PORT = 20128;
+
+/** OmniRoute's OWN dashboard URL - opened so the USER connects providers there. */
+export const OMNIROUTE_DASHBOARD_URL = 'http://localhost:20128';
+
+/** The `/v1/models` health endpoint used to confirm the spawned server is up. */
+export const OMNIROUTE_HEALTH_URL = 'http://localhost:20128/v1/models';
+
+/**
+ * Pinned OmniRoute package installed by the one-click flow. Pinned (not
+ * `latest`) so a surprise upstream release cannot silently break install/run;
+ * bump deliberately after verifying a new version.
+ */
+export const OMNIROUTE_PINNED_PACKAGE = 'omniroute@3.8.49';
+
+/** Which runtime the one-click flow used to install/run OmniRoute. */
+export type OmnirouteRuntimeKind = 'bun' | 'node';
+
+/** Lifecycle state of the Darhai-managed OmniRoute process. */
+export type OmnirouteRuntimeState =
+  | 'idle' // never installed/started this session
+  | 'installing' // global install in progress
+  | 'installed' // installed, not yet running
+  | 'starting' // spawned, waiting for health
+  | 'running' // healthy on OMNIROUTE_RUNTIME_PORT
+  | 'stopped' // was running, now stopped
+  | 'error'; // install/start failed (see error / needsRuntime)
+
+/** Snapshot of the OmniRoute runtime the Settings card renders. */
+export type OmnirouteRuntimeStatus = {
+  state: OmnirouteRuntimeState;
+  /** The bound port when running, else null. */
+  port: number | null;
+  /** OmniRoute's dashboard URL when running, else null. */
+  dashboardUrl: string | null;
+  /** Which runtime install/run used, or null before resolution. */
+  runtime: OmnirouteRuntimeKind | null;
+  /** True when no runtime (bun/node) is available - the card shows the Node hint. */
+  needsRuntime: boolean;
+  /** A clean error token/message when `state === 'error'`. */
+  error?: string;
+};
+
+/** A single install/start progress event pushed to the card. */
+export type OmnirouteInstallProgress = {
+  /** Which phase the line belongs to. */
+  phase: 'install' | 'start' | 'health';
+  /** A human-facing line (installer stdout tail or a phase marker). */
+  message: string;
+};

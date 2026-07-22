@@ -1118,6 +1118,9 @@ type CleanupModules = {
   // Kill any spawned llama-server (cookbook serve) from before-quit so it does
   // not leak and hold the GPU after the app quits.
   cookbook: typeof import('@process/services/cookbook/cookbookServeSingleton');
+  // Kill any spawned OmniRoute (C2 one-click runtime) from before-quit so the
+  // Next.js server does not leak and hold port 20128 after the app quits.
+  omniroute: typeof import('@process/services/omnirouteGateway/omnirouteRuntimeSingleton');
 };
 let _cleanupModulesPromise: Promise<CleanupModules> | undefined;
 
@@ -1135,6 +1138,7 @@ const prefetchCleanupModules = (): Promise<CleanupModules> => {
     import('@process/services/notes/noteServiceSingleton'),
     import('@process/services/calendar/calendarServiceSingleton'),
     import('@process/services/cookbook/cookbookServeSingleton'),
+    import('@process/services/omnirouteGateway/omnirouteRuntimeSingleton'),
   ]).then(
     ([
       ambient,
@@ -1149,6 +1153,7 @@ const prefetchCleanupModules = (): Promise<CleanupModules> => {
       notes,
       calendar,
       cookbook,
+      omniroute,
     ]) => ({
       ambient,
       channels,
@@ -1162,6 +1167,7 @@ const prefetchCleanupModules = (): Promise<CleanupModules> => {
       notes,
       calendar,
       cookbook,
+      omniroute,
     })
   );
 };
@@ -1298,6 +1304,7 @@ app.on('before-quit', async () => {
       safeImport('cron', () => import('@process/services/cron/cronServiceSingleton')),
       safeImport('fileWatch', () => import('@process/bridge/fileWatchBridge')),
       safeImport('cookbook', () => import('@process/services/cookbook/cookbookServeSingleton')),
+      safeImport('omniroute', () => import('@process/services/omnirouteGateway/omnirouteRuntimeSingleton')),
     ]);
     const out: Partial<CleanupModules> = {};
     for (const [k, v] of entries) {
@@ -1372,6 +1379,18 @@ app.on('before-quit', async () => {
       (async () => {
         if (!mods.cookbook) return;
         await mods.cookbook.cookbookServe.stopAll();
+      })(),
+      PER_STEP_TIMEOUT_MS
+    );
+
+    // Kill any spawned OmniRoute (C2 one-click runtime) so its Next.js server
+    // does not outlive the app and hold port 20128. Same SIGTERM -> SIGKILL
+    // teardown as the cookbook serve above.
+    const omnirouteStep = withTimeout(
+      'omnirouteRuntime.stopAll',
+      (async () => {
+        if (!mods.omniroute) return;
+        await mods.omniroute.omnirouteRuntime.stopAll();
       })(),
       PER_STEP_TIMEOUT_MS
     );
@@ -1455,6 +1474,7 @@ app.on('before-quit', async () => {
       notesStep,
       calendarStep,
       cookbookStep,
+      omnirouteStep,
       workerStep,
       ambientStep,
       teamStep,
