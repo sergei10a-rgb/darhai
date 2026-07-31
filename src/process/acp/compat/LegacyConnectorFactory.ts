@@ -29,11 +29,7 @@ import {
 import { AcpError } from '@process/acp/errors/AcpError';
 import type { ChildProcess } from 'node:child_process';
 
-type BuiltinConnectFn = (
-  cwd: string,
-  hooks: NpxConnectHooks,
-  customEnv?: Record<string, string>
-) => Promise<void>;
+type BuiltinConnectFn = (cwd: string, hooks: NpxConnectHooks, customEnv?: Record<string, string>) => Promise<void>;
 
 const NPX_BACKENDS: Record<string, BuiltinConnectFn> = {
   codex: connectCodex,
@@ -59,10 +55,10 @@ async function spawnLegacyChild(config: AgentConfig): Promise<ChildProcess> {
 
   const npxConnect = NPX_BACKENDS[backend];
   if (npxConnect) {
-    // Thread the per-spawn customEnv (e.g. the Flux routing surface:
+    // Thread the per-spawn customEnv (e.g. a provider-routing surface:
     // ANTHROPIC_BASE_URL / ANTHROPIC_MODEL / CLAUDE_CONFIG_DIR for claude) into
     // the npx connector. Without this the bridge spawns with the user's native
-    // env and ignores Flux routing entirely.
+    // env and ignores the per-spawn routing entirely.
     return spawnViaNpxHooks(npxConnect, cwd, config.env);
   }
   if (config.command) {

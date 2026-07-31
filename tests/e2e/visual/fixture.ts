@@ -1,0 +1,342 @@
+/**
+ * @license
+ * Copyright 2026 Ferrox Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/**
+ * Deterministic visual-regression fixture for the real Electron app.
+ *
+ * Visual baselines are only useful if a passing run means "the UI is unchanged"
+ * and a failing run means "the UI changed". Anything that varies between runs
+ * (clock, machine, animation timing) turns the suite into noise that people
+ * learn to ignore, so every source of variance is pinned here rather than in
+ * individual specs.
+ *
+ * What is pinned, and why (each was observed drifting on a real run):
+ *
+ *  1. **Profile isolation.** `configureChromium.ts` rewrites userData in dev to
+ *     `dirname(userData)/<devAppName>`. Passing `--user-data-dir=<tmp>` alone
+ *     therefore lands every run in the SHARED `<tmp>/Wayland-Dev`. We pass a
+ *     NESTED path (`<unique>/profile`) so the rewrite resolves to
+ *     `<unique>/Wayland-Dev` - genuinely per-run.
+ *  2. **Device scale + window size.** A raw launch inherited the host display
+ *     (dpr 1.5, 1365x816), which would make baselines machine-specific.
+ *  3. **Animations/transitions.** One CSS animation and ~69 transitions were
+ *     live on the main screen; two screenshots 1.5s apart differed by ~20KB.
+ *  4. **Clock.** The home greeting is time-of-day dependent ("Сайхан өглөө" vs
+ *     "Орой хүртэл сэрүүн"), so the clock is frozen to a fixed instant.
+ *  5. **Async settle.** Agent/health lists populate after first paint and shift
+ *     layout by ~14 lines, so we wait for the DOM to stop changing rather than
+ *     sleeping a guessed amount.
+ */
+import { _electron as electron, type ElectronApplication, type Page } from 'playwright';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+
+/** Repo root, resolved from this file rather than cwd so callers can't skew it. */
+export const PROJECT_ROOT = path.resolve(__dirname, '..', '..', '..');
+
+/** Fixed content size for every visual run. Baselines are only valid at this size. */
+export const VIEWPORT = { width: 1280, height: 800 } as const;
+
+/**
+ * The instant the app clock is frozen to for every visual run.
+ * Chosen mid-morning UTC so time-of-day copy lands on a stable branch.
+ */
+export const FROZEN_TIME = new Date('2026-01-15T09:30:00.000Z');
+
+/** Directories created for launched apps, removed on {@link closeVisualApp}. */
+const runRoots = new Set<string>();
+
+export type VisualApp = {
+  app: ElectronApplication;
+  page: Page;
+  /** The per-run isolated profile root (parent of the app's userData). */
+  runRoot: string;
+};
+
+/** Windows the app opens that are not the main renderer. */
+function isAuxiliaryWindow(url: string): boolean {
+  const u = url.toLowerCase();
+  if (u.startsWith('devtools://')) return true;
+  return ['/ambient/', '/pet/', 'ambient.html', 'pet.html', 'pet-hit.html', 'pet-confirm.html'].some((s) =>
+    u.includes(s)
+  );
+}
+
+/**
+ * Launch the real Electron app against a fresh, isolated profile.
+ *
+ * Cold launch is slow (~80s observed on Windows dev mode); callers should share
+ * one app across as many screens as possible rather than relaunching per test.
+ */
+export async function launchVisualApp(extraEnv: Record<string, string> = {}): Promise<VisualApp> {
+  const runRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'darhai-visual-'));
+  runRoots.add(runRoot);
+
+  const app = await electron.launch({
+    args: [
+      '.',
+      // Nested on purpose - see note 1 in the file header.
+      `--user-data-dir=${path.join(runRoot, 'profile')}`,
+      '--force-device-scale-factor=1',
+      '--disable-lcd-text',
+      '--hide-scrollbars',
+      '--disable-gpu-compositing',
+    ],
+    cwd: PROJECT_ROOT,
+    env: {
+      ...process.env,
+      NODE_ENV: 'development',
+      DARHAI_E2E_TEST: '1',
+      DARHAI_DISABLE_AUTO_UPDATE: '1',
+      DARHAI_DISABLE_DEVTOOLS: '1',
+      DARHAI_DISABLE_IJFW: '1',
+      DARHAI_CDP_PORT: '0',
+      TZ: 'UTC',
+      LANG: 'mn_MN.UTF-8',
+      ...extraEnv,
+    },
+    timeout: 180_000,
+  });
+
+  const page = await resolveMainWindow(app);
+  await pinWindowGeometry(app);
+  await waitForBridge(page);
+
+  return { app, page, runRoot };
+}
+
+/** Resolve the main renderer window, ignoring devtools and satellite windows. */
+async function resolveMainWindow(app: ElectronApplication): Promise<Page> {
+  const deadline = Date.now() + 120_000;
+  while (Date.now() < deadline) {
+    const win = app.windows().find((w) => !isAuxiliaryWindow(w.url()));
+    if (win) {
+      await win.waitForLoadState('domcontentloaded').catch(() => {});
+      return win;
+    }
+    await app.waitForEvent('window', { timeout: 2_000 }).catch(() => {});
+  }
+  throw new Error('visual fixture: main renderer window did not appear within 120s');
+}
+
+/** Force a fixed, non-resizable content size so geometry is host-independent. */
+async function pinWindowGeometry(app: ElectronApplication): Promise<void> {
+  await app
+    .evaluate(({ BrowserWindow }, size) => {
+      const win = BrowserWindow.getAllWindows().find((w) => !w.isDestroyed());
+      if (!win) return;
+      win.setResizable(true);
+      win.setContentSize(size.width, size.height);
+      win.setResizable(false);
+    }, VIEWPORT)
+    .catch(() => {
+      // Non-fatal: assertStableViewport below turns this into a loud failure.
+    });
+}
+
+/** Wait until the preload bridge is present and has stopped being replaced. */
+async function waitForBridge(page: Page): Promise<void> {
+  const deadline = Date.now() + 90_000;
+  let firstSeen = 0;
+  while (Date.now() < deadline) {
+    const ok = await page
+      .evaluate(() => typeof (window as unknown as { electronAPI?: unknown }).electronAPI !== 'undefined')
+      .catch(() => false);
+    if (ok) {
+      if (!firstSeen) firstSeen = Date.now();
+      if (Date.now() - firstSeen >= 500) return;
+    } else {
+      firstSeen = 0;
+    }
+    await new Promise((r) => setTimeout(r, 100));
+  }
+  throw new Error('visual fixture: window.electronAPI never stabilised within 90s');
+}
+
+/**
+ * Fail loudly if the render surface is not the size baselines were captured at.
+ * A silently-resized window would otherwise produce a confusing pixel diff.
+ */
+export async function assertStableViewport(page: Page): Promise<void> {
+  const vp = await page.evaluate(() => ({
+    w: window.innerWidth,
+    h: window.innerHeight,
+    dpr: window.devicePixelRatio,
+  }));
+  if (vp.dpr !== 1) {
+    throw new Error(`visual fixture: devicePixelRatio is ${vp.dpr}, expected 1 (baselines are 1x)`);
+  }
+  if (vp.w !== VIEWPORT.width) {
+    throw new Error(`visual fixture: innerWidth is ${vp.w}, expected ${VIEWPORT.width}`);
+  }
+}
+
+/**
+ * Pin the two clock-and-dice sources the UI reads during render.
+ *
+ * - **Clock**: the home greeting picks a bucket from `getHours()`
+ *   (`Greeting.tsx:54`), so an unpinned run renders "Сайхан өглөө" or
+ *   "Орой хүртэл сэрүүн" depending on when it happened to run.
+ * - **`Math.random`**: the same greeting then picks one of three phrasings at
+ *   random *per mount* (`Greeting.tsx:56`). Freezing only the clock leaves that
+ *   1-in-3 flip live, which would fail a baseline roughly two runs in three.
+ *   Replaced with a deterministic PRNG rather than a constant, so code that
+ *   needs distinct values (React keys, request ids) still gets them.
+ *
+ * Installed as an init script, so it must be applied before the load whose
+ * first render should see it (callers reload after calling this).
+ */
+export async function pinNondeterminism(page: Page, at: Date = FROZEN_TIME): Promise<void> {
+  await page.addInitScript((iso: string) => {
+    const fixed = new Date(iso).getTime();
+    const RealDate = Date;
+    // A Proxy rather than a subclass: it forwards every static, the prototype
+    // and `instanceof` untouched, so only the two clock reads change behaviour.
+    // `new Date()` with no args is pinned; every explicit form (parse,
+    // timestamp, y/m/d) keeps working exactly as before.
+    const FrozenDate = new Proxy(RealDate, {
+      construct: (target, args) => Reflect.construct(target, args.length === 0 ? [fixed] : args),
+      get: (target, prop, receiver) => (prop === 'now' ? () => fixed : Reflect.get(target, prop, receiver)),
+    });
+    globalThis.Date = FrozenDate;
+
+    // mulberry32: tiny, fixed-seed PRNG. Same sequence on every run.
+    let seed = 0x9e3779b9;
+    Math.random = () => {
+      seed |= 0;
+      seed = (seed + 0x6d2b79f5) | 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+
+    if (globalThis.performance) {
+      globalThis.performance.now = () => 0;
+    }
+  }, at.toISOString());
+}
+
+/**
+ * Kill every animation, transition and caret so paint is a pure function of
+ * state. Re-applied after each navigation because a new document drops it.
+ */
+export async function freezeMotion(page: Page): Promise<void> {
+  await page.addStyleTag({
+    content: `*, *::before, *::after {
+        animation: none !important;
+        animation-duration: 0s !important;
+        animation-delay: 0s !important;
+        animation-play-state: paused !important;
+        transition: none !important;
+        transition-duration: 0s !important;
+        transition-delay: 0s !important;
+        caret-color: transparent !important;
+        scroll-behavior: auto !important;
+      }
+      video, canvas { visibility: hidden !important; }`,
+  });
+}
+
+/**
+ * A signature of everything on the page that can change what gets painted.
+ *
+ * `innerText` alone is not enough: the home input runs a typewriter effect that
+ * fills the `placeholder` **attribute** one character at a time
+ * (`useTypewriterPlaceholder.ts`). That is invisible to `innerText` but plainly
+ * visible in pixels, so a settle check watching only text declares the page
+ * quiet while it is still visibly typing - and the screenshot pair then
+ * disagrees. Placeholders, field values and image load state are included for
+ * that reason.
+ */
+async function paintSignature(page: Page): Promise<string> {
+  return page
+    .evaluate(() => {
+      const text = document.body?.innerText ?? '';
+      const fields = Array.from(document.querySelectorAll('input, textarea'))
+        .map((el) => {
+          const f = el as HTMLInputElement | HTMLTextAreaElement;
+          return `${f.placeholder ?? ''}${f.value ?? ''}`;
+        })
+        .join('');
+      const images = Array.from(document.images)
+        .map((img) => `${img.currentSrc}:${img.complete ? 1 : 0}`)
+        .join('');
+      const scroll = `${window.scrollX},${window.scrollY}`;
+      return [text, fields, images, scroll].join('');
+    })
+    .catch(() => '');
+}
+
+/**
+ * Wait until nothing that affects paint has changed for `quietMs`, then until
+ * webfonts are ready.
+ *
+ * Async data (agent lists, health pills) lands after first paint and shifts
+ * layout, so we poll for a quiet period instead of sleeping a guessed amount.
+ */
+export async function waitForSettle(page: Page, quietMs = 1_500, timeoutMs = 90_000): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  let previous = '';
+  let quietSince = 0;
+
+  while (Date.now() < deadline) {
+    const current = await paintSignature(page);
+    if (current === previous && current.length > 0) {
+      if (!quietSince) quietSince = Date.now();
+      if (Date.now() - quietSince >= quietMs) break;
+    } else {
+      quietSince = 0;
+      previous = current;
+    }
+    await new Promise((r) => setTimeout(r, 200));
+  }
+
+  await page.evaluate(() => document.fonts?.ready).catch(() => {});
+}
+
+/**
+ * Apply every stabilisation step in the order a screen needs them.
+ * Call after navigating to (or forcing the state of) the screen under test.
+ */
+export async function stabilize(page: Page): Promise<void> {
+  await assertStableViewport(page);
+  await waitForSettle(page);
+  await freezeMotion(page);
+  // One more short settle: freezing motion can snap in-flight transitions to
+  // their end state, which is itself a paint change.
+  await new Promise((r) => setTimeout(r, 400));
+}
+
+/**
+ * Screenshot twice and require the two to be byte-identical.
+ *
+ * This is a self-check on determinism: if a screen cannot reproduce itself
+ * within a single run it can never be a stable baseline, and we want that
+ * reported as "this screen is unstable" rather than as a spurious pixel diff.
+ */
+export async function stableScreenshot(page: Page, opts: { fullPage?: boolean } = {}): Promise<Buffer> {
+  const first = await page.screenshot({ fullPage: opts.fullPage ?? false, animations: 'disabled' });
+  await new Promise((r) => setTimeout(r, 700));
+  const second = await page.screenshot({ fullPage: opts.fullPage ?? false, animations: 'disabled' });
+
+  if (Buffer.compare(first, second) !== 0) {
+    throw new Error(
+      `visual fixture: screen is not self-reproducible - two screenshots 700ms apart differed ` +
+        `(${first.length} vs ${second.length} bytes). Something on this screen is still animating, ` +
+        `polling, or clock-dependent; pin it before capturing a baseline.`
+    );
+  }
+  return first;
+}
+
+/** Close an app and remove its isolated profile. */
+export async function closeVisualApp(visual: VisualApp): Promise<void> {
+  await visual.app.evaluate(({ app }) => app.exit(0)).catch(() => {});
+  await visual.app.close().catch(() => {});
+  runRoots.delete(visual.runRoot);
+  fs.rmSync(visual.runRoot, { recursive: true, force: true });
+}

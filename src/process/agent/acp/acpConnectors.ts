@@ -606,7 +606,7 @@ async function connectNpxBackend(config: {
   extraArgs?: string[];
   detached?: boolean;
   /**
-   * Per-spawn env (e.g. the Flux routing surface) merged into `cleanEnv` LAST,
+   * Per-spawn env (e.g. a provider-routing surface) merged into `cleanEnv` LAST,
    * so it overrides defaults and any provider env added inside `prepareFn`
    * (e.g. cc-switch's native ANTHROPIC_* for claude).
    */

@@ -241,3 +241,7 @@ resources/bundled-ijfw
 
 # IJFW session scratch (any depth) - never tracked
 .ijfw/
+
+# audit working file (not part of the product)
+.audit-findings.json
+

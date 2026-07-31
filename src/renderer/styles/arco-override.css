@@ -61,6 +61,22 @@ body,
   border-color: var(--aou-2) !important;
 }
 
+/* Primary buttons carry white label text on the brand orange #ff6b35, which
+   measures 2.84:1 - below the WCAG AA floor of 4.5:1, and below even the 3:1
+   large-text floor. The brand orange is deliberately unchanged (it is the
+   product's identity and appears in the logo, accents and focus rings), so the
+   label goes dark instead: #1a1a1a on #ff6b35 is 6.14:1.
+   Applies in both themes - the button background is the same orange in each.
+   Disabled buttons are excluded: they use --aou-2 above, not the brand. */
+.arco-btn-primary:not(.arco-btn-disabled):not(:disabled) {
+  color: #1a1a1a;
+}
+
+.arco-btn-primary:not(.arco-btn-disabled):not(:disabled) .arco-btn-icon,
+.arco-btn-primary:not(.arco-btn-disabled):not(:disabled) svg {
+  color: inherit;
+}
+
 .arco-collapse {
   border: none;
   border-radius: 8px;
