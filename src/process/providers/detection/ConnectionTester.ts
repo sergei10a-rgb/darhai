@@ -28,6 +28,18 @@
  *  - a 200 that still has no usable model → `no-models`
  *  - anything else                       → `unknown`
  *
+ * ## The degraded branch cannot claim success on its own
+ *
+ * A 200 from `/v1/models` only says something about the credential if the SAME
+ * endpoint would have REFUSED the request without it. Some providers serve
+ * their model list publicly (`https://ollama.com/v1/models` answers 200 to an
+ * anonymous GET), so a garbage key sailed through as a green "connected"
+ * provider that only failed later at inference time. The degraded path
+ * therefore runs a differential check: on a successful credentialed 200 it
+ * repeats the request with NO credential, and when that anonymous control probe
+ * also succeeds the result is returned as `{ ok: true, unverified: true }` -
+ * the endpoint proved nothing, so the caller must not persist `connected`.
+ *
  * `test()` NEVER throws - every failure mode resolves to a typed
  * `{ ok: false, error }`.
  */
@@ -43,8 +55,15 @@ const FETCH_TIMEOUT_MS = 15_000;
 /** Credentials for a connection test: a single API key, or multi-field creds. */
 type TestCreds = { key: string } | { fields: Record<string, string> };
 
-/** The result of a connection test. */
-type TestResult = { ok: boolean; error?: ConnectError };
+/**
+ * The result of a connection test.
+ *
+ * `unverified` is only ever set alongside `ok: true`, and means "the probe
+ * succeeded but the endpoint accepts the same request WITHOUT the credential,
+ * so this success does not prove the credential is valid". Callers must not
+ * persist such a provider as `connected` - see {@link ConnectionTester}.
+ */
+type TestResult = { ok: boolean; error?: ConnectError; unverified?: boolean };
 
 /**
  * Per-provider known cheap test model. The tester sends a 1-token completion to
@@ -170,7 +189,8 @@ export class ConnectionTester {
 
   /**
    * Degraded path: a provider with no known test model. A 200 on `/v1/models`
-   * proves the key authenticates (but NOT that inference works). An empty model
+   * is only evidence about the credential when the endpoint would have refused
+   * the anonymous request - see {@link probeAcceptsAnonymous}. An empty model
    * list maps to `no-models`.
    */
   private async probeModelsEndpoint(providerId: ProviderId, apiKey: string, endpoint: string): Promise<TestResult> {
@@ -191,7 +211,38 @@ export class ConnectionTester {
     if (modelsBodyIsEmpty(body)) {
       return { ok: false, error: 'no-models' };
     }
+    // A credentialed 200 proves nothing when the endpoint is public. Only a
+    // credential we actually sent is worth this second round-trip: a keyless
+    // local backend (Ollama / llama.cpp) has nothing to verify.
+    if (apiKey.length > 0 && (await this.probeAcceptsAnonymous(endpoint))) {
+      return { ok: true, unverified: true };
+    }
     return { ok: true };
+  }
+
+  /**
+   * Control probe: repeat the models request with NO credential at all - no
+   * auth header, no key query parameter. A 2xx means the endpoint serves the
+   * list publicly, so the credentialed 200 we just got says nothing about the
+   * key.
+   *
+   * Returns `false` on any non-2xx AND on any network failure: we only downgrade
+   * a result on positive evidence that the endpoint authenticates nothing.
+   * Treating a transient control-probe failure as "unverified" would make the
+   * persisted provider state flap on unrelated network blips, while the failure
+   * this guards against (a permanently public endpoint) is always observable.
+   */
+  private async probeAcceptsAnonymous(endpoint: string): Promise<boolean> {
+    try {
+      const res = await this.fetchWithTimeout(endpoint, { method: 'GET', headers: anonymousHeaders() });
+      if (!res.ok) return false;
+      // Drain the body so the socket is released; an empty list is still an
+      // anonymous success (auth was not required to reach it).
+      await readBody(res);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   // ─── fetch with timeout ─────────────────────────────────────────────────────
@@ -291,12 +342,23 @@ function deriveModelsEndpoint(customBaseUrl: string | undefined): string | undef
   return `${base}/v1/models`;
 }
 
-/** Auth + identification headers for a request, per the provider's scheme. */
-function authHeaders(auth: AuthStrategy, apiKey: string): Record<string, string> {
-  const headers: Record<string, string> = {
+/**
+ * Identification headers with NO credential of any kind - the control probe's
+ * request shape. Kept identical to {@link authHeaders} minus the auth material
+ * so the only difference between the two requests is the credential itself.
+ */
+function anonymousHeaders(): Record<string, string> {
+  return {
     Accept: 'application/json',
     'Content-Type': 'application/json',
     'User-Agent': 'Wayland/1.0',
+  };
+}
+
+/** Auth + identification headers for a request, per the provider's scheme. */
+function authHeaders(auth: AuthStrategy, apiKey: string): Record<string, string> {
+  const headers: Record<string, string> = {
+    ...anonymousHeaders(),
   };
   switch (auth.kind) {
     case 'bearer':

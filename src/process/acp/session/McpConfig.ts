@@ -2,6 +2,8 @@
 import type { IMcpServer } from '@/common/config/storage';
 import type { AcpMcpCapabilities } from '@/common/types/acpTypes';
 import type { McpServer } from '@agentclientprotocol/sdk';
+import { shouldInjectMcpServer } from '@process/agent/acp/mcpSessionConfig';
+import { resolveBuiltinMcpSpawnArgs } from '@process/utils/mcpScriptDir';
 
 type MergeParams = {
   userServers?: McpServer[];
@@ -38,8 +40,9 @@ export class McpConfig {
    * Convert user-configured MCP servers (from ProcessConfig / IMcpServer[])
    * to SDK McpServer[] with transport capability filtering.
    *
-   * Only builtin + enabled + connected servers are included.
-   * Transport types unsupported by the agent are dropped.
+   * Inclusion is decided by the shared `shouldInjectMcpServer` predicate:
+   * builtin servers on `enabled`, user/catalog servers on `enabled` +
+   * `connected`. Transport types unsupported by the agent are dropped.
    *
    * @param servers  Raw server configs from `ProcessConfig.get('mcp.config')`
    * @param capabilities  Agent MCP capabilities (from cached init result).
@@ -49,7 +52,7 @@ export class McpConfig {
     const caps = capabilities ?? DEFAULT_MCP_CAPABILITIES;
 
     return servers
-      .filter((s) => s.builtin === true && s.enabled && (s.status === undefined || s.status === 'connected'))
+      .filter(shouldInjectMcpServer)
       .map((server): McpServer | null => {
         switch (server.transport.type) {
           case 'stdio':
@@ -57,7 +60,7 @@ export class McpConfig {
             return {
               name: server.name,
               command: server.transport.command,
-              args: server.transport.args || [],
+              args: resolveBuiltinMcpSpawnArgs(server.transport.command, server.transport.args),
               env: toNameValueArray(server.transport.env),
             };
           case 'http':

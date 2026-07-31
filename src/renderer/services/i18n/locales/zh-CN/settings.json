@@ -1956,6 +1956,7 @@
     },
     "row": {
       "connected": "已连接",
+      "unverified": "已连接，密钥未验证",
       "testing": "测试中…",
       "manage": "管理",
       "fix": "修复",

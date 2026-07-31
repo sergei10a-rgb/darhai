@@ -16,6 +16,7 @@ import {
 import { getEnhancedEnv } from '@process/utils/shellEnv';
 import { safeExecFile } from '@process/utils/safeExec';
 import { validateMcpEnvEntry } from '../validateMcpServer';
+import { resolveBuiltinMcpSpawnArgs } from '@process/utils/mcpScriptDir';
 
 /** Env options for exec calls - ensures CLI is found from Finder/launchd launches */
 const getExecEnv = () => ({
@@ -130,7 +131,11 @@ export function buildCodexAddArgs(server: IMcpServer): string[] | null {
       args.push('--env', `${key}=${value}`);
     }
 
-    args.push('--', server.transport.command, ...(server.transport.args || []));
+    args.push(
+      '--',
+      server.transport.command,
+      ...resolveBuiltinMcpSpawnArgs(server.transport.command, server.transport.args)
+    );
     return args;
   }
 

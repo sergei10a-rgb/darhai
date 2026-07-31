@@ -17,6 +17,10 @@ export const ROUTES = {
     agent: '#/settings/agent',
     assistants: '#/settings/assistants',
     capabilities: '#/settings/capabilities',
+    // MCP moved out of the old "capabilities" tab into the MCP Library.
+    // `data-settings-path` on the sider item is the full segment, so the
+    // route must carry `mcp-library/browse` verbatim.
+    mcpLibrary: '#/settings/mcp-library/browse',
     display: '#/settings/display',
     webui: '#/settings/webui',
     system: '#/settings/system',

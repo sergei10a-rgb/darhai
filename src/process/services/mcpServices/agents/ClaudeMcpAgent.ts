@@ -15,6 +15,7 @@ import {
 } from '@process/resources/builtinMcp/constants';
 import { getEnhancedEnv } from '@process/utils/shellEnv';
 import { safeExec, safeExecFile } from '@process/utils/safeExec';
+import { resolveBuiltinMcpSpawnArgs } from '@process/utils/mcpScriptDir';
 
 /** Env options for exec calls - ensures CLI is found from Finder/launchd launches */
 const getExecEnv = () => ({
@@ -28,7 +29,10 @@ export function buildClaudeStdioJsonConfig(server: IMcpServer): string {
 
   return JSON.stringify({
     command: server.transport.command,
-    args: server.transport.args || [],
+    // Bundled scripts must land in the CLI's config as an absolute path: the
+    // Claude CLI spawns them from its own cwd, where a bare filename resolves
+    // to nothing.
+    args: resolveBuiltinMcpSpawnArgs(server.transport.command, server.transport.args),
     env: server.transport.env || {},
   });
 }

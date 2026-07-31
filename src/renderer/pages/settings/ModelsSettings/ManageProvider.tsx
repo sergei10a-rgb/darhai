@@ -265,17 +265,25 @@ const ManageProvider: React.FC<Props> = ({ provider, onBack, onDisconnected }) =
   const viaSuffix = VIA_KEY[provider.connectedVia];
   const viaLabel = viaSuffix ? t(`settings.modelsPage.row.via.${viaSuffix}`) : provider.connectedVia;
 
+  // `unverified` = stored + catalogued, but the provider's only probe answers
+  // the same way without the key, so the badge must not read as a proven green.
+  const isUnverified = provider.state === 'unverified';
+
   const badgeClass = isError
     ? `${styles.badge} ${styles.badgeError}`
     : provider.state === 'testing'
       ? `${styles.badge} ${styles.badgeTesting}`
-      : `${styles.badge} ${styles.badgeConnected}`;
+      : isUnverified
+        ? `${styles.badge} ${styles.badgeUnverified}`
+        : `${styles.badge} ${styles.badgeConnected}`;
 
   const badgeLabel = isError
     ? t('settings.modelsPage.manage.statusError')
     : provider.state === 'testing'
       ? t('settings.modelsPage.row.testing')
-      : t('settings.modelsPage.manage.statusConnected');
+      : isUnverified
+        ? t('settings.modelsPage.row.unverified')
+        : t('settings.modelsPage.manage.statusConnected');
 
   // ---- Row renderer ------------------------------------------------------
   const renderRow = (model: CuratedModel) => {

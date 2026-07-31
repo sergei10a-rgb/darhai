@@ -85,30 +85,39 @@ function resolvePackagedApp(): { executablePath: string; cwd: string } | null {
 
   const platform = process.platform;
 
+  // electron-builder names the binary after `executableName` in
+  // electron-builder.yml. That is `Darhai` today; the hard-coded `Wayland`
+  // below it survived the rebrand and made every packaged-mode run (CI's
+  // default) throw "could not find packaged app under out/". Both names are
+  // tried so an older tree still resolves.
+  const productNames = ['Darhai', 'Wayland'];
+
   if (platform === 'win32') {
-    // out/win-unpacked/Wayland.exe  or  out/win-x64-unpacked/Wayland.exe
+    // out/win-unpacked/Darhai.exe  or  out/win-x64-unpacked/Darhai.exe
     for (const dir of ['win-unpacked', 'win-x64-unpacked', 'win-arm64-unpacked']) {
-      const exe = path.join(outDir, dir, 'Wayland.exe');
-      if (fs.existsSync(exe)) return { executablePath: exe, cwd: path.join(outDir, dir) };
+      for (const name of productNames) {
+        const exe = path.join(outDir, dir, `${name}.exe`);
+        if (fs.existsSync(exe)) return { executablePath: exe, cwd: path.join(outDir, dir) };
+      }
     }
   } else if (platform === 'darwin') {
-    // out/mac-arm64/Wayland.app/Contents/MacOS/Wayland  or  out/mac/Wayland.app/...
+    // out/mac-arm64/Darhai.app/Contents/MacOS/Darhai  or  out/mac/Darhai.app/...
     for (const dir of ['mac-arm64', 'mac-x64', 'mac', 'mac-universal']) {
       const macDir = path.join(outDir, dir);
       if (!fs.existsSync(macDir)) continue;
       const appBundle = fs.readdirSync(macDir).find((f) => f.endsWith('.app'));
-      if (appBundle) {
-        const exe = path.join(macDir, appBundle, 'Contents', 'MacOS', 'Wayland');
+      if (!appBundle) continue;
+      for (const name of [path.basename(appBundle, '.app'), ...productNames]) {
+        const exe = path.join(macDir, appBundle, 'Contents', 'MacOS', name);
         if (fs.existsSync(exe)) return { executablePath: exe, cwd: macDir };
       }
     }
   } else {
-    // Linux: out/linux-unpacked/wayland  (lowercase executable name)
+    // Linux: out/linux-unpacked/darhai (executableName, lowercased by some targets)
     for (const dir of ['linux-unpacked', 'linux-x64-unpacked', 'linux-arm64-unpacked']) {
       const dirPath = path.join(outDir, dir);
       if (!fs.existsSync(dirPath)) continue;
-      // Try common executable names
-      for (const name of ['wayland', 'Wayland']) {
+      for (const name of [...productNames, ...productNames.map((n) => n.toLowerCase())]) {
         const exe = path.join(dirPath, name);
         if (fs.existsSync(exe)) return { executablePath: exe, cwd: dirPath };
       }

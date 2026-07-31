@@ -6,8 +6,11 @@
 # engine file and only reads this copy when that path is missing.
 #
 # Snapshot date: unknown (do not fabricate). To refresh from the engine, run:
-#   node scripts/generateProviderCatalog.mjs   (with ../waylandcore present)
+#   bun run providers:catalog                  (with ../waylandcore present)
+#   # equivalently: node scripts/generateProviderCatalog.mjs
 # then re-copy this file from the engine source above.
+# The generator needs Node 22.18+ / 24 (it imports the real runtime curation
+# modules and relies on native TypeScript type stripping).
 # ---------------------------------------------------------------------------
 
 # Wayland Core — Bundled Provider Catalog

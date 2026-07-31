@@ -6,7 +6,8 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { IMcpServer } from '../../src/common/config/storage';
-import { buildBuiltinAcpSessionMcpServers } from '../../src/process/agent/acp/mcpSessionConfig';
+import { buildAcpSessionMcpServers } from '../../src/process/agent/acp/mcpSessionConfig';
+import { getMcpScriptPath } from '../../src/process/utils/mcpScriptDir';
 import { parseAgentCapabilities } from '../../src/common/types/acpTypes';
 
 describe('ACP built-in MCP session config - wayland_search_skills (C1)', () => {
@@ -34,14 +35,16 @@ describe('ACP built-in MCP session config - wayland_search_skills (C1)', () => {
       },
     ];
 
-    const result = buildBuiltinAcpSessionMcpServers(servers, { stdio: true, http: false, sse: false });
+    const result = buildAcpSessionMcpServers(servers, { stdio: true, http: false, sse: false });
 
     expect(result).toEqual([
       {
         type: 'stdio',
         name: 'wayland-search-skills',
         command: 'node',
-        args: ['/abs/builtin-mcp-search-skills.js'],
+        // Stored path does not exist, so the spawn-arg resolver re-points it
+        // at the current bundle dir rather than handing the agent a dead path.
+        args: [getMcpScriptPath('builtin-mcp-search-skills.js')],
         env: [],
       },
     ]);
@@ -66,7 +69,7 @@ describe('ACP built-in MCP session config - wayland_search_skills (C1)', () => {
       },
     ];
 
-    const result = buildBuiltinAcpSessionMcpServers(servers, { stdio: false, http: false, sse: false });
+    const result = buildAcpSessionMcpServers(servers, { stdio: false, http: false, sse: false });
     expect(result).toEqual([]);
   });
 });
@@ -151,14 +154,14 @@ describe('ACP built-in MCP session config', () => {
       },
     ];
 
-    const result = buildBuiltinAcpSessionMcpServers(servers, { stdio: true, http: true, sse: false });
+    const result = buildAcpSessionMcpServers(servers, { stdio: true, http: true, sse: false });
 
     expect(result).toEqual([
       {
         type: 'stdio',
         name: 'wayland-image-generation',
         command: 'node',
-        args: ['/abs/builtin-mcp-image-gen.js'],
+        args: [getMcpScriptPath('builtin-mcp-image-gen.js')],
         env: [
           { name: 'DARHAI_IMG_PLATFORM', value: 'openai' },
           { name: 'DARHAI_IMG_MODEL', value: 'gpt-image-1' },

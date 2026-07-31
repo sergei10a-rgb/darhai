@@ -1990,6 +1990,7 @@
     },
     "row": {
       "connected": "Connecté",
+      "unverified": "Connecté, clé non vérifiée",
       "testing": "Test…",
       "manage": "Gérer",
       "fix": "Corriger",

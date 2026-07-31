@@ -6,12 +6,23 @@ import UnoCSS from 'unocss/vite';
 import unoConfig from './uno.config.ts';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 
-// Build builtin MCP servers after main process bundle so they survive out/main/ cleanup.
+// Build builtin MCP servers after the main process bundle so they survive out/main/ cleanup.
+//
+// Registered in EVERY mode. It used to be gated on `mode === 'development'`, so
+// `electron-vite build` (npm run package / make) produced an out/main/ with no
+// builtin-mcp-*.js at all - while initStorage still seeded mcp.config with
+// absolute paths into that directory and handed them to every agent in
+// `session/new`. Two of those servers are enabled by default, so every agent
+// spawn tried to start a file that was never emitted.
+//
+// The verify step right after turns a silently-skipped or partially-failed
+// bundle step into a hard build failure instead of a dead runtime registration.
 function buildMcpServersPlugin() {
   return {
     name: 'vite-plugin-build-mcp-servers',
     closeBundle() {
-      execSync(`node "${resolve('scripts/build-mcp-servers.js')}"`, { stdio: 'inherit' });
+      execSync(`node "${resolve(__dirname, 'scripts/build-mcp-servers.js')}"`, { stdio: 'inherit' });
+      execSync(`node "${resolve(__dirname, 'scripts/verify-mcp-scripts.js')}"`, { stdio: 'inherit' });
     },
   };
 }
@@ -63,18 +74,6 @@ export default defineConfig(({ mode }) => {
         // externalizeDepsPlugin replaces our custom getExternalDeps() + pluginExternalizeDynamicImports.
         // 'fix-path' excluded so it gets bundled inline (only 3KB).
         externalizeDepsPlugin({ exclude: ['fix-path'] }),
-        ...(isDevelopment
-          ? [
-              {
-                name: 'dev-build-mcp-servers',
-                closeBundle() {
-                  execSync(`node "${resolve(__dirname, 'scripts/build-mcp-servers.js')}"`, {
-                    stdio: 'inherit',
-                  });
-                },
-              },
-            ]
-          : []),
         ...(!isDevelopment
           ? [
               viteStaticCopy({
@@ -93,7 +92,7 @@ export default defineConfig(({ mode }) => {
             ]
           : []),
         ...(enableSentrySourceMaps ? [sentryVitePlugin(sentryPluginOptions)] : []),
-        ...(isDevelopment ? [buildMcpServersPlugin()] : []),
+        buildMcpServersPlugin(),
       ],
       resolve: { alias: mainAliases, extensions: ['.ts', '.tsx', '.js', '.json'] },
       build: {

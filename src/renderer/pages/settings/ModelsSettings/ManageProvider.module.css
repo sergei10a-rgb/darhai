@@ -79,6 +79,12 @@
   color: var(--danger);
 }
 
+/* Connected but the key could not be proven - amber, never the connected green. */
+.badgeUnverified {
+  background: var(--warning-soft-bg);
+  color: var(--warning);
+}
+
 .badgeDot {
   width: 5px;
   height: 5px;

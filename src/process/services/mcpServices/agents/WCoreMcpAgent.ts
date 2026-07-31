@@ -13,6 +13,7 @@ import { resolveWCoreBinary } from '@process/agent/wcore/binaryResolver';
 import type { McpOperationResult } from '../McpProtocol';
 import { AbstractMcpAgent } from '../McpProtocol';
 import type { IMcpServer, IMcpServerTransport } from '@/common/config/storage';
+import { resolveBuiltinMcpSpawnArgs } from '@process/utils/mcpScriptDir';
 
 /**
  * wayland-core config.toml transport type (kebab-case)
@@ -122,10 +123,11 @@ function toWCoreConfig(server: IMcpServer): WCoreServerConfig {
   const wcoreType = toWCoreTransportType(server.transport.type);
 
   if (server.transport.type === 'stdio') {
+    const spawnArgs = resolveBuiltinMcpSpawnArgs(server.transport.command, server.transport.args);
     const config: WCoreServerConfig = {
       transport: wcoreType,
       command: server.transport.command,
-      args: server.transport.args?.length ? server.transport.args : undefined,
+      args: spawnArgs.length > 0 ? spawnArgs : undefined,
     };
     if (server.transport.env && Object.keys(server.transport.env).length > 0) {
       config.env = server.transport.env;

@@ -9,6 +9,7 @@ import { AbstractMcpAgent } from '../McpProtocol';
 import type { IMcpServer } from '@/common/config/storage';
 import { getEnhancedEnv } from '@process/utils/shellEnv';
 import { safeExec, safeExecFile } from '@process/utils/safeExec';
+import { resolveBuiltinMcpSpawnArgs } from '@process/utils/mcpScriptDir';
 
 /** Env options for exec calls - ensures CLI is found from Finder/launchd launches */
 const getExecEnv = () => ({
@@ -191,9 +192,7 @@ export class GeminiMcpAgent extends AbstractMcpAgent {
             // Pass name/command/args as separate argv elements (shell:false) so
             // shell metacharacters in any value cannot inject commands (SEC-MCP-01).
             const args = ['mcp', 'add', server.name, server.transport.command];
-            if (server.transport.args?.length) {
-              args.push(...server.transport.args);
-            }
+            args.push(...resolveBuiltinMcpSpawnArgs(server.transport.command, server.transport.args));
 
             // Add scope flag (user or project)
             args.push('-s', 'user');

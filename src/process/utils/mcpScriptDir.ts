@@ -47,6 +47,7 @@
 
 import * as path from 'node:path';
 import * as fs from 'node:fs';
+import { BUILTIN_DARHAI_MCP_FILES, isBuiltinDarhaiMcpArg } from '@process/resources/builtinMcp/constants';
 
 /**
  * Names of every stdio script that must exist next to the main bundle.
@@ -62,30 +63,19 @@ export const MCP_STDIO_SCRIPT_NAMES = [
   'builtin-mcp-web-search.js',
 ] as const;
 
-/**
- * Bundled @darhai MCP servers - ship with the installer, no npm publish.
- *
- * Listed separately from MCP_STDIO_SCRIPT_NAMES because they may be absent on
- * machines that don't have the sibling darhaimcp repo (CI, contributor forks
- * without it). `assertMcpScriptsExist` must NOT fail when these are missing -
- * the corresponding catalog entries simply won't be installable.
- */
-export const BUILTIN_DARHAI_MCP_FILENAMES = [
-  'builtin-mcp-apple.mjs',
-  'builtin-mcp-imap.mjs',
-  'builtin-mcp-news.mjs',
-  'builtin-mcp-cal-com.mjs',
-] as const;
-
-export type BuiltinDarhaiMcpFilename = (typeof BUILTIN_DARHAI_MCP_FILENAMES)[number];
-
-/** True if `arg` is a bare filename matching a bundled @darhai MCP. */
-export function isBuiltinDarhaiMcpFilename(arg: string | undefined | null): arg is BuiltinDarhaiMcpFilename {
-  if (!arg) return false;
-  return (BUILTIN_DARHAI_MCP_FILENAMES as readonly string[]).includes(arg);
-}
-
 export type McpStdioScriptName = (typeof MCP_STDIO_SCRIPT_NAMES)[number];
+
+/**
+ * Every script name this app may hand to an external `node` process: the five
+ * stdio bundles plus the four bundled @darhai servers advertised in the MCP
+ * catalog. The @darhai list lives in `builtinMcp/constants.ts` (shared with the
+ * standalone server bundles); it is referenced here rather than copied so the
+ * two cannot drift.
+ */
+const SPAWNABLE_SCRIPT_NAMES: ReadonlySet<string> = new Set<string>([
+  ...MCP_STDIO_SCRIPT_NAMES,
+  ...BUILTIN_DARHAI_MCP_FILES,
+]);
 
 /**
  * Resolve the directory containing the bundled MCP stdio scripts.
@@ -117,6 +107,46 @@ export function resolveMcpScriptDir(): string {
  */
 export function getMcpScriptPath(scriptName: McpStdioScriptName | string): string {
   return path.join(resolveMcpScriptDir(), scriptName);
+}
+
+/**
+ * Rewrite the argv of a bundled MCP stdio spawn so it points at a file that
+ * actually exists on this machine.
+ *
+ * Two failure modes this closes, both observed in the field:
+ *
+ *  1. **Bare filename.** Catalog entries for the bundled @darhai servers store
+ *     `{ command: 'node', args: ['builtin-mcp-apple.mjs'] }`. Only the
+ *     Test-connection dialog used to expand that to an absolute path, so
+ *     "Test connection" passed while the real agent spawned the bare name from
+ *     its own cwd and failed.
+ *  2. **Stale absolute path.** Builtin entries are persisted with an absolute
+ *     path into `out/main/`. After the app moves (dev tree -> installed
+ *     app, or an update that relocates Resources) the stored path is dead. If
+ *     the basename is one we ship, re-resolve it against the current bundle
+ *     dir instead of handing an agent a path to nothing.
+ *
+ * Anything else is passed through untouched - user-added servers keep exactly
+ * the argv the user configured.
+ */
+export function resolveBuiltinMcpSpawnArgs(command: string | undefined, args: readonly string[] | undefined): string[] {
+  const raw = args ? [...args] : [];
+  if (command !== 'node') return raw;
+
+  const first = raw[0];
+  if (typeof first !== 'string' || first.length === 0) return raw;
+
+  // Case 1: bare bundled @darhai filename.
+  if (isBuiltinDarhaiMcpArg(first)) {
+    return [getMcpScriptPath(first), ...raw.slice(1)];
+  }
+
+  // Case 2: a path to one of our scripts that no longer exists there.
+  const base = path.basename(first);
+  if (!SPAWNABLE_SCRIPT_NAMES.has(base)) return raw;
+  if (fs.existsSync(first)) return raw;
+
+  return [getMcpScriptPath(base), ...raw.slice(1)];
 }
 
 export type McpScriptCanaryResult = {

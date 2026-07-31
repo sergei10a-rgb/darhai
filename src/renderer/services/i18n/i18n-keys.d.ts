@@ -3580,6 +3580,7 @@ export type I18nKey =
   | 'settings.modelsPage.row.modelCount'
   | 'settings.modelsPage.row.noModelsHint'
   | 'settings.modelsPage.row.testing'
+  | 'settings.modelsPage.row.unverified'
   | 'settings.modelsPage.row.via.apiKey'
   | 'settings.modelsPage.row.via.autoDiscovered'
   | 'settings.modelsPage.row.via.cloudCredentials'

@@ -19,6 +19,7 @@
     "webui:prod:remote": "cross-env NODE_ENV=production electron-vite dev -- --webui --remote",
     "resetpass": "electron-vite dev -- --resetpass",
     "bundle:modelsdev": "bunx tsx scripts/bundle-modelsdev.ts",
+    "providers:catalog": "node scripts/generateProviderCatalog.mjs",
     "prebuild": "bun run bundle:modelsdev",
     "prepackage": "bun run bundle:modelsdev",
     "package": "electron-vite build",

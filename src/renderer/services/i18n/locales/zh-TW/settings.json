@@ -1957,6 +1957,7 @@
     },
     "row": {
       "connected": "已連接",
+      "unverified": "已連線，金鑰未驗證",
       "testing": "測試中…",
       "manage": "管理",
       "fix": "修復",

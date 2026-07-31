@@ -1957,6 +1957,7 @@
     },
     "row": {
       "connected": "연결됨",
+      "unverified": "연결됨, 키 미검증",
       "testing": "테스트 중…",
       "manage": "관리",
       "fix": "수정",

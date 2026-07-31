@@ -125,8 +125,17 @@ export type CuratedModel = CatalogModel & {
   role?: 'flagship' | 'previous' | 'fast';
 };
 
-/** Live connection state of a provider in the model registry. */
-export type ProviderConnState = 'connected' | 'testing' | 'error';
+/**
+ * Live connection state of a provider in the model registry.
+ *
+ * `unverified` is a connected-but-unproven provider: its credentials are stored
+ * and its catalog was built, but the only probe available for it answers the
+ * same way WITHOUT the credential (a public `/v1/models` endpoint), so the
+ * connection test could not prove the key is valid. It is deliberately distinct
+ * from `connected` - reporting it as connected is the false green the UI must
+ * never show - and from `error`, which means the provider is known broken.
+ */
+export type ProviderConnState = 'connected' | 'testing' | 'error' | 'unverified';
 
 /** Classified failure reason from a connect / test-connection attempt. */
 export type ConnectError = 'unauthorized' | 'no-credit' | 'offline' | 'unrecognized' | 'no-models' | 'unknown';

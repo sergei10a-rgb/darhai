@@ -151,17 +151,25 @@ describe('ConnectionTester', () => {
       .mockResolvedValueOnce(
         response({ type: 'error', error: { type: 'not_found_error', message: 'model: claude-stale' } }, 404)
       )
-      .mockResolvedValueOnce(response({ data: [{ id: 'claude-opus-4-7' }] }, 200));
+      .mockResolvedValueOnce(response({ data: [{ id: 'claude-opus-4-7' }] }, 200))
+      // The `/v1/models` success is only evidence about the key if the endpoint
+      // refuses the anonymous request - Anthropic does, so the result is a plain
+      // verified `ok` with no `unverified` flag.
+      .mockResolvedValueOnce(response({ error: 'missing x-api-key' }, 401));
     vi.stubGlobal('fetch', fetchMock);
 
     const result = await tester.test('anthropic', { key: 'sk-ant-valid' });
     expect(result).toEqual({ ok: true });
 
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
     const [messagesUrl] = fetchMock.mock.calls[0] as [string];
     const [modelsUrl] = fetchMock.mock.calls[1] as [string];
     expect(messagesUrl).toContain('/v1/messages');
     expect(modelsUrl).toContain('/v1/models');
+    // The control probe repeats the same request WITHOUT the credential.
+    const [controlUrl, controlInit] = fetchMock.mock.calls[2] as [string, RequestInit];
+    expect(controlUrl).toContain('/v1/models');
+    expect((controlInit.headers as Record<string, string>)['x-api-key']).toBeUndefined();
   });
 
   it('still reports unauthorized when a stale-model fallback hits a bad key', async () => {
@@ -203,7 +211,12 @@ describe('ConnectionTester', () => {
   });
 
   it('falls back to a /v1/models auth-only check for a provider with no test model', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(response({ data: [{ id: 'x' }] }, 200));
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(response({ data: [{ id: 'x' }] }, 200))
+      // Anonymous control probe: a 401 proves the endpoint really does gate on
+      // the credential, so the credentialed 200 is a genuine verification.
+      .mockResolvedValueOnce(response({ message: 'no api key supplied' }, 401));
     vi.stubGlobal('fetch', fetchMock);
 
     // `cohere` has a /v1/models endpoint but no known cheap chat model here.

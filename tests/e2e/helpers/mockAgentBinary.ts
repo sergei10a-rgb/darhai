@@ -43,6 +43,12 @@ export interface MockBinaryOptions {
   responses?: MockBinaryResponse[];
   /** Inject a startup error and exit non-zero before reading stdin. */
   failOnStartup?: { code: number; stderr: string };
+  /**
+   * Append every JSON-RPC request the app sends to this file, one JSON object
+   * per line. The only way to read what the app ACTUALLY put in `session/new`
+   * (MCP servers, cwd, modes) rather than what the source suggests it would.
+   */
+  dumpRequestsTo?: string;
 }
 
 let tmpRoot: string | null = null;
@@ -90,10 +96,20 @@ export function createMockAgentBinary(options: MockBinaryOptions): string {
 const RESPONSES = ${JSON.stringify(responses)};
 const FAIL = ${JSON.stringify(failOnStartup)};
 const BINARY = ${JSON.stringify(options.binary)};
+const DUMP = ${JSON.stringify(options.dumpRequestsTo ?? null)};
 
 if (FAIL) {
   process.stderr.write(String(FAIL.stderr));
   process.exit(FAIL.code);
+}
+
+function record(req) {
+  if (!DUMP) return;
+  try {
+    require('fs').appendFileSync(DUMP, JSON.stringify(req) + '\\n');
+  } catch (_err) {
+    /* dumping must never break the mock */
+  }
 }
 
 let responseIndex = 0;
@@ -110,6 +126,7 @@ function send(obj) {
 
 function handleRequest(req) {
   if (!req || typeof req !== 'object') return;
+  record(req);
   const method = req.method;
   const id = req.id;
   if (method === 'initialize') {
@@ -118,7 +135,14 @@ function handleRequest(req) {
       id,
       result: {
         protocolVersion: 1,
-        agentCapabilities: { promptCapabilities: { audio: false, embeddedContext: false, image: false } },
+        agentCapabilities: {
+          promptCapabilities: { audio: false, embeddedContext: false, image: false },
+          // Declaring mcpCapabilities at all is what makes the app treat stdio
+          // as supported (see parseAgentCapabilitiesObject) and therefore put
+          // MCP servers into session/new. Without it the mock would silently
+          // receive an empty mcpServers list.
+          mcpCapabilities: { http: false, sse: false },
+        },
         authMethods: [],
       },
     });

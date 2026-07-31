@@ -11,6 +11,7 @@ import stripJsonComments from 'strip-json-comments';
 import type { IMcpServer, IMcpServerTransport } from '@/common/config/storage';
 import type { McpOperationResult } from '../McpProtocol';
 import { AbstractMcpAgent } from '../McpProtocol';
+import { resolveBuiltinMcpSpawnArgs } from '@process/utils/mcpScriptDir';
 
 type OpencodeToolConfig = Record<string, boolean | undefined>;
 
@@ -101,7 +102,7 @@ function toOpencodeEntry(transport: IMcpServerTransport): OpencodeMcpEntry | nul
   if (transport.type === 'stdio') {
     return {
       type: 'local',
-      command: [transport.command, ...(transport.args || [])],
+      command: [transport.command, ...resolveBuiltinMcpSpawnArgs(transport.command, transport.args)],
       ...(transport.env && Object.keys(transport.env).length > 0 ? { environment: transport.env } : {}),
       enabled: true,
     };

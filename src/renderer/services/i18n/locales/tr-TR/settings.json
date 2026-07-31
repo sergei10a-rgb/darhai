@@ -1955,6 +1955,7 @@
     },
     "row": {
       "connected": "Bağlı",
+      "unverified": "Bağlandı, anahtar doğrulanmadı",
       "testing": "Test ediliyor…",
       "manage": "Yönet",
       "fix": "Düzelt",

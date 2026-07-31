@@ -12,6 +12,7 @@ import type { McpOperationResult } from '../McpProtocol';
 import { AbstractMcpAgent } from '../McpProtocol';
 import { safeExecFile } from '@process/utils/safeExec';
 import { validateMcpEnvEntry } from '../validateMcpServer';
+import { resolveBuiltinMcpSpawnArgs } from '@process/utils/mcpScriptDir';
 
 /**
  * CodeBuddy MCP server entry in ~/.codebuddy/mcp.json
@@ -186,11 +187,10 @@ export class CodebuddyMcpAgent extends AbstractMcpAgent {
               // Format: codebuddy mcp add -s user <name> <command> -- [args...] [-e KEY=VALUE...]
               const args = ['mcp', 'add', '-s', 'user', server.name, server.transport.command];
 
-              if (server.transport.args?.length || Object.keys(server.transport.env || {}).length) {
+              const spawnArgs = resolveBuiltinMcpSpawnArgs(server.transport.command, server.transport.args);
+              if (spawnArgs.length > 0 || Object.keys(server.transport.env || {}).length) {
                 args.push('--');
-                if (server.transport.args?.length) {
-                  args.push(...server.transport.args);
-                }
+                args.push(...spawnArgs);
               }
 
               for (const [key, value] of Object.entries(server.transport.env || {})) {

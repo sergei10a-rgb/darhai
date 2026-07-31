@@ -11,6 +11,13 @@
  *
  * These tests pin the shared resolver to behaviors that, if violated again,
  * would re-introduce that silent failure.
+ *
+ * SCOPE: this file tests the RESOLVER only, and its `inspectMcpScripts`
+ * assertions are necessarily branch-conditional - under vitest the resolver's
+ * `__dirname` is the source directory, never `out/main`, so it can only report
+ * "scripts missing". The hard guard that the BUILD OUTPUT contains every
+ * advertised script (and that each one starts) lives in
+ * `mcpScriptsBuilt.test.ts`; do not weaken that one to match this file.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -64,10 +71,7 @@ describe('MCP_STDIO_SCRIPT_NAMES', () => {
     // If `scripts/build-mcp-servers.js` emits a new script, the canary
     // list MUST be updated in lockstep - otherwise startup assertions
     // won't catch a missing-script failure for the new file.
-    const buildScript = fs.readFileSync(
-      path.resolve(__dirname, '../../../../scripts/build-mcp-servers.js'),
-      'utf-8'
-    );
+    const buildScript = fs.readFileSync(path.resolve(__dirname, '../../../../scripts/build-mcp-servers.js'), 'utf-8');
     const matches = [...buildScript.matchAll(/outfile:\s*path\.join\(ROOT,\s*'out\/main\/([^']+)'\)/g)];
     const emittedNames = matches.map((m) => m[1]).sort();
     expect(emittedNames).toEqual([...MCP_STDIO_SCRIPT_NAMES].sort());

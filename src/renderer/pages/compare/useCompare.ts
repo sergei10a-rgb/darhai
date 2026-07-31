@@ -29,7 +29,10 @@ export function modelOptionKey(option: Pick<CompareModelOption, 'providerId' | '
  */
 async function loadModelOptions(): Promise<CompareModelOption[]> {
   const providers = await ipcBridge.modelRegistry.list.invoke();
-  const connected = providers.filter((p) => p.state === 'connected' && p.modelCount > 0);
+  // `unverified` providers are usable (creds stored, catalog built) - only the
+  // connection PROOF is missing, so they belong in the picker alongside
+  // `connected`. `testing` / `error` stay out.
+  const connected = providers.filter((p) => (p.state === 'connected' || p.state === 'unverified') && p.modelCount > 0);
   const lists = await Promise.all(
     connected.map(async (provider) => {
       const view = await ipcBridge.modelRegistry.getCatalog.invoke({ providerId: provider.providerId });

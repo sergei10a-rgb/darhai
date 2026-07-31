@@ -6,6 +6,7 @@
 
 import type { IMcpServer } from '@/common/config/storage';
 import type { AcpMcpCapabilities } from '@/common/types/acpTypes';
+import { resolveBuiltinMcpSpawnArgs } from '@process/utils/mcpScriptDir';
 
 export interface AcpSessionMcpNameValue {
   name: string;
@@ -37,26 +38,20 @@ function toNameValueEntries(source?: Record<string, string>): AcpSessionMcpNameV
   return entries.length > 0 ? entries : undefined;
 }
 
-function shouldInjectBuiltinServer(server: IMcpServer): boolean {
-  if (server.builtin !== true || !server.enabled) {
-    return false;
-  }
-
-  return server.status === undefined || server.status === 'connected';
-}
-
 /**
- * Whether an MCP server should be injected into the fork Gemini runtime
- * (@office-ai/aioncli-core via GeminiAgentManager).
+ * The single predicate deciding whether an MCP server reaches a model, shared
+ * by every backend (ACP `session/new` and the fork Gemini runtime).
  *
- * Builtin servers (image generation, skill search) are seeded into mcp.config
- * with `status: undefined` and are never connection-tested, so they must be
- * accepted on `undefined` exactly like the ACP session path
- * (`shouldInjectBuiltinServer`); otherwise the fork Gemini backend silently
- * drops them while ACP backends (Claude, Codex, Wayland Core) inject them.
- * User-added servers still require an active `connected` status.
+ * Builtin servers (image generation, skill search, web search) are seeded into
+ * mcp.config with `status: undefined` and are never connection-tested, so they
+ * must be accepted on `undefined`. User-added and catalog-installed servers
+ * still require an active `connected` status - but they ARE included: the ACP
+ * paths used to filter on `builtin === true`, which meant a user-installed MCP
+ * server could never be placed in `session/new` no matter how it was
+ * configured, and for a custom ACP agent with no config file of its own it was
+ * never delivered at all.
  */
-export function shouldInjectGeminiMcpServer(server: IMcpServer): boolean {
+export function shouldInjectMcpServer(server: IMcpServer): boolean {
   if (!server.enabled) {
     return false;
   }
@@ -66,7 +61,7 @@ export function shouldInjectGeminiMcpServer(server: IMcpServer): boolean {
   return server.status === 'connected';
 }
 
-export function buildBuiltinAcpSessionMcpServers(
+export function buildAcpSessionMcpServers(
   mcpServers: IMcpServer[] | undefined | null,
   capabilities: AcpMcpCapabilities
 ): AcpSessionMcpServer[] {
@@ -75,7 +70,7 @@ export function buildBuiltinAcpSessionMcpServers(
   }
 
   return mcpServers
-    .filter(shouldInjectBuiltinServer)
+    .filter(shouldInjectMcpServer)
     .map((server): AcpSessionMcpServer | null => {
       switch (server.transport.type) {
         case 'stdio':
@@ -84,7 +79,7 @@ export function buildBuiltinAcpSessionMcpServers(
             type: 'stdio',
             name: server.name,
             command: server.transport.command,
-            args: server.transport.args || [],
+            args: resolveBuiltinMcpSpawnArgs(server.transport.command, server.transport.args),
             env: toNameValueEntries(server.transport.env) ?? [],
           };
         case 'http':

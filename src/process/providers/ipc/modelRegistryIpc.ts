@@ -68,6 +68,7 @@ import type { CliAgentKey } from '../sources/CliAgentSource';
 import { CatalogAssembler, MODELS_DEV_PROVIDER_KEY } from '../catalog/CatalogAssembler';
 import { Curator } from '../catalog/Curator';
 import { ProviderCatalogStore, loadBaselineProviderCatalog } from '../catalog/providerCatalogStore';
+import { catalogBaseUrlFor } from '../catalog/catalogEndpoint';
 import type { CatalogProviderEntry } from '../catalog/catalogProvider';
 import { ConnectionTester } from '../detection/ConnectionTester';
 import { KeyDiscovery } from '../detection/KeyDiscovery';
@@ -180,7 +181,7 @@ export type ModelRegistryDeps = {
       providerId: ProviderId,
       creds: { key: string } | { fields: Record<string, string> },
       customBaseUrl?: string
-    ) => Promise<{ ok: boolean; error?: ConnectError }>;
+    ) => Promise<{ ok: boolean; error?: ConnectError; unverified?: boolean }>;
   };
   modelsDevClient: { getRegistry: () => Promise<ModelsDevRegistry> };
   makeApiSource: (providerId: ProviderId, apiKey: string, baseUrl?: string) => CatalogSource;
@@ -295,11 +296,16 @@ export function createModelRegistryHandlers(deps: ModelRegistryDeps): ModelRegis
       // view for `openai-compatible` (and any other custom-endpoint provider)
       // can set its endpoint at connect time. A non-string / empty value is
       // dropped here so the persistence layer only ever sees real URLs.
-      const out: { key: string; baseUrl?: string } = { key: creds.key };
       if (typeof creds.baseUrl === 'string' && creds.baseUrl.trim().length > 0) {
-        out.baseUrl = creds.baseUrl.trim();
+        return { key: creds.key, baseUrl: creds.baseUrl.trim() };
       }
-      return out;
+      // No caller-supplied endpoint. A Browse catalog row deliberately sends
+      // key-only (the provider is already known, so the user is never asked for
+      // a URL) - resolving that provider's own endpoint is OUR job, and the
+      // vendored catalog is the authority for it. Without this the connection
+      // test has nothing to talk to and fails in single-digit milliseconds
+      // without ever attempting a request.
+      return withCatalogEndpoint(providerId, creds.key);
     }
     if ('fields' in creds) return { fields: creds.fields };
     if ('useGoogleAuth' in creds) {
@@ -308,12 +314,14 @@ export function createModelRegistryHandlers(deps: ModelRegistryDeps): ModelRegis
       return { useGoogleAuth: true };
     }
     // `useDiscovered` - find the discovered key for this provider, read it.
+    // An auto-discovered catalog key needs the catalog endpoint just as much as
+    // a pasted one, so it goes through the same resolution.
     try {
       const found = await keyDiscovery.scan();
       const match = found.find((d) => d.providerId === providerId);
       if (!match) return null;
       const value = keyDiscovery.readValue(match);
-      return value ? { key: value } : null;
+      return value ? withCatalogEndpoint(providerId, value) : null;
     } catch {
       return null;
     }
@@ -375,11 +383,15 @@ export function createModelRegistryHandlers(deps: ModelRegistryDeps): ModelRegis
         // Fix 10 - preserve the user's saved custom baseUrl through refresh.
         // Otherwise `openai-compatible` and other custom-endpoint providers
         // silently re-target the canonical default on every refresh.
+        // A catalog provider has no `PROVIDER_ENDPOINTS` entry, so falling back
+        // to its vendored endpoint is what keeps `ApiProviderSource` from
+        // failing with "no models endpoint registered" - relevant for any row
+        // persisted before the endpoint was resolved at connect time.
         const stored = repo.getRegistryProviderCreds(providerId);
         const customBaseUrl =
           stored.status === 'ok' && typeof stored.creds.baseUrl === 'string'
             ? (stored.creds.baseUrl as string)
-            : undefined;
+            : catalogBaseUrlFor(providerId);
         sources = [deps.makeApiSource(providerId, creds.key, customBaseUrl)];
       } else {
         sources = [];
@@ -448,7 +460,7 @@ export function createModelRegistryHandlers(deps: ModelRegistryDeps): ModelRegis
       if (!match) return false;
       const value = keyDiscovery.readValue(match);
       if (!value) return false;
-      repo.updateRegistryProviderCreds(providerId, { key: value });
+      repo.updateRegistryProviderCreds(providerId, withCatalogEndpoint(providerId, value));
       repo.updateRegistryProviderState(providerId, 'connected');
       // Refresh the legacy v2 bridge so legacy consumers see the recovered
       // key on the same boot (matches what `connect`/`rekey`/`refresh`
@@ -505,6 +517,13 @@ export function createModelRegistryHandlers(deps: ModelRegistryDeps): ModelRegis
     const isCloud = CLOUD_PROVIDERS.has(providerId);
     const isGoogleAuth = 'useGoogleAuth' in resolved;
 
+    /**
+     * True when the probe succeeded but could not prove the credential (the
+     * endpoint answers identically without it). Such a provider is persisted as
+     * `'unverified'`, never `'connected'` - see `ProviderConnState`.
+     */
+    let unverified = false;
+
     if (isGoogleAuth) {
       // Google-auth Gemini - no HTTP probe (OAuth is verified by the auth
       // module that produced the token), but we still want to build the
@@ -523,7 +542,11 @@ export function createModelRegistryHandlers(deps: ModelRegistryDeps): ModelRegis
       if ('fields' in resolved) return { ok: false, error: 'unrecognized' };
       const result = await connectionTester.test(providerId, resolved as { key: string }, resolved.baseUrl);
       if (!result.ok) return { ok: false, error: result.error ?? 'unknown' };
+      unverified = result.unverified === true;
     }
+
+    /** The state a successful connect persists - honest about an unproven key. */
+    const connectedState: ProviderConnState = unverified ? 'unverified' : 'connected';
 
     // Ship-gate Fix B2: persist an explicit `baseUrl` alongside the api key
     // when the caller supplied one (e.g. `openai-compatible` Browse connect).
@@ -545,7 +568,7 @@ export function createModelRegistryHandlers(deps: ModelRegistryDeps): ModelRegis
       const priorCreds = repo.getRegistryProviderCreds(providerId);
 
       repo.updateRegistryProviderCreds(providerId, credsRecord);
-      repo.updateRegistryProviderState(providerId, 'connected');
+      repo.updateRegistryProviderState(providerId, connectedState);
 
       const built = await buildAndPersistCatalog(providerId, resolved);
       if (!built.ok || (built.models === 0 && built.sourceErrors > 0)) {
@@ -568,7 +591,7 @@ export function createModelRegistryHandlers(deps: ModelRegistryDeps): ModelRegis
     repo.upsertRegistryProvider({
       providerId,
       connectedVia: connectedViaLabel(creds, providerId),
-      state: 'connected',
+      state: connectedState,
       creds: credsRecord,
     });
 
@@ -637,7 +660,14 @@ export function createModelRegistryHandlers(deps: ModelRegistryDeps): ModelRegis
           creds as { key: string } | { fields: Record<string, string> },
           typeof stored.creds.baseUrl === 'string' ? stored.creds.baseUrl : undefined
         );
-        const state: ProviderConnState = result.ok ? 'connected' : 'error';
+        // A success the probe could not attribute to the credential lands in
+        // `'unverified'`, never `'connected'` - re-testing a provider must not
+        // be able to launder a false green back into the row.
+        const state: ProviderConnState = result.ok
+          ? result.unverified === true
+            ? 'unverified'
+            : 'connected'
+          : 'error';
         repo.updateRegistryProviderState(providerId, state, result.ok ? undefined : result.error);
         return result.ok ? { ok: true } : { ok: false, error: result.error ?? 'unknown' };
       } catch {
@@ -923,6 +953,19 @@ export function createModelRegistryHandlers(deps: ModelRegistryDeps): ModelRegis
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /**
+ * Pair an api key with the provider's own endpoint when it is a catalog
+ * provider. A native provider has its endpoint hand-wired in
+ * `PROVIDER_ENDPOINTS` / `CHAT_START_BASE_URL` and gets no `baseUrl` here; a
+ * catalog provider has it ONLY in the vendored catalog, so it is attached now
+ * and persisted with the credentials - the connection probe, the catalog build
+ * and the chat-start dispatch all read it back from there.
+ */
+function withCatalogEndpoint(providerId: ProviderId, key: string): { key: string; baseUrl?: string } {
+  const baseUrl = catalogBaseUrlFor(providerId);
+  return baseUrl ? { key, baseUrl } : { key };
+}
+
+/**
  * True when a cloud provider's `fields` payload carries every credential field
  * that provider needs, each a non-empty string. A non-empty-presence check -
  * NOT a real cloud-SDK credential validation. A provider with no entry in
@@ -1090,7 +1133,9 @@ const CHAT_START_NAME: Partial<Record<ProviderId, string>> = {
  *    than the generic Open-Models redirect.
  */
 type ChatStartBuildResult =
-  { kind: 'payload'; payload: IModelRegistryChatStartPayload } | { kind: 'unsupported' } | { kind: 'undecryptable' };
+  | { kind: 'payload'; payload: IModelRegistryChatStartPayload }
+  | { kind: 'unsupported' }
+  | { kind: 'undecryptable' };
 
 function buildChatStartPayload(
   providerId: ProviderId,
@@ -1101,7 +1146,14 @@ function buildChatStartPayload(
   // `gemini-with-google-auth` platform string (Fix 6). No api-key check.
   const isGoogleAuthGemini = providerId === 'google-gemini' && creds.useGoogleAuth === true;
 
-  const platform = isGoogleAuthGemini ? 'gemini-with-google-auth' : CHAT_START_PLATFORM[providerId];
+  // A catalog provider has no hand-wired dispatcher arm, but the vendored
+  // catalog only ever contains OpenAI-compatible rows (`anthropic-wire` entries
+  // are curated out), so it dispatches through the same `openai-compatible`
+  // protocol against the endpoint stored with its credentials.
+  const catalogPlatform = catalogBaseUrlFor(providerId) ? 'openai-compatible' : undefined;
+  const platform = isGoogleAuthGemini
+    ? 'gemini-with-google-auth'
+    : (CHAT_START_PLATFORM[providerId] ?? catalogPlatform);
   if (!platform) return { kind: 'unsupported' };
 
   const payload: IModelRegistryChatStartPayload = {
@@ -1166,7 +1218,7 @@ function buildChatStartPayload(
   // ── Standard API-key provider ──────────────────────────────────────────
   const apiKey = typeof creds.key === 'string' ? (creds.key as string) : '';
   const customBaseUrl = typeof creds.baseUrl === 'string' ? (creds.baseUrl as string) : '';
-  const resolvedBaseUrl = customBaseUrl || CHAT_START_BASE_URL[providerId] || '';
+  const resolvedBaseUrl = customBaseUrl || CHAT_START_BASE_URL[providerId] || catalogBaseUrlFor(providerId) || '';
 
   if (!apiKey) {
     // Keyless local backends (Ollama / LM Studio / llama.cpp) accept no API

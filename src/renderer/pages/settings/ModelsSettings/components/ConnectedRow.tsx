@@ -37,11 +37,15 @@ const VIA_KEY: Record<string, string> = {
 /**
  * One compact connected-provider row. No chips, no overflow menu (spec §4.2).
  *
- * Drives three states from the registry view:
- *  - `connected` - green dot, model count, Manage.
- *  - `testing`   - spinner, "Testing…", Manage hidden.
- *  - `error`     - persistent "Action needed" status + a red Fix action
- *                  (spec §4.3 - never a stale green badge).
+ * Drives four states from the registry view:
+ *  - `connected`  - green dot, model count, Manage.
+ *  - `unverified` - amber dot: the credentials are stored and the catalog is
+ *                   built, but the provider's only probe answers the same way
+ *                   without the key, so the row must NOT claim a verified
+ *                   green connection. Still usable - Manage stays available.
+ *  - `testing`    - spinner, "Testing…", Manage hidden.
+ *  - `error`      - persistent "Action needed" status + a red Fix action
+ *                   (spec §4.3 - never a stale green badge).
  *
  * `no-models` is an honest sub-case: the provider connected but returned zero
  * models, so the row stays `connected` with a recovery hint instead of a count.
@@ -52,6 +56,7 @@ const ConnectedRow: React.FC<Props> = ({ provider, onManage, onFix }) => {
 
   const isError = provider.state === 'error';
   const isTesting = provider.state === 'testing';
+  const isUnverified = provider.state === 'unverified';
   const noModels = !isError && !isTesting && provider.modelCount === 0;
 
   // Localize the `connectedVia` enum; fall back to the raw value if the backend
@@ -59,7 +64,12 @@ const ConnectedRow: React.FC<Props> = ({ provider, onManage, onFix }) => {
   const viaSuffix = VIA_KEY[provider.connectedVia];
   const viaLabel = viaSuffix ? t(`settings.modelsPage.row.via.${viaSuffix}`) : provider.connectedVia;
 
-  const rowClass = [styles.row, isTesting ? styles.rowTesting : '', isError ? styles.rowError : '']
+  const rowClass = [
+    styles.row,
+    isTesting ? styles.rowTesting : '',
+    isError ? styles.rowError : '',
+    isUnverified ? styles.rowUnverified : '',
+  ]
     .filter(Boolean)
     .join(' ');
 
@@ -95,9 +105,9 @@ const ConnectedRow: React.FC<Props> = ({ provider, onManage, onFix }) => {
       )}
 
       {!isError && !isTesting && (
-        <div className={`${styles.status} ${styles.statusConnected}`}>
+        <div className={`${styles.status} ${isUnverified ? styles.statusUnverified : styles.statusConnected}`}>
           <span className={styles.statusDot} />
-          {t('settings.modelsPage.row.connected')}
+          {isUnverified ? t('settings.modelsPage.row.unverified') : t('settings.modelsPage.row.connected')}
         </div>
       )}
 

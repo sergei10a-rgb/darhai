@@ -187,6 +187,11 @@
   border-color: var(--danger);
 }
 
+/* Connected but the key could not be proven - amber, never the connected green. */
+.rowUnverified {
+  border-color: var(--warning);
+}
+
 .avatar {
   width: 34px;
   height: 34px;
@@ -230,6 +235,10 @@
 
 .statusError {
   color: var(--danger);
+}
+
+.statusUnverified {
+  color: var(--warning);
 }
 
 .statusDot {

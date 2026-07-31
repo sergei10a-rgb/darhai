@@ -2008,6 +2008,7 @@
     },
     "row": {
       "connected": "Connected",
+      "unverified": "Connected, key not verified",
       "testing": "Testing…",
       "manage": "Manage",
       "fix": "Fix",

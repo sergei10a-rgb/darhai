@@ -1957,6 +1957,7 @@
     },
     "row": {
       "connected": "接続済み",
+      "unverified": "接続済み、キーは未検証",
       "testing": "テスト中…",
       "manage": "管理",
       "fix": "修正",

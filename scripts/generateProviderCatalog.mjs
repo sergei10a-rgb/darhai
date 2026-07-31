@@ -21,19 +21,27 @@
  *    re-run produces a byte-identical file — the snapshot test depends on this.
  *  - Prints a breakdown of how many rows were excluded and why.
  *
- * Reuses the real runtime modules (Node strips the `import type`-only TS) so the
- * generator can never drift from the curation the app ships.
+ * Reuses the real runtime modules (Node 22.18+/24 strips the TypeScript types
+ * natively) so the generator can never drift from the curation the app ships.
+ * The type stripper does not read `tsconfig.json`, so the project's path
+ * aliases are supplied by `scripts/tsPathAliasHook.mjs` — registered BEFORE the
+ * runtime modules are pulled in, which is why they are imported dynamically.
  *
  * Usage:
  *   node scripts/generateProviderCatalog.mjs
+ *   bun run providers:catalog
  */
 
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { register } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parse } from 'smol-toml';
-import { normalizeCatalogEntry } from '../src/process/providers/catalog/catalogProvider.ts';
-import { isCatalogEligible } from '../src/process/providers/catalog/catalogCuration.ts';
+
+register('./tsPathAliasHook.mjs', import.meta.url);
+
+const { normalizeCatalogEntry } = await import('../src/process/providers/catalog/catalogProvider.ts');
+const { isCatalogEligible } = await import('../src/process/providers/catalog/catalogCuration.ts');
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
