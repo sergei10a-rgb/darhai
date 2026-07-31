@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { withCsrfToken, hasValidCsrfToken, clearCookie } from '@process/webserver/middleware/csrfClient';
 import { CSRF_COOKIE_NAME } from '@process/webserver/config/constants';
+import { ipcBridge } from '@/common';
 
 type AuthStatus = 'checking' | 'authenticated' | 'unauthenticated';
 
@@ -16,12 +17,7 @@ interface LoginParams {
 }
 
 type LoginErrorCode =
-  | 'invalidCredentials'
-  | 'tooManyAttempts'
-  | 'serverError'
-  | 'networkError'
-  | 'csrfError'
-  | 'unknown';
+  'invalidCredentials' | 'tooManyAttempts' | 'serverError' | 'networkError' | 'csrfError' | 'unknown';
 
 interface LoginResult {
   success: boolean;
@@ -45,6 +41,62 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 const AUTH_USER_ENDPOINT = '/api/auth/user';
 
 const isDesktopRuntime = typeof window !== 'undefined' && Boolean(window.electronAPI);
+
+/**
+ * Budget for one `localUser.get` round trip. The provider is a single indexed
+ * SQLite read, but the very first call of a cold launch can queue behind schema
+ * migration, so this is generous rather than tight.
+ */
+const LOCAL_USER_TIMEOUT_MS = 5_000;
+
+/** Attempts before the desktop identity is treated as unavailable. */
+const LOCAL_USER_ATTEMPTS = 2;
+
+/**
+ * Bound a bridge call.
+ *
+ * The IPC transport resolves a provider call only when the main process answers;
+ * there is no built-in deadline. Awaiting it unbounded during boot would mean a
+ * single unanswered call renders the whole app blank forever, so every await on
+ * the auth path is raced against a deadline.
+ */
+async function withDeadline<T>(work: Promise<T>, timeoutMs: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      work,
+      new Promise<never>((_resolve, reject) => {
+        timer = setTimeout(() => reject(new Error(`timed out after ${timeoutMs}ms`)), timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
+/**
+ * Resolve the identity the desktop runtime acts as.
+ *
+ * The desktop app has no login, so the main process answers this from the local
+ * profile's own row in the `users` table (seeding it if absent). Without it the
+ * renderer has no user id, and every per-user surface - calendar, notes,
+ * documents - silently lists nothing and silently declines to write, because
+ * their hooks skip both the query and the mutation when the id is empty.
+ */
+async function fetchLocalUser(): Promise<AuthUser | null> {
+  for (let attempt = 1; attempt <= LOCAL_USER_ATTEMPTS; attempt += 1) {
+    try {
+      const identity = await withDeadline(ipcBridge.localUser.get.invoke(), LOCAL_USER_TIMEOUT_MS);
+      if (identity?.id) {
+        return { id: identity.id, username: identity.username };
+      }
+      console.error('Local desktop user resolved without an id:', identity);
+    } catch (error) {
+      console.error(`Failed to resolve the local desktop user (attempt ${attempt}):`, error);
+    }
+  }
+  return null;
+}
 
 // Clear expired auth cache including cookies and localStorage
 function clearAuthCache(): void {
@@ -106,8 +158,12 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
 
   const refresh = useCallback(async () => {
     if (isDesktopRuntime) {
+      // Desktop has no login to pass, so it is authenticated by construction -
+      // but it still needs an identity. `ready` is held until that resolves so
+      // no page can mount against a null user and quietly no-op; fetchLocalUser
+      // is bounded and never rejects, so this cannot strand the app.
       setStatus('authenticated');
-      setUser(null);
+      setUser(await fetchLocalUser());
       setReady(true);
       return;
     }
@@ -239,7 +295,9 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
 
   const logout = useCallback(async () => {
     if (isDesktopRuntime) {
-      setUser(null);
+      // Nothing to sign out of: on desktop the identity IS the local profile.
+      // Clearing it here would leave the app running with no user id, which is
+      // exactly the state that makes the per-user pages silently inert.
       setStatus('authenticated');
       setReady(true);
       return;

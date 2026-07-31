@@ -72,8 +72,14 @@ function isAuxiliaryWindow(url: string): boolean {
  * Cold launch is slow (~80s observed on Windows dev mode); callers should share
  * one app across as many screens as possible rather than relaunching per test.
  */
-export async function launchVisualApp(extraEnv: Record<string, string> = {}): Promise<VisualApp> {
-  const runRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'darhai-visual-'));
+export async function launchVisualApp(
+  extraEnv: Record<string, string> = {},
+  options: { reuseRunRoot?: string } = {}
+): Promise<VisualApp> {
+  // Passing a previous run's root relaunches against the SAME profile - the only
+  // way a spec can prove that what the UI wrote is still there after a restart,
+  // rather than only that it reached memory. Omit it for a genuinely fresh app.
+  const runRoot = options.reuseRunRoot ?? fs.mkdtempSync(path.join(os.tmpdir(), 'darhai-visual-'));
   runRoots.add(runRoot);
 
   const app = await electron.launch({
@@ -333,10 +339,19 @@ export async function stableScreenshot(page: Page, opts: { fullPage?: boolean } 
   return first;
 }
 
-/** Close an app and remove its isolated profile. */
-export async function closeVisualApp(visual: VisualApp): Promise<void> {
+/**
+ * Quit an app but leave its profile on disk, so it can be relaunched with
+ * `launchVisualApp({}, { reuseRunRoot })`. Callers must still finish with
+ * {@link closeVisualApp} to remove the directory.
+ */
+export async function quitVisualApp(visual: VisualApp): Promise<void> {
   await visual.app.evaluate(({ app }) => app.exit(0)).catch(() => {});
   await visual.app.close().catch(() => {});
+}
+
+/** Close an app and remove its isolated profile. */
+export async function closeVisualApp(visual: VisualApp): Promise<void> {
+  await quitVisualApp(visual);
   runRoots.delete(visual.runRoot);
   fs.rmSync(visual.runRoot, { recursive: true, force: true });
 }

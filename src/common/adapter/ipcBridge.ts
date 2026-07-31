@@ -34,6 +34,7 @@ import type {
   AutoUpdateStatus,
 } from '../update/updateTypes';
 import type { ConnectPastedKeyResult } from '../types/onboarding';
+import type { LocalUserIdentity } from '../types/localUser';
 import type { ProtocolDetectionRequest, ProtocolDetectionResponse } from '../utils/protocolDetector';
 import type { SpeechToTextRequest, SpeechToTextResult } from '../types/speech';
 import type { DownloadResult, VoiceAsset } from '../types/voiceAsset';
@@ -524,6 +525,23 @@ export const googleAuth = {
   ),
   logout: buildProvider<void, {}>('google.auth.logout'),
   status: buildProvider<IBridgeResponse<{ account: string }>, { proxy?: string }>('google.auth.status'),
+};
+
+export const localUser = {
+  /**
+   * The desktop runtime's own identity.
+   *
+   * The desktop app has no login screen, so without this the renderer has no
+   * user id and every per-user surface (calendar / notes / documents) silently
+   * renders empty and silently refuses to write. The main process owns the
+   * `users` table, so it is the only side that can both mint the id and
+   * guarantee the row exists for the foreign keys those tables declare.
+   *
+   * Remote-denied (see bridgeAllowlist): a paired-device WebSocket caller
+   * authenticates through the webserver and must never be handed the local
+   * profile's identity.
+   */
+  get: buildProvider<LocalUserIdentity, void>('local-user.get'),
 };
 
 export const onboarding = {
@@ -1509,13 +1527,7 @@ export interface IConversationTurnCompletedEvent {
   sessionId: string;
   status: 'pending' | 'running' | 'finished';
   state:
-    | 'ai_generating'
-    | 'ai_waiting_input'
-    | 'ai_waiting_confirmation'
-    | 'initializing'
-    | 'stopped'
-    | 'error'
-    | 'unknown';
+    'ai_generating' | 'ai_waiting_input' | 'ai_waiting_confirmation' | 'initializing' | 'stopped' | 'error' | 'unknown';
   detail: string;
   canSendMessage: boolean;
   runtime: {
@@ -1955,8 +1967,7 @@ export const omnirouteGateway = {
 export type IjfwDropEntry = { name: string; size: number; mtimeMs: number };
 
 export type IjfwDropIngestResult =
-  | { ok: true; name: string }
-  | { ok: false; error: string; errorReason: IjfwErrorReason };
+  { ok: true; name: string } | { ok: false; error: string; errorReason: IjfwErrorReason };
 
 // --- Models & Providers redesign (Wave 0 contract) ------------------------
 // New two-tier model registry. Distinct from the legacy `providers` namespace

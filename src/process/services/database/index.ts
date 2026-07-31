@@ -242,6 +242,25 @@ export class DarhaiUIDatabase {
     return user ?? null;
   }
 
+  /**
+   * The local profile's own `users` row - the identity the desktop runtime acts
+   * as, since it has no login screen. Stable for the life of the profile.
+   *
+   * `initialize()` already seeds it, but this re-asserts the row instead of
+   * trusting that it did: every per-user table (calendar_events, notes,
+   * documents, ...) declares a foreign key onto `users(id)`, so a profile
+   * restored from an older backup - or a row removed by hand - would otherwise
+   * turn every write into a FOREIGN KEY failure.
+   */
+  getOrCreateSystemUser(): IUser {
+    this.ensureSystemUser();
+    const user = this.getSystemUser();
+    if (!user) {
+      throw new Error(`Failed to create the local system user row (${this.defaultUserId})`);
+    }
+    return user;
+  }
+
   setSystemUserCredentials(username: string, passwordHash: string): void {
     const now = Date.now();
     this.db
@@ -565,8 +584,7 @@ export class DarhaiUIDatabase {
   getConversation(conversationId: string): IQueryResult<TChatConversation> {
     try {
       const row = this.db.prepare('SELECT * FROM conversations WHERE id = ?').get(conversationId) as
-        | IConversationRow
-        | undefined;
+        IConversationRow | undefined;
 
       if (!row) {
         return {
@@ -1534,8 +1552,7 @@ export class DarhaiUIDatabase {
   getChannelSessionByUser(userId: string): IQueryResult<IChannelSession | null> {
     try {
       const row = this.db.prepare('SELECT * FROM assistant_sessions WHERE user_id = ?').get(userId) as
-        | IChannelSessionRow
-        | undefined;
+        IChannelSessionRow | undefined;
       return { success: true, data: row ? rowToChannelSession(row) : null };
     } catch (error: any) {
       return { success: false, error: error.message };
@@ -1617,8 +1634,7 @@ export class DarhaiUIDatabase {
   getPairingRequestByCode(code: string): IQueryResult<IChannelPairingRequest | null> {
     try {
       const row = this.db.prepare('SELECT * FROM assistant_pairing_codes WHERE code = ?').get(code) as
-        | IChannelPairingCodeRow
-        | undefined;
+        IChannelPairingCodeRow | undefined;
       return { success: true, data: row ? rowToPairingRequest(row) : null };
     } catch (error: any) {
       return { success: false, error: error.message };

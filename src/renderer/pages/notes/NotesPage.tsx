@@ -6,7 +6,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Notification, Switch } from '@arco-design/web-react';
+import { Button, Message, Notification, Switch } from '@arco-design/web-react';
 import { NotebookPen, Plus } from 'lucide-react';
 import { ipcBridge } from '@/common';
 import PageShell from '@renderer/components/layout/PageShell';
@@ -37,6 +37,21 @@ const NotesPage: React.FC = () => {
     return () => unsubscribe();
   }, [t]);
 
+  /**
+   * Run a note mutation and surface a rejection as a toast.
+   *
+   * Every one of these goes over the IPC bridge, which now rejects when the
+   * main-process handler throws. Without this the rejection would be silent to
+   * the user and land as an unhandled rejection in the console.
+   */
+  const runMutation = async (mutate: () => Promise<void>, failedLabel: string): Promise<void> => {
+    try {
+      await mutate();
+    } catch (error) {
+      Message.error(`${failedLabel}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  };
+
   const openCreate = (): void => {
     setEditing(null);
     setComposerOpen(true);
@@ -48,19 +63,26 @@ const NotesPage: React.FC = () => {
   };
 
   const handleSubmit = async (values: NoteComposerSubmit): Promise<void> => {
-    if (editing) {
-      await updateNote(editing.id, {
-        title: values.title ?? '',
-        content: values.content ?? '',
-        items: values.items ?? [],
-        noteType: values.noteType,
-        color: values.color ?? '',
-        label: values.label ?? '',
-        dueDateMs: values.dueDateMs ?? null,
-        repeat: values.repeat,
-      });
-    } else {
-      await createNote(values);
+    // A rejected write must tell the user and keep the composer open with their
+    // input intact - closing it would silently discard what they just typed.
+    try {
+      if (editing) {
+        await updateNote(editing.id, {
+          title: values.title ?? '',
+          content: values.content ?? '',
+          items: values.items ?? [],
+          noteType: values.noteType,
+          color: values.color ?? '',
+          label: values.label ?? '',
+          dueDateMs: values.dueDateMs ?? null,
+          repeat: values.repeat,
+        });
+      } else {
+        await createNote(values);
+      }
+    } catch (error) {
+      Message.error(`${t('common.saveFailed')}: ${error instanceof Error ? error.message : String(error)}`);
+      return;
     }
     setComposerOpen(false);
     setEditing(null);
@@ -100,10 +122,10 @@ const NotesPage: React.FC = () => {
         <NotesList
           notes={notes}
           onEdit={openEdit}
-          onDelete={deleteNote}
-          onTogglePin={togglePin}
-          onToggleArchive={toggleArchive}
-          onToggleItem={toggleItem}
+          onDelete={(noteId) => void runMutation(() => deleteNote(noteId), t('common.deleteFailed'))}
+          onTogglePin={(noteId) => void runMutation(() => togglePin(noteId), t('common.saveFailed'))}
+          onToggleArchive={(noteId) => void runMutation(() => toggleArchive(noteId), t('common.saveFailed'))}
+          onToggleItem={(noteId, index) => void runMutation(() => toggleItem(noteId, index), t('common.saveFailed'))}
         />
       )}
 

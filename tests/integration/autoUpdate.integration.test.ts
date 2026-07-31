@@ -6,20 +6,24 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
+// Handlers registered through `.provider(fn)`, keyed by provider key.
+// `ipcBridge.*.provider` is no longer the platform's own mock - it is the
+// error-propagation wrapper (src/common/adapter/bridgeError.ts) - so the
+// registered handler is captured here at the platform seam instead.
+const { registeredProviderHandlers } = vi.hoisted(() => ({
+  registeredProviderHandlers: new Map<string, Function>(),
+}));
+
 // Mock @office-ai/platform at module level (before any imports)
 vi.mock('@office-ai/platform', () => ({
   bridge: {
-    buildProvider: vi.fn(() => {
-      const handlerMap = new Map<string, Function>();
-      return {
-        provider: vi.fn((handler: Function) => {
-          handlerMap.set('handler', handler);
-          return vi.fn();
-        }),
-        invoke: vi.fn(),
-        _getHandler: () => handlerMap.get('handler'),
-      };
-    }),
+    buildProvider: vi.fn((key: string) => ({
+      provider: vi.fn((handler: Function) => {
+        registeredProviderHandlers.set(key, handler);
+        return vi.fn();
+      }),
+      invoke: vi.fn(),
+    })),
     buildEmitter: vi.fn(() => ({
       emit: vi.fn(),
       on: vi.fn(),
@@ -155,16 +159,15 @@ describe('Auto-Update IPC Bridge Integration', () => {
     it('should set allowPrerelease before checking', async () => {
       const { initUpdateBridge } = await import('@process/bridge/updateBridge');
       const { autoUpdaterService } = await import('@/process/services/autoUpdaterService');
-      const { ipcBridge } = await import('@/common');
+      await import('@/common');
 
       autoUpdaterService.resetForTest();
       initUpdateBridge();
 
       // Hard assert: the handler must have been registered
-      const checkProviderCalls = vi.mocked(ipcBridge.autoUpdate.check.provider).mock.calls;
-      expect(checkProviderCalls.length).toBeGreaterThan(0);
-
-      const checkHandler = checkProviderCalls[0][0];
+      const checkHandler = registeredProviderHandlers.get('auto-update.check') as (params: {
+        includePrerelease?: boolean;
+      }) => Promise<unknown>;
       expect(typeof checkHandler).toBe('function');
 
       // Initialize service so the handler can actually run

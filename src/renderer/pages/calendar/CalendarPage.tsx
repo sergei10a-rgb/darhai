@@ -6,7 +6,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Notification, Radio } from '@arco-design/web-react';
+import { Button, Message, Notification, Radio } from '@arco-design/web-react';
 import { CalendarDays, CalendarPlus } from 'lucide-react';
 import { ipcBridge } from '@/common';
 import PageShell from '@renderer/components/layout/PageShell';
@@ -71,36 +71,48 @@ const CalendarPage: React.FC = () => {
   };
 
   const handleSubmit = async (values: EventComposerSubmit): Promise<void> => {
-    if (editing) {
-      await updateEvent(editing.id, {
-        title: values.title ?? '',
-        description: values.description ?? '',
-        location: values.location ?? '',
-        startMs: values.startMs,
-        endMs: values.endMs,
-        allDay: values.allDay,
-        rrule: values.rrule ?? null,
-        reminderLeadMs: values.reminderLeadMs ?? null,
-        color: values.color ?? '',
-      });
-    } else {
-      await createEvent({
-        title: values.title,
-        description: values.description,
-        location: values.location,
-        startMs: values.startMs,
-        endMs: values.endMs,
-        allDay: values.allDay,
-        rrule: values.rrule,
-        reminderLeadMs: values.reminderLeadMs ?? undefined,
-        color: values.color,
-      });
+    // A rejected write must tell the user and keep the composer open with their
+    // input intact - closing it would silently discard what they just typed.
+    try {
+      if (editing) {
+        await updateEvent(editing.id, {
+          title: values.title ?? '',
+          description: values.description ?? '',
+          location: values.location ?? '',
+          startMs: values.startMs,
+          endMs: values.endMs,
+          allDay: values.allDay,
+          rrule: values.rrule ?? null,
+          reminderLeadMs: values.reminderLeadMs ?? null,
+          color: values.color ?? '',
+        });
+      } else {
+        await createEvent({
+          title: values.title,
+          description: values.description,
+          location: values.location,
+          startMs: values.startMs,
+          endMs: values.endMs,
+          allDay: values.allDay,
+          rrule: values.rrule,
+          reminderLeadMs: values.reminderLeadMs ?? undefined,
+          color: values.color,
+        });
+      }
+    } catch (error) {
+      Message.error(`${t('common.saveFailed')}: ${error instanceof Error ? error.message : String(error)}`);
+      return;
     }
     closeComposer();
   };
 
   const handleDelete = async (eventId: string): Promise<void> => {
-    await deleteEvent(eventId);
+    try {
+      await deleteEvent(eventId);
+    } catch (error) {
+      Message.error(`${t('common.deleteFailed')}: ${error instanceof Error ? error.message : String(error)}`);
+      return;
+    }
     closeComposer();
   };
 

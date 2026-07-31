@@ -67,6 +67,7 @@ import { initHwfitBridge } from './hwfitBridge';
 import { initCookbookBridge } from './cookbookBridge';
 import { initCompareBridge } from './compareBridge';
 import { initFusionBridge } from './fusionBridge';
+import { initLocalUserBridge } from './localUserBridge';
 import { initNoteBridge } from './noteBridge';
 import { initCalendarBridge } from './calendarBridge';
 import { initDocumentsBridge } from './documentsBridge';
@@ -151,6 +152,7 @@ export function initAllBridges(deps: BridgeDependencies): void {
   initCookbookBridge();
   initCompareBridge();
   initFusionBridge();
+  initLocalUserBridge();
   initNoteBridge();
   initCalendarBridge();
   initDocumentsBridge();
@@ -230,6 +232,7 @@ export {
   initCookbookBridge,
   initCompareBridge,
   initFusionBridge,
+  initLocalUserBridge,
   initNoteBridge,
   initCalendarBridge,
   initDocumentsBridge,

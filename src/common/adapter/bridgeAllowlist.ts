@@ -30,6 +30,7 @@
  */
 
 import { bridge, storage } from '@office-ai/platform';
+import { withBridgeErrorPropagation } from './bridgeError';
 
 /** Keys registered via `buildProvider` (main-process providers, renderer invokes). */
 const providerKeys = new Set<string>();
@@ -66,16 +67,20 @@ const CONTROL_ALLOWED: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * Wrap `bridge.buildProvider` so every declared provider key is recorded.
+ * Wrap `bridge.buildProvider` so every declared provider key is recorded AND
+ * handler failures reach the caller.
  *
- * Returned object is identical in shape and behavior to the platform's
- * `buildProvider` - this is a pure side-effect wrapper.
+ * The returned object has the platform's shape. Two behaviours are added:
+ *   - the key is recorded in the C1 inbound allowlist (side effect only), and
+ *   - `withBridgeErrorPropagation` repairs the platform's missing error path,
+ *     so a provider that throws rejects the caller's promise instead of leaving
+ *     it pending forever. See `bridgeError.ts` for the wire format.
  */
 export function buildProvider<Data extends unknown, Params extends unknown = undefined>(
   key: string
 ): ReturnType<typeof bridge.buildProvider<Data, Params>> {
   providerKeys.add(key);
-  return bridge.buildProvider<Data, Params>(key);
+  return withBridgeErrorPropagation<Data, Params>(key, bridge.buildProvider<Data, Params>(key));
 }
 
 /**
@@ -275,6 +280,12 @@ const REMOTE_DENIED_KEYS: ReadonlySet<string> = new Set([
   //     wcoreToolKeys.set (already denied). The read-only onboarding.infer-focus
   //     stays allowed. ---
   'onboarding.connect-pasted-key',
+  // --- Desktop-local identity. `local-user.get` answers "which row in `users`
+  //     is this machine's own profile". A paired-device WS caller has its own
+  //     authenticated identity from the webserver and must never be handed the
+  //     local one: that would let it read and write the host user's calendar /
+  //     notes / documents rows under the host's id. Local renderer only. ---
+  'local-user.get',
   // --- Cost observability (WS-D / WS-F). The whole cost.* namespace is already
   //     denied to remote callers via the `cost.` prefix above; these exact keys
   //     are enumerated for documentation + defence-in-depth. byConversation +

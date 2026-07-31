@@ -11,19 +11,23 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+// Handlers registered through `.provider(fn)`, keyed by provider key.
+// `ipcBridge.*.provider` is no longer the platform's own mock - it is the
+// error-propagation wrapper (src/common/adapter/bridgeError.ts) - so the
+// registered handler is captured here at the platform seam instead.
+const { registeredProviderHandlers } = vi.hoisted(() => ({
+  registeredProviderHandlers: new Map<string, Function>(),
+}));
+
 vi.mock('@office-ai/platform', () => ({
   bridge: {
-    buildProvider: vi.fn(() => {
-      const handlerMap = new Map<string, Function>();
-      return {
-        provider: vi.fn((handler: Function) => {
-          handlerMap.set('handler', handler);
-          return vi.fn();
-        }),
-        invoke: vi.fn(),
-        _getHandler: () => handlerMap.get('handler'),
-      };
-    }),
+    buildProvider: vi.fn((key: string) => ({
+      provider: vi.fn((handler: Function) => {
+        registeredProviderHandlers.set(key, handler);
+        return vi.fn();
+      }),
+      invoke: vi.fn(),
+    })),
     buildEmitter: vi.fn(() => ({
       emit: vi.fn(),
       on: vi.fn(),
@@ -77,14 +81,13 @@ const CANONICAL_REPO = 'sergei10a-rgb/darhai';
 const getCheckHandler = async () => {
   vi.resetModules();
   const { initUpdateBridge } = await import('@process/bridge/updateBridge');
-  const { ipcBridge } = await import('@/common');
+  await import('@/common');
 
   initUpdateBridge();
 
-  const provider = vi.mocked(ipcBridge.update.check.provider);
-  const lastCall = provider.mock.calls.at(-1);
-  if (!lastCall) throw new Error('update.check handler not registered');
-  return lastCall[0];
+  const handler = registeredProviderHandlers.get('update.check');
+  if (!handler) throw new Error('update.check handler not registered');
+  return handler as (params: { repo?: string; includePrerelease?: boolean }) => Promise<{ success: boolean }>;
 };
 
 /** Extract every distinct GitHub API repo slug the handler fetched. */

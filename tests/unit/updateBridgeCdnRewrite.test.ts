@@ -6,19 +6,23 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+// Handlers registered through `.provider(fn)`, keyed by provider key.
+// `ipcBridge.*.provider` is no longer the platform's own mock - it is the
+// error-propagation wrapper (src/common/adapter/bridgeError.ts) - so the
+// registered handler is captured here at the platform seam instead.
+const { registeredProviderHandlers } = vi.hoisted(() => ({
+  registeredProviderHandlers: new Map<string, Function>(),
+}));
+
 vi.mock('@office-ai/platform', () => ({
   bridge: {
-    buildProvider: vi.fn(() => {
-      const handlerMap = new Map<string, Function>();
-      return {
-        provider: vi.fn((handler: Function) => {
-          handlerMap.set('handler', handler);
-          return vi.fn();
-        }),
-        invoke: vi.fn(),
-        _getHandler: () => handlerMap.get('handler'),
-      };
-    }),
+    buildProvider: vi.fn((key: string) => ({
+      provider: vi.fn((handler: Function) => {
+        registeredProviderHandlers.set(key, handler);
+        return vi.fn();
+      }),
+      invoke: vi.fn(),
+    })),
     buildEmitter: vi.fn(() => ({
       emit: vi.fn(),
       on: vi.fn(),
@@ -101,17 +105,27 @@ const makeGitHubReleaseResponse = () => [
   },
 ];
 
-const getCheckHandler = async () => {
+/** Handler signatures, taken straight from the bridge declaration (type-only). */
+type UpdateBridge = (typeof import('@/common'))['ipcBridge']['update'];
+type CheckHandler = Parameters<UpdateBridge['check']['provider']>[0];
+type DownloadHandler = Parameters<UpdateBridge['download']['provider']>[0];
+
+const getCheckHandler = async (): Promise<CheckHandler> => {
   vi.resetModules();
   const { initUpdateBridge } = await import('@process/bridge/updateBridge');
-  const { ipcBridge } = await import('@/common');
+  await import('@/common');
 
   initUpdateBridge();
 
-  const provider = vi.mocked(ipcBridge.update.check.provider);
-  const lastCall = provider.mock.calls.at(-1);
-  if (!lastCall) throw new Error('update.check handler not registered');
-  return lastCall[0];
+  const handler = registeredProviderHandlers.get('update.check');
+  if (!handler) throw new Error('update.check handler not registered');
+  return handler as CheckHandler;
+};
+
+const getDownloadHandler = (): DownloadHandler => {
+  const handler = registeredProviderHandlers.get('update.download');
+  if (!handler) throw new Error('update.download handler not registered');
+  return handler as DownloadHandler;
 };
 
 describe('updateBridge GitHub asset URLs', () => {
@@ -169,14 +183,11 @@ describe('updateBridge download allowlist', () => {
 
     try {
       const { initUpdateBridge } = await import('@process/bridge/updateBridge');
-      const { ipcBridge } = await import('@/common');
+      await import('@/common');
 
       initUpdateBridge();
 
-      const provider = vi.mocked(ipcBridge.update.download.provider);
-      const lastCall = provider.mock.calls.at(-1);
-      if (!lastCall) throw new Error('update.download handler not registered');
-      const handler = lastCall[0];
+      const handler = getDownloadHandler();
 
       // UPD-02: the secure download path requires `tagName` so the downloaded
       // bytes can be sha512-verified against the signed GitHub release metadata
@@ -200,14 +211,11 @@ describe('updateBridge download allowlist', () => {
     vi.clearAllMocks();
 
     const { initUpdateBridge } = await import('@process/bridge/updateBridge');
-    const { ipcBridge } = await import('@/common');
+    await import('@/common');
 
     initUpdateBridge();
 
-    const provider = vi.mocked(ipcBridge.update.download.provider);
-    const lastCall = provider.mock.calls.at(-1);
-    if (!lastCall) throw new Error('update.download handler not registered');
-    const handler = lastCall[0];
+    const handler = getDownloadHandler();
 
     const result = await handler({
       url: 'https://evil.example.com/fake.dmg',
