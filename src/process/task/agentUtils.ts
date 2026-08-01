@@ -229,17 +229,32 @@ export async function buildTurnSkillContext(
     try {
       const body = await SkillLibrary.getInstance().loadBody(top.name);
       if (body) {
-        // A truncated skill is a skill cut mid-sentence: the model gets the
-        // opening 3k characters of a body that averages 24k, which is often
-        // just the preamble. Naming the tool that returns the rest turns a
-        // dead end into a choice - and that tool only became usable once
-        // search stopped inlining every body (it used to cost ~149k tokens,
-        // so "fetch the rest" was not a real option).
-        const capped =
-          body.length > AUTOLOAD_BODY_CHAR_CAP
-            ? `${body.slice(0, AUTOLOAD_BODY_CHAR_CAP)}\n…[truncated - ${body.length - AUTOLOAD_BODY_CHAR_CAP} more characters. Call \`${BUILTIN_READ_SKILL_TOOL_NAME}\` with name "${top.name}" for the full text.]`
-            : body;
-        autoBody = `[Auto-loaded skill: ${top.name}]\n${capped}`;
+        if (body.length <= AUTOLOAD_BODY_CHAR_CAP) {
+          // Small enough to be complete. A whole short skill is worth more
+          // than a pointer to it, and costs about the same.
+          autoBody = `[Auto-loaded skill: ${top.name}]\n${body}`;
+        } else {
+          // OFFER, do not truncate.
+          //
+          // The old behaviour spent 3,000 characters of a body averaging
+          // 24,000 - the opening 12%, which is usually preamble. That is more
+          // than a decision needs and less than the work needs: the model
+          // could not act on it, and could not tell it was missing the part
+          // that mattered. Worse, fetching the rest re-sent those 3,000
+          // characters, so the useful case paid for them twice.
+          //
+          // A description is ~480 characters and answers the only question
+          // being asked here - "is this the skill for this turn?". If the
+          // answer is yes the model fetches all of it; if no, the turn cost
+          // ~120 tokens instead of ~750. This only became the better trade
+          // once `darhai_read_skill` existed: before that, search inlined
+          // every body at ~149k tokens, so "go and get it" was not a real
+          // instruction.
+          autoBody =
+            `[Relevant skill: ${top.name}]\n${top.description}\n` +
+            `(${body.length.toLocaleString()} characters. If this fits the task, call \`${BUILTIN_READ_SKILL_TOOL_NAME}\` ` +
+            `with name "${top.name}" to read it in full before you start.)`;
+        }
         autoLoaded = [{ name: top.name, description: top.description }];
       }
     } catch {

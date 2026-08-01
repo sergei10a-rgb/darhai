@@ -12,6 +12,7 @@ import { SkillGuard } from '@process/services/skills/SkillGuard';
 import { SkillLibrary } from '@process/services/skills/SkillLibrary';
 import { SkillImport } from '@process/services/skills/SkillImport';
 import { SkillQuarantine } from '@process/services/skills/SkillQuarantine';
+import { SkillRetriever } from '@process/services/skills/SkillRetriever';
 import { ProcessConfig } from '@process/utils/initStorage';
 import { loadTeamSkills } from '@process/extensions/data/bundle-vendored/teamSkillMerge';
 import { loadCliSkills } from '@process/services/skills/CliSkillDiscovery';
@@ -134,6 +135,44 @@ export function initSkillsBridge(): void {
 
   ipcBridge.skills.getBody.provider(async ({ name }) => {
     return SkillLibrary.getInstance().loadBody(name);
+  });
+
+  /**
+   * Rank the library for the `/skill` autocomplete.
+   *
+   * Uses the same BM25 retriever the agent does, so what the user is offered
+   * when they type is what the model would have found on its own - one library,
+   * one ranking, whichever way you reach it.
+   *
+   * Prefix-matched names are hoisted above BM25 hits: someone typing `/skill
+   * kube` is naming a skill, not describing a task, and expects the name they
+   * are spelling to be first.
+   */
+  ipcBridge.skills.search.provider(async ({ query, limit }) => {
+    const capped = Math.min(Math.max(1, limit ?? 10), 25);
+    const trimmed = (query ?? '').trim();
+    const lib = SkillLibrary.getInstance();
+    const entries = await lib.list({ type: 'skill' });
+
+    if (!trimmed) {
+      return entries.slice(0, capped).map((e) => ({ name: e.name, description: e.description ?? '' }));
+    }
+
+    const lower = trimmed.toLowerCase();
+    const byPrefix = entries.filter((e) => e.name.toLowerCase().startsWith(lower));
+
+    SkillRetriever.resetInstance();
+    const ranked = SkillRetriever.getInstance({ entries }).retrieve(trimmed, capped);
+
+    const seen = new Set<string>();
+    const out: Array<{ name: string; description: string }> = [];
+    for (const e of [...byPrefix, ...ranked]) {
+      if (seen.has(e.name)) continue;
+      seen.add(e.name);
+      out.push({ name: e.name, description: e.description ?? '' });
+      if (out.length >= capped) break;
+    }
+    return out;
   });
 
   ipcBridge.skills.updateBody.provider(async ({ name, body }) => {

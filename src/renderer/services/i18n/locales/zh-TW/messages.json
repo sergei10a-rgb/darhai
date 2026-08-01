@@ -67,5 +67,9 @@
     "yesAlwaysAllowTool": "是，始終允許來自伺服器 \"{{serverName}}\" 的工具 \"{{toolName}}\"",
     "yesAlwaysAllowServer": "是，始終允許來自伺服器 \"{{serverName}}\" 的所有工具",
     "no": "否 (esc)"
+  },
+  "skillSlash": {
+    "empty": "技能「{{name}}」沒有內容",
+    "failed": "無法讀取技能「{{name}}」"
   }
 }

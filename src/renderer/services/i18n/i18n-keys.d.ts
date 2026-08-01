@@ -1504,6 +1504,8 @@ export type I18nKey =
   | 'messages.processing'
   | 'messages.responseSentSuccessfully'
   | 'messages.scrollToBottom'
+  | 'messages.skillSlash.empty'
+  | 'messages.skillSlash.failed'
   | 'messages.slash.empty'
   | 'messages.slash.hint'
   | 'messages.slash.title'

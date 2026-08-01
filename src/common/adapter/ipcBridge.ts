@@ -411,6 +411,17 @@ export const skills = {
    */
   getBody: buildProvider<string | null, { name: string }>('skills.get-body'),
   /**
+   * Rank the library for a typed prefix, for the `/skill` autocomplete.
+   *
+   * A separate verb from `list` because `list` returns all ~2,470 entries -
+   * about 1.2 MB over IPC - which is fine for the Skills settings page loading
+   * once, and far too slow to run on every keystroke. This returns the top few
+   * with no bodies.
+   */
+  search: buildProvider<Array<{ name: string; description: string }>, { query: string; limit?: number }>(
+    'skills.search'
+  ),
+  /**
    * Overwrite a user-editable skill's SKILL.md body. Re-scans the new body
    * (SkillGuard); a `blocked` verdict is rejected and the body is NOT written.
    * Only `user`/`imported` source skills are editable - bundled skills are
@@ -1535,7 +1546,13 @@ export interface IConversationTurnCompletedEvent {
   sessionId: string;
   status: 'pending' | 'running' | 'finished';
   state:
-    'ai_generating' | 'ai_waiting_input' | 'ai_waiting_confirmation' | 'initializing' | 'stopped' | 'error' | 'unknown';
+    | 'ai_generating'
+    | 'ai_waiting_input'
+    | 'ai_waiting_confirmation'
+    | 'initializing'
+    | 'stopped'
+    | 'error'
+    | 'unknown';
   detail: string;
   canSendMessage: boolean;
   runtime: {
@@ -2025,7 +2042,8 @@ export const omnirouteGateway = {
 export type IjfwDropEntry = { name: string; size: number; mtimeMs: number };
 
 export type IjfwDropIngestResult =
-  { ok: true; name: string } | { ok: false; error: string; errorReason: IjfwErrorReason };
+  | { ok: true; name: string }
+  | { ok: false; error: string; errorReason: IjfwErrorReason };
 
 // --- Models & Providers redesign (Wave 0 contract) ------------------------
 // New two-tier model registry. Distinct from the legacy `providers` namespace

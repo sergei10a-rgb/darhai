@@ -67,5 +67,9 @@
   },
   "atFile.hint": "Введите текст для поиска файлов",
   "atFile.menuLabel": "Упоминания файлов",
-  "atFile.loading": "Загрузка..."
+  "atFile.loading": "Загрузка...",
+  "skillSlash": {
+    "empty": "Навык «{{name}}» пуст",
+    "failed": "Не удалось прочитать навык «{{name}}»"
+  }
 }

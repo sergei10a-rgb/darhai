@@ -67,5 +67,9 @@
     "yesAlwaysAllowTool": "Evet, \"{{serverName}}\" sunucusundan \"{{toolName}}\" aracına her zaman izin ver",
     "yesAlwaysAllowServer": "Evet, \"{{serverName}}\" sunucusundaki tüm araçlara her zaman izin ver",
     "no": "Hayır (esc)"
+  },
+  "skillSlash": {
+    "empty": "\"{{name}}\" becerisinin içeriği yok",
+    "failed": "\"{{name}}\" becerisi okunamadı"
   }
 }

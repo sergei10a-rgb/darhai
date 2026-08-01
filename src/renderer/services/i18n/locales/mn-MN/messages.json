@@ -67,5 +67,9 @@
     "yesAlwaysAllowTool": "Тийм, \"{{serverName}}\" серверээс \"{{toolName}}\" хэрэгслийг үргэлж зөвшөөрөх",
     "yesAlwaysAllowServer": "Тийм, \"{{serverName}}\" серверээс бүх хэрэгслийг үргэлж зөвшөөрөх",
     "no": "Үгүй (esc)"
+  },
+  "skillSlash": {
+    "empty": "«{{name}}» скиллийн агуулга хоосон байна",
+    "failed": "«{{name}}» скиллийг уншиж чадсангүй"
   }
 }

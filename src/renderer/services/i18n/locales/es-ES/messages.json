@@ -67,5 +67,9 @@
     "yesAlwaysAllowTool": "Sí, permitir siempre la herramienta \"{{toolName}}\" del servidor \"{{serverName}}\"",
     "yesAlwaysAllowServer": "Sí, permitir siempre todas las herramientas del servidor \"{{serverName}}\"",
     "no": "No (esc)"
+  },
+  "skillSlash": {
+    "empty": "La habilidad «{{name}}» no tiene contenido",
+    "failed": "No se pudo leer la habilidad «{{name}}»"
   }
 }

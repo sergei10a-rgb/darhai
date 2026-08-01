@@ -11,6 +11,7 @@ import { useInputFocusRing } from '@/renderer/hooks/chat/useInputFocusRing';
 import SlashCommandMenu, { type SlashCommandMenuItem } from '@/renderer/components/chat/SlashCommandMenu';
 import { useBtwCommand } from '@/renderer/components/chat/BtwOverlay/useBtwCommand';
 import { useSlashCommandController } from '@/renderer/hooks/chat/useSlashCommandController';
+import { useSkillSlashCommands } from '@/renderer/hooks/chat/useSkillSlashCommands';
 import { useLayoutContext } from '@/renderer/hooks/context/LayoutContext';
 import { useConversationContextSafe } from '@/renderer/hooks/context/ConversationContext';
 import { usePreviewContext } from '@/renderer/pages/conversation/Preview';
@@ -425,6 +426,11 @@ const SendBox: React.FC<{
     return commands;
   }, [conversationContext?.conversationId, enableBtw, onSlashBuiltinCommand, t]);
 
+  // Skills the user is naming directly. Queried per keystroke rather than
+  // cached: 2,470 entries is ~1.2 MB, too much to hold in the menu.
+  const skillSlashCommands = useSkillSlashCommands(input);
+  const skillNames = useMemo(() => new Set(skillSlashCommands.map((command) => command.name)), [skillSlashCommands]);
+
   const mergedSlashCommands = useMemo(() => {
     const map = new Map<string, SlashCommandItem>();
     for (const command of builtinSlashCommands) {
@@ -435,13 +441,46 @@ const SendBox: React.FC<{
         map.set(command.name, command);
       }
     }
+    // Skills go LAST so an app or agent command always wins a name clash - a
+    // user typing `/export` means the export command, even if some skill in a
+    // 2,470-entry library happens to be called that.
+    for (const command of skillSlashCommands) {
+      if (!map.has(command.name)) {
+        map.set(command.name, command);
+      }
+    }
     return Array.from(map.values());
-  }, [builtinSlashCommands, slashCommands]);
+  }, [builtinSlashCommands, slashCommands, skillSlashCommands]);
 
   const slashController = useSlashCommandController({
     input,
     commands: mergedSlashCommands,
     onExecuteBuiltin: (name) => {
+      // A skill the user named on purpose. Insert it WHOLE and unprompted -
+      // no truncation, no "if this fits" hedge. The per-turn auto-loader
+      // trims because it is guessing; here the user already decided.
+      if (skillNames.has(name) && ipcBridge.skills?.getBody) {
+        void ipcBridge.skills.getBody
+          .invoke({ name })
+          .then((body) => {
+            if (!body) {
+              Message.warning(t('messages.skillSlash.empty', { name }));
+              return;
+            }
+            // Drop the `/name` the user typed; keep anything around it.
+            // `latestInputRef` rather than the `input` prop: this runs after an
+            // await, and the prop captured at render time may already be stale.
+            const current = latestInputRef.current ?? '';
+            const withoutCommand = current.replace(/(^|\s)\/[^\s]*$/, '$1');
+            const separator = withoutCommand && !withoutCommand.endsWith('\n') ? '\n' : '';
+            setInput(`${withoutCommand}${separator}${body}\n`);
+          })
+          .catch(() => {
+            Message.error(t('messages.skillSlash.failed', { name }));
+          });
+        return;
+      }
+
       if (name === 'copy') {
         const lastAssistantText = getLastAssistantText(messageList, Boolean(loading));
         if (!lastAssistantText) {

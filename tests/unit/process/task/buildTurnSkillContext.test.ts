@@ -143,20 +143,28 @@ describe('buildTurnSkillContext', () => {
     expect(ctx.advert).not.toContain('stripe-webhook-signing');
   });
 
-  it('caps an oversized auto-loaded body AND says how to get the rest', async () => {
+  it('OFFERS an oversized skill instead of injecting a truncated one', async () => {
     libState.bodies = { 'stripe-webhook-signing': 'x'.repeat(5000) };
     const ctx = await buildTurnSkillContext('verify stripe webhook signature payload');
 
-    expect(ctx.advert).toContain('[truncated');
-    // Body slice (3000) + markers, well under the raw 5000.
-    expect(ctx.advert.length).toBeLessThan(3600);
+    // The old behaviour spent 3,000 characters of a body averaging 24,000 -
+    // the opening 12%, usually preamble. More than a decision needs, less than
+    // the work needs, and the useful case then paid for those characters twice
+    // when it fetched the rest.
+    expect(ctx.advert, 'the body was injected instead of offered').not.toContain('x'.repeat(500));
+    expect(ctx.advert.length, 'the offer is not much smaller than the truncated body was').toBeLessThan(1200);
 
-    // A skill cut at 3k out of a body averaging 24k is often just the
-    // preamble. Naming the tool that returns the rest turns a dead end into a
-    // choice - and it only became a real choice once search stopped inlining
-    // every body, which used to make "fetch the rest" cost ~149k tokens.
-    expect(ctx.advert, 'the truncation notice does not say how to continue').toContain('darhai_read_skill');
-    expect(ctx.advert, 'the notice does not name the skill to ask for').toContain('stripe-webhook-signing');
-    expect(ctx.advert, 'the notice does not say how much is missing').toContain('2000');
+    // What the model needs to decide: what it is, how big, how to get it.
+    expect(ctx.advert).toContain('stripe-webhook-signing');
+    expect(ctx.advert, 'the offer does not say how to read it').toContain('darhai_read_skill');
+    expect(ctx.advert, 'the offer does not say how large the skill is').toContain('5,000');
+  });
+
+  it('still injects a short skill whole - a pointer would cost the same', async () => {
+    libState.bodies = { 'stripe-webhook-signing': '# Short skill\nDo the thing.' };
+    const ctx = await buildTurnSkillContext('verify stripe webhook signature payload');
+
+    expect(ctx.advert).toContain('Do the thing.');
+    expect(ctx.advert).not.toContain('darhai_read_skill');
   });
 });
