@@ -10,6 +10,7 @@ import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { getDataPath } from '@process/utils';
 import { closeDatabase, getDatabase } from '@process/services/database/export';
+import { AUTH_CONFIG } from '@process/webserver/config/constants';
 import path from 'path';
 
 // Color output
@@ -42,9 +43,13 @@ const hashPasswordAsync = (password: string, saltRounds: number): Promise<string
     });
   });
 
-// Hash password using bcrypt
+// Hash password using bcrypt.
+//
+// The cost factor comes from AUTH_CONFIG, not a literal: this path used to
+// hash at 10 while every other path used 12, which quietly made a
+// CLI-recovered admin password the weakest credential in the system.
 async function hashPassword(password: string): Promise<string> {
-  return await hashPasswordAsync(password, 10);
+  return await hashPasswordAsync(password, AUTH_CONFIG.PASSWORD.SALT_ROUNDS);
 }
 
 // Generate random password

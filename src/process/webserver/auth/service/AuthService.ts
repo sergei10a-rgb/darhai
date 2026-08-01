@@ -89,7 +89,7 @@ const DUMMY_BCRYPT_HASH = '$2a$12$s5cKddFA1hp06nhAubmZa.eT3/xT9Bmve36cul7fZ6ch2m
  * Authentication Service - handles password hashing, token issuance, and validation
  */
 export class AuthService {
-  private static readonly SALT_ROUNDS = 12;
+  private static readonly SALT_ROUNDS = AUTH_CONFIG.PASSWORD.SALT_ROUNDS;
   private static jwtSecret: string | null = null;
   private static readonly TOKEN_EXPIRY = AUTH_CONFIG.TOKEN.SESSION_EXPIRY;
 

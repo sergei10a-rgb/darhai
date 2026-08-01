@@ -676,7 +676,14 @@ const getDefaultMcpServers = (): IMcpServer[] => {
     mcpServers: {
       'chrome-devtools': {
         command: 'npx',
-        args: ['-y', 'chrome-devtools-mcp@latest'],
+        // Pinned, not `@latest`. `npx -y <pkg>@latest` resolves and executes
+        // whatever is newest AT SPAWN TIME, on the user's machine, with no
+        // review step - so a compromised release of this package would run
+        // arbitrary code for every user who has this server enabled. npm does
+        // not allow republishing an existing version, so a pin is the one
+        // thing that makes "what ran yesterday is what runs today" true.
+        // Bump this deliberately when the upgrade has been looked at.
+        args: ['-y', 'chrome-devtools-mcp@1.6.0'],
       },
     },
   };

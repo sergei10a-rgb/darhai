@@ -10,6 +10,7 @@ import type { LoadedExtension } from '../types';
 import { BUILTIN_SETTINGS_TAB_IDS } from '../types';
 import { isPathWithinDirectory } from '../sandbox/pathSafety';
 import { toAssetUrl } from '../protocol/assetProtocol';
+import { checkRemoteUrl, describeRemoteUrlRefusal } from './utils/remoteUrlPolicy';
 import { resolveRuntimeEntryPath } from './utils/entryPointResolver';
 
 /**
@@ -22,7 +23,7 @@ export type ResolvedSettingsTab = {
   name: string;
   /** Icon URL (wayland-asset:// or undefined) */
   icon?: string;
-  /** Content URL (wayland-asset:// local asset or external https:// URL) */
+  /** Content URL: a darhai-asset:// local asset, or an https:// URL (http only on loopback) */
   entryUrl: string;
   /** Position anchor relative to a built-in or other extension tab */
   position?: { anchor: string; placement: 'before' | 'after' };
@@ -62,19 +63,16 @@ export function resolveSettingsTabs(extensions: LoadedExtension[]): ResolvedSett
       let entryUrl: string;
 
       if (isExternalEntry) {
-        try {
-          const external = new URL(tab.entryPoint);
-          if (external.protocol !== 'http:' && external.protocol !== 'https:') {
-            console.warn(
-              `[Extensions] Unsupported settings tab external protocol: ${tab.entryPoint} (extension: ${extName})`
-            );
-            continue;
-          }
-          entryUrl = external.toString();
-        } catch {
-          console.warn(`[Extensions] Invalid settings tab external URL: ${tab.entryPoint} (extension: ${extName})`);
+        // This URL is loaded INSIDE the desktop app, so cleartext http from a
+        // remote host is script injection waiting for a hostile network.
+        const verdict = checkRemoteUrl(tab.entryPoint);
+        if (!verdict.allowed) {
+          console.warn(
+            `[Extensions] Settings tab entry refused - ${describeRemoteUrlRefusal(verdict.reason)}: ${tab.entryPoint} (extension: ${extName})`
+          );
           continue;
         }
+        entryUrl = verdict.url;
       } else {
         const absEntry = resolveRuntimeEntryPath(extDir, tab.entryPoint);
         if (!absEntry) {

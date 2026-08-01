@@ -38,6 +38,22 @@ export const AUTH_CONFIG = {
     WINDOW_MS: 15 * 60 * 1000,
   },
 
+  // Password hashing configuration
+  PASSWORD: {
+    /**
+     * bcrypt cost factor. ONE value for every path that stores a password.
+     *
+     * It lives here rather than beside each hashing call because it drifted
+     * once already: the `--resetpass` CLI hashed at 10 while the web login
+     * path hashed at 12, so an admin who recovered their password through the
+     * CLI ended up with the weakest credential in the system - four times
+     * cheaper to brute-force than one set through the UI, with nothing on
+     * screen to say so. A single exported constant makes that class of drift
+     * impossible rather than merely unlikely.
+     */
+    SALT_ROUNDS: 12,
+  },
+
   // Default user configuration
   DEFAULT_USER: {
     // Default admin username
@@ -135,10 +151,7 @@ export const SERVER_CONFIG = {
  * would be spoofable. Use SERVER_BASE_URL or trust proxy + req.secure instead.
  */
 function detectHttps(req?: Request): boolean {
-  if (
-    process.env.DARHAI_HTTPS === 'true' ||
-    (process.env.NODE_ENV === 'production' && process.env.HTTPS === 'true')
-  ) {
+  if (process.env.DARHAI_HTTPS === 'true' || (process.env.NODE_ENV === 'production' && process.env.HTTPS === 'true')) {
     return true;
   }
 

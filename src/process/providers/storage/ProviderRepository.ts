@@ -43,9 +43,7 @@ export type RegistryOverride = { modelId: string; enabled: boolean };
  * without another repository change.
  */
 export type RegistryCredsResult =
-  | { status: 'ok'; creds: Record<string, unknown> }
-  | { status: 'not-found' }
-  | { status: 'undecryptable' };
+  { status: 'ok'; creds: Record<string, unknown> } | { status: 'not-found' } | { status: 'undecryptable' };
 
 // ─── Model-registry credential encryption ─────────────────────────────────────
 

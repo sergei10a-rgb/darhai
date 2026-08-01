@@ -78,10 +78,24 @@ let userId: string;
 let configured: ConfiguredServer;
 let mcp: McpSession;
 
-/** Local-midnight helpers so the "today" window matches the app's own. */
+/**
+ * An instant on the app's "today", at `hour` of the app's day.
+ *
+ * UTC on purpose. The visual fixture launches Electron with `TZ=UTC`, so the
+ * app - and the MCP subprocess it spawns - computes "today" in UTC, while this
+ * Playwright process runs in the machine's real zone. On a UTC+8 machine those
+ * two disagree for eight hours of every day: seeded at local 10:00 on Aug 2,
+ * the event lands at 02:00 UTC on Aug 2, one hour outside the app's Aug 1
+ * window, and the tool correctly returns nothing.
+ *
+ * This bit the suite for real - green all afternoon, red after 08:00 UTC - and
+ * it is exactly the class of bug that looks like a product defect. The app's
+ * own local-day handling is correct and separately covered; what has to match
+ * here is the app's clock, not this process's.
+ */
 function todayAtHour(hour: number): number {
   const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, 0, 0, 0).getTime();
+  return Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), hour, 0, 0, 0);
 }
 
 function toSpawnSpec(server: ConfiguredServer): McpSpawnSpec {
@@ -133,7 +147,12 @@ test.beforeAll(async () => {
     { userId, title: 'Quarterly plan', content: `Section one.\n${DOC_MARKER} is the acceptance token.\nSection two.` },
     30_000
   );
-  await invokeBridge(visual.page, 'memory.set-quick-add', { content: `${MEM_MARKER} latin memory probe`, scope: 'global' }, 30_000);
+  await invokeBridge(
+    visual.page,
+    'memory.set-quick-add',
+    { content: `${MEM_MARKER} latin memory probe`, scope: 'global' },
+    30_000
+  );
   await invokeBridge(visual.page, 'memory.set-quick-add', { content: MEM_CYRILLIC, scope: 'global' }, 30_000);
 
   // Connect here, not inside a test: Playwright starts a FRESH worker after any
