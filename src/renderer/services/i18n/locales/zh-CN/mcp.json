@@ -70,5 +70,17 @@
     "normal": "普通",
     "high": "高",
     "urgent": "紧急"
+  },
+  "confirm": {
+    "emailSend": {
+      "title": "发送这封邮件吗？",
+      "summary": "Дархай 已写好这封邮件，请你来发送。在你按下“发送”之前，不会有任何内容离开这台电脑。",
+      "confirm": "发送"
+    },
+    "cancel": "取消",
+    "toolLabel": "由 {{tool}} 发起",
+    "untrustedNotice": "以下内容按原样以纯文本显示。做决定的不是 Дархай，而是你。按下按钮前请先阅读。",
+    "emptyValue": "（空）",
+    "queued": "还有 {{count}} 项等待确认，每项需单独确认。"
   }
 }

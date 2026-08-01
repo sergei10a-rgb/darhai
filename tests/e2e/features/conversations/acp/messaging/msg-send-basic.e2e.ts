@@ -127,7 +127,7 @@ test.describe('F-MSG-01 Send text message - failure paths', () => {
     expect(result.msg ?? '', `rejection carried no reason: ${JSON.stringify(result)}`).not.toBe('');
 
     // And nothing may have been conjured into existence for that id.
-    const messages = await readPersistedMessages(page, missingId).catch(() => []);
+    const messages = await readPersistedMessages(page, missingId).catch((): unknown[] => []);
     expect(messages.length, `a missing conversation gained messages: ${JSON.stringify(messages)}`).toBe(0);
   });
 
@@ -166,8 +166,9 @@ test.describe('F-MSG-01 Send text message - failure paths', () => {
 
     // The agent binary really did exit before the handshake.
     const requests = readJsonRpcDump(conversation.dumpPath);
-    expect(requests.map((r) => r.method), `a dead agent answered JSON-RPC: ${JSON.stringify(requests)}`).not.toContain(
-      'session/prompt'
-    );
+    expect(
+      requests.map((r) => r.method),
+      `a dead agent answered JSON-RPC: ${JSON.stringify(requests)}`
+    ).not.toContain('session/prompt');
   });
 });

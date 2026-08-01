@@ -406,6 +406,14 @@ const REMOTE_DENIED_KEYS: ReadonlySet<string> = new Set([
   //     destructive-command DENY floor, so a paired-device WebSocket caller must
   //     never flip it; the read (hookGuard.get-status) stays allowed. ---
   'hookGuard.set-enabled',
+  // --- MCP tool-confirmation gate: `respond` IS the approval. It is the single
+  //     route by which "the user pressed Send" enters the app, so allowing a
+  //     paired device or the WebUI to call it would let a remote caller approve
+  //     an irreversible action (sending mail) on the host's behalf - exactly
+  //     what the gate exists to prevent. The dialog is shown in the host's own
+  //     window and only that window may answer it. `list-pending` is a read of
+  //     what is on screen and stays allowed. ---
+  'toolConfirmation.respond',
   // --- prompt compression: persisted config mutation (changes how prompts are
   //     transformed before every model call). A paired-device WebSocket caller
   //     must never flip it; the read (compression.get-mode) stays allowed. ---

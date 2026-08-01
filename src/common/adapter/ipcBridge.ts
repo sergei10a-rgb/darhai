@@ -1891,6 +1891,45 @@ export const hookGuard = {
 };
 
 /**
+ * MCP tool-confirmation gate.
+ *
+ * An MCP server is a spawned subprocess with no UI, so a tool that would do
+ * something irreversible - send an email, book a meeting - has no way to ask
+ * the user anything. This namespace is that way: main pushes `request`, the
+ * renderer shows a dialog, and the human's press comes back through `respond`.
+ *
+ * `respond` is the ONLY route to an approval, and it is remote-denied in the
+ * bridge allowlist: a paired device or the WebUI must never be able to press
+ * Send on the host's behalf, because the whole point of the gate is that the
+ * person sitting in front of this machine decided.
+ */
+export const toolConfirmation = {
+  /** main -> renderer: show a dialog for this request. */
+  request: buildEmitter<IToolConfirmationRequest>('toolConfirmation.request'),
+  /** main -> renderer: take the dialog down (timeout / app quitting). */
+  cancel: buildEmitter<{ requestId: string }>('toolConfirmation.cancel'),
+  /** renderer -> main: the human pressed a button. LOCAL WINDOW ONLY. */
+  respond: buildProvider<{ settled: boolean }, { requestId: string; approved: boolean }>('toolConfirmation.respond'),
+  /** renderer -> main: dialogs still open, so a reload can re-render them. */
+  listPending: buildProvider<IToolConfirmationRequest[], void>('toolConfirmation.list-pending'),
+};
+
+/** One labelled row of the confirmation dialog. `value` is always inert text. */
+export type IToolConfirmationDetail = { label: string; value: string };
+
+/** A pending confirmation as the renderer receives it. */
+export type IToolConfirmationRequest = {
+  requestId: string;
+  kind: string;
+  toolName: string;
+  title: string;
+  summary: string;
+  confirmLabel: string;
+  details: IToolConfirmationDetail[];
+  fingerprint: string;
+};
+
+/**
  * Prompt token-compression mode toggle. Mirrors the `ecc` namespace: a local
  * config read/write pair, `set-mode` is remote-denied in the bridge allowlist.
  * Default mode is the lossless `lite`.

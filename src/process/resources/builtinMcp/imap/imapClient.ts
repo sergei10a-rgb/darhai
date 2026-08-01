@@ -30,6 +30,17 @@ import { ImapMcpError, MAX_BODY_CHARS, type AttachmentInfo, type ImapSettings, t
 /** Names to try when the server declares no SPECIAL-USE `\Drafts` flag. */
 const DRAFTS_FALLBACK_NAMES = ['drafts', 'draft', 'entwürfe', 'brouillons', 'ноорог'];
 
+/**
+ * Names to try when the server declares no SPECIAL-USE `\Sent` flag.
+ *
+ * Providers disagree loudly here - Gmail says "Sent Mail", Outlook "Sent
+ * Items", Fastmail "Sent" - which is exactly why a missing Sent folder is NOT
+ * an error: the message has already been delivered by the time we look, and
+ * failing the tool over a filing problem would tell the user nothing was sent
+ * when in fact it was.
+ */
+const SENT_FALLBACK_NAMES = ['sent', 'sent items', 'sent mail', 'sent messages', 'gesendet', 'envoyés', 'илгээсэн'];
+
 /** Body parts larger than this are skipped rather than streamed into memory. */
 const MAX_PART_BYTES = 2 * 1024 * 1024;
 
@@ -108,6 +119,48 @@ export async function appendDraft(client: ImapFlow, mailbox: string, mime: Buffe
   const result = await client.append(mailbox, mime, ['\\Draft', '\\Seen'], new Date());
   const uid = result && typeof result === 'object' ? (result as { uid?: number }).uid : undefined;
   return { uid: typeof uid === 'number' ? uid : null };
+}
+
+/**
+ * Find the Sent mailbox, or null when the account has none.
+ *
+ * Null rather than a throw, deliberately: this is only ever called AFTER a
+ * message has already gone out, and turning "I could not find where to file
+ * the copy" into a tool failure would report a successful send as a failure -
+ * the single most dangerous lie this server could tell, because the obvious
+ * user response is to send it again.
+ */
+export async function resolveSentMailbox(client: ImapFlow): Promise<string | null> {
+  try {
+    const boxes = await client.list();
+    const flagged = boxes.find((box) => box.specialUse === '\\Sent');
+    if (flagged) return flagged.path;
+    const byName = boxes.find((box) => SENT_FALLBACK_NAMES.includes(box.name.toLocaleLowerCase()));
+    return byName?.path ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * APPEND a sent message into the resolved Sent mailbox, flagged `\Seen`.
+ *
+ * Like {@link appendDraft}, `mailbox` is what {@link resolveSentMailbox}
+ * returned and never caller input. Failure is reported, not thrown, for the
+ * reason given on `resolveSentMailbox`.
+ */
+export async function appendSentCopy(
+  client: ImapFlow,
+  mailbox: string,
+  mime: Buffer
+): Promise<{ uid: number | null; error: string | null }> {
+  try {
+    const result = await client.append(mailbox, mime, ['\\Seen'], new Date());
+    const uid = result && typeof result === 'object' ? (result as { uid?: number }).uid : undefined;
+    return { uid: typeof uid === 'number' ? uid : null, error: null };
+  } catch (error) {
+    return { uid: null, error: describeImapError(error) };
+  }
 }
 
 export type SearchCriteria = {

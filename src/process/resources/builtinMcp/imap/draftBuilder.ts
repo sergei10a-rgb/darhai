@@ -5,14 +5,16 @@
  */
 
 /**
- * Build an RFC 5322 message for APPENDing to the user's Drafts folder.
+ * Build an RFC 5322 message - for APPENDing to Drafts, and for handing to the
+ * confirmation-gated sender as raw bytes.
  *
- * Written by hand rather than with `nodemailer`'s MailComposer, and that is the
- * point: nodemailer is an SMTP client. Keeping it out of this bundle turns "the
- * email server cannot send" from a claim about the tool list into a claim about
- * the dependency graph - there is no code in the shipped file that can open an
- * SMTP connection, so no future edit can accidentally expose one without adding
- * a dependency first.
+ * Written by hand rather than with `nodemailer`'s MailComposer. That is still
+ * the point after `email_send` exists: this file has no SMTP client and no way
+ * to open a socket, so the ONE module that can transmit
+ * (`smtpSender.ts`) is reachable from exactly one caller (`sendGate.ts`), and
+ * that caller asks the user first. Building the bytes and sending them stay
+ * separate concerns in separate files precisely so the second can be gated
+ * while the first is shared with the draft path.
  *
  * Everything the caller supplies is header-injection-checked before it is
  * written: a subject containing a bare CRLF would otherwise let a model (or an
@@ -26,6 +28,13 @@ export type DraftInput = {
   subject: string;
   body: string;
   cc?: string[];
+  /**
+   * Blind recipients. Validated like every other address, but NEVER written as
+   * a header - a `Bcc:` line in the transmitted bytes would show every blind
+   * recipient to all the others, which is the one thing Bcc must not do. They
+   * travel in the SMTP envelope instead (see {@link BuiltDraft.recipients}).
+   */
+  bcc?: string[];
   from?: string;
   /** Message-ID of the message being replied to, for correct threading. */
   inReplyTo?: string;
@@ -33,11 +42,20 @@ export type DraftInput = {
 };
 
 export type BuiltDraft = {
-  /** Full RFC 5322 bytes, ready for IMAP APPEND. */
+  /** Full RFC 5322 bytes, ready for IMAP APPEND or for the SMTP envelope. */
   mime: Buffer;
   /** The Message-ID this draft carries, so the caller can report it. */
   messageId: string;
   headerSummary: Record<string, string>;
+  /**
+   * Normalised addresses, after validation.
+   *
+   * The SMTP envelope must be built from THESE and not from the raw input:
+   * they are the same values that were header-checked and the same ones the
+   * confirmation dialog is given, so what the user approved and what the
+   * server is told to deliver to cannot drift apart.
+   */
+  recipients: { to: string[]; cc: string[]; bcc: string[] };
 };
 
 /** Characters that would let a value break out of its header line. */
@@ -47,6 +65,7 @@ export function buildDraft(input: DraftInput, now: Date = new Date()): BuiltDraf
   const to = normaliseAddressList(input.to, 'to');
   if (to.length === 0) throw new ImapMcpError('A draft needs at least one recipient in `to`.');
   const cc = normaliseAddressList(input.cc ?? [], 'cc');
+  const bcc = normaliseAddressList(input.bcc ?? [], 'bcc');
   const subject = assertHeaderSafe(input.subject ?? '', 'subject');
   const from = input.from ? assertHeaderSafe(input.from, 'from') : '';
 
@@ -79,7 +98,13 @@ export function buildDraft(input: DraftInput, now: Date = new Date()): BuiltDraf
   return {
     mime,
     messageId,
-    headerSummary: Object.fromEntries(headers.filter(([k]) => k !== 'Content-Transfer-Encoding')),
+    // Bcc is summarised (the user must SEE who they are blind-copying) but is
+    // deliberately absent from `headers`, so it never reaches the wire bytes.
+    headerSummary: {
+      ...Object.fromEntries(headers.filter(([k]) => k !== 'Content-Transfer-Encoding')),
+      ...(bcc.length > 0 ? { Bcc: bcc.join(', ') } : {}),
+    },
+    recipients: { to, cc, bcc },
   };
 }
 
@@ -100,12 +125,31 @@ export function encodeHeaderValue(value: string): string {
   return `=?UTF-8?B?${Buffer.from(value, 'utf8').toString('base64')}?=`;
 }
 
+/**
+ * One array element must be ONE bare address - no display name, no comma list.
+ *
+ * This got stricter when `email_send` arrived, and the reason is specific: the
+ * SMTP envelope is built from these same strings. `["a@x.mn, attacker@evil"]`
+ * used to pass (it contains an `@`), which would put two recipients in the
+ * visible `To:` header and one nonsense string in the envelope - a mismatch
+ * between what the user was shown and what the server is asked to deliver to.
+ * `Name <a@x.mn>` is rejected for the same reason: the envelope needs the bare
+ * addr-spec, and quietly sending the display-name form is how a message goes
+ * to nobody.
+ */
+const BARE_ADDRESS = /^[^\s,;<>@]+@[^\s,;<>@]+$/;
+
 function normaliseAddressList(values: readonly string[], field: string): string[] {
   return values
     .map((value) => assertHeaderSafe(String(value ?? '').trim(), field))
     .filter((value) => value.length > 0)
     .map((value) => {
-      if (!value.includes('@')) throw new ImapMcpError(`'${value}' in \`${field}\` is not an email address.`);
+      if (!BARE_ADDRESS.test(value)) {
+        throw new ImapMcpError(
+          `'${value}' in \`${field}\` is not an email address. ` +
+            'Give one plain address per entry, with no display name and no comma-separated list.'
+        );
+      }
       return value;
     });
 }

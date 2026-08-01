@@ -70,5 +70,17 @@
     "normal": "Normal",
     "high": "Yüksek",
     "urgent": "Acil"
+  },
+  "confirm": {
+    "emailSend": {
+      "title": "Bu e-posta gönderilsin mi?",
+      "summary": "Дархай bu mesajı yazdı ve göndermenizi istiyor. Siz «Gönder»e basana kadar bu bilgisayardan hiçbir şey çıkmaz.",
+      "confirm": "Gönder"
+    },
+    "cancel": "İptal",
+    "toolLabel": "{{tool}} tarafından istendi",
+    "untrustedNotice": "Aşağıdakilerin tamamı yazıldığı gibi, düz metin olarak gösteriliyor. Kararı Дархай değil, siz veriyorsunuz. Basmadan önce okuyun.",
+    "emptyValue": "(boş)",
+    "queued": "{{count}} tane daha bekliyor. Her biri ayrı ayrı yanıtlanır."
   }
 }

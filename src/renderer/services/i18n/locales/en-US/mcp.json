@@ -70,5 +70,17 @@
     "normal": "Normal",
     "high": "High",
     "urgent": "Urgent"
+  },
+  "confirm": {
+    "emailSend": {
+      "title": "Send this email?",
+      "summary": "Дархай wrote this message and is asking you to send it. Nothing leaves this computer until you press Send.",
+      "confirm": "Send"
+    },
+    "cancel": "Cancel",
+    "toolLabel": "Requested by {{tool}}",
+    "untrustedNotice": "Everything below is shown exactly as written, as plain text. Дархай is not deciding this - you are. Read it before you press the button.",
+    "emptyValue": "(empty)",
+    "queued": "{{count}} more waiting. Each one is answered on its own."
   }
 }

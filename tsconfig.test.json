@@ -1,12 +1,18 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
+    // Tests are type-checked with --noEmit and executed by Vitest on Node 24,
+    // so nothing here is ever downlevelled. The base target (ES6) exists for
+    // the shipped bundles; applying it to tests only means banning syntax the
+    // runtime supports - a `/s` regex flag fails to type-check while running
+    // perfectly. Raising it here keeps the check honest about what tests run on.
+    "target": "ES2022",
+    // ES2022 would otherwise flip `useDefineForClassFields` on, which changes
+    // class-field semantics and makes three production managers fail a check
+    // they pass under the real build. Pin it to the base target's behaviour:
+    // this file raises the allowed SYNTAX level, nothing else.
+    "useDefineForClassFields": false,
     "types": ["node", "vitest/globals"]
   },
-  "include": [
-    "tests/**/*",
-    "vitest.config.ts",
-    "playwright.config.ts",
-    "src/renderer/types.d.ts"
-  ]
+  "include": ["tests/**/*", "vitest.config.ts", "playwright.config.ts", "src/renderer/types.d.ts"]
 }

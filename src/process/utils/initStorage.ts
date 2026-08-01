@@ -54,6 +54,7 @@ import {
   getPersonalDataMcpRuntime,
   initPersonalDataMcpServer,
 } from '../resources/builtinMcp/personalData/personalDataSingleton';
+import { initToolConfirmationGate } from '../services/toolConfirmation';
 import { getMcpScriptPath, inspectMcpScripts } from './mcpScriptDir';
 import { getAppDataExtensionsDir, EXTENSION_MANIFEST_FILE } from '../extensions/constants';
 // Platform and architecture types (moved from deleted updateConfig)
@@ -1028,7 +1029,9 @@ const ensureBuiltinMcpServers = async (): Promise<void> => {
     // register the entry - advertising a tool that can never answer is the mute
     // failure mode the MCP script canary exists to prevent.
     const personalDataRuntime = getPersonalDataMcpRuntime();
-    const personalDataExistingIdx = mcpServers.findIndex((s) => s.builtin === true && s.id === BUILTIN_PERSONAL_DATA_ID);
+    const personalDataExistingIdx = mcpServers.findIndex(
+      (s) => s.builtin === true && s.id === BUILTIN_PERSONAL_DATA_ID
+    );
 
     if (personalDataRuntime && personalDataRuntime.port > 0) {
       const personalDataScriptPath = getBuiltinMcpScriptPath('builtin-mcp-personal-data');
@@ -1038,11 +1041,7 @@ const ensureBuiltinMcpServers = async (): Promise<void> => {
       };
 
       const buildPersonalDataOriginalJson = (scriptPathValue: string, env: Record<string, string>) =>
-        JSON.stringify(
-          { [BUILTIN_PERSONAL_DATA_NAME]: { command: 'node', args: [scriptPathValue], env } },
-          null,
-          2
-        );
+        JSON.stringify({ [BUILTIN_PERSONAL_DATA_NAME]: { command: 'node', args: [scriptPathValue], env } }, null, 2);
 
       if (personalDataExistingIdx >= 0) {
         const existing = mcpServers[personalDataExistingIdx];
@@ -1230,6 +1229,16 @@ const initStorage = async () => {
   // Never throws - a failure to bind degrades to "entry not registered".
   await initPersonalDataMcpServer();
   mark('4.1.6 personalDataMcpServer');
+
+  // 4.1.7 Start the MCP tool-confirmation gate. It publishes its loopback port
+  // + per-boot token into THIS process's `process.env`, which every spawned
+  // child (and every agent CLI that spawns an MCP server itself) inherits - see
+  // `services/toolConfirmation/index.ts` for why that beats threading the pair
+  // through all eleven spawn call sites. Must run before any agent session can
+  // start, otherwise a gated tool would refuse with `not-available` even though
+  // a window is right there. Never throws.
+  await initToolConfirmationGate();
+  mark('4.1.7 toolConfirmationGate');
 
   // 4.2 Ensure built-in MCP servers exist and are up-to-date
   await ensureBuiltinMcpServers();

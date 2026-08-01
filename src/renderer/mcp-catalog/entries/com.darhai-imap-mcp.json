@@ -1,8 +1,8 @@
 {
   "$schema": "../schema/entry.schema.json",
   "name": "com.darhai/imap-mcp",
-  "title": "Email (IMAP) - read & draft",
-  "description": "Read your mail and write drafts into your Drafts folder. It cannot send: you review and press Send yourself. Works with iCloud, Gmail, Fastmail, Proton Bridge and any IMAP host.",
+  "title": "Email (IMAP) - read, draft & send with your approval",
+  "description": "Read your mail, write drafts, and send - but only after Дархай shows you the whole message and you press Send yourself. The model can propose; it cannot send on its own. Works with iCloud, Gmail, Fastmail, Proton Bridge and any IMAP/SMTP host.",
   "version": "1.0.0",
   "websiteUrl": "https://github.com/sergei10a-rgb/darhai",
   "repository": { "url": "https://github.com/sergei10a-rgb/darhai", "source": "github" },
@@ -43,6 +43,36 @@
           "description": "Set to false only for a local or plaintext server such as a test instance.",
           "isRequired": false,
           "default": "true"
+        },
+        {
+          "name": "SMTP_HOST",
+          "description": "Outbound mail server, e.g. smtp.gmail.com. LEAVE EMPTY to keep the account read-and-draft only: without it the `email_send` tool refuses. There is deliberately no guess from the IMAP host.",
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
+          "name": "SMTP_PORT",
+          "description": "Submission port. 587 (STARTTLS, the default) or 465 (implicit TLS).",
+          "isRequired": false,
+          "default": "587"
+        },
+        {
+          "name": "SMTP_USER",
+          "description": "Outbound username. Leave empty to reuse IMAP_USER, which is right at almost every provider.",
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
+          "name": "SMTP_PASSWORD",
+          "description": "Outbound app-specific password. Leave empty to reuse IMAP_PASSWORD. It stays on this machine and is never shown to the model.",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "SMTP_TLS",
+          "description": "Set to false ONLY for a local bridge that terminates TLS itself (Proton Bridge). Otherwise encryption is required and a server that will not start TLS is refused rather than downgraded.",
+          "isRequired": false,
+          "default": "true"
         }
       ]
     }
@@ -50,7 +80,7 @@
   "x-wayland": {
     "tier": "core",
     "categories": ["communication"],
-    "tags": ["imap", "email", "drafts", "read-only", "icloud", "proton", "fastmail"],
+    "tags": ["imap", "smtp", "email", "drafts", "send", "confirmation", "icloud", "proton", "fastmail"],
     "maintainerType": "wayland",
     "license": "Apache-2.0",
     "verifiedAt": "2026-08-01",
@@ -65,9 +95,10 @@
     },
     "toolGroups": [
       { "label": "Read mail", "count": 4 },
-      { "label": "Save a draft (never sends)", "count": 1 }
+      { "label": "Save a draft (never sends)", "count": 1 },
+      { "label": "Send - only after you press Send", "count": 1 }
     ],
-    "setupGuide": { "path": "guides/com.darhai-imap-mcp.md", "estimatedMinutes": 3, "stepCount": 2 },
+    "setupGuide": { "path": "guides/com.darhai-imap-mcp.md", "estimatedMinutes": 4, "stepCount": 3 },
     "platforms": ["macos", "windows", "linux"],
     "minWaylandVersion": "0.8.0"
   }

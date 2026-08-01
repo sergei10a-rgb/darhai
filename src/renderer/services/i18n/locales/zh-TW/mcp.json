@@ -70,5 +70,17 @@
     "normal": "一般",
     "high": "高",
     "urgent": "緊急"
+  },
+  "confirm": {
+    "emailSend": {
+      "title": "要寄出這封郵件嗎？",
+      "summary": "Дархай 已寫好這封郵件，請你來寄出。在你按下「寄出」之前，不會有任何內容離開這台電腦。",
+      "confirm": "寄出"
+    },
+    "cancel": "取消",
+    "toolLabel": "由 {{tool}} 發起",
+    "untrustedNotice": "以下內容依原樣以純文字顯示。做決定的不是 Дархай，而是你。按下按鈕前請先閱讀。",
+    "emptyValue": "（空）",
+    "queued": "還有 {{count}} 項等待確認，每項需個別確認。"
   }
 }

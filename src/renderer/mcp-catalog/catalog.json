@@ -93,8 +93,8 @@
     },
     {
       "id": "com.darhai/imap-mcp",
-      "name": "Email (IMAP) - read & draft",
-      "shortDescription": "Read your mail and write drafts into your Drafts folder. It cannot send: you review and press Send yourself.",
+      "name": "Email (IMAP) - read, draft & send",
+      "shortDescription": "Read your mail, write drafts, and send - but only after Дархай shows you the whole message and you press Send yourself.",
       "iconUrl": "icons/email.svg",
       "tier": "core",
       "categories": [

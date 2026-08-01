@@ -70,5 +70,17 @@
     "normal": "Normal",
     "high": "Hoch",
     "urgent": "Dringend"
+  },
+  "confirm": {
+    "emailSend": {
+      "title": "Diese E-Mail senden?",
+      "summary": "Дархай hat diese Nachricht geschrieben und bittet Sie, sie zu senden. Nichts verlässt diesen Computer, bis Sie auf „Senden“ drücken.",
+      "confirm": "Senden"
+    },
+    "cancel": "Abbrechen",
+    "toolLabel": "Angefragt von {{tool}}",
+    "untrustedNotice": "Alles unten wird genau so angezeigt, wie es geschrieben wurde - als reiner Text. Nicht Дархай entscheidet das, sondern Sie. Bitte vor dem Drücken lesen.",
+    "emptyValue": "(leer)",
+    "queued": "Noch {{count}} in der Warteschlange. Jede wird einzeln beantwortet."
   }
 }

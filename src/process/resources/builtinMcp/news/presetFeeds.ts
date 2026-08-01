@@ -17,6 +17,17 @@
  * `<link rel="alternate">` declaration in their HTML. They are not missing by
  * oversight and must NOT be added by scraping their HTML: this server reads
  * feeds that publishers chose to publish, and nothing else.
+ *
+ * zarig.mn belongs in that list for a subtler reason worth writing down, because
+ * a future reader WILL retry it. `https://zarig.mn/rss` answers `200 OK` - but
+ * with `Content-Type: text/html` and an article page as the body. The site
+ * serves a page for every unrecognised path, so a status-code check alone says
+ * "the feed is fine" and the parser then yields nothing, forever, silently.
+ * Verified 2026-08-01: /rss, /feed, /rss.xml and /feed/ all fail this way or
+ * 404, and the homepage declares no alternate feed link.
+ *
+ * The rule this encodes: a feed is only added after its BODY parses into items.
+ * A 200 proves a server answered, not that it published a feed.
  */
 
 import { NEWS_FEEDS_ENV } from '../constants';

@@ -64,6 +64,9 @@ const useDebug = () => {
 };
 
 const UpdateModal = React.lazy(() => import('@/renderer/components/settings/UpdateModal'));
+// Mounted once, globally: a gated MCP tool (email_send today) can raise this
+// from any conversation, and the answer must come from the host's own window.
+const ToolConfirmationDialog = React.lazy(() => import('@/renderer/components/agent/ToolConfirmationDialog'));
 
 const DEFAULT_SIDER_WIDTH = 240;
 const DESKTOP_COLLAPSED_WIDTH = 64;
@@ -603,6 +606,9 @@ const Layout: React.FC<{
               <PwaPullToRefresh />
               <Suspense fallback={null}>
                 <UpdateModal />
+              </Suspense>
+              <Suspense fallback={null}>
+                <ToolConfirmationDialog />
               </Suspense>
               <CommandPalette
                 open={paletteOpen}

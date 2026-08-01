@@ -12,6 +12,7 @@
  */
 export const OS_RESOURCE_TESTS: readonly string[] = [
   'tests/integration/acp-smoke.test.ts',
+  'tests/integration/email-send-gate.test.ts',
   'tests/integration/team-mcp-server.test.ts',
   'tests/integration/team-real-components.test.ts',
   'tests/integration/team-stress-tcp.test.ts',

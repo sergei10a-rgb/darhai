@@ -15,7 +15,7 @@
  *   - builtin-mcp-web-search.js  (web search)
  *   - builtin-mcp-personal-data.js (calendar / notes / documents / memory)
  *   - builtin-mcp-news.js        (RSS / Atom feeds + Hacker News)
- *   - builtin-mcp-imap.js        (email: read + save draft, never send)
+ *   - builtin-mcp-imap.js        (email: read, draft, send only after the user confirms)
  *   - builtin-mcp-cal-com.js     (Cal.com scheduling, read-only)
  *
  * `scripts/build-mcp-servers.js` emits them next to the main bundle:

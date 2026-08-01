@@ -54,10 +54,14 @@ export const BUILTIN_NEWS_FILE = 'builtin-mcp-news.js';
 /** Optional env var: newline/comma separated extra feed URLs added by the user. */
 export const NEWS_FEEDS_ENV = 'DARHAI_NEWS_FEEDS';
 
-// ── Built-in Email (IMAP) MCP server ────────────────────────────────────────
-// READ + DRAFT ONLY. Speaks IMAP to the user's own mail host, saves drafts into
-// their Drafts folder, and cannot send: there is no send tool and no SMTP
-// client anywhere in `imap/`. Credentials arrive as spawn env inside the
+// ── Built-in Email (IMAP/SMTP) MCP server ───────────────────────────────────
+// READ, DRAFT, and ONE CONFIRMATION-GATED SEND. Speaks IMAP to the user's own
+// mail host, saves drafts into their Drafts folder, and can send only after the
+// user has read the complete message in a Дархай dialog and pressed Send. The
+// model cannot approve its own request: the only module in `imap/` that imports
+// an SMTP client is `smtpSender.ts`, its only importer is `sendGate.ts`, and
+// that file calls the confirmation gate first (see
+// `services/toolConfirmation/`). Credentials arrive as spawn env inside the
 // subprocess and are never returned by a tool.
 //
 // History: catalog entries for `com.darhai/imap-mcp` and `com.darhai/cal-com-mcp`

@@ -70,5 +70,17 @@
     "normal": "Normale",
     "high": "Élevée",
     "urgent": "Urgente"
+  },
+  "confirm": {
+    "emailSend": {
+      "title": "Envoyer cet e-mail ?",
+      "summary": "Дархай a rédigé ce message et vous demande de l’envoyer. Rien ne quitte cet ordinateur tant que vous n’avez pas appuyé sur « Envoyer ».",
+      "confirm": "Envoyer"
+    },
+    "cancel": "Annuler",
+    "toolLabel": "Demandé par {{tool}}",
+    "untrustedNotice": "Tout ce qui suit est affiché tel quel, en texte brut. Ce n’est pas Дархай qui décide, c’est vous. Lisez avant d’appuyer.",
+    "emptyValue": "(vide)",
+    "queued": "{{count}} autre(s) en attente. Chacune se confirme séparément."
   }
 }

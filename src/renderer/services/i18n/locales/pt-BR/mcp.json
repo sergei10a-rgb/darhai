@@ -70,5 +70,17 @@
     "normal": "Normal",
     "high": "Alta",
     "urgent": "Urgente"
+  },
+  "confirm": {
+    "emailSend": {
+      "title": "Enviar este e-mail?",
+      "summary": "O Дархай escreveu esta mensagem e pede que você a envie. Nada sai deste computador até você apertar «Enviar».",
+      "confirm": "Enviar"
+    },
+    "cancel": "Cancelar",
+    "toolLabel": "Solicitado por {{tool}}",
+    "untrustedNotice": "Tudo abaixo é mostrado exatamente como foi escrito, em texto simples. Quem decide não é o Дархай, é você. Leia antes de apertar.",
+    "emptyValue": "(vazio)",
+    "queued": "Mais {{count}} aguardando. Cada uma é respondida separadamente."
   }
 }
