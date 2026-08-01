@@ -4,7 +4,8 @@
 // and their stdio bridges (teamMcpStdio, teamGuideMcpStdio).
 // Provides length-prefixed JSON message framing over TCP sockets.
 
-import * as net from 'node:net';
+import type * as net from 'node:net';
+import { connectLoopback, LOOPBACK_HOST, type ConnectLoopbackOptions } from './loopbackConnect';
 import { resolveMcpScriptDir as resolveMcpScriptDirShared } from '@process/utils/mcpScriptDir';
 
 /**
@@ -135,28 +136,46 @@ function takeBytes(chunks: Buffer[], n: number): Buffer {
   return out;
 }
 
+export type SendTcpRequestOptions = {
+  /** Budget for the REQUEST once the socket is established. */
+  timeoutMs?: number;
+  maxBodyBytes?: number;
+  host?: string;
+  /**
+   * Connection-establishment retry policy. Only the connect is retried - see
+   * {@link connectLoopback}. Pass `{ attempts: 1 }` to opt out entirely.
+   */
+  connect?: ConnectLoopbackOptions;
+};
+
 /**
  * Open a TCP connection, send one framed JSON request, await one framed JSON
  * response, then close the connection. Used by the stdio MCP bridges.
  *
  * Replaces the previous per-bridge inline implementations, which had the same
  * O(N^2) Buffer.concat bug as the server-side reader.
+ *
+ * The connect goes through {@link connectLoopback}, which retries a SYN the
+ * host's TCP stack dropped or refused (this app's loopback bridges run on
+ * machines whose ephemeral port pool overlaps every server port). The retry
+ * covers ESTABLISHMENT ONLY: `writeTcpMessage` below runs exactly once, on an
+ * already-connected socket, so a peer that does replay detection or single-use
+ * token checks can never see the same request twice.
  */
-export function sendTcpRequest<T = { result?: string; error?: string }>(
+export async function sendTcpRequest<T = { result?: string; error?: string }>(
   port: number,
   data: unknown,
-  options: { timeoutMs?: number; maxBodyBytes?: number; host?: string } = {}
+  options: SendTcpRequestOptions = {}
 ): Promise<T> {
   const timeoutMs = options.timeoutMs ?? 300_000;
   const maxBodyBytes = options.maxBodyBytes ?? MAX_MCP_MESSAGE_SIZE;
-  const host = options.host ?? '127.0.0.1';
+  const host = options.host ?? LOOPBACK_HOST;
+
+  // Failing here means every attempt failed to establish; nothing was sent.
+  const socket = await connectLoopback(port, { host, ...options.connect });
 
   return new Promise<T>((resolve, reject) => {
     let settled = false;
-
-    const socket = net.createConnection({ host, port }, () => {
-      writeTcpMessage(socket, data);
-    });
 
     const finish = (err: Error | null, value?: T): void => {
       if (settled) return;
@@ -178,6 +197,9 @@ export function sendTcpRequest<T = { result?: string; error?: string }>(
 
     socket.setTimeout(timeoutMs);
     socket.on('timeout', () => finish(new Error('TCP request timeout')));
+
+    // Exactly one delivery, after the connection is already up.
+    writeTcpMessage(socket, data);
   });
 }
 

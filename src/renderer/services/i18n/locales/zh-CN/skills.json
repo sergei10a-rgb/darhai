@@ -14,7 +14,8 @@
       "team": "团队",
       "user": "我的技能",
       "imported": "已导入",
-      "cli-discovered": "来自您的 CLI"
+      "cli-discovered": "来自您的 CLI",
+      "extension": "来自扩展"
     },
     "verdict": {
       "all": "全部",
@@ -39,7 +40,8 @@
     "disable": "禁用",
     "delete": "删除",
     "import": "导入",
-    "build": "创建技能"
+    "build": "创建技能",
+    "scanLibrary": "扫描技能库"
   },
   "threats": {
     "credential-access": "凭证访问",
@@ -153,14 +155,17 @@
     },
     "error": {
       "saveFailed": "保存失败",
-      "generateFailed": "生成失败"
+      "generateFailed": "生成失败",
+      "noModel": "尚未连接 AI 模型。请先在设置中添加服务商，然后重试。"
     }
   },
   "detail": {
     "whenLoaded": "Darhai 加载时",
     "metadata": "元数据",
     "body": "主体",
-    "quarantined": "此技能已被隔离，无法加载。"
+    "quarantined": "此技能已被隔离，无法加载。",
+    "scanNow": "立即扫描",
+    "scanDone": "扫描完成。"
   },
   "stats": {
     "total": "技能总数",
@@ -177,5 +182,8 @@
     "title": "从已安装的 CLI 工具镜像技能",
     "subtitle": "呈现来自 ~/.claude/skills、~/.codex/skills 和 ~/.gemini/skills 的技能，使其显示在你的技能页面上。需手动开启。需重启后生效。",
     "restartNeeded": "- 请重启应用以生效。"
+  },
+  "scan": {
+    "done": "已扫描 {{count}} 个技能。"
   }
 }

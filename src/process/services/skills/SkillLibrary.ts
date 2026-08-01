@@ -119,6 +119,25 @@ function resolveBundledWorkflowsDir(): string {
 
 type ReadFileFn = (p: string) => Promise<string>;
 
+/**
+ * Coerce one index entry into the shape {@link SkillIndexEntry} declares.
+ *
+ * Every entry in the vendored `skills-library/index.json` stores `tags` as a
+ * single space-separated STRING while the type says `string[]`. Consumers
+ * trusted the type: `SkillGuard.scan` called `tags.join(' ')` (a TypeError, so
+ * the whole security scan threw) and `SkillRetriever.buildIndex` spread the
+ * string, turning every tag into one-character BM25 tokens - which both lost
+ * the tag words as search terms and inflated the document length that BM25
+ * length-normalizes against. Normalizing here fixes every consumer at once and
+ * keeps the vendored JSON untouched.
+ */
+function normalizeEntry(entry: SkillIndexEntry): SkillIndexEntry {
+  const rawTags: unknown = entry.metadata?.tags;
+  if (Array.isArray(rawTags)) return entry;
+  const tags = typeof rawTags === 'string' ? rawTags.split(/[\s,]+/).filter(Boolean) : [];
+  return { ...entry, metadata: { ...entry.metadata, tags } };
+}
+
 type SkillLibraryOptions = {
   resourceDir?: string;
   /** Override for the Wayland built-in workflows dir (tests). */
@@ -197,8 +216,9 @@ export class SkillLibrary {
       const parsed = JSON.parse(raw) as SkillIndexEntry[];
       // Merge index entries into existing collections so registerSource()
       // calls made before the first lazy-load are preserved.
-      for (const e of parsed) {
-        if (!this.byName.has(e.name)) {
+      for (const indexed of parsed) {
+        if (!this.byName.has(indexed.name)) {
+          const e = normalizeEntry(indexed);
           this.entries.push(e);
           this.byName.set(e.name, e);
         }
@@ -245,8 +265,9 @@ export class SkillLibrary {
       return;
     }
     if (!Array.isArray(parsed)) return;
-    for (const e of parsed) {
-      if (this.byName.has(e.name)) continue; // main library wins
+    for (const indexed of parsed) {
+      if (this.byName.has(indexed.name)) continue; // main library wins
+      const e = normalizeEntry(indexed);
       this.entries.push(e);
       this.byName.set(e.name, e);
       this.bundledWorkflowNames.add(e.name);
@@ -262,7 +283,8 @@ export class SkillLibrary {
    * On name collision the later registration wins; a warning is logged.
    */
   registerSource(incoming: SkillIndexEntry[]): void {
-    for (const entry of incoming) {
+    for (const incomingEntry of incoming) {
+      const entry = normalizeEntry(incomingEntry);
       if (this.byName.has(entry.name)) {
         const prev = this.byName.get(entry.name)?.source;
         console.warn(
@@ -274,6 +296,23 @@ export class SkillLibrary {
       this.entries.push(entry);
       this.byName.set(entry.name, entry);
     }
+  }
+
+  /**
+   * Make `incoming` the complete set of entries for `source`, dropping any
+   * previously registered entry from that source.
+   *
+   * Needed by sources that can change while the app runs - extension skills
+   * appear and disappear as the user enables/disables extensions, and
+   * `registerSource` alone would leave the removed ones in the index (and warn
+   * about a name collision on every re-registration).
+   */
+  replaceSource(source: SkillSource, incoming: SkillIndexEntry[]): void {
+    this.entries = this.entries.filter((e) => e.source !== source);
+    for (const [name, entry] of this.byName) {
+      if (entry.source === source) this.byName.delete(name);
+    }
+    this.registerSource(incoming);
   }
 
   /**
@@ -387,15 +426,23 @@ export class SkillLibrary {
       return null;
     }
 
+    return this.readEntryBody(entry);
+  }
+
+  /**
+   * Read the markdown body an index entry points at, applying every layout
+   * fallback the vendored library needs. Shared by {@link loadBody} and
+   * {@link rescanIfStale}: the re-scan path used to re-implement only the
+   * literal `<resourceDir>/<entry.path>` join, which does not exist for any
+   * bundled skill (their bodies live under `<resourceDir>/bodies/...`), so the
+   * read always threw and the security re-scan silently never ran.
+   *
+   * Returns null when no candidate path is readable.
+   */
+  private async readEntryBody(entry: SkillIndexEntry): Promise<string | null> {
     // Externally-rooted sources (team, user, imported, cli-discovered) carry
     // absolute paths because their SKILL.md lives outside the bundled
-    // `resourceDir`. Honor those directly. Vendored entries keep relative
-    // paths and continue to resolve against `resourceDir`.
-    //
-    // Vendored bodies live under `<resourceDir>/bodies/...` but index.json
-    // stores the path without the `bodies/` prefix. Try the literal path
-    // first (preserves any existing layout) and fall back to `bodies/` so the
-    // canonical vendored layout works without touching every index entry.
+    // `resourceDir`. Honor those directly.
     if (path.isAbsolute(entry.path)) {
       try {
         return await this.readFileFn(entry.path);
@@ -403,36 +450,26 @@ export class SkillLibrary {
         return null;
       }
     }
-    // Wayland built-in workflows resolve their (relative) body against the
-    // bundled-workflows root, mirroring the skills-library literal-then-bodies
-    // fallback so index entries may store the path with or without the
-    // `bodies/` prefix.
-    if (this.bundledWorkflowNames.has(name)) {
+
+    // Vendored bodies live under `<root>/bodies/...` but index.json stores the
+    // path without the `bodies/` prefix. Try the literal path first (preserves
+    // any existing layout) and fall back to `bodies/`.
+    const root = this.bundledWorkflowNames.has(entry.name) ? this.bundledWorkflowsDir : this.resourceDir;
+    for (const candidate of [path.join(root, entry.path), path.join(root, 'bodies', entry.path)]) {
       try {
-        return await this.readFileFn(path.join(this.bundledWorkflowsDir, entry.path));
+        return await this.readFileFn(candidate);
       } catch {
-        try {
-          return await this.readFileFn(path.join(this.bundledWorkflowsDir, 'bodies', entry.path));
-        } catch {
-          return null;
-        }
+        // Try the next candidate layout.
       }
     }
-    try {
-      return await this.readFileFn(path.join(this.resourceDir, entry.path));
-    } catch {
-      try {
-        return await this.readFileFn(path.join(this.resourceDir, 'bodies', entry.path));
-      } catch {
-        return null;
-      }
-    }
+    return null;
   }
 
   /**
    * Re-scan a skill if its stored scannerVersion is older than the current
-   * SKILL_SCANNER_VERSION. Reads the body off the resource dir and updates
-   * the in-memory entry's `security` field in place. Returns the new report
+   * SKILL_SCANNER_VERSION. Reads the body via {@link readEntryBody} (so every
+   * layout the library ships resolves) and updates the in-memory entry's
+   * `security` field in place. Returns the new report
    * (or the existing one if no re-scan was needed), or null for unknown skills.
    * Runs lazily / on demand - never on the startup path.
    */
@@ -442,12 +479,8 @@ export class SkillLibrary {
     if (!entry) return null;
     const stored = entry.security?.scannerVersion ?? 0;
     if (stored >= SKILL_SCANNER_VERSION) return entry.security ?? null;
-    let body: string;
-    try {
-      body = await this.readFileFn(path.join(this.resourceDir, entry.path));
-    } catch {
-      return entry.security ?? null;
-    }
+    const body = await this.readEntryBody(entry);
+    if (body === null) return entry.security ?? null;
     const [report] = await SkillGuard.scan(
       [{ name: entry.name, body, description: entry.description, tags: entry.metadata.tags ?? [] }],
       opts

@@ -14,7 +14,8 @@
       "team": "Ekip",
       "user": "Becerilerim",
       "imported": "İçe aktarılan",
-      "cli-discovered": "CLI'larınızdan"
+      "cli-discovered": "CLI'larınızdan",
+      "extension": "Uzantılardan"
     },
     "verdict": {
       "all": "Tümü",
@@ -39,7 +40,8 @@
     "disable": "Devre dışı bırak",
     "delete": "Sil",
     "import": "İçe aktar",
-    "build": "Beceri oluştur"
+    "build": "Beceri oluştur",
+    "scanLibrary": "Kitaplığı tara"
   },
   "threats": {
     "credential-access": "Kimlik bilgisi erişimi",
@@ -153,14 +155,17 @@
     },
     "error": {
       "saveFailed": "Kayıt başarısız",
-      "generateFailed": "Oluşturma başarısız"
+      "generateFailed": "Oluşturma başarısız",
+      "noModel": "Henüz bir yapay zekâ modeli bağlı değil. Ayarlardan bir sağlayıcı ekleyip tekrar deneyin."
     }
   },
   "detail": {
     "whenLoaded": "Darhai bunu yüklediğinde",
     "metadata": "Meta veri",
     "body": "Gövde",
-    "quarantined": "Bu beceri karantinaya alındı ve yüklenemiyor."
+    "quarantined": "Bu beceri karantinaya alındı ve yüklenemiyor.",
+    "scanNow": "Şimdi tara",
+    "scanDone": "Tarama tamamlandı."
   },
   "stats": {
     "total": "Toplam beceri",
@@ -177,5 +182,8 @@
     "title": "Becerileri kurulu CLI araçlarından yansıt",
     "subtitle": "~/.claude/skills, ~/.codex/skills ve ~/.gemini/skills içindeki becerileri Beceriler sayfanızda görünmeleri için ortaya çıkarın. İsteğe bağlıdır. Etkili olması için yeniden başlatma gerekir.",
     "restartNeeded": "- uygulamak için uygulamayı yeniden başlatın."
+  },
+  "scan": {
+    "done": "{{count}} beceri tarandı."
   }
 }

@@ -33,6 +33,7 @@ export const SOURCE_LABEL: Record<SkillSource, string> = {
   user: 'My skills',
   imported: 'Imported',
   'cli-discovered': 'From your CLIs',
+  extension: 'From extensions',
 };
 
 export const STATUS_LABEL: Record<SkillVerdict, string> = {
@@ -70,6 +71,11 @@ const SOURCE_BADGE_STYLE: Record<SkillSource, React.CSSProperties> = {
     background: 'rgba(111,200,220,0.13)',
     color: 'rgb(111,200,220)',
     borderColor: 'rgba(111,200,220,0.34)',
+  },
+  extension: {
+    background: 'rgba(168,130,225,0.13)',
+    color: 'rgb(178,145,232)',
+    borderColor: 'rgba(168,130,225,0.34)',
   },
 };
 

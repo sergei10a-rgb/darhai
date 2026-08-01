@@ -220,7 +220,7 @@ export class CronService {
       if (existingJobs.length > 0) {
         const existingJob = existingJobs[0];
         throw new Error(
-          i18n.t('cron:error.alreadyExists', {
+          i18n.t('cron.error.alreadyExists', {
             name: existingJob.name,
             id: existingJob.id,
           })
@@ -500,9 +500,16 @@ export class CronService {
         const delay = schedule.atMs - Date.now();
         if (delay > 0) {
           const timer = setTimeout(() => {
-            void this.executeJob(job);
-            // One-time job, disable after execution
-            void this.updateJob(job.id, { enabled: false });
+            // Disable only AFTER the run has finished writing its result.
+            // Firing both concurrently raced: `updateJob` re-read the row while
+            // `executeJob`'s own (stale-snapshot) state write was still in
+            // flight, saw `enabled` back at true, and called startTimer again -
+            // landing on the expired branch below, which overwrote a run that
+            // had just succeeded with lastStatus='skipped'.
+            void this.executeJob(job).finally(() => {
+              // One-time job, disable after execution
+              void this.updateJob(job.id, { enabled: false });
+            });
           }, delay);
           this.timers.set(job.id, timer);
 
@@ -511,10 +518,18 @@ export class CronService {
           await this.repo.update(job.id, { state: job.state });
           this.emitter.emitJobUpdated(job);
         } else {
-          // Past one-time job, mark as expired and disable
+          // Past one-time job: disable it. Whether this counts as "never ran"
+          // depends on the recorded state - a job that already fired (its
+          // lastRunAtMs is at/after the scheduled instant) keeps its real
+          // result. Only a genuinely missed one-shot is marked skipped, so
+          // re-arming a completed job (app restart, conversation migration)
+          // can no longer rewrite history as "never ran".
+          const alreadyRan = (job.state.runCount ?? 0) > 0 && (job.state.lastRunAtMs ?? 0) >= schedule.atMs;
           job.state.nextRunAtMs = undefined;
-          job.state.lastStatus = 'skipped';
-          job.state.lastError = i18n.t('cron:error.scheduledTimePassed');
+          if (!alreadyRan) {
+            job.state.lastStatus = 'skipped';
+            job.state.lastError = i18n.t('cron.error.scheduledTimePassed');
+          }
           job.enabled = false;
           await this.repo.update(job.id, { enabled: false, state: job.state });
           this.emitter.emitJobUpdated(job);
@@ -595,7 +610,7 @@ export class CronService {
           state: {
             ...job.state,
             lastStatus: 'skipped',
-            lastError: i18n.t('cron:error.conversationBusy', {
+            lastError: i18n.t('cron.error.conversationBusy', {
               count: job.state.maxRetries || 3,
             }),
           },
@@ -783,7 +798,7 @@ export class CronService {
       console.log(`[CronService] Missed job "${job.name}" (was due at ${new Date(nextRunAt).toISOString()})`);
 
       job.state.lastStatus = 'missed';
-      job.state.lastError = i18n.t('cron:error.missedJob', {
+      job.state.lastError = i18n.t('cron.error.missedJob', {
         name: job.name,
         time: new Date(nextRunAt).toLocaleString(),
       });
@@ -803,7 +818,7 @@ export class CronService {
     const { conversationId } = job.metadata;
     const scheduledTime = new Date(scheduledAtMs).toLocaleString();
     const msgId = uuid();
-    const content = i18n.t('cron:error.missedJob', {
+    const content = i18n.t('cron.error.missedJob', {
       name: job.name,
       time: scheduledTime,
     });

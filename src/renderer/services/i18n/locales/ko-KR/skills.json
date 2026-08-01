@@ -14,7 +14,8 @@
       "team": "팀",
       "user": "내 스킬",
       "imported": "가져온 항목",
-      "cli-discovered": "CLI에서 검색됨"
+      "cli-discovered": "CLI에서 검색됨",
+      "extension": "확장에서"
     },
     "verdict": {
       "all": "전체",
@@ -39,7 +40,8 @@
     "disable": "비활성화",
     "delete": "삭제",
     "import": "가져오기",
-    "build": "스킬 만들기"
+    "build": "스킬 만들기",
+    "scanLibrary": "라이브러리 검사"
   },
   "threats": {
     "credential-access": "자격 증명 접근",
@@ -153,14 +155,17 @@
     },
     "error": {
       "saveFailed": "저장 실패",
-      "generateFailed": "생성 실패"
+      "generateFailed": "생성 실패",
+      "noModel": "아직 AI 모델이 연결되지 않았습니다. 설정에서 제공자를 추가한 뒤 다시 시도하세요."
     }
   },
   "detail": {
     "whenLoaded": "Darhai가 이것을 불러올 때",
     "metadata": "메타데이터",
     "body": "본문",
-    "quarantined": "이 스킬은 격리되어 불러올 수 없습니다."
+    "quarantined": "이 스킬은 격리되어 불러올 수 없습니다.",
+    "scanNow": "지금 검사",
+    "scanDone": "검사가 완료되었습니다."
   },
   "stats": {
     "total": "전체 스킬",
@@ -177,5 +182,8 @@
     "title": "설치된 CLI 도구에서 스킬 미러링",
     "subtitle": "~/.claude/skills, ~/.codex/skills, ~/.gemini/skills의 스킬을 노출하여 스킬 페이지에 표시합니다. 선택적으로 사용합니다. 적용하려면 재시작이 필요합니다.",
     "restartNeeded": "- 적용하려면 앱을 재시작하세요."
+  },
+  "scan": {
+    "done": "{{count}}개의 스킬을 검사했습니다."
   }
 }

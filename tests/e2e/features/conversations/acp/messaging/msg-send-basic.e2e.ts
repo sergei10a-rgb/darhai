@@ -8,6 +8,15 @@ import {
   waitForAiReply,
   takeScreenshot,
 } from '../../../../helpers';
+import {
+  assistantText,
+  cleanupMockWorkspaces,
+  createMockAgentConversation,
+  readJsonRpcDump,
+  readPersistedMessages,
+  sendToMockAgent,
+  waitForMessages,
+} from '../../../../helpers/mockAgentConversation';
 
 const USER_MSG_SELECTOR = '.message-item.text.justify-end';
 const AI_MSG_SELECTOR = '.message-item.text.justify-start';
@@ -93,6 +102,72 @@ test.describe('F-MSG-01 Send text message', () => {
   });
 
   test.skip('Multiple queued messages merged and sent (partially implemented, to be completed when full feature ships)', async () => {});
-  test.skip('Error message shown when AI connection fails (E2E cannot reliably simulate backend connection failure)', async () => {});
-  test.skip('Prompt shows conversation not found when session does not exist (defensive boundary)', async () => {});
+});
+
+/**
+ * The failure and boundary half of F-MSG-01, driven against a mock ACP agent.
+ *
+ * These were empty `test.skip`s reading "E2E cannot reliably simulate backend
+ * connection failure" and "defensive boundary". Both are now reachable: the
+ * mock agent binary can be made to die on startup, and a conversation id that
+ * was never created needs no agent at all. Neither needs a signed-in CLI, so
+ * this block runs even when the agent picker has no usable backend.
+ */
+test.describe('F-MSG-01 Send text message - failure paths', () => {
+  test.afterAll(() => {
+    cleanupMockWorkspaces();
+  });
+
+  test('Sending to a conversation that does not exist is rejected, not silently accepted', async ({ page }) => {
+    const missingId = `no-such-conversation-${Date.now()}`;
+
+    const result = await sendToMockAgent(page, missingId, 'E2E send into the void', 30_000);
+
+    expect(result.success, `send into a missing conversation was accepted: ${JSON.stringify(result)}`).toBe(false);
+    expect(result.msg ?? '', `rejection carried no reason: ${JSON.stringify(result)}`).not.toBe('');
+
+    // And nothing may have been conjured into existence for that id.
+    const messages = await readPersistedMessages(page, missingId).catch(() => []);
+    expect(messages.length, `a missing conversation gained messages: ${JSON.stringify(messages)}`).toBe(0);
+  });
+
+  test('A backend that dies on startup never produces a fabricated assistant reply', async ({ page }) => {
+    test.setTimeout(180_000);
+
+    const conversation = await createMockAgentConversation(page, {
+      name: 'e2e failing backend',
+      failOnStartup: { code: 1, stderr: 'mock agent: not authenticated' },
+    });
+    createdIds.push(conversation.id);
+
+    const sendResult = await sendToMockAgent(page, conversation.id, 'E2E connection failure probe', 120_000);
+
+    // Give the failure every chance to land before reading.
+    const messages = await waitForMessages(
+      page,
+      conversation.id,
+      (msgs) => msgs.some((m) => m.position !== 'right'),
+      30_000
+    );
+
+    // The agent never started, so no assistant text can legitimately exist.
+    // A reply here would mean the app invented one - the exact "reports success
+    // while nothing happened" failure the audit found on the happy path.
+    const reply = assistantText(messages);
+    expect(reply, `assistant text appeared although the backend never started: ${reply}`).not.toContain('mock reply');
+
+    // The user must be told. Either the send itself reports the failure, or the
+    // conversation carries an error/notice row - a silent no-op is the defect.
+    const surfaced = sendResult.success === false || messages.some((m) => m.position !== 'right');
+    expect(
+      surfaced,
+      `backend failure was silent: send=${JSON.stringify(sendResult)} messages=${JSON.stringify(messages)}`
+    ).toBe(true);
+
+    // The agent binary really did exit before the handshake.
+    const requests = readJsonRpcDump(conversation.dumpPath);
+    expect(requests.map((r) => r.method), `a dead agent answered JSON-RPC: ${JSON.stringify(requests)}`).not.toContain(
+      'session/prompt'
+    );
+  });
 });

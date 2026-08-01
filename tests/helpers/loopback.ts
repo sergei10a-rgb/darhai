@@ -7,131 +7,27 @@
 /**
  * Loopback connect helpers for tests that talk to a server they just started.
  *
- * Why this exists
- * ---------------
- * Tests here bind an ephemeral port, connect to it, and assert on the answer.
- * That connect intermittently failed with `Error: connect ETIMEDOUT
- * 127.0.0.1:<port>` - every test in a file failing at once, then the same file
- * passing untouched on the next run. It was never the code under test: the
- * server was listening, and a standalone probe doing 600 listen/connect pairs
- * on the same host while the suite ran did not drop a single connection.
+ * The retry itself is NOT defined here any more. It used to be a test-only
+ * copy, which meant production shipped without the guard the test lane needed:
+ * the same host conditions that made these tests fail (see `loopbackConnect.ts`
+ * for the full diagnosis - a Windows ephemeral port range starting at 1024, so
+ * client and server pools overlap and a TIME_WAIT 4-tuple reuse is refused)
+ * apply verbatim to the app's own loopback MCP bridges.
  *
- * Two things go wrong, and both are about the host rather than the server:
- *
- *  1. **4-tuple collisions.** This machine's Windows dynamic port range is
- *     configured as 1024-65534 (`netsh int ipv4 show dynamicport tcp`), so
- *     listeners and clients share one pool that a full run cycles through fast.
- *     Reusing a (127.0.0.1:client -> 127.0.0.1:server) tuple that is still in
- *     TIME_WAIT is refused outright - directly reproducible on this host, where
- *     a deliberate reuse returns EADDRINUSE and the very next attempt, on a
- *     fresh client port, connects.
- *  2. **A starved event loop.** A fork that does not get scheduled for several
- *     seconds cannot dispatch its own `connect` event either, so any tight
- *     deadline reports a connection that the kernel already completed as a
- *     timeout. Hence the deliberately generous per-attempt budget below.
- *
- * Only connection *establishment* is retried - the request, the response and
- * every assertion still happen exactly once, so a genuinely broken server still
- * fails (its ECONNREFUSED is not retryable).
+ * `connectLoopback` is therefore re-exported from `src/`, so tests exercise the
+ * exact code the product runs. Only connection *establishment* is retried - the
+ * request, the response and every assertion still happen exactly once, so a
+ * genuinely broken server still fails (its ECONNREFUSED is not retryable).
  */
 import * as http from 'node:http';
-import * as net from 'node:net';
+import {
+  connectLoopback,
+  LOOPBACK_HOST,
+  type ConnectLoopbackOptions,
+} from '../../src/process/team/mcp/loopbackConnect';
 
-export const LOOPBACK_HOST = '127.0.0.1';
-
-/**
- * Per-attempt connect budget.
- *
- * Generous on purpose. This timer measures the *test process's event loop*, not
- * the network: a vitest worker that is starved for several seconds cannot
- * dispatch the socket's `connect` event either, so a tight budget reports a
- * connection that actually succeeded as ETIMEDOUT. Ten seconds is still half
- * the OS's own ~21 s SYN give-up, so a genuinely dropped SYN is retried with a
- * fresh client port well before the kernel would have surfaced it.
- */
-const CONNECT_TIMEOUT_MS = 10_000;
-
-/** Total attempts, including the first. */
-const CONNECT_ATTEMPTS = 3;
-
-/**
- * Failures that mean "the packet was lost / the tuple was refused by the
- * stack", not "nothing is listening there".
- *
- * `ECONNREFUSED` is deliberately absent: it is the answer a closed port gives,
- * and retrying it would turn a real "the server never started" bug into a
- * timeout several seconds later.
- */
-const RETRYABLE_CODES = new Set(['ETIMEDOUT', 'ECONNRESET', 'ECONNABORTED', 'EADDRINUSE', 'ENETRESET']);
-
-function connectOnce(port: number, host: string, timeoutMs: number): Promise<net.Socket> {
-  return new Promise<net.Socket>((resolve, reject) => {
-    const socket = net.connect({ port, host });
-    let settled = false;
-
-    const onError = (err: Error): void => {
-      if (settled) return;
-      settled = true;
-      cleanup();
-      socket.destroy();
-      reject(err);
-    };
-    const onTimeout = (): void => {
-      const err: NodeJS.ErrnoException = new Error(`connect ETIMEDOUT ${host}:${port} after ${timeoutMs}ms`);
-      err.code = 'ETIMEDOUT';
-      onError(err);
-    };
-    const onConnect = (): void => {
-      if (settled) return;
-      settled = true;
-      cleanup();
-      // Hand the caller a socket with no inactivity deadline of ours.
-      socket.setTimeout(0);
-      resolve(socket);
-    };
-    function cleanup(): void {
-      socket.removeListener('error', onError);
-      socket.removeListener('timeout', onTimeout);
-      socket.removeListener('connect', onConnect);
-    }
-
-    socket.once('error', onError);
-    socket.once('connect', onConnect);
-    socket.setTimeout(timeoutMs, onTimeout);
-  });
-}
-
-export type ConnectLoopbackOptions = {
-  host?: string;
-  attempts?: number;
-  timeoutMs?: number;
-};
-
-/**
- * Connect to `port` on loopback, retrying a dropped SYN.
- *
- * Resolves an already-connected socket with none of this helper's listeners
- * still attached, so the caller wires up `data` / `error` / `end` exactly as it
- * would after a bare `net.connect`.
- */
-export async function connectLoopback(port: number, options: ConnectLoopbackOptions = {}): Promise<net.Socket> {
-  const host = options.host ?? LOOPBACK_HOST;
-  const attempts = options.attempts ?? CONNECT_ATTEMPTS;
-  const timeoutMs = options.timeoutMs ?? CONNECT_TIMEOUT_MS;
-
-  let lastError: unknown;
-  for (let attempt = 0; attempt < attempts; attempt++) {
-    try {
-      // eslint-disable-next-line no-await-in-loop
-      return await connectOnce(port, host, timeoutMs);
-    } catch (err) {
-      lastError = err;
-      const code = (err as NodeJS.ErrnoException).code;
-      if (!code || !RETRYABLE_CODES.has(code)) throw err;
-    }
-  }
-  throw lastError;
-}
+export { connectLoopback, LOOPBACK_HOST };
+export type { ConnectLoopbackOptions };
 
 export type LoopbackHttpResponse = {
   status: number;

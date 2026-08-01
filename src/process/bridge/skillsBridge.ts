@@ -16,6 +16,52 @@ import { ProcessConfig } from '@process/utils/initStorage';
 import { loadTeamSkills } from '@process/extensions/data/bundle-vendored/teamSkillMerge';
 import { loadCliSkills } from '@process/services/skills/CliSkillDiscovery';
 import { getDatabase } from '@process/services/database';
+import { oneShotComplete, pickBestModel } from '@process/services/completion/oneShot';
+
+/**
+ * Prompt for the "Describe it" tab of the skill builder.
+ *
+ * The structure mirrors what `SkillGuard` and the retrieval layer expect from a
+ * SKILL.md: a title, a one-line summary, explicit use / do-not-use guidance
+ * (which is what makes the model activate the skill accurately) and concrete
+ * instructions. Language is mirrored back to the user deliberately - this is a
+ * Mongolian-first product and a Mongolian description must not come back in
+ * English.
+ */
+function buildSkillDraftPrompt(description: string): string {
+  return [
+    'You are writing a SKILL.md file for an AI coding agent.',
+    'Return ONLY the markdown document - no commentary, no code fences around it.',
+    '',
+    'Required structure:',
+    '# <kebab-case-skill-name>',
+    '',
+    '> <one-sentence summary>',
+    '',
+    '## Use when',
+    '- <concrete trigger>',
+    '',
+    '## Do NOT use when',
+    '- <concrete non-trigger>',
+    '',
+    '## Instructions',
+    '<numbered, actionable steps the agent should follow>',
+    '',
+    'Write the document in the SAME LANGUAGE as the description below.',
+    'Be specific and actionable; do not leave placeholders such as "(fill in)".',
+    '',
+    'Description of the skill to write:',
+    description,
+  ].join('\n');
+}
+
+/** Strip wrapping ``` fences a chatty model may add around the document. */
+function stripCodeFence(raw: string): string {
+  return raw
+    .replace(/^```(?:markdown|md)?\s*\n?/i, '')
+    .replace(/\n?```\s*$/i, '')
+    .trim();
+}
 
 export function initSkillsBridge(): void {
   // Register the waylandteams bundle's 88 curated skills as the second
@@ -30,7 +76,7 @@ export function initSkillsBridge(): void {
   void loadCliSkills();
   ipcBridge.skills.scan.provider(async ({ name }) => {
     const lib = SkillLibrary.getInstance();
-    return lib.rescanIfStale(name) ?? null;
+    return (await lib.rescanIfStale(name)) ?? null;
   });
 
   ipcBridge.skills.getReport.provider(async ({ name }) => {
@@ -164,26 +210,25 @@ export function initSkillsBridge(): void {
   // ---------------------------------------------------------------------------
 
   ipcBridge.skills.build.draft.provider(async ({ description }) => {
-    // TODO: replace with a real model call to generate a SKILL.md from the description.
-    // The stub returns a minimal valid template so the UI can bootstrap the Write tab.
-    const skillMd = [
-      '# new-skill',
-      '',
-      `> ${description}`,
-      '',
-      '## Use when',
-      '',
-      '- (fill in)',
-      '',
-      '## Do NOT use when',
-      '',
-      '- (fill in)',
-      '',
-      '## Instructions',
-      '',
-      description,
-    ].join('\n');
-    return { skillMd };
+    // Rarely run and high-stakes (the output becomes a skill the agent follows),
+    // so use the best model the user has rather than the cheap one - same choice
+    // the project-knowledge wizard makes.
+    try {
+      const model = await pickBestModel();
+      if (!model) return { skillMd: '', error: 'no-model' as const };
+      const raw = await oneShotComplete(buildSkillDraftPrompt(description), {
+        model,
+        maxTokens: 1200,
+        timeoutMs: 90_000,
+      });
+      const skillMd = stripCodeFence(raw);
+      if (!skillMd) return { skillMd: '', error: 'failed' as const };
+      return { skillMd };
+    } catch (err) {
+      console.error('[skillsBridge] build.draft failed:', err);
+      const msg = err instanceof Error ? err.message : '';
+      return { skillMd: '', error: msg === 'no-usable-model' ? ('no-model' as const) : ('failed' as const) };
+    }
   });
 
   ipcBridge.skills.save.provider(async ({ name, description, category, tags, body }) => {

@@ -445,7 +445,15 @@ export const skills = {
      * Draft a SKILL.md from a plain-text description.
      * TODO: wire to real model call; currently returns a deterministic template.
      */
-    draft: buildProvider<{ skillMd: string }, { description: string }>('skills.build.draft'),
+    /**
+     * Draft a SKILL.md from a plain-language description using the best model
+     * the user has configured. Never rejects: `error` is `'no-model'` when no
+     * provider is reachable and `'failed'` when the call itself failed, so the
+     * builder modal can say why instead of silently showing a stub.
+     */
+    draft: buildProvider<{ skillMd: string; error?: 'no-model' | 'failed' }, { description: string }>(
+      'skills.build.draft'
+    ),
   },
   /**
    * Write a new SKILL.md to ~/.darhai/skills/<kebab-name>/SKILL.md,

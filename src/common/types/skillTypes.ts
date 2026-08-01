@@ -8,7 +8,7 @@
  * Canonical skill types for the Wayland skills subsystem.
  */
 
-export type SkillSource = 'wayland-library' | 'team' | 'user' | 'imported' | 'cli-discovered';
+export type SkillSource = 'wayland-library' | 'team' | 'user' | 'imported' | 'cli-discovered' | 'extension';
 export type SkillType = 'skill' | 'workflow' | 'agent-profile';
 export type SkillVerdict = 'clean' | 'review' | 'blocked' | 'unscanned';
 export type SkillThreat =

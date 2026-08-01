@@ -50,9 +50,12 @@ type DocRecord = {
 const TOKEN_RE = /[\p{L}\p{N}_-]+/gu;
 
 function tokenize(text: string): string[] {
-  // `toLocaleLowerCase` casefolds Cyrillic and other non-ASCII scripts
+  // NFC first: «й»/«ё»/«ү» written as base letter + combining breve (NFD) must
+  // index and query as the same token as the pre-composed form, or a Mongolian
+  // query silently misses documents that merely differ in encoding.
+  // `toLocaleLowerCase` then casefolds Cyrillic and other non-ASCII scripts
   // correctly, where `toLowerCase` can be locale-insensitive for some ranges.
-  return text.toLocaleLowerCase().match(TOKEN_RE) ?? [];
+  return text.normalize('NFC').toLocaleLowerCase().match(TOKEN_RE) ?? [];
 }
 
 // ---------------------------------------------------------------------------
@@ -140,6 +143,41 @@ export class SkillRetriever {
   // ---------------------------------------------------------------------------
   // BM25 retrieval
   // ---------------------------------------------------------------------------
+
+  /**
+   * The largest number of DISTINCT query terms any single document contains -
+   * the hard ceiling on `matchedTerms` for this query and corpus.
+   *
+   * This is what makes a "the best hit must share at least N query terms"
+   * relevance gate fair across languages. The bundled library is ~96% English,
+   * so a Mongolian turn's Latin loan word and its Cyrillic words essentially
+   * never co-occur in one document: "Надад Kubernetes кластерт програм
+   * байршуулахад туслаач" tops out at ONE shared term, and a flat floor of two
+   * makes the gate unsatisfiable - every such turn surfaced nothing.
+   *
+   * Callers gate on `min(desiredMinimum, maxSharedTerms)`: an English turn
+   * where some document does share two terms keeps the full anti-spam floor,
+   * while a turn no document can ever satisfy twice is judged on its best
+   * achievable evidence instead of being silently dropped.
+   */
+  maxSharedTerms(query: string): number {
+    this.ensureBuilt();
+    const terms = [...new Set(tokenize(query))].filter((t) => (this.df.get(t) ?? 0) > 0);
+    if (terms.length === 0) return 0;
+
+    let best = 0;
+    for (const doc of this.docs) {
+      let shared = 0;
+      for (const term of terms) {
+        if (doc.termFreqs.has(term)) shared += 1;
+      }
+      if (shared > best) {
+        best = shared;
+        if (best === terms.length) break; // cannot do better
+      }
+    }
+    return best;
+  }
 
   retrieve(query: string, limit = 25): RetrievalResult[] {
     this.ensureBuilt();

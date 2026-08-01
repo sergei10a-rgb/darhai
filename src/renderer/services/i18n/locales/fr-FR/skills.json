@@ -25,7 +25,8 @@
       "team": "Équipe",
       "user": "Mes compétences",
       "imported": "Importées",
-      "cli-discovered": "Depuis vos CLI"
+      "cli-discovered": "Depuis vos CLI",
+      "extension": "Depuis les extensions"
     },
     "verdict": {
       "all": "Toutes",
@@ -50,7 +51,8 @@
     "disable": "Désactiver",
     "delete": "Supprimer",
     "import": "Importer",
-    "build": "Créer une compétence"
+    "build": "Créer une compétence",
+    "scanLibrary": "Analyser la bibliothèque"
   },
   "cliDiscovery": {
     "title": "Refléter les compétences des outils CLI installés",
@@ -169,13 +171,19 @@
     },
     "error": {
       "saveFailed": "Échec de l'enregistrement",
-      "generateFailed": "Échec de la génération"
+      "generateFailed": "Échec de la génération",
+      "noModel": "Aucun modèle d'IA n'est encore connecté. Ajoutez un fournisseur dans les paramètres, puis réessayez."
     }
   },
   "detail": {
     "whenLoaded": "Quand Darhai charge ceci",
     "metadata": "Métadonnées",
     "body": "Corps",
-    "quarantined": "Cette compétence est en quarantaine et ne peut pas être chargée."
+    "quarantined": "Cette compétence est en quarantaine et ne peut pas être chargée.",
+    "scanNow": "Analyser maintenant",
+    "scanDone": "Analyse terminée."
+  },
+  "scan": {
+    "done": "{{count}} compétences analysées."
   }
 }

@@ -25,7 +25,8 @@
       "team": "Equipe",
       "user": "Minhas skills",
       "imported": "Importadas",
-      "cli-discovered": "Dos seus CLIs"
+      "cli-discovered": "Dos seus CLIs",
+      "extension": "De extensões"
     },
     "verdict": {
       "all": "Todas",
@@ -50,7 +51,8 @@
     "disable": "Desativar",
     "delete": "Excluir",
     "import": "Importar",
-    "build": "Criar uma skill"
+    "build": "Criar uma skill",
+    "scanLibrary": "Analisar biblioteca"
   },
   "cliDiscovery": {
     "title": "Espelhar skills de ferramentas CLI instaladas",
@@ -169,13 +171,19 @@
     },
     "error": {
       "saveFailed": "Falha ao salvar",
-      "generateFailed": "Falha na geração"
+      "generateFailed": "Falha na geração",
+      "noModel": "Nenhum modelo de IA conectado ainda. Adicione um provedor nas configurações e tente novamente."
     }
   },
   "detail": {
     "whenLoaded": "Quando o Darhai carrega isto",
     "metadata": "Metadados",
     "body": "Corpo",
-    "quarantined": "Esta skill está em quarentena e não pode ser carregada."
+    "quarantined": "Esta skill está em quarentena e não pode ser carregada.",
+    "scanNow": "Analisar agora",
+    "scanDone": "Análise concluída."
+  },
+  "scan": {
+    "done": "{{count}} habilidades analisadas."
   }
 }

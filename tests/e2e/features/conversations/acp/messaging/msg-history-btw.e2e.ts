@@ -77,9 +77,12 @@ test.describe('F-MSG-06 Input Box History', () => {
   test.skip('ArrowUp/ArrowDown do not trigger history in multi-line input (requires precise cursor position control)', async () => {});
 });
 
-test.describe('F-MSG-07 Retry and Undo Last Conversation Round', () => {
-  test.skip('entire feature not implemented (skip allowlist: F-MSG-07 undo/redo not implemented)', async () => {});
-});
+// F-MSG-07 (Retry / Undo last conversation round) has no implementation to
+// test. The only undo/redo in the tree belongs to the preview markdown and HTML
+// editors (`Preview/components/editors/*`), which is unrelated to conversation
+// rounds; nothing in the conversation surface can retry or undo a turn. A
+// placeholder asserting "not implemented" tests nothing, so it is gone rather
+// than left to look like coverage. Reinstate a real spec when the feature ships.
 
 test.describe('F-MSG-08 /btw Append Context', () => {
   test('sending /btw message during AI reply clears the input box and AI completes the reply', async ({ page }) => {

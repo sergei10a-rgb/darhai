@@ -5,10 +5,10 @@
  */
 
 import { Alert, Button, Drawer, Input, Message, Spin, Tag, Typography } from '@arco-design/web-react';
-import { Pencil, Star } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import { Pencil, ShieldCheck, Star } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { SkillIndexEntry } from '@/common/types/skillTypes';
+import type { SkillIndexEntry, SkillSecurityReport } from '@/common/types/skillTypes';
 import { ipcBridge } from '@/common';
 import { SOURCE_LABEL, STATUS_LABEL, VERDICT_ICON } from './SkillRow';
 
@@ -44,9 +44,50 @@ const SkillDetailDrawer: React.FC<Props> = ({ entry, open, onClose, onTogglePin,
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
   const [saving, setSaving] = useState(false);
+  // Security report shown in the drawer. Starts as whatever the index carries,
+  // then reflects a freshly stored report (`skills.getReport`) and any scan the
+  // user runs here (`skills.scan`). Before this, the three security IPC
+  // providers had no caller anywhere in the renderer.
+  const [report, setReport] = useState<SkillSecurityReport | null>(null);
+  const [scanning, setScanning] = useState(false);
   const entryName = entry?.name ?? null;
   // Only user-authored / imported skills live in a writable path.
   const editable = entry?.source === 'user' || entry?.source === 'imported';
+  // Pull the stored report whenever the drawer opens on a skill, so a scan run
+  // elsewhere (the page-level "Scan library") is reflected here too.
+  useEffect(() => {
+    if (!entryName || !open) {
+      setReport(null);
+      return;
+    }
+    let cancelled = false;
+    ipcBridge.skills.getReport
+      .invoke({ name: entryName })
+      .then((r) => {
+        if (!cancelled) setReport(r);
+      })
+      .catch(() => {
+        if (!cancelled) setReport(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [entryName, open]);
+
+  const handleScan = useCallback(async () => {
+    if (!entryName) return;
+    setScanning(true);
+    try {
+      const result = await ipcBridge.skills.scan.invoke({ name: entryName });
+      setReport(result);
+      Message.success(t('detail.scanDone', { defaultValue: 'Scan complete.' }));
+    } catch (e) {
+      Message.error(e instanceof Error ? e.message : String(e));
+    } finally {
+      setScanning(false);
+    }
+  }, [entryName, t]);
+
   useEffect(() => {
     setEditing(false);
     if (!entryName || !open) {
@@ -104,12 +145,13 @@ const SkillDetailDrawer: React.FC<Props> = ({ entry, open, onClose, onTogglePin,
 
   if (!entry) return null;
 
-  const verdict = entry.security?.verdict ?? 'unscanned';
+  const security = report ?? entry.security ?? null;
+  const verdict = security?.verdict ?? 'unscanned';
   const isBlocked = verdict === 'blocked';
   const sourceLabel =
     entry.sourceLabel ??
     t(`filters.source.${entry.source}`, { defaultValue: SOURCE_LABEL[entry.source] ?? entry.source });
-  const findings = entry.security?.findings ?? [];
+  const findings = security?.findings ?? [];
 
   return (
     <Drawer
@@ -181,12 +223,25 @@ const SkillDetailDrawer: React.FC<Props> = ({ entry, open, onClose, onTogglePin,
 
         {/* Security */}
         <div>
-          <Typography.Text
-            className='block mb-8px text-11px uppercase font-semibold'
-            style={{ color: 'var(--color-text-3)', letterSpacing: '0.06em' }}
-          >
-            Security
-          </Typography.Text>
+          <div className='flex items-center justify-between mb-8px'>
+            <Typography.Text
+              className='text-11px uppercase font-semibold'
+              style={{ color: 'var(--color-text-3)', letterSpacing: '0.06em' }}
+            >
+              Security
+            </Typography.Text>
+            <Button
+              type='text'
+              size='mini'
+              icon={<ShieldCheck size={13} />}
+              loading={scanning}
+              onClick={() => {
+                void handleScan();
+              }}
+            >
+              {t('detail.scanNow', { defaultValue: 'Scan now' })}
+            </Button>
+          </div>
           <div className='flex items-center gap-6px mb-8px'>
             {VERDICT_ICON[verdict]}
             <Typography.Text className='text-12px' style={{ color: 'var(--text-primary)' }}>

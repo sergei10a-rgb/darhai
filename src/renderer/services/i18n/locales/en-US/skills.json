@@ -25,7 +25,8 @@
       "team": "Team",
       "user": "My skills",
       "imported": "Imported",
-      "cli-discovered": "From your CLIs"
+      "cli-discovered": "From your CLIs",
+      "extension": "From extensions"
     },
     "verdict": {
       "all": "All",
@@ -50,7 +51,8 @@
     "disable": "Disable",
     "delete": "Delete",
     "import": "Import",
-    "build": "Build a skill"
+    "build": "Build a skill",
+    "scanLibrary": "Scan library"
   },
   "cliDiscovery": {
     "title": "Mirror skills from installed CLI tools",
@@ -169,13 +171,19 @@
     },
     "error": {
       "saveFailed": "Save failed",
-      "generateFailed": "Generation failed"
+      "generateFailed": "Generation failed",
+      "noModel": "No AI model is connected yet. Add a provider in Settings, then try again."
     }
   },
   "detail": {
     "whenLoaded": "When Darhai loads this",
     "metadata": "Metadata",
     "body": "Body",
-    "quarantined": "This skill is quarantined and cannot be loaded."
+    "quarantined": "This skill is quarantined and cannot be loaded.",
+    "scanNow": "Scan now",
+    "scanDone": "Scan complete."
+  },
+  "scan": {
+    "done": "{{count}} skills scanned."
   }
 }

@@ -10,6 +10,7 @@ import { getPersonalDataMcpRuntime } from '@process/resources/builtinMcp/persona
 import { AcpSkillManager, buildSkillsIndexText, type SkillIndex } from './AcpSkillManager';
 import { SkillLibrary } from '@process/services/skills/SkillLibrary';
 import { SkillRetriever } from '@process/services/skills/SkillRetriever';
+import { discriminativeQueryTerms, isMostlyNonLatinScript } from '@process/services/skills/skillQueryTerms';
 import {
   augmentSkillAdvertWithVector,
   keywordLaneFromRetriever,
@@ -122,42 +123,19 @@ const MIN_QUERY_TERMS = 2;
  * relevant turn shares 2+ content words with a skill, while a chatty turn whose
  * "match" comes from a single incidental word shares exactly one. This is what
  * kills the "5 irrelevant skills on every message" spam.
+ *
+ * For a turn written mostly in a non-Latin script this floor is capped by what
+ * any single document could possibly share (`SkillRetriever.maxSharedTerms`).
+ * The bundled library is written in English, so a Mongolian turn's Latin loan
+ * word and its Cyrillic words never co-occur in one skill: "Надад Kubernetes
+ * кластерт програм байршуулахад туслаач" tops out at ONE shared term, and the
+ * flat floor made the gate unsatisfiable - every Mongolian turn surfaced
+ * nothing. Same-script turns keep the full floor, because there "no document
+ * shares two of your words" really is evidence of irrelevance.
  */
 const MATCH_MIN_TERMS = 2;
 /** Advert only hits within this fraction of the top score (the coherent cluster, not the weak tail). */
 const ADVERT_RATIO = 0.55;
-
-/**
- * Conversational stopwords stripped from the retrieval query. These carry no
- * skill intent but, because the skill corpus is terse, several of them are rare
- * in it (high idf) - so left in, a long chatty sentence accumulates BM25 score
- * on unrelated skills (the "5 irrelevant skills on every message" bug). Plain
- * English stopwords plus chat filler; deliberately excludes domain words.
- */
-const QUERY_STOPWORDS = new Set(
-  (
-    'about above after again against all also am an and any are arent as at be because been before being ' +
-    'below between both but by can cant cannot could couldnt did didnt do does doesnt doing dont down during ' +
-    'each few for from further had hadnt has hasnt have havent having he her here hers herself him himself his ' +
-    'how however i id if ill im ive into is isnt it its itself just lets me more most must my myself no nor not ' +
-    'of off on once only or other ought our ours ourselves out over own same shant she should shouldnt so some ' +
-    'such than that thats the their theirs them themselves then there theres these they theyll theyre theyve ' +
-    'this those through to too under until up very was wasnt we well were werent weve what whats when where ' +
-    'which while who whom why will with wont would wouldnt you youd youll youre youve your yours yourself ' +
-    'yourselves hi hey hello howdy yeah yep nope ok okay cool nice thanks thank sure gonna wanna gotta got get ' +
-    'getting let make made making want wants need needs going give stuff thing things really actually basically ' +
-    'maybe perhaps please'
-  ).split(' ')
-);
-
-/** Distinct, length>2, non-stopword query tokens - the signal we retrieve on. */
-function discriminativeQueryTerms(text: string): string[] {
-  // Unicode-aware tokenization (`\p{L}\p{N}`) so Cyrillic / Mongolian query
-  // words survive - the old ASCII `[a-z0-9_-]` regex dropped them entirely,
-  // leaving non-Latin turns with zero discriminative terms.
-  const tokens: string[] = text.toLocaleLowerCase().match(/[\p{L}\p{N}_-]+/gu) ?? [];
-  return [...new Set(tokens.filter((t) => t.length > 2 && !QUERY_STOPWORDS.has(t)))];
-}
 
 // Module-level BM25 index cache, rebuilt only when the library size changes.
 let turnRetriever: SkillRetriever | null = null;
@@ -217,8 +195,14 @@ export async function buildTurnSkillContext(
   // Gate 2: relevance. The best match must genuinely share multiple query terms,
   // not ride in on a single incidental word - otherwise this turn has no truly
   // relevant skill and we surface nothing instead of the least-bad guesses.
+  // The requirement is capped by what the index can possibly match, so a turn
+  // written in a language the corpus is not in still surfaces the skill its one
+  // in-vocabulary term names.
   const topScore = hits[0].score;
-  if (hits[0].matchedTerms < MATCH_MIN_TERMS) return empty;
+  const requiredMatches = isMostlyNonLatinScript(terms)
+    ? Math.min(MATCH_MIN_TERMS, turnRetriever.maxSharedTerms(query))
+    : MATCH_MIN_TERMS;
+  if (hits[0].matchedTerms < requiredMatches) return empty;
 
   const alwaysOn = new Set(opts?.alwaysOnNames ?? []);
 

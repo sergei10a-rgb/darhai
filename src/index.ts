@@ -77,6 +77,8 @@ import { onCloseToTrayChanged, onLanguageChanged } from './process/bridge/system
 import { setInitialLanguage } from '@process/services/i18n';
 import { workerTaskManager } from './process/task/workerTaskManagerSingleton';
 import { setupApplicationMenu } from './process/utils/appMenu';
+import { createQuitBarrier } from './process/utils/quitBarrier';
+import { registerSyncQuitReapers } from './process/utils/quitReapers';
 import { startWebServer } from './process/webserver';
 import { initializeZoomFactor, setupZoomForWindow } from './process/utils/zoom';
 import { getOrCreateAnalyticsId } from './process/utils/analyticsId';
@@ -389,6 +391,13 @@ process.on('unhandledRejection', (reason, _promise) => {
   }
   // Do not exit - Node's default for unhandled rejections is to log and continue.
 });
+
+// Release synchronously-releasable OS resources (today: the SQLite handle) on
+// EVERY way this process can die, including the `app.exit(1)` two lines above
+// and the one in the init-failure path - neither emits `will-quit`, so neither
+// is covered by the quit barrier at the bottom of this file. Registered here,
+// before any code that can hard-exit, so the guarantee predates the risk.
+registerSyncQuitReapers();
 
 const hasSwitch = (flag: string) => process.argv.includes(`--${flag}`) || app.commandLine.hasSwitch(flag);
 const getSwitchValue = (flag: string): string | undefined => {
@@ -1234,12 +1243,30 @@ app.on('activate', () => {
   }
 });
 
-app.on('before-quit', async () => {
-  console.log('[Wayland] before-quit');
-  setIsQuitting(true);
-  isExplicitQuit = true;
-  destroyTray();
+/**
+ * Absolute upper bound on the `will-quit` barrier.
+ *
+ * The cleanup already races its own 10s master ceiling, so this only matters if
+ * that race itself wedges. Deliberately larger than it, and unconditional: a
+ * barrier that could fail to exit would turn a quit into a hang, which is worse
+ * than the leak it exists to prevent.
+ */
+const QUIT_BARRIER_CEILING_MS = 12000;
 
+const quitBarrier = createQuitBarrier({
+  ceilingMs: QUIT_BARRIER_CEILING_MS,
+  exit: () => {
+    try {
+      // Does NOT re-emit before-quit / will-quit, so there is no recursion.
+      app.exit(0);
+    } catch (err) {
+      console.error('[Wayland] app.exit failed; exiting the process directly:', err);
+      process.exit(0);
+    }
+  },
+});
+
+const runQuitCleanup = async (): Promise<void> => {
   // M17: per-step budget. A single slow step (e.g. WebSocket close) cannot
   // starve later steps. Total ceiling stays at 10s.
   const PER_STEP_TIMEOUT_MS = 2000;
@@ -1303,6 +1330,11 @@ app.on('before-quit', async () => {
       safeImport('database', () => import('@process/services/database/export')),
       safeImport('cron', () => import('@process/services/cron/cronServiceSingleton')),
       safeImport('fileWatch', () => import('@process/bridge/fileWatchBridge')),
+      // notes + calendar were listed in the prefetch but NOT here, so whenever
+      // the prefetch was unavailable (quit raced ready, or one import rejected)
+      // their reminder scanners were silently never shut down.
+      safeImport('notes', () => import('@process/services/notes/noteServiceSingleton')),
+      safeImport('calendar', () => import('@process/services/calendar/calendarServiceSingleton')),
       safeImport('cookbook', () => import('@process/services/cookbook/cookbookServeSingleton')),
       safeImport('omniroute', () => import('@process/services/omnirouteGateway/omnirouteRuntimeSingleton')),
     ]);
@@ -1490,18 +1522,50 @@ app.on('before-quit', async () => {
   // Per-step timeouts (2s each) handle the common case; this is the
   // last-resort guard if loadModules itself wedges or many steps queue
   // microtasks beyond their budget.
+  let ceilingTimer: ReturnType<typeof setTimeout> | undefined;
   const masterCeiling = new Promise<void>((resolve) => {
-    setTimeout(() => {
+    ceilingTimer = setTimeout(() => {
       console.warn(`[Wayland] Cleanup master ceiling (${MASTER_TIMEOUT_MS}ms) reached; forcing quit`);
       resolve();
     }, MASTER_TIMEOUT_MS);
   });
 
-  await Promise.race([cleanup(), masterCeiling]);
+  try {
+    await Promise.race([cleanup(), masterCeiling]);
+  } finally {
+    // Cleanup won the race: drop the ceiling so it cannot hold the loop open.
+    if (ceilingTimer) clearTimeout(ceilingTimer);
+  }
+};
+
+app.on('before-quit', () => {
+  console.log('[Wayland] before-quit');
+  setIsQuitting(true);
+  isExplicitQuit = true;
+  destroyTray();
+
+  // Start the cleanup, do NOT await it here: Electron ignores whatever an
+  // async `before-quit` handler returns (measured on this build: `before-quit`
+  // -> 23ms -> `will-quit`, with the process already going away). The
+  // `will-quit` barrier below is what actually gives these steps their time.
+  quitBarrier.begin(runQuitCleanup);
 });
 
-app.on('will-quit', () => {
-  console.log('[Wayland] will-quit - all cleanup should be complete');
+/**
+ * Hold the quit open until the cleanup `before-quit` started has finished.
+ *
+ * See {@link createQuitBarrier} for why this is safe (it always exits, it is
+ * bounded, and it runs once). Note the WebUI-mode `will-quit` handler
+ * registered in `handleAppReady`: it only cancels the quit while
+ * `isExplicitQuit` is false, which `before-quit` has already set to true by
+ * the time any of this runs.
+ */
+app.on('will-quit', (event) => {
+  if (quitBarrier.hold()) {
+    event.preventDefault();
+    return;
+  }
+  console.log('[Wayland] will-quit - cleanup complete');
 });
 
 app.on('quit', (_event, exitCode) => {

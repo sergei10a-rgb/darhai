@@ -85,7 +85,19 @@ const BuildSkillModal: React.FC<BuildSkillModalProps> = ({ visible, onClose, onS
     setGenerateError('');
     setGenerating(true);
     try {
-      const { skillMd } = await ipcBridge.skills.build.draft.invoke({ description: describePrompt });
+      const { skillMd, error } = await ipcBridge.skills.build.draft.invoke({ description: describePrompt });
+      if (error) {
+        // Never leave the user staring at a spinner that produced a stub: say
+        // exactly why nothing was generated.
+        setGenerateError(
+          error === 'no-model'
+            ? t('builder.error.noModel', {
+                defaultValue: 'No AI model is connected yet. Add a provider in Settings, then try again.',
+              })
+            : t('builder.error.generateFailed')
+        );
+        return;
+      }
       setBody(skillMd);
       // Pre-fill description from the prompt if not yet set
       if (!description.trim()) setDescription(describePrompt.trim());

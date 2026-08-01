@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Button, Input, Switch } from '@arco-design/web-react';
-import { Download, Sparkles } from 'lucide-react';
+import { Button, Input, Message, Switch } from '@arco-design/web-react';
+import { Download, ShieldCheck, Sparkles } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
@@ -32,6 +32,7 @@ const SkillsSettings: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [query, setQuery] = useState(searchParams.get('q') ?? '');
   const [buildModalVisible, setBuildModalVisible] = useState(false);
+  const [scanning, setScanning] = useState(false);
 
   // CLI discovery flag (default off). Reads/writes via the skills bridge.
   // Flipping shows a restart-required hint - the discovery only fires once
@@ -124,6 +125,25 @@ const SkillsSettings: React.FC = () => {
     }
   }, []);
 
+  /**
+   * Run Skill Guard over every skill whose stored report predates the current
+   * scanner version, then refresh the list + health cards. This is the only
+   * caller of `skills.rescanAll`; without it the "verified safe" card could
+   * never leave zero because bundled skills ship unscanned.
+   */
+  const handleScanLibrary = useCallback(async () => {
+    setScanning(true);
+    try {
+      const { rescanned } = await ipcBridge.skills.rescanAll.invoke();
+      await fetchData();
+      Message.success(t('scan.done', { count: rescanned, defaultValue: '{{count}} skills scanned.' }));
+    } catch (e) {
+      Message.error(e instanceof Error ? e.message : String(e));
+    } finally {
+      setScanning(false);
+    }
+  }, [fetchData, t]);
+
   const handleRowClick = useCallback((entry: SkillIndexEntry) => {
     setSelectedSkill(entry);
     setDrawerOpen(true);
@@ -202,6 +222,16 @@ const SkillsSettings: React.FC = () => {
           }}
         >
           {t('actions.import', 'Import skills')}
+        </Button>
+        <Button
+          type='secondary'
+          icon={<ShieldCheck size={14} />}
+          loading={scanning}
+          onClick={() => {
+            void handleScanLibrary();
+          }}
+        >
+          {t('actions.scanLibrary', 'Scan library')}
         </Button>
         <Button type='primary' icon={<Sparkles size={14} />} onClick={() => setBuildModalVisible(true)} className=''>
           {t('actions.build')}

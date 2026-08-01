@@ -10,7 +10,7 @@ import { ExtensionLoader } from './ExtensionLoader';
 import { resolveAcpAdapters } from './resolvers/AcpAdapterResolver';
 import { resolveMcpServers } from './resolvers/McpServerResolver';
 import { resolveAssistants, resolveAgents } from './resolvers/AssistantResolver';
-import { resolveSkills } from './resolvers/SkillResolver';
+import { resolveSkills, syncExtensionSkills } from './resolvers/SkillResolver';
 import { resolveThemes } from './resolvers/ThemeResolver';
 import { resolveChannelPlugins } from './resolvers/ChannelPluginResolver';
 import { resolveWebuiContributions, type WebuiContribution } from './resolvers/WebuiResolver';
@@ -364,6 +364,10 @@ export class ExtensionRegistry {
     this._acpAdapters = resolveAcpAdapters(enabledExtensions);
     this._mcpServers = resolveMcpServers(enabledExtensions);
     this._skills = resolveSkills(enabledExtensions);
+    // Publish them to the SkillLibrary singleton so extension skills take part
+    // in per-turn BM25 retrieval and auto-load, not just the first-message
+    // index. Re-runs on every enable/disable, hence replace-not-append.
+    syncExtensionSkills(this._skills);
     this._themes = resolveThemes(enabledExtensions);
     this._channelPlugins = resolveChannelPlugins(enabledExtensions) as Map<
       string,

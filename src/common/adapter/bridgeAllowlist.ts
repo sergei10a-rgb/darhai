@@ -29,8 +29,11 @@
  * A small set of constant control names (heartbeat, auth) is also allowed.
  */
 
-import { bridge, storage } from '@office-ai/platform';
+import { bridge } from '@office-ai/platform';
+// `storage` is referenced only to restate the platform's declared return type.
+import type { storage } from '@office-ai/platform';
 import { withBridgeErrorPropagation } from './bridgeError';
+import { buildBridgeStorage, storageWireKeys, type StorageProviderApi } from './bridgeStorage';
 
 /** Keys registered via `buildProvider` (main-process providers, renderer invokes). */
 const providerKeys = new Set<string>();
@@ -94,29 +97,43 @@ export function buildEmitter<Params extends unknown = undefined>(
 }
 
 /**
- * Wrap `storage.buildStorage` so every namespace's `get`/`set`/`clear`/`remove`
- * wire key is recorded in the allowlist. The platform's internal `buildStorage`
- * calls `bridge.buildProvider` directly (NOT our wrapped `buildProvider`), so
- * without this wrapper every storage namespace silently bypasses C1.
+ * Build a storage namespace with BOTH bridge fixes applied.
  *
- * Wire keys per namespace (from @office-ai/platform internals):
+ * Wire keys per namespace (verbatim from @office-ai/platform internals):
  *   `<namespace>.storage.get`
  *   `<namespace>.storage.set`
  *   `<namespace>.storage.clear`
  *   `<namespace>.storage.remove`
  *
- * Behavior is otherwise identical to `storage.buildStorage` - pure side-effect
- * wrapper for allowlist registration.
+ * This used to delegate to `storage.buildStorage` and only record those four
+ * keys in the C1 allowlist. That left the SECOND defect wide open: the
+ * platform's `buildStorage` calls `bridge.buildProvider` internally, never our
+ * wrapped {@link buildProvider}, so `withBridgeErrorPropagation` was not
+ * applied and a storage interceptor that threw answered the renderer with
+ * nothing at all - `<namespace>.storage.{get,set,clear,remove}` hung forever on
+ * a throw, which is the whole failure class `bridgeError.ts` exists to kill.
+ *
+ * `node_modules` must not be patched, so the namespace is now assembled by
+ * {@link buildBridgeStorage} on top of our own provider factory. The wire shape
+ * is unchanged (see `bridgeStorage.ts` for the byte-level contract), so main
+ * and renderer still speak the platform's protocol - they just do it through
+ * providers that can report failure.
  */
 export function buildStorage<Refer = unknown>(
   namespace: string,
   options?: { debug: boolean }
 ): ReturnType<typeof storage.buildStorage<Refer>> {
-  providerKeys.add(`${namespace}.storage.get`);
-  providerKeys.add(`${namespace}.storage.set`);
-  providerKeys.add(`${namespace}.storage.clear`);
-  providerKeys.add(`${namespace}.storage.remove`);
-  return options ? storage.buildStorage<Refer>(namespace, options) : storage.buildStorage<Refer>(namespace);
+  for (const key of storageWireKeys(namespace)) {
+    providerKeys.add(key);
+  }
+  const factory = (key: string): StorageProviderApi =>
+    buildProvider<unknown, unknown>(key) as unknown as StorageProviderApi;
+  // Cast to the platform's declared shape: it is structurally identical (see
+  // `BridgeStorage<S>`), but the platform types the mutating verbs as `any`,
+  // which this repo forbids. Call sites keep their existing types unchanged.
+  return buildBridgeStorage<Refer>(namespace, factory, options) as unknown as ReturnType<
+    typeof storage.buildStorage<Refer>
+  >;
 }
 
 /**

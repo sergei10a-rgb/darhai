@@ -11,6 +11,15 @@ import {
   AGENT_PILL,
   agentPillByBackend,
 } from '../../../../helpers';
+import {
+  assistantText,
+  cleanupMockWorkspaces,
+  createMockAgentConversation,
+  readPersistedMessages,
+  sendToMockAgent,
+  waitForJsonRpc,
+  waitForMessages,
+} from '../../../../helpers/mockAgentConversation';
 
 const BACKENDS = ['claude', 'codex'] as const;
 const createdIds: string[] = [];
@@ -56,7 +65,6 @@ test.describe('F-SESSION-01 Create new session', () => {
   });
 
   test.skip('create session via tray menu (E2E cannot interact with system-level tray menu)', async () => {});
-  test.skip('create session with invalid agent type (defensive boundary, not covered by E2E)', async () => {});
 
   test('verify session data exists via bridge', async ({ page }) => {
     for (const id of createdIds) {
@@ -112,5 +120,96 @@ test.describe('F-SESSION-07 Delete session', () => {
   });
 
   test.skip('delete via tray menu (E2E cannot interact with system-level tray menu)', async () => {});
-  test.skip('delete with invalid id (boundary case, not covered by E2E)', async () => {});
+});
+
+/**
+ * Session lifecycle against a mock ACP agent - no signed-in CLI required.
+ *
+ * The create/delete boundary cases above were empty `test.skip`s marked "not
+ * covered by E2E". They are covered now: `create-conversation` validates the
+ * conversation type in the main process, `remove-conversation` has to tolerate
+ * an id that was never stored, and a full create -> delete cycle can be driven
+ * end-to-end through a mock agent binary.
+ */
+test.describe('F-SESSION-01/07 lifecycle boundaries (mock agent)', () => {
+  test.afterAll(() => {
+    cleanupMockWorkspaces();
+  });
+
+  test('creating a session with an invalid conversation type is rejected', async ({ page }) => {
+    const created = await invokeBridge<{ id?: string } | { success?: boolean; msg?: string }>(
+      page,
+      'create-conversation',
+      {
+        type: 'definitely-not-a-backend',
+        name: 'e2e invalid type',
+        model: { id: 'mock', name: 'mock', platform: 'custom', useModel: 'mock' },
+        extra: { backend: 'custom' },
+      },
+      30_000
+    ).catch((err: unknown) => ({ success: false, msg: String(err) }));
+
+    const id = (created as { id?: string })?.id;
+    if (id) createdIds.push(id);
+    expect(id, `an unknown conversation type was accepted and stored as ${id}`).toBeFalsy();
+  });
+
+  test('deleting an id that was never created is a no-op, not a crash', async ({ page }) => {
+    const ghostId = `no-such-conversation-${Date.now()}`;
+
+    // Must not reject...
+    await invokeBridge(page, 'remove-conversation', { id: ghostId }, 30_000).catch((err: unknown) => {
+      throw new Error(`remove-conversation threw on an unknown id: ${String(err)}`);
+    });
+    // ...and must not take the main process down with it. A real create/read
+    // round-trip afterwards is the liveness proof: it exercises the same bridge
+    // and the same database the delete just touched.
+    const survivor = await createMockAgentConversation(page, { name: 'e2e post-ghost-delete liveness' });
+    createdIds.push(survivor.id);
+
+    const stored = await invokeBridge<{ id?: string }>(page, 'get-conversation', { id: survivor.id }, 30_000);
+    expect(stored?.id, 'the bridge stopped answering after deleting an unknown id').toBe(survivor.id);
+  });
+
+  test('a mock-agent session survives a full create -> converse -> delete cycle', async ({ page }) => {
+    test.setTimeout(240_000);
+
+    const conversation = await createMockAgentConversation(page, {
+      name: 'e2e mock lifecycle',
+      responses: [{ type: 'text', chunks: ['lifecycle', ' ok'] }],
+    });
+
+    // (a) created and readable
+    const stored = await invokeBridge<{ id?: string }>(page, 'get-conversation', { id: conversation.id }, 30_000);
+    expect(stored?.id, `created conversation not readable back: ${JSON.stringify(stored)}`).toBe(conversation.id);
+
+    // (b) a turn really reaches the agent and comes back persisted
+    const sendResult = await sendToMockAgent(page, conversation.id, 'E2E lifecycle probe');
+    expect(sendResult.success, `send failed: ${sendResult.msg}`).toBe(true);
+
+    const messages = await waitForMessages(page, conversation.id, (msgs) =>
+      assistantText(msgs).includes('lifecycle ok')
+    );
+    expect(assistantText(messages), `agent reply never persisted: ${JSON.stringify(messages)}`).toContain(
+      'lifecycle ok'
+    );
+
+    const requests = await waitForJsonRpc(conversation.dumpPath, 'session/prompt', 30_000);
+    expect(requests.map((r) => r.method)).toContain('initialize');
+    expect(requests.map((r) => r.method)).toContain('session/new');
+
+    // (c) delete removes the conversation AND its messages
+    await invokeBridge(page, 'remove-conversation', { id: conversation.id }, 30_000);
+
+    const afterMessages = await readPersistedMessages(page, conversation.id).catch(() => []);
+    expect(afterMessages.length, `messages survived deletion: ${JSON.stringify(afterMessages)}`).toBe(0);
+
+    const afterConversation = await invokeBridge<{ id?: string } | null>(
+      page,
+      'get-conversation',
+      { id: conversation.id },
+      30_000
+    ).catch(() => null);
+    expect(!afterConversation || !afterConversation.id, 'conversation still readable after deletion').toBe(true);
+  });
 });

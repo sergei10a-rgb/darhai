@@ -14,6 +14,7 @@
  */
 import type { ElectronApplication, Page } from 'playwright';
 import { freezeMotion, waitForSettle } from './fixture';
+import { ensureOnboardingComplete, resetOnboardingCache } from '../helpers/navigation';
 
 /** Narrow sizes Mongolian button pairs must still survive. */
 export const NARROW_VIEWPORTS = [
@@ -42,21 +43,35 @@ export async function setContentSize(app: ElectronApplication, size: { width: nu
   }, size);
 }
 
+/** Pages whose Electron app has already had the onboarding cache reset. */
+const onboardedPages = new WeakSet<Page>();
+
 /**
- * Take the first-run overlay out of the way.
+ * Take the first-run overlay out of the way, for real.
  *
- * The overlay is an Arco `Modal` with `closable`, `maskClosable` and
- * `escToExit` all false (`OnboardingOverlay.tsx:70`), and its dismissal is
- * React state behind a multi-step flow, so there is no stable "close" affordance
- * to click. Its `visible` flag also lives in a component we must not modify.
- * Hiding the modal layer leaves the real application mounted and laid out
- * underneath - which is what these specs need to measure - without pretending
- * onboarding was completed.
+ * This used to inject `.arco-modal-wrapper, .arco-modal-mask { display: none }`.
+ * That hid the overlay but left onboarding un-completed, and - because the rule
+ * is global and permanent for the page - it also hid every OTHER Arco modal and
+ * every composer rendered inside one, so specs that need to click those saw an
+ * element that was present in the DOM and invisible on screen.
+ *
+ * `ensureOnboardingComplete` persists `onboardingCompleted`, walks the
+ * quickstart flow, and reloads if the overlay is still mounted, so the app ends
+ * up in the state a returning user actually sees. It is idempotent and cached,
+ * so the repeat calls in `ensureSiderExpanded` cost nothing.
  */
 export async function hideFirstRunOverlay(page: Page): Promise<void> {
-  await page.addStyleTag({
-    content: '.arco-modal-wrapper, .arco-modal-mask { display: none !important; }',
-  });
+  // `ensureOnboardingComplete` caches "already done" in a module-level flag,
+  // which is scoped to the Playwright worker process - but every visual spec
+  // launches its OWN Electron app against a fresh profile, so that flag would
+  // make the second app skip onboarding and keep its overlay up. Reset it once
+  // per app (tracked per page), then let the cache work normally for the
+  // repeat calls inside `ensureSiderExpanded`.
+  if (!onboardedPages.has(page)) {
+    onboardedPages.add(page);
+    resetOnboardingCache();
+  }
+  await ensureOnboardingComplete(page);
 }
 
 /**
@@ -79,9 +94,9 @@ export async function ensureSiderExpanded(page: Page): Promise<void> {
   for (let attempt = 0; attempt < 3; attempt++) {
     if (!(await isCollapsed())) return;
     // The first-run overlay swallows pointer events across the whole window,
-    // so re-hide it before reaching for the toggle. Idempotent by design: the
-    // page is never reloaded, but a re-mounted overlay must not be able to
-    // block this and turn a real assertion into a click timeout.
+    // so make sure it is gone before reaching for the toggle. Idempotent by
+    // design, and cheap after the first call: a re-mounted overlay must not be
+    // able to block this and turn a real assertion into a click timeout.
     await hideFirstRunOverlay(page);
     await page.locator(SIDER_TOGGLE).first().click({ timeout: 10_000 });
     await settleFrozen(page);

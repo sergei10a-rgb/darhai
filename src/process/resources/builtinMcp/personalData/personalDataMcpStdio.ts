@@ -34,22 +34,6 @@ import { PERSONAL_DATA_TOOLS } from './personalDataTools';
 /** Per-call timeout. These are local reads; anything slower is a hang. */
 const REQUEST_TIMEOUT_MS = 30_000;
 
-/**
- * Total attempts per tool call.
- *
- * A loopback `connect` can fail transiently on a loaded host (observed as
- * `ETIMEDOUT 127.0.0.1:<port>` under a saturated Windows TCP stack, in this
- * server and in the pre-existing team MCP alike). Retrying is provably safe
- * HERE and only here: every tool on this server is a read, so a duplicated
- * request cannot double-apply anything. Do not copy this into a bridge that
- * gains a mutating verb.
- */
-const MAX_ATTEMPTS = 3;
-/** Backoff between attempts. Short - the failure mode is a stalled SYN, not load. */
-const RETRY_DELAY_MS = 250;
-
-const delay = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
-
 const port = Number.parseInt(process.env[PERSONAL_DATA_PORT_ENV] ?? '0', 10);
 const token = process.env[PERSONAL_DATA_TOKEN_ENV] ?? '';
 
@@ -67,24 +51,23 @@ for (const spec of PERSONAL_DATA_TOOLS) {
           `${PERSONAL_DATA_TOKEN_ENV}. Restart the app and try again.`
       );
     }
-    let lastError = '';
-    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-      try {
-        const response = await sendTcpRequest<{ result?: string; error?: string }>(
-          port,
-          { tool: spec.name, args, auth_token: token },
-          { timeoutMs: REQUEST_TIMEOUT_MS }
-        );
-        // A server-side error is a real answer, not a transport failure -
-        // return it rather than hammering the same bad request twice more.
-        if (response.error) return errorResult(`${spec.name} error: ${response.error}`);
-        return { content: [{ type: 'text' as const, text: response.result ?? '' }] };
-      } catch (err) {
-        lastError = err instanceof Error ? err.message : String(err);
-        if (attempt < MAX_ATTEMPTS) await delay(RETRY_DELAY_MS);
-      }
+    try {
+      // The transient loopback `connect` failure this server used to wrap in
+      // its own 3-attempt loop is now retried inside `sendTcpRequest`, at the
+      // connect only (see `loopbackConnect.ts`). That is strictly safer than
+      // the old loop, which re-sent the whole request: this call site happens
+      // to be read-only, but the shared helper is used by mutating bridges too.
+      const response = await sendTcpRequest<{ result?: string; error?: string }>(
+        port,
+        { tool: spec.name, args, auth_token: token },
+        { timeoutMs: REQUEST_TIMEOUT_MS }
+      );
+      // A server-side error is a real answer, not a transport failure.
+      if (response.error) return errorResult(`${spec.name} error: ${response.error}`);
+      return { content: [{ type: 'text' as const, text: response.result ?? '' }] };
+    } catch (err) {
+      return errorResult(`${spec.name} error: ${err instanceof Error ? err.message : String(err)}`);
     }
-    return errorResult(`${spec.name} error after ${MAX_ATTEMPTS} attempts: ${lastError}`);
   });
 }
 

@@ -20,6 +20,7 @@ export const OS_RESOURCE_TESTS: readonly string[] = [
   'tests/unit/cookbook/CookbookServeService.test.ts',
   'tests/unit/cookbook/LocalServeManager.test.ts',
   'tests/unit/getNpxCacheDir.test.ts',
+  'tests/unit/loopbackConnect.test.ts',
   'tests/unit/omnirouteGateway/OmnirouteRuntimeManager.test.ts',
   'tests/unit/omnirouteGateway/killProcessTree.test.ts',
   'tests/unit/pptPreviewInstallGuard.test.ts',

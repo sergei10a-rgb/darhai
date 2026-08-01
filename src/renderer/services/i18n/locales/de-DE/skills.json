@@ -25,7 +25,8 @@
       "team": "Team",
       "user": "Meine Skills",
       "imported": "Importiert",
-      "cli-discovered": "Aus deinen CLIs"
+      "cli-discovered": "Aus deinen CLIs",
+      "extension": "Aus Erweiterungen"
     },
     "verdict": {
       "all": "Alle",
@@ -50,7 +51,8 @@
     "disable": "Deaktivieren",
     "delete": "Löschen",
     "import": "Importieren",
-    "build": "Skill erstellen"
+    "build": "Skill erstellen",
+    "scanLibrary": "Bibliothek prüfen"
   },
   "cliDiscovery": {
     "title": "Skills aus installierten CLI-Tools spiegeln",
@@ -169,13 +171,19 @@
     },
     "error": {
       "saveFailed": "Speichern fehlgeschlagen",
-      "generateFailed": "Generierung fehlgeschlagen"
+      "generateFailed": "Generierung fehlgeschlagen",
+      "noModel": "Es ist noch kein KI-Modell verbunden. Fügen Sie in den Einstellungen einen Anbieter hinzu und versuchen Sie es erneut."
     }
   },
   "detail": {
     "whenLoaded": "Wenn Darhai dies lädt",
     "metadata": "Metadaten",
     "body": "Inhalt",
-    "quarantined": "Dieser Skill ist unter Quarantäne und kann nicht geladen werden."
+    "quarantined": "Dieser Skill ist unter Quarantäne und kann nicht geladen werden.",
+    "scanNow": "Jetzt prüfen",
+    "scanDone": "Prüfung abgeschlossen."
+  },
+  "scan": {
+    "done": "{{count}} Skills geprüft."
   }
 }
