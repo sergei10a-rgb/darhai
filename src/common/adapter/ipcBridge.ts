@@ -1535,13 +1535,7 @@ export interface IConversationTurnCompletedEvent {
   sessionId: string;
   status: 'pending' | 'running' | 'finished';
   state:
-    | 'ai_generating'
-    | 'ai_waiting_input'
-    | 'ai_waiting_confirmation'
-    | 'initializing'
-    | 'stopped'
-    | 'error'
-    | 'unknown';
+    'ai_generating' | 'ai_waiting_input' | 'ai_waiting_confirmation' | 'initializing' | 'stopped' | 'error' | 'unknown';
   detail: string;
   canSendMessage: boolean;
   runtime: {
@@ -2031,8 +2025,7 @@ export const omnirouteGateway = {
 export type IjfwDropEntry = { name: string; size: number; mtimeMs: number };
 
 export type IjfwDropIngestResult =
-  | { ok: true; name: string }
-  | { ok: false; error: string; errorReason: IjfwErrorReason };
+  { ok: true; name: string } | { ok: false; error: string; errorReason: IjfwErrorReason };
 
 // --- Models & Providers redesign (Wave 0 contract) ------------------------
 // New two-tier model registry. Distinct from the legacy `providers` namespace

@@ -22,10 +22,10 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
-import { BUILTIN_SEARCH_SKILLS_NAME, BUILTIN_SEARCH_SKILLS_TOOL_NAME } from './constants';
-import { createSearchSkillsServer } from './searchSkillsServer';
+import { BUILTIN_READ_SKILL_TOOL_NAME, BUILTIN_SEARCH_SKILLS_NAME, BUILTIN_SEARCH_SKILLS_TOOL_NAME } from './constants';
+import { createSearchSkillsServer, DEFAULT_SEARCH_RESULTS, MAX_SEARCH_RESULTS } from './searchSkillsServer';
 
-const TOOL_DESCRIPTION = `Search the full Darhai skill library (~2,000+ entries) by natural-language query and return the matching skill bodies inline.
+const SEARCH_TOOL_DESCRIPTION = `Search the full Darhai skill library (~2,470 entries) by natural-language query. Returns a RANKED LIST, not the skill contents.
 
 When to use:
 - The user's task hints at a domain not covered by the small set of skills already loaded in your context (those advertised in the system prompt).
@@ -33,14 +33,20 @@ When to use:
 
 How it works:
 - Lexical BM25 retrieval over titles + descriptions + tags + metadata.
-- Returns up to \`limit\` ranked results (default 25). Each result has \`name\`, \`description\`, \`score\`, and the full skill \`body\` (markdown).
+- Returns up to \`limit\` ranked results (default 10, max 25). Each result has \`name\`, \`description\`, \`score\` and \`bodyChars\` (how large that skill's body is).
 - Blocked or quarantined skills are NEVER returned.
 
-After retrieval, treat the returned \`body\` as additional context: read it, follow its guidance, and cite the skill by \`name\` if relevant.
+Then call \`${BUILTIN_READ_SKILL_TOOL_NAME}\` with the \`name\` of the ONE skill you want. Read the descriptions first and pick deliberately - skill bodies average 24 KB and some are 59 KB, so fetching several without reason will crowd out the conversation you are having.
 
 Input:
 - \`query\`: natural-language description of what you are trying to do. Be specific.
-- \`limit\`: optional; max number of results to return (default 25).`;
+- \`limit\`: optional; max number of results (default 10, max 25).`;
+
+const READ_TOOL_DESCRIPTION = `Fetch the full markdown body of ONE skill by its exact \`name\`, as returned by \`${BUILTIN_SEARCH_SKILLS_TOOL_NAME}\`.
+
+Use it after searching, for the single skill you decided you need. Treat the body as additional context: read it, follow its guidance, and cite the skill by \`name\` if relevant.
+
+Names must match exactly - search first rather than guessing. Blocked or quarantined skills are never readable.`;
 
 async function main(): Promise<void> {
   const server = new McpServer({
@@ -50,43 +56,45 @@ async function main(): Promise<void> {
 
   const handler = createSearchSkillsServer();
 
+  /** Both tools answer with pretty JSON; failures answer with `isError` text. */
+  const respond = async (toolName: string, run: () => Promise<unknown>) => {
+    try {
+      return { content: [{ type: 'text' as const, text: JSON.stringify(await run(), null, 2) }] };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return { content: [{ type: 'text' as const, text: `${toolName} error: ${message}` }], isError: true };
+    }
+  };
+
   server.tool(
     BUILTIN_SEARCH_SKILLS_TOOL_NAME,
-    TOOL_DESCRIPTION,
+    SEARCH_TOOL_DESCRIPTION,
     {
       query: z.string().describe('Natural-language description of the task or topic to find skills for.'),
+      // Capped at 25, not 100. The old ceiling let one call ask for ~2.4 MB of
+      // skill bodies; even as metadata, a 100-item list is a worse answer to
+      // "which skill do I want" than a 10-item one. The server clamps this
+      // again, so a caller ignoring the schema still cannot exceed it.
       limit: z
         .number()
         .int()
         .positive()
-        .max(100)
+        .max(MAX_SEARCH_RESULTS)
         .optional()
-        .describe('Optional. Maximum number of skills to return (default 25, max 100).'),
+        .describe(
+          `Optional. Maximum number of results (default ${DEFAULT_SEARCH_RESULTS}, max ${MAX_SEARCH_RESULTS}).`
+        ),
     },
-    async ({ query, limit }) => {
-      try {
-        const result = await handler.call({ query, limit: limit ?? 25 });
-        return {
-          content: [
-            {
-              type: 'text' as const,
-              text: JSON.stringify(result, null, 2),
-            },
-          ],
-        };
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        return {
-          content: [
-            {
-              type: 'text' as const,
-              text: `${BUILTIN_SEARCH_SKILLS_TOOL_NAME} error: ${message}`,
-            },
-          ],
-          isError: true,
-        };
-      }
-    }
+    async ({ query, limit }) => respond(BUILTIN_SEARCH_SKILLS_TOOL_NAME, () => handler.call({ query, limit }))
+  );
+
+  server.tool(
+    BUILTIN_READ_SKILL_TOOL_NAME,
+    READ_TOOL_DESCRIPTION,
+    {
+      name: z.string().describe('Exact skill name, as returned by the search tool.'),
+    },
+    async ({ name }) => respond(BUILTIN_READ_SKILL_TOOL_NAME, () => handler.readSkill({ name }))
   );
 
   const transport = new StdioServerTransport();

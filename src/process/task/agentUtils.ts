@@ -5,7 +5,7 @@
  */
 
 import { getSkillsDir, getBuiltinSkillsCopyDir, loadSkillsContent, ProcessConfig } from '@process/utils/initStorage';
-import { BUILTIN_PERSONAL_DATA_ID } from '@process/resources/builtinMcp/constants';
+import { BUILTIN_PERSONAL_DATA_ID, BUILTIN_READ_SKILL_TOOL_NAME } from '@process/resources/builtinMcp/constants';
 import { getPersonalDataMcpRuntime } from '@process/resources/builtinMcp/personalData/personalDataSingleton';
 import { AcpSkillManager, buildSkillsIndexText, type SkillIndex } from './AcpSkillManager';
 import { SkillLibrary } from '@process/services/skills/SkillLibrary';
@@ -229,8 +229,16 @@ export async function buildTurnSkillContext(
     try {
       const body = await SkillLibrary.getInstance().loadBody(top.name);
       if (body) {
+        // A truncated skill is a skill cut mid-sentence: the model gets the
+        // opening 3k characters of a body that averages 24k, which is often
+        // just the preamble. Naming the tool that returns the rest turns a
+        // dead end into a choice - and that tool only became usable once
+        // search stopped inlining every body (it used to cost ~149k tokens,
+        // so "fetch the rest" was not a real option).
         const capped =
-          body.length > AUTOLOAD_BODY_CHAR_CAP ? `${body.slice(0, AUTOLOAD_BODY_CHAR_CAP)}\n…[truncated]` : body;
+          body.length > AUTOLOAD_BODY_CHAR_CAP
+            ? `${body.slice(0, AUTOLOAD_BODY_CHAR_CAP)}\n…[truncated - ${body.length - AUTOLOAD_BODY_CHAR_CAP} more characters. Call \`${BUILTIN_READ_SKILL_TOOL_NAME}\` with name "${top.name}" for the full text.]`
+            : body;
         autoBody = `[Auto-loaded skill: ${top.name}]\n${capped}`;
         autoLoaded = [{ name: top.name, description: top.description }];
       }

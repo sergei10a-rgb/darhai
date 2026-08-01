@@ -20,6 +20,16 @@ export const BUILTIN_IMAGE_GEN_LEGACY_NAMES = [
 export const BUILTIN_SEARCH_SKILLS_ID = 'builtin-search-skills';
 export const BUILTIN_SEARCH_SKILLS_NAME = 'darhai-search-skills';
 export const BUILTIN_SEARCH_SKILLS_TOOL_NAME = 'darhai_search_skills';
+/**
+ * Second tool on the same server: fetch ONE skill body by name.
+ *
+ * Search used to inline every matching body. With 2,470 skills averaging 24 KB
+ * that made the default 25-result call ~583 KB (~149k tokens) - a single search
+ * filled or overflowed the whole context window, which broke the very thing the
+ * tool exists for. Search now returns metadata; this fetches the one body the
+ * model actually decided it wanted.
+ */
+export const BUILTIN_READ_SKILL_TOOL_NAME = 'darhai_read_skill';
 // Legacy display names carried by shipped user configs. Do NOT rename these
 // strings - they exist to match pre-rename entries during catalog migration.
 export const BUILTIN_SEARCH_SKILLS_LEGACY_NAMES = ['wayland-search-skills', BUILTIN_SEARCH_SKILLS_ID] as const;

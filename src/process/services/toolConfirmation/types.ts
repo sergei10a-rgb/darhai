@@ -128,13 +128,7 @@ export type ToolConfirmationRequest = Omit<ToolConfirmationRequestInput, 'detail
  * "probably fine" - that is the whole point of the union.
  */
 export type ToolConfirmationDenyReason =
-  | 'declined'
-  | 'timeout'
-  | 'no-window'
-  | 'shutting-down'
-  | 'not-available'
-  | 'transport-error'
-  | 'invalid-request';
+  'declined' | 'timeout' | 'no-window' | 'shutting-down' | 'not-available' | 'transport-error' | 'invalid-request';
 
 export type ToolConfirmationOutcome =
   | { approved: true; requestId: string; fingerprint: string }

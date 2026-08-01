@@ -143,11 +143,20 @@ describe('buildTurnSkillContext', () => {
     expect(ctx.advert).not.toContain('stripe-webhook-signing');
   });
 
-  it('caps an oversized auto-loaded body', async () => {
+  it('caps an oversized auto-loaded body AND says how to get the rest', async () => {
     libState.bodies = { 'stripe-webhook-signing': 'x'.repeat(5000) };
     const ctx = await buildTurnSkillContext('verify stripe webhook signature payload');
-    expect(ctx.advert).toContain('…[truncated]');
+
+    expect(ctx.advert).toContain('[truncated');
     // Body slice (3000) + markers, well under the raw 5000.
     expect(ctx.advert.length).toBeLessThan(3600);
+
+    // A skill cut at 3k out of a body averaging 24k is often just the
+    // preamble. Naming the tool that returns the rest turns a dead end into a
+    // choice - and it only became a real choice once search stopped inlining
+    // every body, which used to make "fetch the rest" cost ~149k tokens.
+    expect(ctx.advert, 'the truncation notice does not say how to continue').toContain('darhai_read_skill');
+    expect(ctx.advert, 'the notice does not name the skill to ask for').toContain('stripe-webhook-signing');
+    expect(ctx.advert, 'the notice does not say how much is missing').toContain('2000');
   });
 });
