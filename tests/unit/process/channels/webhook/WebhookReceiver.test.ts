@@ -7,7 +7,7 @@
 import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest';
 import { createHmac } from 'node:crypto';
 import express from 'express';
-import http from 'node:http';
+import type http from 'node:http';
 import path from 'node:path';
 import os from 'node:os';
 import type { AddressInfo } from 'node:net';

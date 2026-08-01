@@ -10,7 +10,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import * as net from 'node:net';
+import type * as net from 'node:net';
 
 // Mock ProcessConfig for dynamic team capability checks
 vi.mock('@process/utils/initStorage', () => ({

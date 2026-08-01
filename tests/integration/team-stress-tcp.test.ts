@@ -15,7 +15,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import * as net from 'node:net';
+import type * as net from 'node:net';
 import { TeamMcpServer } from '@process/team/mcp/team/TeamMcpServer';
 import { MAX_MCP_MESSAGE_SIZE } from '@process/team/mcp/tcpHelpers';
 import type { TeamAgent } from '@/common/types/teamTypes';
