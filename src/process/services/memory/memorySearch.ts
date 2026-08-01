@@ -24,7 +24,18 @@
  *   - Whitespace-separated tokens must ALL appear, but may appear in different
  *     fields, so `Дархай санах ой` still finds an entry whose summary carries
  *     one half of the phrase and whose body carries the other.
+ *   - Transliterated technical terms match their English form in BOTH
+ *     directions: a note that says «пайтон» is found by `python`, and a note
+ *     that says `python` is found by «пайтон». This is the same defect the
+ *     skill retriever had, and it bites harder here because the matcher is a
+ *     strict AND - one unmatched token drops the entry entirely. Both sides are
+ *     canonicalized (query AND entry) because both sides are written by the
+ *     SAME user, who has no reason to spell a term the same way in a note as in
+ *     a search box months later. The rule is purely ADDITIVE: the raw substring
+ *     test still runs first, so no entry that matches today can stop matching.
  */
+
+import { canonicalTechnicalTerm, isTransliteratedTechnicalTerm } from '@/common/utils/mongolianTechnicalTerms';
 
 /** Fields a search runs over. Keeps this module decoupled from MemoryEntry. */
 export type SearchableEntry = {
@@ -45,18 +56,50 @@ export function queryTokens(query: string): string[] {
     .filter((token) => token.length > 0);
 }
 
-/** The text one entry is searched over: summary, body preview and tags. */
-function haystack(entry: SearchableEntry): string {
-  return normalizeSearchText([entry.summary, entry.bodyPreview, ...entry.tags].join('\n'));
+/** Unicode-aware word run - the unit an alias lookup is defined on. */
+const WORD_RE = /[\p{L}\p{N}_-]+/gu;
+
+/**
+ * The canonical English form of a query token, or `null` when the token is not
+ * a known transliteration. Punctuation is trimmed first, because
+ * {@link queryTokens} splits on whitespace only, so a user typing «пайтон,»
+ * would otherwise miss the table.
+ */
+function canonicalFormOf(token: string): string | null {
+  const bare = token.match(/[\p{L}\p{N}_-]+/u)?.[0];
+  if (bare === undefined || !isTransliteratedTechnicalTerm(bare)) return null;
+  return canonicalTechnicalTerm(bare);
 }
 
 /**
- * True when every token of `query` occurs somewhere in the entry. An empty or
- * whitespace-only query matches nothing (callers skip search entirely instead).
+ * The text one entry is searched over: summary, body preview and tags, plus the
+ * canonical English form of any transliterated technical term found in them.
+ *
+ * The canonical forms are APPENDED rather than substituted, so the original
+ * spelling stays searchable and the substring semantics of every existing query
+ * are untouched.
+ */
+function haystack(entry: SearchableEntry): string {
+  const text = normalizeSearchText([entry.summary, entry.bodyPreview, ...entry.tags].join('\n'));
+  const canonical = new Set<string>();
+  for (const word of text.match(WORD_RE) ?? []) {
+    if (isTransliteratedTechnicalTerm(word)) canonical.add(canonicalTechnicalTerm(word));
+  }
+  return canonical.size === 0 ? text : `${text}\n${[...canonical].join(' ')}`;
+}
+
+/**
+ * True when every token of `query` occurs somewhere in the entry, either as
+ * written or as its canonical English form. An empty or whitespace-only query
+ * matches nothing (callers skip search entirely instead).
  */
 export function matchesQuery(entry: SearchableEntry, query: string): boolean {
   const tokens = queryTokens(query);
   if (tokens.length === 0) return false;
   const text = haystack(entry);
-  return tokens.every((token) => text.includes(token));
+  return tokens.every((token) => {
+    if (text.includes(token)) return true;
+    const canonical = canonicalFormOf(token);
+    return canonical !== null && text.includes(canonical);
+  });
 }

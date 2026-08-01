@@ -44,46 +44,36 @@ export const PERSONAL_DATA_PORT_ENV = 'DARHAI_PERSONAL_DATA_PORT';
 /** Per-boot shared secret the bridge must present on every TCP request. */
 export const PERSONAL_DATA_TOKEN_ENV = 'DARHAI_PERSONAL_DATA_TOKEN';
 
-// Bundled @darhai MCP servers shipped with the installer (no npm publish).
-// Each catalog entry's transport stores the bare filename as args[0]; the
-// spawn layer rewrites it to an absolute path via `getMcpScriptPath()`.
-export const BUILTIN_DARHAI_APPLE_NAME = 'com.darhai/apple-mcp';
-export const BUILTIN_DARHAI_APPLE_FILE = 'builtin-mcp-apple.mjs';
-export const BUILTIN_DARHAI_IMAP_NAME = 'com.darhai/imap-mcp';
-export const BUILTIN_DARHAI_IMAP_FILE = 'builtin-mcp-imap.mjs';
-export const BUILTIN_DARHAI_NEWS_NAME = 'com.darhai/news-mcp';
-export const BUILTIN_DARHAI_NEWS_FILE = 'builtin-mcp-news.mjs';
-export const BUILTIN_DARHAI_CAL_COM_NAME = 'com.darhai/cal-com-mcp';
-export const BUILTIN_DARHAI_CAL_COM_FILE = 'builtin-mcp-cal-com.mjs';
+// ── Built-in news / RSS MCP server ──────────────────────────────────────────────
+// Plain stdio server built from our own source in `news/`. Unlike the
+// personal-data bridge it needs NOTHING from the Electron app: it only speaks
+// HTTP to public feeds, so the tool bodies run inside the spawned subprocess
+// exactly like `searchSkillsServer`.
+export const BUILTIN_NEWS_NAME = 'com.darhai/news-mcp';
+export const BUILTIN_NEWS_FILE = 'builtin-mcp-news.js';
+/** Optional env var: newline/comma separated extra feed URLs added by the user. */
+export const NEWS_FEEDS_ENV = 'DARHAI_NEWS_FEEDS';
 
-export const BUILTIN_DARHAI_MCP_FILES = [
-  BUILTIN_DARHAI_APPLE_FILE,
-  BUILTIN_DARHAI_IMAP_FILE,
-  BUILTIN_DARHAI_NEWS_FILE,
-  BUILTIN_DARHAI_CAL_COM_FILE,
-] as const;
+// ── Built-in Email (IMAP) MCP server ────────────────────────────────────────
+// READ + DRAFT ONLY. Speaks IMAP to the user's own mail host, saves drafts into
+// their Drafts folder, and cannot send: there is no send tool and no SMTP
+// client anywhere in `imap/`. Credentials arrive as spawn env inside the
+// subprocess and are never returned by a tool.
+//
+// History: catalog entries for `com.darhai/imap-mcp` and `com.darhai/cal-com-mcp`
+// used to advertise `.mjs` bundles built from a sibling `waylandmcp` repo that
+// does not exist in any checkout, on npm, or in upstream CI. Both servers are
+// now built from source in this repository, so they are ordinary members of
+// `MCP_STDIO_SCRIPT_NAMES` like the news server - and `scripts/verify-mcp-scripts.js`
+// fails the build if either bundle goes missing again.
+export const BUILTIN_IMAP_NAME = 'com.darhai/imap-mcp';
+export const BUILTIN_IMAP_FILE = 'builtin-mcp-imap.js';
 
-export type BuiltinDarhaiMcpFile = (typeof BUILTIN_DARHAI_MCP_FILES)[number];
-
-/** True if `arg` is a bare filename matching a bundled @darhai MCP. */
-export function isBuiltinDarhaiMcpArg(arg: string | undefined | null): arg is BuiltinDarhaiMcpFile {
-  if (!arg) return false;
-  return (BUILTIN_DARHAI_MCP_FILES as readonly string[]).includes(arg);
-}
-
-/**
- * True if the transport is a bundled @darhai MCP spawn (node + bare filename
- * args[0] matching one of the four built-ins).
- */
-export function isBuiltinDarhaiMcpTransport(transport?: {
-  type?: string;
-  command?: string;
-  args?: string[] | null;
-}): boolean {
-  if (!transport || transport.type !== 'stdio' || transport.command !== 'node') return false;
-  const first = (transport.args ?? [])[0];
-  return isBuiltinDarhaiMcpArg(first);
-}
+// ── Built-in Cal.com MCP server ─────────────────────────────────────────────
+// READ-ONLY against the Cal.com v2 API. See `calCom/calComServer.ts` for the
+// recorded reason there is no create / cancel / reschedule tool.
+export const BUILTIN_CAL_COM_NAME = 'com.darhai/cal-com-mcp';
+export const BUILTIN_CAL_COM_FILE = 'builtin-mcp-cal-com.js';
 
 export function isBuiltinImageGenName(name?: string | null): boolean {
   if (!name) return false;
@@ -156,7 +146,5 @@ export function isBuiltinPersonalDataTransport(transport?: {
     return false;
   }
 
-  return (transport.args || []).some(
-    (arg) => typeof arg === 'string' && arg.includes(BUILTIN_PERSONAL_DATA_FILE)
-  );
+  return (transport.args || []).some((arg) => typeof arg === 'string' && arg.includes(BUILTIN_PERSONAL_DATA_FILE));
 }

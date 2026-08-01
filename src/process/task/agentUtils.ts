@@ -10,7 +10,11 @@ import { getPersonalDataMcpRuntime } from '@process/resources/builtinMcp/persona
 import { AcpSkillManager, buildSkillsIndexText, type SkillIndex } from './AcpSkillManager';
 import { SkillLibrary } from '@process/services/skills/SkillLibrary';
 import { SkillRetriever } from '@process/services/skills/SkillRetriever';
-import { discriminativeQueryTerms, isMostlyNonLatinScript } from '@process/services/skills/skillQueryTerms';
+import {
+  discriminativeQueryTerms,
+  hasCrossLingualBridgeTerm,
+  isMongolianTurn,
+} from '@process/services/skills/skillQueryTerms';
 import {
   augmentSkillAdvertWithVector,
   keywordLaneFromRetriever,
@@ -124,14 +128,21 @@ const MIN_QUERY_TERMS = 2;
  * "match" comes from a single incidental word shares exactly one. This is what
  * kills the "5 irrelevant skills on every message" spam.
  *
- * For a turn written mostly in a non-Latin script this floor is capped by what
- * any single document could possibly share (`SkillRetriever.maxSharedTerms`).
- * The bundled library is written in English, so a Mongolian turn's Latin loan
- * word and its Cyrillic words never co-occur in one skill: "Надад Kubernetes
- * кластерт програм байршуулахад туслаач" tops out at ONE shared term, and the
- * flat floor made the gate unsatisfiable - every Mongolian turn surfaced
- * nothing. Same-script turns keep the full floor, because there "no document
- * shares two of your words" really is evidence of irrelevance.
+ * For a Mongolian turn that also names a term the corpus knows, this floor is
+ * capped by what any single document could possibly share
+ * (`SkillRetriever.maxSharedTerms`). The bundled library is written in English,
+ * so a Mongolian turn's Latin loan word and its Cyrillic words never co-occur
+ * in one skill: "Надад Kubernetes кластерт програм байршуулахад туслаач" tops
+ * out at ONE shared term, and the flat floor made the gate unsatisfiable -
+ * every Mongolian turn surfaced nothing.
+ *
+ * Both halves of that condition are required. A Mongolian turn with NO bridge
+ * term is not blocked by the language barrier, it simply has nothing technical
+ * in it, and relaxing for it is how "Сайн байна уу, өнөөдөр цаг агаар ямар
+ * байна?" (weather small talk) came to advertise three unrelated career skills:
+ * one Cyrillic word incidentally occurred in one Cyrillic-described skill.
+ * Same-script turns keep the full floor for the same reason - there, "no
+ * document shares two of your words" really is evidence of irrelevance.
  */
 const MATCH_MIN_TERMS = 2;
 /** Advert only hits within this fraction of the top score (the coherent cluster, not the weak tail). */
@@ -199,7 +210,8 @@ export async function buildTurnSkillContext(
   // written in a language the corpus is not in still surfaces the skill its one
   // in-vocabulary term names.
   const topScore = hits[0].score;
-  const requiredMatches = isMostlyNonLatinScript(terms)
+  const languageBarrier = isMongolianTurn(userText ?? '', terms) && hasCrossLingualBridgeTerm(terms);
+  const requiredMatches = languageBarrier
     ? Math.min(MATCH_MIN_TERMS, turnRetriever.maxSharedTerms(query))
     : MATCH_MIN_TERMS;
   if (hits[0].matchedTerms < requiredMatches) return empty;

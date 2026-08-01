@@ -22,25 +22,6 @@
       "guideUrl": "guides/io.github.taylorwilsdon-google-workspace-mcp.md"
     },
     {
-      "id": "com.darhai/apple-mcp",
-      "name": "Apple Ecosystem",
-      "shortDescription": "Notes, Reminders, Mail, Calendar, Maps, Photos via EventKit and AppleScript. macOS only.",
-      "iconUrl": "icons/apple.svg",
-      "tier": "core",
-      "categories": [
-        "personal",
-        "communication",
-        "calendar",
-        "files-and-docs"
-      ],
-      "maintainerType": "wayland",
-      "verifiedByWayland": "2026-05-27",
-      "popularityRank": 2,
-      "installRate": 0.71,
-      "entryUrl": "entries/com.darhai-apple-mcp.json",
-      "guideUrl": "guides/com.darhai-apple-mcp.md"
-    },
-    {
       "id": "com.slack/slack-mcp",
       "name": "Slack",
       "shortDescription": "Search messages and threads, post replies, manage canvases, look up users - Slack's official MCP.",
@@ -112,15 +93,15 @@
     },
     {
       "id": "com.darhai/imap-mcp",
-      "name": "Generic IMAP / SMTP",
-      "shortDescription": "Personal email via IMAP/SMTP - works with iCloud, Proton Bridge, Fastmail, and any standards-compliant mail host.",
+      "name": "Email (IMAP) - read & draft",
+      "shortDescription": "Read your mail and write drafts into your Drafts folder. It cannot send: you review and press Send yourself.",
       "iconUrl": "icons/email.svg",
       "tier": "core",
       "categories": [
         "communication"
       ],
       "maintainerType": "wayland",
-      "verifiedByWayland": "2026-05-27",
+      "verifiedByWayland": "2026-08-01",
       "popularityRank": 8,
       "installRate": 0.34,
       "entryUrl": "entries/com.darhai-imap-mcp.json",
@@ -180,7 +161,7 @@
     {
       "id": "com.darhai/news-mcp",
       "name": "News & RSS",
-      "shortDescription": "Unified search across NewsAPI, Hacker News, and any RSS or Atom feed - one MCP for staying current.",
+      "shortDescription": "Mongolian headlines the moment you install it, plus any RSS or Atom feed and Hacker News. No API key, ever.",
       "iconUrl": "icons/news.svg",
       "tier": "core",
       "categories": [
@@ -189,7 +170,7 @@
         "research"
       ],
       "maintainerType": "wayland",
-      "verifiedByWayland": "2026-05-27",
+      "verifiedByWayland": "2026-08-01",
       "popularityRank": 12,
       "installRate": 0.28,
       "entryUrl": "entries/com.darhai-news-mcp.json",
@@ -334,8 +315,8 @@
     },
     {
       "id": "com.darhai/cal-com-mcp",
-      "name": "Cal.com Scheduling",
-      "shortDescription": "Open-source scheduling - bookings, event types, and availability via Cal.com's API.",
+      "name": "Cal.com Scheduling (read-only)",
+      "shortDescription": "See your Cal.com bookings, event types and free slots, and draft a booking for you to confirm. It never books or cancels on its own.",
       "iconUrl": "icons/cal-com.svg",
       "tier": "worker",
       "categories": [
@@ -343,7 +324,7 @@
         "productivity"
       ],
       "maintainerType": "wayland",
-      "verifiedByWayland": "2026-05-27",
+      "verifiedByWayland": "2026-08-01",
       "popularityRank": 25,
       "installRate": 0.16,
       "entryUrl": "entries/com.darhai-cal-com-mcp.json",

@@ -1,43 +1,70 @@
 ---
-guideVersion: 1.0.0
-estimatedMinutes: 2
+guideVersion: 2.0.0
+estimatedMinutes: 1
 steps:
   - id: install
     title: Install the MCP server
     estSeconds: 30
     autoCompletedByInstall: true
     body: |
-      Дархай bundles the News server as `builtin-mcp-news.mjs` - no external
-      download. Hacker News and RSS/Atom feeds work immediately with no
-      credentials. The optional step below adds mainstream-press search.
-  - id: api-key
-    title: (Optional) Paste a NewsAPI key
-    estSeconds: 90
-    externalAction: { label: "Get a free NewsAPI key", url: "https://newsapi.org/register" }
+      Дархай bundles the News server as `builtin-mcp-news.js` - nothing to
+      download, no account, no API key at any point.
+
+      It is ready the moment it is installed: ask for the news and you get
+      today's Mongolian headlines from iKon.mn, Caak.mn, Sonin.mn, Sport.mn,
+      Gereg and ITOIM. Hacker News and any RSS or Atom feed on the web work
+      the same way, with no credentials.
+  - id: feeds
+    title: (Optional) Add your own feeds
+    estSeconds: 30
     inputs:
-      - { name: NEWSAPI_KEY, label: "NewsAPI key (optional)", secret: true }
+      - { name: DARHAI_NEWS_FEEDS, label: 'Extra feed URLs (comma or newline separated)', secret: false }
     body: |
-      Skip this step entirely if you only need Hacker News and RSS. NewsAPI
-      adds search across ~80,000 mainstream news sources.
+      Leave this blank unless you want to follow something beyond the curated
+      Mongolian outlets.
 
-      1. Click **Get a free NewsAPI key** above. NewsAPI's signup form asks
-         for first name, last name, email, and a password. No credit card.
-      2. After registering, your API key appears on the account dashboard -
-         it's a 32-character hex string. Copy it.
-      3. Paste it into `NEWSAPI_KEY` above and save. The Developer plan is
-         free with a 100 requests/day cap and is rate-limited to localhost
-         in development; it works fine for personal Дархай use.
+      Paste any RSS 2.0 or Atom feed URLs, separated by commas or newlines:
 
-      Leave the field blank to skip - Hacker News and arbitrary RSS/Atom
-      feeds still work without any key.
+      ```
+      https://news.ycombinator.com/rss
+      https://blog.mn/feed
+      ```
+
+      Your feeds are ADDED to the Mongolian ones - they never replace them.
+      You can also hand a one-off feed URL straight to the `news_fetch_feed`
+      tool without saving anything here.
 ---
 
 # News & RSS setup
 
-Hacker News and arbitrary RSS/Atom feeds work out of the box - no credentials.
+No key. No account. Nothing to configure.
 
-## Step 2 - (Optional) NewsAPI
+## What you get immediately
 
-For mainstream-press search across thousands of outlets, get a free NewsAPI
-key (100 queries/day, no card required). Paste it above. If you skip this
-step, Hacker News and RSS feeds still work normally.
+| Tool               | What it does                                                  |
+| ------------------ | ------------------------------------------------------------- |
+| `news_headlines`   | Today's Mongolian news across all curated feeds, newest first |
+| `news_search`      | Keyword search across those feeds - Mongolian Cyrillic works  |
+| `news_list_feeds`  | Shows exactly which feeds are being read                      |
+| `news_fetch_feed`  | Any single RSS 2.0, RSS 1.0 or Atom URL you name              |
+| `news_hacker_news` | Hacker News top / new / best, via the public API              |
+
+Every tool is read-only: the server can fetch pages, and nothing else.
+
+## The curated Mongolian feeds
+
+`https://ikon.mn/rss`, `https://caak.mn/rss`, `https://sonin.mn/rss`,
+`https://sport.mn/rss`, `https://gereg.mn/feed`, `https://itoim.mn/rss.xml`
+
+These were each verified live before shipping.
+
+Some large Mongolian outlets - news.mn, montsame.mn, gogo.mn, eagle.mn,
+unuudur.mn, mnb.mn - publish no RSS feed at all. They are absent on purpose:
+this server reads feeds publishers chose to publish and never scrapes a site
+that has not offered one.
+
+## Step 2 - your own feeds (optional)
+
+Set `DARHAI_NEWS_FEEDS` to any feed URLs you want added to the list. Skipping
+this step costs you nothing - the Mongolian feeds and Hacker News work either
+way.

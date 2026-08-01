@@ -1,28 +1,28 @@
 {
   "$schema": "../schema/entry.schema.json",
   "name": "com.darhai/cal-com-mcp",
-  "title": "Cal.com Scheduling",
-  "description": "Open-source scheduling - bookings, event types, and availability via Cal.com's API.",
-  "version": "0.1.0",
-  "websiteUrl": "https://github.com/FerroxLabs/waylandmcp/tree/main/packages/cal-com-mcp",
-  "repository": { "url": "https://github.com/FerroxLabs/waylandmcp", "source": "github" },
+  "title": "Cal.com Scheduling (read-only)",
+  "description": "See your Cal.com bookings, event types and free slots, and let the assistant draft a booking for you to confirm. It never books, cancels or reschedules on its own.",
+  "version": "1.0.0",
+  "websiteUrl": "https://github.com/sergei10a-rgb/darhai",
+  "repository": { "url": "https://github.com/sergei10a-rgb/darhai", "source": "github" },
   "packages": [
     {
       "registryType": "binary",
-      "identifier": "builtin-mcp-cal-com.mjs",
-      "version": "0.1.0",
+      "identifier": "builtin-mcp-cal-com.js",
+      "version": "1.0.0",
       "runtimeHint": "native",
       "transport": { "type": "stdio" },
       "environmentVariables": [
         {
           "name": "CALCOM_API_KEY",
-          "description": "API key from your Cal.com settings.",
+          "description": "API key from Cal.com -> Settings -> Developer -> API keys. Stays on this machine and is never shown to the model.",
           "isRequired": true,
           "isSecret": true
         },
         {
           "name": "CALCOM_BASE_URL",
-          "description": "Override for self-hosted Cal.com instances.",
+          "description": "Only for self-hosted Cal.com. Leave blank for cal.com. A bare host such as cal.example.com is accepted - /v2 is appended for you.",
           "isRequired": false,
           "default": "https://api.cal.com/v2"
         }
@@ -32,10 +32,10 @@
   "x-wayland": {
     "tier": "worker",
     "categories": ["calendar", "productivity"],
-    "tags": ["cal-com", "scheduling", "open-source"],
+    "tags": ["cal-com", "scheduling", "read-only", "open-source"],
     "maintainerType": "wayland",
-    "license": "MIT",
-    "verifiedAt": "2026-05-27",
+    "license": "Apache-2.0",
+    "verifiedAt": "2026-08-01",
     "popularityRank": 25,
     "installRate": 0.16,
     "iconUrl": "icons/cal-com.svg",
@@ -46,9 +46,9 @@
       "providerSignupUrl": "https://app.cal.com/settings/developer/api-keys"
     },
     "toolGroups": [
-      { "label": "Bookings", "count": 5 },
-      { "label": "Event Types", "count": 4 },
-      { "label": "Availability", "count": 3 }
+      { "label": "Bookings", "count": 2 },
+      { "label": "Event types & availability", "count": 2 },
+      { "label": "Draft a booking to confirm", "count": 1 }
     ],
     "setupGuide": { "path": "guides/com.darhai-cal-com-mcp.md", "estimatedMinutes": 2, "stepCount": 2 },
     "platforms": ["macos", "windows", "linux"],

@@ -18,6 +18,7 @@
  */
 
 import type { SkillIndexEntry } from '@/common/types/skillTypes';
+import { canonicalTechnicalTerm } from '@/common/utils/mongolianTechnicalTerms';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -55,7 +56,15 @@ function tokenize(text: string): string[] {
   // query silently misses documents that merely differ in encoding.
   // `toLocaleLowerCase` then casefolds Cyrillic and other non-ASCII scripts
   // correctly, where `toLowerCase` can be locale-insensitive for some ranges.
-  return text.normalize('NFC').toLocaleLowerCase().match(TOKEN_RE) ?? [];
+  const raw = text.normalize('NFC').toLocaleLowerCase().match(TOKEN_RE) ?? [];
+  // Fold transliterated technical terms onto their canonical English form, so
+  // «пайтон» / `paiton` and `python` are the SAME index term. Applied to
+  // documents as well as queries, for two reasons: the two sides must meet in
+  // one vocabulary, and the ~100 Cyrillic-described skills in the library then
+  // become reachable from an English query too. It is a no-op on English text
+  // (every alias key is a non-English string) and idempotent, so callers that
+  // already canonicalized their query lose nothing.
+  return raw.map(canonicalTechnicalTerm);
 }
 
 // ---------------------------------------------------------------------------

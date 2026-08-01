@@ -2,23 +2,23 @@
   "$schema": "../schema/entry.schema.json",
   "name": "com.darhai/news-mcp",
   "title": "News & RSS",
-  "description": "Unified search across NewsAPI, Hacker News, and any RSS or Atom feed - one MCP for staying current.",
-  "version": "0.1.0",
-  "websiteUrl": "https://github.com/FerroxLabs/waylandmcp/tree/main/packages/news-mcp",
-  "repository": { "url": "https://github.com/FerroxLabs/waylandmcp", "source": "github" },
+  "description": "Mongolian headlines the moment you install it, plus any RSS or Atom feed and Hacker News. No API key, ever.",
+  "version": "1.0.0",
+  "websiteUrl": "https://github.com/sergei10a-rgb/darhai",
+  "repository": { "url": "https://github.com/sergei10a-rgb/darhai", "source": "github" },
   "packages": [
     {
       "registryType": "binary",
-      "identifier": "builtin-mcp-news.mjs",
-      "version": "0.1.0",
+      "identifier": "builtin-mcp-news.js",
+      "version": "1.0.0",
       "runtimeHint": "native",
       "transport": { "type": "stdio" },
       "environmentVariables": [
         {
-          "name": "NEWSAPI_KEY",
-          "description": "Optional newsapi.org key. Without it, only Hacker News + RSS work.",
+          "name": "DARHAI_NEWS_FEEDS",
+          "description": "Optional. Your own feed URLs, comma- or newline-separated. Added to the curated Mongolian feeds - it never replaces them.",
           "isRequired": false,
-          "isSecret": true
+          "isSecret": false
         }
       ]
     }
@@ -26,25 +26,21 @@
   "x-wayland": {
     "tier": "core",
     "categories": ["search", "news", "research"],
-    "tags": ["news", "rss", "hacker-news", "newsapi"],
+    "tags": ["news", "rss", "atom", "mongolia", "hacker-news"],
     "maintainerType": "wayland",
-    "license": "MIT",
-    "verifiedAt": "2026-05-27",
+    "license": "Apache-2.0",
+    "verifiedAt": "2026-08-01",
     "popularityRank": 12,
     "installRate": 0.28,
     "iconUrl": "icons/news.svg",
     "brand": { "logoBackground": "linear-gradient(135deg,#ff6b35 0%,#1a1a1a 100%)", "logoForeground": "#ffffff" },
-    "auth": {
-      "method": "api-key",
-      "providerName": "NewsAPI (optional)",
-      "providerSignupUrl": "https://newsapi.org/register"
-    },
+    "auth": { "method": "none" },
     "toolGroups": [
-      { "label": "News Search", "count": 3 },
-      { "label": "Hacker News", "count": 3 },
-      { "label": "RSS / Atom", "count": 3 }
+      { "label": "Mongolian news", "count": 3 },
+      { "label": "Any RSS / Atom feed", "count": 1 },
+      { "label": "Hacker News", "count": 1 }
     ],
-    "setupGuide": { "path": "guides/com.darhai-news-mcp.md", "estimatedMinutes": 2, "stepCount": 2 },
+    "setupGuide": { "path": "guides/com.darhai-news-mcp.md", "estimatedMinutes": 1, "stepCount": 2 },
     "platforms": ["macos", "windows", "linux"],
     "minWaylandVersion": "0.8.0"
   }

@@ -37,55 +37,16 @@ const SHARED_OPTIONS = {
   },
 };
 
-/**
- * Bundle a sibling @wayland/<name>-mcp package into a single self-contained
- * .mjs file in out/main/. These packages live in ~/dev/waylandmcp and ship
- * with the Electron installer (no npm registry dep).
- *
- * Sources use top-level await so the bundle must be ESM, not CJS.
- *
- * Tolerates a missing source tree (e.g. CI without the sibling repo): logs and
- * skips so the rest of the build still completes.
- */
-async function bundleWaylandMcp(pkgName, outName, opts = {}) {
-  const candidates = [
-    process.env.DARHAI_MCP_SRC,
-    path.resolve(ROOT, '..', '..', 'waylandmcp', 'packages', pkgName),
-    path.resolve(ROOT, '..', 'waylandmcp', 'packages', pkgName),
-    path.join(require('os').homedir(), 'dev', 'waylandmcp', 'packages', pkgName),
-  ].filter(Boolean);
-
-  const src = candidates.find((p) => fs.existsSync(path.join(p, 'src', 'index.ts')));
-  if (!src) {
-    console.warn(
-      `[build-mcp-servers] @wayland/${pkgName} source not found in any of: ${candidates.join(', ')} - skipping.`
-    );
-    return;
-  }
-
-  await esbuild.build({
-    bundle: true,
-    platform: 'node',
-    format: 'esm',
-    external: ['electron'],
-    loader: { '.wasm': 'empty' },
-    entryPoints: [path.join(src, 'src', 'index.ts')],
-    outfile: path.join(OUT_MAIN, outName),
-    nodePaths: [path.join(src, 'node_modules')],
-    // ESM-format bundles need a working `require` for inner CJS deps that
-    // dynamically pull node builtins (e.g. rss-parser → http). Without the
-    // banner, esbuild emits a stub that throws "Dynamic require not
-    // supported." `createRequire` makes those require() calls resolve at
-    // runtime against Node's real module system.
-    banner: {
-      js:
-        "import { createRequire as __wayland_createRequire } from 'module';\n" +
-        'const require = __wayland_createRequire(import.meta.url);',
-    },
-  });
-
-  if (opts.onSuccess) await opts.onSuccess(src);
-}
+// NOTE (2026-08): `bundleWaylandMcp()` used to live here. It searched for a
+// sibling `waylandmcp` repository to build `builtin-mcp-imap.mjs` and
+// `builtin-mcp-cal-com.mjs`, and - because a missing source tree was only a
+// warning - it silently emitted nothing on every machine, including upstream
+// CI. That repo exists in no checkout, is 404 on GitHub, and its four npm
+// packages do not exist, so the two servers were advertised in the MCP catalog
+// as "bundled - nothing to download" for the life of the product and never once
+// started. Both are now built from source below, and
+// `scripts/verify-mcp-scripts.js` fails the build if a catalog entry ever again
+// claims a bundle that is not in out/main/.
 
 async function main() {
   await Promise.all([
@@ -111,27 +72,28 @@ async function main() {
     }),
     esbuild.build({
       ...SHARED_OPTIONS,
+      entryPoints: [path.join(ROOT, 'src/process/resources/builtinMcp/news/newsMcpStdio.ts')],
+      outfile: path.join(ROOT, 'out/main/builtin-mcp-news.js'),
+    }),
+    esbuild.build({
+      ...SHARED_OPTIONS,
       entryPoints: [path.join(ROOT, 'src/process/team/mcp/team/teamMcpStdio.ts')],
       outfile: path.join(ROOT, 'out/main/team-mcp-stdio.js'),
     }),
     esbuild.build({
       ...SHARED_OPTIONS,
+      entryPoints: [path.join(ROOT, 'src/process/resources/builtinMcp/imap/imapMcpStdio.ts')],
+      outfile: path.join(ROOT, 'out/main/builtin-mcp-imap.js'),
+    }),
+    esbuild.build({
+      ...SHARED_OPTIONS,
+      entryPoints: [path.join(ROOT, 'src/process/resources/builtinMcp/calCom/calComMcpStdio.ts')],
+      outfile: path.join(ROOT, 'out/main/builtin-mcp-cal-com.js'),
+    }),
+    esbuild.build({
+      ...SHARED_OPTIONS,
       entryPoints: [path.join(ROOT, 'src/process/team/mcp/guide/teamGuideMcpStdio.ts')],
       outfile: path.join(ROOT, 'out/main/team-guide-mcp-stdio.js'),
-    }),
-    // Bundled @wayland MCP servers - ship with the installer, no npm publish.
-    bundleWaylandMcp('imap-mcp', 'builtin-mcp-imap.mjs'),
-    bundleWaylandMcp('news-mcp', 'builtin-mcp-news.mjs'),
-    bundleWaylandMcp('cal-com-mcp', 'builtin-mcp-cal-com.mjs'),
-    bundleWaylandMcp('apple-mcp', 'builtin-mcp-apple.mjs', {
-      onSuccess: async (src) => {
-        // Copy the Swift EventKit bridge binary alongside the JS bundle.
-        const bridge = path.join(src, 'dist', 'eventkit-bridge');
-        if (fs.existsSync(bridge)) {
-          fs.copyFileSync(bridge, path.join(OUT_MAIN, 'eventkit-bridge'));
-          fs.chmodSync(path.join(OUT_MAIN, 'eventkit-bridge'), 0o755);
-        }
-      },
     }),
   ]);
 }

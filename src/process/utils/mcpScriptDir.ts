@@ -7,13 +7,16 @@
  *
  * Background
  * ----------
- * Six stdio scripts are spawned as external `node` child processes:
+ * Nine stdio scripts are spawned as external `node` child processes:
  *   - team-mcp-stdio.js          (team coordination tools)
  *   - team-guide-mcp-stdio.js    (solo aion_* tools)
  *   - builtin-mcp-image-gen.js   (image generation)
  *   - builtin-mcp-search-skills.js (skills library)
  *   - builtin-mcp-web-search.js  (web search)
  *   - builtin-mcp-personal-data.js (calendar / notes / documents / memory)
+ *   - builtin-mcp-news.js        (RSS / Atom feeds + Hacker News)
+ *   - builtin-mcp-imap.js        (email: read + save draft, never send)
+ *   - builtin-mcp-cal-com.js     (Cal.com scheduling, read-only)
  *
  * `scripts/build-mcp-servers.js` emits them next to the main bundle:
  *   - dev:      <project>/app/out/main/
@@ -48,7 +51,6 @@
 
 import * as path from 'node:path';
 import * as fs from 'node:fs';
-import { BUILTIN_DARHAI_MCP_FILES, isBuiltinDarhaiMcpArg } from '@process/resources/builtinMcp/constants';
 
 /**
  * Names of every stdio script that must exist next to the main bundle.
@@ -63,21 +65,24 @@ export const MCP_STDIO_SCRIPT_NAMES = [
   'builtin-mcp-search-skills.js',
   'builtin-mcp-web-search.js',
   'builtin-mcp-personal-data.js',
+  'builtin-mcp-news.js',
+  'builtin-mcp-imap.js',
+  'builtin-mcp-cal-com.js',
 ] as const;
 
 export type McpStdioScriptName = (typeof MCP_STDIO_SCRIPT_NAMES)[number];
 
 /**
- * Every script name this app may hand to an external `node` process: the five
- * stdio bundles plus the four bundled @darhai servers advertised in the MCP
- * catalog. The @darhai list lives in `builtinMcp/constants.ts` (shared with the
- * standalone server bundles); it is referenced here rather than copied so the
- * two cannot drift.
+ * Every script name this app may hand to an external `node` process.
+ *
+ * There used to be a second list here for "bundled @darhai" servers built from
+ * a sibling `waylandmcp` repo. That repo exists nowhere - not in a checkout,
+ * not on npm, not in upstream CI - so the two servers it was supposed to
+ * provide (`imap`, `cal-com`) were advertised in the catalog and never once
+ * shipped. Both are now built from source in this repository, so one list is
+ * enough and there is nothing left to drift against.
  */
-const SPAWNABLE_SCRIPT_NAMES: ReadonlySet<string> = new Set<string>([
-  ...MCP_STDIO_SCRIPT_NAMES,
-  ...BUILTIN_DARHAI_MCP_FILES,
-]);
+const SPAWNABLE_SCRIPT_NAMES: ReadonlySet<string> = new Set<string>(MCP_STDIO_SCRIPT_NAMES);
 
 /**
  * Resolve the directory containing the bundled MCP stdio scripts.
@@ -117,8 +122,8 @@ export function getMcpScriptPath(scriptName: McpStdioScriptName | string): strin
  *
  * Two failure modes this closes, both observed in the field:
  *
- *  1. **Bare filename.** Catalog entries for the bundled @darhai servers store
- *     `{ command: 'node', args: ['builtin-mcp-apple.mjs'] }`. Only the
+ *  1. **Bare filename.** Catalog entries for bundled servers store
+ *     `{ command: 'node', args: ['builtin-mcp-imap.js'] }`. Only the
  *     Test-connection dialog used to expand that to an absolute path, so
  *     "Test connection" passed while the real agent spawned the bare name from
  *     its own cwd and failed.
@@ -138,8 +143,11 @@ export function resolveBuiltinMcpSpawnArgs(command: string | undefined, args: re
   const first = raw[0];
   if (typeof first !== 'string' || first.length === 0) return raw;
 
-  // Case 1: bare bundled @darhai filename.
-  if (isBuiltinDarhaiMcpArg(first)) {
+  // Case 1: bare bundled filename (no directory component at all). Catalog
+  // entries persist exactly this, so it must resolve against the bundle dir and
+  // never against whatever cwd the agent happens to have.
+  const isBare = !first.includes('/') && !first.includes('\\');
+  if (isBare && SPAWNABLE_SCRIPT_NAMES.has(first)) {
     return [getMcpScriptPath(first), ...raw.slice(1)];
   }
 

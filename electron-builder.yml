@@ -343,15 +343,11 @@ asarUnpack:
   - 'out/main/builtin-mcp-search-skills.js'
   - 'out/main/builtin-mcp-web-search.js'
   - 'out/main/builtin-mcp-personal-data.js'
+  - 'out/main/builtin-mcp-news.js'
+  - 'out/main/builtin-mcp-imap.js'
+  - 'out/main/builtin-mcp-cal-com.js'
   - 'out/main/team-mcp-stdio.js'
   - 'out/main/team-guide-mcp-stdio.js'
-  # Bundled @wayland MCP servers (ship with installer, no npm publish)
-  - 'out/main/builtin-mcp-apple.mjs'
-  - 'out/main/builtin-mcp-imap.mjs'
-  - 'out/main/builtin-mcp-news.mjs'
-  - 'out/main/builtin-mcp-cal-com.mjs'
-  # Apple MCP native EventKit bridge (macOS only - built by `swiftc`)
-  - 'out/main/eventkit-bridge'
   # NOTE: skills-library + bundled-workflows now ship via extraResources
   # (Contents/Resources/{skills-library,bundled-workflows}); the old asarUnpack
   # entries here matched nothing (source is under src/process/resources, never

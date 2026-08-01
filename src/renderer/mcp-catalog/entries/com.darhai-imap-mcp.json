@@ -1,54 +1,48 @@
 {
   "$schema": "../schema/entry.schema.json",
   "name": "com.darhai/imap-mcp",
-  "title": "Generic IMAP / SMTP",
-  "description": "Personal email via IMAP/SMTP - works with iCloud, Proton Bridge, Fastmail, and any standards-compliant mail host.",
-  "version": "0.1.0",
-  "websiteUrl": "https://github.com/FerroxLabs/waylandmcp/tree/main/packages/imap-mcp",
-  "repository": { "url": "https://github.com/FerroxLabs/waylandmcp", "source": "github" },
+  "title": "Email (IMAP) - read & draft",
+  "description": "Read your mail and write drafts into your Drafts folder. It cannot send: you review and press Send yourself. Works with iCloud, Gmail, Fastmail, Proton Bridge and any IMAP host.",
+  "version": "1.0.0",
+  "websiteUrl": "https://github.com/sergei10a-rgb/darhai",
+  "repository": { "url": "https://github.com/sergei10a-rgb/darhai", "source": "github" },
   "packages": [
     {
       "registryType": "binary",
-      "identifier": "builtin-mcp-imap.mjs",
-      "version": "0.1.0",
+      "identifier": "builtin-mcp-imap.js",
+      "version": "1.0.0",
       "runtimeHint": "native",
       "transport": { "type": "stdio" },
       "environmentVariables": [
         {
           "name": "IMAP_HOST",
-          "description": "IMAP server hostname (e.g. imap.fastmail.com).",
+          "description": "IMAP server hostname, e.g. imap.fastmail.com or imap.gmail.com.",
           "isRequired": true,
           "isSecret": false
         },
         {
           "name": "IMAP_PORT",
-          "description": "IMAP port - usually 993 for TLS.",
+          "description": "IMAP port. 993 for TLS, which is almost always right.",
           "isRequired": false,
           "default": "993"
         },
         {
           "name": "IMAP_USER",
-          "description": "IMAP username (often your email address).",
+          "description": "IMAP username - usually your full email address.",
           "isRequired": true,
           "isSecret": false
         },
         {
           "name": "IMAP_PASSWORD",
-          "description": "IMAP password or app-specific password.",
+          "description": "App-specific password. Never your main account password. It stays on this machine and is never shown to the model.",
           "isRequired": true,
           "isSecret": true
         },
         {
-          "name": "SMTP_HOST",
-          "description": "SMTP hostname for sending mail.",
+          "name": "IMAP_TLS",
+          "description": "Set to false only for a local or plaintext server such as a test instance.",
           "isRequired": false,
-          "isSecret": false
-        },
-        {
-          "name": "SMTP_PORT",
-          "description": "SMTP port (usually 587 STARTTLS or 465 TLS).",
-          "isRequired": false,
-          "default": "587"
+          "default": "true"
         }
       ]
     }
@@ -56,23 +50,22 @@
   "x-wayland": {
     "tier": "core",
     "categories": ["communication"],
-    "tags": ["imap", "smtp", "email", "icloud", "proton", "fastmail"],
+    "tags": ["imap", "email", "drafts", "read-only", "icloud", "proton", "fastmail"],
     "maintainerType": "wayland",
-    "license": "MIT",
-    "verifiedAt": "2026-05-27",
+    "license": "Apache-2.0",
+    "verifiedAt": "2026-08-01",
     "popularityRank": 8,
     "installRate": 0.34,
     "iconUrl": "icons/email.svg",
     "brand": { "logoBackground": "linear-gradient(135deg,#ff6b35 0%,#1a1a1a 100%)", "logoForeground": "#ffffff" },
     "auth": {
       "method": "api-key",
-      "providerName": "Your IMAP host",
-      "providerSignupUrl": "https://www.fastmail.com/help/clients/apppassword.html"
+      "providerName": "Your mail host",
+      "providerSignupUrl": "https://support.google.com/accounts/answer/185833"
     },
     "toolGroups": [
-      { "label": "Mailbox", "count": 4 },
-      { "label": "Messages", "count": 6 },
-      { "label": "Send", "count": 2 }
+      { "label": "Read mail", "count": 4 },
+      { "label": "Save a draft (never sends)", "count": 1 }
     ],
     "setupGuide": { "path": "guides/com.darhai-imap-mcp.md", "estimatedMinutes": 3, "stepCount": 2 },
     "platforms": ["macos", "windows", "linux"],

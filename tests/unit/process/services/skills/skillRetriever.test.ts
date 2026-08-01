@@ -121,6 +121,67 @@ describe('SkillRetriever', () => {
     });
   });
 
+  describe('transliterated technical terms', () => {
+    /**
+     * Folding happens inside the tokenizer, so it covers documents as well as
+     * queries. That is deliberate and load-bearing: `darhai_search_skills`
+     * hands a raw model-written query straight to `retrieve()` without going
+     * through `discriminativeQueryTerms`, so the query-side canonicalization in
+     * the per-turn path would not help it. These tests pin the retriever's own
+     * behaviour rather than the per-turn pipeline's.
+     */
+    const TRANSLIT_FIXTURES: SkillIndexEntry[] = [
+      entry({
+        name: 'python-project-setup',
+        description: 'Set up a new Python project with virtual environments',
+        metadata: { tags: ['python', 'pytest'], category: 'software-engineering' },
+      }),
+      entry({
+        name: 'kube-deploy',
+        description: 'Deploy an application to a Kubernetes cluster with Docker images',
+        metadata: { tags: ['kubernetes', 'docker'], category: 'devops' },
+      }),
+      entry({
+        name: 'mongol-veb-dizain',
+        description: 'Вэб сайтын дизайн хийх заавар',
+        metadata: { tags: ['дизайн'], category: 'хэл' },
+      }),
+    ];
+
+    it('finds an English skill from a Cyrillic-transliterated query', () => {
+      const r = new SkillRetriever({ entries: TRANSLIT_FIXTURES });
+      expect(r.retrieve('пайтон пайтэст')[0].name).toBe('python-project-setup');
+      expect(r.retrieve('докер кубернетес')[0].name).toBe('kube-deploy');
+    });
+
+    it('finds an English skill from a Latin-romanized query', () => {
+      const r = new SkillRetriever({ entries: TRANSLIT_FIXTURES });
+      expect(r.retrieve('paiton paitest')[0].name).toBe('python-project-setup');
+      expect(r.retrieve('doker kubernetis')[0].name).toBe('kube-deploy');
+    });
+
+    it('finds a Cyrillic-described skill from an English query', () => {
+      // The other direction: documents are folded too, so the ~100
+      // Cyrillic-described skills in the shipped library stop being invisible
+      // to an English-speaking model.
+      const r = new SkillRetriever({ entries: TRANSLIT_FIXTURES });
+      expect(r.retrieve('web design')[0].name).toBe('mongol-veb-dizain');
+    });
+
+    it('counts a term and its transliteration as ONE shared term', () => {
+      // matchedTerms drives the relevance gate, so a single concept spelled two
+      // ways must not be able to clear a two-term floor on its own.
+      const r = new SkillRetriever({ entries: TRANSLIT_FIXTURES });
+      expect(r.maxSharedTerms('python пайтон paiton')).toBe(1);
+    });
+
+    it('leaves an English query and English documents untouched', () => {
+      const r = new SkillRetriever({ entries: TRANSLIT_FIXTURES });
+      expect(r.retrieve('python project setup')[0].name).toBe('python-project-setup');
+      expect(r.retrieve('kubernetes docker')[0].name).toBe('kube-deploy');
+    });
+  });
+
   describe('retrieve', () => {
     it('returns the matching skill in top results for an exact name query', () => {
       const r = new SkillRetriever({ entries: FIXTURES });

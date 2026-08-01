@@ -73,3 +73,45 @@ describe('matchesQuery', () => {
     expect(matchesQuery(entry('anything'), '   ')).toBe(false);
   });
 });
+
+describe('matchesQuery - transliterated technical terms', () => {
+  // The user who wrote the note and the user who runs the search are the same
+  // person, months apart, with no reason to spell «пайтон» / `python` the same
+  // way twice. Because the matcher is a strict AND, one such mismatch drops the
+  // entry entirely - so both sides are canonicalized.
+  it('finds a Cyrillic-transliterated note from an English query', () => {
+    const e = entry('Пайтон скриптийг докер контейнер дотор ажиллуулсан');
+    expect(matchesQuery(e, 'python')).toBe(true);
+    expect(matchesQuery(e, 'docker')).toBe(true);
+    expect(matchesQuery(e, 'python docker')).toBe(true);
+  });
+
+  it('finds an English note from a Cyrillic-transliterated query', () => {
+    const e = entry('Ran the python script inside a docker container');
+    expect(matchesQuery(e, 'пайтон')).toBe(true);
+    expect(matchesQuery(e, 'докер')).toBe(true);
+    expect(matchesQuery(e, 'пайтон докер')).toBe(true);
+  });
+
+  it('bridges the two Latin spellings as well', () => {
+    expect(matchesQuery(entry('kubernetis klaster deer deploi hiisen'), 'kubernetes')).toBe(true);
+    expect(matchesQuery(entry('Deployed to the kubernetes cluster'), 'kubernetis')).toBe(true);
+  });
+
+  it('still matches the spelling actually written', () => {
+    const e = entry('Пайтон скрипт');
+    expect(matchesQuery(e, 'пайтон')).toBe(true);
+    expect(matchesQuery(e, 'скрипт')).toBe(true);
+  });
+
+  it('tolerates punctuation on the query token', () => {
+    expect(matchesQuery(entry('Ran the python script'), 'пайтон,')).toBe(true);
+  });
+
+  it('does not turn an unrelated entry into a match', () => {
+    const e = entry('TELD charger protocol is not OCPP compliant', '', ['teld']);
+    expect(matchesQuery(e, 'python')).toBe(false);
+    expect(matchesQuery(e, 'пайтон')).toBe(false);
+    expect(matchesQuery(e, 'докер')).toBe(false);
+  });
+});
