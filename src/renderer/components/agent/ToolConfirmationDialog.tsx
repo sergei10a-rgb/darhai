@@ -51,6 +51,14 @@ const KIND_KEYS = {
     summary: 'mcp.confirm.emailSend.summary',
     confirm: 'mcp.confirm.emailSend.confirm',
   },
+  // The engine pausing a turn to ask permission. Same dialog, same rules - the
+  // request comes from the local engine rather than an MCP subprocess, which
+  // changes nothing about who is allowed to answer it.
+  'agent.toolApproval': {
+    title: 'mcp.confirm.agentTool.title',
+    summary: 'mcp.confirm.agentTool.summary',
+    confirm: 'mcp.confirm.agentTool.confirm',
+  },
 } as const satisfies Record<string, { title: string; summary: string; confirm: string }>;
 
 function isKnownKind(kind: string): kind is keyof typeof KIND_KEYS {
@@ -156,7 +164,15 @@ const ToolConfirmationDialog: React.FC = () => {
         <dl className='flex flex-col gap-12px m-0'>
           {current.details.map((detail, index) => (
             <div key={`${detail.label}-${index}`} className='flex flex-col gap-4px'>
-              <dt className='text-12px font-500 text-t-secondary'>{detail.label}</dt>
+              {/*
+                A request raised by the app itself sends `labelKey` so the field
+                name is translated; an MCP subprocess sends a plain English name
+                like `To`, which is correct for a protocol word and is used
+                as-is. `label` is also the fallback when a key does not resolve.
+              */}
+              <dt className='text-12px font-500 text-t-secondary'>
+                {detail.labelKey ? t(detail.labelKey as never, { defaultValue: detail.label }) : detail.label}
+              </dt>
               {/* Text node only. Never markup - see rule 1 in the module comment. */}
               <dd
                 className='m-0 text-13px text-t-primary whitespace-pre-wrap break-words rd-8px bg-2 px-12px py-8px max-h-240px overflow-auto'

@@ -81,6 +81,13 @@
     "toolLabel": "{{tool}} tarafından istendi",
     "untrustedNotice": "Aşağıdakilerin tamamı yazıldığı gibi, düz metin olarak gösteriliyor. Kararı Дархай değil, siz veriyorsunuz. Basmadan önce okuyun.",
     "emptyValue": "(boş)",
-    "queued": "{{count}} tane daha bekliyor. Her biri ayrı ayrı yanıtlanır."
+    "queued": "{{count}} tane daha bekliyor. Her biri ayrı ayrı yanıtlanır.",
+    "agentTool": {
+      "title": "Asistan izin istiyor",
+      "summary": "Motor bu turu duraklattı ve kararınızı bekliyor. Reddetmek turu sonlandırır.",
+      "confirm": "İzin ver",
+      "reason": "Neden",
+      "context": "Ayrıntılar"
+    }
   }
 }

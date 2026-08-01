@@ -81,6 +81,13 @@
     "toolLabel": "由 {{tool}} 發起",
     "untrustedNotice": "以下內容依原樣以純文字顯示。做決定的不是 Дархай，而是你。按下按鈕前請先閱讀。",
     "emptyValue": "（空）",
-    "queued": "還有 {{count}} 項等待確認，每項需個別確認。"
+    "queued": "還有 {{count}} 項等待確認，每項需個別確認。",
+    "agentTool": {
+      "title": "助理正在請求權限",
+      "summary": "引擎已暫停本輪，正在等待你的決定。拒絕將結束本輪。",
+      "confirm": "允許",
+      "reason": "原因",
+      "context": "詳情"
+    }
   }
 }

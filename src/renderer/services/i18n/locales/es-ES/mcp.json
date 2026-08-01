@@ -81,6 +81,13 @@
     "toolLabel": "Solicitado por {{tool}}",
     "untrustedNotice": "Todo lo de abajo se muestra tal cual, como texto plano. No decide Дархай, decides tú. Léelo antes de pulsar.",
     "emptyValue": "(vacío)",
-    "queued": "Quedan {{count}} en espera. Cada una se responde por separado."
+    "queued": "Quedan {{count}} en espera. Cada una se responde por separado.",
+    "agentTool": {
+      "title": "El asistente solicita permiso",
+      "summary": "El motor pausó este turno y espera tu decisión. Rechazar finaliza el turno.",
+      "confirm": "Permitir",
+      "reason": "Motivo",
+      "context": "Detalles"
+    }
   }
 }

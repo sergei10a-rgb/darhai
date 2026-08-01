@@ -34,6 +34,8 @@ import { ConversationTurnCompletionService } from './ConversationTurnCompletionS
 import { cronBusyGuard } from '@process/services/cron/CronBusyGuard';
 import { skillSuggestWatcher } from '@process/services/cron/SkillSuggestWatcher';
 import { getCostRecorder } from '@process/services/cost/CostRecorder';
+import { getToolConfirmationService } from '@process/services/toolConfirmation';
+import { resolveEngineApproval } from './wcoreApprovalGate';
 
 // ---------------------------------------------------------------------------
 // Truncation-heuristic constants (HC-4 - see audit at
@@ -249,7 +251,15 @@ export class WCoreManager extends BaseAgentManager<WCoreManagerData, string> {
       sessionId: mergedData.sessionId,
       resume: mergedData.resume,
       stdioMcpServers,
-      onStreamEvent: (event) => this.emit('wcore.message', event),
+      onStreamEvent: (event) => {
+        // The engine pauses the turn on `approval_required` and waits. Nothing
+        // in the renderer listens for it, so before this the turn hung until a
+        // restart. Ask the user through the same dialog the MCP tool gate uses,
+        // then answer the engine either way - a denial ends the turn with a
+        // reason, which beats a silent hang.
+        if (event.type === 'approval_required') void this.resolveEngineApproval(event);
+        this.emit('wcore.message', event);
+      },
       onProcessExit: (code, activeMsgId) => this.handleProcessExit(code, activeMsgId),
       onPong: () => this.handlePong(),
     });
@@ -691,6 +701,41 @@ export class WCoreManager extends BaseAgentManager<WCoreManagerData, string> {
       outputTokens,
       ts: Date.now(),
     });
+  }
+
+  /**
+   * Answer the engine's `approval_required` by asking the user.
+   *
+   * Kept thin on purpose: the decision logic and its fail-closed rules live in
+   * `wcoreApprovalGate.ts`, where they can be tested without an engine, a
+   * window or a socket.
+   */
+  private async resolveEngineApproval(event: { data?: unknown }): Promise<void> {
+    const agent = this.agent;
+    if (!agent) return;
+
+    // `WCoreAgent` re-shapes the raw engine event into `{type, data, msg_id}`
+    // and camel-cases the payload, so the wire names (`call_id`) are gone by
+    // the time it reaches here.
+    const data = (event.data ?? {}) as { callId?: string; reason?: string; context?: string; resumeToken?: string };
+
+    const result = await resolveEngineApproval(
+      {
+        call_id: data.callId ?? '',
+        reason: data.reason ?? '',
+        context: data.context ?? '',
+        resume_token: data.resumeToken,
+      },
+      {
+        confirm: (input) => getToolConfirmationService().requestUserConfirmation(input),
+        approve: (callId) => agent.approveTool(callId, 'once'),
+        deny: (callId, reason) => agent.denyTool(callId, reason),
+      }
+    );
+
+    if (!result.approved) {
+      mainError('[WCoreManager]', `engine approval denied for ${data.callId ?? '?'}: ${result.reason ?? 'unknown'}`);
+    }
   }
 
   private handleProcessExit(code: number | null, activeMsgId: string): void {

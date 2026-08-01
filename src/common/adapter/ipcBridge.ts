@@ -1535,7 +1535,13 @@ export interface IConversationTurnCompletedEvent {
   sessionId: string;
   status: 'pending' | 'running' | 'finished';
   state:
-    'ai_generating' | 'ai_waiting_input' | 'ai_waiting_confirmation' | 'initializing' | 'stopped' | 'error' | 'unknown';
+    | 'ai_generating'
+    | 'ai_waiting_input'
+    | 'ai_waiting_confirmation'
+    | 'initializing'
+    | 'stopped'
+    | 'error'
+    | 'unknown';
   detail: string;
   canSendMessage: boolean;
   runtime: {
@@ -1915,7 +1921,18 @@ export const toolConfirmation = {
 };
 
 /** One labelled row of the confirmation dialog. `value` is always inert text. */
-export type IToolConfirmationDetail = { label: string; value: string };
+export type IToolConfirmationDetail = {
+  label: string;
+  /**
+   * i18n key the dialog resolves instead of showing `label`.
+   *
+   * Sent by requests the app raises itself (the main process has no
+   * translator); MCP subprocesses send a plain English field name, which is
+   * right for a protocol word like `To`. `label` is the fallback either way.
+   */
+  labelKey?: string;
+  value: string;
+};
 
 /** A pending confirmation as the renderer receives it. */
 export type IToolConfirmationRequest = {
@@ -2014,7 +2031,8 @@ export const omnirouteGateway = {
 export type IjfwDropEntry = { name: string; size: number; mtimeMs: number };
 
 export type IjfwDropIngestResult =
-  { ok: true; name: string } | { ok: false; error: string; errorReason: IjfwErrorReason };
+  | { ok: true; name: string }
+  | { ok: false; error: string; errorReason: IjfwErrorReason };
 
 // --- Models & Providers redesign (Wave 0 contract) ------------------------
 // New two-tier model registry. Distinct from the legacy `providers` namespace

@@ -81,6 +81,13 @@
     "toolLabel": "由 {{tool}} 发起",
     "untrustedNotice": "以下内容按原样以纯文本显示。做决定的不是 Дархай，而是你。按下按钮前请先阅读。",
     "emptyValue": "（空）",
-    "queued": "还有 {{count}} 项等待确认，每项需单独确认。"
+    "queued": "还有 {{count}} 项等待确认，每项需单独确认。",
+    "agentTool": {
+      "title": "助手正在请求权限",
+      "summary": "引擎已暂停本轮，正在等待你的决定。拒绝将结束本轮。",
+      "confirm": "允许",
+      "reason": "原因",
+      "context": "详情"
+    }
   }
 }

@@ -81,6 +81,13 @@
     "toolLabel": "Requested by {{tool}}",
     "untrustedNotice": "Everything below is shown exactly as written, as plain text. Дархай is not deciding this - you are. Read it before you press the button.",
     "emptyValue": "(empty)",
-    "queued": "{{count}} more waiting. Each one is answered on its own."
+    "queued": "{{count}} more waiting. Each one is answered on its own.",
+    "agentTool": {
+      "title": "The assistant is asking permission",
+      "summary": "The engine paused this turn and is waiting for your decision. Refusing ends the turn.",
+      "confirm": "Allow",
+      "reason": "Reason",
+      "context": "Details"
+    }
   }
 }

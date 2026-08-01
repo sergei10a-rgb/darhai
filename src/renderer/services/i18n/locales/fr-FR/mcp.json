@@ -81,6 +81,13 @@
     "toolLabel": "Demandé par {{tool}}",
     "untrustedNotice": "Tout ce qui suit est affiché tel quel, en texte brut. Ce n’est pas Дархай qui décide, c’est vous. Lisez avant d’appuyer.",
     "emptyValue": "(vide)",
-    "queued": "{{count}} autre(s) en attente. Chacune se confirme séparément."
+    "queued": "{{count}} autre(s) en attente. Chacune se confirme séparément.",
+    "agentTool": {
+      "title": "L'assistant demande une autorisation",
+      "summary": "Le moteur a mis ce tour en pause et attend votre décision. Un refus met fin au tour.",
+      "confirm": "Autoriser",
+      "reason": "Raison",
+      "context": "Détails"
+    }
   }
 }

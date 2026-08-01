@@ -65,8 +65,19 @@ export const TOOL_CONFIRM_TIMEOUT_MS = 5 * 60_000;
  * interpreted as markup by the dialog.
  */
 export type ConfirmationDetail = {
-  /** Short field name, e.g. `To`, `Subject`. Already localised by the caller. */
+  /** Short field name, e.g. `To`, `Subject`. Used verbatim when `labelKey` is absent. */
   label: string;
+  /**
+   * i18n key the renderer resolves instead of showing `label`.
+   *
+   * The main process has no translator - the repo's convention is to pass a
+   * key and let the renderer resolve it (see `modelBridge`'s `i18nKey`). MCP
+   * subprocesses send plain English field names, which is right for protocol
+   * words like `To` and `Subject`; a request raised by the app itself has no
+   * excuse to be untranslated, so it sends a key and `label` becomes the
+   * fallback for a key that does not resolve.
+   */
+  labelKey?: string;
   /** The full value. NEVER truncated by the sender - the dialog scrolls. */
   value: string;
 };
@@ -117,7 +128,13 @@ export type ToolConfirmationRequest = Omit<ToolConfirmationRequestInput, 'detail
  * "probably fine" - that is the whole point of the union.
  */
 export type ToolConfirmationDenyReason =
-  'declined' | 'timeout' | 'no-window' | 'shutting-down' | 'not-available' | 'transport-error' | 'invalid-request';
+  | 'declined'
+  | 'timeout'
+  | 'no-window'
+  | 'shutting-down'
+  | 'not-available'
+  | 'transport-error'
+  | 'invalid-request';
 
 export type ToolConfirmationOutcome =
   | { approved: true; requestId: string; fingerprint: string }

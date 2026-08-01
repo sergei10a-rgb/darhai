@@ -81,6 +81,13 @@
     "toolLabel": "Angefragt von {{tool}}",
     "untrustedNotice": "Alles unten wird genau so angezeigt, wie es geschrieben wurde - als reiner Text. Nicht Дархай entscheidet das, sondern Sie. Bitte vor dem Drücken lesen.",
     "emptyValue": "(leer)",
-    "queued": "Noch {{count}} in der Warteschlange. Jede wird einzeln beantwortet."
+    "queued": "Noch {{count}} in der Warteschlange. Jede wird einzeln beantwortet.",
+    "agentTool": {
+      "title": "Der Assistent bittet um Erlaubnis",
+      "summary": "Die Engine hat diesen Zug angehalten und wartet auf Ihre Entscheidung. Eine Ablehnung beendet den Zug.",
+      "confirm": "Erlauben",
+      "reason": "Grund",
+      "context": "Details"
+    }
   }
 }
