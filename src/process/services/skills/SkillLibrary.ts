@@ -16,7 +16,12 @@
 import path from 'path';
 import { existsSync } from 'fs';
 import { readFile as fsReadFile } from 'fs/promises';
-import { SKILL_SCANNER_VERSION, type SkillIndexEntry, type SkillSecurityReport, type SkillSource } from '@/common/types/skillTypes';
+import {
+  SKILL_SCANNER_VERSION,
+  type SkillIndexEntry,
+  type SkillSecurityReport,
+  type SkillSource,
+} from '@/common/types/skillTypes';
 import { SkillGuard } from './SkillGuard';
 
 // ProcessConfig and mainLogger are intentionally NOT imported at the module
@@ -26,6 +31,32 @@ import { SkillGuard } from './SkillGuard';
 // plain `console.warn` here instead.
 
 const TAG = '[SkillLibrary]';
+
+/**
+ * The `source` every entry in the shipped `index.json` carries.
+ *
+ * These 2,470 skills are part of the application, not user content, so nothing
+ * that arrives later - an import, a CLI discovery, an extension - may take
+ * their name. The literal is historical (the fork inherited it) and changing
+ * it would invalidate the shipped index, so it is pinned here instead of
+ * renamed, and a test asserts the index still uses it.
+ */
+const BUNDLED_SOURCE: SkillSource = 'wayland-library';
+
+/**
+ * Sources whose content the user did not author, and therefore may not take a
+ * bundled skill's name.
+ *
+ * `user` and `team` are deliberately ABSENT. Writing your own skill that
+ * replaces one of ours is a legitimate thing to want - it is how you fix a
+ * bundled skill that is wrong for your project - and a person editing their own
+ * library is making a decision, not being tricked into one. What this set
+ * blocks is content that arrived as a FILE: a zip, a git clone, a folder from a
+ * chat message, a skill a third-party CLI or extension happens to expose.
+ * There, the name is chosen by whoever produced the file, and matching a
+ * bundled skill's name is not something the user asked for.
+ */
+const UNTRUSTED_SOURCES: ReadonlySet<SkillSource> = new Set<SkillSource>(['imported', 'cli-discovered', 'extension']);
 
 /**
  * Resolve the on-disk directory that holds `index.json` + `bodies/`.
@@ -216,12 +247,25 @@ export class SkillLibrary {
       const parsed = JSON.parse(raw) as SkillIndexEntry[];
       // Merge index entries into existing collections so registerSource()
       // calls made before the first lazy-load are preserved.
+      //
+      // The bundled library WINS any name collision here. Load order is not a
+      // security boundary: an imported skill registered before the first lazy
+      // load would otherwise keep its slot and the app's own skill would never
+      // be indexed at all - the same shadowing that `registerSource` refuses,
+      // arrived at from the other direction.
       for (const indexed of parsed) {
-        if (!this.byName.has(indexed.name)) {
-          const e = normalizeEntry(indexed);
-          this.entries.push(e);
-          this.byName.set(e.name, e);
+        const existing = this.byName.get(indexed.name);
+        if (existing && UNTRUSTED_SOURCES.has(existing.source)) {
+          console.warn(
+            `${TAG} '${indexed.name}' was registered by '${existing.source}' before the bundled library loaded - the bundled skill wins`
+          );
+          this.entries = this.entries.filter((e) => e.name !== indexed.name);
+        } else if (existing) {
+          continue;
         }
+        const e = normalizeEntry(indexed);
+        this.entries.push(e);
+        this.byName.set(e.name, e);
       }
       // ALSO merge the Wayland built-in workflows folder. The main library
       // wins on name conflict (the bundled-workflows entry is dropped). The
@@ -285,12 +329,31 @@ export class SkillLibrary {
   registerSource(incoming: SkillIndexEntry[]): void {
     for (const incomingEntry of incoming) {
       const entry = normalizeEntry(incomingEntry);
-      if (this.byName.has(entry.name)) {
-        const prev = this.byName.get(entry.name)?.source;
+      const prev = this.byName.get(entry.name);
+
+      // The app's own skills are not overwritable by anything that arrives
+      // later. Before this guard, importing a folder named after a bundled
+      // skill silently replaced it: the warning went to a log nobody reads,
+      // the agent then loaded the imported body instead, and every future
+      // turn used it. `SkillGuard` scans imports, but it is a heuristic - it
+      // quarantines what looks hostile and still registers a `review`
+      // verdict, so it cannot be the only thing standing between a
+      // downloaded file and one of the app's own capabilities.
+      //
+      // Refusing rather than renaming is deliberate: a silently renamed
+      // skill is a skill the user cannot find, which is its own bug report.
+      if (prev && prev.source === BUNDLED_SOURCE && UNTRUSTED_SOURCES.has(entry.source)) {
         console.warn(
-          `${TAG} Skill name collision on registerSource - '${entry.name}' overwritten`,
-          { prev, next: entry.source }
+          `${TAG} Refusing to shadow bundled skill '${entry.name}' with a '${entry.source}' entry - the bundled skill stays`
         );
+        continue;
+      }
+
+      if (prev) {
+        console.warn(`${TAG} Skill name collision on registerSource - '${entry.name}' overwritten`, {
+          prev: prev.source,
+          next: entry.source,
+        });
         this.entries = this.entries.filter((e) => e.name !== entry.name);
       }
       this.entries.push(entry);
@@ -344,9 +407,7 @@ export class SkillLibrary {
     }
     if (query !== undefined && query.length > 0) {
       const q = query.toLowerCase();
-      result = result.filter(
-        (e) => e.name.toLowerCase().includes(q) || e.description.toLowerCase().includes(q)
-      );
+      result = result.filter((e) => e.name.toLowerCase().includes(q) || e.description.toLowerCase().includes(q));
     }
 
     return result;
@@ -372,9 +433,7 @@ export class SkillLibrary {
   async stats(filter?: { type?: SkillIndexEntry['type'] }): Promise<SkillStats> {
     await this.ensureLoaded();
 
-    const entries = filter?.type
-      ? this.entries.filter((e) => e.type === filter.type)
-      : this.entries;
+    const entries = filter?.type ? this.entries.filter((e) => e.type === filter.type) : this.entries;
 
     const bySource = {} as Record<SkillSource, number>;
     let flagged = 0;
