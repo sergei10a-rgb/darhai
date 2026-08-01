@@ -36,6 +36,21 @@ describe('layeredFallback', () => {
     expect(layeredFallback([], [])).toEqual([]);
   });
 
+  it('drops individual vector hits below the threshold instead of returning the whole list', () => {
+    // The defect: the gate looked only at vectorHits[0], so one confident hit
+    // dragged every other candidate in with it. With k = min(corpus, 50) that
+    // was the entire corpus for every query, gibberish included.
+    const vectorHits = [vec('a', 0.9), vec('b', 0.34), vec('c', 0.1)];
+    const result = layeredFallback(vectorHits, [kw('x', 10)]);
+    expect(result.map((h) => h.id)).toEqual(['a']);
+  });
+
+  it('falls back to keyword when every vector hit is below the threshold', () => {
+    const vectorHits = [vec('a', 0.2), vec('b', 0.1)];
+    const result = layeredFallback(vectorHits, [kw('x', 10)]);
+    expect(result.map((h) => h.id)).toEqual(['x']);
+  });
+
   it('respects a custom minVectorScore', () => {
     const vectorHits = [vec('a', 0.5)];
     const keywordHits = [kw('x', 1)];

@@ -12,9 +12,7 @@ import { GeminiAgentManager } from '@process/task/GeminiAgentManager';
 import { WCoreManager } from '@process/task/WCoreManager';
 import { mcpService } from '@/process/services/mcpServices/McpService';
 import { ipcBridge } from '@/common';
-import { LegacyConnectorFactory } from '@process/acp/compat/LegacyConnectorFactory';
-import { noopProtocolHandlers } from '@process/acp/types';
-import * as os from 'os';
+import { checkAgentHealth } from './checkAgentHealth';
 
 export function initAcpConversationBridge(workerTaskManager: IWorkerTaskManager): void {
   // Debug provider to check environment variables
@@ -28,23 +26,31 @@ export function initAcpConversationBridge(workerTaskManager: IWorkerTaskManager)
     });
   });
 
-  ipcBridge.acpConversation.detectCliPath.provider(({ backend }) => {
+  ipcBridge.acpConversation.detectCliPath.provider(async ({ backend }) => {
+    await agentRegistry.whenReady();
     const agents = agentRegistry.getDetectedAgents();
     const agent = agents.find((a) => isAgentKind(a, 'acp') && a.backend === backend);
 
     if (agent && isAgentKind(agent, 'acp') && agent.cliPath) {
-      return Promise.resolve({ success: true, data: { path: agent.cliPath } });
+      return { success: true, data: { path: agent.cliPath } };
     }
 
-    return Promise.resolve({
+    return {
       success: false,
       msg: `${backend} CLI not found. Please install it and ensure it's accessible.`,
-    });
+    };
   });
 
   // Get all detected execution engines, enriched with MCP transport support info.
-  ipcBridge.acpConversation.getAvailableAgents.provider(() => {
+  //
+  // AUDIT: this used to read the registry snapshot synchronously. Detection is
+  // started fire-and-forget at boot, so the renderer's first query (~300ms after
+  // mount) regularly won the race and got `[]` back - which SWR then cached,
+  // leaving the agent picker permanently empty. Awaiting `whenReady()` makes the
+  // first answer the real one.
+  ipcBridge.acpConversation.getAvailableAgents.provider(async () => {
     try {
+      await agentRegistry.whenReady();
       const agents = agentRegistry.getDetectedAgents();
       const enriched = agents.map((agent) => ({
         ...agent,
@@ -63,26 +69,30 @@ export function initAcpConversationBridge(workerTaskManager: IWorkerTaskManager)
         isPreset: 'isPreset' in agent ? (agent.isPreset as boolean | undefined) : undefined,
         customAgentId: 'customAgentId' in agent ? (agent.customAgentId as string | undefined) : undefined,
       }));
-      return Promise.resolve({ success: true as const, data });
+      return { success: true as const, data };
     } catch (error) {
-      return Promise.resolve({
+      return {
         success: false as const,
         msg: error instanceof Error ? error.message : 'Unknown error',
-      });
+      };
     }
   });
 
   // AUDIT-05 F19: surface AgentRegistry sub-detector load failures (e.g.
   // remote agent DB read errors) so the UI can show "remote agents failed
   // to load: <reason>" instead of silently rendering an empty list.
-  ipcBridge.acpConversation.getLoadErrors.provider(() => {
+  ipcBridge.acpConversation.getLoadErrors.provider(async () => {
     try {
-      return Promise.resolve({ success: true as const, data: agentRegistry.getLoadErrors() });
+      // Load errors are only populated by a detection pass, so reading them
+      // before one has run reports "no failures" for a registry that has not
+      // yet tried. Same wait as getAvailableAgents, for the same reason.
+      await agentRegistry.whenReady();
+      return { success: true as const, data: agentRegistry.getLoadErrors() };
     } catch (error) {
-      return Promise.resolve({
+      return {
         success: false as const,
         msg: error instanceof Error ? error.message : 'Unknown error',
-      });
+      };
     }
   });
 
@@ -98,86 +108,10 @@ export function initAcpConversationBridge(workerTaskManager: IWorkerTaskManager)
     return testCustomAgentConnection(params);
   });
 
-  // Check agent health by sending a real test message
-  ipcBridge.acpConversation.checkAgentHealth.provider(async ({ backend }) => {
-    const startTime = Date.now();
-
-    // Step 1: Check if CLI is installed
-    const agents = agentRegistry.getDetectedAgents();
-    const agent = agents.find((a) => isAgentKind(a, 'acp') && a.backend === backend);
-    const acpAgent = agent && isAgentKind(agent, 'acp') ? agent : undefined;
-
-    // Skip CLI check for claude/codebuddy (uses npx) and codex (has its own detection)
-    if (!acpAgent?.cliPath && backend !== 'claude' && backend !== 'codebuddy' && backend !== 'codex') {
-      return {
-        success: false,
-        msg: `${backend} CLI not found`,
-        data: { available: false, error: 'CLI not installed' },
-      };
-    }
-
-    const tempDir = os.tmpdir();
-    const cliPath = acpAgent?.cliPath;
-    const acpArgs = acpAgent?.acpArgs;
-
-    // Step 2: For ACP-based agents (claude, codex, gemini, qwen, etc.)
-    const factory = new LegacyConnectorFactory();
-    const client = factory.create(
-      {
-        agentBackend: backend,
-        agentSource: 'builtin',
-        agentId: `health-check-${backend}`,
-        cwd: tempDir,
-        command: cliPath,
-        args: acpArgs,
-      },
-      noopProtocolHandlers
-    );
-
-    try {
-      await client.start();
-      const session = await client.createSession({ cwd: tempDir });
-      await client.prompt(session.sessionId, [{ type: 'text', text: 'hi' }]);
-
-      const latency = Date.now() - startTime;
-      await client.close();
-
-      return {
-        success: true,
-        data: { available: true, latency },
-      };
-    } catch (error) {
-      try {
-        await client.close();
-      } catch {
-        // Ignore close errors
-      }
-
-      const errorMsg = error instanceof Error ? error.message : String(error);
-      const lowerError = errorMsg.toLowerCase();
-
-      if (
-        lowerError.includes('auth') ||
-        lowerError.includes('login') ||
-        lowerError.includes('credential') ||
-        lowerError.includes('api key') ||
-        lowerError.includes('unauthorized') ||
-        lowerError.includes('forbidden')
-      ) {
-        return {
-          success: false,
-          msg: `${backend} not authenticated`,
-          data: { available: false, error: 'Not authenticated' },
-        };
-      }
-
-      return {
-        success: false,
-        msg: `${backend} health check failed: ${errorMsg}`,
-        data: { available: false, error: errorMsg },
-      };
-    }
-  });
+  // Check agent health by sending a real test message. Bounded by a wall-clock
+  // budget so a stalled backend reports a timeout instead of leaving the IPC
+  // promise pending forever - see checkAgentHealth.ts.
+  ipcBridge.acpConversation.checkAgentHealth.provider(({ backend }) => checkAgentHealth(backend));
 
   ipcBridge.acpConversation.getMode.provider(({ conversationId }) => {
     const task = workerTaskManager.getTask(conversationId);

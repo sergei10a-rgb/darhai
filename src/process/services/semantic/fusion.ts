@@ -30,9 +30,14 @@ const RRF_K = 60;
 /**
  * Layered fallback: prefer the vector ranking, fall back to keyword.
  *
- * The vector lane "wins" only when it produced results AND its best hit clears
- * `minVectorScore`. A near-empty or low-confidence vector result (offline model,
- * cold index, off-topic query) yields to the keyword lane, which never regresses
+ * The threshold is applied PER HIT, not just to the top one. Gating on
+ * `vectorHits[0]` alone and then returning the whole list meant a single
+ * moderately-similar top hit dragged every other candidate in with it - with
+ * `k = min(corpus, 50)` that is the entire corpus, which is exactly what the
+ * memory search box did for every query, gibberish included.
+ *
+ * A vector list whose every hit is below `minVectorScore` (offline model, cold
+ * index, off-topic query) yields to the keyword lane, which never regresses
  * below the previous BM25 behavior.
  */
 export function layeredFallback(
@@ -40,11 +45,8 @@ export function layeredFallback(
   keywordHits: readonly SemanticHit[],
   minVectorScore: number = DEFAULT_VECTOR_MIN_SCORE
 ): SemanticHit[] {
-  const topVector = vectorHits[0];
-  if (topVector && topVector.score >= minVectorScore) {
-    return [...vectorHits];
-  }
-  return [...keywordHits];
+  const confident = vectorHits.filter((hit) => hit.score >= minVectorScore);
+  return confident.length > 0 ? confident : [...keywordHits];
 }
 
 /**

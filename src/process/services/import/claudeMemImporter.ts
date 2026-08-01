@@ -14,6 +14,7 @@ import * as path from 'node:path';
 import BetterSqlite3 from 'better-sqlite3';
 import type Database from 'better-sqlite3';
 import log from 'electron-log';
+import { globalMemoryDir } from '../memory/memoryRoots';
 
 export type ClaudeMemImportResult = {
   imported: number;
@@ -78,7 +79,7 @@ function parseTags(raw: string | null): string[] {
  */
 export async function runClaudeMemImport(opts?: { ijfwMemoryDir?: string }): Promise<ClaudeMemImportResult> {
   const dbPath = path.join(os.homedir(), '.claude-mem', 'claude-mem.db');
-  const memDir = opts?.ijfwMemoryDir ?? path.join(os.homedir(), '.ijfw', 'memory');
+  const memDir = opts?.ijfwMemoryDir ?? globalMemoryDir();
 
   const result: ClaudeMemImportResult = { imported: 0, skipped: 0, errors: [] };
 

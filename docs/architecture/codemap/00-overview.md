@@ -197,7 +197,7 @@ JSON-RPC; renderer reaches it through `ijfw.brain-invoke` with a 20-verb allowli
 | Import pipeline is Darhai-native | `src/process/services/import/*` + `importBridge` (`memory.import.*`, `memory.ingest-files`) already write MemoryEntry markdown into `~/.ijfw/memory` (§04) |
 | Prelude/`CLAUDE.md` blocks | `preludeManager.ts` sentinel rewriting (§03) |
 | Lifecycle/UI status pattern (for whatever remains external) | `ijfwSystemService` status union + `emitStatus` + guarded deferred boot block `src/index.ts:636-668` (§03 anchor 4); Memory page 6-state machine (§14) |
-| Semantic lane | `memorySemanticLane` + `SqliteVecStore` vec_memory (§02); v50 shadow tables (§11) |
+| Semantic lane | `skillSemanticLane` + `SqliteVecStore` (§02); v50 shadow tables (§11). Memory search is lexical - see `memory/memorySearch.ts` |
 
 ### 3e. Odysseus features → Darhai core
 

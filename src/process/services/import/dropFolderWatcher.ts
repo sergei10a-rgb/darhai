@@ -15,6 +15,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import chokidar from 'chokidar';
 import log from 'electron-log';
+import { globalMemoryDir } from '../memory/memoryRoots';
 
 function getDefaultDropFolder(): string {
   return path.join(os.homedir(), 'Documents', 'Darhai-Memory');
@@ -284,7 +285,7 @@ export async function runDropFolderProcess(opts?: {
   ijfwMemoryDir?: string;
 }): Promise<DropFolderProcessResult> {
   const dropFolder = opts?.dropFolder ?? getDefaultDropFolder();
-  const ijfwMemoryDir = opts?.ijfwMemoryDir ?? path.join(os.homedir(), '.ijfw', 'memory');
+  const ijfwMemoryDir = opts?.ijfwMemoryDir ?? globalMemoryDir();
   const result: DropFolderProcessResult = { count: 0, errors: [] };
 
   try {

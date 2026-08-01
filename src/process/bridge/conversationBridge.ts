@@ -42,6 +42,28 @@ const refreshTrayMenuSafely = async (): Promise<void> => {
   }
 };
 
+/**
+ * Fields `chat.send.message` cannot do anything useful without.
+ *
+ * `msg_id` identifies the turn the user message and every streamed reply chunk
+ * are keyed by; `input` is the prompt; `conversation_id` selects the task. With
+ * any of them missing the agent manager silently skips persistence and the turn
+ * evaporates, so the call is rejected instead.
+ */
+const REQUIRED_SEND_MESSAGE_FIELDS = ['conversation_id', 'msg_id', 'input'] as const;
+
+/** Returns a description of the first invalid field, or `undefined` when valid. */
+function findInvalidSendMessageParam(params: object): string | undefined {
+  const record = params as Record<string, unknown>;
+  for (const field of REQUIRED_SEND_MESSAGE_FIELDS) {
+    const value = record[field];
+    if (typeof value !== 'string' || value.length === 0) {
+      return `chat.send.message requires a non-empty "${field}" (got ${JSON.stringify(value)})`;
+    }
+  }
+  return undefined;
+}
+
 const VALID_CONVERSATION_TYPES = new Set<TChatConversation['type']>([
   'gemini',
   'acp',
@@ -544,6 +566,17 @@ export function initConversationBridge(
   ipcBridge.conversation.sendMessage.provider(async (params) => {
     if (!params) {
       return { success: false, msg: 'Missing request parameters' };
+    }
+    // AUDIT: a call missing `msg_id` or `input` used to be accepted, persist
+    // nothing (AcpAgentManager only writes the user message when both are
+    // present) and still answer `{ success: true }` - a failed turn was
+    // indistinguishable from a slow one at the API boundary. These fields are
+    // required by ISendMessageParams; the wire has no type checker, so they are
+    // enforced here and a violation is reported as a real error.
+    const invalidParam = findInvalidSendMessageParam(params);
+    if (invalidParam) {
+      console.error(`[conversationBridge] sendMessage: rejected malformed call - ${invalidParam}`);
+      return { success: false, msg: invalidParam };
     }
     const { conversation_id, files, ...other } = params;
     let task: IAgentManager | undefined;

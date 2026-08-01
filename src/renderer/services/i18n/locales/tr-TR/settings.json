@@ -2616,7 +2616,7 @@
   },
   "omnirouteGateway": {
     "title": "OmniRoute Ağ Geçidi (harici aktarıcı)",
-    "intro": "OmniRoute, birden çok ücretsiz kaynağı bir araya getiren ve KENDİ makinenizde kendinizin çalıştırdığı OpenAI uyumlu bir toplayıcıdır. Etkinleştirildiğinde Дархай yalnızca belirttiğiniz adrese bağlanır - kendisi asla bir şey kurmaz veya çalıştırmaz.",
+    "intro": "OmniRoute, birden çok ücretsiz kaynağı bir araya getiren ve KENDİ makinenizde çalışan OpenAI uyumlu bir toplayıcıdır. Дархай onu yalnızca aşağıdaki tek tıklama düğmesine bastığınızda kurar ve çalıştırır; harici aktarmayı yalnızca bu anahtar açar, Дархай asla kendiliğinden açmaz.",
     "benefitsTitle": "Avantajlar",
     "benefit1": "Birden çok ücretsiz kaynağı tek yerde toplar",
     "benefit2": "Ücretli API maliyetlerini azaltabilir",
@@ -2657,7 +2657,10 @@
       "installNodeLink": "Install Node.js",
       "installFailed": "Install failed ({{error}}).",
       "startFailed": "Could not start OmniRoute ({{error}}).",
-      "advancedTitle": "Advanced: connect to an OmniRoute you run yourself"
+      "advancedTitle": "Advanced: connect to an OmniRoute you run yourself",
+      "dashboardPasswordNote": "OmniRoute's dashboard asks for its own password - the default is CHANGEME. Change it inside OmniRoute after your first sign-in; Darhai never signs in for you.",
+      "externalServerNote": "An OmniRoute was already serving port 20128 before Darhai started anything, so Darhai did not start this one and cannot stop it. Close it where you started it.",
+      "enableHint": "OmniRoute is running, but the external relay is still OFF. To use its models inside Darhai, turn on the switch at the top of this card yourself."
     }
   }
 }

@@ -17,16 +17,21 @@
  *      poll `GET /v1/models` until healthy.
  *   3. {@link openDashboard} - open OmniRoute's OWN dashboard so the USER connects
  *      a provider there.
- *   4. {@link stop} / {@link stopAll} - reap the process (before-quit).
+ *   4. {@link stop} / {@link stopAll} - reap the whole process TREE (before-quit).
+ *
+ * TWO HONESTY RULES the state machine enforces, both of which it used to break:
+ *  - OWNERSHIP. `start` probes the port first; a server that already answers is
+ *    adopted as `owned: false`, never claimed as ours and never double-spawned.
+ *  - STOPPING MEANS STOPPED. `stop` kills the whole descendant tree (killing the
+ *    direct child leaves the grandchild holding the port on Windows) and then
+ *    RE-PROBES: a port that still answers reports `external-server`, not
+ *    `stopped`.
  *
  * LIABILITY BOUNDARY (enforced by design + unit test): this manager INSTALLS,
  * SPAWNS, HEALTH-CHECKS, and OPENS the dashboard - nothing else. It has NO
- * collaborator that could connect a free provider or write OmniRoute's
- * provider/relay config, and it never imports the gateway service. Pointing
- * Darhai's own `omniroute-gateway` provider at localhost:20128/v1 (via
- * applyOmnirouteGatewayConfig) is done OUTSIDE this manager, in the bridge, once
- * health is green - that only registers Darhai's gateway, it never connects a
- * provider on the user's behalf.
+ * collaborator that could connect a free provider, register a provider, or
+ * write OmniRoute's relay config, and it never imports the gateway service.
+ * Turning the external relay ON stays the user's own Settings switch.
  *
  * Never throws to the caller: every failure is reflected in the returned
  * {@link OmnirouteRuntimeStatus}. Best-effort by design - if no runtime is
@@ -44,6 +49,8 @@ import {
   type OmnirouteRuntimeStatus,
 } from '@/common/types/omnirouteGateway';
 import type { ChildProcessLike } from '@process/services/cookbook/LocalServeManager';
+import type { KillTreeOutcome } from './killProcessTree';
+import { awaitServerReady, killTreeEscalating, waitForPortRelease } from './runtimeProcessControl';
 
 /** Spawn options the manager passes down (superset of the cookbook shape). */
 export type OmnirouteSpawnOptions = {
@@ -51,6 +58,12 @@ export type OmnirouteSpawnOptions = {
   env: Record<string, string>;
   shell?: boolean;
   windowsHide?: boolean;
+  /**
+   * POSIX only: put the server in its own process GROUP so the whole tree can
+   * be signalled at once. Windows uses `taskkill /T` instead (a detached child
+   * there would only hide the console window, not help the kill).
+   */
+  detached?: boolean;
 };
 
 /** Injectable collaborators - production defaults are wired in the singleton. */
@@ -73,23 +86,22 @@ export type OmnirouteRuntimeDeps = {
   readyTimeoutMs: number;
   /** Windows shell-exec options (`.cmd` shims); `{}` off Windows. */
   spawnShellOptions: () => { shell?: boolean; windowsHide?: boolean };
+  /** Terminate a pid AND every descendant it spawned (never the direct child alone). */
+  killTree: (pid: number, force: boolean) => Promise<KillTreeOutcome>;
   /** Optional status emitter (prod: IPC `on-runtime-status`). */
   onStatus?: (status: OmnirouteRuntimeStatus) => void;
   /** Optional progress emitter (prod: IPC `on-install-progress`). */
   onProgress?: (progress: OmnirouteInstallProgress) => void;
 };
 
-/** Interval between `/v1/models` polls while waiting for readiness (ms). */
-const HEALTH_POLL_MS = 800;
-/** SIGTERM -> SIGKILL escalation window (ms). */
-const FORCE_KILL_MS = 5000;
-/** Default readiness timeout fallback (ms) - a Next.js cold start is slow. */
-const DEFAULT_READY_TIMEOUT_MS = 30000;
 /** Keep at most this many trailing chars of an installer line (progress noise). */
 const MAX_PROGRESS_LINE = 240;
 
 /** A resolved runtime: which kind + the executable + its global-install args. */
 type ResolvedRuntime = { kind: OmnirouteRuntimeKind; exec: string; installArgs: string[] };
+
+/** A located `omniroute` bin plus the runtime kind it was installed by. */
+type ResolvedBin = { bin: string; kind: OmnirouteRuntimeKind };
 
 const IDLE_STATUS: OmnirouteRuntimeStatus = {
   state: 'idle',
@@ -97,6 +109,7 @@ const IDLE_STATUS: OmnirouteRuntimeStatus = {
   dashboardUrl: null,
   runtime: null,
   needsRuntime: false,
+  owned: false,
 };
 
 export class OmnirouteRuntimeManager {
@@ -157,16 +170,38 @@ export class OmnirouteRuntimeManager {
   }
 
   private async doStart(onProgress?: (p: OmnirouteInstallProgress) => void): Promise<OmnirouteRuntimeStatus> {
-    const bin = this.resolveOmnirouteBin();
-    if (!bin) {
-      return this.setStatus({ state: 'error', error: 'not-installed' });
+    // Preflight: something already serving the port means Darhai did NOT start
+    // it. Adopt it (it is a usable gateway either way) but mark it unowned, so
+    // neither the card nor stop() pretends this process is ours to control.
+    if (await this.deps.healthProbe(OMNIROUTE_HEALTH_URL)) {
+      this.emitProgress('health', 'omniroute already serving port 20128 (not started by Darhai)', onProgress);
+      return this.setStatus({
+        state: 'running',
+        port: OMNIROUTE_RUNTIME_PORT,
+        dashboardUrl: OMNIROUTE_DASHBOARD_URL,
+        runtime: this.runtimeKind,
+        needsRuntime: false,
+        owned: false,
+        error: undefined,
+      });
     }
-    this.setStatus({ state: 'starting', runtime: this.runtimeKind, error: undefined });
+    const resolved = this.resolveOmnirouteBin();
+    if (!resolved) {
+      return this.setStatus({ state: 'error', error: 'not-installed', owned: false });
+    }
+    // The runtime label must reflect what START used, not only what install()
+    // happened to set: "already installed" is the common path and it never
+    // calls install(), which is why the card used to render a blank runtime.
+    this.runtimeKind = resolved.kind;
+    this.setStatus({ state: 'starting', runtime: resolved.kind, error: undefined, owned: false });
     try {
-      await this.launch(bin, onProgress);
+      await this.launch(resolved.bin, onProgress);
     } catch (err) {
-      this.process = null;
-      return this.setStatus({ state: 'error', error: this.errText(err) });
+      // A readiness timeout leaves a LIVE server behind. Reap the tree here or
+      // it holds port 20128 for the rest of the machine's uptime with nothing
+      // left to stop it - the exact leak the audit caught.
+      await this.killProcess();
+      return this.setStatus({ state: 'error', error: this.errText(err), owned: false });
     }
     return this.setStatus({
       state: 'running',
@@ -174,6 +209,8 @@ export class OmnirouteRuntimeManager {
       dashboardUrl: OMNIROUTE_DASHBOARD_URL,
       runtime: this.runtimeKind,
       needsRuntime: false,
+      owned: true,
+      error: undefined,
     });
   }
 
@@ -190,16 +227,64 @@ export class OmnirouteRuntimeManager {
     }
   }
 
-  /** Stop the running server: SIGTERM, then SIGKILL after {@link FORCE_KILL_MS}. */
+  /**
+   * Stop the running server and PROVE the port came free.
+   *
+   * Killing the tree is only half of it: the returned status is derived from a
+   * re-probe of port 20128, never from "a signal was sent". A port that still
+   * answers is reported as `running` + `external-server` - a server Darhai does
+   * not own cannot be stopped by Darhai, and saying "stopped" there is the lie
+   * this method exists to avoid.
+   */
   async stop(): Promise<OmnirouteRuntimeStatus> {
+    const hadOwnProcess = this.process !== null;
     await this.killProcess();
-    return this.setStatus({ state: 'stopped', port: null, dashboardUrl: null });
+    const released = await waitForPortRelease(this.deps.healthProbe, OMNIROUTE_HEALTH_URL);
+    if (!released) {
+      return this.setStatus({
+        state: 'running',
+        port: OMNIROUTE_RUNTIME_PORT,
+        dashboardUrl: OMNIROUTE_DASHBOARD_URL,
+        owned: false,
+        error: hadOwnProcess ? 'stop-port-still-served' : 'external-server',
+      });
+    }
+    return this.setStatus({ state: 'stopped', port: null, dashboardUrl: null, owned: false, error: undefined });
+  }
+
+  /**
+   * BLOCKING last-resort reaper for app quit.
+   *
+   * Electron does not await async `before-quit` handlers, so {@link stopAll} -
+   * however correct - can be cut off before its kill lands, and the OmniRoute
+   * tree then outlives the app holding port 20128 (measured: 23ms between
+   * `before-quit` and `will-quit`, server still LISTENING afterwards). This
+   * hands the pid to a synchronous killer that the quit sequence cannot
+   * interrupt, and drops the handle so a later stopAll is a no-op.
+   *
+   * @param killSync must block until the tree is gone (injected so this class
+   *   still owns no process API of its own).
+   */
+  reapOnQuitSync(killSync: (pid: number) => void): void {
+    const child = this.process;
+    if (!child) return;
+    this.process = null;
+    const pid = typeof child.pid === 'number' && child.pid > 0 ? child.pid : null;
+    if (pid === null) {
+      child.kill('SIGKILL');
+      return;
+    }
+    killSync(pid);
   }
 
   /**
    * Stop everything for app quit. A spawned OmniRoute (Next.js) server MUST be
-   * killed or it leaks and holds the port after the app quits. Wired into the
-   * before-quit CleanupModules bundle next to cookbook's stopAll.
+   * killed - tree and all - or it leaks and holds the port after the app quits.
+   * Wired into the before-quit CleanupModules bundle next to cookbook's stopAll.
+   *
+   * Deliberately skips stop()'s port re-probe: before-quit runs on a 2s per-step
+   * budget and there is nothing left to react with. The kill itself is issued
+   * through the identical {@link killProcess} path, so it is exactly as thorough.
    */
   async stopAll(): Promise<void> {
     await this.killProcess();
@@ -221,13 +306,19 @@ export class OmnirouteRuntimeManager {
     return null;
   }
 
-  /** Locate a runnable global `omniroute` bin among the candidates + PATH. */
-  private resolveOmnirouteBin(): string | null {
+  /**
+   * Locate a runnable global `omniroute` bin among the candidates + PATH, and
+   * report WHICH runtime put it there. The candidates are bun's global bin dir
+   * (`bun add -g` drops shims there), so a hit means bun; falling through to a
+   * bare PATH lookup means the npm/node global install.
+   */
+  private resolveOmnirouteBin(): ResolvedBin | null {
     for (const candidate of this.deps.omnirouteBinCandidates()) {
       const found = this.deps.resolveCommandPath(candidate);
-      if (found) return found;
+      if (found) return { bin: found, kind: 'bun' };
     }
-    return this.deps.resolveCommandPath('omniroute');
+    const onPath = this.deps.resolveCommandPath('omniroute');
+    return onPath ? { bin: onPath, kind: 'node' } : null;
   }
 
   /** Spawn a command and resolve on exit 0 (install path). */
@@ -258,7 +349,7 @@ export class OmnirouteRuntimeManager {
   }
 
   /** Spawn the server + resolve once healthy (mirrors LocalServeManager.launch). */
-  private launch(bin: string, onProgress?: (p: OmnirouteInstallProgress) => void): Promise<void> {
+  private async launch(bin: string, onProgress?: (p: OmnirouteInstallProgress) => void): Promise<void> {
     const env: Record<string, string> = {
       ...this.deps.env(),
       PORT: String(OMNIROUTE_RUNTIME_PORT),
@@ -268,90 +359,50 @@ export class OmnirouteRuntimeManager {
     };
     let child: ChildProcessLike;
     try {
-      child = this.deps.spawn(bin, [], this.spawnOpts(env));
+      child = this.deps.spawn(bin, [], this.spawnOpts(env, true));
     } catch (err) {
-      return Promise.reject(err instanceof Error ? err : new Error(String(err)));
+      throw err instanceof Error ? err : new Error(String(err));
     }
     this.process = child;
 
-    return new Promise<void>((resolve, reject) => {
-      let resolved = false;
-      let pollTimer: ReturnType<typeof setInterval> | undefined;
-      let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
-
-      const cleanup = (): void => {
-        if (pollTimer) clearInterval(pollTimer);
-        if (fallbackTimer) clearTimeout(fallbackTimer);
-      };
-      const ready = (): void => {
-        if (resolved) return;
-        resolved = true;
-        cleanup();
-        this.emitProgress('health', 'omniroute healthy', onProgress);
-        resolve();
-      };
-
-      child.stdout?.on('data', (d) => this.emitProgress('start', d.toString(), onProgress));
-      child.stderr?.on('data', (d) => this.emitProgress('start', d.toString(), onProgress));
-      child.on('error', (...a) => {
-        if (resolved) return;
-        resolved = true;
-        cleanup();
-        reject((a[0] as unknown as Error) ?? new Error('spawn error'));
-      });
-      child.on('exit', (...a) => {
-        const code = (a[0] as unknown as number | null) ?? null;
+    await awaitServerReady(child, {
+      healthProbe: this.deps.healthProbe,
+      healthUrl: OMNIROUTE_HEALTH_URL,
+      readyTimeoutMs: this.deps.readyTimeoutMs,
+      onOutput: (chunk) => this.emitProgress('start', chunk, onProgress),
+      onEarlyExit: () => {
         this.process = null;
-        if (resolved) return;
-        resolved = true;
-        cleanup();
-        reject(new Error(`omniroute exited before readiness (code=${code})`));
-      });
-
-      pollTimer = setInterval(() => {
-        void this.deps.healthProbe(OMNIROUTE_HEALTH_URL).then((ok) => {
-          if (ok) ready();
-        });
-      }, HEALTH_POLL_MS);
-      pollTimer.unref?.();
-
-      fallbackTimer = setTimeout(() => {
-        // Only accept the timeout fallback if the process is still alive AND a
-        // final health probe passes - a Next.js server that is up but slow to
-        // print a ready line should still register, but a wedged one must not.
-        if (resolved || !this.process || this.process.killed) return;
-        void this.deps.healthProbe(OMNIROUTE_HEALTH_URL).then((ok) => {
-          if (ok) ready();
-          else if (!resolved) {
-            resolved = true;
-            cleanup();
-            reject(new Error('omniroute did not become healthy in time'));
-          }
-        });
-      }, this.deps.readyTimeoutMs);
-      fallbackTimer.unref?.();
+      },
     });
+    this.emitProgress('health', 'omniroute healthy', onProgress);
   }
 
+  /**
+   * Reap the spawned server and EVERY process it started.
+   *
+   * `this.process` is cleared up front so a concurrent stop/quit cannot kill the
+   * same tree twice, and so a failed kill can never leave the manager believing
+   * it still controls a process it does not.
+   */
   private async killProcess(): Promise<void> {
     const child = this.process;
     if (!child) return;
-    child.kill('SIGTERM');
-    const forceKill = setTimeout(() => {
-      if (this.process && !this.process.killed) this.process.kill('SIGKILL');
-    }, FORCE_KILL_MS);
-    forceKill.unref?.();
-    await new Promise<void>((resolve) => {
-      child.once('exit', () => {
-        clearTimeout(forceKill);
-        resolve();
-      });
-    });
     this.process = null;
+    await killTreeEscalating(child, { killTree: this.deps.killTree });
   }
 
-  private spawnOpts(env: Record<string, string>): OmnirouteSpawnOptions {
-    return { stdio: ['ignore', 'pipe', 'pipe'], env, ...this.deps.spawnShellOptions() };
+  /**
+   * @param detach only the long-lived SERVER needs its own POSIX process group
+   *   (so `kill(-pid)` reaches the forks it makes). The installer is a
+   *   short-lived foreground command and stays attached.
+   */
+  private spawnOpts(env: Record<string, string>, detach = false): OmnirouteSpawnOptions {
+    return {
+      stdio: ['ignore', 'pipe', 'pipe'],
+      env,
+      ...(detach && process.platform !== 'win32' ? { detached: true } : {}),
+      ...this.deps.spawnShellOptions(),
+    };
   }
 
   private emitProgress(

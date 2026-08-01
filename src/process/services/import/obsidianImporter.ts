@@ -13,6 +13,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import * as crypto from 'node:crypto';
 import log from 'electron-log';
+import { globalMemoryDir } from '../memory/memoryRoots';
 
 export type VaultInfo = {
   path: string;
@@ -281,7 +282,7 @@ export async function runObsidianImport(
   }
   vaultPath = path.resolve(vaultPath);
 
-  const memDir = opts?.ijfwMemoryDir ?? path.join(os.homedir(), '.ijfw', 'memory');
+  const memDir = opts?.ijfwMemoryDir ?? globalMemoryDir();
   const result: ObsidianImportResult = { imported: 0, skipped: 0, errors: [], total: 0, capped: false };
 
   try {

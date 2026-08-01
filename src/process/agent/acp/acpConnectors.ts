@@ -30,6 +30,7 @@ import {
   normalizeNpxArgsForBundledBun,
   resolveNpxPath,
 } from '@process/utils/shellEnv';
+import { adaptWindowsLauncher } from '@process/utils/windowsLauncher';
 import { readClaudeProviderEnvFromCcSwitch } from '@process/services/ccSwitchModelSource';
 import { mainWarn } from '@process/utils/mainLogger';
 import { getPlatformServices } from '@/common/platform';
@@ -208,6 +209,26 @@ export async function prepareCleanEnv(): Promise<Record<string, string | undefin
     merged.TMP = merged.BUN_TMPDIR;
     merged.TEMP = merged.BUN_TMPDIR;
   }
+
+  // The redirect above hands every ACP backend - not just bun - a TMP/TEMP that
+  // did not exist until something created it, and on a fresh profile nothing
+  // ever did. Measured consequence: goose panics inside
+  // `platform_extensions/mod.rs` with "The system cannot find the path
+  // specified", then never answers `session/new`, so both the health check and
+  // any real goose conversation wait forever. A process handed a temp directory
+  // is entitled to assume it exists.
+  await Promise.all(
+    [merged.BUN_INSTALL_CACHE_DIR, merged.BUN_TMPDIR].map((dir) =>
+      dir
+        ? fs.mkdir(dir, { recursive: true }).catch((error) => {
+            // Not fatal on its own - report it so a backend that then fails on a
+            // missing temp path is diagnosable instead of mysterious.
+            mainWarn('[ACP]', `Failed to create temp directory ${dir}`, error);
+          })
+        : Promise.resolve()
+    )
+  );
+
   console.log(`[ACP] BUN_INSTALL_CACHE_DIR=${merged.BUN_INSTALL_CACHE_DIR}`);
   console.log(`[ACP] BUN_TMPDIR=${merged.BUN_TMPDIR}`);
   if (process.platform === 'win32') {
@@ -436,6 +457,11 @@ export function spawnNpxBackend(
 ): SpawnResult {
   const spawnArgs = ['x', '--bun', npxPackage, ...normalizeNpxArgsForBundledBun(extraArgs)];
 
+  // A `.cmd` launcher (npx.cmd, a PATH-resolved bun shim) cannot be spawned
+  // without a command processor - see windowsLauncher.ts. Non-batch targets,
+  // including the bundled bun.exe, pass through untouched.
+  const launcher = adaptWindowsLauncher(normalizeWindowsCommand(npxCommand), spawnArgs, cleanEnv);
+
   const spawnStart = Date.now();
   // detached: true creates a new session (setsid) so the child has no controlling terminal.
   // Required for backends (e.g. CodeBuddy) that write to /dev/tty - without it, SIGTTOU
@@ -445,13 +471,14 @@ export function spawnNpxBackend(
   // building a `chcp 65001 >nul && ...` cmd.exe string. npxCommand and spawnArgs are
   // passed as the executable + argv array, so no shell metacharacter interpretation
   // can occur. windowsHide keeps the console window from flashing.
-  const child = spawn(normalizeWindowsCommand(npxCommand), spawnArgs, {
+  const child = spawn(launcher.command, launcher.args, {
     cwd: workingDir,
     stdio: ['pipe', 'pipe', 'pipe'],
     env: cleanEnv,
     shell: false,
     windowsHide: true,
     detached,
+    ...launcher.options,
   });
   // Prevent the detached child from keeping the parent alive when the parent wants to exit normally.
   if (detached) {
@@ -569,8 +596,12 @@ export async function spawnGenericBackend(
   const spawnStart = Date.now();
   const detached = process.platform !== 'win32';
   const config = createGenericSpawnConfig(cliPath, workingDir, acpArgs, undefined, cleanEnv as Record<string, string>);
-  const child = spawn(config.command, config.args, {
+  // npm/pnpm/yarn-installed CLIs (opencode, qwen, auggie, kimi, ...) are `.cmd`
+  // shims on Windows and cannot be spawned directly - see windowsLauncher.ts.
+  const launcher = adaptWindowsLauncher(config.command, config.args, cleanEnv);
+  const child = spawn(launcher.command, launcher.args, {
     ...config.options,
+    ...launcher.options,
     detached,
   });
   if (detached) {

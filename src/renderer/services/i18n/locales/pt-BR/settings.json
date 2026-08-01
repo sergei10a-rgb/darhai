@@ -2617,7 +2617,7 @@
   },
   "omnirouteGateway": {
     "title": "OmniRoute Gateway (retransmissor externo)",
-    "intro": "O OmniRoute é um agregador compatível com OpenAI que VOCÊ MESMO executa na sua máquina, reunindo várias fontes gratuitas. Quando ativado, o Darhai só se conecta ao endereço definido - ele nunca instala nem executa nada por conta própria.",
+    "intro": "O OmniRoute é um agregador compatível com OpenAI que roda na SUA máquina, reunindo várias fontes gratuitas. O Darhai só o instala e executa quando você pressiona o botão de um clique abaixo; o relé externo é ativado apenas por esta chave, nunca pelo próprio Darhai.",
     "benefitsTitle": "Benefícios",
     "benefit1": "Agrega várias fontes gratuitas em um só lugar",
     "benefit2": "Pode reduzir custos de APIs pagas",
@@ -2658,7 +2658,10 @@
       "installNodeLink": "Install Node.js",
       "installFailed": "Install failed ({{error}}).",
       "startFailed": "Could not start OmniRoute ({{error}}).",
-      "advancedTitle": "Advanced: connect to an OmniRoute you run yourself"
+      "advancedTitle": "Advanced: connect to an OmniRoute you run yourself",
+      "dashboardPasswordNote": "OmniRoute's dashboard asks for its own password - the default is CHANGEME. Change it inside OmniRoute after your first sign-in; Darhai never signs in for you.",
+      "externalServerNote": "An OmniRoute was already serving port 20128 before Darhai started anything, so Darhai did not start this one and cannot stop it. Close it where you started it.",
+      "enableHint": "OmniRoute is running, but the external relay is still OFF. To use its models inside Darhai, turn on the switch at the top of this card yourself."
     }
   }
 }

@@ -138,10 +138,13 @@ describe('ijfwMcpClient', () => {
     const parsed = JSON.parse(written.trim());
     expect(parsed.method).toBe('tools/call');
     // Codex B1: renderer verb 'memory_recall' is now mapped to the real MCP
-    // tool name 'ijfw_memory_recall' before being put on the wire.
+    // tool name 'ijfw_memory_recall' before being put on the wire. The argument
+    // is renamed too: the server's tool schema hard-requires `context_hint`, so
+    // sending `query` reached it as `context_hint: undefined` and it answered
+    // "No memories matching: undefined" with ok:true.
     expect(parsed.params).toEqual({
       name: 'ijfw_memory_recall',
-      arguments: { query: 'hello' },
+      arguments: { context_hint: 'hello' },
     });
 
     // Reply with the real MCP envelope shape (Codex B2).

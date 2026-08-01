@@ -15,6 +15,7 @@ import log from 'electron-log';
 import { z } from 'zod';
 import { ipcBridge } from '@/common';
 import { getIjfwArchiveService } from '@process/services/memory/ijfwArchiveService';
+import { GLOBAL_PROJECT_NAME, globalMemoryDir, registerProject } from '@process/services/memory/memoryRoots';
 import { runClaudeMemImport } from '@process/services/import/claudeMemImporter';
 import { runClaudeNativeImport } from '@process/services/import/claudeNativeImporter';
 import { runObsidianImport, detectVaults } from '@process/services/import/obsidianImporter';
@@ -55,21 +56,32 @@ const ABSENT_SOURCE_NOTE = [/not found/i, /No Claude Code memory found/i];
 
 let _dropWatcherHandle: DropFolderWatcherHandle | null = null;
 
-/** Resolve the current project's .ijfw/memory directory. */
-function resolveMemoryDir(): string {
-  try {
-    const svc = getIjfwArchiveService();
-    // The archive service exposes projects[0].path as the most recently active project.
-    // Access via the index held in the closure - safe because we're in main process.
-    const indexStats = svc.indexStats();
-    if (indexStats.projects > 0) {
-      // Derive via quickAdd's same pattern: first project from internal index.
-      // We don't have a direct accessor, so fall back to homedir global path.
+/**
+ * Memory directory an import writes into. The home-scoped directory is a
+ * first-class index root (see memoryRoots.ts), so everything written here is
+ * recallable; a `project` scope resolves to the most recently active registered
+ * project and falls back to the home root when there is none.
+ */
+async function resolveMemoryDir(scope: 'project' | 'global' = 'global'): Promise<string> {
+  if (scope === 'project') {
+    try {
+      const projects = await getIjfwArchiveService().getProjects();
+      const real = projects.find((p) => p.basename !== GLOBAL_PROJECT_NAME);
+      if (real) return path.join(real.path, '.ijfw', 'memory');
+    } catch (err) {
+      log.warn('[import] project scope resolution failed, using global', { err });
     }
-  } catch {
-    // service not yet initialised - fall back
   }
-  return path.join(os.homedir(), '.ijfw', 'memory');
+  return globalMemoryDir();
+}
+
+/** Re-read the memory index so freshly imported files are immediately visible. */
+async function refreshArchive(): Promise<void> {
+  try {
+    await getIjfwArchiveService().rebuildNow();
+  } catch (err) {
+    log.warn('[import] archive rebuild after import failed', { err });
+  }
 }
 
 export function initImportBridge(): void {
@@ -80,7 +92,7 @@ export function initImportBridge(): void {
   // "source not present" note is filtered out so it is not shown as an error.
   ipcBridge.memory.import.claudeMem.provider(async () => {
     try {
-      const memDir = resolveMemoryDir();
+      const memDir = await resolveMemoryDir();
       const nativeResult = await runClaudeNativeImport({ ijfwMemoryDir: memDir });
       const dbResult = await runClaudeMemImport({ ijfwMemoryDir: memDir });
       const imported = nativeResult.imported + dbResult.imported;
@@ -92,6 +104,7 @@ export function initImportBridge(): void {
         dbImported: dbResult.imported,
         errorCount: errors.length,
       });
+      if (imported > 0) await refreshArchive();
       return { count: imported, errors };
     } catch (err) {
       log.error('[import] claude threw', { err });
@@ -138,7 +151,7 @@ export function initImportBridge(): void {
           };
         }
       }
-      const memDir = resolveMemoryDir();
+      const memDir = await resolveMemoryDir();
       const { imported, skipped, errors, total, capped } = await runObsidianImport(vaultPath, {
         ijfwMemoryDir: memDir,
         maxFiles: OBSIDIAN_MAX_FILES,
@@ -151,6 +164,7 @@ export function initImportBridge(): void {
         capped,
         errorCount: errors.length,
       });
+      if (imported > 0) await refreshArchive();
       return { count: imported, errors, total, capped };
     } catch (err) {
       log.error('[import] obsidianVault threw', { err });
@@ -185,7 +199,7 @@ export function initImportBridge(): void {
   // ── dev dir scanner + importer ───────────────────────────────────────────
   ipcBridge.memory.import.scanDevDir.provider(async () => {
     try {
-      const memDir = resolveMemoryDir();
+      const memDir = await resolveMemoryDir();
       const candidates = await scanForMemoryDirs();
       // Import all candidates not already in the registry.
       const newCandidatePaths = candidates.filter((c) => !c.alreadyInRegistry).map((c) => c.path);
@@ -198,7 +212,21 @@ export function initImportBridge(): void {
       const { imported, skipped, projectsFound, errors } = await runDevScanImport(newCandidatePaths, {
         ijfwMemoryDir: memDir,
       });
-      log.info('[import] scanDevDir done', { imported, skipped, projectsFound, errorCount: errors.length });
+      // Register what the scan found. Without this the scan discovered real
+      // IJFW projects and then left them unreachable, because nothing in the
+      // app ever wrote registry.md and the index reads its roots from there.
+      let registered = 0;
+      for (const candidate of newCandidatePaths) {
+        if (await registerProject(candidate)) registered++;
+      }
+      await refreshArchive();
+      log.info('[import] scanDevDir done', {
+        imported,
+        skipped,
+        projectsFound,
+        registered,
+        errorCount: errors.length,
+      });
       return { count: imported, projectsFound, errors };
     } catch (err) {
       log.error('[import] scanDevDir threw', { err });
@@ -211,8 +239,9 @@ export function initImportBridge(): void {
     // Lazy-start the live watcher if it hasn't been started yet (Fix 7).
     startDropWatcherIfNeeded();
     try {
-      const memDir = resolveMemoryDir();
+      const memDir = await resolveMemoryDir();
       const { count, errors } = await runDropFolderProcess({ ijfwMemoryDir: memDir });
+      if (count > 0) await refreshArchive();
       log.info('[import] processDropFolder done', { count, errorCount: errors.length });
       return { count, errors };
     } catch (err) {
@@ -232,9 +261,16 @@ export function initImportBridge(): void {
       return { ok: false, ingested: 0, errors: ['invalid args'] };
     }
 
-    const memDir = resolveMemoryDir();
+    // Resolve both scopes up front: `scope` is per-file, and a project-scoped
+    // drop must not silently land in the home root (it used to - the scope was
+    // parsed and then ignored).
+    const dirByScope: Record<'project' | 'global', string> = {
+      global: await resolveMemoryDir('global'),
+      project: await resolveMemoryDir('project'),
+    };
     try {
-      await fs.promises.mkdir(memDir, { recursive: true });
+      await fs.promises.mkdir(dirByScope.global, { recursive: true });
+      await fs.promises.mkdir(dirByScope.project, { recursive: true });
     } catch (err) {
       log.error('[import] ingestFiles mkdir failed', { err });
       return { ok: false, ingested: 0, errors: [`Failed to create memory dir: ${String(err)}`] };
@@ -250,13 +286,13 @@ export function initImportBridge(): void {
         continue;
       }
 
+      const scope = file.scope ?? 'global';
       const timestamp = Date.now();
       const hash = crypto.createHash('sha1').update(file.content).digest('hex').slice(0, 8);
       const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').replace(/\.(?:md|txt|json)$/i, '.md');
       const destName = `dropped-${timestamp}-${safeName}`;
-      const destPath = path.join(memDir, destName);
+      const destPath = path.join(dirByScope[scope], destName);
 
-      const scope = file.scope ?? 'global';
       const summary = file.content
         .split('\n')[0]
         .slice(0, 200)
@@ -272,6 +308,9 @@ export function initImportBridge(): void {
           `id: ${hash}`,
           `type: observation`,
           `created: ${timestamp}`,
+          // The indexer keys an entry's identity off its stored-at instant; an
+          // ISO `stored` keeps that identity fixed across restarts.
+          `stored: ${new Date(timestamp).toISOString()}`,
           `source: drag-drop`,
           `scope: ${scope}`,
           `summary: ${summary}`,
@@ -291,6 +330,10 @@ export function initImportBridge(): void {
       }
     }
 
+    // Rebuild before returning so an ingested file is recallable the moment the
+    // call resolves, rather than whenever the directory watcher happens to fire.
+    if (ingested > 0) await refreshArchive();
+
     return { ok: true, ingested, errors };
   });
 
@@ -304,9 +347,8 @@ export function initImportBridge(): void {
 function startDropWatcherIfNeeded(): void {
   if (_dropWatcherHandle !== null) return;
   try {
-    const memDir = resolveMemoryDir();
     _dropWatcherHandle = startDropFolderWatcher({
-      ijfwMemoryDir: memDir,
+      ijfwMemoryDir: globalMemoryDir(),
       onIngest: (filename) => {
         log.info('[import] dropFolder auto-ingested', { filename });
       },

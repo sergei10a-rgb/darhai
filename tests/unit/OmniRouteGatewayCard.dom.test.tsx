@@ -69,6 +69,7 @@ const RUNNING = {
   dashboardUrl: 'http://localhost:20128',
   runtime: 'bun',
   needsRuntime: false,
+  owned: true,
 };
 
 beforeEach(() => {
@@ -140,5 +141,38 @@ describe('OmniRouteGatewayCard - one-click install + run', () => {
     // The Node.js link opens nodejs.org via the shell bridge.
     fireEvent.click(screen.getByTestId('omniroute-gateway-install-node'));
     await waitFor(() => expect(mocks.openExternal).toHaveBeenCalledWith('https://nodejs.org'));
+  });
+});
+
+/**
+ * REGRESSION for the refuted "stays opt-in" claim. Running a server is not
+ * consent to relay prompts through third parties: the card must never flip its
+ * own switch, must never write config off a start, and must say out loud that
+ * the relay is still off.
+ */
+describe('OmniRouteGatewayCard - running is not consent', () => {
+  it('leaves the opt-in switch OFF after a successful install + run, and says so', async () => {
+    mocks.install.mockResolvedValue({ ...RUNNING, state: 'installed', port: null, dashboardUrl: null, owned: false });
+    mocks.start.mockResolvedValue(RUNNING);
+
+    render(<OmniRouteGatewayCard />);
+    fireEvent.click(await screen.findByTestId('omniroute-gateway-install-run'));
+    await waitFor(() => expect(mocks.start).toHaveBeenCalledTimes(1));
+
+    const toggle = await screen.findByTestId('omniroute-gateway-switch');
+    await waitFor(() => expect(toggle.getAttribute('aria-checked')).toBe('false'));
+    expect(mocks.setConfig).not.toHaveBeenCalled();
+    expect(await screen.findByTestId('omniroute-gateway-enable-hint')).toBeTruthy();
+  });
+
+  it('labels an adopted server as one Darhai did not start', async () => {
+    mocks.runtimeStatus.mockResolvedValue({ ...RUNNING, owned: false });
+    render(<OmniRouteGatewayCard />);
+    expect(await screen.findByTestId('omniroute-gateway-external-note')).toBeTruthy();
+  });
+
+  it('warns about OmniRoute’s own dashboard password before the user meets it', async () => {
+    render(<OmniRouteGatewayCard />);
+    expect(await screen.findByTestId('omniroute-gateway-dashboard-password-note')).toBeTruthy();
   });
 });

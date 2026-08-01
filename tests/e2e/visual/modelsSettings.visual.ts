@@ -70,6 +70,7 @@ const BASE_RUNTIME: OmnirouteRuntimeStatus = {
   dashboardUrl: null,
   runtime: 'node',
   needsRuntime: false,
+  owned: true,
 };
 
 /**

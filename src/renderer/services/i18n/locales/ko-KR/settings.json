@@ -2618,7 +2618,7 @@
   },
   "omnirouteGateway": {
     "title": "OmniRoute 게이트웨이(외부 릴레이)",
-    "intro": "OmniRoute는 여러 무료 소스를 모아 주는 OpenAI 호환 애그리게이터로, 사용자 본인이 직접 자신의 컴퓨터에서 실행합니다. 활성화하면 Дархай는 지정한 주소로만 연결하며, 스스로 무언가를 설치하거나 실행하지 않습니다.",
+    "intro": "OmniRoute는 여러 무료 소스를 모아 주는 OpenAI 호환 애그리게이터로, 사용자 컴퓨터에서 실행됩니다. Дархай는 아래의 원클릭 버튼을 누른 경우에만 설치하고 실행합니다. 외부 릴레이는 오직 이 스위치로만 켤 수 있으며, Дархай가 스스로 켜지는 않습니다.",
     "benefitsTitle": "장점",
     "benefit1": "여러 무료 소스를 한곳에 집약",
     "benefit2": "유료 API 비용 절감 가능",
@@ -2659,7 +2659,10 @@
       "installNodeLink": "Install Node.js",
       "installFailed": "Install failed ({{error}}).",
       "startFailed": "Could not start OmniRoute ({{error}}).",
-      "advancedTitle": "Advanced: connect to an OmniRoute you run yourself"
+      "advancedTitle": "Advanced: connect to an OmniRoute you run yourself",
+      "dashboardPasswordNote": "OmniRoute's dashboard asks for its own password - the default is CHANGEME. Change it inside OmniRoute after your first sign-in; Darhai never signs in for you.",
+      "externalServerNote": "An OmniRoute was already serving port 20128 before Darhai started anything, so Darhai did not start this one and cannot stop it. Close it where you started it.",
+      "enableHint": "OmniRoute is running, but the external relay is still OFF. To use its models inside Darhai, turn on the switch at the top of this card yourself."
     }
   }
 }

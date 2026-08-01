@@ -13,6 +13,7 @@ const { fsPromisesMock } = vi.hoisted(() => ({
     access: vi.fn(),
     readdir: vi.fn(),
     stat: vi.fn(),
+    mkdir: vi.fn(async () => undefined),
   },
 }));
 
@@ -106,14 +107,18 @@ describe('spawnNpxBackend - Windows UTF-8 fix', () => {
     expect(options).toMatchObject({ shell: false, windowsHide: true });
   });
 
-  it('passes a quoted Windows path through unquoted with no shell (SEC-ACP-04)', () => {
+  it('unquotes a quoted Windows path and launches the .cmd shim through cmd.exe', () => {
     const npxWithSpaces = 'C:\\Program Files\\nodejs\\npx.cmd';
     spawnNpxBackend('claude', '@pkg/cli@1.0.0', `"${npxWithSpaces}"`, {}, '/cwd', true, false);
 
-    const [command, , options] = mockSpawn.mock.calls[0];
-    // Surrounding quotes are stripped; no chcp prefix, no shell interpretation.
-    expect(command).toBe(npxWithSpaces);
-    expect(options).toMatchObject({ shell: false });
+    const [command, args, options] = mockSpawn.mock.calls[0];
+    // Surrounding quotes are stripped, then the batch shim is routed through an
+    // explicit cmd.exe - spawning a `.cmd` with shell:false throws EINVAL.
+    // `shell` stays false: this module owns the command line, not Node.
+    expect(command.toLowerCase()).toContain('cmd.exe');
+    expect(args.slice(0, 3)).toEqual(['/d', '/s', '/c']);
+    expect(args[3]).toContain(`"${npxWithSpaces}"`);
+    expect(options).toMatchObject({ shell: false, windowsVerbatimArguments: true });
   });
 
   it('passes bun x --bun and package name as spawn args', () => {
@@ -151,20 +156,24 @@ describe('spawnNpxBackend - Windows UTF-8 fix', () => {
     expect(mockChild.unref).not.toHaveBeenCalled();
   });
 
-  it('spawns the bundled bun command directly on Windows (no chcp prefix)', () => {
+  it('routes a bare .cmd launcher through cmd.exe with the package args intact', () => {
     spawnNpxBackend('claude', '@pkg/cli@1.0.0', 'npx.cmd', {}, 'C:\\cwd', true, false);
 
-    const [command, , options] = mockSpawn.mock.calls[0];
-    expect(command).toBe('npx.cmd');
-    expect(options).toMatchObject({ shell: false });
+    const [command, args, options] = mockSpawn.mock.calls[0];
+    expect(command.toLowerCase()).toContain('cmd.exe');
+    expect(args[3]).toContain('"npx.cmd"');
+    // The bun/npx argv must survive the wrapping, one quoted token each.
+    expect(args[3]).toContain('"x" "--bun" "@pkg/cli@1.0.0"');
+    expect(options).toMatchObject({ shell: false, windowsVerbatimArguments: true });
   });
 
-  it('spawns an unquoted Windows npx path directly with no shell', () => {
+  it('routes an absolute Windows .cmd path through cmd.exe', () => {
     spawnNpxBackend('claude', '@pkg/cli@1.0.0', 'C:\\nodejs\\npx.cmd', {}, 'C:\\cwd', true, false);
 
-    const [command, , options] = mockSpawn.mock.calls[0];
-    expect(command).toBe('C:\\nodejs\\npx.cmd');
-    expect(options).toMatchObject({ shell: false });
+    const [command, args, options] = mockSpawn.mock.calls[0];
+    expect(command.toLowerCase()).toContain('cmd.exe');
+    expect(args[3]).toContain('"C:\\nodejs\\npx.cmd"');
+    expect(options).toMatchObject({ shell: false, windowsVerbatimArguments: true });
   });
 
   it('uses bundled bun command directly on non-Windows', () => {
@@ -441,6 +450,25 @@ describe('spawnGenericBackend - detached process group', () => {
     );
     expect(result.isDetached).toBe(false);
     expect(mockChild.unref).not.toHaveBeenCalled();
+  });
+
+  it('creates the redirected temp directories before handing them to the backend', async () => {
+    // On Windows prepareCleanEnv points TMP/TEMP at <userData>/bun-tmp for every
+    // ACP backend, bun-based or not. Nothing used to create it: goose then
+    // panicked on the missing path and never answered `session/new`, hanging the
+    // health check and every goose conversation.
+    Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
+
+    await spawnGenericBackend('goose', 'goose', 'C:\\cwd', ['acp']);
+
+    const created = mockFsPromises.mkdir.mock.calls.map((call) => String(call[0]));
+    expect(created.some((dir) => dir.endsWith('bun-tmp'))).toBe(true);
+    expect(created.some((dir) => dir.endsWith('bun-cache'))).toBe(true);
+
+    const [, , options] = mockSpawn.mock.calls[0];
+    const env = (options as { env: Record<string, string> }).env;
+    expect(created).toContain(env.TEMP);
+    expect(env.TMP).toBe(env.TEMP);
   });
 });
 

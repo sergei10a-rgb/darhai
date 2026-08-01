@@ -120,7 +120,23 @@ export type OmnirouteRuntimeStatus = {
   runtime: OmnirouteRuntimeKind | null;
   /** True when no runtime (bun/node) is available - the card shows the Node hint. */
   needsRuntime: boolean;
-  /** A clean error token/message when `state === 'error'`. */
+  /**
+   * True only when `state === 'running'` AND the server on {@link
+   * OMNIROUTE_RUNTIME_PORT} is the child Darhai spawned in THIS session.
+   *
+   * False for an ADOPTED server: something was already answering on the port
+   * before Darhai spawned anything (a leftover from a previous run, another
+   * app, any local process). Darhai can still use and open it, but it did not
+   * start it and cannot stop it - claiming ownership there would be a lie, and
+   * the card says "started outside Darhai" instead.
+   */
+  owned: boolean;
+  /**
+   * A clean error token/message. Set when `state === 'error'`, and also on the
+   * one honest `running` case: `'external-server'` means stop() killed
+   * everything Darhai owned yet the port is STILL served by a process Darhai
+   * does not own.
+   */
   error?: string;
 };
 

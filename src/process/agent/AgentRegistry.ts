@@ -41,6 +41,12 @@ class AgentRegistry {
   private detectedAgents: DetectedAgent[] = [];
   private isInitialized = false;
   private mutationQueue: Promise<void> = Promise.resolve();
+  /**
+   * Memoized first detection pass. Every caller shares this one promise, so a
+   * renderer query that arrives while boot-time detection is still running
+   * awaits the SAME pass instead of observing the still-empty snapshot.
+   */
+  private initialDetection: Promise<void> | null = null;
 
   // Cache sub-detector results for partial refresh
   private builtinAgents: AcpDetectedAgent[] = [];
@@ -217,6 +223,12 @@ class AgentRegistry {
   // ---------------------------------------------------------------------------
 
   async initialize(): Promise<void> {
+    if (this.isInitialized) return;
+    this.initialDetection ??= this.runInitialDetection();
+    await this.initialDetection;
+  }
+
+  private async runInitialDetection(): Promise<void> {
     await this.runExclusiveMutation(async () => {
       if (this.isInitialized) return;
 
@@ -232,6 +244,26 @@ class AgentRegistry {
         `[AgentRegistry] Completed in ${elapsed}ms, found ${this.detectedAgents.length} agents: ${agentSummary}`
       );
     });
+  }
+
+  /**
+   * Await the first detection pass, starting it when nothing else has.
+   *
+   * Every reader of {@link getDetectedAgents} that can be reached from the
+   * renderer must go through this. Detection is kicked off fire-and-forget at
+   * boot (`src/index.ts`), so a query that lands before it finishes used to get
+   * an empty array back and cache it - which is exactly how the agent picker
+   * ended up with zero pills. Awaiting here makes the answer correct rather
+   * than merely early, and self-starting detection removes the dependency on
+   * boot-hook ordering entirely.
+   */
+  async whenReady(): Promise<void> {
+    await this.initialize();
+  }
+
+  /** True once the first detection pass has completed. */
+  get initialized(): boolean {
+    return this.isInitialized;
   }
 
   getDetectedAgents(): DetectedAgent[] {

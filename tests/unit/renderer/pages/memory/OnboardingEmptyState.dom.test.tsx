@@ -23,11 +23,10 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { brainInvokeMock } = vi.hoisted(() => ({
-  brainInvokeMock: vi.fn<
-    (args: { verb: string; args?: Record<string, unknown> }) => Promise<
-      { ok: true } | { ok: false; error?: string }
-    >
-  >(),
+  brainInvokeMock:
+    vi.fn<
+      (args: { verb: string; args?: Record<string, unknown> }) => Promise<{ ok: true } | { ok: false; error?: string }>
+    >(),
 }));
 
 vi.mock('react-i18next', () => ({
@@ -35,9 +34,7 @@ vi.mock('react-i18next', () => ({
 }));
 
 vi.mock('@arco-design/web-react', async () => {
-  const actual = await vi.importActual<typeof import('@arco-design/web-react')>(
-    '@arco-design/web-react'
-  );
+  const actual = await vi.importActual<typeof import('@arco-design/web-react')>('@arco-design/web-react');
   return {
     ...actual,
     Message: {
@@ -109,9 +106,12 @@ describe('OnboardingEmptyState', () => {
       fireEvent.click(submit);
     });
     expect(brainInvokeMock).toHaveBeenCalledTimes(1);
+    // `type` is not optional: the brain rejects a store without it with
+    // "type must be one of: decision, observation, pattern, handoff,
+    // preference", so omitting it made every save from this surface fail.
     expect(brainInvokeMock).toHaveBeenCalledWith({
       verb: 'memory_store',
-      args: { content: 'I prefer TypeScript' },
+      args: { content: 'I prefer TypeScript', type: 'observation' },
     });
   });
 

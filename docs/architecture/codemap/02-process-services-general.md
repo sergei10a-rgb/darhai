@@ -101,7 +101,7 @@ talk to the DOM; persistence goes through `services/database` repositories or pl
 | `mcpServices/agents/{Codebuddy,Codex,Gemini,Opencode,Qwen}McpAgent.ts` | Same pattern per CLI (codex tolerates `env`/`env_vars` shapes, CodexMcpAgent.ts:38-60) |
 | `mcpServices/agents/DarhaiMcpAgent.ts` | Backend `'wayland'`: MCP config lives in ProcessConfig key `mcp.config` (line 45); read/merge only, remove is renderer-owned no-op (117-120) |
 | `mcpServices/agents/WCoreMcpAgent.ts` | wayland-core Rust engine: config path via `<binary> --config-path` (55-60), TOML read/write via smol-toml |
-| `memory/ijfwArchiveService.ts` | (functionally IJFW — detailed in area 03) Reads `.ijfw/memory/*.md`, in-memory index, fs watchers, frontmatter clamps (42-44), feeds `memorySemanticLane` |
+| `memory/ijfwArchiveService.ts` | (functionally IJFW — detailed in area 03) Reads `.ijfw/memory/*.md`, in-memory index, per-root dir watchers, frontmatter clamps; roots via `memory/memoryRoots.ts` (home-scoped root always indexed), lexical search via `memory/memorySearch.ts` |
 | `memory/markdownFrontmatter.ts` | Pure `---` block parser; JSON-quoted scalars prevent YAML break-out (28-39) |
 | `memory/promotionScore.ts` | Pure 0-100 promotion score: +30 decision/pattern, +10/cross-ref, +5/referencedBy, +20 promoted tags, +15 recency decay (32-65) |
 | `memory/promotionSweep.ts` | Periodic auto-promotion; settings persisted at `~/.config/wayland-dev/memory-archive-settings.json` (line 62), threshold default 90 |
@@ -116,7 +116,7 @@ talk to the DOM; persistence goes through `services/database` repositories or pl
 | `semantic/fingerprint.ts` / `semantic/fusion.ts` | Pure: doc fingerprints; layered-fallback (min cosine 0.35, fusion.ts:25) + RRF (k=60) |
 | `semantic/HybridRetriever.ts` | Vector KNN → keyword lane fallback per namespace; `MAX_REINDEX_DOCS` 20000 (47); keyword lane rebound each call (66-70) |
 | `semantic/SemanticIndexService.ts` | Singleton wiring: embedder cache at `getDataPath()/models` (80), sqlite-vec extension via `createRequire` (34-48), per-namespace retrievers |
-| `semantic/memorySemanticLane.ts` / `skillSemanticLane.ts` | Corpus-specific doc builders + keyword lanes (substring for memory, BM25 `SkillRetriever` for skills); background reindex schedulers |
+| `semantic/skillSemanticLane.ts` | Skill doc builder + BM25 `SkillRetriever` keyword lane; background reindex scheduler. Memory has no vector lane - e5 scores gibberish and correct matches in the same band, so memory membership is lexical (memorySearch.ts) |
 | `usage/types.ts` | Closed `UsageEventType` union (launchpad/guid/dashboard/workflow.* events, 12-39); repo interface with prune |
 | `usage/UsageEventLogger.ts` | Append with UUID/timestamp defaults; metadata cap 2048 bytes (14); errors swallowed |
 | `usage/SqliteUsageEventRepository.ts` | usage_events table (migration v40) repo |

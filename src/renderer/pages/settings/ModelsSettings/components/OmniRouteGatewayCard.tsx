@@ -108,7 +108,8 @@ const OmniRouteGatewayCard: React.FC = () => {
   useEffect(() => {
     const offStatus = ipcBridge.omnirouteGateway.onRuntimeStatus.on((status: OmnirouteRuntimeStatus) => {
       setRuntime(status);
-      if (status.state === 'running') setEnabled(true);
+      // A running server does NOT mean the relay is on: the switch mirrors the
+      // persisted opt-in only, so it can never show a consent nobody gave.
       if (status.state === 'running' || status.state === 'stopped' || status.state === 'error') {
         setProgressLine('');
       }
@@ -209,8 +210,9 @@ const OmniRouteGatewayCard: React.FC = () => {
         Message.error(t('settings.omnirouteGateway.autoInstall.startFailed', { error: started?.error ?? 'unknown' }));
         return;
       }
-      setEnabled(true);
       // Open OmniRoute's OWN dashboard - the USER connects a provider there.
+      // The opt-in switch is deliberately left untouched: installing a server is
+      // not consent to relay prompts through third parties.
       await ipcBridge.omnirouteGateway.openDashboard.invoke();
       Message.success(t('settings.omnirouteGateway.autoInstall.running'));
     } catch (err) {
@@ -318,6 +320,26 @@ const OmniRouteGatewayCard: React.FC = () => {
         <Typography.Text type='secondary' className='text-12px'>
           {t('settings.omnirouteGateway.autoInstall.connectYourselfNote')}
         </Typography.Text>
+
+        {/* OmniRoute guards its own dashboard with its own password - saying so
+            up front beats letting the user hit an unexplained login screen. */}
+        <Typography.Text type='secondary' className='text-12px' data-testid='omniroute-gateway-dashboard-password-note'>
+          {t('settings.omnirouteGateway.autoInstall.dashboardPasswordNote')}
+        </Typography.Text>
+
+        {/* Running != adopted-by-Darhai. Say which one this is. */}
+        {isRunning && runtime?.owned === false && (
+          <Typography.Text type='warning' className='text-12px' data-testid='omniroute-gateway-external-note'>
+            {t('settings.omnirouteGateway.autoInstall.externalServerNote')}
+          </Typography.Text>
+        )}
+
+        {/* Running is not consent: the relay stays off until the user flips it. */}
+        {isRunning && !enabled && (
+          <Typography.Text type='warning' className='text-12px' data-testid='omniroute-gateway-enable-hint'>
+            {t('settings.omnirouteGateway.autoInstall.enableHint')}
+          </Typography.Text>
+        )}
 
         <div className='flex items-center gap-8px flex-wrap'>
           {!isRunning && (

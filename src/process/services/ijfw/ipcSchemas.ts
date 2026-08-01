@@ -126,7 +126,17 @@ export const verbSchemas: Record<IjfwVerb, z.ZodTypeAny> = {
   // pollution, byte cap - not an exhaustive contract).
   // PromotionsTab / ConflictsTab / HomeTab / MemoryPage:
   //   { any?, promotable?, conflicts?, pending_promotion?, id?, skipPromotion? }
-  memory_facts: z.object({}).passthrough(),
+  // `ijfw_memory_facts` hard-requires subject + predicate. Accepting `{}` here
+  // meant a malformed call reached the server and came back as
+  // `{ok: true, data: "undefined"}` - a success envelope around nothing.
+  memory_facts: z
+    .object({
+      subject: z.string().min(1).max(500),
+      predicate: z.string().min(1).max(500),
+      valid_at: z.string().min(1).max(64).optional(),
+      history: z.boolean().optional(),
+    })
+    .passthrough(),
   memory_store: z.object({ content: memoryStoreContentSchema }).passthrough(),
   memory_search: z
     .object({
@@ -134,15 +144,33 @@ export const verbSchemas: Record<IjfwVerb, z.ZodTypeAny> = {
       k: z.number().int().min(1).max(50).optional(),
     })
     .passthrough(),
+  // The server's required field is `context_hint`; `query` is the name the
+  // bridge and renderer use and is mapped onto it before the call goes out
+  // (see normalizeToolArgs). One of the two must be present - a bare `{}`
+  // used to be accepted and answered "No memories matching: undefined".
   memory_recall: z
     .object({
       query: queryStringSchema.optional(),
+      context_hint: queryStringSchema.optional(),
+      detail_level: z.enum(['summary', 'standard', 'full']).optional(),
+      from_project: z.string().min(1).max(1024).optional(),
       limit: z.number().int().min(1).max(200).optional(),
     })
-    .passthrough(),
+    .passthrough()
+    .refine((v) => v.query !== undefined || v.context_hint !== undefined, {
+      message: 'memory_recall requires `query` or `context_hint`',
+    }),
   memory_prelude: z.object({}).passthrough(),
-  // Wave 7 B1: diagnostics / lifecycle.
-  state: z.object({}).passthrough(),
+  // Wave 7 B1: diagnostics / lifecycle. `ijfw_state` is a verb facade whose
+  // own schema requires `verb`; `{}` could never produce an accepted call.
+  state: z
+    .object({
+      verb: z.string().min(1).max(64),
+      payload: z.record(z.unknown()).optional(),
+      projectRoot: z.string().min(1).max(1024).optional(),
+      subagentId: z.string().min(1).max(128).optional(),
+    })
+    .passthrough(),
   metrics: z.object({}).passthrough(),
   prompt_check: z.object({ prompt: z.string().min(1).max(8000).optional() }).passthrough(),
   update_check: z.object({}).passthrough(),
@@ -221,9 +249,7 @@ export const jsonRpcResponseSchema = z
     jsonrpc: z.literal('2.0'),
     id: z.number().int().nonnegative(),
     result: z.unknown().optional(),
-    error: z
-      .object({ code: z.number().int(), message: z.string() })
-      .optional(),
+    error: z.object({ code: z.number().int(), message: z.string() }).optional(),
   })
   .strict();
 
@@ -231,7 +257,7 @@ export type JsonRpcResponse = z.infer<typeof jsonRpcResponseSchema>;
 
 // Standardized errorReason enum (mirrors @/common/types/ijfw IjfwErrorReason).
 export const ijfwErrorReasonSchema = z.enum(
-  IJFW_ERROR_REASONS as unknown as readonly [IjfwErrorReason, ...IjfwErrorReason[]],
+  IJFW_ERROR_REASONS as unknown as readonly [IjfwErrorReason, ...IjfwErrorReason[]]
 );
 
 // Renderer → main argument schema for `brain.invoke`. Pre-flight only - the

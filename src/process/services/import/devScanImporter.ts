@@ -13,6 +13,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import * as crypto from 'node:crypto';
 import { parseMarkdownBlocks } from '../memory/markdownFrontmatter';
+import { globalMemoryDir, readRegistry } from '../memory/memoryRoots';
 import log from 'electron-log';
 
 export type DevMemoryCandidate = {
@@ -32,19 +33,8 @@ export type DevScanImportResult = {
 // ===== Registry reader =====
 
 async function readRegistryPaths(): Promise<Set<string>> {
-  const registryPath = path.join(os.homedir(), '.ijfw', 'registry.md');
   const known = new Set<string>();
-  try {
-    const content = await fs.promises.readFile(registryPath, 'utf8');
-    for (const line of content.split('\n')) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith('#') || trimmed.startsWith('<!--')) continue;
-      const parts = trimmed.split('|').map((p) => p.trim());
-      if (parts[0]) known.add(path.resolve(parts[0]));
-    }
-  } catch {
-    // Registry absent - all candidates are new.
-  }
+  for (const entry of await readRegistry()) known.add(path.resolve(entry.path));
   return known;
 }
 
@@ -214,7 +204,7 @@ export async function runDevScanImport(
   paths: string[],
   opts?: { ijfwMemoryDir?: string }
 ): Promise<DevScanImportResult> {
-  const targetMemDir = opts?.ijfwMemoryDir ?? path.join(os.homedir(), '.ijfw', 'memory');
+  const targetMemDir = opts?.ijfwMemoryDir ?? globalMemoryDir();
   const result: DevScanImportResult = { imported: 0, skipped: 0, projectsFound: 0, errors: [] };
 
   try {

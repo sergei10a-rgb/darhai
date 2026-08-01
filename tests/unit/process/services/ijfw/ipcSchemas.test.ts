@@ -72,22 +72,23 @@ describe('ijfw/ipcSchemas', () => {
     });
   });
 
-  describe('Wave 7 B1: memory.* verbs accept the args renderer call sites pass', () => {
-    it('memory_facts {any:true} (MemoryPage routing gate)', () => {
-      expect(validateInvocation('memory_facts', { any: true }).ok).toBe(true);
+  // These schemas mirror the tool schemas the installed MCP server actually
+  // publishes (`~/.ijfw/mcp-server/src/server.js`). The looser shapes asserted
+  // here previously described call sites that no longer exist and contracts the
+  // server rejects: `memory_facts` requires subject+predicate and answered a
+  // bare `{}` with `{ok:true, data:"undefined"}`; `memory_recall` requires
+  // `context_hint` and answered `{query}` with "No memories matching:
+  // undefined" AND ok:true. Accepting those shapes here turned a broken call
+  // into a reported success.
+  describe('memory.* verbs match the server tool schemas', () => {
+    it('memory_facts {subject, predicate}', () => {
+      expect(validateInvocation('memory_facts', { subject: 'v1.5.0', predicate: 'ship_date' }).ok).toBe(true);
     });
-    it('memory_facts {promotable:true} (HomeTab)', () => {
-      expect(validateInvocation('memory_facts', { promotable: true }).ok).toBe(true);
+    it('memory_facts rejects an arg-free call the server cannot answer', () => {
+      expect(validateInvocation('memory_facts', {}).ok).toBe(false);
     });
-    it('memory_facts {conflicts:true} (ConflictsTab)', () => {
-      expect(validateInvocation('memory_facts', { conflicts: true }).ok).toBe(true);
-    });
-    it('memory_facts {pending_promotion:true} (PromotionsTab)', () => {
-      expect(validateInvocation('memory_facts', { pending_promotion: true }).ok).toBe(true);
-    });
-    it('memory_facts {id, skipPromotion} (PromotionsTab.handleSkip)', () => {
-      const result = validateInvocation('memory_facts', { id: 'abc', skipPromotion: true });
-      expect(result.ok).toBe(true);
+    it('memory_facts rejects a call missing the predicate', () => {
+      expect(validateInvocation('memory_facts', { subject: 'v1.5.0' }).ok).toBe(false);
     });
     it('memory_store {content} (OnboardingEmptyState)', () => {
       const result = validateInvocation('memory_store', { content: 'hello world' });
@@ -100,8 +101,14 @@ describe('ijfw/ipcSchemas', () => {
     it('memory_search {query}', () => {
       expect(validateInvocation('memory_search', { query: 'hi' }).ok).toBe(true);
     });
-    it('memory_recall {} (arg-free)', () => {
-      expect(validateInvocation('memory_recall', {}).ok).toBe(true);
+    it('memory_recall {query} (the bridge-facing name)', () => {
+      expect(validateInvocation('memory_recall', { query: 'Дархай' }).ok).toBe(true);
+    });
+    it('memory_recall {context_hint} (the server-facing name)', () => {
+      expect(validateInvocation('memory_recall', { context_hint: 'session_start' }).ok).toBe(true);
+    });
+    it('memory_recall rejects an arg-free call that could only recall nothing', () => {
+      expect(validateInvocation('memory_recall', {}).ok).toBe(false);
     });
     it('memory_prelude {} (arg-free)', () => {
       expect(validateInvocation('memory_prelude', {}).ok).toBe(true);
@@ -109,8 +116,12 @@ describe('ijfw/ipcSchemas', () => {
   });
 
   describe('Wave 7 B1: lifecycle / diagnostics verbs', () => {
-    it.each(['state', 'metrics', 'update_check'] as const)('%s accepts arg-free invocation', (verb) => {
+    it.each(['metrics', 'update_check'] as const)('%s accepts arg-free invocation', (verb) => {
       expect(validateInvocation(verb, {}).ok).toBe(true);
+    });
+    it('state requires the facade verb the server demands', () => {
+      expect(validateInvocation('state', {}).ok).toBe(false);
+      expect(validateInvocation('state', { verb: 'workflow.get' }).ok).toBe(true);
     });
     it('prompt_check {prompt}', () => {
       expect(validateInvocation('prompt_check', { prompt: 'check me' }).ok).toBe(true);
@@ -318,9 +329,7 @@ describe('ijfw/ipcSchemas', () => {
 
   describe('jsonRpcResponseSchema', () => {
     it('accepts a result response', () => {
-      expect(
-        jsonRpcResponseSchema.safeParse({ jsonrpc: '2.0', id: 1, result: { ok: true } }).success,
-      ).toBe(true);
+      expect(jsonRpcResponseSchema.safeParse({ jsonrpc: '2.0', id: 1, result: { ok: true } }).success).toBe(true);
     });
 
     it('accepts an error response', () => {
@@ -329,21 +338,16 @@ describe('ijfw/ipcSchemas', () => {
           jsonrpc: '2.0',
           id: 1,
           error: { code: -32600, message: 'bad' },
-        }).success,
+        }).success
       ).toBe(true);
     });
 
     it('rejects extra unknown keys (strict)', () => {
-      expect(
-        jsonRpcResponseSchema.safeParse({ jsonrpc: '2.0', id: 1, result: {}, extra: 'nope' })
-          .success,
-      ).toBe(false);
+      expect(jsonRpcResponseSchema.safeParse({ jsonrpc: '2.0', id: 1, result: {}, extra: 'nope' }).success).toBe(false);
     });
 
     it('rejects non-2.0 protocol', () => {
-      expect(jsonRpcResponseSchema.safeParse({ jsonrpc: '1.0', id: 1, result: {} }).success).toBe(
-        false,
-      );
+      expect(jsonRpcResponseSchema.safeParse({ jsonrpc: '1.0', id: 1, result: {} }).success).toBe(false);
     });
   });
 
@@ -370,9 +374,7 @@ describe('ijfw/ipcSchemas', () => {
       expect(brainInvokeArgsSchema.safeParse({ verb: '', args: {} }).success).toBe(false);
     });
     it('rejects extra top-level keys (strict)', () => {
-      expect(
-        brainInvokeArgsSchema.safeParse({ verb: 'think', args: {}, evil: true }).success,
-      ).toBe(false);
+      expect(brainInvokeArgsSchema.safeParse({ verb: 'think', args: {}, evil: true }).success).toBe(false);
     });
   });
 });

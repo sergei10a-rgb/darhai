@@ -16,21 +16,23 @@
  * C2 (one-click auto-install + run): `install` / `start` / `stop` /
  * `open-dashboard` drive the {@link omnirouteRuntime} manager (host-side
  * install/exec/open, all remote-denied); `runtime-status` is a readable
- * snapshot. Only `start` touches the gateway service: once the spawned server
- * is HEALTHY, it registers Darhai's OWN `omniroute-gateway` provider at the
- * local endpoint (applyOmnirouteGatewayConfig). That points Darhai's gateway at
- * the user's local OmniRoute - it never connects a free provider on the user's
- * behalf. The USER connects providers themselves in OmniRoute's dashboard.
+ * snapshot. NONE of them touch the gateway service: running a local server and
+ * ENABLING an external relay are different decisions, and only `set-config`
+ * (the user's own Settings switch) makes the second one. The USER connects
+ * providers themselves in OmniRoute's dashboard, and the USER turns the relay
+ * on in Darhai.
  */
 
 import { ipcBridge } from '@/common';
-import { OMNIROUTE_GATEWAY_DEFAULT_BASE_URL } from '@/common/types/omnirouteGateway';
 import {
   applyOmnirouteGatewayConfig,
   getOmnirouteGatewayConfigView,
   testOmnirouteGatewayConnection,
 } from '@process/services/omnirouteGateway/omnirouteGatewayService';
-import { omnirouteRuntime } from '@process/services/omnirouteGateway/omnirouteRuntimeSingleton';
+import {
+  omnirouteRuntime,
+  registerOmnirouteQuitReaper,
+} from '@process/services/omnirouteGateway/omnirouteRuntimeSingleton';
 
 /** Cap on any string handed across the boundary (chars). */
 const MAX_FIELD_LEN = 2048;
@@ -41,6 +43,12 @@ function safeString(value: unknown): string {
 }
 
 export function initOmnirouteGatewayBridge(): void {
+  // A spawned OmniRoute must not outlive the app. The async before-quit cleanup
+  // in src/index.ts is not enough on its own - Electron never awaits it - so the
+  // runtime also installs a BLOCKING reaper here, at the one place guaranteed to
+  // run once per app start.
+  registerOmnirouteQuitReaper();
+
   ipcBridge.omnirouteGateway.getConfig.provider(async () => getOmnirouteGatewayConfigView());
 
   ipcBridge.omnirouteGateway.setConfig.provider(async ({ enabled, baseUrl, apiKey }) => {
@@ -60,22 +68,18 @@ export function initOmnirouteGatewayBridge(): void {
 
   ipcBridge.omnirouteGateway.install.provider(async () => omnirouteRuntime.install());
 
-  ipcBridge.omnirouteGateway.start.provider(async () => {
-    const status = await omnirouteRuntime.start();
-    // Only after the spawned server is HEALTHY do we register Darhai's OWN
-    // gateway provider pointing at the user's local OmniRoute. This does NOT
-    // connect any free provider - that choice (and its ToS/relay liability)
-    // stays entirely the user's, done in OmniRoute's own dashboard. Best-effort:
-    // a registration hiccup must not turn a running server into a failure.
-    if (status.state === 'running') {
-      try {
-        await applyOmnirouteGatewayConfig({ enabled: true, baseUrl: OMNIROUTE_GATEWAY_DEFAULT_BASE_URL });
-      } catch (err) {
-        console.error('[omnirouteGateway] post-start provider registration failed:', err);
-      }
-    }
-    return status;
-  });
+  // Starting the server NEVER enables the relay. This handler used to call
+  // applyOmnirouteGatewayConfig({enabled:true}) on a green health check, which
+  // meant one click on "install & run" (a button whose label promises only an
+  // install) flipped the master external-relay switch, persisted it, and pushed
+  // ~100 third-party relay models into every conversation picker - without the
+  // user ever touching the opt-in Switch. Worse, `running` can come from a
+  // server Darhai did not start (see the manager's ownership rule), so a
+  // stranger's listener on port 20128 was enough to turn the relay on.
+  //
+  // The switch is the ONLY thing that enables the relay, and it is the user's.
+  // Anything the card needs after a start is a hint, not a config write.
+  ipcBridge.omnirouteGateway.start.provider(async () => omnirouteRuntime.start());
 
   ipcBridge.omnirouteGateway.stop.provider(async () => omnirouteRuntime.stop());
 

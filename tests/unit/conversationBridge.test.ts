@@ -273,6 +273,10 @@ describe('conversationBridge', () => {
       const handler = handlers['sendMessage'];
       const result = await handler({
         conversation_id: 'c1',
+        // msg_id is required by ISendMessageParams and now enforced at the
+        // boundary - the real send box always supplies one (AcpSendBox uses
+        // uuid()), and without it nothing about the turn can be persisted.
+        msg_id: 'm1',
         input: 'hello',
         files: ['/some/file.txt'],
       });
@@ -281,6 +285,35 @@ describe('conversationBridge', () => {
       // sendMessage should still be called with empty files array
       expect(mockTask.sendMessage).toHaveBeenCalled();
     });
+  });
+
+  describe('sendMessage - required parameter validation', () => {
+    // A call missing msg_id or input cannot produce a turn: AcpAgentManager only
+    // persists the user message when both are present, so the send used to
+    // answer `{ success: true }` while nothing at all was written and no error
+    // reached the caller.
+    const malformed: ReadonlyArray<{ label: string; params: Record<string, unknown>; expect: string }> = [
+      { label: 'missing msg_id', params: { conversation_id: 'c1', input: 'hi' }, expect: 'msg_id' },
+      { label: 'empty msg_id', params: { conversation_id: 'c1', msg_id: '', input: 'hi' }, expect: 'msg_id' },
+      { label: 'missing input', params: { conversation_id: 'c1', msg_id: 'm1' }, expect: 'input' },
+      { label: 'empty input', params: { conversation_id: 'c1', msg_id: 'm1', input: '' }, expect: 'input' },
+      { label: 'missing conversation_id', params: { msg_id: 'm1', input: 'hi' }, expect: 'conversation_id' },
+    ];
+
+    for (const testCase of malformed) {
+      it(`reports an error and dispatches nothing for a call with ${testCase.label}`, async () => {
+        const mockTask = { workspace: '/ws', sendMessage: vi.fn().mockResolvedValue(undefined) };
+        const getOrBuildTask = vi.fn().mockResolvedValue(mockTask);
+        initConversationBridge(service, makeTaskManager({ getOrBuildTask }));
+
+        const result = await handlers['sendMessage'](testCase.params);
+
+        expect(result.success).toBe(false);
+        expect(result.msg).toContain(testCase.expect);
+        expect(getOrBuildTask).not.toHaveBeenCalled();
+        expect(mockTask.sendMessage).not.toHaveBeenCalled();
+      });
+    }
   });
 
   describe('warmup', () => {

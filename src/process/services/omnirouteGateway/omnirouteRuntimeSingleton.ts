@@ -21,7 +21,7 @@
 
 import { spawn as nodeSpawn } from 'node:child_process';
 import path from 'node:path';
-import { shell } from 'electron';
+import { app, shell } from 'electron';
 import { ipcBridge } from '@/common';
 import {
   getBundledBunDir,
@@ -30,6 +30,7 @@ import {
   getWindowsShellExecutionOptions,
 } from '@process/utils/shellEnv';
 import { resolveOnPath, type ChildProcessLike } from '@process/services/cookbook/LocalServeManager';
+import { killProcessTree, killProcessTreeSync } from './killProcessTree';
 import { OmnirouteRuntimeManager, type OmnirouteSpawnOptions } from './OmnirouteRuntimeManager';
 
 /** GET a URL with a short timeout; true on 2xx. */
@@ -72,6 +73,8 @@ export const omnirouteRuntime = new OmnirouteRuntimeManager({
       env: opts.env,
       ...(opts.shell !== undefined ? { shell: opts.shell } : {}),
       ...(opts.windowsHide !== undefined ? { windowsHide: opts.windowsHide } : {}),
+      // POSIX process group, so killProcessTree can signal the server's forks.
+      ...(opts.detached !== undefined ? { detached: opts.detached } : {}),
     }) as unknown as ChildProcessLike,
   healthProbe: probeUrl,
   openUrl: (url: string) => shell.openExternal(url),
@@ -81,6 +84,34 @@ export const omnirouteRuntime = new OmnirouteRuntimeManager({
   omnirouteBinCandidates,
   readyTimeoutMs: 30000,
   spawnShellOptions: () => getWindowsShellExecutionOptions(),
+  killTree: killProcessTree,
   onStatus: (status) => ipcBridge.omnirouteGateway.onRuntimeStatus.emit(status),
   onProgress: (progress) => ipcBridge.omnirouteGateway.onInstallProgress.emit(progress),
 });
+
+/** Set once so a repeated bridge init cannot stack quit handlers. */
+let quitReaperRegistered = false;
+
+/**
+ * Register the BLOCKING quit reaper (idempotent; called from the gateway bridge
+ * init, which runs exactly once per app start).
+ *
+ * The app-level cleanup bundle in `src/index.ts` awaits `omnirouteRuntime
+ * .stopAll()` from an async `before-quit` handler - but Electron does not await
+ * those handlers. Measured on this build: `[Wayland] before-quit` -> 23ms ->
+ * `[Wayland] will-quit`, Electron pid gone, and `netstat` still showing
+ * `127.0.0.1:20128 LISTENING` held by the OmniRoute tree. The async path is
+ * still the right one for an ordinary stop; this is the guarantee that quitting
+ * Darhai cannot leave a server behind, and it deliberately runs synchronously
+ * so the quit sequence cannot cut it short.
+ */
+export function registerOmnirouteQuitReaper(): void {
+  if (quitReaperRegistered) return;
+  quitReaperRegistered = true;
+  app.on('before-quit', () => {
+    omnirouteRuntime.reapOnQuitSync((pid) => {
+      const outcome = killProcessTreeSync(pid);
+      if (!outcome.ok) console.error('[omnirouteGateway] quit reaper failed:', outcome.detail);
+    });
+  });
+}

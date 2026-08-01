@@ -36,6 +36,10 @@ vi.mock('../../src/common', () => ({
 vi.mock('../../src/process/agent/AgentRegistry', () => ({
   agentRegistry: {
     getDetectedAgents: vi.fn(() => []),
+    getLoadErrors: vi.fn(() => []),
+    // Detection is kicked off fire-and-forget at boot; every renderer-reachable
+    // read must await this or it can observe the still-empty snapshot.
+    whenReady: vi.fn(async () => {}),
     refreshCustomAgents: vi.fn(async () => {}),
   },
 }));
@@ -94,6 +98,9 @@ describe('acpConversationBridge', () => {
     taskManager = makeTaskManager();
     const { agentRegistry } = await import('../../src/process/agent/AgentRegistry');
     vi.mocked(agentRegistry.getDetectedAgents).mockReturnValue([]);
+    // clearAllMocks drops call history but keeps implementations, so restore the
+    // default "detection already finished" behaviour for every test.
+    vi.mocked(agentRegistry.whenReady).mockImplementation(async () => {});
     initAcpConversationBridge(taskManager);
   });
 
@@ -147,6 +154,37 @@ describe('acpConversationBridge', () => {
     expect(result.success).toBe(true);
     expect(result.data).toHaveLength(1);
     expect(result.data[0].supportedTransports).toEqual(['stdio']);
+  });
+
+  it('getAvailableAgents waits for detection before reading the registry', async () => {
+    // The registry snapshot is empty until the first detection pass merges into
+    // it. Reading it without waiting is how the agent picker ended up with zero
+    // pills, so the ordering - not just the result - is what this pins.
+    const { agentRegistry } = await import('../../src/process/agent/AgentRegistry');
+    const order: string[] = [];
+    let releaseDetection: (() => void) | undefined;
+    vi.mocked(agentRegistry.whenReady).mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          order.push('whenReady');
+          releaseDetection = resolve;
+        })
+    );
+    vi.mocked(agentRegistry.getDetectedAgents).mockImplementation(() => {
+      order.push('getDetectedAgents');
+      return [{ backend: 'claude', name: 'Claude' }] as never;
+    });
+
+    const pending = handlers['getAvailableAgents']();
+    await Promise.resolve();
+    expect(order, 'provider read the registry before detection finished').toEqual(['whenReady']);
+
+    releaseDetection?.();
+    const result = await pending;
+
+    expect(order).toEqual(['whenReady', 'getDetectedAgents']);
+    expect(result.success).toBe(true);
+    expect(result.data).toHaveLength(1);
   });
 
   it('getAvailableAgents returns error when registry throws', async () => {

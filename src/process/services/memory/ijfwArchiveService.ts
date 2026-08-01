@@ -12,17 +12,19 @@
  */
 
 import * as fs from 'node:fs';
-import * as os from 'node:os';
 import * as path from 'node:path';
 import * as crypto from 'node:crypto';
 import log from 'electron-log';
 import { parseMarkdownBlocks } from './markdownFrontmatter';
 import { computePromotionScore } from './promotionScore';
+import { matchesQuery } from './memorySearch';
 import {
-  scheduleMemoryReindex,
-  searchMemoryIds,
-  type MemoryDocInput,
-} from '@process/services/semantic/memorySemanticLane';
+  GLOBAL_PROJECT_NAME,
+  globalMemoryDir,
+  listMemoryFiles,
+  resolveMemoryRoots,
+  type MemoryRoot,
+} from './memoryRoots';
 import type {
   MemoryEntry,
   MemoryStats,
@@ -32,9 +34,6 @@ import type {
   PromotionCandidates,
   IndexStats,
 } from '@/common/types/memory';
-
-// Memory files to read per project root.
-const MEMORY_FILES = ['knowledge.md', 'journal.md', 'handoff.md', 'plan.md', 'brief.md', 'project-journal.md'] as const;
 
 // Frontmatter is attacker-controllable (any project on disk). Clamp the fields
 // that flow into the embedder / index so a giant `summary` or a tags flood can't
@@ -87,55 +86,35 @@ function parseDateToMs(stored: string): number {
   return isNaN(ms) ? 0 : ms;
 }
 
+/**
+ * The entry's stored-at instant as a stable string, from whichever field the
+ * writer used: `stored` (journal writer, ISO) or `created` (the importers,
+ * ISO or epoch millis). Empty when neither is present or parseable.
+ */
+function frontmatterTimestamp(fm: Record<string, string | string[]>): string {
+  for (const key of ['stored', 'created'] as const) {
+    const raw = fm[key];
+    if (typeof raw !== 'string' || !raw) continue;
+    if (parseDateToMs(raw)) return raw;
+    const epoch = Number(raw);
+    if (Number.isFinite(epoch) && epoch > 0) return new Date(epoch).toISOString();
+  }
+  return '';
+}
+
+/** Last-resort stable timestamp for a file whose frontmatter carries none. */
+function fileMtimeIso(filePath: string): string {
+  try {
+    return fs.statSync(filePath).mtime.toISOString();
+  } catch {
+    return '';
+  }
+}
+
 function toMemoryType(raw: string): MemoryEntry['type'] {
   const lower = raw?.toLowerCase?.() ?? '';
   const valid = ['decision', 'pattern', 'observation', 'session', 'wiki', 'preference'] as const;
   return (valid as readonly string[]).includes(lower) ? (lower as MemoryEntry['type']) : 'observation';
-}
-
-// ===== Registry reader =====
-
-type RegistryEntry = { path: string; lastSeen: number };
-
-async function readRegistry(): Promise<RegistryEntry[]> {
-  const registryPath = path.join(os.homedir(), '.ijfw', 'registry.md');
-  try {
-    const content = await fs.promises.readFile(registryPath, 'utf8');
-    const entries: RegistryEntry[] = [];
-    for (const line of content.split('\n')) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith('#') || trimmed.startsWith('<!--')) continue;
-      // Format: <path> | <hash> | <ISO8601>
-      const parts = trimmed.split('|').map((p) => p.trim());
-      if (parts.length < 1 || !parts[0]) continue;
-      const projectPath = parts[0];
-      const lastSeen = parts[2] ? parseDateToMs(parts[2]) : 0;
-      entries.push({ path: projectPath, lastSeen });
-    }
-    return entries;
-  } catch {
-    return [];
-  }
-}
-
-async function fallbackScanForProjects(): Promise<RegistryEntry[]> {
-  const devDir = path.join(os.homedir(), 'dev');
-  const entries: RegistryEntry[] = [];
-  try {
-    const topDirs = await fs.promises.readdir(devDir);
-    for (const name of topDirs) {
-      const candidate = path.join(devDir, name, '.ijfw', 'memory');
-      try {
-        await fs.promises.access(candidate);
-        entries.push({ path: path.join(devDir, name), lastSeen: 0 });
-      } catch {
-        // not an IJFW project
-      }
-    }
-  } catch {
-    // dev dir doesn't exist
-  }
-  return entries;
 }
 
 // ===== Entry parser =====
@@ -164,8 +143,14 @@ export function parseEntriesFromFile(filePath: string, projectPath: string, proj
     // into the index / embedder (bodyPreview is already capped at 200).
     const summary = rawSummary.length > MAX_SUMMARY_CHARS ? rawSummary.slice(0, MAX_SUMMARY_CHARS) : rawSummary;
 
-    const storedStr = typeof fm['stored'] === 'string' ? fm['stored'] : '';
-    const storedAt = parseDateToMs(storedStr) || Date.now();
+    // `stored` is what the journal writer emits; the importers emit `created`
+    // (sometimes as epoch millis). Falling straight through to Date.now() made
+    // both `storedAt` AND the derived id change on every index build, so an
+    // imported entry got a new identity after every restart - breaking
+    // getEntry(id), the promotion sidecar and any saved reference to it. The
+    // file's mtime is the last stable fallback.
+    const storedStr = frontmatterTimestamp(fm) || fileMtimeIso(filePath);
+    const storedAt = parseDateToMs(storedStr) || 0;
 
     const rawTags = fm['tags'];
     const tagList: string[] = Array.isArray(rawTags)
@@ -179,7 +164,7 @@ export function parseEntriesFromFile(filePath: string, projectPath: string, proj
       .slice(0, MAX_TAGS)
       .map((t) => (t.length > MAX_TAG_CHARS ? t.slice(0, MAX_TAG_CHARS) : t));
 
-    const id = makeId(filePath, storedStr || String(storedAt), summary);
+    const id = makeId(filePath, storedStr, summary);
     const bodyPreview = stripMarkdown(block.body).slice(0, 200);
 
     // Extract Why / How to apply from body text.
@@ -308,6 +293,7 @@ class IjfwArchiveService {
     refsByEntry: new Map(),
   };
 
+  private roots: MemoryRoot[] = [];
   private watchers: Array<{ close(): void }> = [];
   private changeCallbacks: ChangeCallback[] = [];
   private debounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -334,57 +320,34 @@ class IjfwArchiveService {
   }
 
   private async buildIndex(): Promise<void> {
-    let registryEntries = await readRegistry();
-    if (registryEntries.length === 0) {
-      registryEntries = await fallbackScanForProjects();
-    }
-
-    // Deduplicate by normalized path.
-    const seen = new Set<string>();
-    const projectPaths: RegistryEntry[] = [];
-    for (const entry of registryEntries) {
-      const norm = path.resolve(entry.path);
-      if (seen.has(norm)) continue;
-      // Skip temp dirs and non-existent paths.
-      if (norm.includes('/tmp/') || norm.includes('Temp/')) continue;
-      try {
-        await fs.promises.access(path.join(norm, '.ijfw', 'memory'));
-        seen.add(norm);
-        projectPaths.push({ path: norm, lastSeen: entry.lastSeen });
-      } catch {
-        // project has no .ijfw/memory dir - skip
-      }
-    }
+    const roots = await resolveMemoryRoots();
+    this.roots = roots;
 
     const allEntries: MemoryEntry[] = [];
     const projectSummaries: ProjectSummary[] = [];
     const wikiCounts = new Map<string, number>();
 
-    for (const { path: pPath, lastSeen } of projectPaths) {
-      const memDir = path.join(pPath, '.ijfw', 'memory');
-      const projectName = path.basename(pPath);
+    for (const root of roots) {
       const projectEntries: MemoryEntry[] = [];
 
-      for (const fileName of MEMORY_FILES) {
-        const filePath = path.join(memDir, fileName);
-        try {
-          await fs.promises.access(filePath);
-        } catch {
-          continue;
-        }
-        const parsed = parseEntriesFromFile(filePath, pPath, projectName);
-        projectEntries.push(...parsed);
-        this.watchFile(filePath);
+      for (const fileName of await listMemoryFiles(root.memoryDir)) {
+        const filePath = path.join(root.memoryDir, fileName);
+        projectEntries.push(...parseEntriesFromFile(filePath, root.projectPath, root.projectName));
       }
+      // Watch the directory rather than each file: it is one handle per root
+      // instead of one per file, and - unlike per-file watches - it also fires
+      // when an importer DROPS A NEW FILE in, which is how drag-drop ingest
+      // becomes visible without an app restart.
+      this.watchDir(root.memoryDir);
 
       allEntries.push(...projectEntries);
-      const wikiCount = await countWikiFiles(pPath);
-      wikiCounts.set(projectName, wikiCount);
+      const wikiCount = await countWikiFiles(root.projectPath);
+      wikiCounts.set(root.projectName, wikiCount);
 
-      const maxStored = projectEntries.reduce((m, e) => Math.max(m, e.storedAt), lastSeen);
+      const maxStored = projectEntries.reduce((m, e) => Math.max(m, e.storedAt), root.lastSeen);
       projectSummaries.push({
-        path: pPath,
-        basename: projectName,
+        path: root.projectPath,
+        basename: root.projectName,
         count: projectEntries.length,
         lastActive: maxStored,
       });
@@ -412,13 +375,33 @@ class IjfwArchiveService {
       refsExpiry: 0,
       refsByEntry: new Map(),
     };
+  }
 
-    // Fire-and-forget: keep the memory vector index in sync in the background.
-    // No-op when unchanged or when vectors are unavailable; never blocks the
-    // index build or any query.
-    scheduleMemoryReindex(
-      resident.map((e) => ({ id: e.id, summary: e.summary, bodyPreview: e.bodyPreview, tags: e.tags }))
-    );
+  /** Memory directory a `scope` write targets. */
+  private memoryDirForScope(scope: 'project' | 'global'): string {
+    if (scope === 'global') return globalMemoryDir();
+    const firstProject = this.roots.find((r) => !r.isGlobal);
+    return firstProject?.memoryDir ?? globalMemoryDir();
+  }
+
+  /**
+   * Rebuild the index and wait for it. Used by write paths so a store is
+   * immediately recallable instead of depending on watcher debounce timing.
+   */
+  async rebuildNow(): Promise<void> {
+    const rebuild = (async () => {
+      this.closeWatchers();
+      await this.buildIndex();
+      const stats = this.indexStats();
+      for (const cb of this.changeCallbacks) cb(stats);
+    })();
+    this.activeRebuild = rebuild;
+    try {
+      await rebuild;
+      this.initialized = true;
+    } finally {
+      if (this.activeRebuild === rebuild) this.activeRebuild = null;
+    }
   }
 
   private ensureRefs(): void {
@@ -435,14 +418,14 @@ class IjfwArchiveService {
     }
   }
 
-  private watchFile(filePath: string): void {
+  private watchDir(dirPath: string): void {
     try {
-      const watcher = this.watcherFactory(filePath, { persistent: false }, () => {
+      const watcher = this.watcherFactory(dirPath, { persistent: false }, () => {
         this.scheduleReindex();
       });
       this.watchers.push(watcher);
     } catch (err) {
-      log.warn('[memory-archive] watch failed', { filePath, err });
+      log.warn('[memory-archive] watch failed', { dirPath, err });
     }
   }
 
@@ -601,11 +584,11 @@ class IjfwArchiveService {
 
     // Project filter.
     if (filter.project && filter.project !== 'all') {
-      if (filter.project === 'global') {
-        entries = entries.filter((e) => e.tags.includes('global'));
+      if (filter.project === GLOBAL_PROJECT_NAME) {
+        entries = entries.filter((e) => e.project === GLOBAL_PROJECT_NAME || e.tags.includes('global'));
       } else if (filter.project === 'this') {
-        // 'this' = the first project in the index (most recently active).
-        const firstProject = this.index.projects[0]?.basename;
+        // 'this' = the most recently active real project (never the home root).
+        const firstProject = this.index.projects.find((p) => p.basename !== GLOBAL_PROJECT_NAME)?.basename;
         if (firstProject) {
           entries = entries.filter((e) => e.project === firstProject);
         }
@@ -635,38 +618,13 @@ class IjfwArchiveService {
       entries = entries.filter((e) => e.storedAt >= cutoff);
     }
 
-    // Search filter. Substring is the always-on baseline (identical to the
-    // prior behavior). When the semantic vector lane is available it ADDS
-    // entries that match the query by meaning but not by literal substring
-    // (e.g. a Cyrillic query recalling a related English memory). Additive
-    // union - offline / no-vector behavior is byte-for-byte the same.
+    // Search filter. Lexical matching alone decides membership - see
+    // memorySearch.ts for the measurements that rule out using the vector lane
+    // here (it scores gibberish and correct matches in the same band, so it
+    // returned the entire corpus for every query).
     if (filter.search && filter.search.trim()) {
-      const rawQuery = filter.search.trim();
-      const q = rawQuery.toLowerCase();
-      const substringMatched = entries.filter(
-        (e) =>
-          e.summary.toLowerCase().includes(q) ||
-          e.bodyPreview.toLowerCase().includes(q) ||
-          e.tags.some((t) => t.toLowerCase().includes(q))
-      );
-
-      const semanticIds = await this.semanticSearchIds(rawQuery, entries);
-      if (semanticIds && semanticIds.length > 0) {
-        const seen = new Set(substringMatched.map((e) => e.id));
-        const byId = new Map(entries.map((e) => [e.id, e]));
-        const merged = [...substringMatched];
-        for (const id of semanticIds) {
-          if (seen.has(id)) continue;
-          const entry = byId.get(id);
-          if (entry) {
-            merged.push(entry);
-            seen.add(id);
-          }
-        }
-        entries = merged;
-      } else {
-        entries = substringMatched;
-      }
+      const query = filter.search.trim();
+      entries = entries.filter((e) => matchesQuery(e, query));
     }
 
     // Sort.
@@ -685,22 +643,6 @@ class IjfwArchiveService {
     entries = entries.slice(offset, offset + limit);
 
     return { entries, total };
-  }
-
-  /**
-   * Hybrid (vector + substring) id ranking for a free-text query over the given
-   * entries. Delegates to the memory semantic lane, which is itself fail-soft:
-   * returns null when the semantic path is unavailable so the caller keeps its
-   * substring result unchanged.
-   */
-  private async semanticSearchIds(query: string, entries: readonly MemoryEntry[]): Promise<string[] | null> {
-    const docs: MemoryDocInput[] = entries.map((e) => ({
-      id: e.id,
-      summary: e.summary,
-      bodyPreview: e.bodyPreview,
-      tags: e.tags,
-    }));
-    return searchMemoryIds(query, docs, Math.min(docs.length, 50));
   }
 
   async getEntry(id: string): Promise<(MemoryEntry & { body: string }) | null> {
@@ -770,10 +712,9 @@ class IjfwArchiveService {
   }
 
   async quickAdd(content: string, scope: 'project' | 'global', type = 'observation'): Promise<void> {
-    const memDir =
-      scope === 'global'
-        ? path.join(os.homedir(), '.ijfw', 'memory')
-        : path.join(this.index.projects[0]?.path ?? os.homedir(), '.ijfw', 'memory');
+    // The index must know its roots before a project-scoped write can pick one.
+    await this.init();
+    const memDir = this.memoryDirForScope(scope);
     await fs.promises.mkdir(memDir, { recursive: true });
     const journalPath = path.join(memDir, 'journal.md');
     const now = new Date().toISOString();
@@ -782,13 +723,15 @@ class IjfwArchiveService {
       `type: ${sanitizeYamlScalar(type)}`,
       `summary: ${sanitizeYamlScalar(content)}`,
       `stored: ${now}`,
-      `tags: []`,
+      `tags: [${scope}]`,
       '---',
       content,
       '',
     ].join('\n');
     await fs.promises.appendFile(journalPath, block, 'utf8');
-    this.scheduleReindex();
+    // Awaited, not debounced: a quick-add the user just made has to be
+    // recallable the moment the call returns.
+    await this.rebuildNow();
   }
 
   indexStats(): IndexStats {

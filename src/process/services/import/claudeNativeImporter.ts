@@ -21,6 +21,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import * as crypto from 'node:crypto';
 import log from 'electron-log';
+import { globalMemoryDir } from '../memory/memoryRoots';
 
 export type ClaudeNativeImportResult = {
   imported: number;
@@ -95,7 +96,7 @@ export async function runClaudeNativeImport(opts?: {
   /** Override the Claude projects root (defaults to ~/.claude/projects). For tests. */
   projectsRoot?: string;
 }): Promise<ClaudeNativeImportResult> {
-  const memDir = opts?.ijfwMemoryDir ?? path.join(os.homedir(), '.ijfw', 'memory');
+  const memDir = opts?.ijfwMemoryDir ?? globalMemoryDir();
   const projectsRoot = opts?.projectsRoot ?? path.join(os.homedir(), '.claude', 'projects');
   const result: ClaudeNativeImportResult = { imported: 0, skipped: 0, errors: [] };
 

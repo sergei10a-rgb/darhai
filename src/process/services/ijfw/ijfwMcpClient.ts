@@ -71,9 +71,26 @@ type ResolvedToolCall =
   | { ok: true; toolName: string; toolArgs: Record<string, unknown> }
   | { ok: false; reason: string };
 
+/**
+ * Reconcile the caller-facing argument names with the server's tool schema.
+ *
+ * `ijfw_memory_recall` hard-requires `context_hint`, but the bridge (and the
+ * renderer written against it) speaks `query`. Sending `{query}` reached the
+ * server as `context_hint: undefined`, which it answered with
+ * "No memories matching: undefined" AND `ok: true` - a recall that silently
+ * returned nothing while reporting success.
+ */
+export function normalizeToolArgs(verb: string, args: Record<string, unknown>): Record<string, unknown> {
+  if (verb !== 'memory_recall') return args;
+  const hint = args['context_hint'] ?? args['query'];
+  if (typeof hint !== 'string' || hint.length === 0) return args;
+  const { query: _query, ...rest } = args;
+  return { ...rest, context_hint: hint };
+}
+
 function resolveToolCall(verb: string, args: Record<string, unknown>): ResolvedToolCall {
   if (Object.prototype.hasOwnProperty.call(DIRECT_TOOL_MAP, verb)) {
-    return { ok: true, toolName: DIRECT_TOOL_MAP[verb]!, toolArgs: args };
+    return { ok: true, toolName: DIRECT_TOOL_MAP[verb]!, toolArgs: normalizeToolArgs(verb, args) };
   }
   if (BRAIN_VERBS.has(verb)) {
     return { ok: true, toolName: 'ijfw_brain', toolArgs: { verb, args } };

@@ -56,7 +56,10 @@ const OnboardingEmptyState: React.FC = () => {
     try {
       const result = await ipcBridge.ijfw.brainInvoke.invoke({
         verb: 'memory_store',
-        args: { content: trimmed },
+        // `type` is required by the brain: omitting it fails every save with
+        // "type must be one of: decision, observation, pattern, handoff,
+        // preference". A free-text note from this surface is an observation.
+        args: { content: trimmed, type: 'observation' },
       });
       if (result && result.ok) {
         setValue('');
@@ -83,9 +86,7 @@ const OnboardingEmptyState: React.FC = () => {
         <h2 className='text-24px font-semibold text-t-primary leading-32px m-0 text-center'>
           {t('memory.empty.title')}
         </h2>
-        <p className='text-14px text-t-secondary leading-22px m-0 text-center'>
-          {t('memory.empty.subtitle')}
-        </p>
+        <p className='text-14px text-t-secondary leading-22px m-0 text-center'>{t('memory.empty.subtitle')}</p>
         <Input.TextArea
           ref={textareaRef}
           value={value}

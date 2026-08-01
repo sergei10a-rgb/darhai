@@ -2618,7 +2618,7 @@
   },
   "omnirouteGateway": {
     "title": "OmniRoute 閘道（外部中繼）",
-    "intro": "OmniRoute 是由您自己在本機執行的 OpenAI 相容聚合器，可彙整多個免費來源。啟用後，Дархай 只會連線到您填寫的位址——絕不會自行安裝或執行任何程式。",
+    "intro": "OmniRoute 是在您本機執行的 OpenAI 相容聚合器，可彙整多個免費來源。只有在您按下下方的一鍵按鈕時，Дархай 才會安裝並執行它；外部轉送僅能由此開關開啟，Дархай 絕不會自行開啟。",
     "benefitsTitle": "優勢",
     "benefit1": "將多個免費來源彙整到一處",
     "benefit2": "可降低付費 API 成本",
@@ -2659,7 +2659,10 @@
       "installNodeLink": "Install Node.js",
       "installFailed": "Install failed ({{error}}).",
       "startFailed": "Could not start OmniRoute ({{error}}).",
-      "advancedTitle": "Advanced: connect to an OmniRoute you run yourself"
+      "advancedTitle": "Advanced: connect to an OmniRoute you run yourself",
+      "dashboardPasswordNote": "OmniRoute's dashboard asks for its own password - the default is CHANGEME. Change it inside OmniRoute after your first sign-in; Darhai never signs in for you.",
+      "externalServerNote": "An OmniRoute was already serving port 20128 before Darhai started anything, so Darhai did not start this one and cannot stop it. Close it where you started it.",
+      "enableHint": "OmniRoute is running, but the external relay is still OFF. To use its models inside Darhai, turn on the switch at the top of this card yourself."
     }
   }
 }
