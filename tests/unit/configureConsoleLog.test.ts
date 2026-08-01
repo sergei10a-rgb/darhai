@@ -12,6 +12,10 @@ describe('configureConsoleLog', () => {
       file: { fileName: '', level: '' as string | boolean, maxSize: 0 },
       console: { level: '' as string | boolean },
     },
+    // Real electron-log exposes a `hooks` array that every transport walks
+    // before formatting. The module under test registers the credential
+    // redactor there, so a mock without it is not a stand-in for the library.
+    hooks: [] as Array<(message: { data: unknown[] }) => { data: unknown[] }>,
     initialize: vi.fn(),
     functions: {
       log: vi.fn(),
@@ -37,6 +41,7 @@ describe('configureConsoleLog', () => {
     mockLog.transports.file.level = '';
     mockLog.transports.console.level = '';
     mockLog.transports.file.maxSize = 0;
+    mockLog.hooks.length = 0;
     mockLog.initialize.mockClear();
   });
 

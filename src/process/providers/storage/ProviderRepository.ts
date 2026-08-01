@@ -1,5 +1,6 @@
 import type { ISqliteDriver } from '@process/services/database/drivers/ISqliteDriver';
 import { decryptString, encryptString } from '@process/secrets/safeStorage';
+import { registerLogSecret } from '@process/utils/logRedaction';
 import type { ProviderId, CatalogModel, ProviderConnState, ConnectError } from '../types';
 
 // ─── Model registry (Models & Providers redesign - Wave 1) ─────────────────────
@@ -70,7 +71,16 @@ function decryptRegistryCreds(ciphertext: string): Record<string, unknown> | nul
   try {
     const parsed: unknown = JSON.parse(decryptString(ciphertext));
     if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
-      return parsed as Record<string, unknown>;
+      const creds = parsed as Record<string, unknown>;
+      // Every provider key in the app passes through here exactly once on its
+      // way out of the keychain, which makes this the one place that can
+      // register them all without a call site being forgotten. The log
+      // redactor's pattern rules cover key SHAPES; this covers the actual
+      // values, including a key whose format nobody has a pattern for.
+      for (const value of Object.values(creds)) {
+        if (typeof value === 'string') registerLogSecret(value);
+      }
+      return creds;
     }
     return null;
   } catch {
