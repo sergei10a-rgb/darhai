@@ -21,6 +21,7 @@ import { MAX_MCP_MESSAGE_SIZE } from '@process/team/mcp/tcpHelpers';
 import type { TeamAgent } from '@/common/types/teamTypes';
 import type { Mailbox } from '@process/team/Mailbox';
 import type { TaskManager } from '@process/team/TaskManager';
+import { connectLoopback } from '../helpers/loopback';
 
 // ── TCP helpers ───────────────────────────────────────────────────────────────
 
@@ -31,7 +32,12 @@ function writeTcpMessage(socket: net.Socket, data: unknown): void {
   socket.write(Buffer.concat([header, body]));
 }
 
-function readOneTcpResponse(socket: net.Socket, timeoutMs = 5000): Promise<unknown> {
+/**
+ * 30 s, not 5 s: this deadline bounds how long the *worker process* may be
+ * starved before we call the server unresponsive, and a saturated host stalls a
+ * fork for many seconds at a time. The assertion on the response is unchanged.
+ */
+function readOneTcpResponse(socket: net.Socket, timeoutMs = 30_000): Promise<unknown> {
   return new Promise((resolve, reject) => {
     let buf = Buffer.alloc(0);
     const timer = setTimeout(() => reject(new Error(`TCP response timeout after ${timeoutMs}ms`)), timeoutMs);
@@ -70,7 +76,7 @@ async function callTool(
   fromSlotId?: string
 ): Promise<unknown> {
   return new Promise((resolve, reject) => {
-    const socket = net.createConnection({ port, host: '127.0.0.1' }, () => {
+    void connectLoopback(port).then((socket) => {
       readOneTcpResponse(socket)
         .then(resolve)
         .catch(reject)
@@ -82,8 +88,7 @@ async function callTool(
         auth_token: authToken,
         ...(fromSlotId ? { from_slot_id: fromSlotId } : {}),
       });
-    });
-    socket.on('error', reject);
+    }, reject);
   });
 }
 
@@ -101,8 +106,8 @@ async function callToolWithChunkedDelivery(
   const full = Buffer.concat([header, body]);
 
   return new Promise((resolve, reject) => {
-    const socket = net.createConnection({ port, host: '127.0.0.1' }, () => {
-      readOneTcpResponse(socket, 5000)
+    void connectLoopback(port).then((socket) => {
+      readOneTcpResponse(socket, 30_000)
         .then(resolve)
         .catch(reject)
         .finally(() => socket.destroy());
@@ -114,8 +119,7 @@ async function callToolWithChunkedDelivery(
           socket.write(full.subarray(splitAt));
         }
       }, 10);
-    });
-    socket.on('error', reject);
+    }, reject);
   });
 }
 
@@ -375,13 +379,15 @@ describe('Stress - rapid connect/disconnect cycles', () => {
 
   it('abrupt disconnect mid-request: server handles error gracefully', async () => {
     await new Promise<void>((resolve, _reject) => {
-      const socket = net.createConnection({ port, host: '127.0.0.1' }, () => {
-        // Connect then immediately destroy without sending anything
-        socket.destroy();
-        // Give server time to handle the disconnect
-        setTimeout(resolve, 50);
-      });
-      socket.on('error', () => resolve()); // Expected
+      void connectLoopback(port).then(
+        (socket) => {
+          // Connect then immediately destroy without sending anything
+          socket.destroy();
+          // Give server time to handle the disconnect
+          setTimeout(resolve, 50);
+        },
+        () => resolve()
+      ); // connect refused/lost is also an acceptable outcome here
     });
 
     // Server should still handle subsequent requests
@@ -391,15 +397,17 @@ describe('Stress - rapid connect/disconnect cycles', () => {
 
   it('partial message sent then disconnect: server recovers for next connection', async () => {
     await new Promise<void>((resolve) => {
-      const socket = net.createConnection({ port, host: '127.0.0.1' }, () => {
-        // Send only 2 bytes of the 4-byte header, then disconnect
-        socket.write(Buffer.from([0x00, 0x00]));
-        setTimeout(() => {
-          socket.destroy();
-          setTimeout(resolve, 50);
-        }, 10);
-      });
-      socket.on('error', () => resolve());
+      void connectLoopback(port).then(
+        (socket) => {
+          // Send only 2 bytes of the 4-byte header, then disconnect
+          socket.write(Buffer.from([0x00, 0x00]));
+          setTimeout(() => {
+            socket.destroy();
+            setTimeout(resolve, 50);
+          }, 10);
+        },
+        () => resolve()
+      );
     });
 
     // Server should not crash and accept next connection
@@ -435,19 +443,21 @@ describe('Stress - malformed JSON and bad inputs', () => {
     header.writeUInt32BE(garbage.length, 0);
 
     await new Promise<void>((resolve) => {
-      const socket = net.createConnection({ port, host: '127.0.0.1' }, () => {
-        socket.write(Buffer.concat([header, garbage]));
+      void connectLoopback(port).then(
+        (socket) => {
+          socket.write(Buffer.concat([header, garbage]));
 
-        // Server skips malformed JSON - no response is sent, socket closes
-        socket.on('close', () => resolve());
-        socket.on('error', () => resolve());
-        // Timeout in case neither fires
-        setTimeout(() => {
-          socket.destroy();
-          resolve();
-        }, 500);
-      });
-      socket.on('error', () => resolve());
+          // Server skips malformed JSON - no response is sent, socket closes
+          socket.on('close', () => resolve());
+          socket.on('error', () => resolve());
+          // Timeout in case neither fires
+          setTimeout(() => {
+            socket.destroy();
+            resolve();
+          }, 500);
+        },
+        () => resolve()
+      );
     });
 
     // Server recovers and handles next valid request
@@ -458,27 +468,31 @@ describe('Stress - malformed JSON and bad inputs', () => {
   it('oversize length prefix: destroys socket immediately and still serves later requests', async () => {
     await new Promise<void>((resolve, reject) => {
       let settled = false;
-      const socket = net.createConnection({ port, host: '127.0.0.1' }, () => {
-        const header = Buffer.alloc(4);
-        header.writeUInt32BE(MAX_MCP_MESSAGE_SIZE + 1, 0);
-        socket.write(header);
-      });
+      let timer: NodeJS.Timeout | undefined;
 
       const finish = (error?: Error) => {
         if (settled) return;
         settled = true;
-        clearTimeout(timer);
+        if (timer) clearTimeout(timer);
         if (error) reject(error);
         else resolve();
       };
 
-      const timer = setTimeout(() => finish(new Error('Oversize TCP frame was not closed promptly')), 500);
+      void connectLoopback(port).then((socket) => {
+        // The clock starts once the connection exists, so a retried SYN does not
+        // eat into the window the server has to disconnect us.
+        timer = setTimeout(() => finish(new Error('Oversize TCP frame was not closed promptly')), 500);
 
-      socket.once('data', (chunk) => {
-        finish(new Error(`Expected disconnect for oversize frame, got data: ${chunk.toString('hex')}`));
-      });
-      socket.once('close', () => finish());
-      socket.once('error', () => finish());
+        socket.once('data', (chunk) => {
+          finish(new Error(`Expected disconnect for oversize frame, got data: ${chunk.toString('hex')}`));
+        });
+        socket.once('close', () => finish());
+        socket.once('error', () => finish());
+
+        const header = Buffer.alloc(4);
+        header.writeUInt32BE(MAX_MCP_MESSAGE_SIZE + 1, 0);
+        socket.write(header);
+      }, reject);
     });
 
     const result = (await callTool(port, authToken, 'team_members')) as { result?: string };
@@ -528,19 +542,21 @@ describe('Stress - malformed JSON and bad inputs', () => {
   it('zero-length body (bodyLen=0): handled without error', async () => {
     // Send a framed message with body length 0 - empty JSON
     await new Promise<void>((resolve) => {
-      const socket = net.createConnection({ port, host: '127.0.0.1' }, () => {
-        const header = Buffer.alloc(4);
-        header.writeUInt32BE(0, 0);
-        socket.write(header);
+      void connectLoopback(port).then(
+        (socket) => {
+          const header = Buffer.alloc(4);
+          header.writeUInt32BE(0, 0);
+          socket.write(header);
 
-        socket.on('close', () => resolve());
-        socket.on('error', () => resolve());
-        setTimeout(() => {
-          socket.destroy();
-          resolve();
-        }, 300);
-      });
-      socket.on('error', () => resolve());
+          socket.on('close', () => resolve());
+          socket.on('error', () => resolve());
+          setTimeout(() => {
+            socket.destroy();
+            resolve();
+          }, 300);
+        },
+        () => resolve()
+      );
     });
 
     // Server should still handle next valid request
@@ -560,7 +576,9 @@ describe('Stress - server start/stop lifecycle', () => {
     const authToken = getAuthToken(server);
 
     // Fire 10 requests but stop the server immediately
-    const requests = Array.from({ length: 10 }, () => callTool(port, authToken, 'team_members').catch(() => null));
+    const requests = Array.from({ length: 10 }, () =>
+      callTool(port, authToken, 'team_members').catch((): null => null)
+    );
 
     // Stop server while requests are in flight
     await server.stop();

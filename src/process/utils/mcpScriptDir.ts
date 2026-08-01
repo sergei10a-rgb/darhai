@@ -7,12 +7,13 @@
  *
  * Background
  * ----------
- * Five stdio scripts are spawned as external `node` child processes:
+ * Six stdio scripts are spawned as external `node` child processes:
  *   - team-mcp-stdio.js          (team coordination tools)
  *   - team-guide-mcp-stdio.js    (solo aion_* tools)
  *   - builtin-mcp-image-gen.js   (image generation)
  *   - builtin-mcp-search-skills.js (skills library)
  *   - builtin-mcp-web-search.js  (web search)
+ *   - builtin-mcp-personal-data.js (calendar / notes / documents / memory)
  *
  * `scripts/build-mcp-servers.js` emits them next to the main bundle:
  *   - dev:      <project>/app/out/main/
@@ -61,6 +62,7 @@ export const MCP_STDIO_SCRIPT_NAMES = [
   'builtin-mcp-image-gen.js',
   'builtin-mcp-search-skills.js',
   'builtin-mcp-web-search.js',
+  'builtin-mcp-personal-data.js',
 ] as const;
 
 export type McpStdioScriptName = (typeof MCP_STDIO_SCRIPT_NAMES)[number];

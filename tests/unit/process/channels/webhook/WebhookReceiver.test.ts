@@ -11,6 +11,7 @@ import http from 'node:http';
 import path from 'node:path';
 import os from 'node:os';
 import type { AddressInfo } from 'node:net';
+import { loopbackHttpRequest } from '../../../../helpers/loopback';
 import { __setLogPathForTests } from '@process/channels/webhook/audit-log';
 import {
   getReplayCache,
@@ -45,29 +46,27 @@ function closeServer(server: Listener): Promise<void> {
   return new Promise((resolve, reject) => server.close((err) => (err ? reject(err) : resolve())));
 }
 
+/**
+ * POST exactly once over a loopback socket that survives a dropped SYN.
+ *
+ * The retry is in the connect, never in the request: the replay-detection test
+ * below asserts that a second delivery of the same event is dropped, so a
+ * request-level retry would make it assert the opposite of what it means.
+ */
 async function postJson(
   url: string,
   body: string,
   headers: Record<string, string>
 ): Promise<{ status: number; text: string }> {
-  return new Promise((resolve, reject) => {
-    const req = http.request(
-      url,
-      {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', 'content-length': Buffer.byteLength(body), ...headers },
-      },
-      (res) => {
-        let chunks = '';
-        res.setEncoding('utf8');
-        res.on('data', (c) => (chunks += c));
-        res.on('end', () => resolve({ status: res.statusCode ?? 0, text: chunks }));
-      }
-    );
-    req.on('error', reject);
-    req.write(body);
-    req.end();
+  const parsed = new URL(url);
+  const res = await loopbackHttpRequest({
+    port: Number(parsed.port),
+    method: 'POST',
+    path: `${parsed.pathname}${parsed.search}`,
+    headers: { 'content-type': 'application/json', 'content-length': Buffer.byteLength(body), ...headers },
+    body,
   });
+  return { status: res.status, text: res.body };
 }
 
 describe('WebhookReceiver pipeline', () => {
@@ -101,14 +100,10 @@ describe('WebhookReceiver pipeline', () => {
     try {
       const body = JSON.stringify({ event_id: 'evt-bad-sig' });
       const ts = Math.floor(Date.now() / 1000).toString();
-      const res = await postJson(
-        `${baseUrl}/webhooks/slack/${record.token}`,
-        body,
-        {
-          'x-slack-signature': 'v0=0000000000000000000000000000000000000000000000000000000000000000',
-          'x-slack-request-timestamp': ts,
-        }
-      );
+      const res = await postJson(`${baseUrl}/webhooks/slack/${record.token}`, body, {
+        'x-slack-signature': 'v0=0000000000000000000000000000000000000000000000000000000000000000',
+        'x-slack-request-timestamp': ts,
+      });
       expect(res.status).toBe(401);
     } finally {
       await closeServer(server);
@@ -124,11 +119,10 @@ describe('WebhookReceiver pipeline', () => {
       const body = JSON.stringify({ event_id: 'evt-no-dispatcher-' + Date.now() });
       const ts = Math.floor(Date.now() / 1000).toString();
       const sig = signSlack(ts, body);
-      const res = await postJson(
-        `${baseUrl}/webhooks/slack/${record.token}`,
-        body,
-        { 'x-slack-signature': sig, 'x-slack-request-timestamp': ts }
-      );
+      const res = await postJson(`${baseUrl}/webhooks/slack/${record.token}`, body, {
+        'x-slack-signature': sig,
+        'x-slack-request-timestamp': ts,
+      });
       expect(res.status).toBe(503);
     } finally {
       await closeServer(server);
@@ -146,11 +140,10 @@ describe('WebhookReceiver pipeline', () => {
       const body = JSON.stringify({ event_id: 'evt-dispatch-' + Date.now() });
       const ts = Math.floor(Date.now() / 1000).toString();
       const sig = signSlack(ts, body);
-      const res = await postJson(
-        `${baseUrl}/webhooks/slack/${record.token}`,
-        body,
-        { 'x-slack-signature': sig, 'x-slack-request-timestamp': ts }
-      );
+      const res = await postJson(`${baseUrl}/webhooks/slack/${record.token}`, body, {
+        'x-slack-signature': sig,
+        'x-slack-request-timestamp': ts,
+      });
 
       expect(res.status).toBe(202);
       expect(dispatcher).toHaveBeenCalledTimes(1);
@@ -180,11 +173,10 @@ describe('WebhookReceiver pipeline', () => {
       // Pre-seed the replay cache so we exercise the duplicate branch.
       getReplayCache().seen(eventId);
 
-      const res = await postJson(
-        `${baseUrl}/webhooks/slack/${record.token}`,
-        body,
-        { 'x-slack-signature': sig, 'x-slack-request-timestamp': ts }
-      );
+      const res = await postJson(`${baseUrl}/webhooks/slack/${record.token}`, body, {
+        'x-slack-signature': sig,
+        'x-slack-request-timestamp': ts,
+      });
       expect(res.status).toBe(200);
       expect(dispatcher).not.toHaveBeenCalled();
     } finally {

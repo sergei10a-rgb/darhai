@@ -24,6 +24,7 @@ import type { AddressInfo } from 'net';
 import express from 'express';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { setupBasicMiddleware } from '@process/webserver/setup';
+import { loopbackHttpRequest } from '../../helpers/loopback';
 
 type FetchResult = {
   status: number;
@@ -31,46 +32,20 @@ type FetchResult = {
   body: string;
 };
 
-function request(
+/**
+ * One HTTP round-trip over a loopback socket that survives a dropped SYN.
+ * Only the connect is retried - each request still reaches the server once, so
+ * the single-use CSRF token below is never spent twice.
+ */
+async function request(
   port: number,
   method: 'GET' | 'POST',
   path: string,
   headers: Record<string, string> = {},
   body?: string
 ): Promise<FetchResult> {
-  return new Promise((resolve, reject) => {
-    const req = http.request(
-      {
-        hostname: '127.0.0.1',
-        port,
-        method,
-        path,
-        headers,
-      },
-      (res) => {
-        const chunks: Buffer[] = [];
-        res.on('data', (c) => chunks.push(c));
-        res.on('end', () => {
-          const flatHeaders: Record<string, string> = {};
-          for (const [k, v] of Object.entries(res.headers)) {
-            if (Array.isArray(v)) {
-              flatHeaders[k] = v.join('; ');
-            } else if (typeof v === 'string') {
-              flatHeaders[k] = v;
-            }
-          }
-          resolve({
-            status: res.statusCode ?? 0,
-            headers: flatHeaders,
-            body: Buffer.concat(chunks).toString('utf8'),
-          });
-        });
-      }
-    );
-    req.on('error', reject);
-    if (body !== undefined) req.write(body);
-    req.end();
-  });
+  const res = await loopbackHttpRequest({ port, method, path, headers, body });
+  return { status: res.status, headers: res.headers, body: res.body };
 }
 
 describe('CSRF middleware - cookie-parser secret wiring (P0 regression)', () => {
@@ -98,9 +73,7 @@ describe('CSRF middleware - cookie-parser secret wiring (P0 regression)', () => 
 
   afterEach(async () => {
     delete process.env.CSRF_SECRET;
-    await new Promise<void>((resolve, reject) =>
-      server.close((err) => (err ? reject(err) : resolve()))
-    );
+    await new Promise<void>((resolve, reject) => server.close((err) => (err ? reject(err) : resolve())));
   });
 
   it('signed CSRF cookie + matching _csrf body field allows POST through', async () => {

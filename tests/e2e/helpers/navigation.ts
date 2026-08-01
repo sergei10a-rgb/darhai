@@ -6,6 +6,102 @@
  */
 import type { Page } from '@playwright/test';
 import { channelItemById, webuiTabByKey } from './selectors';
+import { invokeBridge } from './bridge';
+
+// ── First-run onboarding ─────────────────────────────────────────────────────
+
+/** Arco renders every modal, including the first-run overlay, in this wrapper. */
+const MODAL_WRAPPER = '.arco-modal-wrapper';
+
+/** One settled decision per app instance; the app is a per-worker singleton. */
+let onboardingSettled = false;
+
+/**
+ * Put the app into the state of a user who has already been through onboarding.
+ *
+ * On a profile that has never completed onboarding, `OnboardingOverlay` mounts
+ * an Arco `Modal` with `closable`, `maskClosable` and `escToExit` all false. Its
+ * mask covers the whole window, so the sider-footer button `navigateTo` clicks
+ * is never reached and every settings navigation times out - that alone
+ * accounted for 12 of the 13 failures in `specs/ext-settings-tabs.e2e.ts`.
+ *
+ * The fix is to finish onboarding, not to hide it. Hiding the modal layer with
+ * CSS (`display: none` on `.arco-modal-wrapper`) also hides every *other* Arco
+ * modal - composers, confirm dialogs, pickers - that later specs need to click,
+ * so it trades one silent failure for a subtler one.
+ *
+ * Three steps, in increasing order of intrusiveness:
+ *   1. Persist `onboardingCompleted` through the app's own config bridge. This
+ *      is byte-for-byte the write `OnboardingOverlay.dismiss()` performs, so the
+ *      profile ends up in a genuine post-onboarding state rather than a faked
+ *      one.
+ *   2. If the overlay is already mounted, walk it to its finish button. Its
+ *      `visible` flag is component state that only consults the config on
+ *      mount, so the write in step 1 cannot close a modal that is already open.
+ *   3. If it is still there, reload the renderer. Step 1 has persisted the flag,
+ *      so the overlay does not re-open on the fresh mount.
+ *
+ * Throws if the overlay outlives all three - a loud failure is far better than
+ * a suite that silently clicks through an invisible mask.
+ */
+export async function ensureOnboardingComplete(page: Page): Promise<void> {
+  if (onboardingSettled || page.isClosed()) return;
+  onboardingSettled = true;
+
+  // `ConfigStorage.set('onboardingCompleted', true)` over the platform's storage
+  // provider protocol: `<namespace>.storage.set` with `{ key, data }`.
+  await invokeBridge(page, 'agent.config.storage.set', { key: 'onboardingCompleted', data: true }).catch(() => {
+    // Best-effort: the walk + reload below still clear a mounted overlay.
+  });
+
+  const overlay = page.locator(MODAL_WRAPPER).first();
+  if (!(await overlay.isVisible().catch(() => false))) return;
+
+  // Step 2: click the step's primary action until the flow finishes. Each screen
+  // (quickstart -> scan -> outcome) ends in a single forward button, and the
+  // last one calls `onFinish`, which is the overlay's own dismiss path.
+  for (let step = 0; step < 6; step++) {
+    if (!(await overlay.isVisible().catch(() => false))) return;
+    const forward = page.locator(`${MODAL_WRAPPER} button:visible`).last();
+    // eslint-disable-next-line no-await-in-loop
+    if (!(await forward.isEnabled().catch(() => false))) break;
+    // eslint-disable-next-line no-await-in-loop
+    await forward.click({ timeout: 5_000 }).catch((): void => undefined);
+    // eslint-disable-next-line no-await-in-loop
+    await page.waitForTimeout(600);
+  }
+
+  if (!(await overlay.isVisible().catch(() => false))) return;
+
+  // Step 3: the flag is persisted, so a fresh mount reads "already onboarded".
+  await page.reload();
+  await page
+    .waitForFunction(() => (document.body.textContent?.length ?? 0) > 50, { timeout: 60_000 })
+    .catch((): void => undefined);
+  await page
+    .locator(MODAL_WRAPPER)
+    .first()
+    .waitFor({ state: 'hidden', timeout: 20_000 })
+    .catch((): void => undefined);
+
+  if (
+    await page
+      .locator(MODAL_WRAPPER)
+      .first()
+      .isVisible()
+      .catch(() => false)
+  ) {
+    throw new Error(
+      'first-run onboarding overlay is still covering the window after completing it and reloading. ' +
+        'Every click-driven navigation will be swallowed by its mask; fix the overlay rather than hiding it.'
+    );
+  }
+}
+
+/** Reset the onboarding cache (call when a fresh app instance is launched). */
+export function resetOnboardingCache(): void {
+  onboardingSettled = false;
+}
 
 // ── Route constants ──────────────────────────────────────────────────────────
 
@@ -62,6 +158,9 @@ export async function navigateTo(page: Page, hash: string): Promise<void> {
   if (page.isClosed()) {
     throw new Error('Cannot navigate: page is already closed.');
   }
+
+  // Nothing below can click anything while the first-run mask is up.
+  await ensureOnboardingComplete(page);
 
   if (isAlreadyAt(page, hash)) {
     return;
@@ -190,7 +289,7 @@ export async function goToChannelsTab(page: Page): Promise<void> {
   // Ensure route transition is actually complete before locating inner tabs
   await page
     .waitForFunction(() => window.location.hash.startsWith('#/settings/webui'), { timeout: 12_000 })
-    .catch(() => undefined);
+    .catch((): void => undefined);
 
   const stableTab = page.locator(webuiTabByKey('channels')).first();
   const fallbackTab = page

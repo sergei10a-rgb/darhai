@@ -28,6 +28,22 @@ export const BUILTIN_WEB_SEARCH_ID = 'builtin-web-search';
 export const BUILTIN_WEB_SEARCH_NAME = 'darhai-web-search';
 export const BUILTIN_WEB_SEARCH_TOOL_NAME = 'web_search';
 
+// ── Built-in personal-data MCP server ───────────────────────────────────────
+// Exposes the user's OWN stores (calendar / notes / documents / memory) to any
+// agent that speaks MCP. Unlike the other builtins the tool bodies do NOT run
+// in the spawned subprocess: the subprocess is a thin TCP bridge onto an
+// in-process server living in the Electron main process, which already owns the
+// single SQLite connection, the local `users` row and the live services. See
+// `personalData/PersonalDataMcpServer.ts` for why that split is mandatory.
+export const BUILTIN_PERSONAL_DATA_ID = 'builtin-personal-data';
+export const BUILTIN_PERSONAL_DATA_NAME = 'darhai-personal-data';
+export const BUILTIN_PERSONAL_DATA_FILE = 'builtin-mcp-personal-data.js';
+
+/** Loopback TCP port of the in-process personal-data server, injected at spawn. */
+export const PERSONAL_DATA_PORT_ENV = 'DARHAI_PERSONAL_DATA_PORT';
+/** Per-boot shared secret the bridge must present on every TCP request. */
+export const PERSONAL_DATA_TOKEN_ENV = 'DARHAI_PERSONAL_DATA_TOKEN';
+
 // Bundled @darhai MCP servers shipped with the installer (no npm publish).
 // Each catalog entry's transport stores the bare filename as args[0]; the
 // spawn layer rewrites it to an absolute path via `getMcpScriptPath()`.
@@ -124,4 +140,23 @@ export function isBuiltinWebSearchTransport(transport?: {
   }
 
   return (transport.args || []).some((arg) => typeof arg === 'string' && arg.includes('builtin-mcp-web-search.js'));
+}
+
+export function isBuiltinPersonalDataName(name?: string | null): boolean {
+  if (!name) return false;
+  return name === BUILTIN_PERSONAL_DATA_NAME;
+}
+
+export function isBuiltinPersonalDataTransport(transport?: {
+  type?: string;
+  command?: string;
+  args?: string[] | null;
+}): boolean {
+  if (!transport || transport.type !== 'stdio' || transport.command !== 'node') {
+    return false;
+  }
+
+  return (transport.args || []).some(
+    (arg) => typeof arg === 'string' && arg.includes(BUILTIN_PERSONAL_DATA_FILE)
+  );
 }

@@ -50,6 +50,7 @@ import { TeamMcpServer } from '../../src/process/team/mcp/team/TeamMcpServer';
 import type { TeamAgent } from '@/common/types/teamTypes';
 import type { Mailbox } from '../../src/process/team/Mailbox';
 import type { TaskManager } from '../../src/process/team/TaskManager';
+import { connectLoopback } from '../helpers/loopback';
 
 // ── TCP helpers ─────────────────────────────────────────────────────────────
 
@@ -60,7 +61,7 @@ function writeTcp(socket: net.Socket, data: unknown): void {
   socket.write(Buffer.concat([header, body]));
 }
 
-function readTcpResponse(socket: net.Socket, timeoutMs = 3000): Promise<unknown> {
+function readTcpResponse(socket: net.Socket, timeoutMs = 30_000): Promise<unknown> {
   return new Promise((resolve, reject) => {
     let buf = Buffer.alloc(0);
     const timer = setTimeout(() => reject(new Error('TCP response timeout')), timeoutMs);
@@ -94,7 +95,9 @@ async function callTool(
   fromSlotId?: string
 ): Promise<unknown> {
   return new Promise((resolve, reject) => {
-    const socket = net.createConnection({ port, host: '127.0.0.1' }, () => {
+    void connectLoopback(port).then((socket) => {
+      socket.on('error', reject);
+
       readTcpResponse(socket)
         .then(resolve)
         .catch(reject)
@@ -106,8 +109,7 @@ async function callTool(
         auth_token: authToken,
         ...(fromSlotId ? { from_slot_id: fromSlotId } : {}),
       });
-    });
-    socket.on('error', reject);
+    }, reject);
   });
 }
 

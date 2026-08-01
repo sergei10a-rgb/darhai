@@ -18,6 +18,7 @@
  */
 
 import * as net from 'node:net';
+import { connectLoopback } from '../../../../../helpers/loopback';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('electron', () => ({
@@ -107,31 +108,31 @@ function makeTaskManager() {
 
 async function tcpRequest(port: number, data: unknown): Promise<{ result?: unknown; error?: string }> {
   return new Promise((resolve, reject) => {
-    const socket = new net.Socket();
-    socket.connect(port, '127.0.0.1', () => {
+    void connectLoopback(port).then((socket) => {
+      let buffer = Buffer.alloc(0);
+      socket.on('data', (chunk) => {
+        buffer = Buffer.concat([buffer, chunk]);
+        while (buffer.length >= 4) {
+          const bodyLen = buffer.readUInt32BE(0);
+          if (buffer.length < 4 + bodyLen) break;
+          const jsonStr = buffer.subarray(4, 4 + bodyLen).toString('utf-8');
+          buffer = buffer.subarray(4 + bodyLen);
+          try {
+            resolve(JSON.parse(jsonStr));
+          } catch (e) {
+            reject(e);
+          }
+        }
+      });
+      socket.on('error', reject);
+      setTimeout(() => reject(new Error('TCP request timed out')), 30_000);
+
       const json = JSON.stringify(data);
       const body = Buffer.from(json, 'utf-8');
       const header = Buffer.alloc(4);
       header.writeUInt32BE(body.length, 0);
       socket.write(Buffer.concat([header, body]));
-    });
-    let buffer = Buffer.alloc(0);
-    socket.on('data', (chunk) => {
-      buffer = Buffer.concat([buffer, chunk]);
-      while (buffer.length >= 4) {
-        const bodyLen = buffer.readUInt32BE(0);
-        if (buffer.length < 4 + bodyLen) break;
-        const jsonStr = buffer.subarray(4, 4 + bodyLen).toString('utf-8');
-        buffer = buffer.subarray(4 + bodyLen);
-        try {
-          resolve(JSON.parse(jsonStr));
-        } catch (e) {
-          reject(e);
-        }
-      }
-    });
-    socket.on('error', reject);
-    setTimeout(() => reject(new Error('TCP request timed out')), 3000);
+    }, reject);
   });
 }
 
@@ -151,9 +152,7 @@ async function startServer(team: TTeam, mailbox: Mailbox, taskManager: TaskManag
     getTeam: () => team,
     mailbox,
     taskManager,
-    spawnAgent: vi.fn().mockResolvedValue(
-      makeAgent({ slotId: 'slot-new', agentName: 'NewBot', role: 'teammate' })
-    ),
+    spawnAgent: vi.fn().mockResolvedValue(makeAgent({ slotId: 'slot-new', agentName: 'NewBot', role: 'teammate' })),
     renameAgent: vi.fn(),
     removeAgent: vi.fn(),
     wakeAgent: vi.fn().mockResolvedValue(undefined),

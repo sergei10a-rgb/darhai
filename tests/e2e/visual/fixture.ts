@@ -50,6 +50,79 @@ export const FROZEN_TIME = new Date('2026-01-15T09:30:00.000Z');
 /** Directories created for launched apps, removed on {@link closeVisualApp}. */
 const runRoots = new Set<string>();
 
+/**
+ * Every app this module has launched and not yet proved dead.
+ *
+ * `quitVisualApp` used to fire `app.exit(0)` and `app.close()` with both results
+ * swallowed, then return. The OS process was still alive for a moment
+ * afterwards - and it still held `<runRoot>/Wayland-Dev/SingletonLock` (plus the
+ * Windows lockfile) inside its `--user-data-dir`. A spec that relaunches against
+ * the same `runRoot` (`localUserSurfaces`, `memoryRecall`) therefore raced the
+ * corpse for its own profile: when it lost, Chromium refused the profile, the
+ * new process exited before Playwright could attach, and the launch surfaced as
+ * `Error: Process failed to launch!` - taking the whole file's `beforeAll` with
+ * it and reporting the remaining tests as "did not run". A retry on a clean
+ * machine then passed, which is exactly what made it look like noise.
+ */
+const liveApps = new Set<ElectronApplication>();
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Close an app and do not return until its OS process is genuinely gone.
+ *
+ * `ElectronApplication.close()` alone is not proof: once `app.exit(0)` has torn
+ * the main process down, the CDP call it rides on can reject, and every earlier
+ * caller swallowed that rejection. Here the child process itself is the source
+ * of truth, and a process that ignores both is killed rather than left to
+ * collide with the next launch.
+ */
+async function reapVisualApp(app: ElectronApplication, timeoutMs = 30_000): Promise<void> {
+  const child = app.process();
+  const exited = child
+    ? new Promise<void>((resolve) => {
+        if (child.exitCode !== null || child.signalCode !== null) return resolve();
+        child.once('exit', () => resolve());
+      })
+    : Promise.resolve();
+
+  await app.evaluate(({ app: electronApp }) => electronApp.exit(0)).catch(() => {});
+  await app.close().catch(() => {});
+
+  const deadline = Date.now() + timeoutMs;
+  let alive = await Promise.race([exited.then(() => false), delay(timeoutMs).then(() => true)]);
+  if (alive && child) {
+    console.warn(`[visual] Electron pid ${child.pid} ignored exit(0); killing it before the next launch`);
+    child.kill('SIGKILL');
+    alive = await Promise.race([
+      exited.then(() => false),
+      delay(Math.max(1_000, deadline - Date.now())).then(() => true),
+    ]);
+  }
+  if (alive) {
+    throw new Error(
+      `visual fixture: Electron process ${child?.pid ?? '(unknown)'} would not exit within ${timeoutMs}ms. ` +
+        'Relaunching now would race it for its profile directory.'
+    );
+  }
+  liveApps.delete(app);
+}
+
+/** Reap anything a previous spec left running, so a fresh launch starts clean. */
+async function reapOutstandingApps(): Promise<void> {
+  // Snapshot first: reapVisualApp deletes from the set it is iterating.
+  const outstanding = Array.from(liveApps);
+  for (const app of outstanding) {
+    // eslint-disable-next-line no-await-in-loop
+    await reapVisualApp(app).catch((err) => {
+      console.warn('[visual] could not reap a previous app:', err instanceof Error ? err.message : err);
+      liveApps.delete(app);
+    });
+  }
+}
+
 export type VisualApp = {
   app: ElectronApplication;
   page: Page;
@@ -82,7 +155,10 @@ export async function launchVisualApp(
   const runRoot = options.reuseRunRoot ?? fs.mkdtempSync(path.join(os.tmpdir(), 'darhai-visual-'));
   runRoots.add(runRoot);
 
-  const app = await electron.launch({
+  // Never launch alongside a process that still owns a profile directory.
+  await reapOutstandingApps();
+
+  const launchOptions = {
     args: [
       '.',
       // Nested on purpose - see note 1 in the file header.
@@ -106,7 +182,35 @@ export async function launchVisualApp(
       ...extraEnv,
     },
     timeout: 180_000,
-  });
+  };
+
+  // A launch that dies before Playwright can attach ("Process failed to launch!")
+  // is almost always contention with a process that has not finished exiting,
+  // not a broken build. Retry it - loudly, so a genuinely broken build still
+  // reads as three identical failures rather than one mysterious one - instead
+  // of letting a single lost race cascade into "N did not run".
+  const ATTEMPTS = 3;
+  let app: ElectronApplication | undefined;
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= ATTEMPTS; attempt++) {
+    try {
+      app = await electron.launch(launchOptions);
+      break;
+    } catch (err) {
+      lastError = err;
+      const message = err instanceof Error ? err.message : String(err);
+      console.warn(`[visual] Electron launch attempt ${attempt}/${ATTEMPTS} failed: ${message}`);
+      await reapOutstandingApps();
+      await delay(2_000 * attempt);
+    }
+  }
+  if (!app) {
+    throw new Error(
+      `visual fixture: Electron failed to launch after ${ATTEMPTS} attempts (profile ${runRoot}). ` +
+        `Last error: ${lastError instanceof Error ? lastError.message : String(lastError)}`
+    );
+  }
+  liveApps.add(app);
 
   const page = await resolveMainWindow(app);
   await pinWindowGeometry(app);
@@ -345,13 +449,24 @@ export async function stableScreenshot(page: Page, opts: { fullPage?: boolean } 
  * {@link closeVisualApp} to remove the directory.
  */
 export async function quitVisualApp(visual: VisualApp): Promise<void> {
-  await visual.app.evaluate(({ app }) => app.exit(0)).catch(() => {});
-  await visual.app.close().catch(() => {});
+  await reapVisualApp(visual.app);
 }
 
 /** Close an app and remove its isolated profile. */
 export async function closeVisualApp(visual: VisualApp): Promise<void> {
   await quitVisualApp(visual);
   runRoots.delete(visual.runRoot);
-  fs.rmSync(visual.runRoot, { recursive: true, force: true });
+  // Windows keeps a directory busy for a moment after the last handle on it is
+  // released, and an EBUSY here would fail `afterAll` - reporting a teardown
+  // problem as a test failure. The directory lives under the OS temp dir, so
+  // giving up on it is harmless; failing the spec over it is not.
+  for (let attempt = 0; attempt < 5; attempt++) {
+    try {
+      fs.rmSync(visual.runRoot, { recursive: true, force: true });
+      return;
+    } catch {
+      // eslint-disable-next-line no-await-in-loop
+      await delay(500);
+    }
+  }
 }

@@ -18,6 +18,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as net from 'node:net';
+import { connectLoopback } from '../helpers/loopback';
 
 // ---------------------------------------------------------------------------
 // Hoist mocks BEFORE any source imports
@@ -202,37 +203,37 @@ function makeWorkerTaskManager(sendMessageFn = vi.fn().mockResolvedValue(undefin
 
 async function tcpCall(port: number, payload: Record<string, unknown>): Promise<{ result?: string; error?: string }> {
   return new Promise((resolve, reject) => {
-    const socket = net.createConnection({ port, host: '127.0.0.1' }, () => {
+    void connectLoopback(port).then((socket) => {
+      let buffer = Buffer.alloc(0);
+
+      socket.on('data', (chunk: Buffer) => {
+        buffer = Buffer.concat([buffer, chunk]);
+        if (buffer.length >= 4) {
+          const bodyLen = buffer.readUInt32BE(0);
+          if (buffer.length >= 4 + bodyLen) {
+            const jsonStr = buffer.subarray(4, 4 + bodyLen).toString('utf-8');
+            try {
+              resolve(JSON.parse(jsonStr) as { result?: string; error?: string });
+            } catch {
+              reject(new Error('Bad JSON response'));
+            }
+            socket.destroy();
+          }
+        }
+      });
+
+      socket.on('error', reject);
+      socket.setTimeout(30_000, () => {
+        socket.destroy();
+        reject(new Error('TCP timeout'));
+      });
+
       const json = JSON.stringify(payload);
       const body = Buffer.from(json, 'utf-8');
       const header = Buffer.alloc(4);
       header.writeUInt32BE(body.length, 0);
       socket.write(Buffer.concat([header, body]));
-    });
-
-    let buffer = Buffer.alloc(0);
-
-    socket.on('data', (chunk: Buffer) => {
-      buffer = Buffer.concat([buffer, chunk]);
-      if (buffer.length >= 4) {
-        const bodyLen = buffer.readUInt32BE(0);
-        if (buffer.length >= 4 + bodyLen) {
-          const jsonStr = buffer.subarray(4, 4 + bodyLen).toString('utf-8');
-          try {
-            resolve(JSON.parse(jsonStr) as { result?: string; error?: string });
-          } catch {
-            reject(new Error('Bad JSON response'));
-          }
-          socket.destroy();
-        }
-      }
-    });
-
-    socket.on('error', reject);
-    socket.setTimeout(3000, () => {
-      socket.destroy();
-      reject(new Error('TCP timeout'));
-    });
+    }, reject);
   });
 }
 

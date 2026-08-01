@@ -342,6 +342,7 @@ asarUnpack:
   - 'out/main/builtin-mcp-image-gen.js'
   - 'out/main/builtin-mcp-search-skills.js'
   - 'out/main/builtin-mcp-web-search.js'
+  - 'out/main/builtin-mcp-personal-data.js'
   - 'out/main/team-mcp-stdio.js'
   - 'out/main/team-guide-mcp-stdio.js'
   # Bundled @wayland MCP servers (ship with installer, no npm publish)

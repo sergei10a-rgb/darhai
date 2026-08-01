@@ -10,6 +10,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as net from 'node:net';
+import { connectLoopback } from '../helpers/loopback';
 
 // ------------------------------------------------------------------
 // Hoist mocks
@@ -97,34 +98,32 @@ function getAuthToken(service: TeamGuideMcpServer): string {
 
 async function tcpRequest(port: number, data: unknown): Promise<unknown> {
   return new Promise((resolve, reject) => {
-    const socket = new net.Socket();
+    void connectLoopback(port).then((socket) => {
+      let buffer = Buffer.alloc(0);
+      socket.on('data', (chunk) => {
+        buffer = Buffer.concat([buffer, chunk]);
+        while (buffer.length >= 4) {
+          const bodyLen = buffer.readUInt32BE(0);
+          if (buffer.length < 4 + bodyLen) break;
+          const jsonStr = buffer.subarray(4, 4 + bodyLen).toString('utf-8');
+          buffer = buffer.subarray(4 + bodyLen);
+          try {
+            resolve(JSON.parse(jsonStr));
+          } catch (e) {
+            reject(e);
+          }
+        }
+      });
 
-    socket.connect(port, '127.0.0.1', () => {
+      socket.on('error', reject);
+      setTimeout(() => reject(new Error('TCP request timed out')), 30_000);
+
       const json = JSON.stringify(data);
       const body = Buffer.from(json, 'utf-8');
       const header = Buffer.alloc(4);
       header.writeUInt32BE(body.length, 0);
       socket.write(Buffer.concat([header, body]));
-    });
-
-    let buffer = Buffer.alloc(0);
-    socket.on('data', (chunk) => {
-      buffer = Buffer.concat([buffer, chunk]);
-      while (buffer.length >= 4) {
-        const bodyLen = buffer.readUInt32BE(0);
-        if (buffer.length < 4 + bodyLen) break;
-        const jsonStr = buffer.subarray(4, 4 + bodyLen).toString('utf-8');
-        buffer = buffer.subarray(4 + bodyLen);
-        try {
-          resolve(JSON.parse(jsonStr));
-        } catch (e) {
-          reject(e);
-        }
-      }
-    });
-
-    socket.on('error', reject);
-    setTimeout(() => reject(new Error('TCP request timed out')), 3000);
+    }, reject);
   });
 }
 
@@ -218,29 +217,31 @@ describe('TeamGuideMcpServer auth token', () => {
 
     await new Promise<void>((resolve, reject) => {
       let settled = false;
-      const socket = new net.Socket();
+      let timer: NodeJS.Timeout | undefined;
 
       const finish = (error?: Error) => {
         if (settled) return;
         settled = true;
-        clearTimeout(timer);
+        if (timer) clearTimeout(timer);
         if (error) reject(error);
         else resolve();
       };
 
-      const timer = setTimeout(() => finish(new Error('Oversize guide MCP frame was not closed promptly')), 500);
+      void connectLoopback(getPort(service)).then((socket) => {
+        // Start the disconnect budget once connected, so a retried SYN does not
+        // consume the window the server has to close us.
+        timer = setTimeout(() => finish(new Error('Oversize guide MCP frame was not closed promptly')), 500);
 
-      socket.connect(getPort(service), '127.0.0.1', () => {
+        socket.once('data', (chunk) => {
+          finish(new Error(`Expected disconnect for oversize guide frame, got data: ${chunk.toString('hex')}`));
+        });
+        socket.once('close', () => finish());
+        socket.once('error', () => finish());
+
         const header = Buffer.alloc(4);
         header.writeUInt32BE(MAX_MCP_MESSAGE_SIZE + 1, 0);
         socket.write(header);
-      });
-
-      socket.once('data', (chunk) => {
-        finish(new Error(`Expected disconnect for oversize guide frame, got data: ${chunk.toString('hex')}`));
-      });
-      socket.once('close', () => finish());
-      socket.once('error', () => finish());
+      }, reject);
     });
 
     const response = (await tcpRequest(getPort(service), {

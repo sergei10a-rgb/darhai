@@ -5,6 +5,8 @@ export {
   goToExtensionSettings,
   goToChannelsTab,
   resetChannelsTabCache,
+  ensureOnboardingComplete,
+  resetOnboardingCache,
   waitForSettle,
   waitForClassChange,
   ROUTES,

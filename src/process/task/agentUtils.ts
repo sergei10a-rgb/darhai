@@ -4,7 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { getSkillsDir, getBuiltinSkillsCopyDir, loadSkillsContent } from '@process/utils/initStorage';
+import { getSkillsDir, getBuiltinSkillsCopyDir, loadSkillsContent, ProcessConfig } from '@process/utils/initStorage';
+import { BUILTIN_PERSONAL_DATA_ID } from '@process/resources/builtinMcp/constants';
+import { getPersonalDataMcpRuntime } from '@process/resources/builtinMcp/personalData/personalDataSingleton';
 import { AcpSkillManager, buildSkillsIndexText, type SkillIndex } from './AcpSkillManager';
 import { SkillLibrary } from '@process/services/skills/SkillLibrary';
 import { SkillRetriever } from '@process/services/skills/SkillRetriever';
@@ -28,6 +30,48 @@ import { getWorkflowSessionService } from '@process/services/workflow/workflowSe
  */
 export function searchSkillsAdvertText(): string {
   return 'Use the `darhai_search_skills` tool to discover skills from the full library on demand.';
+}
+
+/**
+ * Advertisement for the `darhai-personal-data` MCP tools.
+ *
+ * Discoverability is the whole point: the user's calendar, notes, documents and
+ * memory are NOT in the prompt (deliberately - see initStorage's registration
+ * comment), so a model that does not know the tools exist will confidently
+ * answer "I don't have access to your calendar" and never call them. The
+ * `darhai_search_skills` advert exists for the same reason and is the pattern
+ * copied here.
+ *
+ * Model-facing prompt text, not UI copy: English only, no i18n key, exactly
+ * like {@link searchSkillsAdvertText}.
+ */
+export function personalDataAdvertText(): string {
+  return [
+    "[The user's own data]",
+    'You have read-only tools for the data this user keeps inside Darhai. None of it is in your context, so you MUST call a tool before answering any question about it - never say you lack access, and never guess:',
+    '- `darhai_calendar_search` - their calendar events (what is on a day, when something is scheduled).',
+    '- `darhai_notes_search` - their notes and to-do lists.',
+    '- `darhai_documents_search` - their documents (search, then read one by id).',
+    '- `darhai_memory_recall` - decisions, preferences and patterns Darhai has stored over time.',
+    'All four are read-only and support Mongolian Cyrillic queries.',
+  ].join('\n');
+}
+
+/**
+ * True when the personal-data MCP entry is registered AND enabled, i.e. when it
+ * will actually be handed to the agent in `session/new`. Advertising tools the
+ * session does not carry is worse than staying silent, so the prompt line is
+ * gated on the same config the injection reads.
+ */
+async function personalDataToolsAvailable(): Promise<boolean> {
+  try {
+    if (!getPersonalDataMcpRuntime()) return false;
+    const servers = await ProcessConfig.get('mcp.config');
+    if (!Array.isArray(servers)) return false;
+    return servers.some((s) => s?.id === BUILTIN_PERSONAL_DATA_ID && s?.enabled === true);
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -495,6 +539,12 @@ If you find yourself about to escalate scheduling outside of Wayland or use a no
     instructions.push(skillsInstruction);
   }
 
+  // 2.5 Tell the model the user's own calendar / notes / documents / memory are
+  // reachable by tool. Without this line the tools ship but are never called.
+  if (await personalDataToolsAvailable()) {
+    instructions.push(personalDataAdvertText());
+  }
+
   // 3. Inject Team Guide prompt when agent has team guide capability
   if (config.enableTeamGuide) {
     const leaderLabel = await resolveLeaderAssistantLabel(config.presetAssistantId);
@@ -554,6 +604,12 @@ export async function buildSystemInstructionsWithSkillsIndex(config: FirstMessag
     if (indexText.length > 0) {
       instructions.push(indexText);
     }
+  }
+
+  // Same personal-data advert as prepareFirstMessageWithSkillsIndex - this is
+  // the composition path the non-ACP backends use.
+  if (await personalDataToolsAvailable()) {
+    instructions.push(personalDataAdvertText());
   }
 
   // Inject Team Guide prompt when agent has team guide capability

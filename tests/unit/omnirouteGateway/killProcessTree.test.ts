@@ -66,6 +66,19 @@ function isAlive(pid: number): boolean {
   }
 }
 
+/**
+ * How long one loopback connect attempt may take before we call it unanswered.
+ *
+ * A single probe is not evidence about the port: Windows silently drops a SYN
+ * whose 4-tuple collides with a socket still in TIME_WAIT, and this host's
+ * dynamic port range (1024-65534) recycles fast enough during a suite run for
+ * that to happen. `THE DEFECT` used to fail with `expected false to be true`
+ * while the grandchild was demonstrably still alive and listening, purely
+ * because its one probe lost that race. Probes are therefore kept short and
+ * repeated through {@link waitUntil}, which retries with a fresh client port.
+ */
+const PORT_PROBE_TIMEOUT_MS = 2_000;
+
 /** True when something accepts a TCP connection on the loopback port. */
 function isPortServed(port: number): Promise<boolean> {
   return new Promise((resolve) => {
@@ -76,7 +89,7 @@ function isPortServed(port: number): Promise<boolean> {
     };
     socket.once('connect', () => done(true));
     socket.once('error', () => done(false));
-    socket.setTimeout(1000, () => done(false));
+    socket.setTimeout(PORT_PROBE_TIMEOUT_MS, () => done(false));
   });
 }
 
@@ -154,7 +167,9 @@ describe('killProcessTree against real processes', () => {
     // Give any cascade a fair chance before claiming the descendant survived.
     await new Promise((r) => setTimeout(r, 2000));
     expect(isAlive(grandPid)).toBe(true);
-    expect(await isPortServed(port)).toBe(true);
+    // Retry rather than assert on one probe - see PORT_PROBE_TIMEOUT_MS. The
+    // claim is unchanged: the orphaned grandchild is still serving the port.
+    await waitUntil(() => isPortServed(port), DEATH_TIMEOUT_MS, 'the orphaned grandchild to still be serving its port');
   });
 
   it('THE FIX: killProcessTree takes the whole tree down and frees the port', { timeout: 45000 }, async () => {

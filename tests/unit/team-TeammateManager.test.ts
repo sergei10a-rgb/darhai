@@ -30,6 +30,21 @@ vi.mock('@process/agent/acp/AcpDetector', () => ({
 vi.mock('@process/utils/initStorage', () => ({
   ProcessConfig: { get: vi.fn(async () => null) },
 }));
+// `finalizeTurn` -> `readLastAssistantExcerpt` calls the REAL `getDatabase()`,
+// which opens (and migrates) a SQLite file under the developer's own data dir
+// and loads the better-sqlite3 native binding. In a unit test that is both a
+// side effect on real user data and an unbounded wait: every worker in the
+// suite raced for the same file, and the first call in this file paid the
+// module-load + migration cost. The assertions below used to sit behind a fixed
+// 50 ms sleep, so whenever that call took longer than 50 ms - routinely, once
+// the full suite saturates the machine - the turn had not finished and the
+// assertion read zero calls. Mocking it keeps the whole `finalizeTurn` chain on
+// the microtask queue, which is what makes {@link drainAsync} below sufficient.
+vi.mock('@process/services/database', () => ({
+  getDatabase: vi.fn(async () => ({
+    getConversationMessages: vi.fn(() => ({ data: [] })),
+  })),
+}));
 
 import { TeammateManager } from '@process/team/TeammateManager';
 import { teamEventBus } from '@process/team/teamEventBus';
@@ -94,15 +109,42 @@ function makeTeammateManager(agents: TeamAgent[] = [], overrides: Record<string,
   const mailbox = makeMailbox();
   const taskManager = makeTaskManager();
   const workerTaskManager = makeWorkerTaskManager();
+  // `taskManager` is deliberately NOT passed to the constructor:
+  // `TeammateManagerParams` has no such field, so every value handed in here was
+  // silently discarded. Type-checking `tests/` surfaced it. It is still returned
+  // for tests that want the mock, but the manager under test never saw it, and
+  // pretending otherwise made the fixture read like coverage it does not have.
   const mgr = new TeammateManager({
     teamId: 'team-1',
     agents,
     mailbox,
-    taskManager,
     workerTaskManager,
     ...overrides,
   });
   return { mgr, mailbox, taskManager, workerTaskManager };
+}
+
+/**
+ * Let every async continuation started by a synchronously-emitted event run to
+ * completion.
+ *
+ * `teamEventBus.emit(...)` returns before the `void this.finalizeTurn(...)` /
+ * `void this.wake(...)` chain it kicks off has finished, so the tests below
+ * have to wait for that chain. They used to do it with a fixed
+ * `setTimeout(50)`, which is a bet on how much wall-clock the machine will give
+ * this worker - a bet the suite loses whenever all 24 forks are busy, and the
+ * assertion then reads a state the code simply had not reached yet.
+ *
+ * Every await in those chains is now a resolved promise (all collaborators are
+ * mocks, including the database), so the work is bounded by *turns of the event
+ * loop*, not by elapsed time. Draining a fixed number of macrotask turns
+ * therefore settles it identically on an idle machine and a saturated one.
+ */
+async function drainAsync(turns = 25): Promise<void> {
+  for (let i = 0; i < turns; i++) {
+    // eslint-disable-next-line no-await-in-loop
+    await new Promise((resolve) => setImmediate(resolve));
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -1050,7 +1092,7 @@ describe('TeammateManager', () => {
       });
 
       // Give async finalizeTurn time to run
-      await new Promise((r) => setTimeout(r, 50));
+      await drainAsync();
 
       // Should have written idle notification to leader
       expect(mbox.write).toHaveBeenCalledWith(
@@ -1093,7 +1135,7 @@ describe('TeammateManager', () => {
         data: null,
       });
 
-      await new Promise((r) => setTimeout(r, 50));
+      await drainAsync();
 
       // finalizedTurns dedup: the second finish is discarded.
       // The idle notification to leader is written exactly once, not twice.
@@ -1142,7 +1184,7 @@ describe('TeammateManager', () => {
         data: null,
       });
 
-      await new Promise((r) => setTimeout(r, 50));
+      await drainAsync();
 
       // member2 is still active → maybeWakeLeaderWhenAllIdle must NOT wake the leader
       expect(workerTaskManager.getOrBuildTask).not.toHaveBeenCalledWith('conv-lead');
@@ -1184,7 +1226,7 @@ describe('TeammateManager', () => {
         data: null,
       });
 
-      await new Promise((r) => setTimeout(r, 100));
+      await drainAsync();
 
       // Leader should have been woken since all members are idle
       expect(workerTaskManager.getOrBuildTask).toHaveBeenCalledWith('conv-lead');
@@ -1254,7 +1296,7 @@ describe('TeammateManager', () => {
         data: { error: 'Process exited unexpectedly (code: 1, signal: null)', agentCrash: true },
       });
 
-      await new Promise((r) => setTimeout(r, 100));
+      await drainAsync();
 
       // Testament written to leader
       expect(mailbox.write).toHaveBeenCalledWith(
@@ -1309,7 +1351,7 @@ describe('TeammateManager', () => {
         data: { error: 'Process exited unexpectedly (code: null, signal: SIGTERM)', agentCrash: true },
       });
 
-      await new Promise((r) => setTimeout(r, 100));
+      await drainAsync();
 
       // No testament written - leader has no recipient for its own crash
       expect(mailbox.write).not.toHaveBeenCalled();
@@ -1347,7 +1389,7 @@ describe('TeammateManager', () => {
         data: { error: 'Something went wrong' },
       });
 
-      await new Promise((r) => setTimeout(r, 100));
+      await drainAsync();
 
       // No testament written - normal error goes through finalizeTurn
       const testamentCalls = (mailbox.write as ReturnType<typeof vi.fn>).mock.calls.filter((args: unknown[]) => {
@@ -1380,7 +1422,7 @@ describe('TeammateManager', () => {
         data: { error: '429 Too Many Requests' },
       });
 
-      await new Promise((r) => setTimeout(r, 50));
+      await drainAsync();
 
       const agent = mgr.getAgents().find((a) => a.slotId === 'slot-member');
       expect(agent).toBeDefined();
@@ -1412,7 +1454,7 @@ describe('TeammateManager', () => {
         data: 'API rate limit exceeded',
       });
 
-      await new Promise((r) => setTimeout(r, 50));
+      await drainAsync();
 
       const agent = mgr.getAgents().find((a) => a.slotId === 'slot-member');
       expect(agent!.status).toBe('failed');
@@ -1438,7 +1480,7 @@ describe('TeammateManager', () => {
         data: { error: 'Quota exceeded for this model' },
       });
 
-      await new Promise((r) => setTimeout(r, 50));
+      await drainAsync();
 
       const agent = mgr.getAgents().find((a) => a.slotId === 'slot-member');
       expect(agent!.status).toBe('failed');
@@ -1465,7 +1507,7 @@ describe('TeammateManager', () => {
         data: null,
       });
 
-      await new Promise((r) => setTimeout(r, 100));
+      await drainAsync();
 
       // Agent still exists
       expect(mgr.getAgents().find((a) => a.slotId === 'slot-member')).toBeDefined();
@@ -1499,7 +1541,7 @@ describe('TeammateManager', () => {
         data: { error: 'Process exited unexpectedly', agentCrash: true },
       });
 
-      await new Promise((r) => setTimeout(r, 100));
+      await drainAsync();
 
       expect(mgr.getAgents()).toHaveLength(2);
       expect(mgr.getAgents().find((a) => a.slotId === 'slot-member')).toBeDefined();
@@ -1528,7 +1570,7 @@ describe('TeammateManager', () => {
         data: { error: 'Process exited unexpectedly', agentCrash: true },
       });
 
-      await new Promise((r) => setTimeout(r, 100));
+      await drainAsync();
 
       expect(mockIpcBridge.team.agentStatusChanged.emit).toHaveBeenCalledWith(
         expect.objectContaining({ teamId: 'team-1', slotId: 'slot-member', status: 'failed' })
@@ -1559,7 +1601,7 @@ describe('TeammateManager', () => {
         data: { error: 'Process exited unexpectedly', agentCrash: true },
       });
 
-      await new Promise((r) => setTimeout(r, 100));
+      await drainAsync();
 
       expect(workerTaskManager.kill).toHaveBeenCalledWith('conv-member');
 
@@ -1596,7 +1638,7 @@ describe('TeammateManager', () => {
         data: { error: 'Process exited unexpectedly', agentCrash: true },
       });
 
-      await new Promise((r) => setTimeout(r, 100));
+      await drainAsync();
 
       // Now wake again - should NOT be skipped
       vi.mocked(workerTaskManager.getOrBuildTask).mockClear();
@@ -1625,7 +1667,7 @@ describe('TeammateManager', () => {
         data: { error: 'Process exited (code: 1)', agentCrash: true },
       });
 
-      await new Promise((r) => setTimeout(r, 100));
+      await drainAsync();
 
       expect(mailbox.write).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1666,7 +1708,7 @@ describe('TeammateManager', () => {
         data: { error: 'Process exited unexpectedly', agentCrash: true },
       });
 
-      await new Promise((r) => setTimeout(r, 100));
+      await drainAsync();
 
       // Leader's wake was triggered - getOrBuildTask called with leader's conversationId
       expect(workerTaskManager.getOrBuildTask).toHaveBeenCalledWith('conv-lead');

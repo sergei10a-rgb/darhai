@@ -47,6 +47,8 @@
     "i18n:types": "node scripts/generate-i18n-types.js",
     "audit:settings": "node scripts/audit-settings.mjs",
     "test": "vitest run",
+    "typecheck": "tsc --noEmit --pretty false",
+    "typecheck:tests": "node scripts/typecheck-tests.mjs",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:contract": "vitest run tests/contract --passWithNoTests",

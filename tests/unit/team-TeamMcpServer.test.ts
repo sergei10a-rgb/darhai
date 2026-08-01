@@ -1,6 +1,7 @@
 // tests/unit/team-TeamMcpServer.test.ts
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as net from 'node:net';
+import { connectLoopback } from '../helpers/loopback';
 
 vi.mock('electron', () => ({
   app: { isPackaged: false, getAppPath: () => '/app' },
@@ -110,34 +111,32 @@ function makeTaskManager() {
  */
 async function tcpRequest(port: number, data: unknown): Promise<unknown> {
   return new Promise((resolve, reject) => {
-    const socket = new net.Socket();
+    void connectLoopback(port).then((socket) => {
+      let buffer = Buffer.alloc(0);
+      socket.on('data', (chunk) => {
+        buffer = Buffer.concat([buffer, chunk]);
+        while (buffer.length >= 4) {
+          const bodyLen = buffer.readUInt32BE(0);
+          if (buffer.length < 4 + bodyLen) break;
+          const jsonStr = buffer.subarray(4, 4 + bodyLen).toString('utf-8');
+          buffer = buffer.subarray(4 + bodyLen);
+          try {
+            resolve(JSON.parse(jsonStr));
+          } catch (e) {
+            reject(e);
+          }
+        }
+      });
 
-    socket.connect(port, '127.0.0.1', () => {
+      socket.on('error', reject);
+      setTimeout(() => reject(new Error('TCP request timed out')), 30_000);
+
       const json = JSON.stringify(data);
       const body = Buffer.from(json, 'utf-8');
       const header = Buffer.alloc(4);
       header.writeUInt32BE(body.length, 0);
       socket.write(Buffer.concat([header, body]));
-    });
-
-    let buffer = Buffer.alloc(0);
-    socket.on('data', (chunk) => {
-      buffer = Buffer.concat([buffer, chunk]);
-      while (buffer.length >= 4) {
-        const bodyLen = buffer.readUInt32BE(0);
-        if (buffer.length < 4 + bodyLen) break;
-        const jsonStr = buffer.subarray(4, 4 + bodyLen).toString('utf-8');
-        buffer = buffer.subarray(4 + bodyLen);
-        try {
-          resolve(JSON.parse(jsonStr));
-        } catch (e) {
-          reject(e);
-        }
-      }
-    });
-
-    socket.on('error', reject);
-    setTimeout(() => reject(new Error('TCP request timed out')), 3000);
+    }, reject);
   });
 }
 
@@ -739,8 +738,21 @@ describe('TeamMcpServer', () => {
   describe('TCP framing', () => {
     it('handles message sent in multiple chunks', async () => {
       const response = await new Promise((resolve, reject) => {
-        const socket = new net.Socket();
-        socket.connect(server.getPort(), '127.0.0.1', () => {
+        void connectLoopback(server.getPort()).then((socket) => {
+          let buffer = Buffer.alloc(0);
+          socket.on('data', (chunk) => {
+            buffer = Buffer.concat([buffer, chunk]);
+            if (buffer.length >= 4) {
+              const bodyLen = buffer.readUInt32BE(0);
+              if (buffer.length >= 4 + bodyLen) {
+                const jsonStr = buffer.subarray(4, 4 + bodyLen).toString('utf-8');
+                resolve(JSON.parse(jsonStr));
+              }
+            }
+          });
+          socket.on('error', reject);
+          setTimeout(() => reject(new Error('Timeout')), 30_000);
+
           const json = JSON.stringify({ tool: 'team_members', args: {}, auth_token: authToken });
           const body = Buffer.from(json, 'utf-8');
           const header = Buffer.alloc(4);
@@ -750,21 +762,7 @@ describe('TeamMcpServer', () => {
           // Send in two chunks
           socket.write(full.subarray(0, 5));
           setTimeout(() => socket.write(full.subarray(5)), 10);
-        });
-
-        let buffer = Buffer.alloc(0);
-        socket.on('data', (chunk) => {
-          buffer = Buffer.concat([buffer, chunk]);
-          if (buffer.length >= 4) {
-            const bodyLen = buffer.readUInt32BE(0);
-            if (buffer.length >= 4 + bodyLen) {
-              const jsonStr = buffer.subarray(4, 4 + bodyLen).toString('utf-8');
-              resolve(JSON.parse(jsonStr));
-            }
-          }
-        });
-        socket.on('error', reject);
-        setTimeout(() => reject(new Error('Timeout')), 3000);
+        }, reject);
       });
 
       expect((response as Record<string, unknown>).result).toContain('Leader');

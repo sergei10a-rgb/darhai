@@ -40,12 +40,20 @@ import {
   BUILTIN_IMAGE_GEN_ID,
   BUILTIN_IMAGE_GEN_LEGACY_NAMES,
   BUILTIN_IMAGE_GEN_NAME,
+  BUILTIN_PERSONAL_DATA_ID,
+  BUILTIN_PERSONAL_DATA_NAME,
   BUILTIN_SEARCH_SKILLS_ID,
   BUILTIN_SEARCH_SKILLS_LEGACY_NAMES,
   BUILTIN_SEARCH_SKILLS_NAME,
   BUILTIN_WEB_SEARCH_ID,
   BUILTIN_WEB_SEARCH_NAME,
+  PERSONAL_DATA_PORT_ENV,
+  PERSONAL_DATA_TOKEN_ENV,
 } from '../resources/builtinMcp/constants';
+import {
+  getPersonalDataMcpRuntime,
+  initPersonalDataMcpServer,
+} from '../resources/builtinMcp/personalData/personalDataSingleton';
 import { getMcpScriptPath, inspectMcpScripts } from './mcpScriptDir';
 import { getAppDataExtensionsDir, EXTENSION_MANIFEST_FILE } from '../extensions/constants';
 // Platform and architecture types (moved from deleted updateConfig)
@@ -1001,6 +1009,84 @@ const ensureBuiltinMcpServers = async (): Promise<void> => {
       changed = true;
     }
 
+    // ── Built-in personal-data MCP server ────────────────────────────────────
+    // The user's own calendar / notes / documents / memory. Before this entry
+    // existed a functional audit proved the gap end to end: an event titled
+    // `CALMARKER7719 dentist appointment` was persisted, the user asked "what is
+    // on my calendar today", and the marker appeared nowhere in the 18,475-char
+    // prompt the agent received. There was no injection point to find, because
+    // stuffing those stores into every prompt is the wrong shape - it bloats
+    // each turn, goes stale, and does not scale with a growing store. A tool the
+    // model calls when the question needs it does.
+    //
+    // Enabled by default and read-only (see personalDataTools.ts): silent unless
+    // called, and it can only ever read.
+    //
+    // The env carries the loopback port + per-boot token of the in-process
+    // server; both change every boot, so they are refreshed here exactly like
+    // the web-search provider keys above. If the server did not start we do NOT
+    // register the entry - advertising a tool that can never answer is the mute
+    // failure mode the MCP script canary exists to prevent.
+    const personalDataRuntime = getPersonalDataMcpRuntime();
+    const personalDataExistingIdx = mcpServers.findIndex((s) => s.builtin === true && s.id === BUILTIN_PERSONAL_DATA_ID);
+
+    if (personalDataRuntime && personalDataRuntime.port > 0) {
+      const personalDataScriptPath = getBuiltinMcpScriptPath('builtin-mcp-personal-data');
+      const personalDataEnv: Record<string, string> = {
+        [PERSONAL_DATA_PORT_ENV]: String(personalDataRuntime.port),
+        [PERSONAL_DATA_TOKEN_ENV]: personalDataRuntime.token,
+      };
+
+      const buildPersonalDataOriginalJson = (scriptPathValue: string, env: Record<string, string>) =>
+        JSON.stringify(
+          { [BUILTIN_PERSONAL_DATA_NAME]: { command: 'node', args: [scriptPathValue], env } },
+          null,
+          2
+        );
+
+      if (personalDataExistingIdx >= 0) {
+        const existing = mcpServers[personalDataExistingIdx];
+        if (existing.transport.type === 'stdio' && existing.transport.command === 'node') {
+          const needsPathUpdate = (existing.transport.args || [])[0] !== personalDataScriptPath;
+          const needsEnvUpdate = !envEquals(existing.transport.env ?? {}, personalDataEnv);
+          if (needsPathUpdate || needsEnvUpdate) {
+            mcpServers[personalDataExistingIdx] = {
+              ...existing,
+              transport: { ...existing.transport, args: [personalDataScriptPath], env: personalDataEnv },
+              originalJson: buildPersonalDataOriginalJson(personalDataScriptPath, personalDataEnv),
+              updatedAt: now,
+            };
+            changed = true;
+          }
+        }
+      } else {
+        mcpServers.push({
+          id: BUILTIN_PERSONAL_DATA_ID,
+          name: BUILTIN_PERSONAL_DATA_NAME,
+          description:
+            "Built-in read-only tools that let agents look up the user's own calendar events, notes, documents and stored memory. Never writes.",
+          enabled: true,
+          builtin: true,
+          transport: {
+            type: 'stdio',
+            command: 'node',
+            args: [personalDataScriptPath],
+            env: personalDataEnv,
+          },
+          createdAt: now,
+          updatedAt: now,
+          originalJson: buildPersonalDataOriginalJson(personalDataScriptPath, personalDataEnv),
+        });
+        changed = true;
+      }
+    } else if (personalDataExistingIdx >= 0) {
+      // Server down this boot: strip the stale port/token rather than leave a
+      // previous boot's env pointing at a closed socket.
+      mcpServers.splice(personalDataExistingIdx, 1);
+      changed = true;
+      console.warn('[Wayland] personal-data MCP server not running - removed its stale catalog entry');
+    }
+
     if (changed) {
       await configFile.set('mcp.config', mcpServers);
       console.log('[Wayland] Built-in MCP servers ensured');
@@ -1136,6 +1222,14 @@ const initStorage = async () => {
     console.error('[Wayland] MCP script canary error:', error);
   }
   mark('4.1.5 mcpScriptCanary');
+
+  // 4.1.6 Start the in-process personal-data MCP server BEFORE the catalog is
+  // written: `ensureBuiltinMcpServers` persists its loopback port + per-boot
+  // token into the `darhai-personal-data` spawn env, and a port of 0 would make
+  // every spawned bridge report "not available" for the whole session.
+  // Never throws - a failure to bind degrades to "entry not registered".
+  await initPersonalDataMcpServer();
+  mark('4.1.6 personalDataMcpServer');
 
   // 4.2 Ensure built-in MCP servers exist and are up-to-date
   await ensureBuiltinMcpServers();
