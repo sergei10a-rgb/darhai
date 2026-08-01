@@ -1274,8 +1274,7 @@ const initStorage = async () => {
     if (!splitMigrationDone) {
       const legacyCustomAgents =
         ((await configFile.get('acp.customAgents').catch((): undefined => undefined)) as
-          | AcpBackendConfig[]
-          | undefined) || [];
+          AcpBackendConfig[] | undefined) || [];
       const currentAssistants =
         ((await configFile.get('assistants').catch((): undefined => undefined)) as AcpBackendConfig[] | undefined) ||
         [];

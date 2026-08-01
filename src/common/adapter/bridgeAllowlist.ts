@@ -414,6 +414,29 @@ const REMOTE_DENIED_KEYS: ReadonlySet<string> = new Set([
   //     window and only that window may answer it. `list-pending` is a read of
   //     what is on screen and stays allowed. ---
   'toolConfirmation.respond',
+  // --- Cron: scheduling IS delayed execution, so every mutating verb here is a
+  //     remote code-execution primitive wearing a scheduler's clothes.
+  //
+  //     `cron.run-now` starts a conversation and runs the agent immediately.
+  //     `cron.save-skill` writes a skill file that the agent then loads - code
+  //     that persists across restarts. `add-job` / `update-job` do the same on
+  //     a timer, which is worse: the payload fires when nobody is watching.
+  //     `confirm-proposal` accepts a job the AGENT proposed, so leaving it open
+  //     would let a remote caller rubber-stamp something the model asked for -
+  //     the one decision that has to stay with the person at the machine.
+  //
+  //     A paired WebUI user is deliberately less trusted than the local user
+  //     (that is what this whole list is for); without these entries that user
+  //     could escalate straight to running code on the host. The READ verbs
+  //     (cron.list-jobs, cron.list-jobs-by-conversation, cron.get-job,
+  //     cron.has-skill) follow the cron read policy and stay allowed so the
+  //     paired UI can still show what is scheduled. ---
+  'cron.add-job',
+  'cron.update-job',
+  'cron.remove-job',
+  'cron.run-now',
+  'cron.save-skill',
+  'cron.confirm-proposal',
   // --- prompt compression: persisted config mutation (changes how prompts are
   //     transformed before every model call). A paired-device WebSocket caller
   //     must never flip it; the read (compression.get-mode) stays allowed. ---

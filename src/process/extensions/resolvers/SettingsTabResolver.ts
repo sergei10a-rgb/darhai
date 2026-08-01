@@ -133,8 +133,7 @@ export function resolveSettingsTabs(extensions: LoadedExtension[]): ResolvedSett
  * @returns Merged sequence of { type, id, extTab? } in display order
  */
 export type MergedTab =
-  | { type: 'builtin'; id: string }
-  | { type: 'extension'; id: string; extTab: ResolvedSettingsTab };
+  { type: 'builtin'; id: string } | { type: 'extension'; id: string; extTab: ResolvedSettingsTab };
 
 export function mergeSettingsTabs(builtinIds: readonly string[], extTabs: ResolvedSettingsTab[]): MergedTab[] {
   // Build initial sequence from built-in IDs
