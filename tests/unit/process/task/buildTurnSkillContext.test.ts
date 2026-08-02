@@ -46,7 +46,7 @@ vi.mock('@process/team/prompts/teamGuideAssistant.ts', () => ({
   resolveLeaderAssistantLabel: vi.fn().mockResolvedValue('Leader'),
 }));
 
-import { buildTurnSkillContext } from '@process/task/agentUtils';
+import { buildTurnSkillContext, isAutoLoadWinner } from '@process/task/agentUtils';
 
 const entry = (overrides: Partial<SkillIndexEntry> & { name: string }): SkillIndexEntry => {
   const { metadata, ...rest } = overrides;
@@ -166,5 +166,50 @@ describe('buildTurnSkillContext', () => {
 
     expect(ctx.advert).toContain('Do the thing.');
     expect(ctx.advert).not.toContain('darhai_read_skill');
+  });
+
+  it('sends the model to read-by-name, not to search - it already has the names', async () => {
+    // The advert lists exact skill names. Pointing at `darhai_search_skills`
+    // (the tool for finding a name you do NOT have) cost a whole round-trip
+    // whose output was the list the model was already holding.
+    libState.bodies = {};
+    const ctx = await buildTurnSkillContext('deploy a react component to a kubernetes cluster');
+
+    expect(ctx.advert).toContain('[Relevant skills for this request]');
+    expect(ctx.advert, 'the advert still routes through a search').not.toContain('darhai_search_skills');
+    expect(ctx.advert).toContain('darhai_read_skill');
+  });
+});
+
+describe('isAutoLoadWinner', () => {
+  // These ratios are the measured trade-off documented on AUTOLOAD_MARGIN:
+  // over 34 technical and 38 ordinary turns against the shipped 2,470-skill
+  // index, 1.3 auto-loads on 8 technical turns and 0 ordinary ones, while 1.2
+  // starts auto-loading "this is taking a long time" -> weekly-cleaning-schedule.
+  const SCORE = 20;
+
+  it('loads when the winner clears the runner-up by the measured margin', () => {
+    // 1.35x - `git-workflow` beats `git-panic-recovery` by 1.37x on the real
+    // corpus, and is the right skill for "recover from a bad git rebase".
+    expect(isAutoLoadWinner(SCORE, SCORE / 1.35)).toBe(true);
+  });
+
+  it('stays silent on a near-tie, however high both score', () => {
+    // `python-testing-patterns` vs `rust-testing-patterns` sit at 1.02x. There
+    // is no winner to pick, so the advert lists both and the model chooses.
+    expect(isAutoLoadWinner(SCORE, SCORE / 1.02)).toBe(false);
+  });
+
+  it('holds the line short of where an ordinary turn starts winning', () => {
+    // The measured break is at a 1.2 margin, where "this is taking a long time"
+    // auto-loads `weekly-cleaning-schedule`. Anything that loose must stay out:
+    // a 1.25x lead is not a clear enough winner, and neither is 1.15x.
+    expect(isAutoLoadWinner(SCORE, SCORE / 1.25)).toBe(false);
+    expect(isAutoLoadWinner(SCORE, SCORE / 1.15)).toBe(false);
+  });
+
+  it('refuses a weak top hit even with no competition', () => {
+    expect(isAutoLoadWinner(1, undefined)).toBe(false);
+    expect(isAutoLoadWinner(20, undefined)).toBe(true);
   });
 });

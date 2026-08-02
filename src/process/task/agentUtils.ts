@@ -111,8 +111,32 @@ export type TurnSkillContext = {
 const TURN_ADVERT_LIMIT = 3;
 /** Absolute BM25 floor a top hit must clear before we auto-load its body. */
 const AUTOLOAD_MIN_SCORE = 4.0;
-/** Top-1 must beat top-2 by this factor to count as a clear winner (no blind auto-load on ties). */
-const AUTOLOAD_MARGIN = 1.4;
+/**
+ * Top-1 must beat top-2 by this factor to count as a clear winner (no blind
+ * auto-load on ties).
+ *
+ * Measured over the shipped 2,470-skill index against 34 technical turns and 38
+ * ordinary-conversation turns, counting how often the winner is auto-loaded and
+ * how often an ordinary turn wrongly gets one:
+ *
+ *   margin   technical   ordinary (must stay 0)
+ *   1.40      5/34        0
+ *   1.35      7/34        0
+ *   1.30      8/34        0
+ *   1.25      9/34        0
+ *   1.20     10/34        1   <- "this is taking a long time" -> weekly-cleaning-schedule
+ *   1.10     17/34        2
+ *
+ * 1.4 was leaving correct picks on the table by a hair - `git-workflow` beat its
+ * runner-up by 1.37x and `forensics-analyst` by 1.36x, and both are the right
+ * skill for their turn. 1.3 takes those without touching the ordinary turns, and
+ * keeps two measured steps of headroom before the value where the first false
+ * auto-load appears. The three turns it adds (git rebase, memory dump, swagger
+ * spec) all pick the correct skill.
+ *
+ * Loosening further is not free: at 1.2 an ordinary turn starts auto-loading.
+ */
+const AUTOLOAD_MARGIN = 1.3;
 /** Body char cap for an auto-loaded skill - honors the ~3k-token/turn budget. */
 const AUTOLOAD_BODY_CHAR_CAP = 3000;
 /**
@@ -143,10 +167,48 @@ const MIN_QUERY_TERMS = 2;
  * one Cyrillic word incidentally occurred in one Cyrillic-described skill.
  * Same-script turns keep the full floor for the same reason - there, "no
  * document shares two of your words" really is evidence of irrelevance.
+ *
+ * This floor has been measured and deliberately left at 2. Over 34 technical and
+ * 38 ordinary turns against the shipped index it surfaces skills on 24/34
+ * technical turns and wrongly on 2/38 ordinary ones. Every looser rule tried
+ * bought technical recall at roughly the same rate it bought noise:
+ *
+ *   - top-3 unanimous on `category`:  +2 technical, +1 ordinary
+ *   - top-3 majority on `category`:   +5 technical, +5 ordinary
+ *   - an absolute BM25 floor:         the distributions overlap - the best
+ *     ordinary turn scores 10.61, the worst wanted technical turn 10.51
+ *   - rarity (df) of the matched term: no separation at all, median df 3 for
+ *     ordinary turns and 2 for technical ones. The corpus is terse, so `undo`
+ *     and `head` are exactly as rare as `postgres` and `rds`.
+ *
+ * The 10 technical turns it still misses all name ONE product ("deploy to
+ * kubernetes", "a postgres migration", "add oauth login"). They miss because
+ * that product's skill shares only the product's name with the turn - a corpus
+ * property, not a threshold that is set wrong. Those turns are covered by the
+ * `/` command and by `darhai_search_skills`; do not trade the ordinary-turn
+ * silence for them without new evidence.
  */
 const MATCH_MIN_TERMS = 2;
 /** Advert only hits within this fraction of the top score (the coherent cluster, not the weak tail). */
 const ADVERT_RATIO = 0.55;
+
+/**
+ * Is the top hit a clear enough winner to auto-load its body?
+ *
+ * Exported so {@link AUTOLOAD_MIN_SCORE} and {@link AUTOLOAD_MARGIN} can be
+ * tested at the ratios that matter rather than through whatever scores BM25
+ * happens to produce for a fixture pair - the two constants encode a measured
+ * trade-off (see AUTOLOAD_MARGIN), and a test that cannot see the ratio cannot
+ * notice when someone changes it.
+ *
+ * @param topScore - BM25 score of the best hit
+ * @param secondScore - BM25 score of the runner-up, or undefined when there is none
+ */
+export function isAutoLoadWinner(topScore: number, secondScore?: number): boolean {
+  if (!(topScore >= AUTOLOAD_MIN_SCORE)) return false;
+  if (secondScore === undefined) return true;
+  return topScore >= AUTOLOAD_MARGIN * secondScore;
+}
 
 // Module-level BM25 index cache, rebuilt only when the library size changes.
 let turnRetriever: SkillRetriever | null = null;
@@ -221,7 +283,7 @@ export async function buildTurnSkillContext(
   // High-confidence top-1 auto-load: a clear winner not already in context.
   const top = hits[0];
   const second = hits[1];
-  const isClearWinner = top.score >= AUTOLOAD_MIN_SCORE && (!second || top.score >= AUTOLOAD_MARGIN * second.score);
+  const isClearWinner = isAutoLoadWinner(top.score, second?.score);
 
   let autoLoaded: SkillIndex[] = [];
   let autoBody = '';
@@ -265,10 +327,19 @@ export async function buildTurnSkillContext(
   // Advert only the coherent cluster near the top (>= ADVERT_RATIO of the top
   // score), excluding always-on and just-auto-loaded skills. The weak tail is
   // dropped, so a turn surfaces 1-3 real matches, not 5.
+  //
+  // The auto-loaded skill spends one of those slots. It used to be additive:
+  // filtering the winner out of the list left room for the 4th-ranked hit to
+  // take its place, so the moment a turn found a clear winner it started naming
+  // FOUR skills - and the 4th is by construction the weakest. Measured on the
+  // shipped index, "help me write a python unit test with pytest fixtures" went
+  // from three testing skills to those plus `fastapi-patterns`. The limit is
+  // there to keep the turn cheap and the list credible; whether a skill arrives
+  // offered or listed does not change what it costs to read.
   const advertFloor = ADVERT_RATIO * topScore;
   const advertHits = hits
     .filter((h) => h.score >= advertFloor && !alwaysOn.has(h.name) && !autoLoaded.some((a) => a.name === h.name))
-    .slice(0, TURN_ADVERT_LIMIT);
+    .slice(0, Math.max(0, TURN_ADVERT_LIMIT - autoLoaded.length));
 
   // Semantic recall: append skills the vector lane surfaces that BM25 missed
   // (e.g. a Cyrillic query matching an English skill by meaning). Additive only
@@ -288,9 +359,14 @@ export async function buildTurnSkillContext(
 
   if (combinedAdvert.length === 0 && !autoBody) return empty;
 
+  // The advert has just handed over exact skill NAMES, so it must point at the
+  // tool that takes a name. It used to send the model to `darhai_search_skills`,
+  // which is the tool for the opposite problem - finding a name you do not have.
+  // Following that advice meant a search round-trip whose entire output was a
+  // ranked list the model was already holding, before it could read anything.
   const advertBlock =
     combinedAdvert.length > 0
-      ? `[Relevant skills for this request]\nThese skills may help. Load full instructions with the darhai_search_skills tool (or read the skill's SKILL.md) when useful:\n${combinedAdvert
+      ? `[Relevant skills for this request]\nThese skills may help. To use one, call \`${BUILTIN_READ_SKILL_TOOL_NAME}\` with its name below - you already have the names, so there is no need to search first:\n${combinedAdvert
           .map((h) => `- ${h.name}: ${h.description}`)
           .join('\n')}`
       : '';
