@@ -21,6 +21,7 @@
 
 import * as path from 'node:path';
 import { getBundledBunDir } from '@process/utils/shellEnv';
+import { getPlatformServices } from '@/common/platform';
 import { buildChildEnv } from './envAllowlist';
 
 export type IjfwNodeRuntime = {
@@ -38,9 +39,38 @@ export function resolveIjfwNodeRuntime(extraEnv: Record<string, string> = {}): I
     const bun = path.join(bunDir, process.platform === 'win32' ? 'bun.exe' : 'bun');
     return { command: bun, prefixArgs: [], env: buildChildEnv(extraEnv) };
   }
+  // No bun bundle. In a dev checkout that is expected, and Electron-as-Node
+  // works there because the fuse is applied at pack time. In a PACKAGED build it
+  // means the bundle is missing for this platform/arch - most plausibly x64
+  // without AVX2 and no staged `-baseline` build - and there the fuse is OFF, so
+  // this branch would not run the script at all: it would boot a second Darhai
+  // GUI, which loses the single-instance lock and quits. `node` from PATH fails
+  // cleanly on a machine without Node.js instead of opening a window nobody
+  // asked for.
+  if (isPackagedBuild()) {
+    return { command: 'node', prefixArgs: [], env: buildChildEnv(extraEnv) };
+  }
+
   return {
     command: process.execPath,
     prefixArgs: [],
     env: buildChildEnv({ ...extraEnv, ELECTRON_RUN_AS_NODE: '1' }),
   };
+}
+
+/**
+ * Is this a packaged build?
+ *
+ * Defaults to NOT packaged when platform services are unavailable, because that
+ * is what being unable to answer actually means here: the only callers without
+ * them are tests and tooling, never a shipped app. Guessing "packaged" there
+ * would send them down the PATH branch and change behaviour nothing asked to
+ * change.
+ */
+function isPackagedBuild(): boolean {
+  try {
+    return getPlatformServices().paths.isPackaged();
+  } catch {
+    return false;
+  }
 }
