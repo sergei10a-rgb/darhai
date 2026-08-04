@@ -32,6 +32,7 @@ import {
   verifyDirectoryFiles,
 } from './utils';
 import { writeFileAtomic } from './atomicWrite';
+import { isManagedBuiltinMcpCommand, resolveBuiltinMcpRuntime } from './builtinMcpRuntime';
 import { getOsUserName } from './osUserName';
 import { getDatabase } from '../services/database/export';
 import type { AcpBackendConfig } from '@/common/types/acpTypes';
@@ -769,6 +770,13 @@ const ensureBuiltinMcpServers = async (): Promise<void> => {
     const now = Date.now();
     let changed = false;
 
+    // Resolved ONCE per pass: every builtin entry below must agree on the
+    // runtime, and the resolution touches the filesystem. Registering `node`
+    // here is what made the whole builtin layer - calendar, notes, documents,
+    // memory, skill search, news, email, Cal.com - die on any machine without a
+    // JavaScript toolchain installed, which is every ordinary desktop user.
+    const mcpRuntime = resolveBuiltinMcpRuntime();
+
     const scriptPath = getBuiltinMcpScriptPath('builtin-mcp-image-gen');
 
     // Check if built-in image gen server already exists
@@ -796,7 +804,7 @@ const ensureBuiltinMcpServers = async (): Promise<void> => {
       JSON.stringify(
         {
           [BUILTIN_IMAGE_GEN_NAME]: {
-            command: 'node',
+            command: mcpRuntime.command,
             args: [scriptPathValue],
             env,
           },
@@ -812,10 +820,16 @@ const ensureBuiltinMcpServers = async (): Promise<void> => {
         existing.name !== BUILTIN_IMAGE_GEN_NAME &&
         BUILTIN_IMAGE_GEN_LEGACY_NAMES.includes(existing.name as (typeof BUILTIN_IMAGE_GEN_LEGACY_NAMES)[number]);
 
+      // A stored row needs refreshing when the script MOVED (app reinstalled
+      // elsewhere) or when the RUNTIME changed - the latter is how a row written
+      // before `resolveBuiltinMcpRuntime` existed, holding a bare `node`, gets
+      // migrated onto the bundled bun on the first launch after an update.
       const needsPathUpdate =
         existing.transport.type === 'stdio' &&
-        existing.transport.command === 'node' &&
-        ((existing.transport.args || [])[0] !== scriptPath || needsNameMigration);
+        isManagedBuiltinMcpCommand(existing.transport.command) &&
+        ((existing.transport.args || [])[0] !== scriptPath ||
+          existing.transport.command !== mcpRuntime.command ||
+          needsNameMigration);
 
       const needsMigration = shouldEnable && !existing.enabled;
 
@@ -828,7 +842,7 @@ const ensureBuiltinMcpServers = async (): Promise<void> => {
             : existing.transport.env;
           updatedTransport = {
             ...existing.transport,
-            ...(needsPathUpdate && { args: [scriptPath] }),
+            ...(needsPathUpdate && { command: mcpRuntime.command, args: [scriptPath] }),
             ...(needsMigration && { env: mergedEnv }),
           };
         }
@@ -859,7 +873,7 @@ const ensureBuiltinMcpServers = async (): Promise<void> => {
         builtin: true,
         transport: {
           type: 'stdio',
-          command: 'node',
+          command: mcpRuntime.command,
           args: [scriptPath],
           env,
         },
@@ -887,7 +901,7 @@ const ensureBuiltinMcpServers = async (): Promise<void> => {
       JSON.stringify(
         {
           [BUILTIN_SEARCH_SKILLS_NAME]: {
-            command: 'node',
+            command: mcpRuntime.command,
             args: [scriptPathValue],
             env: {},
           },
@@ -909,13 +923,14 @@ const ensureBuiltinMcpServers = async (): Promise<void> => {
         );
       const needsPathUpdate =
         existing.transport.type === 'stdio' &&
-        existing.transport.command === 'node' &&
-        (existing.transport.args || [])[0] !== searchSkillsScriptPath;
+        isManagedBuiltinMcpCommand(existing.transport.command) &&
+        ((existing.transport.args || [])[0] !== searchSkillsScriptPath ||
+          existing.transport.command !== mcpRuntime.command);
 
       if (needsNameMigration || needsPathUpdate) {
         const updatedTransport: IMcpServer['transport'] =
           needsPathUpdate && existing.transport.type === 'stdio'
-            ? { ...existing.transport, args: [searchSkillsScriptPath] }
+            ? { ...existing.transport, command: mcpRuntime.command, args: [searchSkillsScriptPath] }
             : existing.transport;
         mcpServers[searchSkillsExistingIdx] = {
           ...existing,
@@ -936,7 +951,7 @@ const ensureBuiltinMcpServers = async (): Promise<void> => {
         builtin: true,
         transport: {
           type: 'stdio',
-          command: 'node',
+          command: mcpRuntime.command,
           args: [searchSkillsScriptPath],
           env: {},
         },
@@ -964,7 +979,7 @@ const ensureBuiltinMcpServers = async (): Promise<void> => {
       JSON.stringify(
         {
           [BUILTIN_WEB_SEARCH_NAME]: {
-            command: 'node',
+            command: mcpRuntime.command,
             args: [scriptPathValue],
             env,
           },
@@ -975,14 +990,16 @@ const ensureBuiltinMcpServers = async (): Promise<void> => {
 
     if (webSearchExistingIdx >= 0) {
       const existing = mcpServers[webSearchExistingIdx];
-      if (existing.transport.type === 'stdio' && existing.transport.command === 'node') {
+      if (existing.transport.type === 'stdio' && isManagedBuiltinMcpCommand(existing.transport.command)) {
         const currentArgsFirst = (existing.transport.args || [])[0];
         const needsPathUpdate = currentArgsFirst !== webSearchScriptPath;
         const needsEnvUpdate = !envEquals(existing.transport.env ?? {}, webSearchEnv);
+        const needsCommandUpdate = existing.transport.command !== mcpRuntime.command;
 
-        if (needsPathUpdate || needsEnvUpdate) {
+        if (needsPathUpdate || needsEnvUpdate || needsCommandUpdate) {
           const updatedTransport: IMcpServer['transport'] = {
             ...existing.transport,
+            command: mcpRuntime.command,
             args: [webSearchScriptPath],
             env: webSearchEnv,
           };
@@ -1005,7 +1022,7 @@ const ensureBuiltinMcpServers = async (): Promise<void> => {
         builtin: true,
         transport: {
           type: 'stdio',
-          command: 'node',
+          command: mcpRuntime.command,
           args: [webSearchScriptPath],
           env: webSearchEnv,
         },
@@ -1048,17 +1065,27 @@ const ensureBuiltinMcpServers = async (): Promise<void> => {
       };
 
       const buildPersonalDataOriginalJson = (scriptPathValue: string, env: Record<string, string>) =>
-        JSON.stringify({ [BUILTIN_PERSONAL_DATA_NAME]: { command: 'node', args: [scriptPathValue], env } }, null, 2);
+        JSON.stringify(
+          { [BUILTIN_PERSONAL_DATA_NAME]: { command: mcpRuntime.command, args: [scriptPathValue], env } },
+          null,
+          2
+        );
 
       if (personalDataExistingIdx >= 0) {
         const existing = mcpServers[personalDataExistingIdx];
-        if (existing.transport.type === 'stdio' && existing.transport.command === 'node') {
+        if (existing.transport.type === 'stdio' && isManagedBuiltinMcpCommand(existing.transport.command)) {
           const needsPathUpdate = (existing.transport.args || [])[0] !== personalDataScriptPath;
           const needsEnvUpdate = !envEquals(existing.transport.env ?? {}, personalDataEnv);
-          if (needsPathUpdate || needsEnvUpdate) {
+          const needsCommandUpdate = existing.transport.command !== mcpRuntime.command;
+          if (needsPathUpdate || needsEnvUpdate || needsCommandUpdate) {
             mcpServers[personalDataExistingIdx] = {
               ...existing,
-              transport: { ...existing.transport, args: [personalDataScriptPath], env: personalDataEnv },
+              transport: {
+                ...existing.transport,
+                command: mcpRuntime.command,
+                args: [personalDataScriptPath],
+                env: personalDataEnv,
+              },
               originalJson: buildPersonalDataOriginalJson(personalDataScriptPath, personalDataEnv),
               updatedAt: now,
             };
@@ -1075,7 +1102,7 @@ const ensureBuiltinMcpServers = async (): Promise<void> => {
           builtin: true,
           transport: {
             type: 'stdio',
-            command: 'node',
+            command: mcpRuntime.command,
             args: [personalDataScriptPath],
             env: personalDataEnv,
           },
@@ -1274,7 +1301,8 @@ const initStorage = async () => {
     if (!splitMigrationDone) {
       const legacyCustomAgents =
         ((await configFile.get('acp.customAgents').catch((): undefined => undefined)) as
-          AcpBackendConfig[] | undefined) || [];
+          | AcpBackendConfig[]
+          | undefined) || [];
       const currentAssistants =
         ((await configFile.get('assistants').catch((): undefined => undefined)) as AcpBackendConfig[] | undefined) ||
         [];
