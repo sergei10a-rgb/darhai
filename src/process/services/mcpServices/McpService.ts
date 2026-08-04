@@ -240,11 +240,58 @@ export class McpService {
   /**
    * Test connection to an MCP server
    */
+  /**
+   * Give a remote server the bearer token the user signed in for, if it has one.
+   *
+   * `McpOAuthService` could already log a user in and store a token, but nothing
+   * ever put that token on a request - so a hosted connector showed a successful
+   * sign-in and then failed to connect, with no way for the user to tell the two
+   * apart. Returns a COPY: the stored server keeps no credential, so nothing here
+   * can leak one into `mcp.config` on disk.
+   *
+   * Imported lazily, and that is not a style choice. Upstream added this as a
+   * top-level import and it dragged the aioncli OAuth chain into module load,
+   * where a static field initialiser hit its own class before initialisation -
+   * a TDZ ReferenceError that crashed the app at startup, fixed only in a
+   * follow-up commit (`eaa75edfb`). This fork never took that regression; the
+   * deferred import is what keeps it that way.
+   *
+   * @param server - the server about to be contacted
+   * @returns the server, or a copy carrying `Authorization`
+   */
+  private async attachOAuthToken(server: IMcpServer): Promise<IMcpServer> {
+    const transport = server.transport;
+    if (transport.type === 'stdio') return server; // no headers to carry
+    // A header the user set by hand wins: they may be using a service token
+    // deliberately, and silently replacing it would be very hard to diagnose.
+    if (transport.headers?.Authorization) return server;
+
+    try {
+      const { mcpOAuthService } = await import('./McpOAuthService');
+      const token = await mcpOAuthService.getValidToken(server);
+      if (!token) return server;
+      return {
+        ...server,
+        transport: { ...transport, headers: { ...transport.headers, Authorization: `Bearer ${token}` } },
+      };
+    } catch (error) {
+      // Never block a connection on the token lookup - an un-authenticated
+      // attempt fails with the server's own message, which is more useful than
+      // an error from this layer.
+      console.warn(
+        `[McpService] Could not attach OAuth token for "${server.name}": ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
+      return server;
+    }
+  }
+
   async testMcpConnection(server: IMcpServer): Promise<McpConnectionTestResult> {
     // Use the first available agent to test the connection; the test logic in the base class is generic
     const firstAgent = this.agents.values().next().value;
     if (firstAgent) {
-      return await firstAgent.testMcpConnection(server);
+      return await firstAgent.testMcpConnection(await this.attachOAuthToken(server));
     }
     return {
       success: false,
