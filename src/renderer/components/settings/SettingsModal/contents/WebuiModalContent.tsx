@@ -22,6 +22,7 @@ import { Button, Form, Input, Message, Switch, Tooltip } from '@arco-design/web-
 import React, { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettingsViewMode } from '../settingsViewContext';
+import { resolveActivePort, resolveWebuiDisplayUrl } from './webuiAddress';
 
 /**
  * Preference row component
@@ -78,9 +79,24 @@ const WebuiModalContent: React.FC = () => {
   const [status, setStatus] = useState<IWebUIStatus | null>(null);
   const [loading, setLoading] = useState(false);
   const [startLoading, setStartLoading] = useState(false);
-  const port = WEBUI_DEFAULT_PORT;
+  /**
+   * The port we ASK the server for - never the one to build a URL from.
+   *
+   * `startWebServer` walks 25808..25818 when the port is taken (a second Darhai
+   * instance is enough to trigger it) and reports back which one it bound. This
+   * panel used a single hardcoded constant for both roles, so once the server
+   * moved the panel kept advertising the default: the address text was wrong and
+   * the pairing QR code pointed a phone at a port with nothing on it.
+   */
+  const requestedPort = WEBUI_DEFAULT_PORT;
   const [webuiEnabled, setWebuiEnabled] = useState(false);
   const [allowRemotePreference, setAllowRemotePreference] = useState(false);
+  /**
+   * The port the server is ACTUALLY on. Everything a human acts on - the address
+   * shown, the copy button, the QR a phone scans - must be built from this.
+   * Falls back to the default only before the server has answered.
+   */
+  const activePort = resolveActivePort(status, WEBUI_DEFAULT_PORT);
   const [cachedIP, setCachedIP] = useState<string | null>(null);
   const [cachedPassword, setCachedPassword] = useState<string | null>(null);
   // Flag for plaintext password display (first startup and not copied)
@@ -222,14 +238,12 @@ const WebuiModalContent: React.FC = () => {
 
   // Get display URL
   const getDisplayUrl = useCallback(() => {
-    const currentIP = getLocalIP();
-    const currentPort = status?.port || port;
-    const useRemote = status?.running ? status.allowRemote : allowRemotePreference;
-    if (useRemote && currentIP) {
-      return `http://${currentIP}:${currentPort}`;
-    }
-    return `http://localhost:${currentPort}`;
-  }, [allowRemotePreference, getLocalIP, status?.allowRemote, status?.port, status?.running, port]);
+    return resolveWebuiDisplayUrl(status, {
+      defaultPort: WEBUI_DEFAULT_PORT,
+      lanIP: getLocalIP(),
+      preferRemote: allowRemotePreference,
+    });
+  }, [allowRemotePreference, getLocalIP, status]);
 
   // Start/Stop WebUI
   const handleToggle = async (enabled: boolean) => {
@@ -245,17 +259,20 @@ const WebuiModalContent: React.FC = () => {
 
     try {
       if (enabled) {
-        const localUrl = `http://localhost:${port}`;
-
         // Reduce start timeout to 3s (server starts quickly)
         const startResult = await Promise.race([
-          webui.start.invoke({ port, allowRemote: allowRemotePreference }),
+          webui.start.invoke({ port: requestedPort, allowRemote: allowRemotePreference }),
           new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
         ]);
 
         if (startResult && startResult.success && startResult.data) {
-          const responseIP = startResult.data.lanIP || currentIP;
-          const responsePassword = startResult.data.initialPassword;
+          const data = startResult.data;
+          const responseIP = data.lanIP || currentIP;
+          const responsePassword = data.initialPassword;
+          // The bridge already resolves these from the listening socket. Prefer
+          // them over anything rebuilt here, so a server that walked past the
+          // default port is described by the port it is really on.
+          const boundPort = data.port ?? requestedPort;
 
           if (responseIP) setCachedIP(responseIP);
           if (responsePassword) {
@@ -266,22 +283,27 @@ const WebuiModalContent: React.FC = () => {
           setStatus((prev) => ({
             ...(prev || { adminUsername: 'admin' }),
             running: true,
-            port,
+            port: boundPort,
             allowRemote: allowRemotePreference,
-            localUrl,
-            networkUrl: allowRemotePreference && responseIP ? `http://${responseIP}:${port}` : undefined,
+            localUrl: data.localUrl ?? `http://localhost:${boundPort}`,
+            networkUrl:
+              data.networkUrl ??
+              (allowRemotePreference && responseIP ? `http://${responseIP}:${boundPort}` : undefined),
             lanIP: responseIP,
             initialPassword: responsePassword || cachedPassword || prev?.initialPassword,
           }));
         } else {
+          // The start call has not answered yet, so the bound port is unknown.
+          // Show the requested one provisionally; the `statusChanged` listener
+          // above corrects it with the real port as soon as the server reports.
           setStatus((prev) => ({
             ...(prev || { adminUsername: 'admin' }),
             running: true,
-            port,
+            port: requestedPort,
             allowRemote: allowRemotePreference,
-            localUrl,
+            localUrl: `http://localhost:${requestedPort}`,
             lanIP: currentIP || prev?.lanIP,
-            networkUrl: allowRemotePreference && currentIP ? `http://${currentIP}:${port}` : undefined,
+            networkUrl: allowRemotePreference && currentIP ? `http://${currentIP}:${requestedPort}` : undefined,
             initialPassword: cachedPassword || prev?.initialPassword,
           }));
         }
@@ -328,13 +350,17 @@ const WebuiModalContent: React.FC = () => {
 
         // 2. Restart immediately (server stops quickly)
         const startResult = await Promise.race([
-          webui.start.invoke({ port, allowRemote: checked }),
+          webui.start.invoke({ port: requestedPort, allowRemote: checked }),
           new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
         ]);
 
         if (startResult && startResult.success && startResult.data) {
-          const responseIP = startResult.data.lanIP;
-          const responsePassword = startResult.data.initialPassword;
+          const data = startResult.data;
+          const responseIP = data.lanIP;
+          const responsePassword = data.initialPassword;
+          // Same reason as the start path: this is a RESTART, so the port can
+          // move between the old instance and the new one.
+          const boundPort = data.port ?? requestedPort;
 
           if (responseIP) setCachedIP(responseIP);
           if (responsePassword) setCachedPassword(responsePassword);
@@ -342,10 +368,10 @@ const WebuiModalContent: React.FC = () => {
           setStatus((prev) => ({
             ...(prev || { adminUsername: 'admin' }),
             running: true,
-            port,
+            port: boundPort,
             allowRemote: checked,
-            localUrl: `http://localhost:${port}`,
-            networkUrl: checked && responseIP ? `http://${responseIP}:${port}` : undefined,
+            localUrl: data.localUrl ?? `http://localhost:${boundPort}`,
+            networkUrl: data.networkUrl ?? (checked && responseIP ? `http://${responseIP}:${boundPort}` : undefined),
             lanIP: responseIP,
             initialPassword: responsePassword || cachedPassword || prev?.initialPassword,
           }));
@@ -415,7 +441,7 @@ const WebuiModalContent: React.FC = () => {
                 ...prev,
                 allowRemote: checked,
                 lanIP: existingIP || prev.lanIP,
-                networkUrl: checked && existingIP ? `http://${existingIP}:${port}` : undefined,
+                networkUrl: checked && existingIP ? `http://${existingIP}:${activePort}` : undefined,
               }
             : null
         );
