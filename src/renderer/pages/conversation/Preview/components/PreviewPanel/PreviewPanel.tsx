@@ -7,6 +7,7 @@
 import { ipcBridge } from '@/common';
 import { downloadFileFromPath, downloadTextContent } from '@/renderer/utils/file/download';
 import { useLayoutContext } from '@/renderer/hooks/context/LayoutContext';
+import { ErrorBoundary } from '@renderer/components/ErrorBoundary';
 import { PreviewToolbarExtrasProvider, type PreviewToolbarExtras } from '../../context/PreviewToolbarExtrasContext';
 import { usePreviewContext } from '../../context/PreviewContext';
 import { useResizableSplit } from '@/renderer/hooks/ui/useResizableSplit';
@@ -805,8 +806,22 @@ const PreviewPanel: React.FC = () => {
           />
         )}
 
-        {/* Preview content */}
-        {renderContent()}
+        {/*
+          Preview content, contained.
+
+          `renderContent` mounts ten independent viewers - PDF, PPT, Office,
+          Excel, image, URL, code, diff, markdown, HTML - most of them parsing a
+          file the user picked rather than anything we produced. A throw in any
+          one of them used to unmount the whole surrounding page: the entire
+          conversation, composer and workspace on /conversation/:id, and on
+          /project/:projectId it went further and took HashRouter with it, so
+          back and forward stopped working until the window was reloaded.
+
+          One malformed file should cost that file's tab. Keyed on the tab, so
+          the error clears the moment the user switches away and does not follow
+          a healthy document into the panel.
+        */}
+        <ErrorBoundary key={activeTabId ?? 'preview'}>{renderContent()}</ErrorBoundary>
 
         {/* Tab context menu */}
         {/* eslint-disable-next-line max-len */}

@@ -17,6 +17,7 @@ import { resilientFetch } from './resilientFetch';
 import { isProviderCircuitOpen, isModelLockedOut } from '@process/services/resilience';
 import { pickModel, usageCounter, type RoundRobinCursor, type RoutingCandidate } from '@process/services/routing';
 import { getModelPricing, type IModelPricing } from '@process/services/cost/ModelPricing';
+import { readJsonBody } from './readJsonBody';
 
 /**
  * A minimal one-shot LLM completion for cheap background tasks (e.g. the project
@@ -301,7 +302,10 @@ export async function oneShotComplete(
         },
       }),
     });
-    const data = (await res.json()) as { content?: Array<{ text?: string }>; error?: { message?: string } };
+    const data = await readJsonBody<{ content?: Array<{ text?: string }>; error?: { message?: string } }>(
+      res,
+      'anthropic'
+    );
     if (!res.ok) throw new Error(`${res.status}: ${data.error?.message || 'request failed'}`);
     return (data.content?.[0]?.text || '').trim();
   }
@@ -324,10 +328,10 @@ export async function oneShotComplete(
         },
       }),
     });
-    const data = (await res.json()) as {
+    const data = await readJsonBody<{
       candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
       error?: { message?: string };
-    };
+    }>(res, 'gemini');
     if (!res.ok) throw new Error(`${res.status}: ${data.error?.message || 'request failed'}`);
     return (data.candidates?.[0]?.content?.parts?.[0]?.text || '').trim();
   }
@@ -355,10 +359,10 @@ export async function oneShotComplete(
       },
     }),
   });
-  const data = (await res.json()) as {
+  const data = await readJsonBody<{
     choices?: Array<{ message?: { content?: string } }>;
     error?: { message?: string };
-  };
+  }>(res, 'openai-compatible');
   if (!res.ok) throw new Error(`${res.status}: ${data.error?.message || 'request failed'}`);
   return (data.choices?.[0]?.message?.content || '').trim();
 }

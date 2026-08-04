@@ -123,6 +123,16 @@ export class WCoreManager extends BaseAgentManager<WCoreManagerData, string> {
   readonly approvalStore = new WCoreApprovalStore();
   private agent: WCoreAgent | null = null;
   private agentReady: Promise<void>;
+  /**
+   * Why the agent bootstrap failed, if it did.
+   *
+   * `start()` used to be swallowed by a bare `.catch(() => {})`, and `sendMessage`
+   * guarded its send with `if (this.agent)` and no else. So when bootstrap
+   * failed the user pressed send, the task went to 'pending', and NOTHING came
+   * back - no reply, no error, no finish - until the app was restarted. Keeping
+   * the reason lets the turn fail out loud instead.
+   */
+  private startError: Error | null = null;
   private currentMode: string = 'default';
   private _capabilities: WCoreCapabilities | null = null;
   private _configSentAt: number | null = null;
@@ -172,7 +182,10 @@ export class WCoreManager extends BaseAgentManager<WCoreManagerData, string> {
     void this.refreshGuardConfig();
 
     // Start the agent bootstrap - store promise so sendMessage can await it
-    this.agentReady = this.start().catch(() => {});
+    this.agentReady = this.start().catch((error: unknown) => {
+      this.startError = error instanceof Error ? error : new Error(String(error));
+      mainError('[WCoreManager]', `agent bootstrap failed: ${this.startError.message}`);
+    });
   }
 
   /**
@@ -347,9 +360,54 @@ export class WCoreManager extends BaseAgentManager<WCoreManagerData, string> {
     await this.refreshGuardConfig();
     this._messageSentAt = Date.now();
     mainLog('[WCoreManager]', `message sent: msg_id=${data.msg_id}`);
-    if (this.agent) {
-      await this.agent.send(data.content, data.msg_id, data.files);
+    if (!this.agent) {
+      // There is no agent to send to, so this turn can never produce a reply.
+      // Say so and end it. Returning quietly - the previous behaviour - left the
+      // task at 'pending' with a spinner the user could only clear by
+      // restarting the app.
+      this.failTurn(
+        data.msg_id,
+        this.startError
+          ? `Agent failed to start: ${this.startError.message}`
+          : 'Agent is not available for this conversation'
+      );
+      return;
     }
+    await this.agent.send(data.content, data.msg_id, data.files);
+  }
+
+  /**
+   * End the current turn with a visible error.
+   *
+   * Same error+finish pair `handleProcessExit` emits, because the renderer needs
+   * both: the error to show, and the finish to clear `streamRunning` and unlock
+   * the composer. Emitting only one leaves the UI mid-turn.
+   *
+   * @param activeMsgId - the message id the failed turn was answering
+   * @param message - user-facing reason
+   */
+  private failTurn(activeMsgId: string, message: string): void {
+    mainError('[WCoreManager]', `turn failed: ${message}`);
+    this.status = 'finished';
+    void this.handleTurnEnd();
+
+    const errorMessage: IResponseMessage = {
+      type: 'error',
+      conversation_id: this.conversation_id,
+      msg_id: activeMsgId,
+      data: message,
+    };
+    ipcBridge.conversation.responseStream.emit(errorMessage);
+    this.emitToEventBuses(errorMessage);
+
+    const finishMessage: IResponseMessage = {
+      type: 'finish',
+      conversation_id: this.conversation_id,
+      msg_id: uuid(),
+      data: null,
+    };
+    ipcBridge.conversation.responseStream.emit(finishMessage);
+    this.emitToEventBuses(finishMessage);
   }
 
   /**
@@ -965,6 +1023,12 @@ export class WCoreManager extends BaseAgentManager<WCoreManagerData, string> {
       if (processedData.type === 'finish') {
         const total = this._messageSentAt ? `${Date.now() - this._messageSentAt}ms` : 'n/a';
         mainLog('[WCoreManager]', `stream_end: msg_id=${processedData.msg_id}, total=${total}`, processedData.data);
+        // The turn is over, so say so. `status` was otherwise only ever set to
+        // 'finished' on a content/tool_group frame, so a turn that produced an
+        // error and no content stayed 'pending' forever. `conversationBridge`
+        // hydrates the renderer from this field, so the stuck value survived a
+        // reload: the spinner came back and the composer stayed locked.
+        this.status = 'finished';
         this._messageSentAt = null;
         this.heartbeatActive = false;
         this.heartbeatMissedCount = 0;

@@ -1,7 +1,7 @@
 {
   "$schema": "./schema/catalog.schema.json",
   "version": "1.0.0",
-  "publishedAt": "2026-05-28T06:23:16.505Z",
+  "publishedAt": "2026-08-04T19:08:23.337Z",
   "entries": [
     {
       "id": "io.github.taylorwilsdon/google-workspace-mcp",
@@ -9,11 +9,7 @@
       "shortDescription": "Gmail, Calendar, Drive, Docs, Sheets, Slides, Chat, Forms, Tasks - every Google service in one MCP.",
       "iconUrl": "icons/google.svg",
       "tier": "core",
-      "categories": [
-        "communication",
-        "files-and-docs",
-        "calendar"
-      ],
+      "categories": ["communication", "files-and-docs", "calendar"],
       "maintainerType": "community",
       "verifiedByWayland": "2026-05-12",
       "popularityRank": 1,
@@ -27,10 +23,7 @@
       "shortDescription": "Search messages and threads, post replies, manage canvases, look up users - Slack's official MCP.",
       "iconUrl": "icons/slack.svg",
       "tier": "core",
-      "categories": [
-        "communication",
-        "productivity"
-      ],
+      "categories": ["communication", "productivity"],
       "maintainerType": "official",
       "verifiedByWayland": "2026-05-12",
       "popularityRank": 3,
@@ -44,10 +37,7 @@
       "shortDescription": "Repos, issues, pull requests, Actions, and code search - GitHub's official hosted MCP with OAuth.",
       "iconUrl": "icons/github.svg",
       "tier": "builder",
-      "categories": [
-        "developer",
-        "code"
-      ],
+      "categories": ["developer", "code"],
       "maintainerType": "official",
       "verifiedByWayland": "2026-05-12",
       "popularityRank": 4,
@@ -61,11 +51,7 @@
       "shortDescription": "Read and write pages, databases, and comments. Notion's official hosted MCP with OAuth.",
       "iconUrl": "icons/notion.svg",
       "tier": "core",
-      "categories": [
-        "productivity",
-        "files-and-docs",
-        "knowledge"
-      ],
+      "categories": ["productivity", "files-and-docs", "knowledge"],
       "maintainerType": "official",
       "verifiedByWayland": "2026-05-12",
       "popularityRank": 5,
@@ -79,11 +65,7 @@
       "shortDescription": "Outlook, Teams, OneDrive, Excel, To Do, OneNote, Calendar - all of Microsoft Graph in one MCP.",
       "iconUrl": "icons/microsoft.svg",
       "tier": "core",
-      "categories": [
-        "communication",
-        "files-and-docs",
-        "calendar"
-      ],
+      "categories": ["communication", "files-and-docs", "calendar"],
       "maintainerType": "community",
       "verifiedByWayland": "2026-05-12",
       "popularityRank": 6,
@@ -93,13 +75,11 @@
     },
     {
       "id": "com.darhai/imap-mcp",
-      "name": "Email (IMAP) - read, draft & send",
-      "shortDescription": "Read your mail, write drafts, and send - but only after Дархай shows you the whole message and you press Send yourself.",
+      "name": "Email (IMAP) - read, draft & send with your approval",
+      "shortDescription": "Read your mail, write drafts, and send - but only after Дархай shows you the whole message and you press Send yourself. The model can propose; it cannot send on its own. Works with iCloud, Gmail, Fastmail, Proton Bridge and any IMAP/SMTP host.",
       "iconUrl": "icons/email.svg",
       "tier": "core",
-      "categories": [
-        "communication"
-      ],
+      "categories": ["communication"],
       "maintainerType": "wayland",
       "verifiedByWayland": "2026-08-01",
       "popularityRank": 8,
@@ -113,10 +93,7 @@
       "shortDescription": "Sandboxed local-file read/write/edit/search across user-allowed directories.",
       "iconUrl": "icons/filesystem.svg",
       "tier": "core",
-      "categories": [
-        "files-and-docs",
-        "developer"
-      ],
+      "categories": ["files-and-docs", "developer"],
       "maintainerType": "community",
       "verifiedByWayland": "2026-05-12",
       "popularityRank": 9,
@@ -130,10 +107,7 @@
       "shortDescription": "Independent web search index - fast, private, and ad-free, powered by Brave's own crawler.",
       "iconUrl": "icons/brave.svg",
       "tier": "core",
-      "categories": [
-        "search",
-        "research"
-      ],
+      "categories": ["search", "research"],
       "maintainerType": "official",
       "verifiedByWayland": "2026-05-12",
       "popularityRank": 10,
@@ -147,10 +121,7 @@
       "shortDescription": "Tasks, projects, labels, filters, and reminders - Doist's official Todoist MCP.",
       "iconUrl": "icons/todoist.svg",
       "tier": "core",
-      "categories": [
-        "productivity",
-        "tasks"
-      ],
+      "categories": ["productivity", "tasks"],
       "maintainerType": "official",
       "verifiedByWayland": "2026-05-12",
       "popularityRank": 11,
@@ -164,11 +135,7 @@
       "shortDescription": "Mongolian headlines the moment you install it, plus any RSS or Atom feed and Hacker News. No API key, ever.",
       "iconUrl": "icons/news.svg",
       "tier": "core",
-      "categories": [
-        "search",
-        "news",
-        "research"
-      ],
+      "categories": ["search", "news", "research"],
       "maintainerType": "wayland",
       "verifiedByWayland": "2026-08-01",
       "popularityRank": 12,
@@ -182,11 +149,7 @@
       "shortDescription": "Issues, projects, cycles, and roadmaps - Linear's official hosted MCP with OAuth.",
       "iconUrl": "icons/linear.svg",
       "tier": "worker",
-      "categories": [
-        "productivity",
-        "tasks",
-        "developer"
-      ],
+      "categories": ["productivity", "tasks", "developer"],
       "maintainerType": "official",
       "verifiedByWayland": "2026-05-12",
       "popularityRank": 15,
@@ -200,11 +163,7 @@
       "shortDescription": "Jira issues, sprints, and Confluence pages - Atlassian's official hosted MCP with OAuth.",
       "iconUrl": "icons/atlassian.svg",
       "tier": "worker",
-      "categories": [
-        "productivity",
-        "tasks",
-        "knowledge"
-      ],
+      "categories": ["productivity", "tasks", "knowledge"],
       "maintainerType": "official",
       "verifiedByWayland": "2026-05-12",
       "popularityRank": 16,
@@ -218,10 +177,7 @@
       "shortDescription": "Tasks, projects, sections, and goals - Asana's official hosted MCP with OAuth.",
       "iconUrl": "icons/asana.svg",
       "tier": "worker",
-      "categories": [
-        "productivity",
-        "tasks"
-      ],
+      "categories": ["productivity", "tasks"],
       "maintainerType": "official",
       "verifiedByWayland": "2026-05-12",
       "popularityRank": 17,
@@ -235,10 +191,7 @@
       "shortDescription": "Tasks, lists, docs, and goals - ClickUp's official hosted MCP with OAuth.",
       "iconUrl": "icons/clickup.svg",
       "tier": "worker",
-      "categories": [
-        "productivity",
-        "tasks"
-      ],
+      "categories": ["productivity", "tasks"],
       "maintainerType": "official",
       "verifiedByWayland": "2026-05-12",
       "popularityRank": 18,
@@ -252,10 +205,7 @@
       "shortDescription": "Channel messages, chats, meetings, and presence via Microsoft Graph - community-maintained MCP server.",
       "iconUrl": "icons/teams.svg",
       "tier": "worker",
-      "categories": [
-        "communication",
-        "productivity"
-      ],
+      "categories": ["communication", "productivity"],
       "maintainerType": "community",
       "verifiedByWayland": "2026-05-12",
       "popularityRank": 19,
@@ -269,9 +219,7 @@
       "shortDescription": "Send and read messages across chats, channels, and groups using your Telegram user account.",
       "iconUrl": "icons/telegram.svg",
       "tier": "worker",
-      "categories": [
-        "communication"
-      ],
+      "categories": ["communication"],
       "maintainerType": "community",
       "verifiedByWayland": "2026-05-12",
       "popularityRank": 21,
@@ -285,10 +233,7 @@
       "shortDescription": "Schedule meetings, list recordings, manage chat, and read your calendar - Zoom's official hosted MCP.",
       "iconUrl": "icons/zoom.svg",
       "tier": "worker",
-      "categories": [
-        "communication",
-        "calendar"
-      ],
+      "categories": ["communication", "calendar"],
       "maintainerType": "official",
       "verifiedByWayland": "2026-05-12",
       "popularityRank": 22,
@@ -302,10 +247,7 @@
       "shortDescription": "List event types, scheduled events, and invitees - Calendly's official hosted MCP with OAuth.",
       "iconUrl": "icons/calendly.svg",
       "tier": "worker",
-      "categories": [
-        "calendar",
-        "productivity"
-      ],
+      "categories": ["calendar", "productivity"],
       "maintainerType": "official",
       "verifiedByWayland": "2026-05-12",
       "popularityRank": 24,
@@ -316,13 +258,10 @@
     {
       "id": "com.darhai/cal-com-mcp",
       "name": "Cal.com Scheduling (read-only)",
-      "shortDescription": "See your Cal.com bookings, event types and free slots, and draft a booking for you to confirm. It never books or cancels on its own.",
+      "shortDescription": "See your Cal.com bookings, event types and free slots, and let the assistant draft a booking for you to confirm. It never books, cancels or reschedules on its own.",
       "iconUrl": "icons/cal-com.svg",
       "tier": "worker",
-      "categories": [
-        "calendar",
-        "productivity"
-      ],
+      "categories": ["calendar", "productivity"],
       "maintainerType": "wayland",
       "verifiedByWayland": "2026-08-01",
       "popularityRank": 25,
@@ -336,10 +275,7 @@
       "shortDescription": "Contacts, companies, deals, and tickets - HubSpot's official hosted MCP with OAuth.",
       "iconUrl": "icons/hubspot.svg",
       "tier": "worker",
-      "categories": [
-        "sales",
-        "crm"
-      ],
+      "categories": ["sales", "crm"],
       "maintainerType": "official",
       "verifiedByWayland": "2026-05-12",
       "popularityRank": 26,
@@ -353,10 +289,7 @@
       "shortDescription": "People, companies, deals, and lists in the Attio CRM via API token.",
       "iconUrl": "icons/attio.svg",
       "tier": "worker",
-      "categories": [
-        "sales",
-        "crm"
-      ],
+      "categories": ["sales", "crm"],
       "maintainerType": "community",
       "verifiedByWayland": "2026-05-12",
       "popularityRank": 28,
@@ -370,10 +303,7 @@
       "shortDescription": "Read, write, search, and back-link notes in any local Obsidian vault - no plugin required.",
       "iconUrl": "icons/obsidian.svg",
       "tier": "worker",
-      "categories": [
-        "knowledge",
-        "files-and-docs"
-      ],
+      "categories": ["knowledge", "files-and-docs"],
       "maintainerType": "community",
       "verifiedByWayland": "2026-05-12",
       "popularityRank": 30,
@@ -387,10 +317,7 @@
       "shortDescription": "Highlights, books, articles, and your Reader inbox - Readwise's official hosted MCP.",
       "iconUrl": "icons/readwise.svg",
       "tier": "worker",
-      "categories": [
-        "knowledge",
-        "research"
-      ],
+      "categories": ["knowledge", "research"],
       "maintainerType": "official",
       "verifiedByWayland": "2026-05-12",
       "popularityRank": 31,
@@ -404,10 +331,7 @@
       "shortDescription": "Bookmarks, collections, and tags - Raindrop.io's official hosted MCP with OAuth.",
       "iconUrl": "icons/raindrop.svg",
       "tier": "worker",
-      "categories": [
-        "knowledge",
-        "research"
-      ],
+      "categories": ["knowledge", "research"],
       "maintainerType": "official",
       "verifiedByWayland": "2026-05-12",
       "popularityRank": 32,
@@ -421,10 +345,7 @@
       "shortDescription": "Projects, issues, merge requests, and pipelines - GitLab's official hosted MCP with OAuth.",
       "iconUrl": "icons/gitlab.svg",
       "tier": "builder",
-      "categories": [
-        "developer",
-        "code"
-      ],
+      "categories": ["developer", "code"],
       "maintainerType": "official",
       "verifiedByWayland": "2026-05-12",
       "popularityRank": 33,
@@ -438,10 +359,7 @@
       "shortDescription": "Customers, payments, subscriptions, invoices, and refunds - Stripe's official hosted MCP.",
       "iconUrl": "icons/stripe.svg",
       "tier": "builder",
-      "categories": [
-        "payments",
-        "developer"
-      ],
+      "categories": ["payments", "developer"],
       "maintainerType": "official",
       "verifiedByWayland": "2026-05-12",
       "popularityRank": 34,
@@ -455,10 +373,7 @@
       "shortDescription": "Deployments, projects, env vars, and logs - Vercel's official hosted MCP with OAuth.",
       "iconUrl": "icons/vercel.svg",
       "tier": "builder",
-      "categories": [
-        "developer",
-        "devops"
-      ],
+      "categories": ["developer", "devops"],
       "maintainerType": "official",
       "verifiedByWayland": "2026-05-12",
       "popularityRank": 35,
@@ -472,11 +387,7 @@
       "shortDescription": "Projects, schema, tables, RLS, edge functions, and logs - Supabase's official hosted MCP.",
       "iconUrl": "icons/supabase.svg",
       "tier": "builder",
-      "categories": [
-        "developer",
-        "data",
-        "devops"
-      ],
+      "categories": ["developer", "data", "devops"],
       "maintainerType": "official",
       "verifiedByWayland": "2026-05-12",
       "popularityRank": 36,
@@ -490,11 +401,7 @@
       "shortDescription": "Workers, Pages, DNS, R2, KV, D1, and Analytics - Cloudflare's official hosted MCP with OAuth.",
       "iconUrl": "icons/cloudflare.svg",
       "tier": "builder",
-      "categories": [
-        "developer",
-        "devops",
-        "infrastructure"
-      ],
+      "categories": ["developer", "devops", "infrastructure"],
       "maintainerType": "official",
       "verifiedByWayland": "2026-05-12",
       "popularityRank": 37,
@@ -508,11 +415,7 @@
       "shortDescription": "Call any AWS CLI command (all services) and get natural-language command suggestions via AWS Labs' official MCP server.",
       "iconUrl": "icons/aws.svg",
       "tier": "builder",
-      "categories": [
-        "developer",
-        "devops",
-        "infrastructure"
-      ],
+      "categories": ["developer", "devops", "infrastructure"],
       "maintainerType": "official",
       "verifiedByWayland": "2026-05-12",
       "popularityRank": 38,
@@ -526,11 +429,7 @@
       "shortDescription": "Projects, compute, Cloud Storage, BigQuery, and Cloud Run via Application Default Credentials.",
       "iconUrl": "icons/gcloud.svg",
       "tier": "builder",
-      "categories": [
-        "developer",
-        "devops",
-        "infrastructure"
-      ],
+      "categories": ["developer", "devops", "infrastructure"],
       "maintainerType": "official",
       "verifiedByWayland": "2026-05-12",
       "popularityRank": 39,
@@ -544,10 +443,7 @@
       "shortDescription": "Issues, events, releases, and performance traces - Sentry's official hosted MCP with OAuth.",
       "iconUrl": "icons/sentry.svg",
       "tier": "builder",
-      "categories": [
-        "developer",
-        "observability"
-      ],
+      "categories": ["developer", "observability"],
       "maintainerType": "official",
       "verifiedByWayland": "2026-05-12",
       "popularityRank": 40,
@@ -561,10 +457,7 @@
       "shortDescription": "Up-to-date library and SDK docs (React, Next.js, Stripe, Supabase, and 9000+ others) for accurate code generation.",
       "iconUrl": "icons/context7.svg",
       "tier": "builder",
-      "categories": [
-        "developer",
-        "research"
-      ],
+      "categories": ["developer", "research"],
       "maintainerType": "official",
       "verifiedByWayland": "2026-05-12",
       "popularityRank": 41,
@@ -578,10 +471,7 @@
       "shortDescription": "Run read-only SQL, inspect schemas, and explain query plans against any Postgres database.",
       "iconUrl": "icons/postgres.svg",
       "tier": "builder",
-      "categories": [
-        "developer",
-        "data"
-      ],
+      "categories": ["developer", "data"],
       "maintainerType": "community",
       "verifiedByWayland": "2026-05-12",
       "popularityRank": 43,
@@ -595,11 +485,7 @@
       "shortDescription": "Headless browser automation - click, type, navigate, screenshot, and assert. Powered by Playwright.",
       "iconUrl": "icons/playwright.svg",
       "tier": "builder",
-      "categories": [
-        "developer",
-        "automation",
-        "browser"
-      ],
+      "categories": ["developer", "automation", "browser"],
       "maintainerType": "official",
       "verifiedByWayland": "2026-05-12",
       "popularityRank": 44,
@@ -613,10 +499,7 @@
       "shortDescription": "Live page inspection, console, network, performance, and Lighthouse audits via Chrome DevTools Protocol.",
       "iconUrl": "icons/chrome.svg",
       "tier": "builder",
-      "categories": [
-        "developer",
-        "browser"
-      ],
+      "categories": ["developer", "browser"],
       "maintainerType": "official",
       "verifiedByWayland": "2026-05-12",
       "popularityRank": 45,
@@ -630,11 +513,7 @@
       "shortDescription": "Neural web search optimized for AI agents - semantic search, similar-page discovery, and content retrieval.",
       "iconUrl": "icons/exa.svg",
       "tier": "builder",
-      "categories": [
-        "search",
-        "research",
-        "developer"
-      ],
+      "categories": ["search", "research", "developer"],
       "maintainerType": "official",
       "verifiedByWayland": "2026-05-12",
       "popularityRank": 46,
@@ -648,11 +527,7 @@
       "shortDescription": "Crawl, scrape, and extract structured data from any website - turn URLs into clean Markdown.",
       "iconUrl": "icons/firecrawl.svg",
       "tier": "builder",
-      "categories": [
-        "search",
-        "research",
-        "developer"
-      ],
+      "categories": ["search", "research", "developer"],
       "maintainerType": "official",
       "verifiedByWayland": "2026-05-12",
       "popularityRank": 47,
@@ -666,10 +541,7 @@
       "shortDescription": "Execute commands inside local Docker containers via the Docker socket - community MCP server.",
       "iconUrl": "icons/docker.svg",
       "tier": "builder",
-      "categories": [
-        "developer",
-        "devops"
-      ],
+      "categories": ["developer", "devops"],
       "maintainerType": "community",
       "verifiedByWayland": "2026-05-12",
       "popularityRank": 48,
@@ -683,11 +555,7 @@
       "shortDescription": "Convert PDFs, Office docs, images, audio, and HTML to clean Markdown for LLM ingestion. Microsoft's official local utility.",
       "iconUrl": "icons/microsoft.svg",
       "tier": "core",
-      "categories": [
-        "files-and-docs",
-        "productivity",
-        "developer"
-      ],
+      "categories": ["files-and-docs", "productivity", "developer"],
       "maintainerType": "official",
       "verifiedByWayland": "2026-05-27",
       "popularityRank": 49,
@@ -701,11 +569,7 @@
       "shortDescription": "Read Figma design files, variables, components, and Dev Mode metadata. Figma's official hosted MCP with OAuth.",
       "iconUrl": "icons/figma.svg",
       "tier": "worker",
-      "categories": [
-        "design",
-        "developer",
-        "productivity"
-      ],
+      "categories": ["design", "developer", "productivity"],
       "maintainerType": "official",
       "verifiedByWayland": "2026-05-27",
       "popularityRank": 50,
@@ -719,11 +583,7 @@
       "shortDescription": "Read and edit Miro boards - sticky notes, frames, shapes, and connectors. Miro's official hosted MCP with OAuth 2.1.",
       "iconUrl": "icons/miro.svg",
       "tier": "worker",
-      "categories": [
-        "design",
-        "productivity",
-        "communication"
-      ],
+      "categories": ["design", "productivity", "communication"],
       "maintainerType": "official",
       "verifiedByWayland": "2026-05-27",
       "popularityRank": 51,
@@ -737,11 +597,7 @@
       "shortDescription": "Trigger Zapier actions across 9,000+ apps from Дархай - Gmail, Slack, Salesforce, and the rest. Zapier's official hosted MCP.",
       "iconUrl": "icons/zapier.svg",
       "tier": "worker",
-      "categories": [
-        "automation",
-        "productivity",
-        "communication"
-      ],
+      "categories": ["automation", "productivity", "communication"],
       "maintainerType": "official",
       "verifiedByWayland": "2026-05-27",
       "popularityRank": 52,
@@ -755,11 +611,7 @@
       "shortDescription": "Files, folders, search, and Box AI - Box's official hosted MCP server with OAuth.",
       "iconUrl": "icons/box.svg",
       "tier": "worker",
-      "categories": [
-        "files-and-docs",
-        "productivity",
-        "collaboration"
-      ],
+      "categories": ["files-and-docs", "productivity", "collaboration"],
       "maintainerType": "official",
       "verifiedByWayland": "2026-05-27",
       "popularityRank": 53,
@@ -773,11 +625,7 @@
       "shortDescription": "Boards, items, columns, and workforms - monday.com's official hosted MCP with OAuth.",
       "iconUrl": "icons/monday.svg",
       "tier": "worker",
-      "categories": [
-        "productivity",
-        "tasks",
-        "collaboration"
-      ],
+      "categories": ["productivity", "tasks", "collaboration"],
       "maintainerType": "official",
       "verifiedByWayland": "2026-05-27",
       "popularityRank": 54,
@@ -791,10 +639,7 @@
       "shortDescription": "Search conversations and contacts - Intercom's official hosted MCP with OAuth.",
       "iconUrl": "icons/intercom.svg",
       "tier": "worker",
-      "categories": [
-        "support",
-        "communication"
-      ],
+      "categories": ["support", "communication"],
       "maintainerType": "official",
       "verifiedByWayland": "2026-05-27",
       "popularityRank": 55,
@@ -808,11 +653,7 @@
       "shortDescription": "Geocoding, routing, isochrones, and geospatial analysis - Mapbox's official MCP server.",
       "iconUrl": "icons/mapbox.svg",
       "tier": "worker",
-      "categories": [
-        "maps",
-        "developer",
-        "research"
-      ],
+      "categories": ["maps", "developer", "research"],
       "maintainerType": "official",
       "verifiedByWayland": "2026-05-27",
       "popularityRank": 56,
@@ -826,11 +667,7 @@
       "shortDescription": "Query, aggregate, and manage MongoDB clusters and Atlas projects through MongoDB's official MCP server.",
       "iconUrl": "icons/mongodb.svg",
       "tier": "builder",
-      "categories": [
-        "database",
-        "developer",
-        "data"
-      ],
+      "categories": ["database", "developer", "data"],
       "maintainerType": "official",
       "verifiedByWayland": "2026-05-27",
       "popularityRank": 57,
@@ -844,12 +681,7 @@
       "shortDescription": "Query and analyze Elasticsearch indices with natural language through Elastic's official MCP server.",
       "iconUrl": "icons/elastic.svg",
       "tier": "builder",
-      "categories": [
-        "search",
-        "database",
-        "developer",
-        "data"
-      ],
+      "categories": ["search", "database", "developer", "data"],
       "maintainerType": "official",
       "verifiedByWayland": "2026-05-27",
       "popularityRank": 58,
@@ -863,11 +695,7 @@
       "shortDescription": "Browse the Terraform Registry, manage HCP Terraform workspaces, and explore providers and modules.",
       "iconUrl": "icons/terraform.svg",
       "tier": "builder",
-      "categories": [
-        "infrastructure",
-        "devops",
-        "developer"
-      ],
+      "categories": ["infrastructure", "devops", "developer"],
       "maintainerType": "official",
       "verifiedByWayland": "2026-05-27",
       "popularityRank": 59,
@@ -881,11 +709,7 @@
       "shortDescription": "Manage serverless Postgres projects, branches, and queries on Neon - official hosted MCP with OAuth.",
       "iconUrl": "icons/neon.svg",
       "tier": "builder",
-      "categories": [
-        "database",
-        "developer",
-        "infrastructure"
-      ],
+      "categories": ["database", "developer", "infrastructure"],
       "maintainerType": "official",
       "verifiedByWayland": "2026-05-27",
       "popularityRank": 60,
@@ -899,11 +723,7 @@
       "shortDescription": "Search models, datasets, Spaces, and papers on the Hugging Face Hub, and run community tools via Gradio Spaces.",
       "iconUrl": "icons/huggingface.svg",
       "tier": "builder",
-      "categories": [
-        "ml",
-        "developer",
-        "research"
-      ],
+      "categories": ["ml", "developer", "research"],
       "maintainerType": "official",
       "verifiedByWayland": "2026-05-27",
       "popularityRank": 61,
@@ -917,10 +737,7 @@
       "shortDescription": "Scan for vulnerabilities in open-source dependencies, code, IaC, and container images via the Snyk CLI's built-in MCP server.",
       "iconUrl": "icons/snyk.svg",
       "tier": "builder",
-      "categories": [
-        "security",
-        "developer"
-      ],
+      "categories": ["security", "developer"],
       "maintainerType": "official",
       "verifiedByWayland": "2026-05-27",
       "popularityRank": 62,
@@ -934,10 +751,7 @@
       "shortDescription": "Manage incidents, services, schedules, on-calls, and escalation policies in PagerDuty directly from your assistant.",
       "iconUrl": "icons/pagerduty.svg",
       "tier": "builder",
-      "categories": [
-        "incidents",
-        "ops"
-      ],
+      "categories": ["incidents", "ops"],
       "maintainerType": "official",
       "verifiedByWayland": "2026-05-27",
       "popularityRank": 63,
@@ -951,10 +765,7 @@
       "shortDescription": "Connect AI agents to your Postman workspaces, collections, environments, and API specs for testing and automation.",
       "iconUrl": "icons/postman.svg",
       "tier": "builder",
-      "categories": [
-        "api-testing",
-        "developer"
-      ],
+      "categories": ["api-testing", "developer"],
       "maintainerType": "official",
       "verifiedByWayland": "2026-05-27",
       "popularityRank": 64,

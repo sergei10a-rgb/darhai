@@ -219,13 +219,24 @@ const Inspector: React.FC<InspectorProps> = ({
           <span className={styles.scoreText} data-testid='inspector-score-text'>
             Promotion score {entry.promotionScore}/100 - auto-promotes at {promotionThreshold}
           </span>
+          {/*
+            The span is load-bearing. Arco's Tooltip positions against its
+            trigger's DOM node, and an @icon-park icon is not built with
+            forwardRef, so it hands back nothing - on React 19 there is no
+            findDOMNode left to fall back to. Hovering threw, and because
+            /memory carries no route-level error boundary the throw reached the
+            root one and blanked the entire app. A host element the ref can
+            attach to is the whole fix.
+          */}
           <Tooltip content={SCORE_TOOLTIP} position='top'>
-            <Help
-              theme='outline'
-              size='13'
-              style={{ cursor: 'help', opacity: 0.6 }}
-              aria-label={t('memory.archive.inspector.score_help')}
-            />
+            <span style={{ display: 'inline-flex' }}>
+              <Help
+                theme='outline'
+                size='13'
+                style={{ cursor: 'help', opacity: 0.6 }}
+                aria-label={t('memory.archive.inspector.score_help')}
+              />
+            </span>
           </Tooltip>
         </div>
         <div className={styles.scoreBar} data-testid='inspector-score-bar'>

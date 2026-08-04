@@ -65,7 +65,16 @@ beforeEach(() => {
 
   global.fetch = vi.fn(async (_url: unknown, init: { body: string }) => {
     sentBody = JSON.parse(init.body);
-    return { ok: true, json: async () => ({ content: [{ text: 'reply' }] }) } as unknown as Response;
+    // `text` as well as `json`: a real Response has both, and `oneShotComplete`
+    // reads the body as text first so a gateway answering 502 with an HTML page
+    // produces an error naming the status instead of a bare SyntaxError.
+    const body = { content: [{ text: 'reply' }] };
+    return {
+      ok: true,
+      status: 200,
+      json: async () => body,
+      text: async () => JSON.stringify(body),
+    } as unknown as Response;
   }) as unknown as typeof fetch;
 });
 

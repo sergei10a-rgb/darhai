@@ -82,12 +82,16 @@ beforeEach(() => {
   global.fetch = vi.fn(async (url: unknown, init: { body: string }) => {
     sentUrl = String(url);
     sentBody = JSON.parse(init.body);
+    // `text` as well as `json` - see the note in oneShotCompression.test.ts.
+    const body = {
+      content: [{ text: 'reply' }],
+      choices: [{ message: { content: 'reply' } }],
+    };
     return {
       ok: true,
-      json: async () => ({
-        content: [{ text: 'reply' }],
-        choices: [{ message: { content: 'reply' } }],
-      }),
+      status: 200,
+      json: async () => body,
+      text: async () => JSON.stringify(body),
     } as unknown as Response;
   }) as unknown as typeof fetch;
 });

@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { ErrorBoundary } from '@renderer/components/ErrorBoundary';
 import AppLoader from '@renderer/components/layout/AppLoader';
 import { useAuth } from '@renderer/hooks/context/AuthContext';
@@ -68,10 +68,31 @@ const WikiDetailPage = React.lazy(() =>
   import('@renderer/pages/wiki/WikiDetailPage').then((m) => ({ default: m.WikiDetailPageRoute }))
 );
 
+/**
+ * Contain a render error to the route that threw, and clear it on navigation.
+ *
+ * Only `/conversation/:id` used to carry a boundary. Every other route - memory,
+ * projects, wiki, teams, all of settings - threw straight past `HashRouter` to
+ * the root boundary in `main.tsx`, which unmounts the router itself: the app is
+ * replaced wholesale and back/forward stop working until the window is reloaded.
+ * A crash in one page should cost that page, not the session.
+ *
+ * Keyed on the pathname because a boundary that has caught keeps rendering its
+ * fallback until it is remounted. Without the key, React reuses the instance
+ * across `:id` changes, so picking a different conversation still showed the
+ * previous one's error screen.
+ */
+const RouteBoundary: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { pathname } = useLocation();
+  return <ErrorBoundary key={pathname}>{children}</ErrorBoundary>;
+};
+
 const withRouteFallback = (Component: React.LazyExoticComponent<React.ComponentType>) => (
-  <Suspense fallback={<AppLoader />}>
-    <Component />
-  </Suspense>
+  <RouteBoundary>
+    <Suspense fallback={<AppLoader />}>
+      <Component />
+    </Suspense>
+  </RouteBoundary>
 );
 
 const ProtectedLayout: React.FC<{ layout: React.ReactElement }> = ({ layout }) => {
@@ -107,10 +128,8 @@ const PanelRoute: React.FC<{ layout: React.ReactElement }> = ({ layout }) => {
           <Route element={<ProtectedLayout layout={layout} />}>
             <Route index element={<Navigate to='/guid' replace />} />
             <Route path='/guid' element={withRouteFallback(Guid)} />
-            <Route
-              path='/conversation/:id'
-              element={<ErrorBoundary>{withRouteFallback(Conversation)}</ErrorBoundary>}
-            />
+            {/* Boundary comes from withRouteFallback now - see RouteBoundary. */}
+            <Route path='/conversation/:id' element={withRouteFallback(Conversation)} />
             {/* WORKSPACE */}
             <Route path='/settings/assistants' element={withRouteFallback(AssistantSettings)} />
             <Route path='/settings/agents' element={withRouteFallback(AgentsSettings)} />

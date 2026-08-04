@@ -5,7 +5,6 @@
  */
 
 import React from 'react';
-import log from 'electron-log/renderer';
 
 type State = { error: Error | null };
 
@@ -22,7 +21,25 @@ export class ErrorBoundary extends React.Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
-    log.error('[ErrorBoundary]', error, info.componentStack);
+    // The logger is loaded HERE, not at module scope.
+    //
+    // `electron-log/renderer` expects a renderer runtime and dies on import
+    // without one. That made this file unimportable from anything a
+    // node-environment test can reach: wrapping the preview viewers in a
+    // boundary crashed a worker outright, and vitest then waited for a fork
+    // that would never answer - the whole node suite went from 40s to never
+    // finishing, for a logging line that only runs after a crash.
+    //
+    // A component whose only side effect is logging should not decide where it
+    // can be imported. Failure to log is not worth failing a render over, so a
+    // missing logger is swallowed: the fallback UI still renders.
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const log = require('electron-log/renderer') as { error: (...args: unknown[]) => void };
+      log.error('[ErrorBoundary]', error, info.componentStack);
+    } catch {
+      console.error('[ErrorBoundary]', error, info.componentStack);
+    }
   }
 
   reset = () => this.setState({ error: null });

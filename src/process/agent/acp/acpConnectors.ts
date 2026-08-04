@@ -13,7 +13,7 @@
 import type { ChildProcess, SpawnOptions } from 'child_process';
 import { execFile as execFileCb, execFileSync, spawn } from 'child_process';
 import { promisify } from 'util';
-import { promises as fs, rmSync } from 'fs';
+import { promises as fs, readdirSync, rmSync } from 'fs';
 import os from 'os';
 import path from 'path';
 import {
@@ -409,6 +409,55 @@ export function isBunxCacheCorruption(stderr: string): boolean {
  *
  * @returns The cache directory that was cleared, or null if extraction failed.
  */
+/**
+ * Delete every bunx working directory belonging to a package.
+ *
+ * {@link clearBunxCache} can only recover a directory whose path bun happened to
+ * print. That covers the case where a module resolves to a real file inside the
+ * cache - but the failure this recovery exists for is a PARTIAL extraction,
+ * where bun stops with `error: Cannot find module 'zod/v4'` and no path at all.
+ * There was then nothing to delete, the single retry never fired, and every
+ * later launch hit the same half-unpacked directory: the agent was dead until
+ * the user found and removed the temp folder by hand.
+ *
+ * Scoped by the package's first segment (`@zed-industries`, or a bare package
+ * name) so a sweep can only touch directories bun created for THIS package.
+ *
+ * @param npxPackage - the package spec, e.g. `@zed-industries/claude-agent-acp@0.21.0`
+ * @returns the directories removed
+ */
+export function clearBunxWorkingDirsForPackage(npxPackage: string): string[] {
+  // `@scope/name@version` -> `@scope`; `name@version` -> `name`.
+  const scope = npxPackage.startsWith('@') ? npxPackage.split('/')[0] : npxPackage.split('@')[0];
+  if (!scope) return [];
+
+  const escaped = scope.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  // bun names these `bunx-<uid-or-timestamp>-<scope>`; anchored so a directory
+  // merely containing the scope elsewhere in its name is never matched.
+  const pattern = new RegExp(`^bunx-\\d+-${escaped}$`, 'i');
+
+  const removed: string[] = [];
+  let candidates: string[] = [];
+  try {
+    candidates = readdirSync(os.tmpdir());
+  } catch {
+    return removed;
+  }
+
+  for (const name of candidates) {
+    if (!pattern.test(name)) continue;
+    const dir = path.join(os.tmpdir(), name);
+    try {
+      rmSync(dir, { recursive: true, force: true });
+      removed.push(dir);
+    } catch {
+      // A locked directory (antivirus, another instance) is not fatal - the
+      // remaining candidates may still be the broken one.
+    }
+  }
+  return removed;
+}
+
 export function clearBunxCache(stderr: string): string | null {
   const match = stderr.match(/([^\s'"]*[/\\]bunx-\d+[^\s/\\]*[/\\][^\s/\\]+@[^\s/\\]+)[/\\]node_modules/);
   if (!match) return null;
@@ -674,6 +723,15 @@ async function connectNpxBackend(config: {
       const cleared = clearBunxCache(errMsg);
       if (cleared) {
         console.log(`[ACP ${backend}] Cleared corrupted bunx cache: ${cleared}, retrying...`);
+        await setup(spawnNpxBackend(backend, npxPackage, npxCommand, cleanEnv, workingDir, isWindows, false, opts));
+        return;
+      }
+
+      // No path in stderr - the partial-extraction case. Without this the retry
+      // never fired at all and the agent stayed broken across every restart.
+      const swept = clearBunxWorkingDirsForPackage(npxPackage);
+      if (swept.length > 0) {
+        console.log(`[ACP ${backend}] Swept bunx working dirs: ${swept.join(', ')}, retrying...`);
         await setup(spawnNpxBackend(backend, npxPackage, npxCommand, cleanEnv, workingDir, isWindows, false, opts));
         return;
       }

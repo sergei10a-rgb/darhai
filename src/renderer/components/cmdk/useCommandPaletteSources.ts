@@ -96,6 +96,13 @@ export function useCommandPaletteSources(): CommandPaletteSources {
   const { conversations } = useConversationHistoryContext();
 
   const assistants = useMemo<PaletteAssistant[]>(() => {
+    // Both sources cross an IPC boundary before they get here, and the palette
+    // is reachable by a keystroke from every screen. An array method on a
+    // malformed answer throws during render, which is how upstream's command
+    // palette took the renderer down; the shape differs here, the exposure does
+    // not. Coerced rather than guarded at each call so a new consumer below
+    // cannot reintroduce it.
+    if (!Array.isArray(presetAssistants)) return [];
     return presetAssistants
       .filter((agent): agent is AvailableAgent & { customAgentId: string } => Boolean(agent.customAgentId))
       .map((agent) => ({
@@ -108,6 +115,7 @@ export function useCommandPaletteSources(): CommandPaletteSources {
   }, [presetAssistants]);
 
   const recents = useMemo<PaletteRecent[]>(() => {
+    if (!Array.isArray(conversations)) return [];
     return conversations
       .slice()
       .sort((a: TChatConversation, b: TChatConversation) => (b.modifyTime ?? 0) - (a.modifyTime ?? 0))

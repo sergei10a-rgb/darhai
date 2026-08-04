@@ -164,6 +164,14 @@ export const useWCoreMessage = (
             setStreamRunning(false);
             setWaitingResponse(false);
             setThought({ subject: '', description: '' });
+            // The refs too, not just the state. They are read synchronously by
+            // the send path and by the auto-recover branches above, so leaving
+            // them set after a turn ends keeps the composer locked and makes the
+            // next message look like it arrived mid-stream. State setters are
+            // async; these are the values the very next event sees.
+            streamRunningRef.current = false;
+            waitingResponseRef.current = false;
+            hasActiveToolsRef.current = false;
           }
           break;
         case 'tool_group':

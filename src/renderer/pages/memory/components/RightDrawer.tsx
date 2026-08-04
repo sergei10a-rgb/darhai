@@ -87,7 +87,15 @@ type SourcePanelState =
   | { status: 'idle' }
   | { status: 'loading' }
   | { status: 'error'; error: string }
-  | { status: 'ok'; before: string; anchor: string; after: string; totalLines: number; fromLine: number; toLine: number };
+  | {
+      status: 'ok';
+      before: string;
+      anchor: string;
+      after: string;
+      totalLines: number;
+      fromLine: number;
+      toLine: number;
+    };
 
 type SourcePanelProps = {
   path: string;
@@ -109,13 +117,28 @@ const SourcePanel: React.FC<SourcePanelProps> = ({ path, line, autoExpand = fals
     ipcBridge.memory.readSourceContext
       .invoke({ path, line, contextLines: 50 })
       .then((result) => {
-        const r = result as { ok: boolean; before?: string; anchor?: string; after?: string; totalLines?: number; error?: string };
+        const r = result as {
+          ok: boolean;
+          before?: string;
+          anchor?: string;
+          after?: string;
+          totalLines?: number;
+          error?: string;
+        };
         if (r.ok) {
           const ctxLines = 50;
           const anchorLine = Math.max(1, line);
           const fromLine = Math.max(1, anchorLine - ctxLines);
           const toLine = Math.min(r.totalLines ?? 0, anchorLine + ctxLines);
-          setState({ status: 'ok', before: r.before ?? '', anchor: r.anchor ?? '', after: r.after ?? '', totalLines: r.totalLines ?? 0, fromLine, toLine });
+          setState({
+            status: 'ok',
+            before: r.before ?? '',
+            anchor: r.anchor ?? '',
+            after: r.after ?? '',
+            totalLines: r.totalLines ?? 0,
+            fromLine,
+            toLine,
+          });
         } else {
           setState({ status: 'error', error: r.error ?? 'Unknown error' });
         }
@@ -224,7 +247,7 @@ const RightDrawer: React.FC<RightDrawerProps> = ({
       }
       onCopy?.(text);
     },
-    [onCopy],
+    [onCopy]
   );
 
   const isOpen = entry !== null;
@@ -327,13 +350,16 @@ const RightDrawer: React.FC<RightDrawerProps> = ({
                 {' - '}
                 {t('archive.drawer.autoPromotesAt', 'auto-promotes at {{n}}', { n: promotionThreshold })}
               </span>
+              {/* Host element for Arco's ref - see the note in Inspector.tsx. */}
               <Tooltip content={SCORE_TOOLTIP} position='top'>
-                <Help
-                  theme='outline'
-                  size='13'
-                  style={{ cursor: 'help', opacity: 0.6 }}
-                  aria-label={t('archive.drawer.scoreFormula', 'Score formula')}
-                />
+                <span style={{ display: 'inline-flex' }}>
+                  <Help
+                    theme='outline'
+                    size='13'
+                    style={{ cursor: 'help', opacity: 0.6 }}
+                    aria-label={t('archive.drawer.scoreFormula', 'Score formula')}
+                  />
+                </span>
               </Tooltip>
             </div>
             <div className={styles.scoreTrack} data-testid='drawer-score-track'>
@@ -462,11 +488,7 @@ const RightDrawer: React.FC<RightDrawerProps> = ({
             </div>
 
             {/* Inline source context */}
-            <SourcePanel
-              path={entry.sourcePath}
-              line={entry.sourceLine}
-              autoExpand={!entry.why && !entry.howToApply}
-            />
+            <SourcePanel path={entry.sourcePath} line={entry.sourceLine} autoExpand={!entry.why && !entry.howToApply} />
           </div>
         </div>
       )}
