@@ -15,7 +15,7 @@ import { CodexMcpAgent } from './agents/CodexMcpAgent';
 import { OpencodeMcpAgent } from './agents/OpencodeMcpAgent';
 import { WCoreMcpAgent } from './agents/WCoreMcpAgent';
 import type { IMcpProtocol, DetectedMcpServer, McpConnectionTestResult, McpSyncResult, McpSource } from './McpProtocol';
-import { validateMcpServer } from './validateMcpServer';
+import { sanitizeMcpServerName, validateMcpServer } from './validateMcpServer';
 
 /**
  * MCP service - coordinates the MCP operation protocol across agents
@@ -270,10 +270,56 @@ export class McpService {
       return Promise.resolve({ success: true, results: [] });
     }
 
+    // Derive the WIRE name every agent will key on. The stored display name is
+    // a reverse-DNS catalog id (`com.slack/slack-mcp`) which SAFE_MCP_NAME
+    // rejects, so without this every Library install failed validation below.
+    // `removeMcpFromAgents` applies the same derivation, which is what keeps the
+    // key written here findable at removal time.
+    const wireServers = enabledServers.map((server) => ({
+      ...server,
+      name: sanitizeMcpServerName(server.name),
+    }));
+
     // Reject command-injection-prone names / non-http(s) URLs before any agent
     // builds a CLI invocation from them (SEC-MCP-01 pre-sync guard).
-    for (const server of enabledServers) {
-      validateMcpServer(server);
+    //
+    // Partitioned, not thrown. This ran as a bare loop outside the lock and
+    // outside any try/catch, so ONE unusable server aborted the sync for every
+    // other server and every agent - the blast radius of a single bad row was
+    // the whole feature. Rejecting it individually keeps the security property
+    // (an invalid server still never reaches an agent) without letting it take
+    // the healthy ones down with it.
+    const syncableServers: IMcpServer[] = [];
+    const claimedWireNames = new Set<string>();
+    for (const server of wireServers) {
+      // Two display names can derive one wire name (`a/b` and `a-b` both become
+      // `a-b`), and the agent config is keyed on it, so the second write would
+      // silently replace the first. The derivation cannot disambiguate on its
+      // own: removal is given a single name and never the set, so the key must
+      // stay a pure function of that name. Refusing the duplicate keeps the
+      // symmetry and makes the clash visible instead of silent.
+      if (claimedWireNames.has(server.name)) {
+        console.warn(
+          `[McpService] Skipping MCP server "${server.name}": another enabled server already resolves to that name`
+        );
+        continue;
+      }
+
+      try {
+        validateMcpServer(server);
+        syncableServers.push(server);
+        claimedWireNames.add(server.name);
+      } catch (error) {
+        console.warn(
+          `[McpService] Skipping unsafe MCP server "${server.name}": ${
+            error instanceof Error ? error.message : String(error)
+          }`
+        );
+      }
+    }
+
+    if (syncableServers.length === 0) {
+      return Promise.resolve({ success: true, results: [] });
     }
 
     return this.withServiceLock(async () => {
@@ -293,7 +339,7 @@ export class McpService {
             };
           }
 
-          const result = await agentInstance.installMcpServers(enabledServers);
+          const result = await agentInstance.installMcpServers(syncableServers);
           return {
             agent: agent.name,
             success: result.success,
@@ -344,7 +390,10 @@ export class McpService {
             };
           }
 
-          const result = await agentInstance.removeMcpServer(mcpServerName);
+          // Same derivation as the sync path - the key an agent stored is the
+          // sanitized one, so removing by the raw display name would never
+          // match and would leave an orphan the user cannot delete.
+          const result = await agentInstance.removeMcpServer(sanitizeMcpServerName(mcpServerName));
           return {
             agent: `${agent.backend}:${agent.name}`,
             success: result.success,

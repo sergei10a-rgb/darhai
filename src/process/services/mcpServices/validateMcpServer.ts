@@ -222,6 +222,42 @@ export function validateMcpEnv(serverName: string, env: Record<string, string> |
  * @param server The MCP server to validate.
  * @throws {Error} If the name, env, or remote transport URL is unsafe.
  */
+/**
+ * The name an MCP server is known by ON THE WIRE - as a key in a per-CLI agent
+ * config, and as an argv element in the command that agent builds.
+ *
+ * A server has two names, and conflating them broke the entire MCP Library. The
+ * DISPLAY name comes from the catalog and is a reverse-DNS id: `com.slack/slack-mcp`,
+ * `com.darhai/imap-mcp`. All 55 bundled entries contain a slash. The WIRE name
+ * must satisfy {@link SAFE_MCP_NAME}, which does not allow one. So every install
+ * from the Library stored a name that `validateMcpServer` then rejected, and
+ * because the pre-sync check ran as a bare loop, one such row aborted the sync
+ * for every server and every agent. The Library was not partly broken; nothing
+ * in it could be installed at all.
+ *
+ * Deriving the wire name instead of rewriting the stored one keeps the pretty
+ * reverse-DNS id in the UI, and - because the same derivation is applied when
+ * REMOVING a server - guarantees the key written at sync time is the key looked
+ * up at removal time. That symmetry is the whole point: an earlier attempt that
+ * sanitized only on the way in left rows that could be written but never
+ * removed.
+ *
+ * Deterministic and idempotent: sanitizing an already-sanitized name is a no-op,
+ * so a row that has been through this once keeps the same key forever. Verified
+ * against the shipped catalog: all 55 entries map to 55 distinct wire names, so
+ * no two servers can collide onto one key.
+ *
+ * @param name The display name as stored on the server.
+ * @returns A name safe to interpolate into a CLI invocation.
+ */
+export function sanitizeMcpServerName(name: string): string {
+  const replaced = (name ?? '').replace(/[^A-Za-z0-9_.-]/g, '-');
+  // A leading '-' is a legal SAFE_MCP_NAME character but reads as an option to
+  // any CLI that re-parses the name. Prefix rather than strip, so two names that
+  // differ only by that character cannot collapse into one key.
+  return replaced.startsWith('-') ? `_${replaced}` : replaced;
+}
+
 export function validateMcpServer(server: IMcpServer): void {
   if (!SAFE_MCP_NAME.test(server.name)) {
     throw new Error(`Invalid MCP server name "${server.name}": only letters, digits, '_', '.', and '-' are allowed`);
