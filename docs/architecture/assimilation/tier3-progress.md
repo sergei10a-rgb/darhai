@@ -20,111 +20,52 @@
 | `7db58d06a` | ACP: turn дунд илгээсэн мессеж алга болно | ЭВДЭРСЭН (upstream-ээс ч дор) → **зассан** | `1f9c7b701` |
 | `9f4df293a` | нэрлэсэн профайл default-ийн дата дээр ажиллана | ЭВДЭРСЭН → **зассан** | `848a0842f` |
 | `d1457cf18` | өнчин team-child мөр → migration DB-г brick хийнэ | ЭВДЭРСЭН → **зассан** | `848a0842f` |
-| `d878b430a` (b) | ACP picker хоосон | ЭВДЭРСЭН | ⏳ үлдсэн |
-| `a11477782` | Дархай хэрэглэгчийн `~/.codex/config.toml`-ыг өөрчилнө | ЭВДЭРСЭН | ⏳ үлдсэн |
-| `9c93ba86f` | төслийн reference файл чимээгүй хаягдана | ЭВДЭРСЭН | ⏳ үлдсэн |
-| `2bbe1cc47` (a) | leader-ийн mailbox сэрэх үед алга болно | ЭВДЭРСЭН | ⏳ үлдсэн |
-| `2bbe1cc47` (b) | codex-add / claude-fire deadlock | ЭВДЭРСЭН | ⏳ үлдсэн |
-| `2bbe1cc47` (d) | Teams: model cache sync (SWR revalidate алга) | ЭВДЭРСЭН | ⏳ үлдсэн |
-| `056296c76` | төслийн байнгын workspace алга (том порт) | ЭВДЭРСЭН | ⏳ үлдсэн |
+| `a11477782` | Дархай хэрэглэгчийн `~/.codex/config.toml`-ыг өөрчилнө | ЭВДЭРСЭН → **зассан** | `769c615b5` |
+| `9c93ba86f` | төслийн reference файл чимээгүй хаягдана | ЭВДЭРСЭН → **зассан** | `815cff822` |
+| `2bbe1cc47` (a) | leader-ийн mailbox сэрэх үед алга болно | ЭВДЭРСЭН → **зассан** | `bdfa7b506` |
+| `2bbe1cc47` (b) | codex-add deadlock | ЭВДЭРСЭН → **зассан** | `bdfa7b506` |
+| `2bbe1cc47` (d) | Teams: model cache sync (SWR revalidate алга) | ЭВДЭРСЭН → **зассан** | `8678695f4` |
+| `d878b430a` (b) | ACP picker хоосон | ЭВДЭРСЭН → **зассан** | `ba07c8567` |
+| `056296c76` | төслийн байнгын workspace алга | ЭВДЭРСЭН → **зассан** | `f405d38f8` |
 
-**Дууссан: 9/17. Үлдсэн: 7 (доорх дарааллаар).**
+**Tier 3 бүрэн дууссан: 17/17.**
 
-## Үлдсэн ажлын нарийвчилсан төлөвлөгөө
+## Гүйцэтгэлийн тэмдэглэл (шийдвэр гаргасан газрууд)
 
-Дараагийн сесс энэ хэсгээс шууд үргэлжлүүлнэ. Бүгд бодит кодтой тулгагдсан, файл/мөр заасан.
+### `a11477782` — Дархай хэрэглэгчийн codex тохиргоог өөрчилдөг
 
-### 1. `a11477782` — Дархай хэрэглэгчийн codex тохиргоог өөрчилдөг (АЮУЛГҮЙ БАЙДАЛ)
+Дархай өөрийн `codex-home` (`<userData>/codex-home`) үүсгэдэг болов: хэрэглэгчийн
+config-ийг хуулаад зөвхөн `sandbox_mode`-ыг дарж бичнэ, `CODEX_HOME`-оор заана.
+**Хэрэглэгчийн файлыг огт бичихээ больсон.** `auth.json`-г symlink хийнэ (Windows дээр
+developer mode-гүй бол `copyFile` руу шилжинэ) — нэг удаа нэвтэрвэл терминал болон
+апп хоёулаа ажиллана.
 
-`src/process/task/codexConfig.ts:45` `writeCodexSandboxMode` нь `~/.codex/config.toml` дотор
-`sandbox_mode`-ыг **бодитоор бичдэг** (бусад мөрийг хадгална, бүхэлд нь дардаггүй — тайлангийн
-«overwrite» гэдэг нь хэтрүүлсэн). Дуудагдах газар: `AcpAgentManager.ts:780` (codex асаах бүрд)
-болон `:1695` (`setMode`).
+### `9c93ba86f` — reference файл: **хамгаалалтыг сулруулаагүй**
 
-Хор нь: хэрэглэгчийн **өөрийнх нь** `codex` CLI-ийн зан төлөв Дархайгаас болж өөрчлөгдөнө —
-`danger-full-access` бичигдвэл терминал дээрх codex нь sandbox-гүй ажиллана.
+`confinePath` бол SEC-IPC-04-ийн зориудын хаалт (reference хавтас нь prompt руу шууд
+ордог тул дурын файл = exfil). Тайланд санал болгосон `allowOutsideRoots` сонголтыг
+**нэмээгүй** — тэр бол аюулгүй байдлын шийдвэр, миний хийх зүйл биш. Зассан нь
+**худал мэдээлэл**: одоо юу татгалзсаныг шалтгаантай нь буцаана, UI нь «3 файл нэмлээ»
+гэж худлаа хэлэхээ болив.
 
-Зөв засвар (upstream-ийнх): `<userData>/codex-home` хаяглалт үүсгэж, хэрэглэгчийн config-ийг
-хуулаад зөвхөн `sandbox_mode`-ыг дарж бичих; `auth.json`-г symlink (Windows дээр EPERM бол
-`copyFile`) хийж OAuth сэргээлт хэрэглэгчийн файл руу бичигдэхээр үлдээх; codex CLI-г асаах
-env-д `CODEX_HOME` заах (`acpConnectors.ts:549 prepareCodex` → `cleanEnv`). Дараа нь
-`AcpAgentManager`-ийн хоёр дуудлагыг устгана.
+> ⏳ **serge-ийн шийдвэр хүлээж буй:** drag-drop-оор дурын хавтаснаас файл нэмэхийг
+> зөвшөөрөх үү? Зөвшөөрвөл confinement-ийг зориуд сулруулна.
 
-⚠️ **Эрсдэл:** `auth.json`-г буруу холбовол Windows дээр codex-ийн нэвтрэлт эвдэрнэ. Symlink
-бүтэлгүйтвэл copy руу шилжих, мөн refresh хийгдсэн token-ыг буцааж хуулах логик хэрэгтэй.
-Тиймээс энэ нь болгоомжтой, тусад нь хийх ажил.
+### `2bbe1cc47` (b) — гарчгийн шалгалтыг **чангатгаагүй**
 
-### 2. `9c93ba86f` — төслийн reference файл чимээгүй хаягдана
+`toolTitle.includes('wayland-team')` нь сул боловч claude/gemini дээр **ажиллаж
+байгаа** бөгөөд бодит гарчгийн хэлбэрийг баталгаажуулах fixture олдсонгүй. Чангатгавал
+ажиллаж буй зүйлийг эвдэх эрсдэлтэй тул хэвээр үлдээж, codex-ийн `rawInput.server_name`
+замыг **нэмсэн** (anchored). Зөвхөн нэмэгдсэн, юу ч хасаагүй.
 
-`src/process/services/projectKnowledge/knowledge.ts:332` — `confinePath` null буцаавал
-`continue` (чимээгүй алгасна). `addProjectReference` нь алдааны мэдээлэл буцаадаггүй
-(`knowledge.ts:356`), UI нь **хаясан** тоогоор бус **чирсэн** тоогоор амжилт харуулна
-(`ProjectReferencePanel.tsx:64`).
+### `056296c76` — байгаа чатуудыг **дахин бэхлээгүй**
 
-Засвар: `confinePath`-д `{ allowOutsideRoots }` сонголт нэмэх (зөвхөн эцсийн root-containment
-шалгалтыг алгасна, `hasUnsafePathForm` гэх мэт бусад шалгалт хэвээр); `addProjectReference`
-`{ files, failed }` буцаах; IPC гэрээ (`ipcBridge.ts:2894`) + `projectBridge.ts:189` өргөтгөх;
-UI-д хэсэгчилсэн алдааг харуулах + `projects.json` i18n түлхүүр.
+Хэрэглэгчийн одоо байгаа чатууд `wcore-temp-*` хавтастай бөгөөд тэнд **бодит файл
+байгаа**. Тэднийг шинэ хавтас руу заавал шилжүүлбэл тэр файлууд өнчирнө — засвараас
+дор. Тиймээс: шинэ чат л төслийн хавтсыг авна.
 
-### 3. `2bbe1cc47` (a)+(b) — Teams mailbox + codex-add deadlock
-
-Нэг суурь дутагдал: `Mailbox`-д **уншаад тэмдэглэдэггүй** `peekUnread` алга
-(`Mailbox.ts:70` зөвхөн `readUnreadAndMark`). `TeammateManager.finalizeTurn` (`:770-787`)
-leader-ийн хайрцгийг огт шалгадаггүй, `wake()` нь `activeWakes` хамгаалалтаар (`:244`)
-давхар сэрэхийг алгасдаг → сэрэх үед ирсэн мессеж мөнхөд хэвтэнэ.
-
-(b)-ийн codex тал: `AcpAgentManager.ts:1029-1031` `toolTitle.includes('wayland-team')` —
-codex-acp нь «Approve MCP tool call» гэсэн ерөнхий гарчигтай ирдэг тул хэзээ ч таарахгүй →
-`team_spawn_agent` мөнхөд батлагдахыг хүлээнэ. Gemini-ийн зам аль хэдийн зөв
-(`GeminiAgentManager.ts:728`).
-
-Засвар: `ITeamRepository`+`SqliteTeamRepository`-д уншилтгүй `peekUnread`; `Mailbox.peekUnread`;
-`finalizeTurn`-д leader-ийн салаа; `AcpAgentManager`-т `isTeamMcpPermission(toolCall)`
-(гарчгийн anchored regex + codex-д `rawInput.server_name` шалгах).
-
-### 4. `2bbe1cc47` (d) — Teams model cache
-
-`TeamPage.tsx:76` болон `:328` нь `useSWR`-ийг **revalidate захиалгагүй** ашиглана. Шинэ
-`useTeamConversation` hook (`ipcBridge.conversation.listChanged.on` → `mutate()`) нэмээд
-хоёр дуудлагыг солино. Бусад 3 уншигч ижил SWR key хуваалцдаг тул дагаад засагдана.
-
-### 5. `d878b430a` (b) — ACP picker хоосон
-
-`modelRegistryIpc.ts:929-945` — enumerable CLI хоосон буцаавал models.dev fallback алга,
-`ACP_BACKEND_UNDERLYING_PROVIDER` зураглал алга (grok→xai, kimi→moonshot, qwen→qwen,
-vibe→mistral) → эдгээр backend бүр хоосон picker өгнө.
-
-### 6. `056296c76` — төслийн байнгын workspace (ХАМГИЙН ТОМ)
-
-9 файл, 3 нь шинэ. `initAgent.ts:219` `wcore-temp-<ts>` анхдагчийг арилгах;
-`ProjectServiceImpl.createProject`-д workspace хуваарилах; `ConversationServiceImpl`-д
-`ensureProjectWorkspace`; `WorkerTaskManager.getOrBuildTask`-д дахин бэхлэх (drift засах);
-`useGuidSend.ts:142` `isCustomWorkspace`-ийг засах (одоо project workspace-ийг «custom» гэж
-үзээд skill symlink суулгахыг алгасдаг).
-
-⚠️ Хэрэглэгчийн одоо байгаа чатууд `~/.darhai`-д байгаа тул шилжүүлэх/дахин бэхлэх логик
-болгоомжтой байх ёстой.
-
-## Тайлангийн залруулга (шалгалтаар илэрсэн)
-
-1. **`056296c76`** — «OS арчдаг temp» гэсэн нь **буруу**. `getSystemDir().workDir` нь
-   `<userData>/wayland` → `~/.darhai`, өөрөөр хэлбэл апп-ын дата, OS цэвэрлэдэггүй. Гэхдээ
-   хэрэглэгчид үл үзэгдэх директор + төслийн чат буруу газар орох гэдэг нь үнэн.
-2. **`d1457cf18`** — «FK чангатгах migration ирвэл» гэсэн нөхцөл энэ fork-д **байхгүй**
-   (v51–v55 нь notes/calendar/documents/research/email, FK хөддөггүй). Гэвч
-   `migrations.ts:2545`-ийн `foreign_key_check` нь **глобал бөгөөд нөхцөлгүй**, бүх migration
-   нэг transaction дотор — тиймээс v50-аас доош DB бүр эхний ачаалалт дээр энэ шалгалтад орно.
-   Эрсдэл байна, зөвхөн шалтгаан нь өөр.
-
-## Замдаа олсон зүйлс
-
-- `parseCronExpr` болон `formatSchedule` тус тусдаа гараг-хөрвүүлэх хүснэгэлтэй байсан → жагсаалт
-  «Лхагва гараг» гэж, засварын цонх «Өдөр бүр 09:00» гэж хардаг байв. Одоо нэг хүснэгт хуваалцана.
-- `DARHAI_TIMESTAMP_SEPARATOR` тогтмолын **утга** нь `'_wayland_'` хэвээр (нэр нь л солигдсон).
-  Солих нь диск дээр байгаа файлуудыг эвдэнэ тул хөдөлгөөгүй — брэндийн үлдэгдэл, өгөгдлийн алдаа биш.
-- **Тестийн сургамж:** SWR-ийн cache нь модуль-глобал. `cleanup()` нь түүнийг устгадаггүй тул
-  «reload» дуурайсан тест persistence-гүйгээр ч тэнцэж байв. Одоо тест бүр `SWRConfig`-оор
-  өөрийн cache-тэй. Мутацийн шалгалт: persistence устгавал 6-аас 4 унана.
+Шинэ хавтас = `~/Documents/Darhai/<төслийн нэр>` (мөргөлдвөл ` 2`, ` 3`…). Төсөл бүрд
+нэг удаа, зэрэг үүсгэхийг in-flight map-аар хаасан.
 
 ## Шалгалтын байдал
 
