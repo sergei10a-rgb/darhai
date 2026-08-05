@@ -72,6 +72,17 @@ export class Mailbox {
   }
 
   /**
+   * Look at an agent's unread messages without consuming them.
+   *
+   * `wake()` skips when a wake for the same agent is already running, so a
+   * message that arrives mid-wake is never delivered by that wake. Peeking after
+   * the turn ends is how we notice it is still sitting there.
+   */
+  async peekUnread(teamId: string, agentId: string): Promise<MailboxMessage[]> {
+    return this.repo.peekUnread(teamId, agentId);
+  }
+
+  /**
    * Get message history for an agent (newest first).
    */
   async getHistory(teamId: string, agentId: string, limit?: number): Promise<MailboxMessage[]> {

@@ -18,6 +18,15 @@ export interface IMailboxRepository {
   readUnread(teamId: string, toAgentId: string): Promise<MailboxMessage[]>;
   /** Atomically read all unread messages and mark them as read in one transaction. */
   readUnreadAndMark(teamId: string, toAgentId: string): Promise<MailboxMessage[]>;
+  /**
+   * The same unread messages, WITHOUT marking them read.
+   *
+   * Needed to answer "is anything waiting for this agent?" at a moment when we
+   * are not ready to deliver - a wake that fires while another is already in
+   * flight is skipped, and the message it would have carried has to still be
+   * unread when the turn ends.
+   */
+  peekUnread(teamId: string, toAgentId: string): Promise<MailboxMessage[]>;
   markRead(messageId: string): Promise<void>;
   getMailboxHistory(teamId: string, toAgentId: string, limit?: number): Promise<MailboxMessage[]>;
 }

@@ -30,6 +30,7 @@ function makeRepo(): ITeamRepository {
     writeMessage: vi.fn(),
     readUnread: vi.fn(),
     readUnreadAndMark: vi.fn(),
+    peekUnread: vi.fn(),
     markRead: vi.fn(),
     getMailboxHistory: vi.fn(),
     createTask: vi.fn(),
@@ -171,6 +172,31 @@ describe('Mailbox', () => {
       const result = await mailbox.readUnread('team-1', 'slot-2');
 
       expect(result).toEqual([]);
+    });
+  });
+
+  /**
+   * `wake()` skips when a wake for the same agent is already running, so a
+   * message that lands mid-wake is never delivered by that wake. Peeking after
+   * the turn ends is how the leader notices it is still waiting - which only
+   * works if the peek leaves it unread for the wake that follows.
+   */
+  describe('peekUnread', () => {
+    it('reads without consuming, so the message is still there to deliver', async () => {
+      const messages = [makeMessage({ id: 'msg-1' })];
+      vi.mocked(repo.peekUnread).mockResolvedValue(messages);
+
+      const result = await mailbox.peekUnread('team-1', 'slot-1');
+
+      expect(result).toEqual(messages);
+      expect(repo.peekUnread).toHaveBeenCalledWith('team-1', 'slot-1');
+      expect(repo.readUnreadAndMark).not.toHaveBeenCalled();
+    });
+
+    it('returns empty when nothing is waiting', async () => {
+      vi.mocked(repo.peekUnread).mockResolvedValue([]);
+
+      expect(await mailbox.peekUnread('team-1', 'slot-1')).toEqual([]);
     });
   });
 

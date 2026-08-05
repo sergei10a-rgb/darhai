@@ -21,10 +21,7 @@ import { agentRegistry } from '@process/agent/AgentRegistry';
 // each agent conversation so the ACP file-op gate can resolve the team
 // when sandboxed imported agents request file ops.
 import type { TTeam } from './types';
-import {
-  registerTeamConversation,
-  unregisterTeamConversation,
-} from './sandbox/acpTeamContextRegistry';
+import { registerTeamConversation, unregisterTeamConversation } from './sandbox/acpTeamContextRegistry';
 
 type TeammateManagerParams = {
   teamId: string;
@@ -523,12 +520,7 @@ export class TeammateManager extends EventEmitter {
    * W1e - emit a `'wake'` event with duration + success flag. Helper so the
    * three wake() exit points (noop, success, failure) all share one schema.
    */
-  private logWakeEvent(
-    slotId: string,
-    startedAt: number,
-    success: boolean,
-    extra: Record<string, unknown> = {}
-  ): void {
+  private logWakeEvent(slotId: string, startedAt: number, success: boolean, extra: Record<string, unknown> = {}): void {
     if (!this.eventLogger) return;
     void this.eventLogger.append({
       teamId: this.teamId,
@@ -559,9 +551,7 @@ export class TeammateManager extends EventEmitter {
     // clean prompt/completion split (ACP gives `used` total only), so the split
     // fields stay 0 with the per-turn delta preserved as `total_tokens`.
     if (msg.type === 'acp_context_usage') {
-      const usage = msg.data as
-        | { used?: number; size?: number; cost?: { amount?: number; currency?: string } }
-        | null;
+      const usage = msg.data as { used?: number; size?: number; cost?: { amount?: number; currency?: string } } | null;
       if (usage && typeof usage.used === 'number') {
         const cumulativeUsed = usage.used;
         const costAmount = typeof usage.cost?.amount === 'number' ? usage.cost.amount : 0;
@@ -783,6 +773,28 @@ export class TeammateManager extends EventEmitter {
         // This prevents death loops where each idle notification triggers a new leader turn.
         this.maybeWakeLeaderWhenAllIdle(leadAgent.slotId);
       }
+      return;
+    }
+
+    // The leader's own mailbox, checked at the one moment it is safe to.
+    //
+    // `wake()` skips when a wake for the same agent is already in flight, and
+    // the only other path back to the leader is `maybeWakeLeaderWhenAllIdle`,
+    // which returns early on a team with no members. So a follow-up written
+    // while the leader was mid-turn had nothing left to deliver it: the message
+    // sat unread forever, and to the user their instruction had simply been
+    // ignored.
+    //
+    // Idle notifications are excluded deliberately - they are the chatter this
+    // method itself produces, and waking on them is the death loop the guard
+    // above exists to prevent.
+    try {
+      const waiting = await this.mailbox.peekUnread(this.teamId, agent.slotId);
+      if (waiting.some((message) => message.type !== 'idle_notification')) {
+        void this.wake(agent.slotId);
+      }
+    } catch (error) {
+      console.warn('[TeammateManager] Could not check the leader mailbox after a turn:', error);
     }
   }
 

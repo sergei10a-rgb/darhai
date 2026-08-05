@@ -122,6 +122,11 @@ function createInMemoryRepo(): ITeamRepository {
       }
       return unread;
     },
+    async peekUnread(teamId: string, toAgentId: string) {
+      return [...messages.values()]
+        .filter((m) => m.teamId === teamId && m.toAgentId === toAgentId && !m.read)
+        .toSorted((a, b) => a.createdAt - b.createdAt);
+    },
     async markRead(messageId: string) {
       const msg = messages.get(messageId);
       if (msg) messages.set(messageId, { ...msg, read: true });
@@ -526,6 +531,73 @@ describe('Real TeammateManager with real Mailbox + TaskManager', () => {
     // Idle notification should be in leader's real Mailbox
     const leaderMessages = await mailbox.getHistory('team-1', 'slot-lead');
     expect(leaderMessages.some((m) => m.type === 'idle_notification' && m.fromAgentId === 'slot-member')).toBe(true);
+  });
+
+  /**
+   * A message that arrives while the leader is mid-turn had nothing to deliver
+   * it: `wake()` skips when a wake is already in flight, and the only other
+   * path back to the leader returns early on a team with no members. So a
+   * follow-up the user typed during a long turn sat unread forever, and to them
+   * their instruction had simply been ignored.
+   */
+  it('delivers a message that arrived while the leader was mid-turn', async () => {
+    await mailbox.write({
+      teamId: 'team-1',
+      toAgentId: 'slot-lead',
+      fromAgentId: 'user',
+      content: 'also check the tests',
+    });
+    mockSendMessage.mockClear();
+
+    teamEventBus.emit('responseStream', {
+      type: 'finish',
+      conversation_id: 'conv-lead',
+      msg_id: 'msg-lead-1',
+      data: null,
+    });
+
+    await new Promise((r) => setTimeout(r, 120));
+
+    expect(mockSendMessage).toHaveBeenCalled();
+  });
+
+  it('does not wake the leader for the idle chatter it produces itself', async () => {
+    // Waking on idle notifications is the death loop the all-idle guard exists
+    // to prevent - so the mailbox check has to ignore them.
+    await mailbox.write({
+      teamId: 'team-1',
+      toAgentId: 'slot-lead',
+      fromAgentId: 'slot-member',
+      content: 'Turn completed',
+      type: 'idle_notification',
+    });
+    mockSendMessage.mockClear();
+
+    teamEventBus.emit('responseStream', {
+      type: 'finish',
+      conversation_id: 'conv-lead',
+      msg_id: 'msg-lead-2',
+      data: null,
+    });
+
+    await new Promise((r) => setTimeout(r, 120));
+
+    expect(mockSendMessage).not.toHaveBeenCalled();
+  });
+
+  it('leaves the leader alone when nothing is waiting', async () => {
+    mockSendMessage.mockClear();
+
+    teamEventBus.emit('responseStream', {
+      type: 'finish',
+      conversation_id: 'conv-lead',
+      msg_id: 'msg-lead-3',
+      data: null,
+    });
+
+    await new Promise((r) => setTimeout(r, 120));
+
+    expect(mockSendMessage).not.toHaveBeenCalled();
   });
 
   it('state transition: wake() changes agent status pending→idle→active via real events', async () => {

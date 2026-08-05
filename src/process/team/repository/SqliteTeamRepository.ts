@@ -331,6 +331,17 @@ export class SqliteTeamRepository implements ITeamRepository {
     return rows.map(rowToMailbox);
   }
 
+  async peekUnread(teamId: string, toAgentId: string): Promise<MailboxMessage[]> {
+    const db = await this.getDb();
+    const rows = db
+      .prepare(
+        `SELECT * FROM mailbox WHERE team_id = ? AND to_agent_id = ? AND read = 0
+         ORDER BY created_at ASC`
+      )
+      .all(teamId, toAgentId) as MailboxRow[];
+    return rows.map(rowToMailbox);
+  }
+
   async markRead(messageId: string): Promise<void> {
     const db = await this.getDb();
     db.prepare('UPDATE mailbox SET read = 1 WHERE id = ?').run(messageId);
@@ -498,9 +509,9 @@ export class SqliteTeamRepository implements ITeamRepository {
     // the outcome guarded by `status='zombie'`. Increment is a SQL expression on
     // the column, never a JS snapshot, so two passes cannot double-increment.
     const run = db.transaction((): 'requeued' | 'exhausted' | 'skipped' => {
-      const row = db.prepare('SELECT status, metadata, retry_budget, retries_used FROM team_tasks WHERE id = ?').get(id) as
-        | Pick<TaskRow, 'status' | 'metadata' | 'retry_budget' | 'retries_used'>
-        | undefined;
+      const row = db
+        .prepare('SELECT status, metadata, retry_budget, retries_used FROM team_tasks WHERE id = ?')
+        .get(id) as Pick<TaskRow, 'status' | 'metadata' | 'retry_budget' | 'retries_used'> | undefined;
       if (!row || row.status !== 'zombie') return 'skipped';
 
       if (row.retries_used < row.retry_budget) {
@@ -514,7 +525,11 @@ export class SqliteTeamRepository implements ITeamRepository {
         return 'requeued';
       }
 
-      const metadata = { ...(JSON.parse(row.metadata) as Record<string, unknown>), failed: true, failureReason: 'lease exhausted' };
+      const metadata = {
+        ...(JSON.parse(row.metadata) as Record<string, unknown>),
+        failed: true,
+        failureReason: 'lease exhausted',
+      };
       // Terminal state is `failed` (NOT `deleted`): a permanently-failed task
       // must stay VISIBLE in Mission Control's attention surface, not vanish.
       db.prepare(

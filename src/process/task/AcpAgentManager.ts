@@ -38,6 +38,7 @@ import {
   materializeCodexHome,
   type CodexSandboxMode,
 } from '@process/task/codexConfig';
+import { isTeamMcpPermission } from './teamMcpPermission';
 import BaseAgentManager from './BaseAgentManager';
 import { IpcAgentEventEmitter } from './IpcAgentEventEmitter';
 import { hasCronCommands } from './CronCommandDetector';
@@ -1038,9 +1039,11 @@ ${collectedResponses.join('\n')}`;
         return;
       }
 
-      // Auto-approve team MCP tools - internal tools provided by Wayland.
-      const toolTitle = toolCall.title || '';
-      if (toolTitle.includes('wayland-team') && options.length > 0) {
+      // Auto-approve team MCP tools - internal tools provided by Darhai.
+      // codex-acp reports the server in rawInput rather than in the title, so
+      // matching on the title alone left a team call through codex waiting on
+      // an approval nobody could give: adding a codex teammate hung forever.
+      if (isTeamMcpPermission(toolCall) && options.length > 0) {
         const autoOption = options[0];
         setTimeout(() => {
           void this.confirm(v.msg_id, toolCall.toolCallId || v.msg_id, autoOption);
