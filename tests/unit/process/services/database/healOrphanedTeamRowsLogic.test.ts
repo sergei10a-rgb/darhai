@@ -36,7 +36,7 @@ function stubDriver(options: { existingTables: string[]; deletedPerTable?: numbe
         runs.push({ sql, args });
         return { changes: options.deletedPerTable ?? 0, lastInsertRowid: 0 };
       },
-      all: () => [],
+      all: (): unknown[] => [],
     }),
     exec: vi.fn(),
     pragma: vi.fn(),

@@ -24,8 +24,14 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { act, cleanup, renderHook } from '@testing-library/react';
 import { SWRConfig } from 'swr';
 import { __clearInMemoryDraftsForTests, getSendBoxDraftHook } from '@renderer/hooks/chat/useSendBoxDraft';
+import type { FileOrFolderItem } from '@renderer/hooks/chat/useSendBoxDraft';
 
-const initial = { _type: 'wcore' as const, content: '', atPath: [], uploadFile: [] };
+const initial = {
+  _type: 'wcore' as const,
+  content: '',
+  atPath: [] as Array<string | FileOrFolderItem>,
+  uploadFile: [] as string[],
+};
 const useDraft = getSendBoxDraftHook('wcore', initial);
 
 /** A fresh conversation id per test, so nothing can carry between them. */
