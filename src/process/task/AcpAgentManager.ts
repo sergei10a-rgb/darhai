@@ -35,8 +35,8 @@ import { cronBusyGuard } from '@process/services/cron/CronBusyGuard';
 import { mainWarn, mainError } from '@process/utils/mainLogger';
 import {
   getCodexSandboxModeForSessionMode,
+  materializeCodexHome,
   type CodexSandboxMode,
-  writeCodexSandboxMode,
 } from '@process/task/codexConfig';
 import BaseAgentManager from './BaseAgentManager';
 import { IpcAgentEventEmitter } from './IpcAgentEventEmitter';
@@ -730,6 +730,7 @@ ${collectedResponses.join('\n')}`;
     const codexConfig = data.backend === 'codex' ? await ProcessConfig.get('codex.config') : undefined;
 
     let cliPath = data.cliPath;
+    let codexHome: string | undefined;
     if (!cliPath && config?.[data.backend]?.cliPath) {
       cliPath = config[data.backend].cliPath;
     }
@@ -777,11 +778,22 @@ ${collectedResponses.join('\n')}`;
         data.sessionMode || this.currentMode,
         data.sandboxMode || codexConfig?.sandboxMode || 'workspace-write'
       ) as CodexSandboxMode;
-      await writeCodexSandboxMode(sandboxMode);
       data.sandboxMode = sandboxMode;
+      // The sandbox mode goes into a Codex home of ours, and CODEX_HOME points
+      // the spawned CLI at it. Writing it into the user's own ~/.codex changed
+      // how their terminal `codex` behaves - silently, and with
+      // danger-full-access that meant their CLI stopped sandboxing.
+      try {
+        codexHome = await materializeCodexHome(sandboxMode);
+      } catch (error) {
+        // Without a managed home we let Codex use the user's own, unmodified -
+        // the session may run under their sandbox setting instead of the one
+        // picked here, which is the safe direction to be wrong in.
+        mainWarn('[ACP codex]', 'Could not prepare the managed Codex home', error);
+      }
     }
 
-    return { cliPath, customArgs, yoloMode };
+    return { cliPath, customArgs, yoloMode, customEnv: codexHome ? { CODEX_HOME: codexHome } : undefined };
   }
 
   // ── initAgent callback handlers ──────────────────────────────────────
@@ -1162,7 +1174,8 @@ ${collectedResponses.join('\n')}`;
           pendingConfigOptions: data.pendingConfigOptions,
           // Forward team MCP stdio config so AcpAgent.loadBuiltinSessionMcpServers() can inject it
           teamMcpStdioConfig: (data as unknown as Record<string, unknown>).teamMcpStdioConfig as
-            { name: string; command: string; args: string[]; env: Array<{ name: string; value: string }> } | undefined,
+            | { name: string; command: string; args: string[]; env: Array<{ name: string; value: string }> }
+            | undefined,
         },
         onSessionIdUpdate: (sessionId: string) => {
           // Save ACP session ID to database for resume support
@@ -1692,7 +1705,12 @@ ${collectedResponses.join('\n')}`;
       this.yoloMode = this.isYoloMode(mode);
       const sandboxMode = getCodexSandboxModeForSessionMode(mode, this.options.sandboxMode);
       this.options.sandboxMode = sandboxMode;
-      await writeCodexSandboxMode(sandboxMode);
+      // Update our own Codex home so the next spawn starts in the chosen mode.
+      // The running CLI already read its config, and the user's ~/.codex is not
+      // ours to change.
+      await materializeCodexHome(sandboxMode).catch((error) => {
+        mainWarn('[ACP codex]', 'Could not update the managed Codex home for the new mode', error);
+      });
       this.saveSessionMode(mode);
 
       if (this.isYoloMode(prev) && !this.isYoloMode(mode)) {
