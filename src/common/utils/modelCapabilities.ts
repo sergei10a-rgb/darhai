@@ -35,13 +35,31 @@ export const RERANK_MODEL = /(?:rerank|re-rank|re-ranker|re-ranking|retrieval|re
 export const SPEECH_MODEL = /(?:^|[\s./:_-])(?:whisper|tts)(?=$|[\s./:_-])/i;
 
 /**
+ * Image-generation models.
+ *
+ * Hiding these from the CHAT picker is only half the job - the other half is
+ * making sure they are all offered in the place that does use them: Settings →
+ * Image generation. Those two lists were written separately and drifted, so
+ * `dall-e-3` was hidden from chat (right) and also missing from the image picker
+ * (wrong) even though `imageGenCore` has a dedicated OpenAI Images-API path for
+ * it. An OpenAI user could not select DALL·E at all.
+ *
+ * Both sides now read this one definition, so a model can never fall out of both.
+ */
+export const IMAGE_GENERATION_MODEL =
+  /flux|diffusion|stabilityai|sd-|dall|cogview|janus|midjourney|mj-|imagen|image|banana/i;
+
+/** Whether a model id names an image generator (Settings → Image generation). */
+export const isImageGenerationModel = (modelName: string): boolean => IMAGE_GENERATION_MODEL.test(modelName);
+
+/**
  * Capability matching regex patterns
  */
 export const CAPABILITY_PATTERNS: Record<ModelType, RegExp> = {
   text: /gpt|claude|gemini|qwen|llama|mistral|deepseek/i,
   vision: /4o|claude-3|gemini-.*-pro|gemini-.*-flash|gemini-2\.0|qwen-vl|llava|vision/i,
   function_calling: /gpt-4|claude-3|gemini|qwen|deepseek/i,
-  image_generation: /flux|diffusion|stabilityai|sd-|dall|cogview|janus|midjourney|mj-|imagen/i,
+  image_generation: IMAGE_GENERATION_MODEL,
   web_search: /search|perplexity/i,
   reasoning: /o1-|reasoning|think/i,
   embedding: EMBEDDING_MODEL,

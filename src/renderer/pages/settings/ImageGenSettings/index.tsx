@@ -14,6 +14,7 @@ import {
   type IConfigStorageRefer,
   type IMcpServer,
 } from '@/common/config/storage';
+import { isImageGenerationModel } from '@/common/utils/modelCapabilities';
 import useConfigModelListWithImage from '@renderer/hooks/agent/useConfigModelListWithImage';
 import { useMcpServers, useMcpAgentStatus, useMcpOperations } from '@renderer/hooks/mcp';
 import DarhaiSelect from '@renderer/components/base/DarhaiSelect';
@@ -44,15 +45,17 @@ const ImageGenSettings: React.FC = () => {
     ? (agentInstallStatus[builtinImageGenServer.name] ?? [])
     : [];
 
-  // Filter providers to only those with image-capable models
+  // Filter providers to only those with image-capable models.
+  //
+  // This reads the same `IMAGE_GENERATION_MODEL` definition the chat picker uses
+  // to EXCLUDE these models, so a model can never fall out of both lists. It
+  // previously matched only `image` / `banana` / `imagine` by hand, which left
+  // `dall-e-3` and `dall-e-2` unselectable here even though `imageGenCore` has a
+  // dedicated OpenAI Images-API path for exactly those ids.
   const imageModelList = useMemo(() => {
-    const isImageModel = (modelName: string) => {
-      const n = modelName.toLowerCase();
-      return n.includes('image') || n.includes('banana') || n.includes('imagine');
-    };
     return (modelListWithImage || [])
-      .filter((p) => p.model.some(isImageModel))
-      .map((p) => ({ ...p, model: p.model.filter(isImageModel) }));
+      .filter((p) => p.model.some(isImageGenerationModel))
+      .map((p) => ({ ...p, model: p.model.filter(isImageGenerationModel) }));
   }, [modelListWithImage]);
 
   // Load persisted model selection on mount

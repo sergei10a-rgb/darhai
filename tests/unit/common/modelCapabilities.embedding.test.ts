@@ -21,7 +21,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { CAPABILITY_PATTERNS, EMBEDDING_MODEL } from '@/common/utils/modelCapabilities';
+import { CAPABILITY_PATTERNS, EMBEDDING_MODEL, isImageGenerationModel } from '@/common/utils/modelCapabilities';
 
 const isExcluded = (modelId: string): boolean => CAPABILITY_PATTERNS.excludeFromPrimary.test(modelId);
 
@@ -67,6 +67,44 @@ describe('excludeFromPrimary - rerankers, image and speech models', () => {
 
   it.each(['whisper-1', 'whisper-large-v3', 'tts-1', 'tts-1-hd'])('excludes the speech model %s', (modelId) => {
     expect(isExcluded(modelId)).toBe(true);
+  });
+});
+
+describe('an image model hidden from chat is still offered where it IS used', () => {
+  // Hiding a model from the chat picker is only correct if it remains reachable
+  // in Settings → Image generation. Those two lists were maintained separately
+  // and drifted: `dall-e-3` was hidden from chat AND missing from the image
+  // picker, so an OpenAI user could not select DALL·E anywhere - even though
+  // `imageGenCore` has a dedicated OpenAI Images-API path for that exact id.
+  const imageModels = [
+    'dall-e-3',
+    'dall-e-2',
+    'gpt-image-1',
+    'gpt-image-2',
+    'chatgpt-image-latest',
+    'gemini-3-pro-image-preview',
+    'gemini-2.5-flash-image',
+    'nano-banana',
+    'imagen-4.0-generate-001',
+    'flux-2-pro',
+    'stable-diffusion-3.5',
+  ];
+
+  it.each(imageModels)('%s is selectable as an image-generation model', (modelId) => {
+    expect(isImageGenerationModel(modelId)).toBe(true);
+  });
+
+  it('never leaves an image model out of BOTH pickers', () => {
+    // The rule, not a list: anything the app calls an image generator must be
+    // offered in the image picker, whatever the chat picker does with it.
+    const orphaned = imageModels.filter((modelId) => isExcluded(modelId) && !isImageGenerationModel(modelId));
+    expect(orphaned).toEqual([]);
+  });
+
+  it('does not mistake a chat model for an image generator', () => {
+    for (const modelId of ['gpt-5.1', 'claude-opus-4-8', 'gemini-3-pro-preview', 'qwen3-235b-a22b']) {
+      expect(isImageGenerationModel(modelId)).toBe(false);
+    }
   });
 });
 
