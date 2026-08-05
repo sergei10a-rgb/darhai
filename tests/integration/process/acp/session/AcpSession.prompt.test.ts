@@ -92,4 +92,80 @@ describe('AcpSession prompt flow', () => {
     session.sendMessage('after suspend');
     await vi.waitFor(() => expect(['resuming', 'active', 'prompting'].includes(session.status)).toBe(true));
   });
+
+  /**
+   * Typing while the agent is still working is the most ordinary thing a person
+   * does, and it used to throw INVALID_STATE - which the layer above turned
+   * into a failed send. The words were simply gone, with nothing in the
+   * transcript to show they had ever been typed. The single pending slot lost
+   * them a second way: a second queued message overwrote the first.
+   */
+  describe('messages sent mid-turn', () => {
+    /** Hold the first prompt open so the session stays in `prompting`. */
+    function prompterThatHangs() {
+      let release!: () => void;
+      const held = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      let calls = 0;
+      client.prompt = vi.fn(async () => {
+        calls += 1;
+        if (calls === 1) await held;
+        return { stopReason: 'end_turn' as const };
+      });
+      return { release, promptMock: () => client.prompt as ReturnType<typeof vi.fn> };
+    }
+
+    it('queues a follow-up instead of throwing it away', async () => {
+      const session = await startSession();
+      const { release, promptMock } = prompterThatHangs();
+
+      session.sendMessage('first');
+      await vi.waitFor(() => expect(session.status).toBe('prompting'));
+
+      await expect(session.sendMessage('while you were working')).resolves.toBeUndefined();
+
+      release();
+      await vi.waitFor(() => expect(promptMock()).toHaveBeenCalledTimes(2));
+    });
+
+    it('keeps every queued message, in the order they were typed', async () => {
+      // The single slot silently dropped all but the last one.
+      const session = await startSession();
+      const { release, promptMock } = prompterThatHangs();
+
+      session.sendMessage('first');
+      await vi.waitFor(() => expect(session.status).toBe('prompting'));
+      await session.sendMessage('second');
+      await session.sendMessage('third');
+
+      release();
+      await vi.waitFor(() => expect(promptMock()).toHaveBeenCalledTimes(3));
+
+      const sentText = promptMock().mock.calls.map((call) => JSON.stringify(call[1]));
+      expect(sentText[1]).toContain('second');
+      expect(sentText[2]).toContain('third');
+    });
+
+    it('sends one turn at a time, never two prompts at once', async () => {
+      // Two concurrent prompts on one session is a protocol error, not a
+      // faster reply.
+      const session = await startSession();
+      const { release, promptMock } = prompterThatHangs();
+
+      session.sendMessage('first');
+      await vi.waitFor(() => expect(session.status).toBe('prompting'));
+      await session.sendMessage('second');
+      await session.sendMessage('third');
+
+      expect(promptMock()).toHaveBeenCalledTimes(1);
+      release();
+      await vi.waitFor(() => expect(promptMock()).toHaveBeenCalledTimes(3));
+    });
+
+    it('still refuses to send with no session at all', async () => {
+      const session = new AcpSession(baseConfig, clientFactory, callbacks);
+      await expect(session.sendMessage('hello')).rejects.toThrow(/Cannot send in idle state/);
+    });
+  });
 });

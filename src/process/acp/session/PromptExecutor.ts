@@ -21,7 +21,17 @@ export type PromptHost = {
 };
 
 export class PromptExecutor {
-  private pendingPrompt: PromptContent | null = null;
+  /**
+   * Messages waiting for the session to be ready, oldest first.
+   *
+   * This was a single slot, and the second message written into it dropped the
+   * first on the floor. Sending two follow-ups while the agent was working -
+   * or one while it was waking - lost one of them with no error and no trace in
+   * the transcript. A queue is what the user already assumes is there.
+   */
+  private pendingPrompts: PromptContent[] = [];
+  /** Guards against two flushes racing the same queue head. */
+  private flushing = false;
   private readonly timer: PromptTimer;
 
   constructor(
@@ -34,24 +44,43 @@ export class PromptExecutor {
   // ─── Pending prompt buffer ────────────────────────────────────
 
   hasPending(): boolean {
-    return this.pendingPrompt !== null;
+    return this.pendingPrompts.length > 0;
   }
 
+  /** Queue a message to send once the session is ready. */
   setPending(content: PromptContent): void {
-    this.pendingPrompt = content;
+    this.pendingPrompts.push(content);
   }
 
   clearPending(): void {
-    this.pendingPrompt = null;
+    this.pendingPrompts = [];
   }
 
-  /** Fire the pending prompt if one exists and session is active. */
+  /**
+   * Send queued messages, one turn at a time, while the session stays active.
+   *
+   * Two callers can fire this (a resumed session and a finished turn), so the
+   * `flushing` flag keeps them from both taking the same head and sending it
+   * twice. Each turn chains the next, so a queue drains in order rather than
+   * all at once - a second prompt sent mid-turn is a protocol error, not a
+   * faster reply.
+   */
   flush(): void {
-    if (this.pendingPrompt && this.host.status === 'active') {
-      const content = this.pendingPrompt;
-      this.pendingPrompt = null;
-      void this.execute(content);
-    }
+    if (this.flushing) return;
+    const content = this.pendingPrompts[0];
+    if (!content || this.host.status !== 'active') return;
+
+    this.flushing = true;
+    this.pendingPrompts.shift();
+    void this.execute(content)
+      // `execute` re-throws so a direct caller can report the failure. A
+      // flushed message has no such caller, and the error already reached the
+      // UI through `onSignal`.
+      .catch(() => {})
+      .finally(() => {
+        this.flushing = false;
+        this.flush();
+      });
   }
 
   // ─── Execute ──────────────────────────────────────────────────
@@ -91,13 +120,19 @@ export class PromptExecutor {
     this.host.messageTranslator.onTurnEnd();
     this.host.setStatus('active');
     this.host.callbacks.onSignal({ type: 'turn_finished' });
+    // Anything typed during the turn goes now. Without this a queued follow-up
+    // would wait for some unrelated event to flush it - which, for a session
+    // that never suspends, may be never.
+    this.flush();
   }
 
   private handlePromptError(err: unknown, content: PromptContent): void {
     const acpErr = normalizeError(err);
 
     if (acpErr.code === 'AUTH_REQUIRED') {
-      this.pendingPrompt = content;
+      // Back to the head, not the tail: this message was next, and signing in
+      // should resume where the user left off rather than reorder their queue.
+      this.pendingPrompts.unshift(content);
       this.host.lifecycle.setAuthPendingForPrompt();
       void this.host.lifecycle.teardown().then(() => {
         this.host.setStatus('error');
@@ -133,7 +168,7 @@ export class PromptExecutor {
   }
 
   cancelAll(): void {
-    this.pendingPrompt = null;
+    this.pendingPrompts = [];
     if (this.host.status === 'prompting') this.cancel();
   }
 

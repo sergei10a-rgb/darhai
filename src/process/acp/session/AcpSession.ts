@@ -206,6 +206,16 @@ export class AcpSession {
         this.promptExecutor.setPending(content);
         this.lifecycle.resume();
         return;
+      // A message typed while the agent is still working, starting, or waking
+      // is the most ordinary thing a person does. It used to throw
+      // INVALID_STATE, which the layer above turned into a failed send - the
+      // words were simply gone. Queue it and let the flush deliver it when the
+      // session is ready.
+      case 'prompting':
+      case 'starting':
+      case 'resuming':
+        this.promptExecutor.setPending(content);
+        return;
       default:
         throw new AcpError('INVALID_STATE', `Cannot send in ${this._status} state`);
     }

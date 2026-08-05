@@ -19,6 +19,7 @@ import type { WCoreCapabilities } from '@process/agent/wcore/protocol';
 import { getHookGuardConfig, normalizeWcore, safeEvaluate } from '@process/agent/guard';
 import type { GuardRule, GuardVerdict, WCoreToolLike } from '@process/agent/guard';
 import { buildSystemInstructionsWithSkillsIndex } from './agentUtils';
+import { buildResumeHistoryText } from './resumeHistory';
 import { getDatabase } from '@process/services/database';
 import { ProviderRepository } from '@process/providers/storage/ProviderRepository';
 import { isProviderKeyAuthFailure } from '@process/providers/detection/authFailure';
@@ -280,6 +281,27 @@ export class WCoreManager extends BaseAgentManager<WCoreManagerData, string> {
     await agent.start();
     this.agent = agent;
     this._capabilities = agent.capabilities ?? null;
+
+    // On resume, replay the tail of the persisted conversation. `--resume`
+    // carries the id but does not reliably restore history, and when it fails
+    // it silently starts a fresh session - so the model lost every prior turn
+    // while the chat window still showed them, and a follow-up about something
+    // visibly on screen went to an agent that had never seen it. New sessions
+    // have nothing to replay; the current user turn is not persisted yet at
+    // start(), so it cannot be injected twice.
+    if (sessionArgs.resume) {
+      try {
+        const historyDb = await getDatabase();
+        const history = historyDb.getConversationMessages(this.conversation_id, 0, 10000);
+        const text = buildResumeHistoryText(history.data);
+        if (text) await agent.injectConversationHistory(text);
+      } catch (error) {
+        // Best-effort: a resume without seeded history is still better than no
+        // resume, and the chat window is unaffected either way.
+        console.warn('[WCoreManager] Failed to seed resume history:', error);
+      }
+    }
+
     // Mirror the resolved CLI budget (which may be the reasoning-model default
     // from envBuilder) into manager data so detectTruncation can compare
     // output_tokens against the real budget. Only fill the gap - never
