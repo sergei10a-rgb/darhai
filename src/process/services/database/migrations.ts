@@ -2466,6 +2466,36 @@ const migration_v55: IMigration = {
 };
 
 /**
+ * Migration v55 -> v56: record the tögrög rate on each spend row.
+ *
+ * Model prices are quoted in USD, but users here budget in tögrög. Converting a
+ * historical total with today's rate would make last month's spend drift every
+ * time the exchange rate moves - the number would never settle, which is useless
+ * for a ledger. So each row carries the rate that was in effect when the spend
+ * happened, and old rows (NULL) fall back to the current rate at display time.
+ */
+const migration_v56: IMigration = {
+  version: 56,
+  name: 'Record the MNT-per-USD rate on each cost event',
+  up: (db) => {
+    const columns = db.prepare('PRAGMA table_info(cost_events)').all() as Array<{ name: string }>;
+    if (!columns.some((c) => c.name === 'mnt_per_usd')) {
+      db.exec('ALTER TABLE cost_events ADD COLUMN mnt_per_usd REAL');
+    }
+    console.log('[Migration v56] Added cost_events.mnt_per_usd');
+  },
+  down: () => {
+    // Deliberately not dropped. SQLite can only remove a column by rebuilding the
+    // table, and losing the historical rates would silently re-price every past
+    // row at today's rate - the exact drift this column exists to prevent. An
+    // unused nullable column costs nothing.
+    console.log(
+      '[Migration v56] Rolled back: cost_events.mnt_per_usd left in place (historical rates are not dropped)'
+    );
+  },
+};
+
+/**
  * All migrations in order
  */
 // prettier-ignore
@@ -2479,7 +2509,7 @@ export const ALL_MIGRATIONS: IMigration[] = [
   migration_v37, migration_v38, migration_v39, migration_v40, migration_v41, migration_v42,
   migration_v43, migration_v44, migration_v45, migration_v46, migration_v47,
   migration_v48, migration_v49, migration_v50, migration_v51, migration_v52, migration_v53,
-  migration_v54, migration_v55,
+  migration_v54, migration_v55, migration_v56,
 ];
 
 /**
