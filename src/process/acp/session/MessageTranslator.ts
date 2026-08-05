@@ -77,11 +77,27 @@ export function mapToolLocations(locations: ToolCallLocation[] | null | undefine
 export class MessageTranslator {
   /** SDK messageId → generated UUID (scoped to current turn, cleared on onTurnEnd) */
   private messageMap = new Map<string, string>();
+  /** resolved msg_id → text seen so far, so only net-new text is emitted */
+  private accumulated = new Map<string, string>();
+  /** last real SDK messageId this turn, so id-less chunks join the right message */
+  private lastMessageId: string | null = null;
 
   constructor(private readonly conversationId: string) {}
 
   get activeEntryCount(): number {
     return this.messageMap.size;
+  }
+
+  /**
+   * How many messages the delta accumulator is still holding text for.
+   *
+   * Exposed only so a test can prove it is emptied. Each turn mints fresh
+   * msg_ids, so a stale entry never produces a wrong delta - it just never gets
+   * collected, and a long session would accumulate the full text of every
+   * message it ever streamed.
+   */
+  get accumulatedEntryCount(): number {
+    return this.accumulated.size;
   }
 
   translate(notification: SessionNotification): TMessage[] {
@@ -112,10 +128,14 @@ export class MessageTranslator {
 
   onTurnEnd(): void {
     this.messageMap.clear();
+    this.accumulated.clear();
+    this.lastMessageId = null;
   }
 
   reset(): void {
     this.messageMap.clear();
+    this.accumulated.clear();
+    this.lastMessageId = null;
   }
 
   /** Get or create a stable UUID for a SDK messageId within the current turn. */
@@ -128,12 +148,64 @@ export class MessageTranslator {
     return msgId;
   }
 
+  /**
+   * Only the text that has not been emitted yet for this message.
+   *
+   * Two streaming shapes have to produce the same result. Some backends send
+   * incremental fragments; claude-code-acp streams fragments and THEN repeats
+   * the whole message as one chunk. Treating the repeat as new text is what
+   * rendered a one-word reply as "PongPong" - and because the doubled text is
+   * what gets persisted, it spread into conversation history and downstream
+   * memory rather than staying a display glitch.
+   *
+   * A chunk that starts with everything seen so far is a restatement, so only
+   * its tail is new. Anything else is a genuine fragment and is appended.
+   */
+  private netNewDelta(msgId: string, text: string): string {
+    const seen = this.accumulated.get(msgId) ?? '';
+    if (text.startsWith(seen)) {
+      this.accumulated.set(msgId, text);
+      return text.slice(seen.length);
+    }
+    this.accumulated.set(msgId, seen + text);
+    return text;
+  }
+
+  /**
+   * Which message a chunk belongs to, merging the two ids one logical message
+   * can arrive under.
+   *
+   * claude-code-acp streams deltas with no messageId, then repeats the full text
+   * under a real one. Bucketing those separately produced two messages carrying
+   * the same words. So: an id-less chunk joins the message in flight, and a real
+   * id whose text continues that in-flight bucket adopts it instead of starting
+   * a second one.
+   */
+  private resolveRunKey(rawMessageId: string | undefined, text: string, prefix: string): string {
+    if (!rawMessageId) {
+      return prefix + (this.lastMessageId ?? 'default');
+    }
+    const realKey = prefix + rawMessageId;
+    const defaultKey = prefix + 'default';
+    const pending = this.messageMap.get(defaultKey);
+    if (pending && !this.messageMap.has(realKey)) {
+      const seen = this.accumulated.get(pending) ?? '';
+      if (seen && text.startsWith(seen)) {
+        this.messageMap.set(realKey, pending);
+        this.messageMap.delete(defaultKey);
+      }
+    }
+    return realKey;
+  }
+
   private handleAgentMessageChunk(update: ContentChunk): IMessageText[] {
-    const messageId = update.messageId ?? 'default';
+    if (update.messageId) this.lastMessageId = update.messageId;
     const text = update.content.type === 'text' ? update.content.text : '';
     if (!text) return [];
 
-    const msgId = this.resolveMsgId(messageId);
+    const msgId = this.resolveMsgId(this.resolveRunKey(update.messageId, text, ''));
+    const delta = this.netNewDelta(msgId, text);
+    if (!delta) return [];
 
     return [
       {
@@ -141,7 +213,7 @@ export class MessageTranslator {
         msg_id: msgId,
         conversation_id: this.conversationId,
         type: 'text',
-        content: { content: text },
+        content: { content: delta },
         position: 'left',
         status: 'work',
       },
@@ -149,11 +221,13 @@ export class MessageTranslator {
   }
 
   private handleThoughtChunk(update: ContentChunk): IMessageThinking[] {
-    const messageId = `thought-${update.messageId ?? 'default'}`;
+    if (update.messageId) this.lastMessageId = update.messageId;
     const text = update.content.type === 'text' ? update.content.text : '';
     if (!text) return [];
 
-    const msgId = this.resolveMsgId(messageId);
+    const msgId = this.resolveMsgId(this.resolveRunKey(update.messageId, text, 'thought-'));
+    const delta = this.netNewDelta(msgId, text);
+    if (!delta) return [];
 
     return [
       {
@@ -161,7 +235,7 @@ export class MessageTranslator {
         msg_id: msgId,
         conversation_id: this.conversationId,
         type: 'thinking',
-        content: { content: text, status: 'thinking' },
+        content: { content: delta, status: 'thinking' },
         position: 'left',
         status: 'work',
       },
@@ -172,6 +246,8 @@ export class MessageTranslator {
     // Tool call interrupts the current text stream - clear text msg_id mappings
     // so subsequent text chunks start a new message (matching old AcpAdapter behavior).
     this.messageMap.clear();
+    this.accumulated.clear();
+    this.lastMessageId = null;
 
     const toolCallId = update.toolCallId ?? crypto.randomUUID();
 
