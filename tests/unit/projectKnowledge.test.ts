@@ -75,12 +75,13 @@ describe('project knowledge', () => {
     const a = path.join(ws, 'a.txt');
     await fs.writeFile(a, 'alpha');
     const after1 = await addProjectReference(ws, [a]);
-    expect(after1.map((f) => f.name)).toEqual(['a.txt']);
+    expect(after1.files.map((f) => f.name)).toEqual(['a.txt']);
+    expect(after1.rejected).toEqual([]);
 
     // dropping the same basename again must not overwrite - it de-dupes the name.
     const after2 = await addProjectReference(ws, [a]);
-    expect(after2).toHaveLength(2);
-    expect(after2.some((f) => /^a-1\.txt$/.test(f.name))).toBe(true);
+    expect(after2.files).toHaveLength(2);
+    expect(after2.files.some((f) => /^a-1\.txt$/.test(f.name))).toBe(true);
 
     const listed = await listProjectReference(ws);
     expect(listed).toHaveLength(2);

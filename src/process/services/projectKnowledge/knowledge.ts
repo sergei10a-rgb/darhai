@@ -51,6 +51,26 @@ export type ProjectKnowledge = {
   decisions: string;
 };
 
+/** Why one source did not become a reference file. */
+export type RejectedReference = {
+  name: string;
+  reason: 'not-permitted' | 'not-a-file' | 'too-large' | 'too-many' | 'failed';
+};
+
+/**
+ * What `addProjectReference` actually did.
+ *
+ * It used to return only the resulting list, so a caller had no way to tell an
+ * empty add from a full one - and the panel reported success using the number
+ * of files the user DRAGGED. Someone could drop three documents, see "3 files
+ * added", and have none of them: the reference list is what the model reads,
+ * so their project quietly lacked the very context they added it for.
+ */
+export type AddReferenceResult = {
+  files: ReferenceFile[];
+  rejected: RejectedReference[];
+};
+
 export type ReferenceFile = {
   name: string;
   path: string;
@@ -311,14 +331,18 @@ const MAX_REFERENCE_FILE_BYTES = 25 * 1024 * 1024; // 25 MB
  *   - copy only regular files (skip dirs / sockets / devices / fifos).
  *   - cap the per-call count and per-file size to bound abuse and disk use.
  */
-export async function addProjectReference(workspace: string, sourcePaths: string[]): Promise<ReferenceFile[]> {
+export async function addProjectReference(workspace: string, sourcePaths: string[]): Promise<AddReferenceResult> {
   if (!workspace || !workspace.trim()) throw new Error('Project has no workspace folder');
   const dir = path.join(knowledgeRoot(workspace), REFERENCE_DIR);
   await fs.mkdir(dir, { recursive: true });
 
+  const rejected: RejectedReference[] = [];
   const sources = sourcePaths.slice(0, MAX_REFERENCE_FILES);
   if (sourcePaths.length > MAX_REFERENCE_FILES) {
     console.warn(`[projectKnowledge] addReference capped at ${MAX_REFERENCE_FILES} files (got ${sourcePaths.length})`);
+    for (const src of sourcePaths.slice(MAX_REFERENCE_FILES)) {
+      rejected.push({ name: path.basename(src), reason: 'too-many' });
+    }
   }
 
   for (const src of sources) {
@@ -332,6 +356,7 @@ export async function addProjectReference(workspace: string, sourcePaths: string
       const trusted = (await confinePath(src)) ?? resolveWithinApprovedDirectory(src);
       if (trusted === null) {
         console.warn('[projectKnowledge] refusing out-of-root reference source:', src);
+        rejected.push({ name: path.basename(src), reason: 'not-permitted' });
         continue;
       }
 
@@ -340,20 +365,27 @@ export async function addProjectReference(workspace: string, sourcePaths: string
       const stat = await fs.lstat(trusted);
       if (stat.isSymbolicLink()) {
         console.warn('[projectKnowledge] refusing symlinked reference source:', src);
+        rejected.push({ name: path.basename(src), reason: 'not-permitted' });
         continue;
       }
-      if (!stat.isFile()) continue; // skip directories / non-regular files
+      if (!stat.isFile()) {
+        // Directories and devices: skip, but say so rather than pretending.
+        rejected.push({ name: path.basename(src), reason: 'not-a-file' });
+        continue;
+      }
       if (stat.size > MAX_REFERENCE_FILE_BYTES) {
         console.warn(`[projectKnowledge] refusing oversized reference source (${stat.size} bytes):`, src);
+        rejected.push({ name: path.basename(src), reason: 'too-large' });
         continue;
       }
       const dest = await uniqueDest(dir, path.basename(trusted));
       await fs.copyFile(trusted, dest);
     } catch (err) {
       console.warn('[projectKnowledge] failed to copy reference file:', src, err);
+      rejected.push({ name: path.basename(src), reason: 'failed' });
     }
   }
-  return listProjectReference(workspace);
+  return { files: await listProjectReference(workspace), rejected };
 }
 
 /** Remove one reference file by its basename (path-traversal guarded). */

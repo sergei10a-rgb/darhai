@@ -122,6 +122,8 @@
     },
     "fileAdded": "Added {{count}} file",
     "fileAdded_other": "Added {{count}} files",
+    "fileAddedPartial": "{{count}} 件を追加しました。{{failed}} 件は追加できませんでした: {{names}}",
+    "fileAddedNone": "次のファイルを追加できませんでした: {{names}}。選択したフォルダー内、またはプロジェクト内のファイルのみ追加できます。",
     "fileAddFailed": "Could not add the files.",
     "fileRemoveFailed": "Could not remove the file.",
     "noWorkspaceTitle": "No workspace folder yet",

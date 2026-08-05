@@ -122,6 +122,8 @@
     },
     "fileAdded": "Added {{count}} file",
     "fileAdded_other": "Added {{count}} files",
+    "fileAddedPartial": "{{count}} dosya eklendi, {{failed}} dosya eklenemedi: {{names}}",
+    "fileAddedNone": "Bu dosyalar eklenemedi: {{names}}. Dosyalar seçtiğiniz bir klasörden veya projenin içinden olmalıdır.",
     "fileAddFailed": "Could not add the files.",
     "fileRemoveFailed": "Could not remove the file.",
     "noWorkspaceTitle": "No workspace folder yet",

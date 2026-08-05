@@ -122,6 +122,8 @@
     },
     "fileAdded": "Added {{count}} file",
     "fileAdded_other": "Added {{count}} files",
+    "fileAddedPartial": "Додано файлів: {{count}}, не вдалося додати: {{failed}} — {{names}}",
+    "fileAddedNone": "Не вдалося додати ці файли: {{names}}. Файли мають бути з обраної вами теки або з проєкту.",
     "fileAddFailed": "Could not add the files.",
     "fileRemoveFailed": "Could not remove the file.",
     "noWorkspaceTitle": "No workspace folder yet",

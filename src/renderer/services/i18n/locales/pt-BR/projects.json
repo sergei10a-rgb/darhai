@@ -113,6 +113,8 @@
     },
     "fileAdded": "{{count}} arquivo adicionado",
     "fileAdded_other": "{{count}} arquivos adicionados",
+    "fileAddedPartial": "{{count}} arquivos adicionados; {{failed}} não puderam ser adicionados: {{names}}",
+    "fileAddedNone": "Não foi possível adicionar estes arquivos: {{names}}. Os arquivos devem vir de uma pasta escolhida por você ou de dentro do projeto.",
     "fileAddFailed": "Não foi possível adicionar os arquivos.",
     "fileRemoveFailed": "Não foi possível remover o arquivo.",
     "noWorkspaceTitle": "Nenhuma pasta de workspace ainda",

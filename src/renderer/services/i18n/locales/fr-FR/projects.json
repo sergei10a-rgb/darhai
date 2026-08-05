@@ -113,6 +113,8 @@
     },
     "fileAdded": "{{count}} fichier ajouté",
     "fileAdded_other": "{{count}} fichiers ajoutés",
+    "fileAddedPartial": "{{count}} fichiers ajoutés, {{failed}} n'ont pas pu être ajoutés : {{names}}",
+    "fileAddedNone": "Impossible d'ajouter ces fichiers : {{names}}. Les fichiers doivent provenir d'un dossier que vous avez choisi ou du projet.",
     "fileAddFailed": "Impossible d'ajouter les fichiers.",
     "fileRemoveFailed": "Impossible de retirer le fichier.",
     "noWorkspaceTitle": "Aucun dossier d'espace de travail pour l'instant",

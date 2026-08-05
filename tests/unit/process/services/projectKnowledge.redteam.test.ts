@@ -146,3 +146,90 @@ describe('addProjectReference confinement (SEC-IPC-04)', () => {
     expect(mockCopyFile).toHaveBeenCalledWith(IN_ROOT, expect.stringContaining('spec.md'));
   });
 });
+
+/**
+ * Refusals are normal here - the reference dir is read straight into prompts,
+ * so a source outside every authorized root is rejected on purpose. What was
+ * NOT acceptable is that the caller could not tell. `addProjectReference`
+ * returned only the resulting list, and the panel reported success using the
+ * number of files the user DRAGGED: drop three documents that were all refused
+ * and it said "3 files added", while the project quietly lacked the very
+ * context it had just been given.
+ */
+describe('addProjectReference reports what it refused', () => {
+  it('names a source it would not accept', async () => {
+    mockConfinePath.mockResolvedValue(null);
+    mockResolveApproved.mockReturnValue(null);
+
+    const result = await addProjectReference(WORKSPACE, [OUT_OF_ROOT]);
+
+    expect(result.rejected).toEqual([{ name: 'passwd', reason: 'not-permitted' }]);
+  });
+
+  it('reports nothing rejected when every source was copied', async () => {
+    mockConfinePath.mockResolvedValue(IN_ROOT);
+    mockResolveApproved.mockReturnValue(null);
+    mockLstat.mockResolvedValue(regularFile(10));
+
+    const result = await addProjectReference(WORKSPACE, [IN_ROOT]);
+
+    expect(result.rejected).toEqual([]);
+  });
+
+  it('separates the copied from the refused in a mixed drop', async () => {
+    // This is the case the old return type could not express at all.
+    mockConfinePath.mockImplementation(async (p: unknown) => (p === IN_ROOT ? IN_ROOT : null));
+    mockResolveApproved.mockReturnValue(null);
+    mockLstat.mockResolvedValue(regularFile(10));
+
+    const result = await addProjectReference(WORKSPACE, [OUT_OF_ROOT, IN_ROOT]);
+
+    expect(result.rejected).toHaveLength(1);
+    expect(result.rejected[0].name).toBe('passwd');
+  });
+
+  it('reports a symlinked source as refused, not as added', async () => {
+    mockConfinePath.mockResolvedValue(IN_ROOT);
+    mockResolveApproved.mockReturnValue(null);
+    mockLstat.mockResolvedValue({
+      isSymbolicLink: () => true,
+      isFile: () => false,
+      size: 10,
+    } as unknown as Awaited<ReturnType<typeof fs.lstat>>);
+
+    const result = await addProjectReference(WORKSPACE, [IN_ROOT]);
+
+    expect(result.rejected).toEqual([{ name: 'spec.md', reason: 'not-permitted' }]);
+    expect(mockCopyFile).not.toHaveBeenCalled();
+  });
+
+  it('reports an oversized source with its own reason', async () => {
+    mockConfinePath.mockResolvedValue(IN_ROOT);
+    mockResolveApproved.mockReturnValue(null);
+    mockLstat.mockResolvedValue(regularFile(500 * 1024 * 1024));
+
+    const result = await addProjectReference(WORKSPACE, [IN_ROOT]);
+
+    expect(result.rejected).toEqual([{ name: 'spec.md', reason: 'too-large' }]);
+  });
+
+  it('reports a copy that threw, rather than swallowing it', async () => {
+    mockConfinePath.mockResolvedValue(IN_ROOT);
+    mockResolveApproved.mockReturnValue(null);
+    mockLstat.mockResolvedValue(regularFile(10));
+    mockCopyFile.mockRejectedValue(new Error('EACCES') as never);
+
+    const result = await addProjectReference(WORKSPACE, [IN_ROOT]);
+
+    expect(result.rejected).toEqual([{ name: 'spec.md', reason: 'failed' }]);
+  });
+
+  it('still returns the resulting file list alongside the refusals', async () => {
+    mockConfinePath.mockResolvedValue(null);
+    mockResolveApproved.mockReturnValue(null);
+
+    const result = await addProjectReference(WORKSPACE, [OUT_OF_ROOT]);
+
+    expect(Array.isArray(result.files)).toBe(true);
+  });
+});

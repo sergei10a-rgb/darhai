@@ -113,6 +113,8 @@
     },
     "fileAdded": "Se añadió {{count}} archivo",
     "fileAdded_other": "Se añadieron {{count}} archivos",
+    "fileAddedPartial": "Se añadieron {{count}} archivos; {{failed}} no se pudieron añadir: {{names}}",
+    "fileAddedNone": "No se pudieron añadir estos archivos: {{names}}. Los archivos deben venir de una carpeta que hayas elegido o de dentro del proyecto.",
     "fileAddFailed": "No se pudieron añadir los archivos.",
     "fileRemoveFailed": "No se pudo quitar el archivo.",
     "noWorkspaceTitle": "Aún no hay carpeta de espacio de trabajo",

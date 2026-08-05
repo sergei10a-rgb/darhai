@@ -113,6 +113,8 @@
     },
     "fileAdded": "{{count}} файл нэмлээ",
     "fileAdded_other": "{{count}} файл нэмлээ",
+    "fileAddedPartial": "{{count}} файл нэмлээ, {{failed}} нь нэмэгдсэнгүй: {{names}}",
+    "fileAddedNone": "Эдгээр файлыг нэмж чадсангүй: {{names}}. Файл нь таны сонгосон хавтас эсвэл төслийн дотор байх ёстой.",
     "fileAddFailed": "Файлуудыг нэмж чадсангүй.",
     "fileRemoveFailed": "Файлыг хасаж чадсангүй.",
     "noWorkspaceTitle": "Хараахан ажлын талбарын хавтас байхгүй",

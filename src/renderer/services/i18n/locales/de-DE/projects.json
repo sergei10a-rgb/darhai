@@ -113,6 +113,8 @@
     },
     "fileAdded": "{{count}} Datei hinzugefügt",
     "fileAdded_other": "{{count}} Dateien hinzugefügt",
+    "fileAddedPartial": "{{count}} Dateien hinzugefügt, {{failed}} konnten nicht hinzugefügt werden: {{names}}",
+    "fileAddedNone": "Diese Dateien konnten nicht hinzugefügt werden: {{names}}. Dateien müssen aus einem von dir gewählten Ordner oder aus dem Projekt stammen.",
     "fileAddFailed": "Die Dateien konnten nicht hinzugefügt werden.",
     "fileRemoveFailed": "Die Datei konnte nicht entfernt werden.",
     "noWorkspaceTitle": "Noch kein Workspace-Ordner",

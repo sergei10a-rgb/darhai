@@ -1967,6 +1967,8 @@ export type I18nKey =
   | 'projects.knowledge.edit'
   | 'projects.knowledge.fileAddFailed'
   | 'projects.knowledge.fileAdded'
+  | 'projects.knowledge.fileAddedNone'
+  | 'projects.knowledge.fileAddedPartial'
   | 'projects.knowledge.fileAdded_other'
   | 'projects.knowledge.fileRemoveFailed'
   | 'projects.knowledge.generate'

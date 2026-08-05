@@ -122,6 +122,8 @@
     },
     "fileAdded": "Added {{count}} file",
     "fileAdded_other": "Added {{count}} files",
+    "fileAddedPartial": "已新增 {{count}} 個檔案，{{failed}} 個無法新增：{{names}}",
+    "fileAddedNone": "無法新增這些檔案：{{names}}。檔案必須來自你選擇的資料夾或專案內部。",
     "fileAddFailed": "Could not add the files.",
     "fileRemoveFailed": "Could not remove the file.",
     "noWorkspaceTitle": "No workspace folder yet",

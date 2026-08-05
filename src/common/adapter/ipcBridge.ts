@@ -2890,10 +2890,22 @@ export const project = {
   listReference: buildProvider<Array<{ name: string; path: string; size: number }>, { id: string }>(
     'project.list-reference'
   ),
-  /** Copy dropped files into .darhai/reference/; returns the updated list. */
-  addReference: buildProvider<Array<{ name: string; path: string; size: number }>, { id: string; filePaths: string[] }>(
-    'project.add-reference'
-  ),
+  /**
+   * Copy dropped files into .darhai/reference/.
+   *
+   * Returns the updated list AND what was refused, because refusals are normal
+   * here: the reference dir feeds straight into prompts, so a source that is
+   * not inside an authorized root or a directory the user picked through the
+   * native dialog is rejected on purpose. Reporting only the list let the panel
+   * claim success for files it never copied.
+   */
+  addReference: buildProvider<
+    {
+      files: Array<{ name: string; path: string; size: number }>;
+      rejected: Array<{ name: string; reason: 'not-permitted' | 'not-a-file' | 'too-large' | 'too-many' | 'failed' }>;
+    },
+    { id: string; filePaths: string[] }
+  >('project.add-reference'),
   /** Remove one reference file by name; returns the updated list. */
   removeReference: buildProvider<Array<{ name: string; path: string; size: number }>, { id: string; name: string }>(
     'project.remove-reference'

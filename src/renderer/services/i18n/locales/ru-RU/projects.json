@@ -122,6 +122,8 @@
     },
     "fileAdded": "Added {{count}} file",
     "fileAdded_other": "Added {{count}} files",
+    "fileAddedPartial": "Добавлено файлов: {{count}}, не удалось добавить: {{failed}} — {{names}}",
+    "fileAddedNone": "Не удалось добавить эти файлы: {{names}}. Файлы должны быть из выбранной вами папки или из проекта.",
     "fileAddFailed": "Could not add the files.",
     "fileRemoveFailed": "Could not remove the file.",
     "noWorkspaceTitle": "No workspace folder yet",

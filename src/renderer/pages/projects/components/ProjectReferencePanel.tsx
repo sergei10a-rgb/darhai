@@ -56,12 +56,31 @@ const ProjectReferencePanel: React.FC<{
   const onFilesDropped = useCallback(
     async (files: Array<{ path: string; name: string }>) => {
       try {
-        const updated = await ipcBridge.project.addReference.invoke({
+        const result = await ipcBridge.project.addReference.invoke({
           id: projectId,
           filePaths: files.map((f) => f.path),
         });
-        setRefs(Array.isArray(updated) ? updated : []);
-        Message.success(t('projects.knowledge.fileAdded', { count: files.length }));
+        const added = Array.isArray(result?.files) ? result.files : [];
+        const rejected = Array.isArray(result?.rejected) ? result.rejected : [];
+        setRefs(added);
+
+        // The count used to come from the files the user DRAGGED, so dropping
+        // three documents that were all refused still said "3 files added" -
+        // and the project quietly lacked the very context it was given.
+        const addedCount = files.length - rejected.length;
+        if (rejected.length === 0) {
+          Message.success(t('projects.knowledge.fileAdded', { count: addedCount }));
+        } else if (addedCount > 0) {
+          Message.warning(
+            t('projects.knowledge.fileAddedPartial', {
+              count: addedCount,
+              failed: rejected.length,
+              names: rejected.map((r) => r.name).join(', '),
+            })
+          );
+        } else {
+          Message.error(t('projects.knowledge.fileAddedNone', { names: rejected.map((r) => r.name).join(', ') }));
+        }
       } catch {
         Message.error(t('projects.knowledge.fileAddFailed'));
       }
@@ -127,10 +146,7 @@ const ProjectReferencePanel: React.FC<{
       {refs.length > 0 && (
         <div className='grid gap-12px' style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))' }}>
           {refs.map((f) => (
-            <div
-              key={f.name}
-              className={`group flex flex-col gap-8px px-14px py-13px ${styles.card}`}
-            >
+            <div key={f.name} className={`group flex flex-col gap-8px px-14px py-13px ${styles.card}`}>
               <div className='flex items-start justify-between'>
                 <div className='flex items-center justify-center w-32px h-32px rd-8px bg-fill-2 text-t-secondary'>
                   <FileText size={16} />

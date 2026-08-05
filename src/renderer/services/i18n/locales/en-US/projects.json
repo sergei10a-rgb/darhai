@@ -113,6 +113,8 @@
     },
     "fileAdded": "Added {{count}} file",
     "fileAdded_other": "Added {{count}} files",
+    "fileAddedPartial": "Added {{count}} files - {{failed}} could not be added: {{names}}",
+    "fileAddedNone": "Could not add these files: {{names}}. Files must come from a folder you picked, or from inside the project.",
     "fileAddFailed": "Could not add the files.",
     "fileRemoveFailed": "Could not remove the file.",
     "noWorkspaceTitle": "No workspace folder yet",
