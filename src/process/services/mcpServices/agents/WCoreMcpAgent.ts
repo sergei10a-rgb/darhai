@@ -13,7 +13,7 @@ import { resolveWCoreBinary } from '@process/agent/wcore/binaryResolver';
 import type { McpOperationResult } from '../McpProtocol';
 import { AbstractMcpAgent } from '../McpProtocol';
 import type { IMcpServer, IMcpServerTransport } from '@/common/config/storage';
-import { resolveBuiltinMcpSpawnArgs } from '@process/utils/mcpScriptDir';
+import { resolveMcpStdioSpawn } from '@process/services/mcpServices/mcpStdioSpawn';
 
 /**
  * wayland-core config.toml transport type (kebab-case)
@@ -123,11 +123,14 @@ function toWCoreConfig(server: IMcpServer): WCoreServerConfig {
   const wcoreType = toWCoreTransportType(server.transport.type);
 
   if (server.transport.type === 'stdio') {
-    const spawnArgs = resolveBuiltinMcpSpawnArgs(server.transport.command, server.transport.args);
+    // The engine spawns this from a persisted config.toml via Rust's
+    // std::process::Command, which does no PATHEXT shimming - so a stored `npx`
+    // has to be resolved to a real binary here or the server never starts.
+    const spawn = resolveMcpStdioSpawn(server.transport.command, server.transport.args ?? []);
     const config: WCoreServerConfig = {
       transport: wcoreType,
-      command: server.transport.command,
-      args: spawnArgs.length > 0 ? spawnArgs : undefined,
+      command: spawn.command,
+      args: spawn.args.length > 0 ? spawn.args : undefined,
     };
     if (server.transport.env && Object.keys(server.transport.env).length > 0) {
       config.env = server.transport.env;

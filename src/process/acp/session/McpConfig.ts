@@ -3,7 +3,7 @@ import type { IMcpServer } from '@/common/config/storage';
 import type { AcpMcpCapabilities } from '@/common/types/acpTypes';
 import type { McpServer } from '@agentclientprotocol/sdk';
 import { shouldInjectMcpServer } from '@process/agent/acp/mcpSessionConfig';
-import { resolveBuiltinMcpSpawnArgs } from '@process/utils/mcpScriptDir';
+import { resolveMcpStdioSpawn } from '@process/services/mcpServices/mcpStdioSpawn';
 
 type MergeParams = {
   userServers?: McpServer[];
@@ -55,14 +55,19 @@ export class McpConfig {
       .filter(shouldInjectMcpServer)
       .map((server): McpServer | null => {
         switch (server.transport.type) {
-          case 'stdio':
+          case 'stdio': {
             if (!caps.stdio) return null;
+            // A stored `npx` hint has to become a real command before the agent
+            // spawns it, or on Windows the server starts nothing and the session
+            // gets zero tools with no error.
+            const spawn = resolveMcpStdioSpawn(server.transport.command, server.transport.args ?? []);
             return {
               name: server.name,
-              command: server.transport.command,
-              args: resolveBuiltinMcpSpawnArgs(server.transport.command, server.transport.args),
+              command: spawn.command,
+              args: spawn.args,
               env: toNameValueArray(server.transport.env),
             };
+          }
           case 'http':
           case 'streamable_http':
             if (!caps.http) return null;

@@ -6,7 +6,7 @@
 
 import type { IMcpServer } from '@/common/config/storage';
 import type { AcpMcpCapabilities } from '@/common/types/acpTypes';
-import { resolveBuiltinMcpSpawnArgs } from '@process/utils/mcpScriptDir';
+import { resolveMcpStdioSpawn } from '@process/services/mcpServices/mcpStdioSpawn';
 
 export interface AcpSessionMcpNameValue {
   name: string;
@@ -73,15 +73,19 @@ export function buildAcpSessionMcpServers(
     .filter(shouldInjectMcpServer)
     .map((server): AcpSessionMcpServer | null => {
       switch (server.transport.type) {
-        case 'stdio':
+        case 'stdio': {
           if (!capabilities.stdio) return null;
+          // A stored `npx` hint must become a real command before session/new,
+          // or on Windows the server contributes zero tools with no error.
+          const spawn = resolveMcpStdioSpawn(server.transport.command, server.transport.args ?? []);
           return {
             type: 'stdio',
             name: server.name,
-            command: server.transport.command,
-            args: resolveBuiltinMcpSpawnArgs(server.transport.command, server.transport.args),
+            command: spawn.command,
+            args: spawn.args,
             env: toNameValueEntries(server.transport.env) ?? [],
           };
+        }
         case 'http':
         case 'streamable_http':
           if (!capabilities.http) return null;

@@ -33,7 +33,7 @@ import { getCostRecorder } from '@process/services/cost/CostRecorder';
 import { handlePreviewOpenEvent } from '@process/utils/previewUtils';
 import { getTeamGuideStdioConfig } from '@process/team/mcp/guide/teamGuideSingleton';
 import { shouldInjectMcpServer } from '@process/agent/acp/mcpSessionConfig';
-import { resolveBuiltinMcpSpawnArgs } from '@process/utils/mcpScriptDir';
+import { resolveMcpStdioSpawn } from '@process/services/mcpServices/mcpStdioSpawn';
 import BaseAgentManager from './BaseAgentManager';
 import { IpcAgentEventEmitter } from './IpcAgentEventEmitter';
 import { mainLog, mainWarn, mainError } from '@process/utils/mainLogger';
@@ -386,9 +386,13 @@ export class GeminiAgentManager extends BaseAgentManager<
         .filter(shouldInjectMcpServer)
         .forEach((server: IMcpServer) => {
           if (server.transport.type === 'stdio') {
+            // Same storage and same filter as the ACP path, so it needs the same
+            // `npx` resolution - otherwise a fork-backed Gemini session on
+            // Windows keeps the green-badge-but-no-tools failure.
+            const spawn = resolveMcpStdioSpawn(server.transport.command, server.transport.args ?? []);
             mcpConfig[server.name] = {
-              command: server.transport.command,
-              args: resolveBuiltinMcpSpawnArgs(server.transport.command, server.transport.args),
+              command: spawn.command,
+              args: spawn.args,
               env: server.transport.env || {},
               description: server.description,
             };
