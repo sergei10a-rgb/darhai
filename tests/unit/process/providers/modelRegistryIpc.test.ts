@@ -661,6 +661,77 @@ describe('modelRegistry IPC - refresh', () => {
     expect(result).toEqual({ ok: false });
     expect(repo.getRegistryProvider('openai')?.state).toBe('error');
   });
+
+  // `ollama-local` is keyless: its catalog is the live `/api/tags` listing, not
+  // something `buildAndPersistCatalog` can assemble. Sending it down that path
+  // builds zero models and writes the empty list over the real catalog - the
+  // Refresh button deleted the user's local model list. `refreshAllOnce` has
+  // carried the re-probe exemption for a while; the single-provider handler
+  // beside it did not, so the two disagreed about the same provider.
+  describe('keyless ollama-local', () => {
+    const connectOllama = (repo: FakeRepo, models: string[]) => {
+      repo.upsertRegistryProvider({
+        providerId: 'ollama-local',
+        connectedVia: 'auto-local',
+        state: 'connected',
+        creds: { key: '', baseUrl: 'http://127.0.0.1:11434/v1' },
+      });
+      repo.replaceRegistryCatalog(
+        'ollama-local',
+        models.map((id) => catalogModel({ id, providerId: 'ollama-local' }))
+      );
+    };
+
+    it('refreshes from the live daemon listing', async () => {
+      const { deps, repo } = makeFakes();
+      connectOllama(repo, ['llama3:latest']);
+      const probeOllama = vi.fn().mockResolvedValue({ running: true, models: ['llama3:latest', 'qwen3:8b'] });
+      const h = createModelRegistryHandlers({ ...deps, probeOllama });
+
+      expect(await h.refresh({ providerId: 'ollama-local' })).toEqual({ ok: true });
+      expect(repo.getRegistryCatalog('ollama-local').map((m) => m.id)).toEqual(['llama3:latest', 'qwen3:8b']);
+    });
+
+    it('keeps the catalog when the daemon is down', async () => {
+      // The regression: a stopped daemon used to leave the user with an empty
+      // model list and no way back except restarting Ollama and finding the
+      // button again.
+      const { deps, repo } = makeFakes();
+      connectOllama(repo, ['llama3:latest']);
+      const probeOllama = vi.fn().mockResolvedValue({ running: false, models: [] });
+      const h = createModelRegistryHandlers({ ...deps, probeOllama });
+
+      expect(await h.refresh({ providerId: 'ollama-local' })).toEqual({ ok: false });
+      expect(repo.getRegistryCatalog('ollama-local').map((m) => m.id)).toEqual(['llama3:latest']);
+    });
+
+    it('keeps the catalog when there is no probe at all', async () => {
+      const { deps, repo } = makeFakes();
+      connectOllama(repo, ['llama3:latest']);
+      const h = createModelRegistryHandlers(deps);
+
+      expect(await h.refresh({ providerId: 'ollama-local' })).toEqual({ ok: false });
+      expect(repo.getRegistryCatalog('ollama-local').map((m) => m.id)).toEqual(['llama3:latest']);
+    });
+
+    it('treats a row pointed off loopback as an ordinary provider', async () => {
+      // The keyless exemption is scoped to a loopback host so it cannot be
+      // hijacked onto a remote one - the same scoping the sweep applies.
+      const { deps, repo } = makeFakes();
+      repo.upsertRegistryProvider({
+        providerId: 'ollama-local',
+        connectedVia: 'api-key',
+        state: 'connected',
+        creds: { key: 'k', baseUrl: 'https://ollama.example.com/v1' },
+      });
+      const probeOllama = vi.fn().mockResolvedValue({ running: true, models: ['should-not-be-used'] });
+      const h = createModelRegistryHandlers({ ...deps, probeOllama });
+
+      await h.refresh({ providerId: 'ollama-local' });
+
+      expect(probeOllama).not.toHaveBeenCalled();
+    });
+  });
 });
 
 describe('modelRegistry IPC - disconnect', () => {

@@ -730,6 +730,20 @@ export function createModelRegistryHandlers(deps: ModelRegistryDeps): ModelRegis
         }
         // `not-found` - nothing to refresh.
         if (stored.status !== 'ok') return { ok: false };
+        // Keyless `ollama-local` takes the re-probe path, exactly as the sweep
+        // in `refreshAllOnce` does. Sending it through `buildAndPersistCatalog`
+        // assembles zero models (there is no key to assemble from) and then
+        // writes that empty list over the daemon-discovered catalog - so the
+        // per-provider Refresh button DELETED the local model list, while the
+        // background sweep beside it did not. Same exemption, same loopback
+        // scoping, so the two paths agree.
+        const storedBaseUrl = stored.creds.baseUrl;
+        if (
+          providerId === OLLAMA_LOCAL_ID &&
+          isLoopbackBaseUrl(typeof storedBaseUrl === 'string' ? storedBaseUrl : '')
+        ) {
+          return { ok: (await refreshOllamaLocal()) === 'ok' };
+        }
         const creds = toTestCreds(stored.creds);
         const built = await buildAndPersistCatalog(providerId, creds);
         return { ok: built.ok };

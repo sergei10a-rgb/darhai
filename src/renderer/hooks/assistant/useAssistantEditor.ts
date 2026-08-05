@@ -14,6 +14,7 @@ import type {
 } from '@/renderer/pages/settings/AssistantSettings/types';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { removeStoredAssistant, updateStoredAssistant } from './assistantStore';
 
 type UseAssistantEditorParams = {
   localeKey: string;
@@ -328,8 +329,19 @@ export const useAssistantEditor = ({
           });
         }
 
-        const updatedAgents = agents.map((agent) => (agent.id === activeAssistant.id ? updatedAgent : agent));
-        await ConfigStorage.set('assistants', updatedAgents);
+        // Writes to whichever store persists this assistant. Mapping over
+        // `assistants` alone silently did nothing for a custom agent (those
+        // moved to `acp.customAgents`) and for an extension specialist (which
+        // is persisted nowhere) - and then reported success over the loss.
+        const saved = await updateStoredAssistant(activeAssistant.id, () => updatedAgent);
+        if (!saved) {
+          message.error(
+            t('settings.extensionAssistantReadonly', {
+              defaultValue: 'Extension assistants are read-only. You can duplicate it and edit the copy.',
+            })
+          );
+          return;
+        }
         await loadAssistants();
         message.success(t('common.saveSuccess', { defaultValue: 'Saved successfully' }));
       }
@@ -371,10 +383,14 @@ export const useAssistantEditor = ({
         ipcBridge.fs.deleteAssistantSkill.invoke({ assistantId: activeAssistant.id }),
       ]);
 
-      // Remove assistant from config
-      const agents = (await ConfigStorage.get('assistants')) || [];
-      const updatedAgents = agents.filter((agent) => agent.id !== activeAssistant.id);
-      await ConfigStorage.set('assistants', updatedAgents);
+      // Same two-store lookup as save: a custom agent lives in
+      // `acp.customAgents`, so filtering `assistants` removed nothing and the
+      // assistant came straight back on the next list load.
+      const removed = await removeStoredAssistant(activeAssistant.id);
+      if (!removed) {
+        message.error(t('common.failed', { defaultValue: 'Failed' }));
+        return;
+      }
 
       // Reload merged assistant list (local + extensions)
       await loadAssistants();
@@ -400,9 +416,11 @@ export const useAssistantEditor = ({
     }
 
     try {
-      const agents = (await ConfigStorage.get('assistants')) || [];
-      const updatedAgents = agents.map((agent) => (agent.id === assistant.id ? { ...agent, enabled } : agent));
-      await ConfigStorage.set('assistants', updatedAgents);
+      const toggled = await updateStoredAssistant(assistant.id, (previous) => ({ ...previous, enabled }));
+      if (!toggled) {
+        message.error(t('common.failed', { defaultValue: 'Failed' }));
+        return;
+      }
 
       // Reload merged assistant list (local + extensions)
       await loadAssistants();
