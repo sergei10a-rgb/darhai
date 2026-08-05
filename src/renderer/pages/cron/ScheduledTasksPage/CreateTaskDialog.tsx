@@ -25,6 +25,8 @@ import type { AcpBackendAll, AcpModelInfo, AcpSessionConfigOption, AgentBackend 
 import { useModelProviderList } from '@renderer/hooks/agent/useModelProviderList';
 import GuidModelSelector from '@renderer/pages/guid/components/GuidModelSelector';
 import { WorkspaceFolderSelect } from '@renderer/components/workspace';
+import { parseCronExpr } from '@renderer/pages/cron/cronUtils';
+import type { CronFrequency } from '@renderer/pages/cron/cronUtils';
 
 const FormItem = Form.Item;
 const TextArea = Input.TextArea;
@@ -62,7 +64,6 @@ interface CreateTaskDialogProps {
   initialWorkflowSlug?: string;
 }
 
-type FrequencyType = 'manual' | 'hourly' | 'daily' | 'weekdays' | 'weekly' | 'custom';
 type ExecutionMode = 'new_conversation' | 'existing';
 type TaskSource = 'manual' | 'workflow';
 
@@ -75,61 +76,6 @@ const WEEKDAYS = [
   { value: 'SAT', label: 'saturday' },
   { value: 'SUN', label: 'sunday' },
 ];
-
-/**
- * Infer frequency type and time/weekday from a cron expression for edit mode.
- * Returns 'custom' for expressions that don't match our preset formats.
- */
-function parseCronExpr(expr: string): { frequency: FrequencyType; time: string; weekday: string } {
-  if (!expr) return { frequency: 'manual', time: '09:00', weekday: 'MON' };
-
-  const parts = expr.trim().split(/\s+/);
-  if (parts.length < 5) return { frequency: 'daily', time: '09:00', weekday: 'MON' };
-
-  const [min, hour, day, month, dow] = parts;
-
-  // Hourly: 0 * * * *
-  if (hour === '*' && min === '0' && day === '*' && month === '*' && dow === '*') {
-    return { frequency: 'hourly', time: '09:00', weekday: 'MON' };
-  }
-
-  // Weekdays: min hour * * MON-FRI
-  if (dow === 'MON-FRI' && day === '*' && month === '*') {
-    const hh = String(hour).padStart(2, '0');
-    const mm = String(min).padStart(2, '0');
-    const time = `${hh}:${mm}`;
-    return { frequency: 'weekdays', time, weekday: 'MON' };
-  }
-
-  // Weekly: min hour * * DAY
-  if (dow !== '*' && day === '*' && month === '*') {
-    const dayUpper = dow.toUpperCase();
-    const matched = WEEKDAYS.find((d) => d.value === dayUpper);
-    if (matched) {
-      const hh = String(hour).padStart(2, '0');
-      const mm = String(min).padStart(2, '0');
-      const time = `${hh}:${mm}`;
-      return { frequency: 'weekly', time, weekday: dayUpper };
-    }
-    return { frequency: 'daily', time: '09:00', weekday: 'MON' };
-  }
-
-  // Daily: min hour * * * - only if all parts match the expected pattern
-  if (day === '*' && month === '*' && dow === '*') {
-    // Check if hour and minute are simple numbers (not expressions like */4)
-    const hourNum = Number(hour);
-    const minNum = Number(min);
-    if (!isNaN(hourNum) && !isNaN(minNum) && hourNum >= 0 && hourNum <= 23 && minNum >= 0 && minNum <= 59) {
-      const hh = String(hourNum).padStart(2, '0');
-      const mm = String(minNum).padStart(2, '0');
-      const time = `${hh}:${mm}`;
-      return { frequency: 'daily', time, weekday: 'MON' };
-    }
-  }
-
-  // Custom: any expression that doesn't match our presets
-  return { frequency: 'custom', time: '09:00', weekday: 'MON' };
-}
 
 function getDescriptionInitialValue(job: ICronJob): string {
   const storedDescription = job.description?.trim();
@@ -169,7 +115,7 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
   const [submitting, setSubmitting] = useState(false);
   const { cliAgents, presetAssistants } = useConversationAgents();
   const { providers, getAvailableModels } = useModelProviderList();
-  const [frequency, setFrequency] = useState<FrequencyType>('manual');
+  const [frequency, setFrequency] = useState<CronFrequency>('manual');
   const [time, setTime] = useState('09:00');
   const [weekday, setWeekday] = useState('MON');
   const [customCronExpr, setCustomCronExpr] = useState<string>('');
@@ -521,7 +467,7 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
   const showConfigSelector = resolvedBackend === 'codex';
   const advancedFieldCount = Number(showModelSelector) + Number(showConfigSelector) + 1;
 
-  const handleFrequencyChange = (value: FrequencyType) => {
+  const handleFrequencyChange = (value: CronFrequency) => {
     setFrequency(value);
     if (value !== 'custom') {
       setCustomCronExpr('');
