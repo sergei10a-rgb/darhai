@@ -114,7 +114,7 @@ describe('materializeCodexHome', () => {
 
     const home = await materializeCodexHome('workspace-write');
 
-    const link = await readlink(join(home, 'auth.json')).catch(() => null);
+    const link = await readlink(join(home, 'auth.json')).catch((): string | null => null);
     if (link === null) {
       // Windows without developer mode. The copy fallback is expected, and the
       // previous test already covered that it authenticates.
