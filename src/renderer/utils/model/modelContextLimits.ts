@@ -59,6 +59,7 @@ export const MODEL_CONTEXT_LIMITS: Record<string, number> = {
   // The bare `claude-opus-4` / `-sonnet-4` / `-haiku-4` entries are the fuzzy
   // fallback for dated ids (`claude-opus-4-20250514`); longest-match means the
   // versioned keys above win wherever one exists.
+  'claude-opus-5': 1_000_000,
   'claude-opus-4-8': 1_000_000,
   'claude-opus-4-7': 1_000_000,
   'claude-opus-4-6': 1_000_000,
@@ -67,6 +68,10 @@ export const MODEL_CONTEXT_LIMITS: Record<string, number> = {
   'claude-opus-4': 200_000,
   'claude-sonnet-5': 1_000_000,
   'claude-sonnet-4-6': 1_000_000,
+  // 200K, NOT the 1M some catalogs report. Sonnet 4.5's million-token window is
+  // a beta tier that requires an `anthropic-beta: context-1m-*` request header,
+  // and we never send one - so 1M is a window this app cannot actually obtain.
+  // Claiming it would push compaction past the real ceiling and fail the turn.
   'claude-sonnet-4-5': 200_000,
   'claude-sonnet-4': 200_000,
   'claude-haiku-4-5': 200_000,

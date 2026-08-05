@@ -75,49 +75,123 @@ describe('getModelContextLimit - Claude windows', () => {
 });
 
 describe('MODEL_CONTEXT_LIMITS conformance with the shipped models.dev snapshot', () => {
-  // Anthropic only: other vendors re-serve the same model id through gateways at
-  // different windows, so an id alone is not enough to pin a number there. The
-  // Anthropic ids are unambiguous, and they are where the bug was.
+  /**
+   * Consensus across providers, not one vendor row.
+   *
+   * The first version of this check read only the `anthropic` entry, and a
+   * snapshot refresh promptly showed why that is not enough: that row began
+   * reporting Sonnet 4.5 at 1M, which is its BETA tier. 29 other providers say
+   * 200K and 8 say 1M, and this app never sends the `anthropic-beta:
+   * context-1m-*` header that unlocks the larger window - so 1M is a number we
+   * cannot actually obtain, and believing it would push compaction past the real
+   * ceiling and fail the turn.
+   *
+   * Majority across every provider serving the id is the honest reading: it
+   * still catches real drift, and a single vendor's beta tier cannot move it.
+   */
   const snapshot = JSON.parse(readFileSync(join(process.cwd(), 'resources/modelsdev-snapshot.json'), 'utf8')) as Record<
     string,
     { models?: Record<string, { limit?: { context?: number } }> }
   >;
+
+  /** Window most providers serving `modelId` report, or undefined if unknown. */
+  const consensusWindow = (modelId: string): number | undefined => {
+    const votes = new Map<number, number>();
+    for (const provider of Object.values(snapshot)) {
+      for (const [id, model] of Object.entries(provider.models ?? {})) {
+        // `us.anthropic.claude-opus-5`, `anthropic/claude-opus-5`, plain id.
+        if (id !== modelId && !id.endsWith(`/${modelId}`) && !id.endsWith(`.${modelId}`)) continue;
+        const context = model.limit?.context;
+        if (typeof context === 'number') votes.set(context, (votes.get(context) ?? 0) + 1);
+      }
+    }
+    if (votes.size === 0) return undefined;
+    return [...votes.entries()].sort((a, b) => b[1] - a[1])[0][0];
+  };
+
   const anthropic = snapshot.anthropic?.models ?? {};
 
   it('has a snapshot to check against', () => {
     expect(Object.keys(anthropic).length).toBeGreaterThan(10);
   });
 
-  it('agrees with the snapshot for every Claude id it names exactly', () => {
+  it('matches the cross-provider consensus for every Claude id it names', () => {
     const disagreements: string[] = [];
 
     for (const [key, tableLimit] of Object.entries(MODEL_CONTEXT_LIMITS)) {
       if (!key.startsWith('claude-')) continue;
-      const real = anthropic[key]?.limit?.context;
-      // Bare family keys (`claude-opus-4`) are deliberate fuzzy fallbacks and are
-      // not snapshot ids; skip anything the snapshot does not name.
-      if (typeof real !== 'number') continue;
-      if (real !== tableLimit) {
-        disagreements.push(`${key}: table ${tableLimit} vs snapshot ${real}`);
+      const consensus = consensusWindow(key);
+      // Bare family keys (`claude-opus-4`) are deliberate fuzzy fallbacks and no
+      // provider serves them as ids; skip anything nobody names.
+      if (consensus === undefined) continue;
+      if (consensus !== tableLimit) {
+        disagreements.push(`${key}: table ${tableLimit} vs consensus ${consensus}`);
       }
     }
 
     expect(disagreements).toEqual([]);
   });
 
-  it('resolves every Claude id in the snapshot to that id’s real window', () => {
-    // The end-to-end guard: not just "the table agrees" but "the lookup a caller
-    // actually performs returns the right number", which is what the dotted keys
-    // broke - the table looked plausible and every lookup still missed it.
+  it('resolves every Claude id Anthropic itself serves to its consensus window', () => {
+    // The end-to-end guard: not "the table agrees" but "the lookup a caller
+    // actually performs returns the right number" - which is exactly what the
+    // dotted keys broke. The table looked plausible and every lookup missed it.
     const wrong: string[] = [];
 
-    for (const [modelId, model] of Object.entries(anthropic)) {
-      const real = model.limit?.context;
-      if (typeof real !== 'number') continue;
+    for (const modelId of Object.keys(anthropic)) {
+      const consensus = consensusWindow(modelId);
+      if (consensus === undefined) continue;
       const resolved = getModelContextLimit(modelId);
-      if (resolved !== real) wrong.push(`${modelId}: resolved ${resolved} vs real ${real}`);
+      if (resolved !== consensus) wrong.push(`${modelId}: resolved ${resolved} vs consensus ${consensus}`);
     }
 
     expect(wrong).toEqual([]);
+  });
+
+  it('resolves every model Anthropic currently offers in the picker', () => {
+    // The concrete list a user sees today, top-level and under "More models".
+    // Anchoring on that rather than on the whole snapshot keeps this honest
+    // about what people actually select.
+    const offered: Array<[string, number]> = [
+      ['claude-fable-5', M],
+      ['claude-opus-5', M],
+      ['claude-sonnet-5', M],
+      ['claude-haiku-4-5', K200],
+      ['claude-opus-4-8', M],
+      ['claude-opus-4-7', M],
+      ['claude-opus-4-6', M],
+      ['claude-sonnet-4-6', M],
+    ];
+
+    const wrong = offered
+      .filter(([modelId, expected]) => getModelContextLimit(modelId) !== expected)
+      .map(([modelId, expected]) => `${modelId}: got ${getModelContextLimit(modelId)}, expected ${expected}`);
+
+    expect(wrong).toEqual([]);
+  });
+
+  it('resolves each offered model by an exact key, not the catch-all default', () => {
+    // 1,048,576 is the default. It sits close enough to a real 1M window to look
+    // correct while meaning "no idea" - which is how `claude-opus-5` went
+    // unnoticed. A model in the picker must never resolve to it by accident.
+    for (const modelId of ['claude-fable-5', 'claude-opus-5', 'claude-sonnet-5', 'claude-opus-4-8']) {
+      expect(getModelContextLimit(modelId)).not.toBe(DEFAULT_CONTEXT_LIMIT);
+    }
+  });
+
+  it('knows the current Claude 5 family', () => {
+    // These shipped after the previous snapshot was cut, so `claude-opus-5` fell
+    // through to the 1,048,576 default - close enough to look right, which is
+    // the worst way for a number to be wrong.
+    expect(getModelContextLimit('claude-opus-5')).toBe(M);
+    expect(getModelContextLimit('claude-sonnet-5')).toBe(M);
+    expect(getModelContextLimit('claude-fable-5')).toBe(M);
+  });
+
+  it('does not claim Sonnet 4.5’s 1M beta window we never request', () => {
+    // Guards the direction that actually breaks a turn: over-reporting means
+    // compaction never fires before the real 200K ceiling is hit.
+    expect(getModelContextLimit('claude-sonnet-4-5')).toBe(K200);
+    expect(getModelContextLimit('claude-sonnet-4-5-20250929')).toBe(K200);
   });
 });
