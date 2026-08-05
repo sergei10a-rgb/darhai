@@ -194,6 +194,9 @@ const GuidPage: React.FC = () => {
   });
 
   const send = useGuidSend({
+    // The project folder the composer was opened with, so an auto-filled dir is
+    // not mistaken for one the user picked (which skipped skill setup).
+    projectWorkspace: (location.state as { projectWorkspace?: string } | null)?.projectWorkspace,
     // Input state
     input: guidInput.input,
     setInput: guidInput.setInput,

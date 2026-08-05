@@ -11,6 +11,7 @@ import { uuid } from '@/common/utils';
 import { cronService } from './cron/cronServiceSingleton';
 import { SqliteProjectRepository } from '@process/services/database/SqliteProjectRepository';
 import { loadProjectKnowledgeBlock } from '@process/services/projectKnowledge/knowledge';
+import { ensureProjectWorkspace } from '@process/services/projectWorkspace';
 import {
   createGeminiAgent,
   createAcpAgent,
@@ -151,6 +152,38 @@ export class ConversationServiceImpl implements IConversationService {
     }
   }
 
+  /**
+   * Home a project's chat in the project's own folder.
+   *
+   * Without this the chat falls through to a fresh `wcore-temp-<timestamp>`
+   * directory inside the app's data folder - somewhere the user cannot find,
+   * and a different one for every chat, so the project's second chat could not
+   * see what the first one built.
+   *
+   * A workspace the caller chose is left alone; this only fills the gap.
+   */
+  private async applyProjectWorkspace(params: CreateConversationParams): Promise<void> {
+    const extra = params.extra as { projectId?: string; workspace?: string } | undefined;
+    if (!extra?.projectId || extra.workspace) return;
+    try {
+      const workspace = await ensureProjectWorkspace(extra.projectId, this.projectStore());
+      if (workspace) extra.workspace = workspace;
+    } catch (err) {
+      // The chat still opens on the old fallback; losing the project folder is
+      // better than refusing to start the conversation.
+      console.error('[ConversationServiceImpl] project workspace resolution failed:', err);
+    }
+  }
+
+  /** The narrow slice `ensureProjectWorkspace` needs, backed by the repository. */
+  private projectStore() {
+    const projects = new SqliteProjectRepository();
+    return {
+      getProject: (id: string) => projects.getProject(id),
+      updateProject: (id: string, patch: { workspace: string }) => projects.updateProject(id, patch),
+    };
+  }
+
   async createConversation(params: CreateConversationParams): Promise<TChatConversation> {
     let conversation: TChatConversation;
 
@@ -161,6 +194,7 @@ export class ConversationServiceImpl implements IConversationService {
     // (presetRules) and acp/Claude Code/Codex/Qwen (presetContext); backends with
     // no system-rules channel (openclaw/nanobot/remote) are a documented follow-up.
     await this.injectProjectKnowledge(params);
+    await this.applyProjectWorkspace(params);
 
     switch (params.type) {
       case 'gemini': {

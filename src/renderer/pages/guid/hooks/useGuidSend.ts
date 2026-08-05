@@ -24,6 +24,14 @@ export type GuidSendDeps = {
   files: string[];
   setFiles: React.Dispatch<React.SetStateAction<string[]>>;
   dir: string;
+  /**
+   * The project's own folder, when the composer runs inside a project.
+   *
+   * Needed only to tell it apart from a folder the user picked: an auto-filled
+   * project dir marked "custom" made the create path skip skill setup, so a
+   * project chat silently had no skills.
+   */
+  projectWorkspace?: string;
   setDir: React.Dispatch<React.SetStateAction<string>>;
   setLoading: React.Dispatch<React.SetStateAction<boolean>>;
   loading: boolean;
@@ -106,6 +114,7 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
     files,
     setFiles,
     dir,
+    projectWorkspace,
     setDir,
     setLoading,
     loading,
@@ -139,7 +148,11 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
   const sendingRef = useRef(false);
 
   const handleSend = useCallback(async (): Promise<boolean> => {
-    const isCustomWorkspace = !!dir;
+    // "Custom" means the user chose this folder. A project folder we filled in
+    // for them is not custom - and treating it as custom made the create path
+    // skip `setupAssistantWorkspace`, so a project chat started with no skills
+    // linked and nothing to say why.
+    const isCustomWorkspace = Boolean(dir) && dir !== projectWorkspace;
     const finalWorkspace = dir || '';
     // Stamped into every create path's extra when the composer runs inside a
     // project. Omitted from extra when undefined so it never pollutes a normal chat.
@@ -524,42 +537,45 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
     projectId,
   ]);
 
-  const sendMessageHandler = useCallback((opts?: { onSent?: () => void }) => {
-    if (loading || sendingRef.current) return;
-    sendingRef.current = true;
-    setLoading(true);
-    handleSend()
-      .then((ok) => {
-        setInput('');
-        setMentionOpen(false);
-        setMentionQuery(null);
-        setMentionSelectorOpen(false);
-        setMentionActiveIndex(0);
-        setFiles([]);
-        setDir('');
-        // Cross-audit MED-3: only fire onSent (telemetry) when the send
-        // actually succeeded - validation early-returns resolve to false.
-        if (ok) opts?.onSent?.();
-      })
-      .catch((error) => {
-        console.error('Failed to send message:', error);
-      })
-      .finally(() => {
-        sendingRef.current = false;
-        setLoading(false);
-      });
-  }, [
-    loading,
-    handleSend,
-    setLoading,
-    setInput,
-    setMentionOpen,
-    setMentionQuery,
-    setMentionSelectorOpen,
-    setMentionActiveIndex,
-    setFiles,
-    setDir,
-  ]);
+  const sendMessageHandler = useCallback(
+    (opts?: { onSent?: () => void }) => {
+      if (loading || sendingRef.current) return;
+      sendingRef.current = true;
+      setLoading(true);
+      handleSend()
+        .then((ok) => {
+          setInput('');
+          setMentionOpen(false);
+          setMentionQuery(null);
+          setMentionSelectorOpen(false);
+          setMentionActiveIndex(0);
+          setFiles([]);
+          setDir('');
+          // Cross-audit MED-3: only fire onSent (telemetry) when the send
+          // actually succeeded - validation early-returns resolve to false.
+          if (ok) opts?.onSent?.();
+        })
+        .catch((error) => {
+          console.error('Failed to send message:', error);
+        })
+        .finally(() => {
+          sendingRef.current = false;
+          setLoading(false);
+        });
+    },
+    [
+      loading,
+      handleSend,
+      setLoading,
+      setInput,
+      setMentionOpen,
+      setMentionQuery,
+      setMentionSelectorOpen,
+      setMentionActiveIndex,
+      setFiles,
+      setDir,
+    ]
+  );
 
   // Calculate button disabled state
   const isButtonDisabled =

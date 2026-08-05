@@ -11,6 +11,7 @@ import type { IProject, ICreateProjectParams, IUpdateProjectParams } from '@/com
 import type { TChatConversation } from '@/common/config/storage';
 import { uuid } from '@/common/utils';
 import { bootstrapProjectKnowledge } from '@process/services/projectKnowledge/bootstrap';
+import { allocateProjectWorkspace } from '@process/services/projectWorkspace';
 
 /**
  * Concrete IProjectService. Owns id/timestamp generation and the `.darhai/`
@@ -26,11 +27,17 @@ export class ProjectServiceImpl implements IProjectService {
 
   async createProject(params: ICreateProjectParams): Promise<IProject> {
     const now = Date.now();
+    const name = params.name.trim() || 'Untitled project';
+    // A project with no folder used to send each of its chats to a fresh
+    // temp directory inside the app's data folder: the user could not find
+    // what the agent wrote, and the project's second chat could not see what
+    // the first one built. Give it one folder, in their documents, now.
+    const workspace = params.workspace || (await allocateProjectWorkspace(name));
     const project: IProject = {
       id: uuid(),
-      name: params.name.trim() || 'Untitled project',
+      name,
       description: params.description,
-      workspace: params.workspace,
+      workspace,
       icon: params.icon,
       iconColor: params.iconColor,
       pinned: false,
