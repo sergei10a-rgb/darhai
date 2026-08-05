@@ -12,7 +12,7 @@ import { parse, stringify } from 'smol-toml';
 import type { TProviderWithModel } from '@/common/config/storage';
 import { resolveWCoreBinary } from './binaryResolver';
 import { buildEngineSpawnEnv, buildSpawnConfig } from './envBuilder';
-import { resolveActiveConfigDir } from './profilePaths';
+import { ProfileIsolationError, resolveActiveConfigDir } from './profilePaths';
 import { getToolKeyStore } from './toolKeyStore';
 import { hydrateModelForSpawn } from '@process/providers/ipc/modelRegistryIpc';
 import type { WCoreEvent, WCoreCommand, WCoreCapabilities } from './protocol';
@@ -190,9 +190,7 @@ export class WCoreAgent {
     // and is never persisted. Per-call resolution keeps concurrent chats on
     // different accounts isolated (audit C6); raw-engine mode ignores the model
     // (it uses the engine's own config.toml), so skip the lookup there.
-    const spawnModel = this.options.rawEngineMode
-      ? this.options.model
-      : await hydrateModelForSpawn(this.options.model);
+    const spawnModel = this.options.rawEngineMode ? this.options.model : await hydrateModelForSpawn(this.options.model);
 
     const { args, env, projectConfig, resolvedMaxTokens } = buildSpawnConfig(spawnModel, {
       workspace: this.options.workspace,
@@ -223,6 +221,13 @@ export class WCoreAgent {
     try {
       waylandHome = await resolveActiveConfigDir();
     } catch (err) {
+      // A named profile that cannot be resolved must stop the spawn. Falling
+      // through leaves DARHAI_HOME unset, and the engine then uses its own
+      // default - the DEFAULT profile's config.toml and memory.db. A profile
+      // created to keep work separate would start writing into the one it was
+      // meant to be separate from, silently. Failing to start is recoverable;
+      // mixing two profiles' data is not.
+      if (err instanceof ProfileIsolationError) throw err;
       console.warn('[WCoreAgent] Failed to resolve active profile config dir:', err);
     }
     this.childProcess = spawn(binaryPath, args, {

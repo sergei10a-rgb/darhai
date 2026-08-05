@@ -22,6 +22,7 @@ import {
   getActiveProfile,
   nativeConfigDir,
   profilesRoot,
+  ProfileIsolationError,
   resolveActiveConfigDir,
   resolveActiveConfigPath,
   resolveProfileDir,
@@ -95,5 +96,42 @@ describe('resolveActiveConfigDir - the default<->named fork', () => {
     await setActive('../../etc'); // fails the name regex => getActiveProfile => default
     const dir = await resolveActiveConfigDir();
     expect(dir).toBe(nativeConfigDir());
+  });
+
+  /**
+   * A named profile that cannot be resolved must be a hard stop, not a warning.
+   *
+   * The spawn site used to catch everything here and continue with no config
+   * root, which makes the engine fall back to its own default - the DEFAULT
+   * profile's config.toml and memory.db. A profile the user made to keep work
+   * separate would then write into the profile they were keeping it away from,
+   * with nothing to show for it but entries in the wrong place.
+   */
+  describe('when a named profile cannot be resolved', () => {
+    const boom = async (): Promise<string> => {
+      throw new Error('EACCES');
+    };
+
+    it('throws ProfileIsolationError rather than falling back', async () => {
+      await setActive('client-work');
+
+      await expect(resolveActiveConfigDir(boom)).rejects.toBeInstanceOf(ProfileIsolationError);
+    });
+
+    it('names the profile it could not resolve, and keeps the cause', async () => {
+      await setActive('client-work');
+
+      await expect(resolveActiveConfigDir(boom)).rejects.toMatchObject({ profile: 'client-work' });
+      await expect(resolveActiveConfigDir(boom)).rejects.toThrow(/EACCES/);
+    });
+
+    it('leaves the default profile alone, which has nothing to isolate from', async () => {
+      // Turning a filesystem hiccup into a hard stop here would brick every
+      // user who never created a profile at all - and the default profile has
+      // no other profile's data to leak into.
+      await setActive('default');
+
+      await expect(resolveActiveConfigDir(boom)).resolves.toBe(nativeConfigDir());
+    });
   });
 });

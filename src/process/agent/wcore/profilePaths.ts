@@ -176,12 +176,45 @@ export function nativeConfigDir(): string {
  * panes edit) and the engine spawn (`DARHAI_HOME`) resolve through, so they can
  * never disagree about which profile is live.
  */
-export async function resolveActiveConfigDir(): Promise<string> {
+export async function resolveActiveConfigDir(
+  // Injected so a test can exercise the failure branch: the marker and the
+  // profile directory share a root, so no portable filesystem trick keeps one
+  // readable while breaking the other.
+  resolveDir: (name: string) => Promise<string> = resolveProfileDir
+): Promise<string> {
   const active = await getActiveProfile();
   if (active && active !== DEFAULT_PROFILE) {
-    return resolveProfileDir(active);
+    try {
+      return await resolveDir(active);
+    } catch (cause) {
+      throw new ProfileIsolationError(active, cause);
+    }
   }
   return nativeConfigDir();
+}
+
+/**
+ * A named profile's directory could not be resolved.
+ *
+ * This is its own type because the only safe response is to abort. Callers used
+ * to catch every failure here and carry on with no config root at all, which
+ * makes the engine fall back to its own default - the DEFAULT profile's
+ * config.toml and memory.db. A profile the user created to keep work separate
+ * would then quietly write into the profile they were keeping it away from,
+ * and the only sign would be entries appearing where they do not belong.
+ *
+ * The `default` branch deliberately does NOT throw this: a failure there is an
+ * ordinary filesystem problem for the one profile that has nothing to isolate
+ * from, and turning it into a hard stop would brick every default-profile user.
+ */
+export class ProfileIsolationError extends Error {
+  constructor(
+    readonly profile: string,
+    readonly cause: unknown
+  ) {
+    super(`Cannot resolve the data directory for profile "${profile}": ${String(cause)}`);
+    this.name = 'ProfileIsolationError';
+  }
 }
 
 /** Resolve the active profile's `config.toml` path. */

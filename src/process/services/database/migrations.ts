@@ -2501,6 +2501,46 @@ export function getMigrationsToRollback(fromVersion: number, toVersion: number):
 }
 
 /**
+ * Tables whose rows belong to a team and are meant to die with it.
+ *
+ * Hardcoded rather than discovered, because this list is spliced into DELETE
+ * statements. Every entry declares `FOREIGN KEY (team_id) REFERENCES teams(id)
+ * ON DELETE CASCADE` in `schema.ts`.
+ */
+const TEAM_CHILD_TABLES = ['mailbox', 'team_tasks', 'team_event_log'] as const;
+
+/**
+ * Delete team-child rows whose team no longer exists.
+ *
+ * The migration runner checks foreign keys once, globally, for the whole batch,
+ * and a single violation rolls back every migration in it - so one stale row
+ * left behind by an older build is enough to stop a user's database from ever
+ * upgrading, and the app then fails to open. The rows themselves are already
+ * unreachable: no team owns them, nothing queries them, and the schema says
+ * they should have been cascaded away.
+ *
+ * Runs before the check on every batch rather than as a one-time migration, so
+ * a future release that adds a constraint cannot be bricked by the same rows.
+ * Missing tables are skipped: a database old enough to predate Teams has
+ * nothing to heal.
+ */
+export function healOrphanedTeamRows(db: ISqliteDriver): number {
+  let removed = 0;
+  for (const table of TEAM_CHILD_TABLES) {
+    const exists = db.prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name=?`).get(table);
+    if (!exists) continue;
+    const result = db
+      .prepare(`DELETE FROM ${table} WHERE team_id IS NOT NULL AND team_id NOT IN (SELECT id FROM teams)`)
+      .run();
+    if (result.changes > 0) {
+      console.warn(`[Migrations] Removed ${result.changes} orphaned row(s) from ${table}`);
+      removed += result.changes;
+    }
+  }
+  return removed;
+}
+
+/**
  * Run migrations in a transaction
  */
 export function runMigrations(db: ISqliteDriver, fromVersion: number, toVersion: number): void {
@@ -2541,6 +2581,13 @@ export function runMigrations(db: ISqliteDriver, fromVersion: number, toVersion:
         throw error; // Transaction will rollback
       }
     }
+
+    // Rows whose team is already gone would fail the check below and roll back
+    // the WHOLE batch - every migration, for a user whose only sin is having
+    // used Teams before. They are dead weight either way: the team they point
+    // at does not exist, nothing can read them, and the schema says they should
+    // have gone with it.
+    healOrphanedTeamRows(db);
 
     // Verify foreign key integrity after all migrations
     const fkViolations = db.pragma('foreign_key_check') as unknown[];
