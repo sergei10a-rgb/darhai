@@ -66,6 +66,7 @@ import { ModelRefreshScheduler } from '../scheduler/ModelRefreshScheduler';
 import { CliAgentSource, isEnumerableCliAgent } from '../sources/CliAgentSource';
 import type { CliAgentKey } from '../sources/CliAgentSource';
 import { CatalogAssembler, MODELS_DEV_PROVIDER_KEY } from '../catalog/CatalogAssembler';
+import { makeRegistrySource } from '../catalog/registryFallback';
 import { Curator } from '../catalog/Curator';
 import { ProviderCatalogStore, loadBaselineProviderCatalog } from '../catalog/providerCatalogStore';
 import { catalogBaseUrlFor } from '../catalog/catalogEndpoint';
@@ -119,6 +120,21 @@ const CLI_UNDERLYING_PROVIDER: Record<CliAgentKey, ProviderId> = {
   claude: 'anthropic',
   codex: 'openai',
   gemini: 'google-gemini',
+};
+
+/**
+ * The provider behind each ACP backend that is not one of the three CLIs above.
+ *
+ * Nothing enumerates these, and nothing connects them as providers either, so
+ * the picker had no source at all for them and showed an empty list every time.
+ * Knowing which provider each one runs is enough to describe its models from
+ * the public registry.
+ */
+const ACP_BACKEND_UNDERLYING_PROVIDER: Record<string, ProviderId> = {
+  grok: 'xai',
+  kimi: 'moonshot',
+  qwen: 'qwen',
+  vibe: 'mistral',
 };
 
 // ─── Injectable dependencies ──────────────────────────────────────────────────
@@ -940,20 +956,57 @@ export function createModelRegistryHandlers(deps: ModelRegistryDeps): ModelRegis
           return all;
         }
 
+        /**
+         * What the public registry says this provider offers.
+         *
+         * Reached whenever nothing else has models to show. An empty picker is
+         * indistinguishable from "this agent has no models", so answering with
+         * the published list is better than answering with nothing: a model the
+         * user cannot actually reach fails later with a real message, which
+         * tells them far more than a blank list does.
+         */
+        const fromRegistry = async (providerId: ProviderId): Promise<CuratedModel[]> => {
+          const registry = await modelsDevClient.getRegistry().catch(() => ({}) as ModelsDevRegistry);
+          const { models } = await assembler.assemble([makeRegistrySource(providerId, registry)], registry);
+          return applyOverrides(providerId, curator.curate(models));
+        };
+
         if (CLI_AGENT_KEYS.has(agentKey)) {
           const cliKey = agentKey as CliAgentKey;
+          const underlying = CLI_UNDERLYING_PROVIDER[cliKey];
+
           if (isEnumerableCliAgent(cliKey)) {
-            // Enumerable CLI (Codex) - build straight from its CLI source.
+            // Enumerable CLI (Codex) - build straight from its CLI source. On a
+            // cold start the binary has never been run and enumeration yields
+            // nothing, which is not the same as "no models exist".
             const source = deps.makeCliSource(cliKey);
             const registry = await modelsDevClient.getRegistry().catch(() => ({}) as ModelsDevRegistry);
             const { models } = await assembler.assemble([source], registry);
-            return curator.curate(models);
+            const curated = curator.curate(models);
+            if (curated.length > 0) return curated;
+            return fromRegistry(underlying);
           }
-          // Non-enumerable CLI - fall back to the underlying provider's curated
-          // set when that provider is connected, else nothing.
-          const underlying = CLI_UNDERLYING_PROVIDER[cliKey];
-          if (!repo.getRegistryProvider(underlying)) return [];
-          return applyOverrides(underlying, curator.curate(repo.getRegistryCatalog(underlying)));
+
+          // Non-enumerable CLI. The connected provider's catalog is the better
+          // answer when there is one - someone signed in on a subscription has
+          // no key connected, and that used to leave the picker blank.
+          if (repo.getRegistryProvider(underlying)) {
+            const curated = applyOverrides(underlying, curator.curate(repo.getRegistryCatalog(underlying)));
+            if (curated.length > 0) return curated;
+          }
+          return fromRegistry(underlying);
+        }
+
+        // An ACP backend the CLI map does not cover. Each runs one known
+        // provider, so the registry can describe it even though nothing here
+        // ever enumerates it - these pickers were blank in every case.
+        const acpUnderlying = ACP_BACKEND_UNDERLYING_PROVIDER[agentKey];
+        if (acpUnderlying) {
+          if (repo.getRegistryProvider(acpUnderlying)) {
+            const curated = applyOverrides(acpUnderlying, curator.curate(repo.getRegistryCatalog(acpUnderlying)));
+            if (curated.length > 0) return curated;
+          }
+          return fromRegistry(acpUnderlying);
         }
 
         return [];

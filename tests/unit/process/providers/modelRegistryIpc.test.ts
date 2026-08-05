@@ -605,6 +605,126 @@ describe('modelRegistry IPC - curatedForAgent', () => {
     // (it must NOT union openai/deepseek).
     expect(await h.curatedForAgent({ agentKey: 'claude' })).toEqual([]);
   });
+
+  /**
+   * An empty picker looks exactly like "this agent has no models", not like
+   * "nothing has been fetched yet" - and it hit the ordinary cases. Someone
+   * signed into Claude on a subscription has no Anthropic key connected, so
+   * that catalog is empty and the picker was blank. An ACP backend nothing
+   * enumerates - grok, kimi, qwen - was blank always.
+   *
+   * The public registry describes what a provider offers without a key. A model
+   * the user cannot actually reach fails later with a real message, which tells
+   * them far more than a list with nothing in it.
+   */
+  describe('when nothing local has models', () => {
+    /** A models.dev payload naming two Anthropic models and one xAI model. */
+    const registryWith = () => ({
+      anthropic: {
+        id: 'anthropic',
+        env: [],
+        name: 'Anthropic',
+        models: {
+          'claude-opus-5': { id: 'claude-opus-5', name: 'Claude Opus 5', release_date: '2026-01-01' },
+          'claude-sonnet-5': { id: 'claude-sonnet-5', name: 'Claude Sonnet 5', release_date: '2026-01-01' },
+        },
+      },
+      xai: {
+        id: 'xai',
+        env: [],
+        name: 'xAI',
+        models: { 'grok-4': { id: 'grok-4', name: 'Grok 4', release_date: '2026-01-01' } },
+      },
+    });
+
+    it('offers the published list for a CLI whose provider is not connected', async () => {
+      // The subscription case: signed in, no API key, blank picker.
+      const { deps, getRegistry } = twoProviderRepo();
+      getRegistry.mockResolvedValue(registryWith());
+      const h = createModelRegistryHandlers(deps);
+
+      const ids = (await h.curatedForAgent({ agentKey: 'claude' })).map((m) => m.id);
+
+      expect(ids).toContain('claude-opus-5');
+    });
+
+    it('still refuses to union another vendor into a locked CLI', async () => {
+      // The fallback must not become a back door around vendor locking.
+      const { deps, getRegistry } = twoProviderRepo();
+      getRegistry.mockResolvedValue(registryWith());
+      const h = createModelRegistryHandlers(deps);
+
+      const ids = (await h.curatedForAgent({ agentKey: 'claude' })).map((m) => m.id);
+
+      expect(ids).not.toContain('gpt-4o');
+      expect(ids).not.toContain('deepseek-chat');
+      expect(ids).not.toContain('grok-4');
+    });
+
+    it('offers models for an ACP backend nothing enumerates', async () => {
+      const { deps, getRegistry } = twoProviderRepo();
+      getRegistry.mockResolvedValue(registryWith());
+      const h = createModelRegistryHandlers(deps);
+
+      const ids = (await h.curatedForAgent({ agentKey: 'grok' })).map((m) => m.id);
+
+      expect(ids).toEqual(['grok-4']);
+    });
+
+    it('prefers what is actually connected over the published list', async () => {
+      // A connected provider's catalog is the better answer: it reflects what
+      // this account can really reach.
+      const { deps, repo, getRegistry } = twoProviderRepo();
+      getRegistry.mockResolvedValue(registryWith());
+      repo.upsertRegistryProvider({
+        providerId: 'anthropic',
+        connectedVia: 'api-key',
+        state: 'connected',
+        creds: { key: 'k' },
+      });
+      repo.replaceRegistryCatalog('anthropic', [
+        catalogModel({
+          id: 'claude-from-account',
+          providerId: 'anthropic',
+          family: 'claude',
+          releaseDate: '2026-05-01',
+          enriched: true,
+        }),
+      ]);
+      const h = createModelRegistryHandlers(deps);
+
+      const ids = (await h.curatedForAgent({ agentKey: 'claude' })).map((m) => m.id);
+
+      expect(ids).toEqual(['claude-from-account']);
+    });
+
+    it('falls back for an enumerable CLI that enumerated nothing', async () => {
+      // Cold start: the codex binary has never been run, so it lists nothing.
+      const { deps, getRegistry, cliListModels } = twoProviderRepo();
+      getRegistry.mockResolvedValue({
+        openai: {
+          id: 'openai',
+          env: [],
+          name: 'OpenAI',
+          models: { 'gpt-5-codex': { id: 'gpt-5-codex', name: 'GPT-5 Codex', release_date: '2026-01-01' } },
+        },
+      });
+      cliListModels.mockResolvedValue([]);
+      const h = createModelRegistryHandlers(deps);
+
+      const ids = (await h.curatedForAgent({ agentKey: 'codex' })).map((m) => m.id);
+
+      expect(ids).toContain('gpt-5-codex');
+    });
+
+    it('returns nothing for an agent it has never heard of', async () => {
+      const { deps, getRegistry } = twoProviderRepo();
+      getRegistry.mockResolvedValue(registryWith());
+      const h = createModelRegistryHandlers(deps);
+
+      expect(await h.curatedForAgent({ agentKey: 'not-an-agent' })).toEqual([]);
+    });
+  });
 });
 
 describe('modelRegistry IPC - toggleModel', () => {
