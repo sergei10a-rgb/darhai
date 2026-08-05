@@ -97,22 +97,46 @@ describe('ProviderDetector.detect - unique prefix matches', () => {
     if (r.kind === 'unique') expect(r.provider).toBe('anyscale');
   });
 
-  it('detects deepgram from dg_ prefix', () => {
-    const r = detector.detect('dg_abcdef1234567890');
+  it('detects openai from a service-account key', () => {
+    const r = detector.detect('sk-svcacct-abcdef1234567890');
     expect(r.kind).toBe('unique');
-    if (r.kind === 'unique') expect(r.provider).toBe('deepgram');
+    if (r.kind === 'unique') expect(r.provider).toBe('openai');
   });
 
-  it('detects assemblyai from aai_ prefix', () => {
-    const r = detector.detect('aai_abcdef1234567890');
+  it('detects openai from an Admin API key', () => {
+    const r = detector.detect('sk-admin-abcdef1234567890');
     expect(r.kind).toBe('unique');
-    if (r.kind === 'unique') expect(r.provider).toBe('assemblyai');
+    if (r.kind === 'unique') expect(r.provider).toBe('openai');
   });
 
-  it('detects elevenlabs from xi-api- prefix', () => {
-    const r = detector.detect('xi-api-abcdef1234567890');
+  it('detects google-gemini from the newer AQ. key format', () => {
+    // Some AI Studio accounts now receive `AQ.` keys exclusively; knowing only
+    // `AIza` meant such a key was rejected as unrecognized before any connect.
+    const r = detector.detect('AQ.Ab8RN6JabcdefGHIJ1234567890');
     expect(r.kind).toBe('unique');
-    if (r.kind === 'unique') expect(r.provider).toBe('elevenlabs');
+    if (r.kind === 'unique') expect(r.provider).toBe('google-gemini');
+  });
+
+  it('detects github-models from a classic PAT', () => {
+    const r = detector.detect('ghp_abcdef1234567890');
+    expect(r.kind).toBe('unique');
+    if (r.kind === 'unique') expect(r.provider).toBe('github-models');
+  });
+
+  it('detects github-models from a fine-grained PAT', () => {
+    const r = detector.detect('github_pat_11ABCDEFG0abcdef1234567890');
+    expect(r.kind).toBe('unique');
+    if (r.kind === 'unique') expect(r.provider).toBe('github-models');
+  });
+
+  // The `dg_` / `aai_` / `xi-api-` rules were removed: none of those is a real
+  // key prefix, so they could never fire. Pin that they no longer claim a key -
+  // re-adding them would silently mis-route a bare key that happens to start
+  // with those letters.
+  it('does not claim a provider for the retired dg_/aai_/xi-api- prefixes', () => {
+    for (const key of ['dg_abcdef1234567890', 'aai_abcdef1234567890', 'xi-api-abcdef1234567890']) {
+      expect(detector.detect(key).kind).not.toBe('unique');
+    }
   });
 });
 

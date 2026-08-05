@@ -267,8 +267,15 @@ export function recognizeKey(raw: string): KeyRecognition {
   // Unique high-confidence prefixes (priority 100).
   if (key.startsWith('sk-ant-')) return { kind: 'recognized', provider: 'anthropic' };
   if (key.startsWith('sk-or-')) return { kind: 'recognized', provider: 'openrouter' };
-  if (key.startsWith('sk-proj-')) return { kind: 'recognized', provider: 'openai' };
-  if (key.startsWith('AIza')) return { kind: 'recognized', provider: 'google-gemini' };
+  // OpenAI project (`sk-proj-`), service-account (`sk-svcacct-`) and Admin API
+  // (`sk-admin-`) keys - all distinct from the bare legacy `sk-` shape below.
+  if (key.startsWith('sk-proj-') || key.startsWith('sk-svcacct-') || key.startsWith('sk-admin-')) {
+    return { kind: 'recognized', provider: 'openai' };
+  }
+  // Google AI Studio issues classic `AIza` "traffic" keys and newer `AQ.`
+  // "authentication" keys; some accounts now get the latter exclusively. Both are
+  // valid Generative Language API keys.
+  if (key.startsWith('AIza') || key.startsWith('AQ.')) return { kind: 'recognized', provider: 'google-gemini' };
   if (key.startsWith('gsk_')) return { kind: 'recognized', provider: 'groq' };
   if (key.startsWith('xai-')) return { kind: 'recognized', provider: 'xai' };
   if (key.startsWith('hf_')) return { kind: 'recognized', provider: 'huggingface' };
@@ -279,9 +286,13 @@ export function recognizeKey(raw: string): KeyRecognition {
   if (key.startsWith('csk-')) return { kind: 'recognized', provider: 'cerebras' };
   if (key.startsWith('nvapi-')) return { kind: 'recognized', provider: 'nvidia' };
   if (key.startsWith('esecret_')) return { kind: 'recognized', provider: 'anyscale' };
-  if (key.startsWith('dg_')) return { kind: 'recognized', provider: 'deepgram' };
-  if (key.startsWith('aai_')) return { kind: 'recognized', provider: 'assemblyai' };
-  if (key.startsWith('xi-api-')) return { kind: 'recognized', provider: 'elevenlabs' };
+  // GitHub Models' inference gateway authenticates with a GitHub PAT.
+  if (key.startsWith('ghp_') || key.startsWith('github_pat_')) {
+    return { kind: 'recognized', provider: 'github-models' };
+  }
+  // Removed: `dg_` / `aai_` / `xi-api-`. None is a real key prefix (Deepgram and
+  // AssemblyAI keys carry none; `xi-api-key` is ElevenLabs' header name), so they
+  // could never match. Those providers stay connectable through Browse.
 
   // Multi-field cloud provider (priority 90) - needs the credential form, not a
   // bare key.

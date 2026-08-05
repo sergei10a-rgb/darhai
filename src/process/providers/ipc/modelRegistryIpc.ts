@@ -947,7 +947,12 @@ export function createModelRegistryHandlers(deps: ModelRegistryDeps): ModelRegis
               curator.curate(repo.getRegistryCatalog(provider.providerId))
             );
             for (const model of curated) {
-              const dedupKey = `${model.providerId} ${model.id}`;
+              // Keep this separator written as a unicode escape, never as a raw
+              // NUL byte in the source. A raw NUL makes every byte-oriented tool
+              // (ripgrep, grep, git's binary-file heuristic) treat this whole file as
+              // binary and skip it silently - which is how this 1900-line file went
+              // missing from every code search. The runtime value is identical.
+              const dedupKey = `${model.providerId}\u0000${model.id}`;
               if (seen.has(dedupKey)) continue;
               seen.add(dedupKey);
               all.push(model);
@@ -1116,8 +1121,15 @@ const CHAT_START_PLATFORM: Partial<Record<ProviderId, string>> = {
   // future Azure chat-start will need its own dispatcher work.
 };
 
-/** Canonical base URL per provider. A user-saved custom URL overrides this. */
-const CHAT_START_BASE_URL: Partial<Record<ProviderId, string>> = {
+/**
+ * Canonical base URL per provider. A user-saved custom URL overrides this.
+ *
+ * Exported so `providerHosts.test.ts` can hold it against the connect-probe
+ * table in `providerEndpoints.ts`. Those two must name the same HOST for a
+ * given provider: the probe is what validates the key, so if inference points
+ * somewhere else the key connects green and then 401s on the first message.
+ */
+export const CHAT_START_BASE_URL: Partial<Record<ProviderId, string>> = {
   anthropic: 'https://api.anthropic.com',
   openai: 'https://api.openai.com/v1',
   'google-gemini': 'https://generativelanguage.googleapis.com',
@@ -1142,7 +1154,12 @@ const CHAT_START_BASE_URL: Partial<Record<ProviderId, string>> = {
   baichuan: 'https://api.baichuan-ai.com/v1',
   lingyiwanwu: 'https://api.lingyiwanwu.com/v1',
   'zhipu-glm': 'https://open.bigmodel.cn/api/paas/v4',
-  minimax: 'https://api.minimax.chat/v1',
+  // International MiniMax platform (`.io`). The mainland-China `api.minimax.chat`
+  // host rejects international keys and vice versa - the same split as Moonshot
+  // above. Inference MUST use the host the key was validated against: the connect
+  // probe in `providerEndpoints.ts` already uses `.io`, so pointing inference at
+  // `.chat` made a key connect green and then 401 on the user's first message.
+  minimax: 'https://api.minimax.io/v1',
   stability: 'https://api.stability.ai/v1',
   deepgram: 'https://api.deepgram.com/v1',
   assemblyai: 'https://api.assemblyai.com/v2',

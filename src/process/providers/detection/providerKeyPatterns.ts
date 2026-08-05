@@ -28,14 +28,23 @@ export const PROVIDER_KEY_PATTERNS: PatternRule[] = [
     priority: 100,
   },
   {
+    // Project keys (`sk-proj-`), plus service-account (`sk-svcacct-`) and Admin
+    // API (`sk-admin-`) keys - all OpenAI-issued and all distinct from the bare
+    // legacy `sk-` shape handled structurally below. Without the latter two, a
+    // service-account key fell into the ambiguous bare-`sk-` bucket.
     provider: 'openai',
-    test: (k) => k.startsWith('sk-proj-'),
+    test: (k) => k.startsWith('sk-proj-') || k.startsWith('sk-svcacct-') || k.startsWith('sk-admin-'),
     match: 'unique',
     priority: 100,
   },
   {
+    // Google AI Studio issues two key formats: the classic `AIza` "traffic" keys
+    // and the newer `AQ.` "authentication" keys that some accounts now receive
+    // exclusively. Both are valid Generative Language API keys. Knowing only
+    // `AIza` meant an `AQ.` key was called unrecognized and never even tried -
+    // an onboarding dead end for a Gemini user.
     provider: 'google-gemini',
-    test: (k) => k.startsWith('AIza'),
+    test: (k) => k.startsWith('AIza') || k.startsWith('AQ.'),
     match: 'unique',
     priority: 100,
   },
@@ -100,23 +109,19 @@ export const PROVIDER_KEY_PATTERNS: PatternRule[] = [
     priority: 100,
   },
   {
-    provider: 'deepgram',
-    test: (k) => k.startsWith('dg_'),
+    // GitHub Models' inference gateway authenticates with a GitHub PAT - classic
+    // `ghp_` or fine-grained `github_pat_`. A PAT pasted into the model-key field
+    // signals model intent, so route it to the connectable `github-models`
+    // catalog entry (models.github.ai/inference).
+    provider: 'github-models',
+    test: (k) => k.startsWith('ghp_') || k.startsWith('github_pat_'),
     match: 'unique',
     priority: 100,
   },
-  {
-    provider: 'assemblyai',
-    test: (k) => k.startsWith('aai_'),
-    match: 'unique',
-    priority: 100,
-  },
-  {
-    provider: 'elevenlabs',
-    test: (k) => k.startsWith('xi-api-'),
-    match: 'unique',
-    priority: 100,
-  },
+  // Removed: deepgram `dg_`, assemblyai `aai_`, elevenlabs `xi-api-`. None of
+  // those is a real key prefix - Deepgram and AssemblyAI keys carry no prefix at
+  // all, and `xi-api-key` is ElevenLabs' HTTP HEADER name, not the key. The rules
+  // could never match a real key. All three stay connectable through Browse.
 
   // --- Structural sk- variants (priority 95) ---
   // These are bare-sk shapes with enough structural signal to resolve to a

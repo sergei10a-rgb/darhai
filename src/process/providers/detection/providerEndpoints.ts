@@ -21,7 +21,9 @@ export const PROVIDER_ENDPOINTS: Partial<Record<ProviderId, string>> = {
   xai: 'https://api.x.ai/v1/models',
   mistral: 'https://api.mistral.ai/v1/models',
   cohere: 'https://api.cohere.com/v1/models',
-  perplexity: 'https://api.perplexity.ai/models',
+  // Perplexity's models endpoint is versioned. A bare `/models` 404s, the catalog
+  // fetch throws, and a perfectly valid key is marked `error`.
+  perplexity: 'https://api.perplexity.ai/v1/models',
   together: 'https://api.together.xyz/v1/models',
   fireworks: 'https://api.fireworks.ai/inference/v1/models',
   cerebras: 'https://api.cerebras.ai/v1/models',

@@ -396,9 +396,14 @@ describe('recognizeKey', () => {
     ['cerebras', 'csk-abcdef'],
     ['nvidia', 'nvapi-abcdef'],
     ['anyscale', 'esecret_abcdef'],
-    ['deepgram', 'dg_abcdef'],
-    ['assemblyai', 'aai_abcdef'],
-    ['elevenlabs', 'xi-api-abcdef'],
+    ['github-models', 'ghp_abcdef'],
+    ['github-models', 'github_pat_11ABCDEFG0abcdef'],
+    // OpenAI's service-account and Admin API key shapes - without these they fell
+    // into the ambiguous bare-`sk-` bucket.
+    ['openai', 'sk-svcacct-abcdef'],
+    ['openai', 'sk-admin-abcdef'],
+    // Newer Google AI Studio key format; some accounts get it exclusively.
+    ['google-gemini', 'AQ.Ab8RN6Jabcdef'],
     // Structural sk- variants - these resolve uniquely despite the bare-sk
     // prefix because their internal shape is distinctive (32-hex for DeepSeek;
     // 48-mixed-alnum minus OpenAI's `T3BlbkFJ` signature for Moonshot).
