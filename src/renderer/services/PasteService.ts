@@ -11,6 +11,48 @@ import { trackUpload, type UploadSource } from '@/renderer/hooks/file/useUploadS
 import { isElectronDesktop } from '@/renderer/utils/platform';
 
 /**
+ * Chromium hands every pasted clipboard image the same name: `image.png`.
+ *
+ * That name was kept verbatim. On disk a `_wayland_<ms>` suffix keeps the files
+ * apart, but that suffix is stripped again before the path reaches the agent
+ * (`messageFiles.ts`), so every paste in a conversation collapsed back onto the
+ * FIRST `image.png` written. The user pasted a second screenshot and the agent
+ * silently read the first one - a wrong answer about the wrong picture, with
+ * nothing on screen to suggest it. Drag-drop was never affected, because
+ * dropped files carry real names.
+ *
+ * So a generic clipboard name is treated like a system-generated one and given
+ * a unique, strip-proof base of its own.
+ */
+export function buildPastedImageName(
+  originalName: string | undefined,
+  fileExt: string,
+  timeStr: string,
+  isSystemGenerated: boolean
+): string {
+  const isGenericClipboardName = !originalName || /^image\.\w+$/i.test(originalName);
+  if (!originalName || isSystemGenerated || isGenericClipboardName) {
+    return `pasted_image_${timeStr}${fileExt}`;
+  }
+  return originalName;
+}
+
+/**
+ * A name not already taken in this paste batch, suffixing `_2`, `_3`, … as
+ * needed. Covers several files pasted at once; `buildPastedImageName` covers
+ * separate pastes.
+ */
+export function uniqueName(fileName: string, fileExt: string, taken: ReadonlySet<string>): string {
+  if (!taken.has(fileName)) return fileName;
+  const extIdx = fileName.lastIndexOf('.');
+  const baseName = extIdx > 0 ? fileName.slice(0, extIdx) : fileName;
+  const ext = extIdx > 0 ? fileName.slice(extIdx) : fileExt;
+  let counter = 2;
+  while (taken.has(`${baseName}_${counter}${ext}`)) counter++;
+  return `${baseName}_${counter}${ext}`;
+}
+
+/**
  * Create a temporary file in a platform-aware way.
  * Electron desktop uses IPC, WebUI uses HTTP API.
  */
@@ -165,24 +207,18 @@ class PasteServiceClass {
               const arrayBuffer = await file.arrayBuffer();
               const uint8Array = new Uint8Array(arrayBuffer);
 
-              // Generate a concise filename; replace system-generated default names
+              // Generate a concise filename; replace system-generated default
+              // names. Millisecond precision so two pastes in the same second
+              // do not land on the same name.
               const now = new Date();
-              const timeStr = `${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
+              const timeStr = `${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}${now.getMilliseconds().toString().padStart(3, '0')}`;
 
               const isSystemGenerated = file.name && /^[a-zA-Z]?_?\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}/.test(file.name);
-              let fileName = file.name && !isSystemGenerated ? file.name : `pasted_image_${timeStr}${fileExt}`;
-              // Ensure unique filename within the same paste batch to prevent
-              // collisions when multiple images are pasted simultaneously
-              if (usedFileNames.has(fileName)) {
-                const extIdx = fileName.lastIndexOf('.');
-                const baseName = extIdx > 0 ? fileName.slice(0, extIdx) : fileName;
-                const ext = extIdx > 0 ? fileName.slice(extIdx) : fileExt;
-                let counter = 2;
-                while (usedFileNames.has(`${baseName}_${counter}${ext}`)) {
-                  counter++;
-                }
-                fileName = `${baseName}_${counter}${ext}`;
-              }
+              const fileName = uniqueName(
+                buildPastedImageName(file.name, fileExt, timeStr, Boolean(isSystemGenerated)),
+                fileExt,
+                usedFileNames
+              );
               usedFileNames.add(fileName);
 
               // Create a temp file and write data (Electron uses IPC; WebUI uses HTTP API)
@@ -235,17 +271,7 @@ class PasteServiceClass {
               const uint8Array = new Uint8Array(arrayBuffer);
 
               // Ensure unique filename within the same paste batch
-              let fileName = file.name;
-              if (usedFileNames.has(fileName)) {
-                const extIdx = fileName.lastIndexOf('.');
-                const baseName = extIdx > 0 ? fileName.slice(0, extIdx) : fileName;
-                const ext = extIdx > 0 ? fileName.slice(extIdx) : fileExt;
-                let counter = 2;
-                while (usedFileNames.has(`${baseName}_${counter}${ext}`)) {
-                  counter++;
-                }
-                fileName = `${baseName}_${counter}${ext}`;
-              }
+              const fileName = uniqueName(file.name, fileExt, usedFileNames);
               usedFileNames.add(fileName);
 
               const tempPath = await createTempFile(
