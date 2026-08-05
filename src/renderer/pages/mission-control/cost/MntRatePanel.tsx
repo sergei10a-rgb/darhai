@@ -24,6 +24,20 @@ import { MAX_PLAUSIBLE_MNT_PER_USD, MIN_PLAUSIBLE_MNT_PER_USD } from '@process/s
 import { useMntRate } from '@renderer/hooks/cost/useMntRate';
 import styles from './Cost.module.css';
 
+/**
+ * `YYYY-MM-DD`, not the host locale's default.
+ *
+ * `toLocaleDateString()` with no locale follows the operating system, which on a
+ * Mongolian user's machine still printed `8/5/2026` - a US month-first date
+ * sitting inside otherwise fully-Mongolian copy, and ambiguous with 5 August in
+ * every other convention. The ISO form is unambiguous and reads naturally here.
+ */
+export const formatRateDate = (epochMs: number): string => {
+  const d = new Date(epochMs);
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
+
 export const MntRatePanel: React.FC = () => {
   const { t } = useTranslation();
   const { rate } = useMntRate();
@@ -54,7 +68,7 @@ export const MntRatePanel: React.FC = () => {
           rate.source === 'manual'
             ? t('missionControl.cost.fx.sourceManual')
             : t('missionControl.cost.fx.sourceFetched', {
-                date: rate.asOf ? new Date(rate.asOf).toLocaleDateString() : '',
+                date: rate.asOf ? formatRateDate(rate.asOf) : '',
               }),
       })
     : t('missionControl.cost.fx.unknown');
