@@ -192,6 +192,14 @@ class PasteServiceClass {
       // Handle files; skip text handling
       const fileList: FileMetadata[] = [];
       const usedFileNames = new Set<string>();
+      // One stamp for the whole paste, not one per file. Per-file, two images
+      // pasted together landed on the same millisecond or not depending on how
+      // fast the loop ran - so whether they were told apart by the timestamp or
+      // by the `_2` suffix was a coin flip. Sharing the stamp makes the suffix
+      // the only thing that separates them, which is deterministic, and files
+      // from one paste sort together.
+      const pastedAt = new Date();
+      const timeStr = `${pastedAt.getHours().toString().padStart(2, '0')}${pastedAt.getMinutes().toString().padStart(2, '0')}${pastedAt.getSeconds().toString().padStart(2, '0')}${pastedAt.getMilliseconds().toString().padStart(3, '0')}`;
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         const filePath = (file as File & { path?: string }).path;
@@ -206,12 +214,6 @@ class PasteServiceClass {
             try {
               const arrayBuffer = await file.arrayBuffer();
               const uint8Array = new Uint8Array(arrayBuffer);
-
-              // Generate a concise filename; replace system-generated default
-              // names. Millisecond precision so two pastes in the same second
-              // do not land on the same name.
-              const now = new Date();
-              const timeStr = `${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}${now.getMilliseconds().toString().padStart(3, '0')}`;
 
               const isSystemGenerated = file.name && /^[a-zA-Z]?_?\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}/.test(file.name);
               const fileName = uniqueName(
