@@ -19,9 +19,10 @@
 import { InputNumber, Switch, Tooltip } from '@arco-design/web-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSWRConfig } from 'swr';
 import { ipcBridge } from '@/common';
 import { MAX_PLAUSIBLE_MNT_PER_USD, MIN_PLAUSIBLE_MNT_PER_USD } from '@process/services/cost/fxRate';
-import { useMntRate } from '@renderer/hooks/cost/useMntRate';
+import { MNT_RATE_KEY, useMntRate } from '@renderer/hooks/cost/useMntRate';
 import styles from './Cost.module.css';
 
 /**
@@ -41,6 +42,7 @@ export const formatRateDate = (epochMs: number): string => {
 export const MntRatePanel: React.FC = () => {
   const { t } = useTranslation();
   const { rate } = useMntRate();
+  const { mutate } = useSWRConfig();
   const [auto, setAuto] = useState(true);
   const [manual, setManual] = useState<number | undefined>(undefined);
 
@@ -51,15 +53,20 @@ export const MntRatePanel: React.FC = () => {
     });
   }, []);
 
-  const save = useCallback(async (nextAuto: boolean, nextManual: number | undefined) => {
-    setAuto(nextAuto);
-    setManual(nextManual);
-    await ipcBridge.cost.setMntRateSettings.invoke({ auto: nextAuto, manualMntPerUsd: nextManual ?? null });
-    // Every spend surface on the page reads the same SWR key, so re-fetching it
-    // here re-converts all of them at once rather than leaving the page showing
-    // two different rates.
-    await ipcBridge.cost.mntRate.invoke();
-  }, []);
+  const save = useCallback(
+    async (nextAuto: boolean, nextManual: number | undefined) => {
+      setAuto(nextAuto);
+      setManual(nextManual);
+      await ipcBridge.cost.setMntRateSettings.invoke({ auto: nextAuto, manualMntPerUsd: nextManual ?? null });
+      // Invalidate the SHARED cache entry, not just call the bridge again. Every
+      // spend surface reads this one key, so this re-converts all of them at once.
+      // Calling the bridge directly would fetch a rate SWR never sees, leaving the
+      // figures on screen stale until the page remounted - a change that appears
+      // to do nothing.
+      await mutate(MNT_RATE_KEY);
+    },
+    [mutate]
+  );
 
   const rateLine = rate
     ? t('missionControl.cost.fx.current', {

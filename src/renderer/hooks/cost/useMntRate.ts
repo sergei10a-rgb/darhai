@@ -24,7 +24,7 @@ import { usdToMnt } from '@process/services/cost/fxRate';
  * Without one key, the sidebar meter and the cost panel could each hold a
  * different rate and disagree about the same spend.
  */
-const MNT_RATE_KEY = 'cost.mntRate';
+export const MNT_RATE_KEY = 'cost.mntRate';
 
 export type UseMntRate = {
   rate: MntRate | null;
