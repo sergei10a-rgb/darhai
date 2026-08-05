@@ -96,9 +96,7 @@ function secondFieldIntervalMs(seconds: string): number {
  * process-side types and both sides can use it.
  */
 export type ScheduleLike =
-  | { kind: 'at'; atMs?: number }
-  | { kind: 'every'; everyMs?: number }
-  | { kind: 'cron'; expr?: string };
+  { kind: 'at'; atMs?: number } | { kind: 'every'; everyMs?: number } | { kind: 'cron'; expr?: string };
 
 /**
  * How often a stored schedule fires, in ms, or null when undeterminable.
