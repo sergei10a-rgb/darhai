@@ -155,7 +155,8 @@
     "jobNotFound": "スクリプトが見つかりません: {{id}}",
     "conversationNotFound": "会話が見つかりません",
     "scheduledTimePassed": "予定時刻が過ぎました",
-    "conversationBusy": "会話がビジーです。{{count}} 回の試行後にスキップしました"
+    "conversationBusy": "会話がビジーです。{{count}} 回の試行後にスキップしました",
+    "highFrequencyNewConversation": "新しい会話を作成するスケジュールは 15 分より短い間隔では実行できません。実行のたびに会話とエージェントプロセスが新規に作成され、夜間に実際の費用が発生します。より長い間隔を選ぶか、この制限を明示的に解除してください。"
   },
   "propose": {
     "title": "スケジュールの確認",

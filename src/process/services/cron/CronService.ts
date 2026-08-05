@@ -5,6 +5,7 @@
  */
 
 import { ipcBridge } from '@/common';
+import { isNewConversationFootgun } from '@/common/cron/cronFrequency';
 import type { CronMessageMeta, TMessage } from '@/common/chat/chatLib';
 import type { TChatConversation } from '@/common/config/storage';
 import { uuid } from '@/common/utils';
@@ -35,6 +36,16 @@ export type CreateCronJobParams = {
   agentType: import('@/common/types/acpTypes').AgentBackend;
   createdBy: 'user' | 'agent';
   executionMode?: 'existing' | 'new_conversation';
+  /**
+   * Consent to a new-conversation schedule that fires faster than
+   * `MIN_SAFE_NEW_CONVERSATION_INTERVAL_MS`.
+   *
+   * Without it such a job is refused: each fire creates a whole conversation and
+   * agent run, so `* * * * *` means one agent run a minute forever - unbounded
+   * history and real spend against the user's provider account. This is a gate,
+   * not a ban; someone who means it can pass it.
+   */
+  allowHighFrequency?: boolean;
   agentConfig?: import('./CronStore').CronJob['metadata']['agentConfig'];
   /**
    * Internal escape hatch for system-managed crons that legitimately need
@@ -56,6 +67,8 @@ export class CronService {
   private timers: Map<string, Cron | NodeJS.Timeout> = new Map();
   private retryTimers: Map<string, NodeJS.Timeout> = new Map();
   private retryCounts: Map<string, number> = new Map();
+  /** Job ids with a run in flight, so a job never overlaps itself. */
+  private readonly runningJobs = new Set<string>();
   private initialized = false;
   private powerSaveBlockerId: number | null = null;
 
@@ -213,6 +226,8 @@ export class CronService {
    * @throws Error if conversation already has a cron job (one job per conversation limit)
    */
   async addJob(params: CreateCronJobParams): Promise<CronJob> {
+    this.assertScheduleIsSafe(params.schedule, params.executionMode, params.allowHighFrequency);
+
     // Check if conversation already has a cron job (one job per conversation limit)
     // Skip for new_conversation mode since each execution creates a new conversation
     if (params.executionMode !== 'new_conversation' && params.conversationId && !params.bypassUniqueGuard) {
@@ -590,10 +605,43 @@ export class CronService {
   }
 
   /**
+   * Refuse a new-conversation schedule fast enough to run away with itself.
+   *
+   * Throws rather than silently downgrading the schedule: a job that quietly
+   * runs at a different frequency than the user asked for is its own surprise.
+   */
+  private assertScheduleIsSafe(
+    schedule: CronSchedule | undefined,
+    executionMode: string | undefined,
+    allowHighFrequency: boolean | undefined
+  ): void {
+    if (allowHighFrequency) return;
+    if (!isNewConversationFootgun(schedule, executionMode)) return;
+    throw new Error(i18n.t('cron.error.highFrequencyNewConversation'));
+  }
+
+  /**
    * Execute a job - send message to conversation
    * Handles conversation busy state with retries and power management
    */
   private async executeJob(job: CronJob, preparedConversationId?: string): Promise<void> {
+    // A job must not overlap itself. The busy check below cannot cover this for
+    // new-conversation jobs: they have no `metadata.conversationId`, so it runs
+    // against `undefined`, never trips, and a slow run simply piles up behind
+    // the next fire. This is keyed on the JOB, so it holds for both modes.
+    if (this.runningJobs.has(job.id)) {
+      console.warn(`[CronService] Skipping "${job.name}" - its previous run has not finished`);
+      return;
+    }
+    this.runningJobs.add(job.id);
+    try {
+      await this.executeJobInner(job, preparedConversationId);
+    } finally {
+      this.runningJobs.delete(job.id);
+    }
+  }
+
+  private async executeJobInner(job: CronJob, preparedConversationId?: string): Promise<void> {
     const conversationId = preparedConversationId ?? job.metadata.conversationId;
 
     // Check if conversation is busy

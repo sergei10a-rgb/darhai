@@ -143,7 +143,8 @@
     "jobNotFound": "未找到腳本: {{id}}",
     "conversationNotFound": "未找到對話",
     "scheduledTimePassed": "定時時間已過",
-    "conversationBusy": "對話繁忙，在 {{count}} 次嘗試後跳過"
+    "conversationBusy": "對話繁忙，在 {{count}} 次嘗試後跳過",
+    "highFrequencyNewConversation": "建立新對話的排程不能每 15 分鐘內多次觸發：每次執行都會新建一個對話和一個代理程序，會在無人看管時產生真實費用。請選擇更長的間隔，或明確解除此限制。"
   },
   "propose": {
     "title": "排程確認",

@@ -143,7 +143,8 @@
     "jobNotFound": "未找到脚本: {{id}}",
     "conversationNotFound": "未找到会话",
     "scheduledTimePassed": "定时时间已过",
-    "conversationBusy": "会话繁忙，在 {{count}} 次尝试后跳过"
+    "conversationBusy": "会话繁忙，在 {{count}} 次尝试后跳过",
+    "highFrequencyNewConversation": "创建新会话的计划任务不能每 15 分钟内多次触发：每次运行都会新建一个会话和一个代理进程，会在无人值守时产生真实费用。请选择更长的间隔，或明确解除此限制。"
   },
   "propose": {
     "title": "计划确认",

@@ -233,7 +233,10 @@ describe('CronService', () => {
 
     await service.addJob({
       name: 'new-conv-job',
-      schedule: { kind: 'every', everyMs: 10000, description: 'test' },
+      // Hourly. This test is about executionMode being persisted; it used to
+      // pass a 10-second interval, which now reads as what it always was - a
+      // new conversation and a new agent process every ten seconds.
+      schedule: { kind: 'every', everyMs: 3_600_000, description: 'test' },
       prompt: 'hello',
       conversationId: 'conv-1',
       agentType: 'gemini',
@@ -246,6 +249,62 @@ describe('CronService', () => {
         target: expect.objectContaining({ executionMode: 'new_conversation' }),
       })
     );
+  });
+
+  it('refuses a new-conversation schedule fast enough to run away with itself', async () => {
+    vi.mocked(repo.listByConversation).mockReturnValue([]);
+
+    // Ten seconds: one whole conversation and one agent process every ten
+    // seconds, forever, spending real money against the user's provider.
+    await expect(
+      service.addJob({
+        name: 'runaway',
+        schedule: { kind: 'every', everyMs: 10_000, description: 'test' },
+        prompt: 'hello',
+        conversationId: 'conv-1',
+        agentType: 'gemini',
+        createdBy: 'user',
+        executionMode: 'new_conversation',
+      })
+    ).rejects.toThrow();
+
+    expect(repo.insert).not.toHaveBeenCalled();
+  });
+
+  it('allows a fast new-conversation schedule when the caller opts in', async () => {
+    // A gate, not a ban - someone who means it can still have it.
+    vi.mocked(repo.listByConversation).mockReturnValue([]);
+
+    await service.addJob({
+      name: 'deliberate',
+      schedule: { kind: 'every', everyMs: 10_000, description: 'test' },
+      prompt: 'hello',
+      conversationId: 'conv-1',
+      agentType: 'gemini',
+      createdBy: 'user',
+      executionMode: 'new_conversation',
+      allowHighFrequency: true,
+    });
+
+    expect(repo.insert).toHaveBeenCalled();
+  });
+
+  it('does not gate a fast schedule that posts into an existing conversation', async () => {
+    // Bounded by that conversation's busy state, so it queues rather than
+    // multiplying. Refusing it would be a false alarm.
+    vi.mocked(repo.listByConversation).mockReturnValue([]);
+
+    await service.addJob({
+      name: 'existing-fast',
+      schedule: { kind: 'every', everyMs: 10_000, description: 'test' },
+      prompt: 'hello',
+      conversationId: 'conv-1',
+      agentType: 'gemini',
+      createdBy: 'user',
+      executionMode: 'existing',
+    });
+
+    expect(repo.insert).toHaveBeenCalled();
   });
 
   it('updateJob preserves edited description', async () => {
@@ -485,8 +544,7 @@ describe('CronService', () => {
     // emitJobUpdated may still be called by startTimer; only assert NO missed-status update.
     const updateCalls = vi.mocked(repo.update).mock.calls;
     const missedUpdate = updateCalls.find(
-      ([, updates]) =>
-        updates?.state && (updates.state as { lastStatus?: string }).lastStatus === 'missed'
+      ([, updates]) => updates?.state && (updates.state as { lastStatus?: string }).lastStatus === 'missed'
     );
     expect(missedUpdate).toBeUndefined();
   });

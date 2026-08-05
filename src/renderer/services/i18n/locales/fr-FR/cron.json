@@ -142,7 +142,8 @@
     "jobNotFound": "Tâche introuvable : {{id}}",
     "conversationNotFound": "Conversation introuvable",
     "scheduledTimePassed": "L'heure planifiée est dépassée",
-    "conversationBusy": "Conversation occupée après {{count}} tentatives"
+    "conversationBusy": "Conversation occupée après {{count}} tentatives",
+    "highFrequencyNewConversation": "Une planification qui crée une nouvelle conversation ne peut pas s'exécuter plus souvent que toutes les 15 minutes : chaque exécution lance une nouvelle conversation et un nouveau processus d'agent, et dépense de l'argent réel pendant la nuit. Choisissez un intervalle plus long ou levez explicitement cette limite."
   },
   "propose": {
     "title": "Confirmation de la planification",

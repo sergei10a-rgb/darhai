@@ -142,7 +142,8 @@
     "jobNotFound": "Task not found: {{id}}",
     "conversationNotFound": "Conversation not found",
     "scheduledTimePassed": "Scheduled time has passed",
-    "conversationBusy": "Conversation busy after {{count}} retries"
+    "conversationBusy": "Conversation busy after {{count}} retries",
+    "highFrequencyNewConversation": "A schedule that creates a new conversation cannot fire more often than every 15 minutes: each run starts a fresh conversation and a fresh agent process, spending real money overnight. Choose a longer interval, or deliberately lift this limit."
   },
   "propose": {
     "title": "Schedule confirmation",

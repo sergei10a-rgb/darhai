@@ -155,7 +155,8 @@
     "jobNotFound": "Betik bulunamadı: {{id}}",
     "conversationNotFound": "Konuşma bulunamadı",
     "scheduledTimePassed": "Zamanlanmış saat geçti",
-    "conversationBusy": "Konuşma meşgul, {{count}} denemeden sonra atlandı"
+    "conversationBusy": "Konuşma meşgul, {{count}} denemeden sonra atlandı",
+    "highFrequencyNewConversation": "Yeni bir sohbet oluşturan zamanlama 15 dakikadan sık çalışamaz: her çalıştırma yeni bir sohbet ve yeni bir aracı süreci başlatır ve gece boyunca gerçek para harcar. Daha uzun bir aralık seçin veya bu sınırı bilerek kaldırın."
   },
   "propose": {
     "title": "Program onayı",

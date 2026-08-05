@@ -143,7 +143,8 @@
     "jobNotFound": "스크립트를 찾을 수 없음: {{id}}",
     "conversationNotFound": "대화를 찾을 수 없음",
     "scheduledTimePassed": "예약 시간이 지났습니다",
-    "conversationBusy": "대화가 사용 중이며 {{count}}번 시도 후 건너뜁니다"
+    "conversationBusy": "대화가 사용 중이며 {{count}}번 시도 후 건너뜁니다",
+    "highFrequencyNewConversation": "새 대화를 만드는 일정은 15분보다 자주 실행할 수 없습니다. 실행할 때마다 새 대화와 새 에이전트 프로세스가 생성되어 밤사이 실제 비용이 발생합니다. 더 긴 간격을 선택하거나 이 제한을 명시적으로 해제하세요."
   },
   "propose": {
     "title": "일정 확인",

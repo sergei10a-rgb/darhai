@@ -142,7 +142,8 @@
     "jobNotFound": "Tarefa não encontrada: {{id}}",
     "conversationNotFound": "Conversa não encontrada",
     "scheduledTimePassed": "O horário agendado já passou",
-    "conversationBusy": "Conversa ocupada após {{count}} tentativas"
+    "conversationBusy": "Conversa ocupada após {{count}} tentativas",
+    "highFrequencyNewConversation": "Um agendamento que cria uma nova conversa não pode ser executado com mais frequência que a cada 15 minutos: cada execução inicia uma conversa e um processo de agente novos, gastando dinheiro real durante a noite. Escolha um intervalo maior ou remova este limite de forma explícita."
   },
   "propose": {
     "title": "Confirmação de agendamento",

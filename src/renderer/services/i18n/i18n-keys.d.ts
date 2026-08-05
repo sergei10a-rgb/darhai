@@ -695,6 +695,7 @@ export type I18nKey =
   | 'cron.error.alreadyExists'
   | 'cron.error.conversationBusy'
   | 'cron.error.conversationNotFound'
+  | 'cron.error.highFrequencyNewConversation'
   | 'cron.error.jobNotFound'
   | 'cron.error.missedJob'
   | 'cron.error.scheduledTimePassed'

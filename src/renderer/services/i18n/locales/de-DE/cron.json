@@ -142,7 +142,8 @@
     "jobNotFound": "Aufgabe nicht gefunden: {{id}}",
     "conversationNotFound": "Unterhaltung nicht gefunden",
     "scheduledTimePassed": "Die geplante Zeit ist bereits verstrichen",
-    "conversationBusy": "Unterhaltung nach {{count}} Versuchen weiterhin belegt"
+    "conversationBusy": "Unterhaltung nach {{count}} Versuchen weiterhin belegt",
+    "highFrequencyNewConversation": "Ein Zeitplan, der eine neue Unterhaltung erstellt, darf nicht häufiger als alle 15 Minuten laufen: Jeder Lauf startet eine neue Unterhaltung und einen neuen Agentenprozess und verursacht über Nacht echte Kosten. Wählen Sie ein längeres Intervall oder heben Sie dieses Limit bewusst auf."
   },
   "propose": {
     "title": "Zeitplan bestätigen",
