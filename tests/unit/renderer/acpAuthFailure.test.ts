@@ -22,6 +22,25 @@ describe('looksLikeAuthFailure', () => {
   it('returns false for an unrelated error', () => {
     expect(looksLikeAuthFailure('network timeout while reading file')).toBe(false);
   });
+
+  // `401` used to sit in the plain substring list, so any error text containing
+  // those three digits anywhere sent the user to the re-authenticate card
+  // instead of showing the real problem.
+  it.each([
+    'request failed after 40100 tokens',
+    'trace id 124015',
+    'HTTP 404012 upstream error',
+    'read 4013 bytes before EOF',
+  ])('does not mistake %s for an auth failure', (errorMsg) => {
+    expect(looksLikeAuthFailure(errorMsg)).toBe(false);
+  });
+
+  it.each(['HTTP 401', 'status: 401', 'got 401 from the provider', '401 Unauthorized'])(
+    'still recognises a real 401 in %s',
+    (errorMsg) => {
+      expect(looksLikeAuthFailure(errorMsg)).toBe(true);
+    }
+  );
 });
 
 describe('classifyAcpAuthFailure', () => {

@@ -56,7 +56,8 @@
   "option": "選項",
   "noOptionsAvailable": "沒有可用選項",
   "processing": "處理中...",
-  "responseSentSuccessfully": "回覆已成功送出",
+  "permissionAllowed": "已允許 - 代理可以繼續",
+  "permissionDenied": "已拒絕 - 代理已停止",
   "confirmation": {
     "applyChange": "應用此更改？",
     "allowExecution": "允許執行？",

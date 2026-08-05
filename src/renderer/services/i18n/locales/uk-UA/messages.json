@@ -55,7 +55,8 @@
   "option": "Варіант",
   "noOptionsAvailable": "Немає доступних варіантів",
   "processing": "Обробка...",
-  "responseSentSuccessfully": "Відповідь надіслано успішно",
+  "permissionAllowed": "Дозволено — агент може продовжити",
+  "permissionDenied": "Відхилено — агента зупинено",
   "confirmation": {
     "applyChange": "Застосувати цю зміну?",
     "allowExecution": "Дозволити виконання?",

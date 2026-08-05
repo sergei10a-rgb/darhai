@@ -53,7 +53,8 @@
   "option": "Опция",
   "noOptionsAvailable": "Нет доступных опций",
   "processing": "Обработка...",
-  "responseSentSuccessfully": "Ответ успешно отправлен",
+  "permissionAllowed": "Разрешено — агент может продолжить",
+  "permissionDenied": "Отклонено — агент остановлен",
   "confirmation": {
     "applyChange": "Применить это изменение?",
     "allowExecution": "Разрешить выполнение?",

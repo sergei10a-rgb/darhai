@@ -56,7 +56,8 @@
   "option": "Opção",
   "noOptionsAvailable": "Nenhuma opção disponível",
   "processing": "Processando...",
-  "responseSentSuccessfully": "Resposta enviada com sucesso",
+  "permissionAllowed": "Permitido - o agente pode continuar",
+  "permissionDenied": "Negado - o agente foi interrompido",
   "confirmation": {
     "applyChange": "Aplicar esta alteração?",
     "allowExecution": "Permitir a execução?",

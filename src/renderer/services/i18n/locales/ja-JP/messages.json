@@ -56,7 +56,8 @@
   "option": "オプション",
   "noOptionsAvailable": "利用可能なオプションはありません",
   "processing": "Processing...",
-  "responseSentSuccessfully": "応答が正常に送信されました",
+  "permissionAllowed": "許可しました - エージェントは続行できます",
+  "permissionDenied": "拒否しました - エージェントを停止しました",
   "confirmation": {
     "applyChange": "この変更を適用しますか？",
     "allowExecution": "実行を許可しますか？",

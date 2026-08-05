@@ -9,6 +9,7 @@ import { conversation } from '@/common/adapter/ipcBridge';
 import { Button, Card, Radio, Typography } from '@arco-design/web-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { resolvePermissionOutcome } from './permissionOutcome';
 
 const { Text } = Typography;
 
@@ -50,6 +51,10 @@ const MessageAcpPermission: React.FC<MessageAcpPermissionProps> = React.memo(({ 
   const [selected, setSelected] = useState<string | null>(null);
   const [isResponding, setIsResponding] = useState(false);
   const [hasResponded, setHasResponded] = useState(false);
+  // Which way the prompt was answered. Without this the card showed the same
+  // green "sent successfully" banner for an approval and a refusal, so denying
+  // `rm -rf` looked exactly like allowing it.
+  const outcome = resolvePermissionOutcome(options, selected);
 
   const handleConfirm = async () => {
     if (hasResponded || !selected) return;
@@ -125,16 +130,26 @@ const MessageAcpPermission: React.FC<MessageAcpPermissionProps> = React.memo(({ 
           </>
         )}
 
-        {hasResponded && (
-          <div
-            className='mt-10px p-2 rounded-md border'
-            style={{ backgroundColor: 'var(--color-success-light-1)', borderColor: 'rgb(var(--success-3))' }}
-          >
-            <Text className='text-sm' style={{ color: 'rgb(var(--success-6))' }}>
-              ✓ {t('messages.responseSentSuccessfully')}
-            </Text>
-          </div>
-        )}
+        {hasResponded &&
+          (outcome === 'denied' ? (
+            <div
+              className='mt-10px p-2 rounded-md border'
+              style={{ backgroundColor: 'var(--color-warning-light-1)', borderColor: 'rgb(var(--warning-3))' }}
+            >
+              <Text className='text-sm' style={{ color: 'rgb(var(--warning-6))' }}>
+                ✕ {t('messages.permissionDenied')}
+              </Text>
+            </div>
+          ) : (
+            <div
+              className='mt-10px p-2 rounded-md border'
+              style={{ backgroundColor: 'var(--color-success-light-1)', borderColor: 'rgb(var(--success-3))' }}
+            >
+              <Text className='text-sm' style={{ color: 'rgb(var(--success-6))' }}>
+                ✓ {t('messages.permissionAllowed')}
+              </Text>
+            </div>
+          ))}
       </div>
     </Card>
   );

@@ -86,4 +86,40 @@ describe('convertLatexDelimiters', () => {
       expect(convertLatexDelimiters('')).toBe('');
     });
   });
+
+  describe('currency is not rendered as math', () => {
+    // remark-math pairs two bare `$` into an inline-math span, so a sentence
+    // mentioning two prices rendered as italic KaTeX with the spaces collapsed
+    // and both dollar signs eaten.
+    it('escapes a single dollar amount so it stays literal text', () => {
+      expect(convertLatexDelimiters('the $2k cohort')).toBe('the \\$2k cohort');
+    });
+
+    it('escapes both amounts in a range rather than pairing them into math', () => {
+      expect(convertLatexDelimiters('between $5 and $10')).toBe('between \\$5 and \\$10');
+    });
+
+    it('handles the amounts an agent actually writes', () => {
+      expect(convertLatexDelimiters('$25, $10k, $50k+ and $1.5M')).toBe('\\$25, \\$10k, \\$50k+ and \\$1.5M');
+    });
+
+    it('leaves an already-escaped dollar alone', () => {
+      expect(convertLatexDelimiters('costs \\$5')).toBe('costs \\$5');
+    });
+
+    it('leaves $$ display math alone', () => {
+      expect(convertLatexDelimiters('$$1 + 2$$')).toBe('$$1 + 2$$');
+    });
+
+    it('leaves real inline math alone - it starts with a non-digit', () => {
+      expect(convertLatexDelimiters('$x + y$')).toBe('$x + y$');
+      expect(convertLatexDelimiters('\\$\\alpha$')).toBe('\\$\\alpha$');
+    });
+
+    it('still converts inline math that begins with a digit', () => {
+      // The currency guard runs BEFORE delimiter conversion, so math produced by
+      // that conversion is never re-examined and escaped by it.
+      expect(convertLatexDelimiters('\\(5x + 3\\)')).toBe('$5x + 3$');
+    });
+  });
 });

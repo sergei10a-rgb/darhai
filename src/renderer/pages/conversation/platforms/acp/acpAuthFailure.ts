@@ -19,8 +19,18 @@ const AUTH_FAILURE_SIGNATURES = [
   '[acp-auth-',
   'oauth',
   'unauthorized',
-  '401',
 ] as const;
+
+/**
+ * HTTP 401, as a standalone number.
+ *
+ * `'401'` used to sit in the substring list above, so ANY error text containing
+ * those three digits anywhere routed the user to the re-authenticate card
+ * instead of showing the real problem: a token count like `40100`, a request id
+ * like `124015`, an HTTP `404012`. Word boundaries keep the genuine status code
+ * and drop the coincidences.
+ */
+const HTTP_401 = /\b401\b/;
 
 /** A descriptor for how to remedy an ACP auth failure for a given backend. */
 export type AcpAuthRemedy = {
@@ -45,7 +55,8 @@ export type AcpAuthRemedy = {
 /** Case-insensitive substring match against the generic auth-failure signatures. */
 export function looksLikeAuthFailure(errorMsg: string): boolean {
   const haystack = errorMsg.toLowerCase();
-  return AUTH_FAILURE_SIGNATURES.some((signature) => haystack.includes(signature));
+  if (AUTH_FAILURE_SIGNATURES.some((signature) => haystack.includes(signature))) return true;
+  return HTTP_401.test(haystack);
 }
 
 /** Display labels for backend ids that do not Title-case cleanly. */

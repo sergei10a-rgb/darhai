@@ -56,7 +56,8 @@
   "option": "Seçenek",
   "noOptionsAvailable": "Seçenek yok",
   "processing": "İşleniyor...",
-  "responseSentSuccessfully": "Yanıt başarıyla gönderildi",
+  "permissionAllowed": "İzin verildi - aracı devam edebilir",
+  "permissionDenied": "Reddedildi - aracı durduruldu",
   "confirmation": {
     "applyChange": "Bu değişikliği uygula?",
     "allowExecution": "Yürütmeye izin ver?",

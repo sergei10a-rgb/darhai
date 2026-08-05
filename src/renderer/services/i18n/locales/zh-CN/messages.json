@@ -56,7 +56,8 @@
   "option": "选项",
   "noOptionsAvailable": "无可用选项",
   "processing": "处理中...",
-  "responseSentSuccessfully": "响应已成功发送",
+  "permissionAllowed": "已允许 - 代理可以继续",
+  "permissionDenied": "已拒绝 - 代理已停止",
   "confirmation": {
     "applyChange": "应用此更改？",
     "allowExecution": "允许执行？",
