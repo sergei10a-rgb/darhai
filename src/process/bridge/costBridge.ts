@@ -5,6 +5,9 @@
  */
 
 import { ipcBridge } from '@/common';
+import type { MntRate } from '@process/services/cost/fxRate';
+import { getMntRate, primeMntRate, startMntRateRefresh } from '@process/services/cost/fxRateService';
+import { ProcessConfig } from '@process/utils/initStorage';
 import type { CostAnalyticsService } from '@process/services/cost/CostAnalyticsService';
 import type { BudgetController } from '@process/services/cost/BudgetController';
 import type {
@@ -117,4 +120,57 @@ export function initCostBudgetBridge(controller: BudgetController): void {
       return [];
     }
   });
+}
+
+/**
+ * Tögrög conversion for the spend surfaces.
+ *
+ * Registered separately from the analytics providers because it needs neither
+ * the database nor the budget controller - the rate lives in config - so it
+ * stays available even if cost analytics failed to initialise.
+ *
+ * Every handler returns null / the previous settings on error rather than
+ * throwing: a currency conversion failing must never take down a spend panel.
+ */
+export function initCostFxBridge(): void {
+  ipcBridge.cost.mntRate.provider(async (): Promise<MntRate | null> => {
+    try {
+      return await getMntRate();
+    } catch (error) {
+      console.error('[costBridge] mntRate error:', error);
+      return null;
+    }
+  });
+
+  ipcBridge.cost.mntRateSettings.provider(async (): Promise<{ auto: boolean; manualMntPerUsd?: number }> => {
+    try {
+      return (await ProcessConfig.get('cost.mntRate')) ?? { auto: true };
+    } catch (error) {
+      console.error('[costBridge] mntRateSettings error:', error);
+      return { auto: true };
+    }
+  });
+
+  ipcBridge.cost.setMntRateSettings.provider(
+    async (input: { auto: boolean; manualMntPerUsd?: number | null }): Promise<MntRate | null> => {
+      try {
+        const stored = (await ProcessConfig.get('cost.mntRate')) ?? { auto: true };
+        // An empty manual field means "go back to the fetched rate", so the key
+        // is removed rather than stored as 0 - which would read as a rate.
+        const next = { ...stored, auto: input.auto };
+        if (typeof input.manualMntPerUsd === 'number' && Number.isFinite(input.manualMntPerUsd)) {
+          next.manualMntPerUsd = input.manualMntPerUsd;
+        } else {
+          delete next.manualMntPerUsd;
+        }
+        await ProcessConfig.set('cost.mntRate', next);
+        // Turning auto on should show a rate now, not tomorrow.
+        if (input.auto) await startMntRateRefresh();
+        return await primeMntRate();
+      } catch (error) {
+        console.error('[costBridge] setMntRateSettings error:', error);
+        return null;
+      }
+    }
+  );
 }

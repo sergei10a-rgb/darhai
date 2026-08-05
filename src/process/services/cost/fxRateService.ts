@@ -100,3 +100,38 @@ export async function getMntRate(): Promise<MntRate | null> {
   const stored: StoredRate = await readStored();
   return resolveMntRate({ manualMntPerUsd: stored.manualMntPerUsd, fetched: stored.fetched });
 }
+
+/**
+ * In-memory copy of the resolved rate.
+ *
+ * The cost recorder runs on the turn-finish path and writes synchronously, so it
+ * cannot await config. It reads this instead, and a turn recorded before the
+ * first refresh simply carries no rate - which is handled, not broken.
+ */
+let liveRate: MntRate | null = null;
+
+/** The rate to stamp on a cost row, for callers that cannot await. */
+export function currentMntRateSync(): number | null {
+  return liveRate?.mntPerUsd ?? null;
+}
+
+/** Re-read the stored rate into memory. Call after the user changes settings. */
+export async function primeMntRate(): Promise<MntRate | null> {
+  liveRate = await getMntRate();
+  return liveRate;
+}
+
+/**
+ * Refresh from the network if due and allowed, then prime the in-memory copy.
+ *
+ * Safe to call at startup and on a timer: it makes at most one request a day and
+ * never throws, so a failure here can never keep the app from starting.
+ */
+export async function startMntRateRefresh(now: number = Date.now()): Promise<void> {
+  try {
+    await refreshMntRate(now);
+  } catch (error) {
+    console.warn('[fxRate] Refresh failed; keeping whatever rate is cached:', error);
+  }
+  await primeMntRate();
+}

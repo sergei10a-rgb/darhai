@@ -15,7 +15,10 @@ export interface ModelPricing {
    * USD for a per-turn token split. Returns undefined for an unknown/undefined
    * model id so the recorder can fall back to cost_source='unknown'.
    */
-  priceTokens(modelId: string | undefined, t: { input: number; output: number; cacheRead?: number }): number | undefined;
+  priceTokens(
+    modelId: string | undefined,
+    t: { input: number; output: number; cacheRead?: number }
+  ): number | undefined;
 }
 
 export type CostSource = 'engine' | 'computed' | 'unknown';
@@ -65,14 +68,46 @@ type Baseline = { usd: number; tokens: number };
  */
 export type TurnRecordedHook = (ctx: { modelId?: string; backend: string; teamId?: string }) => void;
 
+/**
+ * Reads the current tögrög-per-USD rate, or null when none is known.
+ *
+ * Synchronous by contract: recording sits on the turn-finish path and the
+ * repository writes synchronously, so a rate that has to be awaited cannot be
+ * stamped on the row. The caller keeps a refreshed value in memory.
+ */
+export type MntRateProvider = () => number | null;
+
 export class CostRecorder {
   private readonly baselines = new Map<string, Baseline>();
   private onTurnRecorded?: TurnRecordedHook;
+  private mntRateProvider?: MntRateProvider;
 
   constructor(
     private readonly repo: ICostRepository,
     private readonly pricing: ModelPricing
   ) {}
+
+  /**
+   * Supply the tögrög rate to stamp on each recorded row.
+   *
+   * Optional: with none set, rows carry no rate and are converted at the current
+   * rate when displayed - which is exactly the old behaviour, so nothing depends
+   * on this being wired.
+   */
+  setMntRateProvider(provider: MntRateProvider): void {
+    this.mntRateProvider = provider;
+  }
+
+  /** The rate to stamp, or undefined. Never throws into the recording path. */
+  private currentMntRate(): number | undefined {
+    if (!this.mntRateProvider) return undefined;
+    try {
+      const rate = this.mntRateProvider();
+      return typeof rate === 'number' && Number.isFinite(rate) && rate > 0 ? rate : undefined;
+    } catch {
+      return undefined;
+    }
+  }
 
   /**
    * Register a post-record hook for budget enforcement. Wired in initBridge.ts
@@ -134,6 +169,7 @@ export class CostRecorder {
       cronId: e.cronId,
       teamId: e.teamId,
       createdAt: e.ts,
+      mntPerUsd: this.currentMntRate(),
     });
   }
 
@@ -174,6 +210,7 @@ export class CostRecorder {
       cronId: e.cronId,
       teamId: e.teamId,
       createdAt: e.ts,
+      mntPerUsd: this.currentMntRate(),
     });
   }
 
@@ -194,6 +231,7 @@ export class CostRecorder {
       cronId: e.cronId,
       teamId: e.teamId,
       createdAt: e.ts,
+      mntPerUsd: this.currentMntRate(),
     });
   }
 }

@@ -103,6 +103,16 @@
       "pauseActionHint": "Pause gates new turns for this scope while over budget. It is resumable at any time and reserved for scheduled or team work.",
       "alertTitle": "Budget exceeded",
       "alertBody": "Spent {{spent}} of the {{limit}} limit."
+    },
+    "fx": {
+      "title": "Wechselkurs",
+      "current": "$1 = {{rate}}₮ ({{source}})",
+      "unknown": "Kein Kurs bekannt - nur Dollar",
+      "sourceManual": "selbst eingegeben",
+      "sourceFetched": "abgerufen am {{date}}",
+      "auto": "Kurs täglich aktualisieren",
+      "manual": "Eigener Kurs",
+      "manualHint": "Ein hier eingegebener Kurs überschreibt den abgerufenen. Leer lassen, um zum abgerufenen Kurs zurückzukehren."
     }
   }
 }

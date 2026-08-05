@@ -32,6 +32,8 @@ export type CostEvent = {
   cronId?: string;
   teamId?: string;
   createdAt: number;
+  /** Tögrög per USD when this row was written. Null on rows predating the column. */
+  mntPerUsd?: number;
 };
 
 /**
@@ -52,6 +54,15 @@ export type CostEventInput = {
   cronId?: string;
   teamId?: string;
   createdAt: number;
+  /**
+   * Tögrög per USD at the moment this turn was recorded.
+   *
+   * Stamped per row rather than converted at display time so a past total stops
+   * moving every time the exchange rate does - a figure that never settles is
+   * useless for a ledger. Undefined when no rate is known; those rows fall back
+   * to the current rate when shown.
+   */
+  mntPerUsd?: number;
 };
 
 /**

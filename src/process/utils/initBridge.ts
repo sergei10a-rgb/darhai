@@ -22,8 +22,9 @@ import { SqliteCostRepository } from '@process/services/cost/SqliteCostRepositor
 import { SqliteBudgetRepository } from '@process/services/cost/SqliteBudgetRepository';
 import { CostAnalyticsService } from '@process/services/cost/CostAnalyticsService';
 import { BudgetController } from '@process/services/cost/BudgetController';
-import { initCostBridge, initCostBudgetBridge } from '@process/bridge/costBridge';
+import { initCostBridge, initCostBudgetBridge, initCostFxBridge } from '@process/bridge/costBridge';
 import { CostRecorder, setCostRecorder } from '@process/services/cost/CostRecorder';
+import { currentMntRateSync, startMntRateRefresh } from '@process/services/cost/fxRateService';
 import { getModelPricing } from '@process/services/cost/ModelPricing';
 import { getDatabase } from '@process/services/database';
 import { FrequentlyUsedAggregator } from '@process/services/usage/FrequentlyUsedAggregator';
@@ -195,6 +196,7 @@ void getDatabase()
       // can query summary/byModel/byBackend/byConversation/byTeam/series.
       const costAnalytics = new CostAnalyticsService(db.getDriver());
       initCostBridge(costAnalytics);
+      initCostFxBridge();
 
       // Budgets / caps (Stage 1). The controller emits a one-time non-blocking
       // cost.budgetAlert to the renderer when a turn pushes a 'warn' budget over
@@ -209,6 +211,13 @@ void getDatabase()
       });
       initCostBudgetBridge(budgetController);
       costRecorder.setTurnRecordedHook((ctx) => budgetController.checkAfterTurn(ctx));
+
+      // Stamp each spend row with the tögrög rate in force when it happened, so
+      // a past total stops moving every time the exchange rate does. The refresh
+      // is fire-and-forget: it never throws, makes at most one request a day,
+      // and a turn recorded before it lands simply carries no rate.
+      costRecorder.setMntRateProvider(currentMntRateSync);
+      void startMntRateRefresh();
     } catch (err) {
       console.warn('[cost] init failed:', err);
     }

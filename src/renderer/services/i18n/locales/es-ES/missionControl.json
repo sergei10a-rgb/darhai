@@ -103,6 +103,16 @@
       "pauseActionHint": "Pause gates new turns for this scope while over budget. It is resumable at any time and reserved for scheduled or team work.",
       "alertTitle": "Budget exceeded",
       "alertBody": "Spent {{spent}} of the {{limit}} limit."
+    },
+    "fx": {
+      "title": "Tipo de cambio",
+      "current": "$1 = {{rate}}₮ ({{source}})",
+      "unknown": "Sin tipo de cambio - solo dólares",
+      "sourceManual": "introducido por ti",
+      "sourceFetched": "obtenido el {{date}}",
+      "auto": "Actualizar el tipo cada día",
+      "manual": "Tu tipo",
+      "manualHint": "El tipo que introduzcas aquí sustituye al obtenido. Déjalo vacío para volver al automático."
     }
   }
 }

@@ -11,7 +11,8 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CostAggregate } from '@process/services/cost/types';
-import { formatTokenCount, formatUsd } from '@renderer/utils/format/tokens';
+import { formatTokenCount, formatSpend } from '@renderer/utils/format/tokens';
+import { useMntRate } from '@renderer/hooks/cost/useMntRate';
 import { BudgetBar } from './BudgetBar';
 import styles from './Cost.module.css';
 
@@ -26,6 +27,7 @@ export type CostBreakdownProps = {
 
 export const CostBreakdown: React.FC<CostBreakdownProps> = ({ title, rows, unattributedLabel, limit = 8 }) => {
   const { t } = useTranslation();
+  const { toMnt } = useMntRate();
   const top = rows.slice(0, limit);
   const max = top.reduce((m, r) => (r.costUsd > m ? r.costUsd : m), 0);
 
@@ -43,7 +45,7 @@ export const CostBreakdown: React.FC<CostBreakdownProps> = ({ title, rows, unatt
               <div className={styles.barTop}>
                 <span className={styles.barKey}>{row.key || unattributedLabel}</span>
                 <span className={styles.barVal}>
-                  {formatUsd(row.costUsd)} {'·'} {formatTokenCount(row.tokensTotal)}
+                  {formatSpend(row.costUsd, toMnt(row.costUsd))} {'·'} {formatTokenCount(row.tokensTotal)}
                 </span>
               </div>
               <BudgetBar fraction={max > 0 ? row.costUsd / max : 0} />

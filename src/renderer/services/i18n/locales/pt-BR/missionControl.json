@@ -103,6 +103,16 @@
       "pauseActionHint": "Pause gates new turns for this scope while over budget. It is resumable at any time and reserved for scheduled or team work.",
       "alertTitle": "Budget exceeded",
       "alertBody": "Spent {{spent}} of the {{limit}} limit."
+    },
+    "fx": {
+      "title": "Taxa de câmbio",
+      "current": "$1 = {{rate}}₮ ({{source}})",
+      "unknown": "Taxa desconhecida - apenas dólares",
+      "sourceManual": "informada por você",
+      "sourceFetched": "obtida em {{date}}",
+      "auto": "Atualizar a taxa diariamente",
+      "manual": "Sua taxa",
+      "manualHint": "Uma taxa informada aqui substitui a obtida. Deixe vazio para voltar à automática."
     }
   }
 }

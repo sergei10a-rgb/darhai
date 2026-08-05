@@ -15,14 +15,9 @@ import { Button, Form, InputNumber, Modal, Notification, Select } from '@arco-de
 import { Plus } from 'lucide-react';
 import useSWR from 'swr';
 import { ipcBridge } from '@/common';
-import type {
-  BudgetAction,
-  BudgetInput,
-  BudgetPeriod,
-  BudgetScope,
-  BudgetStatus,
-} from '@process/services/cost/types';
-import { formatUsd } from '@renderer/utils/format/tokens';
+import type { BudgetAction, BudgetInput, BudgetPeriod, BudgetScope, BudgetStatus } from '@process/services/cost/types';
+import { formatSpend, formatUsd } from '@renderer/utils/format/tokens';
+import { useMntRate } from '@renderer/hooks/cost/useMntRate';
 import { budgetFraction, budgetSeverity } from './costChart';
 import { BudgetBar } from './BudgetBar';
 import styles from './Cost.module.css';
@@ -44,6 +39,7 @@ type FormValues = {
 
 export const BudgetsPanel: React.FC = () => {
   const { t } = useTranslation();
+  const { toMnt } = useMntRate();
   const [form] = Form.useForm<FormValues>();
   const [modalOpen, setModalOpen] = useState(false);
   const [editId, setEditId] = useState<string | undefined>(undefined);
@@ -170,7 +166,7 @@ export const BudgetsPanel: React.FC = () => {
                 </span>
                 <div className={styles.budgetActions}>
                   <span className={styles.budgetSpend}>
-                    {formatUsd(b.spentUsd)} / {formatUsd(b.limitUsd)}
+                    {formatSpend(b.spentUsd, toMnt(b.spentUsd))} / {formatSpend(b.limitUsd, toMnt(b.limitUsd))}
                     {' · '}
                     {t(`missionControl.cost.budgets.period.${b.period}`)}
                   </span>
@@ -205,11 +201,7 @@ export const BudgetsPanel: React.FC = () => {
         unmountOnExit
       >
         <Form form={form} layout='vertical'>
-          <FormItem
-            label={t('missionControl.cost.budgets.fieldScope')}
-            field='scope'
-            rules={[{ required: true }]}
-          >
+          <FormItem label={t('missionControl.cost.budgets.fieldScope')} field='scope' rules={[{ required: true }]}>
             <Select>
               {SCOPES.map((s) => (
                 <Option key={s} value={s}>
@@ -226,11 +218,7 @@ export const BudgetsPanel: React.FC = () => {
                   field='scopeKey'
                   rules={[{ required: true }]}
                 >
-                  <Select
-                    allowCreate
-                    showSearch
-                    placeholder={t('missionControl.cost.budgets.scopeKeyPlaceholder')}
-                  />
+                  <Select allowCreate showSearch placeholder={t('missionControl.cost.budgets.scopeKeyPlaceholder')} />
                 </FormItem>
               ) : null
             }
@@ -242,11 +230,7 @@ export const BudgetsPanel: React.FC = () => {
           >
             <InputNumber min={0.01} step={1} prefix='$' />
           </FormItem>
-          <FormItem
-            label={t('missionControl.cost.budgets.fieldPeriod')}
-            field='period'
-            rules={[{ required: true }]}
-          >
+          <FormItem label={t('missionControl.cost.budgets.fieldPeriod')} field='period' rules={[{ required: true }]}>
             <Select>
               {PERIODS.map((p) => (
                 <Option key={p} value={p}>
@@ -255,11 +239,7 @@ export const BudgetsPanel: React.FC = () => {
               ))}
             </Select>
           </FormItem>
-          <FormItem
-            label={t('missionControl.cost.budgets.fieldAction')}
-            field='action'
-            rules={[{ required: true }]}
-          >
+          <FormItem label={t('missionControl.cost.budgets.fieldAction')} field='action' rules={[{ required: true }]}>
             <Select>
               {ACTIONS.map((a) => (
                 <Option key={a} value={a}>

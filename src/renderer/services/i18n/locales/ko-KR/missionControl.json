@@ -103,6 +103,16 @@
       "pauseActionHint": "Pause gates new turns for this scope while over budget. It is resumable at any time and reserved for scheduled or team work.",
       "alertTitle": "Budget exceeded",
       "alertBody": "Spent {{spent}} of the {{limit}} limit."
+    },
+    "fx": {
+      "title": "환율",
+      "current": "$1 = {{rate}}₮ ({{source}})",
+      "unknown": "환율을 알 수 없음 — 달러만 표시",
+      "sourceManual": "직접 입력",
+      "sourceFetched": "{{date}} 가져옴",
+      "auto": "매일 환율 자동 갱신",
+      "manual": "직접 지정한 환율",
+      "manualHint": "여기에 입력한 환율이 자동 환율보다 우선합니다. 비우면 자동으로 돌아갑니다."
     }
   }
 }

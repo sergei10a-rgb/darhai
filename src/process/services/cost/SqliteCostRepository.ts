@@ -5,14 +5,7 @@
  */
 
 import type { ISqliteDriver, IStatement } from '@process/services/database/drivers/ISqliteDriver';
-import type {
-  CostAggregate,
-  CostEventInput,
-  CostGroupBy,
-  CostSeriesPoint,
-  CostWindow,
-  ICostRepository,
-} from './types';
+import type { CostAggregate, CostEventInput, CostGroupBy, CostSeriesPoint, CostWindow, ICostRepository } from './types';
 
 const GROUP_COLUMNS: Record<CostGroupBy, string> = {
   model_id: 'model_id',
@@ -38,9 +31,9 @@ export class SqliteCostRepository implements ICostRepository {
       INSERT INTO cost_events (
         conversation_id, backend, model_id, cost_usd, tokens_total,
         input_tokens, output_tokens, cache_read_tokens, cost_source,
-        cron_id, team_id, created_at
+        cron_id, team_id, created_at, mnt_per_usd
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     this.stmtTotal = db.prepare(`
@@ -68,7 +61,8 @@ export class SqliteCostRepository implements ICostRepository {
       event.costSource,
       event.cronId ?? null,
       event.teamId ?? null,
-      event.createdAt
+      event.createdAt,
+      event.mntPerUsd ?? null
     );
     return Number(result.lastInsertRowid);
   }

@@ -103,6 +103,16 @@
       "pauseActionHint": "Pause gates new turns for this scope while over budget. It is resumable at any time and reserved for scheduled or team work.",
       "alertTitle": "Budget exceeded",
       "alertBody": "Spent {{spent}} of the {{limit}} limit."
+    },
+    "fx": {
+      "title": "Курс валют",
+      "current": "$1 = {{rate}}₮ ({{source}})",
+      "unknown": "Курс невідомий — лише долари",
+      "sourceManual": "введений вами",
+      "sourceFetched": "отримано {{date}}",
+      "auto": "Оновлювати курс щодня",
+      "manual": "Власний курс",
+      "manualHint": "Введений тут курс має пріоритет над отриманим. Залиште порожнім, щоб повернутися до автоматичного."
     }
   }
 }

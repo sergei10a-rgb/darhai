@@ -12,7 +12,9 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Radio } from '@arco-design/web-react';
 import { RefreshCw } from 'lucide-react';
-import { formatTokenCount, formatUsd } from '@renderer/utils/format/tokens';
+import { formatTokenCount, formatSpend } from '@renderer/utils/format/tokens';
+import { useMntRate } from '@renderer/hooks/cost/useMntRate';
+import { MntRatePanel } from './MntRatePanel';
 import { type CostPeriod } from './costChart';
 import { useCostAnalytics } from './useCostAnalytics';
 import { CostTrend } from './CostTrend';
@@ -31,6 +33,7 @@ const SummaryCard: React.FC<{ label: string; value: string }> = ({ label, value 
 
 export const CostTab: React.FC = () => {
   const { t } = useTranslation();
+  const { toMnt } = useMntRate();
   const { period, setPeriod, summary, byModel, byBackend, byTeam, byConversation, series, loading, refresh } =
     useCostAnalytics();
 
@@ -42,12 +45,7 @@ export const CostTab: React.FC = () => {
       <div className={styles.toolbar}>
         <span className={styles.toolbarTitle}>{t('missionControl.cost.periodLabel')}</span>
         <div className='flex items-center gap-10px'>
-          <Radio.Group
-            type='button'
-            size='small'
-            value={period}
-            onChange={(v) => setPeriod(v as CostPeriod)}
-          >
+          <Radio.Group type='button' size='small' value={period} onChange={(v) => setPeriod(v as CostPeriod)}>
             {PERIODS.map((p) => (
               <Radio key={p} value={p}>
                 {t(`missionControl.cost.period.${p}`)}
@@ -60,8 +58,13 @@ export const CostTab: React.FC = () => {
         </div>
       </div>
 
+      <MntRatePanel />
+
       <div className={styles.cards}>
-        <SummaryCard label={t('missionControl.cost.totalSpend')} value={formatUsd(summary.costUsd)} />
+        <SummaryCard
+          label={t('missionControl.cost.totalSpend')}
+          value={formatSpend(summary.costUsd, toMnt(summary.costUsd))}
+        />
         <SummaryCard label={t('missionControl.cost.totalTokens')} value={formatTokenCount(summary.tokensTotal)} />
         <SummaryCard label={t('missionControl.cost.totalEvents')} value={summary.events.toLocaleString()} />
       </div>

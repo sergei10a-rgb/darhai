@@ -12,7 +12,8 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CostSeriesPoint } from '@process/services/cost/types';
-import { formatUsd } from '@renderer/utils/format/tokens';
+import { formatSpend, formatUsd } from '@renderer/utils/format/tokens';
+import { useMntRate } from '@renderer/hooks/cost/useMntRate';
 import { buildChartGeometry, type CostPeriod } from './costChart';
 import styles from './Cost.module.css';
 
@@ -34,6 +35,7 @@ function formatBucketLabel(ms: number, period: CostPeriod): string {
 
 export const CostTrend: React.FC<CostTrendProps> = ({ series, period }) => {
   const { t } = useTranslation();
+  const { toMnt } = useMntRate();
   const [hover, setHover] = useState<number | null>(null);
   const geo = buildChartGeometry(series, WIDTH, HEIGHT);
 
@@ -59,14 +61,27 @@ export const CostTrend: React.FC<CostTrendProps> = ({ series, period }) => {
         <span className={styles.panelTitle}>{t('missionControl.cost.trendTitle')}</span>
         {hovered ? (
           <span className={styles.panelHint}>
-            {formatBucketLabel(hovered.point.bucketStart, period)} {'·'} {formatUsd(hovered.point.costUsd)}
+            {formatBucketLabel(hovered.point.bucketStart, period)} {'·'}{' '}
+            {formatSpend(hovered.point.costUsd, toMnt(hovered.point.costUsd))}
           </span>
         ) : null}
       </div>
       <svg className={styles.chart} viewBox={`0 0 ${geo.width} ${geo.height}`} role='img'>
         {/* y-axis max gridline + label */}
-        <line className={styles.chartGrid} x1={geo.pad.left} y1={geo.pad.top} x2={geo.width - geo.pad.right} y2={geo.pad.top} />
-        <line className={styles.chartGrid} x1={geo.pad.left} y1={baselineY} x2={geo.width - geo.pad.right} y2={baselineY} />
+        <line
+          className={styles.chartGrid}
+          x1={geo.pad.left}
+          y1={geo.pad.top}
+          x2={geo.width - geo.pad.right}
+          y2={geo.pad.top}
+        />
+        <line
+          className={styles.chartGrid}
+          x1={geo.pad.left}
+          y1={baselineY}
+          x2={geo.width - geo.pad.right}
+          y2={baselineY}
+        />
         <text className={styles.chartAxis} x={geo.pad.left - 6} y={geo.pad.top + 4} textAnchor='end'>
           {formatUsd(geo.maxCostUsd)}
         </text>

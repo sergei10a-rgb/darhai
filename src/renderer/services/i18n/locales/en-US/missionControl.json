@@ -103,6 +103,16 @@
       "pauseActionHint": "Pause gates new turns for this scope while over budget. It is resumable at any time and reserved for scheduled or team work.",
       "alertTitle": "Budget exceeded",
       "alertBody": "Spent {{spent}} of the {{limit}} limit."
+    },
+    "fx": {
+      "title": "Exchange rate",
+      "current": "$1 = {{rate}}₮ ({{source}})",
+      "unknown": "No rate known - showing dollars only",
+      "sourceManual": "entered by you",
+      "sourceFetched": "fetched {{date}}",
+      "auto": "Refresh the rate daily",
+      "manual": "Your rate",
+      "manualHint": "A rate you enter here overrides the fetched one. Leave it empty to go back to the fetched rate."
     }
   }
 }

@@ -2723,6 +2723,20 @@ export const cost = {
   listBudgets: buildProvider<import('@process/services/cost/types').BudgetStatus[], void>('cost.listBudgets'),
   /** One-time non-blocking over-budget warn notification (main -> renderer). */
   budgetAlert: buildEmitter<import('@process/services/cost/types').BudgetAlert>('cost.budgetAlert'),
+  // Tögrög conversion. Spend surfaces show dollars first (that is what providers
+  // bill) with tögrög alongside, so a user here does not have to translate a
+  // dollar figure in their head. Null means no rate is trustworthy - the UI then
+  // shows dollars alone rather than a guess. Remote-denied with the rest of
+  // cost.* since these reads accompany spend data.
+  /** Current tögrög-per-USD rate, or null when none is known. */
+  mntRate: buildProvider<import('@process/services/cost/fxRate').MntRate | null, void>('cost.mntRate'),
+  /** Update the rate settings (auto on/off, manual override). Returns the resolved rate. */
+  setMntRateSettings: buildProvider<
+    import('@process/services/cost/fxRate').MntRate | null,
+    { auto: boolean; manualMntPerUsd?: number | null }
+  >('cost.setMntRateSettings'),
+  /** The stored rate settings, for the Settings page. */
+  mntRateSettings: buildProvider<{ auto: boolean; manualMntPerUsd?: number }, void>('cost.mntRateSettings'),
 };
 
 // ==================== Memory Archive (v0.6.4) ====================

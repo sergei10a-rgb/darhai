@@ -314,6 +314,10 @@ const REMOTE_DENIED_KEYS: ReadonlySet<string> = new Set([
   'cost.upsertBudget',
   'cost.deleteBudget',
   'cost.listBudgets',
+  // setMntRateSettings is a mutation that changes what the host machine is
+  // allowed to fetch from the network, so it belongs with the other mutations a
+  // paired WebUI must never reach.
+  'cost.setMntRateSettings',
   // --- MCP mutation (agent install/remove, OAuth login/logout, credential set) ---
   'mcp.sync-to-agents',
   'mcp.remove-from-agents',

@@ -103,6 +103,16 @@
       "pauseActionHint": "Pause gates new turns for this scope while over budget. It is resumable at any time and reserved for scheduled or team work.",
       "alertTitle": "Budget exceeded",
       "alertBody": "Spent {{spent}} of the {{limit}} limit."
+    },
+    "fx": {
+      "title": "匯率",
+      "current": "$1 = {{rate}}₮（{{source}}）",
+      "unknown": "未知匯率 — 僅顯示美元",
+      "sourceManual": "手動輸入",
+      "sourceFetched": "{{date}} 取得",
+      "auto": "每天自動更新匯率",
+      "manual": "自訂匯率",
+      "manualHint": "在此輸入的匯率會覆蓋自動取得的匯率。留空則恢復自動。"
     }
   }
 }

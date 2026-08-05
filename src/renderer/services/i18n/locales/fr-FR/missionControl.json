@@ -103,6 +103,16 @@
       "pauseActionHint": "Pause gates new turns for this scope while over budget. It is resumable at any time and reserved for scheduled or team work.",
       "alertTitle": "Budget exceeded",
       "alertBody": "Spent {{spent}} of the {{limit}} limit."
+    },
+    "fx": {
+      "title": "Taux de change",
+      "current": "1 $ = {{rate}}₮ ({{source}})",
+      "unknown": "Taux inconnu - dollars uniquement",
+      "sourceManual": "saisi par vous",
+      "sourceFetched": "récupéré le {{date}}",
+      "auto": "Actualiser le taux chaque jour",
+      "manual": "Votre taux",
+      "manualHint": "Un taux saisi ici remplace celui récupéré. Laissez vide pour revenir au taux automatique."
     }
   }
 }
