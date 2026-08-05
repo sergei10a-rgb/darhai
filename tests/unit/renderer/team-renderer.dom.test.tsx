@@ -32,6 +32,9 @@ vi.mock('@/common', () => ({
       get: { invoke: (...args: unknown[]) => mockConversationGetInvoke(...args) },
       update: { invoke: (...args: unknown[]) => mockConversationUpdateInvoke(...args) },
       stop: { invoke: vi.fn() },
+      // The team page subscribes to this so a teammate's model change reaches
+      // every tile; the real bridge always provides it.
+      listChanged: { on: vi.fn(() => vi.fn()) },
       responseStream: { on: vi.fn(() => vi.fn()), emit: vi.fn() },
       confirmation: {
         list: { invoke: vi.fn().mockResolvedValue([]) },

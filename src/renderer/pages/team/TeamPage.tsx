@@ -3,6 +3,7 @@ import { Message, Modal, Spin } from '@arco-design/web-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import useSWR, { useSWRConfig } from 'swr';
+import { useTeamConversation } from './hooks/useTeamConversation';
 import { useAuth } from '@renderer/hooks/context/AuthContext';
 import { ipcBridge } from '@/common';
 import type { TeamAgent, TTeam } from '@/common/types/teamTypes';
@@ -73,9 +74,7 @@ const AgentChatSlot: React.FC<{
   palette?: PaletteKey;
 }> = ({ agent, teamId, isLeader, isFullscreen = false, onToggleFullscreen, onRemove, palette }) => {
   const { t } = useTranslation();
-  const { data: conversation } = useSWR(agent.conversationId ? ['team-conversation', agent.conversationId] : null, () =>
-    ipcBridge.conversation.get.invoke({ id: agent.conversationId })
-  );
+  const { data: conversation } = useTeamConversation(agent.conversationId);
 
   const isWCore = conversation?.type === 'wcore';
   const initialModelId = (conversation?.extra as { currentModelId?: string })?.currentModelId;
@@ -325,10 +324,7 @@ const TeamPageContent: React.FC<TeamPageContentProps> = ({ team, onRenameTeam })
   const allConversationIds = useMemo(() => agents.map((a) => a.conversationId).filter(Boolean), [agents]);
 
   // Fetch leader agent's conversation for the workspace sider
-  const { data: dispatchConversation } = useSWR(
-    leadAgent?.conversationId ? ['team-conversation', leadAgent.conversationId] : null,
-    () => ipcBridge.conversation.get.invoke({ id: leadAgent!.conversationId })
-  );
+  const { data: dispatchConversation } = useTeamConversation(leadAgent?.conversationId);
 
   // Use team workspace if specified, otherwise fall back to leader agent's conversation workspace (temp workspace)
   const effectiveWorkspace = team.workspace || (dispatchConversation?.extra as { workspace?: string })?.workspace || '';
