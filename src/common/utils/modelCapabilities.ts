@@ -7,6 +7,34 @@
 import type { IProvider, ModelType } from '@/common/config/storage';
 
 /**
+ * Embedding / retrieval model families.
+ *
+ * Most of these are NOT named with the literal word `embed` - `bge-m3`,
+ * `gte-large`, `e5-mistral`, `voyage-3` - so the families have to be named. Each
+ * stem is anchored to a token boundary (start of id, or one of `/ . : _ -` or
+ * whitespace on each side) so a two- or three-letter stem cannot match inside an
+ * unrelated chat id: `uae` must not trip the vendored `kuae-*` coding models,
+ * and `e5` / `bge` / `gte` must not match mid-word.
+ *
+ * Exported so any other classifier stays consistent with this one rather than
+ * growing a second, subtly different list.
+ */
+export const EMBEDDING_MODEL =
+  /(?:^|[\s./:_-])(?:embeddings?|embed|bge|gte|e5|uae|voyage|jina-clip|retrieval|llm2vec)(?=$|[\s./:_-])/i;
+
+/** Reranker / cross-encoder models. Never chat models. */
+export const RERANK_MODEL = /(?:rerank|re-rank|re-ranker|re-ranking|retrieval|retriever)/i;
+
+/**
+ * Speech-to-text and text-to-speech models.
+ *
+ * Deliberately narrow: `whisper` and `tts` only. A bare `audio` is NOT matched,
+ * because audio-capable CHAT models exist (`gpt-4o-audio-preview`) and hiding
+ * those would be its own bug.
+ */
+export const SPEECH_MODEL = /(?:^|[\s./:_-])(?:whisper|tts)(?=$|[\s./:_-])/i;
+
+/**
  * Capability matching regex patterns
  */
 export const CAPABILITY_PATTERNS: Record<ModelType, RegExp> = {
@@ -16,9 +44,19 @@ export const CAPABILITY_PATTERNS: Record<ModelType, RegExp> = {
   image_generation: /flux|diffusion|stabilityai|sd-|dall|cogview|janus|midjourney|mj-|imagen/i,
   web_search: /search|perplexity/i,
   reasoning: /o1-|reasoning|think/i,
-  embedding: /(?:^text-|embed|bge-|e5-|LLM2Vec|retrieval|uae-|gte-|jina-clip|jina-embeddings|voyage-)/i,
-  rerank: /(?:rerank|re-rank|re-ranker|re-ranking|retrieval|retriever)/i,
-  excludeFromPrimary: /dall-e|flux|stable-diffusion|midjourney|flash-image|image|embed|rerank/i,
+  embedding: EMBEDDING_MODEL,
+  rerank: RERANK_MODEL,
+  // Must be a SUPERSET of embedding + rerank + speech, so a non-chat model is
+  // filtered OUT of the chat / workflow / team pickers rather than offered and
+  // then failing the turn with a provider 400 ("does not support chat").
+  //
+  // The bare `embed` / `rerank` literals this replaces missed every
+  // family-named embedding - `bge-m3`, `gte-large`, `e5-mistral`, `voyage-3`
+  // contain neither word, so all of them were offered for chat.
+  excludeFromPrimary: new RegExp(
+    `dall-e|flux|stable-diffusion|midjourney|flash-image|image|${EMBEDDING_MODEL.source}|${RERANK_MODEL.source}|${SPEECH_MODEL.source}`,
+    'i'
+  ),
 };
 
 /**

@@ -5,9 +5,13 @@
  */
 
 /**
- * Context window size configuration for known models
+ * Context window size configuration for known models.
+ *
+ * Exported so `modelContextLimits.test.ts` can hold the Claude rows against
+ * `resources/modelsdev-snapshot.json` - the table is hand-maintained, and the
+ * whole point of the bug it replaced is that hand-maintained tables drift.
  */
-const MODEL_CONTEXT_LIMITS: Record<string, number> = {
+export const MODEL_CONTEXT_LIMITS: Record<string, number> = {
   // Gemini family
   'gemini-3.1-pro-preview': 1_048_576,
   'gemini-3-pro-preview': 1_048_576,
@@ -40,16 +44,39 @@ const MODEL_CONTEXT_LIMITS: Record<string, number> = {
   o3: 200_000,
   'o3-mini': 200_000,
 
-  // Claude family
-  'claude-opus-4.5': 200_000,
-  'claude-haiku-4.5': 200_000,
-  'claude-sonnet-4.5': 1_000_000,
-  'claude-opus-4.1': 200_000,
+  // Claude family. Keys are the REAL hyphenated catalog ids the app passes here.
+  // They used to be dotted (`claude-opus-4.5`), which no real id ever matches, so
+  // every Claude model fell through to the bare `claude-opus-4` / `claude-sonnet-4`
+  // fuzzy prefixes: `claude-opus-4-8` (a 1M model) resolved to 200K and
+  // `claude-sonnet-4-5` (a 200K model) resolved to 1M. That is not cosmetic - the
+  // meter denominator and the compaction trigger both read this number, so a wrong
+  // window either compacts far too early or lets a turn overflow the real one.
+  //
+  // Values come from our own `resources/modelsdev-snapshot.json`, and
+  // `modelContextLimits.test.ts` re-checks every key against that snapshot so this
+  // table cannot drift away from it again.
+  //
+  // The bare `claude-opus-4` / `-sonnet-4` / `-haiku-4` entries are the fuzzy
+  // fallback for dated ids (`claude-opus-4-20250514`); longest-match means the
+  // versioned keys above win wherever one exists.
+  'claude-opus-4-8': 1_000_000,
+  'claude-opus-4-7': 1_000_000,
+  'claude-opus-4-6': 1_000_000,
+  'claude-opus-4-5': 200_000,
+  'claude-opus-4-1': 200_000,
   'claude-opus-4': 200_000,
-  'claude-sonnet-4': 1_000_000,
-  'claude-3.7-sonnet': 200_000,
-  'claude-3.5-haiku': 200_000,
+  'claude-sonnet-5': 1_000_000,
+  'claude-sonnet-4-6': 1_000_000,
+  'claude-sonnet-4-5': 200_000,
+  'claude-sonnet-4': 200_000,
+  'claude-haiku-4-5': 200_000,
+  'claude-haiku-4': 200_000,
+  'claude-fable-5': 1_000_000,
+  'claude-3-7-sonnet': 200_000,
+  'claude-3-5-sonnet': 200_000,
+  'claude-3-5-haiku': 200_000,
   'claude-3-opus': 200_000,
+  'claude-3-sonnet': 200_000,
   'claude-3-haiku': 200_000,
 };
 
