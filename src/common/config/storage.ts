@@ -285,6 +285,22 @@ export interface IConfigStorageRefer {
   };
   'tools.speechToText'?: SpeechToTextConfig;
   'tools.textToSpeech'?: TextToSpeechConfig;
+  /**
+   * Tögrög-per-dollar rate used to show spend in the user's own currency.
+   *
+   * `manualMntPerUsd` always wins over `fetched` - someone reconciling against a
+   * bank statement or a contract rate must not have it overwritten by a
+   * background refresh. `fetched` is kept even when stale so an offline session
+   * can still convert, dated so the UI can say how old it is.
+   */
+  'cost.mntRate'?: {
+    /** Whether to refresh the rate from the network. User-controlled. */
+    auto: boolean;
+    /** Rate the user typed. Overrides `fetched` whenever it is set. */
+    manualMntPerUsd?: number;
+    /** Last successful fetch. `asOf` is epoch ms. */
+    fetched?: { mntPerUsd: number; asOf: number };
+  };
   // Per-category notification preferences (master switch lives in system.notificationEnabled via systemSettingsBridge)
   'notifications.agentFinished'?: boolean;
   'notifications.agentError'?: boolean;
@@ -862,7 +878,10 @@ export interface IMcpServerTransportStreamableHTTP {
 }
 
 export type IMcpServerTransport =
-  IMcpServerTransportStdio | IMcpServerTransportSSE | IMcpServerTransportHTTP | IMcpServerTransportStreamableHTTP;
+  | IMcpServerTransportStdio
+  | IMcpServerTransportSSE
+  | IMcpServerTransportHTTP
+  | IMcpServerTransportStreamableHTTP;
 
 /**
  * MCP server provenance. Used by the MCP Library UI to group servers into
