@@ -47,7 +47,11 @@ const modelIdOf = (data: unknown): string | undefined =>
 
 /** What the main process does when a teammate's model changes. */
 function announce(conversationId: string, action = 'updated'): void {
-  for (const listener of [...listeners]) listener({ conversationId, action });
+  // Iterate the Set itself. A snapshot would only matter if a listener added
+  // another listener mid-dispatch, which nothing here does - and Set iteration
+  // already skips entries deleted before they are reached, so an unsubscribe
+  // during dispatch behaves the way we want without one.
+  for (const listener of listeners) listener({ conversationId, action });
 }
 
 function mount(conversationId: string | undefined) {
