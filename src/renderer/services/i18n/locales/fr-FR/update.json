@@ -39,5 +39,8 @@
     "metadataMissing": "Impossible de trouver les métadonnées de mise à jour signées (latest.yml) pour cette version. Refus d'ouvrir un programme d'installation non vérifié.",
     "assetNotInMetadata": "Le fichier téléchargé « {{name}} » ne figure pas dans les métadonnées de mise à jour signées. Refus d'ouvrir un programme d'installation non vérifié.",
     "checksumMismatch": "La mise à jour téléchargée a échoué à la vérification d'intégrité (somme de contrôle non concordante) et a été supprimée. Ne l'exécutez pas. Veuillez réessayer ou télécharger depuis la page Releases."
-  }
+  },
+  "deferredTitle": "Mise à jour prête",
+  "deferredDesc": "Cette mise à jour s'appliquera à la fin de vos tâches ou à la fermeture. Installer maintenant quand même ?",
+  "installNowAnyway": "Installer maintenant quand même"
 }

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CheckCircle2, Download, FolderOpen, RefreshCw, XCircle } from 'lucide-react';
+import { CheckCircle2, Clock, Download, FolderOpen, RefreshCw, XCircle } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Button, Progress, Message } from '@arco-design/web-react';
 import { ipcBridge } from '@/common';
@@ -13,7 +13,17 @@ import MarkdownView from '@/renderer/components/Markdown';
 import type { UpdateDownloadProgressEvent, UpdateReleaseInfo, AutoUpdateStatus } from '@/common/update/updateTypes';
 import { useTranslation } from 'react-i18next';
 
-type UpdateStatus = 'checking' | 'upToDate' | 'available' | 'downloading' | 'downloaded' | 'success' | 'error';
+type UpdateStatus =
+  | 'checking'
+  | 'upToDate'
+  | 'available'
+  | 'downloading'
+  | 'downloaded'
+  // Downloaded, but the restart is held while the app is actively working; it
+  // applies on idle or on quit, with an "install now anyway" override.
+  | 'deferred'
+  | 'success'
+  | 'error';
 
 type UpdateInfo = UpdateReleaseInfo;
 
@@ -160,7 +170,19 @@ const UpdateModal: React.FC = () => {
 
   const quitAndInstall = async () => {
     try {
-      await ipcBridge.autoUpdate.quitAndInstall.invoke();
+      await ipcBridge.autoUpdate.quitAndInstall.invoke(undefined);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error('Install failed:', err);
+      Message.error(msg);
+    }
+  };
+
+  // "Install now anyway" - bypass the update-on-quiesce gate and restart
+  // immediately, accepting the interruption of in-flight work.
+  const forceQuitAndInstall = async () => {
+    try {
+      await ipcBridge.autoUpdate.quitAndInstall.invoke({ force: true });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error('Install failed:', err);
@@ -230,6 +252,13 @@ const UpdateModal: React.FC = () => {
           break;
         case 'downloaded':
           setStatus('downloaded');
+          break;
+        case 'deferred':
+          // Update is ready but its restart was held because the app is busy.
+          // Surface the deferred state + the override so the user is not left
+          // wondering why "Install" did not restart.
+          setStatus('deferred');
+          setVisible(true);
           break;
         case 'error':
           setStatus('error');
@@ -414,6 +443,20 @@ const UpdateModal: React.FC = () => {
               className='!px-16px'
             >
               {t('update.installNow')}
+            </Button>
+          </div>
+        );
+
+      case 'deferred':
+        return (
+          <div className='flex flex-col items-center justify-center py-48px px-32px'>
+            <div className='w-56px h-56px bg-[rgb(var(--warning-6))]/12 rounded-full flex items-center justify-center mb-20px'>
+              <Clock size={28} color='rgb(var(--warning-6))' />
+            </div>
+            <div className='text-16px text-t-primary font-600 mb-8px'>{t('update.deferredTitle')}</div>
+            <div className='text-13px text-t-tertiary mb-24px text-center max-w-360px'>{t('update.deferredDesc')}</div>
+            <Button type='primary' size='small' onClick={forceQuitAndInstall} className='!px-16px'>
+              {t('update.installNowAnyway')}
             </Button>
           </div>
         );

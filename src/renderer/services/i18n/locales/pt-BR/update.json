@@ -39,5 +39,8 @@
     "metadataMissing": "Não foi possível encontrar os metadados de atualização assinados (latest.yml) para esta versão. Recusando-se a abrir um instalador não verificado.",
     "assetNotInMetadata": "O arquivo baixado \"{{name}}\" não consta nos metadados de atualização assinados. Recusando-se a abrir um instalador não verificado.",
     "checksumMismatch": "A atualização baixada falhou na verificação de integridade (checksum divergente) e foi descartada. Não a execute. Tente novamente ou baixe pela página de Releases."
-  }
+  },
+  "deferredTitle": "Atualização pronta",
+  "deferredDesc": "Esta atualização será aplicada quando suas tarefas terminarem ou ao sair. Instalar agora mesmo assim?",
+  "installNowAnyway": "Instalar agora mesmo assim"
 }

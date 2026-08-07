@@ -39,5 +39,8 @@
     "metadataMissing": "Bu sürüm için imzalı güncelleme meta verisi (latest.yml) bulunamadı. Doğrulanmamış bir yükleyici açılmayacak.",
     "assetNotInMetadata": "İndirilen \"{{name}}\" dosyası imzalı güncelleme meta verisinde listelenmiyor. Doğrulanmamış bir yükleyici açılmayacak.",
     "checksumMismatch": "İndirilen güncelleme bütünlük doğrulamasından (sağlama toplamı uyuşmazlığı) geçemedi ve silindi. Çalıştırmayın. Lütfen yeniden deneyin veya Releases sayfasından indirin."
-  }
+  },
+  "deferredTitle": "Güncelleme hazır",
+  "deferredDesc": "Bu güncelleme görevleriniz bitince veya çıkışta uygulanacak. Yine de şimdi kurulsun mu?",
+  "installNowAnyway": "Yine de şimdi kur"
 }

@@ -39,5 +39,8 @@
     "metadataMissing": "Signierte Update-Metadaten (latest.yml) für dieses Release wurden nicht gefunden. Das Öffnen eines nicht verifizierten Installationsprogramms wird verweigert.",
     "assetNotInMetadata": "Die heruntergeladene Datei \"{{name}}\" ist nicht in den signierten Update-Metadaten aufgeführt. Das Öffnen eines nicht verifizierten Installationsprogramms wird verweigert.",
     "checksumMismatch": "Die Integritätsprüfung des heruntergeladenen Updates ist fehlgeschlagen (Prüfsummen-Abweichung) und es wurde verworfen. Führe es nicht aus. Bitte versuche es erneut oder lade es von der Releases-Seite herunter."
-  }
+  },
+  "deferredTitle": "Update bereit",
+  "deferredDesc": "Dieses Update wird angewendet, sobald Ihre Aufgaben abgeschlossen sind oder Sie die App beenden. Trotzdem jetzt installieren?",
+  "installNowAnyway": "Trotzdem jetzt installieren"
 }

@@ -234,18 +234,77 @@ describe('AutoUpdaterService', () => {
     });
   });
 
-  describe('quitAndInstall', () => {
-    it('should call quitAndInstall on autoUpdater and force exit after delay', async () => {
+  describe('quitAndInstall (forced)', () => {
+    it('calls quitAndInstall on autoUpdater and force-exits only AFTER the quit barrier ceiling', async () => {
       vi.useFakeTimers();
       const { app } = vi.mocked(await import('electron'));
 
       autoUpdaterService.quitAndInstall();
       expect(autoUpdater.quitAndInstall).toHaveBeenCalledWith(true, true);
 
-      // app.exit is called after a 1s delay
-      vi.advanceTimersByTime(1000);
+      // The fallback exit must NOT fire inside the 12s will-quit barrier
+      // window - a shorter timer would cut the quit cleanup drain off
+      // mid-flight, which is the bug the quiesce work fixed. It exists only
+      // for the macOS path where quitAndInstall never starts a real quit.
+      vi.advanceTimersByTime(12_000);
+      expect(app.exit).not.toHaveBeenCalled();
+
+      vi.advanceTimersByTime(3_000);
       expect(app.exit).toHaveBeenCalledWith(0);
       vi.useRealTimers();
+    });
+  });
+
+  describe('installOnQuitIfReady', () => {
+    it('does nothing when no update was downloaded', () => {
+      expect(autoUpdaterService.installOnQuitIfReady()).toBe(false);
+      expect(autoUpdater.quitAndInstall).not.toHaveBeenCalled();
+    });
+
+    it('applies a staged update without the force-exit timer', async () => {
+      vi.useFakeTimers();
+      const { app } = vi.mocked(await import('electron'));
+      autoUpdaterService.initialize(mockStatusBroadcast);
+      // Stage an update the way production does: the download-complete event.
+      autoUpdaterService.triggerEventForTest('update-downloaded', { version: '9.9.9' });
+
+      expect(autoUpdaterService.installOnQuitIfReady()).toBe(true);
+      // isForceRunAfter=false: apply-on-quit semantics - the caller is already
+      // quitting, so relaunching or force-exiting would race the cleanup that
+      // just finished.
+      expect(autoUpdater.quitAndInstall).toHaveBeenCalledWith(true, false);
+      vi.runAllTimers();
+      expect(app.exit).not.toHaveBeenCalled();
+      vi.useRealTimers();
+    });
+
+    it('stops offering the staged update after a reset', () => {
+      autoUpdaterService.initialize(mockStatusBroadcast);
+      autoUpdaterService.triggerEventForTest('update-downloaded', { version: '9.9.9' });
+      autoUpdaterService.reset();
+
+      expect(autoUpdaterService.installOnQuitIfReady()).toBe(false);
+    });
+  });
+
+  describe('notifyDeferred', () => {
+    it('broadcasts the deferred status with the staged version', () => {
+      autoUpdaterService.initialize(mockStatusBroadcast);
+      autoUpdaterService.triggerEventForTest('update-downloaded', { version: '9.9.9' });
+      mockStatusBroadcast.mockClear();
+
+      autoUpdaterService.notifyDeferred();
+
+      expect(mockStatusBroadcast).toHaveBeenCalledWith({ status: 'deferred', version: '9.9.9' });
+    });
+  });
+
+  describe('constructor policy', () => {
+    it('drives install-on-quit itself instead of letting electron-updater pick the moment', () => {
+      // The coordinated install runs as the LAST quit-cleanup step
+      // (installOnQuitIfReady); electron-updater's own hook would fire at an
+      // uncoordinated moment relative to that drain.
+      expect(autoUpdater.autoInstallOnAppQuit).toBe(false);
     });
   });
 

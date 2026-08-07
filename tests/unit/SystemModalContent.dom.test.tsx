@@ -149,6 +149,10 @@ vi.mock('@/common', () => ({
       // L17 wired SystemModalContent to surface auto-updater init failures.
       // Default to "available" so the existing test surface is unchanged.
       getStatus: { invoke: vi.fn().mockResolvedValue({ available: true }) },
+      // Update-on-quiesce toggle (defer restarts while busy). Default ON,
+      // matching production's default.
+      getDeferWhileBusy: { invoke: vi.fn().mockResolvedValue(true) },
+      setDeferWhileBusy: { invoke: vi.fn().mockResolvedValue(undefined) },
     },
   },
 }));

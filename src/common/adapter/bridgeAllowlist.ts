@@ -469,6 +469,16 @@ const REMOTE_DENIED_KEYS: ReadonlySet<string> = new Set([
   'omniroute-gateway.stop',
   'omniroute-gateway.open-dashboard',
 
+  // --- auto-update: host restart / persistent host config ---
+  // `quit-and-install` restarts the host app (and with force bypasses the
+  // quiesce gate), `download` stages an installer on the host disk, and
+  // `set-defer-while-busy` rewrites persistent host update policy. None of
+  // these may be driven by a paired-device WebSocket caller. The reads
+  // (auto-update.check / get-status / get-defer-while-busy) stay allowed.
+  'auto-update.quit-and-install',
+  'auto-update.download',
+  'auto-update.set-defer-while-busy',
+
   // --- app.* / process control that writes or executes ---
   'app.set-start-on-boot',
   'app.set-zoom-factor',

@@ -39,5 +39,8 @@
     "metadataMissing": "找不到此版本的已签名更新元数据 (latest.yml)。拒绝打开未经验证的安装程序。",
     "assetNotInMetadata": "下载的文件“{{name}}”未列在已签名的更新元数据中。拒绝打开未经验证的安装程序。",
     "checksumMismatch": "下载的更新未通过完整性校验（校验和不匹配），已被丢弃。请勿运行它。请重试或从 Releases 页面下载。"
-  }
+  },
+  "deferredTitle": "更新已就绪",
+  "deferredDesc": "此更新将在你的任务完成后或退出时应用。仍要立即安装吗？",
+  "installNowAnyway": "仍然立即安装"
 }

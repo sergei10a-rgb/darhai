@@ -51,6 +51,9 @@ const SystemModalContent: React.FC = () => {
   const [agentIdleTimeout, setAgentIdleTimeout] = useState<number>(5);
   const [saveUploadToWorkspace, setSaveUploadToWorkspace] = useState(false);
   const [autoPreviewOfficeFiles, setAutoPreviewOfficeFiles] = useState(true);
+  // Update-on-quiesce: defer an auto-update restart while the app is actively
+  // working. Default ON.
+  const [deferUpdateWhileBusy, setDeferUpdateWhileBusy] = useState(true);
   // L17 (AUDIT-05 F16): surface auto-updater bootstrap failures so users know auto-updates
   // are disabled until next launch. `null` = unknown/loading, `available: true` = healthy.
   const [updateChannelStatus, setUpdateChannelStatus] = useState<{ available: boolean; error?: string } | null>(null);
@@ -90,6 +93,14 @@ const SystemModalContent: React.FC = () => {
       .then((enabled) => setCronNotificationEnabled(enabled))
       .catch((err) => console.warn('[SystemModalContent.getCronNotificationEnabled]', err));
   }, []);
+
+  useEffect(() => {
+    if (!isDesktop) return;
+    ipcBridge.autoUpdate.getDeferWhileBusy
+      .invoke()
+      .then((enabled) => setDeferUpdateWhileBusy(enabled))
+      .catch((err) => console.warn('[SystemModalContent.getDeferWhileBusy]', err));
+  }, [isDesktop]);
 
   useEffect(() => {
     ConfigStorage.get('acp.promptTimeout')
@@ -220,6 +231,15 @@ const SystemModalContent: React.FC = () => {
     });
   }, []);
 
+  const handleDeferUpdateWhileBusyChange = useCallback((checked: boolean) => {
+    setDeferUpdateWhileBusy(checked);
+    ipcBridge.autoUpdate.setDeferWhileBusy.invoke({ enabled: checked }).catch(() => {
+      // The write failed; the switch must not keep claiming a state that was
+      // never persisted.
+      setDeferUpdateWhileBusy(!checked);
+    });
+  }, []);
+
   // Get system directory info
   const { data: systemInfo } = useSWR('system.dir.info', () => ipcBridge.application.systemInfo.invoke());
 
@@ -290,6 +310,18 @@ const SystemModalContent: React.FC = () => {
       label: t('settings.autoPreviewOfficeFiles'),
       description: t('settings.autoPreviewOfficeFilesDesc'),
       component: <Switch checked={autoPreviewOfficeFiles} onChange={handleAutoPreviewOfficeFilesChange} />,
+    },
+    {
+      key: 'deferUpdateWhileBusy',
+      label: t('settings.deferUpdateWhileBusy'),
+      description: t('settings.deferUpdateWhileBusyDesc'),
+      component: (
+        <Switch
+          checked={deferUpdateWhileBusy}
+          onChange={handleDeferUpdateWhileBusyChange}
+          data-testid='defer-update-while-busy-switch'
+        />
+      ),
     },
   ];
 

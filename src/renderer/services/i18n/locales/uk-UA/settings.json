@@ -2663,5 +2663,7 @@
       "externalServerNote": "An OmniRoute was already serving port 20128 before Darhai started anything, so Darhai did not start this one and cannot stop it. Close it where you started it.",
       "enableHint": "OmniRoute is running, but the external relay is still OFF. To use its models inside Darhai, turn on the switch at the top of this card yourself."
     }
-  }
+  },
+  "deferUpdateWhileBusy": "Відкладати оновлення під час роботи",
+  "deferUpdateWhileBusyDesc": "Чекає завершення активних чатів, запланованих завдань і команд, перш ніж перезапускатися для оновлення. Оновлення все одно застосовується в режимі очікування або під час виходу."
 }

@@ -852,12 +852,47 @@ export function initUpdateBridge(): void {
     }
   });
 
-  ipcBridge.autoUpdate.quitAndInstall.provider(async (): Promise<void> => {
+  ipcBridge.autoUpdate.quitAndInstall.provider(async (params: { force?: boolean } | undefined): Promise<void> => {
     try {
-      autoUpdaterService.quitAndInstall();
+      // "Install now anyway" bypasses the quiesce gate AND the drain,
+      // installing immediately via the hard force path - the one case where
+      // the user explicitly accepted an abrupt interruption.
+      if (params?.force) {
+        autoUpdaterService.quitAndInstall();
+        return;
+      }
+      // Default: defer the restart while the app is busy, apply once idle.
+      // Lazy import keeps the ProcessConfig/initStorage chain out of this
+      // module's load graph.
+      const { installOrDefer } = await import('../services/updateQuiesceGate');
+      await installOrDefer(
+        // Route the install through the normal quit sequence - NOT the raw
+        // autoUpdaterService.quitAndInstall(), whose hard-exit fallback exists
+        // for the forced path. app.quit() lets the full before-quit drain run
+        // (DB, cron, workers, team sessions, web server, engine children) and
+        // then installOnQuitIfReady() applies the staged update as the LAST
+        // step, in the correct order. Hard-exiting here would orphan child
+        // processes and drop unflushed writes right after the busy flag
+        // clears - the exact bug class this gate exists to prevent.
+        () => app.quit(),
+        () => autoUpdaterService.notifyDeferred()
+      );
     } catch (err: unknown) {
       console.error('quitAndInstall failed:', err);
     }
+  });
+
+  // Update-on-quiesce setting. Persisted in main via ProcessConfig so the gate
+  // reads it directly (no IPC round-trip); the renderer toggle uses these.
+  ipcBridge.autoUpdate.getDeferWhileBusy.provider(async (): Promise<boolean> => {
+    const { ProcessConfig } = await import('@process/utils/initStorage');
+    const value = await ProcessConfig.get('update.deferWhileBusy');
+    return value ?? true; // default: defer while busy
+  });
+
+  ipcBridge.autoUpdate.setDeferWhileBusy.provider(async ({ enabled }): Promise<void> => {
+    const { ProcessConfig } = await import('@process/utils/initStorage');
+    await ProcessConfig.set('update.deferWhileBusy', enabled);
   });
 
   // L17 (AUDIT-05 F16): expose auto-updater bootstrap status so renderer System tab

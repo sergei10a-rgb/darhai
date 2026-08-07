@@ -11,6 +11,14 @@ import log from 'electron-log';
 import { EventEmitter } from 'events';
 
 /**
+ * Fallback hard-exit for the FORCED install path, and only that path. Must
+ * exceed the 12s will-quit barrier ceiling (index.ts) so it can never cut the
+ * quit cleanup drain short - it exists solely for the macOS case where
+ * quitAndInstall never starts a real quit.
+ */
+const FORCE_EXIT_FALLBACK_MS = 15_000;
+
+/**
  * Returns the appropriate update channel name based on the current platform and architecture.
  * Returns undefined for the default channel (Windows x64 / Linux x64).
  */
@@ -41,7 +49,19 @@ export function getUpdateChannel(): string | undefined {
 }
 
 export interface AutoUpdateStatus {
-  status: 'checking' | 'available' | 'not-available' | 'downloading' | 'downloaded' | 'error' | 'cancelled';
+  // 'deferred': an update is downloaded but its restart was held because the
+  // app is actively working (a chat responding, a cron job running, a team
+  // wake). It applies automatically once everything goes idle, or on the next
+  // quit. The user can still force it via "install now anyway".
+  status:
+    | 'checking'
+    | 'available'
+    | 'not-available'
+    | 'downloading'
+    | 'downloaded'
+    | 'deferred'
+    | 'error'
+    | 'cancelled';
   version?: string;
   releaseDate?: string;
   releaseNotes?: string;
@@ -69,6 +89,12 @@ class AutoUpdaterService extends EventEmitter {
   private _statusBroadcastCallback: StatusBroadcastCallback | null = null;
   /** Stores registered autoUpdater event handlers for cleanup and test access */
   private readonly _autoUpdaterHandlers = new Map<string, (...args: unknown[]) => void>();
+  /**
+   * Version of the update that finished downloading, or null when nothing is
+   * staged. What {@link installOnQuitIfReady} keys on: with no staged update
+   * there is nothing to install on quit.
+   */
+  private _lastDownloadedVersion: string | null = null;
 
   constructor() {
     super();
@@ -78,7 +104,13 @@ class AutoUpdaterService extends EventEmitter {
 
     // Disable auto-download for manual control
     autoUpdater.autoDownload = false;
-    autoUpdater.autoInstallOnAppQuit = true;
+    // Disable electron-updater's OWN install-on-quit. It fires at an
+    // uncoordinated moment relative to our quit sequence; instead the quit
+    // cleanup calls installOnQuitIfReady() as its LAST step, after in-flight
+    // work is drained (DB closed, cron silenced, workers cleared, engine
+    // children reaped), so a real quit applies the update in a controlled
+    // order rather than an update racing the teardown.
+    autoUpdater.autoInstallOnAppQuit = false;
 
     // Set the correct update channel based on platform and architecture before
     // any update checks are performed
@@ -126,6 +158,7 @@ class AutoUpdaterService extends EventEmitter {
     // Note: _eventHandlersSetup is NOT reset to avoid duplicate handler registration
     this._allowPrerelease = false;
     this._statusBroadcastCallback = null;
+    this._lastDownloadedVersion = null;
   }
 
   /**
@@ -137,6 +170,7 @@ class AutoUpdaterService extends EventEmitter {
     this._eventHandlersSetup = false;
     this._allowPrerelease = false;
     this._statusBroadcastCallback = null;
+    this._lastDownloadedVersion = null;
     // Remove listeners from this EventEmitter instance
     this.removeAllListeners();
     // Remove each registered handler from autoUpdater to prevent
@@ -227,6 +261,9 @@ class AutoUpdaterService extends EventEmitter {
 
     register('update-downloaded', (info: UpdateInfo) => {
       log.info('Update downloaded');
+      // Remember the staged version so the on-quit install knows there is
+      // something to apply (and the deferred banner can name it).
+      this._lastDownloadedVersion = info.version ?? null;
       this.broadcastStatus({
         status: 'downloaded',
         version: info.version,
@@ -305,17 +342,66 @@ class AutoUpdaterService extends EventEmitter {
     }
   }
 
+  /**
+   * Force-install NOW, interrupting whatever is running.
+   *
+   * This is the "install now anyway" override: the ONE path where the user has
+   * explicitly accepted an abrupt restart. The default install path does not
+   * come here - the update bridge routes it through the quiesce gate, which
+   * defers while busy and then quits via `app.quit()` so the full cleanup
+   * drain runs and {@link installOnQuitIfReady} applies the update last.
+   */
   quitAndInstall(): void {
-    log.info('Quitting and installing update...');
+    log.info('Quitting and installing update (forced)...');
     // On macOS, autoUpdater.quitAndInstall() closes all windows but the
     // 'window-all-closed' handler does NOT call app.quit() (standard macOS
     // behavior + close-to-tray). This leaves the process alive and Squirrel
-    // cannot finish replacing the app bundle. Force-exit after a short delay
-    // to let Squirrel receive the install signal.
+    // cannot finish replacing the app bundle. Force-exit after a delay to let
+    // Squirrel receive the install signal.
+    //
+    // The delay must sit ABOVE the 12s will-quit barrier ceiling in index.ts:
+    // on the platforms where quitAndInstall does start a real quit, that quit
+    // runs the cleanup drain under the barrier, and a shorter timer here would
+    // cut that drain off mid-flight - the very bug the quiesce work fixed. At
+    // 15s this only ever fires on the macOS stuck path it exists for. The
+    // sync reapers (DB close + engine-child kill) cover this hard exit.
     autoUpdater.quitAndInstall(true, true);
     setTimeout(() => {
       app.exit(0);
-    }, 1000);
+    }, FORCE_EXIT_FALLBACK_MS);
+  }
+
+  /**
+   * Broadcast a 'deferred' status: an update is downloaded but its restart was
+   * held because the app is actively working. The renderer surfaces "update
+   * ready - applies when your tasks finish or on quit" with an override
+   * button. The quiesce gate calls this when it defers.
+   */
+  notifyDeferred(): void {
+    log.info('[autoUpdater] Update restart deferred while the app is busy.');
+    this.broadcastStatus({ status: 'deferred', version: this._lastDownloadedVersion ?? undefined });
+  }
+
+  /**
+   * Apply a downloaded update NOW, as the last step of quit cleanup - after
+   * in-flight work is drained. Unlike {@link quitAndInstall} it does NOT
+   * schedule an app.exit(): we are already inside the quit sequence, so
+   * forcing an exit would race the very cleanup we waited for.
+   *
+   * No-op (returns false) unless an update was actually downloaded.
+   *
+   * @returns true if an install was triggered.
+   */
+  installOnQuitIfReady(): boolean {
+    if (!this._lastDownloadedVersion) {
+      return false; // nothing staged to install
+    }
+    log.info(`[autoUpdater] Applying staged update ${this._lastDownloadedVersion} on quit (post-cleanup).`);
+    // isSilent=true, isForceRunAfter=false: install on quit without relaunching
+    // (apply-on-quit semantics, like VS Code/Slack) and without the force-exit
+    // timer - the caller is already quitting.
+    autoUpdater.quitAndInstall(true, false);
+    return true;
   }
 
   /**

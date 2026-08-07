@@ -1548,6 +1548,22 @@ const runQuitCleanup = async (): Promise<void> => {
       })(),
       REAP_TIMEOUT_MS
     );
+
+    // LAST step: apply a staged auto-update now that in-flight work is drained
+    // (DB closed, cron silenced, workers cleared, engine children reaped
+    // above). This is why autoInstallOnAppQuit is disabled in
+    // autoUpdaterService: instead of electron-updater installing at an
+    // uncoordinated moment, we install here, after cleanup, in a controlled
+    // order. No-op unless an update was downloaded. Non-force-exit, so it
+    // cannot race the cleanup we just awaited.
+    await withTimeout(
+      'installOnQuitIfReady',
+      (async () => {
+        const { autoUpdaterService } = await import('@process/services/autoUpdaterService');
+        autoUpdaterService.installOnQuitIfReady();
+      })(),
+      PER_STEP_TIMEOUT_MS
+    );
   };
 
   // Master ceiling: hard 10s upper bound on the entire cleanup phase.

@@ -82,6 +82,11 @@ export type AutoUpdateStatusType =
   | 'downloading'
   | 'downloaded'
   | 'error'
+  // An update is downloaded but its restart was deferred because the app is
+  // actively working (a chat responding, a cron job running, a team wake). It
+  // applies automatically once everything goes idle, or on the next quit. The
+  // user can still force it via "install now anyway".
+  | 'deferred'
   | 'cancelled';
 
 export interface AutoUpdateProgress {

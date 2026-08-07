@@ -21,6 +21,13 @@ type IdleCallback = () => void;
 export class CronBusyGuard {
   private states = new Map<string, ConversationState>();
   private idleCallbacks = new Map<string, IdleCallback[]>();
+  /**
+   * One-shot callbacks fired when the LAST processing conversation clears, i.e.
+   * the whole app goes idle. Backs update-on-quiesce: because team wakes and
+   * cron runs all funnel through the agent managers that call setProcessing(),
+   * this single registry already spans chat + cron + team.
+   */
+  private globalIdleCallbacks: IdleCallback[] = [];
 
   /**
    * Check if a conversation is currently processing a message
@@ -48,7 +55,66 @@ export class CronBusyGuard {
         this.idleCallbacks.delete(conversationId);
         for (const cb of callbacks) cb();
       }
+
+      // Global idle: fire the one-shot app-idle callbacks when this clear left
+      // nothing else processing (the last busy conversation went idle).
+      this.fireGlobalIdleIfIdle();
     }
+  }
+
+  /**
+   * Fire the one-shot global-idle callbacks IF the app is now idle - but on the
+   * NEXT macrotask, not synchronously, and only after a re-check.
+   *
+   * Callers mark a conversation idle at the START of turn teardown and then
+   * keep working: WCoreManager's turn-end path calls setProcessing(false)
+   * first, then flushes buffered text, persists a cron schedule, and can even
+   * start a follow-up turn. Firing synchronously here would let a deferred
+   * update restart pre-empt that finalization - the exact rug-pull the quiesce
+   * gate exists to prevent. So defer to setImmediate and re-check: if work
+   * resumed (a follow-up turn re-asserts busy), re-arm and wait for the next
+   * real idle.
+   */
+  private fireGlobalIdleIfIdle(): void {
+    if (this.globalIdleCallbacks.length === 0 || this.isAppBusy()) return;
+    const globals = this.globalIdleCallbacks;
+    this.globalIdleCallbacks = [];
+    setImmediate(() => {
+      if (this.isAppBusy()) {
+        // Work resumed before the callback ran (e.g. a follow-up turn). Put the
+        // callbacks back; the next transition to idle re-schedules them.
+        this.globalIdleCallbacks.unshift(...globals);
+        return;
+      }
+      for (const cb of globals) cb();
+    });
+  }
+
+  /**
+   * True if ANY tracked conversation is currently processing. The single
+   * source of truth for "is the app working right now" across chat, cron, and
+   * team wakes - they all route through setProcessing.
+   */
+  isAppBusy(): boolean {
+    for (const state of this.states.values()) {
+      if (state.isProcessing) return true;
+    }
+    return false;
+  }
+
+  /**
+   * Register a one-shot callback for when the WHOLE app becomes idle (no
+   * conversation processing). If already idle, fires immediately - this
+   * matches onceIdle's already-idle behavior and closes the busy-to-idle race:
+   * a caller that checks isAppBusy() and then registers can never miss the
+   * transition, because registration is synchronous with the check.
+   */
+  onceAllIdle(callback: IdleCallback): void {
+    if (!this.isAppBusy()) {
+      callback();
+      return;
+    }
+    this.globalIdleCallbacks.push(callback);
   }
 
   /**
@@ -113,6 +179,8 @@ export class CronBusyGuard {
         this.states.delete(id);
       }
     }
+    // Removing states can make the app idle without a setProcessing(false) call.
+    this.fireGlobalIdleIfIdle();
   }
 
   /**
@@ -121,6 +189,9 @@ export class CronBusyGuard {
    */
   remove(conversationId: string): void {
     this.states.delete(conversationId);
+    // Deleting the last processing conversation flips the app to idle without a
+    // setProcessing(false); make sure a pending global-idle install still fires.
+    this.fireGlobalIdleIfIdle();
   }
 
   /**
@@ -128,6 +199,8 @@ export class CronBusyGuard {
    */
   clear(): void {
     this.states.clear();
+    // A pending global-idle callback must not be stranded by a test reset.
+    this.globalIdleCallbacks = [];
   }
 }
 
