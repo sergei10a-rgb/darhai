@@ -6,7 +6,8 @@
 
 import type { IProvider, TProviderWithModel } from '@/common/config/storage';
 import { useModelProviderList } from '@/renderer/hooks/agent/useModelProviderList';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useStickyModelSelection } from '@/renderer/hooks/agent/useStickyModelSelection';
+import { useCallback, useMemo } from 'react';
 
 export type WCoreModelSelection = {
   currentModel?: TProviderWithModel;
@@ -25,11 +26,9 @@ export const useWCoreModelSelection = ({
   initialModel,
   onSelectModel,
 }: UseAionrsModelSelectionOptions): WCoreModelSelection => {
-  const [currentModel, setCurrentModel] = useState<TProviderWithModel | undefined>(initialModel);
-
-  useEffect(() => {
-    setCurrentModel(initialModel);
-  }, [initialModel?.id, initialModel?.useModel]);
+  // Shared with the Gemini picker so the "don't let a slow read undo the click"
+  // guard lives in one place. See useStickyModelSelection.ts.
+  const { currentModel, selectModel } = useStickyModelSelection({ initialModel, onSelectModel });
 
   const { providers: allProviders, getAvailableModels, formatModelLabel } = useModelProviderList();
 
@@ -37,20 +36,6 @@ export const useWCoreModelSelection = ({
   const providers = useMemo(
     () => allProviders.filter((p) => !p.platform?.toLowerCase().includes('gemini-with-google-auth')),
     [allProviders]
-  );
-
-  const handleSelectModel = useCallback(
-    async (provider: IProvider, modelName: string) => {
-      const selected = {
-        ...(provider as unknown as TProviderWithModel),
-        useModel: modelName,
-      } as TProviderWithModel;
-      const ok = await onSelectModel(provider, modelName);
-      if (ok) {
-        setCurrentModel(selected);
-      }
-    },
-    [onSelectModel]
   );
 
   const getDisplayModelName = useCallback(
@@ -67,7 +52,7 @@ export const useWCoreModelSelection = ({
     currentModel,
     providers,
     getAvailableModels,
-    handleSelectModel,
+    handleSelectModel: selectModel,
     getDisplayModelName,
   };
 };

@@ -1,7 +1,8 @@
 import type { IProvider, TProviderWithModel } from '@/common/config/storage';
 import type { GeminiModeOption } from '@/renderer/hooks/agent/useModeModeList';
 import { useModelProviderList } from '@/renderer/hooks/agent/useModelProviderList';
-import { useCallback, useEffect, useState } from 'react';
+import { useStickyModelSelection } from '@/renderer/hooks/agent/useStickyModelSelection';
+import { useCallback } from 'react';
 
 export interface GeminiModelSelection {
   currentModel?: TProviderWithModel;
@@ -23,27 +24,11 @@ export const useGeminiModelSelection = ({
   initialModel,
   onSelectModel,
 }: UseGeminiModelSelectionOptions): GeminiModelSelection => {
-  const [currentModel, setCurrentModel] = useState<TProviderWithModel | undefined>(initialModel);
-
-  useEffect(() => {
-    setCurrentModel(initialModel);
-  }, [initialModel?.id, initialModel?.useModel]);
+  // Shared with the wcore picker so the "don't let a slow read undo the click"
+  // guard lives in one place. See useStickyModelSelection.ts.
+  const { currentModel, selectModel } = useStickyModelSelection({ initialModel, onSelectModel });
 
   const { providers, geminiModeLookup, getAvailableModels, formatModelLabel } = useModelProviderList();
-
-  const handleSelectModel = useCallback(
-    async (provider: IProvider, modelName: string) => {
-      const selected = {
-        ...(provider as unknown as TProviderWithModel),
-        useModel: modelName,
-      } as TProviderWithModel;
-      const ok = await onSelectModel(provider, modelName);
-      if (ok) {
-        setCurrentModel(selected);
-      }
-    },
-    [onSelectModel]
-  );
 
   const getDisplayModelName = useCallback(
     (modelName?: string) => {
@@ -62,6 +47,6 @@ export const useGeminiModelSelection = ({
     formatModelLabel,
     getDisplayModelName,
     getAvailableModels,
-    handleSelectModel,
+    handleSelectModel: selectModel,
   };
 };
