@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 type Handler = (...args: unknown[]) => unknown | Promise<unknown>;
 
@@ -292,5 +292,76 @@ describe('modelBridge fetchModelList', () => {
 
     expect(mockModelsList).toHaveBeenCalledOnce();
     expect(result).toEqual({ success: true, data: { mode: ['local-1'] } });
+  });
+
+  // ── DashScope Coding Plan: live /v1/models with a network-only fallback ──
+  describe('DashScope Coding Plan', () => {
+    const DS_BASE = 'https://coding.dashscope.aliyuncs.com/v1';
+    const mockFetch = vi.fn();
+
+    beforeEach(() => {
+      mockFetch.mockReset();
+      vi.stubGlobal('fetch', mockFetch);
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it('returns the LIVE /v1/models list, not a hardcoded snapshot', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({ data: [{ id: 'qwen3.7-plus' }, { id: 'qwen-live-sentinel' }] }),
+      });
+
+      const fetchModelList = getFetchModelListHandler();
+      const result = await fetchModelList({ base_url: DS_BASE, api_key: 'ds-key' });
+
+      // The sentinel id only exists in the mocked live response - a fix that
+      // kept returning the static list could never produce it.
+      expect(result).toEqual({ success: true, data: { mode: ['qwen3.7-plus', 'qwen-live-sentinel'] } });
+      expect(mockFetch).toHaveBeenCalledOnce();
+      const [url, init] = mockFetch.mock.calls[0] as [string, { headers: Record<string, string> }];
+      expect(url).toBe('https://coding.dashscope.aliyuncs.com/v1/models');
+      expect(init.headers.Authorization).toBe('Bearer ds-key');
+    });
+
+    it('surfaces a 401 as a failed key check instead of masking it with the fallback', async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 401,
+        json: async () => ({ error: { message: 'bad key' } }),
+      });
+
+      const result = await getFetchModelListHandler()({ base_url: DS_BASE, api_key: 'expired' });
+
+      expect(result).toEqual({ success: false, msg: 'bad key' });
+    });
+
+    it('falls back to the refreshed static snapshot ONLY on network failure', async () => {
+      mockFetch.mockRejectedValue(new Error('offline'));
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const result = await getFetchModelListHandler()({ base_url: DS_BASE, api_key: 'ds-key' });
+
+      expect(result.success).toBe(true);
+      // The snapshot must be the REFRESHED one - the stale 8-row list carried
+      // neither qwen3.7-plus nor qwen3.6-plus.
+      expect(result.data?.mode).toContain('qwen3.7-plus');
+      expect(result.data?.mode).toContain('qwen3.6-plus');
+      warnSpy.mockRestore();
+    });
+
+    it('runs the SSRF guard even when no API key is set', async () => {
+      // The old code only validated the URL inside `if (actualApiKey)`, so a
+      // keyless entry skipped SSRF entirely.
+      mockDnsLookup.mockResolvedValue([{ address: '169.254.169.254', family: 4 }]);
+
+      const result = await getFetchModelListHandler()({ base_url: DS_BASE, api_key: '' });
+
+      expect(result.success).toBe(false);
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
   });
 });

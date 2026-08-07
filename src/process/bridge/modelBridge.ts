@@ -463,49 +463,61 @@ export function initModelBridge(): void {
       return { success: true, data: { mode: minimaxModels } };
     }
 
-    // DashScope Coding Plan does not provide /v1/models endpoint (returns 404)
-    // Validate API key via /chat/completions probe, then return hardcoded list
+    // DashScope Coding Plan DOES serve /v1/models on coding.dashscope.aliyuncs.com
+    // (re-verified live 2026-06-24; the old "returns 404" note was measured against
+    // the wrong /compatible-mode path). Query the live list so new models appear
+    // without a release. The static snapshot below is a NETWORK-failure fallback
+    // only - a 401 must surface as a bad key, never be masked by the fallback.
     if (base_url && isDashScopeCodingAPI(base_url)) {
-      const codingPlanModels = [
-        'qwen3-coder-plus',
-        'qwen3-coder-next',
-        'qwen3.5-plus',
-        'qwen3-max-2026-01-23',
-        'glm-4.7',
-        'glm-5',
-        'MiniMax-M2.5',
-        'kimi-k2.5',
-      ];
-
-      // Validate the API key by probing the chat/completions endpoint
-      if (actualApiKey) {
-        try {
-          await assertSafeBaseUrl(base_url);
-        } catch (e) {
-          return { success: false, msg: e instanceof Error ? e.message : String(e) };
-        }
-        try {
-          const probeUrl = `${base_url.replace(/\/+$/, '')}/chat/completions`;
-          const probeResponse = await fetch(probeUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${actualApiKey}` },
-            body: JSON.stringify({
-              model: codingPlanModels[0],
-              messages: [{ role: 'user', content: 'hi' }],
-              max_tokens: PROBE_MAX_TOKENS,
-            }),
-          });
-          if (probeResponse.status === 401) {
-            const errorData = await probeResponse.json().catch(() => ({}));
-            const errorMsg = errorData?.error?.message || errorData?.message || 'Invalid API key or token expired';
-            return { success: false, msg: errorMsg };
-          }
-        } catch {
-          // Network error during probe - still return model list, user will see error when chatting
-        }
+      // SSRF guard runs even without a key: the URL is fetched either way.
+      try {
+        await assertSafeBaseUrl(base_url);
+      } catch (e) {
+        return { success: false, msg: e instanceof Error ? e.message : String(e) };
       }
 
-      return { success: true, data: { mode: codingPlanModels } };
+      const codingPlanFallback = [
+        'qwen3-coder-plus',
+        'qwen3-coder-next',
+        'qwen3.7-plus',
+        'qwen3.6-plus',
+        'qwen3.5-plus',
+        'qwen3-max-2026-01-23',
+        'glm-5',
+        'glm-4.7',
+        'kimi-k2.5',
+        'MiniMax-M2.5',
+      ];
+
+      const trimmed = base_url.replace(/\/+$/, '');
+      const modelsUrl = /\/v1$/i.test(trimmed) ? `${trimmed}/models` : `${trimmed}/v1/models`;
+      try {
+        const headers: Record<string, string> = { 'User-Agent': 'Wayland/1.0' };
+        if (actualApiKey) {
+          headers.Authorization = `Bearer ${actualApiKey}`;
+        }
+        const response = await fetch(modelsUrl, { headers });
+        if (response.status === 401) {
+          const errorData = await response.json().catch(() => ({}));
+          const errorMsg = errorData?.error?.message || errorData?.message || 'Invalid API key or token expired';
+          return { success: false, msg: errorMsg };
+        }
+        if (!response.ok) {
+          throw new Error(`DashScope /v1/models returned ${response.status}`);
+        }
+        const payload = await response.json();
+        const ids = (Array.isArray(payload?.data) ? payload.data : [])
+          .map((m: unknown) => (typeof m === 'string' ? m : (m as { id?: unknown })?.id))
+          .filter((id: unknown): id is string => typeof id === 'string' && id.length > 0);
+        if (ids.length === 0) {
+          throw new Error('DashScope /v1/models returned an empty list');
+        }
+        return { success: true, data: { mode: ids } };
+      } catch (e) {
+        // Offline / DNS / proxy failure: the snapshot keeps the model picker usable.
+        console.warn('[modelBridge] DashScope live model list unavailable, using fallback:', e);
+        return { success: true, data: { mode: codingPlanFallback } };
+      }
     }
 
     // For Anthropic/Claude platform, use Anthropic API to fetch models
