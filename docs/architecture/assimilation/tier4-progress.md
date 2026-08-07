@@ -47,6 +47,9 @@
 | `c9139aeec` | Эвдэрсэн turn мөнхөд «бичиж байна» гэж үлддэгийг асаалтад засна | `e86612b58` |
 | `227230be6`/`4faa14596` | `LD_LIBRARY_PATH`, `NVM_DIR`, `VOLTA_HOME` allowlist-д (Linux сан + node manager) | `97b04e7f4` |
 | `4ec2deef5` | ACP контекст хэмжигчийг загвараас хэмжинэ; slot нэр («opus»/«haiku»); цагираг гажихаа болив | `63e13f0bf` |
+| `0b00ac45a` | DashScope: амьд `/v1/models` асууж, 401 нь түлхүүрийн алдаа гэж илэрнэ; fallback зөвхөн сүлжээний алдаанд; SSRF guard түлхүүргүй үед ч ажиллана | `32dcb191c` |
+| `cf6950939` | Түлхүүргүй локал Ollama: wcore spawn env-д `ollama` placeholder (зөвхөн локал base, cloud хэвээр чанга унана) | `8157c8509` |
+| `60b8c17d9` | Idle цаг stream chunk + status flip бүрд шинэчлэгдэнэ — урт хариу уншиж байхад bridge унтрахаа болив | `a2da1e653` |
 
 ## Үлдсэн (7 агентаар кодтой тулгаж БАТАЛСАН, засаагүй)
 
@@ -55,9 +58,6 @@
 
 | хэмжээ | sha | юу |
 |--------|-----|----|
-| S | `0b00ac45a` | DashScope hardcoded coding-plan catalog outdated; live /v1/models never queried |
-| S | `cf6950939` | Keyless local Ollama: wcore spawn omits OPENAI_API_KEY so the engine bails at init |
-| S | `60b8c17d9` | Idle timer not reset during streaming — bridge torn down around long turns |
 | S | `1f3926f06` | acceptEdits mode advertised but not honored at ACP permission gate |
 | S | `346f71831` | Respawn-storm: identical crash banners stack (no per-episode msg_id dedup) |
 | S | `854c0c19e` | MCP Library Browse page has no 'add custom server' entry point |
