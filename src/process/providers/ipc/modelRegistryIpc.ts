@@ -1217,9 +1217,7 @@ const CHAT_START_NAME: Partial<Record<ProviderId, string>> = {
  *    than the generic Open-Models redirect.
  */
 type ChatStartBuildResult =
-  | { kind: 'payload'; payload: IModelRegistryChatStartPayload }
-  | { kind: 'unsupported' }
-  | { kind: 'undecryptable' };
+  { kind: 'payload'; payload: IModelRegistryChatStartPayload } | { kind: 'unsupported' } | { kind: 'undecryptable' };
 
 function buildChatStartPayload(
   providerId: ProviderId,

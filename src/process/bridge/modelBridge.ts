@@ -908,8 +908,7 @@ export function initModelBridge(): void {
 
     // A LOCAL keyless backend needs no key; inject a placeholder so protocol
     // detection can probe it. A cloud endpoint with no key still errors.
-    const apiKeys =
-      parsedApiKeys.length === 0 && isLocalBaseUrl(baseUrl) ? [LOCAL_KEYLESS_PLACEHOLDER] : parsedApiKeys;
+    const apiKeys = parsedApiKeys.length === 0 && isLocalBaseUrl(baseUrl) ? [LOCAL_KEYLESS_PLACEHOLDER] : parsedApiKeys;
 
     if (apiKeys.length === 0) {
       return {

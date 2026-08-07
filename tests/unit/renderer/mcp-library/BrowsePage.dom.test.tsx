@@ -8,11 +8,11 @@ test('BrowsePage renders Recommended section + multiple category headings', () =
   render(
     <MemoryRouter>
       <BrowsePage />
-    </MemoryRouter>,
+    </MemoryRouter>
   );
   expect(screen.getByText(/Recommended for you/)).toBeInTheDocument();
   expect(
-    screen.getAllByText(/^Communication$|^Productivity|^Developer|^Search|^Personal/).length,
+    screen.getAllByText(/^Communication$|^Productivity|^Developer|^Search|^Personal/).length
   ).toBeGreaterThanOrEqual(3);
 });
 
@@ -20,7 +20,7 @@ test('BrowsePage renders Google Workspace card', () => {
   render(
     <MemoryRouter>
       <BrowsePage />
-    </MemoryRouter>,
+    </MemoryRouter>
   );
   // Multiple cards may have the name (one in recommended, one in category) - getAllByText
   expect(screen.getAllByText('Google Workspace').length).toBeGreaterThan(0);
@@ -34,7 +34,7 @@ test('BrowsePage exposes an add-custom-MCP entry point (was unreachable pre-854c
   render(
     <MemoryRouter>
       <BrowsePage />
-    </MemoryRouter>,
+    </MemoryRouter>
   );
   // Fallback string is rendered because the test has no i18next instance.
   const addButton = screen.getByRole('button', { name: /Add custom MCP/i });

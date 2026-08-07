@@ -1190,8 +1190,7 @@ ${collectedResponses.join('\n')}`;
           pendingConfigOptions: data.pendingConfigOptions,
           // Forward team MCP stdio config so AcpAgent.loadBuiltinSessionMcpServers() can inject it
           teamMcpStdioConfig: (data as unknown as Record<string, unknown>).teamMcpStdioConfig as
-            | { name: string; command: string; args: string[]; env: Array<{ name: string; value: string }> }
-            | undefined,
+            { name: string; command: string; args: string[]; env: Array<{ name: string; value: string }> } | undefined,
         },
         onSessionIdUpdate: (sessionId: string) => {
           // Save ACP session ID to database for resume support
