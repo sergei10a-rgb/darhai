@@ -60,6 +60,13 @@
 23 мөрийг бүгдийг нь бодит кодтой тулгаж шалгав — **бүгд «real»**, нэг нь ч
 хуучирсан/хамааралгүй биш байв. Хэмжээгээр эрэмбэлэв (S = хагас өдөр, L = хэд хоног).
 
+> **✅ v0.9.7-mn.10 «Найдвартай зөвшөөрөл» нийтлэгдсэн** (2026-08-08): дээрх
+> 6 Tier-4 засвар (DashScope, keyless Ollama, idle-clock, acceptEdits,
+> respawn-banner, MCP Library, allow-always) + Windows атомт бичилт.
+> 13 asset, sha512 хоёр аргаар тулгасан, public latest.yml = 200 + byte-ижил.
+> `3afb6b93c` (uninstaller) + `3b1f59382` (max_tokens) хойшлуулсан; үлдсэн
+> 10 M/L зүйл mn.11 рүү.
+
 | хэмжээ | sha | юу |
 |--------|-----|----|
 | S | `3afb6b93c` | Uninstaller leaves HKCU residue: darhai:// protocol handler + start-on-boot Run/StartupApproved entries survive uninstall (**хойшлуулсан — доор**) |
