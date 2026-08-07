@@ -80,6 +80,14 @@ type PendingPermission = {
 type PermissionResolverConfig = {
   autoApproveAll: boolean;
   cacheMaxSize?: number;
+  /**
+   * Load persisted allow-always entries as [cacheKey, optionId] pairs. Called
+   * at most once, lazily, before the first cache lookup. Omit to disable
+   * persistence (keeps the synchronous uiCallback timing unchanged).
+   */
+  hydrate?: () => Promise<Array<[string, string]>>;
+  /** Write-through a durable allow-always decision. Omit to disable. */
+  persist?: (cacheKey: string, optionId: string) => void;
 };
 
 type PendingPermissionWithContext = PendingPermission & {
@@ -90,14 +98,44 @@ export class PermissionResolver {
   private readonly yoloMode: boolean;
   private readonly cache: ApprovalCache;
   private readonly pending = new Map<string, PendingPermissionWithContext>();
+  private readonly hydrateFn?: () => Promise<Array<[string, string]>>;
+  private readonly persistFn?: (cacheKey: string, optionId: string) => void;
+  private hydrated: Promise<void> | null = null;
 
   constructor(config: PermissionResolverConfig) {
     this.yoloMode = config.autoApproveAll;
     this.cache = new ApprovalCache(config.cacheMaxSize ?? 500);
+    this.hydrateFn = config.hydrate;
+    this.persistFn = config.persist;
   }
 
   get hasPending(): boolean {
     return this.pending.size > 0;
+  }
+
+  /**
+   * Seed the in-memory cache from persisted approvals, once. Only entries that
+   * are genuine allow-always decisions are trusted (tamper guard: a persisted
+   * 'deny'/'allow_once' would otherwise be replayed as an auto-approval). A
+   * same-session cache entry is never clobbered by hydration.
+   */
+  private ensureHydrated(): Promise<void> {
+    if (!this.hydrateFn) return Promise.resolve();
+    if (!this.hydrated) {
+      this.hydrated = this.hydrateFn()
+        .then((entries) => {
+          for (const [key, optionId] of entries) {
+            if (!optionId.startsWith('allow_') || !optionId.includes('always')) continue;
+            if (this.cache.get(key) === undefined) {
+              this.cache.set(key, optionId);
+            }
+          }
+        })
+        .catch(() => {
+          // Fail-soft: a hydration failure just means nothing is pre-approved.
+        });
+    }
+    return this.hydrated;
   }
 
   async evaluate(
@@ -111,7 +149,11 @@ export class PermissionResolver {
       return { outcome: { outcome: 'selected', optionId } };
     }
 
-    // Level 2: Cache hit (session-level "always allow" memory)
+    // Seed persisted allow-always decisions before the cache lookup, once.
+    // No-op (and no await stall) when persistence is not configured.
+    if (this.hydrateFn) await this.ensureHydrated();
+
+    // Level 2: Cache hit (session + persisted "always allow" memory)
     const cacheKey = buildCacheKey(request);
     const cached = this.cache.get(cacheKey);
     if (cached) {
@@ -147,9 +189,11 @@ export class PermissionResolver {
     if (!entry) return;
     this.pending.delete(callId);
 
-    // Cache "allow always" decisions for future auto-approval (never cache deny)
+    // Cache "allow always" decisions for future auto-approval (never cache deny).
+    // Also write-through to durable storage so it survives an app restart.
     if (optionId.startsWith('allow_') && optionId.includes('always')) {
       this.cache.set(entry.cacheKey, optionId);
+      this.persistFn?.(entry.cacheKey, optionId);
     }
 
     entry.resolve({ outcome: { outcome: 'selected', optionId } });

@@ -12,6 +12,7 @@ import { ConfigTracker } from '@process/acp/session/ConfigTracker';
 import { InputPreprocessor } from '@process/acp/session/InputPreprocessor';
 import { MessageTranslator } from '@process/acp/session/MessageTranslator';
 import { PermissionResolver } from '@process/acp/session/PermissionResolver';
+import { loadWorkspaceApprovals, saveWorkspaceApproval } from '@process/acp/session/ApprovalPersistence';
 import { PromptExecutor } from '@process/acp/session/PromptExecutor';
 import { SessionLifecycle } from '@process/acp/session/SessionLifecycle';
 import type {
@@ -103,9 +104,17 @@ export class AcpSession {
     this.configTracker = new ConfigTracker(options?.initialDesired);
     this.messageTranslator = new MessageTranslator(agentConfig.agentId);
     this.inputPreprocessor = new InputPreprocessor((path) => fs.readFileSync(path, 'utf-8'));
+    // Persist allow-always decisions per workspace so they survive a restart
+    // (in-memory cache alone re-prompted every launch). Fail-soft: a missing
+    // cwd just means no persistence, and both hooks swallow their own errors.
+    const approvalCwd = agentConfig.cwd;
     this.permissionResolver = new PermissionResolver({
       autoApproveAll: agentConfig.yoloMode ?? false,
       cacheMaxSize: options?.approvalCacheMaxSize,
+      hydrate: approvalCwd ? () => loadWorkspaceApprovals(approvalCwd) : undefined,
+      persist: approvalCwd
+        ? (cacheKey, optionId) => void saveWorkspaceApproval(approvalCwd, cacheKey, optionId)
+        : undefined,
     });
 
     this.lifecycle = new SessionLifecycle(

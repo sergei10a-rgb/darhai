@@ -142,4 +142,61 @@ describe('PermissionResolver', () => {
     await expect(p2).rejects.toThrow('disconnect');
     expect(resolver.hasPending).toBe(false);
   });
+
+  // ── Persisted allow-always across restart (3f0dc9e2e) ──────────────────
+  describe('approval persistence', () => {
+    it('write-through: persists only allow-always, never allow-once or deny', () => {
+      const persist = vi.fn();
+      const resolver = new PermissionResolver({ autoApproveAll: false, persist });
+
+      resolver.evaluate(makeRequest('t', 'c1', { kind: 'edit' }), vi.fn());
+      resolver.resolve('c1', 'allow_always');
+      expect(persist).toHaveBeenCalledTimes(1);
+      const [, optionId] = persist.mock.calls[0];
+      expect(optionId).toBe('allow_always');
+
+      resolver.evaluate(makeRequest('t', 'c2', { kind: 'edit', rawInput: { command: 'x' } }), vi.fn());
+      resolver.resolve('c2', 'allow_once');
+      resolver.evaluate(makeRequest('t', 'c3', { kind: 'edit', rawInput: { command: 'y' } }), vi.fn());
+      resolver.resolve('c3', 'reject_always');
+      // Only the first (allow_always) decision was persisted.
+      expect(persist).toHaveBeenCalledTimes(1);
+    });
+
+    // Capture the exact cache key the resolver derives for a request shape by
+    // resolving one allow-always through a capturing persist hook.
+    function captureCacheKey(): string {
+      let key = '';
+      const r = new PermissionResolver({ autoApproveAll: false, persist: (k) => (key = k) });
+      r.evaluate(makeRequest('read_file', 'seed', { kind: 'read' }), vi.fn());
+      r.resolve('seed', 'allow_always');
+      return key;
+    }
+
+    it('rehydrates a persisted allow-always so a fresh resolver never prompts', async () => {
+      const key = captureCacheKey();
+      const hydrate = vi.fn(async () => [[key, 'allow_always']] as Array<[string, string]>);
+      const fresh = new PermissionResolver({ autoApproveAll: false, hydrate });
+      const uiCallback = vi.fn();
+
+      const result = await fresh.evaluate(makeRequest('read_file', 'f1', { kind: 'read' }), uiCallback);
+
+      expect(hydrate).toHaveBeenCalledTimes(1);
+      expect(uiCallback).not.toHaveBeenCalled();
+      expect(result.outcome).toEqual({ outcome: 'selected', optionId: 'allow_always' });
+    });
+
+    it('tamper guard: a persisted non-allow-always entry is NOT replayed as approval', async () => {
+      const key = captureCacheKey();
+      const hydrate = vi.fn(async () => [[key, 'reject_always']] as Array<[string, string]>);
+      const fresh = new PermissionResolver({ autoApproveAll: false, hydrate });
+      const uiCallback = vi.fn();
+
+      // evaluate stays pending (falls through to UI); flush microtasks then assert.
+      void fresh.evaluate(makeRequest('read_file', 'f1', { kind: 'read' }), uiCallback);
+      await new Promise((r) => setTimeout(r, 0));
+
+      expect(uiCallback).toHaveBeenCalledTimes(1);
+    });
+  });
 });
