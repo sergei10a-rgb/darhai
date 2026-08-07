@@ -20,6 +20,22 @@
  * Scope: state files only. User-content writes (where partial output is
  * recoverable by the user) intentionally do not use these helpers.
  *
+ * --- Windows rename-over-open-file (measured win32 10.0.26200 / Node 24) ------
+ * POSIX rename(2) replaces the target even while another process holds it open.
+ * Windows MoveFileEx does NOT: if any process has the target open - and merely
+ * open for READING is enough (a settings viewer, a backup daemon, the app's own
+ * other window) - the rename fails with EPERM/EBUSY/EACCES. The write is then
+ * lost and, without this fallback, the tmp is orphaned. This is a
+ * Windows-user-only, developer-invisible failure, and it is the exact class of
+ * bug that silently accumulated 100 MB of orphaned temp files elsewhere.
+ *
+ * On those three codes we fall back to copyFileSync(tmp -> target) + unlink,
+ * which succeeds where the rename could not (copy opens the target with a
+ * generous share mode). That single copy is not itself atomic, but the choice
+ * is "non-atomic write that lands" vs "atomic write that is lost", and landing
+ * the user's data wins. POSIX never hits this path, so its atomicity is
+ * unchanged.
+ *
  * --- RT-S1: cross-platform confidentiality of the temp file ----------------
  * The sibling temp file is created inside the SAME directory as `targetPath`.
  * For secret-bearing writes (callers pass `{ mode: 0o600 }` - config/env/chat
@@ -41,6 +57,19 @@
 import { promises as fs } from 'fs';
 import * as fsSync from 'fs';
 import { execFileSync, spawn } from 'child_process';
+
+/**
+ * Rename-failure codes for which a copy+unlink fallback is worth trying.
+ * EXDEV is the cross-filesystem case (rename can't span mounts); EPERM/EBUSY/
+ * EACCES are the Windows rename-over-open-file case. On any of these the copy
+ * lands the data where the rename could not.
+ */
+const RENAME_FALLBACK_CODES = new Set(['EXDEV', 'EPERM', 'EBUSY', 'EACCES']);
+
+function isRenameFallbackError(err: unknown): boolean {
+  const code = (err as NodeJS.ErrnoException)?.code;
+  return typeof code === 'string' && RENAME_FALLBACK_CODES.has(code);
+}
 
 /**
  * True when the caller requested owner-only POSIX permissions, i.e. the data
@@ -102,11 +131,21 @@ export async function writeFileAtomic(
   try {
     await fs.rename(tmp, targetPath);
   } catch (err) {
-    // Best-effort cleanup so EXDEV / ENOSPC / EACCES don't orphan the tmp.
-    // Under ENOSPC the orphan would consume the very bytes that caused the
-    // failure; swallow unlink errors so the original rename error propagates.
-    await fs.unlink(tmp).catch(() => {});
-    throw err;
+    if (isRenameFallbackError(err)) {
+      // Windows rename-over-open-file (or cross-device): copy the bytes into
+      // place instead, then drop the tmp. Landing the write beats losing it.
+      try {
+        await fs.copyFile(tmp, targetPath);
+      } finally {
+        await fs.unlink(tmp).catch(() => {});
+      }
+    } else {
+      // Anything else (ENOSPC, ...) is not recoverable by copying: clean up the
+      // tmp and surface the original error. Swallow unlink failures so the real
+      // error propagates.
+      await fs.unlink(tmp).catch(() => {});
+      throw err;
+    }
   }
   // Re-apply after rename: the destination may pre-exist with a wider ACL, and
   // rename does not reset it on Windows.
@@ -121,13 +160,54 @@ export function writeFileSyncAtomic(targetPath: string, data: string | Buffer, o
   try {
     fsSync.renameSync(tmp, targetPath);
   } catch (err) {
-    // Best-effort cleanup so EXDEV / ENOSPC / EACCES don't orphan the tmp.
-    try {
-      fsSync.unlinkSync(tmp);
-    } catch {
-      // Ignore - surface the original rename error below.
+    if (isRenameFallbackError(err)) {
+      // Windows rename-over-open-file (or cross-device): copy into place, then
+      // drop the tmp. Landing the write beats losing it.
+      try {
+        fsSync.copyFileSync(tmp, targetPath);
+      } finally {
+        try {
+          fsSync.unlinkSync(tmp);
+        } catch {
+          // best-effort
+        }
+      }
+    } else {
+      // Non-recoverable (ENOSPC, ...): clean up and surface the original error.
+      try {
+        fsSync.unlinkSync(tmp);
+      } catch {
+        // Ignore - surface the original rename error below.
+      }
+      throw err;
+    }
+  }
+  if (ownerOnly) restrictWindowsDacl(targetPath);
+}
+
+/**
+ * Move a file into place, tolerating the same Windows rename-over-open-file
+ * failure as {@link writeFileAtomic}. Unlike the write helpers, `src` is an
+ * existing file the caller already produced (e.g. quarantining a dropped file),
+ * so there is no tmp of our own to manage.
+ *
+ * On a fallback code the source is copied to `dest` and then unlinked. If the
+ * unlink itself fails (Windows cannot delete a file another process holds
+ * open), the error PROPAGATES even though the copy landed: a move that leaves
+ * the source behind has not moved anything, and reporting success would let a
+ * caller like the drop-quarantine claim a file was quarantined while it still
+ * sits in the drop directory. The stray copy at `dest` is harmless; the honest
+ * error is not.
+ */
+export async function moveFileAtomic(src: string, dest: string): Promise<void> {
+  try {
+    await fs.rename(src, dest);
+  } catch (err) {
+    if (isRenameFallbackError(err)) {
+      await fs.copyFile(src, dest);
+      await fs.unlink(src);
+      return;
     }
     throw err;
   }
-  if (ownerOnly) restrictWindowsDacl(targetPath);
 }

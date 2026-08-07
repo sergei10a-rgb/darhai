@@ -1,5 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { writeFileSyncAtomic } from '@process/utils/atomicWrite';
 
 /** Reads/writes a single encrypted blob file at a user-specified path. */
 export class LocalFileBackend {
@@ -18,10 +19,13 @@ export class LocalFileBackend {
     }
   }
 
-  /** Write the raw encrypted blob atomically (write to tmp, then rename). */
+  /**
+   * Write the raw encrypted blob atomically. Uses the shared helper so a
+   * pid-stamped tmp avoids two writers clobbering each other, and the Windows
+   * rename-over-open-file fallback keeps the sync blob from being lost when
+   * another process holds it open for reading.
+   */
   write(data: Buffer): void {
-    const tmp = this.filePath + '.tmp';
-    fs.writeFileSync(tmp, data);
-    fs.renameSync(tmp, this.filePath);
+    writeFileSyncAtomic(this.filePath, data);
   }
 }

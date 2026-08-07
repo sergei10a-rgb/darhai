@@ -276,9 +276,15 @@ describe('specialist overlay CRUD', () => {
 
       expect(result).toBe(true);
       expect(fsMock.mkdirSync).toHaveBeenCalledWith(SPECIALISTS_DIR, { recursive: true });
-      // Atomic write: content goes to a .tmp file, then renamed onto the final path.
-      expect(fsMock.writeFileSync).toHaveBeenCalledWith(`${overlayPath}.tmp`, content, 'utf-8');
-      expect(fsMock.renameSync).toHaveBeenCalledWith(`${overlayPath}.tmp`, overlayPath);
+      // Atomic write via the shared helper: content goes to a PID-stamped tmp
+      // sibling (a fixed `.tmp` name let two writers clobber each other), and
+      // the SAME tmp is then renamed onto the final path.
+      const [tmpPath, written, encoding] = fsMock.writeFileSync.mock.calls[0];
+      expect(tmpPath).toMatch(new RegExp(`\\.md\\.tmp-${process.pid}-\\d+$`));
+      expect(tmpPath.startsWith(overlayPath)).toBe(true);
+      expect(written).toBe(content);
+      expect(encoding).toBe('utf-8');
+      expect(fsMock.renameSync).toHaveBeenCalledWith(tmpPath, overlayPath);
     });
 
     it('returns false and does not write for an invalid id', async () => {

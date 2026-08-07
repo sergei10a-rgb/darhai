@@ -612,8 +612,7 @@ export class DarhaiUIDatabase {
   getConversation(conversationId: string): IQueryResult<TChatConversation> {
     try {
       const row = this.db.prepare('SELECT * FROM conversations WHERE id = ?').get(conversationId) as
-        | IConversationRow
-        | undefined;
+        IConversationRow | undefined;
 
       if (!row) {
         return {
@@ -1600,8 +1599,7 @@ export class DarhaiUIDatabase {
   getChannelSessionByUser(userId: string): IQueryResult<IChannelSession | null> {
     try {
       const row = this.db.prepare('SELECT * FROM assistant_sessions WHERE user_id = ?').get(userId) as
-        | IChannelSessionRow
-        | undefined;
+        IChannelSessionRow | undefined;
       return { success: true, data: row ? rowToChannelSession(row) : null };
     } catch (error: any) {
       return { success: false, error: error.message };
@@ -1683,8 +1681,7 @@ export class DarhaiUIDatabase {
   getPairingRequestByCode(code: string): IQueryResult<IChannelPairingRequest | null> {
     try {
       const row = this.db.prepare('SELECT * FROM assistant_pairing_codes WHERE code = ?').get(code) as
-        | IChannelPairingCodeRow
-        | undefined;
+        IChannelPairingCodeRow | undefined;
       return { success: true, data: row ? rowToPairingRequest(row) : null };
     } catch (error: any) {
       return { success: false, error: error.message };

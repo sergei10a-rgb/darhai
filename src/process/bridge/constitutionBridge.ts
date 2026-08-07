@@ -10,10 +10,11 @@
  */
 
 import { ipcMain } from 'electron';
-import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, statSync, unlinkSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, unlinkSync } from 'fs';
 import { homedir } from 'os';
 import { basename, join, resolve, sep } from 'path';
 import { enforceRateLimit } from './webuiDirectAuth';
+import { writeFileSyncAtomic } from '@process/utils/atomicWrite';
 
 const DARHAI_HOME_DIR = '.darhai';
 const CONSTITUTION_NAME = 'CONSTITUTION.md';
@@ -237,11 +238,13 @@ const writeConstitution = (content: string): boolean => {
   const { dir, path } = resolveConstitutionPaths();
   try {
     mkdirSync(dir, { recursive: true });
-    // Atomic write: write to .tmp then rename. Prevents a torn file if
-    // the process is killed mid-write.
-    const tmp = `${path}.tmp`;
-    writeFileSync(tmp, content, 'utf-8');
-    renameSync(tmp, path);
+    // Atomic write with a pid-stamped tmp and a Windows rename-over-open-file
+    // fallback. The old inline `writeFileSync(tmp)+renameSync(tmp,path)` used a
+    // fixed `.tmp` name (two writers clobbered each other) and lost the write
+    // entirely on Windows when any process held the Constitution open for
+    // reading - the user's edit vanished with only a console line to show for
+    // it. This is user-authored content, so losing it silently is the worst case.
+    writeFileSyncAtomic(path, content, 'utf-8');
     return true;
   } catch (err) {
     console.error('[constitutionBridge] write failed:', err);
@@ -342,10 +345,10 @@ const writeConstitutionSpecialist = (id: string, content: string): boolean => {
   const { specialistsDir, overlayPath } = resolved;
   try {
     mkdirSync(specialistsDir, { recursive: true });
-    // Atomic write: write to .tmp then rename. Same pattern as writeConstitution.
-    const tmp = `${overlayPath}.tmp`;
-    writeFileSync(tmp, content, 'utf-8');
-    renameSync(tmp, overlayPath);
+    // Same atomic-write helper as writeConstitution: pid-stamped tmp + the
+    // Windows rename-over-open-file fallback that keeps the overlay from
+    // vanishing when a reader holds it open.
+    writeFileSyncAtomic(overlayPath, content, 'utf-8');
     return true;
   } catch (err) {
     console.error('[constitutionBridge] writeSpecialist failed:', err);

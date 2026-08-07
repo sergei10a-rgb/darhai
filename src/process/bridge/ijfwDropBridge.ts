@@ -22,6 +22,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import log from 'electron-log';
 import { ipcBridge } from '@/common';
+import { moveFileAtomic } from '@process/utils/atomicWrite';
 import type { IjfwErrorReason } from '@/common/types/ijfw';
 
 const MAX_FILE_BYTES = 50 * 1024 * 1024;
@@ -234,9 +235,12 @@ async function quarantineImpl(name: string): Promise<{ ok: true } | { ok: false;
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
   const dest = path.join(quarantineDir(), `${stamp}.${name}`);
   try {
-    await fs.promises.rename(src, dest);
+    // A dropped file may still be held open by whatever produced it; a bare
+    // rename fails EPERM on Windows in that case, so move with the copy+unlink
+    // fallback instead of reporting a quarantine failure the user can't act on.
+    await moveFileAtomic(src, dest);
   } catch (err) {
-    log.warn('[ijfw-drop] quarantine rename failed', { err });
+    log.warn('[ijfw-drop] quarantine move failed', { err });
     return { ok: false, error: (err as Error).message };
   }
   return { ok: true };

@@ -54,14 +54,7 @@ export interface AutoUpdateStatus {
   // wake). It applies automatically once everything goes idle, or on the next
   // quit. The user can still force it via "install now anyway".
   status:
-    | 'checking'
-    | 'available'
-    | 'not-available'
-    | 'downloading'
-    | 'downloaded'
-    | 'deferred'
-    | 'error'
-    | 'cancelled';
+    'checking' | 'available' | 'not-available' | 'downloading' | 'downloaded' | 'deferred' | 'error' | 'cancelled';
   version?: string;
   releaseDate?: string;
   releaseNotes?: string;

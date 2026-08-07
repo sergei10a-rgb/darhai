@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { existsSync, mkdirSync, renameSync, statSync, appendFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, renameSync, statSync, truncateSync, appendFileSync } from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 
@@ -68,14 +68,34 @@ function maskToken(token: string): string {
   return token.slice(-4);
 }
 
-function rotateIfNeeded(logPath: string): void {
+/**
+ * Rotate the log when it exceeds `maxBytes`. Exported (with an injectable
+ * threshold) so a test can exercise the Windows rename-failure fallback with a
+ * tiny file instead of writing the real 10 MB cap.
+ */
+export function rotateIfNeeded(logPath: string, maxBytes: number = MAX_BYTES): void {
   try {
     const stats = statSync(logPath);
-    if (stats.size < MAX_BYTES) return;
+    if (stats.size < maxBytes) return;
     const rotated = `${logPath}.1`;
-    renameSync(logPath, rotated);
+    try {
+      renameSync(logPath, rotated);
+    } catch (err) {
+      // The old blanket catch treated EVERY failure as "file missing". On
+      // Windows a rename fails EPERM whenever any process holds the log open -
+      // even just for reading - so rotation never happened and the size cap
+      // silently stopped existing: the log grew without bound. Fall back to
+      // copy+truncate, the standard rotation for a file that cannot be moved
+      // (what logrotate's copytruncate does). Lines appended between the copy
+      // and the truncate are lost; that narrow window is the accepted price of
+      // keeping the cap real.
+      if ((err as NodeJS.ErrnoException)?.code === 'ENOENT') return;
+      copyFileSync(logPath, rotated);
+      truncateSync(logPath, 0);
+    }
   } catch {
-    // File missing → nothing to rotate.
+    // File missing, or the fallback itself failed (rotated target locked too).
+    // Never let rotation break the append - the audit record matters more.
   }
 }
 
