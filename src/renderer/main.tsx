@@ -49,11 +49,7 @@ import { ConfigProvider } from '@arco-design/web-react';
 // Configure Arco Design to use React 18's createRoot, fixing Message component's CopyReactDOM.render error
 import '@arco-design/web-react/es/_util/react-19-adapter';
 import '@arco-design/web-react/dist/css/arco.css';
-import enUS from '@arco-design/web-react/es/locale/en-US';
-import jaJP from '@arco-design/web-react/es/locale/ja-JP';
-import zhCN from '@arco-design/web-react/es/locale/zh-CN';
-import zhTW from '@arco-design/web-react/es/locale/zh-TW';
-import koKR from '@arco-design/web-react/es/locale/ko-KR';
+import { resolveArcoLocale } from './services/i18n/arcoLocales';
 import { useTranslation } from 'react-i18next';
 
 // Styles - Inter font first so it's available before Arco/Uno set their defaults
@@ -75,34 +71,6 @@ import { useAuth } from './hooks/context/AuthContext';
 import { ConversationHistoryProvider } from './hooks/context/ConversationHistoryContext';
 import HOC from './utils/ui/HOC';
 
-// Patch Korean locale with missing properties from English locale
-const koKRComplete = {
-  ...koKR,
-  Calendar: {
-    ...koKR.Calendar,
-    monthFormat: enUS.Calendar.monthFormat,
-    yearFormat: enUS.Calendar.yearFormat,
-  },
-  DatePicker: {
-    ...koKR.DatePicker,
-    Calendar: {
-      ...koKR.DatePicker.Calendar,
-      monthFormat: enUS.Calendar.monthFormat,
-      yearFormat: enUS.Calendar.yearFormat,
-    },
-  },
-  Form: enUS.Form,
-  ColorPicker: enUS.ColorPicker,
-};
-
-const arcoLocales: Record<string, typeof enUS> = {
-  'zh-CN': zhCN,
-  'zh-TW': zhTW,
-  'ja-JP': jaJP,
-  'ko-KR': koKRComplete,
-  'en-US': enUS,
-};
-
 const AppProviders: React.FC<PropsWithChildren> = ({ children }) =>
   React.createElement(
     AuthProvider,
@@ -118,7 +86,7 @@ const Config: React.FC<PropsWithChildren> = ({ children }) => {
   const {
     i18n: { language },
   } = useTranslation();
-  const arcoLocale = arcoLocales[language] ?? enUS;
+  const arcoLocale = resolveArcoLocale(language);
 
   return React.createElement(ConfigProvider, { theme: { primaryColor: '#4E5969' }, locale: arcoLocale }, children);
 };
