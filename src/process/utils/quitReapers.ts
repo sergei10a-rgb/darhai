@@ -32,6 +32,7 @@
 
 import { app } from 'electron';
 import { closeDatabase } from '@process/services/database/export';
+import { reapAgentChildrenSync } from '@process/agent/childRegistry';
 
 /** Set once so a repeated init cannot stack handlers. */
 let registered = false;
@@ -47,6 +48,19 @@ function reapSync(): void {
     // Never throw from an exit handler - a throw here would replace the real
     // exit reason with this one.
     console.error('[Wayland] sync quit reaper: closeDatabase failed:', err);
+  }
+  try {
+    // Engine children (wcore, ACP backends, the OpenClaw gateway) outlive an
+    // `app.exit()` for the same reason the database handle did: nothing on
+    // these paths gets a chance to tear them down. On Windows a survivor holds
+    // files in the install directory, which is what makes the next update or
+    // uninstall fail. Normally a no-op - the async sweep already ran.
+    const killed = reapAgentChildrenSync();
+    if (killed > 0) {
+      console.warn(`[Wayland] sync quit reaper: hard-killed ${killed} engine child(ren)`);
+    }
+  } catch (err) {
+    console.error('[Wayland] sync quit reaper: engine child reap failed:', err);
   }
 }
 

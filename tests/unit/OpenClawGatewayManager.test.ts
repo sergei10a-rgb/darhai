@@ -19,6 +19,14 @@ const mockPath = isWindows ? 'C:\\bin;C:\\usr\\local\\bin' : '/usr/bin:/usr/loca
 
 const mockSpawn = vi.hoisted(() => vi.fn());
 const mockExecFileSync = vi.hoisted(() => vi.fn());
+// The manager now reaches `killChild`, which promisifies `execFile` at module
+// load. Without this the mocked `child_process` hands `promisify` undefined and
+// the whole module graph fails to import.
+const mockExecFile = vi.hoisted(() =>
+  vi.fn((_cmd: string, _args: string[], _opts: unknown, cb?: (e: unknown, r: unknown) => void) => {
+    cb?.(null, { stdout: '', stderr: '' });
+  })
+);
 const mockAccessSync = vi.hoisted(() => vi.fn());
 const mockOpenSync = vi.hoisted(() => vi.fn());
 const mockReadSync = vi.hoisted(() => vi.fn());
@@ -27,11 +35,13 @@ const mockCloseSync = vi.hoisted(() => vi.fn());
 vi.mock('child_process', () => ({
   spawn: mockSpawn,
   execFileSync: mockExecFileSync,
+  execFile: mockExecFile,
 }));
 
 vi.mock('node:child_process', () => ({
   spawn: mockSpawn,
   execFileSync: mockExecFileSync,
+  execFile: mockExecFile,
 }));
 
 vi.mock('node:fs', () => ({

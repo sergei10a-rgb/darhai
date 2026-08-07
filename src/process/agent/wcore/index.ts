@@ -15,6 +15,8 @@ import { buildEngineSpawnEnv, buildSpawnConfig } from './envBuilder';
 import { ProfileIsolationError, resolveActiveConfigDir } from './profilePaths';
 import { getToolKeyStore } from './toolKeyStore';
 import { hydrateModelForSpawn } from '@process/providers/ipc/modelRegistryIpc';
+import { registerAgentChild, unregisterAgentChild } from '../childRegistry';
+import { killChild } from '../acp/utils';
 import type { WCoreEvent, WCoreCommand, WCoreCapabilities } from './protocol';
 
 const WCORE_PROJECT_CONFIG = '.wcore.toml';
@@ -235,6 +237,10 @@ export class WCoreAgent {
       stdio: ['pipe', 'pipe', 'pipe'],
       cwd: this.options.workspace,
     });
+    // The engine spawns its own tree (MCP servers, tool subprocesses). Track it
+    // so the quit sweep can still reach that tree if the graceful kill below
+    // runs out of its budget. See childRegistry.ts.
+    registerAgentChild(this.childProcess, { label: 'wcore' });
 
     // Parse stdout JSON Lines
     const rl = createInterface({ input: this.childProcess.stdout! });
@@ -810,12 +816,28 @@ export class WCoreAgent {
     return this.childProcess !== null;
   }
 
-  kill(): void {
+  /**
+   * Stop the engine and everything it spawned.
+   *
+   * This used to be a bare `childProcess.kill('SIGTERM')`. On Windows that
+   * signal is emulated and never reaches the engine's own children - the MCP
+   * servers and tool subprocesses it started - so closing the app left them
+   * running, holding files in the install directory and breaking the next
+   * update or uninstall. `killChild` does the platform-correct tree kill
+   * (`taskkill /T /F` on Windows, descendant sweep on POSIX).
+   *
+   * Now async: the caller has to be able to wait for the tree to be gone,
+   * otherwise the quit sequence races the kill it just asked for.
+   */
+  async kill(): Promise<void> {
     this.restoreProjectConfig();
-    if (this.childProcess) {
-      this.childProcess.kill('SIGTERM');
-      this.childProcess = null;
-    }
+    const child = this.childProcess;
+    if (!child) return;
+    // Clear the handle first so a second kill() (heartbeat + quit can both
+    // fire) does not send a second tree kill at the same pid.
+    this.childProcess = null;
+    unregisterAgentChild(child.pid);
+    await killChild(child, false, 'WCoreAgent');
   }
 
   /**

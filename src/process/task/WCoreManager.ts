@@ -907,7 +907,8 @@ export class WCoreManager extends BaseAgentManager<WCoreManagerData, string> {
 
     if (this.heartbeatMissedCount >= this.heartbeatMaxMissed) {
       mainError('[WCoreManager]', `wcore process unresponsive after ${this.heartbeatMaxMissed} missed pongs, killing`);
-      this.agent?.kill();
+      // Fire-and-forget: this runs on a heartbeat timer with nobody to await it.
+      void this.agent?.kill();
       return;
     }
 
@@ -1243,16 +1244,19 @@ export class WCoreManager extends BaseAgentManager<WCoreManagerData, string> {
     }
   }
 
-  override kill(): Promise<void> {
+  override async kill(): Promise<void> {
     if (this.agent) {
       try {
-        this.agent.kill();
+        // Awaited, not fired and forgotten: the engine's tree kill has to
+        // finish before the worker is torn down, or the quit returns while
+        // wcore and its children are still alive.
+        await this.agent.kill();
       } catch {
         // best-effort
       }
     }
     // super.kill() is async (ForkTask M18); return its promise so callers
     // (WorkerTaskManager.clear) can await child exit.
-    return Promise.resolve(super.kill());
+    await super.kill();
   }
 }

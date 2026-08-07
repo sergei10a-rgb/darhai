@@ -22,6 +22,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 
 const closeDatabase = vi.fn();
+const reapAgentChildrenSync = vi.fn(() => 0);
 const appHandlers = new Map<string, () => void>();
 
 vi.mock('electron', () => ({
@@ -34,6 +35,10 @@ vi.mock('electron', () => ({
 
 vi.mock('@process/services/database/export', () => ({
   closeDatabase: () => closeDatabase(),
+}));
+
+vi.mock('@process/agent/childRegistry', () => ({
+  reapAgentChildrenSync: () => reapAgentChildrenSync(),
 }));
 
 /** Import fresh each time so the module's "registered once" latch is reset. */
@@ -50,6 +55,8 @@ function processExitHandlers(before: ReadonlyArray<unknown>): Array<() => void> 
 describe('registerSyncQuitReapers', () => {
   beforeEach(() => {
     closeDatabase.mockClear();
+    reapAgentChildrenSync.mockClear();
+    reapAgentChildrenSync.mockReturnValue(0);
     appHandlers.clear();
   });
 
@@ -80,6 +87,70 @@ describe('registerSyncQuitReapers', () => {
       onQuit?.();
       expect(closeDatabase).toHaveBeenCalledTimes(1);
     } finally {
+      for (const fn of installed) process.off('exit', fn);
+    }
+  });
+
+  test("reaps engine children from process 'exit', the path app.exit() takes", async () => {
+    // wcore / ACP / the OpenClaw gateway outlive an app.exit() for exactly the
+    // reason the database handle did: nothing on that path tears them down. On
+    // Windows a survivor holds files in the install directory, which is what
+    // makes the next update or uninstall fail.
+    const before = process.listeners('exit');
+    reapAgentChildrenSync.mockReturnValue(2);
+    const warns = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { registerSyncQuitReapers } = await loadModule();
+    registerSyncQuitReapers();
+
+    const installed = processExitHandlers(before);
+    try {
+      installed[0]();
+      expect(reapAgentChildrenSync).toHaveBeenCalledTimes(1);
+      expect(warns).toHaveBeenCalled();
+    } finally {
+      warns.mockRestore();
+      for (const fn of installed) process.off('exit', fn);
+    }
+  });
+
+  test('reaps engine children even when closing the database throws first', async () => {
+    // The two reapers are independent; one failing must not skip the other.
+    const before = process.listeners('exit');
+    closeDatabase.mockImplementation(() => {
+      throw new Error('database is locked');
+    });
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { registerSyncQuitReapers } = await loadModule();
+    registerSyncQuitReapers();
+
+    const installed = processExitHandlers(before);
+    try {
+      installed[0]();
+      expect(reapAgentChildrenSync).toHaveBeenCalledTimes(1);
+    } finally {
+      errors.mockRestore();
+      closeDatabase.mockReset();
+      for (const fn of installed) process.off('exit', fn);
+    }
+  });
+
+  test('never throws out of an exit handler when the child reap fails', async () => {
+    const before = process.listeners('exit');
+    reapAgentChildrenSync.mockImplementation(() => {
+      throw new Error('taskkill exploded');
+    });
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { registerSyncQuitReapers } = await loadModule();
+    registerSyncQuitReapers();
+
+    const installed = processExitHandlers(before);
+    try {
+      expect(() => installed[0]()).not.toThrow();
+      expect(errors).toHaveBeenCalled();
+    } finally {
+      errors.mockRestore();
+      reapAgentChildrenSync.mockReset();
+      reapAgentChildrenSync.mockReturnValue(0);
       for (const fn of installed) process.off('exit', fn);
     }
   });

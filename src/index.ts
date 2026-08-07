@@ -1130,6 +1130,9 @@ type CleanupModules = {
   // Kill any spawned OmniRoute (C2 one-click runtime) from before-quit so the
   // Next.js server does not leak and hold port 20128 after the app quits.
   omniroute: typeof import('@process/services/omnirouteGateway/omnirouteRuntimeSingleton');
+  // Last-resort sweep for engine children (wcore / ACP / OpenClaw gateway) that
+  // the graceful per-agent teardown did not finish killing. See childRegistry.ts.
+  agentChildren: typeof import('@process/agent/childRegistry');
 };
 let _cleanupModulesPromise: Promise<CleanupModules> | undefined;
 
@@ -1148,6 +1151,7 @@ const prefetchCleanupModules = (): Promise<CleanupModules> => {
     import('@process/services/calendar/calendarServiceSingleton'),
     import('@process/services/cookbook/cookbookServeSingleton'),
     import('@process/services/omnirouteGateway/omnirouteRuntimeSingleton'),
+    import('@process/agent/childRegistry'),
   ]).then(
     ([
       ambient,
@@ -1163,6 +1167,7 @@ const prefetchCleanupModules = (): Promise<CleanupModules> => {
       calendar,
       cookbook,
       omniroute,
+      agentChildren,
     ]) => ({
       ambient,
       channels,
@@ -1177,6 +1182,7 @@ const prefetchCleanupModules = (): Promise<CleanupModules> => {
       calendar,
       cookbook,
       omniroute,
+      agentChildren,
     })
   );
 };
@@ -1337,6 +1343,7 @@ const runQuitCleanup = async (): Promise<void> => {
       safeImport('calendar', () => import('@process/services/calendar/calendarServiceSingleton')),
       safeImport('cookbook', () => import('@process/services/cookbook/cookbookServeSingleton')),
       safeImport('omniroute', () => import('@process/services/omnirouteGateway/omnirouteRuntimeSingleton')),
+      safeImport('agentChildren', () => import('@process/agent/childRegistry')),
     ]);
     const out: Partial<CleanupModules> = {};
     for (const [k, v] of entries) {
@@ -1516,6 +1523,31 @@ const runQuitCleanup = async (): Promise<void> => {
       pptPreviewStep,
       fileWatchStep,
     ]);
+
+    // Last, and only after the graceful teardown above has had its turn: kill
+    // any engine child still running.
+    //
+    // Sequential, not part of the group, because it is defined by what the
+    // group failed to finish - running it concurrently would sweep processes
+    // the per-agent kill was still in the middle of stopping cleanly.
+    //
+    // Its own budget, larger than the 2s the other steps get, because one
+    // Windows `taskkill /T /F` alone is allowed 5s. That 2s ceiling is the
+    // reason children were being abandoned mid-kill in the first place, so
+    // reusing it here would reproduce the bug in the fix. 6s still leaves room
+    // under the 10s master ceiling, which in turn sits under the 12s barrier.
+    const REAP_TIMEOUT_MS = 6000;
+    await withTimeout(
+      'reapOrphanedAgentChildren',
+      (async () => {
+        if (!mods.agentChildren) return;
+        const { reaped, failed } = await mods.agentChildren.reapOrphanedAgentChildren();
+        if (reaped || failed) {
+          console.warn(`[Wayland] reaped ${reaped} orphaned engine child(ren), ${failed} failed`);
+        }
+      })(),
+      REAP_TIMEOUT_MS
+    );
   };
 
   // Master ceiling: hard 10s upper bound on the entire cleanup phase.

@@ -10,6 +10,8 @@ import { getEnhancedEnv } from '@process/utils/shellEnv';
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { registerAgentChild, unregisterAgentChild } from '../childRegistry';
+import { killChild } from '../acp/utils';
 
 interface GatewayManagerConfig {
   /** Path to openclaw CLI (default: 'openclaw') */
@@ -212,6 +214,9 @@ export class OpenClawGatewayManager extends EventEmitter {
         env,
         shell: isWindows,
       });
+      // The gateway spawns its own tree. Track it so the quit sweep can still
+      // reach that tree if stop() never runs or runs out of budget.
+      registerAgentChild(this.process, { label: 'openclaw-gateway' });
 
       let hasResolved = false;
       let stdoutBuffer = '';
@@ -296,38 +301,32 @@ export class OpenClawGatewayManager extends EventEmitter {
   /**
    * Stop the gateway process
    */
+  /**
+   * Stop the gateway and everything it spawned.
+   *
+   * Two things were wrong with the previous SIGTERM-then-SIGKILL version.
+   * The gateway starts its own child tree (MCP servers, tool subprocesses),
+   * and on Windows neither signal reaches it - SIGTERM is emulated and SIGKILL
+   * ends only the process we hold - so those children outlived the app and
+   * kept handles on files in the install directory. And the wait was
+   * unbounded: it resolved on `exit` alone, so a process that never emitted
+   * one left `stop()` pending forever, wedging the quit sequence that awaited
+   * it. `killChild` does the platform-correct tree kill and already bounds
+   * itself, so awaiting it is both correct and finite.
+   */
   async stop(): Promise<void> {
-    if (!this.process) {
+    const child = this.process;
+    if (!child) {
       return;
     }
 
     console.log('[OpenClawGatewayManager] Stopping gateway...');
-
-    // Send SIGTERM first
-    this.process.kill('SIGTERM');
-
-    // Force kill after timeout
-    const forceKillTimeout = setTimeout(() => {
-      if (this.process && !this.process.killed) {
-        console.log('[OpenClawGatewayManager] Force killing gateway...');
-        this.process.kill('SIGKILL');
-      }
-    }, 5000);
-
-    await new Promise<void>((resolve) => {
-      if (!this.process) {
-        clearTimeout(forceKillTimeout);
-        resolve();
-        return;
-      }
-
-      this.process.once('exit', () => {
-        clearTimeout(forceKillTimeout);
-        resolve();
-      });
-    });
-
+    // Clear the handle first so a concurrent stop() cannot tree-kill the same
+    // pid twice.
     this.process = null;
+    unregisterAgentChild(child.pid);
+
+    await killChild(child, false, 'OpenClawGatewayManager');
     console.log('[OpenClawGatewayManager] Gateway stopped');
   }
 

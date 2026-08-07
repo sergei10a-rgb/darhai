@@ -40,14 +40,18 @@ export async function waitForProcessExit(pid: number, timeoutMs: number): Promis
 /**
  * Kill a child process with platform-specific handling.
  * Windows: taskkill tree kill. POSIX: collect descendants → SIGTERM → SIGKILL escalation.
+ *
+ * `label` only tags the diagnostics. It exists because this helper started out
+ * ACP-only and is now the one tree-kill for every engine child, so a warning
+ * about the wcore engine should not claim to come from ACP.
  */
-export async function killChild(child: ChildProcess, isDetached: boolean): Promise<void> {
+export async function killChild(child: ChildProcess, isDetached: boolean, label = 'ACP'): Promise<void> {
   const pid = child.pid;
   if (process.platform === 'win32' && pid) {
     try {
       await execFile('taskkill', ['/PID', String(pid), '/T', '/F'], { windowsHide: true, timeout: 5000 });
     } catch (forceError) {
-      console.warn(`[ACP] taskkill /T /F failed for PID ${pid}:`, decodeWindowsError(forceError));
+      console.warn(`[${label}] taskkill /T /F failed for PID ${pid}:`, decodeWindowsError(forceError));
     }
     return;
   }
@@ -72,7 +76,7 @@ export async function killChild(child: ChildProcess, isDetached: boolean): Promi
 
     // Escalate to SIGKILL if the process ignored SIGTERM
     if (isProcessAlive(pid)) {
-      console.warn(`[ACP] Process ${pid} did not exit after SIGTERM, escalating to SIGKILL`);
+      console.warn(`[${label}] Process ${pid} did not exit after SIGTERM, escalating to SIGKILL`);
       try {
         if (isDetached) {
           process.kill(-pid, 'SIGKILL');

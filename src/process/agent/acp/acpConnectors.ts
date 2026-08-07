@@ -34,6 +34,7 @@ import { adaptWindowsLauncher } from '@process/utils/windowsLauncher';
 import { readClaudeProviderEnvFromCcSwitch } from '@process/services/ccSwitchModelSource';
 import { mainWarn } from '@process/utils/mainLogger';
 import { getPlatformServices } from '@/common/platform';
+import { registerAgentChild } from '../childRegistry';
 
 const execFile = promisify(execFileCb);
 
@@ -533,6 +534,7 @@ export function spawnNpxBackend(
   if (detached) {
     child.unref();
   }
+  registerAgentChild(child, { label: `acp:${backend}`, detached });
   console.log(`[ACP-PERF] ${backend}: process spawned ${Date.now() - spawnStart}ms (bundled bun)`);
 
   return { child, isDetached: detached };
@@ -656,6 +658,7 @@ export async function spawnGenericBackend(
   if (detached) {
     child.unref();
   }
+  registerAgentChild(child, { label: `acp:${backend}`, detached });
   console.log(`[ACP-PERF] connect: ${backend} process spawned ${Date.now() - spawnStart}ms`);
 
   return { child, isDetached: detached };
