@@ -5,6 +5,7 @@ import { teamEventBus } from '@process/team/teamEventBus';
 import { ipcBridge } from '@/common';
 import type { CronMessageMeta, TMessage } from '@/common/chat/chatLib';
 import { isCodexAutoApproveMode } from '@/common/types/codex/codexModes';
+import { shouldAutoApproveAcpEdit } from '@/common/types/agentModes';
 import type { SlashCommandItem } from '@/common/chat/slash/types';
 import { transformMessage } from '@/common/chat/chatLib';
 import type { IConfigStorageRefer } from '@/common/config/storage';
@@ -1045,6 +1046,18 @@ ${collectedResponses.join('\n')}`;
       // an approval nobody could give: adding a codex teammate hung forever.
       if (isTeamMcpPermission(toolCall) && options.length > 0) {
         const autoOption = options[0];
+        setTimeout(() => {
+          void this.confirm(v.msg_id, toolCall.toolCallId || v.msg_id, autoOption);
+        }, 50);
+        return;
+      }
+
+      // Accept Edits mode: auto-approve edit tool calls only. Commands
+      // ('execute') and reads still prompt - that is the mode's advertised
+      // contract. Prefer an explicit allow_* option over options[0] so a
+      // reject-first ordering can never be auto-picked.
+      if (shouldAutoApproveAcpEdit(this.currentMode, toolCall.kind) && options.length > 0) {
+        const autoOption = options.find((o) => o.kind.startsWith('allow_')) ?? options[0];
         setTimeout(() => {
           void this.confirm(v.msg_id, toolCall.toolCallId || v.msg_id, autoOption);
         }, 50);

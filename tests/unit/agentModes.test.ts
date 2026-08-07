@@ -111,3 +111,29 @@ describe('mergeWithCapabilities', () => {
     ]);
   });
 });
+
+// ── shouldAutoApproveAcpEdit truth table (1f3926f06) ─────────────────────────
+// The Accept Edits gate: ONLY the (acceptEdits, edit) pair auto-approves.
+// eslint-disable-next-line import/first
+import { shouldAutoApproveAcpEdit } from '@/common/types/agentModes';
+
+describe('shouldAutoApproveAcpEdit (1f3926f06)', () => {
+  it('approves edits in acceptEdits mode', () => {
+    expect(shouldAutoApproveAcpEdit('acceptEdits', 'edit')).toBe(true);
+  });
+
+  it('still prompts for commands and reads in acceptEdits mode', () => {
+    expect(shouldAutoApproveAcpEdit('acceptEdits', 'execute')).toBe(false);
+    expect(shouldAutoApproveAcpEdit('acceptEdits', 'read')).toBe(false);
+  });
+
+  it('never approves outside acceptEdits mode', () => {
+    expect(shouldAutoApproveAcpEdit('default', 'edit')).toBe(false);
+    expect(shouldAutoApproveAcpEdit('plan', 'edit')).toBe(false);
+  });
+
+  it('tolerates missing mode or kind without throwing', () => {
+    expect(shouldAutoApproveAcpEdit(undefined, 'edit')).toBe(false);
+    expect(shouldAutoApproveAcpEdit('acceptEdits', undefined)).toBe(false);
+  });
+});
