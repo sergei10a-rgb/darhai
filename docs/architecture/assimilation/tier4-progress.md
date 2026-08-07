@@ -50,6 +50,10 @@
 | `0b00ac45a` | DashScope: амьд `/v1/models` асууж, 401 нь түлхүүрийн алдаа гэж илэрнэ; fallback зөвхөн сүлжээний алдаанд; SSRF guard түлхүүргүй үед ч ажиллана | `32dcb191c` |
 | `cf6950939` | Түлхүүргүй локал Ollama: wcore spawn env-д `ollama` placeholder (зөвхөн локал base, cloud хэвээр чанга унана) | `8157c8509` |
 | `60b8c17d9` | Idle цаг stream chunk + status flip бүрд шинэчлэгдэнэ — урт хариу уншиж байхад bridge унтрахаа болив | `a2da1e653` |
+| `1f3926f06` | acceptEdits горим permission gate-д хүндлэгдэнэ (зөвхөн edit авто-зөвшөөрөл, команд асууна) | `7eb6279e2` |
+| `346f71831` | Respawn storm: нэг episode = нэг banner id, ижил banner давхарлахаа болив | `d391a7323` |
+| `854c0c19e` | MCP Library Browse хуудсанд «захиалгат нэмэх» орох цэг нэмэгдэв (sidebar энд бууна) | `73dd02a4d` |
+| `3f0dc9e2e` | ACP allow-always зөвшөөрөл workspace тус бүрээр config-д хадгалагдаж restart-д амьд үлдэнэ | `86adbdfbe` |
 
 ## Үлдсэн (7 агентаар кодтой тулгаж БАТАЛСАН, засаагүй)
 
@@ -61,7 +65,6 @@
 | S | `3afb6b93c` | Uninstaller leaves HKCU residue: darhai:// protocol handler + start-on-boot Run/StartupApproved entries survive uninstall (**хойшлуулсан — доор**) |
 | M | `3b1f59382` | max_tokens guessed from model NAME substring - breaks unknown/custom model ids |
 | M | `58566e9ed` | Custom OpenAI-compatible endpoint without /models hard-fails connect (no chat-completions fallback, no no-models landing) |
-| M | `3f0dc9e2e` | ACP allow-always approvals forgotten after restart (no persistence) |
 | M | `e41615065` | WCore turn stall watchdog missing — silent turn spins forever |
 | M | `e2f75273b` | No right-click cut/copy/paste menu; Ctrl+C on agent messages copies nothing (shadow DOM) |
 | M | `none` | Closing active tab shows wrong conversation (no navigation, jumps to last tab); Ctrl+Z cannot undo a paste in the composer |
