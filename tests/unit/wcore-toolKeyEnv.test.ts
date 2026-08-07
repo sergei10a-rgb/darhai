@@ -140,6 +140,30 @@ describe('buildEngineSpawnEnv - SEC-1 allowlist', () => {
     expect(env.BRAVE_SEARCH_API_KEY).toBeUndefined();
     expect(env.TAVILY_API_KEY).toBeUndefined();
   });
+
+  it("passes the dynamic linker's search path through, so the engine can load the same libraries we can", () => {
+    // Stripping this broke the engine on any Linux box that resolves a shared
+    // library from a non-system prefix - e.g. OpenSSL 1.1 under /opt on ARM64
+    // Ubuntu. The child could not load a library the parent could.
+    process.env.LD_LIBRARY_PATH = '/opt/openssl-1.1/lib:/usr/lib/aarch64-linux-gnu';
+
+    const env = buildEngineSpawnEnv({ providerEnv: {} });
+
+    expect(env.LD_LIBRARY_PATH).toBe('/opt/openssl-1.1/lib:/usr/lib/aarch64-linux-gnu');
+  });
+
+  it('passes the node version managers through, so a Volta or nvm user still has a node', () => {
+    // Without these the child inherits a PATH pointing into an nvm/Volta shim
+    // but no longer knows where the manager lives, so the spawn reports "node
+    // not found" on a machine where node works fine in the terminal.
+    process.env.NVM_DIR = '/home/test/.nvm';
+    process.env.VOLTA_HOME = '/home/test/.volta';
+
+    const env = buildEngineSpawnEnv({ providerEnv: {} });
+
+    expect(env.NVM_DIR).toBe('/home/test/.nvm');
+    expect(env.VOLTA_HOME).toBe('/home/test/.volta');
+  });
 });
 
 describeNativeSqlite('ToolKeyStore - encrypted at rest (real DB round-trip)', () => {

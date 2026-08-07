@@ -375,6 +375,17 @@ const ENGINE_ENV_ALLOWLIST: readonly string[] = [
   'TMP',
   'TEMP',
   'PWD',
+  // The POSIX dynamic linker's search path. Stripping it broke the engine on
+  // any Linux box that resolves a shared library from a non-system prefix -
+  // e.g. OpenSSL 1.1 installed under /opt on ARM64 Ubuntu - because the child
+  // then cannot load a library the parent could.
+  'LD_LIBRARY_PATH',
+  // Node version managers. Without these the engine child inherits a PATH that
+  // points into an nvm/Volta shim but no longer knows where the manager lives,
+  // so a Volta or nvm user gets "node not found" from a spawn that works fine
+  // in their own terminal.
+  'NVM_DIR',
+  'VOLTA_HOME',
   // ── Windows system (load-bearing for spawning + DLL resolution) ─────────
   'SYSTEMROOT',
   'SYSTEMDRIVE',
