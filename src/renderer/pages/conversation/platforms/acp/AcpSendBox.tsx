@@ -37,6 +37,7 @@ import React, { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { classifyAcpAuthFailure } from './acpAuthFailure';
 import { useAcpInitialMessage } from './useAcpInitialMessage';
+import { getModelContextLimit } from '@/renderer/utils/model/modelContextLimits';
 import { useAcpMessage } from './useAcpMessage';
 
 const useAcpSendBoxDraft = getSendBoxDraftHook('acp', {
@@ -118,6 +119,7 @@ const AcpSendBox: React.FC<{
     resetState,
     tokenUsage,
     contextLimit,
+    currentModelId,
     hasThinkingMessage,
   } = useAcpMessage(conversation_id);
   const { t } = useTranslation();
@@ -446,7 +448,12 @@ Please check your local CLI tool authentication status`,
           tokenUsage ? (
             <ContextUsageIndicator
               tokenUsage={tokenUsage}
-              contextLimit={contextLimit > 0 ? contextLimit : undefined}
+              // Prefer the window the agent reported; otherwise size it from
+              // the model itself, the way the wcore box does. Falling through
+              // to the component default showed 1M for every ACP model, so a
+              // 200K model displayed a fifth of its real usage and never
+              // warned before overflowing.
+              contextLimit={contextLimit > 0 ? contextLimit : getModelContextLimit(currentModelId ?? undefined)}
               size={24}
             />
           ) : undefined

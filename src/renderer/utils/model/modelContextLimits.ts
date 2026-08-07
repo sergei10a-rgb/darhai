@@ -83,6 +83,19 @@ export const MODEL_CONTEXT_LIMITS: Record<string, number> = {
   'claude-3-opus': 200_000,
   'claude-3-sonnet': 200_000,
   'claude-3-haiku': 200_000,
+
+  // Bare slot names. The Claude CLI reports the model as a slot ("opus",
+  // "haiku") rather than a full id, and those matched nothing here, so an ACP
+  // conversation fell through to the 1M default. Longest-key-wins keeps every
+  // full id above winning over these.
+  //
+  // `sonnet` is deliberately absent: which Sonnet that alias currently
+  // resolves to is not something this table can know, and the two candidates
+  // differ five-fold (200K vs 1M). Guessing would recreate exactly the bug
+  // these rows exist to fix - an unmatched slot falling back is honest, a
+  // wrong number is not.
+  opus: 1_000_000,
+  haiku: 200_000,
 };
 
 /**

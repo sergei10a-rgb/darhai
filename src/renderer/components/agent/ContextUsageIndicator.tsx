@@ -29,23 +29,31 @@ const ContextUsageIndicator: React.FC<ContextUsageIndicatorProps> = ({
   const { t } = useTranslation();
 
   const { percentage, displayTotal, displayLimit, isWarning, isDanger } = useMemo(() => {
+    // A zero or missing limit would divide by zero and a negative one would
+    // invert the ring; either way the caller has told us nothing useful, so
+    // fall back rather than render a nonsense arc.
+    const limit = Number.isFinite(contextLimit) && contextLimit > 0 ? contextLimit : DEFAULT_CONTEXT_LIMIT;
+
     if (!tokenUsage) {
       return {
         percentage: 0,
         displayTotal: '0',
-        displayLimit: formatTokenCount(contextLimit, true),
+        displayLimit: formatTokenCount(limit, true),
         isWarning: false,
         isDanger: false,
       };
     }
 
-    const total = tokenUsage.totalTokens;
-    const pct = (total / contextLimit) * 100;
+    const total = Number.isFinite(tokenUsage.totalTokens) ? tokenUsage.totalTokens : 0;
+    // Clamp: usage above the window is real (an over-long turn), but an
+    // unclamped percentage drives the ring's dash offset negative and draws a
+    // corrupt arc. Past 100% the ring is simply full.
+    const pct = Math.min(100, Math.max(0, (total / limit) * 100));
 
     return {
       percentage: pct,
       displayTotal: formatTokenCount(total),
-      displayLimit: formatTokenCount(contextLimit, true),
+      displayLimit: formatTokenCount(limit, true),
       isWarning: pct > 70,
       isDanger: pct > 90,
     };

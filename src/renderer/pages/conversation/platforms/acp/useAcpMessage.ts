@@ -23,6 +23,7 @@ type UseAcpMessageReturn = {
   resetState: () => void;
   tokenUsage: TokenUsageData | null;
   contextLimit: number;
+  currentModelId: string | null;
   hasThinkingMessage: boolean;
 };
 
@@ -40,6 +41,9 @@ export const useAcpMessage = (conversation_id: string): UseAcpMessageReturn => {
   const [aiProcessing, setAiProcessing] = useState(false); // New loading state for AI response
   const [tokenUsage, setTokenUsage] = useState<TokenUsageData | null>(null);
   const [contextLimit, setContextLimit] = useState<number>(0);
+  // The model the agent is actually on, so the context meter can be sized
+  // from its real window rather than the 1M default.
+  const [currentModelId, setCurrentModelId] = useState<string | null>(null);
 
   // Use refs to sync state for immediate access in event handlers
   const runningRef = useRef(running);
@@ -237,9 +241,17 @@ export const useAcpMessage = (conversation_id: string): UseAcpMessageReturn => {
           }
           addOrUpdateMessage(transformedMessage);
           break;
-        case 'acp_model_info':
-          // Model info updates are handled by AcpModelSelector, no action needed here
+        case 'acp_model_info': {
+          // The selector renders the name; we keep the id so the context meter
+          // can be sized from the model's real window. Without it every ACP
+          // conversation fell back to the 1M default, so a 200K model showed a
+          // fifth of its true usage and never warned before overflowing.
+          const modelInfo = message.data as { currentModelId?: string } | undefined;
+          if (modelInfo?.currentModelId) {
+            setCurrentModelId(modelInfo.currentModelId);
+          }
           break;
+        }
         case 'slash_commands_updated':
           // Slash commands became available (often during bootstrap when
           // agent_status events are suppressed). Update acpStatus so
@@ -318,6 +330,7 @@ export const useAcpMessage = (conversation_id: string): UseAcpMessageReturn => {
     setAcpStatus(null);
     setTokenUsage(null);
     setContextLimit(0);
+    setCurrentModelId(null);
     hasContentInTurnRef.current = false;
     turnFinishedRef.current = false;
     hasThinkingMessageRef.current = false;
@@ -354,6 +367,14 @@ export const useAcpMessage = (conversation_id: string): UseAcpMessageReturn => {
         aiProcessingRef.current = true;
       }
       setHasHydratedRunningState(true);
+
+      // Seed the model from the persisted conversation so the meter is sized
+      // correctly on the very first render, before any stream event arrives.
+      // A later acp_model_info still wins - this only fills the gap.
+      if (res.type === 'acp' && res.extra?.currentModelId) {
+        const persisted = res.extra.currentModelId;
+        setCurrentModelId((prev) => prev ?? persisted);
+      }
 
       // Restore persisted context usage data
       if (res.type === 'acp' && res.extra?.lastTokenUsage) {
@@ -395,6 +416,7 @@ export const useAcpMessage = (conversation_id: string): UseAcpMessageReturn => {
     resetState,
     tokenUsage,
     contextLimit,
+    currentModelId,
     hasThinkingMessage,
   };
 };

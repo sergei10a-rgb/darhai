@@ -194,4 +194,33 @@ describe('MODEL_CONTEXT_LIMITS conformance with the shipped models.dev snapshot'
     expect(getModelContextLimit('claude-sonnet-4-5')).toBe(K200);
     expect(getModelContextLimit('claude-sonnet-4-5-20250929')).toBe(K200);
   });
+
+  describe('bare slot names, which is what the Claude CLI reports', () => {
+    const M = 1_000_000;
+    const K200 = 200_000;
+
+    it('sizes a slot instead of falling back to the 1M default', () => {
+      // An ACP conversation reports "opus" / "haiku", not a full id. Those
+      // matched nothing, so every one of them showed the 1M default - a 200K
+      // model displayed a fifth of its real usage and never warned before
+      // overflowing.
+      expect(getModelContextLimit('opus')).toBe(M);
+      expect(getModelContextLimit('haiku')).toBe(K200);
+    });
+
+    it('leaves the Sonnet slot unresolved rather than guessing', () => {
+      // Which Sonnet the alias resolves to is not knowable here, and the
+      // candidates differ five-fold. Falling back is honest; a wrong number
+      // would recreate the very bug the slot rows fix.
+      expect(getModelContextLimit('sonnet')).toBe(DEFAULT_CONTEXT_LIMIT);
+    });
+
+    it('still lets a full id win over the slot it contains', () => {
+      // Longest-key-wins: 'claude-3-opus' must not be dragged to 1M by the
+      // bare 'opus' row.
+      expect(getModelContextLimit('claude-3-opus')).toBe(K200);
+      expect(getModelContextLimit('claude-opus-4-5')).toBe(K200);
+      expect(getModelContextLimit('claude-haiku-4-5')).toBe(K200);
+    });
+  });
 });
