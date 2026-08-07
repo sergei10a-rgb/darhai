@@ -5,7 +5,8 @@
  */
 
 import type { TProviderWithModel } from '@/common/config/storage';
-import { isOpenAIHost } from '@/common/utils/urlValidation';
+import { isOpenAIHost, isLocalBaseUrl } from '@/common/utils/urlValidation';
+import { LOCAL_KEYLESS_PLACEHOLDER } from '@/common/utils/platformConstants';
 import { loadBaselineProviderCatalog } from '@process/providers/catalog/providerCatalogStore';
 import { getEnhancedEnv } from '@process/utils/shellEnv';
 
@@ -277,8 +278,16 @@ export function buildSpawnConfig(
       break;
 
     case 'openai': {
-      if (model.apiKey) env.OPENAI_API_KEY = model.apiKey;
       const baseUrl = resolveOpenAIBaseUrl(model);
+      if (model.apiKey) {
+        env.OPENAI_API_KEY = model.apiKey;
+      } else if (baseUrl && isLocalBaseUrl(baseUrl)) {
+        // Keyless local backend (Ollama / LM Studio / llama.cpp): the engine's
+        // key resolution hard-requires a key for --provider openai and exits
+        // before `ready` (upstream #268), so inject the harmless placeholder.
+        // Keyless CLOUD bases stay keyless - the engine still fails loudly there.
+        env.OPENAI_API_KEY = LOCAL_KEYLESS_PLACEHOLDER;
+      }
       if (baseUrl) args.push('--base-url', stripTrailingV1(baseUrl));
       break;
     }

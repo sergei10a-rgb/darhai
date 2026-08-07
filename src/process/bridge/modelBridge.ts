@@ -21,7 +21,7 @@ import {
 } from '@/common/utils/protocolDetector';
 import { isGoogleApisHost, isLocalBaseUrl } from '@/common/utils/urlValidation';
 import type OpenAIType from 'openai';
-import { isNewApiPlatform } from '@/common/utils/platformConstants';
+import { isNewApiPlatform, LOCAL_KEYLESS_PLACEHOLDER } from '@/common/utils/platformConstants';
 import { ipcBridge } from '@/common';
 import { ProcessConfig } from '@process/utils/initStorage';
 import { ExtensionRegistry } from '@process/extensions';
@@ -71,15 +71,9 @@ export function loadAwsBedrock(): Promise<BedrockModule> {
  */
 const PROBE_MAX_TOKENS = 1;
 
-/**
- * Placeholder credential for keyless LOCAL backends (Ollama / LM Studio /
- * llama.cpp), which accept no API key. The OpenAI SDK constructor rejects an
- * empty string, so a harmless non-secret token is injected ONLY when the
- * resolved base URL host is local ({@link isLocalBaseUrl}). It is never
- * persisted as a real credential and never sent to a non-local host - cloud
- * providers still hard-require a real key.
- */
-const LOCAL_KEYLESS_PLACEHOLDER = 'ollama';
+// LOCAL_KEYLESS_PLACEHOLDER moved to @/common/utils/platformConstants so the
+// wcore spawn env builder can inject the same placeholder (keyless local
+// Ollama fix) without duplicating the constant.
 
 /**
  * Common path patterns for OpenAI-compatible APIs

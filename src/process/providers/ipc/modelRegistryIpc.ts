@@ -1331,10 +1331,12 @@ function buildChatStartPayload(
  *
  * `apiKey` is `undefined` for an intentionally keyless local provider (Ollama /
  * LM Studio / llama.cpp - Finding 2). `undefined` means "this provider carries
- * NO credential": the merge must NOT fall back to a stale `model.apiKey`, and
- * the envBuilder simply omits `OPENAI_API_KEY` (a local daemon needs none). An
- * empty string is never used to signal keyless - it is indistinguishable from a
- * cloud provider whose key failed to resolve.
+ * NO credential": the merge must NOT fall back to a stale `model.apiKey`. The
+ * envBuilder then re-injects LOCAL_KEYLESS_PLACEHOLDER for LOCAL base URLs only
+ * (the bundled engine hard-requires a key for --provider openai and would exit
+ * before `ready` - upstream #268); keyless CLOUD bases stay keyless and fail
+ * loudly. An empty string is never used to signal keyless - it is
+ * indistinguishable from a cloud provider whose key failed to resolve.
  */
 export type SpawnSecrets = {
   apiKey: string | undefined;

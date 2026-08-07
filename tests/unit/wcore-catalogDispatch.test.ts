@@ -143,3 +143,56 @@ describe('buildSpawnConfig - catalog provider dispatch (T3.5)', () => {
     expect(env.NOVITA_API_KEY).toBe('sk-z');
   });
 });
+
+describe('buildSpawnConfig - keyless local Ollama placeholder (upstream #268 / cf6950939)', () => {
+  /**
+   * The bundled engine's key resolution hard-requires a key for
+   * `--provider openai` and exits before `ready`, so a keyless LOCAL base must
+   * spawn with the harmless 'ollama' placeholder. Keyless CLOUD bases must NOT
+   * get one - a missing cloud key has to fail loudly, and a real key must never
+   * be overridden.
+   */
+  function makeLocalOllamaModel(apiKey: string): TProviderWithModel {
+    // Shaped like the legacy mirror of ollama-local: platform collapses to
+    // 'openai-compatible' (absent from mapProvider's map -> generic openai arm)
+    // and the registry id lives only in the bridge tag.
+    return {
+      id: 'random-uuid-ollama',
+      platform: 'openai-compatible',
+      name: 'Ollama',
+      baseUrl: 'http://127.0.0.1:11434/v1',
+      apiKey,
+      useModel: 'llama3:latest',
+      __waylandModelRegistryBridge: 'v2:ollama-local',
+    } as TProviderWithModel;
+  }
+
+  it('injects the ollama placeholder for a keyless LOCAL base', () => {
+    const { args, env } = buildSpawnConfig(makeLocalOllamaModel(''), OPTS);
+
+    expect(providerArg(args)).toBe('openai');
+    expect(env.OPENAI_API_KEY).toBe('ollama');
+  });
+
+  it('strips the trailing /v1 from the local base url', () => {
+    const { args } = buildSpawnConfig(makeLocalOllamaModel(''), OPTS);
+
+    const i = args.indexOf('--base-url');
+    expect(i).not.toBe(-1);
+    expect(args[i + 1]).toBe('http://127.0.0.1:11434');
+  });
+
+  it('does NOT inject a placeholder for a keyless CLOUD base (must fail loudly)', () => {
+    const model = makeNativeModel('openai', '');
+    model.baseUrl = 'https://api.openai.com/v1';
+    const { env } = buildSpawnConfig(model, OPTS);
+
+    expect(env.OPENAI_API_KEY).toBeUndefined();
+  });
+
+  it('never overrides a real key on a local base', () => {
+    const { env } = buildSpawnConfig(makeLocalOllamaModel('sk-real'), OPTS);
+
+    expect(env.OPENAI_API_KEY).toBe('sk-real');
+  });
+});
