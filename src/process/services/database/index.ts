@@ -106,8 +106,36 @@ const extractSearchPreviewText = (rawContent: string): string => {
 };
 
 /**
- * Main database class for Wayland
- * Uses a pluggable ISqliteDriver for SQLite operations
+ * Mark every message a previous run left mid-stream as failed.
+ *
+ * Standalone (driver-level) like `healOrphanedTeamRows`, so a test can run it
+ * against a bare in-memory driver; the class method below delegates here.
+ *
+ * @returns the number of rows repaired.
+ */
+export function reconcileInterruptedMessagesOn(db: ISqliteDriver): IQueryResult<number> {
+  try {
+    const stmt = db.prepare(`
+      UPDATE messages
+      SET status = 'error'
+      WHERE status IN ('work', 'pending')
+    `);
+    const result = stmt.run();
+    return {
+      success: true,
+      data: result.changes,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      error: error.message,
+    };
+  }
+}
+
+/**
+ * Main database class for Darhai.
+ * Uses a pluggable ISqliteDriver for SQLite operations.
  */
 export class DarhaiUIDatabase {
   private db: ISqliteDriver;
@@ -584,7 +612,8 @@ export class DarhaiUIDatabase {
   getConversation(conversationId: string): IQueryResult<TChatConversation> {
     try {
       const row = this.db.prepare('SELECT * FROM conversations WHERE id = ?').get(conversationId) as
-        IConversationRow | undefined;
+        | IConversationRow
+        | undefined;
 
       if (!row) {
         return {
@@ -1156,6 +1185,25 @@ export class DarhaiUIDatabase {
     }
   }
 
+  /**
+   * Mark every message a previous run left mid-stream as failed.
+   *
+   * Streaming persists rows with status 'pending' and ACP tool calls with
+   * 'work'; both are finalized only when the turn completes. A crash or kill
+   * mid-turn freezes those rows non-terminal, and nothing else ever touches
+   * them again - so after every restart the chat rendered the dead turn as
+   * still responding, forever.
+   *
+   * Called once at startup, before any window or agent exists. At that moment
+   * no turn can legitimately be in flight, which is what makes the blanket
+   * UPDATE safe: every non-terminal row is, by definition, an interrupted one.
+   *
+   * @returns the number of rows repaired.
+   */
+  reconcileInterruptedMessages(): IQueryResult<number> {
+    return reconcileInterruptedMessagesOn(this.db);
+  }
+
   deleteMessage(messageId: string): IQueryResult<boolean> {
     try {
       const stmt = this.db.prepare('DELETE FROM messages WHERE id = ?');
@@ -1552,7 +1600,8 @@ export class DarhaiUIDatabase {
   getChannelSessionByUser(userId: string): IQueryResult<IChannelSession | null> {
     try {
       const row = this.db.prepare('SELECT * FROM assistant_sessions WHERE user_id = ?').get(userId) as
-        IChannelSessionRow | undefined;
+        | IChannelSessionRow
+        | undefined;
       return { success: true, data: row ? rowToChannelSession(row) : null };
     } catch (error: any) {
       return { success: false, error: error.message };
@@ -1634,7 +1683,8 @@ export class DarhaiUIDatabase {
   getPairingRequestByCode(code: string): IQueryResult<IChannelPairingRequest | null> {
     try {
       const row = this.db.prepare('SELECT * FROM assistant_pairing_codes WHERE code = ?').get(code) as
-        IChannelPairingCodeRow | undefined;
+        | IChannelPairingCodeRow
+        | undefined;
       return { success: true, data: row ? rowToPairingRequest(row) : null };
     } catch (error: any) {
       return { success: false, error: error.message };

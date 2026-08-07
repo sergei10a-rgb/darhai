@@ -826,6 +826,26 @@ const handleAppReady = async (): Promise<void> => {
     return;
   }
 
+  // Repair turns a previous run left mid-stream, BEFORE any window or agent
+  // exists. Streaming rows stay 'pending' and ACP tool calls 'work' until a
+  // turn finalizes them; a crash or kill mid-turn freezes them there, and the
+  // chat then renders the dead turn as still responding after every restart.
+  // Right here nothing can legitimately be in flight, so every non-terminal
+  // row is an interrupted one. Best-effort: a failure must not block startup.
+  try {
+    const { getDatabase } = await import('@process/services/database');
+    const db = await getDatabase();
+    const repaired = db.reconcileInterruptedMessages();
+    if (repaired.success && repaired.data) {
+      console.log(`[Wayland] reconciled ${repaired.data} interrupted message(s) from a previous run`);
+    } else if (!repaired.success) {
+      console.warn('[Wayland] interrupted-message reconcile failed (ignored):', repaired.error);
+    }
+    mark('reconcileInterruptedMessages');
+  } catch (error) {
+    console.warn('[Wayland] interrupted-message reconcile skipped (ignored):', error);
+  }
+
   try {
     initializeZoomFactor(await ProcessConfig.get('ui.zoomFactor'));
     mark('initializeZoomFactor');
