@@ -58,10 +58,7 @@
 
 | хэмжээ | sha | юу |
 |--------|-----|----|
-| S | `1f3926f06` | acceptEdits mode advertised but not honored at ACP permission gate |
-| S | `346f71831` | Respawn-storm: identical crash banners stack (no per-episode msg_id dedup) |
-| S | `854c0c19e` | MCP Library Browse page has no 'add custom server' entry point |
-| S | `3afb6b93c` | Uninstaller leaves HKCU residue: darhai:// protocol handler + start-on-boot Run/StartupApproved entries survive uninstall |
+| S | `3afb6b93c` | Uninstaller leaves HKCU residue: darhai:// protocol handler + start-on-boot Run/StartupApproved entries survive uninstall (**хойшлуулсан — доор**) |
 | M | `3b1f59382` | max_tokens guessed from model NAME substring - breaks unknown/custom model ids |
 | M | `58566e9ed` | Custom OpenAI-compatible endpoint without /models hard-fails connect (no chat-completions fallback, no no-models landing) |
 | M | `3f0dc9e2e` | ACP allow-always approvals forgotten after restart (no persistence) |
@@ -81,6 +78,15 @@
 дээр desktop-ийн анхдагчийг устгавал Gemini Pro/reasoning загварууд **хоосон
 хариу** буцаах регресст ордог. Тиймээс энэ нь хөдөлгүүрийн хувилбар ахиулах
 (+ SHA мөрүүд) шаардана — тусад нь, зориудаар хийх ажил.
+
+**⚠️ `3afb6b93c` (uninstaller HKCU үлдэгдэл) — ХЭМЖИЛТ ХҮРТЭЛ ХОЙШЛУУЛСАН.**
+Протоколын түлхүүр (`HKCU\Software\Classes\darhai`) устгах нь детерминист,
+аюулгүй. Гэвч start-on-boot-ийн `Run` утгын НЭР (`electron.app.Darhai` гэж
+таамаглаж буй) нь Electron хувилбараас хамаардаг бөгөөд манай fork
+`setAppUserModelId` дууддаггүй. Буруу нэр бичвэл цэвэрлэгээ **чимээгүй юу ч
+хийхгүй** — «зассан» мэт харагдаад ажиллахгүй. Багцалсан installer барьж,
+autostart асаагаад `HKCU\...\Run`-ийн жинхэнэ утгын нэрийг **нүдээр хэмжсэний
+дараа** л .nsh-д бичнэ (measure-never-guess). Тусдаа, багц-барилттай ажил.
 
 ## Өнчин процессын засварын тэмдэглэл (`ac4aa1866`)
 
