@@ -118,6 +118,15 @@ export class AcpAgentV2 {
   private cachedModes: ModeSnapshot | null = null;
   private lastSessionId: string | null = null;
   private lastStatus: SessionStatus = 'idle';
+  /**
+   * Stable msg_id for the CURRENT error episode. The start-retry loop can
+   * crash several times in a row; reusing one id makes the renderer (which
+   * upserts by msg_id) update a single banner instead of stacking identical
+   * ones. Reset on forward progress (active status, turn finish, new send) so
+   * a genuinely new failure gets its own banner. (upstream 346f71831)
+   */
+  private errorBannerId: string | null = null;
+  private errorEpisodeSeq = 0;
 
   // Promise bridges for async methods (Tasks 4-6)
   private startOp: PendingOp<void> | null = null;
@@ -321,6 +330,10 @@ export class AcpAgentV2 {
       onStatusChange: (status: SessionStatus) => {
         this.lastStatus = status;
         this.persistStatus(status);
+        if (status === 'active') {
+          // Forward progress: the next error is a new episode, new banner.
+          this.errorBannerId = null;
+        }
 
         // Resolve startOp when reaching active/error
         if (status === 'active' && this.startOp) {
@@ -433,6 +446,8 @@ export class AcpAgentV2 {
 
         switch (event.type) {
           case 'turn_finished':
+            // A turn completed - forward progress, close the error episode.
+            this.errorBannerId = null;
             this.onSignalEvent({
               type: 'finish',
               conversation_id: this.conversationId,
@@ -488,10 +503,13 @@ export class AcpAgentV2 {
               event.message.includes('PROCESS_CRASHED') ||
               event.message.includes('Process disconnected');
 
+            // One stable id per episode: retry storms update a single banner
+            // instead of stacking identical ones (renderer upserts by msg_id).
+            this.errorBannerId ??= `error_${this.conversationId}_${++this.errorEpisodeSeq}`;
             this.onSignalEvent({
               type: 'error',
               conversation_id: this.conversationId,
-              msg_id: `signal_${Date.now()}`,
+              msg_id: this.errorBannerId,
               data: event.message,
             });
 
@@ -648,6 +666,9 @@ export class AcpAgentV2 {
   // ─── Messaging + Permission Methods (Task 5) ───────────
 
   async sendMessage(data: { content: string; files?: string[]; msg_id?: string }): Promise<AcpResult> {
+    // A new user turn starts a new error episode: failures of THIS send get
+    // their own banner rather than silently updating a stale one.
+    this.errorBannerId = null;
     try {
       // Auto-reconnect if session is in error/idle state (mirrors V1 behavior).
       // V1 checks isConnected/hasActiveSession before every prompt and calls start().

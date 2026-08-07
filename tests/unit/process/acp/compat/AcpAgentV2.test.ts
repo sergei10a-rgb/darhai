@@ -482,6 +482,51 @@ describe('AcpAgentV2 - Messaging + Permission Methods', () => {
     return result;
   }
 
+  describe('error banner dedup (346f71831)', () => {
+    function errorEvents(onSignalEvent: ReturnType<typeof vi.fn>) {
+      return onSignalEvent.mock.calls
+        .map((c) => c[0] as { type: string; msg_id: string })
+        .filter((e) => e.type === 'error');
+    }
+
+    it('reuses ONE msg_id across a retry storm (renderer upserts, no stacking)', async () => {
+      const { onSignalEvent } = await createStartedAgentWithSignalCapture();
+
+      capturedCallbacks.onSignal({ type: 'error', message: 'spawn failed' });
+      capturedCallbacks.onSignal({ type: 'error', message: 'spawn failed again' });
+
+      const errors = errorEvents(onSignalEvent);
+      expect(errors).toHaveLength(2);
+      expect(errors[1].msg_id).toBe(errors[0].msg_id);
+    });
+
+    it('rotates the banner id after forward progress so a new failure gets a new banner', async () => {
+      const { onSignalEvent } = await createStartedAgentWithSignalCapture();
+
+      capturedCallbacks.onSignal({ type: 'error', message: 'first episode' });
+      // Forward progress: session came back up.
+      capturedCallbacks.onStatusChange('active');
+      capturedCallbacks.onSignal({ type: 'error', message: 'second episode' });
+
+      const errors = errorEvents(onSignalEvent);
+      expect(errors).toHaveLength(2);
+      expect(errors[1].msg_id).not.toBe(errors[0].msg_id);
+    });
+
+    it('a new user send also starts a new error episode', async () => {
+      const { agent, onSignalEvent } = await createStartedAgentWithSignalCapture();
+
+      capturedCallbacks.onSignal({ type: 'error', message: 'pre-send failure' });
+      capturedCallbacks.onStatusChange('active'); // avoid the reconnect path in sendMessage
+      await agent.sendMessage({ content: 'retry please' });
+      capturedCallbacks.onSignal({ type: 'error', message: 'post-send failure' });
+
+      const errors = errorEvents(onSignalEvent);
+      expect(errors).toHaveLength(2);
+      expect(errors[1].msg_id).not.toBe(errors[0].msg_id);
+    });
+  });
+
   describe('sendMessage()', () => {
     it('should delegate to session.sendMessage and return success', async () => {
       const { agent } = await createStartedAgentWithSignalCapture();
