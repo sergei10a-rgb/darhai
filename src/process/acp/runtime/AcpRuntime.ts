@@ -208,9 +208,24 @@ export class AcpRuntime {
     this.sessions.clear();
   }
 
+  /**
+   * Restart the idle clock for a session. Called from every stream chunk and
+   * status flip: sendMessage alone is not enough, because a turn longer than
+   * the idle timeout would otherwise flip back to 'active' with a stale
+   * lastActiveAt and be suspended on the next reclaimer scan - tearing down
+   * the bridge child while the user is reading the reply (upstream 60b8c17d9).
+   */
+  private touchActivity(convId: string): void {
+    const entry = this.sessions.get(convId);
+    if (entry) {
+      entry.lastActiveAt = Date.now();
+    }
+  }
+
   private buildCallbacks(convId: string): SessionCallbacks {
     return {
       onMessage: (message) => {
+        this.touchActivity(convId);
         this.onStreamEvent(convId, message);
       },
       onSessionId: (_sessionId) => {
@@ -218,6 +233,7 @@ export class AcpRuntime {
         // this.acpSessionRepo.updateSessionId(convId, sessionId);
       },
       onStatusChange: (status) => {
+        this.touchActivity(convId);
         // TODO(ACP Discovery): Re-enable after fixing agent_id.
         // this.persistStatus(convId, status);
         this.onSignalEvent(convId, { type: 'status_change', status });
