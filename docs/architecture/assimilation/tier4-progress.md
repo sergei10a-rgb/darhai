@@ -56,6 +56,7 @@
 | `3f0dc9e2e` | ACP allow-always зөвшөөрөл workspace тус бүрээр config-д хадгалагдаж restart-д амьд үлдэнэ | `86adbdfbe` |
 | (serge) | Reference файлыг дурын хавтснаас drag-drop зөвшөөрөв (confinePath сулруулсан ч .ssh/.aws/unsafe хэвээр хаагдана) | `910603cf4` |
 | `e41615065` | WCore turn ахицгүй гацахад watchdog зогсоож алдаа гаргана (heartbeat дангаараа амьд байлгахгүй) | `d4dea79ae` |
+| `c98088d05`+`49a49fcd9` | MCP сервер холбогдож чадаагүйг гаргана; engine stderr-ийг түвшнээр нь ангилж console.error үер зогсооно | `359e9c9c5` |
 
 ## Үлдсэн (7 агентаар кодтой тулгаж БАТАЛСАН, засаагүй)
 
