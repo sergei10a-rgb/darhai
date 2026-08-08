@@ -7,7 +7,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { DARHAI_KNOWLEDGE_DIR } from './bootstrap';
-import { confinePath } from '@process/bridge/pathConfinement';
+import { confinePath, resolveExternalReferencePath } from '@process/bridge/pathConfinement';
 import { resolveWithinApprovedDirectory } from '@process/bridge/userApprovedPaths';
 
 /**
@@ -318,16 +318,20 @@ const MAX_REFERENCE_FILE_BYTES = 25 * 1024 * 1024; // 25 MB
  *
  * Sources are renderer-supplied (drag-drop file paths) so they are NOT trusted.
  * Reference files are later read back into chat prompts, so an arbitrary file
- * here is an arbitrary read-into-model exfil primitive (SEC-IPC-04). Defenses:
- *   - PRIMARY GATE: each source must either confine to an authorized app root
- *     (`confinePath`) OR sit inside a directory the user explicitly approved
- *     through the native open dialog (`resolveWithinApprovedDirectory`). A plain
- *     absolute path the renderer injects (e.g. `/etc/passwd`, ~/.aws/credentials)
- *     is neither - it never reaches lstat/copyFile. Dialog-picked files remain
- *     accepted because dialogBridge approves their parent directory in MAIN.
+ * here is an arbitrary read-into-model exfil primitive (SEC-IPC-04).
+ *
+ * The owner deliberately relaxed the authorized-root confinement here (decision
+ * 2026-08-08) so reference files can be dragged in from ANY folder. That single
+ * relaxation is bounded by the layered guards that remain:
+ *   - PRIMARY GATE: a source is resolved via `confinePath` (in-root fast path),
+ *     `resolveWithinApprovedDirectory` (native-dialog-approved dirs), or
+ *     `resolveExternalReferencePath` (arbitrary folder, but still rejecting
+ *     unsafe path forms, `..` traversal, and sensitive credential dirs like
+ *     .ssh/.aws/.gnupg - so ~/.ssh/id_rsa and ~/.aws/credentials stay
+ *     unreachable even under the relaxation).
  *   - lstat (NOT stat) and refuse symlinks/junctions/reparse points on the
  *     source itself, so a symlink can never be dereferenced to capture its
- *     sensitive target (e.g. ~/.aws/credentials).
+ *     sensitive target.
  *   - copy only regular files (skip dirs / sockets / devices / fifos).
  *   - cap the per-call count and per-file size to bound abuse and disk use.
  */
@@ -347,13 +351,14 @@ export async function addProjectReference(workspace: string, sourcePaths: string
 
   for (const src of sources) {
     try {
-      // PRIMARY GATE: resolve the source to a trusted path. Accept it only when
-      // it confines to an authorized app root, or when it lives inside a
-      // user-approved (native-dialog) directory. Anything else - including a
-      // plain absolute path to a sensitive regular file - is rejected here,
-      // before any lstat/copyFile touches it. Both gates return the resolved,
-      // realpath-collapsed path so the path validated is the path copied.
-      const trusted = (await confinePath(src)) ?? resolveWithinApprovedDirectory(src);
+      // PRIMARY GATE: resolve the source to a trusted path. In-root files and
+      // native-dialog-approved dirs pass directly; any other folder is accepted
+      // via resolveExternalReferencePath (owner-approved relaxation) which still
+      // rejects unsafe forms, traversal, and sensitive credential dirs. A path
+      // to ~/.ssh/id_rsa or ~/.aws/credentials is refused by all three, before
+      // any lstat/copyFile touches it.
+      const trusted =
+        (await confinePath(src)) ?? resolveWithinApprovedDirectory(src) ?? resolveExternalReferencePath(src);
       if (trusted === null) {
         console.warn('[projectKnowledge] refusing out-of-root reference source:', src);
         rejected.push({ name: path.basename(src), reason: 'not-permitted' });

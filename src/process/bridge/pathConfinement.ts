@@ -301,6 +301,45 @@ export async function confinePath(rawPath: unknown): Promise<string | null> {
   return null;
 }
 
+/**
+ * Resolve a renderer-supplied path for the DRAG-DROP REFERENCE feature, where
+ * the owner has deliberately allowed pulling files from ANY folder (not only
+ * the app's authorized roots). This is a scoped relaxation of {@link confinePath}
+ * for that one copy-into-`.darhai/reference/` flow.
+ *
+ * The relaxation lifts ONLY the authorized-root requirement. Every other guard
+ * that protects against the worst abuses stays in force, so a compromised
+ * renderer still cannot turn this into a secret-exfil primitive:
+ *   - unsafe path FORMS (NUL, UNC, device, NTFS ADS) -> rejected
+ *   - `..` traversal / trailing-dot-or-space segments -> rejected
+ *   - sensitive credential dirs (.ssh, .aws, .gnupg, .kube, .netrc, ...) ->
+ *     rejected, so ~/.ssh/id_rsa and ~/.aws/credentials remain unreachable
+ *   - the caller's own lstat then refuses symlinks/non-regular files
+ *
+ * The path is resolved LEXICALLY (no realpath collapse) on purpose: the caller
+ * runs lstat on the returned path, and a realpath collapse would dereference a
+ * symlink before that check could see it.
+ *
+ * @returns the lexically resolved absolute path when it clears the residual
+ *   guards, or `null` to reject (fail closed).
+ */
+export function resolveExternalReferencePath(rawPath: unknown): string | null {
+  if (typeof rawPath !== 'string') return null;
+  const raw = rawPath.trim();
+  if (hasUnsafePathForm(raw)) return null;
+
+  let resolved: string;
+  try {
+    resolved = path.resolve(raw);
+  } catch {
+    return null;
+  }
+
+  if (hasUnsafeSegment(resolved)) return null;
+  if (touchesSensitiveSegment(resolved)) return null;
+  return resolved;
+}
+
 /** True when `candidate` is inside any currently authorized root. */
 function isAuthorized(candidate: string): boolean {
   for (const root of authorizedRoots) {

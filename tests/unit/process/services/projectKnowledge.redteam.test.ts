@@ -22,9 +22,12 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// The two security gates. Mock them so we control accept/reject deterministically.
+// The three security gates. Mock them so we control accept/reject
+// deterministically. resolveExternalReferencePath is the owner-approved
+// relaxation (arbitrary folders, sensitive/unsafe still rejected).
 vi.mock('@process/bridge/pathConfinement', () => ({
   confinePath: vi.fn(),
+  resolveExternalReferencePath: vi.fn(),
 }));
 vi.mock('@process/bridge/userApprovedPaths', () => ({
   resolveWithinApprovedDirectory: vi.fn(),
@@ -50,11 +53,12 @@ vi.mock('@process/services/projectKnowledge/bootstrap', () => ({
 }));
 
 import fs from 'fs/promises';
-import { confinePath } from '@process/bridge/pathConfinement';
+import { confinePath, resolveExternalReferencePath } from '@process/bridge/pathConfinement';
 import { resolveWithinApprovedDirectory } from '@process/bridge/userApprovedPaths';
 import { addProjectReference } from '@process/services/projectKnowledge/knowledge';
 
 const mockConfinePath = vi.mocked(confinePath);
+const mockResolveExternal = vi.mocked(resolveExternalReferencePath);
 const mockResolveApproved = vi.mocked(resolveWithinApprovedDirectory);
 const mockMkdir = vi.mocked(fs.mkdir);
 const mockLstat = vi.mocked(fs.lstat);
@@ -76,6 +80,10 @@ const regularFile = (size: number) =>
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // Default the relaxation gate to REJECT, so the existing rejection tests
+  // model a source all three gates refuse (a sensitive/unsafe path). Tests
+  // exercising the acceptance path override it per-case.
+  mockResolveExternal.mockReturnValue(null);
   mockMkdir.mockResolvedValue(undefined as never);
   // uniqueDest: fs.access throws => destination is free on first try.
   mockAccess.mockRejectedValue(new Error('ENOENT') as never);
@@ -144,6 +152,42 @@ describe('addProjectReference confinement (SEC-IPC-04)', () => {
     expect(mockLstat).toHaveBeenCalledWith(IN_ROOT);
     expect(mockCopyFile).toHaveBeenCalledTimes(1);
     expect(mockCopyFile).toHaveBeenCalledWith(IN_ROOT, expect.stringContaining('spec.md'));
+  });
+
+  // Owner-approved relaxation (2026-08-08): a file dragged from an arbitrary
+  // content folder is now accepted through the external-reference gate, even
+  // though neither the app-root nor the dialog-approved gate matches it.
+  it('accepts an arbitrary-folder source via the external-reference gate', async () => {
+    const EXTERNAL = '/home/user/Downloads/dataset.csv';
+    mockConfinePath.mockResolvedValue(null);
+    mockResolveApproved.mockReturnValue(null);
+    mockResolveExternal.mockReturnValue(EXTERNAL);
+    mockLstat.mockResolvedValue(regularFile(2048));
+
+    const result = await addProjectReference(WORKSPACE, [EXTERNAL]);
+
+    expect(mockResolveExternal).toHaveBeenCalledWith(EXTERNAL);
+    // The copy operates on the resolved external path.
+    expect(mockLstat).toHaveBeenCalledWith(EXTERNAL);
+    expect(mockCopyFile).toHaveBeenCalledTimes(1);
+    expect(mockCopyFile.mock.calls[0][0]).toBe(EXTERNAL);
+    expect(String(mockCopyFile.mock.calls[0][1])).toContain('dataset.csv');
+    expect(result.rejected).toEqual([]);
+  });
+
+  // The relaxation is bounded: a source the external gate refuses (sensitive
+  // credential dir / unsafe form) is still rejected and never copied.
+  it('still refuses a source the external-reference gate rejects', async () => {
+    const SENSITIVE = '/home/user/.ssh/id_rsa';
+    mockConfinePath.mockResolvedValue(null);
+    mockResolveApproved.mockReturnValue(null);
+    mockResolveExternal.mockReturnValue(null); // sensitive → refused
+
+    const result = await addProjectReference(WORKSPACE, [SENSITIVE]);
+
+    expect(mockLstat).not.toHaveBeenCalled();
+    expect(mockCopyFile).not.toHaveBeenCalled();
+    expect(result.rejected).toEqual([{ name: 'id_rsa', reason: 'not-permitted' }]);
   });
 });
 
