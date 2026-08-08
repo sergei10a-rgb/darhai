@@ -142,6 +142,9 @@ export type WCoreEvent =
   | { type: 'info'; msg_id: string; message: string }
   | { type: 'config_changed'; capabilities: WCoreCapabilities }
   | { type: 'mcp_ready'; name: string; tools: string[] }
+  // A configured MCP server failed to connect. Surfaced to the user so a
+  // missing tool set is explained rather than silently absent.
+  | { type: 'mcp_failed'; name: string; reason: string }
   | { type: 'pong' }
   // ── W1: F9 structured trace ──────────────────────────────────────
   | {

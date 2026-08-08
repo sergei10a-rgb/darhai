@@ -953,6 +953,23 @@ export class WCoreManager extends BaseAgentManager<WCoreManagerData, string> {
         return;
       }
 
+      // A configured MCP server failed to connect. This is a system-level event
+      // (empty msg_id) that MUST reach the renderer - forward it as an error
+      // frame BEFORE the msg_id guard below drops it, so the user learns why an
+      // expected tool set is missing instead of it vanishing silently.
+      if (data.type === 'mcp_failed') {
+        const info = (data.data ?? {}) as { name?: string; reason?: string };
+        const name = info.name ?? 'MCP';
+        const reason = info.reason ?? '';
+        ipcBridge.conversation.responseStream.emit({
+          type: 'error',
+          conversation_id: this.conversation_id,
+          msg_id: '',
+          data: `MCP сервер "${name}" холбогдож чадсангүй${reason ? `: ${reason}` : ''}.`,
+        });
+        return;
+      }
+
       // When the inference provider rejects the key (401 / invalid x-api-key),
       // flip that provider off "connected" so the UI stops showing it healthy
       // and the next spawn does not reuse the dead key. Side-effect only: the

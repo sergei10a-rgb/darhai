@@ -18,6 +18,7 @@ import { hydrateModelForSpawn } from '@process/providers/ipc/modelRegistryIpc';
 import { registerAgentChild, unregisterAgentChild } from '../childRegistry';
 import { killChild } from '../acp/utils';
 import { PromptTimer } from '@process/acp/session/PromptTimer';
+import { wcoreStderrLevel } from './stderrLog';
 import type { WCoreEvent, WCoreCommand, WCoreCapabilities } from './protocol';
 
 const WCORE_PROJECT_CONFIG = '.wcore.toml';
@@ -290,9 +291,14 @@ export class WCoreAgent {
       }
     });
 
-    // Log stderr as diagnostics
+    // Log stderr as diagnostics, routed by the line's own level token so
+    // ordinary engine progress no longer floods console.error (49a49fcd9).
     this.childProcess.stderr?.on('data', (chunk: Buffer) => {
-      console.error('[wcore]', chunk.toString());
+      for (const line of chunk.toString().split('\n')) {
+        if (!line.trim()) continue;
+        const level = wcoreStderrLevel(line);
+        console[level]('[wcore]', line);
+      }
     });
 
     // Handle process exit
@@ -571,6 +577,18 @@ export class WCoreAgent {
 
       case 'mcp_ready':
         this.mcpReadyResolve();
+        break;
+
+      case 'mcp_failed':
+        // A configured MCP server failed to connect. Surface it (distinct type,
+        // NOT 'info', so the manager's msg_id gate does not swallow it) so the
+        // user learns why an expected tool set is missing.
+        console.warn('[WCoreAgent] mcp_failed', { name: event.name, reason: event.reason });
+        this.onStreamEvent({
+          type: 'mcp_failed',
+          data: { name: event.name, reason: event.reason },
+          msg_id: '',
+        });
         break;
 
       case 'pong':

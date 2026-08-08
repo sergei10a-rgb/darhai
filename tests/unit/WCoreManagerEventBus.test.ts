@@ -335,6 +335,21 @@ describe('GAP-8: WCoreManager Multi EventBus Emission', () => {
     });
   });
 
+  // ── mcp_failed: forwarded despite empty msg_id (c98088d05) ──────
+
+  describe('mcp_failed forwarding', () => {
+    it('forwards a failed MCP server as an error frame despite empty msg_id', () => {
+      // System-level event (msg_id ''): the pass-through must fire BEFORE the
+      // empty-msg_id guard that otherwise swallows it.
+      emitEvent(manager, { type: 'mcp_failed', data: { name: 'gws', reason: 'egress denied' }, msg_id: '' });
+
+      const errors = findIpcEmissions('error');
+      expect(errors).toHaveLength(1);
+      expect(String(errors[0].data)).toContain('gws');
+      expect(String(errors[0].data)).toContain('egress denied');
+    });
+  });
+
   // ── AC-5: request_trace does NOT emit to team/channel buses ─────
 
   describe('AC-5: request_trace stays ipcBridge-only', () => {
