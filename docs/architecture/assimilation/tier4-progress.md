@@ -54,6 +54,8 @@
 | `346f71831` | Respawn storm: нэг episode = нэг banner id, ижил banner давхарлахаа болив | `d391a7323` |
 | `854c0c19e` | MCP Library Browse хуудсанд «захиалгат нэмэх» орох цэг нэмэгдэв (sidebar энд бууна) | `73dd02a4d` |
 | `3f0dc9e2e` | ACP allow-always зөвшөөрөл workspace тус бүрээр config-д хадгалагдаж restart-д амьд үлдэнэ | `86adbdfbe` |
+| (serge) | Reference файлыг дурын хавтснаас drag-drop зөвшөөрөв (confinePath сулруулсан ч .ssh/.aws/unsafe хэвээр хаагдана) | `910603cf4` |
+| `e41615065` | WCore turn ахицгүй гацахад watchdog зогсоож алдаа гаргана (heartbeat дангаараа амьд байлгахгүй) | `d4dea79ae` |
 
 ## Үлдсэн (7 агентаар кодтой тулгаж БАТАЛСАН, засаагүй)
 
@@ -72,7 +74,6 @@
 | S | `3afb6b93c` | Uninstaller leaves HKCU residue: darhai:// protocol handler + start-on-boot Run/StartupApproved entries survive uninstall (**хойшлуулсан — доор**) |
 | M | `3b1f59382` | max_tokens guessed from model NAME substring - breaks unknown/custom model ids |
 | M | `58566e9ed` | Custom OpenAI-compatible endpoint without /models hard-fails connect (no chat-completions fallback, no no-models landing) |
-| M | `e41615065` | WCore turn stall watchdog missing — silent turn spins forever |
 | M | `e2f75273b` | No right-click cut/copy/paste menu; Ctrl+C on agent messages copies nothing (shadow DOM) |
 | M | `none` | Closing active tab shows wrong conversation (no navigation, jumps to last tab); Ctrl+Z cannot undo a paste in the composer |
 | M | `c98088d05+49a49fcd9` | Engine mcp_failed events swallowed; all engine stderr logged as console.error |
