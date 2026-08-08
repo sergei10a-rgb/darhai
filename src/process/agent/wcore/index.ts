@@ -17,9 +17,31 @@ import { getToolKeyStore } from './toolKeyStore';
 import { hydrateModelForSpawn } from '@process/providers/ipc/modelRegistryIpc';
 import { registerAgentChild, unregisterAgentChild } from '../childRegistry';
 import { killChild } from '../acp/utils';
+import { PromptTimer } from '@process/acp/session/PromptTimer';
 import type { WCoreEvent, WCoreCommand, WCoreCapabilities } from './protocol';
 
 const WCORE_PROJECT_CONFIG = '.wcore.toml';
+
+/** Default turn-stall timeout: 10 minutes of zero forward progress. */
+const DEFAULT_TURN_STALL_TIMEOUT_MS = 600_000;
+/** Never arm a stall deadline shorter than this - protects against a misconfig. */
+const MIN_TURN_STALL_TIMEOUT_MS = 60_000;
+/** setTimeout's 32-bit ceiling; a larger delay fires immediately in Node. */
+const MAX_TIMER_MS = 2_147_483_647;
+
+/**
+ * Resolve the per-turn stall timeout. A turn is "stalled" when the engine keeps
+ * the process alive (answering ping) but emits no msg_id-bearing frame for this
+ * long, leaving the chat stuck on 'working' forever. Overridable via
+ * DARHAI_WCORE_TURN_STALL_TIMEOUT_MS (fork env vars are DARHAI_*); clamped to a
+ * sane floor and setTimeout's ceiling.
+ */
+function resolveTurnStallTimeoutMs(env: NodeJS.ProcessEnv = process.env): number {
+  const raw = env.DARHAI_WCORE_TURN_STALL_TIMEOUT_MS;
+  const parsed = raw ? Number(raw) : NaN;
+  const value = Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_TURN_STALL_TIMEOUT_MS;
+  return Math.min(Math.max(value, MIN_TURN_STALL_TIMEOUT_MS), MAX_TIMER_MS);
+}
 
 type StreamEventHandler = (event: { type: string; data: unknown; msg_id: string }) => void;
 
@@ -132,6 +154,21 @@ export class WCoreAgent {
   private _onPong: WCoreAgentOptions['onPong'];
   private options: WCoreAgentOptions;
   private activeMsgId: string | null = null;
+  /**
+   * The msg_id the stall watchdog will fault against. Set on `send`, cleared on
+   * the terminal frame (stream_end / error) or when the watchdog fires. Kept
+   * separate from `activeMsgId` (which the engine only sets at stream_start) so
+   * an engine that goes silent BEFORE stream_start is still bounded.
+   */
+  private stallMsgId: string | null = null;
+  /** Per-turn stall watchdog: faults a turn that makes no forward progress. */
+  private readonly stallTimer = new PromptTimer(resolveTurnStallTimeoutMs(), () => this.handleTurnStall());
+  /**
+   * Active pause reasons (tool executions, pending approvals). The watchdog is
+   * paused while any legitimate long wait is in flight and resumes only when the
+   * last one clears - edge-triggered on 0↔1 so nested waits do not double-toggle.
+   */
+  private readonly stallPauseReasons = new Set<string>();
   private configBackup: { path: string; content: string | null; written: string | null } | null = null;
   private mcpReadyPromise: Promise<void>;
   private mcpReadyResolve!: () => void;
@@ -268,6 +305,10 @@ export class WCoreAgent {
         this._onProcessExit(code, this.activeMsgId);
       }
       this.activeMsgId = null;
+      // The process is gone; a lingering stall timer would fire against a dead
+      // turn (and try to stop() a dead process). Disarm it.
+      this.stopStallWatchdog();
+      this.stallMsgId = null;
       this.childProcess = null;
     });
 
@@ -332,7 +373,63 @@ export class WCoreAgent {
     }
   }
 
+  /** Arm the stall watchdog for a fresh turn. */
+  private startStallWatchdog(): void {
+    this.stallPauseReasons.clear();
+    this.stallTimer.start();
+  }
+
+  /** Disarm the stall watchdog (terminal frame or teardown). */
+  private stopStallWatchdog(): void {
+    this.stallTimer.stop();
+    this.stallPauseReasons.clear();
+  }
+
+  /** Pause the watchdog for a legitimate long wait (tool run / approval). */
+  private pauseStallWatchdog(reason: string): void {
+    if (this.stallPauseReasons.has(reason)) return;
+    this.stallPauseReasons.add(reason);
+    if (this.stallPauseReasons.size === 1) this.stallTimer.pause();
+  }
+
+  /** Clear one wait; resume only when the last outstanding wait clears. */
+  private resumeStallWatchdog(reason: string): void {
+    if (!this.stallPauseReasons.delete(reason)) return;
+    if (this.stallPauseReasons.size === 0) this.stallTimer.resume();
+  }
+
+  /**
+   * The engine stopped making forward progress on the active turn. Tear the
+   * turn down deterministically: disarm, send `stop`, and surface a terminal
+   * error against the stalled msg_id so the chat leaves 'working' instead of
+   * spinning forever.
+   */
+  private handleTurnStall(): void {
+    const msgId = this.stallMsgId;
+    if (!msgId) return;
+    this.stopStallWatchdog();
+    this.stallMsgId = null;
+    this.activeMsgId = null;
+    try {
+      this.stop();
+    } catch {
+      // best-effort: the process may already be gone.
+    }
+    this.onStreamEvent({
+      type: 'error',
+      data: 'Хариу удаан хугацаанд ахицгүй болсон тул зогсоолоо. Дахин оролдоно уу.',
+      msg_id: msgId,
+    });
+  }
+
   private handleEvent(event: WCoreEvent): void {
+    // Any msg_id-bearing frame is forward progress: defer the stall deadline.
+    // pong/ready/mcp_ready carry no msg_id, so a dead turn cannot be kept alive
+    // by heartbeats alone. reset() is a no-op unless the timer is running, so a
+    // frame that arrives while paused (mid tool run) does not disturb the pause.
+    if ('msg_id' in event && event.msg_id) {
+      this.stallTimer.reset();
+    }
     switch (event.type) {
       case 'ready':
         this.ready = true;
@@ -355,6 +452,9 @@ export class WCoreAgent {
         break;
 
       case 'tool_request':
+        // A tool may legitimately run (or await approval) for a long time; pause
+        // the stall deadline until its result/cancellation arrives.
+        this.pauseStallWatchdog(`tool:${event.call_id}`);
         this.onStreamEvent({
           type: 'tool_group',
           data: [
@@ -388,6 +488,8 @@ export class WCoreAgent {
         break;
 
       case 'tool_result':
+        // Tool finished: resume the stall deadline.
+        this.resumeStallWatchdog(`tool:${event.call_id}`);
         this.onStreamEvent({
           type: 'tool_group',
           data: [
@@ -408,6 +510,8 @@ export class WCoreAgent {
         break;
 
       case 'tool_cancelled':
+        // Tool aborted: resume the stall deadline.
+        this.resumeStallWatchdog(`tool:${event.call_id}`);
         this.onStreamEvent({
           type: 'tool_group',
           data: [
@@ -430,6 +534,9 @@ export class WCoreAgent {
         const payload = Object.keys(finishPayload).length > 0 ? finishPayload : '';
         this.onStreamEvent({ type: 'finish', data: payload, msg_id: event.msg_id });
         this.activeMsgId = null;
+        // Turn completed: disarm the stall watchdog.
+        this.stopStallWatchdog();
+        this.stallMsgId = null;
         break;
       }
 
@@ -439,6 +546,10 @@ export class WCoreAgent {
           data: event.error.message,
           msg_id: event.msg_id ?? this.activeMsgId ?? '',
         });
+        // Terminal frame: null the dangling activeMsgId (#774) and disarm.
+        this.activeMsgId = null;
+        this.stopStallWatchdog();
+        this.stallMsgId = null;
         break;
 
       case 'info':
@@ -612,6 +723,10 @@ export class WCoreAgent {
           callId: event.call_id,
           reason: event.reason,
         });
+        // Awaiting a human decision is not a stall; pause until it resumes.
+        // Key on resume_token so approval_resume (which carries no call_id) can
+        // pair with the correct pause.
+        this.pauseStallWatchdog(`approval:${event.resume_token}`);
         this.onStreamEvent({
           type: 'approval_required',
           data: {
@@ -634,6 +749,8 @@ export class WCoreAgent {
         break;
 
       case 'approval_resume':
+        // Human decided: resume the stall deadline for this approval.
+        this.resumeStallWatchdog(`approval:${event.resume_token}`);
         this.onStreamEvent({
           type: 'approval_resume',
           data: { resumeToken: event.resume_token, approved: event.approved },
@@ -775,6 +892,10 @@ export class WCoreAgent {
 
   async send(content: string, msgId: string, files?: string[]): Promise<void> {
     await this.readyPromise;
+    // Arm the stall watchdog for this turn so an engine that goes silent - even
+    // before it emits stream_start - is bounded, not left spinning on 'working'.
+    this.stallMsgId = msgId;
+    this.startStallWatchdog();
     this.sendCommand({
       type: 'message',
       msg_id: msgId,
@@ -831,6 +952,9 @@ export class WCoreAgent {
    */
   async kill(): Promise<void> {
     this.restoreProjectConfig();
+    // Disarm the stall watchdog so it cannot fire after teardown.
+    this.stopStallWatchdog();
+    this.stallMsgId = null;
     const child = this.childProcess;
     if (!child) return;
     // Clear the handle first so a second kill() (heartbeat + quit can both
