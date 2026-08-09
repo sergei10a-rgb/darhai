@@ -19,6 +19,7 @@ const PROVIDER_CAPABILITY_RULES: Record<string, Record<ModelType, boolean | null
   anthropic: {
     text: true,
     vision: true,
+    video: false,
     function_calling: true,
     image_generation: false,
     web_search: false,
@@ -30,6 +31,7 @@ const PROVIDER_CAPABILITY_RULES: Record<string, Record<ModelType, boolean | null
   deepseek: {
     text: true,
     vision: null,
+    video: false,
     function_calling: true,
     image_generation: false,
     web_search: false,

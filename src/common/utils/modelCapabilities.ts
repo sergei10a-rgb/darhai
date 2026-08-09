@@ -58,6 +58,12 @@ export const isImageGenerationModel = (modelName: string): boolean => IMAGE_GENE
 export const CAPABILITY_PATTERNS: Record<ModelType, RegExp> = {
   text: /gpt|claude|gemini|qwen|llama|mistral|deepseek/i,
   vision: /4o|claude-3|gemini-.*-pro|gemini-.*-flash|gemini-2\.0|qwen-vl|llava|vision/i,
+  // Native VIDEO input. Deliberately narrow - only families with MEASURED video
+  // support: Gemini 1.5+, Qwen VL/Omni lines, and the unified-multimodal
+  // Qwen3.6/3.8 checkpoints (3.6-27B model card lists video input; 3.8-max
+  // lists video on its provider page). Anything else is enabled per-provider
+  // via the user-selected capability override, not by guessing here.
+  video: /gemini|qwen[\d.]*[.-](?:vl|omni)|qwen3\.[68]/i,
   function_calling: /gpt-4|claude-3|gemini|qwen|deepseek/i,
   image_generation: IMAGE_GENERATION_MODEL,
   web_search: /search|perplexity/i,
@@ -83,6 +89,9 @@ export const CAPABILITY_PATTERNS: Record<ModelType, RegExp> = {
 export const CAPABILITY_EXCLUSIONS: Record<ModelType, RegExp[]> = {
   text: [],
   vision: [/embed|rerank|dall-e|flux|stable-diffusion/i],
+  // `gemini` alone would sweep in gemini-embedding-*; video GENERATORS (imagen,
+  // veo) must never be tagged as video-INPUT chat models.
+  video: [/embed|rerank|dall-e|flux|stable-diffusion|imagen|veo/i],
   function_calling: [
     /aqa(?:-[\w-]+)?/i,
     /imagen(?:-[\w-]+)?/i,

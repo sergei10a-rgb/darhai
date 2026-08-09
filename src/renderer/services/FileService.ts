@@ -101,6 +101,17 @@ export const imageExts = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.sv
 /** Supported document file extensions */
 export const documentExts = ['.pdf', '.doc', '.docx', '.pptx', '.xlsx', '.odt', '.odp', '.ods'];
 
+/**
+ * Supported video file extensions.
+ *
+ * Drag-drop always accepted videos (isSupportedFile is unconditionally true),
+ * but PASTE filters through supportedExts (PasteService.handlePaste), so
+ * without this list a pasted video was silently dropped with only a
+ * console.warn. Video attachments feed the video-input pipeline: sent as-is
+ * to video-capable models, or extracted to frames for image-only ones.
+ */
+export const videoExts = ['.mp4', '.mov', '.webm', '.mkv', '.avi', '.m4v'];
+
 /** Supported text file extensions */
 export const textExts = [
   '.txt',
@@ -132,7 +143,7 @@ export const textExts = [
 ];
 
 /** All supported file extensions (designed ahead; currently all file types are accepted) */
-export const allSupportedExts = [...imageExts, ...documentExts, ...textExts];
+export const allSupportedExts = [...imageExts, ...documentExts, ...videoExts, ...textExts];
 
 // File metadata interface
 export interface FileMetadata {

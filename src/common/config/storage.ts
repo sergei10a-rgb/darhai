@@ -771,6 +771,7 @@ export type IChatConversationRefer = {
 export type ModelType =
   | 'text' // Text conversation
   | 'vision' // Vision/image understanding
+  | 'video' // Video understanding (native video input)
   | 'function_calling' // Tool/function calling
   | 'image_generation' // Image generation
   | 'web_search' // Web search

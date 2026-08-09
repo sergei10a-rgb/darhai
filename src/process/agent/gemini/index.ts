@@ -35,6 +35,7 @@ import {
 import fs from 'fs';
 import { ApiKeyManager } from '@/common/api/ApiKeyManager';
 import { handleAtCommand } from './cli/atCommandProcessor';
+import { applyOpenAiMediaPatch } from './openaiMediaPatch';
 import { loadCliConfig } from './cli/config';
 import { sanitizeGeminiSchema } from './cli/utils/geminiSchemaFilter';
 import { loadExtensions } from './cli/extension';
@@ -132,6 +133,10 @@ export class GeminiAgent {
     return new FileDiscoveryService(workspace);
   }
   constructor(options: GeminiAgent2Options) {
+    // Idempotent: lets attached images/videos survive the OpenAI-compat
+    // request conversion (they are silently dropped by the vendored
+    // converter otherwise). Must run before any content generator is built.
+    applyOpenAiMediaPatch();
     this.workspace = options.workspace;
     this.proxy = options.proxy;
     this.model = options.model;
