@@ -122,6 +122,28 @@ export class WCoreManager extends BaseAgentManager<WCoreManagerData, string> {
   workspace: string;
   model: TProviderWithModel;
   readonly approvalStore = new WCoreApprovalStore();
+
+  /**
+   * Tool call ids the inline Confirming gate has already taken ownership of.
+   *
+   * The engine announces a tool twice by design: `tool_request` (the call is
+   * about to run) and `approval_required` (the HITL pause). Darhai grew two
+   * INDEPENDENT gates for those - the inline in-transcript prompt from
+   * `handleConformationMessage`, and the global modal from
+   * `resolveEngineApproval`. Both answer with the SAME `tool_approve` /
+   * `tool_deny` keyed by the SAME call id, so the user saw one decision asked
+   * twice and the engine received two conflicting replies.
+   *
+   * Worse, the modal path bypasses the native destructive-command guard, and
+   * in yolo mode the inline path auto-approves while the orphaned modal times
+   * out five minutes later and denies a call that already ran.
+   *
+   * The value records WHICH surface claimed the call, so whichever event
+   * arrives first wins and the other one drops only its duplicate PROMPT. The
+   * destructive-command guard always runs regardless - it is a floor, not a
+   * prompt.
+   */
+  private readonly gatedCallIds = new Map<string, 'inline' | 'modal'>();
   private agent: WCoreAgent | null = null;
   private agentReady: Promise<void>;
   /**
@@ -353,6 +375,7 @@ export class WCoreManager extends BaseAgentManager<WCoreManagerData, string> {
     this.flushAllBufferedStreamTexts();
     cronBusyGuard.setProcessing(this.conversation_id, false);
     this.confirmations = [];
+    this.gatedCallIds.clear();
     if (this.agent) {
       this.agent.stop();
     }
@@ -504,6 +527,17 @@ export class WCoreManager extends BaseAgentManager<WCoreManagerData, string> {
     const confirmingTools = message.content.filter((c) => c.status === 'Confirming');
 
     for (const content of confirmingTools) {
+      // Did the modal path get here first (reverse event order)? The guard
+      // still runs below - it is a hard floor, not a prompt - but the inline
+      // prompt is suppressed so the user is not asked the same thing twice.
+      const claimedByModal = this.gatedCallIds.get(content.callId) === 'modal';
+      if (!claimedByModal) {
+        // Claim BEFORE any branch: every outcome below (guard deny, yolo
+        // auto-approve, stored "always allow", asking the user) is a complete
+        // answer, so the modal path must not raise a second prompt for it.
+        this.gatedCallIds.set(content.callId, 'inline');
+      }
+
       // Native pre-tool guard (Phase 3): runs BEFORE tryAutoApprove and the
       // approval-store cache, so neither yolo mode nor a prior "always allow"
       // can bypass the hard destructive-command floor.
@@ -517,6 +551,11 @@ export class WCoreManager extends BaseAgentManager<WCoreManagerData, string> {
         this.emitGuardNotice(verdict.message ?? '');
         // fall through to the normal approval flow
       }
+
+      // The modal path already owns the answer for this call (it arrived
+      // first). The guard above still ran as a floor, but the prompt and the
+      // approve/deny reply belong to the modal - do not duplicate them.
+      if (claimedByModal) continue;
 
       // Check mode-based auto-approval
       if (this.tryAutoApprove(content)) continue;
@@ -798,6 +837,17 @@ export class WCoreManager extends BaseAgentManager<WCoreManagerData, string> {
     // and camel-cases the payload, so the wire names (`call_id`) are gone by
     // the time it reaches here.
     const data = (event.data ?? {}) as { callId?: string; reason?: string; context?: string; resumeToken?: string };
+
+    // The inline Confirming gate already owns this call - it will send the
+    // same tool_approve/tool_deny for the same id. A second surface here would
+    // ask the user twice, skip the destructive-command guard, and (in yolo
+    // mode) time out five minutes later denying a call that already ran.
+    const callId = data.callId ?? '';
+    if (callId && this.gatedCallIds.has(callId)) return;
+    // Claim it for the reverse arrival order too (approval_required first): a
+    // later inline tool_request then suppresses only its duplicate PROMPT,
+    // while its destructive-command guard still runs as a floor.
+    if (callId) this.gatedCallIds.set(callId, 'modal');
 
     const result = await resolveEngineApproval(
       {
@@ -1140,6 +1190,9 @@ export class WCoreManager extends BaseAgentManager<WCoreManagerData, string> {
   private async handleTurnEnd(): Promise<void> {
     cronBusyGuard.setProcessing(this.conversation_id, false);
     this.flushAllBufferedStreamTexts();
+    // Tool call ids are per-turn; carrying them across turns would let a
+    // recycled id silently suppress a later prompt.
+    this.gatedCallIds.clear();
 
     // Finalize thinking if still active
     if (this.thinkingMsgId) {
