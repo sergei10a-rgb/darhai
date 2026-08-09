@@ -5,7 +5,9 @@
  */
 
 import { GeminiAgent, GeminiApprovalStore } from '@process/agent/gemini';
-import type { TChatConversation } from '@/common/config/storage';
+import type { TChatConversation, TProviderWithModel } from '@/common/config/storage';
+import { hasSpecificModelCapability } from '@/common/utils/modelCapabilities';
+import { prepareVideoAttachments } from '@process/services/video/videoFrames';
 import type { IAgentManager } from '@process/task/IAgentManager';
 import type { IConversationService, CreateConversationParams } from '@process/services/IConversationService';
 import type { IWorkerTaskManager } from '@process/task/IWorkerTaskManager';
@@ -40,6 +42,22 @@ const refreshTrayMenuSafely = async (): Promise<void> => {
   } catch (error) {
     console.warn('[conversationBridge] Failed to refresh tray menu:', error);
   }
+};
+
+/**
+ * Whether the conversation's model takes native video input (the А path).
+ * Provider-level user override (capabilities[].isUserSelected) wins over the
+ * measured name-pattern default.
+ */
+const conversationSupportsVideo = (conversation: TChatConversation | undefined): boolean => {
+  const model = (conversation as { model?: TProviderWithModel } | undefined)?.model;
+  if (!model) return false;
+  const userSelected = model.capabilities?.find((cap) => cap.type === 'video')?.isUserSelected;
+  if (userSelected !== undefined) return userSelected;
+  // First parameter is unused by the checker (name-regex based) - the
+  // TProviderWithModel/IProvider shape difference (model list vs useModel)
+  // is irrelevant here.
+  return hasSpecificModelCapability(model as unknown as Parameters<typeof hasSpecificModelCapability>[0], model.useModel ?? '', 'video') === true;
 };
 
 /**
@@ -594,6 +612,31 @@ export function initConversationBridge(
       return { success: false, msg: 'conversation not found' };
     }
 
+    // Fetched early: the video decision below needs the conversation's model,
+    // and the workflow-context block further down reuses the same record.
+    const sendMessageConversation = await conversationService
+      .getConversation(conversation_id)
+      .catch((): undefined => undefined);
+
+    // Video input (А/Б paths): a model with native video support receives the
+    // file untouched (А - inline video / video_url); any other model gets the
+    // video replaced by extracted frames (Б) so it can still "watch" it
+    // through the ordinary image channel. The wcore engine never accepts
+    // inline video, so wcore conversations always take the frame path.
+    // Extraction runs BEFORE the workspace copy so a large source video is
+    // never copied into the workspace - only its small frames are.
+    let sendFiles = files;
+    if (files?.length) {
+      const supportsVideo = task.type !== 'wcore' && conversationSupportsVideo(sendMessageConversation);
+      const videoPrep = await prepareVideoAttachments(files, supportsVideo);
+      sendFiles = videoPrep.files;
+      for (const notice of videoPrep.notices) {
+        // Degraded state must be visible, never silent (matches the stall
+        // watchdog precedent of Mongolian main-process stream notices).
+        ipcBridge.conversation.responseStream.emit({ type: 'error', conversation_id, msg_id: '', data: notice });
+      }
+    }
+
     // Handle file paths based on agent type
     // Gemini requires files in workspace; other agents can use cache directory directly
     let workspaceFiles: string[];
@@ -603,7 +646,7 @@ export function initConversationBridge(
       // Gemini: Copy files to workspace (required for gemini CLI)
       // Wrap in try-catch to prevent unhandled rejection when workspace directory is missing
       try {
-        workspaceFiles = await copyFilesToDirectory(task.workspace, files, false, getSystemDir().cacheDir);
+        workspaceFiles = await copyFilesToDirectory(task.workspace, sendFiles, false, getSystemDir().cacheDir);
       } catch (error) {
         console.error('[conversationBridge] sendMessage: failed to copy files to workspace:', error);
         workspaceFiles = [];
@@ -611,7 +654,7 @@ export function initConversationBridge(
     } else {
       // Non-Gemini agents (ACP, Codex, NanoBot, OpenClaw, Remote): Use cache directory paths directly
       // Filter to only include absolute paths that exist
-      workspaceFiles = (files ?? []).filter((f) => path.isAbsolute(f));
+      workspaceFiles = (sendFiles ?? []).filter((f) => path.isAbsolute(f));
     }
 
     if (workspaceFiles.length > 0) {
@@ -641,9 +684,7 @@ export function initConversationBridge(
     // can both (a) prepend the per-turn WORKFLOW_STEP_CONTEXT block to the user
     // channel (SPEC §7.2) and (b) wire it through to prepareFirstMessage so the
     // static WORKFLOW_PROTOCOL system block (SPEC §7.1 / W4.3) is injected too.
-    const sendMessageConversation = await conversationService
-      .getConversation(conversation_id)
-      .catch((): undefined => undefined);
+    // (Conversation record itself is fetched once, above the file handling.)
     const sendMessageExtra = sendMessageConversation?.extra as unknown as { workflowSessionId?: string } | undefined;
     const workflowSessionId = sendMessageExtra?.workflowSessionId;
     if (workflowSessionId) {

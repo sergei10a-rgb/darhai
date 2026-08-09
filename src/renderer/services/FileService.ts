@@ -102,7 +102,8 @@ export const imageExts = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.sv
 export const documentExts = ['.pdf', '.doc', '.docx', '.pptx', '.xlsx', '.odt', '.odp', '.ods'];
 
 /**
- * Supported video file extensions.
+ * Supported video file extensions (shared with the main process - see
+ * common/utils/mediaExtensions).
  *
  * Drag-drop always accepted videos (isSupportedFile is unconditionally true),
  * but PASTE filters through supportedExts (PasteService.handlePaste), so
@@ -110,7 +111,8 @@ export const documentExts = ['.pdf', '.doc', '.docx', '.pptx', '.xlsx', '.odt', 
  * console.warn. Video attachments feed the video-input pipeline: sent as-is
  * to video-capable models, or extracted to frames for image-only ones.
  */
-export const videoExts = ['.mp4', '.mov', '.webm', '.mkv', '.avi', '.m4v'];
+import { videoExts } from '@/common/utils/mediaExtensions';
+export { videoExts };
 
 /** Supported text file extensions */
 export const textExts = [
