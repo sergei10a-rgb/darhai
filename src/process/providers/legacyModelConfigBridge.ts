@@ -137,6 +137,42 @@ export function isExactMirrorRowFor(row: IProvider, providerId: ProviderId): boo
   return typeof tag === 'string' && tag === bridgeTagValue(providerId);
 }
 
+/** The providerId stamped into a `v2:<providerId>` bridge tag, if any. */
+export function providerIdFromBridgeTag(row: IProvider): ProviderId | undefined {
+  const tag = (row as unknown as Record<string, unknown>)[BRIDGE_TAG_KEY];
+  if (typeof tag !== 'string' || !tag.startsWith('v2:')) return undefined;
+  const id = tag.slice(3);
+  return id ? (id as ProviderId) : undefined;
+}
+
+/**
+ * Heal mirror rows whose `baseUrl` is empty by filling in the canonical
+ * chat-start host for their provider.
+ *
+ * Rows written BEFORE the mirror learned to resolve the canonical host are
+ * already on disk with `baseUrl: ''`. Nothing rewrites them until the user
+ * happens to re-connect that provider, and in the meantime every chat on that
+ * provider hands its key to the OpenAI SDK with no base URL - which defaults
+ * to api.openai.com and 401s (live-caught with an OpenRouter key). Healing on
+ * READ makes the repair automatic, idempotent, and free of a disk migration:
+ * a row that already has a URL (user-typed or canonical) is untouched, and a
+ * provider with no canonical host stays as-is.
+ */
+export function healMirrorBaseUrls(providers: IProvider[]): IProvider[] {
+  let changed = false;
+  const healed = providers.map((row) => {
+    if (row.baseUrl) return row;
+    const providerId = providerIdFromBridgeTag(row);
+    if (!providerId) return row;
+    const canonical = CHAT_START_BASE_URL[providerId];
+    if (!canonical) return row;
+    changed = true;
+    console.log(`[legacyModelConfigBridge] healed empty baseUrl for ${providerId} -> ${canonical}`);
+    return { ...row, baseUrl: canonical };
+  });
+  return changed ? healed : providers;
+}
+
 // ─── Promise mutex ────────────────────────────────────────────────────────────
 
 let mutex: Promise<void> = Promise.resolve();

@@ -30,13 +30,21 @@ vi.mock('@process/utils/initStorage', () => ({
 }));
 
 // eslint-disable-next-line import/first
-import { mirrorConnectOrRekey } from '@process/providers/legacyModelConfigBridge';
+import {
+  BRIDGE_TAG_KEY,
+  healMirrorBaseUrls,
+  mirrorConnectOrRekey,
+  providerIdFromBridgeTag,
+} from '@process/providers/legacyModelConfigBridge';
 // eslint-disable-next-line import/first
 import { CHAT_START_BASE_URL } from '@process/providers/chatStartHosts';
 // eslint-disable-next-line import/first
 import type { ProviderRepository } from '@process/providers/storage/ProviderRepository';
 
-type MirrorRepo = Pick<ProviderRepository, 'getRegistryProvider' | 'getRegistryProviderCreds' | 'getRegistryCatalog' | 'listRegistryOverrides'>;
+type MirrorRepo = Pick<
+  ProviderRepository,
+  'getRegistryProvider' | 'getRegistryProviderCreds' | 'getRegistryCatalog' | 'listRegistryOverrides'
+>;
 
 const makeRepo = (creds: Record<string, unknown>): MirrorRepo =>
   ({
@@ -81,5 +89,63 @@ describe('mirrorConnectOrRekey baseUrl resolution', () => {
       'openrouter'
     );
     expect(writtenRow()!.baseUrl).toBe('https://proxy.example.mn/v1');
+  });
+});
+
+/**
+ * Read-time repair for rows ALREADY on disk from before the fix - a live
+ * install had exactly this: `openai-compatible baseUrl=[] key=sk-or-v1…`,
+ * so every chat on it 401'd until the user happened to re-connect.
+ */
+describe('healMirrorBaseUrls (read-time repair of already-persisted rows)', () => {
+  const row = (over: Record<string, unknown>) =>
+    ({
+      id: 'random-uuid',
+      name: 'OpenRouter',
+      platform: 'openai-compatible',
+      baseUrl: '',
+      apiKey: 'sk-or-v1-live',
+      model: ['anthropic/claude-opus-5-fast'],
+      [BRIDGE_TAG_KEY]: 'v2:openrouter',
+      ...over,
+    }) as never;
+
+  it('fills an empty baseUrl from the bridge tag providerId', () => {
+    const healed = healMirrorBaseUrls([row({})]);
+    expect(healed[0].baseUrl).toBe('https://openrouter.ai/api/v1');
+  });
+
+  it('leaves a row that already has a baseUrl untouched (identity-preserving)', () => {
+    const input = [row({ baseUrl: 'https://proxy.example.mn/v1' })];
+    const healed = healMirrorBaseUrls(input);
+    expect(healed).toBe(input); // same array reference: nothing changed
+    expect(healed[0].baseUrl).toBe('https://proxy.example.mn/v1');
+  });
+
+  it('leaves an untagged (user-authored) row alone even with an empty baseUrl', () => {
+    const untagged = [row({ [BRIDGE_TAG_KEY]: undefined })];
+    expect(healMirrorBaseUrls(untagged)[0].baseUrl).toBe('');
+  });
+
+  it('leaves a keyless local row alone - it already carries its loopback URL', () => {
+    const ollama = [
+      row({ baseUrl: 'http://127.0.0.1:11434/v1', apiKey: '', [BRIDGE_TAG_KEY]: 'v2:ollama-local' }),
+    ];
+    expect(healMirrorBaseUrls(ollama)[0].baseUrl).toBe('http://127.0.0.1:11434/v1');
+  });
+
+  it('is idempotent', () => {
+    const once = healMirrorBaseUrls([row({})]);
+    const twice = healMirrorBaseUrls(once);
+    expect(twice).toBe(once);
+    expect(twice[0].baseUrl).toBe('https://openrouter.ai/api/v1');
+  });
+});
+
+describe('providerIdFromBridgeTag', () => {
+  it('reads the providerId out of a v2 tag and ignores the legacy bare tag', () => {
+    expect(providerIdFromBridgeTag({ [BRIDGE_TAG_KEY]: 'v2:groq' } as never)).toBe('groq');
+    expect(providerIdFromBridgeTag({ [BRIDGE_TAG_KEY]: 'v2' } as never)).toBeUndefined();
+    expect(providerIdFromBridgeTag({} as never)).toBeUndefined();
   });
 });

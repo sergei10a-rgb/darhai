@@ -24,6 +24,7 @@ import type OpenAIType from 'openai';
 import { isNewApiPlatform, LOCAL_KEYLESS_PLACEHOLDER } from '@/common/utils/platformConstants';
 import { ipcBridge } from '@/common';
 import { ProcessConfig } from '@process/utils/initStorage';
+import { healMirrorBaseUrls } from '@process/providers/legacyModelConfigBridge';
 import { ExtensionRegistry } from '@process/extensions';
 import type {
   BedrockClient as BedrockClientType,
@@ -377,19 +378,25 @@ export async function getMergedModelProviders(): Promise<IProvider[]> {
       } as IProvider;
     });
 
+    // Repair mirror rows persisted before the mirror resolved canonical hosts:
+    // an empty baseUrl makes the OpenAI-compat client fall back to
+    // api.openai.com and 401 the provider's own key. Read-time and idempotent -
+    // no disk migration, and a row that already has a URL is untouched.
+    const providers = healMirrorBaseUrls(normalizedProviders);
+
     // Merge extension-contributed model providers
     try {
       const registry = ExtensionRegistry.getInstance();
       const extensionProviders = registry.getModelProviders();
       if (!extensionProviders || extensionProviders.length === 0) {
-        return normalizedProviders;
+        return providers;
       }
 
       const extensionIds = new Set(extensionProviders.map((provider) => provider.id));
-      const userProviders = normalizedProviders.filter((provider) => !extensionIds.has(provider.id));
+      const userProviders = providers.filter((provider) => !extensionIds.has(provider.id));
 
       const mergedExtensionProviders: IProvider[] = extensionProviders.map((provider) => {
-        const existing = normalizedProviders.find((item) => item.id === provider.id);
+        const existing = providers.find((item) => item.id === provider.id);
         return {
           ...existing,
           id: provider.id,
@@ -405,7 +412,7 @@ export async function getMergedModelProviders(): Promise<IProvider[]> {
       return [...userProviders, ...mergedExtensionProviders];
     } catch (error) {
       console.warn('[ModelBridge] Failed to merge extension model providers:', error);
-      return normalizedProviders;
+      return providers;
     }
   } catch (error) {
     // Degrade to an empty list rather than crashing the picker, but never
