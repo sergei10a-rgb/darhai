@@ -14,6 +14,7 @@
  * lastDream stats come from MemoryStats.factsExtracted / promoted count (no-deferment #4).
  */
 
+import { formatShortcut } from '@/renderer/utils/ui/shortcutLabel';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ipcBridge } from '@/common';
@@ -187,14 +188,18 @@ const MemoryStatusBar: React.FC<MemoryStatusBarProps> = ({
 
       {/* Right: kbd hints (K9) */}
       <div className={styles.right}>
-        <span className={styles.kbd} data-testid='status-kbd-search'>⌘K</span>
+        <span className={styles.kbd} data-testid='status-kbd-search'>
+          {formatShortcut(['mod', 'K'])}
+        </span>
         <span className={styles.kbdLabel}>{t('archive.status.kbd.search', 'search')}</span>
         <span className={styles.kbdSep} aria-hidden>·</span>
         <span className={styles.kbd} data-testid='status-kbd-nav-j'>J</span>
         <span className={styles.kbd} data-testid='status-kbd-nav-k'>K</span>
         <span className={styles.kbdLabel}>{t('archive.status.kbd.navigate', 'navigate')}</span>
         <span className={styles.kbdSep} aria-hidden>·</span>
-        <span className={styles.kbd} data-testid='status-kbd-focus'>⌘K</span>
+        <span className={styles.kbd} data-testid='status-kbd-focus'>
+          {formatShortcut(['mod', 'K'])}
+        </span>
         <span className={styles.kbdLabel}>/</span>
         <span className={styles.kbdSep} aria-hidden>·</span>
         <span className={styles.kbd} data-testid='status-kbd-close'>Esc</span>

@@ -15,6 +15,8 @@
  * autonomous-execution button. Other 5 are recurring entrepreneur jobs.
  */
 
+import i18n from '@/renderer/services/i18n';
+
 export type QuickLaunchAnchorId =
   | 'cowork'
   | 'write-copy'
@@ -25,11 +27,41 @@ export type QuickLaunchAnchorId =
 
 export type QuickLaunchAnchor = {
   id: QuickLaunchAnchorId;
+  /** English source copy - the i18n fallback when a locale lacks the key. */
   label: string;
   sub: string;
   prefill: string;
   assistantId: string;
   lucideIcon: string;
+};
+
+/**
+ * i18n key prefix for an anchor's user-facing strings.
+ *
+ * These six cards are the most prominent text on the home screen, and they
+ * shipped as hardcoded English - a Mongolian user saw "Cowork / Write copy /
+ * Close a deal" on an otherwise fully translated page. The English in
+ * {@link QUICK_LAUNCH_ANCHORS} stays as the source copy AND the fallback, so
+ * a missing translation degrades to English instead of an empty card.
+ *
+ * Keys: `guid.launchpad.anchors.<id>.{label,sub,prefill}`.
+ */
+export const anchorI18nKey = (id: QuickLaunchAnchorId, field: 'label' | 'sub' | 'prefill'): string =>
+  `guid.launchpad.anchors.${id}.${field}`;
+
+/**
+ * Translate one anchor field, falling back to its English source copy.
+ *
+ * Uses the i18next instance directly (not the `useTranslation` hook) because
+ * the catalog resolver is a plain function called from several components.
+ */
+export const translateAnchorField = (
+  anchor: Pick<QuickLaunchAnchor, 'id' | 'label' | 'sub' | 'prefill'>,
+  field: 'label' | 'sub' | 'prefill'
+): string => {
+  const fallback = anchor[field];
+  const translated = i18n.t(anchorI18nKey(anchor.id, field), { defaultValue: fallback });
+  return typeof translated === 'string' && translated.length > 0 ? translated : fallback;
 };
 
 export const QUICK_LAUNCH_ANCHORS: readonly QuickLaunchAnchor[] = [

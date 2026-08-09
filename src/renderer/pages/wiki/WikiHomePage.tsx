@@ -11,6 +11,7 @@
  * TODO(W2): replace MOCK_CONCEPTS / MOCK_ORPHANS with await ipcBridge.wiki.listConcepts({...})
  */
 
+import { shortcutKeyLabel } from '@/renderer/utils/ui/shortcutLabel';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Spin, Message } from '@arco-design/web-react';
@@ -277,7 +278,7 @@ export function WikiHomePage(): React.ReactElement {
               aria-label={t('wiki.home.search.placeholder', 'Search concepts…')}
             />
             <div className={styles.searchKbd} aria-hidden>
-              <span className={styles.kbd}>⌘</span>
+              <span className={styles.kbd}>{shortcutKeyLabel('mod')}</span>
               <span className={styles.kbd}>K</span>
             </div>
           </div>

@@ -27,6 +27,7 @@
  * List column margin-right transitions in sync with drawer opening.
  */
 
+import { formatShortcut } from '@/renderer/utils/ui/shortcutLabel';
 import React, { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Input, Message } from '@arco-design/web-react';
@@ -462,7 +463,7 @@ const FullPanelShell: React.FC = () => {
             prefix={<Search size={14} />}
             suffix={
               <kbd className={styles.searchKbd} data-testid='memory-search-kbd'>
-                ⌘K
+                {formatShortcut(['mod', 'K'])}
               </kbd>
             }
             placeholder={t('archive.filter.searchPlaceholder', 'Search memories… (type:decision tag:design)')}

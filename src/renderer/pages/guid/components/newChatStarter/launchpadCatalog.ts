@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import type { PaletteKey } from '@/renderer/pages/guid/components/AssistantIconTile';
 import { categoryToPaletteKey } from '@/renderer/pages/guid/components/AssistantIconTile';
-import { QUICK_LAUNCH_ANCHORS } from '@/renderer/pages/guid/quickLaunchAnchors';
+import { QUICK_LAUNCH_ANCHORS, translateAnchorField } from '@/renderer/pages/guid/quickLaunchAnchors';
 import type { AssistantListItem } from '@/renderer/pages/settings/AssistantSettings/types';
 import { ASSISTANT_PRESETS } from '@/common/config/presets/assistantPresets';
 import { CUSTOM_AVATAR_IMAGE_MAP } from '@/renderer/pages/guid/constants';
@@ -97,20 +97,23 @@ export function resolveBarEntry(
   assistants: AssistantListItem[],
   localeKey: string
 ): LaunchpadBarEntry | null {
-  // 1. Default anchors - preserve their hand-tuned copy. Only Cowork carries
-  //    the orange-halo treatment; the other five anchors get the same neutral
-  //    chrome as picker-added cards (palette still tints the tile).
+  // 1. Default anchors - translated, with the hand-tuned English as the i18n
+  //    fallback (these six cards are the most prominent copy on the home
+  //    screen and used to render English on a fully translated page). Only
+  //    Cowork carries the orange-halo treatment; the other five anchors get
+  //    the same neutral chrome as picker-added cards (palette still tints the
+  //    tile).
   const anchor = QUICK_LAUNCH_ANCHORS.find((a) => a.assistantId === rawId);
   if (anchor) {
     return {
       id: rawId,
       assistantId: rawId,
-      label: anchor.label,
-      sub: anchor.sub,
+      label: translateAnchorField(anchor, 'label'),
+      sub: translateAnchorField(anchor, 'sub'),
       Icon: LUCIDE_ICON_MAP[anchor.lucideIcon] ?? Zap,
       palette: anchorPalette(anchor.id),
       isCowork: rawId === 'builtin-cowork',
-      prefill: anchor.prefill,
+      prefill: translateAnchorField(anchor, 'prefill'),
     };
   }
 

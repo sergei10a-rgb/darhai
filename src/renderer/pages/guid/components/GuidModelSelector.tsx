@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { formatShortcut } from '@/renderer/utils/ui/shortcutLabel';
 import { Brain, ChevronDown, ChevronRight, Pin, Plus, Search } from 'lucide-react';
 import { Button, Dropdown, Input, Menu, Message, Tooltip } from '@arco-design/web-react';
 import { ipcBridge } from '@/common';
@@ -870,7 +871,7 @@ export const ModelSelectorPanel: React.FC<ModelSelectorPanelProps> = ({
             size='small'
           />
         </div>
-        {!searching && <span className={styles.kbdHint}>⌘K</span>}
+        {!searching && <span className={styles.kbdHint}>{formatShortcut(['mod', 'K'])}</span>}
       </div>
 
       <div className={styles.scrollArea}>

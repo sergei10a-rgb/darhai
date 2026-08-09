@@ -17,6 +17,7 @@
  * should pass them through. Scope IS forwarded.
  */
 
+import { formatShortcut } from '@/renderer/utils/ui/shortcutLabel';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Button, Input, Message, Modal } from '@arco-design/web-react';
 import { X } from 'lucide-react';
@@ -311,7 +312,9 @@ export function ComposerModal({ open, onClose, onSubmit }: ComposerModalProps): 
 
         {/* ---- Footer ---- */}
         <div className={styles.footer}>
-          <span className={styles.footerHint}>⌘↵ {t('memory.archive.composer.hint')}</span>
+          <span className={styles.footerHint}>
+            {formatShortcut(['mod', 'enter'])} {t('memory.archive.composer.hint')}
+          </span>
           <div className={styles.footerActions}>
             <Button onClick={onClose} disabled={submitting} data-testid='composer-cancel-btn'>
               {t('common.cancel')}
