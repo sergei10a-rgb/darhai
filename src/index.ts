@@ -132,7 +132,7 @@ const skipSingleInstanceLock = isE2ETestMode || process.env.DARHAI_MULTI_INSTANC
 const deepLinkFromArgv = process.argv.find(isDeepLinkArg);
 const gotTheLock = skipSingleInstanceLock ? true : app.requestSingleInstanceLock({ deepLinkUrl: deepLinkFromArgv });
 if (!gotTheLock) {
-  console.warn('[Wayland] Another instance is already running; current process will exit.');
+  console.warn('[Darhai] Another instance is already running; current process will exit.');
   app.quit();
 } else {
   app.on('second-instance', (_event, argv, _workingDirectory, additionalData) => {
@@ -153,7 +153,7 @@ if (!gotTheLock) {
       showOrCreateMainWindow({
         mainWindow,
         createWindow: () => {
-          console.log('[Wayland] second-instance received with no active main window, recreating main window');
+          console.log('[Darhai] second-instance received with no active main window, recreating main window');
           createWindow();
         },
       });
@@ -368,7 +368,7 @@ app.on('web-contents-created', (_event, contents) => {
   if (contents.getType() === 'webview') {
     const blockEscalation = (event: Electron.Event, navigationUrl: string): void => {
       if (isPrivilegedAppTarget(navigationUrl)) {
-        console.warn('[Wayland] Blocked guest webview navigation into app origin:', navigationUrl);
+        console.warn('[Darhai] Blocked guest webview navigation into app origin:', navigationUrl);
         event.preventDefault();
       }
     };
@@ -448,7 +448,7 @@ let appReadyDone = false;
 let mainWindow: BrowserWindow;
 
 const createWindow = ({ showOnReady = true }: { showOnReady?: boolean } = {}): void => {
-  console.log('[Wayland] Creating main window...');
+  console.log('[Darhai] Creating main window...');
   // Get primary display size
   const primaryDisplay = screen.getPrimaryDisplay();
   const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize;
@@ -509,7 +509,7 @@ const createWindow = ({ showOnReady = true }: { showOnReady?: boolean } = {}): v
       webviewTag: true,
     },
   });
-  console.log(`[Wayland] Main window created (id=${mainWindow.id})`);
+  console.log(`[Darhai] Main window created (id=${mainWindow.id})`);
 
   // C6: security guards on the main window's webContents.
   // 1) Deny renderer-initiated window.open() - preload exposes whatever opener APIs
@@ -541,7 +541,7 @@ const createWindow = ({ showOnReady = true }: { showOnReady?: boolean } = {}): v
     } catch {
       // Fall through to deny on unparsable URLs.
     }
-    console.warn('[Wayland] Blocked will-navigate to', navigationUrl);
+    console.warn('[Darhai] Blocked will-navigate to', navigationUrl);
     event.preventDefault();
   });
 
@@ -599,18 +599,18 @@ const createWindow = ({ showOnReady = true }: { showOnReady?: boolean } = {}): v
   if (showOnReady) {
     const showWindow = () => {
       if (!mainWindow.isDestroyed() && !mainWindow.isVisible()) {
-        console.log('[Wayland] Showing main window');
+        console.log('[Darhai] Showing main window');
         mainWindow.show();
         mainWindow.focus();
       }
     };
     mainWindow.once('ready-to-show', () => {
-      console.log('[Wayland] Window ready-to-show');
+      console.log('[Darhai] Window ready-to-show');
       showWindow();
     });
     // Belt-and-suspenders: also show on did-finish-load in case ready-to-show already fired
     mainWindow.webContents.once('did-finish-load', () => {
-      console.log('[Wayland] Renderer did-finish-load');
+      console.log('[Darhai] Renderer did-finish-load');
       showWindow();
     });
     // Fallback: show window after 5s even if events don't fire (e.g. loadURL failure)
@@ -650,7 +650,7 @@ const createWindow = ({ showOnReady = true }: { showOnReady?: boolean } = {}): v
         };
       });
   } else {
-    console.log('[Wayland] Auto-updater disabled via env/CI guard');
+    console.log('[Darhai] Auto-updater disabled via env/CI guard');
   }
 
   // Initialize IJFW system service (skip when disabled via env, e.g. E2E / CI / explicit opt-out)
@@ -692,51 +692,51 @@ const createWindow = ({ showOnReady = true }: { showOnReady?: boolean } = {}): v
   const fallbackFile = path.join(__dirname, '../renderer/index.html');
 
   if (!app.isPackaged && rendererUrl) {
-    console.log(`[Wayland] Loading renderer URL: ${rendererUrl}`);
+    console.log(`[Darhai] Loading renderer URL: ${rendererUrl}`);
     mainWindow.loadURL(rendererUrl).catch((error) => {
-      console.error('[Wayland] loadURL failed, falling back to file:', error.message || error);
+      console.error('[Darhai] loadURL failed, falling back to file:', error.message || error);
       mainWindow.loadFile(fallbackFile).catch((e2) => {
-        console.error('[Wayland] loadFile fallback also failed:', e2.message || e2);
+        console.error('[Darhai] loadFile fallback also failed:', e2.message || e2);
       });
     });
   } else {
-    console.log(`[Wayland] Loading renderer file: ${fallbackFile}`);
+    console.log(`[Darhai] Loading renderer file: ${fallbackFile}`);
     mainWindow.loadFile(fallbackFile).catch((error) => {
-      console.error('[Wayland] loadFile failed:', error.message || error);
+      console.error('[Darhai] loadFile failed:', error.message || error);
     });
   }
 
   mainWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription, validatedURL, isMainFrame) => {
-    console.error('[Wayland] did-fail-load:', { errorCode, errorDescription, validatedURL, isMainFrame });
+    console.error('[Darhai] did-fail-load:', { errorCode, errorDescription, validatedURL, isMainFrame });
   });
 
   mainWindow.webContents.on('render-process-gone', (_event, details) => {
-    console.error('[Wayland] render-process-gone:', details);
+    console.error('[Darhai] render-process-gone:', details);
 
     // Reload the renderer to recover from the crash.
     // The isDestroyed() guard in adapter/main.ts prevents further sends
     // to the dead webContents while the reload is in progress.
     if (!mainWindow.isDestroyed()) {
-      console.log('[Wayland] Attempting to recover from renderer crash by reloading...');
+      console.log('[Darhai] Attempting to recover from renderer crash by reloading...');
 
       if (!app.isPackaged && rendererUrl) {
         mainWindow.loadURL(rendererUrl).catch((error) => {
-          console.error('[Wayland] Recovery loadURL failed:', error.message || error);
+          console.error('[Darhai] Recovery loadURL failed:', error.message || error);
         });
       } else {
         mainWindow.loadFile(fallbackFile).catch((error) => {
-          console.error('[Wayland] Recovery loadFile failed:', error.message || error);
+          console.error('[Darhai] Recovery loadFile failed:', error.message || error);
         });
       }
     }
   });
 
   mainWindow.webContents.on('unresponsive', () => {
-    console.warn('[Wayland] Renderer became unresponsive');
+    console.warn('[Darhai] Renderer became unresponsive');
   });
 
   mainWindow.on('closed', () => {
-    console.log('[Wayland] Main window closed');
+    console.log('[Darhai] Main window closed');
   });
 
   // DevTools is no longer auto-opened at startup.
@@ -763,7 +763,7 @@ const createWindow = ({ showOnReady = true }: { showOnReady?: boolean } = {}): v
 
 const handleAppReady = async (): Promise<void> => {
   const t0 = performance.now();
-  const mark = (label: string) => console.log(`[Wayland:ready] ${label} +${Math.round(performance.now() - t0)}ms`);
+  const mark = (label: string) => console.log(`[Darhai:ready] ${label} +${Math.round(performance.now() - t0)}ms`);
   mark('start');
 
   if (!app.isPackaged) {
@@ -848,20 +848,20 @@ const handleAppReady = async (): Promise<void> => {
     const db = await getDatabase();
     const repaired = db.reconcileInterruptedMessages();
     if (repaired.success && repaired.data) {
-      console.log(`[Wayland] reconciled ${repaired.data} interrupted message(s) from a previous run`);
+      console.log(`[Darhai] reconciled ${repaired.data} interrupted message(s) from a previous run`);
     } else if (!repaired.success) {
-      console.warn('[Wayland] interrupted-message reconcile failed (ignored):', repaired.error);
+      console.warn('[Darhai] interrupted-message reconcile failed (ignored):', repaired.error);
     }
     mark('reconcileInterruptedMessages');
   } catch (error) {
-    console.warn('[Wayland] interrupted-message reconcile skipped (ignored):', error);
+    console.warn('[Darhai] interrupted-message reconcile skipped (ignored):', error);
   }
 
   try {
     initializeZoomFactor(await ProcessConfig.get('ui.zoomFactor'));
     mark('initializeZoomFactor');
   } catch (error) {
-    console.error('[Wayland] Failed to restore zoom factor:', error);
+    console.error('[Darhai] Failed to restore zoom factor:', error);
     initializeZoomFactor(undefined);
   }
 
@@ -920,7 +920,7 @@ const handleAppReady = async (): Promise<void> => {
       try {
         await migrateCredentialsToSafeStorage_v1();
       } catch (err) {
-        console.error('[Wayland] credential migration threw:', err);
+        console.error('[Darhai] credential migration threw:', err);
       }
 
       try {
@@ -1229,7 +1229,7 @@ void app
     // parallel with init. Failure is non-fatal - before-quit handles undefined.
     _cleanupModulesPromise = prefetchCleanupModules();
     _cleanupModulesPromise.catch((err) => {
-      console.warn('[Wayland] Cleanup-module prefetch failed; before-quit will fall back to fresh imports:', err);
+      console.warn('[Darhai] Cleanup-module prefetch failed; before-quit will fall back to fresh imports:', err);
       _cleanupModulesPromise = undefined;
     });
   })
@@ -1239,7 +1239,7 @@ void app
     // to Sentry and hard-exit so the OS/launcher can recover. app.quit() is a
     // soft request that can be cancelled by before-quit handlers, which is the
     // wrong behavior when init itself failed.
-    console.error('[Wayland] App initialization failed:', error);
+    console.error('[Darhai] App initialization failed:', error);
     try {
       _sentry?.captureException(error);
     } catch {
@@ -1297,7 +1297,7 @@ const quitBarrier = createQuitBarrier({
       // Does NOT re-emit before-quit / will-quit, so there is no recursion.
       app.exit(0);
     } catch (err) {
-      console.error('[Wayland] app.exit failed; exiting the process directly:', err);
+      console.error('[Darhai] app.exit failed; exiting the process directly:', err);
       process.exit(0);
     }
   },
@@ -1315,7 +1315,7 @@ const runQuitCleanup = async (): Promise<void> => {
       const timer = setTimeout(() => {
         if (settled) return;
         settled = true;
-        console.warn(`[Wayland] cleanup step "${label}" exceeded ${ms}ms; moving on`);
+        console.warn(`[Darhai] cleanup step "${label}" exceeded ${ms}ms; moving on`);
         resolve(undefined);
       }, ms);
       p.then(
@@ -1329,7 +1329,7 @@ const runQuitCleanup = async (): Promise<void> => {
           if (settled) return;
           settled = true;
           clearTimeout(timer);
-          console.error(`[Wayland] cleanup step "${label}" failed:`, err);
+          console.error(`[Darhai] cleanup step "${label}" failed:`, err);
           resolve(undefined);
         }
       );
@@ -1574,7 +1574,7 @@ const runQuitCleanup = async (): Promise<void> => {
         if (!mods.agentChildren) return;
         const { reaped, failed } = await mods.agentChildren.reapOrphanedAgentChildren();
         if (reaped || failed) {
-          console.warn(`[Wayland] reaped ${reaped} orphaned engine child(ren), ${failed} failed`);
+          console.warn(`[Darhai] reaped ${reaped} orphaned engine child(ren), ${failed} failed`);
         }
       })(),
       REAP_TIMEOUT_MS
@@ -1604,7 +1604,7 @@ const runQuitCleanup = async (): Promise<void> => {
   let ceilingTimer: ReturnType<typeof setTimeout> | undefined;
   const masterCeiling = new Promise<void>((resolve) => {
     ceilingTimer = setTimeout(() => {
-      console.warn(`[Wayland] Cleanup master ceiling (${MASTER_TIMEOUT_MS}ms) reached; forcing quit`);
+      console.warn(`[Darhai] Cleanup master ceiling (${MASTER_TIMEOUT_MS}ms) reached; forcing quit`);
       resolve();
     }, MASTER_TIMEOUT_MS);
   });
@@ -1618,7 +1618,7 @@ const runQuitCleanup = async (): Promise<void> => {
 };
 
 app.on('before-quit', () => {
-  console.log('[Wayland] before-quit');
+  console.log('[Darhai] before-quit');
   setIsQuitting(true);
   isExplicitQuit = true;
   destroyTray();
@@ -1644,11 +1644,11 @@ app.on('will-quit', (event) => {
     event.preventDefault();
     return;
   }
-  console.log('[Wayland] will-quit - cleanup complete');
+  console.log('[Darhai] will-quit - cleanup complete');
 });
 
 app.on('quit', (_event, exitCode) => {
-  console.log(`[Wayland] quit (exitCode=${exitCode})`);
+  console.log(`[Darhai] quit (exitCode=${exitCode})`);
 });
 
 // In this file you can include the rest of your app's specific main process

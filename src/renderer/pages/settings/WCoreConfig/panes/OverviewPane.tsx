@@ -10,12 +10,11 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ipcBridge } from '@/common';
 import { useModelRegistry } from '@/renderer/hooks/useModelRegistry';
+import { useEngineConfigPath } from '../components/useEngineConfigPath';
 import styles from './Panes.module.css';
 
 /** Total provider catalog size: the headline "104 catalog" figure. */
 const CATALOG_SIZE = 104;
-/** The engine's default profile, as written to disk by wayland-core. */
-const DEFAULT_PROFILE_PATH = '~/.darhai/profiles/default';
 
 type OverviewPaneProps = {
   /** Engine version for the VERSION stat card (live, else the pinned build). */
@@ -47,6 +46,13 @@ const OverviewPane: React.FC<OverviewPaneProps> = ({ version }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [engineAvailable, setEngineAvailable] = useState<boolean | null>(null);
+  // The ACTIVE profile, read rather than assumed. This card used to hardcode
+  // "Default" and the path `~/.darhai/profiles/default` - wrong twice over: a
+  // user on a named profile was told they were on the default one, and the
+  // default profile does not live under `profiles/` at all (it maps to the
+  // engine's native config dir). `list` already reports the real `dir`.
+  const [activeProfile, setActiveProfile] = useState<{ name: string; dir?: string } | null>(null);
+  const engineConfigPath = useEngineConfigPath();
   const { providers } = useModelRegistry();
 
   useEffect(() => {
@@ -55,6 +61,22 @@ const OverviewPane: React.FC<OverviewPaneProps> = ({ version }) => {
         setEngineAvailable(result.data.some((a) => a.backend === 'wcore'));
       }
     });
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+    ipcBridge.wcoreProfiles.list
+      .invoke()
+      .then((list) => {
+        const active = Array.isArray(list) ? list.find((p) => p.active) : undefined;
+        if (alive && active) setActiveProfile({ name: active.name, dir: active.dir });
+      })
+      .catch(() => {
+        // Card falls back to the config path below; never invent a profile.
+      });
+    return () => {
+      alive = false;
+    };
   }, []);
 
   const goDesktop = (route: string): void => {
@@ -175,10 +197,12 @@ const OverviewPane: React.FC<OverviewPaneProps> = ({ version }) => {
           <div className={styles.scLabel}>
             {t('settings.wcoreConfig.overview.scProfile', { defaultValue: 'Active Profile' })}
           </div>
-          <div className={styles.scValue}>
-            {t('settings.wcoreConfig.overview.scProfileDefault', { defaultValue: 'Default' })}
+          <div className={styles.scValue} data-testid='active-profile-name'>
+            {activeProfile?.name ?? t('settings.wcoreConfig.overview.scProfileDefault', { defaultValue: 'Default' })}
           </div>
-          <div className={`${styles.scMeta} ${styles.scMetaMono}`}>{DEFAULT_PROFILE_PATH}</div>
+          <div className={`${styles.scMeta} ${styles.scMetaMono}`} data-testid='active-profile-dir'>
+            {activeProfile?.dir ?? engineConfigPath ?? ''}
+          </div>
         </div>
       </div>
 
@@ -236,8 +260,12 @@ const OverviewPane: React.FC<OverviewPaneProps> = ({ version }) => {
 
           <div className={styles.engineOwnedLine}>
             {t('settings.wcoreConfig.overview.engineOwnedLine', {
+              // Real path from the main process - it varies by platform AND by
+              // active profile. Falls back to the bare filename, never to a
+              // guessed location.
+              path: engineConfigPath ?? 'config.toml',
               defaultValue:
-                'Tools, Memory, Security and Profiles are the engine’s own: written to ~/.wayland-core/config.toml and shared with the Darhai Core CLI.',
+                'Tools, Memory, Security and Profiles are the engine’s own: written to {{path}} and shared with the Darhai Core CLI.',
             })}
           </div>
         </div>

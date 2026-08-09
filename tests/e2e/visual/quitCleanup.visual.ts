@@ -8,7 +8,7 @@
  * Quitting Darhai must FINISH its cleanup, not merely start it.
  *
  * Electron does not await async `before-quit` handlers - measured on this
- * build, `[Wayland] before-quit` and `[Wayland] will-quit` are ~23ms apart with
+ * build, `[Darhai] before-quit` and `[Darhai] will-quit` are ~23ms apart with
  * the process already going away - so every awaited step in the cleanup bundle
  * (SQLite close, cron shutdown, cookbook llama-server teardown, fork workers)
  * was best-effort. Only OmniRoute survived, because it had registered its own
@@ -42,7 +42,7 @@ import { launchVisualApp, closeVisualApp, waitForSettle, type VisualApp } from '
 import { invokeBridge } from '../helpers/bridge';
 
 /** Written by the barrier once the cleanup it held the quit for has finished. */
-const CLEANUP_FINISHED = '[Wayland] quit cleanup finished in';
+const CLEANUP_FINISHED = '[Darhai] quit cleanup finished in';
 
 type DbPaths = { db: string; wal: string; shm: string; logsDir: string };
 
@@ -296,7 +296,7 @@ test.describe('quit cleanup', () => {
       // have written this line.
       const logs = readLogs(paths.logsDir);
       expect(logs, 'main log has no quit record at all - the check below would be vacuous').toContain(
-        '[Wayland] before-quit'
+        '[Darhai] before-quit'
       );
       expect(logs).toContain(CLEANUP_FINISHED);
     } finally {

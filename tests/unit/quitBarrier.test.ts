@@ -192,6 +192,6 @@ describe('createQuitBarrier', () => {
     release();
     await flush();
 
-    expect(h.logs).toContain('[Wayland] quit cleanup finished in 450ms');
+    expect(h.logs).toContain('[Darhai] quit cleanup finished in 450ms');
   });
 });

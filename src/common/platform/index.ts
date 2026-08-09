@@ -1,16 +1,35 @@
+import { existsSync } from 'node:fs';
 import path from 'path';
 import type { IPlatformServices } from './IPlatformServices';
 import { NodePlatformServices } from './NodePlatformServices';
 
 let _services: IPlatformServices | null = null;
 
+/** Dev userData folder name this fork writes for a fresh checkout. */
+const DEV_APP_NAME = 'Darhai-Dev';
+/** The pre-fork name. Still honoured when a developer already has that folder. */
+const LEGACY_DEV_APP_NAME = 'Wayland-Dev';
+
 /**
  * Resolve the dev-mode app name for environment isolation.
  * Centralised so that every call-site stays in sync.
+ *
+ * Passing `parentDir` (the directory userData sits in) opts into the legacy
+ * check: a developer whose existing dev profile is still under `Wayland-Dev`
+ * keeps using it, because switching names would leave their chat history,
+ * settings and connected providers behind in a folder the app no longer opens -
+ * the data is intact on disk but gone from the app, which is the worse failure.
+ * A fresh checkout has neither folder and gets {@link DEV_APP_NAME}.
+ *
+ * Called without `parentDir` it is pure and always returns the new name.
  */
-export function getDevAppName(): string {
-  const isMultiInstance = process.env.DARHAI_MULTI_INSTANCE === '1';
-  return isMultiInstance ? 'Wayland-Dev-2' : 'Wayland-Dev';
+export function getDevAppName(parentDir?: string): string {
+  const suffix = process.env.DARHAI_MULTI_INSTANCE === '1' ? '-2' : '';
+  const preferred = `${DEV_APP_NAME}${suffix}`;
+  if (!parentDir) return preferred;
+  if (existsSync(path.join(parentDir, preferred))) return preferred;
+  const legacy = `${LEGACY_DEV_APP_NAME}${suffix}`;
+  return existsSync(path.join(parentDir, legacy)) ? legacy : preferred;
 }
 
 export function registerPlatformServices(services: IPlatformServices): void {
@@ -40,9 +59,10 @@ export function getPlatformServices(): IPlatformServices {
         // Rollup may load this chunk before configureChromium.ts runs, so we
         // must apply the dev name here as a safety net.
         if (!app.isPackaged) {
-          const devAppName = getDevAppName();
+          const parentDir = path.dirname(app.getPath('userData'));
+          const devAppName = getDevAppName(parentDir);
           app.setName(devAppName);
-          app.setPath('userData', path.join(path.dirname(app.getPath('userData')), devAppName));
+          app.setPath('userData', path.join(parentDir, devAppName));
         }
         // Typed as IPlatformPaths so tsc enforces completeness: any new method
         // added to the interface will cause a compile error here if omitted below.

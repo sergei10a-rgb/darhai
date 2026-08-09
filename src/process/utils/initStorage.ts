@@ -119,7 +119,7 @@ const initBundledExtensions = async (): Promise<void> => {
       });
     }
   } catch (error) {
-    console.warn('[Wayland] Failed to sync bundled extensions:', error);
+    console.warn('[Darhai] Failed to sync bundled extensions:', error);
   }
 };
 
@@ -138,7 +138,7 @@ const migrateLegacyData = async () => {
         try {
           return existsSync(newDir) && readdirSync(newDir).length === 0;
         } catch (error) {
-          console.warn('[Wayland] Warning: Could not read new directory during migration check:', error);
+          console.warn('[Darhai] Warning: Could not read new directory during migration check:', error);
           return false; // Assume non-empty to avoid overwriting on migration
         }
       })();
@@ -160,7 +160,7 @@ const migrateLegacyData = async () => {
             await fs.rm(oldDir, { recursive: true });
           } catch (cleanupError) {
             console.warn(
-              '[Wayland] Failed to clean up original directory, please delete manually:',
+              '[Darhai] Failed to clean up original directory, please delete manually:',
               oldDir,
               cleanupError
             );
@@ -171,7 +171,7 @@ const migrateLegacyData = async () => {
       return true;
     }
   } catch (error) {
-    console.error('[Wayland] Data migration failed:', error);
+    console.error('[Darhai] Data migration failed:', error);
   }
 
   return false;
@@ -469,7 +469,7 @@ const initBuiltinAssistantRules = async (): Promise<void> => {
       }
     }
 
-    console.warn(`[Wayland] Could not find builtin ${dirPath} directory, tried:`, candidates);
+    console.warn(`[Darhai] Could not find builtin ${dirPath} directory, tried:`, candidates);
     return candidates[0];
   };
 
@@ -510,7 +510,7 @@ const initBuiltinAssistantRules = async (): Promise<void> => {
         overwrite: true,
       });
     } catch (error) {
-      console.warn(`[Wayland] Failed to sync builtin skills directory:`, error);
+      console.warn(`[Darhai] Failed to sync builtin skills directory:`, error);
     }
   }
 
@@ -549,7 +549,7 @@ const initBuiltinAssistantRules = async (): Promise<void> => {
 
           // Check if source file exists
           if (!existsSync(sourceRulesPath)) {
-            console.warn(`[Wayland] Source rule file not found: ${sourceRulesPath}`);
+            console.warn(`[Darhai] Source rule file not found: ${sourceRulesPath}`);
             continue;
           }
 
@@ -560,7 +560,7 @@ const initBuiltinAssistantRules = async (): Promise<void> => {
           await fs.writeFile(targetPath, content, 'utf-8');
         } catch (error) {
           // Ignore missing locale files
-          console.warn(`[Wayland] Failed to copy rule file ${ruleFile}:`, error);
+          console.warn(`[Darhai] Failed to copy rule file ${ruleFile}:`, error);
         }
       }
     } else {
@@ -590,7 +590,7 @@ const initBuiltinAssistantRules = async (): Promise<void> => {
 
           // Check if source file exists
           if (!existsSync(sourceSkillsPath)) {
-            console.warn(`[Wayland] Source skill file not found: ${sourceSkillsPath}`);
+            console.warn(`[Darhai] Source skill file not found: ${sourceSkillsPath}`);
             continue;
           }
 
@@ -601,7 +601,7 @@ const initBuiltinAssistantRules = async (): Promise<void> => {
           await fs.writeFile(targetPath, content, 'utf-8');
         } catch (error) {
           // Ignore missing skill files
-          console.warn(`[Wayland] Failed to copy skill file ${skillFile}:`, error);
+          console.warn(`[Darhai] Failed to copy skill file ${skillFile}:`, error);
         }
       }
     } else {
@@ -1117,12 +1117,12 @@ const ensureBuiltinMcpServers = async (): Promise<void> => {
       // previous boot's env pointing at a closed socket.
       mcpServers.splice(personalDataExistingIdx, 1);
       changed = true;
-      console.warn('[Wayland] personal-data MCP server not running - removed its stale catalog entry');
+      console.warn('[Darhai] personal-data MCP server not running - removed its stale catalog entry');
     }
 
     if (changed) {
       await configFile.set('mcp.config', mcpServers);
-      console.log('[Wayland] Built-in MCP servers ensured');
+      console.log('[Darhai] Built-in MCP servers ensured');
     }
 
     // Clear old switch flag after migration
@@ -1131,7 +1131,7 @@ const ensureBuiltinMcpServers = async (): Promise<void> => {
       await configFile.set('tools.imageGenerationModel', rest as typeof oldConfig);
     }
   } catch (error) {
-    console.error('[Wayland] Failed to ensure built-in MCP servers:', error);
+    console.error('[Darhai] Failed to ensure built-in MCP servers:', error);
   }
 };
 
@@ -1167,16 +1167,16 @@ const cleanupOrphanedHealthCheckConversations = async () => {
     });
 
     if (deletedCount > 0) {
-      console.log(`[Wayland] Cleaned up ${deletedCount} orphaned health-check conversation(s) on startup`);
+      console.log(`[Darhai] Cleaned up ${deletedCount} orphaned health-check conversation(s) on startup`);
     }
   } catch (error) {
-    console.warn('[Wayland] Failed to cleanup orphaned health-check conversations:', error);
+    console.warn('[Darhai] Failed to cleanup orphaned health-check conversations:', error);
   }
 };
 
 const initStorage = async () => {
   const t0 = performance.now();
-  const mark = (label: string) => console.log(`[Wayland:init] ${label} +${Math.round(performance.now() - t0)}ms`);
+  const mark = (label: string) => console.log(`[Darhai:init] ${label} +${Math.round(performance.now() - t0)}ms`);
   mark('start');
 
   // 1. Run data migration first (before any directory is created)
@@ -1223,7 +1223,7 @@ const initStorage = async () => {
       await configFile.set('mcp.config', defaultServers);
     }
   } catch (error) {
-    console.error('[Wayland] Failed to initialize default MCP servers:', error);
+    console.error('[Darhai] Failed to initialize default MCP servers:', error);
   }
   mark('4.1 MCP defaults');
 
@@ -1241,18 +1241,18 @@ const initStorage = async () => {
   try {
     const mcpScripts = inspectMcpScripts();
     if (!mcpScripts.ok) {
-      console.error('[Wayland] MCP script canary FAILED:\n' + mcpScripts.message);
+      console.error('[Darhai] MCP script canary FAILED:\n' + mcpScripts.message);
       if (getPlatformServices().paths.isPackaged()) {
         throw new Error(mcpScripts.message);
       }
     } else {
       console.log(
-        `[Wayland] MCP scripts present (${mcpScripts.presentScripts.length}/${mcpScripts.presentScripts.length}) at ${mcpScripts.dir}`
+        `[Darhai] MCP scripts present (${mcpScripts.presentScripts.length}/${mcpScripts.presentScripts.length}) at ${mcpScripts.dir}`
       );
     }
   } catch (error) {
     if (getPlatformServices().paths.isPackaged()) throw error;
-    console.error('[Wayland] MCP script canary error:', error);
+    console.error('[Darhai] MCP script canary error:', error);
   }
   mark('4.1.5 mcpScriptCanary');
 
@@ -1301,7 +1301,8 @@ const initStorage = async () => {
     if (!splitMigrationDone) {
       const legacyCustomAgents =
         ((await configFile.get('acp.customAgents').catch((): undefined => undefined)) as
-          AcpBackendConfig[] | undefined) || [];
+          | AcpBackendConfig[]
+          | undefined) || [];
       const currentAssistants =
         ((await configFile.get('assistants').catch((): undefined => undefined)) as AcpBackendConfig[] | undefined) ||
         [];
@@ -1474,7 +1475,7 @@ const initStorage = async () => {
     }
     mark('5.2 assistant config + migrations');
   } catch (error) {
-    console.error('[Wayland] Failed to initialize builtin assistants:', error);
+    console.error('[Darhai] Failed to initialize builtin assistants:', error);
   }
 
   // 6. Initialize the database (better-sqlite3)
@@ -1589,7 +1590,7 @@ export const loadSkillsContent = async (enabledSkills: string[]): Promise<string
         skillContents.push(`## Skill: ${skillName}\n${content}`);
       }
     } catch (error) {
-      console.warn(`[Wayland] Failed to load skill ${skillName}:`, error);
+      console.warn(`[Darhai] Failed to load skill ${skillName}:`, error);
     }
   }
 

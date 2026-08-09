@@ -86,8 +86,8 @@ function agentPillByBackend(backend: string) {
 
 function getLogFilePath(): string {
   const today = new Date().toISOString().slice(0, 10);
-  // Dev mode uses "Wayland-Dev", production uses "Wayland"
-  const devPath = path.join(os.homedir(), 'Library', 'Logs', 'Wayland-Dev', `${today}.log`);
+  // Dev mode uses "Darhai-Dev" (see getDevAppName), production uses "Darhai"
+  const devPath = path.join(os.homedir(), 'Library', 'Logs', 'Darhai-Dev', `${today}.log`);
   const prodPath = path.join(os.homedir(), 'Library', 'Logs', 'Wayland', `${today}.log`);
   return fs.existsSync(devPath) ? devPath : prodPath;
 }

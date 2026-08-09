@@ -24,6 +24,7 @@
  */
 
 import { getSection, setSection } from '@process/agent/wcore/configBridge';
+import { resolveActiveConfigPath } from '@process/agent/wcore/profilePaths';
 import { initWcoreProfileIpc } from '@process/agent/wcore/profileStore';
 import { ipcBridge } from '@/common';
 
@@ -77,6 +78,12 @@ export function sanitizeSecuritySection(value: Record<string, unknown>): Record<
 export function initWcoreConfigBridge(): void {
   ipcBridge.wcoreConfig.getSection.provider(async ({ section }) => {
     return getSection<Record<string, unknown>>(section);
+  });
+
+  // Read-only: where the ACTIVE profile's config.toml really lives, so the
+  // settings panes can name the file instead of guessing at it.
+  ipcBridge.wcoreConfig.getConfigPath.provider(async () => {
+    return resolveActiveConfigPath();
   });
 
   ipcBridge.wcoreConfig.setSection.provider(async ({ section, value }) => {

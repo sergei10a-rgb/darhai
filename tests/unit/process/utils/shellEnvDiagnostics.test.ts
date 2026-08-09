@@ -230,7 +230,7 @@ describe('logEnvironmentDiagnostics', () => {
     const output = consoleSpy.mock.calls[0][0] as string;
 
     // Should contain the environment tag
-    expect(output).toContain('[Wayland:env]');
+    expect(output).toContain('[Darhai:env]');
 
     // Verify Shell label alignment (9 chars padded)
     expect(output).toContain('Shell    :');
@@ -251,6 +251,6 @@ describe('logEnvironmentDiagnostics', () => {
     });
 
     await expect(logEnvironmentDiagnostics()).resolves.toBeUndefined();
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('[Wayland:env]'), expect.any(Error));
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('[Darhai:env]'), expect.any(Error));
   });
 });

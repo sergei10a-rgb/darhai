@@ -119,7 +119,7 @@ export async function killProcessTree(pid: number, force: boolean): Promise<Kill
  * quit.
  *
  * Electron does not await async `before-quit` handlers. Measured on this build:
- * `[Wayland] before-quit` and `[Wayland] will-quit` are 23ms apart, so an
+ * `[Darhai] before-quit` and `[Darhai] will-quit` are 23ms apart, so an
  * awaited cleanup step is cut off mid-flight and the OmniRoute tree outlives
  * the app (netstat kept showing `127.0.0.1:20128 LISTENING` after the Electron
  * pid was gone). A synchronous kill inside the handler cannot be cut short.

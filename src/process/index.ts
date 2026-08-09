@@ -24,7 +24,7 @@ import { ExtensionRegistry } from '@process/extensions';
 
 export const initializeProcess = async () => {
   const t0 = performance.now();
-  const mark = (label: string) => console.log(`[Wayland:process] ${label} +${Math.round(performance.now() - t0)}ms`);
+  const mark = (label: string) => console.log(`[Darhai:process] ${label} +${Math.round(performance.now() - t0)}ms`);
 
   await initStorage();
   mark('initStorage');

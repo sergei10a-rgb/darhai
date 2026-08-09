@@ -305,7 +305,7 @@ export class WCoreAgent {
       waylandHome = await resolveActiveConfigDir();
     } catch (err) {
       // A named profile that cannot be resolved must stop the spawn. Falling
-      // through leaves DARHAI_HOME unset, and the engine then uses its own
+      // through leaves WAYLAND_HOME unset, and the engine then uses its own
       // default - the DEFAULT profile's config.toml and memory.db. A profile
       // created to keep work separate would start writing into the one it was
       // meant to be separate from, silently. Failing to start is recoverable;

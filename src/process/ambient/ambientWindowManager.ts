@@ -95,7 +95,7 @@ export function getBubbleWindow(): BrowserWindow | null {
 async function resolveInitialBounds(): Promise<{ x: number; y: number }> {
   let persisted: { x: number; y: number; displayId: number } | null = null;
   // In E2E test mode we always start from the default bottom-right - the
-  // persistence layer is shared with the dev app's userData (`Wayland-Dev/config/`)
+  // persistence layer is shared with the dev app's userData (`Darhai-Dev/config/`)
   // so a previous local run could leave a non-default `ambient.bubblePosition`
   // that breaks AC-M1-1's "bottom-right on first launch" assertion. Honoring
   // DARHAI_E2E_TEST here gives the test suite a clean slate without needing

@@ -32,7 +32,7 @@ const ORIGINAL_ENV = { ...process.env };
 
 beforeEach(async () => {
   home = await mkdtemp(join(tmpdir(), 'wcore-home-'));
-  delete process.env.DARHAI_HOME;
+  delete process.env.WAYLAND_HOME;
   delete process.env.XDG_DATA_HOME;
 });
 
@@ -48,9 +48,11 @@ async function setActive(name: string): Promise<void> {
   await writeFile(join(root, '.active'), `${name}\n`, 'utf-8');
 }
 
+// The precedence asserted here is verified against the real engine binary in
+// tests/unit/wcore-engineHome.test.ts; these cases pin the pure resolution.
 describe('nativeConfigDir - mirrors engine wayland_config_dir precedence', () => {
-  it('honors DARHAI_HOME as the literal config dir', () => {
-    process.env.DARHAI_HOME = '/tmp/wh';
+  it('honors WAYLAND_HOME as the literal config dir', () => {
+    process.env.WAYLAND_HOME = '/tmp/wh';
     expect(nativeConfigDir()).toBe('/tmp/wh');
   });
 

@@ -140,21 +140,24 @@ const AGENT_PILL = '[data-agent-pill="true"]';
 function getLogFilePath(): string {
   const today = new Date().toISOString().slice(0, 10);
   const candidates: string[] = [];
-  // Dev builds still use the 'Wayland-Dev' app name (see getDevAppName);
-  // packaged builds moved to 'Darhai' after the rename. Old 'Wayland' paths are
-  // kept as fallbacks for logs written by pre-rebrand installs.
+  // Dev builds use 'Darhai-Dev' (see getDevAppName), which still falls back to
+  // an existing 'Wayland-Dev' folder; packaged builds are 'Darhai'. The older
+  // names stay as fallbacks for logs written by pre-rebrand installs.
   if (process.platform === 'darwin') {
     candidates.push(
+      path.join(os.homedir(), 'Library', 'Logs', 'Darhai-Dev', `${today}.log`),
       path.join(os.homedir(), 'Library', 'Logs', 'Wayland-Dev', `${today}.log`),
       path.join(os.homedir(), 'Library', 'Logs', 'Darhai', `${today}.log`),
       path.join(os.homedir(), 'Library', 'Logs', 'Wayland', `${today}.log`)
     );
   } else if (process.platform === 'win32') {
     const appData = process.env.APPDATA ?? path.join(os.homedir(), 'AppData', 'Roaming');
+    candidates.push(path.join(appData, 'Darhai-Dev', 'logs', `${today}.log`));
     candidates.push(path.join(appData, 'Wayland-Dev', 'logs', `${today}.log`));
     candidates.push(path.join(appData, 'Darhai', 'logs', `${today}.log`));
     candidates.push(path.join(appData, 'Wayland', 'logs', `${today}.log`));
   } else {
+    candidates.push(path.join(os.homedir(), '.config', 'Darhai-Dev', 'logs', `${today}.log`));
     candidates.push(path.join(os.homedir(), '.config', 'Wayland-Dev', 'logs', `${today}.log`));
     candidates.push(path.join(os.homedir(), '.config', 'Darhai', 'logs', `${today}.log`));
     candidates.push(path.join(os.homedir(), '.config', 'Wayland', 'logs', `${today}.log`));

@@ -1556,7 +1556,13 @@ export interface IConversationTurnCompletedEvent {
   sessionId: string;
   status: 'pending' | 'running' | 'finished';
   state:
-    'ai_generating' | 'ai_waiting_input' | 'ai_waiting_confirmation' | 'initializing' | 'stopped' | 'error' | 'unknown';
+    | 'ai_generating'
+    | 'ai_waiting_input'
+    | 'ai_waiting_confirmation'
+    | 'initializing'
+    | 'stopped'
+    | 'error'
+    | 'unknown';
   detail: string;
   canSendMessage: boolean;
   runtime: {
@@ -2046,7 +2052,8 @@ export const omnirouteGateway = {
 export type IjfwDropEntry = { name: string; size: number; mtimeMs: number };
 
 export type IjfwDropIngestResult =
-  { ok: true; name: string } | { ok: false; error: string; errorReason: IjfwErrorReason };
+  | { ok: true; name: string }
+  | { ok: false; error: string; errorReason: IjfwErrorReason };
 
 // --- Models & Providers redesign (Wave 0 contract) ------------------------
 // New two-tier model registry. Distinct from the legacy `providers` namespace
@@ -2309,6 +2316,12 @@ export const wcoreConfig = {
   // Read one top-level `config.toml` section (e.g. `tools`, `security`),
   // or undefined when the section is absent.
   getSection: buildProvider<Record<string, unknown> | undefined, { section: string }>('wcoreConfig.getSection'),
+  // Absolute path of the config.toml the ACTIVE profile actually reads/writes.
+  // The settings panes used to print a hardcoded `~/.wayland-core/config.toml`,
+  // which is not the real location on ANY platform (Windows resolves under
+  // %APPDATA%, macOS under ~/Library/Application Support) and is wrong outright
+  // for a named profile. A user who went looking found nothing there.
+  getConfigPath: buildProvider<string, void>('wcoreConfig.getConfigPath'),
   // Replace one top-level section wholesale, preserving every other section.
   // HUMAN-ONLY; remote-denied; never reachable from the agent tool surface.
   setSection: buildProvider<{ ok: boolean }, { section: string; value: Record<string, unknown> }>(

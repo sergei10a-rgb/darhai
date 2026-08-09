@@ -8,12 +8,18 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // --- Hoist mocks ---
-const { mockNavigate, mockGetAvailableAgents, mockProviders, mockMcpServers } = vi.hoisted(() => ({
-  mockNavigate: vi.fn(),
-  mockGetAvailableAgents: vi.fn(),
-  mockProviders: { value: [] as Array<{ providerId: string }> },
-  mockMcpServers: { value: [] as Array<{ name: string; enabled?: boolean }> },
-}));
+const { mockNavigate, mockGetAvailableAgents, mockProviders, mockMcpServers, MOCK_CONFIG_PATH, mockProfiles } =
+  vi.hoisted(() => ({
+    mockNavigate: vi.fn(),
+    mockGetAvailableAgents: vi.fn(),
+    mockProviders: { value: [] as Array<{ providerId: string }> },
+    mockMcpServers: { value: [] as Array<{ name: string; enabled?: boolean }> },
+    // A platform-shaped absolute path, deliberately NOT `~/.wayland-core/...`:
+    // the point of these assertions is that the panes print what the main
+    // process reports, not a path compiled into the markup.
+    MOCK_CONFIG_PATH: '/home/tester/.config/wayland-core/config.toml',
+    mockProfiles: { value: [] as Array<{ name: string; active: boolean; dir?: string }> },
+  }));
 
 vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
@@ -47,6 +53,10 @@ vi.mock('../../../../src/common', () => ({
     wcoreConfig: {
       getSection: { invoke: () => Promise.resolve(undefined) },
       setSection: { invoke: () => Promise.resolve({ ok: true }) },
+      // The REAL path of the active profile's config.toml. The panes used to
+      // print a hardcoded `~/.wayland-core/config.toml`, which resolves to a
+      // file that exists on no platform the app ships to.
+      getConfigPath: { invoke: () => Promise.resolve(MOCK_CONFIG_PATH) },
     },
     // Tool-backend key presence (Services & Keys pane).
     wcoreToolKeys: {
@@ -56,7 +66,7 @@ vi.mock('../../../../src/common', () => ({
     },
     // Profile fs (Profiles pane).
     wcoreProfiles: {
-      list: { invoke: () => Promise.resolve([]) },
+      list: { invoke: () => Promise.resolve(mockProfiles.value) },
       create: { invoke: () => Promise.resolve({ ok: true }) },
       clone: { invoke: () => Promise.resolve({ ok: true }) },
       activate: { invoke: () => Promise.resolve({ ok: true }) },
@@ -85,6 +95,7 @@ describe('WCoreConfig - Wayland Core configuration surface', () => {
     vi.clearAllMocks();
     mockProviders.value = [];
     mockMcpServers.value = [];
+    mockProfiles.value = [];
     mockGetAvailableAgents.mockResolvedValue({
       success: true,
       data: [{ backend: 'wcore', name: 'Darhai Core', cliPath: '/usr/local/bin/wcore' }],
@@ -116,7 +127,7 @@ describe('WCoreConfig - Wayland Core configuration surface', () => {
     expect(screen.getAllByText('Manage in Desktop Settings').length).toBeGreaterThan(0);
   });
 
-  it('renders the three engine status stat cards', () => {
+  it('renders the three engine status stat cards', async () => {
     render(<WCoreConfig />);
     // "Engine" also appears as the rail group label, so assert the unique
     // stat-card meta strings instead of the ambiguous labels.
@@ -124,7 +135,11 @@ describe('WCoreConfig - Wayland Core configuration surface', () => {
     expect(screen.getByText('embedded · spawned in-process')).toBeTruthy();
     expect(screen.getByText('wayland-core · pinned')).toBeTruthy();
     expect(screen.getByText('Active Profile')).toBeTruthy();
-    expect(screen.getByText('~/.darhai/profiles/default')).toBeTruthy();
+    // This used to assert the literal `~/.darhai/profiles/default`, which is
+    // where the default profile does NOT live - it maps to the engine's native
+    // config dir. The card now shows the resolved location; the dedicated
+    // describe block below covers the cases.
+    await waitFor(() => expect(screen.getByTestId('active-profile-dir').textContent).toBe(MOCK_CONFIG_PATH));
   });
 
   it('renders the smart-defaults "configured in the engine" strip', () => {
@@ -189,5 +204,43 @@ describe('WCoreConfig - Wayland Core configuration surface', () => {
     mockGetAvailableAgents.mockResolvedValue({ success: true, data: [] });
     render(<WCoreConfig />);
     await waitFor(() => expect(screen.getByText('engine stopped')).toBeTruthy());
+  });
+
+  /**
+   * Where the engine config lives was printed as a literal
+   * `~/.wayland-core/config.toml`. That path is wrong on Windows (%APPDATA%),
+   * wrong on macOS (~/Library/Application Support), and wrong for anyone on a
+   * named profile. A user who opened a terminal to edit it found nothing.
+   */
+  describe('the engine config location is reported, not guessed', () => {
+    it('prints the path the main process resolved', async () => {
+      render(<WCoreConfig />);
+      await waitFor(() => expect(screen.getByTestId('active-profile-dir').textContent).toBe(MOCK_CONFIG_PATH));
+    });
+
+    it('never prints the old hardcoded path anywhere on the pane', async () => {
+      const { container } = render(<WCoreConfig />);
+      await waitFor(() => expect(screen.getByTestId('active-profile-dir').textContent).toBeTruthy());
+      expect(container.textContent).not.toContain('~/.wayland-core');
+      expect(container.textContent).not.toContain('~/.darhai/profiles/default');
+    });
+
+    it('names the ACTIVE profile and its real dir, not a hardcoded "Default"', async () => {
+      mockProfiles.value = [
+        { name: 'default', active: false, dir: '/home/tester/.config/wayland-core' },
+        { name: 'client-work', active: true, dir: '/home/tester/.darhai/profiles/client-work' },
+      ];
+      render(<WCoreConfig />);
+      await waitFor(() => expect(screen.getByTestId('active-profile-name').textContent).toBe('client-work'));
+      expect(screen.getByTestId('active-profile-dir').textContent).toBe('/home/tester/.darhai/profiles/client-work');
+    });
+
+    it('falls back to the config path when the profile list cannot be read', async () => {
+      // list resolves empty => no active profile => the card still shows a real
+      // location rather than inventing one.
+      render(<WCoreConfig />);
+      await waitFor(() => expect(screen.getByTestId('active-profile-dir').textContent).toBe(MOCK_CONFIG_PATH));
+      expect(screen.getByTestId('active-profile-name').textContent).toBe('Default');
+    });
   });
 });

@@ -2425,7 +2425,7 @@
       "skillsDetail": "Injected via system prompt · {{allocated}}",
       "assistantsDetail": "Injected via system prompt · {{allocated}}",
       "mcpDetail": "Darhai operational MCPs · your Desktop MCP library is separate",
-      "engineOwnedLine": "Tools, Memory, Security and Profiles are the engine’s own — written to ~/.wayland-core/config.toml and shared with the Darhai Core CLI."
+      "engineOwnedLine": "Tools, Memory, Security and Profiles are the engine’s own — written to {{path}} and shared with the Darhai Core CLI."
     },
     "services": {
       "subtitle": "The engine tool backends — web search, vision, voice, image. Darhai ships working out of the box; plug in a key to unlock higher limits.",

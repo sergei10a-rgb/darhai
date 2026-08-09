@@ -392,7 +392,7 @@ export async function verifyDirectoryFiles(dir1: string, dir2: string): Promise<
 
     return true;
   } catch (error) {
-    console.warn('[Wayland] Error verifying directory files:', error);
+    console.warn('[Darhai] Error verifying directory files:', error);
     return false;
   }
 }
@@ -417,8 +417,8 @@ export const copyFilesToDirectory = async (
     try {
       await fs.access(absoluteFilePath);
     } catch (error) {
-      console.warn(`[Wayland] Source file does not exist, skipping: ${absoluteFilePath}`);
-      console.warn(`[Wayland] Original path: ${file}`);
+      console.warn(`[Darhai] Source file does not exist, skipping: ${absoluteFilePath}`);
+      console.warn(`[Darhai] Original path: ${file}`);
       // Skip missing files instead of throwing
       continue;
     }
@@ -446,7 +446,7 @@ export const copyFilesToDirectory = async (
       await fs.copyFile(absoluteFilePath, destPath);
       copiedFiles.push(destPath);
     } catch (error) {
-      console.error(`[Wayland] Failed to copy file from ${absoluteFilePath} to ${destPath}:`, error);
+      console.error(`[Darhai] Failed to copy file from ${absoluteFilePath} to ${destPath}:`, error);
       // Continue with other files instead of failing the entire operation
     }
 

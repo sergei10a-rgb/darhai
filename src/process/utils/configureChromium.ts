@@ -17,11 +17,13 @@ import { writeFileSyncAtomic } from './atomicWrite';
 // Note: getPlatformServices() auto-registration also applies this as a safety net
 // in case Rollup loads initStorage's chunk before this module runs.
 if (!app.isPackaged) {
-  const devAppName = getDevAppName();
+  // Resolve the parent FIRST: getDevAppName inspects it to keep an existing
+  // pre-fork dev profile in use rather than stranding it (see its JSDoc).
+  const appSupportDir = path.dirname(app.getPath('userData'));
+  const devAppName = getDevAppName(appSupportDir);
   app.setName(devAppName);
   // In Electron 28+, setName alone no longer updates userData path on macOS.
   // Explicitly override userData to the dev directory.
-  const appSupportDir = path.dirname(app.getPath('userData'));
   app.setPath('userData', path.join(appSupportDir, devAppName));
 }
 

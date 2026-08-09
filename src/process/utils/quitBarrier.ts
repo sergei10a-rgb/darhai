@@ -10,7 +10,7 @@
  * The problem it solves
  * ---------------------
  * Electron does not await async `before-quit` handlers. Measured on this build,
- * `[Wayland] before-quit` and `[Wayland] will-quit` are ~23ms apart with the
+ * `[Darhai] before-quit` and `[Darhai] will-quit` are ~23ms apart with the
  * process already going away, so every awaited step in the app's cleanup bundle
  * - SQLite close, cron shutdown, cookbook llama-server teardown, fork workers -
  * was best-effort. The one subsystem that survived (OmniRoute) did so by
@@ -92,7 +92,7 @@ export function createQuitBarrier(deps: QuitBarrierDeps): QuitBarrier {
   const exitOnce = (): void => {
     if (exited) return;
     exited = true;
-    log('[Wayland] quit barrier released; exiting');
+    log('[Darhai] quit barrier released; exiting');
     deps.exit();
   };
 
@@ -103,11 +103,11 @@ export function createQuitBarrier(deps: QuitBarrierDeps): QuitBarrier {
       cleanup = run().then(
         () => {
           settled = true;
-          log(`[Wayland] quit cleanup finished in ${now() - startedAt}ms`);
+          log(`[Darhai] quit cleanup finished in ${now() - startedAt}ms`);
         },
         (err: unknown) => {
           settled = true;
-          warn(`[Wayland] quit cleanup failed after ${now() - startedAt}ms: ${String(err)}`);
+          warn(`[Darhai] quit cleanup failed after ${now() - startedAt}ms: ${String(err)}`);
         }
       );
     },
@@ -117,10 +117,10 @@ export function createQuitBarrier(deps: QuitBarrierDeps): QuitBarrier {
       if (!cleanup || settled) return false;
       if (armed) return true;
       armed = true;
-      log('[Wayland] will-quit - holding the quit until cleanup finishes');
+      log('[Darhai] will-quit - holding the quit until cleanup finishes');
 
       const ceiling = setTimer(() => {
-        warn(`[Wayland] quit barrier ceiling (${deps.ceilingMs}ms) reached; exiting anyway`);
+        warn(`[Darhai] quit barrier ceiling (${deps.ceilingMs}ms) reached; exiting anyway`);
         exitOnce();
       }, deps.ceilingMs);
 

@@ -486,8 +486,13 @@ const ENGINE_ENV_ALLOWLIST: readonly string[] = [
  *     active profile's OWN config.toml + memory.db + skills. Set explicitly for
  *     every profile (default -> native dir; named -> `~/.darhai/profiles/<n>`)
  *     so the live config file the panes edit and the file the engine reads can
- *     never diverge. Layered last so a stray `process.env.DARHAI_HOME` can't
- *     override the resolved profile dir.
+ *     never diverge. Layered last so a stray inherited value can't override the
+ *     resolved profile dir.
+ *
+ * Note that `WAYLAND_HOME` is deliberately ABSENT from
+ * {@link ENGINE_ENV_ALLOWLIST}: a value exported in the user's shell must not
+ * reach the engine, because it would win whenever profile resolution has
+ * nothing to set and silently redirect every profile at one config tree.
  */
 export function buildEngineSpawnEnv(opts: {
   providerEnv: Record<string, string>;
@@ -516,8 +521,17 @@ export function buildEngineSpawnEnv(opts: {
   }
 
   // Active-profile config root (Design B). Authoritative - set last.
+  //
+  // The name is the ENGINE's, not ours. Measured against the bundled binary
+  // (`wayland-core --config-path`, 2026-08-10):
+  //   WAYLAND_HOME=<dir>   -> <dir>\config.toml            (honoured)
+  //   DARHAI_HOME=<dir>    -> %APPDATA%\wayland-core\...   (ignored)
+  // and the binary contains 16 occurrences of `WAYLAND_HOME`, 0 of `DARHAI`.
+  // This used to set `DARHAI_HOME`, which the engine has never read: EVERY
+  // profile shared one config.toml + memory.db - the exact cross-contamination
+  // `ProfileIsolationError` exists to prevent. Renaming it is not cosmetic.
   if (opts.waylandHome) {
-    out.DARHAI_HOME = opts.waylandHome;
+    out.WAYLAND_HOME = opts.waylandHome;
   }
 
   return out;

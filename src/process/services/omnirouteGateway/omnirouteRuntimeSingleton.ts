@@ -98,8 +98,8 @@ let quitReaperRegistered = false;
  *
  * The app-level cleanup bundle in `src/index.ts` awaits `omnirouteRuntime
  * .stopAll()` from an async `before-quit` handler - but Electron does not await
- * those handlers. Measured on this build: `[Wayland] before-quit` -> 23ms ->
- * `[Wayland] will-quit`, Electron pid gone, and `netstat` still showing
+ * those handlers. Measured on this build: `[Darhai] before-quit` -> 23ms ->
+ * `[Darhai] will-quit`, Electron pid gone, and `netstat` still showing
  * `127.0.0.1:20128 LISTENING` held by the OmniRoute tree. The async path is
  * still the right one for an ordinary stop; this is the guarantee that quitting
  * Darhai cannot leave a server behind, and it deliberately runs synchronously

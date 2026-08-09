@@ -234,6 +234,9 @@ const REMOTE_DENIED_KEYS: ReadonlySet<string> = new Set([
   // Also deny the read: it discloses the engine's security/tools posture to a
   // paired WebUI client (no secret values, but defence-in-depth — SEC review F2).
   'wcoreConfig.getSection',
+  // The config PATH is likewise local-only: it discloses the operator's home
+  // directory and active profile name to a paired WebUI client.
+  'wcoreConfig.getConfigPath',
   // --- Wayland Core profile fs mutation (create/clone/activate/delete profile
   //     directories under the profiles root). Remote-denied (SEC-4). ---
   'wcoreProfiles.create',

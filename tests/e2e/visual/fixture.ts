@@ -17,9 +17,9 @@
  *
  *  1. **Profile isolation.** `configureChromium.ts` rewrites userData in dev to
  *     `dirname(userData)/<devAppName>`. Passing `--user-data-dir=<tmp>` alone
- *     therefore lands every run in the SHARED `<tmp>/Wayland-Dev`. We pass a
+ *     therefore lands every run in the SHARED `<tmp>/Darhai-Dev`. We pass a
  *     NESTED path (`<unique>/profile`) so the rewrite resolves to
- *     `<unique>/Wayland-Dev` - genuinely per-run.
+ *     `<unique>/Darhai-Dev` - genuinely per-run.
  *  2. **Device scale + window size.** A raw launch inherited the host display
  *     (dpr 1.5, 1365x816), which would make baselines machine-specific.
  *  3. **Animations/transitions.** One CSS animation and ~69 transitions were
@@ -55,7 +55,7 @@ const runRoots = new Set<string>();
  *
  * `quitVisualApp` used to fire `app.exit(0)` and `app.close()` with both results
  * swallowed, then return. The OS process was still alive for a moment
- * afterwards - and it still held `<runRoot>/Wayland-Dev/SingletonLock` (plus the
+ * afterwards - and it still held `<runRoot>/Darhai-Dev/SingletonLock` (plus the
  * Windows lockfile) inside its `--user-data-dir`. A spec that relaunches against
  * the same `runRoot` (`localUserSurfaces`, `memoryRecall`) therefore raced the
  * corpse for its own profile: when it lost, Chromium refused the profile, the
