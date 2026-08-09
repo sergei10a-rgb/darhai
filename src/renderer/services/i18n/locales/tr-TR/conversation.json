@@ -266,7 +266,8 @@
     "queueTooLarge": "Kuyruk verisi güvenli şekilde saklanamayacak kadar büyük. Önce bazı komutları kaldırın."
   },
   "contextUsage": {
-    "contextUsed": "bağlam kullanıldı"
+    "contextUsed": "bağlam kullanıldı",
+    "overLimit": "Sınır aşıldı - yeni bir sohbet başlatın"
   },
   "skill_generator": {
     "title": "Yetenek/Kural Oluştur",

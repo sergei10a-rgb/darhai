@@ -44,6 +44,45 @@ function resolveTurnStallTimeoutMs(env: NodeJS.ProcessEnv = process.env): number
   return Math.min(Math.max(value, MIN_TURN_STALL_TIMEOUT_MS), MAX_TIMER_MS);
 }
 
+/**
+ * Consecutive failing tool calls that end a turn.
+ *
+ * The stall watchdog alone cannot catch this: a tool loop PAUSES the timer on
+ * every `tool_request` and resets it on every frame, so an agent retrying a
+ * permanently-failing tool stays "busy" forever. Measured live: one
+ * `video_analyze` call 401'd, the agent retried through Bash / ffmpeg / cp /
+ * echo workarounds, and the turn burned 1.4M tokens against a 1M window.
+ *
+ * 5 matches the two thresholds this codebase already settled on for the same
+ * shape of problem - `CIRCUIT_FAILURE_THRESHOLD` in providerCircuitBreaker and
+ * the vendored aioncli `TOOL_CALL_LOOP_THRESHOLD` - so it is not a fresh guess.
+ * A SUCCESS resets the streak, which is what keeps a long legitimate refactor
+ * (many calls, some failing) from tripping it.
+ */
+const DEFAULT_TOOL_FAIL_STREAK = 5;
+/**
+ * Backstop on total tool calls in one turn. Deliberately far above any real
+ * agentic turn - it exists to bound a loop that alternates success/failure and
+ * so never builds a failure streak, not to shape normal work.
+ */
+const DEFAULT_TOOL_CALLS_PER_TURN = 100;
+
+const readPositiveIntEnv = (env: NodeJS.ProcessEnv, name: string, fallback: number): number => {
+  const raw = env[name];
+  const parsed = raw ? Number(raw) : NaN;
+  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback;
+};
+
+/** Consecutive tool failures allowed before the turn is faulted. */
+export function resolveToolFailStreakLimit(env: NodeJS.ProcessEnv = process.env): number {
+  return readPositiveIntEnv(env, 'DARHAI_WCORE_MAX_TOOL_FAIL_STREAK', DEFAULT_TOOL_FAIL_STREAK);
+}
+
+/** Total tool calls allowed in one turn before it is faulted. */
+export function resolveToolCallsPerTurnLimit(env: NodeJS.ProcessEnv = process.env): number {
+  return readPositiveIntEnv(env, 'DARHAI_WCORE_MAX_TOOL_CALLS_PER_TURN', DEFAULT_TOOL_CALLS_PER_TURN);
+}
+
 type StreamEventHandler = (event: { type: string; data: unknown; msg_id: string }) => void;
 
 /**
@@ -170,6 +209,10 @@ export class WCoreAgent {
    * last one clears - edge-triggered on 0↔1 so nested waits do not double-toggle.
    */
   private readonly stallPauseReasons = new Set<string>();
+  /** Consecutive failing tool results in the active turn; any success resets it. */
+  private toolFailStreak = 0;
+  /** Total tool calls issued in the active turn (backstop counter). */
+  private toolCallsThisTurn = 0;
   private configBackup: { path: string; content: string | null; written: string | null } | null = null;
   private mcpReadyPromise: Promise<void>;
   private mcpReadyResolve!: () => void;
@@ -382,6 +425,10 @@ export class WCoreAgent {
   /** Arm the stall watchdog for a fresh turn. */
   private startStallWatchdog(): void {
     this.stallPauseReasons.clear();
+    // The per-turn tool counters live on the same lifecycle as the watchdog:
+    // this is the single "a new turn begins" seam (called from send()).
+    this.toolFailStreak = 0;
+    this.toolCallsThisTurn = 0;
     this.stallTimer.start();
   }
 
@@ -411,6 +458,18 @@ export class WCoreAgent {
    * spinning forever.
    */
   private handleTurnStall(): void {
+    this.faultTurn('Хариу удаан хугацаанд ахицгүй болсон тул зогсоолоо. Дахин оролдоно уу.');
+  }
+
+  /**
+   * End the active turn deterministically with a user-visible reason.
+   *
+   * Shared by every host-side turn guard (stall watchdog, tool-failure streak,
+   * per-turn call cap) so they all produce the SAME renderer contract: disarm,
+   * `stop`, one terminal error frame against the stalled msg_id. A turn that is
+   * already finished is a no-op, so a late second trip cannot double-report.
+   */
+  private faultTurn(message: string): void {
     const msgId = this.stallMsgId;
     if (!msgId) return;
     this.stopStallWatchdog();
@@ -421,11 +480,7 @@ export class WCoreAgent {
     } catch {
       // best-effort: the process may already be gone.
     }
-    this.onStreamEvent({
-      type: 'error',
-      data: 'Хариу удаан хугацаанд ахицгүй болсон тул зогсоолоо. Дахин оролдоно уу.',
-      msg_id: msgId,
-    });
+    this.onStreamEvent({ type: 'error', data: message, msg_id: msgId });
   }
 
   private handleEvent(event: WCoreEvent): void {
@@ -461,6 +516,15 @@ export class WCoreAgent {
         // A tool may legitimately run (or await approval) for a long time; pause
         // the stall deadline until its result/cancellation arrives.
         this.pauseStallWatchdog(`tool:${event.call_id}`);
+        // Backstop for a loop that alternates success and failure, so it never
+        // builds a failure streak yet still spends without bound.
+        this.toolCallsThisTurn += 1;
+        if (this.toolCallsThisTurn > resolveToolCallsPerTurnLimit()) {
+          this.faultTurn(
+            `Энэ ээлжид хэрэгслийн дуудлага ${this.toolCallsThisTurn} хүрсэн тул зогсоолоо. Даалгавраа жижиг хэсгүүдэд хуваан дахин оролдоно уу.`
+          );
+          return;
+        }
         this.onStreamEvent({
           type: 'tool_group',
           data: [
@@ -493,9 +557,24 @@ export class WCoreAgent {
         });
         break;
 
-      case 'tool_result':
+      case 'tool_result': {
         // Tool finished: resume the stall deadline.
         this.resumeStallWatchdog(`tool:${event.call_id}`);
+        // A permanently-failing tool keeps the stall watchdog alive forever
+        // (every request pauses it, every frame resets it), so the streak is
+        // what actually bounds the retry loop. Any success clears it, which is
+        // what lets a long legitimate turn with occasional failures continue.
+        if (event.status === 'success') {
+          this.toolFailStreak = 0;
+        } else {
+          this.toolFailStreak += 1;
+          if (this.toolFailStreak >= resolveToolFailStreakLimit()) {
+            this.faultTurn(
+              `Хэрэгсэл дараалан ${this.toolFailStreak} удаа алдаа өглөө — ээлжийг зогсоолоо. Алдааг шалгаад дахин оролдоно уу.`
+            );
+            return;
+          }
+        }
         this.onStreamEvent({
           type: 'tool_group',
           data: [
@@ -514,6 +593,7 @@ export class WCoreAgent {
           msg_id: event.msg_id,
         });
         break;
+      }
 
       case 'tool_cancelled':
         // Tool aborted: resume the stall deadline.

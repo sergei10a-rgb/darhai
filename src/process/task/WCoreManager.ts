@@ -64,6 +64,18 @@ const NEAR_BUDGET_RATIO = 0.95;
  */
 const EMPTY_CONTENT_THRESHOLD_CHARS = 20;
 
+/**
+ * Default `--max-turns` handed to the engine.
+ *
+ * The flag was plumbed end to end but no caller ever supplied a value, so the
+ * engine's own runaway cap never armed and a retry loop could spend without
+ * bound (measured: 1.4M tokens on one attachment). Sized as a ceiling for a
+ * pathological loop, not a budget for real work - a long legitimate agentic
+ * turn stays well under it, and the host-side tool guards in `WCoreAgent`
+ * (consecutive-failure streak, per-turn call cap) trip far earlier.
+ */
+const DEFAULT_ENGINE_MAX_TURNS = 60;
+
 // WCore-specific approval key - reuses same pattern as GeminiApprovalStore
 type WCoreApprovalKey = IApprovalKey & {
   action: 'exec' | 'edit' | 'info' | 'mcp';
@@ -283,7 +295,12 @@ export class WCoreManager extends BaseAgentManager<WCoreManagerData, string> {
       presetRules: effectivePresetRules,
       rawEngineMode,
       maxTokens: mergedData.maxTokens,
-      maxTurns: mergedData.maxTurns,
+      // `--max-turns` was fully plumbed but nothing ever set a value, so the
+      // engine's own runaway cap never armed. It is a second, independent
+      // layer under the host-side tool guards in WCoreAgent: the engine stops
+      // itself ("Run stopped: reached the configured max_turns limit") even if
+      // a host counter is bypassed. A conversation may still override it.
+      maxTurns: mergedData.maxTurns ?? DEFAULT_ENGINE_MAX_TURNS,
       sessionId: mergedData.sessionId,
       resume: mergedData.resume,
       stdioMcpServers,

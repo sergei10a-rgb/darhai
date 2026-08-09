@@ -130,7 +130,8 @@ export async function extractVideoFrames(videoPath: string, options: ExtractOpti
     FRAME_COUNT_MIN,
     FRAME_COUNT_MAX
   );
-  const timeoutMs = options.timeoutMs ?? readPositiveIntEnv('DARHAI_VIDEO_EXTRACT_TIMEOUT_MS', EXTRACT_TIMEOUT_MS_DEFAULT);
+  const timeoutMs =
+    options.timeoutMs ?? readPositiveIntEnv('DARHAI_VIDEO_EXTRACT_TIMEOUT_MS', EXTRACT_TIMEOUT_MS_DEFAULT);
 
   const stat = await fs.stat(videoPath).catch((): null => null);
   if (!stat || !stat.isFile()) {

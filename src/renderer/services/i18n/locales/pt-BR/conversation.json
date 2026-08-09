@@ -271,7 +271,8 @@
     "queueTooLarge": "Os dados da fila são grandes demais para serem salvos com segurança. Remova alguns comandos da fila primeiro."
   },
   "contextUsage": {
-    "contextUsed": "contexto usado"
+    "contextUsed": "contexto usado",
+    "overLimit": "Limite excedido - inicie um novo chat"
   },
   "skill_generator": {
     "title": "Gerar habilidade/regra",

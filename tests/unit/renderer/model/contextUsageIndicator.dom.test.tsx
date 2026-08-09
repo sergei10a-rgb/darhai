@@ -20,7 +20,7 @@
  */
 
 import React from 'react';
-import { render } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import ContextUsageIndicator from '@renderer/components/agent/ContextUsageIndicator';
 
@@ -83,5 +83,44 @@ describe('ContextUsageIndicator', () => {
   it('renders nothing at all without token data', () => {
     const { container } = render(React.createElement(ContextUsageIndicator, { tokenUsage: null }));
     expect(container.querySelector('circle')).toBeNull();
+  });
+});
+
+/**
+ * The ring clamp must not silence the NUMBER.
+ *
+ * A user hovering an over-budget conversation read "100.0% . 1.4M / 1M" - the
+ * percentage was clamped alongside the ring, so a 40% overrun was displayed as
+ * a tidy 100% and the two halves of the same line contradicted each other.
+ */
+describe('ContextUsageIndicator readout', () => {
+  /** The readout lives in a hover popover, so open it before reading. */
+  const openReadout = async (usage: number, limit: number): Promise<HTMLElement> => {
+    const { container } = render(
+      React.createElement(ContextUsageIndicator, { tokenUsage: { totalTokens: usage }, contextLimit: limit })
+    );
+    fireEvent.mouseEnter(container.querySelector('.context-usage-indicator') as HTMLElement);
+    return waitFor(() => screen.getByTestId('context-usage-figure'));
+  };
+
+  it('reports the TRUE percentage past the window, not a clamped 100', async () => {
+    // The measured case: 1.4M against a 1M window.
+    const figure = await openReadout(1_400_000, 1_000_000);
+    expect(figure.textContent ?? '').toContain('140.0%');
+  });
+
+  it('is unchanged below the window', async () => {
+    const figure = await openReadout(100_000, 200_000);
+    expect(figure.textContent ?? '').toContain('50.0%');
+  });
+
+  it('surfaces an over-limit notice only when actually over', async () => {
+    await openReadout(1_400_000, 1_000_000);
+    expect(screen.queryByTestId('context-usage-over')).not.toBeNull();
+  });
+
+  it('shows no over-limit notice below the window', async () => {
+    await openReadout(100_000, 200_000);
+    expect(screen.queryByTestId('context-usage-over')).toBeNull();
   });
 });

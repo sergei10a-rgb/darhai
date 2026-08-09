@@ -271,7 +271,8 @@
     "queueTooLarge": "Los datos de la cola son demasiado grandes para guardarlos de forma segura. Quita primero algunos comandos en cola."
   },
   "contextUsage": {
-    "contextUsed": "contexto usado"
+    "contextUsed": "contexto usado",
+    "overLimit": "Límite superado: inicia un chat nuevo"
   },
   "skill_generator": {
     "title": "Generar habilidad/regla",

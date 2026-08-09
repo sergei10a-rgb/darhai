@@ -412,7 +412,6 @@ const GuidPage: React.FC = () => {
     [mention, guidInput.input, send.sendMessageHandler, recordMessageSent]
   );
 
-
   const handleSelectAssistant = useCallback(
     (assistantId: string) => {
       setHasInteractedWithAgentSelection(true);

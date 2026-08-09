@@ -28,7 +28,7 @@ const ContextUsageIndicator: React.FC<ContextUsageIndicatorProps> = ({
 }) => {
   const { t } = useTranslation();
 
-  const { percentage, displayTotal, displayLimit, isWarning, isDanger } = useMemo(() => {
+  const { percentage, truePercentage, isOverLimit, displayTotal, displayLimit, isWarning, isDanger } = useMemo(() => {
     // A zero or missing limit would divide by zero and a negative one would
     // invert the ring; either way the caller has told us nothing useful, so
     // fall back rather than render a nonsense arc.
@@ -37,6 +37,8 @@ const ContextUsageIndicator: React.FC<ContextUsageIndicatorProps> = ({
     if (!tokenUsage) {
       return {
         percentage: 0,
+        truePercentage: 0,
+        isOverLimit: false,
         displayTotal: '0',
         displayLimit: formatTokenCount(limit, true),
         isWarning: false,
@@ -45,13 +47,19 @@ const ContextUsageIndicator: React.FC<ContextUsageIndicatorProps> = ({
     }
 
     const total = Number.isFinite(tokenUsage.totalTokens) ? tokenUsage.totalTokens : 0;
-    // Clamp: usage above the window is real (an over-long turn), but an
-    // unclamped percentage drives the ring's dash offset negative and draws a
+    const rawPct = Math.max(0, (total / limit) * 100);
+    // Clamp the RING only: usage above the window is real (an over-long turn),
+    // but an unclamped percentage drives the dash offset negative and draws a
     // corrupt arc. Past 100% the ring is simply full.
-    const pct = Math.min(100, Math.max(0, (total / limit) * 100));
+    const pct = Math.min(100, rawPct);
 
     return {
       percentage: pct,
+      // The TEXT keeps the true figure. Clamping both produced the reading a
+      // user reported: "100.0% · 1.4M / 1M" - internally contradictory, and it
+      // hid a 40% overrun behind a number that looked merely maxed out.
+      truePercentage: rawPct,
+      isOverLimit: rawPct > 100,
       displayTotal: formatTokenCount(total),
       displayLimit: formatTokenCount(limit, true),
       isWarning: pct > 70,
@@ -84,10 +92,18 @@ const ContextUsageIndicator: React.FC<ContextUsageIndicatorProps> = ({
 
   const popoverContent = (
     <div className='p-8px min-w-160px'>
-      <div className='text-14px font-medium text-t-primary'>
-        {percentage.toFixed(1)}% · {displayTotal} / {displayLimit}{' '}
+      <div className='text-14px font-medium text-t-primary' data-testid='context-usage-figure'>
+        {truePercentage.toFixed(1)}% · {displayTotal} / {displayLimit}{' '}
         {t('conversation.contextUsage.contextUsed', 'context used')}
       </div>
+      {isOverLimit ? (
+        // Past the window the ring is simply full, so without this line the
+        // display is identical at 101% and 400% - the user gets no signal that
+        // the only real remedy is a new conversation.
+        <div className='text-12px mt-4px' style={{ color: 'rgb(var(--danger-6))' }} data-testid='context-usage-over'>
+          {t('conversation.contextUsage.overLimit', 'Over the limit - start a new chat')}
+        </div>
+      ) : null}
     </div>
   );
 

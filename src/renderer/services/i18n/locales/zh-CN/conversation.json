@@ -271,7 +271,8 @@
     "queueTooLarge": "队列数据过大，无法安全缓存，请先移除部分排队指令。"
   },
   "contextUsage": {
-    "contextUsed": "上下文已使用"
+    "contextUsed": "上下文已使用",
+    "overLimit": "已超出上限 - 建议新建对话"
   },
   "skill_generator": {
     "title": "生成 Skill/规则",

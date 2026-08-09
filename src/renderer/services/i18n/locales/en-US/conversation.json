@@ -271,7 +271,8 @@
     "queueTooLarge": "Queue data is too large to persist safely. Remove some queued commands first."
   },
   "contextUsage": {
-    "contextUsed": "context used"
+    "contextUsed": "context used",
+    "overLimit": "Over the limit - start a new chat"
   },
   "skill_generator": {
     "title": "Generate Skill/Rule",

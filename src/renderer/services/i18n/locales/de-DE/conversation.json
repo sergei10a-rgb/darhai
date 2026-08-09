@@ -271,7 +271,8 @@
     "queueTooLarge": "Die Warteschlangendaten sind zu groß, um sicher gespeichert zu werden. Entferne zuerst einige eingereihte Befehle."
   },
   "contextUsage": {
-    "contextUsed": "Kontext genutzt"
+    "contextUsed": "Kontext genutzt",
+    "overLimit": "Limit überschritten - neuen Chat starten"
   },
   "skill_generator": {
     "title": "Skill/Regel generieren",

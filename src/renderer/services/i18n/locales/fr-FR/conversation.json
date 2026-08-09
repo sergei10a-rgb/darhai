@@ -271,7 +271,8 @@
     "queueTooLarge": "Les données de la file d'attente sont trop volumineuses pour être enregistrées en toute sécurité. Retirez d'abord quelques commandes en file d'attente."
   },
   "contextUsage": {
-    "contextUsed": "contexte utilisé"
+    "contextUsed": "contexte utilisé",
+    "overLimit": "Limite dépassée - démarrez une nouvelle discussion"
   },
   "skill_generator": {
     "title": "Générer une compétence/règle",

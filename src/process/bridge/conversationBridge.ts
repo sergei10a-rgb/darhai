@@ -57,7 +57,13 @@ const conversationSupportsVideo = (conversation: TChatConversation | undefined):
   // First parameter is unused by the checker (name-regex based) - the
   // TProviderWithModel/IProvider shape difference (model list vs useModel)
   // is irrelevant here.
-  return hasSpecificModelCapability(model as unknown as Parameters<typeof hasSpecificModelCapability>[0], model.useModel ?? '', 'video') === true;
+  return (
+    hasSpecificModelCapability(
+      model as unknown as Parameters<typeof hasSpecificModelCapability>[0],
+      model.useModel ?? '',
+      'video'
+    ) === true
+  );
 };
 
 /**
@@ -117,8 +123,7 @@ export function initConversationBridge(
         return { success: false, msg: 'OpenClaw conversation not found' };
       }
       const task = (await workerTaskManager.getOrBuildTask(conversation_id)) as unknown as
-        | OpenClawAgentManager
-        | undefined;
+        OpenClawAgentManager | undefined;
       if (!task || task.type !== 'openclaw-gateway') {
         return { success: false, msg: 'OpenClaw runtime not available' };
       }
@@ -225,9 +230,7 @@ export function initConversationBridge(
   ipcBridge.conversation.reloadContext.provider(async ({ conversation_id }) => {
     try {
       const task = (await workerTaskManager.getOrBuildTask(conversation_id)) as unknown as
-        | GeminiAgentManager
-        | AcpAgentManager
-        | undefined;
+        GeminiAgentManager | AcpAgentManager | undefined;
       if (!task) return { success: false, msg: 'conversation not found' };
       if (task.type !== 'gemini') return { success: false, msg: 'only supported for gemini' };
 

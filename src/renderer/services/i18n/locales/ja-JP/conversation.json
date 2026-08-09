@@ -271,7 +271,8 @@
     "queueTooLarge": "キューのデータが大きすぎて安全に保持できません。いくつか削除してください。"
   },
   "contextUsage": {
-    "contextUsed": "コンテキスト使用量"
+    "contextUsed": "コンテキスト使用量",
+    "overLimit": "上限超過 - 新しいチャットを開始してください"
   },
   "skill_generator": {
     "title": "Generate Skill/Rule",

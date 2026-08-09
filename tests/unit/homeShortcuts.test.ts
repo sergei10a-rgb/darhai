@@ -82,7 +82,9 @@ describe('Ctrl+N opens a new chat', () => {
   });
 
   it('still requires the Cmd/Ctrl modifier and rejects Alt/Shift combinations', () => {
-    expect(source).toMatch(/if \(!\(event\.metaKey \|\| event\.ctrlKey\) \|\| event\.altKey \|\| event\.shiftKey\) return false;/);
+    expect(source).toMatch(
+      /if \(!\(event\.metaKey \|\| event\.ctrlKey\) \|\| event\.altKey \|\| event\.shiftKey\) return false;/
+    );
   });
 });
 

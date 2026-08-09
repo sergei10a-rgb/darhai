@@ -271,7 +271,8 @@
     "queueTooLarge": "佇列資料過大，無法安全快取，請先移除部分排隊指令。"
   },
   "contextUsage": {
-    "contextUsed": "上下文已使用"
+    "contextUsed": "上下文已使用",
+    "overLimit": "已超出上限 - 建議新增對話"
   },
   "skill_generator": {
     "title": "Generate Skill/Rule",
