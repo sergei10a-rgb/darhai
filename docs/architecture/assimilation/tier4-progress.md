@@ -163,3 +163,38 @@ baseline тестүүд vendored bug-ийг жинхэнэ класс дээр �
 (unit + бодит ffmpeg smoke хүртэл нотолсон); wcore engine фрэйм-зургуудыг
 vision-д оруулах эсэх нь хаалттай binary тул хэмжигдээгүй — gemini agent
 pill дээр бүрэн ажиллана.
+
+## ⚠️ ХЭМЖСЭН НЭЭЛТ: `DARHAI_HOME`-ыг engine УНШДАГГҮЙ (2026-08-10)
+
+Bundled engine-ийг **бодитоор ажиллуулж** хэмжсэн
+(`resources/bundled-wayland-core/win32-x64/wayland-core.exe`, `wayland-core 0.10.0`):
+
+```
+wayland-core --config-path                    → %APPDATA%\wayland-core\config.toml
+DARHAI_HOME=<tmp> wayland-core --config-path  → %APPDATA%\wayland-core\config.toml  ← ҮЛ ТООМСОРЛОВ
+WAYLAND_HOME=<tmp> wayland-core --config-path → <tmp>\config.toml                   ← ДАГАВ
+```
+Түүхий хайлт: `DARHAI` = **0 тохиолдол**, `WAYLAND_HOME` = 12 тохиолдол.
+
+**Үр дагавар (гоо сайхны БИШ, функциональ):**
+- `envBuilder.ts` дэх `out.DARHAI_HOME = opts.waylandHome` **юу ч хийхгүй**.
+- **wcore профайлууд тусгаарлагдахгүй** — бүх профайл `%APPDATA%\wayland-core` руу
+  бичнэ. Яг тэр «профайлын дата чимээгүй холилдох» уналтаас сэргийлэхээр
+  `profilePaths.ts`-д `ProfileIsolationError` бичсэн байтал.
+- Хэрэглэгч `WAYLAND_HOME`-ыг shell-д тавьсан бол Тохиргооны цонх ба хөдөлгүүр
+  **өөр өөр файл** засна (апп нь `DARHAI_HOME` уншдаг).
+- `WAYLAND_HOME` нь `ENGINE_ENV_ALLOWLIST`-д байхгүй тул дамждаггүй ч.
+- ⚠️ `tests/unit/wcore-profilePaths.test.ts` + `wcore-configBridge.test.ts` нь
+  DARHAI_HOME «ажиллаж байгааг» баталж **ногоон байдаг** — зөвхөн TS тольдолгыг
+  шалгадаг, хөдөлгүүрийг хүрдэггүй. **Хоосон gate.**
+
+**Засвар (дараагийн ээлж):** spawn env-д `WAYLAND_HOME`-ыг ч тавих (хоёуланг),
+allowlist-д нэмэх, `profilePaths.ts:22-29`-ийн худал тайлбарыг засах, тестийг
+жинхэнэ binary-аар (skipIf) баталдаг болгох.
+
+**userData хавтас:** packaged дээр аль хэдийн ЗӨВ (`%APPDATA%\Darhai`). Зөвхөн
+dev горимд `Wayland-Dev` — `src/common/platform/index.ts:13` `getDevAppName()`
+дотор шууд бичигдсэн, **нэг мөрийн засвар**.
+
+**`wayland-asset://`** солих нь аюулгүй: URL хаана ч хадгалагддаггүй, асаалт
+бүрд manifest-аас шинээр тооцоологддог (9 дуудлага, бүгд `toAssetUrl()`).
