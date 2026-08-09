@@ -139,3 +139,27 @@ ABI дээр байгаа тул тест алгасагддаг → **жинх�
 
 `tsc` 0, тестийн `tsc` 0, lint 0 алдаа, i18n 0, иж бүрдэл
 **11,214 тэнцсэн / 0 унасан**.
+
+## mn.11 фийчер: видео оролт (2026-08-09)
+
+Хэрэглэгчийн хүсэлт: «загвар видео дэмждэг бол Дархай видеог үзүүлж чаддаг
+байх». Судалгаагаар (4 read-only агент) **зураг ч** OpenAI-compat замд загварт
+хүрдэггүй нь тогтоогдсон — vendored `convertToOpenAIFormat` inlineData-г
+чимээгүй хаядаг байв.
+
+| Commit | Юу |
+| --- | --- |
+| `5c14036a1` | `openaiMediaPatch` — inlineData→`image_url`/`video_url` (prototype wrap, node_modules хөндөгдөөгүй); `'video'` ModelType + хэмжсэн regex (gemini, qwen vl/omni, qwen3.6/3.8); paste-д videoExts |
+| `41a1fe07e` | `videoFrames` — А/Б чиглүүлэлт: видео-чадвартай загварт эх файл (А), бусдад ffmpeg-ээр ≤8 фрэйм (Б, `DARHAI_VIDEO_MAX_FRAMES`); wcore ямагт Б; ffmpeg PATH-аас, байхгүй бол монгол мэдэгдэл; bridge hook нь workspace хуулахаас ӨМНӨ ажиллаж том видеог workspace-д оруулахгүй |
+| `7a00f3f9b` | Жинхэнэ ffmpeg smoke (lavfi testsrc → бодит задлалт; ffmpeg-гүй орчинд skip) |
+
+Мутацийн нотолгоо: media patch-ийн image салбар (3 унасан) + tool-injection
+(тест чангалсны дараа 1 унасан — эхний тест байрлал ялгадаггүй сул байсныг
+илрүүлсэн) + Б чиглүүлэлт (2 унасан). Тест: 25 нэмэгдсэн, бүгд ногоон;
+baseline тестүүд vendored bug-ийг жинхэнэ класс дээр бэхэлсэн тул dependency
+шинэчлэлт патчийг эвдвэл шууд улаан болно.
+
+Шалгаагүй үлдсэн: апп бүхэлдээ ажиллуулж локал загвартай E2E хийгээгүй
+(unit + бодит ffmpeg smoke хүртэл нотолсон); wcore engine фрэйм-зургуудыг
+vision-д оруулах эсэх нь хаалттай binary тул хэмжигдээгүй — gemini agent
+pill дээр бүрэн ажиллана.
