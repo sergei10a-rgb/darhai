@@ -111,6 +111,17 @@ import {
 } from './process/utils/tray';
 // @ts-expect-error - electron-squirrel-startup doesn't have types
 import electronSquirrelStartup from 'electron-squirrel-startup';
+import { DARHAI_APP_USER_MODEL_ID } from './common/config/appIdentity';
+
+// ============ Windows application identity ============
+// Windows keys taskbar grouping, jump lists and toast notifications off the
+// Application User Model ID, not the executable path. Without this call the
+// dev taskbar shows electron.exe's icon instead of Darhai's, and notifications
+// are attributed to the host process even in a packaged install (the installer
+// registers its shortcut under this exact id). No-op off Windows.
+if (process.platform === 'win32') {
+  app.setAppUserModelId(DARHAI_APP_USER_MODEL_ID);
+}
 
 // ============ Single Instance Lock ============
 // Acquire lock early so the second instance quits before doing unnecessary work.
