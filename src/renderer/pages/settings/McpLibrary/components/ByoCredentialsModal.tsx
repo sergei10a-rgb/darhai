@@ -92,7 +92,7 @@ export function ByoCredentialsModal({ visible, vendorName, redirectUri, vendorHi
             <p>
               {t(
                 'mcpLibrary.byo.universalIntro',
-                "{{vendor}} does not allow Wayland to auto-register an OAuth client. Register an OAuth app on the vendor's developer console and paste the credentials below.",
+                "{{vendor}} does not allow Darhai to auto-register an OAuth client. Register an OAuth app on the vendor's developer console and paste the credentials below.",
                 { vendor: vendorName }
               )}
             </p>

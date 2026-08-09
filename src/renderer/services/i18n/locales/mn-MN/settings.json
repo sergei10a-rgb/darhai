@@ -550,7 +550,7 @@
           "help": "Сонголттой. Зөвхөн дараа нь Gateway-ийн оронд HTTP харилцан үйлчлэлийн цэг рүү шилжвэл шаардлагатай."
         }
       },
-      "privilegedIntentsHint": "Шалгахаас өмнө: Developer Portal → таны апп → Bot → Privileged Gateway Intents хэсэгт \"Message Content Intent\" БОЛОН \"Server Members Intent\"-ийг идэвхжүүл. Wayland мессеж унших болон гишүүдийг тодорхойлоход хоёулаа шаардлагатай. Эдгээргүйгээр Шалгаад идэвхжүүлэх амжилтгүй болно."
+      "privilegedIntentsHint": "Шалгахаас өмнө: Developer Portal → таны апп → Bot → Privileged Gateway Intents хэсэгт \"Message Content Intent\" БОЛОН \"Server Members Intent\"-ийг идэвхжүүл. Дархай мессеж унших болон гишүүдийг тодорхойлоход хоёулаа шаардлагатай. Эдгээргүйгээр Шалгаад идэвхжүүлэх амжилтгүй болно."
     },
     "webhook": {
       "comingSoonTitle": "Webhook суваг {{phase}}-д ирнэ",

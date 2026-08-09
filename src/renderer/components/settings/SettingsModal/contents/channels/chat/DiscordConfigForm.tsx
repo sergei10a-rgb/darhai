@@ -151,7 +151,7 @@ const DiscordConfigForm: React.FC<DiscordConfigFormProps> = ({ pluginStatus, mod
         <span className='text-12px'>
           {t(
             'settings.channels.discord.privilegedIntentsHint',
-            'Before testing: in the Developer Portal → your app → Bot → Privileged Gateway Intents, enable "Message Content Intent" AND "Server Members Intent". Both are required for Wayland to read messages and resolve members. Without them, Test & Enable will fail.'
+            'Before testing: in the Developer Portal → your app → Bot → Privileged Gateway Intents, enable "Message Content Intent" AND "Server Members Intent". Both are required for Darhai to read messages and resolve members. Without them, Test & Enable will fail.'
           )}
         </span>
       </div>
