@@ -154,6 +154,17 @@ export class WCoreManager extends BaseAgentManager<WCoreManagerData, string> {
    * arrives first wins and the other one drops only its duplicate PROMPT. The
    * destructive-command guard always runs regardless - it is a floor, not a
    * prompt.
+   *
+   * WHICH surface the user ends up seeing was MEASURED rather than assumed
+   * (`scripts/measure-approval-order.mjs`, bundled engine, 2026-08-10):
+   *   - a gated tool emits BOTH signals, `tool_request` first, 0.0-0.3ms apart
+   *     (8/8 runs across Bash and Write);
+   *   - an allow-listed tool emits NEITHER - it goes straight to
+   *     tool_running/tool_result (3/3 runs with Read).
+   * So in practice the inline gate always claims first and the surface is
+   * already predictable; no user-facing setting is needed to make it so. The
+   * modal branch stays as the fallback for the reverse order, which the
+   * current engine does not produce but a future one could.
    */
   private readonly gatedCallIds = new Map<string, 'inline' | 'modal'>();
   private agent: WCoreAgent | null = null;
