@@ -288,7 +288,22 @@ export function buildSpawnConfig(
         // Keyless CLOUD bases stay keyless - the engine still fails loudly there.
         env.OPENAI_API_KEY = LOCAL_KEYLESS_PLACEHOLDER;
       }
-      if (baseUrl) args.push('--base-url', stripTrailingV1(baseUrl));
+      if (baseUrl) {
+        args.push('--base-url', stripTrailingV1(baseUrl));
+        // The CLI flag steers the engine's own chat calls, but its INTERNAL
+        // tools (video_analyze and the other vision helpers) build their own
+        // OpenAI client from OPENAI_BASE_URL. Without it they fall back to
+        // api.openai.com and 401 the user's provider key - measured live:
+        // "Incorrect API key provided: sk-or-v1***" while chatting through
+        // OpenRouter. The agent then loops retrying the failure, which is how
+        // a single video attachment burned 1.4M tokens.
+        //
+        // Full URL here (NOT stripTrailingV1): `--base-url` is the engine's
+        // own convention where it appends `/v1/chat/completions`, whereas
+        // OPENAI_BASE_URL follows the OpenAI SDK convention and must already
+        // include `/v1`.
+        env.OPENAI_BASE_URL = baseUrl;
+      }
       break;
     }
 
