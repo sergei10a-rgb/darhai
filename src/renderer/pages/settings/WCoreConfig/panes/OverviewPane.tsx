@@ -190,7 +190,10 @@ const OverviewPane: React.FC<OverviewPaneProps> = ({ version }) => {
             <span className={styles.scValueMono}>{version}</span>
           </div>
           <div className={styles.scMeta}>
-            {t('settings.wcoreConfig.overview.scVersionMeta', { defaultValue: 'wayland-core · pinned' })}
+            {/* Names the product, not the upstream binary. The version itself
+                is the value line above; this says WHICH engine and that the
+                number is the pinned fallback until the live one reports in. */}
+            {t('settings.wcoreConfig.overview.scVersionMeta', { defaultValue: 'Darhai Core · pinned build' })}
           </div>
         </div>
         <div className={styles.statusCard}>

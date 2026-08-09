@@ -88,7 +88,7 @@ vi.mock('../../../../src/renderer/pages/settings/WCoreConfig/WCoreConfig.module.
 vi.mock('../../../../src/renderer/pages/settings/WCoreConfig/panes/Panes.module.css', () => ({ default: {} }));
 
 import React from 'react';
-import WCoreConfig from '../../../../src/renderer/pages/settings/WCoreConfig';
+import WCoreConfig, { PINNED_VERSION } from '../../../../src/renderer/pages/settings/WCoreConfig';
 
 describe('WCoreConfig - Wayland Core configuration surface', () => {
   beforeEach(() => {
@@ -133,7 +133,8 @@ describe('WCoreConfig - Wayland Core configuration surface', () => {
     // stat-card meta strings instead of the ambiguous labels.
     expect(screen.getByText('Running')).toBeTruthy();
     expect(screen.getByText('embedded · spawned in-process')).toBeTruthy();
-    expect(screen.getByText('wayland-core · pinned')).toBeTruthy();
+    // Names the product, not the upstream binary the engine is built from.
+    expect(screen.getByText('Darhai Core · pinned build')).toBeTruthy();
     expect(screen.getByText('Active Profile')).toBeTruthy();
     // This used to assert the literal `~/.darhai/profiles/default`, which is
     // where the default profile does NOT live - it maps to the engine's native
@@ -197,7 +198,9 @@ describe('WCoreConfig - Wayland Core configuration surface', () => {
 
   it('shows the engine chip with the pinned version when running', async () => {
     render(<WCoreConfig />);
-    await waitFor(() => expect(screen.getByText('engine running · v0.9.6-rc.1')).toBeTruthy());
+    // Assert THROUGH the constant, not a copy of it. The literal that used to
+    // be here kept passing while the shipped engine moved two releases ahead.
+    await waitFor(() => expect(screen.getByText(`engine running · ${PINNED_VERSION}`)).toBeTruthy());
   });
 
   it('shows engine stopped when the wcore backend is absent', async () => {

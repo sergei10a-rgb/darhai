@@ -2673,7 +2673,7 @@
       "scEngineStopped": "Зогссон",
       "scEngineMeta": "суулгагдсан · процессод үүсгэгдсэн",
       "scVersion": "Хувилбар",
-      "scVersionMeta": "wayland-core · бэхлэгдсэн",
+      "scVersionMeta": "Дархай Core · бэхлэгдсэн хувилбар",
       "scProfile": "Идэвхтэй профайл",
       "scProfileDefault": "Анхдагч",
       "inheritModelsDetail": "{{names}} + {{catalog}} каталог · {{allocated}}",

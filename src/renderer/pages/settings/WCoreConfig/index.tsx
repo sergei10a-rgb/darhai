@@ -21,8 +21,16 @@ import ProfilesPane from './panes/ProfilesPane';
 import RuntimePane from './panes/RuntimePane';
 import styles from './WCoreConfig.module.css';
 
-/** The pinned engine build, shown until a live version is reported. */
-const PINNED_VERSION = 'v0.9.6-rc.1';
+/**
+ * The pinned engine build, shown until a live version is reported.
+ *
+ * MUST match `DEFAULT_WCORE_VERSION` in `scripts/prepareWaylandCore.js` - that
+ * is the tag the bundled binary is actually fetched from. It drifted once
+ * (this read `v0.9.6-rc.1` while the shipped engine was 0.10.0, so the card
+ * told the user the wrong version whenever the live one had not arrived yet),
+ * so `tests/unit/enginePinnedVersion.test.ts` now fails on any divergence.
+ */
+export const PINNED_VERSION = 'v0.10.0';
 
 type RailEntry = {
   key: WCoreRailKey;

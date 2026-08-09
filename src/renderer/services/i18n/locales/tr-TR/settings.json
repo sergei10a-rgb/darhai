@@ -2404,7 +2404,7 @@
       "scEngineStopped": "Stopped",
       "scEngineMeta": "embedded · spawned in-process",
       "scVersion": "Version",
-      "scVersionMeta": "wayland-core · pinned",
+      "scVersionMeta": "Darhai Core · sabitlenmiş sürüm",
       "scProfile": "Active Profile",
       "scProfileDefault": "Default",
       "inheritModelsDetail": "{{names}} + {{catalog}} catalog · {{allocated}}",
