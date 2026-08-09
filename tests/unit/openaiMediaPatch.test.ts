@@ -26,7 +26,12 @@
 
 import { describe, it, expect, beforeAll } from 'vitest';
 import { OpenAIContentGenerator } from '@office-ai/aioncli-core/dist/src/core/openaiContentGenerator.js';
-import { applyOpenAiMediaPatch, extractMedia, injectMedia, type OpenAiContentPart } from '@process/agent/gemini/openaiMediaPatch';
+import {
+  applyOpenAiMediaPatch,
+  extractMedia,
+  injectMedia,
+  type OpenAiContentPart,
+} from '@process/agent/gemini/openaiMediaPatch';
 
 type AnyMessage = { role: string; content: string | OpenAiContentPart[] | null; tool_call_id?: string };
 type Convert = (request: unknown) => AnyMessage[];
@@ -57,7 +62,13 @@ const toolMediaRequest = {
     {
       role: 'user',
       parts: [
-        { functionResponse: { id: 'call_1', name: 'read_file', response: { output: 'Binary content provided (1 item(s)).' } } },
+        {
+          functionResponse: {
+            id: 'call_1',
+            name: 'read_file',
+            response: { output: 'Binary content provided (1 item(s)).' },
+          },
+        },
         IMG,
       ],
     },
@@ -155,7 +166,9 @@ describe('patched converter', () => {
   it('unsupported mimes (application/pdf) keep the dropped behaviour', () => {
     const instance = makeInstance();
     const messages = instance.convertToOpenAIFormat({
-      contents: [{ role: 'user', parts: [{ text: 'PDF here' }, { inlineData: { mimeType: 'application/pdf', data: 'cGRm' } }] }],
+      contents: [
+        { role: 'user', parts: [{ text: 'PDF here' }, { inlineData: { mimeType: 'application/pdf', data: 'cGRm' } }] },
+      ],
     });
     expect(flatten(messages)).not.toContain('cGRm');
     // The text itself still goes through as a plain string message.

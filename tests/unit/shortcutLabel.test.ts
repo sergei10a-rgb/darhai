@@ -85,10 +85,7 @@ describe('no hardcoded Mac glyphs in rendered UI', () => {
       .join('\n');
 
   it('HomeHintBar renders shortcuts through the helper, not literals', () => {
-    const source = fs.readFileSync(
-      path.join(repoRoot, 'src/renderer/pages/guid/components/HomeHintBar.tsx'),
-      'utf8'
-    );
+    const source = fs.readFileSync(path.join(repoRoot, 'src/renderer/pages/guid/components/HomeHintBar.tsx'), 'utf8');
     expect(rendered(source)).not.toMatch(MAC_GLYPHS);
     expect(source).toContain('formatShortcut');
   });

@@ -56,9 +56,7 @@ vi.mock('@/common/platform', () => ({
   getPlatformServices: (): FakePlatform => ({
     paths: { isPackaged: () => false, getAppPath: () => null },
     worker: {
-      fork: vi.fn(
-        (): FakeWorker => ({ on: vi.fn().mockReturnThis(), postMessage: vi.fn(), kill: vi.fn() })
-      ),
+      fork: vi.fn((): FakeWorker => ({ on: vi.fn().mockReturnThis(), postMessage: vi.fn(), kill: vi.fn() })),
     },
   }),
 }));

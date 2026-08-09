@@ -80,7 +80,7 @@ const LaunchpadPicker: React.FC<LaunchpadPickerProps> = ({
 
     for (const anchor of QUICK_LAUNCH_ANCHORS) {
       if (seen.has(anchor.assistantId)) continue;
-      const entry = resolveBarEntry(anchor.assistantId, assistants, localeKey);
+      const entry = resolveBarEntry(anchor.assistantId, assistants, localeKey, t);
       if (entry) {
         acc.push(entry);
         seen.add(anchor.assistantId);
@@ -94,7 +94,7 @@ const LaunchpadPicker: React.FC<LaunchpadPickerProps> = ({
       const candidates = [a.id, `builtin-${a.id}`];
       for (const id of candidates) {
         if (seen.has(id)) continue;
-        const entry = resolveBarEntry(id, assistants, localeKey);
+        const entry = resolveBarEntry(id, assistants, localeKey, t);
         if (entry) {
           acc.push(entry);
           seen.add(id);

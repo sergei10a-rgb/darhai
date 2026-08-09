@@ -4,19 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  Zap,
-  PenLine,
-  Handshake,
-  Rocket,
-  BarChart3,
-  Landmark,
-  Bot,
-  type LucideIcon,
-} from 'lucide-react';
+import { Zap, PenLine, Handshake, Rocket, BarChart3, Landmark, Bot, type LucideIcon } from 'lucide-react';
 import type { PaletteKey } from '@/renderer/pages/guid/components/AssistantIconTile';
 import { categoryToPaletteKey } from '@/renderer/pages/guid/components/AssistantIconTile';
-import { QUICK_LAUNCH_ANCHORS, translateAnchorField } from '@/renderer/pages/guid/quickLaunchAnchors';
+import {
+  QUICK_LAUNCH_ANCHORS,
+  translateAnchorField,
+  type AnchorTranslator,
+} from '@/renderer/pages/guid/quickLaunchAnchors';
 import type { AssistantListItem } from '@/renderer/pages/settings/AssistantSettings/types';
 import { ASSISTANT_PRESETS } from '@/common/config/presets/assistantPresets';
 import { CUSTOM_AVATAR_IMAGE_MAP } from '@/renderer/pages/guid/constants';
@@ -64,16 +59,15 @@ export type LaunchpadBarEntry = {
 };
 
 const LUCIDE_ICON_MAP: Record<string, LucideIcon> = {
-  'zap': Zap,
+  zap: Zap,
   'pen-line': PenLine,
-  'handshake': Handshake,
-  'rocket': Rocket,
+  handshake: Handshake,
+  rocket: Rocket,
   'bar-chart-3': BarChart3,
-  'landmark': Landmark,
+  landmark: Landmark,
 };
 
-const stripPrefix = (id: string): string =>
-  id.startsWith('builtin-') ? id.slice('builtin-'.length) : id;
+const stripPrefix = (id: string): string => (id.startsWith('builtin-') ? id.slice('builtin-'.length) : id);
 
 /**
  * Resolve a raw assistant id (as stored in bar order) into the shape the
@@ -95,7 +89,9 @@ const stripPrefix = (id: string): string =>
 export function resolveBarEntry(
   rawId: string,
   assistants: AssistantListItem[],
-  localeKey: string
+  localeKey: string,
+  /** `t` from the calling component - omitted yields the English source copy. */
+  t?: AnchorTranslator
 ): LaunchpadBarEntry | null {
   // 1. Default anchors - translated, with the hand-tuned English as the i18n
   //    fallback (these six cards are the most prominent copy on the home
@@ -108,12 +104,12 @@ export function resolveBarEntry(
     return {
       id: rawId,
       assistantId: rawId,
-      label: translateAnchorField(anchor, 'label'),
-      sub: translateAnchorField(anchor, 'sub'),
+      label: translateAnchorField(anchor, 'label', t),
+      sub: translateAnchorField(anchor, 'sub', t),
       Icon: LUCIDE_ICON_MAP[anchor.lucideIcon] ?? Zap,
       palette: anchorPalette(anchor.id),
       isCowork: rawId === 'builtin-cowork',
-      prefill: translateAnchorField(anchor, 'prefill'),
+      prefill: translateAnchorField(anchor, 'prefill', t),
     };
   }
 
@@ -173,9 +169,7 @@ function entryFromAssistant(rawId: string, a: AssistantListItem, localeKey: stri
  *   5. Single-char/emoji → render as a glyph.
  *   6. Anything else → fall back to the Bot icon.
  */
-function iconFromAvatar(
-  avatar: string | undefined
-): { Icon: LucideIcon; avatarUrl?: string; avatarEmoji?: string } {
+function iconFromAvatar(avatar: string | undefined): { Icon: LucideIcon; avatarUrl?: string; avatarEmoji?: string } {
   const value = avatar?.trim();
   if (!value) return { Icon: Bot };
 

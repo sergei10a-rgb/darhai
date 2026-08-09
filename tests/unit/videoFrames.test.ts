@@ -180,29 +180,25 @@ describe('VideoFrameError', () => {
 // cleanly where ffmpeg is not installed (mirrors the DB-suite local gating).
 const realFfmpeg = resolveFfmpegBinary();
 describe.skipIf(!realFfmpeg)('real ffmpeg smoke', () => {
-  it(
-    'extracts non-empty frames from a generated test clip',
-    async () => {
-      const clip = path.join(scratch, 'testsrc.mp4');
-      await safeExecFile(realFfmpeg!, [
-        '-hide_banner',
-        '-loglevel',
-        'error',
-        '-f',
-        'lavfi',
-        '-i',
-        'testsrc=duration=4:size=320x240:rate=10',
-        '-y',
-        clip,
-      ]);
-      const { frames } = await extractVideoFrames(clip, { outputRoot: scratch, maxFrames: 4 });
-      expect(frames.length).toBeGreaterThan(0);
-      expect(frames.length).toBeLessThanOrEqual(4);
-      for (const frame of frames) {
-        const stat = await fs.stat(frame);
-        expect(stat.size).toBeGreaterThan(0);
-      }
-    },
-    60_000
-  );
+  it('extracts non-empty frames from a generated test clip', async () => {
+    const clip = path.join(scratch, 'testsrc.mp4');
+    await safeExecFile(realFfmpeg!, [
+      '-hide_banner',
+      '-loglevel',
+      'error',
+      '-f',
+      'lavfi',
+      '-i',
+      'testsrc=duration=4:size=320x240:rate=10',
+      '-y',
+      clip,
+    ]);
+    const { frames } = await extractVideoFrames(clip, { outputRoot: scratch, maxFrames: 4 });
+    expect(frames.length).toBeGreaterThan(0);
+    expect(frames.length).toBeLessThanOrEqual(4);
+    for (const frame of frames) {
+      const stat = await fs.stat(frame);
+      expect(stat.size).toBeGreaterThan(0);
+    }
+  }, 60_000);
 });

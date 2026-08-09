@@ -13,13 +13,26 @@ vi.mock('react-i18next', () => ({
 }));
 
 import { HomeHintBar } from '@renderer/pages/guid/components/HomeHintBar';
+import { formatShortcut } from '@renderer/utils/ui/shortcutLabel';
 
 describe('HomeHintBar', () => {
+  // Labels are platform-native now (⌘K on macOS, Ctrl+K elsewhere) - a
+  // Windows user shown ⌘ pressed the ⊞ Windows key and thought the shortcut
+  // was broken. Asserting through the same helper keeps this test meaningful
+  // on every runner instead of pinning one platform's glyphs.
   it('renders 3 kbd hints when chatStartedCount < 5', () => {
     render(<HomeHintBar chatStartedCount={2} />);
-    expect(screen.getByText('⌘K')).toBeInTheDocument();
-    expect(screen.getByText('Tab')).toBeInTheDocument();
-    expect(screen.getByText('⌘N')).toBeInTheDocument();
+    expect(screen.getByText(formatShortcut(['mod', 'K']))).toBeInTheDocument();
+    expect(screen.getByText(formatShortcut(['tab']))).toBeInTheDocument();
+    expect(screen.getByText(formatShortcut(['mod', 'N']))).toBeInTheDocument();
+  });
+
+  it('never shows a macOS glyph on a non-Mac runner', () => {
+    render(<HomeHintBar chatStartedCount={2} />);
+    const bar = screen.getByTestId('home-hint-bar');
+    if (!/Mac/i.test(navigator.userAgent)) {
+      expect(bar.textContent ?? '').not.toMatch(/[⌘⌥⇧⌃]/);
+    }
   });
 
   it('renders nothing when chatStartedCount >= 5', () => {

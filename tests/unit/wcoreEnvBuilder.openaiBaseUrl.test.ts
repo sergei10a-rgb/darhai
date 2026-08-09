@@ -65,10 +65,7 @@ describe('buildSpawnConfig: OPENAI_BASE_URL for engine-internal tools', () => {
   });
 
   it('a keyless local backend still gets its loopback URL exported', () => {
-    const { env } = buildSpawnConfig(
-      makeModel({ baseUrl: 'http://127.0.0.1:11434/v1', apiKey: '' }),
-      OPTS as never
-    );
+    const { env } = buildSpawnConfig(makeModel({ baseUrl: 'http://127.0.0.1:11434/v1', apiKey: '' }), OPTS as never);
     expect(env.OPENAI_BASE_URL).toBe('http://127.0.0.1:11434/v1');
     // Placeholder key: the engine hard-requires one for --provider openai.
     expect(env.OPENAI_API_KEY).toBeTruthy();

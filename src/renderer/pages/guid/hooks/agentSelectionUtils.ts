@@ -73,3 +73,28 @@ export function filterVisibleAgents<T extends { backend: AcpBackend; customAgent
   });
   return visible.length > 0 ? visible : agents;
 }
+
+/**
+ * The agent key one step from `currentKey` in the visible strip.
+ *
+ * Backs the home screen's Tab / Shift+Tab shortcut, which the hint bar
+ * advertised long before any handler existed - the pills were plain
+ * `<div onClick>` with no `tabIndex`, so Tab could not even focus them and the
+ * press fell through to the browser's own focus move.
+ *
+ * Wraps around in both directions. Returns `null` when there is nothing to
+ * cycle to (no agents, a single agent, or an unknown current key), so the
+ * caller can leave the event alone and let Tab keep its default meaning.
+ */
+export function cycleAgentKey<T extends { backend: AcpBackend; customAgentId?: string }>(
+  agents: T[] | undefined,
+  currentKey: string,
+  direction: 1 | -1
+): string | null {
+  if (!agents || agents.length < 2) return null;
+  const keys = agents.map((agent) => getAgentKey(agent));
+  const index = keys.indexOf(currentKey);
+  if (index === -1) return null;
+  const next = (index + direction + keys.length) % keys.length;
+  return keys[next] ?? null;
+}

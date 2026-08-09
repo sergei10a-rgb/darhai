@@ -128,9 +128,7 @@ describe('healMirrorBaseUrls (read-time repair of already-persisted rows)', () =
   });
 
   it('leaves a keyless local row alone - it already carries its loopback URL', () => {
-    const ollama = [
-      row({ baseUrl: 'http://127.0.0.1:11434/v1', apiKey: '', [BRIDGE_TAG_KEY]: 'v2:ollama-local' }),
-    ];
+    const ollama = [row({ baseUrl: 'http://127.0.0.1:11434/v1', apiKey: '', [BRIDGE_TAG_KEY]: 'v2:ollama-local' })];
     expect(healMirrorBaseUrls(ollama)[0].baseUrl).toBe('http://127.0.0.1:11434/v1');
   });
 

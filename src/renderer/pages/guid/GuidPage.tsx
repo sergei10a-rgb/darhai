@@ -38,7 +38,7 @@ import FeedbackReportModal from '@/renderer/components/settings/SettingsModal/co
 import SpeechInputButton from '@/renderer/components/chat/SpeechInputButton';
 import { appendSpeechTranscript } from '@/renderer/hooks/system/useSpeechInput';
 import { useHiddenAgents } from '@renderer/hooks/assistant/useHiddenAgents';
-import { filterVisibleAgents } from './hooks/agentSelectionUtils';
+import { cycleAgentKey, filterVisibleAgents } from './hooks/agentSelectionUtils';
 import { useGuidAgentSelection } from './hooks/useGuidAgentSelection';
 import { useGuidInput } from './hooks/useGuidInput';
 import { useGuidMention } from './hooks/useGuidMention';
@@ -294,8 +294,49 @@ const GuidPage: React.FC = () => {
     [mention.mentionMatchRegex, guidInput.setInput, mention.setMentionQuery, mention.setMentionOpen]
   );
 
+  const handleSelectAgent = useCallback(
+    (key: string) => {
+      setHasInteractedWithAgentSelection(true);
+      agentSelection.setSelectedAgentKey(key);
+      mention.setMentionOpen(false);
+      mention.setMentionQuery(null);
+      mention.setMentionSelectorOpen(false);
+      mention.setMentionActiveIndex(0);
+      recordTelemetry({ eventType: 'guid.cli_selected', cliBackend: key });
+    },
+    [
+      agentSelection.setSelectedAgentKey,
+      mention.setMentionOpen,
+      mention.setMentionQuery,
+      mention.setMentionSelectorOpen,
+      mention.setMentionActiveIndex,
+      recordTelemetry,
+    ]
+  );
+
   const handleInputKeyDown = useCallback(
     (event: React.KeyboardEvent) => {
+      // Tab / Shift+Tab cycles the agent pill - the shortcut the home hint bar
+      // advertises. Scoped to the composer: the pills are click-only elements
+      // with no tabIndex, so Tab had no meaning here anyway, while everywhere
+      // else it keeps its normal focus-move behaviour (accessibility intact).
+      // Skipped while a mention dropdown is open - Tab belongs to that list.
+      if (
+        event.key === 'Tab' &&
+        !event.ctrlKey &&
+        !event.metaKey &&
+        !event.altKey &&
+        !mention.mentionOpen &&
+        !mention.mentionSelectorOpen
+      ) {
+        const nextKey = cycleAgentKey(visibleAgents, agentSelection.selectedAgentKey, event.shiftKey ? -1 : 1);
+        if (nextKey) {
+          event.preventDefault();
+          handleSelectAgent(nextKey);
+          return;
+        }
+        // Nothing to cycle to - leave Tab to the browser.
+      }
       if (
         (mention.mentionOpen || mention.mentionSelectorOpen) &&
         (event.key === 'ArrowDown' || event.key === 'ArrowUp')
@@ -371,25 +412,6 @@ const GuidPage: React.FC = () => {
     [mention, guidInput.input, send.sendMessageHandler, recordMessageSent]
   );
 
-  const handleSelectAgent = useCallback(
-    (key: string) => {
-      setHasInteractedWithAgentSelection(true);
-      agentSelection.setSelectedAgentKey(key);
-      mention.setMentionOpen(false);
-      mention.setMentionQuery(null);
-      mention.setMentionSelectorOpen(false);
-      mention.setMentionActiveIndex(0);
-      recordTelemetry({ eventType: 'guid.cli_selected', cliBackend: key });
-    },
-    [
-      agentSelection.setSelectedAgentKey,
-      mention.setMentionOpen,
-      mention.setMentionQuery,
-      mention.setMentionSelectorOpen,
-      mention.setMentionActiveIndex,
-      recordTelemetry,
-    ]
-  );
 
   const handleSelectAssistant = useCallback(
     (assistantId: string) => {
@@ -402,10 +424,15 @@ const GuidPage: React.FC = () => {
     },
     [
       agentSelection.setSelectedAgentKey,
+      agentSelection.selectedAgentKey,
+      handleSelectAgent,
       mention.setMentionOpen,
       mention.setMentionQuery,
       mention.setMentionSelectorOpen,
       mention.setMentionActiveIndex,
+      mention.mentionOpen,
+      mention.mentionSelectorOpen,
+      visibleAgents,
     ]
   );
 

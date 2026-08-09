@@ -30,8 +30,17 @@ const isConversationTabShortcut = (event: KeyboardEvent): boolean => {
   return event.ctrlKey && !event.metaKey && !event.altKey && event.key === 'Tab';
 };
 
+/**
+ * New chat: Cmd/Ctrl+T (tab convention) or Cmd/Ctrl+N (new-document
+ * convention). Only T was implemented while the home-screen hint bar
+ * advertised N, so users pressed a key that did nothing. Both are accepted -
+ * neither collides with another binding, and each matches what its platform's
+ * users already expect.
+ */
 const isNewConversationShortcut = (event: KeyboardEvent): boolean => {
-  return (event.metaKey || event.ctrlKey) && !event.altKey && !event.shiftKey && event.key.toLowerCase() === 't';
+  if (!(event.metaKey || event.ctrlKey) || event.altKey || event.shiftKey) return false;
+  const key = event.key.toLowerCase();
+  return key === 't' || key === 'n';
 };
 
 export const useConversationShortcuts = ({ navigate }: UseConversationShortcutsParams): void => {

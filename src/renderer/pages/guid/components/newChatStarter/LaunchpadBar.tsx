@@ -68,7 +68,7 @@ const LaunchpadBar: React.FC<LaunchpadBarProps> = ({ onAnchorClick, onViewAll, m
 
   const entries = useMemo<LaunchpadBarEntry[]>(() => {
     return barOrder
-      .map((id) => resolveBarEntry(id, assistants, localeKey))
+      .map((id) => resolveBarEntry(id, assistants, localeKey, t))
       .filter((e): e is LaunchpadBarEntry => e !== null);
   }, [barOrder, assistants, localeKey]);
 

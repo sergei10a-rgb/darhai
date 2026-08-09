@@ -15,15 +15,7 @@
  * autonomous-execution button. Other 5 are recurring entrepreneur jobs.
  */
 
-import i18n from '@/renderer/services/i18n';
-
-export type QuickLaunchAnchorId =
-  | 'cowork'
-  | 'write-copy'
-  | 'close-deal'
-  | 'launch-it'
-  | 'numbers'
-  | 'quiet-money';
+export type QuickLaunchAnchorId = 'cowork' | 'write-copy' | 'close-deal' | 'launch-it' | 'numbers' | 'quiet-money';
 
 export type QuickLaunchAnchor = {
   id: QuickLaunchAnchorId;
@@ -49,26 +41,79 @@ export type QuickLaunchAnchor = {
 export const anchorI18nKey = (id: QuickLaunchAnchorId, field: 'label' | 'sub' | 'prefill'): string =>
   `guid.launchpad.anchors.${id}.${field}`;
 
+/** The `t` shape this module needs - structurally satisfied by i18next's. */
+export type AnchorTranslator = (key: string, opts: { defaultValue: string }) => unknown;
+
 /**
  * Translate one anchor field, falling back to its English source copy.
  *
- * Uses the i18next instance directly (not the `useTranslation` hook) because
- * the catalog resolver is a plain function called from several components.
+ * The translator is INJECTED rather than imported: pulling the i18next
+ * singleton in here would make every module that touches the anchors depend on
+ * the fully-initialised i18n service, which broke unrelated component tests
+ * whose `react-i18next` mock has no `initReactI18next`. Callers are React
+ * components that already hold `t` from `useTranslation`.
+ *
+ * Omitting `t` yields the English source copy - the correct degradation for a
+ * non-React caller rather than a crash.
  */
 export const translateAnchorField = (
   anchor: Pick<QuickLaunchAnchor, 'id' | 'label' | 'sub' | 'prefill'>,
-  field: 'label' | 'sub' | 'prefill'
+  field: 'label' | 'sub' | 'prefill',
+  t?: AnchorTranslator
 ): string => {
   const fallback = anchor[field];
-  const translated = i18n.t(anchorI18nKey(anchor.id, field), { defaultValue: fallback });
+  if (!t) return fallback;
+  const translated = t(anchorI18nKey(anchor.id, field), { defaultValue: fallback });
   return typeof translated === 'string' && translated.length > 0 ? translated : fallback;
 };
 
 export const QUICK_LAUNCH_ANCHORS: readonly QuickLaunchAnchor[] = [
-  { id: 'cowork',      label: 'Cowork',       sub: 'Autonomous',         prefill: 'Cowork: ',                  assistantId: 'builtin-cowork',         lucideIcon: 'zap' },
-  { id: 'write-copy',  label: 'Write copy',   sub: 'Email, ad, page',    prefill: 'Draft me ',                 assistantId: 'ext-copy',               lucideIcon: 'pen-line' },
-  { id: 'close-deal',  label: 'Close a deal', sub: 'Outreach · follow',  prefill: 'Help me close ',            assistantId: 'ext-sales',              lucideIcon: 'handshake' },
-  { id: 'launch-it',   label: 'Launch it',    sub: 'Product · promo',    prefill: 'Plan the launch for ',      assistantId: 'ext-product-launch',     lucideIcon: 'rocket' },
-  { id: 'numbers',     label: 'Numbers',      sub: 'Runway · ROI',       prefill: 'Run the numbers on ',       assistantId: 'ext-coin',               lucideIcon: 'bar-chart-3' },
-  { id: 'quiet-money', label: 'Quiet Money',  sub: 'Wealth coach',       prefill: 'Quiet Money - ',            assistantId: 'ext-quiet-money',        lucideIcon: 'landmark' },
+  {
+    id: 'cowork',
+    label: 'Cowork',
+    sub: 'Autonomous',
+    prefill: 'Cowork: ',
+    assistantId: 'builtin-cowork',
+    lucideIcon: 'zap',
+  },
+  {
+    id: 'write-copy',
+    label: 'Write copy',
+    sub: 'Email, ad, page',
+    prefill: 'Draft me ',
+    assistantId: 'ext-copy',
+    lucideIcon: 'pen-line',
+  },
+  {
+    id: 'close-deal',
+    label: 'Close a deal',
+    sub: 'Outreach · follow',
+    prefill: 'Help me close ',
+    assistantId: 'ext-sales',
+    lucideIcon: 'handshake',
+  },
+  {
+    id: 'launch-it',
+    label: 'Launch it',
+    sub: 'Product · promo',
+    prefill: 'Plan the launch for ',
+    assistantId: 'ext-product-launch',
+    lucideIcon: 'rocket',
+  },
+  {
+    id: 'numbers',
+    label: 'Numbers',
+    sub: 'Runway · ROI',
+    prefill: 'Run the numbers on ',
+    assistantId: 'ext-coin',
+    lucideIcon: 'bar-chart-3',
+  },
+  {
+    id: 'quiet-money',
+    label: 'Quiet Money',
+    sub: 'Wealth coach',
+    prefill: 'Quiet Money - ',
+    assistantId: 'ext-quiet-money',
+    lucideIcon: 'landmark',
+  },
 ] as const;

@@ -122,11 +122,18 @@ const Layout: React.FC<{
     setPaletteOpen((prev) => !prev);
   }, []);
 
-  // ⌘K on macOS / Ctrl+K on Linux+Windows. `useGlobalKeybind` already
-  // skips presses inside inputs/textareas and contenteditable, which is
-  // what we want - typing "k" in the chat input should not steal focus
-  // into the palette.
-  useGlobalKeybind('k', togglePalette, { meta: true });
+  // ⌘K on macOS / Ctrl+K on Linux+Windows.
+  //
+  // `skipInputs: false` on purpose. The default skips presses inside
+  // inputs/textareas, which sounds right ("typing k must not open the
+  // palette") but the modifier check below already prevents that - a bare
+  // "k" never matches. What the default actually did was kill the shortcut
+  // the moment the user clicked the chat box, i.e. the first thing anyone
+  // does on the home screen; the hint bar advertised Ctrl+K and nothing
+  // happened. Settings already registers the same palette with
+  // `skipInputs: false` (SettingsPageWrapper), so this also removes a
+  // surface-dependent inconsistency.
+  useGlobalKeybind('k', togglePalette, { meta: true, skipInputs: false });
 
   const handlePaletteClose = useCallback(() => setPaletteOpen(false), []);
 
