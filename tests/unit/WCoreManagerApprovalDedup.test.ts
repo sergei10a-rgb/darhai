@@ -49,10 +49,17 @@ vi.mock('@/common', () => ({
   },
 }));
 
+type FakeWorker = { on: unknown; postMessage: unknown; kill: unknown };
+type FakePlatform = { paths: { isPackaged: () => boolean; getAppPath: () => null }; worker: { fork: unknown } };
+
 vi.mock('@/common/platform', () => ({
-  getPlatformServices: () => ({
+  getPlatformServices: (): FakePlatform => ({
     paths: { isPackaged: () => false, getAppPath: () => null },
-    worker: { fork: vi.fn(() => ({ on: vi.fn().mockReturnThis(), postMessage: vi.fn(), kill: vi.fn() })) },
+    worker: {
+      fork: vi.fn(
+        (): FakeWorker => ({ on: vi.fn().mockReturnThis(), postMessage: vi.fn(), kill: vi.fn() })
+      ),
+    },
   }),
 }));
 
