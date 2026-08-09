@@ -42,6 +42,7 @@ import type { IProvider } from '@/common/config/storage';
 import { OMNIROUTE_GATEWAY_DISPLAY_NAME, OMNIROUTE_GATEWAY_PROVIDER_ID } from '@/common/types/omnirouteGateway';
 import { uuid } from '@/common/utils';
 import { ProcessConfig } from '@process/utils/initStorage';
+import { CHAT_START_BASE_URL } from './chatStartHosts';
 import { Curator } from './catalog/Curator';
 import type { CatalogModel, ProviderId } from './types';
 import type { ProviderRepository, RegistryOverride } from './storage/ProviderRepository';
@@ -203,7 +204,14 @@ export function mirrorConnectOrRekey(repo: ProviderRepository, providerId: Provi
     // other provider with no key has nothing useful to mirror and is skipped.
     if (!apiKey && providerId !== 'ollama-local' && providerId !== OMNIROUTE_GATEWAY_PROVIDER_ID) return;
 
-    const baseUrl = typeof stored.creds.baseUrl === 'string' ? stored.creds.baseUrl : '';
+    // The registry connect flow stores a baseUrl ONLY when the user typed a
+    // custom one, so a canonical-host provider (OpenRouter, Groq, DeepSeek, ...)
+    // used to mirror with an EMPTY baseUrl - and the gemini-path OpenAI client
+    // then silently defaulted to api.openai.com, 401-ing the provider's own key
+    // on the first message. Fall back to the canonical chat-start host, exactly
+    // like the registry chat-start payload builder does.
+    const storedBaseUrl = typeof stored.creds.baseUrl === 'string' ? stored.creds.baseUrl : '';
+    const baseUrl = storedBaseUrl || CHAT_START_BASE_URL[providerId] || '';
     const modelIds = selectMirrorModelIds(repo.getRegistryCatalog(providerId), repo.listRegistryOverrides(providerId));
     const modelProtocols =
       stored.creds.protocols && typeof stored.creds.protocols === 'object'
