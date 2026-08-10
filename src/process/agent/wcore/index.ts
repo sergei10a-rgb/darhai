@@ -21,6 +21,8 @@ import { PromptTimer } from '@process/acp/session/PromptTimer';
 import { wcoreStderrLevel } from './stderrLog';
 import type { WCoreEvent, WCoreCommand, WCoreCapabilities } from './protocol';
 import { ACKNOWLEDGED_UNHANDLED_EVENTS } from './protocol';
+import { dispatchCapabilityEvent } from './capabilities';
+import type { CapabilityContext } from './capabilities';
 
 const WCORE_PROJECT_CONFIG = '.wcore.toml';
 
@@ -437,6 +439,27 @@ export class WCoreAgent {
   private stopStallWatchdog(): void {
     this.stallTimer.stop();
     this.stallPauseReasons.clear();
+  }
+
+  /**
+   * The narrow surface a capability module acts through.
+   *
+   * Built per dispatch rather than held as a field so a handler can never
+   * capture it and act after its event: everything it can do is scoped to the
+   * decode it was called from.
+   */
+  private capabilityContext(): CapabilityContext {
+    return {
+      sendCommand: (command) => this.sendCommand(command),
+      emit: (frame) => this.onStreamEvent(frame as Parameters<typeof this.onStreamEvent>[0]),
+      activeMsgId: () => this.stallMsgId,
+      log: (message, detail) =>
+        detail === undefined ? console.log(`[WCoreAgent] ${message}`) : console.log(`[WCoreAgent] ${message}`, detail),
+      warn: (message, detail) =>
+        detail === undefined
+          ? console.warn(`[WCoreAgent] ${message}`)
+          : console.warn(`[WCoreAgent] ${message}`, detail),
+    };
   }
 
   /** Pause the watchdog for a legitimate long wait (tool run / approval). */
@@ -939,6 +962,14 @@ export class WCoreAgent {
       default: {
         const unknownEvent = event as { type?: unknown };
         const typeStr = typeof unknownEvent.type === 'string' ? unknownEvent.type : '<non-string>';
+
+        // Capabilities handled outside this switch get first refusal. They live
+        // in ./capabilities so nine independent engine subsystems do not all
+        // land in one 1100-line file with one merge conflict between them.
+        if (dispatchCapabilityEvent(unknownEvent as Record<string, unknown>, this.capabilityContext())) {
+          break;
+        }
+
         // Known-but-inert variants stay quiet: on engine v0.12.26 a single
         // start emits 27 of them, which would bury the one warning that
         // matters. See ACKNOWLEDGED_UNHANDLED_EVENTS for why each is listed.
