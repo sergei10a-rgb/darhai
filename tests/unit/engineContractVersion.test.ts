@@ -98,6 +98,9 @@ describe('vendored engine contract', () => {
       ...(m.events as { type: string; criticality?: string }[]),
     ];
     const unknown = entries.filter((e) => e.criticality && !known.has(e.criticality));
-    expect(unknown.map((e) => `${e.type}:${e.criticality}`), 'unknown criticality level').toEqual([]);
+    expect(
+      unknown.map((e) => `${e.type}:${e.criticality}`),
+      'unknown criticality level'
+    ).toEqual([]);
   });
 });
