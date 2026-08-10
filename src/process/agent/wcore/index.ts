@@ -462,7 +462,13 @@ export class WCoreAgent {
    */
   private capabilityContext(): CapabilityContext {
     return {
-      sendCommand: (command) => this.sendCommand(command),
+      // A capability owns verbs the decoder never speaks (`session_resync`,
+      // `goal_open`, ...). They are declared precisely in the capability's own
+      // module rather than in the shared WCoreCommand union, which would make
+      // one file the merge point for nine modules. On the wire both are the
+      // same thing - a JSON line on stdin - so the cast is the seam, and it
+      // lives here alone rather than in nine handlers.
+      sendCommand: (command) => this.sendCommand(command as WCoreCommand),
       emit: (frame) => this.onStreamEvent(frame as Parameters<typeof this.onStreamEvent>[0]),
       activeMsgId: () => this.stallMsgId,
       log: (message, detail) =>

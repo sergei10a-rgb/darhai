@@ -45,8 +45,18 @@ export type CapabilityStreamFrame = {
  * nothing that would let it reach around the agent's own lifecycle.
  */
 export type CapabilityContext = {
-  /** Send a command to the engine (e.g. answer a request the engine made). */
-  sendCommand: (command: WCoreCommand) => void;
+  /**
+   * Send a command to the engine (e.g. answer a request the engine made).
+   *
+   * Accepts a capability's own command shape as well as a `WCoreCommand`. The
+   * core union covers the verbs the decoder itself speaks; a capability owns
+   * verbs the decoder never touches (`session_resync`, `goal_open`,
+   * `continue_with_budget`, ...), and forcing all of them into that union would
+   * make one shared file the merge point for nine independent modules. Each
+   * capability declares its own precisely-typed command in its own module and
+   * is type-safe internally; this signature is the widened seam between them.
+   */
+  sendCommand: (command: WCoreCommand | ({ type: string } & Record<string, unknown>)) => void;
   /** Forward a frame to the task layer / renderer. */
   emit: (frame: CapabilityStreamFrame) => void;
   /** The msg_id of the turn in flight, or '' outside a turn. */
