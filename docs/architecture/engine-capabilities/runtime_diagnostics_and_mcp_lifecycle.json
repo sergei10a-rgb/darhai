@@ -1,0 +1,189 @@
+{
+  "capability": "runtime_diagnostics_and_mcp_lifecycle",
+  "summary": "Two correlated request/response round-trips Darhai currently has no path for. `get_runtime_diagnostics` → `runtime_diagnostics_snapshot` returns the engine's own view of its process binding, config-source precedence chain, ignored env overrides, and per-MCP-server connection/exposure/executable readiness with machine-readable remediation hints; the engine answers `runtime_diagnostics_unavailable` instead when it cannot serve the requested version. `remove_mcp_server` → `mcp_removal_result` detaches a live MCP server and reports which tools disappeared. Both correlate on `request_id` (unlike the existing `add_mcp_server`/`mcp_ready` pair, which correlates on `name`), so WCoreAgent needs a pending-request map it does not have today — every existing command is fire-and-forget.",
+  "userValue": "Concrete and specific. (1) Today when an MCP server does not show up, the user gets at most a one-line `mcp_failed` toast with a free-text reason; the diagnostics snapshot tells them *which* config file the server came from (`origin`, `display_path`, `precedence`), whether the executable resolved (`executable_readiness: not_found` vs `permission_denied` vs `probe_timed_out`), whether it was exposed or hidden (`exposure: hidden_no_tools`), and what to do about it (`remediation: ['install_executable']`) — the engine grades its own failure instead of the user guessing. It also answers \"which config.toml is actually in effect\" and \"which env var did the engine ignore\", which today requires reading source. (2) Darhai can add an MCP server to a live session but cannot take one back out: `InstalledPage.handleRemove` removes it from the library and rewrites CLI agent config files, and the running engine keeps serving the tools until the conversation is killed. `remove_mcp_server` closes that hole and reports the removed tool names so the UI can say what was actually withdrawn.",
+  "protocolTypes": [
+    {
+      "name": "runtime_diagnostics_snapshot",
+      "direction": "event",
+      "contractPath": "tests/fixtures/engine-contract/desktop/v1/events/runtime_diagnostics_snapshot.json",
+      "tsDefinition": "  | {\n      type: 'runtime_diagnostics_snapshot';\n      diagnostics_version: 1;\n      request_id: string;\n      snapshot: {\n        process: {\n          profile_binding: 'unknown' | 'default_home' | 'explicit_home' | 'bound_profile' | 'unbound_profile';\n          engine_mode: 'unknown' | 'standard' | 'raw';\n          workspace_kind: 'unknown' | 'none' | 'project' | 'temporary' | 'profile_home';\n          profile_name?: string;\n        };\n        config_sources: Array<{\n          role: 'global' | 'project' | 'profile' | 'cli' | 'environment' | 'credential_store' | 'desktop_launch';\n          disposition: 'loaded' | 'absent' | 'ignored' | 'unreadable' | 'invalid' | 'overridden' | 'restricted';\n          precedence: number;\n          content_digest?: string;\n          display_path?: string;\n        }>;\n        unsupported_overrides: Array<{\n          name: string;\n          disposition: 'loaded' | 'absent' | 'ignored' | 'unreadable' | 'invalid' | 'overridden' | 'restricted';\n        }>;\n        mcp_servers: Array<{\n          name: string;\n          origin: 'effective_config' | 'global_config' | 'project_config' | 'profile_config' | 'runtime_command' | 'plugin';\n          transport: 'stdio' | 'sse' | 'streamable_http';\n          connection: 'configured' | 'deferred' | 'connecting' | 'ready' | 'failed' | 'timed_out' | 'skipped' | 'stopping' | 'stopped';\n          exposure: 'not_attempted' | 'not_applicable' | 'exposed' | 'resource_only' | 'resource_only_unavailable' | 'hidden_no_tools' | 'blocked';\n          deferred: boolean;\n          tool_count: number;\n          resources_declared: boolean;\n          resources_exposed: boolean;\n          assistant_scoped: boolean;\n          executable_readiness:\n            | 'not_applicable'\n            | 'unchecked'\n            | 'resolved'\n            | 'missing_effective_path'\n            | 'not_found'\n            | 'invalid_absolute_path'\n            | 'invalid_executable'\n            | 'invalid_effective_environment'\n            | 'permission_denied'\n            | 'not_executable'\n            | 'probe_timed_out'\n            | 'unsupported_transport';\n          working_directory: 'inherited_process' | 'project_root' | 'profile_home' | 'explicit';\n          remediation: Array<\n            | 'open_active_config'\n            | 'restart_desktop'\n            | 'fix_gui_launch_path'\n            | 'install_executable'\n            | 'fix_executable_permissions'\n            | 'review_server_config'\n            | 'retry_connection'\n            | 'retry_diagnostics'\n            | 'check_assistant_scope'\n            | 'restart_to_load_resources'\n          >;\n          executable_basename?: string;\n          failure?:\n            | 'missing_executable'\n            | 'launch_failed'\n            | 'connection_refused'\n            | 'timeout'\n            | 'protocol_mismatch'\n            | 'authentication_required'\n            | 'authorization_denied'\n            | 'invalid_configuration'\n            | 'transport_closed'\n            | 'unknown';\n        }>;\n      };\n    }"
+    },
+    {
+      "name": "runtime_diagnostics_unavailable",
+      "direction": "event",
+      "contractPath": "tests/fixtures/engine-contract/desktop/v1/events/runtime_diagnostics_unavailable.json",
+      "tsDefinition": "  | {\n      type: 'runtime_diagnostics_unavailable';\n      /** The version the HOST asked for. Schema: integer 0..65535 - NOT const 1. */\n      diagnostics_version: number;\n      /** The only version this engine can serve. Schema: const 1. */\n      supported_version: 1;\n      request_id: string;\n      reason: 'unsupported_version' | 'invalid_request';\n    }"
+    },
+    {
+      "name": "mcp_removal_result",
+      "direction": "event",
+      "contractPath": "tests/fixtures/engine-contract/desktop/v1/events/mcp_removal_result.json",
+      "tsDefinition": "  | {\n      type: 'mcp_removal_result';\n      /** Schema: integer 0..65535 - NOT const 1. Fixture value is 1. */\n      lifecycle_version: number;\n      request_id: string;\n      name: string;\n      /**\n       * Free-form in BOTH core-event.schema.json and producer-complete.schema.json:\n       * `{\"type\":\"string\"}` with no enum. The only value the contract exhibits is\n       * 'removed'. Do NOT narrow this to a union - see risks.\n       */\n      outcome: string;\n      removed_tools: string[];\n    }"
+    },
+    {
+      "name": "get_runtime_diagnostics",
+      "direction": "command",
+      "contractPath": "tests/fixtures/engine-contract/desktop/v1/commands/get_runtime_diagnostics.json",
+      "tsDefinition": "  | {\n      type: 'get_runtime_diagnostics';\n      /** Schema: const 1. The host cannot legally ask for any other version. */\n      diagnostics_version: 1;\n      /** 1..128 chars. additionalProperties:false - send nothing else. */\n      request_id: string;\n    }"
+    },
+    {
+      "name": "remove_mcp_server",
+      "direction": "command",
+      "contractPath": "tests/fixtures/engine-contract/desktop/v1/commands/remove_mcp_server.json",
+      "tsDefinition": "  | {\n      type: 'remove_mcp_server';\n      /** Schema: integer 0..65535. Send the module constant 1 (the fixture value). */\n      lifecycle_version: number;\n      /** 1..256 chars AND x-maxUtf8Bytes:256. additionalProperties:false. */\n      request_id: string;\n      /** 1..256 chars AND x-maxUtf8Bytes:256 - byte cap, not code-unit cap. */\n      name: string;\n    }"
+    }
+  ],
+  "handlerWork": [
+    {
+      "file": "src/process/agent/wcore/protocol.ts",
+      "change": "Add the three event union members to `WCoreEvent`. Put `mcp_removal_result` immediately after the existing `mcp_failed` member (line 147) so the MCP trio reads together; put the two `runtime_diagnostics_*` members at the end of the union after `cua_policy_denied` (line 278) under a new `// -- runtime diagnostics v1 (subcontract 1.0) --` banner. Add the two command union members to `WCoreCommand` right after the `add_mcp_server` member (lines 299-308).",
+      "why": "The decoder's exhaustiveness cast at index.ts:940 and the union-parsing regex in tests/unit/wcore-eventCoverage.test.ts:32-40 both key off this union. A handler arm without a union member does not type-check."
+    },
+    {
+      "file": "src/process/agent/wcore/protocol.ts",
+      "change": "DELETE three entries from `ACKNOWLEDGED_UNHANDLED_EVENTS`: `'mcp_removal_result'` (line 356), `'runtime_diagnostics_snapshot'` (line 359), `'runtime_diagnostics_unavailable'` (line 360). Leave the surrounding comment banners; update the `// -- Diagnostics + recovery surfaces --` banner text since only the three `session_recovery_*` + `turn_recovery_lifecycle` names remain under it.",
+      "why": "tests/unit/wcore-eventCoverage.test.ts:56 (`never lists an event the decoder actually handles`) fails the moment a name is in both the union and this set. That failing test is the regression proof that the handler landed - do not silence it, satisfy it."
+    },
+    {
+      "file": "src/process/agent/wcore/index.ts",
+      "change": "Add pending-request state to `WCoreAgent`, declared next to `mcpReadyPromise` (line 218): `private readonly pendingRequests = new Map<string, { resolve: (payload: WCoreEvent) => void; reject: (err: Error) => void; timer: NodeJS.Timeout }>();` plus module constants `const DIAGNOSTICS_VERSION = 1;`, `const MCP_LIFECYCLE_VERSION = 1;`, `const REQUEST_TIMEOUT_MS = 15_000;` near the other module constants (lines 27-33).",
+      "why": "Every existing command is fire-and-forget (`sendCommand`, line 992). These two verbs are the first correlated round-trips in this host, so there is no existing mechanism to reuse - `mcpReadyPromise` is a single one-shot latch keyed on nothing and cannot correlate by request_id."
+    },
+    {
+      "file": "src/process/agent/wcore/index.ts",
+      "change": "Add `private request<T extends WCoreEvent>(cmd: WCoreCommand, requestId: string, timeoutMs = REQUEST_TIMEOUT_MS): Promise<T>` beside `sendCommand` (line 992). It MUST reject immediately with a distinct error when `!this.childProcess?.stdin?.writable` BEFORE registering the pending entry - `sendCommand` returns silently on a dead stdin, so a naive implementation leaves the caller hanging for the full timeout on an engine that is already gone. Otherwise: register the entry, `this.sendCommand(cmd)`, arm the timer to `delete` the entry and reject with a timeout error.",
+      "why": "The silent-drop in sendCommand (line 993 `if (!this.childProcess?.stdin?.writable) return;`) is the exact failure mode that turns a request/response verb into a 15-second UI hang."
+    },
+    {
+      "file": "src/process/agent/wcore/index.ts",
+      "change": "Add three `case` arms inside `handleEvent`'s switch (opens line 495, `default:` at line 939), placed after the `case 'mcp_failed':` arm (line 663-673): `case 'runtime_diagnostics_snapshot':`, `case 'runtime_diagnostics_unavailable':`, `case 'mcp_removal_result':`. Each: look up `this.pendingRequests.get(event.request_id)`; if found, `clearTimeout(entry.timer)`, `this.pendingRequests.delete(...)`, `entry.resolve(event)`; if NOT found, `console.warn('[WCoreAgent] unsolicited <type> for request_id', event.request_id)` and break. Never throw - handleEvent runs inside the readline `line` handler (index.ts:329-336) whose catch only covers JSON.parse.",
+      "why": "These are the response halves. The unsolicited path is real: the contract grades all three as `criticality: safety`, and an engine restart or a replayed line could deliver a response whose requester already timed out."
+    },
+    {
+      "file": "src/process/agent/wcore/index.ts",
+      "change": "Do NOT touch the forward-progress guard at line 492 (`if ('msg_id' in event && event.msg_id)`). All three new events are msg_id-less by contract, so the stall watchdog is correctly left alone. Add an explicit comment saying so, next to the new arms.",
+      "why": "A reviewer's instinct will be to reset the watchdog on any inbound frame. Diagnostics is a settings-initiated round-trip that can fire mid-turn; resetting the deadline on it would let a genuinely stalled turn be kept alive by a Settings pane polling for diagnostics."
+    },
+    {
+      "file": "src/process/agent/wcore/index.ts",
+      "change": "In the `this.childProcess.on('exit', ...)` handler (lines 349-363), before `this.childProcess = null;`, drain `pendingRequests`: clear every timer and reject every entry with `new Error('wcore exited before responding')`, then clear the map. Do the same in `kill()` (the method starting around line 1044).",
+      "why": "Without this a diagnostics request outlives the engine process and hangs to its own timeout, and the timer keeps a handle alive that can fire against a dead agent - the same class of bug the exit handler already fixes for the stall watchdog at lines 358-361."
+    },
+    {
+      "file": "src/process/agent/wcore/index.ts",
+      "change": "Add two public methods next to `ping()` (line 1036). `async getRuntimeDiagnostics()`: build `request_id = \\`rd-${randomUUID()}\\`` (41 chars, inside the 1..128 cap) and `await this.request({ type: 'get_runtime_diagnostics', diagnostics_version: DIAGNOSTICS_VERSION, request_id }, request_id)`; return the resolved event as-is (either variant - the caller decides). `async removeMcpServer(name: string)`: validate FIRST - reject when `name` is empty or `Buffer.byteLength(name, 'utf8') > 256`, then `request({ type: 'remove_mcp_server', lifecycle_version: MCP_LIFECYCLE_VERSION, request_id, name }, request_id)`.",
+      "why": "`x-maxUtf8Bytes: 256` is a BYTE cap while `maxLength: 256` is a UTF-16 code-unit cap. A Cyrillic MCP name (2 bytes/char) can pass `.length <= 256` and still be a schema-invalid command. Darhai's own UI is Mongolian Cyrillic, so this is a live path, not a theoretical one."
+    },
+    {
+      "file": "src/process/task/WCoreManager.ts",
+      "change": "Add two public methods immediately after `setMode` (ends line 1306), matching the `{ success, data?, msg? }` shape that `setMode`/`getCapabilities` already use: `async getRuntimeDiagnostics()` and `async removeMcpServer(name: string)`. Each guards `if (!this.agent) return { success: false, msg: '...' }` (the same `if (this.agent)` idiom used at lines 1288 and 1300) and otherwise delegates to the agent method, catching and converting a rejection into `{ success: false, msg }`.",
+      "why": "`this.agent` is null before bootstrap and after kill (declared line 170, assigned line 332). Every other manager method already guards it; an unguarded delegate would throw across IPC."
+    },
+    {
+      "file": "src/process/task/WCoreManager.ts",
+      "change": "Explicitly do NOT route these through the `this.on('wcore.message', ...)` handler registered in `init()` (line 997). Add a short comment there noting that the two runtime verbs resolve inside WCoreAgent by request_id and never enter the stream path.",
+      "why": "That handler drops every frame with an empty msg_id at line 1064, which is why `config_changed`, `sub_agent_event`, and `mcp_failed` each needed a hand-written early-return above it (lines 999, 1024, 1038). A fourth special case there would be the wrong shape - these are responses to a caller, not broadcasts to the renderer."
+    },
+    {
+      "file": "src/common/adapter/ipcBridge.ts",
+      "change": "Add a new exported namespace `wcoreRuntime` immediately after the `wcoreConfig` block (ends line ~2330), with a doc comment in the same HUMAN/RENDERER-ONLY style: `getDiagnostics: buildProvider<IBridgeResponse<WCoreRuntimeDiagnostics>, { conversationId: string }>('wcoreRuntime.getDiagnostics')` and `removeMcpServer: buildProvider<IBridgeResponse<{ name: string; outcome: string; removed_tools: string[] }>, { conversationId: string; name: string }>('wcoreRuntime.removeMcpServer')`. Export the `WCoreRuntimeDiagnostics` result type (a discriminated union of the two event payload shapes, minus `type`) from the same file.",
+      "why": "`src/common/index.ts:7` does `export * as ipcBridge from './adapter/ipcBridge'`, so a new top-level `export const` is automatically reachable as `ipcBridge.wcoreRuntime.*` in the renderer. `conversationId` is required because the engine is per-conversation - there is no global engine handle."
+    },
+    {
+      "file": "src/process/bridge/wcoreRuntimeBridge.ts",
+      "change": "NEW FILE. `export function initWcoreRuntimeBridge(): void` registering both providers. Resolve the manager exactly the way acpConversationBridge.ts:117-127 does: `const task = workerTaskManager.getTask(conversationId); if (!task || !(task instanceof WCoreManager)) return { success: false, msg: '...' };` then delegate. Use `getTask` (non-building), NOT `getOrBuildTask` (used at line 144) - a Settings pane asking for diagnostics must never spawn an engine as a side effect.",
+      "why": "`workerTaskManager.getTask` is the existing, proven registry lookup for reaching a live WCoreManager from a bridge provider. `getOrBuildTask` would make opening a Settings pane spawn a wcore process."
+    },
+    {
+      "file": "src/process/bridge/index.ts",
+      "change": "Add `import { initWcoreRuntimeBridge } from './wcoreRuntimeBridge';` alongside the existing wcore import (line 83), call `initWcoreRuntimeBridge();` next to `initMcpBridge();` (line 111), and add it to the re-export list near line 211.",
+      "why": "That is the single registration seam; a provider declared in ipcBridge.ts but never `.provider()`-ed leaves the renderer promise pending forever."
+    },
+    {
+      "file": "src/common/adapter/bridgeAllowlist.ts",
+      "change": "Add `'wcoreRuntime.getDiagnostics'` and `'wcoreRuntime.removeMcpServer'` to `REMOTE_DENIED_KEYS`, directly under the existing `wcoreConfig.*` block (lines 230-239), with a comment: the snapshot discloses `display_path` of every config source, the active `profile_name`, and every MCP `executable_basename` - the same disclosure class as `wcoreConfig.getConfigPath`, which is already denied there for exactly this reason; `removeMcpServer` mutates the live engine tool surface and must never be reachable from a paired WebSocket caller.",
+      "why": "`isAllowedForRemote` (line 516) is the only gate. Both verbs are graded `criticality: safety` by the contract manifest, and Darhai already denies the read-only `wcoreConfig.getSection`/`getConfigPath` on defence-in-depth grounds (SEC review F2) - a diagnostics snapshot is strictly more disclosive than either."
+    }
+  ],
+  "uiWork": [
+    {
+      "file": "src/renderer/pages/settings/WCoreConfig/panes/RuntimePane.tsx",
+      "change": "Add a `Diagnostics` section below the existing Power-User section (after line 194, before the `infonote` block). A button calling `ipcBridge.wcoreRuntime.getDiagnostics.invoke({ conversationId })` plus a results block rendering: the `process` row (engine_mode / profile_binding / profile_name / workspace_kind) - which finally makes the hardcoded 'Running' badge at lines 126-130 and the 'Currently: embedded local engine' string at line 103 real reported values instead of static text; a `config_sources` table sorted by `precedence` showing role + disposition + display_path; a `unsupported_overrides` list (ignored env vars); and an `mcp_servers` table with connection / exposure / executable_readiness and the `remediation` hints rendered as labelled chips. When the response is `runtime_diagnostics_unavailable`, show reason + supported_version and nothing else - never fall back to a fake empty snapshot. Requires a `conversationId`: RuntimePane has none today, so take it from the active conversation the pane is opened from, and render a plain 'no live engine session' empty state when there is none."
+    },
+    {
+      "file": "src/renderer/pages/settings/WCoreConfig/panes/RuntimePane.tsx",
+      "change": "Map the ten `remediation` enum values to i18n keys under `settings.wcoreConfig.runtime.remediation.*` (open_active_config, restart_desktop, fix_gui_launch_path, install_executable, fix_executable_permissions, review_server_config, retry_connection, retry_diagnostics, check_assistant_scope, restart_to_load_resources) and the twelve `executable_readiness` values under `settings.wcoreConfig.runtime.readiness.*`. Run `bun run i18n:types` and `node scripts/check-i18n.js` after adding them, per AGENTS.md."
+    },
+    {
+      "file": "src/renderer/pages/settings/McpLibrary/InstalledPage.tsx",
+      "change": "Extend `handleRemove` (line 151). Its confirm copy currently promises 'This will also uninstall it from all CLI agents' (line 157) while the running engine keeps serving the tools. After `crud.handleDeleteMcpServer(s.id)` (line 164), also call `ipcBridge.wcoreRuntime.removeMcpServer.invoke({ conversationId, name: s.name })` for each live wcore conversation and surface `removed_tools` in the success toast ('N tools withdrawn: a, b'). A failure here must NOT roll back the library delete - report it as a separate warning telling the user to restart the session."
+    },
+    {
+      "file": "src/renderer/pages/settings/WCoreConfig/panes/types.ts",
+      "change": "No change. Diagnostics belongs in the existing `runtime` rail entry, not a new one - `WCoreRailKey` (line 14) stays at seven values and the `panes/` directory stays under the 10-child limit in AGENTS.md."
+    }
+  ],
+  "testWork": [
+    {
+      "testFile": "tests/unit/wcore-runtimeDiagnostics.test.ts",
+      "what": "NEW. Drive both diagnostics events through the real decoder using the fixture payloads verbatim, with the `(agent as unknown as { handleEvent: (e: unknown) => void }).handleEvent(...)` pattern already used in tests/unit/wcoreMcpFailed.test.ts:47 and the same three `vi.mock` stubs (binaryResolver / envBuilder / modelRegistryIpc, lines 19-29). Prove: (a) a pending request registered under the fixture's `request_id` ('runtime-diagnostics-001') resolves with the full snapshot including nested `snapshot.mcp_servers[0].remediation`; (b) the unavailable fixture resolves its own request ('runtime-diagnostics-unsupported') rather than rejecting; (c) an event whose `request_id` matches NOTHING is dropped without throwing and without resolving any other pending entry; (d) the command Darhai actually writes to stdin passes `validateCommand()` from tests/helpers/engineContract.ts - capture it by stubbing the child stdin write; (e) `surfaceOf('runtime_diagnostics_v1')` returns exactly ['runtime_diagnostics_snapshot','runtime_diagnostics_unavailable','get_runtime_diagnostics'] so a future contract bump that adds a verb fails here; (f) COUNTER-CHECK: mutate the emitted command (drop `request_id`) and assert `validateCommand` rejects it, proving the validator in (d) is not a no-op.",
+      "fixtures": [
+        "tests/fixtures/engine-contract/desktop/v1/events/runtime_diagnostics_snapshot.json",
+        "tests/fixtures/engine-contract/desktop/v1/events/runtime_diagnostics_unavailable.json",
+        "tests/fixtures/engine-contract/desktop/v1/commands/get_runtime_diagnostics.json"
+      ]
+    },
+    {
+      "testFile": "tests/unit/wcore-mcpLifecycle.test.ts",
+      "what": "NEW. Same harness for the removal round-trip. Prove: (a) the `mcp_removal_result` fixture resolves the pending request keyed on 'mcp-remove-001' and surfaces `removed_tools: ['fetch','search']`; (b) `outcome` is passed through as the raw string and is NOT compared against a hardcoded 'removed' literal anywhere in the handler (grep the source in-test, the way wcore-eventCoverage.test.ts:63 asserts on DECODER_SRC); (c) the emitted `remove_mcp_server` command validates against host-command.schema.json; (d) BYTE-CAP: a name of 200 Cyrillic characters (400 UTF-8 bytes, `.length` 200) is rejected client-side before any stdin write - this is the case a `maxLength`-only check silently lets through; (e) a request issued while `childProcess` is null rejects immediately rather than waiting out the timeout; (f) engine exit while a removal is in flight rejects the pending promise.",
+      "fixtures": [
+        "tests/fixtures/engine-contract/desktop/v1/events/mcp_removal_result.json",
+        "tests/fixtures/engine-contract/desktop/v1/commands/remove_mcp_server.json",
+        "tests/fixtures/engine-contract/desktop/v1/compat/commands/add_mcp_server.minimal.json"
+      ]
+    },
+    {
+      "testFile": "tests/unit/wcore-runtimeDiagnostics.adversarial.test.ts",
+      "what": "NEW. Drive the generic adversarial command corpus through `validateCommand()` and assert every one is REJECTED, then assert every command shape Darhai emits for these two verbs is ACCEPTED. This is the only honest use of these fixtures for this capability: none of them names either verb (only `continue_with_budget` has verb-specific vectors), so they cannot prove engine-side rejection - they prove that the validator guarding Darhai's emitters actually discriminates, and that Darhai never emits a shape from that family. Additionally drive the three unknown-event fixtures through `handleEvent` and assert none throws and none resolves a pending diagnostics/removal request - a future safety-graded event must never be mistaken for a response.",
+      "fixtures": [
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/commands/invalid-json.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/commands/missing-type.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/commands/non-object.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/commands/non-string-type.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/commands/unknown-type.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/commands/wrong-required-field.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/events/unknown-critical.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/events/unknown-noncritical.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/events/unknown-criticality.jsonl"
+      ]
+    },
+    {
+      "testFile": "tests/unit/wcore-eventCoverage.test.ts",
+      "what": "EXISTING, must be extended. Its `never lists an event the decoder actually handles` case (line 56) will fail until the three names leave ACKNOWLEDGED_UNHANDLED_EVENTS - that failure is the proof the handler landed. Add a positive assertion that `handledEventTypes()` now contains all three names, so a later revert that re-adds them to the inert list fails in both directions rather than silently going quiet again. The `size <= 30` cap (line 72) still holds: the set drops from 22 to 19.",
+      "fixtures": []
+    },
+    {
+      "testFile": "tests/unit/bridgeAllowlistWcoreRuntime.redteam.test.ts",
+      "what": "NEW, following the exact shape of tests/unit/bridgeAllowlistHwfit.redteam.test.ts: `it.each(['wcoreRuntime.getDiagnostics','wcoreRuntime.removeMcpServer'])` asserting `isAllowedForRemote('subscribe-' + key) === false`. Add the counter-check that an allowed key (e.g. 'acp.get-mode') still returns true, so a bug that denies everything cannot pass as a green result.",
+      "fixtures": []
+    }
+  ],
+  "risks": [
+    "`mcp_removal_result.outcome` has NO enum - it is `{\"type\":\"string\"}` in BOTH core-event.schema.json and producer-complete.schema.json (verified in the producer schema at anyOf[43]). The only value the contract exhibits anywhere is 'removed'. What the engine emits for 'server not found', 'refused', or 'partially removed' is unknown and can only be settled by running the binary. Do not switch on outcome strings and do not treat non-'removed' as failure until measured - render it verbatim.",
+    "There is no negative-path event for MCP lifecycle at all (no `mcp_removal_unavailable`, no `mcp_removal_refused`). If the engine silently ignores a `remove_mcp_server` for an unknown name, the host has no signal and will hang until its own timeout. The 15s timeout value in this plan is NOT derived from the contract - it is a placeholder that must be replaced with a measured p99 against the real binary before shipping.",
+    "`get_runtime_diagnostics.diagnostics_version` is `const 1` in host-command.schema.json, yet `runtime_diagnostics_unavailable.reason` includes 'unsupported_version' and its fixture carries `diagnostics_version: 2`. A schema-conformant host can therefore never trigger that branch. The unavailable path is only reachable via 'invalid_request' - whose triggers the contract never enumerates - or a future contract version. So the unavailable handler cannot be exercised end-to-end against today's engine except by deliberately emitting a schema-invalid command. Fixture-level tests are the only proof available.",
+    "`remove_mcp_server.lifecycle_version` is an integer 0..65535, not `const 1`, and nothing in the contract says what the engine does with any other value, nor whether an engine lacking `runtime_mcp_lifecycle_v1` ignores the command, errors, or drops the connection. Sending 1 is copying the fixture, not reading a rule.",
+    "Capability gating is not modelled in Darhai. The adversarial `ready` fixtures show the engine advertises per-capability status in `ready.contract.capabilities` (`runtime_diagnostics_v1: \"available\"`, `runtime_mcp_lifecycle_v1: \"available\"`), but Darhai's `WCoreEvent['ready']` member (protocol.ts:93-98) models only `version` / `session_id` / `capabilities` and drops the whole `contract` object. Until that is modelled - it belongs to the contract_negotiation capability, owned by another agent - this host cannot distinguish an engine that lacks the capability from one that is merely slow: both look like a timeout. This is the single biggest reason the UI must say 'no response' rather than 'unsupported'.",
+    "Redaction is contract PROSE, not schema. DEFERRED.md states diagnostics 'executable readiness is non-spawning, launch-environment exact, and redacted before entering protocol state', but nothing in core-event.schema.json enforces it: `display_path` and `executable_basename` are free-form strings. The one fixture shows a tokenized path (`$CONFIG/wayland-core/config.toml`), which is a single sample, not a guarantee. Assume the snapshot may carry a real home-directory path - that assumption is what justifies remote-denying the bridge key, and whether the engine ever emits an untokenized absolute path can only be answered by running it.",
+    "Persistence semantics of removal are undefined. The contract does not say whether `remove_mcp_server` edits config.toml or only detaches the live session. If it is session-only, a restart resurrects the server and the Settings UI will look like it forgot the user's action. This determines whether the UI needs to ALSO write config - and it can only be settled by removing a server, restarting the engine, and looking. Ship the UI copy neutral ('withdrawn from this session') until measured.",
+    "The diagnostics MCP inventory is the ENGINE's list (`origin: global_config | project_config | profile_config | runtime_command | plugin`), which is a different set from Darhai's own `IMcpServer` library table backing McpLibrary. Joining the two on `name` is a guess. Render the engine list as engine-reported and do not attempt reconciliation.",
+    "`gap-matrix.json` is described as 'generated' in tests/fixtures/engine-contract/README.md:34, but no generator script exists anywhere in the repo (grep for 'gap-matrix' hits only that README). Flipping the five entries for this capability from `implemented: false` to `true` will have to be done by hand, and a hand-edited 'generated' file can drift from reality without anything catching it.",
+    "No conflict found between the contract and the gap-matrix for this capability: manifest.json and gap-matrix.json agree that all five types (3 events + 2 commands) are unimplemented, and agree on capability, criticality (all `safety`), and correlation key (all `request_id`). Nothing here required trusting one over the other.",
+    "AGENTS.md caps a directory at 10 direct children; `src/process/bridge/` already holds 83. Adding `wcoreRuntimeBridge.ts` follows the established local practice but widens an existing violation. Flagging rather than silently deciding - folding it into `wcoreConfigBridge.ts` is the alternative, at the cost of mixing config.toml file I/O with live-process IPC in one module."
+  ],
+  "effortHours": 14,
+  "dependencies": [
+    "contract_negotiation"
+  ]
+}

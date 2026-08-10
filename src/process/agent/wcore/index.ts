@@ -23,6 +23,8 @@ import type { WCoreEvent, WCoreCommand, WCoreCapabilities } from './protocol';
 import { ACKNOWLEDGED_UNHANDLED_EVENTS } from './protocol';
 import { dispatchCapabilityEvent } from './capabilities';
 import type { CapabilityContext } from './capabilities';
+import { NO_CONTRACT, negotiateContract } from './capabilities/contractNegotiation';
+import type { NegotiatedContract } from './capabilities/contractNegotiation';
 
 const WCORE_PROJECT_CONFIG = '.wcore.toml';
 
@@ -221,6 +223,16 @@ export class WCoreAgent {
   private mcpReadyResolve!: () => void;
   public sessionId?: string;
   public capabilities?: WCoreCapabilities;
+  /**
+   * What THIS engine build says it supports, from `ready.contract`.
+   *
+   * Darhai is pinned to one engine tag, but `binaryResolver` will use a
+   * `wayland-core` found on PATH and the engine can self-update, so the binary
+   * in front of us is not necessarily the one we vendored a contract for. Every
+   * capability that sends a command gates on this first: asking a build that
+   * graded a capability `shape_only` produces a reply that never arrives.
+   */
+  public contract: NegotiatedContract = NO_CONTRACT;
   /**
    * The `--max-tokens` value actually passed to wcore, after applying the
    * reasoning-model default fallback in `buildSpawnConfig`. `undefined` when
@@ -520,6 +532,10 @@ export class WCoreAgent {
         this.ready = true;
         this.sessionId = event.session_id;
         this.capabilities = event.capabilities;
+        // Capture the engine's own grading of every capability before anything
+        // can act on it - `readyResolve()` releases callers that may immediately
+        // want to send a gated command.
+        this.contract = negotiateContract(event as unknown as Record<string, unknown>);
         this.readyResolve();
         break;
 

@@ -1,0 +1,247 @@
+{
+  "capability": "durable_goals_v1",
+  "summary": "Durable goals is the engine's long-running objective: an engine-journalled record (objective, iteration ceiling, loop-owner lease, task list with dependencies) that survives process restarts, plus five host commands to open/advance/cancel/declare-tasks-on/resync one. Darhai currently decodes none of it — all three events sit in `ACKNOWLEDGED_UNHANDLED_EVENTS` (protocol.ts:341-343) and gap-matrix.json marks all 8 verbs `implemented: false`, which matches the contract exactly (no disagreement). The work is a capability module on the existing `src/process/agent/wcore/capabilities/` seam (HANDLERS is still an empty array), a session-keyed cursor registry so `goal_advance`/`goal_cancel` can echo the engine's cursor rather than invent one, and a read-only projection into Mission Control.",
+  "userValue": "Concrete but modest at phase 1: a user sees long-running engine objectives in Mission Control alongside team tasks and cron jobs — including after an app restart, since the engine's journal, not Darhai, is the durable store and `goal_resync` re-learns state. It also closes a silent-drop hole: `goal_control_refused` is `criticality: safety` in the manifest and is currently swallowed, so if Darhai ever sends a goal command that the engine refuses (`reason: \"cursor_stale\"`), nothing today would tell the user. Value is zero until something opens a goal — see risks: the contract does not say whether the engine ever opens one on its own.",
+  "protocolTypes": [
+    {
+      "name": "WCoreGoalEvent.goal_snapshot",
+      "direction": "event",
+      "tsDefinition": "| {\n      type: 'goal_snapshot';\n      goal_version: number;\n      session_id: string;\n      goal_id: string;\n      cursor: GoalCursor;\n      state_digest: string;\n      goal: GoalRecord;\n    }",
+      "contractPath": "tests/fixtures/engine-contract/desktop/v1/events/goal_snapshot.json"
+    },
+    {
+      "name": "WCoreGoalEvent.goal_transition",
+      "direction": "event",
+      "tsDefinition": "| {\n      type: 'goal_transition';\n      goal_version: number;\n      session_id: string;\n      goal_id: string;\n      cursor: GoalCursor;\n      transition: string;\n      lifecycle: GoalLifecycle;\n    }",
+      "contractPath": "tests/fixtures/engine-contract/desktop/v1/events/goal_transition.json"
+    },
+    {
+      "name": "WCoreGoalEvent.goal_control_refused",
+      "direction": "event",
+      "tsDefinition": "| {\n      type: 'goal_control_refused';\n      goal_version: number;\n      request_id: string;\n      session_id: string;\n      goal_id: string;\n      reason: string;\n    }",
+      "contractPath": "tests/fixtures/engine-contract/desktop/v1/events/goal_control_refused.json"
+    },
+    {
+      "name": "GoalCursor (shared sub-object)",
+      "direction": "event",
+      "tsDefinition": "export type GoalCursor = {\n  /** Schema marks NEITHER field required (no `required` list, additionalProperties:true).\n   *  Every shipped fixture populates both. Optional here is the faithful mapping. */\n  journal_digest?: string;\n  journal_sequence?: number;\n};",
+      "contractPath": "tests/fixtures/engine-contract/desktop/v1/schema/core-event.schema.json (goal_snapshot/goal_transition/goal_advance/goal_cancel .cursor)"
+    },
+    {
+      "name": "GoalLifecycle (shared sub-object)",
+      "direction": "event",
+      "tsDefinition": "export type GoalLifecycle = {\n  /** Free string in the schema. Only 'running' appears in any fixture. */\n  state?: string;\n};",
+      "contractPath": "tests/fixtures/engine-contract/desktop/v1/schema/core-event.schema.json (goal_snapshot.goal.lifecycle, goal_transition.lifecycle)"
+    },
+    {
+      "name": "GoalRecord (goal_snapshot.goal)",
+      "direction": "event",
+      "tsDefinition": "export type GoalRecord = {\n  /** No field inside `goal` is schema-required; all optional is the faithful mapping. */\n  goal_id?: string;\n  objective?: string;\n  lifecycle?: GoalLifecycle;\n  cursor?: GoalCursor;\n  authority?: GoalAuthority;\n  loop_owner?: GoalLoopOwner;\n  loop_owner_epochs?: number;\n  iteration_ceiling?: number;\n  iterations_started?: number;\n  opened_at_unix_ms?: number;\n  resume_count?: number;\n  tasks?: GoalTaskEntry[];\n};",
+      "contractPath": "tests/fixtures/engine-contract/desktop/v1/events/goal_snapshot.json"
+    },
+    {
+      "name": "GoalAuthority (goal_snapshot.goal.authority)",
+      "direction": "event",
+      "tsDefinition": "export type GoalAuthority = {\n  strategy?: string;\n  snapshot_digest?: string;\n  parent_envelope_digest?: string;\n  effective_limits?: { max_tokens?: number };\n  loop_policy?: { kind?: string; iterations?: number };\n};",
+      "contractPath": "tests/fixtures/engine-contract/desktop/v1/events/goal_snapshot.json"
+    },
+    {
+      "name": "GoalLoopOwner (goal_snapshot.goal.loop_owner)",
+      "direction": "event",
+      "tsDefinition": "export type GoalLoopOwner = {\n  epoch?: number;\n  lease_expires_unix_ms?: number;\n  strategy?: string;\n};",
+      "contractPath": "tests/fixtures/engine-contract/desktop/v1/events/goal_snapshot.json"
+    },
+    {
+      "name": "GoalTaskEntry (goal_snapshot.goal.tasks[])",
+      "direction": "event",
+      "tsDefinition": "export type GoalTaskEntry = {\n  /** The schema's `tasks.items` is an anyOf of TWO shapes: one carrying `outcome`\n   *  and no `depends_on` (a completed task), one carrying `depends_on` and no\n   *  `outcome` (a blocked task). Both are additionalProperties:true with no\n   *  required list, so the merged all-optional shape is exactly what the schema\n   *  permits - do NOT model this as a discriminated union; there is no discriminant. */\n  task_id?: string;\n  status?: string;\n  attempts?: number;\n  epoch?: number;\n  dependency_releases?: number;\n  idempotency_key?: string;\n  last_transition_seq?: number;\n  depends_on?: string[];\n  outcome?: { state?: string };\n};",
+      "contractPath": "tests/fixtures/engine-contract/desktop/v1/schema/core-event.schema.json (goal_snapshot.goal.tasks.items.anyOf)"
+    },
+    {
+      "name": "WCoreCommand.goal_open",
+      "direction": "command",
+      "tsDefinition": "| {\n      type: 'goal_open';\n      goal_version: number;\n      request_id: string;\n      session_id: string;\n      goal_id: string;\n      objective: string;\n      iterations: number;\n      strategy: string;\n      max_tokens: number;\n    }",
+      "contractPath": "tests/fixtures/engine-contract/desktop/v1/commands/goal_open.json"
+    },
+    {
+      "name": "WCoreCommand.goal_declare_task",
+      "direction": "command",
+      "tsDefinition": "| {\n      type: 'goal_declare_task';\n      goal_version: number;\n      request_id: string;\n      session_id: string;\n      goal_id: string;\n      task_id: string;\n      /** NOT in the schema's required list, though the fixture sends both. */\n      depends_on?: string[];\n      idempotency_key?: string;\n    }",
+      "contractPath": "tests/fixtures/engine-contract/desktop/v1/commands/goal_declare_task.json"
+    },
+    {
+      "name": "WCoreCommand.goal_advance",
+      "direction": "command",
+      "tsDefinition": "| {\n      type: 'goal_advance';\n      goal_version: number;\n      request_id: string;\n      session_id: string;\n      goal_id: string;\n      cursor: GoalCursor;\n    }",
+      "contractPath": "tests/fixtures/engine-contract/desktop/v1/commands/goal_advance.json"
+    },
+    {
+      "name": "WCoreCommand.goal_cancel",
+      "direction": "command",
+      "tsDefinition": "| {\n      type: 'goal_cancel';\n      goal_version: number;\n      request_id: string;\n      session_id: string;\n      goal_id: string;\n      cursor: GoalCursor;\n    }",
+      "contractPath": "tests/fixtures/engine-contract/desktop/v1/commands/goal_cancel.json"
+    },
+    {
+      "name": "WCoreCommand.goal_resync",
+      "direction": "command",
+      "tsDefinition": "| {\n      type: 'goal_resync';\n      goal_version: number;\n      request_id: string;\n      session_id: string;\n      /** goal_id is NOT in this command's required list (unlike every other goal\n       *  command), although the example payload sends it. Omitting it plausibly\n       *  means \"resync every goal in the session\" - the contract does not say. */\n      goal_id?: string;\n    }",
+      "contractPath": "tests/fixtures/engine-contract/desktop/v1/commands/goal_resync.json"
+    }
+  ],
+  "handlerWork": [
+    {
+      "file": "src/process/agent/wcore/protocol.ts",
+      "change": "Add the `GoalCursor` / `GoalLifecycle` / `GoalAuthority` / `GoalLoopOwner` / `GoalTaskEntry` / `GoalRecord` sub-object types and a NEW exported union `WCoreGoalEvent` with the three event members above. Do NOT add them to `WCoreEvent` (line 92). Append the five goal command members to the `WCoreCommand` union (currently ends at `| { type: 'ping' }`, line 309). Then DELETE the three lines `'goal_control_refused'`, `'goal_snapshot'`, `'goal_transition'` from `ACKNOWLEDGED_UNHANDLED_EVENTS` (lines 341-343).",
+      "why": "The capability seam routes through the decoder's `default` arm (index.ts:962-980). A type added to `WCoreEvent` gets a `case` arm above the default and would NEVER reach `dispatchCapabilityEvent` - the union must stay separate. `ctx.sendCommand` is typed `(command: WCoreCommand) => void` (capabilities/types.ts:49), so the commands MUST be in `WCoreCommand` or the module cannot compile. Removing the three ACK entries is mandatory: `tests/unit/wcore-capabilityDispatch.test.ts:200` fails if a claimed type is also listed inert."
+    },
+    {
+      "file": "src/process/agent/wcore/capabilities/durableGoals.ts",
+      "change": "NEW FILE. Export `durableGoalsCapability: CapabilityHandler` with `name: 'durable_goals_v1'` and `handles: ['goal_snapshot', 'goal_transition', 'goal_control_refused']`. `handle()` narrows the incoming `Record<string, unknown>` with a hand-written guard per type (validate `type`, `session_id`, `goal_id`, `goal_version` are the right primitives; return `false` if not - the dispatcher treats false as unhandled and the caller falls through to the ACK check). On `goal_snapshot` and `goal_transition`: store `{cursor, goal_version, lifecycle, state_digest}` in a module-level Map keyed `${session_id}\u0000${goal_id}`, then `ctx.emit({type: 'goal_snapshot'|'goal_transition', data: {...camelCased...}, msg_id: ''})`. On `goal_control_refused`: `ctx.warn('control refused', {goalId, requestId, reason})` AND `ctx.emit({type:'goal_control_refused', data:{goalId, requestId, reason}, msg_id: ctx.activeMsgId()})`. Also export the command builders `buildGoalAdvance(sessionId, goalId)` / `buildGoalCancel(...)` / `buildGoalResync(...)` / `buildGoalOpen(...)` / `buildGoalDeclareTask(...)` that read the stored cursor, plus `resetGoalState()` for tests.",
+      "why": "This is the seam `capabilities/types.ts` was written for (its own header names 'durable goals' as one of the nine subsystems). `handles` is exactly the manifest's three `capability: durable_goals_v1` events. The cursor Map is not optional: `goal_advance` and `goal_cancel` have `cursor` in their schema `required` list and `goal_control_refused` carries `reason: \"cursor_stale\"` - the host cannot mint a cursor, it must echo the last one the engine published. Key by session+goal because `HANDLERS` is a module singleton (capabilities/index.ts:27, 96) shared by every `WCoreAgent` in the main process, so a goal_id-only key would cross-contaminate two conversations."
+    },
+    {
+      "file": "src/process/agent/wcore/capabilities/index.ts",
+      "change": "Import `durableGoalsCapability` and put it in `const HANDLERS: readonly CapabilityHandler[] = []` (line 27).",
+      "why": "`dispatchCapabilityEvent = createDispatcher(HANDLERS)` (line 96) is built at module load; a handler not in this array is never routed. `assertNoOverlap` runs here, so a sibling capability claiming the same type becomes a startup failure rather than an import-order accident."
+    },
+    {
+      "file": "src/process/agent/wcore/capabilities/types.ts",
+      "change": "Additively extend `CapabilityContext` (line 47) with two members: `sessionId: () => string | undefined` and `contractCapability: (name: string) => 'available' | 'publication_bound' | 'shape_only' | 'unavailable' | undefined`.",
+      "why": "`goal_open` requires `session_id` and has no prior event to echo it from, so the module cannot build it with today's context (sendCommand/emit/activeMsgId/log/warn only). `contractCapability` is the gate: `compat/events/ready.minimal.json` has NO `contract` field at all, so an older engine must leave goals off rather than have Darhai emit commands it will refuse. HIGH CONFLICT FILE - eight sibling capability agents will touch these same lines; keep the change purely additive and land it early."
+    },
+    {
+      "file": "src/process/agent/wcore/index.ts",
+      "change": "In `capabilityContext()` (line 451) add `sessionId: () => this.sessionId` and `contractCapability: (name) => this.contractCapabilities?.[name]`. In the `case 'ready':` arm (line ~496, currently sets `this.ready/sessionId/capabilities`) also store `this.contractCapabilities = (event as {contract?: {capabilities?: Record<string,string>}}).contract?.capabilities` into a new private field. If the contract_negotiation agent has already typed `ready.contract`, use its type instead of the local cast.",
+      "why": "`ready.contract.capabilities.durable_goals_v1` is the only declared gate (present in events/ready.json and in both non-minimal compat ready fixtures, absent from ready.minimal.json). The `ready` member of `WCoreEvent` (protocol.ts:93-98) has no `contract` field today, so this is where the value first becomes reachable."
+    },
+    {
+      "file": "src/process/task/WCoreManager.ts",
+      "change": "In `init()`'s `this.on('wcore.message', ...)` handler, add a forwarding block for `data.type === 'goal_snapshot' | 'goal_transition' | 'goal_control_refused'` immediately after the `sub_agent_event` block (lines 1024-1032) and BEFORE `if (!data.msg_id) return;` (line 1064). Emit `ipcBridge.goals.event.emit({...data.data, conversation_id: this.conversation_id})` and call `goalRegistry.apply(this.conversation_id, data)`. Do not route goal frames into `transformMessage`/`addOrUpdateMessage`.",
+      "why": "Goal events carry no `msg_id`, so the guard at line 1064 drops them silently - the exact failure mode the `sub_agent_event` and `mcp_failed` blocks above it exist to avoid. They are also not conversation messages, so persisting them through the message pipeline would put non-message rows in the chat transcript."
+    },
+    {
+      "file": "src/process/services/goals/GoalRegistry.ts + src/process/services/goals/goalRegistrySingleton.ts",
+      "change": "NEW FILES. `GoalRegistry` holds the latest snapshot per `${conversationId}:${goalId}` with `apply(conversationId, frame)`, `list()`, `forConversation(id)`, and eviction (drop on terminal lifecycle + hard cap, e.g. 64 entries LRU). The singleton mirrors `src/process/services/cron/cronServiceSingleton.ts`.",
+      "why": "`TaskLedgerService` is constructed once in `initMissionControlBridge` while `WCoreManager` is per-conversation, so the ledger needs a process-wide read model to poll. Placed under `src/process/services/` because `src/process/agent/wcore/` already has 11 direct children and AGENTS.md caps a directory at 10 - adding there deepens an existing violation. NOT a durability store: the engine's journal is authoritative, Darhai re-learns after restart via `goal_resync`."
+    },
+    {
+      "file": "src/common/types/missionControl.ts",
+      "change": "Add `'goal'` to `export type LedgerSource = 'team' | 'cron'` (line 19) and document the id prefix `goal:<goalId>`.",
+      "why": "Its own header already says \"ACP sessions + workflows land later\" - a durable goal is the same normalized unit of work. Mapping goal lifecycle onto the existing `LedgerStatus` union avoids inventing a second status vocabulary the UI would have to reconcile."
+    },
+    {
+      "file": "src/process/services/missionControl/TaskLedgerService.ts",
+      "change": "Add `private async collectGoalEntries(): Promise<LedgerEntry[]>` reading `goalRegistry.list()`, plus a `mapGoal(record): LedgerEntry` alongside `mapTeamTask` (line 51) and `mapCronJob` (line 103). Call it from `snapshot()` (lines 24-32) with the same `.catch(() => [])` degradation the other two collectors use.",
+      "why": "One pane, one read model. Failing softly per source is the existing contract of this class (\"any single source failing degrades to an empty contribution\")."
+    },
+    {
+      "file": "src/common/adapter/ipcBridge.ts",
+      "change": "Add a `goals` namespace: `event: buildEmitter<GoalStreamFrame & {conversation_id: string}>('goal.event')`, `list: buildProvider<GoalLedgerRow[], {conversation_id?: string}>('goal.list')`, and the five control providers `goal.open`, `goal.declare-task`, `goal.advance`, `goal.cancel`, `goal.resync`.",
+      "why": "Emitters are the only main→renderer path and providers the only renderer→main path in this codebase; without them the decoded frames stop at the main process."
+    },
+    {
+      "file": "src/common/adapter/bridgeAllowlist.ts",
+      "change": "Add `'goal.'` to `REMOTE_DENIED_PREFIXES` (line 153), with a comment stating that goal_open/advance/cancel spend the session's token budget and drive host-side execution.",
+      "why": "Every one of the five commands is `criticality: safety` in the manifest. The WebSocket token proves a paired browser, not the local trusted user (the file's own WS-POSTAUTH-DISPATCH rationale, lines 139-152), so the whole namespace is human-only. Wholesale prefix denial matches how `cookbook.` and `hwfit.` are handled."
+    }
+  ],
+  "uiWork": [
+    {
+      "file": "src/renderer/pages/mission-control/index.tsx",
+      "change": "Give `LedgerSource === 'goal'` a source badge and let goal entries flow into the existing `SECTIONS` (attention/active/verifying/scheduled/done/idle) via their mapped `LedgerStatus`. Show objective as title and `iterations_started / iteration_ceiling` plus task counts as `detail`. No new page, no new route."
+    },
+    {
+      "file": "src/renderer/pages/mission-control/useMissionControl.ts",
+      "change": "Add `ipcBridge.goals.event.on(refresh)` to the existing `offs` array (alongside `team.agentStatusChanged`, `cron.onJobExecuted`) so a goal transition refetches immediately instead of waiting out the 5s poll."
+    },
+    {
+      "file": "src/renderer/services/i18n/locales/<lang>/missionControl.json (13 files: en-US, es-ES, fr-FR, de-DE, pt-BR, zh-CN, zh-TW, ja-JP, ko-KR, ru-RU, uk-UA, tr-TR, mn-MN)",
+      "change": "Add the goal source label and detail strings. `node scripts/check-i18n.js` + `bun run i18n:types` must pass; mn-MN is `defaultLanguage` so it must be real Mongolian, not an English placeholder."
+    }
+  ],
+  "testWork": [
+    {
+      "testFile": "tests/unit/wcore-durableGoals.contract.test.ts",
+      "what": "Contract conformance, driven entirely through tests/helpers/engineContract.ts so nothing is hand-copied: (1) `surfaceOf('durable_goals_v1')` returns exactly 3 events + 5 commands and `durableGoalsCapability.handles` equals the event set - a future contract adding a fourth goal event turns this red instead of being silently dropped; (2) every `examplePayload('event', t)` passes `validateEvent` and is accepted by the handler's narrowing guard; (3) every command the module builds passes `validateCommand` AND deep-equals the shipped example payload modulo request_id - this is what proves goal_resync is built without requiring goal_id and goal_declare_task without idempotency_key, matching the schema's required lists rather than the examples.",
+      "fixtures": [
+        "tests/fixtures/engine-contract/desktop/v1/events/goal_snapshot.json",
+        "tests/fixtures/engine-contract/desktop/v1/events/goal_transition.json",
+        "tests/fixtures/engine-contract/desktop/v1/events/goal_control_refused.json",
+        "tests/fixtures/engine-contract/desktop/v1/commands/goal_open.json",
+        "tests/fixtures/engine-contract/desktop/v1/commands/goal_declare_task.json",
+        "tests/fixtures/engine-contract/desktop/v1/commands/goal_advance.json",
+        "tests/fixtures/engine-contract/desktop/v1/commands/goal_cancel.json",
+        "tests/fixtures/engine-contract/desktop/v1/commands/goal_resync.json",
+        "tests/fixtures/engine-contract/desktop/v1/manifest.json"
+      ]
+    },
+    {
+      "testFile": "tests/unit/wcore-durableGoals.cursor.test.ts",
+      "what": "Cursor discipline - the one invariant a host can actually get wrong. Feed goal_snapshot, then assert `buildGoalAdvance` echoes that exact `{journal_digest, journal_sequence}`; assert it REFUSES (returns undefined, sends nothing) for a goal_id never seen, so the host can never fabricate a cursor. Then drive the three recovery fixtures as the specification for hand-built goal analogues written in-test: sequence 22 followed by 24 (gap), same sequence with a different digest (digest mismatch), and two snapshots at the same cursor with conflicting `state_digest`. Expected host behaviour: keep the last consistent cursor, warn, and mark the goal as needing `goal_resync` rather than advancing on suspect state. STATE PLAINLY IN THE TEST HEADER that these fixtures belong to turn_recovery_v1 and are borrowed for their cursor semantics - the contract ships NO adversarial fixtures for durable goals (manifest.subcontracts has no `durable_goals` entry).",
+      "fixtures": [
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/recovery/cursor-gap.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/recovery/cursor-digest-mismatch.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/recovery/state-digest-conflict.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/recovery/valid-replay.jsonl"
+      ]
+    },
+    {
+      "testFile": "tests/unit/wcore-durableGoals.gate.test.ts",
+      "what": "The capability gate. With `ready.minimal.json` (no `contract` field at all) `contractCapability('durable_goals_v1')` is undefined and NO goal command may be written to stdin. With `ready.disabled-by-host.legacy.json` and `events/ready.json` (both carry `durable_goals_v1: 'available'`) the gate opens. Also drives the three unknown-shaped event fixtures through the live `dispatchCapabilityEvent` to prove the goal handler declines what it does not claim and the events still reach the ACK check - i.e. registering this capability did not turn the decoder into a swallow-all.",
+      "fixtures": [
+        "tests/fixtures/engine-contract/desktop/v1/compat/events/ready.minimal.json",
+        "tests/fixtures/engine-contract/desktop/v1/compat/events/ready.disabled-by-host.legacy.json",
+        "tests/fixtures/engine-contract/desktop/v1/events/ready.json",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/events/unknown-critical.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/events/unknown-noncritical.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/events/unknown-criticality.jsonl"
+      ]
+    },
+    {
+      "testFile": "tests/unit/wcore-durableGoals.malformed.test.ts",
+      "what": "Malformed-input hygiene in both directions. Inbound: run each malformed COMMAND fixture through `validateCommand` and assert it is REJECTED - this is the mutation proof that the schema gate is live rather than a validator that says yes to everything (without it every other schema assertion in this file is vacuous). Outbound: assert no builder can emit a payload with a missing/non-string `type`, an empty or whitespace-only `request_id`, or an unknown extra field - the continue_with_budget request_id family is the engine's own statement of what it polices there. Say in the header that these are continue_with_budget fixtures, reused for shape; there is no goal-specific malformed corpus.",
+      "fixtures": [
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/commands/missing-type.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/commands/non-object.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/commands/non-string-type.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/commands/unknown-type.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/commands/wrong-required-field.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/commands/continue-with-budget-empty-request-id.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/commands/continue-with-budget-whitespace-request-id.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/commands/continue-with-budget-unknown-field.jsonl"
+      ]
+    },
+    {
+      "testFile": "tests/unit/WCoreManagerGoalForward.test.ts",
+      "what": "Forwarding seam, in the style of the existing WCoreManagerEventBus/WCoreManagerThinking tests: a `wcore.message` frame of each goal type with `msg_id: ''` reaches `ipcBridge.goals.event.emit` and the goal registry, and is NOT passed to `transformMessage`/`addOrUpdateMessage`. Mutation proof: move the forwarding block below the `if (!data.msg_id) return;` guard and confirm the test goes red - that guard is precisely what silently ate these events before.",
+      "fixtures": [
+        "tests/fixtures/engine-contract/desktop/v1/events/goal_snapshot.json",
+        "tests/fixtures/engine-contract/desktop/v1/events/goal_transition.json",
+        "tests/fixtures/engine-contract/desktop/v1/events/goal_control_refused.json"
+      ]
+    },
+    {
+      "testFile": "tests/unit/wcore-eventCoverage.test.ts + tests/unit/wcore-capabilityDispatch.test.ts (existing, must stay green)",
+      "what": "No new cases, but both already gate this change and will fail if the ACK-list edit is skipped: capabilityDispatch:200 forbids a claimed type from also being listed inert, and eventCoverage:56 forbids a WCoreEvent member from being listed inert. Run them explicitly as the acceptance check for the protocol.ts edit.",
+      "fixtures": []
+    }
+  ],
+  "risks": [
+    "The lifecycle state machine is undeclared. `lifecycle.state` and `transition` are free strings in the schema; the only values anywhere in the bundle are `state: \"running\"` and `transition: \"loop_owner_claimed\"`. Nothing states the terminal states, which transitions are legal, or which state means \"this goal is finished and its registry entry may be evicted\". Mapping goal states onto `LedgerStatus` is therefore a guess until the binary is run and its transitions logged.",
+    "`goal_version` has no declared meaning. Every fixture says `1`. The sibling families make it look like a subcontract version constant - `recovery_version: 1` with `adversarial/recovery/version-mismatch.jsonl` bumping it to 2 - but `manifest.subcontracts` lists eight subcontracts and `durable_goals` is NOT among them, so unlike turn_recovery there is no declared version for goals at all. If it is instead a per-goal optimistic-concurrency revision, a host that hardcodes 1 will have every command refused. Only running the binary settles this.",
+    "It is unknown whether the engine ever emits goal events unsolicited. `authority.strategy: \"fleet\"` and a `loop_owner` lease suggest the engine can own the loop itself, but nothing says whether a goal can exist without a host `goal_open`. If it cannot, phase-1 read-only decoding renders an empty Mission Control section forever and the user-visible value is zero until a host-side goal-opening surface is designed. Measure this by running the engine and capturing stdout before designing any UI beyond the ledger row.",
+    "The contract's own two payloads disagree on task-id namespacing. `commands/goal_declare_task.json` sends `task_id: \"publish\"` with `depends_on: [\"build\"]`; `events/goal_snapshot.json` reports `task_id: \"task-publish\"` with `depends_on: [\"task-build\"]`. Either the engine rewrites ids, or the two examples were authored independently. A host that correlates declared tasks to snapshot tasks by exact id may silently never match. Not resolvable from the bundle.",
+    "`goal_control_refused.reason` is a free string; only `\"cursor_stale\"` appears. There is no enumeration of refusal reasons, no statement of which are retryable, and no statement that `goal_resync` is the correct recovery for a stale cursor. The recovery is inferred from the field names, not declared.",
+    "`goal_open.strategy` is a free string; only `\"fleet\"` is ever shown, and `authority.loop_policy.kind: \"fixed\"` is the only loop kind. Sending any other value is untested and may be rejected.",
+    "Nested objects in every goal schema are `additionalProperties: true` with NO `required` list, so a live payload may legally omit `cursor.journal_sequence`, `lifecycle.state`, or the entire `goal.tasks` array. The proposed types mark them optional for exactly this reason; any decoder that dereferences them unguarded will throw on a payload the engine considers valid.",
+    "There are ZERO adversarial fixtures for durable goals. anvil, workflow, policy and recovery each get an ordering/duplicate/gap corpus; goals get none, and there are no goal payloads in `compat/` either (the `goal` hits there are just the `durable_goals_v1` key inside `contract.capabilities`). So duplicate-delivery, out-of-order and replay behaviour for goal events is entirely unspecified - the cursor tests above encode a borrowed convention, not a contract.",
+    "`HANDLERS` in capabilities/index.ts is a module-level singleton, so one `durableGoalsCapability` object serves every `WCoreAgent` in the main process. Any state it holds must be session-keyed and bounded, and there is no teardown hook in `CapabilityHandler` for agent exit - eviction can only be event-driven (terminal lifecycle, which is itself undeclared, see risk 1) plus a hard cap. Without both, a long-lived main process leaks a goal entry per conversation.",
+    "Three shared files are contention hotspots with the eight sibling capability agents: `capabilities/types.ts` (the `CapabilityContext` extension), `capabilities/index.ts` (the `HANDLERS` array), and `protocol.ts` (the ACK-list deletion). Land the `CapabilityContext` change first and separately, or expect repeated conflicts.",
+    "The `ready.contract` gate depends on the contract_negotiation capability. `WCoreEvent`'s `ready` member (protocol.ts:93-98) has no `contract` field today even though the schema marks it REQUIRED. If that agent has not landed, this capability must add the optional field itself and the two will collide on the same union member.",
+    "gap-matrix.json and the contract AGREE here - all three events and all five commands are `implemented: false`, matching manifest.json exactly. Nothing to reconcile. Note only that gap-matrix.json is described in the contract README as generated but has no generator script in the repo, so after implementing, its `implemented` flags must be updated by hand or they will lie."
+  ],
+  "effortHours": 14,
+  "dependencies": [
+    "contract_negotiation (ready.contract.capabilities - the only declared gate for durable_goals_v1; needed before any goal command may be sent)"
+  ]
+}

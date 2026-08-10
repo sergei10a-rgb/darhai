@@ -1,0 +1,124 @@
+{
+  "capability": "workflow_lifecycle_v1",
+  "summary": "The engine emits a per-run, sequence-numbered lifecycle for its own .ron workflows: `workflow_started` opens a run (workflow_id, display name, node_count), `workflow_node_event` reports each node moving through queued/running/succeeded/failed/blocked (optionally carrying a `failure{code,message,retryable}` and a `child_run_id` linking to the sub-agent that ran it), and `workflow_finished` closes the run with a terminal_state. All three correlate on `run_id` + a monotonic `sequence` that only these three types advance; the manifest also assigns `sub_agent_event` to this capability, correlating on `child_run_id` + `child_sequence`, which is how a node's output stream is tied back to its node. Darhai currently lists all three in `ACKNOWLEDGED_UNHANDLED_EVENTS` and drops them silently. The work is a reducer that enforces the ordering rules the 8 adversarial fixtures attack (duplicate/conflict, gap, after-terminal, conflicting node terminal), registered as the first real module in the already-wired `capabilities/` registry, plus a compact in-chat run card.",
+  "userValue": "Today a workflow node that fails is invisible: the event hits the decoder's default arm, matches the acknowledged-inert list, and is discarded without a warning. The user sees a conversation that goes quiet with no explanation. After this, a run shows as one card — \"Desktop audit — 1/1 node, running → succeeded\" — and a failed node surfaces its `failure.code`/`message` and whether it is retryable. The reducer additionally protects against the engine or a hostile stream rewriting history: a second, conflicting terminal for a node that already succeeded cannot flip the card to failed. That is why the contract grades all three `criticality: safety`.",
+  "protocolTypes": [
+    {
+      "name": "workflow_started",
+      "direction": "event",
+      "contractPath": "tests/fixtures/engine-contract/desktop/v1/events/workflow_started.json",
+      "tsDefinition": "  // ── workflow_lifecycle_v1: a .ron workflow run opened ─────────────\n  // Schema: schema/core-event.schema.json, alternative `type: 'workflow_started'`.\n  // required: type, workflow_id, name, node_count, run_id, event_id, sequence\n  | {\n      type: 'workflow_started';\n      /** Stable id of the workflow definition, e.g. `desktop-audit`. */\n      workflow_id: string;\n      /** Human-readable display name, e.g. `Desktop audit`. */\n      name: string;\n      /** Declared node count for this run. Fixtures show 0 and 1; not a bound. */\n      node_count: number;\n      /** Correlation key for the whole run; pairs with `sequence`. */\n      run_id: string;\n      /** Idempotency key. Same id + same body = replay; same id + different body = conflict. */\n      event_id: string;\n      /** Monotonic per-run counter. Only the three workflow_* types advance it. */\n      sequence: number;\n      /** Present only when this run was spawned by another run. Optional in the schema. */\n      parent_run_id?: string;\n    }"
+    },
+    {
+      "name": "workflow_node_event",
+      "direction": "event",
+      "contractPath": "tests/fixtures/engine-contract/desktop/v1/events/workflow_node_event.json",
+      "tsDefinition": "  // ── workflow_lifecycle_v1: one node's state transition ────────────\n  // required: type, run_id, node_id, event_id, sequence, state\n  | {\n      type: 'workflow_node_event';\n      run_id: string;\n      /** Node identifier within the workflow definition, e.g. `scan`. */\n      node_id: string;\n      event_id: string;\n      sequence: number;\n      /** Exactly these five values; `blocked` appears in the schema enum only. */\n      state: 'queued' | 'running' | 'succeeded' | 'failed' | 'blocked';\n      /** The sub-agent run executing this node; joins to sub_agent_event.child_run_id. Optional. */\n      child_run_id?: string;\n      /** Present on failure. All three inner fields are required when `failure` is present. */\n      failure?: { code: string; message: string; retryable: boolean };\n    }"
+    },
+    {
+      "name": "workflow_finished",
+      "direction": "event",
+      "contractPath": "tests/fixtures/engine-contract/desktop/v1/events/workflow_finished.json",
+      "tsDefinition": "  // ── workflow_lifecycle_v1: the run reached a terminal state ───────\n  // required: type, workflow_id, succeeded, run_id, event_id, sequence, terminal_state\n  | {\n      type: 'workflow_finished';\n      workflow_id: string;\n      /** Redundant with `terminal_state`; the contract requires both. Do not derive one from the other. */\n      succeeded: boolean;\n      run_id: string;\n      event_id: string;\n      sequence: number;\n      /** Only two values here - `blocked` is a node state, not a run state. */\n      terminal_state: 'succeeded' | 'failed';\n      failure?: { code: string; message: string; retryable: boolean };\n    }"
+    },
+    {
+      "name": "sub_agent_event (durable-field extension of the EXISTING member)",
+      "direction": "event",
+      "contractPath": "tests/fixtures/engine-contract/desktop/v1/events/sub_agent_event.json",
+      "tsDefinition": "  // REPLACES the existing sub_agent_event member at protocol.ts:164-170.\n  // The schema has TWO alternatives for this type: an authoritative one that\n  // REQUIRES run_id/child_run_id/child_sequence/event_id, and one titled\n  // \"Legacy non-authoritative sub-agent compatibility event\" whose `not` clause\n  // FORBIDS all of them. Darhai today models only the legacy shape. The five\n  // fields are therefore optional in TS and a runtime guard decides which\n  // alternative a given payload satisfies; treating them as always-present\n  // would break the legacy stream, treating them as never-present is what\n  // currently makes 2 of this capability's 8 fixtures undrivable.\n  | {\n      type: 'sub_agent_event';\n      parent_call_id: string;\n      agent_name: string;\n      /** Serialized inner WCoreEvent from the sub-agent; opaque to the host. */\n      inner: unknown;\n      /** Durable alternative only: the parent workflow run. */\n      run_id?: string;\n      /** Durable alternative only: correlation key for this child's own stream. */\n      child_run_id?: string;\n      /** Durable alternative only: monotonic per-child counter, starts at 0. */\n      child_sequence?: number;\n      /** Durable alternative only: idempotency key for this child event. */\n      event_id?: string;\n      /** Nesting link when a child spawns its own child. */\n      parent_child_run_id?: string;\n      /** Present on the child's final event. When 'succeeded' the schema constrains\n       *  inner to {type:'info', msg_id, message}; when 'failed', to\n       *  {type:'error', error:{code,message,retryable}}. */\n      terminal_state?: 'succeeded' | 'failed';\n    }"
+    }
+  ],
+  "handlerWork": [
+    {
+      "file": "src/process/agent/wcore/protocol.ts",
+      "change": "Add the three union members above to `export type WCoreEvent` (after the `evolution_event` member at lines 238-247, before the `browser_event` member), and replace the existing `sub_agent_event` member at lines 164-170 with the extended version. Then DELETE the three strings 'workflow_finished', 'workflow_node_event', 'workflow_started' from `ACKNOWLEDGED_UNHANDLED_EVENTS` (lines 344-346) and drop the now-inaccurate 'workflow' word from the section comment on line 339.",
+      "why": "Deleting from the ack list is not optional: `tests/unit/wcore-eventCoverage.test.ts` line 56 (`never lists an event the decoder actually handles`) scrapes the `WCoreEvent` union out of protocol.ts by regex and fails on any name that appears in both. Leaving them listed would also mean the list lies about what the host does, which is the exact rot that test exists to prevent."
+    },
+    {
+      "file": "src/process/agent/wcore/capabilities/workflowLifecycle.ts (NEW)",
+      "change": "New module exporting `const workflowLifecycleCapability: CapabilityHandler` with `name: 'workflow_lifecycle_v1'` and `handles: ['workflow_started', 'workflow_node_event', 'workflow_finished']`. It owns a module-scoped run store: `Map<run_id, RunState>` where `RunState = { workflowId, name, nodeCount, parentRunId?, lastSequence: number, seenEvents: Map<event_id, string /* canonical JSON */>, terminal: null | { state, succeeded, failure? }, nodes: Map<node_id, { state, failure?, childRunId? }> }`. `handle()` narrows the raw `Record<string, unknown>` with a local type guard per event type (the registry hands handlers untyped events by design), then applies the reducer rules below and calls `ctx.emit({ type: 'workflow_run', data: <projected run snapshot>, msg_id: '' })` on every accepted mutation. Reducer rules, one per adversarial fixture: (1) `event_id` already seen with byte-identical canonical body -> return true, no emit, no warn (idempotent replay is legal); (2) `event_id` seen with a DIFFERENT body -> `ctx.warn`, do NOT mutate state, return true; (3) `sequence > lastSequence + 1` -> record the missing range, `ctx.warn`, then STILL apply (a dropped node update loses safety-graded information; the gap is reported, not used as a reason to discard); (4) any workflow_* event for a run whose `terminal !== null` -> `ctx.warn`, do NOT mutate, return true; (5) a `workflow_node_event` whose node already holds a terminal state (`succeeded`/`failed`) arriving with a different terminal state -> `ctx.warn`, do NOT overwrite. Bound the store: evict a run's entry once terminal and older than N runs (a plain `Map` here is an unbounded leak across a long-lived agent process). Handlers must stay synchronous per `capabilities/types.ts` line 30.",
+      "why": "`src/process/agent/wcore/capabilities/` is the extension point that already exists precisely for this - its header comment at types.ts:13 names 'workflow lifecycle' as one of the nine subsystems it was built for. `HANDLERS` in capabilities/index.ts line 27 is still `[]`, so this is the first real occupant. Putting the reducer here rather than in `handleEvent` keeps index.ts (1146 lines) from growing and makes the reducer unit-testable without spawning a process."
+    },
+    {
+      "file": "src/process/agent/wcore/capabilities/index.ts",
+      "change": "Import `workflowLifecycleCapability` and put it in the `HANDLERS` array at line 27, replacing `[]`.",
+      "why": "`assertNoOverlap(HANDLERS)` runs at module load (line 50) and `BY_TYPE` is built from it (line 53); an unregistered handler is never reached by `dispatchCapabilityEvent`. The default arm of `handleEvent` already calls the dispatcher at src/process/agent/wcore/index.ts line 971, so no change to index.ts is needed - registration is the entire wiring step."
+    },
+    {
+      "file": "src/process/task/WCoreManager.ts",
+      "change": "In `init()`, inside the `this.on('wcore.message', (data) => {...})` handler (starts line 997), add a pass-through arm for `data.type === 'workflow_run'` immediately after the existing `sub_agent_event` arm (lines 1024-1032): emit `ipcBridge.conversation.responseStream.emit({ type: 'workflow_run', conversation_id: this.conversation_id, msg_id: '', data: data.data })` and `return`.",
+      "why": "Capability frames arrive with `msg_id: ''` and the guard at line 1064 (`if (!data.msg_id) return;`) discards every system-level frame. `config_changed`, `sub_agent_event` and `mcp_failed` are all forwarded above that guard for exactly this reason; a workflow frame placed below it would be silently dropped and the whole capability would appear to do nothing."
+    }
+  ],
+  "uiWork": [
+    {
+      "file": "src/common/chat/chatLib.ts",
+      "change": "Add `export type IMessageWorkflowRun = IMessage<'workflow_run', { runId: string; workflowId: string; name: string; nodeCount: number; status: 'running' | 'succeeded' | 'failed'; nodes: { nodeId: string; state: 'queued'|'running'|'succeeded'|'failed'|'blocked'; failure?: { code: string; message: string; retryable: boolean } }[]; failure?: { code: string; message: string; retryable: boolean } }>` next to `IMessageSubAgent` (line 411), add it to the `TMessage` union (line 426-442), and add a `case 'workflow_run':` arm to `transformMessage` next to the `sub_agent_event` arm (line 652) that maps the frame to the card content using `runId` as `msg_id` so streaming updates merge into one card (same trick `sub_agent_event` uses with `parentCallId`)."
+    },
+    {
+      "file": "src/renderer/pages/conversation/Messages/components/WorkflowRunCard.tsx + WorkflowRunCard.module.css (NEW)",
+      "change": "Copy the structure of the sibling `SubAgentActivityCard.tsx`: collapsible header with `Spin` while running, done/failed dot, `data-testid='workflow-run-card'` and `data-workflow-status` attributes for e2e selection. Body lists nodes with their state; a node with `failure` shows `failure.code`, `failure.message` and a retryable badge. Use Arco components only and UnoCSS/CSS-module classes per AGENTS.md."
+    },
+    {
+      "file": "src/renderer/pages/conversation/Messages/MessageList.tsx",
+      "change": "Add `case 'workflow_run': return <WorkflowRunCard message={message} />;` to the memoized render switch, immediately after the existing `case 'sub_agent':` at line 149. Without this the message falls to the `default` arm and renders the literal 'unknown message type' string."
+    },
+    {
+      "file": "src/renderer/pages/conversation/platforms/wcore/useWCoreMessage.ts",
+      "change": "Add `case 'workflow_run': addOrUpdateMessage(transformMessage(message)); break;` alongside the `sub_agent_event` arm at line 231. The default arm would otherwise set `hasContentInTurnRef` and flip `streamRunning` on a system-level frame that is not turn content."
+    },
+    {
+      "file": "src/renderer/services/i18n/locales/<lang>/conversation.json (all 13 languages listed in src/common/config/i18n-config.json)",
+      "change": "Add `conversation.workflowRun.*` keys: statusRunning, statusSucceeded, statusFailed, nodeCount, retryable, notRetryable. Follow the `conversation.subAgent.*` pattern the sibling card uses. Then run `bun run i18n:types` and `node scripts/check-i18n.js` - both are required to pass before a PR when `src/renderer/` or `locales` change."
+    }
+  ],
+  "testWork": [
+    {
+      "testFile": "tests/unit/wcore-workflowLifecycle.test.ts (NEW)",
+      "what": "Drive the reducer through `dispatchCapabilityEvent` (not by calling the handler directly - go through the real dispatcher so isolation and registration are exercised) with a stub `CapabilityContext` that records frames/warns, replaying each fixture line by line via `readFixture()` from tests/helpers/engineContract.ts. Assertions, per fixture: **valid-lifecycle** - all 7 lines accepted, zero warns, final projected run has terminal succeeded and node `scan` succeeded; the two `sub_agent_event` lines carry no `sequence` and must NOT advance the run counter (this is the trap: if the reducer counts them, the run's `sequence` bookkeeping desyncs and the trailing workflow_node_event at sequence 3 falsely reads as a gap). **duplicate-identical** - second `workflow_started` produces no state change AND no warn. **duplicate-conflict** - projected `name` is still 'Desktop audit', never 'Conflicting display name', and exactly one warn fired. **sequence-gap** - the node event at sequence 2 is applied AND a gap of [1] is reported. **after-terminal** - the node event at sequence 2 arriving after `workflow_finished` at sequence 1 leaves the run's node map untouched. **conflicting-node-terminal** - node `scan` stays `succeeded`; the later `failed` with `failure.code='stage_failed'` does not overwrite it. **child-duplicate-conflict** - the second sub_agent_event with the same child_run_id+child_sequence+event_id but `inner.text='conflicting child output'` does not replace 'scan complete'. **child-sequence-gap** - `child_sequence: 1` with no 0 is flagged. Include a mutation check: temporarily invert each rule and confirm the matching assertion fails - a reducer that accepts everything passes a naive replay test.",
+      "fixtures": [
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/workflow/valid-lifecycle.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/workflow/duplicate-identical.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/workflow/duplicate-conflict.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/workflow/sequence-gap.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/workflow/after-terminal.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/workflow/conflicting-node-terminal.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/workflow/child-duplicate-conflict.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/workflow/child-sequence-gap.jsonl"
+      ]
+    },
+    {
+      "testFile": "tests/unit/wcore-workflowContract.test.ts (NEW)",
+      "what": "Contract conformance, no reducer logic. (a) `surfaceOf('workflow_lifecycle_v1').events` returns exactly the four types the manifest assigns to this capability (workflow_started, workflow_node_event, workflow_finished, sub_agent_event) and every one is claimed by a registered handler or by the main decoder switch - this is the assertion that fails if the contract adds a fifth type on an engine bump. (b) `examplePayload('event', <each type>)` passes `validateEvent()` AND is accepted by the runtime type guard in workflowLifecycle.ts - guard and schema must agree. (c) Every line of every workflow fixture passes `validateEvent()`, so an adversarial case is proven to be a semantic attack and not merely malformed JSON. (d) `registeredCapabilities()` contains a handler named `workflow_lifecycle_v1`. (e) Each of the three types has `criticality: 'safety'` and `correlation: 'run_id_and_sequence'` in the manifest - if an engine bump downgrades either, the reducer's strictness needs re-justifying.",
+      "fixtures": [
+        "tests/fixtures/engine-contract/desktop/v1/events/workflow_started.json",
+        "tests/fixtures/engine-contract/desktop/v1/events/workflow_node_event.json",
+        "tests/fixtures/engine-contract/desktop/v1/events/workflow_finished.json",
+        "tests/fixtures/engine-contract/desktop/v1/events/sub_agent_event.json",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/workflow/valid-lifecycle.jsonl"
+      ]
+    },
+    {
+      "testFile": "tests/unit/wcore-eventCoverage.test.ts (EXISTING - update)",
+      "what": "This file will fail as written the moment the union members land, which is the intended signal. Prune the three names from `ACKNOWLEDGED_UNHANDLED_EVENTS` to make the overlap test at line 56 pass, then add a positive assertion that none of the three appears in the ack list any more AND that all three are in `claimedEventTypes()`. The existing cap test at line 71 (size <= 30) gains headroom as a side effect; do not treat that as licence to add more.",
+      "fixtures": []
+    },
+    {
+      "testFile": "tests/unit/WCoreManagerEventBus.test.ts (EXISTING - extend) or a new tests/unit/WCoreManagerWorkflowForward.test.ts",
+      "what": "Prove the forwarding placement, not the reducer: feed a `wcore.message` with `{ type: 'workflow_run', msg_id: '', data: {...} }` and assert `ipcBridge.conversation.responseStream.emit` was called. Then deliberately move the arm below the `if (!data.msg_id) return;` guard at WCoreManager.ts line 1064 and confirm the test goes red - otherwise the test proves nothing about ordering, which is the only thing that can go wrong here.",
+      "fixtures": []
+    }
+  ],
+  "risks": [
+    "**The contract does not say whether Darhai will ever receive these events.** The engine runs .ron workflows under a separate `wcore workflow` subcommand; Darhai spawns the agent with `--json-stream --provider ... --model ...` (src/process/agent/wcore/envBuilder.ts line 233) and there is NO workflow-related command among the 23 in the contract - a host cannot start a workflow over the JSON stream. Whether the agent stream ever carries workflow_* lines (e.g. when a skill or tool triggers a workflow internally) can only be settled by running the binary and capturing stdout. If it never does, this capability is defensive decoding with no live producer. I did not run the binary.",
+    "**No per-fixture verdicts are published.** The manifest gives the correlation keys (`run_id_and_sequence`, `child_run_id_and_child_sequence`) and criticality, and the fixture directory gives the vectors - but nothing states what a correct host must DO with each. tests/helpers/engineContract.ts lines 17-21 says so explicitly: fixture names are 'suggestive but not a reliable oracle'. Every verdict in this plan is inferred from the correlation key plus the fixture body. The most arguable one is **sequence-gap**: I propose apply-and-flag, but drop-until-resynced is equally defensible from the contract text, and the two produce visibly different UI. This is a judgement call that should be recorded in the test's own comments, not presented as contract-derived.",
+    "**gap-matrix.json and the contract disagree about sub_agent_event, and I trust the contract.** gap-matrix.json marks `sub_agent_event` `implemented: true`, but Darhai's member at protocol.ts:164-170 has only parent_call_id/agent_name/inner - which satisfies the schema's alternative titled 'Legacy non-authoritative sub-agent compatibility event', whose `not` clause actually FORBIDS run_id/child_run_id/child_sequence/event_id/terminal_state. Against the authoritative alternative, Darhai implements none of the required durable fields. Two of this capability's eight fixtures (child-duplicate-conflict, child-sequence-gap) cannot be driven without them. gap-matrix.json is not read by any test in the repo, so nothing catches this drift.",
+    "**Ownership overlap on sub_agent_event.** manifest.json assigns `sub_agent_event` to capability `workflow_lifecycle_v1`, so by the contract it is mine - but `durable_child_model_v1` is a separate declared-available capability with its own `types/durable_child_*.json`, and another agent may reasonably claim the same event. If both register it in the `capabilities/` registry, `assertNoOverlap` throws AT MODULE LOAD (capabilities/index.ts line 43), i.e. the app fails to start rather than misbehaving quietly. Whoever coordinates must assign sub_agent_event to exactly one capability before both land. Note sub_agent_event is already handled by the main decoder switch (index.ts line 884), so it must NOT be added to a handler's `handles` array at all unless that switch arm is removed first.",
+    "**`node_count` is not trustworthy as a completion denominator.** after-terminal.jsonl opens a run with `node_count: 0` and then emits a node event; the other fixtures use 1. The contract gives no invariant tying node_count to the number of distinct node_ids observed. A UI showing 'N of M nodes' can therefore render 1/0. Display the observed node list and treat node_count as a hint.",
+    "**Run-store lifetime is unspecified.** Nothing in the contract bounds how many runs a session may open or says when a run_id may be reused. An unbounded `Map<run_id, RunState>` in a long-lived agent process is a slow leak, and reusing a run_id after eviction would look like a fresh run rather than a conflict. I chose eviction-after-terminal; the contract neither endorses nor forbids it.",
+    "**`succeeded` and `terminal_state` are redundant and could disagree.** Both are required on workflow_finished. No fixture makes them contradict, and the contract does not say which wins. The reducer should treat a disagreement as a conflict and warn rather than silently picking one.",
+    "**The 10-children directory rule.** AGENTS.md and docs/contributing/file-structure.md line 177 cap a directory at 10 direct children. `src/process/agent/wcore/` is already at 11 (the `capabilities/` subdir pushed it over) and `src/process/task/` is at 26, so the rule is already breached in this area. Adding `workflowLifecycle.ts` inside `capabilities/` (currently 2 files) keeps this change from making it worse, but reviewers may still flag the parent directory."
+  ],
+  "effortHours": 12,
+  "dependencies": []
+}

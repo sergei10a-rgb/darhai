@@ -1,0 +1,203 @@
+{
+  "capability": "host_delegated_delivery_and_failover",
+  "summary": "Three engine→host events and two host→engine commands that Darhai currently drops on the floor (all three event names sit in `ACKNOWLEDGED_UNHANDLED_EVENTS` at src/process/agent/wcore/protocol.ts:353-357, so they are silently inert today). `host_send_message_request` is the engine asking Darhai to deliver a message on a real channel (email/slack/telegram/...) and waiting for `host_send_message_result` keyed by `call_id`; Darhai already owns a full channel-plugin fleet (`src/process/channels/`) that can actually perform the send. `provider_failover_receipt` is the safety-class audit record of which provider/model failed, every candidate that was considered, why each was accepted or rejected, and what was finally selected. `unknown_tool_effect_resolved` / `resolve_unknown_tool_effect` are the operator-driven reconciliation of a tool whose real-world effect is unknown after an interrupted turn, carrying a journal cursor and signed-ish evidence.",
+  "userValue": "Concrete and large for the delivery half: today the engine's `send_message` tool cannot use any of Darhai's 25+ configured channel plugins, so an agent asked to \"email me the result\" has no working path. Wiring this makes every already-configured channel a delivery target for the agent, and makes a failed delivery visible instead of a stalled turn. For failover: the user finally sees WHY a turn switched providers (rate_limit vs auth vs budget_denied) and, critically, when NOTHING was selected — today that failure is indistinguishable from a generic error. For unknown-tool-effect: an operator can settle \"did that payment/email/deploy actually happen?\" after a crash instead of the session staying permanently in `reconciliation_required`.",
+  "protocolTypes": [
+    {
+      "name": "host_send_message_request",
+      "direction": "event",
+      "tsDefinition": "| {\n      type: 'host_send_message_request';\n      /** Engine-minted correlation id. Measured: the binary mints `hsm-<n>`; the fixture uses `call-send-001`. NEVER assume a format, and keep it in its own namespace - it is NOT a tool call_id. */\n      call_id: string;\n      /** Engine platform vocabulary, NOT a Darhai plugin id. Measured from the bundled v0.12.26 `send_message` tool description: telegram, discord, slack, whatsapp, signal, bluebubbles, qqbot, matrix, mattermost, homeassistant, dingtalk, feishu, wecom, wecom_callback, weixin, email, sms. Schema declares a bare string, so treat unknown values as data. */\n      platform: string;\n      body: string;\n      /** Absent means \"use the host's default channel for this platform\" (engine's own tool doc). */\n      chat_id?: string;\n      thread_id?: string;\n      /** Email subject line. */\n      subject?: string;\n      conversation_id?: string;\n    }",
+      "contractPath": "tests/fixtures/engine-contract/desktop/v1/events/host_send_message_request.json"
+    },
+    {
+      "name": "provider_failover_receipt",
+      "direction": "event",
+      "tsDefinition": "| { type: 'provider_failover_receipt'; receipt: ProviderFailoverReceipt }\n\n// Supporting types (all exported from protocol.ts, all field names and enum\n// members taken verbatim from schema/core-event.schema.json):\n\n/** Shared by `receipt.reason`, `candidate.failure_reason`, `candidate.cooldown_reason`. */\nexport type ProviderFailureReason =\n  | 'auth'\n  | 'auth_permanent'\n  | 'format'\n  | 'rate_limit'\n  | 'overloaded'\n  | 'billing'\n  | 'timeout'\n  | 'model_not_found'\n  | 'session_expired'\n  | 'context_overflow'\n  | 'unknown';\n\nexport type FailoverRejectReason =\n  | 'provider_not_allowed'\n  | 'provider_denied'\n  | 'region_not_allowed'\n  | 'organization_mismatch'\n  | 'tools_unsupported'\n  | 'vision_unsupported'\n  | 'structured_output_unsupported'\n  | 'context_window_unknown'\n  | 'context_window_too_small'\n  | 'pricing_stale'\n  | 'pricing_unavailable'\n  | 'cooldown_active'\n  | 'budget_denied';\n\n/** Rust `Result` serialized externally-tagged; exactly one key is present. */\nexport type FailoverDisposition = { Ok: null } | { Err: FailoverRejectReason };\n\nexport type FailoverPricing = {\n  source: string;\n  age_seconds: number | null;\n  stale: boolean;\n  priced: boolean;\n  estimated_microcents: number | null;\n};\n\nexport type FailoverCandidate = {\n  provider: string;\n  model: string;\n  region: string | null;\n  disposition: FailoverDisposition;\n  failure_reason: ProviderFailureReason | null;\n  cooldown_reason: ProviderFailureReason | null;\n  retry_after_ms: number | null;\n  pricing: FailoverPricing;\n};\n\nexport type ProviderFailoverReceipt = {\n  reason: ProviderFailureReason;\n  failed_provider: string;\n  failed_model: string;\n  candidates: FailoverCandidate[];\n  /** null = no candidate survived; the turn is about to fail. Distinct from absent. */\n  selected_provider: string | null;\n  selected_model: string | null;\n};",
+      "contractPath": "tests/fixtures/engine-contract/desktop/v1/events/provider_failover_receipt.json"
+    },
+    {
+      "name": "unknown_tool_effect_resolved",
+      "direction": "event",
+      "tsDefinition": "| {\n      type: 'unknown_tool_effect_resolved';\n      recovery_version: 1;\n      session_id: string;\n      turn_id: string;\n      cursor: RecoveryCursor;\n      tool_execution_id: string;\n      outcome: UnknownToolEffectOutcome;\n      operator_id: string;\n      evidence: ToolEffectEvidence;\n    }\n\n// Supporting types (shared with the resolve_unknown_tool_effect command; if\n// the turn_recovery capability already declares RecoveryCursor, import it\n// rather than declaring a second copy):\n\nexport type RecoveryCursor = {\n  /** Schema pattern ^[0-9a-f]{64}$ - bare hex, NO `sha256:` prefix. */\n  journal_digest: string;\n  /** Optional: only `journal_digest` is in the schema's `required` list. */\n  journal_sequence?: number;\n};\n\nexport type ToolEffectEvidenceSource =\n  | 'tool_receipt'\n  | 'provider_receipt'\n  | 'process_observation'\n  | 'external_system_record';\n\nexport type ToolEffectEvidence = {\n  source: ToolEffectEvidenceSource;\n  /** minLength 1, maxLength 256. */\n  reference_id: string;\n  /** minimum 1. */\n  observed_at_unix_ms: number;\n  /** Schema pattern ^sha256:[0-9a-f]{64}$ - prefixed, unlike journal_digest. */\n  digest: string;\n};\n\nexport type UnknownToolEffectOutcome = 'succeeded' | 'failed' | 'not_started';",
+      "contractPath": "tests/fixtures/engine-contract/desktop/v1/events/unknown_tool_effect_resolved.json"
+    },
+    {
+      "name": "host_send_message_result",
+      "direction": "command",
+      "tsDefinition": "| {\n      type: 'host_send_message_result';\n      /** Must echo the request's call_id verbatim. */\n      call_id: string;\n      ok: boolean;\n      /** Platform message id on success. Optional in the schema; the contract example sends it. */\n      message_id?: string;\n      /** Failure text. Optional in the schema; the contract example sends `\"\"` on success. */\n      error?: string;\n    }",
+      "contractPath": "tests/fixtures/engine-contract/desktop/v1/commands/host_send_message_result.json"
+    },
+    {
+      "name": "resolve_unknown_tool_effect",
+      "direction": "command",
+      "tsDefinition": "| {\n      type: 'resolve_unknown_tool_effect';\n      recovery_version: 1;\n      session_id: string;\n      turn_id: string;\n      cursor: RecoveryCursor;\n      tool_execution_id: string;\n      outcome: UnknownToolEffectOutcome;\n      operator_id: string;\n      evidence: ToolEffectEvidence;\n    }",
+      "contractPath": "tests/fixtures/engine-contract/desktop/v1/commands/resolve_unknown_tool_effect.json"
+    }
+  ],
+  "handlerWork": [
+    {
+      "file": "src/process/agent/wcore/protocol.ts",
+      "change": "Add the three event members to the `WCoreEvent` union (after the `cua_policy_denied` member, line 273-279) and the two command members to the `WCoreCommand` union (after `{ type: 'ping' }`, line 309). Add the exported supporting types listed in protocolTypes. Then DELETE three entries from `ACKNOWLEDGED_UNHANDLED_EVENTS`: `'provider_failover_receipt'` (line 353), `'host_send_message_request'` (line 355), `'unknown_tool_effect_resolved'` (line 357).",
+      "why": "Those three names are the reason the events are inert today: the decoder's default arm at index.ts:939-949 checks that set and stays silent. Leaving a name in the set while adding a handler also breaks the existing invariant test `tests/unit/wcore-eventCoverage.test.ts:56` ('never lists an event the decoder actually handles')."
+    },
+    {
+      "file": "src/process/agent/wcore/capabilities/index.ts",
+      "change": "Add three entries to the currently-empty `const HANDLERS: readonly CapabilityHandler[] = []` (line 27): the host-delegated-delivery handler, the failover-receipt handler, and the unknown-tool-effect handler. Do not touch `assertNoOverlap` or `createDispatcher`.",
+      "why": "This registry was built for exactly this work but has zero registered handlers. `assertNoOverlap` gives a load-time failure if another capability agent also claims one of these five types, which is the coordination guard we want."
+    },
+    {
+      "file": "src/process/agent/wcore/index.ts",
+      "change": "In `WCoreAgent.handleEvent`, the `default:` arm (line 939-949): call `dispatchCapabilityEvent(event as Record<string, unknown>, ctx)` BEFORE the `ACKNOWLEDGED_UNHANDLED_EVENTS.has(typeStr)` check, and `break` when it returns true. Build the `CapabilityContext` from `{ sendCommand: (c) => this.sendCommand(c), emit: (f) => this.onStreamEvent(f), activeMsgId: () => this.activeMsgId ?? '', log, warn }`. NOTE: this edit is SHARED with every other capability agent - coordinate so it lands once.",
+      "why": "The dispatcher exists (`src/process/agent/wcore/capabilities/index.ts:96`) but nothing calls it. Without this one edit, registering handlers changes nothing at runtime."
+    },
+    {
+      "file": "src/process/agent/wcore/index.ts",
+      "change": "Add two public methods beside `approveTool` (line 1020) / `denyTool` (line 1024): `answerHostSend(callId: string, result: { ok: boolean; messageId?: string; error?: string }): void` which calls `sendCommand({ type: 'host_send_message_result', call_id: callId, ok, message_id, error })` and then `this.resumeStallWatchdog('hostsend:' + callId)`; and `resolveUnknownToolEffect(payload): { sent: boolean; refused?: string }` which REFUSES locally when `this.stallMsgId !== null || this.activeMsgId !== null` and otherwise sends the command. Also pause the watchdog with key `hostsend:${call_id}` when the request event arrives.",
+      "why": "Measured in the bundled v0.12.26 binary: the engine carries the string 'resolve_unknown_tool_effect refused during active turn; resync and retry after the turn stops'. Sending it mid-turn is a guaranteed no-op, so gate it host-side. The `hostsend:` key namespace is deliberately separate from the existing `tool:` keys in `stallPauseReasons` (line 212) because a delivery call_id and a tool call_id are different id spaces and must not cross-clear each other's pause."
+    },
+    {
+      "file": "src/process/agent/wcore/capabilities/hostDelegatedDelivery.ts (new)",
+      "change": "New `CapabilityHandler` with `name: 'host_delegated_delivery'`, `handles: ['host_send_message_request']`. `handle()` is synchronous per the registry contract: it captures `ctx.sendCommand`, kicks off the async delivery with `void deliver(...)`, and returns true immediately. Resolution order: (1) map `platform` → Darhai plugin type via an explicit table; (2) find a RUNNING plugin of that type; (3) resolve `chat_id` (absent = host default channel); (4) `plugin.sendMessage(chatId, { type: 'text', text: body, subject })`; (5) ALWAYS answer - `{ ok: true, message_id }` or `{ ok: false, error }`. Never return without answering, including in the catch block.",
+      "why": "`BasePlugin.sendMessage(chatId, IUnifiedOutgoingMessage): Promise<string>` (src/process/channels/plugins/BasePlugin.ts:310) returns the platform message id, which is exactly `host_send_message_result.message_id`. `IUnifiedOutgoingMessage` (src/process/channels/types.ts:525) already carries `subject` for email. The 'always answer' rule is the whole safety point of this capability."
+    },
+    {
+      "file": "src/process/agent/wcore/capabilities/hostDelegatedDelivery.ts (new)",
+      "change": "Include the platform mapping table as a named exported constant so tests can drive it: engine `telegram|discord|slack|whatsapp|matrix|dingtalk|weixin|wecom|signal|bluebubbles|line|mattermost|irc|nostr` map 1:1 onto Darhai plugin types; `feishu` → `lark`; `email` → `email-imap` then `email-agentmail` (first running one wins); `sms` → `sms-twilio`; `wecom_callback` → `wecom`; `qqbot`, `homeassistant` → no Darhai plugin, answer `ok:false` with a 'no channel configured' error.",
+      "why": "Darhai's `BuiltinPluginType` (src/process/channels/types.ts:29-42) and the engine's platform vocabulary disagree on three names. Measured from the binary's own send_message tool description; without the table, `feishu`/`email`/`sms` sends silently fail to find a plugin."
+    },
+    {
+      "file": "src/process/channels/gateway/PluginManager.ts",
+      "change": "Add `getRunningPluginsByType(type: PluginType): BasePlugin[]` next to `getAllPlugins()` (line 106), filtering `this.plugins.values()` on `plugin.type === type && plugin.status === 'running'`.",
+      "why": "Today the only lookups are `getPlugin(pluginInstanceId)` (line 99) and `getAllPlugins()` (line 106). The delivery resolver has a platform name, not an instance id, and must not deliver through a plugin in `error`/`stopped` state. Reach it via `getChannelManager().getPluginManager()` (ChannelManager.ts:966 / 984)."
+    },
+    {
+      "file": "src/process/agent/wcore/envBuilder.ts",
+      "change": "Add an optional `hostDelegatedSend?: boolean` to `buildEngineSpawnEnv` (line 497) and, when true, set `out.WAYLAND_SEND_MESSAGE_HOST_DELEGATE = '1'` alongside the existing `out.WAYLAND_HOME` assignment (line 534). Do NOT add the name to `ENGINE_ENV_ALLOWLIST` (line 391) - that list governs what is pulled FROM process.env; this value is authored by Darhai.",
+      "why": "MEASURED, not inferred: the bundled v0.12.26 binary contains 'send_message runs host-delegated (WAYLAND_SEND_MESSAGE_HOST_DELEGATE=1): sends are fulfilled by the host, not the engine' and the source path `crates\\wcore-agent\\src\\host_send_transport.rs`. Without this env var the engine never emits `host_send_message_request` at all, and the whole capability is dead code. The spawn env is a strict allowlist (buildEngineSpawnEnv line 503-510), so an inherited value would be stripped."
+    },
+    {
+      "file": "src/process/agent/wcore/index.ts",
+      "change": "In `WCoreAgent.start()`, pass `hostDelegatedSend` into the `buildEngineSpawnEnv({ providerEnv: env, toolKeys, waylandHome })` call at line 318. Gate it on 'at least one channel plugin is running' rather than hardcoding true.",
+      "why": "Turning on delegation with zero configured channels converts every `send_message` from 'engine tries and fails' into 'host answers ok:false' - a lateral move that costs a round-trip. Gate on real capability so the engine keeps its own transport when Darhai has nothing to deliver through."
+    },
+    {
+      "file": "src/process/agent/wcore/capabilities/providerFailoverReceipt.ts (new)",
+      "change": "New handler, `handles: ['provider_failover_receipt']`. Always `ctx.warn` the full receipt (safety criticality). Emit a typed frame `{ type: 'provider_failover_receipt', data: receipt, msg_id: ctx.activeMsgId() }`. Additionally emit an `info` frame when `selected_provider !== null` (\"switched from X to Y: reason\") and an `error` frame when `selected_provider === null` (nothing survived).",
+      "why": "Mirrors the existing `provider_circuit_event` arm (index.ts:783-799), which already surfaces `open` state as user-visible info. `selected_provider: null` is the case where the turn is about to die with no explanation - that is the one the user must see."
+    },
+    {
+      "file": "src/process/agent/wcore/capabilities/unknownToolEffect.ts (new)",
+      "change": "New handler, `handles: ['unknown_tool_effect_resolved']`. Emit `{ type: 'unknown_tool_effect_resolved', data: { ...event }, msg_id: '' }`. Also export a pure `buildResolveUnknownToolEffect(input): { command: WCoreCommand } | { error: string }` that validates `journal_digest` against /^[0-9a-f]{64}$/, `evidence.digest` against /^sha256:[0-9a-f]{64}$/, `reference_id` length 1..256, `observed_at_unix_ms >= 1`, and the two enums BEFORE building the frame.",
+      "why": "The command schema is `additionalProperties: false` with regex-constrained digests; an engine that rejects a malformed recovery command mid-reconciliation is the worst possible time to find out. Validating in a pure exported function is the same shape as `wcoreApprovalGate.ts`, which exists so the decision logic is testable without an engine."
+    },
+    {
+      "file": "src/process/task/WCoreManager.ts",
+      "change": "In `start()`'s `onStreamEvent` callback (line 318-326), the events now arrive as normal typed frames and flow through `this.emit('wcore.message', event)` unchanged. In `init()`'s handler (line 996+), add pass-through blocks for `provider_failover_receipt` and `unknown_tool_effect_resolved` BEFORE the `if (!data.msg_id) return;` guard at line 1064, mirroring the existing `sub_agent_event` block (line 1024-1032) and `mcp_failed` block (line 1038-1049).",
+      "why": "`unknown_tool_effect_resolved` carries no msg_id and a failover receipt may arrive between turns; the line-1064 guard would drop both silently - the exact failure class this whole exercise exists to close."
+    },
+    {
+      "file": "src/common/adapter/ipcBridge.ts",
+      "change": "Add a `wcoreRecovery` provider group beside the existing `wcoreProfiles` (line 2365) / `wcoreConfig` (line 2315) groups, with `resolveUnknownToolEffect: buildProvider<{ ok: boolean; error?: string }, ResolveUnknownToolEffectInput>('wcoreRecovery.resolveUnknownToolEffect')`.",
+      "why": "`resolve_unknown_tool_effect` is operator-initiated: `operator_id` and the evidence tuple can only come from a human. There is no other path from the renderer into `WCoreAgent.resolveUnknownToolEffect`."
+    },
+    {
+      "file": "src/common/adapter/bridgeAllowlist.ts",
+      "change": "Add the prefix `'wcoreRecovery.'` to `REMOTE_DENIED_PREFIXES` (line 153-174), next to the existing `'cookbook.'` and `'hub.'` entries.",
+      "why": "This verb writes an authoritative, safety-class assertion about whether a real-world side effect happened. A paired-device WebSocket token proves a paired browser, not the local trusted operator (the WS-POSTAUTH-DISPATCH rationale at line 140-152). It must be local-renderer only."
+    }
+  ],
+  "uiWork": [
+    {
+      "file": "src/renderer/... WCoreChat message transform (the component that already renders `mcp_failed` and `sub_agent_event` frames)",
+      "change": "Render `provider_failover_receipt` as a compact inline notice: 'X/Y failed (rate_limit) → switched to A/B', and as an error-styled notice when `selected_provider` is null. Show the rejected-candidate list (provider/model + Err reason) behind a disclosure, not inline."
+    },
+    {
+      "file": "src/renderer/... same transform",
+      "change": "Render a delivery-failure notice when a `host_send_message_result` was answered with `ok:false` - the agent will report its own tool error, but 'no Slack plugin is running' is a configuration problem the user must be able to act on, ideally with a link into Settings → Channels."
+    },
+    {
+      "file": "locales/ (all languages, per the i18n skill)",
+      "change": "New keys for: failover switched / failover exhausted / delivery failed - no channel configured for <platform> / delivery failed - <error>. Run `bun run i18n:types` and `node scripts/check-i18n.js`."
+    },
+    {
+      "file": "src/renderer/components/settings/SettingsModal/contents/channels/",
+      "change": "OPTIONAL and honestly deferrable: a read-only 'Agent may deliver through this channel' indicator, so the user can see which platforms `send_message` can actually reach. Not required for the capability to function."
+    }
+  ],
+  "testWork": [
+    {
+      "testFile": "tests/unit/wcoreHostSendDelivery.test.ts",
+      "what": "Drive the delivery resolver with a fake PluginManager. Proves: (1) the FULL fixture (chat_id + thread_id + subject + conversation_id present) reaches `plugin.sendMessage` with the right chatId and subject; (2) the MINIMAL fixture (no chat_id) still delivers, via the host-default-channel path - the engine's own tool doc says a bare platform means 'uses host's default channel', so a resolver that requires chat_id would break the most common case; (3) EVERY path answers - success, plugin throws, plugin not running, platform unmapped ('qqbot') - each producing a `host_send_message_result` that passes `validateCommand()`; (4) `call_id` is echoed byte-identically, including an `hsm-`-prefixed id, since the runtime format differs from the fixture's `call-send-001`. Counter-test (mutation proof): delete the `call_id` echo and assert the suite goes red.",
+      "fixtures": [
+        "tests/fixtures/engine-contract/desktop/v1/events/host_send_message_request.json",
+        "tests/fixtures/engine-contract/desktop/v1/compat/events/host_send_message_request.minimal.json",
+        "tests/fixtures/engine-contract/desktop/v1/commands/host_send_message_result.json",
+        "tests/fixtures/engine-contract/desktop/v1/compat/commands/host_send_message_result.minimal.json"
+      ]
+    },
+    {
+      "testFile": "tests/unit/wcoreHostSendAdversarial.test.ts",
+      "what": "IMPORTANT - the contract ships NO verb-specific adversarial fixtures for either of my commands; `adversarial/commands/` contains only `continue-with-budget-*` (another capability's) plus six generic malformed frames. So this file drives the six GENERIC ones, and each proves a different thing about the host as a COMMAND PRODUCER: `invalid-json` and `non-object` prove the helper's parse path errors loudly rather than yielding an empty object the builder would then serialize; `missing-type` / `non-string-type` / `unknown-type` prove `validateCommand()` rejects a frame the builder must never emit; `wrong-required-field` proves a wrong-typed required field is caught. Then the real assertion: feed each malformed payload into `answerHostSend`/`buildResolveUnknownToolEffect` as if it were an engine request and assert NOTHING is written to stdin except a well-formed frame, or an explicit refusal is returned.",
+      "fixtures": [
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/commands/invalid-json.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/commands/missing-type.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/commands/non-object.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/commands/non-string-type.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/commands/unknown-type.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/commands/wrong-required-field.jsonl"
+      ]
+    },
+    {
+      "testFile": "tests/unit/wcoreFailoverReceipt.test.ts",
+      "what": "Proves the event is no longer dropped: feed the fixture through the real dispatcher and assert a frame was emitted and `ACKNOWLEDGED_UNHANDLED_EVENTS` no longer contains the name. Proves `selected_provider: null` survives as null (not coerced to '' or undefined) and produces the ERROR-class notice while a non-null selection produces the info-class one. Enum completeness: synthesize one payload per member of the 11 `ProviderFailureReason` values and per member of the 13 `FailoverRejectReason` values, run each through `validateEvent()` AND assign it to the TS type - a member missing from the union is a compile error, a member invented by us is a schema failure. Also asserts the `{Ok:null}` / `{Err:...}` externally-tagged shape narrows correctly.",
+      "fixtures": [
+        "tests/fixtures/engine-contract/desktop/v1/events/provider_failover_receipt.json",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/events/schema-mismatch.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/events/unknown-critical.jsonl"
+      ]
+    },
+    {
+      "testFile": "tests/unit/wcoreUnknownToolEffect.test.ts",
+      "what": "Golden/parity check: given the exact inputs from the contract's own command example, `buildResolveUnknownToolEffect` must produce a canonical-JSON payload whose sha256 equals that of `commands/resolve_unknown_tool_effect.json` - byte-level, not 'looks similar'. Then: `validateCommand()` passes; each regex/length/enum guard rejects its own violation (bare digest without `sha256:`, 63-hex journal digest, empty reference_id, `observed_at_unix_ms: 0`, outcome 'unknown'); the active-turn gate refuses to write when `stallMsgId`/`activeMsgId` is set (matching the engine's own 'refused during active turn' string) and permits it when both are null. Correlation: assert the cursor in `resolve_unknown_tool_effect` matches the cursor the recovery surface published (`journal_sequence: 42`, same digest) across the lifecycle + replay fixtures, which is what the manifest's `session_turn_tool_and_cursor` correlation key means. Counter-test: relax the digest regex and assert the suite goes red.",
+      "fixtures": [
+        "tests/fixtures/engine-contract/desktop/v1/commands/resolve_unknown_tool_effect.json",
+        "tests/fixtures/engine-contract/desktop/v1/events/unknown_tool_effect_resolved.json",
+        "tests/fixtures/engine-contract/desktop/v1/events/turn_recovery_lifecycle.json",
+        "tests/fixtures/engine-contract/desktop/v1/events/session_recovery_replay.json",
+        "tests/fixtures/engine-contract/desktop/v1/events/session_recovery_snapshot.json"
+      ]
+    },
+    {
+      "testFile": "tests/unit/wcore-eventCoverage.test.ts (existing - extend, do not rewrite)",
+      "what": "The existing test at line 56 ('never lists an event the decoder actually handles') already fails if a name is left in the acknowledged set after being added to `WCoreEvent`. Add: the three names are ABSENT from `ACKNOWLEDGED_UNHANDLED_EVENTS`, and tighten the size cap at line 72 from <=30 to <=27 so the set cannot silently refill.",
+      "fixtures": []
+    },
+    {
+      "testFile": "tests/unit/wcoreCapabilityRegistry.test.ts (new or extend)",
+      "what": "Proves the dispatcher is actually wired into the decoder's default arm - not just registered. Assert `claimedEventTypes()` contains all three event names, that `assertNoOverlap` rejects a duplicate claim, and that a handler which throws is contained (event reported unhandled, turn survives). Without this, all four files above can pass while production still drops every event.",
+      "fixtures": []
+    },
+    {
+      "testFile": "tests/unit/wcoreEnvBuilder.hostDelegate.test.ts (new)",
+      "what": "Asserts `buildEngineSpawnEnv({ ..., hostDelegatedSend: true })` sets `WAYLAND_SEND_MESSAGE_HOST_DELEGATE='1'` and that omitting the flag leaves it UNSET (not '0' - the binary's check is for the literal '1' but an unset var is the honest 'engine keeps its own transport' state). Also asserts an inherited `process.env.WAYLAND_SEND_MESSAGE_HOST_DELEGATE` does NOT leak through the allowlist.",
+      "fixtures": []
+    }
+  ],
+  "risks": [
+    "THE TIMEOUT NUMBER IS NOT IN THE CONTRACT AND I COULD NOT READ IT FROM STRINGS. Measured: the binary contains 'host did not answer the delegated send within {}s (no host_send_message_result); the message was NOT confirmed sent. The host may still complete this delivery - do NOT auto...' - so the turn does NOT hang forever, it times out and reports an unconfirmed send. That answers the measurement brief's open question in the good direction. But the {} is a runtime format argument; the actual seconds can only be established by running the binary with WAYLAND_SEND_MESSAGE_HOST_DELEGATE=1 and stalling the answer. Do not guess it. Until measured, treat Darhai's own delivery path as needing its own bound (a plugin.sendMessage that never settles must still produce ok:false).",
+    "A LATE ANSWER IS TOLERATED, NOT FATAL - measured string: 'host_send_message_result received for unknown call_id: {} (stale or timed-out send?)'. So answering after the engine gave up warns rather than kills. Good, but it also means a slow host produces a DOUBLE SEND risk at the application level: the engine's own message says the host may still complete the delivery. Whether the engine retries through another transport after timeout is NOT stated anywhere in the contract and can only be settled by running it.",
+    "WHERE `tool_execution_id` COMES FROM IS UNDECLARED. I grepped the entire contract: `tool_execution_id` and `operator_id` appear ONLY in the two unknown-tool-effect files and the three schemas. No recovery event publishes a `tool_execution_id` - `session_recovery_snapshot` publishes `pending_call_id: 'call-tool-002'` and the replay item publishes only `kind: 'effect_uncertain'` + cursor + turn_id. So a host literally cannot construct a valid `resolve_unknown_tool_effect` from the contract alone. Either the engine accepts the tool call_id in that field, or there is an undocumented surface. This MUST be settled against the running binary before the command half is shipped; the decode half and the pure builder are safe to land regardless.",
+    "THE GAP-MATRIX AND THE CONTRACT DISAGREE ON ONE FIELD AND I TRUSTED THE CONTRACT: gap-matrix.json lists `host_send_message_result` with `\"capability\": \"available\"`, which is a capability STATUS value, not a capability name - the manifest's own commands entry has the same oddity. The three real capability ids are `host_delegated_delivery`, `semantic_failover_receipts`, `operator_tool_effect_resolution_v1`, all marked `available` in manifest.capabilities. Treat `host_send_message_result` as belonging to `host_delegated_delivery`; `surfaceOf('host_delegated_delivery')` in the test helper will NOT return it, so any 'did I cover my whole surface' test must special-case it or it will silently under-assert.",
+    "THE CONTRACT SHIPS NO ADVERSARIAL FIXTURES FOR MY TWO VERBS. The task brief says 'adversarial/commands/ entries for these verbs'; measured, `adversarial/commands/` holds ten `continue-with-budget-*` files (a different capability) and six generic malformed frames. The adversarial coverage in my testWork is therefore generic-plus-synthesized, not contract-authored. Anyone auditing coverage by counting fixtures will conclude I skipped them - I did not; they do not exist.",
+    "THE CAPABILITY DISPATCHER IS NOT YET CALLED. `src/process/agent/wcore/capabilities/index.ts` is a complete, well-documented registry with `HANDLERS = []`, and the decoder's default arm (index.ts:939-949) does not invoke `dispatchCapabilityEvent`. That one edit is shared with every other capability agent working from this contract. If two of us write it independently the merge is a conflict; if neither of us writes it, all our handlers are dead code that still passes unit tests.",
+    "THE CAPABILITY CONTEXT CANNOT PAUSE THE STALL WATCHDOG. `CapabilityContext` (capabilities/types.ts:47-58) offers only sendCommand/emit/activeMsgId/log/warn, and handlers are declared synchronous. A host-delegated send is inherently async. Separately: `pauseStallWatchdog` is called only on `tool_request` (index.ts:519), and measurement in this repo (scripts/measure-approval-order.mjs, recorded at WCoreManager.ts:158-167) shows an ALLOW-LISTED tool emits no `tool_request` at all - so an auto-approved `send_message` runs with the watchdog live. The 600s default makes this unlikely to bite, but it is a real hole. Fix is either to extend CapabilityContext with pause/resume (cross-capability API change) or to have WCoreAgent pause on the `host_send_message_request` arm before dispatching.",
+    "PLATFORM MAPPING IS MY CONSTRUCTION, NOT THE CONTRACT'S. The schema declares `platform: string` with no enum. My table comes from the binary's own send_message tool description (telegram, discord, slack, whatsapp, signal, bluebubbles, qqbot, matrix, mattermost, homeassistant, dingtalk, feishu, wecom, wecom_callback, weixin, email, sms) matched against Darhai's `BuiltinPluginType`. Three disagree (feishu/lark, email/email-imap+email-agentmail, sms/sms-twilio) and two have no Darhai plugin (qqbot, homeassistant). A future engine can add a platform without a contract change, so the resolver must fail with an explicit ok:false rather than assuming.",
+    "SECURITY, UNRESOLVED BY THE CONTRACT: enabling WAYLAND_SEND_MESSAGE_HOST_DELEGATE hands the model the ability to send real email/Slack/SMS through the user's own configured accounts, with the body and recipient chosen by the model. The contract has no approval hook for this - `host_send_message_request` is not an `approval_required`. Whether Darhai should gate deliveries behind the existing tool-confirmation service is a product decision I am flagging, not making; shipping it ungated is the same class of exposure the destructive-command guard exists to prevent.",
+    "`gap-matrix.json` has no programmatic consumer anywhere in src/, tests/ or scripts/ (grepped). Flipping `implemented: false` → `true` for the five entries is documentation bookkeeping only; nothing will fail if it is forgotten, and nothing will pass because it was done."
+  ],
+  "effortHours": 22,
+  "dependencies": [
+    "capability_dispatcher_wiring (the shared one-line edit to WCoreAgent.handleEvent's default arm that makes src/process/agent/wcore/capabilities/index.ts live - whichever capability lands first must do it)",
+    "turn_recovery_v1 (session_recovery_snapshot / session_recovery_replay / turn_recovery_lifecycle / resume_turn) - resolve_unknown_tool_effect's session_id, turn_id and journal cursor are only knowable from that surface, and its RecoveryCursor type should be declared once and shared rather than duplicated"
+  ]
+}

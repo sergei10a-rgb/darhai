@@ -95,6 +95,31 @@ export type WCoreEvent =
       version: string;
       session_id?: string;
       capabilities: WCoreCapabilities;
+      /**
+       * The engine's grading of every capability in this build, plus contract
+       * version and digests. Required by the schema; optional here because a
+       * host that refuses to start against a slightly-off `ready` cannot start
+       * against an older or newer engine at all. Absence degrades to "nothing
+       * is available", which is the safe direction. See
+       * `capabilities/contractNegotiation.ts`.
+       */
+      contract?: {
+        name?: string;
+        major?: number;
+        minor?: number;
+        generator?: string;
+        fixture_digest?: string;
+        schema_digest?: string;
+        source_inputs_digest?: string;
+        capabilities?: Record<string, string>;
+      };
+      /**
+       * Whether the engine journals enough to answer a recovery request.
+       * `durable` is the only value under which `session_resync` can succeed.
+       */
+      session_persistence?: 'durable' | 'journaled_without_replay' | 'disabled_by_operator' | 'disabled_by_host';
+      /** Revision 0 of the execution policy, delivered inline with `ready`. */
+      execution_policy?: Record<string, unknown>;
     }
   | { type: 'stream_start'; msg_id: string }
   | { type: 'text_delta'; text: string; msg_id: string }

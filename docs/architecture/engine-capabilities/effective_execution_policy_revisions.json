@@ -1,0 +1,137 @@
+{
+  "capability": "effective_execution_policy_revisions",
+  "summary": "The engine publishes its *effective* execution policy (posture / approvals / sandbox / source / managed-floor) as a monotonically-revisioned receipt: revision 0 arrives embedded in `ready`, and every later change arrives as a standalone `execution_policy` event — the only event in the whole manifest carrying `critical: true` and the subcontract `execution_policy: \"1.0\"`. Darhai currently drops both this event and `workspace_policy` on the floor (both sit in `ACKNOWLEDGED_UNHANDLED_EVENTS` in protocol.ts), so the host has no idea what posture the engine actually enforces. This capability adds a pure `PolicyRevisionTracker` reducer that validates each receipt (contract major version, `critical === true`, revision monotonicity, duplicate-body identity) and keeps the last known-good policy, plus decoder/manager wiring and a UI badge showing effective posture next to the mode selector.",
+  "userValue": "Today the mode selector in `WCoreSendBox.tsx` shows what the user *picked*, never what the engine *applied*. When `managed_floor_active: true` clamps a user's \"Автопилот\" back to `approvals: \"prompt\"`, or when `sandbox` is `bypass`, the UI silently lies about how dangerous the session is. After this the user sees the engine's real posture, and a revision gap or conflict (host's cached picture of \"will edits auto-apply / are we sandboxed\" is provably stale) becomes a visible warning instead of a silent divergence. This is the contract's only `critical: true` event — dropping it is the exact failure class that hid `browser_policy_denied` for a whole engine release.",
+  "protocolTypes": [
+    {
+      "name": "WCoreEffectivePolicy",
+      "direction": "event",
+      "tsDefinition": "export type WCoreEffectivePolicy = {\n  posture: 'smart' | 'managed' | 'dangerous';\n  approvals: 'prompt' | 'auto_edit' | 'bypass';\n  sandbox: 'required' | 'bypass';\n  source:\n    | 'default'\n    | 'managed'\n    | 'user_config'\n    | 'project'\n    | 'environment'\n    | 'local_cli_launch'\n    | 'desktop_local_launch'\n    | 'protocol'\n    | 'acp'\n    | 'tui'\n    | 'resume'\n    | 'child';\n  managed_floor_active: boolean;\n  /** Present only while a `dangerous` posture activation is live. */\n  dangerous_activation_id?: string;\n  dangerous_expires_at_unix_ms?: number;\n};",
+      "contractPath": "schema/core-event.schema.json → oneOf[type=execution_policy].properties.policy (required: posture, approvals, sandbox, source, managed_floor_active; additionalProperties:true)"
+    },
+    {
+      "name": "WCoreExecutionPolicyReceipt",
+      "direction": "event",
+      "tsDefinition": "export type WCoreExecutionPolicyReceipt = {\n  critical: true;\n  contract_version: string;\n  revision: number;\n  reason: 'launch' | 'mode_change' | 'resume' | 'expiry';\n  effective_at_unix_ms: number;\n  policy: WCoreEffectivePolicy;\n};",
+      "contractPath": "schema/core-event.schema.json → oneOf[type=ready].properties.execution_policy (required: critical, contract_version, revision, reason, effective_at_unix_ms, policy). Same object shape the standalone event carries minus `type`."
+    },
+    {
+      "name": "execution_policy",
+      "direction": "event",
+      "tsDefinition": "  | ({\n      type: 'execution_policy';\n    } & WCoreExecutionPolicyReceipt)",
+      "contractPath": "manifest.json events[type=execution_policy] (capability effective_execution_policy_revisions, criticality safety, correlation revision, path events/execution_policy.json); schema/core-event.schema.json oneOf[type=execution_policy] required: [type, critical, contract_version, revision, reason, effective_at_unix_ms, policy]"
+    },
+    {
+      "name": "ready (amend existing member)",
+      "direction": "event",
+      "tsDefinition": "  | {\n      type: 'ready';\n      version: string;\n      session_id?: string;\n      capabilities: WCoreCapabilities;\n      /**\n       * Revision-0 policy receipt. The core-event schema marks it REQUIRED on\n       * `ready`, but compat/events/ready.minimal.json ships a `ready` with no\n       * `execution_policy` at all - so it must be optional in TS. Absent =\n       * pre-policy engine; the tracker stays uninitialised rather than\n       * assuming revision 0.\n       */\n      execution_policy?: WCoreExecutionPolicyReceipt;\n    }",
+      "contractPath": "events/ready.json + compat/events/ready.minimal.json (omits the field) + schema/core-event.schema.json oneOf[type=ready].required includes 'execution_policy'"
+    },
+    {
+      "name": "workspace_policy",
+      "direction": "event",
+      "tsDefinition": "  // The producer emits this (wcore-cli/src/main.rs) but NO payload schema\n  // exists anywhere in the bundle: producer-complete.schema.json gives it only\n  // a bare `type` discriminator with additionalProperties:true and zero declared\n  // properties. Model the tag only - inventing fields here would be a guess.\n  | { type: 'workspace_policy' }",
+      "contractPath": "schema/producer-complete.schema.json → anyOf branch titled \"Non-Desktop producer inventory discriminator\" (type enum includes workspace_policy); DEFERRED.md \"Producer events with NO Desktop payload schema\". NOT present in manifest.json events[]."
+    },
+    {
+      "name": "EXECUTION_POLICY_SUBCONTRACT_VERSION",
+      "direction": "event",
+      "tsDefinition": "/** Major version the host validates every receipt's `contract_version` against. */\nexport const EXECUTION_POLICY_SUBCONTRACT_VERSION = '1.0';",
+      "contractPath": "manifest.json → subcontracts.execution_policy === \"1.0\""
+    }
+  ],
+  "handlerWork": [
+    {
+      "file": "C:/claude/darhai/src/process/agent/wcore/protocol.ts",
+      "change": "Add `WCoreEffectivePolicy`, `WCoreExecutionPolicyReceipt`, `EXECUTION_POLICY_SUBCONTRACT_VERSION` (exact definitions above). Add the `execution_policy` and `workspace_policy` members to the `WCoreEvent` union (currently ends at the `cua_policy_denied` member, line 273-279). Amend the existing `ready` member (lines 93-98) with the optional `execution_policy` field. REMOVE `'execution_policy'` (line 348) and `'workspace_policy'` (line 350) from `ACKNOWLEDGED_UNHANDLED_EVENTS` - the set drops from 22 to 20 entries.",
+      "why": "`tests/unit/wcore-eventCoverage.test.ts` asserts no name appears in BOTH the WCoreEvent union and the inert set ('never lists an event the decoder actually handles'). Leaving either name in place makes that test fail the moment the decoder arm lands."
+    },
+    {
+      "file": "C:/claude/darhai/src/process/agent/wcore/policyRevisions.ts (NEW)",
+      "change": "Pure, dependency-free reducer. Export `type PolicyVerdict = 'applied' | 'idempotent' | 'gap' | 'conflict' | 'version_mismatch' | 'not_critical' | 'regression'` and `class PolicyRevisionTracker` with `accept(receipt: WCoreExecutionPolicyReceipt): { verdict: PolicyVerdict; policy: WCoreEffectivePolicy | null; detail: string }`, `get current()`, `get revision()`, `get stale()`. Rules, in order: (1) `receipt.critical !== true` → `not_critical`, reject (schema pins `critical` to `const: true`); (2) major of `receipt.contract_version` !== major of `EXECUTION_POLICY_SUBCONTRACT_VERSION` → `version_mismatch`, reject; (3) no prior revision → apply as seed; (4) `revision === prev.revision` and canonical-JSON of the whole receipt equals the stored one → `idempotent`, no state change, no warn; (5) `revision === prev.revision` and body differs → `conflict`, reject; (6) `revision < prev.revision` → `regression`, reject; (7) `revision === prev.revision + 1` → `applied`; (8) `revision > prev.revision + 1` → `gap`, reject. On any rejecting verdict set `stale = true` and KEEP the last known-good policy - never adopt an unverifiable one. Canonicalise with a key-sorted `JSON.stringify` so field order cannot fake a conflict.",
+      "why": "Keeping the reducer free of Electron/child_process makes all six adversarial fixtures drivable in a plain vitest unit test with no binary and no spawn - matching how `tests/unit/engineContractVersion.test.ts` already works."
+    },
+    {
+      "file": "C:/claude/darhai/src/process/agent/wcore/index.ts",
+      "change": "In `WCoreAgent` add `private readonly policyTracker = new PolicyRevisionTracker()` and `public effectivePolicy?: WCoreEffectivePolicy` next to `public capabilities?` (line 221). In `handleEvent`'s `case 'ready':` (lines 496-501) after `this.capabilities = event.capabilities`, if `event.execution_policy` is present feed it to the tracker and set `this.effectivePolicy`. Add a new `case 'execution_policy':` arm (place it beside `case 'config_changed':` at line 650): feed the tracker; on `applied` set `this.effectivePolicy` and `this.onStreamEvent({ type: 'execution_policy', data: { revision, reason, effectiveAtUnixMs, policy, stale: false }, msg_id: '' })`; on `idempotent` do nothing; on any rejecting verdict `console.warn('[WCoreAgent] execution_policy rejected', {...})` and emit the same frame with `stale: true` plus a `detail` string. Add `case 'workspace_policy':` that logs the raw frame at debug and does nothing else (tag-only, no field access). Do NOT call `faultTurn` - see risks.",
+      "why": "`handleEvent` (line 487) is the single decoder switch; its `default` arm (line 939) is what currently swallows these. `mcp_failed` (lines 663-673) is the established precedent for a system-level frame emitted with `msg_id: ''` and a `console.warn`, so the new arms copy a shape the manager already knows how to forward."
+    },
+    {
+      "file": "C:/claude/darhai/src/process/task/WCoreManager.ts",
+      "change": "Add `private _effectivePolicy: { revision: number; policy: WCoreEffectivePolicy; stale: boolean } | null = null` next to `_capabilities` (line 183). In `start()` after `this._capabilities = agent.capabilities ?? null` (line 333) also mirror `agent.effectivePolicy`. In `init()`'s `this.on('wcore.message', ...)` (line 997) add an `if (data.type === 'execution_policy') { ... }` block IMMEDIATELY AFTER the `config_changed` block (ends line 1010) - it must cache into `_effectivePolicy` and `ipcBridge.conversation.responseStream.emit({ type: 'execution_policy', conversation_id: this.conversation_id, msg_id: '', data: data.data })` then `return`, because the `if (!data.msg_id) return;` guard at line 1058 would otherwise drop it (same reason `config_changed`, `sub_agent_event` and `mcp_failed` all forward above that line). Add `getEffectivePolicy()` mirroring `getCapabilities()` (line 1283).",
+      "why": "`onStreamEvent` at line 318 re-emits every agent frame as `wcore.message`; the msg_id guard at 1058 is the exact line that makes a system-level frame invisible to the renderer unless it is forwarded before it."
+    },
+    {
+      "file": "C:/claude/darhai/src/common/adapter/bridgeAllowlist.ts",
+      "change": "NO change if the plan stays event-only (the `chat.response.stream` emitter is already registered, and emitters are main→renderer so the inbound allowlist is not involved). IF a later iteration adds a `wcorePolicy.get` provider, it MUST be appended to the REMOTE_DENIED set alongside `'wcoreConfig.getSection'` (line ~236).",
+      "why": "The existing comment on `wcoreConfig.getSection` denies it precisely because it 'discloses the engine's security/tools posture to a paired WebUI client'. `posture`/`sandbox`/`approvals` is the same disclosure class, so any future read provider inherits that ruling."
+    }
+  ],
+  "uiWork": [
+    {
+      "file": "C:/claude/darhai/src/renderer/pages/conversation/platforms/wcore/useWCoreMessage.ts",
+      "change": "Add `onExecutionPolicy?: (p: { revision: number; policy: WCoreEffectivePolicy; stale: boolean; detail?: string }) => void` to the options type (beside `onConfigChanged` at line 24), a ref for it beside the existing `onConfigChangedRef`, and a `case 'execution_policy':` arm in the responseStream switch immediately after `case 'config_changed':` (line 228) that calls the ref and breaks - it must NOT fall into `default`, which would push it through `transformMessage` and render a junk bubble."
+    },
+    {
+      "file": "C:/claude/darhai/src/renderer/pages/conversation/platforms/wcore/WCoreSendBox.tsx",
+      "change": "Hold `const [effectivePolicy, setEffectivePolicy] = useState(...)`, pass `onExecutionPolicy` into the existing `useWCoreMessage(conversation_id, {...})` call (line ~125, beside `onConfigChanged`), and render a small badge next to `<AgentModeSelector ...>` (line 430) whenever the engine's effective `approvals`/`sandbox` disagrees with the selected mode, when `managed_floor_active` is true, or when `stale` is true. Reuse the existing `t('agentMode.*')` labels for `prompt`/`auto_edit`/`bypass`/`smart` - they already exist in all 13 locales."
+    },
+    {
+      "file": "C:/claude/darhai/src/renderer/services/i18n/locales/<all 13 locales>/agentMode.json",
+      "change": "Add keys for the new badge only: `effectivePosture`, `managedFloor`, `sandboxBypass`, `policyStale`. mn-MN is the source of truth; `bun run i18n:types` + `node scripts/check-i18n.js` must both pass (AGENTS.md gate)."
+    }
+  ],
+  "testWork": [
+    {
+      "testFile": "C:/claude/darhai/tests/unit/wcorePolicyRevisions.test.ts (NEW)",
+      "what": "Drive the PolicyRevisionTracker with every fixture in adversarial/policy/, read line-by-line as JSONL from `tests/fixtures/engine-contract/desktop/v1/adversarial/policy/` (same node:fs + process.cwd() pattern as engineContractVersion.test.ts). Per fixture: feed line 1 (`ready`, seeds revision 0 from its embedded `execution_policy`), then line 2, then assert the verdict AND that `tracker.current` is the policy the host should still be acting on. valid-revisions → verdict 'applied', revision 1, approvals flips prompt→auto_edit, source desktop_local_launch→protocol, stale false. revision-gap → verdict 'gap' (revision 2 after 0), NOT applied, `tracker.current.approvals` still 'prompt', stale true — proves the host does not adopt a policy whose predecessor it never saw. duplicate-conflict → verdict 'conflict' (both revision 0, but approvals prompt vs auto_edit and reason launch vs mode_change), NOT applied, stale true — proves same-revision-different-body is refused rather than last-write-wins. duplicate-identical → second frame is byte-identical to the first, verdict 'idempotent', revision still 0, stale FALSE, and zero console.warn — proves a benign replay is not treated as a conflict. noncritical → `critical:false` on a schema that pins `const: true`, verdict 'not_critical', NOT applied. version-mismatch → `contract_version:'2.0'` against manifest `subcontracts.execution_policy === '1.0'`, verdict 'version_mismatch', NOT applied. Plus two mechanised guards: (a) an inventory test that reads `readdirSync` of adversarial/policy/ and fails if any file has no case — a future engine bump that adds a seventh fixture breaks the build instead of going silently untested; (b) a counter-check that hand-builds a rev+2 receipt and a same-rev-different-body receipt and asserts they are rejected, so the gap/conflict guards are proven to actually fire rather than being vacuously green.",
+      "fixtures": [
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/policy/valid-revisions.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/policy/revision-gap.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/policy/duplicate-conflict.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/policy/duplicate-identical.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/policy/noncritical.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/policy/version-mismatch.jsonl"
+      ]
+    },
+    {
+      "testFile": "C:/claude/darhai/tests/unit/wcorePolicyDecoder.test.ts (NEW)",
+      "what": "Decoder-level, no spawn: instantiate WCoreAgent with a stub `onStreamEvent`, call the private `handleEvent` (as the existing wcoreToolLoopGuard / wcoreTurnStallWatchdog tests already do for other arms), and assert that (1) `events/execution_policy.json` verbatim produces one `{ type:'execution_policy', msg_id:'' }` stream frame with the decoded policy, (2) `events/ready.json` seeds `agent.effectivePolicy` from its embedded receipt, (3) `compat/events/ready.minimal.json` (no `execution_policy` field at all) does NOT throw and leaves `effectivePolicy` undefined, (4) a bare `{type:'workspace_policy'}` produces no warn and no stream frame, (5) neither type reaches the `default` arm's `console.warn`.",
+      "fixtures": [
+        "tests/fixtures/engine-contract/desktop/v1/events/execution_policy.json",
+        "tests/fixtures/engine-contract/desktop/v1/events/ready.json",
+        "tests/fixtures/engine-contract/desktop/v1/compat/events/ready.minimal.json",
+        "tests/fixtures/engine-contract/desktop/v1/compat/events/ready.journaled-without-replay.json",
+        "tests/fixtures/engine-contract/desktop/v1/compat/events/ready.disabled-by-host.legacy.json"
+      ]
+    },
+    {
+      "testFile": "C:/claude/darhai/tests/unit/wcore-eventCoverage.test.ts (EXISTING - must be edited)",
+      "what": "Two assertions break the moment the decoder arms land and both must be updated deliberately, not silenced: line 78's list `['execution_policy','workspace_policy','capability_activation','provider_attempt']` must drop the first two (they are now handled, not inert), and the 'never lists an event the decoder actually handles' test at line 56 will otherwise report both as overlaps. Keep `capability_activation` and `provider_attempt` in the inert set - they are outside this capability. Add a positive assertion that both new names ARE in the WCoreEvent union so a future revert is caught.",
+      "fixtures": [
+        "tests/fixtures/engine-contract/desktop/v1/manifest.json"
+      ]
+    },
+    {
+      "testFile": "C:/claude/darhai/tests/unit/WCoreManagerPolicyForward.test.ts (NEW)",
+      "what": "Prove the manager forwards the frame BEFORE the `if (!data.msg_id) return;` guard at WCoreManager.ts:1058 — emit a `wcore.message` with `type:'execution_policy'` and `msg_id:''`, assert `ipcBridge.conversation.responseStream.emit` was called and `getEffectivePolicy()` is populated. Counter-check: move the assertion to a frame type NOT in the pass-through list and confirm it is dropped, so the test is proven to distinguish forwarded from swallowed rather than passing either way.",
+      "fixtures": [
+        "tests/fixtures/engine-contract/desktop/v1/events/execution_policy.json"
+      ]
+    }
+  ],
+  "risks": [
+    "THE BIGGEST GAP: the fixtures declare INPUT, never EXPECTED OUTPUT. There is no per-fixture expectation anywhere — manifest.json's `fixture_inventory` is a flat list of paths with no annotations, and no README in adversarial/ states a required verdict. The names (revision-gap, duplicate-conflict, duplicate-identical, noncritical, version-mismatch, valid-revisions) are the only signal. Everything in the reducer's rule table above is my reading of that naming plus the schema, NOT a quoted contract rule. If upstream ever publishes reducer expectations, re-check rules 4-8.",
+    "What a host must DO on rejection is entirely unspecified. I deliberately chose 'reject the frame, keep the last known-good policy, mark stale, surface it' and explicitly did NOT wire `faultTurn`/session-kill, because nothing in the contract says a bad policy receipt should end the turn — and killing turns on a frame the engine may emit routinely would be worse than the current silence. Whether the engine expects the host to stop is only answerable by running the binary.",
+    "`adversarial/policy/duplicate-identical.jsonl` does not contain a duplicated `execution_policy` event at all — it is two byte-identical `ready` frames. So the fixture proves 'a replayed ready is idempotent', and my rule 4 generalises that to standalone policy events. Whether the engine ever re-emits `ready` mid-session, or ever emits two identical standalone `execution_policy` frames, can ONLY be settled by running the binary.",
+    "`workspace_policy` has NO payload schema anywhere in the bundle. producer-complete.schema.json gives it a bare `type` discriminator with `additionalProperties: true` and zero declared properties; DEFERRED.md says outright that a Desktop host DOES receive it, that the gap 'was previously declared NOWHERE', and that it is 'the one to model first' because it carries a `WorkspacePolicyReceipt` which is 'safety-class authority'. The trust-level and Windows AppContainer sandbox-backend fields from the live measurement are NOT in the contract — typing them requires capturing frames from the running binary. I therefore model the tag only. Anyone who wants the fields must measure, not infer.",
+    "gap-matrix.json does not disagree with the contract for `execution_policy` (both say unimplemented), but it omits `workspace_policy` entirely — because the generator only walks manifest.json, which also omits it. So the gap matrix structurally CANNOT track workspace_policy and must not be used as the completeness check for it. Trust the contract (and DEFERRED.md); the gap matrix is blind here.",
+    "The core-event schema marks `execution_policy` REQUIRED on `ready`, yet the bundle's own `compat/events/ready.minimal.json` ships a `ready` with no such field. The schema and the compat fixture contradict each other. I trust the compat fixture (that is what compat/ exists for) and make the field optional — but this means a genuinely broken engine that omits the receipt is indistinguishable from an old one.",
+    "`revision` is `type: integer` with no `minimum` and no stated reset semantics. `reason: 'resume'` suggests a resumed session may re-announce policy, and whether revision numbering continues or restarts at 0 on resume is unspecified. My 'regression' rule would reject a legitimate restart. Only a live resume run settles this.",
+    "Darhai spawns the engine with `autoApprove` derived from `yoloMode` (index.ts:283) and runs its OWN approval gate on `tool_request`. If the engine's `managed_floor_active` clamps `approvals` back to `prompt`, whether the user then gets one prompt or two is not derivable from the contract — it needs an end-to-end run with a managed floor active.",
+    "Adjacent, not mine, but it touches the trigger: `set_mode` (capability `available`, another agent's surface) is what produces `reason: 'mode_change'` revisions. Darhai's `WCoreCommand` allows `'default' | 'auto_edit' | 'yolo'` while the contract example uses `'force'`; producer-complete.schema.json accepts both plus `dangerously_skip_permissions`, and `compat/commands/set_mode.yolo.json` exists — so this is not a defect today, but a policy-revision test that drives mode changes will depend on that enum staying accepted.",
+    "No UI test can be a screenshot-free claim: per project rule the badge must be verified by looking at it. Budget for one visual check of WCoreSendBox with a managed-floor policy applied; a green unit test does not prove the badge renders or that Cyrillic labels fit."
+  ],
+  "effortHours": 12,
+  "dependencies": []
+}

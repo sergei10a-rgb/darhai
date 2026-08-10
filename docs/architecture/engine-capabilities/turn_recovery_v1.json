@@ -1,0 +1,219 @@
+{
+  "capability": "turn_recovery_v1",
+  "summary": "Recovery is host-initiated and start-path only. The engine never volunteers a snapshot: every `session_recovery_snapshot` / `_replay` / `_unavailable` carries a `request_id`, and the only thing that mints one is the host's `session_resync`. So the flow is: Darhai spawns the engine, waits for `ready`, and — if `ready.session_persistence` is durable and `ready.contract.capabilities.turn_recovery_v1 === 'available'` — sends `session_resync {session_id, after?: cursor}` using the cursor it persisted from the previous run (omit `after` entirely for genesis; `compat/commands/session_resync.genesis.json` proves that form). The engine answers with a snapshot (cursor + `state_digest` + `lifecycle` + `budget`, plus `pending_turn` when a turn was interrupted) and optionally a `session_recovery_replay` whose `from` must stitch exactly onto the snapshot cursor. `turn_recovery_lifecycle` is the one unsolicited event (no `request_id`): it is the live cursor feed during normal operation, and its only job is to keep an up-to-date `after` on disk so the NEXT start has something to resync from. The cursor is `{journal_digest (64-hex, required), journal_sequence (optional)}` — the digest is the identity, the sequence is the gap detector. A tool whose outcome is unknown surfaces as `pending_turn.reconcile_reason: 'tool_outcome_unknown'` with `pending_call_id`, and in the replay as an item of kind `effect_uncertain`; replay items are content-free by design (DEFERRED.md: \"sanitized, content-free journal cursor and replay stream\"), so replay tells the host WHAT KIND of thing happened and WHERE, never what it said. The host answers with `resume_turn {turn_id, cursor, action}`. Implementation is a pure reducer plus a `CapabilityHandler` registered in the (already-wired, currently empty) `src/process/agent/wcore/capabilities/` registry.",
+  "userValue": "Today a mid-turn death loses the turn silently: `WCoreManager.handleProcessExit` prints \"Agent process exited unexpectedly (code N)\" and emits finish, and the next open of that conversation starts a fresh engine with no idea a tool was in flight. After this, reopening the conversation resyncs against the engine's journal and the user is told, in the transcript, that the previous turn was interrupted, at which point it was interrupted, and — when a tool's outcome is unknown — is asked whether to reconcile it or cancel it, instead of the app quietly pretending nothing happened. That last case is the real prize: an interrupted `Bash`/`Write` may or may not have run, and right now Darhai has no way to even ask.",
+  "protocolTypes": [
+    {
+      "name": "WCoreJournalCursor",
+      "direction": "event",
+      "tsDefinition": "export type WCoreJournalCursor = {\n  /** 64 lowercase hex chars (`^[0-9a-f]{64}$`). The cursor's identity. */\n  journal_digest: string;\n  /** Schema marks this OPTIONAL - only the digest is required. Gap detection needs it. */\n  journal_sequence?: number;\n};",
+      "contractPath": "tests/fixtures/engine-contract/desktop/v1/schema/core-event.schema.json (cursor subschema, required: [journal_digest], additionalProperties: false)"
+    },
+    {
+      "name": "WCoreTurnLifecycle",
+      "direction": "event",
+      "tsDefinition": "export type WCoreTurnLifecycle =\n  | 'ready'\n  | 'streaming'\n  | 'awaiting_approval'\n  | 'tool_in_flight'\n  | 'reconciliation_required'\n  | 'suspended'\n  | 'completed'\n  | 'cancelled'\n  | 'failed';",
+      "contractPath": "schema/core-event.schema.json → session_recovery_snapshot.properties.lifecycle.enum"
+    },
+    {
+      "name": "WCoreReconcileReason",
+      "direction": "event",
+      "tsDefinition": "export type WCoreReconcileReason =\n  | 'approval_expired'\n  | 'provider_outcome_unknown'\n  | 'tool_outcome_unknown'\n  | 'effect_requires_operator'\n  | 'budget_exhausted'\n  | 'context_unrestorable'\n  | 'cancellation_ambiguous'\n  | 'unknown_critical_state';",
+      "contractPath": "schema/core-event.schema.json → session_recovery_snapshot.properties.pending_turn.properties.reconcile_reason.enum"
+    },
+    {
+      "name": "WCoreRecoveryUnavailableReason",
+      "direction": "event",
+      "tsDefinition": "export type WCoreRecoveryUnavailableReason =\n  | 'session_not_found'\n  | 'unsupported_version'\n  | 'cursor_invalid'\n  | 'cursor_ahead'\n  | 'cursor_digest_mismatch'\n  | 'history_gap'\n  | 'journal_corrupt'\n  | 'snapshot_unavailable'\n  | 'unknown_critical_state';",
+      "contractPath": "schema/core-event.schema.json → session_recovery_unavailable.properties.reason.enum"
+    },
+    {
+      "name": "WCoreReplayItemKind",
+      "direction": "event",
+      "tsDefinition": "export type WCoreReplayItemKind =\n  | 'state_advanced'\n  | 'turn_started'\n  | 'stream_started'\n  | 'stream_committed'\n  | 'approval_requested'\n  | 'approval_resolved'\n  | 'tool_started'\n  | 'tool_committed'\n  | 'effect_uncertain'\n  | 'cancellation_requested'\n  | 'turn_completed'\n  | 'turn_cancelled'\n  | 'turn_failed';",
+      "contractPath": "schema/core-event.schema.json → session_recovery_replay.properties.items.items.properties.kind.enum"
+    },
+    {
+      "name": "WCoreRecoveryBudget",
+      "direction": "event",
+      "tsDefinition": "export type WCoreRecoveryBudget = {\n  tokens_used: number;\n  cost_used_usd: number;\n  token_limit?: number;\n  cost_limit_usd?: number;\n};",
+      "contractPath": "schema/core-event.schema.json → session_recovery_snapshot.properties.budget (required: [tokens_used, cost_used_usd], additionalProperties: true)"
+    },
+    {
+      "name": "WCorePendingTurn",
+      "direction": "event",
+      "tsDefinition": "export type WCorePendingTurn = {\n  turn_id: string;\n  lifecycle: WCoreTurnLifecycle;\n  msg_id?: string;\n  pending_call_id?: string;\n  reconcile_reason?: WCoreReconcileReason;\n};",
+      "contractPath": "schema/core-event.schema.json → session_recovery_snapshot.properties.pending_turn (required: [turn_id, lifecycle])"
+    },
+    {
+      "name": "WCoreRecoveryReplayItem",
+      "direction": "event",
+      "tsDefinition": "export type WCoreRecoveryReplayItem = {\n  cursor: WCoreJournalCursor;\n  kind: WCoreReplayItemKind;\n  turn_id?: string;\n};",
+      "contractPath": "schema/core-event.schema.json → session_recovery_replay.properties.items.items (required: [cursor, kind])"
+    },
+    {
+      "name": "session_recovery_snapshot",
+      "direction": "event",
+      "tsDefinition": "  | {\n      type: 'session_recovery_snapshot';\n      recovery_version: 1;\n      request_id: string;\n      session_id: string;\n      cursor: WCoreJournalCursor;\n      /** 64 lowercase hex chars. Bound to `cursor`: two snapshots at one cursor must agree. */\n      state_digest: string;\n      lifecycle: WCoreTurnLifecycle;\n      budget: WCoreRecoveryBudget;\n      pending_turn?: WCorePendingTurn;\n    }",
+      "contractPath": "events/session_recovery_snapshot.json + schema/core-event.schema.json (required: [type, recovery_version, request_id, session_id, cursor, state_digest, lifecycle, budget]; additionalProperties: true)"
+    },
+    {
+      "name": "session_recovery_replay",
+      "direction": "event",
+      "tsDefinition": "  | {\n      type: 'session_recovery_replay';\n      recovery_version: 1;\n      request_id: string;\n      session_id: string;\n      /** Cursor after the last item. Adopt this only if every item validated. */\n      through: WCoreJournalCursor;\n      items: WCoreRecoveryReplayItem[];\n      /** Absent for a genesis resync (no `after` was sent). */\n      from?: WCoreJournalCursor;\n    }",
+      "contractPath": "events/session_recovery_replay.json + schema/core-event.schema.json (required: [type, recovery_version, request_id, session_id, through, items]; `from` optional; additionalProperties: true)"
+    },
+    {
+      "name": "session_recovery_unavailable",
+      "direction": "event",
+      "tsDefinition": "  | {\n      type: 'session_recovery_unavailable';\n      recovery_version: 1;\n      request_id: string;\n      session_id: string;\n      reason: WCoreRecoveryUnavailableReason;\n    }",
+      "contractPath": "events/session_recovery_unavailable.json + schema/core-event.schema.json (required: [type, recovery_version, request_id, session_id, reason])"
+    },
+    {
+      "name": "turn_recovery_lifecycle",
+      "direction": "event",
+      "tsDefinition": "  | {\n      type: 'turn_recovery_lifecycle';\n      recovery_version: 1;\n      /** NOTE: no `request_id` - this is the one unsolicited recovery event. */\n      session_id: string;\n      turn_id: string;\n      cursor: WCoreJournalCursor;\n      lifecycle: WCoreTurnLifecycle;\n      reconcile_reason?: WCoreReconcileReason;\n    }",
+      "contractPath": "events/turn_recovery_lifecycle.json + schema/core-event.schema.json (required: [type, recovery_version, session_id, turn_id, cursor, lifecycle])"
+    },
+    {
+      "name": "session_resync",
+      "direction": "command",
+      "tsDefinition": "  | {\n      type: 'session_resync';\n      recovery_version: 1;\n      request_id: string;\n      session_id: string;\n      /** Omit entirely for a genesis resync - see compat/commands/session_resync.genesis.json. */\n      after?: WCoreJournalCursor;\n    }",
+      "contractPath": "commands/session_resync.json + compat/commands/session_resync.genesis.json + schema/host-command.schema.json (required: [type, recovery_version, request_id, session_id]; additionalProperties: FALSE)"
+    },
+    {
+      "name": "resume_turn",
+      "direction": "command",
+      "tsDefinition": "  | {\n      type: 'resume_turn';\n      recovery_version: 1;\n      request_id: string;\n      session_id: string;\n      turn_id: string;\n      /** Compare-and-swap token: the state the host observed when it decided. */\n      cursor: WCoreJournalCursor;\n      action: 'continue' | 'reconcile' | 'cancel';\n    }",
+      "contractPath": "commands/resume_turn.json + schema/host-command.schema.json (required: [type, recovery_version, request_id, session_id, turn_id, cursor, action]; additionalProperties: FALSE)"
+    },
+    {
+      "name": "resolve_interrupted_approval",
+      "direction": "command",
+      "tsDefinition": "  | {\n      type: 'resolve_interrupted_approval';\n      recovery_version: 1;\n      request_id: string;\n      session_id: string;\n      turn_id: string;\n      cursor: WCoreJournalCursor;\n      /** NO engine event in the whole contract produces this value - see risks. */\n      approval_id: string;\n      decision: 'approve' | 'deny';\n      answer?: string;\n    }",
+      "contractPath": "commands/resolve_interrupted_approval.json + schema/host-command.schema.json (required: [type, recovery_version, request_id, session_id, turn_id, cursor, approval_id, decision]; `answer` optional; additionalProperties: FALSE)"
+    }
+  ],
+  "handlerWork": [
+    {
+      "file": "src/process/agent/wcore/protocol.ts",
+      "change": "Add the 8 helper types and the 4 event union members to `WCoreEvent` (currently ends at the `cua_policy_denied` member, ~line 279) and the 3 command members to `WCoreCommand` (currently ends at `{ type: 'ping' }`, ~line 309). Then DELETE the four names `'session_recovery_replay'`, `'session_recovery_snapshot'`, `'session_recovery_unavailable'`, `'turn_recovery_lifecycle'` from `ACKNOWLEDGED_UNHANDLED_EVENTS` (the last four entries of the set, lines 361-364).",
+      "why": "Two committed tests force this pairing. `tests/unit/wcore-eventCoverage.test.ts` → 'never lists an event the decoder actually handles' parses the `WCoreEvent` block for `type: '...'` and fails if a name is in both. `tests/unit/wcore-capabilityDispatch.test.ts:200` → 'no capability claims a type also listed as knowingly inert' fails if the handler claims a name still in the set. Leaving them in the set is how a handled event gets reported as inert."
+    },
+    {
+      "file": "src/process/agent/wcore/protocol.ts",
+      "change": "Add two OPTIONAL fields to the existing `{ type: 'ready'; ... }` union member (line 93-98): `session_persistence?: 'durable' | 'journaled_without_replay' | 'disabled_by_operator' | 'disabled_by_host'` and `contract?: { name: string; major: number; minor: number; capabilities: Record<string, 'available' | 'publication_bound' | 'shape_only' | 'unavailable'> }`. Optional, because engines ≤0.1.21 omit them and Darhai still supports those.",
+      "why": "These are the gate. `events/ready.json` ships `session_persistence: 'durable'` and `contract.capabilities.turn_recovery_v1: 'available'`; `compat/events/ready.minimal.json` ships `disabled_by_operator` with no `contract` block at all. Sending `session_resync` to an engine with persistence disabled is a wasted round trip at best. COORDINATION: the `ready` member belongs to the `contract_negotiation` surface - land this as an additive optional-field edit and expect a merge with whoever owns that capability."
+    },
+    {
+      "file": "src/process/agent/wcore/capabilities/turnRecoveryReducer.ts",
+      "change": "NEW FILE. Pure, no I/O, no engine. Exports `type RecoveryState`, `initialRecoveryState(sessionId)`, and `reduceRecoveryEvent(state, event): { state: RecoveryState; verdict: RecoveryVerdict; effects: RecoveryEffect[] }`. Verdicts: 'applied' | 'ignored_duplicate' | 'rejected_version' | 'rejected_digest_mismatch' | 'rejected_cursor_gap' | 'rejected_state_conflict' | 'unavailable'. Rules, each traceable to a fixture: (1) `recovery_version !== 1` → 'rejected_version', no state change, no command, warn (safety criticality means it must not be dropped in silence). (2) snapshot at a cursor already applied → identical in every field = 'ignored_duplicate'; differing `state_digest` = 'rejected_state_conflict', KEEP the first digest and mark the session's recovery unusable. (3) replay with `from` present → `from.journal_digest` must equal the current cursor digest EXACTLY, else 'rejected_digest_mismatch'; comparing `journal_sequence` alone is the bug the fixture exists to catch. (4) replay items: when both the previous cursor and the item carry `journal_sequence`, each item must be previous+1, else 'rejected_cursor_gap'; the last item's cursor must equal `through`. (5) on accept only, cursor := `through`. (6) `turn_recovery_lifecycle`: version-check, then record lifecycle+reconcile_reason keyed by `turn_id` and advance the cursor only when it does not regress. (7) `session_recovery_unavailable`: drop the stored cursor and, for 'cursor_invalid' | 'cursor_ahead' | 'cursor_digest_mismatch' | 'history_gap', emit ONE genesis-resync retry effect guarded by a once-flag so a failing genesis cannot loop.",
+      "why": "This is the whole capability's decision logic and it is exactly what the five adversarial fixtures drive. Keeping it pure follows the precedent set by `src/process/task/wcoreApprovalGate.ts`, whose header says the decision logic lives there so it can be tested 'without an engine, a window or a socket'. A reducer inside the handler could only be tested through the dispatcher."
+    },
+    {
+      "file": "src/process/agent/wcore/capabilities/turnRecovery.ts",
+      "change": "NEW FILE. Export `const turnRecoveryHandler: CapabilityHandler` with `name: 'turn_recovery_v1'` and `handles: ['session_recovery_snapshot', 'session_recovery_replay', 'session_recovery_unavailable', 'turn_recovery_lifecycle']`. Holds `const states = new Map<string, RecoveryState>()` keyed by the event's own `session_id` (required on all four events) — NOT one shared state, because `HANDLERS` in capabilities/index.ts is a module-level singleton and two concurrent `WCoreManager`s mean two live engines. `handle()` reads `session_id`, gets-or-creates state, calls `reduceRecoveryEvent`, then applies effects through the narrow `CapabilityContext`: `ctx.sendCommand` for the genesis retry, `ctx.warn` for every rejection verdict, `ctx.emit({ type: 'turn_recovery', data: {...}, msg_id: '' })` when there is a `pending_turn` or an unavailable reason a user should see, and `void saveCursor(session_id, cursor)` fire-and-forget on accept. Returns `true` for all four types (it owns them) except a snapshot for a session it is not tracking and cannot create state for, which returns `false`.",
+      "why": "`src/process/agent/wcore/capabilities/index.ts` already exposes exactly this extension point, `types.ts` documents the invariants (synchronous, isolated, one owner per type), and the decoder's default arm already calls `dispatchCapabilityEvent(...)` at index.ts:969 before the acknowledged-unhandled check. Nine subsystems landing in the 1150-line `handleEvent` switch is the thing that file's own comment warns against."
+    },
+    {
+      "file": "src/process/agent/wcore/capabilities/index.ts",
+      "change": "Import `turnRecoveryHandler` and add it to the `const HANDLERS: readonly CapabilityHandler[] = []` array at line 27.",
+      "why": "`assertNoOverlap` runs at module load via `createDispatcher(HANDLERS)` (line 96), so a duplicated claim is a startup failure rather than an import-order accident. Without this line the handler exists but nothing routes to it."
+    },
+    {
+      "file": "src/process/agent/wcore/recoveryCursorStore.ts",
+      "change": "NEW FILE, modelled line-for-line on `src/process/acp/session/ApprovalPersistence.ts`. `const CONFIG_KEY = 'wcore.recoveryCursors'`; shape `Record<sessionId, { journal_digest: string; journal_sequence?: number; updated_at: number }>`. Exports `loadCursor(sessionId)`, `saveCursor(sessionId, cursor)`, `clearCursor(sessionId)` over `ProcessConfig.get/set` from `@process/utils/initStorage`. Every path fail-soft (log via `mainError`, return undefined / skip). Skip the write when the digest is unchanged, and coalesce writes with a short trailing timer, because `turn_recovery_lifecycle` may arrive per journal entry.",
+      "why": "`after` must survive a process death or the whole capability is inert — an in-memory cursor is gone at exactly the moment it is needed. ApprovalPersistence is the shipped precedent for a namespaced ProcessConfig key with fail-soft reads and a redundant-write guard; reusing it avoids inventing a second persistence style and avoids a DB schema migration owned by nobody."
+    },
+    {
+      "file": "src/process/agent/wcore/index.ts",
+      "change": "In the `case 'ready':` arm of `handleEvent` (line ~496, alongside `this.sessionId = event.session_id`), capture `this.recoveryAvailable = event.session_persistence === 'durable' && event.contract?.capabilities?.turn_recovery_v1 === 'available'`. Then add a private `async requestSessionResync(): Promise<void>` and call it in `start()` immediately after the `await Promise.race([this.readyPromise, timeout])` block succeeds and BEFORE the `add_mcp_server` loop / `init_history` injection (lines ~388-423): if `!this.recoveryAvailable || !this.sessionId` return; otherwise `const after = await loadCursor(this.sessionId)` and `this.sendCommand({ type: 'session_resync', recovery_version: 1, request_id: uuid(), session_id: this.sessionId, ...(after ? { after } : {}) })`. Also add two public methods next to `approveTool`/`denyTool` (lines 1020-1026): `resumeTurn(sessionId, turnId, cursor, action)` and `resolveInterruptedApproval(args)`, each building the exact command shape above.",
+      "why": "`start()` is the single place that already knows ready has landed and no `message` has been sent yet, which is the only safe window to reconcile — a resync racing a live turn would act on a cursor the turn is already moving. Resync must precede `init_history` so the reconcile decision is made before any history is replayed into the model. `approveTool`/`denyTool` are the existing pattern for a command the task layer drives, so `resumeTurn` belongs beside them rather than being sent from inside the sync handler."
+    },
+    {
+      "file": "src/process/task/WCoreManager.ts",
+      "change": "In the `this.on('wcore.message', (data) => {...})` body (line 997), add a branch for `data.type === 'turn_recovery'` alongside the existing `sub_agent_event` (line 1024) and `mcp_failed` (line 1038) branches — i.e. BEFORE the msg_id guard that drops empty-msg_id frames. Emit the user-visible notice the same way `mcp_failed` does: `ipcBridge.conversation.responseStream.emit({ type: 'error', conversation_id: this.conversation_id, msg_id: '', data: <Mongolian notice> })`, then `void this.resolveInterruptedTurn(data)` when the payload carries a `pending_turn`.",
+      "why": "That block is the only proven route for a system-level (empty msg_id) engine frame to reach the renderer; the `mcp_failed` branch above it exists because the msg_id guard silently ate exactly this class of event. Reusing the proven `type: 'error'` frame means zero renderer changes."
+    },
+    {
+      "file": "src/process/task/WCoreManager.ts",
+      "change": "NEW private `async resolveInterruptedTurn(frame)`, placed next to `resolveEngineApproval` (line 860) and shaped like it: raise the existing dialog via `getToolConfirmationService().requestUserConfirmation(...)` describing the interrupted turn, the `reconcile_reason` and the `pending_call_id`; on an explicit approve call `agent.resumeTurn(sessionId, turnId, cursor, 'reconcile')`; on ANYTHING else — deny, timeout, no window, thrown error — call `agent.resumeTurn(..., 'cancel')`. Do NOT expose `action: 'continue'`. Never throws.",
+      "why": "`resolveEngineApproval` already established that a hanging engine question is worse than a denial, and that every non-press resolves to the safe answer. `continue` is the one action that could re-run or skip a side effect whose status is unknown, and the contract does not say which — so it must not be reachable until measured. The existing dialog returns a boolean outcome, which is why the three-way action set is deliberately mapped to two."
+    }
+  ],
+  "uiWork": [],
+  "testWork": [
+    {
+      "testFile": "tests/unit/wcoreTurnRecoveryReducer.test.ts",
+      "what": "Drive every adversarial fixture through `reduceRecoveryEvent` message-by-message, asserting the verdict, the resulting cursor, and whether any command was emitted. valid-replay: both messages accepted, final cursor digest '6666…' seq 42 (adopted from `through`), pending_turn recorded as turn-002 / reconciliation_required / tool_outcome_unknown / pending_call_id call-tool-002, and exactly one ask-the-operator effect. cursor-digest-mismatch: snapshot applies at '4444…'@40; the replay's `from` is 'ffff…'@40 — SAME sequence, DIFFERENT digest — so the verdict is 'rejected_digest_mismatch', the cursor stays '4444…', and no resume_turn is produced; this is the fixture that proves the host compares digests and not sequence numbers. cursor-gap: `from` matches but items jump 40→42 (and repeat 42), so the verdict is 'rejected_cursor_gap' and the cursor is unchanged; proves the host does not blindly adopt `through` and thereby lose journal entry 41. state-digest-conflict: two snapshots at the SAME request_id and SAME cursor with state_digest 'aaaa…' then 'ffff…' — the second is 'rejected_state_conflict', the first digest is retained, and the session is marked recovery-unusable. version-mismatch: a lone snapshot with recovery_version 2 yields 'rejected_version', stores no cursor, sends no command, and raises a warn (safety criticality means it must not be dropped in silence).",
+      "fixtures": [
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/recovery/valid-replay.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/recovery/cursor-digest-mismatch.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/recovery/cursor-gap.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/recovery/state-digest-conflict.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/recovery/version-mismatch.jsonl"
+      ]
+    },
+    {
+      "testFile": "tests/unit/wcoreTurnRecoveryReducer.test.ts",
+      "what": "Counter-tests that prove the fixtures actually bite, not just that they pass. Build two deliberately weakened reducers in the test file — one that compares only `journal_sequence`, one that skips the recovery_version check — and assert each one PASSES valid-replay but FAILS its fixture (sequence-only accepts cursor-digest-mismatch; version-blind accepts version-mismatch). Without this the suite can be green while asserting nothing, which is the failure mode a green-but-empty gate always has.",
+      "fixtures": [
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/recovery/valid-replay.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/recovery/cursor-digest-mismatch.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/recovery/version-mismatch.jsonl"
+      ]
+    },
+    {
+      "testFile": "tests/unit/wcoreTurnRecoveryContract.test.ts",
+      "what": "Contract conformance in both directions using `tests/helpers/engineContract.ts`. (a) `surfaceOf('turn_recovery_v1')` must return exactly the 4 events and 3 commands the handler claims — so a contract bump that adds a verb fails here instead of shipping unimplemented. (b) Each `examplePayload('event', ...)` passes `validateEvent` and is assignable to the new TS member with every schema-required field present (this is what catches an omitted required field or an invented one). (c) Every command the code BUILDS — session_resync with `after`, session_resync without `after`, resume_turn, resolve_interrupted_approval — is fed through `validateCommand`; host-command.schema.json sets `additionalProperties: false`, so a stray field fails, which is the whole point. (d) The genesis compat fixture proves the no-`after` form is legal. (e) `readManifest().capabilities.turn_recovery_v1 === 'available'` and `subcontracts.turn_recovery === '1.0'`, so a downgraded engine bundle fails loudly.",
+      "fixtures": [
+        "tests/fixtures/engine-contract/desktop/v1/events/session_recovery_snapshot.json",
+        "tests/fixtures/engine-contract/desktop/v1/events/session_recovery_replay.json",
+        "tests/fixtures/engine-contract/desktop/v1/events/session_recovery_unavailable.json",
+        "tests/fixtures/engine-contract/desktop/v1/events/turn_recovery_lifecycle.json",
+        "tests/fixtures/engine-contract/desktop/v1/commands/session_resync.json",
+        "tests/fixtures/engine-contract/desktop/v1/commands/resume_turn.json",
+        "tests/fixtures/engine-contract/desktop/v1/commands/resolve_interrupted_approval.json",
+        "tests/fixtures/engine-contract/desktop/v1/compat/commands/session_resync.genesis.json"
+      ]
+    },
+    {
+      "testFile": "tests/unit/wcoreTurnRecoveryHandler.test.ts",
+      "what": "Handler + registry wiring, driven through the real dispatcher. (a) `claimedEventTypes()` contains all four recovery event names and `ACKNOWLEDGED_UNHANDLED_EVENTS` contains none of them — a positive assertion, so deleting the handler fails loudly rather than quietly reverting to inert. (b) Feed valid-replay through `dispatchCapabilityEvent` with a fake `CapabilityContext` and assert one `turn_recovery` frame reached `emit` with msg_id ''. (c) Feed cursor-digest-mismatch and assert exactly one `session_resync` (genesis, no `after`) reached `sendCommand`, and that a second failing round does NOT send a second one (the once-flag). (d) CONCURRENCY: interleave valid-replay under session_id 'A' with version-mismatch under session_id 'B' through the SAME handler instance and assert A's cursor is unaffected — this guards the module-singleton hazard, since `HANDLERS` is shared across every live WCoreAgent. (e) A handler that throws is contained by the dispatcher and the event reports unhandled.",
+      "fixtures": [
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/recovery/valid-replay.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/recovery/cursor-digest-mismatch.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/recovery/version-mismatch.jsonl"
+      ]
+    },
+    {
+      "testFile": "tests/unit/wcoreRecoveryCursorStore.test.ts",
+      "what": "Round-trip `saveCursor`/`loadCursor`/`clearCursor` against a stubbed `ProcessConfig`; assert a redundant save (same digest) writes nothing; assert a throwing ProcessConfig on read yields undefined and on write is swallowed — a persistence hiccup must never take down the spawn path that calls it. Assert two session ids never read each other's cursor.",
+      "fixtures": []
+    },
+    {
+      "testFile": "tests/unit/WCoreManagerTurnRecovery.test.ts",
+      "what": "Follow the shape of the existing `WCoreManagerApprovalDedup.test.ts` / `WCoreManagerProcessExit.test.ts`. Assert that a `turn_recovery` frame carrying a pending_turn reaches `ipcBridge.conversation.responseStream` despite msg_id being '' (the guard that ate mcp_failed), and that `resolveInterruptedTurn` calls `agent.resumeTurn(..., 'reconcile')` only on an explicit approve, and `'cancel'` on deny, on a rejected confirmation promise, and on no window — never `'continue'`. Assert it never throws.",
+      "fixtures": []
+    }
+  ],
+  "risks": [
+    "`approval_id` HAS NO PRODUCER IN THE CONTRACT. It is required by `resolve_interrupted_approval`, and grepping the entire bundle finds it in exactly four places: commands/resolve_interrupted_approval.json, manifest.json, host-command.schema.json, producer-complete.schema.json. Zero engine events carry it — not `session_recovery_snapshot` (which has `pending_call_id`), not `turn_recovery_lifecycle`, not `approval_required` (which has `call_id`, `resume_token`, `correlation_id`). The candidates are `pending_turn.pending_call_id`, `resume_token`, and an undeclared field on a replay item of kind `approval_requested` (item schema is additionalProperties: true, so a real engine MAY carry more than the contract declares). This can ONLY be settled by running the binary through an interrupted approval and reading the wire. Until then: implement the command type and the `resumeTurn` path, but do NOT wire a live `resolve_interrupted_approval` send — guessing the id sends an approve/deny that binds to nothing, or worse to the wrong thing.",
+    "WHAT `resume_turn.action` ACTUALLY DOES IS UNDEFINED. The contract gives the enum `continue | reconcile | cancel` and not one word of semantics. For a `tool_outcome_unknown` turn the difference is whether a tool that may already have written a file gets re-run, gets assumed successful, or gets abandoned. The engine's own example (commands/resume_turn.json) uses `reconcile`, which is the only reason to prefer it. The plan exposes only `reconcile` and `cancel` for that reason; whether `continue` is safe requires driving the binary.",
+    "WHETHER THE ENGINE REJECTS A STALE COMMAND CURSOR, AND HOW, IS NOT STATED. `resume_turn` and `resolve_interrupted_approval` carry a `cursor` and the manifest correlates them by `request_id_and_cursor`, which strongly implies compare-and-swap. But nothing in the contract says a rejected command is reported at all, and `session_recovery_unavailable` — the only failure event — is correlated by `request_id_and_session_id`, not by cursor. So a `resume_turn` sent against a moved-on journal may fail silently. Unmeasured.",
+    "REPLAY CHUNKING IS UNSPECIFIED. `session_recovery_replay` carries `from`/`through`/`items`, which is the shape of a chunked stream, but no field marks the last chunk and no rule says one resync yields one replay. A host that treats the first replay as complete may reconcile against a partial journal. The plan's reducer accepts successive replays that stitch (`from` == current cursor) which is safe either way, but the terminator is a guess.",
+    "`journal_sequence` IS OPTIONAL IN THE SCHEMA (cursor requires only `journal_digest`) yet all five recovery fixtures carry it, and gap detection is impossible without it — there is no previous-digest field to chain on. If a real engine ever omits it, the `cursor-gap` defence silently degrades to nothing while the tests stay green on fixtures that do include it. Must be confirmed against the binary.",
+    "NO `duplicate-identical` FIXTURE EXISTS FOR RECOVERY. The sibling subsystems each ship both halves of the pair (adversarial/anvil/, adversarial/policy/, adversarial/workflow/ all have duplicate-identical AND duplicate-conflict); adversarial/recovery/ ships only state-digest-conflict. So 'tolerate an identical redelivery, reject a conflicting one' is inferred from the siblings, not proven for recovery. If the engine never redelivers, the tolerate branch is dead code that no fixture exercises.",
+    "RECOVERY ONLY FIRES AT AGENT START, and the contract does not say whether that is the intended lifetime. The engine is spawned as a child of Darhai (`spawn` in WCoreAgent.start, tracked by `registerAgentChild`), so a Darhai crash kills it too — there is no live repair path, only a next-start reconcile. That is why `turn_recovery_lifecycle` matters at all: it is the live cursor feed whose only job is to leave a good `after` on disk. If the engine is ever meant to outlive the host (detached), this design misses that case entirely.",
+    "DOES THE ENGINE ECHO THE REQUESTED SESSION ID? Darhai passes `sessionId: this.conversation_id` (WCoreManager.start line 248) and reads back `this.sessionId = event.session_id`. The plan keys the cursor store on the engine-reported id, which is correct either way — but if the engine mints its own id, a conversation→session mapping must ALSO be persisted or the next start cannot find its own cursor. Not derivable from the contract; the `ready` fixture just shows a literal `session-desktop-001`.",
+    "`journaled_without_replay` IS A DECLARED STATE WITH UNDECLARED BEHAVIOUR. `compat/events/ready.journaled-without-replay.json` exists and still advertises `turn_recovery_v1: available`. The name suggests `session_resync` answers with a snapshot and no replay, but the contract never says so — it could equally answer `session_recovery_unavailable` with `snapshot_unavailable`. The plan gates resync on `session_persistence === 'durable'` only, which is conservative and may leave a working recovery path unused on that engine configuration.",
+    "TURN_RECOVERY_LIFECYCLE EMISSION RATE IS UNKNOWN. It could be one per journal entry, i.e. several per tool call. The write-coalescing in the cursor store is sized against a guess, not a measurement; run the binary through a multi-tool turn and count before settling the debounce.",
+    "MODULE-SINGLETON STATE. `HANDLERS` in capabilities/index.ts is a module-level const and `dispatchCapabilityEvent` a module-level dispatcher, so ONE handler instance serves every concurrent WCoreAgent. All state must be keyed by the event's `session_id`; if two conversations ever report the same session_id, their cursors cross-contaminate and one conversation reconciles against the other's journal. The plan tests for this, but it stays a structural hazard of the registry.",
+    "SOFT OVERLAP WITH `operator_tool_effect_resolution_v1`. `reconcile_reason: 'effect_requires_operator'` and the replay item kind `effect_uncertain` point at the sibling capability's `resolve_unknown_tool_effect` command. The boundary the contract implies — recovery decides the TURN, that capability decides the EFFECT — is inferred from the verb names, not stated. If the engine expects the effect resolved BEFORE `resume_turn`, the ordering matters and neither capability's contract says so.",
+    "NO CONTRACT/GAP-MATRIX DISAGREEMENT FOUND. gap-matrix.json lists all four events and all three commands under `gaps` with `implemented: false`, and its capability/criticality/correlation values match manifest.json field-for-field. Nothing to reconcile here — recorded because the brief asked."
+  ],
+  "effortHours": 14,
+  "dependencies": [
+    "contract_negotiation"
+  ]
+}

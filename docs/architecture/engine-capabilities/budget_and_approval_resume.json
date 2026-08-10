@@ -1,0 +1,134 @@
+{
+  "capability": "budget_and_approval_resume",
+  "summary": "Darhai already receives `budget_exceeded` and prints it as an info line; the turn then dies with no way back. This capability adds the other half: the host mints a `request_id`, asks the human through the existing tool-confirmation dialog, sends `continue_with_budget`, and decodes the engine's `budget_grant_result` (granted / refused + one of 9 refusal reasons) back onto that request_id. It also adds the `approval_resume` COMMAND type (currently only the same-named EVENT exists) so a suspension carrying a `resume_token` — and `modifications.answer`, which `tool_approve` cannot express — can be answered at all.",
+  "userValue": "Today a budget cap ends the turn and the work in it is lost with no recourse — the user sees \"Budget exceeded: max_tokens_out (observed 8192, limit 4096)\" and nothing else. After this, the same event raises the confirmation dialog with the exact numbers, and one press grants more budget and tells the engine to carry on. The engine's refusal is also surfaced instead of swallowed, so \"managed_policy\" (an admin blocked it) reads differently from \"turn_in_progress\" (retry in a moment). Caveat measured below: whether the CURRENT turn resumes or only the NEXT one benefits cannot be settled from the contract — see risks 1 and 2.",
+  "protocolTypes": [
+    {
+      "name": "BudgetRefusalReason",
+      "direction": "event",
+      "tsDefinition": "export type BudgetRefusalReason =\n  | 'host_not_authorized'\n  | 'managed_policy'\n  | 'no_exhausted_budget'\n  | 'invalid_grant'\n  | 'budget_tracker_unavailable'\n  | 'persistence_failure'\n  | 'request_id_conflict'\n  | 'ledger_capacity_exceeded'\n  | 'turn_in_progress';",
+      "contractPath": "tests/fixtures/engine-contract/desktop/v1/schema/core-event.schema.json (budget_grant_result branch, properties.refusal_reason.enum - all 9 members, verbatim)"
+    },
+    {
+      "name": "budget_grant_result",
+      "direction": "event",
+      "tsDefinition": "  // ── Budget grant answer (correlates on request_id) ────────────────\n  | {\n      type: 'budget_grant_result';\n      /** Echo of the `continue_with_budget.request_id` this answers. 1-128 chars, `^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$`. */\n      request_id: string;\n      /** Tokens actually granted. Integer 0..18446744073709551615. REQUIRED even when refused (the refusal fixture sends 1). */\n      additional_tokens: number;\n      /** USD actually granted. `minimum: 0`. REQUIRED even when refused (the refusal fixture sends 0.0). */\n      additional_cost_usd: number;\n      outcome: 'granted' | 'refused';\n      /** Present if and only if `outcome === 'refused'`; the schema's allOf FORBIDS it when granted. */\n      refusal_reason?: BudgetRefusalReason;\n    }",
+      "contractPath": "tests/fixtures/engine-contract/desktop/v1/events/budget_grant_result.json + schema/core-event.schema.json (required: type, request_id, additional_tokens, additional_cost_usd, outcome; additionalProperties: false; two allOf/if-then rules bind refusal_reason to outcome)"
+    },
+    {
+      "name": "continue_with_budget",
+      "direction": "command",
+      "tsDefinition": "  // ── Grant more budget after `budget_exceeded` ─────────────────────\n  // The schema's `anyOf` (at least one of additional_tokens >= 1 OR\n  // additional_cost_usd > 0) is NOT expressible here; `buildContinueWithBudget`\n  // in budgetGrant.ts is the only sanctioned way to construct this value.\n  | {\n      type: 'continue_with_budget';\n      /** Host-minted. 1-128 chars, `^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$`. */\n      request_id: string;\n      /** Integer 0..18446744073709551615. Must be >= 1 when it is the only quantity. */\n      additional_tokens?: number;\n      /** `minimum: 0`. Must be > 0 (exclusiveMinimum) when it is the only quantity. */\n      additional_cost_usd?: number;\n    }",
+      "contractPath": "tests/fixtures/engine-contract/desktop/v1/commands/continue_with_budget.json + schema/host-command.schema.json (required: type, request_id; additionalProperties: FALSE; anyOf pins the at-least-one-quantity rule)"
+    },
+    {
+      "name": "approval_resume",
+      "direction": "command",
+      "tsDefinition": "  // ── Answer a suspension by resume_token (NOT by call_id) ────────────\n  // Same wire name as the existing WCoreEvent member; different union, no clash.\n  | {\n      type: 'approval_resume';\n      resume_token: string;\n      approved: boolean;\n      /** Free-form answer channel. The schema declares `answer` and allows extra keys. */\n      modifications?: { answer?: string; [key: string]: unknown };\n    }",
+      "contractPath": "tests/fixtures/engine-contract/desktop/v1/commands/approval_resume.json + schema/host-command.schema.json (required: type, resume_token, approved; additionalProperties: TRUE here, unlike continue_with_budget)"
+    }
+  ],
+  "handlerWork": [
+    {
+      "file": "src/process/agent/wcore/protocol.ts",
+      "change": "Add `BudgetRefusalReason` next to the existing `CircuitState` alias (~line 78). Add the `budget_grant_result` member to the `WCoreEvent` union directly after the existing `budget_exceeded` member (lines 207-213). Add the `continue_with_budget` and `approval_resume` members to the `WCoreCommand` union after `add_mcp_server` and before `{ type: 'ping' }` (~line 300). CRITICAL: delete the string `'budget_grant_result'` from `ACKNOWLEDGED_UNHANDLED_EVENTS` (line 340, under the 'Budget / goal / workflow subsystems Darhai does not expose' banner).",
+      "why": "The two union additions are the type surface. The deletion is not optional: `tests/unit/wcore-eventCoverage.test.ts` asserts 'never lists an event the decoder actually handles' by regexing `type: '...'` out of the WCoreEvent block and intersecting it with the acknowledged set. Adding the member without removing the string turns that test red immediately."
+    },
+    {
+      "file": "src/process/agent/wcore/budgetGrant.ts",
+      "change": "NEW file, no Electron/child-process imports so it is unit-testable. Export: `REQUEST_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/`; `MAX_ADDITIONAL_TOKENS = 18446744073709551615n`; `mintBudgetRequestId(): string` (e.g. `budget-${Date.now().toString(36)}-${randomBytes(4).toString('hex')}` - always matches the pattern, always <=128 chars); and `buildContinueWithBudget(input: { requestId: string; additionalTokens?: number; additionalCostUsd?: number }): { ok: true; command: WCoreCommand & { type: 'continue_with_budget' } } | { ok: false; reason: string }`. The builder must (a) construct the command field-by-field, never spread caller input, (b) reject a request_id that fails the pattern or exceeds 128 code points, (c) require at least one of tokens>=1 or cost>0, (d) reject non-finite / negative / non-integer numbers, (e) bound tokens with `BigInt(String(value)) <= MAX_ADDITIONAL_TOKENS`, NOT a Number comparison.",
+      "why": "Every one of the 10 adversarial fixtures is a way this command can be malformed, and `additionalProperties: false` means one stray key invalidates the whole message. Splitting it out mirrors how `wcoreApprovalGate.ts` was split out of WCoreManager so the rules are testable without an engine. The BigInt rule is forced by measurement: ajv ACCEPTS `continue-with-budget-overflow-tokens.jsonl` because 2^64 and the schema's 2^64-1 are the same IEEE-754 double, so a Number-based guard is blind exactly where the fixture aims."
+    },
+    {
+      "file": "src/process/agent/wcore/index.ts",
+      "change": "Add `private readonly pendingBudgetGrants = new Map<string, { resolve: (r: BudgetGrantOutcome) => void; timer: NodeJS.Timeout }>()` beside the other private fields (~line 193). Add `case 'budget_grant_result':` to the `handleEvent` switch immediately after the existing `case 'budget_exceeded':` arm (lines 804-814): console.warn/info the outcome, look up `event.request_id` in `pendingBudgetGrants`, clear its timer, resolve it, and `this.onStreamEvent({ type: 'budget_grant_result', data: { requestId, additionalTokens, additionalCostUsd, outcome, refusalReason }, msg_id: this.activeMsgId ?? '' })`. A result whose request_id is not pending must be logged and dropped, never resolve an unrelated entry.",
+      "why": "The switch is the only decoder; without an arm the event falls into the `default:` branch at line 939 and (today) stays silent because it is in the acknowledged set. Correlating on request_id is what the manifest mandates - `manifest.json` gives this event `\"correlation\": \"request_id\"`, and `refusal_reason: 'request_id_conflict'` proves the engine tracks ids too."
+    },
+    {
+      "file": "src/process/agent/wcore/index.ts",
+      "change": "Add two public methods beside `approveTool` / `denyTool` (lines 1022-1026). `async requestBudgetGrant(input): Promise<BudgetGrantOutcome>` - calls `buildContinueWithBudget`, returns a local refusal without touching the wire when it fails, otherwise registers the pending entry, `sendCommand(command)`, and races a timeout that settles as a refusal so a silent engine cannot leave the caller pending forever. `resumeApproval(resumeToken: string, approved: boolean, modifications?: { answer?: string }): void` - a thin `sendCommand({ type: 'approval_resume', resume_token, approved, ...(modifications ? { modifications } : {}) })`.",
+      "why": "`sendCommand` (line 992) drops silently when stdin is not writable, so a caller needs a method that reports back rather than a fire-and-forget. Both sit next to `approveTool` because they are the same class of verb: a human decision travelling to the engine. Do NOT call `resumeApproval` from the existing approval path - see risk 6."
+    },
+    {
+      "file": "src/process/task/wcoreBudgetGate.ts",
+      "change": "NEW file, a direct mirror of `wcoreApprovalGate.ts` (which is 142 lines and is the template to copy, including its fail-closed doc comment). Export `EngineBudgetRequest = { reason: string; observed: string; limit: string }`, `fingerprintBudgetGrant(request, grant)` (sha256 over reason+observed+limit AND the exact tokens/USD being granted), and `async offerBudgetGrant(request, deps)` where `deps = { confirm, grant, t? }`. Raise the dialog with `kind: 'agent.budgetGrant'`, details = reason / observed / limit / the amount to be granted. Every non-press outcome - timeout, no window, quitting app, thrown error - returns without calling `deps.grant`.",
+      "why": "Granting budget is spending money, so it must ride the same default-deny gate the MCP email tool uses, not a new one. The fingerprint has to cover the AMOUNT, not just the reason: `wcoreApprovalGate.fingerprintApproval` hashes only call_id+reason+context, which is right there but would let an approval for '+250,000 tokens' be spent as '+2,500,000' here."
+    },
+    {
+      "file": "src/process/task/WCoreManager.ts",
+      "change": "In the `onStreamEvent` callback passed to `new WCoreAgent` (lines 317-325), add `if (event.type === 'budget_exceeded') void this.offerBudgetGrant(event);` on the line after the existing `approval_required` dispatch. Add `private readonly budgetPrompts = new Set<string>()` beside `gatedCallIds` (line 169), and clear it in both places `this.gatedCallIds.clear()` already runs (lines 406 and 1223). Add a private `offerBudgetGrant(event)` next to `resolveEngineApproval` (line 860) that de-dupes on `${reason}|${limit}`, then calls the gate with `confirm: (input) => getToolConfirmationService().requestUserConfirmation(input)` and `grant: (cmd) => agent.requestBudgetGrant(cmd)`.",
+      "why": "This is the exact seam where `approval_required` was wired to a human in the same file, so the pattern, the imports and the `mainError` logging are already there. The de-dupe set matters because `budget_exceeded` correlates on `session` (per manifest.json), not on a call id - nothing else prevents a repeat cap from stacking dialogs."
+    }
+  ],
+  "uiWork": [
+    {
+      "file": "src/renderer/components/agent/ToolConfirmationDialog.tsx",
+      "change": "Add an `'agent.budgetGrant'` entry to the `KIND_KEYS` map (line 57, right after the existing `'agent.toolApproval'` entry) pointing at `mcp.confirm.budgetGrant.{title,summary,confirm}`."
+    },
+    {
+      "file": "src/renderer/services/i18n/locales/<13 locales>/mcp.json",
+      "change": "Add `confirm.budgetGrant` with `title`, `summary`, `confirm`, plus the detail-row labels `reason`, `observed`, `limit`, `grant` - to all 13 locale files (en-US, mn-MN, ru-RU, zh-CN, zh-TW, ja-JP, ko-KR, de-DE, fr-FR, es-ES, pt-BR, tr-TR, uk-UA), matching the shape of the existing `confirm.agentTool` block. Then run `bun run i18n:types` and `node scripts/check-i18n.js`, both of which must pass before a PR."
+    }
+  ],
+  "testWork": [
+    {
+      "testFile": "tests/unit/wcoreBudgetGrant.contract.test.ts",
+      "what": "Drive every adversarial fixture through `buildContinueWithBudget` and assert it REFUSES each one, then assert every command the builder DOES emit passes `validateCommand()` from tests/helpers/engineContract.ts. Two harness rules the implementer must not trip over. (1) `continue-with-budget-whitespace-request-id.jsonl` is NOT valid JSON - measured: it contains a raw 0x09 TAB inside the string (`\"request_id\":\"   <TAB>\"`), which RFC 8259 forbids, and `JSON.parse` throws 'Bad control character in string literal at position 40'. The repo helper `readFixture()` re-throws on that, so this one fixture must be read with `readFileSync` as raw text; the assertion is that the builder can never produce a request_id containing a control character. (2) Assert on the BOOLEAN verdict of `validateCommand`, never on the error text - measured: because host-command.schema.json is one big `oneOf`, ajv reports every rejected continue_with_budget as \"must have required property 'msg_id'\", an error from the unrelated `message` branch. What each fixture proves: missing-request-id -> request_id is `required`; empty-request-id -> `\"\"` fails minLength 1 and the pattern's leading `[A-Za-z0-9]`; whitespace-request-id -> control chars are unrepresentable, and a leading space fails the pattern; long-request-id -> measured 129 chars, over maxLength 128 and over the pattern's `{0,127}` tail; unicode-request-id -> measured 128 code points / 256 UTF-16 units / 512 UTF-8 bytes, so it PASSES maxLength and is caught only by the ASCII pattern (proves a length-only guard is insufficient); empty -> neither quantity present, violating the `anyOf` (a grant of nothing must never reach the wire); negative-cost -> -1 breaks `minimum: 0` and the cost branch's `exclusiveMinimum: 0`; overflow-tokens -> MEASURED that ajv ACCEPTS this fixture (2^64 == the schema's 2^64-1 as doubles), so this test is the only thing that catches it and it must assert the BigInt guard refuses it; wrong-numeric-type -> `\"1\"` breaks `type: integer`; unknown-field -> `future_authority` breaks `additionalProperties: false`, proving the builder constructs field-by-field instead of spreading caller input. Positive direction: the builder must be able to produce both compat shapes byte-equivalently.",
+      "fixtures": [
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/commands/continue-with-budget-missing-request-id.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/commands/continue-with-budget-empty-request-id.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/commands/continue-with-budget-whitespace-request-id.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/commands/continue-with-budget-long-request-id.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/commands/continue-with-budget-unicode-request-id.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/commands/continue-with-budget-empty.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/commands/continue-with-budget-negative-cost.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/commands/continue-with-budget-overflow-tokens.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/commands/continue-with-budget-wrong-numeric-type.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/adversarial/commands/continue-with-budget-unknown-field.jsonl",
+        "tests/fixtures/engine-contract/desktop/v1/compat/commands/continue_with_budget.cost-only.json",
+        "tests/fixtures/engine-contract/desktop/v1/compat/commands/continue_with_budget.tokens-only.json",
+        "tests/fixtures/engine-contract/desktop/v1/commands/continue_with_budget.json"
+      ],
+      "testFileNote": ""
+    },
+    {
+      "testFile": "tests/unit/wcoreBudgetGrantResult.test.ts",
+      "what": "Decoder side. Feed the engine's own example and the refusal compat fixture into `WCoreAgent`'s event handler and assert: the granted fixture settles the pending grant registered under `request_id: 'budget-001'`; the `turn_in_progress` fixture settles as a refusal carrying that reason and is distinguishable from the other 8 (it is the one a host may sensibly retry later); a `budget_grant_result` whose request_id was never registered resolves NOTHING and is logged; and both fixtures pass `validateEvent()`. Also assert the schema's allOf coupling holds for what the host accepts - a `granted` payload carrying `refusal_reason` must be treated as invalid. Finally assert `ACKNOWLEDGED_UNHANDLED_EVENTS` no longer contains 'budget_grant_result' (the inverse is already enforced by tests/unit/wcore-eventCoverage.test.ts, which will fail loudly if the removal is forgotten).",
+      "fixtures": [
+        "tests/fixtures/engine-contract/desktop/v1/events/budget_grant_result.json",
+        "tests/fixtures/engine-contract/desktop/v1/compat/events/budget_grant_result.turn-in-progress.json",
+        "tests/fixtures/engine-contract/desktop/v1/events/budget_exceeded.json"
+      ]
+    },
+    {
+      "testFile": "tests/unit/process/task/wcoreBudgetGate.test.ts",
+      "what": "Copy the structure of the existing tests/unit/process/task/wcoreApprovalGate.test.ts. Fail-closed matrix: a confirm that times out, one that resolves denied, one that throws, and one raised with no window must EACH result in zero calls to `grant` - nothing goes on the wire without a press. Approval path: exactly one command, carrying exactly the tokens/USD that were fingerprinted, and a fingerprint mismatch (amount changed between dialog and send) must refuse. De-dupe: two `budget_exceeded` events with the same reason+limit raise at most one dialog. Drive the gate with the contract's own budget_exceeded payload rather than a hand-written one.",
+      "fixtures": [
+        "tests/fixtures/engine-contract/desktop/v1/events/budget_exceeded.json"
+      ]
+    },
+    {
+      "testFile": "tests/unit/wcoreContractGaps.test.ts",
+      "what": "Guard against the plan being half-landed. Read tests/fixtures/engine-contract/gap-matrix.json and assert that neither `budget_grant_result` (event) nor `continue_with_budget` (command) is still listed under `gaps` once implemented, and that the manifest's declared correlation keys are the ones the code actually keys on - `request_id` for both budget types, `resume_token` for approval_resume. Also assert the directory really holds 10 `continue-with-budget-*` fixtures and that the contract test above drives all 10, so a future engine bump that adds an 11th fails instead of being silently skipped.",
+      "fixtures": [
+        "tests/fixtures/engine-contract/gap-matrix.json",
+        "tests/fixtures/engine-contract/desktop/v1/manifest.json"
+      ]
+    }
+  ],
+  "risks": [
+    "MEASURED TRAP - the overflow fixture passes JSON Schema. I ran the contract's own host-command.schema.json through ajv 2020 against all 10 fixtures: 8 rejected, 1 unparseable, and `continue-with-budget-overflow-tokens.jsonl` was ACCEPTED. The value 18446744073709551616 (2^64) and the schema's `maximum: 18446744073709551615` (2^64-1) are the SAME IEEE-754 double, so `<=` holds. Any host guard written as a Number comparison is blind at the top of the range. The builder must compare BigInt over the raw digits. Real-world grants are ~10^7 so the practical exposure is nil, but the fixture only fails as intended with the BigInt guard.",
+    "MEASURED TRAP - one adversarial fixture is not JSON. `continue-with-budget-whitespace-request-id.jsonl` embeds a raw 0x09 TAB inside the string literal; RFC 8259 forbids unescaped control characters, so `JSON.parse` throws and the repo's own `readFixture()` helper (tests/helpers/engineContract.ts:111) re-throws. A test that loops the 10 fixtures through `readFixture` will CRASH, not assert. Read that one as raw text.",
+    "MEASURED TRAP - ajv error messages point at the wrong branch. host-command.schema.json is a single `oneOf` over 23 command shapes, so every rejected continue_with_budget reports \"must have required property 'msg_id'\" / \"'content'\" from the unrelated `message` branch. Assert on the boolean verdict only; an error-text assertion will read as a bug in the wrong place.",
+    "CONTRACT SILENT - does the turn survive `budget_exceeded`? The event correlates on `session` (manifest.json), carries no msg_id, no request_id and no resume_token, and nothing in the contract says the paused turn is resumable. If the engine has already emitted `stream_end` by the time the human presses grant, then `continue_with_budget` restores the budget but the turn's work is still lost and the user value shrinks to 'the next turn works'. Only the binary settles this: run with a tiny `--max-tokens` and capture the event order around budget_exceeded. Do NOT write UI copy promising the turn continues until that is measured.",
+    "CONTRACT SILENT - and the refusal enum hints the answer may be no. `refusal_reason: 'turn_in_progress'` exists, which reads as 'grants are refused WHILE a turn is running'. Combined with the previous risk, the intended flow may be strictly between turns. If so, the gate should still work but the honest framing is 'raise your budget and retry', not 'resume'. Unresolvable from the JSON; measure.",
+    "CONTRACT SILENT - how does a host become authorized? `host_not_authorized` is a published refusal reason, so the engine can reject grants outright, but nothing in the contract, the schema or DEFERRED.md says what makes a host authorized (a CLI flag? a config.toml key? a capability in `ready`?). `manifest.capabilities` has no budget entry at all - the type is filed under capability `available`, which is the catch-all. A first implementation may find every single grant refused with this reason and there is no way to know in advance. Budget half a day to probe the binary.",
+    "CONTRACT SILENT - request_id lifetime and reuse. `budget_exceeded` carries no id, so the host mints one, and `request_id_conflict` proves the engine remembers ids - but for how long, and across restarts, is unstated. Mint fresh per press and you risk double-granting if the user presses twice on the same cap; derive a stable id from reason+limit and you risk a permanent conflict. I would mint fresh and de-dupe on the HOST side (the `budgetPrompts` set), but that is a judgement call the contract does not make for us.",
+    "AMBIGUOUS - approval_resume vs tool_approve, do not silently swap them. `approval_required` carries BOTH `call_id` and `resume_token`, and the contract publishes BOTH answers as commands. Darhai answers with `tool_approve` today and that is MEASURED to work (scripts/measure-approval-order.mjs, 2026-08-10: tool_request and approval_required arrive as a pair, 0.0-0.3ms apart). The contract never says whether `approval_resume` is an alternative, a superset (it alone carries `modifications.answer`), or the required answer for a NON-tool suspension - note the separate `suspend` event also carries a resume_token and currently has no answer path at all. Add the command type and the `resumeApproval()` method; do NOT rewire the existing tool path to it. Sending both would double-answer one approval.",
+    "SCOPE - fixture count. The brief says 8 adversarial fixtures; the directory and `manifest.fixture_inventory` both list 10 `continue-with-budget-*` files. Trusting the contract: 10, all named in testWork.",
+    "NO CONFLICT to report between contract and gap-matrix for this capability. gap-matrix marks event `budget_grant_result`, command `continue_with_budget` and command `approval_resume` as gaps, and event `approval_resume` + event `budget_exceeded` as implemented - which matches src/process/agent/wcore/protocol.ts exactly (the event member exists at line 203, the commands do not).",
+    "IPC SURFACE - resist adding one. This design needs NO new ipcBridge key: the grant rides the existing `toolConfirmation.request` / `respond` pair. If a future change does expose a `wcore.continueWithBudget` provider, it is a remote-reachable SPEND verb and must be added to `REMOTE_DENIED_KEYS` in src/common/adapter/bridgeAllowlist.ts - note the whole `cost.` namespace is already denied there for exactly this reason."
+  ],
+  "effortHours": 14,
+  "dependencies": []
+}

@@ -1,0 +1,110 @@
+[
+  {
+    "capability": "runtime_diagnostics_and_mcp_lifecycle",
+    "effortHours": 14,
+    "protocolTypes": 5,
+    "handlerWork": 14,
+    "uiWork": 4,
+    "testWork": 5,
+    "risks": 11,
+    "dependencies": [
+      "contract_negotiation"
+    ],
+    "userValue": "Concrete and specific. (1) Today when an MCP server does not show up, the user gets at most a one-line `mcp_failed` toast with a free-text reason; the diagnosti"
+  },
+  {
+    "capability": "effective_execution_policy_revisions",
+    "effortHours": 12,
+    "protocolTypes": 6,
+    "handlerWork": 5,
+    "uiWork": 3,
+    "testWork": 4,
+    "risks": 10,
+    "dependencies": [],
+    "userValue": "Today the mode selector in `WCoreSendBox.tsx` shows what the user *picked*, never what the engine *applied*. When `managed_floor_active: true` clamps a user's \""
+  },
+  {
+    "capability": "workflow_lifecycle_v1",
+    "effortHours": 12,
+    "protocolTypes": 4,
+    "handlerWork": 4,
+    "uiWork": 5,
+    "testWork": 4,
+    "risks": 8,
+    "dependencies": [],
+    "userValue": "Today a workflow node that fails is invisible: the event hits the decoder's default arm, matches the acknowledged-inert list, and is discarded without a warning"
+  },
+  {
+    "capability": "host_delegated_delivery_and_failover",
+    "effortHours": 22,
+    "protocolTypes": 5,
+    "handlerWork": 14,
+    "uiWork": 4,
+    "testWork": 7,
+    "risks": 10,
+    "dependencies": [
+      "capability_dispatcher_wiring (the shared one-line edit to WCoreAgent.handleEvent's default arm that makes src/process/agent/wcore/capabilities/index.ts live - whichever capability lands first must do it)",
+      "turn_recovery_v1 (session_recovery_snapshot / session_recovery_replay / turn_recovery_lifecycle / resume_turn) - resolve_unknown_tool_effect's session_id, turn_id and journal cursor are only knowable from that surface, and its RecoveryCursor type should be declared once and shared rather than duplicated"
+    ],
+    "userValue": "Concrete and large for the delivery half: today the engine's `send_message` tool cannot use any of Darhai's 25+ configured channel plugins, so an agent asked to"
+  },
+  {
+    "capability": "durable_goals_v1",
+    "effortHours": 14,
+    "protocolTypes": 14,
+    "handlerWork": 11,
+    "uiWork": 3,
+    "testWork": 6,
+    "risks": 12,
+    "dependencies": [
+      "contract_negotiation (ready.contract.capabilities - the only declared gate for durable_goals_v1; needed before any goal command may be sent)"
+    ],
+    "userValue": "Concrete but modest at phase 1: a user sees long-running engine objectives in Mission Control alongside team tasks and cron jobs — including after an app restar"
+  },
+  {
+    "capability": "budget_and_approval_resume",
+    "effortHours": 14,
+    "protocolTypes": 4,
+    "handlerWork": 6,
+    "uiWork": 2,
+    "testWork": 4,
+    "risks": 11,
+    "dependencies": [],
+    "userValue": "Today a budget cap ends the turn and the work in it is lost with no recourse — the user sees \"Budget exceeded: max_tokens_out (observed 8192, limit 4096)\" and n"
+  },
+  {
+    "capability": "anvil_receipts",
+    "effortHours": 12,
+    "protocolTypes": 2,
+    "handlerWork": 7,
+    "uiWork": 1,
+    "testWork": 3,
+    "risks": 12,
+    "dependencies": [],
+    "userValue": "Real but conditional. When it fires, an Anvil receipt is the difference between \"the agent said it finished\" and \"a gate closed over these exact bytes: 14/14 ch"
+  },
+  {
+    "capability": "turn_recovery_v1",
+    "effortHours": 14,
+    "protocolTypes": 15,
+    "handlerWork": 9,
+    "uiWork": 0,
+    "testWork": 6,
+    "risks": 13,
+    "dependencies": [
+      "contract_negotiation"
+    ],
+    "userValue": "Today a mid-turn death loses the turn silently: `WCoreManager.handleProcessExit` prints \"Agent process exited unexpectedly (code N)\" and emits finish, and the n"
+  },
+  {
+    "capability": "capability_activation_and_disabled_features",
+    "effortHours": 10,
+    "protocolTypes": 4,
+    "handlerWork": 6,
+    "uiWork": 2,
+    "testWork": 5,
+    "risks": 9,
+    "dependencies": [],
+    "userValue": "Two concrete gains. (1) Smart compaction is currently OFF for every Darhai user: `smart_handoff` reports `disabled_by_config` and I measured that `[compact] sma"
+  }
+]
