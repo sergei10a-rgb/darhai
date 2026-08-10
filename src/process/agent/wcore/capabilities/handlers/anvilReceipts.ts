@@ -58,7 +58,7 @@
 
 import { createHash } from 'node:crypto';
 
-import type { CapabilityContext, CapabilityHandler } from './types';
+import type { CapabilityContext, CapabilityHandler } from '../types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Protocol types

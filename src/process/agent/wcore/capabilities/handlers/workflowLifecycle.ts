@@ -58,7 +58,7 @@
  * sequence-gap rule below.
  */
 
-import type { CapabilityContext, CapabilityHandler } from './types';
+import type { CapabilityContext, CapabilityHandler } from '../types';
 
 /** Contract capability id. Used for the log/warn prefix and by the handler's `name`. */
 const CAPABILITY_NAME = 'workflow_lifecycle_v1';

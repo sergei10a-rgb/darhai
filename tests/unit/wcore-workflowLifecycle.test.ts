@@ -45,8 +45,8 @@ import {
   MAX_LEDGER_ENTRIES,
   MAX_TRACKED_RUNS,
   WORKFLOW_RUN_FRAME,
-} from '@process/agent/wcore/capabilities/workflowLifecycle';
-import type { WorkflowRunSnapshot } from '@process/agent/wcore/capabilities/workflowLifecycle';
+} from '@process/agent/wcore/capabilities/handlers/workflowLifecycle';
+import type { WorkflowRunSnapshot } from '@process/agent/wcore/capabilities/handlers/workflowLifecycle';
 import { adversarialFixtures, examplePayload, readFixture, surfaceOf, validateEvent } from '../helpers/engineContract';
 
 /** Every warning this module emits carries this, whether dispatched or called directly. */

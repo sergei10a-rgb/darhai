@@ -360,23 +360,12 @@ export type WCoreCommand =
 export const ACKNOWLEDGED_UNHANDLED_EVENTS: ReadonlySet<string> = new Set([
   // ── Anvil receipts (tamper-evident audit log) ──────────────────────
   // ── Budget / goal / workflow subsystems Darhai does not expose ─────
-  'goal_control_refused',
-  'goal_snapshot',
-  'goal_transition',
   // ── Policy + capability announcements at engine start ──────────────
-  'capability_activation', // observed only; not in the contract bundle
   // ── Provider routing telemetry (Darhai reads provider_circuit_event) ─
   'provider_attempt', // observed only; not in the contract bundle
   'provider_failover_receipt',
   // ── Host-side request/response verbs Darhai does not implement ──────
   'host_send_message_request',
-  'mcp_removal_result',
   'unknown_tool_effect_resolved',
   // ── Diagnostics + recovery surfaces (engine-driven, opt-in) ─────────
-  'runtime_diagnostics_snapshot',
-  'runtime_diagnostics_unavailable',
-  'session_recovery_replay',
-  'session_recovery_snapshot',
-  'session_recovery_unavailable',
-  'turn_recovery_lifecycle',
 ]);

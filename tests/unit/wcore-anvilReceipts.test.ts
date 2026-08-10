@@ -32,8 +32,8 @@ import {
   anvilReceiptsCapability,
   createAnvilLedger,
   createAnvilReceiptsCapability,
-} from '@process/agent/wcore/capabilities/anvilReceipts';
-import type { AnvilLedger, AnvilVerdict } from '@process/agent/wcore/capabilities/anvilReceipts';
+} from '@process/agent/wcore/capabilities/handlers/anvilReceipts';
+import type { AnvilLedger, AnvilVerdict } from '@process/agent/wcore/capabilities/handlers/anvilReceipts';
 import type { CapabilityContext, CapabilityStreamFrame } from '@process/agent/wcore/capabilities/types';
 import {
   adversarialFixtures,

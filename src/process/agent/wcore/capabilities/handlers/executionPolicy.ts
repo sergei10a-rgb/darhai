@@ -65,7 +65,7 @@
  * not fatal.
  */
 
-import type { CapabilityContext, CapabilityHandler } from './types';
+import type { CapabilityContext, CapabilityHandler } from '../types';
 
 /**
  * Major version of the `execution_policy` subcontract this host understands.

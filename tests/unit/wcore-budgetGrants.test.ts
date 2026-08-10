@@ -53,7 +53,7 @@ import {
   resetBudgetGrants,
   sendContinueWithBudget,
   type ContinueWithBudgetInput,
-} from '@process/agent/wcore/capabilities/budgetGrants';
+} from '@process/agent/wcore/capabilities/handlers/budgetGrants';
 import {
   CONTRACT_V1,
   adversarialFixtures,

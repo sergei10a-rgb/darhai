@@ -35,12 +35,12 @@ import {
   EXECUTION_POLICY_SUBCONTRACT_VERSION,
   executionPolicyCapability,
   PolicyRevisionTracker,
-} from '@process/agent/wcore/capabilities/executionPolicy';
+} from '@process/agent/wcore/capabilities/handlers/executionPolicy';
 import type {
   ExecutionPolicyCapability,
   ExecutionPolicyFrame,
   PolicyVerdict,
-} from '@process/agent/wcore/capabilities/executionPolicy';
+} from '@process/agent/wcore/capabilities/handlers/executionPolicy';
 import {
   adversarialFixtures,
   entryFor,

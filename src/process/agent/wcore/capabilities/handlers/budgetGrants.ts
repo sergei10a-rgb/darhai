@@ -65,7 +65,7 @@
 
 import { randomBytes } from 'node:crypto';
 
-import type { CapabilityContext, CapabilityHandler } from './types';
+import type { CapabilityContext, CapabilityHandler } from '../types';
 
 /**
  * The name this capability reports in logs and tests.

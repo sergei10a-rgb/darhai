@@ -16,10 +16,14 @@
  */
 
 import type { CapabilityContext, CapabilityHandler } from './types';
-import { anvilReceiptsCapability } from './anvilReceipts';
-import { budgetGrantsCapability } from './budgetGrants';
-import { executionPolicyCapability } from './executionPolicy';
-import { workflowLifecycleCapability } from './workflowLifecycle';
+import { anvilReceiptsCapability } from './handlers/anvilReceipts';
+import { budgetGrantsCapability } from './handlers/budgetGrants';
+import { capabilityActivationCapability } from './handlers/capabilityActivation';
+import { durableGoalsCapability } from './handlers/durableGoals';
+import { executionPolicyCapability } from './handlers/executionPolicy';
+import { runtimeDiagnosticsCapability } from './handlers/runtimeDiagnostics';
+import { turnRecoveryCapability } from './handlers/turnRecovery';
+import { workflowLifecycleCapability } from './handlers/workflowLifecycle';
 
 /**
  * Every capability module Darhai has wired up.
@@ -34,10 +38,16 @@ import { workflowLifecycleCapability } from './workflowLifecycle';
  * nothing. Every wave-1 review found exactly that and was right to.
  */
 const HANDLERS: readonly CapabilityHandler[] = [
+  // Wave 1 - independent subsystems
   executionPolicyCapability,
   workflowLifecycleCapability,
   anvilReceiptsCapability,
   budgetGrantsCapability,
+  // Wave 2 - gated on the negotiated contract
+  turnRecoveryCapability,
+  durableGoalsCapability,
+  runtimeDiagnosticsCapability,
+  capabilityActivationCapability,
 ];
 
 /**
