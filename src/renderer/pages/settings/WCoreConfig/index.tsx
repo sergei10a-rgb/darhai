@@ -10,7 +10,13 @@ import classNames from 'classnames';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ipcBridge } from '@/common';
-import coreLockup from '@renderer/assets/logos/brand/wayland-core-lockup.png';
+// The Darhai lockup, NOT the upstream one. This header used to show the
+// `Wayland Core` lockup under an `alt` that read "Darhai Core" - a screen
+// reader heard the product name while the eye saw the upstream brand. Caught
+// by looking at the running app; no test asserts on image bytes.
+// Upstream credit belongs in the licence and the docs, not in the chrome of a
+// pane the user opens to configure Darhai.
+import coreLockup from '@renderer/assets/logos/brand/darhai-lockup-white.png';
 import type { WCoreRailKey } from './panes/types';
 import OverviewPane from './panes/OverviewPane';
 import ServicesKeysPane from './panes/ServicesKeysPane';
@@ -164,6 +170,10 @@ const WCoreConfig: React.FC = () => {
             alt={t('settings.wcoreConfig.title', { defaultValue: 'Darhai Core' })}
             className={styles.brandLockup}
           />
+          {/* The lockup art is the product mark alone; "Core" names WHICH
+              surface this is, so it is text - it has to stay legible next to a
+              Cyrillic wordmark and survive translation. */}
+          <span className={styles.brandCore}>Core</span>
           <div className={styles.brandText}>
             <span className={styles.microtag}>
               {t('settings.wcoreConfig.tagline', { defaultValue: 'Forged to run. Hardened to last. Built to evolve.' })}

@@ -112,6 +112,17 @@
   align-items: center;
   gap: 12px;
 }
+/* Sits beside the wordmark, so it matches its optical weight rather than the
+   body scale. Margin pulls it in against the .brand gap, which is sized for
+   the lockup-to-tagline distance, not for two halves of one name. */
+.brandCore {
+  margin-left: -6px;
+  font-family: var(--wc-mono);
+  font-size: 19px;
+  font-weight: 300;
+  letter-spacing: 0.02em;
+  color: var(--wc-text-primary);
+}
 .brandText {
   display: flex;
   flex-direction: column;
