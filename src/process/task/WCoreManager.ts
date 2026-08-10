@@ -37,6 +37,17 @@ import { skillSuggestWatcher } from '@process/services/cron/SkillSuggestWatcher'
 import { getCostRecorder } from '@process/services/cost/CostRecorder';
 import { getToolConfirmationService } from '@process/services/toolConfirmation';
 import { resolveEngineApproval } from './wcoreApprovalGate';
+import { claimedEventTypes } from '@process/agent/wcore/capabilities';
+
+/**
+ * Frame types produced by a registered engine capability.
+ *
+ * Built once from the capability registry rather than maintained by hand: a
+ * hand-kept list is a second source of truth that goes stale the first time a
+ * capability is added, and the failure mode is silent - the frame is simply
+ * dropped by the msg_id guard and the feature looks unimplemented.
+ */
+const CAPABILITY_FRAME_TYPES: ReadonlySet<string> = new Set(claimedEventTypes());
 
 // ---------------------------------------------------------------------------
 // Truncation-heuristic constants (HC-4 - see audit at
@@ -1057,6 +1068,24 @@ export class WCoreManager extends BaseAgentManager<WCoreManagerData, string> {
       // for the turn and the provider must be marked unhealthy.
       if (data.type === 'error') {
         this.maybeInvalidateProviderKeyOnAuthError(typeof data.data === 'string' ? data.data : String(data.data ?? ''));
+      }
+
+      // Engine capabilities (execution policy, workflow runs, anvil receipts,
+      // budget grants, ...) report facts about the SESSION, not about a turn, so
+      // they legitimately carry no msg_id and the guard below would drop every
+      // one of them. Each capability adding its own exemption above would repeat
+      // this block nine times and guarantee the tenth is forgotten, so the set
+      // of claimed types answers it once. Types come from the capability
+      // registry, so a capability that is registered is forwarded - there is no
+      // second list to keep in sync.
+      if (typeof data.type === 'string' && CAPABILITY_FRAME_TYPES.has(data.type)) {
+        ipcBridge.conversation.responseStream.emit({
+          type: data.type as IResponseMessage['type'],
+          conversation_id: this.conversation_id,
+          msg_id: data.msg_id ?? '',
+          data: data.data,
+        });
+        return;
       }
 
       // System-level events (empty msg_id) are not part of a conversation turn.
