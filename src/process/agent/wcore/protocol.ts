@@ -363,9 +363,6 @@ export const ACKNOWLEDGED_UNHANDLED_EVENTS: ReadonlySet<string> = new Set([
   // ── Policy + capability announcements at engine start ──────────────
   // ── Provider routing telemetry (Darhai reads provider_circuit_event) ─
   'provider_attempt', // observed only; not in the contract bundle
-  'provider_failover_receipt',
   // ── Host-side request/response verbs Darhai does not implement ──────
-  'host_send_message_request',
-  'unknown_tool_effect_resolved',
   // ── Diagnostics + recovery surfaces (engine-driven, opt-in) ─────────
 ]);

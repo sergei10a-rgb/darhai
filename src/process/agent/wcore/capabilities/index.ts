@@ -21,6 +21,7 @@ import { budgetGrantsCapability } from './handlers/budgetGrants';
 import { capabilityActivationCapability } from './handlers/capabilityActivation';
 import { durableGoalsCapability } from './handlers/durableGoals';
 import { executionPolicyCapability } from './handlers/executionPolicy';
+import { hostDelegatedDeliveryCapability } from './handlers/hostDelegatedDelivery';
 import { runtimeDiagnosticsCapability } from './handlers/runtimeDiagnostics';
 import { turnRecoveryCapability } from './handlers/turnRecovery';
 import { workflowLifecycleCapability } from './handlers/workflowLifecycle';
@@ -48,6 +49,8 @@ const HANDLERS: readonly CapabilityHandler[] = [
   durableGoalsCapability,
   runtimeDiagnosticsCapability,
   capabilityActivationCapability,
+  // Wave 3 - the engine waits on this one
+  hostDelegatedDeliveryCapability,
 ];
 
 /**
