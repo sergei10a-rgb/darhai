@@ -18,8 +18,12 @@
  * `duplicate-identical` is a case a host should TOLERATE, and `noncritical`
  * names a flag, not a verdict.
  *
- * Everything routes through `createDispatcher`, the same function production
- * calls, so what passes here is true of the real routing and not of a stand-in.
+ * Routing goes through `createDispatcher`, the same function production builds
+ * its dispatcher from, over a handler list this file supplies. It has to supply
+ * one: the production `HANDLERS` array is still empty, so this capability is
+ * not registered and `dispatchCapabilityEvent` would not route to it. What
+ * these tests prove is the reducer and the handler; that the capability is
+ * actually reached in the running app is a registration step outside this file.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -74,32 +78,85 @@ function makeContext(): Recorder {
 }
 
 /**
- * Replay a fixture exactly as the decoder would.
+ * What one replayed message produced.
+ *
+ * `silent` is not a verdict the reducer can return - it is what the REPLAY saw:
+ * the dispatcher consumed the message and the handler announced nothing. It has
+ * to be distinguishable, because the handler stays deliberately quiet on an
+ * `idempotent` receipt, and a replay that simply re-read the newest frame after
+ * every dispatch would credit that silence to the PREVIOUS message's verdict
+ * and report a sequence that never happened.
+ */
+type ReplayVerdict = PolicyVerdict | 'silent';
+
+type Replayed = { ctx: Recorder; cap: ExecutionPolicyCapability; verdicts: ReplayVerdict[] };
+
+/**
+ * Replay a message sequence exactly as the decoder would.
  *
  * `ready` is not dispatched: it has its own arm in the decoder, so its embedded
- * revision-0 receipt enters through `seedFromReady`. Every other line goes
- * through the real dispatcher. Getting this split wrong would silently skip the
- * seed and make every later revision look like a first one.
+ * revision-0 receipt enters through `seedFromReady` and its verdict is read
+ * from the returned decision. Every other line goes through the real
+ * dispatcher, and its verdict is read from the frame THAT dispatch emitted -
+ * never from whatever frame happened to be last.
  */
-function replay(relPath: string): { ctx: Recorder; cap: ExecutionPolicyCapability; verdicts: PolicyVerdict[] } {
+function replayMessages(messages: Record<string, unknown>[], label: string): Replayed {
   const cap = createExecutionPolicyCapability();
   const dispatch = createDispatcher([cap]);
   const ctx = makeContext();
-  const verdicts: PolicyVerdict[] = [];
+  const verdicts: ReplayVerdict[] = [];
 
-  for (const message of readFixture(relPath)) {
+  for (const message of messages) {
     if (message.type === 'ready') {
       const decision = cap.seedFromReady(message, ctx);
       if (decision) verdicts.push(decision.verdict);
       continue;
     }
-    expect(dispatch(message, ctx), `${relPath}: dispatcher did not consume ${String(message.type)}`).toBe(true);
-    const last = ctx.frames.at(-1);
-    if (last) verdicts.push(last.data.verdict);
+    const before = ctx.frames.length;
+    expect(dispatch(message, ctx), `${label}: dispatcher did not consume ${String(message.type)}`).toBe(true);
+    const emitted = ctx.frames.slice(before);
+    verdicts.push(emitted.length > 0 ? emitted[emitted.length - 1].data.verdict : 'silent');
   }
 
   return { ctx, cap, verdicts };
 }
+
+function replay(relPath: string): Replayed {
+  return replayMessages(readFixture(relPath), relPath);
+}
+
+/**
+ * An unmodelled sub-object `levels` deep, for the depth-bound tests below.
+ *
+ * The comparison in the reducer recurses, so it is bounded, and that bound is a
+ * CHOICE the module documents rather than a number the contract states -
+ * nothing in the bundle limits nesting. The arithmetic: the receipt body sits
+ * at depth 0 and `policy` at depth 1, so a chain of N objects hung under
+ * `policy` reaches depth 1 + N; with the cap at 8, six levels are compared and
+ * seven are refused. Both sides of that line are pinned so it cannot move by
+ * accident.
+ */
+const nest = (levels: number): unknown => (levels === 0 ? 'leaf' : { deeper: nest(levels - 1) });
+
+/**
+ * A hand-built receipt, used where a fixture cannot reach the rule under test.
+ * Revision 4 rather than 0 so "behind" and "ahead" both have room.
+ */
+const seed = {
+  type: 'execution_policy',
+  critical: true,
+  contract_version: '1.0',
+  revision: 4,
+  reason: 'launch',
+  effective_at_unix_ms: 1_721_000_000_000,
+  policy: {
+    posture: 'smart',
+    approvals: 'prompt',
+    sandbox: 'required',
+    source: 'desktop_local_launch',
+    managed_floor_active: false,
+  },
+} as const;
 
 describe('the contract surface this capability owns', () => {
   it('claims every event the manifest files under it, and nothing it does not own', () => {
@@ -285,6 +342,51 @@ describe('adversarial/policy fixtures', () => {
 });
 
 /**
+ * The replay helper is test infrastructure, and it was wrong in a way that
+ * would have made a real regression look green, so it gets its own check.
+ */
+describe('the replay helper attributes verdicts to the message that caused them', () => {
+  /**
+   * No shipped fixture reaches this: all six either dispatch nothing (both
+   * `duplicate-identical` lines are `ready`) or dispatch something that
+   * announces a frame. So the sequence is built by hand - `ready` seeding
+   * revision 0, then the SAME receipt re-announced standalone, which the
+   * handler grades `idempotent` and deliberately keeps quiet about.
+   *
+   * A helper that read the newest frame after each dispatch would report
+   * `['applied', 'applied']` here - the seed's own verdict, credited to a
+   * message that produced nothing. Every fixture expectation in this file is
+   * only worth what this test proves.
+   */
+  it('reports a dispatch that announced nothing as silent, not as the previous verdict', () => {
+    const ready = examplePayload('event', 'ready');
+    const receipt = ready.execution_policy as Record<string, unknown>;
+
+    const { ctx, cap, verdicts } = replayMessages(
+      [ready, { type: 'execution_policy', ...receipt }],
+      'hand-built ready + identical standalone'
+    );
+
+    expect(verdicts).toEqual(['applied', 'silent']);
+    expect(ctx.frames).toHaveLength(1);
+    expect(cap.tracker.revision).toBe(0);
+    expect(cap.tracker.stale).toBe(false);
+  });
+
+  it('still reports a dispatch that did announce a frame with that frame’s verdict', () => {
+    const ready = examplePayload('event', 'ready');
+    const receipt = ready.execution_policy as Record<string, unknown>;
+
+    const { verdicts } = replayMessages(
+      [ready, { type: 'execution_policy', ...receipt, revision: 7 }],
+      'hand-built ready + gap'
+    );
+
+    expect(verdicts).toEqual(['applied', 'gap']);
+  });
+});
+
+/**
  * Which fixtures the published schema can catch on its own, and which need the
  * reducer. This is the honest boundary of "validate against the contract": four
  * of the six adversarial payloads are perfectly valid JSON Schema instances, so
@@ -339,16 +441,42 @@ describe('the ready carriers', () => {
    * compat fixture wins - that is what `compat/` is for - so an absent receipt
    * is a supported engine, not an error. The tracker must stay uninitialised
    * rather than inventing a revision 0 nobody sent.
+   *
+   * Staying uninitialised is not the same as staying SILENT. "This engine sends
+   * no receipt" and "this engine's receipt was refused" both leave the tracker
+   * empty; an operator reading the log has to be able to tell them apart, so
+   * the absence is logged when a context is available.
    */
-  it('accepts a ready with no receipt at all and stays uninitialised', () => {
+  it('accepts a ready with no receipt at all, stays uninitialised, and says so', () => {
     const cap = createExecutionPolicyCapability();
+    const ctx = makeContext();
     const minimal = readFixture('compat/events/ready.minimal.json')[0];
 
-    expect(cap.seedFromReady(minimal)).toBeNull();
+    expect(cap.seedFromReady(minimal, ctx)).toBeNull();
     expect(cap.tracker.current).toBeNull();
     expect(cap.tracker.revision).toBeNull();
     // Absence is not a fault: an old engine is not a stale picture.
     expect(cap.tracker.stale).toBe(false);
+
+    expect(ctx.logs.join(' ')).toContain('no execution_policy');
+    expect(ctx.warns).toEqual([]);
+    expect(ctx.frames).toEqual([]);
+  });
+
+  it('logs an explicitly null receipt rather than returning without a trace', () => {
+    const cap = createExecutionPolicyCapability();
+    const ctx = makeContext();
+
+    expect(cap.seedFromReady({ type: 'ready', execution_policy: null }, ctx)).toBeNull();
+    expect(ctx.logs.join(' ')).toContain('no execution_policy');
+  });
+
+  it('logs a ready payload that is not an object at all', () => {
+    const cap = createExecutionPolicyCapability();
+    const ctx = makeContext();
+
+    expect(cap.seedFromReady('ready', ctx)).toBeNull();
+    expect(ctx.logs.join(' ')).toContain('not an object');
   });
 
   it('survives the other compat ready shapes without adopting anything', () => {
@@ -389,9 +517,10 @@ describe('the standalone event through the real dispatcher', () => {
   /**
    * The two carriers must reduce to one receipt. `ready.execution_policy` has
    * no `type`; the standalone event does, and it is an envelope discriminator,
-   * not part of the receipt. If the host compared raw frames, an engine that
-   * re-announced revision 0 standalone after `ready` would look like a
-   * `conflict` - and the host would refuse the very policy it already holds.
+   * not part of the receipt. If the host compared raw frames envelope and all,
+   * an engine that re-announced revision 0 standalone after `ready` would look
+   * like a `conflict` - and the host would refuse the very policy it already
+   * holds.
    */
   it('recognises a standalone re-announcement of the ready receipt as the same receipt', () => {
     const cap = createExecutionPolicyCapability();
@@ -407,6 +536,27 @@ describe('the standalone event through the real dispatcher', () => {
     expect(ctx.warns).toEqual([]);
     // Only the seed announced anything: the replay changed nothing.
     expect(ctx.frames).toHaveLength(1);
+  });
+
+  /**
+   * The frame is what the UI renders, so the staleness it carries has to be the
+   * real one. A receipt that fits the chain but is already known to be behind
+   * must announce `stale: true` - a frame saying `applied` with `stale: false`
+   * is exactly the confident wrong answer this capability exists to remove.
+   */
+  it('emits stale: true on a frame that applied a receipt the engine has already moved past', () => {
+    const cap = createExecutionPolicyCapability();
+    const dispatch = createDispatcher([cap]);
+    const ctx = makeContext();
+
+    expect(dispatch({ ...seed }, ctx)).toBe(true);
+    expect(dispatch({ ...seed, revision: 9 }, ctx)).toBe(true);
+    expect(dispatch({ ...seed, revision: 5, reason: 'mode_change' }, ctx)).toBe(true);
+
+    const frame = ctx.frames.at(-1);
+    expect(frame?.data.verdict).toBe('applied');
+    expect(frame?.data.appliedRevision).toBe(5);
+    expect(frame?.data.stale).toBe(true);
   });
 
   it('consumes workspace_policy without reading a field or emitting anything', () => {
@@ -437,22 +587,6 @@ describe('the standalone event through the real dispatcher', () => {
  * exercise it.
  */
 describe('the reducer’s rules fire on their own', () => {
-  const seed = {
-    type: 'execution_policy',
-    critical: true,
-    contract_version: '1.0',
-    revision: 4,
-    reason: 'launch',
-    effective_at_unix_ms: 1_721_000_000_000,
-    policy: {
-      posture: 'smart',
-      approvals: 'prompt',
-      sandbox: 'required',
-      source: 'desktop_local_launch',
-      managed_floor_active: false,
-    },
-  } as const;
-
   const seeded = (): PolicyRevisionTracker => {
     const tracker = new PolicyRevisionTracker();
     expect(tracker.accept(seed).verdict).toBe('applied');
@@ -586,20 +720,6 @@ describe('the reducer’s rules fire on their own', () => {
   });
 
   /**
-   * `stale` is the flag the UI turns into a warning, so its lifecycle is part
-   * of the contract this module offers: it latches on any rejection and clears
-   * only when a receipt lands exactly where one was expected.
-   */
-  it('latches stale on rejection and clears it only on an in-order receipt', () => {
-    const tracker = seeded();
-    expect(tracker.accept({ ...seed, revision: 9 }).verdict).toBe('gap');
-    expect(tracker.stale).toBe(true);
-
-    expect(tracker.accept({ ...seed, revision: 5, reason: 'mode_change' }).verdict).toBe('applied');
-    expect(tracker.stale).toBe(false);
-  });
-
-  /**
    * A new engine process restarts revisions at 0, which the regression rule
    * would otherwise refuse for the rest of the app's life. `reset` is the only
    * sanctioned way out - deliberately NOT wired to `reason: "resume"`, because
@@ -612,6 +732,7 @@ describe('the reducer’s rules fire on their own', () => {
     tracker.reset();
     expect(tracker.current).toBeNull();
     expect(tracker.stale).toBe(false);
+    expect(tracker.highestAnnouncedRevision).toBeNull();
     expect(tracker.accept({ ...seed, revision: 0 }).verdict).toBe('applied');
   });
 
@@ -624,5 +745,176 @@ describe('the reducer’s rules fire on their own', () => {
     const b = createExecutionPolicyCapability();
     expect(a.tracker.accept(seed).verdict).toBe('applied');
     expect(b.tracker.current).toBeNull();
+  });
+});
+
+/**
+ * `stale` is the flag the UI turns into a warning, so what clears it is part of
+ * the contract this module offers - and getting it wrong is worse than not
+ * having the flag, because a false `stale: false` is an assurance rather than a
+ * silence.
+ *
+ * The rule is NOT "the last receipt fitted the chain". It is "what I hold has
+ * caught up with the highest revision the engine has announced". Those differ
+ * exactly in the case that matters: the engine announces 9, the host cannot
+ * take it, and later receipts walk 5, 6, 7, 8 - each one fitting perfectly, and
+ * every one of them provably behind a number the engine already published.
+ */
+describe('staleness is measured against what the engine announced, not against the last receipt', () => {
+  const seeded = (): PolicyRevisionTracker => {
+    const tracker = new PolicyRevisionTracker();
+    expect(tracker.accept(seed).verdict).toBe('applied');
+    return tracker;
+  };
+
+  it('latches stale on any rejection', () => {
+    const tracker = seeded();
+    expect(tracker.accept({ ...seed, revision: 9 }).verdict).toBe('gap');
+    expect(tracker.stale).toBe(true);
+    expect(tracker.highestAnnouncedRevision).toBe(9);
+  });
+
+  it('keeps stale set while in-order receipts are still below the announced high-water mark', () => {
+    const tracker = seeded();
+    expect(tracker.accept({ ...seed, revision: 9 }).verdict).toBe('gap');
+
+    for (const revision of [5, 6, 7, 8]) {
+      const decision = tracker.accept({ ...seed, revision, reason: 'mode_change' });
+      expect(decision.verdict, `revision ${revision}`).toBe('applied');
+      expect(decision.applied, `revision ${revision}`).toBe(true);
+      expect(decision.stale, `revision ${revision} reported the picture as current`).toBe(true);
+      expect(tracker.stale, `revision ${revision} cleared the latch`).toBe(true);
+    }
+
+    const caughtUp = tracker.accept({ ...seed, revision: 9, reason: 'mode_change' });
+    expect(caughtUp.verdict).toBe('applied');
+    expect(caughtUp.stale).toBe(false);
+    expect(tracker.stale).toBe(false);
+  });
+
+  it('says in the detail why an applied receipt is still not the current picture', () => {
+    const tracker = seeded();
+    tracker.accept({ ...seed, revision: 9 });
+
+    const decision = tracker.accept({ ...seed, revision: 5, reason: 'mode_change' });
+    expect(decision.detail).toContain('still behind revision 9');
+  });
+
+  /**
+   * The high-water mark has to survive a receipt this host could not decode.
+   * A receipt whose `policy` carries an unknown enum is refused, but its
+   * `revision` is a plain integer and reads perfectly well - and it is the only
+   * evidence of how far ahead the engine is. Dropping it would let the very
+   * next in-order receipt declare the picture current.
+   */
+  it('remembers the revision of a receipt whose body it could not read', () => {
+    const tracker = seeded();
+    const refused = tracker.accept({ ...seed, revision: 9, policy: { ...seed.policy, posture: 'reckless' } });
+
+    expect(refused.verdict).toBe('malformed');
+    expect(refused.announcedRevision).toBe(9);
+    expect(tracker.highestAnnouncedRevision).toBe(9);
+
+    expect(tracker.accept({ ...seed, revision: 5, reason: 'mode_change' }).stale).toBe(true);
+  });
+
+  /**
+   * A major-version receipt is refused because this host may be misreading its
+   * fields - but its revision number still counts. Whether a 2.0 engine numbers
+   * revisions in the same space is unknowable from here, and assuming it does
+   * NOT would clear `stale` on the strength of a guess. Conservative wins: the
+   * flag stays up.
+   */
+  it('counts a version-mismatched receipt towards the high-water mark', () => {
+    const tracker = seeded();
+    expect(tracker.accept({ ...seed, revision: 9, contract_version: '2.0' }).verdict).toBe('version_mismatch');
+    expect(tracker.highestAnnouncedRevision).toBe(9);
+    expect(tracker.accept({ ...seed, revision: 5, reason: 'mode_change' }).stale).toBe(true);
+  });
+
+  it('never lets an older announcement lower the mark', () => {
+    const tracker = seeded();
+    tracker.accept({ ...seed, revision: 9 });
+    expect(tracker.accept({ ...seed, revision: 2 }).verdict).toBe('regression');
+    expect(tracker.highestAnnouncedRevision).toBe(9);
+  });
+});
+
+/**
+ * Identity is judged on the whole wire body, not on the part this host models.
+ *
+ * Both the receipt and its `policy` are `additionalProperties: true`. A host
+ * that compares only the fields it understands will grade two contradicting
+ * receipts under one revision as `idempotent` - the single verdict that emits
+ * nothing, warns nothing and leaves `stale` alone. That is the quietest
+ * possible way to lose a safety-class disagreement, and the reason the
+ * comparison runs on the raw body.
+ */
+describe('same-revision identity covers fields this host does not model', () => {
+  const seeded = (): PolicyRevisionTracker => {
+    const tracker = new PolicyRevisionTracker();
+    expect(tracker.accept(seed).verdict).toBe('applied');
+    return tracker;
+  };
+
+  it('refuses a second body under one revision that differs only inside policy', () => {
+    const tracker = seeded();
+    const decision = tracker.accept({
+      ...seed,
+      policy: { ...seed.policy, escalation_window_ms: 5_000 },
+    });
+
+    expect(decision.verdict).toBe('conflict');
+    expect(decision.detail).toContain('outside the fields this host models');
+    expect(tracker.stale).toBe(true);
+    // The last VERIFIED posture is what the host keeps acting on.
+    expect(tracker.current?.approvals).toBe('prompt');
+  });
+
+  it('refuses a second body under one revision that differs only at the top level', () => {
+    const tracker = seeded();
+    expect(tracker.accept({ ...seed, emitted_by: 'engine-b' }).verdict).toBe('conflict');
+  });
+
+  /**
+   * The other half of the rule, or the fix would just be "conflict on
+   * everything": a replay carrying the SAME unmodelled fields is still a
+   * replay, and must stay benign.
+   */
+  it('still tolerates a replay that carries the same unmodelled fields', () => {
+    const tracker = new PolicyRevisionTracker();
+    const withExtras = {
+      ...seed,
+      emitted_by: 'engine-a',
+      policy: { ...seed.policy, escalation_window_ms: 5_000 },
+    };
+
+    expect(tracker.accept(withExtras).verdict).toBe('applied');
+    expect(tracker.accept({ ...withExtras }).verdict).toBe('idempotent');
+    expect(tracker.stale).toBe(false);
+  });
+
+  it('names the plain case differently from the unmodelled one', () => {
+    const tracker = seeded();
+    const decision = tracker.accept({ ...seed, policy: { ...seed.policy, approvals: 'bypass' } });
+
+    expect(decision.verdict).toBe('conflict');
+    expect(decision.detail).not.toContain('outside the fields');
+  });
+
+  it('compares unmodelled structure up to the depth it documents', () => {
+    const tracker = new PolicyRevisionTracker();
+    expect(tracker.accept({ ...seed, policy: { ...seed.policy, extra: nest(6) } }).verdict).toBe('applied');
+  });
+
+  it('refuses a body nested past that depth instead of comparing only part of it', () => {
+    const tracker = new PolicyRevisionTracker();
+    const decision = tracker.accept({ ...seed, policy: { ...seed.policy, extra: nest(7) } });
+
+    expect(decision.verdict).toBe('malformed');
+    expect(decision.detail).toContain('nests deeper');
+    // Refusing is loud and keeps nothing: this was the first receipt.
+    expect(tracker.current).toBeNull();
+    expect(tracker.stale).toBe(true);
   });
 });

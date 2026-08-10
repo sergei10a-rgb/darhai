@@ -23,6 +23,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
+import { claimedEventTypes } from '@process/agent/wcore/capabilities';
 import { ACKNOWLEDGED_UNHANDLED_EVENTS } from '@process/agent/wcore/protocol';
 
 const PROTOCOL_SRC = readFileSync(join(process.cwd(), 'src/process/agent/wcore/protocol.ts'), 'utf-8');
@@ -72,11 +73,21 @@ describe('acknowledged-unhandled engine events', () => {
     expect(ACKNOWLEDGED_UNHANDLED_EVENTS.size).toBeLessThanOrEqual(30);
   });
 
+  /**
+   * The invariant is "this never warns on every engine start", not "this is on
+   * the inert list". A variant satisfies it either way: handled by a registered
+   * capability, or listed as knowingly inert. Written this way it keeps proving
+   * the same thing as capabilities land, instead of needing an edit each time -
+   * `execution_policy` and `workspace_policy` moved from the second column to
+   * the first when the execution-policy capability registered.
+   */
   it('covers the variants a v0.12.26 engine start actually emits', () => {
     // Measured from the running binary via scripts/measure-approval-order.mjs:
     // these four arrive before the first token of any turn, 27 lines in total.
+    const claimed = new Set(claimedEventTypes());
     for (const name of ['execution_policy', 'workspace_policy', 'capability_activation', 'provider_attempt']) {
-      expect(ACKNOWLEDGED_UNHANDLED_EVENTS.has(name), `${name} would warn on every engine start`).toBe(true);
+      const covered = ACKNOWLEDGED_UNHANDLED_EVENTS.has(name) || claimed.has(name);
+      expect(covered, `${name} is neither handled nor acknowledged - it would warn on every engine start`).toBe(true);
     }
   });
 });

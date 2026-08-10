@@ -13,13 +13,24 @@
  * `criticality: safety` in the contract manifest and correlate on
  * `session_id_and_sequence`.
  *
- * WHY THIS EXISTS. Before this module both names sat in
- * `ACKNOWLEDGED_UNHANDLED_EVENTS`: decoded, recognised, thrown away without so
- * much as a console warning. A tampered, replayed, conflicting or
- * version-mismatched receipt therefore vanished silently - the exact failure a
- * tamper-evident log exists to prevent. The user-visible gain here is entirely
- * the failure path: nothing is shown for a healthy receipt, and a verdict the
- * host cannot trust becomes a frame the task layer can surface.
+ * WIRING STATUS - read this before believing anything below about delivery.
+ * This module is NOT reachable at runtime yet. `capabilities/index.ts` ships an
+ * empty `HANDLERS` list, and both type names are still listed in
+ * `ACKNOWLEDGED_UNHANDLED_EVENTS` in `../protocol.ts`, so today the decoder
+ * drops both events without a capability ever seeing them. What this module
+ * supplies is the ledger and a handler over it. What it REQUIRES before a user
+ * gains anything: an entry in `HANDLERS`, and the two names removed from
+ * `ACKNOWLEDGED_UNHANDLED_EVENTS`. Both edits belong to the step that registers
+ * all nine capabilities at once, not to this file. Every statement below about
+ * what a user sees therefore describes what this module WOULD produce once
+ * registered - the tests drive it directly and through `createDispatcher`,
+ * which is the real factory, over a handler list this module supplies.
+ *
+ * WHY IT EXISTS. A tampered, replayed, conflicting or version-mismatched
+ * receipt currently vanishes without so much as a console warning - the exact
+ * failure a tamper-evident log exists to prevent. The value here is entirely in
+ * the failure path: this module produces nothing for a healthy receipt, and
+ * turns a verdict the host cannot trust into a frame a host can surface.
  *
  * WHAT THIS CANNOT DO, stated plainly so nobody builds on a false promise.
  * The contract does not publish the recipe for `receipt_body_digest` /
@@ -41,7 +52,7 @@
  * monitoring.
  *
  * The ledger is pure and lives in this module so the fixture tests drive the
- * same function production does, rather than a copy that keeps passing after
+ * same function production would, rather than a copy that keeps passing after
  * the real one changes.
  */
 
@@ -61,7 +72,7 @@ import type { CapabilityContext, CapabilityHandler } from './types';
 /** Subcontract `anvil_receipts` v1.0 (manifest.json -> subcontracts). */
 export type AnvilReceiptEvent = {
   type: 'anvil_receipt';
-  // Required by the schema's `required` array (11 fields + type).
+  // The schema's `required` array holds 12 entries, `type` among them.
   receipt_id: string;
   event_id: string;
   origin: 'core/anvil';
@@ -108,7 +119,8 @@ export type AnvilInvalidationReason = 'artifact_mutated' | 'gate_revoked' | 'sup
 
 export type AnvilReceiptInvalidatedEvent = {
   type: 'anvil_receipt_invalidated';
-  // Required by the schema's `required` array (12 fields + type).
+  // The schema's `required` array holds 12 entries, `type` among them - the
+  // same count as the receipt branch, over a different field set.
   receipt_id: string;
   event_id: string;
   origin: 'core/anvil';
@@ -123,16 +135,18 @@ export type AnvilReceiptInvalidatedEvent = {
   // Declared in `properties`, absent from `required`.
   issued_at_unix_ms?: number;
   observed_artifact_digest?: string;
+  /** Same story as on the receipt: undeclared, and a reason to refuse. */
+  required_extensions?: string[];
 };
 
 /** The two event types this capability owns, exactly as they appear on the wire. */
 export const ANVIL_EVENT_TYPES = ['anvil_receipt', 'anvil_receipt_invalidated'] as const;
 
 /**
- * The stream frame this capability emits. A structured payload rather than a
- * sentence: the main process has no renderer i18n, and inventing an English
- * string here would hard-code user-facing text in the wrong process. The task
- * layer decides presentation.
+ * The stream frame this capability produces for a verdict a host cannot trust.
+ * A structured payload rather than a sentence: the main process has no renderer
+ * i18n, and inventing an English string here would hard-code user-facing text
+ * in the wrong process. Whichever layer consumes the frame decides presentation.
  */
 export const ANVIL_ALERT_FRAME = 'anvil_receipt_alert';
 
@@ -326,6 +340,18 @@ function shapeFailure(event: Record<string, unknown>): string | null {
   // ordering rule below it. Fail closed rather than guess an intent.
   if (sequence < 0) return `sequence ${sequence} is negative`;
 
+  // Checked for BOTH branches, deliberately. This field is not in either
+  // schema's `properties` block; it rides in only because both set
+  // additionalProperties: true. The reject rule in `admit` fires on
+  // `Array.isArray(x) && x.length > 0`, so a NON-array value would slip past it
+  // silently - an event could demand a reader extension in a shape the reject
+  // rule cannot see, and be admitted. Gating the shape here closes that for the
+  // invalidation branch as well as the receipt branch.
+  const extensions = event.required_extensions;
+  if (extensions !== undefined && (!Array.isArray(extensions) || extensions.some((e) => typeof e !== 'string'))) {
+    return 'required_extensions is not an array of strings';
+  }
+
   if (type === 'anvil_receipt') {
     // Schema const 'verified'. This is what catches altered-body.jsonl.
     if (event.terminal_state !== undefined && event.terminal_state !== 'verified') {
@@ -335,10 +361,6 @@ function shapeFailure(event: Record<string, unknown>): string | null {
       return `digest_algorithm "${String(event.digest_algorithm)}" is not the schema const "sha256"`;
     }
     if (event.priced !== undefined && typeof event.priced !== 'boolean') return 'priced is not a boolean';
-    const extensions = event.required_extensions;
-    if (extensions !== undefined && (!Array.isArray(extensions) || extensions.some((e) => typeof e !== 'string'))) {
-      return 'required_extensions is not an array of strings';
-    }
   } else if (!INVALIDATION_REASONS.has(event.reason as string)) {
     return `reason "${String(event.reason)}" is outside the schema enum`;
   }
@@ -357,10 +379,36 @@ function shapeFailure(event: Record<string, unknown>): string | null {
   return null;
 }
 
-/** `major.minor` per the subcontract version string; NaN when unparseable. */
+/**
+ * The only contract_version shape this host recognises: `MAJOR.MINOR`, both
+ * components plain non-negative integers, no leading zeros.
+ *
+ * Every `contract_version` in the vendored bundle is "1.0" or "2.0", and every
+ * value in manifest.json -> subcontracts is two dot-separated integers. That is
+ * the whole observed universe, so it is the whole accepted universe.
+ */
+const CONTRACT_VERSION_FORM = /^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$/;
+
+/**
+ * The MAJOR component of a contract version, or -1 when the string is not in
+ * the form above. -1 can never be a real major, so an unrecognised version
+ * always lands on the version_mismatch branch.
+ *
+ * This VALIDATES rather than parses, which is the point. `Number.parseInt` is
+ * lenient by design - it reads the longest numeric prefix and throws the rest
+ * away - so the previous implementation mapped '1x2', '1-2', '1..0', '01.0',
+ * '+1.0' and '1e0' all onto major 1, i.e. it read six malformed version strings
+ * as the v1 it knows and asserted verdicts over them.
+ *
+ * A three-component '1.0.1' is refused too. That is a deliberate choice, not an
+ * oversight: the contract has never published such a string, and a version
+ * whose shape this host has never seen is exactly the case where guessing the
+ * major would assert a verdict it cannot back. Refusing surfaces a
+ * version_mismatch an operator can act on; guessing would silently accept.
+ */
 function majorOf(contractVersion: string): number {
-  const major = Number.parseInt(contractVersion.split('.')[0] ?? '', 10);
-  return Number.isNaN(major) ? -1 : major;
+  const match = CONTRACT_VERSION_FORM.exec(contractVersion);
+  return match ? Number(match[1]) : -1;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -384,7 +432,16 @@ type SessionLedger = {
   /** -1 until the session admits its first anvil event. */
   lastAdmitted: number;
   incomplete: boolean;
-  atSequence: Map<number, AdmittedSlot>;
+  /**
+   * Admitted slots indexed by sequence.
+   *
+   * An array rather than a map on purpose. Entries are only ever appended, and
+   * only at `lastAdmitted + 1`, so `admitted.length === lastAdmitted + 1` holds
+   * and every sequence in 0..lastAdmitted has an entry. That makes "an admitted
+   * sequence with no recorded slot" unrepresentable instead of a defensive
+   * branch no test could ever reach.
+   */
+  admitted: AdmittedSlot[];
   receipts: Map<string, ReceiptRecord>;
 };
 
@@ -420,7 +477,7 @@ export function createAnvilLedger(): AnvilLedger {
   const sessionFor = (sessionId: string): SessionLedger => {
     let session = sessions.get(sessionId);
     if (!session) {
-      session = { lastAdmitted: -1, incomplete: false, atSequence: new Map(), receipts: new Map() };
+      session = { lastAdmitted: -1, incomplete: false, admitted: [], receipts: new Map() };
       sessions.set(sessionId, session);
     }
     return session;
@@ -457,9 +514,15 @@ export function createAnvilLedger(): AnvilLedger {
       );
     }
 
-    // (3) UNKNOWN-CRITICAL EXTENSION. The field names extensions the receipt
+    // (3) UNKNOWN-CRITICAL EXTENSION. The field names extensions the event
     // REQUIRES its reader to implement; this host implements none, so accepting
-    // would mean showing "verified" for rules the host does not know.
+    // would mean showing "verified" for rules the host does not know. Applies
+    // to both branches - an invalidation demanding an extension is no more
+    // readable than a receipt doing so.
+    //
+    // `Array.isArray` here is the type narrowing that gives `.join` a string[],
+    // not a second shape check: `shapeFailure` has already refused any
+    // `required_extensions` that is not an array of strings.
     const extensions = event.required_extensions;
     if (Array.isArray(extensions) && extensions.length > 0) {
       return reject(
@@ -520,13 +583,23 @@ export function createAnvilLedger(): AnvilLedger {
         `expected sequence ${session.lastAdmitted < 0 ? FIRST_SEQUENCE : expectedNext}, got ${sequence}`
       );
     }
-    if (sequence < session.lastAdmitted) {
-      return reject('stale_replay', `sequence ${sequence} is behind the admitted ${session.lastAdmitted}`);
-    }
-    if (sequence === session.lastAdmitted) {
-      const slot = session.atSequence.get(sequence);
-      /* c8 ignore next -- lastAdmitted is only set together with its slot */
-      if (!slot) return reject('sequence_conflict', `sequence ${sequence} has no recorded slot`);
+    if (sequence <= session.lastAdmitted) {
+      // ANY already-admitted sequence, not only the newest one.
+      //
+      // This used to split: `sequence === lastAdmitted` consulted the recorded
+      // slot and tolerated an identical repeat, while `sequence < lastAdmitted`
+      // went straight to `stale_replay`. An at-least-once transport that
+      // redelivers a BATCH - the ordinary case after a reconnect - therefore
+      // got one quiet duplicate and a tamper alert for every older event in the
+      // same batch, all of them byte-identical to what the ledger already held.
+      // Those alerts were false, and false alerts on a safety-class readout are
+      // how a real one gets ignored. The slot comparison below is what decides;
+      // how old the sequence is decides nothing on its own.
+      //
+      // A genuinely stale replay is still caught, just by the rule that
+      // actually knows: a retracted receipt is refused at (4) above, before the
+      // sequence rules run at all.
+      const slot = session.admitted[sequence];
 
       // Same correlation key AND same identity: a retransmission. Rejecting it
       // would turn any reconnecting at-least-once transport into a stream of
@@ -580,7 +653,10 @@ export function createAnvilLedger(): AnvilLedger {
       target.status = 'invalidated';
     }
 
-    session.atSequence.set(sequence, { type, receiptId, eventId, declaredDigest, hostHash });
+    // `push` lands at index `admitted.length`, which is `lastAdmitted + 1`, which
+    // is `sequence` on every path that reaches here - the invariant the
+    // `admitted` array's indexing relies on.
+    session.admitted.push({ type, receiptId, eventId, declaredDigest, hostHash });
     session.lastAdmitted = sequence;
     bindings.set(declaredDigest, hostHash);
 
@@ -616,7 +692,7 @@ export function createAnvilReceiptsCapability(ledger: AnvilLedger = createAnvilL
       const verdict = ledger.admit(event);
 
       if (verdict.outcome === 'accepted' || verdict.outcome === 'accepted_duplicate') {
-        // Nothing is shown for a healthy receipt. The engine grades this
+        // Nothing is surfaced for a healthy receipt. The engine grades this
         // capability `publication_bound`, so a receipt proves what was true at
         // publication and nothing since - surfacing it as a standing guarantee
         // would overstate what the engine measured.
@@ -646,8 +722,8 @@ export function createAnvilReceiptsCapability(ledger: AnvilLedger = createAnvilL
         detail: verdict.detail,
       };
       // msg_id '' matches how `sub_agent_event`, `session_cost` and
-      // `mcp_failed` already travel: system-level frames that belong to the
-      // session, not to whichever turn happened to be in flight.
+      // `mcp_failed` already travel in `../index.ts`: system-level frames that
+      // belong to the session, not to whichever turn happened to be in flight.
       ctx.emit({ type: ANVIL_ALERT_FRAME, data: payload, msg_id: '' });
       return true;
     },
@@ -655,11 +731,14 @@ export function createAnvilReceiptsCapability(ledger: AnvilLedger = createAnvilL
 }
 
 /**
- * The registered capability.
+ * A ready-to-register instance, sharing one ledger across the process.
+ *
+ * NOT registered today - see the WIRING STATUS note at the top of this file.
+ * Adding it to `HANDLERS` in `./index.ts` is what makes it live.
  *
  * `handle` always answers `true`, including for every rejection. Returning
- * `false` would send the event back to the acknowledged-unhandled check, and a
- * safety-class event would go silent again - which is the exact behaviour this
- * module exists to end.
+ * `false` would hand the event back to the dispatcher's caller as unhandled,
+ * which for these two type names means the acknowledged-unhandled path - so a
+ * safety-class event would be dropped as silently as it is dropped today.
  */
 export const anvilReceiptsCapability: CapabilityHandler = createAnvilReceiptsCapability();

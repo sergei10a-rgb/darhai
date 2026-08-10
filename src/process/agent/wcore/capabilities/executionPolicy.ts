@@ -24,6 +24,29 @@
  * silence is the exact failure that hid `browser_policy_denied` for a whole
  * engine release.
  *
+ * WIRING THIS MODULE REQUIRES, AND WHICH DOES NOT EXIST YET. Nothing in the
+ * running app reaches this file today. Three edits, none of them in this
+ * module, are needed before any of it runs, and they are deliberately left to
+ * the step that registers all nine capabilities together:
+ *
+ *  1. `capabilities/index.ts` must list {@link executionPolicyCapability} in
+ *     `HANDLERS`, which is still `[]`. The decoder's default arm already calls
+ *     `dispatchCapabilityEvent` (`wcore/index.ts`), so registration is the
+ *     whole routing step - an unregistered handler is simply never reached.
+ *  2. The decoder's `ready` arm must call {@link
+ *     ExecutionPolicyCapability.seedFromReady}. `ready` has its own arm and
+ *     never falls through to the dispatcher, so revision 0 has no other way in.
+ *     `seedFromReady` currently has no caller anywhere.
+ *  3. `WCoreManager` must forward `execution_policy` frames ABOVE its
+ *     `if (!data.msg_id) return;` guard, as it already does for
+ *     `sub_agent_event`. These frames carry `msg_id: ''` on purpose (see
+ *     {@link announce}), so below that guard they would be dropped in silence -
+ *     the same failure class this capability exists to close.
+ *
+ * `execution_policy` and `workspace_policy` must also leave
+ * `ACKNOWLEDGED_UNHANDLED_EVENTS` in `protocol.ts` once (1) lands, or the
+ * decoder will still count them as knowingly-ignored.
+ *
  * WHAT THE CONTRACT DOES NOT SETTLE, AND WHAT THIS MODULE CHOSE. The six
  * fixtures under `adversarial/policy/` declare INPUT only: there is no expected
  * verdict anywhere in the bundle, `manifest.json`'s `fixture_inventory` is a
@@ -92,7 +115,8 @@ export type WCorePolicyReason = 'launch' | 'mode_change' | 'resume' | 'expiry';
  * intentionally NOT carried here: a field this host has never been told about
  * cannot be rendered or reasoned over safely, and inventing a slot for it would
  * be a guess. A future engine field is a deliberate protocol change, not
- * something to absorb silently.
+ * something to absorb silently. Unknown keys are not IGNORED either - they take
+ * part in the identity comparison; see {@link canonicalize}.
  */
 export type WCoreEffectivePolicy = {
   posture: WCorePolicyPosture;
@@ -143,7 +167,7 @@ export type AnnouncedPolicyReceipt = Omit<WCoreExecutionPolicyReceipt, 'critical
 export type PolicyVerdict =
   /** Adopted: either the first receipt of the session, or exactly `previous + 1`. */
   | 'applied'
-  /** A byte-identical replay of the receipt already held. No state change, benign. */
+  /** A replay of the receipt already held, unchanged to the byte. No state change, benign. */
   | 'idempotent'
   /** `revision` jumped forward by more than one - at least one receipt was never seen. */
   | 'gap'
@@ -155,7 +179,7 @@ export type PolicyVerdict =
   | 'not_critical'
   /** `revision` moved backwards. */
   | 'regression'
-  /** Structurally unreadable: missing required field, wrong type, or unknown enum value. */
+  /** Structurally unreadable: missing required field, wrong type, unknown enum, or uncomparable. */
   | 'malformed';
 
 /** The outcome of feeding one receipt to {@link PolicyRevisionTracker.accept}. */
@@ -169,7 +193,14 @@ export type PolicyDecision = {
   appliedRevision: number | null;
   /** Revision this receipt announced; null when it was too malformed to read one. */
   announcedRevision: number | null;
-  /** Whether the host's picture is provably behind the engine's. */
+  /**
+   * Whether the host's picture is provably behind the engine's.
+   *
+   * True whenever the highest revision the engine has ANNOUNCED - across every
+   * receipt, adopted or refused - is above the revision the host holds. It is
+   * therefore not cleared by merely adopting something; it is cleared by
+   * catching up. See {@link PolicyRevisionTracker.highestAnnouncedRevision}.
+   */
   stale: boolean;
   /** Why, in one line. Goes into the operator-facing warning and the stream frame. */
   detail: string;
@@ -267,31 +298,51 @@ function parsePolicy(raw: unknown): { policy: WCoreEffectivePolicy } | { error: 
 }
 
 /**
+ * The result of reading a receipt off the wire.
+ *
+ * The failure arm carries `revision` when that ONE field was readable, even
+ * though the rest of the receipt was not. That is not cosmetic: the revision is
+ * what tells the tracker how far ahead the engine has moved, and a receipt
+ * whose `policy` carries an enum this host does not know still announces its
+ * position in the chain perfectly well. Discarding it would let a later, older
+ * receipt look like it had caught the host up.
+ */
+type ReceiptParse = { receipt: AnnouncedPolicyReceipt } | { error: string; revision: number | null };
+
+/**
  * Decode a receipt from either carrier: the standalone `execution_policy` event
  * or the `execution_policy` object embedded in `ready`. The `type`
  * discriminator is not part of the receipt, so both normalise to the same
  * object and a revision-0 seed can be compared against a standalone revision-0
  * frame on equal terms.
  */
-function parseReceipt(raw: unknown): { receipt: AnnouncedPolicyReceipt } | { error: string } {
-  if (!isRecord(raw)) return { error: 'receipt is not an object' };
+function parseReceipt(raw: unknown): ReceiptParse {
+  if (!isRecord(raw)) return { error: 'receipt is not an object', revision: null };
 
-  const { critical, contract_version: version, revision, reason } = raw;
+  const { critical, contract_version: version, reason } = raw;
   const effectiveAt = raw.effective_at_unix_ms;
 
-  if (typeof critical !== 'boolean') return { error: 'critical is not a boolean' };
-  if (typeof version !== 'string' || version.length === 0) return { error: 'contract_version is not a string' };
   // `revision` is `type: integer` with no `minimum` in the schema. Requiring
   // one here would invent a rule the contract does not state, so only
-  // integer-ness is enforced.
-  if (typeof revision !== 'number' || !Number.isInteger(revision)) return { error: 'revision is not an integer' };
-  if (typeof reason !== 'string' || !REASONS.has(reason)) return { error: `unknown reason ${JSON.stringify(reason)}` };
+  // integer-ness is enforced. Read first so every failure below can still
+  // report where in the chain this receipt claimed to sit.
+  const rawRevision = raw.revision;
+  const revision = typeof rawRevision === 'number' && Number.isInteger(rawRevision) ? rawRevision : null;
+
+  if (typeof critical !== 'boolean') return { error: 'critical is not a boolean', revision };
+  if (typeof version !== 'string' || version.length === 0) {
+    return { error: 'contract_version is not a string', revision };
+  }
+  if (revision === null) return { error: 'revision is not an integer', revision: null };
+  if (typeof reason !== 'string' || !REASONS.has(reason)) {
+    return { error: `unknown reason ${JSON.stringify(reason)}`, revision };
+  }
   if (typeof effectiveAt !== 'number' || !Number.isInteger(effectiveAt)) {
-    return { error: 'effective_at_unix_ms is not an integer' };
+    return { error: 'effective_at_unix_ms is not an integer', revision };
   }
 
   const parsed = parsePolicy(raw.policy);
-  if ('error' in parsed) return parsed;
+  if ('error' in parsed) return { error: parsed.error, revision };
 
   return {
     receipt: {
@@ -311,21 +362,89 @@ function majorOf(version: string): string {
 }
 
 /**
+ * How deep {@link canonicalize} will descend before refusing to compare.
+ *
+ * The receipt this host models is three levels: the receipt object, its
+ * `policy` object, and scalars. The schema sets `additionalProperties: true` on
+ * both, so an engine may hang unmodelled structure below that, and NOTHING in
+ * the bundle bounds how deep. 8 is therefore a CHOICE - a margin of five levels
+ * over the three the contract actually describes - not a number read off the
+ * contract.
+ *
+ * At the cap the receipt is refused as `malformed`, not compared down to the
+ * cap and no further. A truncated comparison would grade two receipts that
+ * differ only below the cap as `idempotent`, which is precisely the silent
+ * duplicate this canonicaliser exists to prevent; refusing is loud, keeps the
+ * last verified policy, and shows as stale. It also keeps the recursion bounded
+ * on input the engine controls.
+ */
+const MAX_CANONICAL_DEPTH = 8;
+
+/**
+ * Serialise a JSON value with object keys in sorted order, or `null` when it
+ * nests past {@link MAX_CANONICAL_DEPTH}.
+ *
+ * `undefined` is encoded as `null` to mirror what `JSON.stringify` does inside
+ * arrays; it cannot arrive from the wire, only from a hand-built object.
+ */
+function canonicalJson(value: unknown, depth: number): string | null {
+  if (value === undefined) return 'null';
+  if (value === null || typeof value !== 'object') {
+    return JSON.stringify(value) ?? null;
+  }
+  if (depth >= MAX_CANONICAL_DEPTH) return null;
+
+  if (Array.isArray(value)) {
+    const items: string[] = [];
+    for (const item of value) {
+      const encoded = canonicalJson(item, depth + 1);
+      if (encoded === null) return null;
+      items.push(encoded);
+    }
+    return `[${items.join(',')}]`;
+  }
+
+  const record = value as Record<string, unknown>;
+  const fields: string[] = [];
+  for (const key of Object.keys(record).toSorted()) {
+    const encoded = canonicalJson(record[key], depth + 1);
+    if (encoded === null) return null;
+    fields.push(`${JSON.stringify(key)}:${encoded}`);
+  }
+  return `{${fields.join(',')}}`;
+}
+
+/**
  * The comparison form used to tell a benign replay from a real conflict.
  *
- * It runs on the PARSED receipt, never on the raw frame, and that is the whole
- * mechanism: `parseReceipt`/`parsePolicy` rebuild the object with a fixed key
- * order and drop the `type` envelope, so a re-serialised replay with different
- * key ordering, and a revision-0 receipt arriving embedded in `ready` versus
- * standalone, all reduce to the same string. Comparing raw frames instead would
- * report both as `conflict` and make the host refuse a policy it already holds.
+ * It runs on the RAW wire object, not on the parsed receipt, and that choice is
+ * the whole point. Both the receipt and its `policy` are
+ * `additionalProperties: true`, so the parsed form is a LOSSY view: two
+ * receipts under one revision that disagree only in a field this host does not
+ * model reduce to the same parsed object. Comparing parsed forms would grade
+ * that pair `idempotent` - the one verdict that emits nothing, warns nothing
+ * and leaves `stale` alone - so a genuine contradiction would read as a
+ * duplicate and vanish. Comparing raw bodies means a difference this host
+ * cannot interpret is still a difference it can REPORT.
  *
- * A key-sorting stringifier was tried here first and measured to change
- * nothing - the parse already normalises order - so it was removed rather than
- * kept as decoration that looks load-bearing.
+ * Two normalisations make that safe rather than noisy:
+ *
+ *  - keys are sorted recursively, so a re-serialised replay with different key
+ *    ordering is still recognised as the same receipt. JSON key order is not
+ *    semantic, and treating it as a conflict would make the host refuse a
+ *    policy it already holds;
+ *  - the top-level `type` discriminator is dropped, because it belongs to the
+ *    event envelope and not to the receipt. Without that, the revision-0
+ *    receipt embedded in `ready` could never match the same receipt
+ *    re-announced standalone.
+ *
+ * Returns `null` when the body nests past {@link MAX_CANONICAL_DEPTH}, which
+ * the caller turns into `malformed`.
  */
-function canonicalize(receipt: AnnouncedPolicyReceipt): string {
-  return JSON.stringify(receipt);
+function canonicalize(raw: unknown): string | null {
+  if (!isRecord(raw)) return null;
+  const body = Object.fromEntries(Object.entries(raw).filter(([key]) => key !== 'type'));
+  return canonicalJson(body, 0);
 }
 
 /**
@@ -339,7 +458,7 @@ function canonicalize(receipt: AnnouncedPolicyReceipt): string {
  * on, because none of them is quoted from the contract - the fixtures declare
  * input only:
  *
- *  0. unreadable body                 -> `malformed`      (reject)
+ *  0. unreadable or uncomparable body -> `malformed`      (reject)
  *  1. `critical !== true`             -> `not_critical`   (reject)
  *  2. `contract_version` major differs -> `version_mismatch` (reject)
  *  3. no prior revision               -> `applied` (seed)
@@ -363,24 +482,38 @@ function canonicalize(receipt: AnnouncedPolicyReceipt): string {
  * Rules 4-8 rest on `manifest.json` naming `revision` as this event's
  * `correlation` key: revision is the identity of a receipt, so two bodies under
  * one revision is a contradiction (not last-write-wins), and a forward jump
- * means at least one receipt never arrived.
+ * means at least one receipt never arrived. "Same body" is judged on the raw
+ * wire object, unmodelled fields included; see {@link canonicalize}.
  *
- * ON REJECTION the last verified policy is KEPT and {@link stale} latches true.
- * The alternative - adopting the newer receipt anyway - would usually give the
- * right answer, since the newest receipt is the current reality. It was
- * rejected because a host that adopts any forward jump has no working notion of
- * a lost frame at all, and the honest report ("I hold revision N and the engine
- * is past it") is more useful to a user deciding whether to trust the session
- * than a confident wrong answer. The cost is real and deliberate: after a gap
- * this tracker cannot advance again for the life of the session, because the
- * missing predecessor never arrives. {@link reset} exists for the one case
- * where that is provably fine - a new engine process.
+ * ON REJECTION the last verified policy is KEPT. The alternative - adopting the
+ * newer receipt anyway - would usually give the right answer, since the newest
+ * receipt is the current reality. It was rejected because a host that adopts
+ * any forward jump has no working notion of a lost frame at all, and the honest
+ * report ("I hold revision N and the engine is past it") is more useful to a
+ * user deciding whether to trust the session than a confident wrong answer. The
+ * cost is real and deliberate: after a gap this tracker cannot advance again
+ * for the life of the session, because the missing predecessor never arrives.
+ * {@link reset} exists for the one case where that is provably fine - a new
+ * engine process.
+ *
+ * STALENESS is a separate question from adoption, and conflating the two was a
+ * real bug here. `stale` means "the engine has announced a revision above the
+ * one I hold", so it is decided against
+ * {@link highestAnnouncedRevision} - the highest revision seen in ANY receipt,
+ * refused ones included - and not against whether the last receipt happened to
+ * fit. Clearing it on any successful apply would let a receipt the host already
+ * knows to be old (revision 5, after the engine announced 9) report the picture
+ * as current.
  */
 export class PolicyRevisionTracker {
   private policy: WCoreEffectivePolicy | null = null;
   private lastRevision: number | null = null;
-  /** Canonical form of the accepted receipt, for the duplicate-identity check. */
+  /** Canonical raw form of the accepted receipt, for the duplicate-identity check. */
   private lastCanonical: string | null = null;
+  /** Modelled form of the accepted receipt, used only to explain a conflict. */
+  private lastModelled: string | null = null;
+  /** Highest revision the engine has announced, whether or not it was adopted. */
+  private highWater: number | null = null;
   private isStale = false;
 
   /** The policy the host should be acting on, or null before the first receipt. */
@@ -393,7 +526,19 @@ export class PolicyRevisionTracker {
     return this.lastRevision;
   }
 
-  /** True once any receipt was refused - the host knows it is behind the engine. */
+  /**
+   * The highest revision any receipt has ANNOUNCED this session - including
+   * receipts that were refused, and receipts too malformed to read anything but
+   * their revision. Null before any receipt announced a readable revision.
+   *
+   * This is the yardstick {@link stale} is measured against: the host is behind
+   * exactly when {@link revision} is below this.
+   */
+  get highestAnnouncedRevision(): number | null {
+    return this.highWater;
+  }
+
+  /** True while the engine has announced a revision above the one held here. */
   get stale(): boolean {
     return this.isStale;
   }
@@ -402,15 +547,18 @@ export class PolicyRevisionTracker {
    * Forget everything. For a NEW engine process only.
    *
    * A fresh engine restarts revisions at 0, which rule 6 would otherwise refuse
-   * as a regression. Whether a mid-session `reason: "resume"` also restarts
-   * numbering is not stated anywhere in the contract and cannot be settled
-   * without running the binary, so this is not called on `resume` - a wrong
-   * reset would silently accept a stale policy as authoritative.
+   * as a regression - and the high-water mark would keep the picture stale for
+   * ever. Whether a mid-session `reason: "resume"` also restarts numbering is
+   * not stated anywhere in the contract and cannot be settled without running
+   * the binary, so this is not called on `resume` - a wrong reset would
+   * silently accept a stale policy as authoritative.
    */
   reset(): void {
     this.policy = null;
     this.lastRevision = null;
     this.lastCanonical = null;
+    this.lastModelled = null;
+    this.highWater = null;
     this.isStale = false;
   }
 
@@ -424,9 +572,18 @@ export class PolicyRevisionTracker {
   accept(raw: unknown): PolicyDecision {
     const parsed = parseReceipt(raw);
     if ('error' in parsed) {
-      return this.reject('malformed', null, parsed.error);
+      return this.reject('malformed', parsed.revision, parsed.error);
     }
     const receipt = parsed.receipt;
+
+    const canonical = canonicalize(raw);
+    if (canonical === null) {
+      return this.reject(
+        'malformed',
+        receipt.revision,
+        `receipt nests deeper than ${MAX_CANONICAL_DEPTH} levels and cannot be compared for identity`
+      );
+    }
 
     if (receipt.critical !== true) {
       return this.reject(
@@ -439,14 +596,15 @@ export class PolicyRevisionTracker {
     const announcedMajor = majorOf(receipt.contract_version);
     const knownMajor = majorOf(EXECUTION_POLICY_SUBCONTRACT_VERSION);
     if (announcedMajor !== knownMajor) {
+      // The revision still counts towards the high-water mark. Whether a 2.0
+      // engine numbers revisions in the same space is unknowable from here, and
+      // assuming it does not would clear `stale` on the strength of a guess.
       return this.reject(
         'version_mismatch',
         receipt.revision,
         `contract_version ${receipt.contract_version} is not major ${knownMajor}`
       );
     }
-
-    const canonical = canonicalize(receipt);
 
     if (this.lastRevision === null) {
       return this.apply(receipt, canonical, `seeded at revision ${receipt.revision} (${receipt.reason})`);
@@ -467,11 +625,14 @@ export class PolicyRevisionTracker {
           detail: `revision ${receipt.revision} re-announced unchanged`,
         };
       }
-      return this.reject(
-        'conflict',
-        receipt.revision,
-        `revision ${receipt.revision} re-announced with a different body`
-      );
+      // Say WHERE the two bodies disagree. When the modelled forms match, the
+      // difference is in a field this host does not model - still two receipts
+      // under one identity, but an operator reading the warning should know
+      // that nothing they can see on screen changed.
+      const modelled = JSON.stringify(receipt);
+      const where =
+        modelled === this.lastModelled ? 'a different body outside the fields this host models' : 'a different body';
+      return this.reject('conflict', receipt.revision, `revision ${receipt.revision} re-announced with ${where}`);
     }
 
     if (receipt.revision < this.lastRevision) {
@@ -493,25 +654,37 @@ export class PolicyRevisionTracker {
     );
   }
 
+  /** Record that the engine claimed this revision exists, adopted or not. */
+  private noteAnnounced(revision: number | null): void {
+    if (revision === null) return;
+    if (this.highWater === null || revision > this.highWater) this.highWater = revision;
+  }
+
   private apply(receipt: AnnouncedPolicyReceipt, canonical: string, detail: string): PolicyDecision {
+    this.noteAnnounced(receipt.revision);
     this.policy = receipt.policy;
     this.lastRevision = receipt.revision;
     this.lastCanonical = canonical;
-    // A receipt that lands exactly where it was expected restores the host's
-    // picture, so staleness clears here and only here.
-    this.isStale = false;
+    this.lastModelled = JSON.stringify(receipt);
+    // Adoption alone does not make the picture current. The host is caught up
+    // only once what it holds reaches the highest revision the engine has ever
+    // announced; until then this receipt is provably old, however neatly it fit
+    // the chain.
+    const behind = this.highWater !== null && receipt.revision < this.highWater;
+    this.isStale = behind;
     return {
       verdict: 'applied',
       applied: true,
       policy: this.policy,
       appliedRevision: this.lastRevision,
       announcedRevision: receipt.revision,
-      stale: false,
-      detail,
+      stale: behind,
+      detail: behind ? `${detail}; still behind revision ${this.highWater} announced earlier` : detail,
     };
   }
 
   private reject(verdict: PolicyVerdict, announcedRevision: number | null, detail: string): PolicyDecision {
+    this.noteAnnounced(announcedRevision);
     this.isStale = true;
     return {
       verdict,
@@ -526,14 +699,16 @@ export class PolicyRevisionTracker {
 }
 
 /**
- * The capability, plus the two seams the decoder needs that a plain
+ * The capability, plus the two seams a decoder needs that a plain
  * `CapabilityHandler` cannot express.
  *
- * `ready` is NOT claimed by this handler: it is a first-class event with its
- * own arm in the decoder (that is where `capabilities` and the negotiated
- * contract are read), and the dispatcher only runs from the decoder's default
- * arm. Claiming `ready` here would register a type that never routes. So the
- * revision-0 seed comes in through {@link seedFromReady}, called from that arm.
+ * `ready` is NOT claimed by this handler, and could not usefully be: `ready` is
+ * a first-class event with its own arm in the decoder (that is where
+ * `capabilities` and the negotiated contract are read), and the dispatcher only
+ * runs from the decoder's default arm, so a handler claiming `ready` would
+ * register a type that never routes. The revision-0 seed must therefore be
+ * pushed in by that arm calling {@link seedFromReady}. No caller exists yet -
+ * see the WIRING note at the top of this file.
  */
 export type ExecutionPolicyCapability = CapabilityHandler & {
   /** The reducer this handler feeds. Exposed so the agent can read `current`/`stale`. */
@@ -543,7 +718,9 @@ export type ExecutionPolicyCapability = CapabilityHandler & {
    * `execution_policy` at all - `compat/events/ready.minimal.json` ships
    * exactly that, even though the core-event schema marks the field required,
    * so an absent receipt is a supported engine, not an error. The tracker then
-   * stays uninitialised rather than assuming a revision 0 nobody sent.
+   * stays uninitialised rather than assuming a revision 0 nobody sent. The
+   * absence is LOGGED through `ctx` when one is given: "no receipt" and "a
+   * receipt this host refused" look identical from outside otherwise.
    */
   seedFromReady(ready: unknown, ctx?: CapabilityContext): PolicyDecision | null;
   /** Forget all revisions. For a new engine process; see {@link PolicyRevisionTracker.reset}. */
@@ -570,9 +747,13 @@ function toFrame(decision: PolicyDecision, receipt: unknown): ExecutionPolicyFra
  *
  * `msg_id` is empty because a policy revision is session-scoped, not
  * turn-scoped: it can arrive between turns, and attaching it to whatever turn
- * happened to be open would file a session-wide fact under one message. The
- * manager forwards frames of this type above its `if (!data.msg_id) return`
- * guard, the same way `config_changed` and `mcp_failed` already are.
+ * happened to be open would file a session-wide fact under one message.
+ *
+ * That choice puts a REQUIREMENT on the layer above, which is not met today:
+ * `WCoreManager` drops frames with no `msg_id` (`if (!data.msg_id) return;`),
+ * so it must gain an `execution_policy` pass-through ABOVE that guard, next to
+ * the `sub_agent_event` one. Until it does, every frame emitted here is
+ * discarded silently.
  */
 function announce(ctx: CapabilityContext, decision: PolicyDecision, receipt: unknown): void {
   ctx.emit({ type: 'execution_policy', data: toFrame(decision, receipt), msg_id: '' });
@@ -583,9 +764,9 @@ function announce(ctx: CapabilityContext, decision: PolicyDecision, receipt: unk
  *
  * A factory rather than a bare object because the tracker is per-engine state:
  * one shared instance across two engine processes would let one session's
- * revisions reject the other's. The registry-facing
- * {@link executionPolicyCapability} is one such instance; anything that runs
- * more than one engine at a time builds its own.
+ * revisions reject the other's. {@link executionPolicyCapability} is one such
+ * instance, meant for the registry; anything that runs more than one engine at
+ * a time builds its own.
  */
 export function createExecutionPolicyCapability(): ExecutionPolicyCapability {
   const tracker = new PolicyRevisionTracker();
@@ -596,8 +777,9 @@ export function createExecutionPolicyCapability(): ExecutionPolicyCapability {
     // appears in NO manifest entry and NO payload schema - only as a bare `type`
     // discriminator in producer-complete.schema.json, with
     // `additionalProperties: true` and zero declared properties. It is claimed
-    // here so it stops being an unexplained warn, and nothing is read from its
-    // body, because there is nothing in the contract to read it against.
+    // here so that, once this capability is registered, it stops being an
+    // unexplained warn; nothing is read from its body, because there is nothing
+    // in the contract to read it against.
     handles: ['execution_policy', 'workspace_policy'],
     tracker,
 
@@ -627,9 +809,19 @@ export function createExecutionPolicyCapability(): ExecutionPolicyCapability {
     },
 
     seedFromReady(ready: unknown, ctx?: CapabilityContext): PolicyDecision | null {
-      if (!isRecord(ready)) return null;
+      if (!isRecord(ready)) {
+        ctx?.log('ready payload is not an object; there is no execution_policy to seed from');
+        return null;
+      }
       const receipt = ready.execution_policy;
-      if (receipt === undefined || receipt === null) return null;
+      if (receipt === undefined || receipt === null) {
+        // Not a fault - `compat/events/ready.minimal.json` is exactly this - but
+        // it must not be invisible either. Without this line an engine that
+        // never sends a receipt and an engine whose receipt was refused both
+        // leave the same empty trace.
+        ctx?.log('ready carries no execution_policy; the tracker stays uninitialised rather than inventing revision 0');
+        return null;
+      }
 
       const decision = tracker.accept(receipt);
       if (ctx) {
@@ -648,5 +840,11 @@ export function createExecutionPolicyCapability(): ExecutionPolicyCapability {
   };
 }
 
-/** The instance the capability registry registers. */
+/**
+ * The instance intended for the capability registry.
+ *
+ * It is NOT registered yet: `HANDLERS` in `capabilities/index.ts` is still
+ * empty, so nothing dispatches to it in the running app. See the WIRING note at
+ * the top of this file for the three edits that change that.
+ */
 export const executionPolicyCapability: ExecutionPolicyCapability = createExecutionPolicyCapability();

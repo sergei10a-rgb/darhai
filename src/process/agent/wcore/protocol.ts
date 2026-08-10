@@ -359,20 +359,12 @@ export type WCoreCommand =
  */
 export const ACKNOWLEDGED_UNHANDLED_EVENTS: ReadonlySet<string> = new Set([
   // ── Anvil receipts (tamper-evident audit log) ──────────────────────
-  'anvil_receipt',
-  'anvil_receipt_invalidated',
   // ── Budget / goal / workflow subsystems Darhai does not expose ─────
-  'budget_grant_result',
   'goal_control_refused',
   'goal_snapshot',
   'goal_transition',
-  'workflow_finished',
-  'workflow_node_event',
-  'workflow_started',
   // ── Policy + capability announcements at engine start ──────────────
-  'execution_policy',
   'capability_activation', // observed only; not in the contract bundle
-  'workspace_policy', // observed only; not in the contract bundle
   // ── Provider routing telemetry (Darhai reads provider_circuit_event) ─
   'provider_attempt', // observed only; not in the contract bundle
   'provider_failover_receipt',

@@ -7,16 +7,44 @@
 /**
  * Budget grants: the half of the budget conversation Darhai never had.
  *
- * What was wrong
- * --------------
- * The decoder already receives `budget_exceeded` and prints one info line -
- * "Budget exceeded: max_tokens_out (observed 8192, limit 4096)" - and then the
- * turn is simply over. The engine publishes the way back (`continue_with_budget`
- * out, `budget_grant_result` in) and Darhai spoke neither: the command type did
- * not exist, and the answer sat in `ACKNOWLEDGED_UNHANDLED_EVENTS`, i.e. was
- * decoded to nothing on purpose. The user's only recourse was to start again.
+ * WHAT THIS MODULE IS
+ * -------------------
+ * A self-contained implementation of the engine's budget-grant exchange:
+ * building `continue_with_budget`, tracking the request_ids it mints, decoding
+ * `budget_grant_result`, and building `approval_resume`. It is a library plus
+ * one {@link CapabilityHandler}. It wires nothing up and imports nothing from
+ * the agent.
  *
- * This module is the missing half. It owns three things:
+ * WHAT IT REQUIRES - none of this is true yet
+ * -------------------------------------------
+ * Read the list below as a to-do for whoever merges the capabilities, NOT as a
+ * description of the running system:
+ *
+ *  1. `budgetGrantsCapability` must be added to `HANDLERS` in
+ *     `capabilities/index.ts`. That array is empty today, so nothing in this
+ *     file runs in production - `dispatchCapabilityEvent` claims no types at
+ *     all and every `budget_grant_result` falls straight through it.
+ *  2. `budget_grant_result` should then be removed from
+ *     `ACKNOWLEDGED_UNHANDLED_EVENTS` in `protocol.ts`, which still lists it.
+ *     Dispatch runs before that check, so leaving it is not a live bug; it is a
+ *     stale claim that this event is deliberately inert.
+ *  3. Something must actually CALL {@link sendContinueWithBudget} - a button on
+ *     the `budget_exceeded` notice is the obvious place. Nothing calls it today,
+ *     which is why the send path carries its own delivery probe rather than
+ *     assuming a healthy transport.
+ *
+ * WHAT IS TRUE TODAY, in the files named
+ * --------------------------------------
+ * `WCoreAgent.handleEvent` has a `budget_exceeded` arm that prints one info line
+ * - "Budget exceeded: max_tokens_out (observed 8192, limit 4096)" - and then the
+ * turn is simply over. The engine publishes a way back (`continue_with_budget`
+ * out, `budget_grant_result` in) and Darhai speaks neither: `WCoreCommand` has
+ * no `continue_with_budget`, and the answer sits in
+ * `ACKNOWLEDGED_UNHANDLED_EVENTS`, i.e. is decoded to nothing on purpose. The
+ * user's only recourse is to start again.
+ *
+ * WHAT IT OWNS
+ * ------------
  *   - the ONLY sanctioned way to construct `continue_with_budget`, because that
  *     command is `additionalProperties: false` with an `anyOf` that JSON-Schema
  *     expresses and TypeScript cannot (see {@link buildContinueWithBudget});
@@ -24,12 +52,12 @@
  *     `"correlation": "request_id"` and the engine can answer
  *     `request_id_conflict`, which proves it tracks ids on its side too;
  *   - the decoder for `budget_grant_result`, including the nine refusal reasons
- *     that used to be swallowed - "managed_policy" (an admin blocked it) has to
- *     read differently from "turn_in_progress" (try again in a moment).
+ *     that would otherwise be swallowed - "managed_policy" (an admin blocked it)
+ *     has to read differently from "turn_in_progress" (try again in a moment).
  *
  * It also builds `approval_resume`. That is a COMMAND the contract publishes
- * and Darhai could not send; the same-named EVENT already exists in the core
- * union, which is why this lives here rather than in `protocol.ts`.
+ * and Darhai cannot send; the same-named EVENT already has an arm in the core
+ * decoder, which is why this lives here rather than in `protocol.ts`.
  *
  * Money moves through here, so every judgement call below is made in the
  * direction of sending less, later, or not at all.
@@ -101,6 +129,13 @@ export function isRetryableRefusal(reason: BudgetRefusalReason): boolean {
  * `adversarial/commands/continue-with-budget-unicode-request-id.jsonl` is 128
  * code points (256 UTF-16 units, 512 bytes) of emoji - it PASSES `maxLength`
  * and is caught only by the ASCII character class.
+ *
+ * TRANSCRIBED, WITH A GATE. `src/` must not read `tests/fixtures/` at runtime,
+ * so this literal is a copy of the schema's `pattern` and copies drift. The
+ * drift gate is the test "REQUEST_ID_PATTERN is the schema's pattern verbatim"
+ * in `tests/unit/wcore-budgetGrants.test.ts`, which compares this `.source`
+ * against `schema/host-command.schema.json` and against the identical pattern on
+ * the event branch. Change one and that test goes red.
  */
 export const REQUEST_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
 
@@ -123,17 +158,38 @@ export const REQUEST_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
  * Built from a STRING, not a `123n` literal: this repo targets ES6, where a
  * BigInt literal is a compile error (TS2737). The string is exact; a numeric
  * argument would not be.
+ *
+ * TRANSCRIBED, WITH A GATE - and the gate has to read the schema as TEXT.
+ * `JSON.parse` on the schema file destroys this number before any comparison
+ * can see it (it comes back as 18446744073709552000), so the test "the token
+ * bound is the schema's maximum, digit for digit" in
+ * `tests/unit/wcore-budgetGrants.test.ts` extracts the raw digits from the file
+ * and compares BigInt to BigInt. Change either side and that test goes red.
  */
 export const MAX_ADDITIONAL_TOKENS = BigInt('18446744073709551615');
 
 /**
  * How many grants may await an answer at once.
  *
- * A pending entry is only ever abandoned because the engine never answered, and
- * an unbounded Map of those is a leak in a process that runs for days. Refusing
- * NEW grants once the map is full would be the other option, but then one
- * unanswered request disables the feature for the rest of the session - so the
- * oldest entry is evicted instead, and evicting is loud.
+ * A HOST-SIDE CHOICE, not a contract number. The contract publishes
+ * `ledger_capacity_exceeded` as a refusal reason, which says the ENGINE bounds
+ * its own ledger, but it never states that bound - there is no capacity field in
+ * the manifest, the schemas, or any fixture (grepped: the string appears only in
+ * the two `refusal_reason` enums). So this number cannot be derived; 64 is
+ * picked and stated as a pick.
+ *
+ * What the engine can actually send: nothing that grows this map. Only
+ * {@link sendContinueWithBudget} adds an entry and every entry is one deliberate
+ * user press, so 64 outstanding presses in one session is already far past
+ * anything a human does - the map only reaches the cap when the engine has
+ * stopped answering, which is exactly the leak this bounds.
+ *
+ * What happens at the cap: the OLDEST entry is dropped, with a warning naming it
+ * and its age. Refusing new grants instead would let one unanswered request
+ * disable the feature for the rest of the session; dropping the oldest keeps the
+ * newest press working. If an evicted grant is answered later, the answer meets
+ * the unknown-request_id path in {@link budgetGrantsCapability} and is discarded
+ * with a warning rather than settling somebody else's grant.
  */
 export const MAX_PENDING_GRANTS = 64;
 
@@ -358,17 +414,64 @@ export function buildApprovalResume(input: ApprovalResumeInput): BuildOutcome<Ap
 export type SendGrantOutcome = { ok: true; requestId: string } | { ok: false; reason: string };
 
 /**
+ * Answers "would a command written right now actually leave this process?".
+ *
+ * WHY THIS IS A REQUIRED ARGUMENT AND NOT AN OPTION WITH A DEFAULT.
+ * `CapabilityContext.sendCommand` returns `void`, and the implementation behind
+ * it drops the command in silence when the engine is gone -
+ * `WCoreAgent.sendCommand` is literally
+ * `if (!this.childProcess?.stdin?.writable) return;` followed by the write. So
+ * a capability that only has the context CANNOT tell a delivered command from a
+ * discarded one, and a ledger entry written for a discarded command is a
+ * request_id that can never be answered: the dialog spins forever and the slot
+ * is held until eviction.
+ *
+ * This module refuses to guess. The caller has the agent and therefore has the
+ * answer, so it must hand it in. Wiring this to `() => true` would be a lie with
+ * a signature, and it would be visible as one in review.
+ *
+ * A probe cannot close the window completely - the stream can die between the
+ * check and the write - which is why the write is also wrapped: see
+ * {@link sendContinueWithBudget}.
+ */
+export type EngineReachable = () => boolean;
+
+/** Drop the oldest pending grant to make room, loudly. See {@link MAX_PENDING_GRANTS}. */
+function evictOldestGrant(ctx: CapabilityContext): void {
+  // Map iterates in insertion order, so the first key is the oldest send.
+  const oldest = pendingGrants.entries().next().value;
+  if (oldest === undefined) return;
+  pendingGrants.delete(oldest[0]);
+  // The age is the useful part of this warning: an engine that answers in
+  // milliseconds and one that never answers look identical without it.
+  const ageMs = Date.now() - oldest[1].at;
+  ctx.warn(`evicted unanswered budget grant "${oldest[0]}" after ${ageMs}ms - ${MAX_PENDING_GRANTS} were pending`);
+}
+
+/**
  * Send one grant and remember it until the engine answers.
  *
  * Takes a {@link CapabilityContext} rather than reaching for the agent: a
  * capability may only speak through the context it is handed, and this keeps
- * the whole path unit-testable without an engine process.
+ * the whole path unit-testable without an engine process. It takes
+ * {@link EngineReachable} separately because the context cannot answer that
+ * question - see the type's own note.
+ *
+ * ORDER MATTERS. Probe, send, and only then record. Every failure mode leaves
+ * the ledger exactly as it found it, so the outcome the caller gets and the
+ * state the module is in agree: `ok: false` means nothing is pending and the
+ * user may press again, `ok: true` means the command was written and an answer
+ * is owed.
  *
  * Nothing here waits. Handlers are synchronous by design, so the answer arrives
  * later as `budget_grant_result` and is emitted as a frame - a promise racing a
  * timeout inside the decode path would be the slow thing this layer forbids.
  */
-export function sendContinueWithBudget(ctx: CapabilityContext, input: ContinueWithBudgetInput): SendGrantOutcome {
+export function sendContinueWithBudget(
+  ctx: CapabilityContext,
+  input: ContinueWithBudgetInput,
+  canReachEngine: EngineReachable
+): SendGrantOutcome {
   const built = buildContinueWithBudget(input);
   // `=== false` rather than `!built.ok`: this repo compiles without
   // strictNullChecks, where only an explicit comparison narrows a discriminated
@@ -385,17 +488,25 @@ export function sendContinueWithBudget(ctx: CapabilityContext, input: ContinueWi
     return { ok: false, reason: `request_id "${requestId}" is already awaiting an answer` };
   }
 
-  if (pendingGrants.size >= MAX_PENDING_GRANTS) {
-    // Map iterates in insertion order, so the first key is the oldest send.
-    const oldest = pendingGrants.entries().next().value;
-    if (oldest !== undefined) {
-      pendingGrants.delete(oldest[0]);
-      // The age is the useful part of this warning: an engine that answers in
-      // milliseconds and one that never answers look identical without it.
-      const ageMs = Date.now() - oldest[1].at;
-      ctx.warn(`evicted unanswered budget grant "${oldest[0]}" after ${ageMs}ms - ${MAX_PENDING_GRANTS} were pending`);
-    }
+  if (!canReachEngine()) {
+    const reason = 'the engine cannot be reached, so the grant was not sent';
+    ctx.warn(`refusing to send continue_with_budget "${requestId}": ${reason}`);
+    return { ok: false, reason };
   }
+
+  try {
+    ctx.sendCommand(built.command);
+  } catch (cause) {
+    // The probe said yes and the write still failed - a stream that died in
+    // between throws EPIPE/ERR_STREAM_DESTROYED rather than returning. Report
+    // the press as not sent; an unsent grant is one the user can repeat, a
+    // recorded-but-unsent grant is a spinner nothing will ever stop.
+    const reason = `the grant was not sent: ${String(cause)}`;
+    ctx.warn(`continue_with_budget "${requestId}" failed to reach the engine: ${String(cause)}`);
+    return { ok: false, reason };
+  }
+
+  if (pendingGrants.size >= MAX_PENDING_GRANTS) evictOldestGrant(ctx);
 
   pendingGrants.set(requestId, {
     requestId,
@@ -403,7 +514,6 @@ export function sendContinueWithBudget(ctx: CapabilityContext, input: ContinueWi
     costUsd: built.command.additional_cost_usd,
     at: Date.now(),
   });
-  ctx.sendCommand(built.command);
   return { ok: true, requestId };
 }
 
@@ -423,6 +533,23 @@ export function resetBudgetGrants(): void {
 }
 
 /**
+ * Every key the schema lets `budget_grant_result` carry - the branch's
+ * `properties`, of which its `required` list is a subset.
+ *
+ * One list, used by the unknown-key check below. Kept beside the decoder rather
+ * than derived from the type, because a TypeScript type is erased at runtime and
+ * this check has to happen at runtime.
+ */
+const BUDGET_GRANT_RESULT_KEYS: ReadonlySet<string> = new Set([
+  'type',
+  'request_id',
+  'additional_tokens',
+  'additional_cost_usd',
+  'outcome',
+  'refusal_reason',
+]);
+
+/**
  * Decode `budget_grant_result`, or say why it cannot be trusted.
  *
  * The schema's two `allOf` rules bind `refusal_reason` to `outcome` - required
@@ -431,17 +558,34 @@ export function resetBudgetGrants(): void {
  * extra field; it is a message whose two halves disagree about whether money
  * was spent, and picking either half would be a guess.
  *
- * Unknown top-level keys are tolerated even though the schema says
- * `additionalProperties: false`. That rule binds the engine's emitter; from
- * the host side an unrecognised key is indistinguishable from an engine that
- * has been upgraded, and refusing it would turn an additive change into a dead
- * feature. Same stance as `negotiateContract`.
+ * UNKNOWN TOP-LEVEL KEYS ARE REFUSED, and this is the one event class where
+ * that is the right direction. Elsewhere (`negotiateContract` over `ready`)
+ * Darhai tolerates unknown keys, because an unrecognised key there is
+ * indistinguishable from an engine upgrade and refusing it would turn an
+ * additive change into a dead feature. Here the schema branch is
+ * `additionalProperties: false` and the manifest grades the type
+ * `criticality: safety`: this message is the answer to a question about money,
+ * and a key this host does not model may be the half that says how much. There
+ * is no safe way to settle a spend answer that is only partly understood.
+ *
+ * The cost is real and is accepted deliberately: an engine that adds a field to
+ * this event stalls grant answers until Darhai is taught the field. It is not
+ * silent - the reason names the offending keys, the pending entry survives so a
+ * well-formed answer can still settle it, and the caller's own
+ * `budget_grant_result` fixtures fail the moment the contract bundle changes.
+ * Between "stall loudly" and "credit an amount from a message we half-read",
+ * this event class gets the first.
  */
 export function decodeBudgetGrantResult(
   event: Record<string, unknown>
 ): { ok: true; value: BudgetGrantResult } | { ok: false; reason: string } {
   if (event.type !== 'budget_grant_result')
     return { ok: false, reason: `not a budget_grant_result: ${describeType(event.type)}` };
+
+  const unknownKeys = Object.keys(event).filter((key) => !BUDGET_GRANT_RESULT_KEYS.has(key));
+  if (unknownKeys.length > 0) {
+    return { ok: false, reason: `budget_grant_result carries unknown field(s): ${unknownKeys.toSorted().join(', ')}` };
+  }
 
   const idFault = requestIdFault('request_id', event.request_id);
   if (idFault) return { ok: false, reason: idFault };
@@ -491,12 +635,14 @@ export function decodeBudgetGrantResult(
 }
 
 /**
- * The capability itself.
+ * The capability itself - inert until something registers it (see the file
+ * header's REQUIRES list).
  *
- * Claims `budget_grant_result` only. `budget_exceeded` keeps its own arm in the
- * decoder switch (it is a first-class event that predates this layer), and
- * `approval_resume` as an EVENT is likewise already decoded there - claiming
- * either here would either be dead code or a second answer to one question.
+ * It declares `budget_grant_result` and nothing else. `budget_exceeded` has its
+ * own arm in `WCoreAgent.handleEvent` today (a first-class event that predates
+ * this layer), and `approval_resume` as an EVENT has an arm there too - claiming
+ * either type here would either be dead code or a second answer to one question,
+ * and the registry rejects two claims on one type outright.
  */
 export const budgetGrantsCapability: CapabilityHandler = {
   name: BUDGET_GRANTS_CAPABILITY,

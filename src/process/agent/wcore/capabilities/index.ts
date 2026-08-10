@@ -16,6 +16,10 @@
  */
 
 import type { CapabilityContext, CapabilityHandler } from './types';
+import { anvilReceiptsCapability } from './anvilReceipts';
+import { budgetGrantsCapability } from './budgetGrants';
+import { executionPolicyCapability } from './executionPolicy';
+import { workflowLifecycleCapability } from './workflowLifecycle';
 
 /**
  * Every capability module Darhai has wired up.
@@ -23,8 +27,18 @@ import type { CapabilityContext, CapabilityHandler } from './types';
  * Adding one is: write the module, import it, add it here. The overlap check
  * runs at module load, so a duplicated event type is a startup failure in dev
  * and in tests - not a silent case of "whichever registered first wins".
+ *
+ * Registration is what makes a capability real. Until a module appears here,
+ * `dispatchCapabilityEvent` returns false for its events and they fall through
+ * to the acknowledged-inert check - the module is correct, tested, and does
+ * nothing. Every wave-1 review found exactly that and was right to.
  */
-const HANDLERS: readonly CapabilityHandler[] = [];
+const HANDLERS: readonly CapabilityHandler[] = [
+  executionPolicyCapability,
+  workflowLifecycleCapability,
+  anvilReceiptsCapability,
+  budgetGrantsCapability,
+];
 
 /**
  * Two capabilities claiming the same event type is a design error, not a

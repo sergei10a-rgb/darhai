@@ -15,8 +15,12 @@
  * `correlation: session_id_and_sequence`), the published JSON Schema, or the
  * fixture's measured shape.
  *
- * The fixtures go through `createDispatcher([...])` - the same factory
- * production uses - so routing proved here is the routing that ships.
+ * The fixtures go through `createDispatcher([...])` - the real factory, not a
+ * stand-in - over a handler list this test supplies. That proves the capability
+ * routes correctly WHEN REGISTERED. It is not proof that it is registered:
+ * `HANDLERS` in `capabilities/index.ts` is still empty and both type names are
+ * still in `ACKNOWLEDGED_UNHANDLED_EVENTS`, so nothing reaches this capability
+ * at runtime yet. See the WIRING STATUS note in the module under test.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -83,8 +87,7 @@ function makeContext(): Recorder {
 describe('contract surface', () => {
   /**
    * If the engine ever adds a third anvil event, this fails here - loudly and
-   * with a name - instead of the new event being dropped into the
-   * acknowledged-unhandled path where nobody looks.
+   * with a name - rather than the new type quietly belonging to nobody.
    */
   it('claims exactly the events the manifest assigns to anvil_receipts', () => {
     const manifestTypes = surfaceOf('anvil_receipts')
@@ -112,10 +115,25 @@ describe('contract surface', () => {
     }
   });
 
+  /**
+   * The title used to promise the ledger and deliver only `validateEvent`. Both
+   * halves are asserted here now, because they can disagree: the schema is a
+   * static shape check, while the ledger is stateful and could reject the
+   * engine's own canonical pair over ordering or linkage and nobody would know.
+   *
+   * The two examples ARE a receipt and its retraction, in that order, so one
+   * ledger must link them rather than merely fail to crash on them.
+   */
   it('the engine’s own example payloads pass the ledger and the schema', () => {
+    const ledger = createAnvilLedger();
+    const outcomes: string[] = [];
     for (const type of ANVIL_EVENT_TYPES) {
-      expect(validateEvent(examplePayload('event', type)).valid, type).toBe(true);
+      const payload = examplePayload('event', type);
+      expect(validateEvent(payload).valid, type).toBe(true);
+      outcomes.push(...labels([ledger.admit(payload)]));
     }
+    expect(outcomes).toEqual(['accepted', 'invalidated']);
+    expect(ledger.receiptStatus(SESSION, RECEIPT)).toBe('invalidated');
   });
 });
 
@@ -432,9 +450,10 @@ describe('routing through the real dispatcher', () => {
   });
 
   /**
-   * Returning false would hand the event back to the acknowledged-unhandled
-   * check, and the safety event would go quiet again - the exact behaviour this
-   * capability replaced.
+   * Returning false would hand the event back to the dispatcher's caller as
+   * unhandled, which for these two type names is the acknowledged-unhandled
+   * path - so the safety event would be dropped exactly as silently as it is
+   * dropped today, and registering this capability would have bought nothing.
    */
   it('never declines an event it claims, whatever the verdict', () => {
     const dispatch = createDispatcher([createAnvilReceiptsCapability()]);
@@ -502,6 +521,26 @@ describe('each guard rejects a single-field mutation of a good receipt', () => {
     ['sequence negative', { sequence: -1 }, 'malformed'],
     ['sequence fractional', { sequence: 0.5 }, 'malformed'],
     ['checks_passed sent as a string', { checks_passed: '14' }, 'malformed'],
+    // `priced` is declared `type: boolean`. Nothing downstream reads it, which
+    // is exactly why an unchecked wrong type would never surface anywhere.
+    ['priced sent as a string', { priced: 'yes' }, 'malformed'],
+    // A string field declared `type: string`, carrying a number instead. Picked
+    // from OPTIONAL_STRING_FIELDS rather than OPTIONAL_INTEGER_FIELDS so the
+    // two loops are covered by different rows.
+    ['coverage sent as a number', { coverage: 87.5 }, 'malformed'],
+    /*
+     * The two halves of the required_extensions shape rule, separately.
+     *
+     * These matter more than they look. The reject rule in `admit` fires on
+     * `Array.isArray(x) && x.length > 0`. A bare string therefore reads as "no
+     * extensions demanded" to that rule, and without the shape check the
+     * receipt below is ACCEPTED while demanding a reader extension this host
+     * does not implement - the precise failure the capability exists to catch.
+     * An array holding a non-string degrades to `unknown_critical_extension`
+     * instead of `malformed`, which is a wrong reason for a right refusal.
+     */
+    ['required_extensions sent as a bare string', { required_extensions: 'future-authority-v2' }, 'malformed'],
+    ['required_extensions holding a non-string', { required_extensions: [42] }, 'malformed'],
   ])('%s -> %s', (_name, patch, code) => {
     const mutated: Record<string, unknown> = { ...good(), ...patch };
     for (const [key, value] of Object.entries(patch)) if (value === undefined) delete mutated[key];
@@ -557,5 +596,213 @@ describe('each guard rejects a single-field mutation of a good receipt', () => {
     expect(verdict.outcome).toBe('rejected');
     expect(verdict.code).toBe('body_conflict');
     expect(ledger.receiptStatus(SESSION, RECEIPT)).toBe('quarantined');
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * The invalidation branch, mutated one field at a time.
+ *
+ * Every counter-check above mutates a RECEIPT, so a rule that silently applies
+ * to only one of the two event types kept passing. `required_extensions` was
+ * exactly that: guarded on the receipt, unguarded on the retraction.
+ */
+describe('each guard rejects a single-field mutation of a good invalidation', () => {
+  const good = () => ({ ...fx('valid-invalidation')[1] });
+
+  /** Shape is judged before linkage, so these need no admitted receipt. */
+  it.each([
+    ['reason outside the schema enum', { reason: 'because-i-said-so' }],
+    ['reason blanked', { reason: '' }],
+    ['observed_artifact_digest sent as a number', { observed_artifact_digest: 12345 }],
+    // The finding that motivated this whole block: with the shape rule gated
+    // behind `type === 'anvil_receipt'`, a retraction demanding a reader
+    // extension in non-array form was admitted and reported as a retraction.
+    ['required_extensions sent as a bare string', { required_extensions: 'future-authority-v2' }],
+  ])('an invalidation with %s is malformed', (_name, patch) => {
+    const verdict = createAnvilLedger().admit({ ...good(), ...patch });
+    expect(verdict.outcome).toBe('rejected');
+    expect(verdict.code).toBe('malformed');
+  });
+
+  /** Well-formed, and still refused: this host implements no anvil extensions. */
+  it('an invalidation demanding an extension is refused like a receipt would be', () => {
+    const ledger = createAnvilLedger();
+    ledger.admit(fx('valid-invalidation')[0]);
+    const verdict = ledger.admit({ ...good(), required_extensions: ['future-authority-v2'] });
+    expect(verdict.outcome).toBe('rejected');
+    expect(verdict.code).toBe('unknown_critical_extension');
+    expect(ledger.receiptStatus(SESSION, RECEIPT)).toBe('accepted');
+  });
+
+  /**
+   * A receipt can be retracted once. A second retraction naming it - different
+   * event, different reason, fresh digest, so neither the binding table nor the
+   * sequence rules answer first - reaches the linkage check with nothing live
+   * left to retract.
+   */
+  it('a second retraction of an already-retracted receipt has no live verdict to take', () => {
+    const ledger = createAnvilLedger();
+    drive(fx('valid-invalidation'), ledger);
+    const verdict = ledger.admit({
+      ...good(),
+      sequence: 2,
+      event_id: 'anvil-event-002',
+      reason: 'gate_revoked',
+      invalidation_body_digest: `sha256:${'9'.repeat(64)}`,
+    });
+    expect(verdict.outcome).toBe('rejected');
+    expect(verdict.code).toBe('stale_replay');
+    expect(ledger.receiptStatus(SESSION, RECEIPT)).toBe('invalidated');
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * `contract_version` is validated, not parsed.
+ *
+ * `Number.parseInt` reads the longest numeric prefix and discards the rest, so
+ * reading the major with it accepted six malformed strings as the v1 this host
+ * knows - and a version string the host has misread is a verdict it has no
+ * business asserting.
+ */
+describe('contract_version shape', () => {
+  const withVersion = (contract_version: string) =>
+    createAnvilLedger().admit({ ...fx('valid-invalidation')[0], contract_version });
+
+  it.each([
+    '1x2', // parseInt stops at the letter
+    '1-2', // and at the sign
+    '1..0', // an empty minor component
+    '01.0', // a leading zero is a different string, not a different number
+    '+1.0', // parseInt honours a leading plus
+    '1e0', // exponent notation is not a version
+    '1', // major alone - the contract always publishes MAJOR.MINOR
+    '1.0.1', // three components: a shape the contract has never published
+    'v1.0', // a common human prefix the wire does not use
+    ' 1.0', // parseInt skips leading whitespace
+  ])('%j is refused rather than read as v1', (version) => {
+    const verdict = withVersion(version);
+    expect(verdict.outcome).toBe('rejected');
+    expect(verdict.code).toBe('version_mismatch');
+  });
+
+  /**
+   * The positive control. Without it the rule above could be satisfied by
+   * hard-coding the single literal "1.0", which would refuse every future
+   * minor bump the subcontract is allowed to make.
+   */
+  it.each(['1.0', '1.7', '1.10'])('%j is accepted as the v1 subcontract', (version) => {
+    expect(withVersion(version).outcome).toBe('accepted');
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Redelivery, which is the ordinary case rather than an attack.
+ *
+ * An at-least-once transport that reconnects replays a BATCH. The ledger used
+ * to tolerate an identical repeat only at the newest sequence and call every
+ * older one a `stale_replay` - so a reconnect produced one quiet duplicate and
+ * a tamper alert for each older event, all of them byte-identical to what the
+ * ledger already held. False alerts on a safety-class readout are how a real
+ * one gets ignored.
+ */
+describe('an at-least-once transport redelivering a batch', () => {
+  /**
+   * Three receipts, all left LIVE. No retraction anywhere in this block, so the
+   * irreversibility rule is out of the picture and the sequence rules are what
+   * is actually under test.
+   *
+   * Each carries its own `receipt_body_digest`, because these are three
+   * different bodies and one digest vouching for two of them is the
+   * contradiction the binding table exists to report.
+   */
+  const receiptAt = (sequence: number): Record<string, unknown> => ({
+    ...fx('valid-invalidation')[0],
+    sequence,
+    receipt_id: `receipt-batch-00${sequence}`,
+    event_id: `anvil-event-batch-00${sequence}`,
+    receipt_body_digest: `sha256:${String(sequence).repeat(64)}`,
+  });
+
+  const BATCH = [0, 1, 2];
+
+  it('tolerates a byte-identical repeat at every admitted sequence, not just the newest', () => {
+    const ledger = createAnvilLedger();
+    expect(labels(BATCH.map((s) => ledger.admit(receiptAt(s))))).toEqual(['accepted', 'accepted', 'accepted']);
+
+    // Replayed oldest-first, the order a reconnecting transport resends in.
+    expect(labels(BATCH.map((s) => ledger.admit(receiptAt(s))))).toEqual([
+      'accepted_duplicate',
+      'accepted_duplicate',
+      'accepted_duplicate',
+    ]);
+    for (const s of BATCH) expect(ledger.receiptStatus(SESSION, `receipt-batch-00${s}`)).toBe('accepted');
+    expect(ledger.sessionIncomplete(SESSION)).toBe(false);
+  });
+
+  it('says nothing to the user about a redelivered batch', () => {
+    const ledger = createAnvilLedger();
+    const dispatch = createDispatcher([createAnvilReceiptsCapability(ledger)]);
+    const ctx = makeContext();
+    for (const pass of [0, 1]) {
+      for (const s of BATCH) expect(dispatch(receiptAt(s), ctx), `pass ${pass} seq ${s}`).toBe(true);
+    }
+    expect(ctx.frames).toEqual([]);
+    expect(ctx.warns).toEqual([]);
+  });
+
+  /**
+   * The tolerance is gated on identity AND body, not on "we have seen this
+   * sequence". Both counter-cases below carry a FRESH `receipt_body_digest` so
+   * the binding table cannot answer first - the slot comparison is the
+   * mechanism under test, not a stand-in for it.
+   */
+  it('an old sequence replayed with a changed body is still a body conflict', () => {
+    const ledger = createAnvilLedger();
+    for (const s of BATCH) ledger.admit(receiptAt(s));
+    const verdict = ledger.admit({
+      ...receiptAt(0),
+      coverage: 'line:12.5%',
+      receipt_body_digest: `sha256:${'f'.repeat(64)}`,
+    });
+    expect(verdict.outcome).toBe('rejected');
+    expect(verdict.code).toBe('body_conflict');
+    expect(ledger.receiptStatus(SESSION, 'receipt-batch-000')).toBe('quarantined');
+  });
+
+  it('an old sequence claimed by a different message is a slot conflict, not a duplicate', () => {
+    const ledger = createAnvilLedger();
+    for (const s of BATCH) ledger.admit(receiptAt(s));
+    const verdict = ledger.admit({
+      ...receiptAt(0),
+      receipt_id: 'receipt-batch-999',
+      event_id: 'anvil-event-batch-999',
+      receipt_body_digest: `sha256:${'e'.repeat(64)}`,
+    });
+    expect(verdict.outcome).toBe('rejected');
+    expect(verdict.code).toBe('sequence_conflict');
+    expect(ledger.receiptStatus(SESSION, 'receipt-batch-999')).toBe('unknown');
+  });
+
+  /**
+   * The interaction that makes the whole change safe. A retracted receipt
+   * replayed at its OWN admitted sequence matches its slot byte-for-byte, so
+   * the redelivery rule on its own would call it a duplicate and leave the
+   * user believing a gate closed over bytes the engine had already disowned.
+   * Irreversibility is ordered ahead of the sequence rules precisely so it
+   * answers first.
+   */
+  it('does not extend to a retracted receipt: irreversibility answers first', () => {
+    const ledger = createAnvilLedger();
+    drive(fx('valid-invalidation'), ledger);
+    const verdict = ledger.admit(fx('valid-invalidation')[0]);
+    expect(verdict.outcome).toBe('rejected');
+    expect(verdict.code).toBe('stale_replay');
+    expect(ledger.receiptStatus(SESSION, RECEIPT)).toBe('invalidated');
   });
 });
