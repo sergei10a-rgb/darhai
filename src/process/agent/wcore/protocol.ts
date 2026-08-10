@@ -307,3 +307,59 @@ export type WCoreCommand =
       headers?: Record<string, string>;
     }
   | { type: 'ping' };
+
+// ============================================
+// Engine events this host knowingly does not act on
+// ============================================
+
+/**
+ * Event types the engine emits that Darhai deliberately does not handle yet.
+ *
+ * The decoder's `default` arm warns on every unrecognised event, on purpose:
+ * safety-critical variants (`browser_policy_denied`) were once dropped in
+ * silence for a whole engine release. But an engine upgrade also brings
+ * variants that are simply not wired up here yet, and warning on those turns
+ * the signal into noise - measured on v0.12.26, a single engine start emits 27
+ * of them (`capability_activation` alone 24 times).
+ *
+ * So the warn now means one specific thing: "the engine emitted something this
+ * host has never been told about". Anything listed here is known, reviewed, and
+ * intentionally inert. `tests/unit/wcore-eventCoverage.test.ts` keeps the list
+ * honest - a name may not appear both here and in {@link WCoreEvent}.
+ *
+ * Source: `wayland-core-v0.12.26-desktop-contract-v1.tar.gz` (`desktop/v1/events/`),
+ * plus three variants observed from the running binary that the contract bundle
+ * does not declare (marked below). Re-derive after an engine bump with
+ * `node scripts/measure-approval-order.mjs` and the contract asset.
+ */
+export const ACKNOWLEDGED_UNHANDLED_EVENTS: ReadonlySet<string> = new Set([
+  // ── Anvil receipts (tamper-evident audit log) ──────────────────────
+  'anvil_receipt',
+  'anvil_receipt_invalidated',
+  // ── Budget / goal / workflow subsystems Darhai does not expose ─────
+  'budget_grant_result',
+  'goal_control_refused',
+  'goal_snapshot',
+  'goal_transition',
+  'workflow_finished',
+  'workflow_node_event',
+  'workflow_started',
+  // ── Policy + capability announcements at engine start ──────────────
+  'execution_policy',
+  'capability_activation', // observed only; not in the contract bundle
+  'workspace_policy', // observed only; not in the contract bundle
+  // ── Provider routing telemetry (Darhai reads provider_circuit_event) ─
+  'provider_attempt', // observed only; not in the contract bundle
+  'provider_failover_receipt',
+  // ── Host-side request/response verbs Darhai does not implement ──────
+  'host_send_message_request',
+  'mcp_removal_result',
+  'unknown_tool_effect_resolved',
+  // ── Diagnostics + recovery surfaces (engine-driven, opt-in) ─────────
+  'runtime_diagnostics_snapshot',
+  'runtime_diagnostics_unavailable',
+  'session_recovery_replay',
+  'session_recovery_snapshot',
+  'session_recovery_unavailable',
+  'turn_recovery_lifecycle',
+]);

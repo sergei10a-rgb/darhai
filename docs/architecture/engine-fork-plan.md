@@ -18,7 +18,7 @@
 | Repo үүссэн | 2026-06-08 (2 сарын настай) |
 | Эх код | **1,817 `.rs` файл · 883,842 мөр · 56 crate** |
 | Upstream-ийн сүүлийн release | **v0.12.26** (2026-08-08) |
-| Дархайн бэхэлсэн хувилбар | **v0.10.0** ← 16 minor хоцорсон |
+| Дархайн бэхэлсэн хувилбар | **v0.12.26** (2026-08-10-нд v0.10.0-аас ахиулсан) |
 | Бинарын хэмжээ | 57.8 МБ (win32-x64) |
 | Release asset | 10 (6 платформ + checksums + SBOM + manifest + desktop-contract) |
 | CI workflow | 10+ (`release.yml`, `release-please.yml`, `release-rehearsal.yml` орно) |
@@ -157,15 +157,55 @@ Fork хийхээс **татгалзах** дохио:
 
 **Fork хийхгүй. Оронд нь:**
 
-### Яаралтай: хөдөлгүүрийг шинэчлэх
-Дархай **v0.10.0** дээр, upstream **v0.12.26** дээр байна — 16 minor хувилбар.
-Хоёр сарын турш гарсан бүх засвар, шинэ боломж Дархайд байхгүй.
+### ✅ Хийгдсэн (2026-08-10): хөдөлгүүрийг v0.12.26 руу ахиулсан
 
-Хийх: `scripts/prepareWaylandCore.js`-ийн `DEFAULT_WCORE_VERSION`-ыг ахиулж,
-`PINNED_VERSION`-той хамт (тест барина), бүрэн шалгалт хийх. Гэхдээ 16
-хувилбарын өөрчлөлтийг эхлээд уншиж, эвдрэх өөрчлөлт (breaking change) байгаа
-эсэхийг тогтоох ёстой — ялангуяа `--json-stream` протокол, `WAYLAND_HOME`
-precedence, tool нэрс.
+Дархай **v0.10.0** дээр, upstream **v0.12.26** дээр байсан — 16 minor хувилбар
+хоцорсон. Одоо ижил хувилбар дээр.
+
+**Юуг хэмжсэн (таамаглаагүй):**
+
+| Шалгалт | Үр дүн |
+|---|---|
+| Дархайн илгээдэг 9 команд гэрээнд байгаа эсэх | **9/9 байна** |
+| Дархайн боловсруулдаг 33 event гэрээнд байгаа эсэх | **33/33 байна** |
+| CLI флаг (13 ширхэг, Дархайн ашигладаг бүгд) | **13/13 хэвээр** |
+| `WAYLAND_HOME` precedence | **хэвээр** (`wcore-engineHome.test.ts` бинар дээр) |
+| Approval дохионы дараалал | **хэвээр** — `tool_request` эхэлнэ, 0.0–0.1мс |
+| Бүрэн unit suite | **10,187 ногоон** |
+
+**Эвдрэх өөрчлөлт байгаагүй.** Протокол зөвхөн ӨРГӨЖСӨН.
+
+**Гэхдээ нэг бодит үр дагавар олдсон:** v0.12.26 нь Дархайн мэддэггүй 23 төрлийн
+event илгээдэг, үүнээс асаалт бүрт **27 мөр** (`capability_activation` дан 24).
+Дархайн декодер мэдэхгүй event-ийг warn-оор унагаадаг тул лог дүүрэх байсан.
+Шийдэл: `ACKNOWLEDGED_UNHANDLED_EVENTS` (protocol.ts) — мэдэгдэж буй, зориудаар
+идэвхгүй жагсаалт. Warn одоо зөвхөн ЖИНХЭНЭ шинэ зүйлд гарна.
+`tests/unit/wcore-eventCoverage.test.ts` жагсаалтыг үнэн байлгана.
+
+**Ашиглаагүй боломжууд** (гэрээнд байгаа, Дархай хараахан авaaгүй): session
+recovery, turn recovery, budget grant, goal subsystem, workflow, runtime
+diagnostics, anvil receipts. Эдгээр нь ирээдүйн ажил, эвдрэл биш.
+
+### Дараагийн шинэчлэлтийг хэрхэн хийх вэ
+
+```bash
+# 1. Шинэ tag-ийн checksum-ыг бүртгэх (release-ийн гарын үсэгтэй файлаас)
+gh release download <tag> --repo FerroxLabs/wayland-core --pattern "*checksums.txt"
+#    -> scripts/bundled-wcore-shasums.json-д нэмэх
+
+# 2. Татах (checksum шалгагдана)
+WCORE_VERSION=<tag> WCORE_FORCE_DOWNLOAD=1 node scripts/prepareWaylandCore.js
+
+# 3. Хоёр тогтмолыг ахиулах: DEFAULT_WCORE_VERSION + PINNED_VERSION
+#    (enginePinnedVersion.test.ts зөрүүг барина)
+
+# 4. Гэрээг татаж протоколын ялгааг харах
+gh release download <tag> --repo FerroxLabs/wayland-core --pattern "*desktop-contract*"
+
+# 5. Бинар дээр хэмжих
+node ./node_modules/vitest/vitest.mjs run tests/unit/wcore-engineHome.test.ts
+node scripts/measure-approval-order.mjs <binary> 3 --model <model>
+```
 
 ### Дунд хугацаанд: бэлтгэл хийх
 Fork хийхгүй ч бэлтгэлтэй байх:

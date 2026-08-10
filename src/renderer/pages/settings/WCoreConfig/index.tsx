@@ -30,7 +30,7 @@ import styles from './WCoreConfig.module.css';
  * told the user the wrong version whenever the live one had not arrived yet),
  * so `tests/unit/enginePinnedVersion.test.ts` now fails on any divergence.
  */
-export const PINNED_VERSION = 'v0.10.0';
+export const PINNED_VERSION = 'v0.12.26';
 
 type RailEntry = {
   key: WCoreRailKey;

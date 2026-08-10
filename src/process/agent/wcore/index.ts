@@ -20,6 +20,7 @@ import { killChild } from '../acp/utils';
 import { PromptTimer } from '@process/acp/session/PromptTimer';
 import { wcoreStderrLevel } from './stderrLog';
 import type { WCoreEvent, WCoreCommand, WCoreCapabilities } from './protocol';
+import { ACKNOWLEDGED_UNHANDLED_EVENTS } from './protocol';
 
 const WCORE_PROJECT_CONFIG = '.wcore.toml';
 
@@ -938,7 +939,12 @@ export class WCoreAgent {
       default: {
         const unknownEvent = event as { type?: unknown };
         const typeStr = typeof unknownEvent.type === 'string' ? unknownEvent.type : '<non-string>';
-        console.warn(`[WCoreAgent] unknown event type "${typeStr}" - dropping`, event);
+        // Known-but-inert variants stay quiet: on engine v0.12.26 a single
+        // start emits 27 of them, which would bury the one warning that
+        // matters. See ACKNOWLEDGED_UNHANDLED_EVENTS for why each is listed.
+        if (!ACKNOWLEDGED_UNHANDLED_EVENTS.has(typeStr)) {
+          console.warn(`[WCoreAgent] unknown event type "${typeStr}" - dropping`, event);
+        }
         break;
       }
     }

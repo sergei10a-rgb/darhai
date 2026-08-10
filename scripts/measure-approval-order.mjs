@@ -38,9 +38,11 @@
 import { spawn } from 'node:child_process';
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 
-const BINARY = process.argv[2];
+// Resolved against the CWD the user typed it in: each run spawns inside a fresh
+// temp workspace, where a relative path would be ENOENT.
+const BINARY = process.argv[2] ? resolve(process.argv[2]) : undefined;
 const RUNS = Number(process.argv[3] ?? 5);
 /** Extra engine flags (e.g. `--model google/gemini-2.5-flash`). */
 const EXTRA_ARGS = process.argv.slice(4);
