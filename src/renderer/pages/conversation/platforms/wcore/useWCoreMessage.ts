@@ -6,27 +6,192 @@
 
 import { ipcBridge } from '@/common';
 import { transformMessage } from '@/common/chat/chatLib';
+import type { IMessageTips } from '@/common/chat/chatLib';
+import { uuid } from '@/common/utils';
 import type { IResponseMessage } from '@/common/adapter/ipcBridge';
 import type { TChatConversation, TokenUsageData } from '@/common/config/storage';
 import type { ThoughtData } from '@/renderer/components/chat/ThoughtDisplay';
 import { useAddOrUpdateMessage } from '@/renderer/pages/conversation/Messages/hooks';
+import type { ExecutionPolicyFrame } from '@process/agent/wcore/capabilities/handlers/executionPolicy';
+import type { BudgetGrantFrameData } from '@process/agent/wcore/capabilities/handlers/budgetGrants';
+import type {
+  HostDeliveryFrame,
+  ProviderFailoverFrame,
+} from '@process/agent/wcore/capabilities/handlers/hostDelegatedDelivery';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 
 type TokenUsage = {
   input_tokens?: number;
   output_tokens?: number;
 };
 
+/** What a capability notice looks like once it is copy rather than a frame. */
+export type NoticeCopy = { content: string; severity: IMessageTips['content']['type'] };
+
+/**
+ * Turn a `provider_failover_receipt` frame into user-facing copy.
+ *
+ * A switched failover is graded `warning`, not `success`, even though the frame
+ * itself carries `severity: 'info'`. The turn did continue - but it continued on
+ * a different provider, which means a different company saw the conversation.
+ * The engine grades this event `criticality: safety` for exactly that reason,
+ * and a green tick would tell the user "all fine" about a change they may need
+ * to act on.
+ */
+export function describeFailover(frame: ProviderFailoverFrame, t: TFunction): NoticeCopy {
+  // Unreadable receipt: every provider/model field is null, so there is nothing
+  // to name. Say that a switch happened and could not be read - inventing a
+  // provider name here would be worse than admitting the gap.
+  if (frame.verdict === 'malformed') {
+    return { content: t('conversation.failover.malformed'), severity: 'warning' };
+  }
+
+  const reason = frame.reason
+    ? t(`conversation.failover.reason.${frame.reason}`, { defaultValue: frame.reason })
+    : t('conversation.failover.reason.unknown');
+
+  // Only rejections are listed; an accepted candidate that simply was not
+  // chosen tells the user nothing about why their turn moved.
+  const rejected = frame.candidates
+    .filter((candidate) => 'Err' in candidate.disposition)
+    .map((candidate) => `${candidate.provider}/${candidate.model}: ${(candidate.disposition as { Err: string }).Err}`);
+
+  const detail =
+    rejected.length > 0
+      ? // `rejected`, not `count`: i18next reserves `count` for plural selection
+        // and would silently fall back to a `_one`/`_other` key no locale has.
+        `\n${t('conversation.failover.rejectedHeader', { rejected: rejected.length })}\n${rejected.join('\n')}`
+      : '';
+
+  if (frame.verdict === 'exhausted') {
+    return {
+      content:
+        t('conversation.failover.exhausted', {
+          failedProvider: frame.failedProvider,
+          failedModel: frame.failedModel,
+          reason,
+        }) + detail,
+      severity: 'error',
+    };
+  }
+
+  return {
+    content:
+      t('conversation.failover.switched', {
+        failedProvider: frame.failedProvider,
+        failedModel: frame.failedModel,
+        reason,
+        selectedProvider: frame.selectedProvider,
+        selectedModel: frame.selectedModel,
+      }) + detail,
+    severity: 'warning',
+  };
+}
+
+/**
+ * Turn a failed host-delegated delivery into user-facing copy.
+ *
+ * The capability only announces FAILURES, so there is no success arm here. The
+ * `unconfigured` flag separates the two failures the user can act on
+ * differently: "no plugin for this platform is running" is a Settings problem,
+ * anything else is a send that was attempted and refused.
+ */
+export function describeDelivery(frame: HostDeliveryFrame, t: TFunction): NoticeCopy {
+  return {
+    content: frame.unconfigured
+      ? t('conversation.delivery.unconfigured', { platform: frame.platform })
+      : t('conversation.delivery.failed', { platform: frame.platform, error: frame.error }),
+    severity: 'warning',
+  };
+}
+
+/** The granted amount as one phrase. Zero halves are omitted, not shown as "0". */
+function describeAmount(tokens: number, costUsd: number, t: TFunction): string {
+  const hasTokens = typeof tokens === 'number' && tokens > 0;
+  const hasCost = typeof costUsd === 'number' && costUsd > 0;
+  // The schema makes BOTH fields required, so a token-only grant answers with
+  // `additional_cost_usd: 0`. Printing "US$ 0" beside it would read as a second
+  // amount that was granted.
+  if (hasTokens && hasCost) {
+    return t('mcp.budgetResult.both', {
+      tokens: t('mcp.budgetResult.tokens', { tokens: String(tokens) }),
+      cost: t('mcp.budgetResult.cost', { cost: String(costUsd) }),
+    });
+  }
+  if (hasTokens) return t('mcp.budgetResult.tokens', { tokens: String(tokens) });
+  if (hasCost) return t('mcp.budgetResult.cost', { cost: String(costUsd) });
+  return t('mcp.budgetResult.nothing');
+}
+
+/**
+ * Turn the engine's answer to a budget grant into user-facing copy.
+ *
+ * Why every refusal reason gets its own sentence: "an administrator's policy
+ * blocks this" and "a turn is still running, try again shortly" are opposite
+ * instructions to the user, and the decoder went to the trouble of preserving
+ * all nine precisely so the difference survives to here. Collapsing them into
+ * "the grant was refused" would throw that away one line before it is read.
+ *
+ * The granted amount is the one the ENGINE reports, never the one the host
+ * asked for - the schema lets it grant less, and a host that echoes the request
+ * misreports spend in the one place a user checks it.
+ */
+export function describeBudgetGrant(frame: BudgetGrantFrameData, t: TFunction): NoticeCopy {
+  if (frame.outcome === 'refused') {
+    const reason = frame.refusalReason
+      ? t(`mcp.budgetResult.reason.${frame.refusalReason}` as never, { defaultValue: frame.refusalReason })
+      : t('mcp.budgetResult.reason.unknown');
+    const retry = frame.retryable === true ? ` ${t('mcp.budgetResult.retry')}` : '';
+    return {
+      content: t('mcp.budgetResult.refused', { reason }) + retry,
+      // A refusal that may work shortly is not the same news as one that never
+      // will, and the colour is the fastest thing the user reads.
+      severity: frame.retryable === true ? 'warning' : 'error',
+    };
+  }
+
+  const granted = describeAmount(frame.additionalTokens, frame.additionalCostUsd, t);
+  const shortTokens = typeof frame.requestedTokens === 'number' && frame.additionalTokens < frame.requestedTokens;
+  const shortCost = typeof frame.requestedCostUsd === 'number' && frame.additionalCostUsd < frame.requestedCostUsd;
+  if (shortTokens || shortCost) {
+    return {
+      content: t('mcp.budgetResult.grantedLess', {
+        amount: granted,
+        requested: describeAmount(frame.requestedTokens ?? 0, frame.requestedCostUsd ?? 0, t),
+      }),
+      severity: 'warning',
+    };
+  }
+
+  return { content: t('mcp.budgetResult.granted', { amount: granted }), severity: 'success' };
+}
+
 export const useWCoreMessage = (
   conversation_id: string,
   options?: {
     onError?: (message: IResponseMessage) => void;
     onConfigChanged?: (capabilities: Record<string, unknown>) => void;
+    /**
+     * The engine's effective execution policy changed, or a revision was
+     * refused. Called for EVERY decision, including rejections - a refused
+     * receipt is exactly when the host's picture of "will edits auto-apply /
+     * are we sandboxed" has gone stale, and that is what the badge must say.
+     */
+    onExecutionPolicy?: (frame: ExecutionPolicyFrame) => void;
   }
 ) => {
   const onError = options?.onError;
   const onConfigChanged = options?.onConfigChanged;
   const onConfigChangedRef = useRef(onConfigChanged);
+  const onExecutionPolicy = options?.onExecutionPolicy;
+  const onExecutionPolicyRef = useRef(onExecutionPolicy);
+  const { t } = useTranslation();
+  // Held in a ref, like the callbacks above: the stream subscription must not be
+  // torn down and rebuilt every time the language changes, and a rebuild between
+  // two frames of one turn would drop whatever arrived in the gap.
+  const tRef = useRef(t);
   const addOrUpdateMessage = useAddOrUpdateMessage();
   const [streamRunning, setStreamRunning] = useState(false);
   const [hasActiveTools, setHasActiveTools] = useState(false);
@@ -52,6 +217,12 @@ export const useWCoreMessage = (
   useEffect(() => {
     onConfigChangedRef.current = onConfigChanged;
   }, [onConfigChanged]);
+  useEffect(() => {
+    onExecutionPolicyRef.current = onExecutionPolicy;
+  }, [onExecutionPolicy]);
+  useEffect(() => {
+    tRef.current = t;
+  }, [t]);
   useEffect(() => {
     hasActiveToolsRef.current = hasActiveTools;
   }, [hasActiveTools]);
@@ -233,6 +404,78 @@ export const useWCoreMessage = (
           // transformMessage handles the status+body merge; composeMessage/hooks.ts
           // merges updates into the same card via msg_id = parentCallId.
           addOrUpdateMessage(transformMessage(message));
+          break;
+        case 'workflow_run':
+          // workflow_lifecycle_v1 run card, keyed by runId. Handled here and not
+          // in `default` because the default arm sets hasContentInTurnRef and
+          // flips streamRunning back on - a workflow run is a session-level fact
+          // that can arrive between turns, and treating it as turn content would
+          // leave the composer locked with nothing generating.
+          addOrUpdateMessage(transformMessage(message));
+          break;
+        case 'execution_policy':
+          // Not a message: the effective posture belongs next to the mode
+          // selector, not in the transcript. Falling through to `default` would
+          // push it into transformMessage and render a junk bubble.
+          onExecutionPolicyRef.current?.(message.data as ExecutionPolicyFrame);
+          break;
+        case 'provider_failover_receipt':
+          {
+            const notice = describeFailover(message.data as ProviderFailoverFrame, tRef.current);
+            addOrUpdateMessage({
+              id: uuid(),
+              type: 'tips',
+              // A SYNTHETIC msg_id, deliberately. The frame carries the active
+              // turn's msg_id, and the message list replaces in place on an
+              // msg_id hit - reusing it would overwrite the assistant's own
+              // reply with this notice. Two failovers in one turn are also two
+              // separate facts and must not collapse into one line.
+              msg_id: `failover:${uuid()}`,
+              conversation_id: message.conversation_id,
+              position: 'center',
+              content: { content: notice.content, type: notice.severity },
+            });
+          }
+          break;
+        case 'budget_grant_result':
+          {
+            // The engine's answer to a grant this host offered. Handled here
+            // rather than in `default` for both reasons the neighbouring arms
+            // name: the default arm pushes the frame through transformMessage
+            // (a junk bubble) and flips streamRunning back on - and this frame
+            // arrives AFTER the capped turn already died, so it would leave the
+            // composer locked with nothing generating.
+            const frame = message.data as BudgetGrantFrameData;
+            const notice = describeBudgetGrant(frame, tRef.current);
+            addOrUpdateMessage({
+              id: uuid(),
+              type: 'tips',
+              // Keyed by request_id: one notice per grant, and never the turn's
+              // own msg_id (see the failover arm above).
+              msg_id: `budget:${frame.requestId}`,
+              conversation_id: message.conversation_id,
+              position: 'center',
+              content: { content: notice.content, type: notice.severity },
+            });
+          }
+          break;
+        case 'host_send_message_request':
+          {
+            // The capability announces FAILED deliveries only; a delivery that
+            // worked is already visible as the agent's own tool result.
+            const frame = message.data as HostDeliveryFrame;
+            const notice = describeDelivery(frame, tRef.current);
+            addOrUpdateMessage({
+              id: uuid(),
+              type: 'tips',
+              // Keyed by call_id: one notice per delivery the engine asked for,
+              // and never the turn's own msg_id (see the failover arm above).
+              msg_id: `delivery:${frame.callId}`,
+              conversation_id: message.conversation_id,
+              position: 'center',
+              content: { content: notice.content, type: notice.severity },
+            });
+          }
           break;
         default: {
           if (message.type === 'error') {

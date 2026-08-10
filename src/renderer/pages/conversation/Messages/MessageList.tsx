@@ -27,15 +27,16 @@ import { useMessageList } from './hooks';
 import MessageAgentStatus from './components/MessageAgentStatus';
 import MessagePlan from './components/MessagePlan';
 import MessageTips from './components/MessageTips';
-import MessageToolCall from './components/MessageToolCall';
-import MessageToolGroup from './components/MessageToolGroup';
-import MessageToolGroupSummary from './components/MessageToolGroupSummary';
-import MessageCronTrigger from './components/MessageCronTrigger';
-import CronProposeCard from './components/CronProposeCard';
+import MessageToolCall from './components/tools/MessageToolCall';
+import MessageToolGroup from './components/tools/MessageToolGroup';
+import MessageToolGroupSummary from './components/tools/MessageToolGroupSummary';
+import MessageCronTrigger from './components/cron/MessageCronTrigger';
+import CronProposeCard from './components/cron/CronProposeCard';
 import MessageSkillSuggest from './components/MessageSkillSuggest';
-import MessageText from './components/MessageText';
-import MessageThinking from './components/MessageThinking';
-import SubAgentActivityCard from './components/SubAgentActivityCard';
+import MessageText from './components/text/MessageText';
+import MessageThinking from './components/text/MessageThinking';
+import SubAgentActivityCard from './components/cards/SubAgentActivityCard';
+import WorkflowRunCard from './components/cards/WorkflowRunCard';
 import type { WriteFileResult } from './types';
 import { useAutoScroll } from './useAutoScroll';
 import { useAutoPreviewOfficeFiles } from '@/renderer/hooks/file/useAutoPreviewOfficeFiles';
@@ -148,6 +149,8 @@ const MessageItem: React.FC<{ message: TMessage; highlighted?: boolean }> = Reac
         return <CronProposeCard message={message} />;
       case 'sub_agent':
         return <SubAgentActivityCard message={message} />;
+      case 'workflow_run':
+        return <WorkflowRunCard message={message} />;
       case 'available_commands':
         return null;
       default:

@@ -127,6 +127,18 @@ export function claimedEventTypes(): readonly string[] {
   return HANDLERS.flatMap((h) => [...h.handles]).sort();
 }
 
+/**
+ * Every frame type a capability can put on the renderer stream.
+ *
+ * Consumed types are included because most capabilities emit under a name they
+ * also handle; `emits` adds the projections that differ. `WCoreManager` uses
+ * this to decide what survives its msg_id guard - keying that on `handles`
+ * alone silently dropped `workflow_run` and `anvil_receipt_alert`.
+ */
+export function forwardableFrameTypes(): readonly string[] {
+  return [...new Set(HANDLERS.flatMap((h) => [...h.handles, ...(h.emits ?? [])]))].sort();
+}
+
 /** The registered capabilities. Exported for tests and diagnostics. */
 export function registeredCapabilities(): readonly CapabilityHandler[] {
   return HANDLERS;

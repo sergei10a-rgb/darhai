@@ -88,6 +88,43 @@
       "confirm": "Autoriser",
       "reason": "Raison",
       "context": "Détails"
+    },
+    "noDetails": "Дархай n’a reçu aucun détail pour cette demande ; ce qui se passerait est donc inconnu. Refusez si vous ne savez pas de quoi il s’agit.",
+    "answerExpired": "Cette demande avait déjà expiré : votre réponse n’a eu aucun effet, elle a été refusée et rien n’a été fait. Plus rien ne peut être accordé ici : fermez cette fenêtre et redemandez si vous le souhaitez toujours.",
+    "answerUndelivered": "Votre réponse n’est pas parvenue à Дархай ; rien n’a été accordé. Appuyez à nouveau, ou fermez pour refuser.",
+    "budgetGrant": {
+      "title": "Augmenter le budget ?",
+      "summary": "Le moteur s’est arrêté car une limite de budget a été atteinte. Vous pouvez en accorder davantage pour qu’il continue. C’est le moteur, et non Дархай, qui décide si le tour en pause reprend ou si le budget supplémentaire ne servira qu’à votre prochain message.",
+      "confirm": "Accorder",
+      "reason": "Limite atteinte",
+      "observed": "Consommé",
+      "limit": "Limite",
+      "unknown": "inconnu",
+      "grantTokens": "Jetons à accorder",
+      "grantCost": "Montant à accorder (US$)",
+      "footer": "Demandé par la limite de budget du moteur lui-même, pas par un outil"
+    }
+  },
+  "budgetResult": {
+    "granted": "Le moteur a augmenté le budget de {{amount}}.",
+    "grantedLess": "Le moteur a augmenté le budget de {{amount}}, moins que les {{requested}} que vous avez accordés.",
+    "refused": "Le budget supplémentaire a été refusé : {{reason}}",
+    "retry": "Cela peut fonctionner si vous réessayez dans un instant.",
+    "tokens": "{{tokens}} jetons",
+    "cost": "US$ {{cost}}",
+    "both": "{{tokens}} et {{cost}}",
+    "nothing": "rien",
+    "reason": {
+      "host_not_authorized": "cette installation de Дархай n’a pas le droit d’augmenter les budgets.",
+      "managed_policy": "une politique gérée l’interdit.",
+      "no_exhausted_budget": "aucun budget n’était épuisé, il n’y avait donc rien à augmenter.",
+      "invalid_grant": "le moteur n’a pas accepté le montant.",
+      "budget_tracker_unavailable": "le suivi de budget du moteur est indisponible.",
+      "persistence_failure": "le moteur n’a pas pu enregistrer l’octroi.",
+      "request_id_conflict": "le moteur connaissait déjà cette demande.",
+      "ledger_capacity_exceeded": "trop d’octrois sont en attente côté moteur.",
+      "turn_in_progress": "un tour est encore en cours, et les octrois sont refusés pendant ce temps.",
+      "unknown": "le moteur n’a pas dit pourquoi."
     }
   }
 }

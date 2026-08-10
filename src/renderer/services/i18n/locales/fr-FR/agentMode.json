@@ -15,5 +15,25 @@
   "permission": "Autorisation",
   "switchMode": "Changer de mode",
   "switchSuccess": "Mode changé avec succès",
-  "switchFailed": "Échec du changement de mode"
+  "switchFailed": "Échec du changement de mode",
+  "prompt": "Demander à chaque fois",
+  "managed": "Géré",
+  "dangerous": "Dangereux",
+  "effectivePosture": "Moteur : {{posture}} / {{approvals}}",
+  "policyUnknown": "Posture du moteur inconnue",
+  "managedFloor": "Un plancher de politique géré est en vigueur",
+  "sandboxBypass": "Le bac à sable est contourné",
+  "policyStale": "La politique du moteur est plus récente que celle affichée.",
+  "policyRevision": "Révision de politique {{revision}}",
+  "policyVerdict": {
+    "applied": "Le moteur a adopté cette politique.",
+    "idempotent": "Le moteur a réannoncé la politique déjà en vigueur ; rien n'a changé.",
+    "gap": "Au moins une mise à jour de politique n'est jamais arrivée : cet état peut être obsolète.",
+    "conflict": "Deux politiques revendiquent le même numéro de révision, aucune n'est donc fiable.",
+    "version_mismatch": "Le moteur annonce un format de politique que cette version de Darhai ne sait pas lire.",
+    "not_critical": "Le moteur a envoyé un reçu de politique qu'il n'a pas marqué comme faisant autorité.",
+    "regression": "Le moteur a annoncé une politique plus ancienne que celle déjà en vigueur.",
+    "malformed": "Le reçu de politique n'a pas pu être lu."
+  },
+  "policyEngineDetail": "Message du moteur : {{detail}}"
 }

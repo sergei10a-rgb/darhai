@@ -37,17 +37,21 @@ import { skillSuggestWatcher } from '@process/services/cron/SkillSuggestWatcher'
 import { getCostRecorder } from '@process/services/cost/CostRecorder';
 import { getToolConfirmationService } from '@process/services/toolConfirmation';
 import { resolveEngineApproval } from './wcoreApprovalGate';
-import { claimedEventTypes } from '@process/agent/wcore/capabilities';
+import { resolveBudgetGrant } from './wcoreBudgetGate';
+import { sendContinueWithBudget } from '@process/agent/wcore/capabilities/handlers/budgetGrants';
+import type { CapabilityContext } from '@process/agent/wcore/capabilities';
+import { forwardableFrameTypes } from '@process/agent/wcore/capabilities';
 
 /**
  * Frame types produced by a registered engine capability.
  *
- * Built once from the capability registry rather than maintained by hand: a
+ * Built from the capability registry - both what capabilities consume and what
+ * they project - rather than maintained by hand: a
  * hand-kept list is a second source of truth that goes stale the first time a
  * capability is added, and the failure mode is silent - the frame is simply
  * dropped by the msg_id guard and the feature looks unimplemented.
  */
-const CAPABILITY_FRAME_TYPES: ReadonlySet<string> = new Set(claimedEventTypes());
+const CAPABILITY_FRAME_TYPES: ReadonlySet<string> = new Set(forwardableFrameTypes());
 
 // ---------------------------------------------------------------------------
 // Truncation-heuristic constants (HC-4 - see audit at
@@ -333,6 +337,11 @@ export class WCoreManager extends BaseAgentManager<WCoreManagerData, string> {
         // then answer the engine either way - a denial ends the turn with a
         // reason, which beats a silent hang.
         if (event.type === 'approval_required') void this.resolveEngineApproval(event);
+        // Same shape for the budget cap that ended a turn: the engine publishes
+        // a way back (`continue_with_budget`) and before this nothing offered
+        // it, so a capped turn was terminal and the user's only move was to
+        // start over.
+        if (event.type === 'budget_exceeded') void this.resolveBudgetGrant(event);
         this.emit('wcore.message', event);
       },
       onProcessExit: (code, activeMsgId) => this.handleProcessExit(code, activeMsgId),
@@ -905,6 +914,70 @@ export class WCoreManager extends BaseAgentManager<WCoreManagerData, string> {
     if (!result.approved) {
       mainError('[WCoreManager]', `engine approval denied for ${data.callId ?? '?'}: ${result.reason ?? 'unknown'}`);
     }
+  }
+
+  /**
+   * The narrow surface `sendContinueWithBudget` acts through.
+   *
+   * `WCoreAgent` builds one of these per dispatch for events it decodes; a
+   * grant is sent from HERE, outside any decode, so the manager builds its own.
+   * `emit` mirrors the capability-frame branch of the stream handler, which is
+   * where a capability's frames reach the renderer.
+   */
+  private budgetCapabilityContext(agent: WCoreAgent): CapabilityContext {
+    return {
+      // `continue_with_budget` is a capability-owned verb and deliberately not
+      // in the core `WCoreCommand` union - see CapabilityContext's own note.
+      sendCommand: (command) => agent.sendCommand(command as Parameters<WCoreAgent['sendCommand']>[0]),
+      emit: (frame) =>
+        ipcBridge.conversation.responseStream.emit({
+          type: frame.type,
+          conversation_id: this.conversation_id,
+          msg_id: frame.msg_id,
+          data: frame.data,
+        }),
+      activeMsgId: () => this.currentMsgId ?? '',
+      log: (message, detail) => mainLog('[WCoreManager]', message, detail),
+      warn: (message, detail) => mainWarn('[WCoreManager]', message, detail),
+    };
+  }
+
+  /**
+   * Offer a budget grant for the engine's `budget_exceeded`, if the user says so.
+   *
+   * Kept thin on purpose, exactly like {@link resolveEngineApproval}: the rules
+   * for what may be offered - which unit, how much, and when to offer nothing -
+   * live in `wcoreBudgetGate.ts`, where they are testable without an engine, a
+   * window or a socket.
+   */
+  private async resolveBudgetGrant(event: { data?: unknown }): Promise<void> {
+    const agent = this.agent;
+    if (!agent) return;
+
+    // `WCoreAgent` camel-cases its payloads, but `budget_exceeded` carries only
+    // single-word fields, so these are the wire names unchanged.
+    const data = (event.data ?? {}) as { reason?: string; observed?: string; limit?: string };
+    const ctx = this.budgetCapabilityContext(agent);
+
+    const result = await resolveBudgetGrant(
+      { reason: data.reason ?? '', observed: data.observed ?? '', limit: data.limit ?? '' },
+      {
+        confirm: (input) => getToolConfirmationService().requestUserConfirmation(input),
+        // The reachability probe is a required argument, not an option: the
+        // capability context cannot tell a delivered command from a discarded
+        // one, and the manager holds the agent that can.
+        grant: (input) => sendContinueWithBudget(ctx, input, () => agent.isAlive),
+      }
+    );
+
+    if (result.granted) {
+      mainLog('[WCoreManager]', `budget grant sent as ${result.requestId ?? '?'}`);
+      return;
+    }
+    // Not an error: refusing is the expected answer most of the time. It is
+    // logged either way so an offer that was never made can be told from one
+    // the user declined.
+    mainLog('[WCoreManager]', `no budget grant sent: ${result.reason ?? 'unknown'}`);
   }
 
   private handleProcessExit(code: number | null, activeMsgId: string): void {

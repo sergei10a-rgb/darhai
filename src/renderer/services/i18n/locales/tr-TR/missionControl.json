@@ -41,7 +41,9 @@
   },
   "tabs": {
     "operations": "Operations",
-    "cost": "Cost"
+    "cost": "Cost",
+    "goals": "Hedefler",
+    "goalsWithCount": "Hedefler · {{count}}"
   },
   "cost": {
     "periodLabel": "Period",
@@ -114,5 +116,48 @@
       "manual": "Kendi kurunuz",
       "manualHint": "Buraya girdiğiniz kur, alınan kurun yerine geçer. Otomatiğe dönmek için boş bırakın."
     }
+  },
+  "goals": {
+    "readOnlyNote": "Salt okunur. Bu görünüm, motorun uzun süreli hedefleri hakkında bildirdiklerini gösterir; bir hedefi açmak, ilerletmek ve iptal etmek bu sürümde motor tarafındadır.",
+    "emptyTitle": "Bildirilen hedef yok",
+    "emptyHint": "Motor bir hedef yayımladığı anda burada görünür. Motor hedefleri kendi günlüğünde tutar; daha önce açılmış bir hedef şimdi değil, bir sonraki güncellemesinde görünür.",
+    "emptyHintUnavailable": "Bu motor sürümü kalıcı hedefleri bildirmiyor; bu değişene kadar burada bir şey görünmeyecek.",
+    "unavailableTitle": "Kalıcı hedefler kullanılamıyor",
+    "limitedTitle": "Bu motor sürümünde kalıcı hedefler sınırlı",
+    "gradeReported": "Motor bu yeteneği {{grade}} olarak derecelendirdi.",
+    "gradeExplained": {
+      "publication_bound": "Biçim kesinleşti, ancak bu sürüm bu olayları yalnızca öyle yapılandırıldığında yayımlar; bu yüzden burada hiç hedef görünmeyebilir.",
+      "shape_only": "Olay türü bu sürümde var ama arkasındaki davranış henüz yok; bu yüzden hedef bildirilmeyecek.",
+      "unavailable": "Bu sürümde kalıcı hedefler hiç yok.",
+      "unrecognised": "Bu ana bilgisayar o dereceyi tanımıyor, bu yüzden ne anlama geldiğini söyleyemez - yukarıda motorun gönderdiği biçimiyle duruyor."
+    },
+    "objectiveUnknown": "Amaç bildirilmedi",
+    "stateLabel": "Durum",
+    "iterationsLabel": "Yineleme",
+    "iterationsOf": "{{ceiling}} içinden {{started}}",
+    "iterationsCeilingUnknown": "{{started}}, üst sınır bildirilmedi",
+    "tasksLabel": "Görevler",
+    "transitionLabel": "Son geçiş",
+    "leaseLabel": "Döngü kirası bitiyor",
+    "sessionLabel": "Oturum",
+    "seenLabel": "Görülen son güncelleme",
+    "refusedTitle": "Motor bir denetim komutunu reddetti",
+    "refusedReason": "Gerekçe: {{reason}}",
+    "refusedCommand": "Reddedilen komut: {{command}}",
+    "refusedMismatch": "Bu istek kimliği başka bir hedef veya oturum için gönderildi; bu yüzden ret, bu hedefin gönderdiği bir komutla eşleştirilemez.",
+    "lockedTitle": "Yeniden eşitlemeye kadar denetim kilitli",
+    "lockedBody": "Bu uygulamanın tuttuğu konumu motor artık kabul etmiyor; motor hedefi yeniden yayımlayana kadar ilerletme ve iptal reddedilir.",
+    "notAdoptedTitle": "Uygulanmadı: {{verdict}}",
+    "taskHeadId": "Görev",
+    "taskHeadStatus": "Durum",
+    "taskHeadAttempts": "Deneme",
+    "taskHeadDependsOn": "Bağımlı olduğu",
+    "taskHeadOutcome": "Sonuç",
+    "noTasks": "Motor bu hedef için görev bildirmedi.",
+    "tasksTruncated": "Motor saklanandan çok görev bildirdi; yukarıdaki liste kısaltıldı.",
+    "dependsOnTruncated": "Bir görev saklanandan çok bağımlılık listeledi; yukarıdaki liste kısaltıldı.",
+    "textClamped": "Motor saklanandan uzun metin gönderdi; gösterilen kısaltıldı.",
+    "evicted": "Listeyi sınırlı tutmak için eski hedefler çıkarıldı.",
+    "unknown": "bilinmiyor"
   }
 }

@@ -24,9 +24,9 @@ vi.mock('@/renderer/styles/colors', () => ({
 }));
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports -- dynamic import after mocks
-type Mod = typeof import('@/renderer/pages/conversation/Messages/components/MessageCronTrigger');
+type Mod = typeof import('@/renderer/pages/conversation/Messages/components/cron/MessageCronTrigger');
 const { default: MessageCronTrigger } = await vi.importActual<Mod>(
-  '@/renderer/pages/conversation/Messages/components/MessageCronTrigger'
+  '@/renderer/pages/conversation/Messages/components/cron/MessageCronTrigger'
 );
 
 function buildMessage(cronJobId: string, cronJobName: string) {

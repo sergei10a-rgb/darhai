@@ -329,5 +329,49 @@
   "openclaw": {
     "runtimeCheckFailed": "Не вдалося перевірити середовище виконання агента",
     "runtimeMismatch": "Перевірка зміни агента не вдалася: {{details}}"
+  },
+  "workflowRun": {
+    "statusRunning": "Виконується",
+    "statusSucceeded": "Успішно",
+    "statusFailed": "Помилка",
+    "untitled": "Робочий процес",
+    "nodesObserved": "кроків отримано: {{observed}}",
+    "nodesDeclared": "рушій заявив {{declared}}",
+    "noNodesYet": "Поки жоден крок не відзвітував",
+    "noNodesReported": "Запуск завершився, не відзвітувавши жодним кроком",
+    "linesLost": "Втрачено рядків потоку: {{lines}} - цей запуск може бути неповним",
+    "retryable": "Можна повторити",
+    "notRetryable": "Повтор неможливий",
+    "runFailed": "Запуск завершився помилкою",
+    "nodeState": {
+      "queued": "У черзі",
+      "running": "Виконується",
+      "succeeded": "Успішно",
+      "failed": "Помилка",
+      "blocked": "Заблоковано"
+    }
+  },
+  "failover": {
+    "switched": "{{failedProvider}}/{{failedModel}} не спрацював ({{reason}}) - перемкнено на {{selectedProvider}}/{{selectedModel}}",
+    "exhausted": "{{failedProvider}}/{{failedModel}} не спрацював ({{reason}}), і жоден провайдер не зміг продовжити",
+    "malformed": "Рушій змінив провайдера, але запис про це не вдалося прочитати",
+    "rejectedHeader": "Відхилено кандидатів: {{rejected}}",
+    "reason": {
+      "auth": "помилка автентифікації",
+      "auth_permanent": "автентифікацію відхилено остаточно",
+      "format": "формат відповіді відхилено",
+      "rate_limit": "перевищено ліміт запитів",
+      "overloaded": "провайдер перевантажений",
+      "billing": "проблема з оплатою",
+      "timeout": "вичерпано час очікування",
+      "model_not_found": "модель не знайдено",
+      "session_expired": "сесія завершилася",
+      "context_overflow": "переповнення контексту",
+      "unknown": "невідома причина"
+    }
+  },
+  "delivery": {
+    "unconfigured": "Агент спробував надіслати повідомлення через {{platform}}, але канал {{platform}} не налаштовано. Додайте його в розділі Налаштування - Канали.",
+    "failed": "Агент не зміг надіслати повідомлення через {{platform}}: {{error}}"
   }
 }

@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { IMessageAcpToolCall, IMessageToolGroup } from '@/common/chat/chatLib';
-import MessageToolGroupSummary from '@/renderer/pages/conversation/Messages/components/MessageToolGroupSummary';
+import MessageToolGroupSummary from '@/renderer/pages/conversation/Messages/components/tools/MessageToolGroupSummary';
 
 vi.mock('@arco-design/web-react', () => ({
   Badge: ({ text, children }: { text?: string; children?: React.ReactNode }) => (

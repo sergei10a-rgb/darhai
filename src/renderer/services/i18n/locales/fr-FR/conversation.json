@@ -329,5 +329,49 @@
   "openclaw": {
     "runtimeCheckFailed": "Impossible de valider l'environnement de l'agent",
     "runtimeMismatch": "Échec de la validation du changement d'agent : {{details}}"
+  },
+  "workflowRun": {
+    "statusRunning": "En cours",
+    "statusSucceeded": "Réussi",
+    "statusFailed": "Échec",
+    "untitled": "Workflow",
+    "nodesObserved": "{{observed}} étapes signalées",
+    "nodesDeclared": "le moteur en a déclaré {{declared}}",
+    "noNodesYet": "Aucune étape signalée pour le moment",
+    "noNodesReported": "L'exécution s'est terminée sans signaler la moindre étape",
+    "linesLost": "{{lines}} lignes du flux ont été perdues - cette exécution peut être incomplète",
+    "retryable": "Peut être réessayé",
+    "notRetryable": "Ne peut pas être réessayé",
+    "runFailed": "L'exécution a échoué",
+    "nodeState": {
+      "queued": "En file d'attente",
+      "running": "En cours",
+      "succeeded": "Réussi",
+      "failed": "Échec",
+      "blocked": "Bloqué"
+    }
+  },
+  "failover": {
+    "switched": "{{failedProvider}}/{{failedModel}} a échoué ({{reason}}) - bascule vers {{selectedProvider}}/{{selectedModel}}",
+    "exhausted": "{{failedProvider}}/{{failedModel}} a échoué ({{reason}}) et aucun autre fournisseur n'a pu prendre le relais",
+    "malformed": "Le moteur a changé de fournisseur, mais l'enregistrement n'a pas pu être lu",
+    "rejectedHeader": "{{rejected}} candidats ont été rejetés :",
+    "reason": {
+      "auth": "échec de l'authentification",
+      "auth_permanent": "authentification définitivement refusée",
+      "format": "format de réponse refusé",
+      "rate_limit": "limite de débit",
+      "overloaded": "fournisseur surchargé",
+      "billing": "problème de facturation",
+      "timeout": "délai d'attente dépassé",
+      "model_not_found": "modèle introuvable",
+      "session_expired": "session expirée",
+      "context_overflow": "dépassement de la fenêtre de contexte",
+      "unknown": "raison inconnue"
+    }
+  },
+  "delivery": {
+    "unconfigured": "L'agent a tenté d'envoyer un message via {{platform}}, mais aucun canal {{platform}} n'est configuré. Ajoutez-en un dans Paramètres - Canaux.",
+    "failed": "L'agent n'a pas pu envoyer de message via {{platform}} : {{error}}"
   }
 }

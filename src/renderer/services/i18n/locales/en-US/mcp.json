@@ -88,6 +88,43 @@
       "confirm": "Allow",
       "reason": "Reason",
       "context": "Details"
+    },
+    "noDetails": "Дархай received no details for this request, so what it would do is unknown. Refuse unless you know what asked.",
+    "answerExpired": "This request had already expired, so your answer had no effect - it was refused and nothing was done. Nothing more can be granted here: close this dialog and ask again if you still want it.",
+    "answerUndelivered": "Your answer did not reach Дархай, so nothing was granted. Press again, or close this to refuse.",
+    "budgetGrant": {
+      "title": "Raise the budget?",
+      "summary": "The engine stopped because a budget cap was reached. You can grant more and let it carry on. Whether the paused turn itself resumes, or the extra budget only applies to your next message, is the engine's decision - not Дархай's.",
+      "confirm": "Grant",
+      "reason": "Cap reached",
+      "observed": "Used",
+      "limit": "Limit",
+      "unknown": "unknown",
+      "grantTokens": "Tokens to grant",
+      "grantCost": "Amount to grant (US$)",
+      "footer": "Requested by the engine's own budget cap, not by a tool"
+    }
+  },
+  "budgetResult": {
+    "granted": "The engine raised the budget by {{amount}}.",
+    "grantedLess": "The engine raised the budget by {{amount}} - less than the {{requested}} you granted.",
+    "refused": "The extra budget was refused: {{reason}}",
+    "retry": "This one may work if you try again shortly.",
+    "tokens": "{{tokens}} tokens",
+    "cost": "US$ {{cost}}",
+    "both": "{{tokens}} and {{cost}}",
+    "nothing": "nothing",
+    "reason": {
+      "host_not_authorized": "this copy of Дархай is not allowed to raise budgets.",
+      "managed_policy": "a managed policy blocks it.",
+      "no_exhausted_budget": "no budget was exhausted, so there was nothing to raise.",
+      "invalid_grant": "the engine did not accept the amount.",
+      "budget_tracker_unavailable": "the engine's budget tracker is unavailable.",
+      "persistence_failure": "the engine could not record the grant.",
+      "request_id_conflict": "the engine had already seen this request.",
+      "ledger_capacity_exceeded": "the engine has too many grants outstanding.",
+      "turn_in_progress": "a turn is still running, and grants are refused while one is.",
+      "unknown": "the engine did not say why."
     }
   }
 }

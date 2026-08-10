@@ -88,6 +88,43 @@
       "confirm": "İzin ver",
       "reason": "Neden",
       "context": "Ayrıntılar"
+    },
+    "noDetails": "Дархай bu istek için hiçbir ayrıntı almadı, bu yüzden ne olacağı bilinmiyor. Ne olduğunu bilmiyorsanız reddedin.",
+    "answerExpired": "Bu isteğin süresi çoktan dolmuştu; yanıtınızın bir etkisi olmadı - reddedildi ve hiçbir şey yapılmadı. Burada artık bir şey verilemez: bu pencereyi kapatın ve hâlâ istiyorsanız yeniden isteyin.",
+    "answerUndelivered": "Yanıtınız Дархай’a ulaşmadı, bu yüzden hiçbir şey verilmedi. Tekrar basın ya da reddetmek için kapatın.",
+    "budgetGrant": {
+      "title": "Bütçe artırılsın mı?",
+      "summary": "Bir bütçe sınırına ulaşıldığı için motor durdu. Devam edebilmesi için daha fazlasını verebilirsiniz. Duraklatılan turun devam edip etmeyeceğine ya da ek bütçenin yalnızca bir sonraki mesajınızda kullanılacağına Дархай değil, motor karar verir.",
+      "confirm": "Ver",
+      "reason": "Ulaşılan sınır",
+      "observed": "Kullanılan",
+      "limit": "Sınır",
+      "unknown": "bilinmiyor",
+      "grantTokens": "Verilecek token",
+      "grantCost": "Verilecek tutar (US$)",
+      "footer": "Bir araç değil, motorun kendi bütçe sınırı istedi"
+    }
+  },
+  "budgetResult": {
+    "granted": "Motor bütçeyi {{amount}} artırdı.",
+    "grantedLess": "Motor bütçeyi {{amount}} artırdı - verdiğiniz {{requested}} miktarından az.",
+    "refused": "Ek bütçe reddedildi: {{reason}}",
+    "retry": "Birazdan yeniden denerseniz işe yarayabilir.",
+    "tokens": "{{tokens}} token",
+    "cost": "US$ {{cost}}",
+    "both": "{{tokens}} ve {{cost}}",
+    "nothing": "hiçbir şey",
+    "reason": {
+      "host_not_authorized": "bu Дархай kurulumunun bütçe artırma yetkisi yok.",
+      "managed_policy": "yönetilen bir ilke buna izin vermiyor.",
+      "no_exhausted_budget": "tükenen bir bütçe yoktu, artırılacak bir şey de yok.",
+      "invalid_grant": "motor bu miktarı kabul etmedi.",
+      "budget_tracker_unavailable": "motorun bütçe takibi kullanılamıyor.",
+      "persistence_failure": "motor verilen bütçeyi kaydedemedi.",
+      "request_id_conflict": "motor bu isteği zaten görmüştü.",
+      "ledger_capacity_exceeded": "motorda yanıtlanmamış çok fazla istek var.",
+      "turn_in_progress": "hâlâ bir tur sürüyor ve bu sırada istekler reddediliyor.",
+      "unknown": "motor nedenini söylemedi."
     }
   }
 }

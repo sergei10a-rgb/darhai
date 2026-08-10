@@ -1658,8 +1658,12 @@ describe('everything the wire controls is bounded', () => {
     expect(dispatch(event, ctx)).toBe(true);
 
     const frame = ctx.frames[0].data as GoalSnapshotFrame;
-    expect(frame.taskCount).toBe(MAX_TASKS_PER_GOAL);
+    // The count is a measurement of the GOAL, the list length a measurement of
+    // this host's buffer. Reporting the second as the first pins every
+    // over-cap goal at exactly 256 tasks, which reads as a fact about the goal.
+    expect(frame.taskCount).toBe(MAX_TASKS_PER_GOAL + 10);
     expect(frame.tasks).toHaveLength(MAX_TASKS_PER_GOAL);
+    expect(frame.taskCount).toBeGreaterThan(frame.tasks.length);
     // Truncation that is not reported would show an incomplete goal as complete.
     expect(frame.tasksTruncated).toBe(true);
     expect(ctx.warns.join(' ')).toContain('truncated');

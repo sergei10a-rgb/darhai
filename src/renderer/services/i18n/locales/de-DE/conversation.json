@@ -329,5 +329,49 @@
   "openclaw": {
     "runtimeCheckFailed": "Agent-Laufzeit konnte nicht überprüft werden",
     "runtimeMismatch": "Agentenwechsel-Prüfung fehlgeschlagen: {{details}}"
+  },
+  "workflowRun": {
+    "statusRunning": "Läuft",
+    "statusSucceeded": "Erfolgreich",
+    "statusFailed": "Fehlgeschlagen",
+    "untitled": "Workflow",
+    "nodesObserved": "{{observed}} Schritte gemeldet",
+    "nodesDeclared": "Engine hat {{declared}} angegeben",
+    "noNodesYet": "Noch kein Schritt gemeldet",
+    "noNodesReported": "Der Lauf endete, ohne einen einzigen Schritt zu melden",
+    "linesLost": "{{lines}} Stream-Zeilen gingen verloren - dieser Lauf kann unvollständig sein",
+    "retryable": "Wiederholbar",
+    "notRetryable": "Nicht wiederholbar",
+    "runFailed": "Der Lauf ist fehlgeschlagen",
+    "nodeState": {
+      "queued": "In Warteschlange",
+      "running": "Läuft",
+      "succeeded": "Erfolgreich",
+      "failed": "Fehlgeschlagen",
+      "blocked": "Blockiert"
+    }
+  },
+  "failover": {
+    "switched": "{{failedProvider}}/{{failedModel}} ist ausgefallen ({{reason}}) - Wechsel zu {{selectedProvider}}/{{selectedModel}}",
+    "exhausted": "{{failedProvider}}/{{failedModel}} ist ausgefallen ({{reason}}) und kein anderer Anbieter konnte übernehmen",
+    "malformed": "Die Engine hat den Anbieter gewechselt, der Nachweis war jedoch nicht lesbar",
+    "rejectedHeader": "{{rejected}} Kandidaten wurden abgelehnt:",
+    "reason": {
+      "auth": "Authentifizierung fehlgeschlagen",
+      "auth_permanent": "Authentifizierung dauerhaft abgelehnt",
+      "format": "Antwortformat abgelehnt",
+      "rate_limit": "Ratenbegrenzung",
+      "overloaded": "Anbieter überlastet",
+      "billing": "Abrechnungsproblem",
+      "timeout": "Zeitüberschreitung",
+      "model_not_found": "Modell nicht gefunden",
+      "session_expired": "Sitzung abgelaufen",
+      "context_overflow": "Kontextfenster überschritten",
+      "unknown": "unbekannter Grund"
+    }
+  },
+  "delivery": {
+    "unconfigured": "Der Agent wollte eine Nachricht über {{platform}} senden, aber es ist kein {{platform}}-Kanal eingerichtet. Legen Sie einen unter Einstellungen - Kanäle an.",
+    "failed": "Der Agent konnte keine Nachricht über {{platform}} senden: {{error}}"
   }
 }

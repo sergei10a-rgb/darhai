@@ -329,5 +329,49 @@
   "openclaw": {
     "runtimeCheckFailed": "Не удалось проверить среду выполнения агента",
     "runtimeMismatch": "Проверка смены агента не удалась: {{details}}"
+  },
+  "workflowRun": {
+    "statusRunning": "Выполняется",
+    "statusSucceeded": "Успешно",
+    "statusFailed": "Ошибка",
+    "untitled": "Рабочий процесс",
+    "nodesObserved": "шагов получено: {{observed}}",
+    "nodesDeclared": "движок заявил {{declared}}",
+    "noNodesYet": "Пока ни один шаг не отчитался",
+    "noNodesReported": "Запуск завершился, не отчитавшись ни одним шагом",
+    "linesLost": "Потеряно строк потока: {{lines}} - этот запуск может быть неполным",
+    "retryable": "Можно повторить",
+    "notRetryable": "Повтор невозможен",
+    "runFailed": "Запуск завершился ошибкой",
+    "nodeState": {
+      "queued": "В очереди",
+      "running": "Выполняется",
+      "succeeded": "Успешно",
+      "failed": "Ошибка",
+      "blocked": "Заблокирован"
+    }
+  },
+  "failover": {
+    "switched": "{{failedProvider}}/{{failedModel}} не сработал ({{reason}}) - переключение на {{selectedProvider}}/{{selectedModel}}",
+    "exhausted": "{{failedProvider}}/{{failedModel}} не сработал ({{reason}}), и ни один провайдер не смог продолжить",
+    "malformed": "Движок сменил провайдера, но запись об этом не удалось прочитать",
+    "rejectedHeader": "Отклонено кандидатов: {{rejected}}",
+    "reason": {
+      "auth": "ошибка аутентификации",
+      "auth_permanent": "аутентификация отклонена окончательно",
+      "format": "формат ответа отклонён",
+      "rate_limit": "превышен лимит запросов",
+      "overloaded": "провайдер перегружен",
+      "billing": "проблема с оплатой",
+      "timeout": "истекло время ожидания",
+      "model_not_found": "модель не найдена",
+      "session_expired": "сессия истекла",
+      "context_overflow": "переполнение контекста",
+      "unknown": "причина неизвестна"
+    }
+  },
+  "delivery": {
+    "unconfigured": "Агент попытался отправить сообщение через {{platform}}, но канал {{platform}} не настроен. Добавьте его в разделе Настройки - Каналы.",
+    "failed": "Агент не смог отправить сообщение через {{platform}}: {{error}}"
   }
 }

@@ -88,6 +88,43 @@
       "confirm": "Permitir",
       "reason": "Motivo",
       "context": "Detalles"
+    },
+    "noDetails": "Дархай no ha recibido ningún detalle de esta solicitud, así que no se sabe qué haría. Recházala si no sabes de qué se trata.",
+    "answerExpired": "Esta solicitud ya había caducado, así que tu respuesta no tuvo efecto: se rechazó y no se hizo nada. Aquí ya no se puede conceder nada: cierra este diálogo y vuelve a pedirlo si aún lo quieres.",
+    "answerUndelivered": "Tu respuesta no llegó a Дархай, así que no se concedió nada. Pulsa de nuevo o cierra para rechazar.",
+    "budgetGrant": {
+      "title": "¿Ampliar el presupuesto?",
+      "summary": "El motor se detuvo porque se alcanzó un límite de presupuesto. Puedes conceder más para que continúe. Si el turno pausado se reanuda o si el presupuesto extra solo se aplica a tu próximo mensaje lo decide el motor, no Дархай.",
+      "confirm": "Conceder",
+      "reason": "Límite alcanzado",
+      "observed": "Consumido",
+      "limit": "Límite",
+      "unknown": "desconocido",
+      "grantTokens": "Tokens a conceder",
+      "grantCost": "Cantidad a conceder (US$)",
+      "footer": "Lo solicita el propio límite de presupuesto del motor, no una herramienta"
+    }
+  },
+  "budgetResult": {
+    "granted": "El motor amplió el presupuesto en {{amount}}.",
+    "grantedLess": "El motor amplió el presupuesto en {{amount}}, menos que los {{requested}} que concediste.",
+    "refused": "Se rechazó el presupuesto adicional: {{reason}}",
+    "retry": "Puede funcionar si lo intentas de nuevo en un momento.",
+    "tokens": "{{tokens}} tokens",
+    "cost": "US$ {{cost}}",
+    "both": "{{tokens}} y {{cost}}",
+    "nothing": "nada",
+    "reason": {
+      "host_not_authorized": "esta copia de Дархай no puede ampliar presupuestos.",
+      "managed_policy": "lo impide una política gestionada.",
+      "no_exhausted_budget": "ningún presupuesto estaba agotado, así que no había nada que ampliar.",
+      "invalid_grant": "el motor no aceptó la cantidad.",
+      "budget_tracker_unavailable": "el control de presupuesto del motor no está disponible.",
+      "persistence_failure": "el motor no pudo registrar la concesión.",
+      "request_id_conflict": "el motor ya había visto esta solicitud.",
+      "ledger_capacity_exceeded": "el motor tiene demasiadas concesiones pendientes.",
+      "turn_in_progress": "todavía hay un turno en curso y no se conceden ampliaciones mientras dura.",
+      "unknown": "el motor no dijo por qué."
     }
   }
 }

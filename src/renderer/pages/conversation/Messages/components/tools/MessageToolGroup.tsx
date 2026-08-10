@@ -14,14 +14,14 @@ import { useTranslation } from 'react-i18next';
 import FileChangesPanel from '@/renderer/components/base/FileChangesPanel';
 import { useDiffPreviewHandlers } from '@/renderer/hooks/file/useDiffPreviewHandlers';
 import { parseDiff } from '@/renderer/utils/file/diffUtils';
-import MessageFileChanges from '../codex/MessageFileChanges';
+import MessageFileChanges from '../../codex/MessageFileChanges';
 import CollapsibleContent from '@renderer/components/chat/CollapsibleContent';
 import LocalImageView from '@renderer/components/media/LocalImageView';
 import MarkdownView from '@renderer/components/Markdown';
 import { ToolConfirmationOutcome } from '@renderer/utils/common';
-import { ImagePreviewContext } from '../MessageList';
-import { COLLAPSE_CONFIG, TEXT_CONFIG } from '../constants';
-import type { ImageGenerationResult, WriteFileResult } from '../types';
+import { ImagePreviewContext } from '../../MessageList';
+import { COLLAPSE_CONFIG, TEXT_CONFIG } from '../../constants';
+import type { ImageGenerationResult, WriteFileResult } from '../../types';
 
 const CODE_STYLE = { marginTop: 4, marginBottom: 4 };
 
@@ -543,11 +543,7 @@ const MessageToolGroup: React.FC<IMessageToolGroupProps> = ({ message }) => {
                       ? 'warning'
                       : 'info'
               }
-              icon={
-                isLoading && (
-                  <Loader2 size={12} color={iconColors.primary} className='loading lh-[1] flex' />
-                )
-              }
+              icon={isLoading && <Loader2 size={12} color={iconColors.primary} className='loading lh-[1] flex' />}
               content={
                 <div>
                   <Tag className={'mr-4px'}>

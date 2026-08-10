@@ -74,7 +74,7 @@ export const formatMessageTime = (timestamp: number): string => {
   }
   return time;
 };
-import MessageCronBadge from './MessageCronBadge';
+import MessageCronBadge from '../cron/MessageCronBadge';
 import { getAgentLogo } from '@/renderer/utils/model/agentLogo';
 import TeammateMessageAvatar from './TeammateMessageAvatar';
 

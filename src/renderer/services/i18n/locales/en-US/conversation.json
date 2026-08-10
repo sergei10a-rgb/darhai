@@ -347,5 +347,49 @@
   "openclaw": {
     "runtimeCheckFailed": "Failed to validate agent runtime",
     "runtimeMismatch": "Agent switch validation failed: {{details}}"
+  },
+  "workflowRun": {
+    "statusRunning": "Running",
+    "statusSucceeded": "Succeeded",
+    "statusFailed": "Failed",
+    "untitled": "Workflow",
+    "nodesObserved": "{{observed}} steps reported",
+    "nodesDeclared": "engine declared {{declared}}",
+    "noNodesYet": "No step has reported yet",
+    "noNodesReported": "The run ended without reporting a single step",
+    "linesLost": "{{lines}} stream lines were lost - this run may be incomplete",
+    "retryable": "Can retry",
+    "notRetryable": "Cannot retry",
+    "runFailed": "The run failed",
+    "nodeState": {
+      "queued": "Queued",
+      "running": "Running",
+      "succeeded": "Succeeded",
+      "failed": "Failed",
+      "blocked": "Blocked"
+    }
+  },
+  "failover": {
+    "switched": "{{failedProvider}}/{{failedModel}} failed ({{reason}}) - the turn switched to {{selectedProvider}}/{{selectedModel}}",
+    "exhausted": "{{failedProvider}}/{{failedModel}} failed ({{reason}}) and no other provider could take the turn",
+    "malformed": "The engine switched provider, but the record could not be read",
+    "rejectedHeader": "{{rejected}} candidates were rejected:",
+    "reason": {
+      "auth": "authentication failed",
+      "auth_permanent": "authentication permanently rejected",
+      "format": "the response format was rejected",
+      "rate_limit": "rate limit",
+      "overloaded": "provider overloaded",
+      "billing": "billing problem",
+      "timeout": "timed out",
+      "model_not_found": "model not found",
+      "session_expired": "session expired",
+      "context_overflow": "context window overflow",
+      "unknown": "unknown reason"
+    }
+  },
+  "delivery": {
+    "unconfigured": "The agent tried to send a message over {{platform}}, but no {{platform}} channel is set up. Add one in Settings - Channels.",
+    "failed": "The agent could not send a message over {{platform}}: {{error}}"
   }
 }

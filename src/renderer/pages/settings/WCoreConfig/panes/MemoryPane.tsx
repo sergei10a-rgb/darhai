@@ -24,15 +24,37 @@ type MemorySection = {
   [key: string]: unknown;
 };
 
+/**
+ * The engine's `[compact]` section.
+ *
+ * `smart_enabled` is the ONE gate identified by measurement: with it set, the
+ * engine's `smart_handoff` capability moves from
+ * `unavailable / disabled_by_config` to `declared -> configured -> constructed
+ * -> ready` in an otherwise-empty isolated home. Without it, smart compaction is
+ * off for every Darhai user and the Overview readiness table says so.
+ *
+ * `smart_handoff_to_memory` is what makes this pane the right home rather than
+ * Runtime: the handoff target is long-term memory.
+ */
+type CompactSection = {
+  smart_enabled?: boolean;
+  smart_handoff_to_memory?: boolean;
+  [key: string]: unknown;
+};
+
 const MemoryPane: React.FC = () => {
   const { t } = useTranslation();
   const { getSection, setSection } = useWcoreConfig();
   const [section, setLocal] = useState<MemorySection | null>(null);
+  const [compact, setCompact] = useState<CompactSection | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     void getSection<MemorySection>('memory').then((s) => {
       if (!cancelled) setLocal(s ?? {});
+    });
+    void getSection<CompactSection>('compact').then((s) => {
+      if (!cancelled) setCompact(s ?? {});
     });
     return () => {
       cancelled = true;
@@ -47,6 +69,14 @@ const MemoryPane: React.FC = () => {
     [setSection]
   );
 
+  const persistCompact = useCallback(
+    (next: CompactSection): void => {
+      setCompact(next);
+      void setSection('compact', next);
+    },
+    [setSection]
+  );
+
   const enabled = section?.enabled !== false;
   const provider: MemoryProvider = useMemo(() => {
     const p = section?.provider;
@@ -54,6 +84,11 @@ const MemoryPane: React.FC = () => {
   }, [section]);
   const budget = typeof section?.recall_budget === 'number' ? section.recall_budget : 5000;
   const autoConsolidate = section?.auto_consolidate !== false;
+  // MEASURED default: absent means OFF. `!== false` (the idiom used above for
+  // options the engine defaults ON) would draw this switch on while the engine
+  // reports the capability `disabled_by_config`.
+  const smartCompaction = compact?.smart_enabled === true;
+  const smartHandoffToMemory = compact?.smart_handoff_to_memory === true;
 
   const providerOptions = useMemo(
     () => [
@@ -169,6 +204,68 @@ const MemoryPane: React.FC = () => {
                 checked={autoConsolidate}
                 onChange={(next) => persist({ ...section, auto_consolidate: next })}
                 label={t('settings.wcoreConfig.memory.autoConsolidate', { defaultValue: 'Auto-consolidate' })}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Engine `[compact]`: smart compaction, off by default. */}
+      <div className={styles.section} data-testid='smart-compaction'>
+        <div className={styles.sectionHead}>
+          <span className={styles.sectionLabel}>
+            {t('settings.wcoreConfig.memory.compactionLabel', { defaultValue: 'Context compaction' })}
+          </span>
+          <span className={styles.sectionHeadLine} />
+        </div>
+        <div className={styles.group}>
+          <div className={styles.listRow}>
+            <div>
+              <div className={styles.lrLabel}>
+                {t('settings.wcoreConfig.memory.smartCompaction', { defaultValue: 'Smart compaction' })}
+              </div>
+              <div className={styles.lrDesc}>
+                {t('settings.wcoreConfig.memory.smartCompactionDesc', {
+                  defaultValue:
+                    'Let the engine shrink a long conversation on its own instead of running the context to the limit. Off unless you turn it on.',
+                })}
+              </div>
+            </div>
+            <div className={styles.lrControl}>
+              <WcSwitch
+                checked={smartCompaction}
+                onChange={(next) => persistCompact({ ...compact, smart_enabled: next })}
+                label={t('settings.wcoreConfig.memory.smartCompaction', { defaultValue: 'Smart compaction' })}
+              />
+            </div>
+          </div>
+
+          <div className={styles.listRow}>
+            <div>
+              <div className={styles.lrLabel}>
+                {t('settings.wcoreConfig.memory.smartHandoff', { defaultValue: 'Hand compacted context to memory' })}
+              </div>
+              <div className={styles.lrDesc}>
+                {smartCompaction
+                  ? t('settings.wcoreConfig.memory.smartHandoffDesc', {
+                      defaultValue: 'What is compacted away is written to long-term memory instead of dropped.',
+                    })
+                  : /* MEASURED: this key alone changes nothing - `smart_enabled`
+                       is what activates the capability. Saying so is better than
+                       an enabled switch that silently does nothing. */
+                    t('settings.wcoreConfig.memory.smartHandoffGated', {
+                      defaultValue: 'Does nothing until smart compaction is on.',
+                    })}
+              </div>
+            </div>
+            <div className={styles.lrControl}>
+              <WcSwitch
+                checked={smartCompaction && smartHandoffToMemory}
+                disabled={!smartCompaction}
+                onChange={(next) => persistCompact({ ...compact, smart_handoff_to_memory: next })}
+                label={t('settings.wcoreConfig.memory.smartHandoff', {
+                  defaultValue: 'Hand compacted context to memory',
+                })}
               />
             </div>
           </div>

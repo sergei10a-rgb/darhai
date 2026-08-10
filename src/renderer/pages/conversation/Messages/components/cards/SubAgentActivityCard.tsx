@@ -6,14 +6,16 @@
 
 import type { IMessageSubAgent } from '@/common/chat/chatLib';
 import { Spin } from '@arco-design/web-react';
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import CardDisclosureHeader from './CardDisclosureHeader';
 import styles from './SubAgentActivityCard.module.css';
 
 const SubAgentActivityCard: React.FC<{ message: IMessageSubAgent }> = ({ message }) => {
   const { t } = useTranslation();
   const { agentName, status, body } = message.content;
   const [expanded, setExpanded] = useState(true);
+  const bodyId = `sub-agent-${useId()}`;
 
   const isDone = status === 'done';
   const isFailed = status === 'failed';
@@ -35,14 +37,25 @@ const SubAgentActivityCard: React.FC<{ message: IMessageSubAgent }> = ({ message
       data-testid='sub-agent-activity-card'
     >
       <hr className={styles.divider} />
-      <div className={styles.header} onClick={() => setExpanded((v) => !v)}>
-        {isRunning && <Spin size={12} />}
-        {isDone && <span className={styles.dotDone} aria-label={t('conversation.subAgent.statusDone')} />}
-        {isFailed && <span className={styles.dotFailed} aria-label={t('conversation.subAgent.statusFailed')} />}
-        <span className={`${styles.arrow} ${expanded ? styles.arrowExpanded : ''}`}>{'▶'}</span>
-        <span className={styles.summary}>{headerLabel}</span>
-      </div>
-      {body && <div className={`${styles.body} ${!expanded ? styles.collapsed : ''}`}>{body}</div>}
+      <CardDisclosureHeader
+        expanded={expanded}
+        onToggle={() => setExpanded((v) => !v)}
+        label={headerLabel}
+        bodyId={bodyId}
+        emphasis='muted'
+        leading={
+          <>
+            {isRunning && <Spin size={12} />}
+            {isDone && <span className={styles.dotDone} aria-label={t('conversation.subAgent.statusDone')} />}
+            {isFailed && <span className={styles.dotFailed} aria-label={t('conversation.subAgent.statusFailed')} />}
+          </>
+        }
+      />
+      {body && (
+        <div id={bodyId} className={`${styles.body} ${!expanded ? styles.collapsed : ''}`}>
+          {body}
+        </div>
+      )}
       <hr className={styles.divider} />
     </div>
   );

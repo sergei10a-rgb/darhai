@@ -19,33 +19,39 @@
  * PICKED; nothing has ever shown what the engine APPLIED. When
  * `managed_floor_active` clamps a chosen autopilot back to `approvals:
  * "prompt"`, or when `sandbox` is `bypass`, the UI silently misstates how
- * dangerous the session is. Both `execution_policy` and `workspace_policy` sit
- * in `ACKNOWLEDGED_UNHANDLED_EVENTS` today - dropping a safety-class event in
- * silence is the exact failure that hid `browser_policy_denied` for a whole
- * engine release.
+ * dangerous the session is. Before this module `execution_policy` and
+ * `workspace_policy` sat in `ACKNOWLEDGED_UNHANDLED_EVENTS` - dropping a
+ * safety-class event in silence is the exact failure that hid
+ * `browser_policy_denied` for a whole engine release.
  *
- * WIRING THIS MODULE REQUIRES, AND WHICH DOES NOT EXIST YET. Nothing in the
- * running app reaches this file today. Three edits, none of them in this
- * module, are needed before any of it runs, and they are deliberately left to
- * the step that registers all nine capabilities together:
+ * WIRING - the full path, and where each step stands:
  *
- *  1. `capabilities/index.ts` must list {@link executionPolicyCapability} in
- *     `HANDLERS`, which is still `[]`. The decoder's default arm already calls
- *     `dispatchCapabilityEvent` (`wcore/index.ts`), so registration is the
- *     whole routing step - an unregistered handler is simply never reached.
- *  2. The decoder's `ready` arm must call {@link
+ *  1. DONE. `capabilities/index.ts` lists {@link executionPolicyCapability} in
+ *     `HANDLERS`. The decoder's default arm calls `dispatchCapabilityEvent`
+ *     (`wcore/index.ts`), so registration is the whole routing step - an
+ *     unregistered handler is simply never reached.
+ *  2. DONE. Neither `execution_policy` nor `workspace_policy` remains in
+ *     `ACKNOWLEDGED_UNHANDLED_EVENTS` in `protocol.ts`, so the decoder no
+ *     longer counts as knowingly-ignored two events it now handles.
+ *  3. DONE. `WCoreManager` forwards these frames ABOVE its
+ *     `if (!data.msg_id) return;` guard. They carry `msg_id: ''` on purpose
+ *     (see {@link announce}), so below that guard they would be dropped in
+ *     silence - the same failure class this capability exists to close. The
+ *     exemption is derived from `forwardableFrameTypes()` rather than
+ *     hand-listed, so registration is what makes a frame survive. This module
+ *     emits under `execution_policy`, a name it also consumes, so it needs no
+ *     `emits` declaration - unlike the two capabilities that emit a projection
+ *     under a name they never handle and were silently dropped for it.
+ *  4. DONE. `EffectivePolicyBadge` (`platforms/wcore/WCoreSendBox.tsx`) renders
+ *     the frame next to the mode selector, via `useWCoreMessage`'s
+ *     `onExecutionPolicy`. It localizes {@link PolicyDecision.verdict}; the
+ *     English {@link PolicyDecision.detail} below is shown as engine output,
+ *     clearly labelled, never as the app's own explanation.
+ *  5. STILL OPEN. The decoder's `ready` arm does not call {@link
  *     ExecutionPolicyCapability.seedFromReady}. `ready` has its own arm and
- *     never falls through to the dispatcher, so revision 0 has no other way in.
- *     `seedFromReady` currently has no caller anywhere.
- *  3. `WCoreManager` must forward `execution_policy` frames ABOVE its
- *     `if (!data.msg_id) return;` guard, as it already does for
- *     `sub_agent_event`. These frames carry `msg_id: ''` on purpose (see
- *     {@link announce}), so below that guard they would be dropped in silence -
- *     the same failure class this capability exists to close.
- *
- * `execution_policy` and `workspace_policy` must also leave
- * `ACKNOWLEDGED_UNHANDLED_EVENTS` in `protocol.ts` once (1) lands, or the
- * decoder will still count them as knowingly-ignored.
+ *     never falls through to the dispatcher, so revision 0 - the posture the
+ *     session STARTS in - has no way in and the badge stays absent until the
+ *     first standalone `execution_policy` event.
  *
  * WHAT THE CONTRACT DOES NOT SETTLE, AND WHAT THIS MODULE CHOSE. The six
  * fixtures under `adversarial/policy/` declare INPUT only: there is no expected
@@ -202,7 +208,17 @@ export type PolicyDecision = {
    * catching up. See {@link PolicyRevisionTracker.highestAnnouncedRevision}.
    */
   stale: boolean;
-  /** Why, in one line. Goes into the operator-facing warning and the stream frame. */
+  /**
+   * Why, in one line. Goes into the operator-facing warning and the stream
+   * frame.
+   *
+   * ENGLISH ENGINE PROSE, never a user-facing string on its own. It is built
+   * here out of schema vocabulary ("critical is not true, on a field the schema
+   * pins to const: true") and the main process has no locale, so a renderer
+   * must not put it where the app's own copy would go. `EffectivePolicyBadge`
+   * localizes {@link verdict} - a closed enum, and therefore translatable - and
+   * shows this behind an "engine says" label, as a quotation.
+   */
   detail: string;
 };
 
@@ -707,8 +723,8 @@ export class PolicyRevisionTracker {
  * `capabilities` and the negotiated contract are read), and the dispatcher only
  * runs from the decoder's default arm, so a handler claiming `ready` would
  * register a type that never routes. The revision-0 seed must therefore be
- * pushed in by that arm calling {@link seedFromReady}. No caller exists yet -
- * see the WIRING note at the top of this file.
+ * pushed in by that arm calling {@link seedFromReady}. That call is still
+ * missing - see step 5 of the WIRING note at the top of this file.
  */
 export type ExecutionPolicyCapability = CapabilityHandler & {
   /** The reducer this handler feeds. Exposed so the agent can read `current`/`stale`. */

@@ -41,7 +41,9 @@
   },
   "tabs": {
     "operations": "Operations",
-    "cost": "Cost"
+    "cost": "Cost",
+    "goals": "Objectifs",
+    "goalsWithCount": "Objectifs · {{count}}"
   },
   "cost": {
     "periodLabel": "Period",
@@ -114,5 +116,48 @@
       "manual": "Votre taux",
       "manualHint": "Un taux saisi ici remplace celui récupéré. Laissez vide pour revenir au taux automatique."
     }
+  },
+  "goals": {
+    "readOnlyNote": "Lecture seule. Cette vue montre ce que le moteur rapporte sur ses objectifs de longue durée ; ouvrir, faire avancer et annuler un objectif relèvent du moteur dans cette version.",
+    "emptyTitle": "Aucun objectif signalé",
+    "emptyHint": "Un objectif apparaît ici dès que le moteur le publie. Le moteur les conserve dans son propre journal : un objectif ouvert plus tôt apparaîtra à sa prochaine mise à jour, pas immédiatement.",
+    "emptyHintUnavailable": "Cette version du moteur ne signale pas d’objectifs persistants ; rien n’apparaîtra ici tant que cela n’aura pas changé.",
+    "unavailableTitle": "Les objectifs persistants sont indisponibles",
+    "limitedTitle": "Les objectifs persistants sont limités dans cette version du moteur",
+    "gradeReported": "Le moteur a classé cette capacité comme {{grade}}.",
+    "gradeExplained": {
+      "publication_bound": "La forme est arrêtée, mais cette version ne publie ces événements que si elle est configurée pour le faire ; un objectif peut donc ne jamais apparaître ici.",
+      "shape_only": "Le type d’événement existe dans cette version, mais pas encore le comportement associé : aucun objectif ne sera signalé.",
+      "unavailable": "Cette version ne comporte pas du tout d’objectifs persistants.",
+      "unrecognised": "Cet hôte ne connaît pas ce classement et ne peut donc pas dire ce qu’il signifie ; il est affiché ci-dessus tel que le moteur l’a envoyé."
+    },
+    "objectiveUnknown": "Objectif non signalé",
+    "stateLabel": "État",
+    "iterationsLabel": "Itérations",
+    "iterationsOf": "{{started}} sur {{ceiling}}",
+    "iterationsCeilingUnknown": "{{started}}, plafond non signalé",
+    "tasksLabel": "Tâches",
+    "transitionLabel": "Dernière transition",
+    "leaseLabel": "Expiration du bail de boucle",
+    "sessionLabel": "Session",
+    "seenLabel": "Dernière mise à jour vue",
+    "refusedTitle": "Le moteur a refusé une commande de contrôle",
+    "refusedReason": "Raison : {{reason}}",
+    "refusedCommand": "Commande refusée : {{command}}",
+    "refusedMismatch": "Cet identifiant de requête a été envoyé pour un autre objectif ou une autre session ; le refus ne peut donc pas être rattaché à une commande de cet objectif.",
+    "lockedTitle": "Le contrôle est verrouillé jusqu’à une resynchronisation",
+    "lockedBody": "La position conservée par cette application n’est plus acceptée par le moteur : faire avancer ou annuler est refusé tant que le moteur n’a pas republié l’objectif.",
+    "notAdoptedTitle": "Non appliqué : {{verdict}}",
+    "taskHeadId": "Tâche",
+    "taskHeadStatus": "Statut",
+    "taskHeadAttempts": "Tentatives",
+    "taskHeadDependsOn": "Dépend de",
+    "taskHeadOutcome": "Résultat",
+    "noTasks": "Le moteur n’a signalé aucune tâche pour cet objectif.",
+    "tasksTruncated": "Le moteur a signalé plus de tâches que ce qui est conservé ; la liste ci-dessus est tronquée.",
+    "dependsOnTruncated": "Une tâche a listé plus de dépendances que ce qui est conservé ; la liste ci-dessus est tronquée.",
+    "textClamped": "Le moteur a envoyé un texte plus long que ce qui est conservé ; l’affichage est tronqué.",
+    "evicted": "Des objectifs plus anciens ont été retirés pour garder cette liste bornée.",
+    "unknown": "inconnu"
   }
 }

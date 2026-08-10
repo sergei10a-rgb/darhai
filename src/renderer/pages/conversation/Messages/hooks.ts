@@ -228,13 +228,43 @@ function composeMessageWithIndex(message: TMessage, list: TMessage[], index: Mes
       if (existingMsg.type === 'sub_agent') {
         const prev = existingMsg.content;
         const next = message.content;
-        const mergedStatus =
-          next.status === 'done' || next.status === 'failed' ? next.status : prev.status;
+        const mergedStatus = next.status === 'done' || next.status === 'failed' ? next.status : prev.status;
         const newList = list.slice();
         newList[existingIdx] = {
           ...existingMsg,
           content: { ...prev, status: mergedStatus, body: prev.body + next.body },
         };
+        return newList;
+      }
+    }
+    const newIdx = list.length;
+    index.msgIdIndex.set(message.msg_id, newIdx);
+    return list.concat(message);
+  }
+
+  // workflow_run message: replace the run card in place, keyed on runId
+  // (stored as msg_id), guarded on type.
+  //
+  // The main-process reducer emits the WHOLE run snapshot on every accepted
+  // mutation, so the newest frame is already the complete truth; merging it
+  // field-by-field would resurrect nodes the engine has since dropped from the
+  // projection.
+  //
+  // This arm is NOT redundant with the generic `if (message.msg_id)` in-place
+  // replacement further down. That one has no `existingMsg.type ===
+  // message.type` guard, so a runId that happened to equal another message's
+  // msg_id would overwrite that message with workflow content and leave a
+  // `type: 'text'` row holding a run snapshot. `composeMessage` in chatLib
+  // states the same rule, but the conversation surface never reaches it:
+  // `composeMessageWithIndex` delegates to `composeMessage` for `tool_group`
+  // only, so the rule has to exist here as well as there.
+  if (message.type === 'workflow_run' && message.msg_id) {
+    const existingIdx = index.msgIdIndex.get(message.msg_id);
+    if (existingIdx !== undefined && existingIdx < list.length) {
+      const existingMsg = list[existingIdx];
+      if (existingMsg.type === 'workflow_run') {
+        const newList = list.slice();
+        newList[existingIdx] = { ...existingMsg, content: message.content };
         return newList;
       }
     }

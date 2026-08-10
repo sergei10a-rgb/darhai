@@ -329,3 +329,126 @@
   color: var(--text-dim, #8a8f98);
   max-width: 360px;
 }
+
+/* ---- durable goals ---- */
+.goalList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.goalCard {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.022);
+  border: 1px solid var(--color-border-2, rgba(255, 255, 255, 0.07));
+}
+/* The two states a user must not have to hunt for: a goal whose controls the
+   engine refused, and one whose cursor is locked pending a resync. */
+.goalCard.goalRefused {
+  border-color: var(--color-danger-light-4, rgba(255, 77, 79, 0.45));
+}
+.goalCard.goalLocked {
+  border-color: var(--color-warning-light-4, rgba(255, 159, 67, 0.45));
+}
+.goalHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.goalObjective {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+  overflow-wrap: anywhere;
+}
+.goalId {
+  font-size: 11px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  color: var(--text-dim, #8a8f98);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 2px 8px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  overflow-wrap: anywhere;
+}
+
+.factRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+}
+.fact {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+.factLabel {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-dim, #8a8f98);
+}
+.factValue {
+  font-size: 12.5px;
+  color: var(--text-secondary, #b6bcc6);
+  overflow-wrap: anywhere;
+}
+
+.bannerBody {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.bannerDetail {
+  opacity: 0.78;
+  overflow-wrap: anywhere;
+}
+
+.taskTable {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-border-2, rgba(255, 255, 255, 0.07));
+  border-radius: 10px;
+  overflow: hidden;
+}
+.taskRow {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1.4fr) minmax(0, 0.7fr) minmax(0, 1.6fr) minmax(0, 1.2fr);
+  gap: 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--color-border-2, rgba(255, 255, 255, 0.05));
+}
+.taskRow:last-child {
+  border-bottom: none;
+}
+.taskHead .taskId,
+.taskHead .taskCell {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-dim, #8a8f98);
+}
+.taskId {
+  font-size: 12.5px;
+  color: var(--text-primary, #fff);
+  overflow-wrap: anywhere;
+}
+.taskCell {
+  font-size: 12.5px;
+  color: var(--text-secondary, #b6bcc6);
+  overflow-wrap: anywhere;
+}
+
+/* Every note here says the readout is INCOMPLETE, so it must stay legible
+   rather than fading into decoration. */
+.goalNote {
+  font-size: 12px;
+  color: var(--text-secondary, #b6bcc6);
+}

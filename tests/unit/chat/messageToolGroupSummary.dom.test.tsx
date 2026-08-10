@@ -24,7 +24,7 @@ vi.mock('@arco-design/web-react/icon', () => ({
 }));
 
 // eslint-disable-next-line
-import MessageToolGroupSummary from '@/renderer/pages/conversation/Messages/components/MessageToolGroupSummary';
+import MessageToolGroupSummary from '@/renderer/pages/conversation/Messages/components/tools/MessageToolGroupSummary';
 
 describe('MessageToolGroupSummary', () => {
   it('renders without crashing when tool_group content is a valid array', () => {

@@ -15,33 +15,29 @@
  * one {@link CapabilityHandler}. It wires nothing up and imports nothing from
  * the agent.
  *
- * WHAT IT REQUIRES - none of this is true yet
- * -------------------------------------------
- * Read the list below as a to-do for whoever merges the capabilities, NOT as a
- * description of the running system:
+ * HOW IT IS WIRED UP - all three seams now exist
+ * ----------------------------------------------
+ *  1. `budgetGrantsCapability` is registered in `HANDLERS`
+ *     (`capabilities/index.ts`), so `dispatchCapabilityEvent` claims
+ *     `budget_grant_result` and routes it here.
+ *  2. `budget_grant_result` is no longer in `ACKNOWLEDGED_UNHANDLED_EVENTS`
+ *     (`protocol.ts`), which would have been a stale claim that the event is
+ *     deliberately inert.
+ *  3. {@link sendContinueWithBudget} is called by `WCoreManager`, from
+ *     `wcoreBudgetGate.ts` - the gate that turns the engine's `budget_exceeded`
+ *     into a confirmation dialog and one explicit human press. The send path
+ *     still carries its own delivery probe rather than assuming a healthy
+ *     transport: the press can land after the engine is gone.
  *
- *  1. `budgetGrantsCapability` must be added to `HANDLERS` in
- *     `capabilities/index.ts`. That array is empty today, so nothing in this
- *     file runs in production - `dispatchCapabilityEvent` claims no types at
- *     all and every `budget_grant_result` falls straight through it.
- *  2. `budget_grant_result` should then be removed from
- *     `ACKNOWLEDGED_UNHANDLED_EVENTS` in `protocol.ts`, which still lists it.
- *     Dispatch runs before that check, so leaving it is not a live bug; it is a
- *     stale claim that this event is deliberately inert.
- *  3. Something must actually CALL {@link sendContinueWithBudget} - a button on
- *     the `budget_exceeded` notice is the obvious place. Nothing calls it today,
- *     which is why the send path carries its own delivery probe rather than
- *     assuming a healthy transport.
- *
- * WHAT IS TRUE TODAY, in the files named
- * --------------------------------------
- * `WCoreAgent.handleEvent` has a `budget_exceeded` arm that prints one info line
- * - "Budget exceeded: max_tokens_out (observed 8192, limit 4096)" - and then the
- * turn is simply over. The engine publishes a way back (`continue_with_budget`
- * out, `budget_grant_result` in) and Darhai speaks neither: `WCoreCommand` has
- * no `continue_with_budget`, and the answer sits in
- * `ACKNOWLEDGED_UNHANDLED_EVENTS`, i.e. is decoded to nothing on purpose. The
- * user's only recourse is to start again.
+ * WHAT THIS REPLACED
+ * ------------------
+ * `WCoreAgent.handleEvent`'s `budget_exceeded` arm printed one info line -
+ * "Budget exceeded: max_tokens_out (observed 8192, limit 4096)" - and the turn
+ * was simply over. The engine published a way back (`continue_with_budget` out,
+ * `budget_grant_result` in) and Darhai spoke neither, so the user's only
+ * recourse was to start again. The arm now forwards the cap typed as well, and
+ * the answer decoded here reaches the transcript through the renderer's
+ * `budget_grant_result` arm.
  *
  * WHAT IT OWNS
  * ------------
@@ -635,8 +631,8 @@ export function decodeBudgetGrantResult(
 }
 
 /**
- * The capability itself - inert until something registers it (see the file
- * header's REQUIRES list).
+ * The capability itself, registered in `capabilities/index.ts` (see the file
+ * header's wiring list).
  *
  * It declares `budget_grant_result` and nothing else. `budget_exceeded` has its
  * own arm in `WCoreAgent.handleEvent` today (a first-class event that predates

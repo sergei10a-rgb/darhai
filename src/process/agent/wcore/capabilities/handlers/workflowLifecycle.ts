@@ -18,35 +18,51 @@
  * run sequences 2 and 3, so a reducer that let children advance the run counter
  * would read the perfectly legal trailing node event as an out-of-order line.
  *
- * WHY A REDUCER AND NOT A PASS-THROUGH. The three run types are listed in
- * `ACKNOWLEDGED_UNHANDLED_EVENTS`, so today a workflow node that fails produces
- * a conversation that simply goes quiet. But forwarding them raw would be worse
- * than silence, because the stream can contradict itself. The eight adversarial
- * fixtures under `adversarial/workflow/` are exactly those contradictions - a
- * duplicate `event_id` carrying a different body, a node event arriving after
- * the run was closed, a second terminal for a node that already succeeded. A
- * card that can be flipped from succeeded to failed by a later line is a card
- * that lies, and `safety` is the grade the contract puts on that.
+ * WHY A REDUCER AND NOT A PASS-THROUGH. Before this module the three run types
+ * were listed in `ACKNOWLEDGED_UNHANDLED_EVENTS`, so a workflow node that
+ * failed produced a conversation that simply went quiet. But forwarding them
+ * raw would be worse than silence, because the stream can contradict itself.
+ * The eight adversarial fixtures under `adversarial/workflow/` are exactly
+ * those contradictions - a duplicate `event_id` carrying a different body, a
+ * node event arriving after the run was closed, a second terminal for a node
+ * that already succeeded. A card that can be flipped from succeeded to failed
+ * by a later line is a card that lies, and `safety` is the grade the contract
+ * puts on that.
  *
- * WIRING REQUIRED - none of it exists yet, and this module cannot add it.
- * Everything below is a reducer over payloads someone hands it; nothing in the
- * running app hands it any. Adoption means four changes in files this module
- * does not own:
- *   1. `capabilities/index.ts` must list {@link workflowLifecycleCapability} in
- *      `HANDLERS`. That array is empty, so the dispatcher routes nothing here
- *      and the three run types never arrive.
- *   2. `protocol.ts` should drop `workflow_started` / `workflow_node_event` /
- *      `workflow_finished` from `ACKNOWLEDGED_UNHANDLED_EVENTS` once (1) lands.
- *      Dispatch runs first, so leaving them costs nothing on the happy path -
- *      but a payload this module refuses as malformed would fall through to a
- *      list that suppresses the warning, which is the opposite of the point.
- *   3. The decoder's `sub_agent_event` arm (`wcore/index.ts`) must call
- *      {@link WorkflowLifecycleCapability.observeSubAgentEvent}. Today that arm
- *      forwards every copy of every child event straight to the task layer and
- *      asks nothing, so the child correlation this module implements is not
- *      consulted by anyone.
- *   4. Something must render {@link WORKFLOW_RUN_FRAME}. No renderer surface
- *      reads a `workflow_run` frame today.
+ * WIRING - the full path, and where each step stands. A reducer with no wiring
+ * is a module that is correct, tested, and invisible; every step below has to
+ * hold before a single pixel reaches the user, and steps 1-4 now do.
+ *   1. DONE. `capabilities/index.ts` lists {@link workflowLifecycleCapability}
+ *      in `HANDLERS`, so `dispatchCapabilityEvent` routes the three run types
+ *      here. Registration is what makes a capability real.
+ *   2. DONE. `protocol.ts` no longer lists `workflow_started` /
+ *      `workflow_node_event` / `workflow_finished` in
+ *      `ACKNOWLEDGED_UNHANDLED_EVENTS`. Dispatch runs first, so leaving them
+ *      would have cost nothing on the happy path - but a payload this module
+ *      refuses as malformed would then fall through to a list that suppresses
+ *      the warning, which is the opposite of the point.
+ *   3. DONE, AND THE STEP THAT WAS MISSING FROM THIS CHECKLIST. `WCoreManager`
+ *      drops every stream frame carrying no `msg_id`, and {@link emit} sends
+ *      the projection with `msg_id: ''` because a run is a fact about the
+ *      SESSION, not about one turn. The manager's exemption is derived from
+ *      `forwardableFrameTypes()`, which unions each handler's `handles` with
+ *      its `emits` - so {@link WORKFLOW_RUN_FRAME} MUST stay declared in
+ *      `emits` below. It is not in `handles`: this module folds three wire
+ *      events into one projection under a name it never consumes. Keying that
+ *      exemption on `handles` alone silently dropped every frame this module
+ *      ever emitted, with the capability's own tests green throughout. An
+ *      earlier version of this checklist omitted this step entirely and a wave
+ *      shipped the card against it - hence the detail here.
+ *   4. DONE. `Messages/MessageList.tsx` renders `WorkflowRunCard` for the
+ *      `workflow_run` message type; `chatLib.transformMessage` turns the frame
+ *      into that message and `composeMessageWithIndex` merges later snapshots
+ *      of the same run into the one card.
+ *   5. STILL OPEN. The decoder's `sub_agent_event` arm (`wcore/index.ts`) does
+ *      not call {@link WorkflowLifecycleCapability.observeSubAgentEvent}. That
+ *      arm forwards every copy of every child event straight to the task layer
+ *      and asks nothing, so the child correlation implemented below is not
+ *      consulted by anyone. The run card is unaffected - it renders nodes, not
+ *      children - but the per-child gap counting is dead until this lands.
  *
  * WHAT THE CONTRACT DOES NOT SETTLE. The manifest publishes correlation keys and
  * criticality; it does not publish a verdict per fixture, and
@@ -214,10 +230,12 @@ export type WorkflowRunSnapshot = {
 /**
  * The stream frame type this capability emits.
  *
- * Nothing consumes it yet: no task-layer or renderer surface reads a
- * `workflow_run` frame today, so adopting this capability includes building the
- * surface that does. The name is exported so that surface and these tests agree
- * on one spelling.
+ * Exported so the four places that must agree on one spelling do: the `emits`
+ * declaration below, `WCoreManager`'s forward set (derived from it), the
+ * `workflow_run` arm in `chatLib.transformMessage`, and `WorkflowRunCard`. The
+ * name is NOT in {@link workflowLifecycleCapability.handles} - three wire
+ * events fold into this one projection - which is precisely why it has to be
+ * declared as an emission or the manager's msg_id guard eats it.
  */
 export const WORKFLOW_RUN_FRAME = 'workflow_run';
 
@@ -933,6 +951,9 @@ export function createWorkflowLifecycleCapability(): WorkflowLifecycleCapability
   return {
     name: CAPABILITY_NAME,
     handles: ['workflow_started', 'workflow_node_event', 'workflow_finished'],
+    // Projection frame: folded from the wire events above, so it must be
+    // declared or WCoreManager drops it at the msg_id guard.
+    emits: [WORKFLOW_RUN_FRAME],
     handle(event, ctx) {
       switch (event.type) {
         case 'workflow_started':
@@ -959,11 +980,12 @@ export function createWorkflowLifecycleCapability(): WorkflowLifecycleCapability
 }
 
 /**
- * The instance intended for registration.
+ * The registered instance.
  *
- * `HANDLERS` in `capabilities/index.ts` is empty today, so nothing dispatches to
- * this object yet - see WIRING REQUIRED at the top of this file. It is a
- * singleton because a capability's state must outlive one decode call, not
- * because anything currently holds it.
+ * `HANDLERS` in `capabilities/index.ts` lists this object, so the dispatcher
+ * routes the three run types to it - see WIRING at the top of this file. It is
+ * a singleton because a capability's state must outlive one decode call: a
+ * per-call handler would forget the run between `workflow_started` and the node
+ * events that follow it.
  */
 export const workflowLifecycleCapability: WorkflowLifecycleCapability = createWorkflowLifecycleCapability();

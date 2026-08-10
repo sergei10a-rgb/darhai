@@ -71,7 +71,7 @@ vi.mock('@arco-design/web-react', async () => {
 
 import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
-import CronProposeCard from '../../../src/renderer/pages/conversation/Messages/components/CronProposeCard';
+import CronProposeCard from '../../../src/renderer/pages/conversation/Messages/components/cron/CronProposeCard';
 import type { IMessageCronPropose } from '../../../src/common/chat/chatLib';
 
 function makeProposeMsg(overrides: Partial<IMessageCronPropose['content']> = {}): IMessageCronPropose {

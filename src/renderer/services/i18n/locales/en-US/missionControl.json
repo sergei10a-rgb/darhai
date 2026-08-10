@@ -41,7 +41,9 @@
   },
   "tabs": {
     "operations": "Operations",
-    "cost": "Cost"
+    "cost": "Cost",
+    "goals": "Goals",
+    "goalsWithCount": "Goals · {{count}}"
   },
   "cost": {
     "periodLabel": "Period",
@@ -114,5 +116,48 @@
       "manual": "Your rate",
       "manualHint": "A rate you enter here overrides the fetched one. Leave it empty to go back to the fetched rate."
     }
+  },
+  "goals": {
+    "readOnlyNote": "Read-only. This view shows what the engine reports about its long-running goals; opening, advancing and cancelling one are engine-side in this build.",
+    "emptyTitle": "No goals reported",
+    "emptyHint": "A goal appears here the moment the engine publishes one. The engine keeps them in its own journal, so a goal opened earlier shows up at its next update rather than right now.",
+    "emptyHintUnavailable": "This engine build does not report durable goals, so nothing will appear here until that changes.",
+    "unavailableTitle": "Durable goals are unavailable",
+    "limitedTitle": "Durable goals are limited in this engine build",
+    "gradeReported": "The engine graded this capability {{grade}}.",
+    "gradeExplained": {
+      "publication_bound": "The shape is settled, but this build publishes these events only when it is configured to, so a goal may never be reported here.",
+      "shape_only": "The event type exists in this build but the behaviour behind it does not yet, so no goal will be reported.",
+      "unavailable": "This build does not carry durable goals at all.",
+      "unrecognised": "This host does not know that grade, so it cannot say what it means for you - the engine's own word for it is above."
+    },
+    "objectiveUnknown": "Objective not reported",
+    "stateLabel": "State",
+    "iterationsLabel": "Iterations",
+    "iterationsOf": "{{started}} of {{ceiling}}",
+    "iterationsCeilingUnknown": "{{started}}, ceiling not reported",
+    "tasksLabel": "Tasks",
+    "transitionLabel": "Last transition",
+    "leaseLabel": "Loop lease expires",
+    "sessionLabel": "Session",
+    "seenLabel": "Last update seen",
+    "refusedTitle": "The engine refused a control command",
+    "refusedReason": "Reason: {{reason}}",
+    "refusedCommand": "Refused command: {{command}}",
+    "refusedMismatch": "This request id was sent for a different goal or session, so the refusal cannot be matched to a command this goal sent.",
+    "lockedTitle": "Control is locked until a resync",
+    "lockedBody": "The position this host holds is no longer one the engine accepts, so advancing or cancelling is refused until the engine republishes the goal.",
+    "notAdoptedTitle": "Not applied: {{verdict}}",
+    "taskHeadId": "Task",
+    "taskHeadStatus": "Status",
+    "taskHeadAttempts": "Attempts",
+    "taskHeadDependsOn": "Depends on",
+    "taskHeadOutcome": "Outcome",
+    "noTasks": "The engine reported no tasks for this goal.",
+    "tasksTruncated": "The engine reported more tasks than are kept; the list above is cut short.",
+    "dependsOnTruncated": "A task listed more dependencies than are kept; the list above is cut short.",
+    "textClamped": "The engine sent text longer than is kept; what is shown is cut short.",
+    "evicted": "Older goals were dropped to keep this list bounded.",
+    "unknown": "unknown"
   }
 }

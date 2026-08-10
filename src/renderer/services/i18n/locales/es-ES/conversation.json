@@ -329,5 +329,49 @@
   "openclaw": {
     "runtimeCheckFailed": "No se pudo validar el entorno del agente",
     "runtimeMismatch": "Falló la validación del cambio de agente: {{details}}"
+  },
+  "workflowRun": {
+    "statusRunning": "En ejecución",
+    "statusSucceeded": "Correcto",
+    "statusFailed": "Con errores",
+    "untitled": "Flujo de trabajo",
+    "nodesObserved": "{{observed}} pasos informados",
+    "nodesDeclared": "el motor declaró {{declared}}",
+    "noNodesYet": "Ningún paso ha informado todavía",
+    "noNodesReported": "La ejecución terminó sin informar ni un solo paso",
+    "linesLost": "Se perdieron {{lines}} líneas del flujo - esta ejecución puede estar incompleta",
+    "retryable": "Se puede reintentar",
+    "notRetryable": "No se puede reintentar",
+    "runFailed": "La ejecución falló",
+    "nodeState": {
+      "queued": "En cola",
+      "running": "En ejecución",
+      "succeeded": "Correcto",
+      "failed": "Con errores",
+      "blocked": "Bloqueado"
+    }
+  },
+  "failover": {
+    "switched": "{{failedProvider}}/{{failedModel}} falló ({{reason}}) - se cambió a {{selectedProvider}}/{{selectedModel}}",
+    "exhausted": "{{failedProvider}}/{{failedModel}} falló ({{reason}}) y ningún otro proveedor pudo continuar",
+    "malformed": "El motor cambió de proveedor, pero no se pudo leer el registro",
+    "rejectedHeader": "Se rechazaron {{rejected}} candidatos:",
+    "reason": {
+      "auth": "fallo de autenticación",
+      "auth_permanent": "autenticación rechazada de forma permanente",
+      "format": "formato de respuesta rechazado",
+      "rate_limit": "límite de peticiones",
+      "overloaded": "proveedor sobrecargado",
+      "billing": "problema de facturación",
+      "timeout": "tiempo de espera agotado",
+      "model_not_found": "modelo no encontrado",
+      "session_expired": "sesión caducada",
+      "context_overflow": "desbordamiento de la ventana de contexto",
+      "unknown": "motivo desconocido"
+    }
+  },
+  "delivery": {
+    "unconfigured": "El agente intentó enviar un mensaje por {{platform}}, pero no hay ningún canal de {{platform}} configurado. Añade uno en Ajustes - Canales.",
+    "failed": "El agente no pudo enviar un mensaje por {{platform}}: {{error}}"
   }
 }

@@ -329,5 +329,49 @@
   "openclaw": {
     "runtimeCheckFailed": "無法驗證智慧代理執行環境",
     "runtimeMismatch": "智慧代理切換驗證失敗：{{details}}"
+  },
+  "workflowRun": {
+    "statusRunning": "執行中",
+    "statusSucceeded": "已成功",
+    "statusFailed": "已失敗",
+    "untitled": "工作流程",
+    "nodesObserved": "已回報 {{observed}} 個步驟",
+    "nodesDeclared": "引擎宣告為 {{declared}}",
+    "noNodesYet": "尚未有任何步驟回報",
+    "noNodesReported": "本次執行結束時未回報任何步驟",
+    "linesLost": "串流中遺失了 {{lines}} 行 - 本次執行可能不完整",
+    "retryable": "可重試",
+    "notRetryable": "不可重試",
+    "runFailed": "本次執行失敗",
+    "nodeState": {
+      "queued": "排隊中",
+      "running": "執行中",
+      "succeeded": "已成功",
+      "failed": "已失敗",
+      "blocked": "已阻擋"
+    }
+  },
+  "failover": {
+    "switched": "{{failedProvider}}/{{failedModel}} 失敗（{{reason}}）- 已切換至 {{selectedProvider}}/{{selectedModel}}",
+    "exhausted": "{{failedProvider}}/{{failedModel}} 失敗（{{reason}}），且沒有其他服務商能接手",
+    "malformed": "引擎切換了服務商，但該紀錄無法讀取",
+    "rejectedHeader": "已拒絕 {{rejected}} 個候選：",
+    "reason": {
+      "auth": "驗證失敗",
+      "auth_permanent": "驗證遭永久拒絕",
+      "format": "回應格式遭拒絕",
+      "rate_limit": "速率限制",
+      "overloaded": "服務商過載",
+      "billing": "計費問題",
+      "timeout": "逾時",
+      "model_not_found": "找不到模型",
+      "session_expired": "工作階段已過期",
+      "context_overflow": "上下文視窗溢位",
+      "unknown": "原因不明"
+    }
+  },
+  "delivery": {
+    "unconfigured": "智慧代理嘗試透過 {{platform}} 傳送訊息，但尚未設定 {{platform}} 通道。請在「設定 - 通道」中新增。",
+    "failed": "智慧代理無法透過 {{platform}} 傳送訊息：{{error}}"
   }
 }

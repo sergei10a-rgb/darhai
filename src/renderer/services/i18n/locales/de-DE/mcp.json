@@ -88,6 +88,43 @@
       "confirm": "Erlauben",
       "reason": "Grund",
       "context": "Details"
+    },
+    "noDetails": "Дархай hat zu dieser Anfrage keine Angaben erhalten, daher ist unbekannt, was geschehen würde. Lehnen Sie ab, wenn Sie nicht wissen, worum es geht.",
+    "answerExpired": "Diese Anfrage war bereits abgelaufen, Ihre Antwort hatte also keine Wirkung - sie wurde abgelehnt und es ist nichts geschehen. Hier lässt sich nichts mehr gewähren: Schließen Sie diesen Dialog und fragen Sie erneut, wenn Sie es weiterhin möchten.",
+    "answerUndelivered": "Ihre Antwort hat Дархай nicht erreicht, es wurde nichts gewährt. Drücken Sie erneut oder schließen Sie, um abzulehnen.",
+    "budgetGrant": {
+      "title": "Budget erhöhen?",
+      "summary": "Die Engine hat angehalten, weil eine Budgetgrenze erreicht wurde. Sie können mehr gewähren und sie weiterarbeiten lassen. Ob der pausierte Zug fortgesetzt wird oder das zusätzliche Budget erst Ihrer nächsten Nachricht zugutekommt, entscheidet die Engine - nicht Дархай.",
+      "confirm": "Gewähren",
+      "reason": "Erreichte Grenze",
+      "observed": "Verbraucht",
+      "limit": "Grenze",
+      "unknown": "unbekannt",
+      "grantTokens": "Zu gewährende Tokens",
+      "grantCost": "Zu gewährender Betrag (US$)",
+      "footer": "Angefragt von der Budgetgrenze der Engine selbst, nicht von einem Werkzeug"
+    }
+  },
+  "budgetResult": {
+    "granted": "Die Engine hat das Budget um {{amount}} erhöht.",
+    "grantedLess": "Die Engine hat das Budget um {{amount}} erhöht - weniger als die {{requested}}, die Sie gewährt haben.",
+    "refused": "Das zusätzliche Budget wurde abgelehnt: {{reason}}",
+    "retry": "Das kann klappen, wenn Sie es gleich noch einmal versuchen.",
+    "tokens": "{{tokens}} Tokens",
+    "cost": "US$ {{cost}}",
+    "both": "{{tokens}} und {{cost}}",
+    "nothing": "nichts",
+    "reason": {
+      "host_not_authorized": "Diese Дархай-Installation darf keine Budgets erhöhen.",
+      "managed_policy": "Eine verwaltete Richtlinie verbietet es.",
+      "no_exhausted_budget": "Kein Budget war erschöpft, es gab also nichts zu erhöhen.",
+      "invalid_grant": "Die Engine hat den Betrag nicht akzeptiert.",
+      "budget_tracker_unavailable": "Die Budgetverwaltung der Engine ist nicht verfügbar.",
+      "persistence_failure": "Die Engine konnte die Gewährung nicht speichern.",
+      "request_id_conflict": "Die Engine kannte diese Anfrage bereits.",
+      "ledger_capacity_exceeded": "Bei der Engine sind zu viele Gewährungen offen.",
+      "turn_in_progress": "Es läuft noch ein Zug, und währenddessen werden Gewährungen abgelehnt.",
+      "unknown": "Die Engine hat keinen Grund genannt."
     }
   }
 }

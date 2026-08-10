@@ -41,7 +41,9 @@
   },
   "tabs": {
     "operations": "Operations",
-    "cost": "Cost"
+    "cost": "Cost",
+    "goals": "目标",
+    "goalsWithCount": "目标 · {{count}}"
   },
   "cost": {
     "periodLabel": "Period",
@@ -114,5 +116,48 @@
       "manual": "自定义汇率",
       "manualHint": "在此输入的汇率将覆盖自动获取的汇率。留空则恢复自动。"
     }
+  },
+  "goals": {
+    "readOnlyNote": "只读。此视图展示引擎报告的长期目标；在此版本中，打开、推进和取消目标均由引擎一侧完成。",
+    "emptyTitle": "没有报告任何目标",
+    "emptyHint": "引擎一发布目标，这里就会出现。引擎将目标记录在自己的日志中，因此更早打开的目标会在下次更新时出现，而不是现在。",
+    "emptyHintUnavailable": "此引擎版本不报告持久目标，在此情况改变之前这里不会出现任何内容。",
+    "unavailableTitle": "持久目标不可用",
+    "limitedTitle": "此引擎版本中的持久目标受限",
+    "gradeReported": "引擎将此能力评为 {{grade}}。",
+    "gradeExplained": {
+      "publication_bound": "结构已定型，但此版本只有在被配置为发布时才会发出这些事件，因此这里可能永远不会出现目标。",
+      "shape_only": "此版本中只有事件类型，其背后的行为尚不存在，因此不会报告任何目标。",
+      "unavailable": "此版本根本不包含持久目标。",
+      "unrecognised": "此主机不认识该评级，无法说明其含义——上面按引擎发送的原样显示。"
+    },
+    "objectiveUnknown": "未报告目标内容",
+    "stateLabel": "状态",
+    "iterationsLabel": "迭代",
+    "iterationsOf": "{{ceiling}} 次中的第 {{started}} 次",
+    "iterationsCeilingUnknown": "{{started}}，未报告上限",
+    "tasksLabel": "任务",
+    "transitionLabel": "最近一次转换",
+    "leaseLabel": "循环租约到期",
+    "sessionLabel": "会话",
+    "seenLabel": "最近一次更新",
+    "refusedTitle": "引擎拒绝了一条控制命令",
+    "refusedReason": "原因：{{reason}}",
+    "refusedCommand": "被拒绝的命令：{{command}}",
+    "refusedMismatch": "该请求 ID 是为另一个目标或会话发送的，因此无法把这次拒绝对应到本目标发出的命令。",
+    "lockedTitle": "在重新同步之前，控制被锁定",
+    "lockedBody": "本应用保存的位置已不再被引擎接受，因此在引擎重新发布该目标之前，推进和取消都会被拒绝。",
+    "notAdoptedTitle": "未采用：{{verdict}}",
+    "taskHeadId": "任务",
+    "taskHeadStatus": "状态",
+    "taskHeadAttempts": "尝试次数",
+    "taskHeadDependsOn": "依赖于",
+    "taskHeadOutcome": "结果",
+    "noTasks": "引擎报告此目标没有任务。",
+    "tasksTruncated": "引擎报告的任务多于所保留的数量；上面的列表已被截断。",
+    "dependsOnTruncated": "某个任务列出的依赖多于所保留的数量；上面的列表已被截断。",
+    "textClamped": "引擎发送的文本长于所保留的长度；显示的内容已被截断。",
+    "evicted": "为保持列表有限，较早的目标已被移除。",
+    "unknown": "未知"
   }
 }

@@ -258,7 +258,6 @@
     "tests/unit/renderer/conversation/CreateTaskDialog.dom.test.tsx",
     "tests/unit/renderer/conversation/CronJobSiderItem.dom.test.tsx",
     "tests/unit/renderer/conversation/CronJobSiderSection.dom.test.tsx",
-    "tests/unit/renderer/conversation/MessageCronTrigger.dom.test.tsx",
     "tests/unit/renderer/conversation/ScheduledTasksPage.dom.test.tsx",
     "tests/unit/renderer/conversation/TaskDetailPage.dom.test.tsx",
     "tests/unit/renderer/conversation/useConversationAgents.dom.test.ts",

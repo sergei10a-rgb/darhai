@@ -2376,6 +2376,106 @@ export const wcoreProfiles = {
   remove: buildProvider<{ ok: boolean; error?: string }, { name: string }>('wcoreProfiles.remove'),
 };
 
+/** One capability's readiness, as the engine announced it during startup. */
+export type IWcoreCapabilityRow = {
+  /** The ENGINE-INTERNAL capability id (e.g. `delegate_isolation`). */
+  capability: string;
+  stage: string;
+  /** Null when the engine stated none, or it was unreadable - never invented. */
+  reason: string | null;
+  /** This host's grade of `stage`: `healthy` | `degraded` | `declined` | ... */
+  health: string;
+  /** What the operator could do about it, graded from `reason`. */
+  remedy: string;
+  frames: number;
+};
+
+/**
+ * What the engine told us about itself, readable at any time.
+ *
+ * WHY A PULL AND NOT A SUBSCRIPTION. `capability_activation` frames are emitted
+ * once per engine process START (MEASURED: 24, or 26 with smart handoff). A
+ * Settings pane is unmounted at that moment - the user is in a chat, which is
+ * what started the engine - so a pane that only subscribes to the live stream
+ * shows an empty table forever. Reading the retained record on mount is the
+ * only way the readout can be correct after the fact.
+ *
+ * The two id spaces are DIFFERENT and both are here on purpose: `activation`
+ * carries engine-internal ids, `grades` carries contract capability ids
+ * (`durable_goals_v1`, ...). They do not intersect - filtering one for a name
+ * from the other never matches.
+ */
+export type IWcoreCapabilitySnapshot = {
+  activation: IWcoreCapabilityRow[];
+  /** True when more capabilities were announced than the record can hold. */
+  overflowed: boolean;
+  /** Contract grade per contract capability id, exactly as the engine graded it. */
+  grades: Record<string, string>;
+  /**
+   * False until some engine published a `ready` in this app run.
+   *
+   * A caller MUST branch on this before reading `grades`: an empty map means
+   * "nothing is available" to a gate, but "we have not asked yet" to a readout,
+   * and conflating the two reports a healthy capability as broken.
+   */
+  contractKnown: boolean;
+  /** Engine semver from the last `ready`, `''` when none. */
+  engineVersion: string;
+};
+
+/**
+ * One live engine this host addressed, or declined to address.
+ *
+ * Exactly one of `requestId` / `reason` is present. `requestId` means the
+ * command was written and an answer is owed under that correlation id; `reason`
+ * is the engine layer's own words for why nothing was sent (no contract grade,
+ * unreachable child, malformed command). Neither is invented here.
+ */
+export type IWcoreEngineRequest = {
+  /** The conversation whose engine was addressed. */
+  conversationId: string;
+  /** The correlation id the reply frame will carry. Absent when nothing went out. */
+  requestId?: string;
+  /** Why nothing was sent. Absent when `requestId` is present. */
+  reason?: string;
+};
+
+/**
+ * What came of asking the live engines something.
+ *
+ * `engines` is the count of live Darhai Core engines AT THE MOMENT OF THE CALL,
+ * and it is separate from `sent.length` on purpose: "no chat is open" and "a
+ * chat is open but its engine refused" are different answers, and a readout
+ * that cannot tell them apart tells the user to open a chat they already have.
+ */
+export type IWcoreRuntimeRequestOutcome = {
+  engines: number;
+  /** One entry per engine that accepted the command. */
+  sent: IWcoreEngineRequest[];
+  /** One entry per engine that refused it, with that engine's reason. */
+  refused: IWcoreEngineRequest[];
+};
+
+/**
+ * Read-only engine introspection for the UI. HUMAN-ONLY - the snapshot
+ * discloses which engine subsystems are enforced (sandbox isolation, policy
+ * grading) and is remote-denied alongside the other `wcore*` readouts.
+ */
+export const wcoreEngine = {
+  // The retained capability-readiness record + the negotiated contract grades.
+  capabilitySnapshot: buildProvider<IWcoreCapabilitySnapshot, void>('wcoreEngine.capabilitySnapshot'),
+  // Ask the most recently active live engine for a runtime diagnostics
+  // snapshot. The answer does NOT come back through this promise - it arrives
+  // later on `conversation.responseStream` as `runtime_diagnostics_snapshot` |
+  // `_unavailable`, correlated by the `requestId` returned here.
+  requestRuntimeDiagnostics: buildProvider<IWcoreRuntimeRequestOutcome, void>('wcoreEngine.requestRuntimeDiagnostics'),
+  // Ask EVERY live engine to drop an MCP server from the running session.
+  // Deleting the server from the library rewrites config files; only this takes
+  // the tools out of a chat that is already open. Replies arrive as
+  // `mcp_removal_result`, again correlated by `requestId`.
+  withdrawMcpServer: buildProvider<IWcoreRuntimeRequestOutcome, { name: string }>('wcoreEngine.withdrawMcpServer'),
+};
+
 // Team Mode API
 export type ICreateTeamParams = {
   userId: string;

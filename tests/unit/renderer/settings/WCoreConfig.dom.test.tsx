@@ -46,6 +46,13 @@ vi.mock('react-i18next', () => ({
 
 vi.mock('../../../../src/common', () => ({
   ipcBridge: {
+    // Engine capability frames (`capability_activation`, the diagnostics
+    // replies) reach the panes on this stream. Subscribing must not throw here;
+    // what the panes DO with the frames is covered by
+    // EngineCapabilityPanes.dom.test.tsx.
+    conversation: {
+      responseStream: { on: (): (() => void) => () => undefined },
+    },
     acpConversation: {
       getAvailableAgents: { invoke: () => mockGetAvailableAgents() },
     },
@@ -71,6 +78,19 @@ vi.mock('../../../../src/common', () => ({
       clone: { invoke: () => Promise.resolve({ ok: true }) },
       activate: { invoke: () => Promise.resolve({ ok: true }) },
       delete: { invoke: () => Promise.resolve({ ok: true }) },
+    },
+    // Engine introspection. `capabilitySnapshot` is READ ON MOUNT by the
+    // Overview pane - the `capability_activation` frames it renders are all
+    // emitted while Settings is unmounted, so the live stream alone can never
+    // fill that table. What the pane does with the answer is covered by
+    // EngineCapabilityPanes.dom.test.tsx; here it only has to resolve.
+    wcoreEngine: {
+      capabilitySnapshot: {
+        invoke: () =>
+          Promise.resolve({ activation: [], overflowed: false, grades: {}, contractKnown: false, engineVersion: '' }),
+      },
+      requestRuntimeDiagnostics: { invoke: () => Promise.resolve({ engines: 0, sent: [], refused: [] }) },
+      withdrawMcpServer: { invoke: () => Promise.resolve({ engines: 0, sent: [], refused: [] }) },
     },
   },
 }));

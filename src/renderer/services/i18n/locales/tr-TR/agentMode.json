@@ -15,5 +15,25 @@
   "permission": "İzin",
   "switchMode": "Switch Mode",
   "switchSuccess": "Mode switched successfully",
-  "switchFailed": "Failed to switch mode"
+  "switchFailed": "Failed to switch mode",
+  "prompt": "Her seferinde sor",
+  "managed": "Yönetilen",
+  "dangerous": "Tehlikeli",
+  "effectivePosture": "Motor: {{posture}} / {{approvals}}",
+  "policyUnknown": "Motorun duruşu bilinmiyor",
+  "managedFloor": "Yönetilen bir politika alt sınırı yürürlükte",
+  "sandboxBypass": "Korumalı alan atlanıyor",
+  "policyStale": "Motorun politikası gösterilenden daha yeni.",
+  "policyRevision": "Politika revizyonu {{revision}}",
+  "policyVerdict": {
+    "applied": "Motor bu politikayı uyguladı.",
+    "idempotent": "Motor hâlihazırda yürürlükteki politikayı yineledi; bir değişiklik yok.",
+    "gap": "En az bir politika güncellemesi hiç ulaşmadı, bu durum güncel olmayabilir.",
+    "conflict": "İki politika aynı revizyon numarasını iddia ediyor, bu yüzden hiçbiri güvenilir değil.",
+    "version_mismatch": "Motor, Darhai'nin bu sürümünün okuyamadığı bir politika biçimi bildirdi.",
+    "not_critical": "Motor, yetkili olarak işaretlemediği bir politika makbuzu gönderdi.",
+    "regression": "Motor, hâlihazırda yürürlükte olandan daha eski bir politika bildirdi.",
+    "malformed": "Politika makbuzu okunamadı."
+  },
+  "policyEngineDetail": "Motor mesajı: {{detail}}"
 }

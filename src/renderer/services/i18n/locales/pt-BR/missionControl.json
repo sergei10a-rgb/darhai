@@ -41,7 +41,9 @@
   },
   "tabs": {
     "operations": "Operations",
-    "cost": "Cost"
+    "cost": "Cost",
+    "goals": "Objetivos",
+    "goalsWithCount": "Objetivos · {{count}}"
   },
   "cost": {
     "periodLabel": "Period",
@@ -114,5 +116,48 @@
       "manual": "Sua taxa",
       "manualHint": "Uma taxa informada aqui substitui a obtida. Deixe vazio para voltar à automática."
     }
+  },
+  "goals": {
+    "readOnlyNote": "Somente leitura. Esta visão mostra o que o motor relata sobre seus objetivos de longa duração; abrir, avançar e cancelar um deles cabe ao motor nesta versão.",
+    "emptyTitle": "Nenhum objetivo relatado",
+    "emptyHint": "Um objetivo aparece aqui assim que o motor o publica. O motor os mantém em seu próprio registro, então um objetivo aberto antes aparece na próxima atualização, e não agora.",
+    "emptyHintUnavailable": "Esta versão do motor não relata objetivos persistentes, então nada aparecerá aqui até que isso mude.",
+    "unavailableTitle": "Objetivos persistentes indisponíveis",
+    "limitedTitle": "Objetivos persistentes são limitados nesta versão do motor",
+    "gradeReported": "O motor classificou esta capacidade como {{grade}}.",
+    "gradeExplained": {
+      "publication_bound": "O formato está definido, mas esta versão só publica esses eventos quando configurada para isso, então um objetivo pode nunca aparecer aqui.",
+      "shape_only": "O tipo de evento existe nesta versão, mas o comportamento por trás dele ainda não, então nenhum objetivo será relatado.",
+      "unavailable": "Esta versão não traz objetivos persistentes.",
+      "unrecognised": "Este host não conhece essa classificação e não pode dizer o que ela significa - acima ela aparece exatamente como o motor a enviou."
+    },
+    "objectiveUnknown": "Objetivo não relatado",
+    "stateLabel": "Estado",
+    "iterationsLabel": "Iterações",
+    "iterationsOf": "{{started}} de {{ceiling}}",
+    "iterationsCeilingUnknown": "{{started}}, limite não relatado",
+    "tasksLabel": "Tarefas",
+    "transitionLabel": "Última transição",
+    "leaseLabel": "Concessão do laço expira",
+    "sessionLabel": "Sessão",
+    "seenLabel": "Última atualização vista",
+    "refusedTitle": "O motor recusou um comando de controle",
+    "refusedReason": "Motivo: {{reason}}",
+    "refusedCommand": "Comando recusado: {{command}}",
+    "refusedMismatch": "Este id de solicitação foi enviado para outro objetivo ou sessão, então a recusa não pode ser associada a um comando enviado por este objetivo.",
+    "lockedTitle": "O controle está travado até uma ressincronização",
+    "lockedBody": "A posição que este aplicativo guarda não é mais aceita pelo motor, então avançar ou cancelar é recusado até o motor republicar o objetivo.",
+    "notAdoptedTitle": "Não aplicado: {{verdict}}",
+    "taskHeadId": "Tarefa",
+    "taskHeadStatus": "Status",
+    "taskHeadAttempts": "Tentativas",
+    "taskHeadDependsOn": "Depende de",
+    "taskHeadOutcome": "Resultado",
+    "noTasks": "O motor não relatou tarefas para este objetivo.",
+    "tasksTruncated": "O motor relatou mais tarefas do que são mantidas; a lista acima está cortada.",
+    "dependsOnTruncated": "Uma tarefa listou mais dependências do que são mantidas; a lista acima está cortada.",
+    "textClamped": "O motor enviou texto maior do que é mantido; o que aparece está cortado.",
+    "evicted": "Objetivos antigos foram descartados para manter esta lista limitada.",
+    "unknown": "desconhecido"
   }
 }

@@ -23,10 +23,11 @@
  *    interrupted turn - the other half of turn recovery's `tool_outcome_unknown`
  *    (see {@link UNKNOWN_TOOL_EFFECT_RECONCILE_REASON}).
  *
- * All three names sit in `ACKNOWLEDGED_UNHANDLED_EVENTS` today, i.e. they are
- * decoded to nothing on purpose. For the failover receipt that means a provider
- * switch is invisible; for the delivery request it means the engine's
- * `send_message` tool can reach none of Darhai's configured channel plugins.
+ * Before this module all three names sat in `ACKNOWLEDGED_UNHANDLED_EVENTS`,
+ * i.e. they were decoded to nothing on purpose. For the failover receipt that
+ * meant a provider switch was invisible; for the delivery request it meant the
+ * engine's `send_message` tool could reach none of Darhai's configured channel
+ * plugins.
  *
  * THE ONE RULE THIS MODULE IS BUILT AROUND: EVERY REQUEST IS ANSWERED. A
  * `host_send_message_request` that this host cannot serve is answered
@@ -39,33 +40,40 @@
  * path here that does not answer - a request with no usable `call_id`, which
  * cannot be answered because the answer is keyed on it - and it is loud.
  *
- * WIRING THIS MODULE REQUIRES, WHICH IT CANNOT CHECK FROM HERE. These are
- * requirements on the code around it, not claims about the running system:
+ * WIRING THIS MODULE REQUIRES, WHICH IT CANNOT CHECK FROM HERE. The status
+ * notes were checked by reading the callers and must be re-checked when they
+ * move; this file asserts nothing about them at runtime:
  *
- *  1. {@link hostDelegatedDeliveryCapability} must be listed in `HANDLERS` in
+ *  1. DONE. {@link hostDelegatedDeliveryCapability} is listed in `HANDLERS` in
  *     `capabilities/index.ts`. Unregistered, nothing routes here and no frame
- *     emitted here reaches a renderer (`WCoreManager` builds its
- *     `CAPABILITY_FRAME_TYPES` pass-through set from `claimedEventTypes()`).
- *  2. The three names must then leave `ACKNOWLEDGED_UNHANDLED_EVENTS` in
- *     `protocol.ts`, or the host reports as knowingly-inert three events it now
- *     handles.
- *  3. `WAYLAND_SEND_MESSAGE_HOST_DELEGATE=1` must be in the engine's spawn env
- *     (`envBuilder.buildEngineSpawnEnv`), or the engine never emits
- *     `host_send_message_request` at all and the delivery half is dead code.
+ *     emitted here reaches a renderer - `WCoreManager` builds its
+ *     `CAPABILITY_FRAME_TYPES` pass-through set from `forwardableFrameTypes()`,
+ *     which unions every registered handler's `handles` with its `emits`. This
+ *     module emits under names it also handles, so it needs no `emits` entry.
+ *  2. DONE. None of the three names remains in `ACKNOWLEDGED_UNHANDLED_EVENTS`
+ *     in `protocol.ts`, so the host no longer reports as knowingly-inert three
+ *     events it now handles.
+ *  3. DONE (renderer). `useWCoreMessage` turns a `provider_failover_receipt`
+ *     and a `host_send_message_request` into a transcript notice via
+ *     {@link describeFailover} / {@link describeDelivery} in
+ *     `platforms/wcore/useWCoreMessage.ts`.
+ *  4. STILL OPEN. `WAYLAND_SEND_MESSAGE_HOST_DELEGATE=1` is not in the engine's
+ *     spawn env (`envBuilder.buildEngineSpawnEnv`), so the engine never emits
+ *     `host_send_message_request` and the delivery half is unreachable.
  *     MEASURED, not inferred: the bundled binary carries "send_message runs
  *     host-delegated (WAYLAND_SEND_MESSAGE_HOST_DELEGATE=1): sends are fulfilled
  *     by the host, not the engine".
- *  4. Something must install a {@link MessageDeliverer} via
+ *  5. STILL OPEN. Nothing installs a {@link MessageDeliverer} via
  *     {@link HostDelegatedDeliveryCapability.setMessageDeliverer} - the adapter
  *     from {@link DeliveryRequest} to a running channel plugin's
  *     `sendMessage(chatId, IUnifiedOutgoingMessage)`. Until it does, this module
  *     DECLINES every delivery with "no delivery transport is installed", which
  *     is the honest answer and not a stall.
- *  5. `resolve_unknown_tool_effect` needs a negotiated contract to be sendable.
- *     The gate reads it through {@link turnRecoveryCapability}, so the decoder's
- *     `ready` arm calling `turnRecoveryCapability.seedFromReady` arms both
- *     capabilities. With no seed the gate is SHUT - the deliberate fail-closed
- *     default.
+ *  6. STILL OPEN. `resolve_unknown_tool_effect` needs a negotiated contract to
+ *     be sendable. The gate reads it through {@link turnRecoveryCapability},
+ *     and the decoder's `ready` arm does not call
+ *     `turnRecoveryCapability.seedFromReady`, so the gate is SHUT - the
+ *     deliberate fail-closed default.
  *
  * WHAT THE CONTRACT DOES NOT SETTLE, AND WHAT THIS MODULE CHOSE:
  *

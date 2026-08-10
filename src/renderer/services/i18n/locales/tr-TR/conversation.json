@@ -331,5 +331,49 @@
   "openclaw": {
     "runtimeCheckFailed": "Ajan çalışma zamanı doğrulanamadı",
     "runtimeMismatch": "Ajan geçişi doğrulaması başarısız: {{details}}"
+  },
+  "workflowRun": {
+    "statusRunning": "Çalışıyor",
+    "statusSucceeded": "Başarılı",
+    "statusFailed": "Başarısız",
+    "untitled": "İş akışı",
+    "nodesObserved": "{{observed}} adım bildirildi",
+    "nodesDeclared": "motor {{declared}} olarak bildirdi",
+    "noNodesYet": "Henüz hiçbir adım bildirilmedi",
+    "noNodesReported": "Çalıştırma tek bir adım bile bildirmeden sona erdi",
+    "linesLost": "Akıştan {{lines}} satır kayboldu - bu çalıştırma eksik olabilir",
+    "retryable": "Yeniden denenebilir",
+    "notRetryable": "Yeniden denenemez",
+    "runFailed": "Çalıştırma başarısız oldu",
+    "nodeState": {
+      "queued": "Sırada",
+      "running": "Çalışıyor",
+      "succeeded": "Başarılı",
+      "failed": "Başarısız",
+      "blocked": "Engellendi"
+    }
+  },
+  "failover": {
+    "switched": "{{failedProvider}}/{{failedModel}} başarısız oldu ({{reason}}) - {{selectedProvider}}/{{selectedModel}} sağlayıcısına geçildi",
+    "exhausted": "{{failedProvider}}/{{failedModel}} başarısız oldu ({{reason}}) ve başka hiçbir sağlayıcı devralamadı",
+    "malformed": "Motor sağlayıcı değiştirdi, ancak kayıt okunamadı",
+    "rejectedHeader": "{{rejected}} aday reddedildi:",
+    "reason": {
+      "auth": "kimlik doğrulama başarısız",
+      "auth_permanent": "kimlik doğrulama kalıcı olarak reddedildi",
+      "format": "yanıt biçimi reddedildi",
+      "rate_limit": "istek sınırı",
+      "overloaded": "sağlayıcı aşırı yüklü",
+      "billing": "faturalandırma sorunu",
+      "timeout": "zaman aşımı",
+      "model_not_found": "model bulunamadı",
+      "session_expired": "oturum süresi doldu",
+      "context_overflow": "bağlam penceresi taştı",
+      "unknown": "bilinmeyen neden"
+    }
+  },
+  "delivery": {
+    "unconfigured": "Aracı {{platform}} üzerinden mesaj göndermeye çalıştı, ancak kurulu bir {{platform}} kanalı yok. Ayarlar - Kanallar bölümünden ekleyin.",
+    "failed": "Aracı {{platform}} üzerinden mesaj gönderemedi: {{error}}"
   }
 }

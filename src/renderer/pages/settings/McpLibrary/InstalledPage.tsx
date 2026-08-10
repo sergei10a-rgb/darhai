@@ -12,7 +12,9 @@ import {
 } from '@renderer/hooks/mcp';
 import type { McpOAuthStatus } from '@renderer/hooks/mcp/useMcpOAuth';
 import type { IMcpServer } from '@/common/config/storage';
+import { ipcBridge } from '@/common';
 import AddMcpServerModal from '@renderer/pages/settings/components/AddMcpServerModal';
+import type { McpRemovalFrame } from '@renderer/pages/settings/WCoreConfig/panes/types';
 import { useMcpLibrary } from './hooks/useMcpLibrary';
 import { ServerRow, type UIStatus } from './components/ServerRow';
 
@@ -26,6 +28,40 @@ function deriveStatus(s: IMcpServer, oauth: McpOAuthStatus | undefined): UIStatu
   return 'stopped';
 }
 
+/**
+ * An `mcp_removal_result` frame, or null.
+ *
+ * The main-process capability already decoded and bounded every field; only the
+ * discriminant is re-checked, because `IResponseMessage.data` is `unknown` at
+ * the IPC seam.
+ */
+function readRemovalFrame(data: unknown): McpRemovalFrame | null {
+  if (typeof data !== 'object' || data === null) return null;
+  const { status } = data as { status?: unknown };
+  if (status !== 'result' && status !== 'name_mismatch' && status !== 'undecodable') return null;
+  return data as McpRemovalFrame;
+}
+
+/**
+ * One withdrawal this page asked for, and what became of it.
+ *
+ * Keyed by the `requestId` the main process minted, which is also the engine's
+ * declared correlation key - so a reply settles the ask it answers and nothing
+ * else. `conversationId` is carried because each open Darhai Core chat is a
+ * separate engine process holding its own copy of the tools: "2 tools
+ * withdrawn" with no engine named is a claim about an unspecified session.
+ */
+type Withdrawal = {
+  requestId: string;
+  conversationId: string;
+  /** The name Darhai asked about, so a mismatched answer can be judged. */
+  requestedName: string;
+  /** The engine's answer, or null while one is owed. */
+  frame: McpRemovalFrame | null;
+  /** Why the command never left this host. Null when it was sent. */
+  notSent: string | null;
+};
+
 export function InstalledPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -33,6 +69,35 @@ export function InstalledPage() {
 
   const [message, contextHolder] = Message.useMessage();
   const [showAddModal, setShowAddModal] = useState(false);
+  const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
+  /**
+   * Request ids still awaiting a reply, readable from the stream handler.
+   *
+   * A ref because the subscription is registered once at mount: a handler
+   * closing over state would keep comparing against the empty set it saw then.
+   */
+  const awaiting = useRef(new Map<string, string>());
+
+  // Removing a server from the library rewrites the CLI agent configs, but a
+  // Darhai Core session that is already running keeps serving its tools until
+  // the engine is told to drop them. `handleRemove` now tells it; this is where
+  // the engine's own account of what actually went comes back. A frame that
+  // matches no outstanding ask is dropped: this page cannot say which engine or
+  // which server it describes, and guessing is the failure it exists to remove.
+  useEffect(() => {
+    return ipcBridge.conversation.responseStream.on((msg) => {
+      if (msg.type !== 'mcp_removal_result') return;
+      const frame = readRemovalFrame(msg.data);
+      if (frame === null) return;
+      const conversationId = awaiting.current.get(frame.requestId);
+      if (conversationId === undefined) return;
+      if (conversationId !== msg.conversation_id) return;
+      awaiting.current.delete(frame.requestId);
+      setWithdrawals((previous) =>
+        previous.map((entry) => (entry.requestId === frame.requestId ? { ...entry, frame } : entry))
+      );
+    });
+  }, []);
   const { mcpServers, saveMcpServers } = useMcpServers();
   const { setAgentInstallStatus, checkSingleServerInstallStatus } = useMcpAgentStatus();
   const { syncMcpToAgents, removeMcpFromAgents } = useMcpOperations(mcpServers, message);
@@ -152,20 +217,84 @@ export function InstalledPage() {
     (s: IMcpServer) => {
       Modal.confirm({
         title: t('mcpLibrary.installed.actionRemove', 'Remove'),
-        content: t(
-          'mcpLibrary.installed.removeConfirm',
-          'Remove {{name}} from your library? This will also uninstall it from all CLI agents.',
-          { name: s.name }
+        content: (
+          <>
+            <div>
+              {t(
+                'mcpLibrary.installed.removeConfirm',
+                'Remove {{name}} from your library? This will also uninstall it from all CLI agents.',
+                { name: s.name }
+              )}
+            </div>
+            {/* The old copy stopped at the line above, while a running engine
+                went on serving the tools. Saying so up front is cheaper than
+                the user discovering it mid-conversation. */}
+            <div className='mt-2 text-t-tertiary'>
+              {t('settings.wcoreConfig.mcpSession.removeEngineCaveat', {
+                defaultValue: 'A Darhai Core chat that is already open keeps its tools until you restart that chat.',
+              })}
+            </div>
+          </>
         ),
         okText: t('mcpLibrary.installed.actionRemove', 'Remove'),
         cancelText: t('mcpLibrary.installed.confirmCancel', 'Cancel'),
         okButtonProps: { status: 'danger' },
         onOk: async () => {
           await crud.handleDeleteMcpServer(s.id);
+          // The library delete rewrites config files. Only this takes the tools
+          // out of a chat that is ALREADY open, and it is asked of every live
+          // engine because the user did not mean "in one of my chats".
+          const outcome = await ipcBridge.wcoreEngine.withdrawMcpServer.invoke({ name: s.name });
+          const sent = Array.isArray(outcome?.sent) ? outcome.sent : [];
+          const refused = Array.isArray(outcome?.refused) ? outcome.refused : [];
+
+          const opened: Withdrawal[] = [];
+          for (const entry of sent) {
+            if (typeof entry.requestId !== 'string' || entry.requestId.length === 0) continue;
+            awaiting.current.set(entry.requestId, entry.conversationId);
+            opened.push({
+              requestId: entry.requestId,
+              conversationId: entry.conversationId,
+              requestedName: s.name,
+              frame: null,
+              notSent: null,
+            });
+          }
+          for (const [index, entry] of refused.entries()) {
+            opened.push({
+              // Nothing was minted, so there is no correlation id to key on;
+              // the index keeps the row distinct without inventing one.
+              requestId: `not-sent-${entry.conversationId}-${index}-${Date.now()}`,
+              conversationId: entry.conversationId,
+              requestedName: s.name,
+              frame: null,
+              notSent:
+                typeof entry.reason === 'string' && entry.reason.length > 0
+                  ? entry.reason
+                  : t('settings.wcoreConfig.mcpSession.withdrawNoReason', { defaultValue: 'no reason was given' }),
+            });
+          }
+          if (opened.length > 0) setWithdrawals((previous) => [...previous, ...opened]);
+
+          // The old copy told EVERY user to restart their chats. Restarting is
+          // the remedy only when the engine could not be asked; when it was
+          // asked, the notice above reports what it actually did.
+          if (sent.length === 0) {
+            message.warning(
+              refused.length > 0
+                ? t('settings.wcoreConfig.mcpSession.removedRestartHint', {
+                    defaultValue: 'Removed. Restart any open Darhai Core chat to stop it offering {{name}}’s tools.',
+                    name: s.name,
+                  })
+                : t('settings.wcoreConfig.mcpSession.removedNoEngine', {
+                    defaultValue: 'Removed. No Darhai Core chat was open, so nothing was still serving its tools.',
+                  })
+            );
+          }
         },
       });
     },
-    [crud, t]
+    [crud, message, t]
   );
 
   const handleAddSubmit = useCallback(
@@ -221,6 +350,93 @@ export function InstalledPage() {
           {t('mcpLibrary.installed.addCustom', '+ Add custom MCP')}
         </button>
       </header>
+
+      {withdrawals.length > 0 && (
+        <div className='mb-3 flex flex-col gap-1.5' data-testid='engine-withdrawals'>
+          {withdrawals.map(({ requestId, conversationId, requestedName, frame, notSent }) => (
+            <div key={requestId} className='rounded border border-b-light p-2 text-xs text-t-secondary'>
+              {/* WHICH engine. Each open chat is its own process with its own
+                  copy of the tools, so an unattributed "2 tools withdrawn" is a
+                  claim about a session the user cannot identify. */}
+              <div className='text-t-tertiary'>
+                {t('settings.wcoreConfig.mcpSession.withdrawScope', {
+                  defaultValue: '{{name}} · engine of chat {{conversation}}',
+                  name: requestedName,
+                  conversation: conversationId,
+                })}
+              </div>
+              {notSent !== null && (
+                <span className='text-warning'>
+                  {t('settings.wcoreConfig.mcpSession.withdrawNotSent', {
+                    defaultValue: 'This chat could not be asked to drop it: {{reason}}',
+                    reason: notSent,
+                  })}
+                </span>
+              )}
+              {frame === null && notSent === null && (
+                <span>
+                  {t('settings.wcoreConfig.mcpSession.withdrawPending', {
+                    defaultValue: 'Asked this chat’s engine to drop it. Waiting for its answer…',
+                  })}
+                </span>
+              )}
+              {frame?.status === 'result' && (
+                <>
+                  {t('settings.wcoreConfig.mcpSession.withdrawn', {
+                    defaultValue: '{{name}}: {{count}} tools withdrawn from the running engine.',
+                    name: frame.name,
+                    count: frame.removedToolCount,
+                  })}
+                  {frame.removedTools.length > 0 && (
+                    <span className='ml-1 font-mono'>{frame.removedTools.join(', ')}</span>
+                  )}
+                  {frame.toolsTruncated && (
+                    <span className='ml-1 text-t-tertiary'>
+                      {t('settings.wcoreConfig.mcpSession.withdrawnTruncated', {
+                        defaultValue: '(only the first names are listed)',
+                      })}
+                    </span>
+                  )}
+                  {/* The contract puts no enum on `outcome`; the only value it
+                      ever exhibits is "removed". Shown verbatim rather than
+                      compared against a literal this host invented. */}
+                  <span className='ml-1 font-mono text-t-tertiary'>{frame.outcome}</span>
+                </>
+              )}
+              {frame?.status === 'name_mismatch' && (
+                <span className='text-warning'>
+                  {t('settings.wcoreConfig.mcpSession.withdrawnMismatch', {
+                    defaultValue:
+                      'The engine answered about “{{reported}}” when asked about “{{requested}}”. Nothing is claimed about either.',
+                    reported: frame.reportedName,
+                    requested: frame.requestedName,
+                  })}
+                </span>
+              )}
+              {frame?.status === 'undecodable' && (
+                <span className='text-warning'>
+                  {t('settings.wcoreConfig.mcpSession.withdrawnUndecodable', {
+                    defaultValue: 'The engine answered in a shape this build cannot read: {{detail}}',
+                    detail: frame.detail,
+                  })}
+                  {/* The engine's own offending text, which the handler keeps
+                      out of the log and puts in the frame precisely so it can be
+                      shown to the user who asked. `detail` alone describes the
+                      shape; this is the value. */}
+                  {frame.offending !== undefined && (
+                    <span className='ml-1 font-mono'>
+                      {t('settings.wcoreConfig.mcpSession.withdrawnOffending', {
+                        defaultValue: 'engine sent: {{value}}',
+                        value: frame.offending,
+                      })}
+                    </span>
+                  )}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className='mcp-status-strip'>
         <div className='mcp-status-cell mcp-status-running'>

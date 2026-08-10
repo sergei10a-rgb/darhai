@@ -55,7 +55,7 @@ vi.mock('@/renderer/utils/model/agentLogo', () => ({
   getAgentLogo: vi.fn((type?: string) => (type ? '/backend-logo.svg' : null)),
 }));
 
-vi.mock('@/renderer/pages/conversation/Messages/components/MessageCronBadge', () => ({
+vi.mock('@/renderer/pages/conversation/Messages/components/cron/MessageCronBadge', () => ({
   default: () => <div data-testid='message-cron-badge' />,
 }));
 
@@ -76,7 +76,7 @@ vi.mock('@/common', () => ({
   },
 }));
 
-import MessageText from '@/renderer/pages/conversation/Messages/components/MessageText';
+import MessageText from '@/renderer/pages/conversation/Messages/components/text/MessageText';
 
 const createMessage = (overrides?: Partial<IMessageText>): IMessageText => ({
   id: 'message-1',

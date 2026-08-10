@@ -41,7 +41,9 @@
   },
   "tabs": {
     "operations": "Operations",
-    "cost": "Cost"
+    "cost": "Cost",
+    "goals": "Ziele",
+    "goalsWithCount": "Ziele · {{count}}"
   },
   "cost": {
     "periodLabel": "Period",
@@ -114,5 +116,48 @@
       "manual": "Eigener Kurs",
       "manualHint": "Ein hier eingegebener Kurs überschreibt den abgerufenen. Leer lassen, um zum abgerufenen Kurs zurückzukehren."
     }
+  },
+  "goals": {
+    "readOnlyNote": "Nur lesen. Diese Ansicht zeigt, was die Engine über ihre langlaufenden Ziele meldet; Öffnen, Fortschreiben und Abbrechen liegen in dieser Version bei der Engine.",
+    "emptyTitle": "Keine Ziele gemeldet",
+    "emptyHint": "Ein Ziel erscheint hier, sobald die Engine es veröffentlicht. Die Engine führt sie in ihrem eigenen Journal, daher taucht ein früher geöffnetes Ziel erst bei seiner nächsten Aktualisierung auf.",
+    "emptyHintUnavailable": "Diese Engine-Version meldet keine dauerhaften Ziele; hier erscheint nichts, bis sich das ändert.",
+    "unavailableTitle": "Dauerhafte Ziele sind nicht verfügbar",
+    "limitedTitle": "Dauerhafte Ziele sind in dieser Engine-Version eingeschränkt",
+    "gradeReported": "Die Engine bewertet diese Fähigkeit als {{grade}}.",
+    "gradeExplained": {
+      "publication_bound": "Die Form steht fest, aber diese Version veröffentlicht diese Ereignisse nur, wenn sie entsprechend konfiguriert ist - hier erscheint also möglicherweise nie ein Ziel.",
+      "shape_only": "Der Ereignistyp existiert in dieser Version, das Verhalten dahinter jedoch noch nicht; es wird kein Ziel gemeldet.",
+      "unavailable": "Diese Version enthält dauerhafte Ziele überhaupt nicht.",
+      "unrecognised": "Dieser Host kennt diese Bewertung nicht und kann daher nicht sagen, was sie bedeutet - oben steht sie genau so, wie die Engine sie gesendet hat."
+    },
+    "objectiveUnknown": "Zielsetzung nicht gemeldet",
+    "stateLabel": "Zustand",
+    "iterationsLabel": "Iterationen",
+    "iterationsOf": "{{started}} von {{ceiling}}",
+    "iterationsCeilingUnknown": "{{started}}, Obergrenze nicht gemeldet",
+    "tasksLabel": "Aufgaben",
+    "transitionLabel": "Letzter Übergang",
+    "leaseLabel": "Schleifen-Lease läuft ab",
+    "sessionLabel": "Sitzung",
+    "seenLabel": "Letzte gesehene Aktualisierung",
+    "refusedTitle": "Die Engine hat einen Steuerbefehl abgelehnt",
+    "refusedReason": "Grund: {{reason}}",
+    "refusedCommand": "Abgelehnter Befehl: {{command}}",
+    "refusedMismatch": "Diese Anfrage-ID wurde für ein anderes Ziel oder eine andere Sitzung gesendet; die Ablehnung lässt sich daher keinem Befehl dieses Ziels zuordnen.",
+    "lockedTitle": "Steuerung ist bis zu einer Resynchronisation gesperrt",
+    "lockedBody": "Die Position, die diese App hält, akzeptiert die Engine nicht mehr; Fortschreiben und Abbrechen werden abgelehnt, bis die Engine das Ziel erneut veröffentlicht.",
+    "notAdoptedTitle": "Nicht übernommen: {{verdict}}",
+    "taskHeadId": "Aufgabe",
+    "taskHeadStatus": "Status",
+    "taskHeadAttempts": "Versuche",
+    "taskHeadDependsOn": "Hängt ab von",
+    "taskHeadOutcome": "Ergebnis",
+    "noTasks": "Die Engine hat für dieses Ziel keine Aufgaben gemeldet.",
+    "tasksTruncated": "Die Engine meldete mehr Aufgaben als gespeichert werden; die Liste oben ist gekürzt.",
+    "dependsOnTruncated": "Eine Aufgabe nannte mehr Abhängigkeiten als gespeichert werden; die Liste oben ist gekürzt.",
+    "textClamped": "Die Engine sandte längeren Text als gespeichert wird; das Gezeigte ist gekürzt.",
+    "evicted": "Ältere Ziele wurden entfernt, damit diese Liste begrenzt bleibt.",
+    "unknown": "unbekannt"
   }
 }

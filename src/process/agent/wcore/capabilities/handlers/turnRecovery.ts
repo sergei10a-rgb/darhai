@@ -34,31 +34,37 @@
  * `Date.now()` for eviction ages. That is what makes all five adversarial
  * fixtures drivable against the same code production runs.
  *
- * WHAT THIS MODULE REQUIRES OF ITS CALLERS. These are REQUIREMENTS on the
- * wiring, not claims about what the running system does today. This file cannot
- * observe whether any of them is satisfied, so it does not assert either way:
+ * WHAT THIS MODULE REQUIRES OF ITS CALLERS, and where each requirement stands.
+ * This file cannot observe any of them at runtime; the status notes below were
+ * checked by reading the callers and must be re-checked when they move:
  *
- *  1. `turnRecoveryCapability` must be listed in `HANDLERS` in
+ *  1. DONE. `turnRecoveryCapability` is listed in `HANDLERS` in
  *     `capabilities/index.ts`. Dispatch only reaches a registered handler, and
- *     `claimedEventTypes()` - which `WCoreManager` builds its frame pass-through
- *     set from - only contains a registered handler's types. Unregistered, this
- *     module decides nothing and its frames reach no renderer.
- *  2. The four names `session_recovery_snapshot`, `session_recovery_replay`,
- *     `session_recovery_unavailable`, `turn_recovery_lifecycle` must not be
- *     listed in `ACKNOWLEDGED_UNHANDLED_EVENTS` in `protocol.ts` once (1) holds,
- *     or the host reports as knowingly-inert four events it now handles.
- *  3. The decoder's `ready` arm must call {@link
+ *     `forwardableFrameTypes()` - which `WCoreManager` builds its frame
+ *     pass-through set from - only contains a registered handler's types.
+ *     Unregistered, this module would decide nothing and its frames would reach
+ *     no renderer. This module emits only under names it also handles, so it
+ *     needs no `emits` declaration; a capability that emits a PROJECTION under
+ *     a fresh name must declare it there or the frame is silently dropped.
+ *  2. DONE. None of `session_recovery_snapshot`, `session_recovery_replay`,
+ *     `session_recovery_unavailable`, `turn_recovery_lifecycle` remains in
+ *     `ACKNOWLEDGED_UNHANDLED_EVENTS` in `protocol.ts`, so the host no longer
+ *     reports as knowingly-inert four events it now handles.
+ *  3. STILL OPEN. The decoder's `ready` arm does not call {@link
  *     TurnRecoveryCapability.seedFromReady}. `ready` has its own arm and never
  *     reaches the dispatcher, so the negotiated contract - which is the GATE on
  *     every command below - has no other way in. With no seed the gate is shut,
- *     which is the deliberate fail-closed default.
- *  4. `WCoreAgent.start()` must call {@link TurnRecoveryCapability.beginResync}
- *     after `ready` lands and BEFORE the first `message`, and must install a
- *     durable cursor sink via {@link TurnRecoveryCapability.setCursorSink}.
- *     Without the ask, rule 3 below refuses every answer the engine sends;
- *     without the sink, the journal position dies with the process.
- *  5. The `resume_turn` cursor a UI press sends must come from the frame that
- *     was marked `actionable` (or from {@link
+ *     which is the deliberate fail-closed default, so recovery is inert rather
+ *     than wrong.
+ *  4. STILL OPEN. `WCoreAgent.start()` does not call {@link
+ *     TurnRecoveryCapability.beginResync} after `ready` and before the first
+ *     `message`, and installs no durable cursor sink via {@link
+ *     TurnRecoveryCapability.setCursorSink}. Without the ask, rule 3 below
+ *     refuses every answer the engine sends; without the sink, the journal
+ *     position dies with the process.
+ *  5. REQUIREMENT ON A SURFACE THAT DOES NOT EXIST YET. The `resume_turn`
+ *     cursor a UI press sends must come from the frame that was marked
+ *     `actionable` (or from {@link
  *     TurnRecoveryCapability.pendingTurnCursorFor}), NOT from {@link
  *     TurnRecoveryCapability.latestCursor} - the live feed moves that one past
  *     the position the pending turn was reported at.
@@ -133,16 +139,18 @@ export const RECOVERY_EVENT_TYPES = [
 /**
  * The `type` this capability emits its user-visible frame under.
  *
- * It MUST be one of {@link RECOVERY_EVENT_TYPES}. `WCoreManager` forwards a
- * system-level frame (empty `msg_id`) to the renderer only when its type is in
- * its `CAPABILITY_FRAME_TYPES` set, which it builds from `claimedEventTypes()`;
- * a frame emitted under an invented type such as `turn_recovery` would be
- * dropped by the `if (!data.msg_id) return;` guard below it, in silence, which
- * is the exact failure class this capability exists to close. That set contains
- * these four names only once requirement (1) in the file header holds. Of the
- * four claimed names this is the one that describes the state of a turn rather
- * than a request/response, so it is the one a renderer would expect to carry the
- * notice.
+ * It MUST be one of {@link RECOVERY_EVENT_TYPES}, or else declared in this
+ * handler's `emits`. `WCoreManager` forwards a system-level frame (empty
+ * `msg_id`) to the renderer only when its type is in its
+ * `CAPABILITY_FRAME_TYPES` set, which it builds from `forwardableFrameTypes()`
+ * - the union of every registered handler's `handles` and `emits`. A frame
+ * emitted under an invented type such as `turn_recovery`, declared in neither,
+ * would be dropped by the `if (!data.msg_id) return;` guard below it, in
+ * silence, which is the exact failure class this capability exists to close.
+ * Staying inside the claimed names is the cheaper half of that rule, so that is
+ * what this module does. Of the four claimed names this is the one that
+ * describes the state of a turn rather than a request/response, so it is the
+ * one a renderer would expect to carry the notice.
  */
 export const TURN_RECOVERY_FRAME_TYPE = 'turn_recovery_lifecycle';
 

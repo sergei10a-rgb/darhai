@@ -41,7 +41,9 @@
   },
   "tabs": {
     "operations": "Operations",
-    "cost": "Cost"
+    "cost": "Cost",
+    "goals": "目標",
+    "goalsWithCount": "目標 · {{count}}"
   },
   "cost": {
     "periodLabel": "Period",
@@ -114,5 +116,48 @@
       "manual": "独自レート",
       "manualHint": "ここに入力したレートは取得したレートより優先されます。空にすると自動に戻ります。"
     }
+  },
+  "goals": {
+    "readOnlyNote": "読み取り専用です。このビューはエンジンが報告する長期目標を表示します。目標の開始・前進・取り消しは、このビルドではエンジン側で行われます。",
+    "emptyTitle": "報告された目標はありません",
+    "emptyHint": "エンジンが目標を公開した時点でここに表示されます。エンジンは目標を自身のジャーナルに保持するため、以前に開始された目標は次の更新時に表示されます。",
+    "emptyHintUnavailable": "このエンジンビルドは永続目標を報告しません。状況が変わるまでここには何も表示されません。",
+    "unavailableTitle": "永続目標は利用できません",
+    "limitedTitle": "このエンジンビルドでは永続目標が制限されています",
+    "gradeReported": "エンジンはこの機能を {{grade}} と評価しました。",
+    "gradeExplained": {
+      "publication_bound": "形式は確定していますが、このビルドは設定された場合にのみこれらのイベントを発行するため、ここに目標が現れないことがあります。",
+      "shape_only": "このビルドにはイベント型はありますが、その背後の動作はまだありません。目標は報告されません。",
+      "unavailable": "このビルドには永続目標が含まれていません。",
+      "unrecognised": "このホストはその評価を知らないため、意味を説明できません。上にはエンジンが送ってきたとおりに表示しています。"
+    },
+    "objectiveUnknown": "目的は報告されていません",
+    "stateLabel": "状態",
+    "iterationsLabel": "反復",
+    "iterationsOf": "{{ceiling}} 回中 {{started}} 回",
+    "iterationsCeilingUnknown": "{{started}}、上限は未報告",
+    "tasksLabel": "タスク",
+    "transitionLabel": "直近の遷移",
+    "leaseLabel": "ループリースの期限",
+    "sessionLabel": "セッション",
+    "seenLabel": "最後に確認した更新",
+    "refusedTitle": "エンジンが制御コマンドを拒否しました",
+    "refusedReason": "理由: {{reason}}",
+    "refusedCommand": "拒否されたコマンド: {{command}}",
+    "refusedMismatch": "このリクエスト ID は別の目標またはセッションに対して送信されたため、この拒否をこの目標が送ったコマンドと対応付けることはできません。",
+    "lockedTitle": "再同期まで制御はロックされています",
+    "lockedBody": "このアプリが保持している位置をエンジンはもう受け付けません。エンジンが目標を再公開するまで、前進と取り消しは拒否されます。",
+    "notAdoptedTitle": "未適用: {{verdict}}",
+    "taskHeadId": "タスク",
+    "taskHeadStatus": "状態",
+    "taskHeadAttempts": "試行",
+    "taskHeadDependsOn": "依存先",
+    "taskHeadOutcome": "結果",
+    "noTasks": "エンジンはこの目標にタスクがないと報告しました。",
+    "tasksTruncated": "エンジンは保持数を超えるタスクを報告しました。上の一覧は途中で切られています。",
+    "dependsOnTruncated": "あるタスクが保持数を超える依存を挙げました。上の一覧は途中で切られています。",
+    "textClamped": "エンジンは保持できる長さを超えるテキストを送信しました。表示は途中で切られています。",
+    "evicted": "一覧を有限に保つため、古い目標は削除されました。",
+    "unknown": "不明"
   }
 }

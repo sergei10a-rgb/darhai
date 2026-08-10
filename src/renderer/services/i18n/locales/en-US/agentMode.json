@@ -15,5 +15,25 @@
   "permission": "Permission",
   "switchMode": "Switch Mode",
   "switchSuccess": "Mode switched successfully",
-  "switchFailed": "Failed to switch mode"
+  "switchFailed": "Failed to switch mode",
+  "prompt": "Ask every time",
+  "managed": "Managed",
+  "dangerous": "Dangerous",
+  "effectivePosture": "Engine: {{posture}} / {{approvals}}",
+  "policyUnknown": "Engine posture unknown",
+  "managedFloor": "A managed policy floor is in force",
+  "sandboxBypass": "The sandbox is bypassed",
+  "policyStale": "The engine's policy is newer than the one shown.",
+  "policyRevision": "Policy revision {{revision}}",
+  "policyVerdict": {
+    "applied": "The engine adopted this policy.",
+    "idempotent": "The engine repeated the policy already in force; nothing changed.",
+    "gap": "At least one policy update never arrived, so this posture may be out of date.",
+    "conflict": "Two policies claim the same revision number, so neither can be trusted.",
+    "version_mismatch": "The engine announced a policy format this build of Darhai cannot read.",
+    "not_critical": "The engine sent a policy receipt it did not mark as authoritative.",
+    "regression": "The engine announced an older policy than the one already in force.",
+    "malformed": "The policy receipt could not be read."
+  },
+  "policyEngineDetail": "Engine message: {{detail}}"
 }

@@ -5,7 +5,7 @@ type: software
 primary_type: software
 secondary_types: []
 confidence: 0.942
-detected_at: 2026-06-04T12:39:04.360Z
+detected_at: 2026-07-05T21:47:52.567Z
 signals:
   - kind: agents_md_frontmatter
     weight: 0.9
@@ -40,13 +40,12 @@ signals:
   - kind: file_extension_ratio
     weight: 0.7
     domain: software
-    ratio: 0.925
-    count: 2631
-  - kind: file_extension_ratio
-    weight: 0.7
-    domain: design
-    ratio: 0.056
-    count: 158
+    ratio: 0.939
+    count: 3377
+  - kind: filename_pattern
+    weight: 0.2
+    domain: content
+    name: post-done-runner.js
   - kind: filename_pattern
     weight: 0.2
     domain: content

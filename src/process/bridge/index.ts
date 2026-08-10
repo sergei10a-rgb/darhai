@@ -81,6 +81,8 @@ import type { TeamSessionService } from '@process/team/TeamSessionService';
 import { initModelRegistryIpc } from '@process/providers/ipc/modelRegistryIpc';
 import { initWcoreToolKeyIpc } from '@process/agent/wcore/toolKeyIpc';
 import { initWcoreConfigBridge } from './wcoreConfigBridge';
+import { initWcoreEngineBridge } from './wcoreEngineBridge';
+import { initWcoreDiagnosticsBridge } from './wcoreDiagnosticsBridge';
 import { initPendingSendBridge } from './pendingSendBridge';
 
 export interface BridgeDependencies {
@@ -168,6 +170,8 @@ export function initAllBridges(deps: BridgeDependencies): void {
   });
   initWcoreToolKeyIpc();
   initWcoreConfigBridge();
+  initWcoreEngineBridge();
+  initWcoreDiagnosticsBridge(deps.workerTaskManager);
   initPendingSendBridge();
   initStorageBridge();
   initNicknamesBridge();

@@ -237,6 +237,20 @@ const REMOTE_DENIED_KEYS: ReadonlySet<string> = new Set([
   // The config PATH is likewise local-only: it discloses the operator's home
   // directory and active profile name to a paired WebUI client.
   'wcoreConfig.getConfigPath',
+  // The capability snapshot names which engine subsystems are enforced
+  // (delegate isolation, learned policy) and which contract verbs are
+  // available - a map of what a remote caller could still get away with.
+  'wcoreEngine.capabilitySnapshot',
+  // The diagnostics snapshot is the same disclosure one level deeper: it names
+  // the config file actually in effect, the operator's home directory inside
+  // `display_path`, every environment override the engine ignored, and per MCP
+  // server whether its executable resolved - a remote caller would get a map of
+  // this machine's tooling and of which server is currently unguarded.
+  'wcoreEngine.requestRuntimeDiagnostics',
+  // Withdrawal MUTATES a running session: it takes an MCP server's tools out of
+  // a live chat. A paired WebUI must never be able to disarm the local user's
+  // tooling mid-conversation.
+  'wcoreEngine.withdrawMcpServer',
   // --- Wayland Core profile fs mutation (create/clone/activate/delete profile
   //     directories under the profiles root). Remote-denied (SEC-4). ---
   'wcoreProfiles.create',

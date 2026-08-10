@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { formatMessageTime } from '@renderer/pages/conversation/Messages/components/MessageText';
+import { formatMessageTime } from '@renderer/pages/conversation/Messages/components/text/MessageText';
 
 describe('formatMessageTime', () => {
   afterEach(() => {

@@ -77,6 +77,23 @@ export type CapabilityHandler = {
    */
   readonly handles: readonly string[];
   /**
+   * Frame types this handler EMITS toward the renderer, when they differ from
+   * what it consumes.
+   *
+   * WHY THIS EXISTS. `WCoreManager` drops any frame with no `msg_id`, and lets
+   * capability frames through by checking the type against the registry. That
+   * check was first written against `handles` alone, on the assumption that a
+   * capability emits under a name it also consumes. Two do not: workflow
+   * lifecycle folds three wire events into one `workflow_run` projection, and
+   * anvil folds two into `anvil_receipt_alert`. Both were silently dropped -
+   * the capability worked, its tests passed, and nothing reached the user.
+   *
+   * Declaring the emitted names here closes that gap at the source rather than
+   * asking every author to remember an invariant the type system did not
+   * enforce. Omit it when the emitted type is already in {@link handles}.
+   */
+  readonly emits?: readonly string[];
+  /**
    * Process one event. Return `true` when handled. Returning `false` lets the
    * event fall through to the acknowledged-unhandled check, which is the honest
    * answer for an event a capability recognises but chooses to ignore in the

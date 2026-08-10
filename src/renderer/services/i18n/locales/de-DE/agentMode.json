@@ -15,5 +15,25 @@
   "permission": "Berechtigung",
   "switchMode": "Modus wechseln",
   "switchSuccess": "Modus erfolgreich gewechselt",
-  "switchFailed": "Moduswechsel fehlgeschlagen"
+  "switchFailed": "Moduswechsel fehlgeschlagen",
+  "prompt": "Jedes Mal fragen",
+  "managed": "Verwaltet",
+  "dangerous": "Gefährlich",
+  "effectivePosture": "Engine: {{posture}} / {{approvals}}",
+  "policyUnknown": "Engine-Modus unbekannt",
+  "managedFloor": "Eine verwaltete Richtlinien-Untergrenze ist aktiv",
+  "sandboxBypass": "Die Sandbox ist umgangen",
+  "policyStale": "Die Richtlinie der Engine ist neuer als die angezeigte.",
+  "policyRevision": "Richtlinien-Revision {{revision}}",
+  "policyVerdict": {
+    "applied": "Die Engine hat diese Richtlinie übernommen.",
+    "idempotent": "Die Engine hat die bereits geltende Richtlinie erneut gemeldet; nichts hat sich geändert.",
+    "gap": "Mindestens eine Richtlinien-Aktualisierung ist nie angekommen, dieser Zustand kann veraltet sein.",
+    "conflict": "Zwei Richtlinien beanspruchen dieselbe Revisionsnummer, daher ist keine von beiden vertrauenswürdig.",
+    "version_mismatch": "Die Engine meldet ein Richtlinienformat, das dieser Darhai-Build nicht lesen kann.",
+    "not_critical": "Die Engine hat eine Richtlinien-Quittung gesendet, die sie nicht als verbindlich markiert hat.",
+    "regression": "Die Engine hat eine ältere Richtlinie gemeldet als die bereits geltende.",
+    "malformed": "Die Richtlinien-Quittung konnte nicht gelesen werden."
+  },
+  "policyEngineDetail": "Meldung der Engine: {{detail}}"
 }

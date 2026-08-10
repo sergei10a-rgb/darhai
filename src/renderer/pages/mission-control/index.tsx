@@ -6,12 +6,14 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Tabs } from '@arco-design/web-react';
-import { Clock, Gauge, RefreshCw, Users } from 'lucide-react';
-import { useMissionControl } from './useMissionControl';
+import { Alert, Button, Tabs } from '@arco-design/web-react';
+import { Clock, Gauge, RefreshCw, Target, Users } from 'lucide-react';
+import { useDurableGoals, useMissionControl } from './useMissionControl';
+import type { DurableGoalView, DurableGoalsState } from './useMissionControl';
 import { CostTab } from './cost/CostTab';
 import PageShell from '@/renderer/components/layout/PageShell';
 import type { LedgerCounts, LedgerEntry, LedgerStatus } from '@/common/types/missionControl';
+import type { GoalTaskSummary } from '@process/agent/wcore/capabilities/handlers/durableGoals';
 import styles from './MissionControl.module.css';
 
 /** Accent color per normalized status (drives the CSS --accent var). */
@@ -169,8 +171,17 @@ const OperationsView: React.FC = () => {
   const { t } = useTranslation();
   const { snapshot, loading, refresh } = useMissionControl();
   const entries = snapshot?.entries ?? [];
-  const counts: LedgerCounts =
-    snapshot?.counts ?? { running: 0, verifying: 0, pending: 0, blocked: 0, failed: 0, zombie: 0, done: 0, idle: 0, total: 0 };
+  const counts: LedgerCounts = snapshot?.counts ?? {
+    running: 0,
+    verifying: 0,
+    pending: 0,
+    blocked: 0,
+    failed: 0,
+    zombie: 0,
+    done: 0,
+    idle: 0,
+    total: 0,
+  };
 
   return (
     <>
@@ -210,8 +221,214 @@ const OperationsView: React.FC = () => {
   );
 };
 
+/**
+ * An engine timestamp, in the language the app is set to.
+ *
+ * The locale is passed explicitly. A bare `toLocaleString()` formats in the
+ * OPERATING SYSTEM's locale, so a user who set Darhai to Mongolian on an en-US
+ * Windows install reads a lease deadline in a different convention than every
+ * label beside it - on the one surface where the deadline is the point.
+ *
+ * Absolute rather than relative on purpose: a lease expiry is a deadline, and
+ * "in 2m" read at the wrong moment is a different claim than the instant the
+ * engine actually named.
+ */
+function formatWhen(ms: number, locale: string): string {
+  return new Date(ms).toLocaleString(locale);
+}
+
+/**
+ * The engine grades this capability with one of four strings; each means a
+ * different thing to a user, so each gets its own sentence. A grade outside the
+ * set is reported as itself rather than guessed at.
+ */
+const EXPLAINED_GRADES: ReadonlySet<string> = new Set(['publication_bound', 'shape_only', 'unavailable']);
+
+/** One `label: value` fact about a goal. Rendered only when the value is known. */
+const Fact: React.FC<{ label: string; value: string }> = ({ label, value }) => (
+  <span className={styles.fact}>
+    <span className={styles.factLabel}>{label}</span>
+    <span className={styles.factValue}>{value}</span>
+  </span>
+);
+
+const TaskRow: React.FC<{ task: GoalTaskSummary }> = ({ task }) => {
+  const { t } = useTranslation();
+  // Every field of a task summary is optional on the wire, and a task the
+  // engine did not grade is not a task with zero attempts. `unknown` says which
+  // it is; `0` would read as a measurement.
+  const unknown = t('missionControl.goals.unknown');
+  return (
+    <div className={styles.taskRow}>
+      <span className={styles.taskId}>{task.taskId ?? unknown}</span>
+      <span className={styles.taskCell}>{task.status ?? unknown}</span>
+      <span className={styles.taskCell}>{task.attempts ?? unknown}</span>
+      <span className={styles.taskCell}>{task.dependsOn?.length ? task.dependsOn.join(', ') : '—'}</span>
+      <span className={styles.taskCell}>{task.outcomeState ?? '—'}</span>
+    </div>
+  );
+};
+
+const GoalCard: React.FC<{ goal: DurableGoalView }> = ({ goal }) => {
+  const { t, i18n } = useTranslation();
+  const iterations =
+    goal.iterationsStarted !== undefined
+      ? goal.iterationCeiling !== undefined
+        ? t('missionControl.goals.iterationsOf', { started: goal.iterationsStarted, ceiling: goal.iterationCeiling })
+        : t('missionControl.goals.iterationsCeilingUnknown', { started: goal.iterationsStarted })
+      : null;
+
+  return (
+    <div
+      className={`${styles.goalCard} ${goal.refusal ? styles.goalRefused : goal.needsResync ? styles.goalLocked : ''}`}
+    >
+      <div className={styles.goalHead}>
+        <span className={styles.goalObjective}>{goal.objective ?? t('missionControl.goals.objectiveUnknown')}</span>
+        <span className={styles.goalId}>{goal.goalId}</span>
+      </div>
+
+      <div className={styles.factRow}>
+        {goal.lifecycleState ? <Fact label={t('missionControl.goals.stateLabel')} value={goal.lifecycleState} /> : null}
+        {iterations ? <Fact label={t('missionControl.goals.iterationsLabel')} value={iterations} /> : null}
+        {goal.taskCount !== undefined ? (
+          <Fact label={t('missionControl.goals.tasksLabel')} value={String(goal.taskCount)} />
+        ) : null}
+        {goal.lastTransition ? (
+          <Fact label={t('missionControl.goals.transitionLabel')} value={goal.lastTransition} />
+        ) : null}
+        {goal.loopOwnerLeaseExpiresUnixMs !== undefined ? (
+          <Fact
+            label={t('missionControl.goals.leaseLabel')}
+            value={formatWhen(goal.loopOwnerLeaseExpiresUnixMs, i18n.language)}
+          />
+        ) : null}
+        <Fact label={t('missionControl.goals.sessionLabel')} value={goal.sessionId} />
+        <Fact label={t('missionControl.goals.seenLabel')} value={formatWhen(goal.seenAt, i18n.language)} />
+      </div>
+
+      {goal.refusal ? (
+        <Alert
+          type='error'
+          title={t('missionControl.goals.refusedTitle')}
+          content={
+            <div className={styles.bannerBody}>
+              <span>{t('missionControl.goals.refusedReason', { reason: goal.refusal.reason })}</span>
+              {goal.refusal.refusedCommand ? (
+                <span>{t('missionControl.goals.refusedCommand', { command: goal.refusal.refusedCommand })}</span>
+              ) : null}
+              {goal.refusal.correlationMismatch ? <span>{t('missionControl.goals.refusedMismatch')}</span> : null}
+              <span className={styles.bannerDetail}>{goal.refusal.detail}</span>
+            </div>
+          }
+        />
+      ) : null}
+
+      {goal.needsResync ? (
+        <Alert
+          type='warning'
+          title={t('missionControl.goals.lockedTitle')}
+          content={t('missionControl.goals.lockedBody')}
+        />
+      ) : null}
+
+      {!goal.lastAdopted && goal.lastVerdict !== 'unchanged' && goal.lastVerdict !== 'refused' ? (
+        <Alert
+          type='warning'
+          title={t('missionControl.goals.notAdoptedTitle', { verdict: goal.lastVerdict })}
+          content={goal.lastDetail}
+        />
+      ) : null}
+
+      {goal.tasks.length > 0 ? (
+        <div className={styles.taskTable}>
+          <div className={`${styles.taskRow} ${styles.taskHead}`}>
+            <span className={styles.taskId}>{t('missionControl.goals.taskHeadId')}</span>
+            <span className={styles.taskCell}>{t('missionControl.goals.taskHeadStatus')}</span>
+            <span className={styles.taskCell}>{t('missionControl.goals.taskHeadAttempts')}</span>
+            <span className={styles.taskCell}>{t('missionControl.goals.taskHeadDependsOn')}</span>
+            <span className={styles.taskCell}>{t('missionControl.goals.taskHeadOutcome')}</span>
+          </div>
+          {goal.tasks.map((task, i) => (
+            <TaskRow key={task.taskId ?? `task-${i}`} task={task} />
+          ))}
+        </div>
+      ) : goal.taskCount === 0 ? (
+        <span className={styles.goalNote}>{t('missionControl.goals.noTasks')}</span>
+      ) : null}
+
+      {goal.tasksTruncated ? <span className={styles.goalNote}>{t('missionControl.goals.tasksTruncated')}</span> : null}
+      {goal.dependsOnTruncated ? (
+        <span className={styles.goalNote}>{t('missionControl.goals.dependsOnTruncated')}</span>
+      ) : null}
+      {goal.textClamped ? <span className={styles.goalNote}>{t('missionControl.goals.textClamped')}</span> : null}
+    </div>
+  );
+};
+
+/** Exported for the DOM test, which drives it with real capability frames. */
+export const GoalsView: React.FC<{ state: DurableGoalsState }> = ({ state }) => {
+  const { t } = useTranslation();
+  const { goals, availability } = state;
+  // `null` covers BOTH honest non-degraded readings - "the engine graded this
+  // available" and "no engine has spoken yet" - and neither may render a
+  // banner. The grade string itself is carried through so the banner can state
+  // what the engine actually said instead of a re-worded verdict.
+  const grade = availability.state === 'degraded' ? availability.grade : null;
+  const gradeKey = grade !== null && EXPLAINED_GRADES.has(grade) ? grade : 'unrecognised';
+
+  return (
+    <>
+      {/* The five control verbs live in the main process and no IPC verb exposes
+          them, so this pane can explain a goal but not steer one. Saying so beats
+          rendering an Advance button that would do nothing. */}
+      <Alert type='info' content={t('missionControl.goals.readOnlyNote')} />
+
+      {grade !== null ? (
+        <Alert
+          // `unavailable` is the end of the road; the other grades mean the
+          // capability exists but will not publish here, which is a warning.
+          type={grade === 'unavailable' ? 'error' : 'warning'}
+          title={
+            grade === 'unavailable'
+              ? t('missionControl.goals.unavailableTitle')
+              : t('missionControl.goals.limitedTitle')
+          }
+          content={
+            <div className={styles.bannerBody}>
+              <span>{t('missionControl.goals.gradeReported', { grade })}</span>
+              <span>{t(`missionControl.goals.gradeExplained.${gradeKey}`)}</span>
+            </div>
+          }
+        />
+      ) : null}
+
+      {state.evicted ? <span className={styles.goalNote}>{t('missionControl.goals.evicted')}</span> : null}
+
+      {goals.length === 0 ? (
+        <div className={styles.empty}>
+          <Target size={40} className={styles.emptyRadar} />
+          <span className={styles.emptyTitle}>{t('missionControl.goals.emptyTitle')}</span>
+          <span className={styles.emptyHint}>
+            {grade !== null ? t('missionControl.goals.emptyHintUnavailable') : t('missionControl.goals.emptyHint')}
+          </span>
+        </div>
+      ) : (
+        <div className={styles.goalList}>
+          {goals.map((goal) => (
+            <GoalCard key={goal.key} goal={goal} />
+          ))}
+        </div>
+      )}
+    </>
+  );
+};
+
 const MissionControlPage: React.FC = () => {
   const { t } = useTranslation();
+  // Subscribed at the page, not inside the pane: Arco mounts a tab pane only
+  // once it is opened, and a goal frame that arrives while the user is on
+  // Operations must not be the one frame this surface never sees.
+  const goalsState = useDurableGoals();
 
   return (
     <PageShell
@@ -223,6 +440,19 @@ const MissionControlPage: React.FC = () => {
       <Tabs defaultActiveTab='operations' className={styles.tabs}>
         <Tabs.TabPane key='operations' title={t('missionControl.tabs.operations')}>
           <OperationsView />
+        </Tabs.TabPane>
+        <Tabs.TabPane
+          key='goals'
+          // The counted label is one translatable unit, not a concatenation:
+          // only the locale can decide the separator, the order, and - by adding
+          // `goalsWithCount_one` / `_few` / ... beside it - the plural form.
+          title={
+            goalsState.goals.length > 0
+              ? t('missionControl.tabs.goalsWithCount', { count: goalsState.goals.length })
+              : t('missionControl.tabs.goals')
+          }
+        >
+          <GoalsView state={goalsState} />
         </Tabs.TabPane>
         <Tabs.TabPane key='cost' title={t('missionControl.tabs.cost')}>
           <CostTab />

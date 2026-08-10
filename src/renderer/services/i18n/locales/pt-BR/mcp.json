@@ -88,6 +88,43 @@
       "confirm": "Permitir",
       "reason": "Motivo",
       "context": "Detalhes"
+    },
+    "noDetails": "O Дархай não recebeu nenhum detalhe desta solicitação, então não se sabe o que aconteceria. Recuse se você não sabe do que se trata.",
+    "answerExpired": "Esta solicitação já havia expirado, então sua resposta não teve efeito: ela foi recusada e nada foi feito. Aqui não é mais possível conceder nada: feche esta janela e peça de novo se ainda quiser.",
+    "answerUndelivered": "Sua resposta não chegou ao Дархай, então nada foi concedido. Aperte de novo ou feche para recusar.",
+    "budgetGrant": {
+      "title": "Aumentar o orçamento?",
+      "summary": "O mecanismo parou porque um limite de orçamento foi atingido. Você pode conceder mais para ele continuar. Se o turno pausado é retomado ou se o orçamento extra vale apenas para a sua próxima mensagem é decisão do mecanismo, não do Дархай.",
+      "confirm": "Conceder",
+      "reason": "Limite atingido",
+      "observed": "Consumido",
+      "limit": "Limite",
+      "unknown": "desconhecido",
+      "grantTokens": "Tokens a conceder",
+      "grantCost": "Valor a conceder (US$)",
+      "footer": "Solicitado pelo próprio limite de orçamento do mecanismo, não por uma ferramenta"
+    }
+  },
+  "budgetResult": {
+    "granted": "O mecanismo aumentou o orçamento em {{amount}}.",
+    "grantedLess": "O mecanismo aumentou o orçamento em {{amount}} - menos que os {{requested}} que você concedeu.",
+    "refused": "O orçamento extra foi recusado: {{reason}}",
+    "retry": "Pode funcionar se você tentar de novo daqui a pouco.",
+    "tokens": "{{tokens}} tokens",
+    "cost": "US$ {{cost}}",
+    "both": "{{tokens}} e {{cost}}",
+    "nothing": "nada",
+    "reason": {
+      "host_not_authorized": "esta instalação do Дархай não pode aumentar orçamentos.",
+      "managed_policy": "uma política gerenciada impede isso.",
+      "no_exhausted_budget": "nenhum orçamento estava esgotado, então não havia o que aumentar.",
+      "invalid_grant": "o mecanismo não aceitou o valor.",
+      "budget_tracker_unavailable": "o controle de orçamento do mecanismo está indisponível.",
+      "persistence_failure": "o mecanismo não conseguiu registrar a concessão.",
+      "request_id_conflict": "o mecanismo já tinha visto esta solicitação.",
+      "ledger_capacity_exceeded": "há concessões demais pendentes no mecanismo.",
+      "turn_in_progress": "ainda há um turno em andamento, e concessões são recusadas enquanto isso.",
+      "unknown": "o mecanismo não disse o motivo."
     }
   }
 }

@@ -87,7 +87,8 @@ type TMessageType =
   | 'skill_suggest'
   | 'cron_trigger'
   | 'cron_propose'
-  | 'sub_agent';
+  | 'sub_agent'
+  | 'workflow_run';
 
 interface IMessage<T extends TMessageType, Content extends Record<string, any>> {
   /**
@@ -422,6 +423,50 @@ export type IMessageSubAgent = IMessage<
   }
 >;
 
+/** Failure detail carried by a failed workflow node or a failed run. Mirrors the engine's `failure` object. */
+export type WorkflowRunFailure = { code: string; message: string; retryable: boolean };
+
+/**
+ * v0.9.7-mn - one `.ron` workflow run, as the `workflow_lifecycle_v1` capability
+ * projects it (`WorkflowRunSnapshot` in
+ * `src/process/agent/wcore/capabilities/handlers/workflowLifecycle.ts`).
+ *
+ * The engine emits the WHOLE snapshot on every accepted mutation, keyed by
+ * `runId` - so this card merges by replacement, never by append. That is the one
+ * way it differs from `sub_agent`, which accumulates streamed text.
+ */
+export type IMessageWorkflowRun = IMessage<
+  'workflow_run',
+  {
+    /** Correlation key for the run; also the message's `msg_id` so updates merge into one card. */
+    runId: string;
+    /** Stable id of the workflow definition, e.g. `desktop-audit`. */
+    workflowId: string;
+    /** Human-readable display name. May be empty - the card falls back to `workflowId`. */
+    name: string;
+    /**
+     * The engine's DECLARED node count. NOT a completion denominator: the
+     * engine is free to open a run with `node_count: 0` and then emit nodes,
+     * and rendering "1 of 0" would report the engine's own inconsistency as a
+     * Darhai bug. The card shows observed nodes and treats this as a hint.
+     */
+    nodeCount: number;
+    status: 'running' | 'succeeded' | 'failed';
+    /**
+     * How many run sequences never arrived. Always the true count even when the
+     * reducer capped its enumerated list, so a "N lines lost" line must read
+     * this and never `missingSequences.length`.
+     */
+    missingTotal: number;
+    nodes: Array<{
+      nodeId: string;
+      state: 'queued' | 'running' | 'succeeded' | 'failed' | 'blocked';
+      failure?: WorkflowRunFailure;
+    }>;
+    failure?: WorkflowRunFailure;
+  }
+>;
+
 // eslint-disable-next-line max-len
 export type TMessage =
   | IMessageText
@@ -439,7 +484,8 @@ export type TMessage =
   | IMessageSkillSuggest
   | IMessageCronTrigger
   | IMessageCronPropose
-  | IMessageSubAgent;
+  | IMessageSubAgent
+  | IMessageWorkflowRun;
 
 // Unified type for all user-interaction confirmation prompts
 export interface IConfirmation<Option extends any = any> {
@@ -687,6 +733,34 @@ export const transformMessage = (message: IResponseMessage): TMessage => {
         },
       };
     }
+    case 'workflow_run': {
+      // `workflow_lifecycle_v1` projection. The main-process reducer has already
+      // validated every field against the engine schema (unknown node states,
+      // negative sequences and conflicting terminals never reach here), so this
+      // reads rather than re-validates. `nodes` is still length-checked because
+      // a missing array would crash the card, and a crashed card is a worse
+      // answer than an empty one.
+      const run = message.data as IMessageWorkflowRun['content'];
+      return {
+        id: uuid(),
+        type: 'workflow_run',
+        // runId as msg_id: every later snapshot for the same run merges into
+        // this one card instead of stacking a new card per node transition.
+        msg_id: run.runId,
+        conversation_id: message.conversation_id,
+        position: 'left',
+        content: {
+          runId: run.runId,
+          workflowId: run.workflowId,
+          name: run.name,
+          nodeCount: run.nodeCount,
+          status: run.status,
+          missingTotal: run.missingTotal,
+          nodes: Array.isArray(run.nodes) ? run.nodes : [],
+          ...(run.failure && { failure: run.failure }),
+        },
+      };
+    }
     case 'start':
     case 'finish':
     case 'thought':
@@ -866,12 +940,26 @@ export const composeMessage = (
         const prevContent = msg.content;
         const nextContent = message.content;
         const mergedStatus =
-          nextContent.status === 'done' || nextContent.status === 'failed'
-            ? nextContent.status
-            : prevContent.status;
+          nextContent.status === 'done' || nextContent.status === 'failed' ? nextContent.status : prevContent.status;
         const mergedBody = prevContent.body + nextContent.body;
         const merged = { ...prevContent, status: mergedStatus, body: mergedBody } as typeof prevContent;
         return updateMessage(i, { ...msg, content: merged });
+      }
+    }
+    return pushMessage(message);
+  }
+
+  // workflow_run: merge by runId (stored as msg_id) with REPLACEMENT, not append.
+  // The reducer emits the whole run snapshot on every accepted mutation, so the
+  // newest frame is already the complete truth; merging field-by-field would
+  // resurrect nodes the engine has since dropped from the projection. Searched
+  // from the end because a long-running workflow's card is usually recent but
+  // need not be the last message - tool calls and text arrive between updates.
+  if (message.type === 'workflow_run' && message.msg_id) {
+    for (let i = list.length - 1; i >= 0; i--) {
+      const msg = list[i];
+      if (msg.type === 'workflow_run' && msg.msg_id === message.msg_id) {
+        return updateMessage(i, { ...msg, content: message.content });
       }
     }
     return pushMessage(message);

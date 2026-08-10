@@ -12,9 +12,119 @@ import { ipcBridge } from '@/common';
 import { useModelRegistry } from '@/renderer/hooks/useModelRegistry';
 import { useEngineConfigPath } from '../components/useEngineConfigPath';
 import styles from './Panes.module.css';
+import type { EngineCapabilityFrame, EngineCapabilityHealth, EngineCapabilityRow } from './types';
 
 /** Total provider catalog size: the headline "104 catalog" figure. */
 const CATALOG_SIZE = 104;
+
+/** The readiness record for ONE engine process. */
+type CapabilityRecord = {
+  /**
+   * The conversation whose engine produced these rows.
+   *
+   * Kept because a second engine process is a second answer to the same
+   * question. Blending two processes' outcomes into one table would let a
+   * capability that failed in a dead session keep accusing a healthy one.
+   *
+   * `null` means the rows came from the main process's RETAINED record rather
+   * than from frames this pane watched arrive. That record is reset on every
+   * engine `ready`, so it always describes exactly one engine - Darhai just
+   * cannot say which conversation it belongs to. Treating `null` as its own
+   * identity is what makes the first live frame replace it rather than merge
+   * into it: any frame arriving after mount comes from an engine whose `ready`
+   * already cleared the record we read.
+   */
+  conversationId: string | null;
+  rows: EngineCapabilityRow[];
+};
+
+/** What the mount-time pull found, before any live frame. */
+type SnapshotState = {
+  /** False until the main process answers; the table says "reading", not "empty". */
+  settled: boolean;
+  /** False until some engine published a `ready` in this app run. */
+  contractKnown: boolean;
+  /** True when the engine announced more capabilities than the record holds. */
+  overflowed: boolean;
+};
+
+const CAPABILITY_HEALTHS: ReadonlySet<string> = new Set<EngineCapabilityHealth>(['ok', 'declined', 'changed']);
+
+/**
+ * A `capability_activation` frame, or null.
+ *
+ * The main process already validated these fields; this re-check exists because
+ * `IResponseMessage.data` is `unknown` at the IPC seam and a renderer that
+ * trusts it renders `undefined` into a table cell.
+ */
+function readCapabilityFrame(data: unknown): EngineCapabilityFrame | null {
+  if (typeof data !== 'object' || data === null) return null;
+  const frame = data as Record<string, unknown>;
+  const { capability, stage, reason, health, remedy } = frame;
+  if (typeof capability !== 'string' || capability.length === 0) return null;
+  if (typeof stage !== 'string' || stage.length === 0) return null;
+  if (typeof health !== 'string' || !CAPABILITY_HEALTHS.has(health)) return null;
+  return {
+    capability,
+    stage,
+    reason: typeof reason === 'string' && reason.length > 0 ? reason : null,
+    health: health as EngineCapabilityHealth,
+    remedy: remedy === 'config' || remedy === 'not_configurable' ? remedy : 'unknown',
+  };
+}
+
+/**
+ * Styling keys off `health`, never off `stage`.
+ *
+ * The stage set is open - a host comparing against the literal `'unavailable'`
+ * is one engine bump away from silently painting a declined capability green.
+ */
+function healthClass(health: EngineCapabilityHealth): string {
+  if (health === 'declined') return 'text-danger font-medium';
+  if (health === 'changed') return 'text-warning font-medium';
+  return 'text-success font-medium';
+}
+
+/** Fold one frame into the record, last-write-wins per capability, first-seen order. */
+function foldCapabilityFrame(
+  previous: CapabilityRecord | null,
+  conversationId: string,
+  frame: EngineCapabilityFrame
+): CapabilityRecord {
+  const base = previous !== null && previous.conversationId === conversationId ? previous.rows : [];
+  const at = base.findIndex((row) => row.capability === frame.capability);
+  if (at === -1) return { conversationId, rows: [...base, frame] };
+  const rows = base.slice();
+  rows[at] = frame;
+  return { conversationId, rows };
+}
+
+/**
+ * Rows from the main process's retained record.
+ *
+ * The health/remedy unions are re-narrowed rather than trusted: the bridge types
+ * them as `string` (the main process grades them, the renderer's unions are a
+ * copy), and a widened member reaching a `Record<Health, string>` lookup renders
+ * `undefined` into a table cell.
+ */
+function readSnapshotRows(
+  rows: readonly { capability: string; stage: string; reason: string | null; health: string; remedy: string }[]
+): EngineCapabilityRow[] {
+  const out: EngineCapabilityRow[] = [];
+  for (const row of rows) {
+    if (typeof row.capability !== 'string' || row.capability.length === 0) continue;
+    if (typeof row.stage !== 'string' || row.stage.length === 0) continue;
+    if (!CAPABILITY_HEALTHS.has(row.health)) continue;
+    out.push({
+      capability: row.capability,
+      stage: row.stage,
+      reason: typeof row.reason === 'string' && row.reason.length > 0 ? row.reason : null,
+      health: row.health as EngineCapabilityHealth,
+      remedy: row.remedy === 'config' || row.remedy === 'not_configurable' ? row.remedy : 'unknown',
+    });
+  }
+  return out;
+}
 
 type OverviewPaneProps = {
   /** Engine version for the VERSION stat card (live, else the pinned build). */
@@ -54,6 +164,59 @@ const OverviewPane: React.FC<OverviewPaneProps> = ({ version }) => {
   const [activeProfile, setActiveProfile] = useState<{ name: string; dir?: string } | null>(null);
   const engineConfigPath = useEngineConfigPath();
   const { providers } = useModelRegistry();
+  const [capabilities, setCapabilities] = useState<CapabilityRecord | null>(null);
+  const [snapshot, setSnapshot] = useState<SnapshotState>({ settled: false, contractKnown: false, overflowed: false });
+
+  // The engine announces its own capability activation at every start - one
+  // frame per lifecycle step, MEASURED at 24 frames over 8 capabilities on
+  // v0.12.26. Darhai used to drop all of them, so `delegate_isolation:
+  // isolation_not_enforced` - the engine stating that delegate isolation is NOT
+  // being enforced, on a product that advertises sub-agents - was invisible.
+  useEffect(() => {
+    return ipcBridge.conversation.responseStream.on((message) => {
+      if (message.type !== 'capability_activation') return;
+      const frame = readCapabilityFrame(message.data);
+      if (frame === null) return;
+      setCapabilities((previous) => foldCapabilityFrame(previous, message.conversation_id, frame));
+    });
+  }, []);
+
+  // MOUNT-TIME PULL, and the reason this table is not permanently empty.
+  //
+  // Every `capability_activation` frame is emitted once per engine process
+  // START - which happens while the user is in a chat, i.e. while this pane is
+  // unmounted (`/conversation/:id` and `/settings/wcore-config` are sibling
+  // routes). Subscribing alone means subscribing after the only frames that
+  // will ever be sent, forever. The main process retains the record; this reads
+  // it. The subscription above stays for the case the pull cannot cover: an
+  // engine that starts while Settings is already open.
+  useEffect(() => {
+    let alive = true;
+    ipcBridge.wcoreEngine.capabilitySnapshot
+      .invoke()
+      .then((result) => {
+        if (!alive) return;
+        setSnapshot({
+          settled: true,
+          contractKnown: result.contractKnown === true,
+          overflowed: result.overflowed === true,
+        });
+        const rows = readSnapshotRows(Array.isArray(result.activation) ? result.activation : []);
+        if (rows.length === 0) return;
+        // Seeded under `null`, never under a conversation id this pane made up.
+        // A live frame from any conversation then replaces it wholesale, which
+        // is correct: the record was cleared by that engine's own `ready`.
+        setCapabilities((previous) => (previous === null ? { conversationId: null, rows } : previous));
+      })
+      .catch(() => {
+        // The record is unreadable; the table says so via `settled` rather than
+        // claiming the engine announced nothing.
+        if (alive) setSnapshot((previous) => ({ ...previous, settled: true }));
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   useEffect(() => {
     void ipcBridge.acpConversation.getAvailableAgents.invoke().then((result) => {
@@ -151,6 +314,59 @@ const OverviewPane: React.FC<OverviewPaneProps> = ({ version }) => {
   }, [providers, providerCount, allocatedLabel, t]);
 
   const stopped = engineAvailable === false;
+
+  const capabilityRows = capabilities?.rows ?? [];
+
+  const healthLabel = (health: EngineCapabilityHealth): string => {
+    if (health === 'declined')
+      return t('settings.wcoreConfig.overview.engineCaps.healthDeclined', { defaultValue: 'declined' });
+    if (health === 'changed')
+      return t('settings.wcoreConfig.overview.engineCaps.healthChanged', { defaultValue: 'outcome changed' });
+    return t('settings.wcoreConfig.overview.engineCaps.healthOk', { defaultValue: 'active' });
+  };
+
+  /** Known reason tokens get a sentence; anything else is shown verbatim. */
+  const reasonLabel = (reason: string): string => {
+    const known: Record<string, string> = {
+      disabled_by_config: t('settings.wcoreConfig.overview.engineCaps.reasonDisabledByConfig', {
+        defaultValue: 'Turned off by configuration.',
+      }),
+      dependency_unavailable: t('settings.wcoreConfig.overview.engineCaps.reasonDependencyUnavailable', {
+        defaultValue: 'Something it depends on is missing.',
+      }),
+      no_production_constructor: t('settings.wcoreConfig.overview.engineCaps.reasonNoProductionConstructor', {
+        defaultValue: 'This engine build ships no working implementation of it.',
+      }),
+      runtime_path_unwired: t('settings.wcoreConfig.overview.engineCaps.reasonRuntimePathUnwired', {
+        defaultValue: 'Built, but nothing in the engine calls it yet.',
+      }),
+      isolation_not_enforced: t('settings.wcoreConfig.overview.engineCaps.reasonIsolationNotEnforced', {
+        defaultValue: 'Isolation is NOT being enforced on this platform.',
+      }),
+    };
+    return known[reason] ?? reason;
+  };
+
+  /**
+   * `config` does NOT mean Darhai knows which key. Only `smart_handoff`'s gate
+   * was ever identified by measurement (`[compact] smart_enabled`, wired on the
+   * Memory pane); `pricing_refresher` and `learned_policy` report the same token
+   * with a key 20+ measured candidates failed to find. So the hint points at the
+   * config file and stops - it never promises a switch that does not exist.
+   */
+  const remedyLabel = (remedy: EngineCapabilityRow['remedy']): string => {
+    if (remedy === 'config')
+      return t('settings.wcoreConfig.overview.engineCaps.remedyConfig', {
+        defaultValue: 'A config key can turn it back on.',
+      });
+    if (remedy === 'not_configurable')
+      return t('settings.wcoreConfig.overview.engineCaps.remedyNotConfigurable', {
+        defaultValue: 'Not a setting - no switch to offer.',
+      });
+    return t('settings.wcoreConfig.overview.engineCaps.remedyUnknown', {
+      defaultValue: 'Darhai does not know whether this is fixable.',
+    });
+  };
 
   return (
     <div className={styles.pane}>
@@ -316,6 +532,104 @@ const OverviewPane: React.FC<OverviewPaneProps> = ({ version }) => {
               'Everything above ships working. Open Tools, Services & Keys, or Security on the left to go deeper, or leave it; the engine just runs.',
           })}
         </div>
+      </div>
+
+      {/* What the ENGINE says about itself, from `capability_activation`. */}
+      <div className={styles.section} data-testid='engine-capabilities'>
+        <div className={styles.sectionHead}>
+          <span className={styles.sectionLabel}>
+            {t('settings.wcoreConfig.overview.engineCaps.title', { defaultValue: 'Engine capability readiness' })}
+          </span>
+          <span className={styles.sectionHeadLine} />
+        </div>
+        <div className={styles.hintText}>
+          {t('settings.wcoreConfig.overview.engineCaps.body', {
+            defaultValue:
+              'Reported by the engine itself as it starts. A capability the engine declined is shown as declined - not as broken, and not as working.',
+          })}
+        </div>
+        {snapshot.overflowed && (
+          <div className='text-warning mt-1 text-xs' data-testid='engine-capabilities-overflowed'>
+            {t('settings.wcoreConfig.overview.engineCaps.overflowed', {
+              defaultValue: 'The engine announced more capabilities than Darhai retains; this table is incomplete.',
+            })}
+          </div>
+        )}
+        {capabilityRows.length === 0 ? (
+          <div className={styles.emptyHint} data-testid='engine-capabilities-empty'>
+            {/* Three different facts, never collapsed into one sentence: the
+                record has not been read yet, no engine has ever spoken, or an
+                engine spoke and announced nothing. Only the middle one is worth
+                telling the user to open a chat about. */}
+            {!snapshot.settled ? (
+              <div>
+                {t('settings.wcoreConfig.overview.engineCaps.loading', {
+                  defaultValue: 'Reading what the engine reported…',
+                })}
+              </div>
+            ) : snapshot.contractKnown ? (
+              <div>
+                {t('settings.wcoreConfig.overview.engineCaps.emptySilent', {
+                  defaultValue: 'An engine started in this session but announced no capability readiness.',
+                })}
+              </div>
+            ) : (
+              <>
+                <div>
+                  {t('settings.wcoreConfig.overview.engineCaps.empty', {
+                    defaultValue: 'The engine has not announced its capabilities yet.',
+                  })}
+                </div>
+                <div className='text-t-tertiary mt-1'>
+                  {t('settings.wcoreConfig.overview.engineCaps.emptyHint', {
+                    defaultValue: 'They arrive when an engine process starts. Open a Darhai Core chat and come back.',
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+        ) : (
+          <table className='w-full border-collapse text-xs' data-testid='engine-capabilities-table'>
+            <thead>
+              <tr className='text-left text-t-tertiary'>
+                <th className='py-1.5 pr-3 font-medium'>
+                  {t('settings.wcoreConfig.overview.engineCaps.colCapability', { defaultValue: 'Capability' })}
+                </th>
+                <th className='py-1.5 pr-3 font-medium'>
+                  {t('settings.wcoreConfig.overview.engineCaps.colStage', { defaultValue: 'Stage' })}
+                </th>
+                <th className='py-1.5 font-medium'>
+                  {t('settings.wcoreConfig.overview.engineCaps.colDetail', { defaultValue: 'What that means' })}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {capabilityRows.map((row) => (
+                <tr key={row.capability} className='border-t border-b-light align-top'>
+                  <td className='py-1.5 pr-3 font-mono text-t-primary'>{row.capability}</td>
+                  <td className='py-1.5 pr-3'>
+                    <span className={healthClass(row.health)}>{healthLabel(row.health)}</span>
+                    <span className='ml-1.5 font-mono text-t-tertiary'>{row.stage}</span>
+                  </td>
+                  <td className='py-1.5 text-t-secondary'>
+                    {row.reason === null ? (
+                      <span className='text-t-tertiary'>
+                        {t('settings.wcoreConfig.overview.engineCaps.noReason', {
+                          defaultValue: 'The engine stated no reason.',
+                        })}
+                      </span>
+                    ) : (
+                      <>
+                        <span>{reasonLabel(row.reason)}</span>
+                        <span className='ml-1.5 text-t-tertiary'>{remedyLabel(row.remedy)}</span>
+                      </>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

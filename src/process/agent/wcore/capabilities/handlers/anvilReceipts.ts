@@ -14,17 +14,21 @@
  * `session_id_and_sequence`.
  *
  * WIRING STATUS - read this before believing anything below about delivery.
- * This module is NOT reachable at runtime yet. `capabilities/index.ts` ships an
- * empty `HANDLERS` list, and both type names are still listed in
- * `ACKNOWLEDGED_UNHANDLED_EVENTS` in `../protocol.ts`, so today the decoder
- * drops both events without a capability ever seeing them. What this module
- * supplies is the ledger and a handler over it. What it REQUIRES before a user
- * gains anything: an entry in `HANDLERS`, and the two names removed from
- * `ACKNOWLEDGED_UNHANDLED_EVENTS`. Both edits belong to the step that registers
- * all nine capabilities at once, not to this file. Every statement below about
- * what a user sees therefore describes what this module WOULD produce once
- * registered - the tests drive it directly and through `createDispatcher`,
- * which is the real factory, over a handler list this module supplies.
+ * The decode path is wired: `capabilities/index.ts` lists this capability in
+ * `HANDLERS`, and neither type name remains in `ACKNOWLEDGED_UNHANDLED_EVENTS`
+ * in `../protocol.ts`, so both events now reach the ledger. The frame path is
+ * wired too, but by a step that is easy to miss and was once missed here:
+ * {@link ANVIL_ALERT_FRAME} is a PROJECTION - it is not one of the names this
+ * module consumes, and `WCoreManager` drops any frame with no `msg_id` unless
+ * its type is in `forwardableFrameTypes()`. That set unions each handler's
+ * `handles` with its `emits`, so the `emits: [ANVIL_ALERT_FRAME]` declaration
+ * below is load-bearing: without it the ledger works, these tests pass, and
+ * every alert is discarded one process upstream of the user.
+ *
+ * WHAT IS STILL MISSING: nothing renders `anvil_receipt_alert`. The frame now
+ * reaches the renderer's response stream and no surface reads it, so a
+ * contradicted receipt is delivered and then ignored. That is the remaining
+ * step for this capability, and it is a renderer change, not one in this file.
  *
  * WHY IT EXISTS. A tampered, replayed, conflicting or version-mismatched
  * receipt currently vanishes without so much as a console warning - the exact
@@ -687,6 +691,9 @@ export function createAnvilReceiptsCapability(ledger: AnvilLedger = createAnvilL
   return {
     name: 'anvil_receipts',
     handles: ANVIL_EVENT_TYPES,
+    // Projection frame: folded from the wire events above, so it must be
+    // declared or WCoreManager drops it at the msg_id guard.
+    emits: [ANVIL_ALERT_FRAME],
 
     handle(event: Record<string, unknown>, ctx: CapabilityContext): boolean {
       const verdict = ledger.admit(event);

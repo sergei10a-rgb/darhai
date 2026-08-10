@@ -15,5 +15,25 @@
   "permission": "権限",
   "switchMode": "モード切替",
   "switchSuccess": "モードを切り替えました",
-  "switchFailed": "モードの切り替えに失敗しました"
+  "switchFailed": "モードの切り替えに失敗しました",
+  "prompt": "毎回確認する",
+  "managed": "管理下",
+  "dangerous": "危険",
+  "effectivePosture": "エンジン: {{posture}} / {{approvals}}",
+  "policyUnknown": "エンジンのポリシー状態が不明",
+  "managedFloor": "管理ポリシーの下限が有効です",
+  "sandboxBypass": "サンドボックスが回避されています",
+  "policyStale": "エンジンのポリシーは表示中のものより新しい状態です。",
+  "policyRevision": "ポリシー改訂 {{revision}}",
+  "policyVerdict": {
+    "applied": "エンジンはこのポリシーを適用しました。",
+    "idempotent": "エンジンが現在有効なポリシーを再通知しました。変更はありません。",
+    "gap": "ポリシー更新が少なくとも1回届いていないため、この状態は古い可能性があります。",
+    "conflict": "2つのポリシーが同じ改訂番号を主張しているため、どちらも信頼できません。",
+    "version_mismatch": "このビルドの Darhai が読み取れないポリシー形式が通知されました。",
+    "not_critical": "エンジンが送ったポリシー受領書に正式なものという印が付いていません。",
+    "regression": "エンジンが現在有効なものより古いポリシーを通知しました。",
+    "malformed": "ポリシー受領書を読み取れませんでした。"
+  },
+  "policyEngineDetail": "エンジンのメッセージ: {{detail}}"
 }

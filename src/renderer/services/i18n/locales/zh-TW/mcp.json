@@ -88,6 +88,43 @@
       "confirm": "允許",
       "reason": "原因",
       "context": "詳情"
+    },
+    "noDetails": "Дархай 沒有收到這個請求的任何細節，因此不知道它會做什麼。如果你不清楚這是什麼，請拒絕。",
+    "answerExpired": "此請求已經過期，你的回答沒有生效——它被視為拒絕，什麼也沒有發生。這裡已無法再授予任何內容：請關閉此對話框；若仍然需要，請重新發起。",
+    "answerUndelivered": "你的回答沒有送達 Дархай，因此沒有授予任何額度。請再按一次，或關閉以拒絕。",
+    "budgetGrant": {
+      "title": "要提高預算嗎？",
+      "summary": "引擎因為達到預算上限而停止。你可以再授予一些，讓它繼續。被暫停的這一輪是否繼續，或額外預算只用於你的下一則訊息，由引擎決定，而不是 Дархай。",
+      "confirm": "授予",
+      "reason": "觸及的上限",
+      "observed": "已用",
+      "limit": "上限",
+      "unknown": "未知",
+      "grantTokens": "授予的 token 數量",
+      "grantCost": "授予的金額（US$）",
+      "footer": "由引擎自身的預算上限發起，而非某個工具"
+    }
+  },
+  "budgetResult": {
+    "granted": "引擎已把預算提高了 {{amount}}。",
+    "grantedLess": "引擎只把預算提高了 {{amount}}，少於你授予的 {{requested}}。",
+    "refused": "額外預算被拒絕：{{reason}}",
+    "retry": "稍後再試一次也許就可以。",
+    "tokens": "{{tokens}} 個 token",
+    "cost": "US$ {{cost}}",
+    "both": "{{tokens}} 和 {{cost}}",
+    "nothing": "沒有任何額度",
+    "reason": {
+      "host_not_authorized": "這台 Дархай 無權提高預算。",
+      "managed_policy": "受管理原則禁止此操作。",
+      "no_exhausted_budget": "沒有預算被耗盡，無需提高。",
+      "invalid_grant": "引擎不接受這個數額。",
+      "budget_tracker_unavailable": "引擎的預算追蹤不可用。",
+      "persistence_failure": "引擎無法記錄這次授予。",
+      "request_id_conflict": "引擎已經見過這個請求。",
+      "ledger_capacity_exceeded": "引擎待處理的授予太多。",
+      "turn_in_progress": "仍有一輪在進行，期間授予會被拒絕。",
+      "unknown": "引擎沒有說明原因。"
     }
   }
 }

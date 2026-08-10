@@ -59,14 +59,54 @@ and lands last.
 | Wave | Capabilities | State |
 |---|---|---|
 | 0 | contract negotiation, dispatcher, contract harness | ✅ landed |
-| 1 | execution policy · workflow lifecycle · anvil receipts · budget grants | in progress |
-| 2 | turn recovery · durable goals · runtime diagnostics + MCP lifecycle · capability activation | pending |
-| 3 | host-delegated delivery + failover receipts + tool-effect resolution | pending (needs wave 2) |
-| 4 | UI surfaces + i18n for every capability that earns one | pending |
+| 1 | execution policy · workflow lifecycle · anvil receipts · budget grants | ✅ landed |
+| 2 | turn recovery · durable goals · runtime diagnostics + MCP lifecycle · capability activation | ✅ landed |
+| 3 | host-delegated delivery + failover receipts + tool-effect resolution | ✅ landed |
+| 4 | UI surfaces + i18n · the producers that make them reachable | ✅ landed |
 
 Each wave is implement-then-adversarially-review: a second agent tries to break
 what the first built, re-runs the mutation proof itself, and reports rather than
 patches.
+
+### What wave 4 taught, and what it changed
+
+Every one of the four wave-4 reviews came back `needs-work` or `broken`, and all
+four failed the same way: **the screen was built, the data could not reach it.**
+Tests were green because a DOM test pushes a frame straight into an
+already-mounted component — it never crosses the two process boundaries where
+the frames actually died. Four seams were missing, and each is now mechanical:
+
+- **Emitting under a name nothing forwards.** `WCoreManager`'s exemption from the
+  msg_id guard was keyed on what capabilities CONSUME. Two capabilities project
+  several wire events into one frame under a name they never consume, so
+  `workflow_run` and `anvil_receipt_alert` were dropped on every turn. Fixed with
+  `emits` on the handler type, and guarded by a SOURCE SCAN
+  (`tests/unit/wcore-capabilityFrameForwarding.test.ts`) that reads every
+  `ctx.emit({ type: X })` out of the handler files and fails if X is not
+  forwardable. The rule used to be asserted by checking that a comment existed.
+- **Reading availability from the wrong namespace.** `capability_activation`
+  names the engine's INTERNAL subsystems; contract ids like `durable_goals_v1`
+  live in `ready.contract.capabilities`. MEASURED: the two sets do not intersect,
+  so a filter on one for a name from the other matches nothing, forever. The
+  contract grades now reach the renderer through
+  `ipcBridge.wcoreEngine.capabilitySnapshot`, and a test pins the disjointness so
+  the next author is told rather than having to rediscover it.
+- **Subscribing to a stream that already fired.** Engine frames arrive once per
+  process START — while the user is in a chat, i.e. while Settings is unmounted.
+  A pane that only subscribes is empty forever. Panes now PULL the retained
+  record on mount and keep the subscription for engines that start later.
+- **A capability with no caller.** `sendContinueWithBudget`,
+  `sendGetRuntimeDiagnostics` and `sendRemoveMcpServer` had zero call sites, so
+  their replies could never arrive and ~400 lines of renderer waited on nothing.
+  Each now has a real producer: a budget gate on `budget_exceeded`, and two
+  remote-denied IPC channels behind controls the user can press.
+
+The `ready` arm also gained the three calls it was documented to make and never
+did: `resetCapabilityActivation()`, `resetRuntimeRequests()`, and
+`seedCapabilitiesFromReady()` — without the last one the execution-policy badge
+had no revision 0 (the engine states it on `ready` and nowhere else) and turn
+recovery had no session contract, so `canResync` answered false for every
+session regardless of what the engine supports.
 
 ## What the research turned up that changes plans
 

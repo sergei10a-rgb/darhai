@@ -15,5 +15,25 @@
   "permission": "權限",
   "switchMode": "切換模式",
   "switchSuccess": "模式切換成功",
-  "switchFailed": "模式切換失敗"
+  "switchFailed": "模式切換失敗",
+  "prompt": "每次都詢問",
+  "managed": "受管",
+  "dangerous": "危險",
+  "effectivePosture": "引擎：{{posture}} / {{approvals}}",
+  "policyUnknown": "引擎政策狀態未知",
+  "managedFloor": "受管政策下限已生效",
+  "sandboxBypass": "已略過沙箱",
+  "policyStale": "引擎政策比所顯示的更新。",
+  "policyRevision": "政策版本 {{revision}}",
+  "policyVerdict": {
+    "applied": "引擎已套用此政策。",
+    "idempotent": "引擎重複了目前已生效的政策，沒有變更。",
+    "gap": "至少有一次政策更新未送達，目前狀態可能已過時。",
+    "conflict": "兩個政策宣稱相同的修訂號，因此都不可信。",
+    "version_mismatch": "引擎公布的政策格式，此版本 Darhai 無法解析。",
+    "not_critical": "引擎送出的政策回條未標記為權威。",
+    "regression": "引擎公布的政策比目前生效的更舊。",
+    "malformed": "無法解析該政策回條。"
+  },
+  "policyEngineDetail": "引擎訊息：{{detail}}"
 }

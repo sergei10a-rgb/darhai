@@ -347,5 +347,49 @@
   "openclaw": {
     "runtimeCheckFailed": "Агентын ажиллах орчныг шалгаж чадсангүй",
     "runtimeMismatch": "Агент сэлгэлтийн шалгалт амжилтгүй: {{details}}"
+  },
+  "workflowRun": {
+    "statusRunning": "Ажиллаж байна",
+    "statusSucceeded": "Амжилттай",
+    "statusFailed": "Амжилтгүй",
+    "untitled": "Ажлын урсгал",
+    "nodesObserved": "{{observed}} алхам мэдээлэгдсэн",
+    "nodesDeclared": "хөдөлгүүр {{declared}} гэж зарласан",
+    "noNodesYet": "Одоогоор ямар ч алхам мэдээлээгүй",
+    "noNodesReported": "Ажил нэг ч алхам мэдээлэхгүйгээр дуусав",
+    "linesLost": "Урсгалаас {{lines}} мөр алдагдсан - энэ ажил бүрэн бус байж болно",
+    "retryable": "Дахин оролдож болно",
+    "notRetryable": "Дахин оролдох боломжгүй",
+    "runFailed": "Ажил амжилтгүй боллоо",
+    "nodeState": {
+      "queued": "Дараалалд",
+      "running": "Ажиллаж байна",
+      "succeeded": "Амжилттай",
+      "failed": "Амжилтгүй",
+      "blocked": "Хаагдсан"
+    }
+  },
+  "failover": {
+    "switched": "{{failedProvider}}/{{failedModel}} унасан ({{reason}}) - {{selectedProvider}}/{{selectedModel}} рүү шилжив",
+    "exhausted": "{{failedProvider}}/{{failedModel}} унасан ({{reason}}), өөр ямар ч нийлүүлэгч ажлыг үргэлжлүүлж чадсангүй",
+    "malformed": "Хөдөлгүүр нийлүүлэгчээ сольсон боловч бүртгэлийг нь уншиж чадсангүй",
+    "rejectedHeader": "{{rejected}} нэр дэвшигчийг татгалзсан:",
+    "reason": {
+      "auth": "нэвтрэлт амжилтгүй",
+      "auth_permanent": "нэвтрэлтийг бүрмөсөн татгалзсан",
+      "format": "хариултын хэлбэрийг татгалзсан",
+      "rate_limit": "хүсэлтийн хязгаар",
+      "overloaded": "нийлүүлэгч хэт ачаалалтай",
+      "billing": "төлбөрийн асуудал",
+      "timeout": "хугацаа хэтэрсэн",
+      "model_not_found": "загвар олдсонгүй",
+      "session_expired": "сешн дууссан",
+      "context_overflow": "контекст багтсангүй",
+      "unknown": "тодорхойгүй шалтгаан"
+    }
+  },
+  "delivery": {
+    "unconfigured": "Агент {{platform}}-аар мессеж илгээхийг оролдсон ч {{platform}} суваг тохируулаагүй байна. Тохиргоо - Сувгууд хэсэгт нэмнэ үү.",
+    "failed": "Агент {{platform}}-аар мессеж илгээж чадсангүй: {{error}}"
   }
 }

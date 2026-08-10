@@ -16,12 +16,12 @@
  * commands (`goal_open`, `goal_declare_task`, `goal_advance`, `goal_cancel`,
  * `goal_resync`) with a cursor the engine will accept.
  *
- * WHY DROPPING IT IS THE BUG. All three events sit in
- * `ACKNOWLEDGED_UNHANDLED_EVENTS` today, and one of them -
- * `goal_control_refused` - is graded `criticality: "safety"` in the manifest.
- * So if Darhai ever sends a goal command the engine refuses
- * (`reason: "cursor_stale"`), nothing tells the user: the command silently did
- * nothing and the UI would keep showing a goal that is not moving.
+ * WHY DROPPING IT WAS THE BUG. All three events used to sit in
+ * `ACKNOWLEDGED_UNHANDLED_EVENTS`, and one of them - `goal_control_refused` -
+ * is graded `criticality: "safety"` in the manifest. So when Darhai sent a goal
+ * command the engine refused (`reason: "cursor_stale"`), nothing told the user:
+ * the command silently did nothing and the UI kept showing a goal that was not
+ * moving. All three now route here instead.
  *
  * THE ONE INVARIANT A HOST CAN ACTUALLY GET WRONG IS THE CURSOR.
  * `goal_advance` and `goal_cancel` both list `cursor` in their schema
@@ -51,25 +51,26 @@
  * Each one is named at its rule below. The direction of every choice is the
  * same: never send a control command on a cursor the host cannot vouch for.
  *
- * WHAT THIS MODULE REQUIRES, AND WHICH IS NOT TRUE YET. Nothing below runs in
- * the app until the capability is registered, and registration is the step that
- * lands all capabilities together - not this file. Stated as requirements
- * rather than as description, because describing them as done would be false:
+ * WIRING - STATUS, checked against the files named rather than assumed:
  *
- *  1. `capabilities/index.ts` must list {@link durableGoalsCapability} in
- *     `HANDLERS`. It does not today, so `dispatchCapabilityEvent` routes no
- *     goal event here and this module is correct, tested, and unreachable.
- *  2. the three goal types must leave `ACKNOWLEDGED_UNHANDLED_EVENTS` in
- *     `protocol.ts` in the same change, or the decoder still counts them as
- *     knowingly-inert - and `tests/unit/wcore-capabilityDispatch.test.ts`
- *     fails a type that is both claimed and listed inert.
- *
- * Every frame below carries an empty `msg_id`, and `WCoreManager` forwards such
- * a frame only when its type is in `CAPABILITY_FRAME_TYPES` - a set built from
- * `claimedEventTypes()`, i.e. from the registry in (1). So until (1) lands,
- * every frame emitted here is dropped by `if (!data.msg_id) return;`. That
- * requirement is also why each frame is emitted under one of the three types
- * this capability declares in `handles` and never under an invented name.
+ *  1. DONE. `capabilities/index.ts` lists {@link durableGoalsCapability} in
+ *     `HANDLERS`, so `dispatchCapabilityEvent` routes goal events here.
+ *  2. DONE. The three goal types have left `ACKNOWLEDGED_UNHANDLED_EVENTS` in
+ *     `protocol.ts`. Both halves matter together:
+ *     `tests/unit/wcore-capabilityDispatch.test.ts` fails a type that is both
+ *     claimed and listed inert.
+ *  3. DONE. Every frame below carries an EMPTY `msg_id` - a goal outlives the
+ *     turn that opened it - and `WCoreManager` drops such a frame unless its
+ *     type is in `CAPABILITY_FRAME_TYPES`, built from
+ *     `forwardableFrameTypes()`. That set is `handles` UNION `emits`; this
+ *     module emits only under the three types it declares in `handles`, so it
+ *     needs no `emits`. Emitting under an invented name would be dropped two
+ *     processes upstream with every test still green - the failure that cost
+ *     the workflow card a whole wave. `tests/unit/wcore-capabilityFrameForwarding.test.ts`
+ *     scans this file for exactly that mistake.
+ *  4. DONE. Mission Control renders these frames; it takes capability
+ *     availability from `wcoreEngine.capabilitySnapshot`, NOT from
+ *     `capability_activation` - see the note on {@link DURABLE_GOALS_CAPABILITY}.
  */
 
 import { randomBytes } from 'node:crypto';
@@ -78,7 +79,19 @@ import { isCapabilityAvailable } from '../contractNegotiation';
 import type { NegotiatedContract } from '../contractNegotiation';
 import type { CapabilityContext, CapabilityHandler } from '../types';
 
-/** The capability id the engine grades in `ready.contract.capabilities`. */
+/**
+ * The capability id the engine grades in `ready.contract.capabilities`.
+ *
+ * That map is the ONLY place this name appears. It is NOT an id the engine
+ * announces in `capability_activation` - MEASURED against the vendored
+ * captures, those frames name eight engine-INTERNAL subsystems
+ * (`delegate_isolation`, `learned_policy`, ...) and the two namespaces do not
+ * intersect. A reader that waits for an activation frame named
+ * `durable_goals_v1` waits forever; the renderer therefore takes availability
+ * from `wcoreEngine.capabilitySnapshot`, which carries the contract grades.
+ * `tests/unit/wcore-engineCapabilitySnapshot.test.ts` pins the disjointness so
+ * this stops being folklore.
+ */
 export const DURABLE_GOALS_CAPABILITY = 'durable_goals_v1';
 
 /**
@@ -581,9 +594,9 @@ function parseTask(raw: unknown, notes: GoalParseNotes): GoalTaskEntry {
  * throwing handler is swallowed by the dispatcher, which turns a decode bug
  * into a silently unhandled safety-class event.
  */
-function parseGoalRecord(raw: unknown): { record: GoalRecord; notes: GoalParseNotes } {
+function parseGoalRecord(raw: unknown): { record: GoalRecord; notes: GoalParseNotes; reportedTaskCount: number } {
   const notes = newParseNotes();
-  if (!isRecord(raw)) return { record: {}, notes };
+  if (!isRecord(raw)) return { record: {}, notes, reportedTaskCount: 0 };
 
   const record: GoalRecord = {
     goal_id: clampedString(raw.goal_id, MAX_GOAL_ID_TEXT, notes),
@@ -631,12 +644,18 @@ function parseGoalRecord(raw: unknown): { record: GoalRecord; notes: GoalParseNo
     };
   }
 
+  // Counted BEFORE the slice. `record.tasks.length` measures this host's buffer,
+  // not the goal: past the cap it is always exactly MAX_TASKS_PER_GOAL, so a
+  // 900-task goal would report 256 - a number that reads as a measurement of the
+  // goal while being a measurement of the ceiling.
+  let reportedTaskCount = 0;
   if (Array.isArray(raw.tasks)) {
+    reportedTaskCount = raw.tasks.length;
     notes.tasksTruncated = raw.tasks.length > MAX_TASKS_PER_GOAL;
     record.tasks = raw.tasks.slice(0, MAX_TASKS_PER_GOAL).map((task) => parseTask(task, notes));
   }
 
-  return { record, notes };
+  return { record, notes, reportedTaskCount };
 }
 
 // ============================================
@@ -1595,6 +1614,11 @@ export type GoalSnapshotFrame = {
   iterationsStarted?: number;
   loopOwnerEpoch?: number;
   loopOwnerLeaseExpiresUnixMs?: number;
+  /**
+   * How many tasks the ENGINE listed, which is not how many `tasks` carries:
+   * that array stops at {@link MAX_TASKS_PER_GOAL}. When the two differ,
+   * `tasksTruncated` is true and this is the larger, true number.
+   */
   taskCount: number;
   tasksTruncated: boolean;
   /** Some task listed more dependencies than {@link MAX_DEPENDS_ON_PER_TASK}. */
@@ -1706,8 +1730,9 @@ function parseEnvelope(
  * Declining lets the event reach the decoder's acknowledged-unhandled check,
  * which is the honest destination for a payload this host could not read -
  * returning `true` would report it as handled. The warn is what stops the
- * decline being silent while these three types are still listed inert in
- * `ACKNOWLEDGED_UNHANDLED_EVENTS`.
+ * decline being silent: the three goal types are no longer listed inert, so a
+ * declined event now falls through to the unhandled path with nothing else to
+ * explain it.
  */
 function declineMalformed(ctx: CapabilityContext, type: string, reason: string): boolean {
   ctx.warn(`${type} could not be decoded and was not handled: ${reason}`);
@@ -1861,7 +1886,7 @@ export function createDurableGoalsCapability(): DurableGoalsCapability {
           iterationsStarted: parsed.record.iterations_started,
           loopOwnerEpoch: parsed.record.loop_owner?.epoch,
           loopOwnerLeaseExpiresUnixMs: parsed.record.loop_owner?.lease_expires_unix_ms,
-          taskCount: parsed.record.tasks?.length ?? 0,
+          taskCount: parsed.reportedTaskCount,
           tasksTruncated: parsed.notes.tasksTruncated,
           dependsOnTruncated: parsed.notes.dependsOnTruncated,
           textClamped: parsed.notes.textClamped,

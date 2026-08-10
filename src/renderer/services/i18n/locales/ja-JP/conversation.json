@@ -329,5 +329,49 @@
   "openclaw": {
     "runtimeCheckFailed": "エージェントランタイムを検証できませんでした",
     "runtimeMismatch": "エージェント切り替えの検証に失敗しました: {{details}}"
+  },
+  "workflowRun": {
+    "statusRunning": "実行中",
+    "statusSucceeded": "成功",
+    "statusFailed": "失敗",
+    "untitled": "ワークフロー",
+    "nodesObserved": "{{observed}} ステップを受信",
+    "nodesDeclared": "エンジンの申告は {{declared}}",
+    "noNodesYet": "まだどのステップも報告していません",
+    "noNodesReported": "1 つもステップを報告しないまま実行が終了しました",
+    "linesLost": "ストリームの {{lines}} 行が失われました - この実行は不完全な可能性があります",
+    "retryable": "再試行できます",
+    "notRetryable": "再試行できません",
+    "runFailed": "実行が失敗しました",
+    "nodeState": {
+      "queued": "待機中",
+      "running": "実行中",
+      "succeeded": "成功",
+      "failed": "失敗",
+      "blocked": "ブロック中"
+    }
+  },
+  "failover": {
+    "switched": "{{failedProvider}}/{{failedModel}} が失敗しました（{{reason}}）- {{selectedProvider}}/{{selectedModel}} に切り替えました",
+    "exhausted": "{{failedProvider}}/{{failedModel}} が失敗し（{{reason}}）、引き継げるプロバイダーがありませんでした",
+    "malformed": "エンジンはプロバイダーを切り替えましたが、その記録を読み取れませんでした",
+    "rejectedHeader": "{{rejected}} 件の候補が却下されました:",
+    "reason": {
+      "auth": "認証に失敗",
+      "auth_permanent": "認証が恒久的に拒否",
+      "format": "応答形式が拒否",
+      "rate_limit": "レート制限",
+      "overloaded": "プロバイダーが過負荷",
+      "billing": "請求の問題",
+      "timeout": "タイムアウト",
+      "model_not_found": "モデルが見つからない",
+      "session_expired": "セッションの期限切れ",
+      "context_overflow": "コンテキスト超過",
+      "unknown": "理由不明"
+    }
+  },
+  "delivery": {
+    "unconfigured": "エージェントは {{platform}} でメッセージを送ろうとしましたが、{{platform}} チャネルが設定されていません。「設定 - チャネル」で追加してください。",
+    "failed": "エージェントは {{platform}} でメッセージを送信できませんでした: {{error}}"
   }
 }

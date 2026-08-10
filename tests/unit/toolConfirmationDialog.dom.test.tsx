@@ -61,6 +61,8 @@ vi.mock('react-i18next', () => ({
         'mcp.confirm.cancel': 'Cancel',
         'mcp.confirm.untrustedNotice': 'Shown exactly as written. You decide, not Дархай.',
         'mcp.confirm.emptyValue': '(empty)',
+        'mcp.confirm.answerExpired': 'That request had already expired. Close this dialog and ask again.',
+        'mcp.confirm.answerUndelivered': 'Your answer did not reach Дархай. Press again, or close this to refuse.',
         'common.close': 'Close',
       };
       if (key === 'mcp.confirm.toolLabel') return `Requested by ${String(options?.tool ?? '')}`;
@@ -206,6 +208,54 @@ describe('ToolConfirmationDialog', () => {
 
     await waitFor(() => expect(screen.queryByText('Send this email?')).toBeNull());
     expect(bridgeMocks.respond).not.toHaveBeenCalled();
+  });
+
+  /**
+   * The `settled: false` branch is newer than this suite and applies to EVERY
+   * kind, including the email gate that shipped long before it. The mock here
+   * had always answered `{ settled: true }`, so the branch reached the
+   * already-shipped path with no coverage at all - and a modal the user could
+   * only escape via Cancel, under a prominent Send button that could never
+   * succeed, is the one shape a confirmation dialog must not have.
+   */
+  describe('an email confirmation the gate had already expired', () => {
+    it('says so, keeps the message on screen, and stops offering Send', async () => {
+      bridgeMocks.respond.mockResolvedValue({ settled: false });
+      render(<ToolConfirmationDialog />);
+      raise(makeRequest());
+      await screen.findByText('Send this email?');
+
+      await userEvent.click(screen.getByRole('button', { name: 'Send' }));
+
+      expect(
+        await screen.findByText('That request had already expired. Close this dialog and ask again.')
+      ).toBeTruthy();
+      // The user still sees what they were about to send.
+      expect(screen.getByText('ganbat@example.mn')).toBeTruthy();
+
+      // The gate settles a request once; pressing again can only reproduce the
+      // same terminal error.
+      const send = screen.getByRole('button', { name: 'Send' }) as HTMLButtonElement;
+      expect(send.disabled).toBe(true);
+      await userEvent.click(send);
+      expect(bridgeMocks.respond).toHaveBeenCalledTimes(1);
+    });
+
+    it('closes on Cancel - the way out the copy names', async () => {
+      bridgeMocks.respond.mockResolvedValue({ settled: false });
+      render(<ToolConfirmationDialog />);
+      raise(makeRequest());
+      await screen.findByText('Send this email?');
+
+      await userEvent.click(screen.getByRole('button', { name: 'Send' }));
+      await screen.findByText('That request had already expired. Close this dialog and ask again.');
+
+      await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+      // A refusal ends the decision whether or not the gate still held it, so
+      // the row goes down instead of trapping the user in a dead dialog.
+      await waitFor(() => expect(screen.queryByText('Send this email?')).toBeNull());
+    });
   });
 
   it('falls back to the tool-supplied chrome for a kind it does not know yet', async () => {

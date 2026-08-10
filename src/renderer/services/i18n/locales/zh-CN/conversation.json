@@ -329,5 +329,49 @@
   "openclaw": {
     "runtimeCheckFailed": "无法验证智能体运行环境",
     "runtimeMismatch": "智能体切换校验失败：{{details}}"
+  },
+  "workflowRun": {
+    "statusRunning": "运行中",
+    "statusSucceeded": "已成功",
+    "statusFailed": "已失败",
+    "untitled": "工作流",
+    "nodesObserved": "已上报 {{observed}} 个步骤",
+    "nodesDeclared": "引擎声明为 {{declared}}",
+    "noNodesYet": "还没有任何步骤上报",
+    "noNodesReported": "本次运行结束时未上报任何步骤",
+    "linesLost": "流中丢失了 {{lines}} 行 - 本次运行可能不完整",
+    "retryable": "可重试",
+    "notRetryable": "不可重试",
+    "runFailed": "本次运行失败",
+    "nodeState": {
+      "queued": "排队中",
+      "running": "运行中",
+      "succeeded": "已成功",
+      "failed": "已失败",
+      "blocked": "已阻塞"
+    }
+  },
+  "failover": {
+    "switched": "{{failedProvider}}/{{failedModel}} 失败（{{reason}}）- 已切换到 {{selectedProvider}}/{{selectedModel}}",
+    "exhausted": "{{failedProvider}}/{{failedModel}} 失败（{{reason}}），且没有其他服务商能够接手",
+    "malformed": "引擎切换了服务商，但该记录无法读取",
+    "rejectedHeader": "已拒绝 {{rejected}} 个候选：",
+    "reason": {
+      "auth": "认证失败",
+      "auth_permanent": "认证被永久拒绝",
+      "format": "响应格式被拒绝",
+      "rate_limit": "速率限制",
+      "overloaded": "服务商过载",
+      "billing": "计费问题",
+      "timeout": "超时",
+      "model_not_found": "未找到模型",
+      "session_expired": "会话已过期",
+      "context_overflow": "上下文窗口溢出",
+      "unknown": "原因未知"
+    }
+  },
+  "delivery": {
+    "unconfigured": "智能体尝试通过 {{platform}} 发送消息，但尚未配置 {{platform}} 通道。请在“设置 - 通道”中添加。",
+    "failed": "智能体无法通过 {{platform}} 发送消息：{{error}}"
   }
 }

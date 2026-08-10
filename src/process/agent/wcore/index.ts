@@ -25,6 +25,11 @@ import { dispatchCapabilityEvent } from './capabilities';
 import type { CapabilityContext } from './capabilities';
 import { NO_CONTRACT, negotiateContract } from './capabilities/contractNegotiation';
 import type { NegotiatedContract } from './capabilities/contractNegotiation';
+import { recordEngineContract } from './capabilities/engineContractStore';
+import { resetCapabilityActivation } from './capabilities/handlers/capabilityActivation';
+import { executionPolicyCapability } from './capabilities/handlers/executionPolicy';
+import { turnRecoveryCapability } from './capabilities/handlers/turnRecovery';
+import { resetRuntimeRequests } from './capabilities/handlers/runtimeDiagnostics';
 
 const WCORE_PROJECT_CONFIG = '.wcore.toml';
 
@@ -480,6 +485,44 @@ export class WCoreAgent {
     };
   }
 
+  /**
+   * Hand `ready` to the two capabilities that need it and cannot claim it.
+   *
+   * `ready` has its own arm in this switch - it is where the contract is read -
+   * and the capability dispatcher only runs from the DEFAULT arm. A handler
+   * declaring `handles: ['ready']` would therefore register a type that never
+   * routes, which is why both modules expose an explicit `seedFromReady`
+   * instead. Nothing called them, so:
+   *
+   *  - the execution-policy tracker started empty and the posture badge stayed
+   *    absent until some standalone `execution_policy` event happened to
+   *    arrive - the engine states revision 0 ON `ready` and nowhere else;
+   *  - turn recovery had no contract for the session, so `canResync` answered
+   *    false for every session and recovery was shut regardless of what the
+   *    engine supports.
+   *
+   * Order matters: `reset()` first, because a `ready` means a NEW engine
+   * process and revisions from the dead one must not gate the live one.
+   *
+   * Failures are contained. A seed that throws must not take down the `ready`
+   * arm - losing a posture badge is recoverable, losing the arm that resolves
+   * `readyResolve()` hangs every caller waiting to send.
+   */
+  private seedCapabilitiesFromReady(ready: Record<string, unknown>): void {
+    const ctx = this.capabilityContext();
+    try {
+      executionPolicyCapability.reset();
+      executionPolicyCapability.seedFromReady(ready, ctx);
+    } catch (cause) {
+      console.warn('[WCoreAgent] execution policy seed failed', cause);
+    }
+    try {
+      turnRecoveryCapability.seedFromReady(ready, ctx);
+    } catch (cause) {
+      console.warn('[WCoreAgent] turn recovery seed failed', cause);
+    }
+  }
+
   /** Pause the watchdog for a legitimate long wait (tool run / approval). */
   private pauseStallWatchdog(reason: string): void {
     if (this.stallPauseReasons.has(reason)) return;
@@ -542,6 +585,23 @@ export class WCoreAgent {
         // can act on it - `readyResolve()` releases callers that may immediately
         // want to send a gated command.
         this.contract = negotiateContract(event as unknown as Record<string, unknown>);
+        // Publish it where the renderer can reach it. The contract belongs to
+        // the BINARY, so a second engine restates the same answer rather than
+        // contradicting the first.
+        recordEngineContract(this.contract);
+        // A `ready` means a NEW engine process. The capability readiness record
+        // is a module singleton shared by every engine child, so without this
+        // the readout blends a dead process's outcomes with a live one's, and
+        // its forwarding budget (256 frames, ~24 per start) is never returned -
+        // measured to silence the readout entirely from roughly the eleventh
+        // conversation of an app run onward.
+        resetCapabilityActivation();
+        // Same reason: request ids outlive nothing. A diagnostics request the
+        // dead engine never answered can only ever be answered by the dead
+        // engine, so keeping it wastes a slot in a 32-entry ledger and leaves a
+        // pending row on screen that no reply will ever settle.
+        resetRuntimeRequests();
+        this.seedCapabilitiesFromReady(event as unknown as Record<string, unknown>);
         this.readyResolve();
         break;
 
@@ -856,6 +916,20 @@ export class WCoreAgent {
           type: 'info',
           data: `Budget exceeded: ${event.reason} (observed ${event.observed}, limit ${event.limit})`,
           msg_id: this.activeMsgId ?? '',
+        });
+        // The line above is the transcript's; this one is the host's. The
+        // engine publishes a way back (`continue_with_budget`) and the info
+        // string has already thrown away the fields a grant needs, so the cap
+        // is forwarded typed as well - `WCoreManager` offers the grant.
+        //
+        // `msg_id: ''` on purpose: this is a SESSION-level fact, not turn
+        // content. The manager's own guard drops empty-msg_id frames before the
+        // renderer, so the typed copy cannot become a second bubble beside the
+        // info line it accompanies.
+        this.onStreamEvent({
+          type: 'budget_exceeded',
+          data: { reason: event.reason, observed: event.observed, limit: event.limit },
+          msg_id: '',
         });
         break;
 

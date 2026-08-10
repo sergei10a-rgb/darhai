@@ -66,7 +66,7 @@ vi.mock('@renderer/components/Markdown', () => ({
   default: ({ children }: { children: React.ReactNode }) => <div data-testid='markdown-view'>{children}</div>,
 }));
 
-import SkillSuggestCard from '@/renderer/pages/conversation/Messages/components/SkillSuggestCard';
+import SkillSuggestCard from '@/renderer/pages/conversation/Messages/components/cards/SkillSuggestCard';
 
 describe('SkillSuggestCard', () => {
   const mockSuggestion: SkillSuggestion = {

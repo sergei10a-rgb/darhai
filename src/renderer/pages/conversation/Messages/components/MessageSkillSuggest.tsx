@@ -6,7 +6,7 @@
 
 import type { IMessageSkillSuggest } from '@/common/chat/chatLib';
 import React from 'react';
-import SkillSuggestCard from './SkillSuggestCard';
+import SkillSuggestCard from './cards/SkillSuggestCard';
 
 const MessageSkillSuggest: React.FC<{ message: IMessageSkillSuggest }> = ({ message }) => {
   const { cronJobId, name, description, skillContent } = message.content;

@@ -1,0 +1,127 @@
+.container {
+  width: 100%;
+}
+
+.divider {
+  border: none;
+  border-top: 1px solid var(--color-border-2);
+  margin: 4px 0;
+}
+
+.iconDone {
+  color: var(--color-success-6);
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+.iconFailed {
+  color: var(--color-danger-6);
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+.iconWarning {
+  color: var(--color-warning-6);
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+.body {
+  padding: 2px 0 6px 18px;
+  font-size: 12px;
+  color: var(--color-text-2);
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-3);
+  padding-bottom: 4px;
+}
+
+.metaMuted {
+  color: var(--color-text-4);
+}
+
+.warning {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--color-warning-6);
+  padding: 2px 0 4px;
+}
+
+.empty {
+  color: var(--color-text-3);
+  font-style: italic;
+  padding: 2px 0;
+}
+
+.nodeList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.node {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nodeHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.nodeId {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text-1);
+}
+
+.failure {
+  border-left: 2px solid var(--color-danger-6);
+  padding: 2px 0 2px 8px;
+  margin-left: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.failureHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.code {
+  font-family: var(--font-family-code, monospace);
+  background-color: var(--color-fill-2);
+  border-radius: 3px;
+  padding: 0 4px;
+  word-break: break-all;
+}
+
+.failureMessage {
+  color: var(--color-text-2);
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.runFailure {
+  padding-top: 6px;
+}
+
+.runFailureTitle {
+  color: var(--color-danger-6);
+  padding-bottom: 2px;
+}
