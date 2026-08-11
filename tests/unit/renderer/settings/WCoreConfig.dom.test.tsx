@@ -8,18 +8,30 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // --- Hoist mocks ---
-const { mockNavigate, mockGetAvailableAgents, mockProviders, mockMcpServers, MOCK_CONFIG_PATH, mockProfiles } =
-  vi.hoisted(() => ({
-    mockNavigate: vi.fn(),
-    mockGetAvailableAgents: vi.fn(),
-    mockProviders: { value: [] as Array<{ providerId: string }> },
-    mockMcpServers: { value: [] as Array<{ name: string; enabled?: boolean }> },
-    // A platform-shaped absolute path, deliberately NOT `~/.wayland-core/...`:
-    // the point of these assertions is that the panes print what the main
-    // process reports, not a path compiled into the markup.
-    MOCK_CONFIG_PATH: '/home/tester/.config/wayland-core/config.toml',
-    mockProfiles: { value: [] as Array<{ name: string; active: boolean; dir?: string }> },
-  }));
+const {
+  mockNavigate,
+  mockGetAvailableAgents,
+  mockProviders,
+  mockMcpServers,
+  MOCK_CONFIG_PATH,
+  mockProfiles,
+  mockLiveness,
+} = vi.hoisted(() => ({
+  mockNavigate: vi.fn(),
+  mockGetAvailableAgents: vi.fn(),
+  // What `wcoreEngine.liveness` reports: live engine processes, and the semver
+  // the newest one published in its `ready`. Both halves of the header chip
+  // and of the Overview "Engine"/"Version" cards read from here, so a test
+  // can put the pane in a state the shipped app can actually be in.
+  mockLiveness: { value: { engines: 1, engineVersion: '' } as { engines: number; engineVersion: string } },
+  mockProviders: { value: [] as Array<{ providerId: string }> },
+  mockMcpServers: { value: [] as Array<{ name: string; enabled?: boolean }> },
+  // A platform-shaped absolute path, deliberately NOT `~/.wayland-core/...`:
+  // the point of these assertions is that the panes print what the main
+  // process reports, not a path compiled into the markup.
+  MOCK_CONFIG_PATH: '/home/tester/.config/wayland-core/config.toml',
+  mockProfiles: { value: [] as Array<{ name: string; active: boolean; dir?: string }> },
+}));
 
 vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
@@ -91,6 +103,9 @@ vi.mock('../../../../src/common', () => ({
       },
       requestRuntimeDiagnostics: { invoke: () => Promise.resolve({ engines: 0, sent: [], refused: [] }) },
       withdrawMcpServer: { invoke: () => Promise.resolve({ engines: 0, sent: [], refused: [] }) },
+      // PASSIVE - it writes nothing to any engine, which is what makes it legal
+      // for a status card to call on mount.
+      liveness: { invoke: () => Promise.resolve(mockLiveness.value) },
     },
   },
 }));
@@ -116,6 +131,9 @@ describe('WCoreConfig - Wayland Core configuration surface', () => {
     mockProviders.value = [];
     mockMcpServers.value = [];
     mockProfiles.value = [];
+    // One engine running, and it has not reported a version yet: the state the
+    // rest of these assertions were written against.
+    mockLiveness.value = { engines: 1, engineVersion: '' };
     mockGetAvailableAgents.mockResolvedValue({
       success: true,
       data: [{ backend: 'wcore', name: 'Darhai Core', cliPath: '/usr/local/bin/wcore' }],
@@ -151,7 +169,7 @@ describe('WCoreConfig - Wayland Core configuration surface', () => {
     render(<WCoreConfig />);
     // "Engine" also appears as the rail group label, so assert the unique
     // stat-card meta strings instead of the ambiguous labels.
-    expect(screen.getByText('Running')).toBeTruthy();
+    await waitFor(() => expect(screen.getByTestId('engine-state').textContent).toContain('Running'));
     expect(screen.getByText('embedded · spawned in-process')).toBeTruthy();
     // Names the product, not the upstream binary the engine is built from.
     expect(screen.getByText('Darhai Core · pinned build')).toBeTruthy();
@@ -216,17 +234,59 @@ describe('WCoreConfig - Wayland Core configuration surface', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/settings', { replace: true });
   });
 
-  it('shows the engine chip with the pinned version when running', async () => {
-    render(<WCoreConfig />);
+  it('shows the engine chip with the pinned version when the engine reported none', async () => {
     // Assert THROUGH the constant, not a copy of it. The literal that used to
     // be here kept passing while the shipped engine moved two releases ahead.
+    render(<WCoreConfig />);
     await waitFor(() => expect(screen.getByText(`engine running · ${PINNED_VERSION}`)).toBeTruthy());
   });
 
-  it('shows engine stopped when the wcore backend is absent', async () => {
-    mockGetAvailableAgents.mockResolvedValue({ success: true, data: [] });
+  /**
+   * The pinned constant must LOSE to a real reading.
+   *
+   * Measured before this change: with the engine reporting `0.99.99-live`, the
+   * chip still rendered `engine running · v0.12.26` and that string appeared
+   * nowhere on the page - `IWcoreCapabilitySnapshot.engineVersion` had zero
+   * consumers repo-wide and `getAvailableAgents` carries no version field, so
+   * `versionLabel` was provably always the constant. Point the chip back at
+   * `getAvailableAgents` and this goes red.
+   */
+  it('shows the version the ENGINE reported, not the build Darhai was pinned to', async () => {
+    mockLiveness.value = { engines: 1, engineVersion: '0.99.99-live' };
+    render(<WCoreConfig />);
+    await waitFor(() => expect(screen.getByText('engine running · 0.99.99-live')).toBeTruthy());
+    expect(screen.queryByText(`engine running · ${PINNED_VERSION}`)).toBeNull();
+    // And the Version card says the number is a reading rather than the pin.
+    expect(screen.getByTestId('engine-version').textContent).toBe('0.99.99-live');
+    expect(screen.getByTestId('engine-version-meta').textContent).toBe('Darhai Core · reported by the engine');
+  });
+
+  /**
+   * The stopped branch, against a payload the real provider can actually emit.
+   *
+   * It used to be driven by `getAvailableAgents` returning `data: []`, which
+   * `AgentRegistry.createWCoreAgent` cannot produce - it merges a wcore entry
+   * with `available: true` unconditionally - so this was a passing test for a
+   * state that did not exist while the true state (no engine process) rendered
+   * "engine running".
+   */
+  it('shows engine stopped when no Darhai Core engine process is running', async () => {
+    mockLiveness.value = { engines: 0, engineVersion: '' };
     render(<WCoreConfig />);
     await waitFor(() => expect(screen.getByText('engine stopped')).toBeTruthy());
+    // The Overview card agrees with the chip, and names the cause the Runtime
+    // pane states in its own words one click away.
+    expect(screen.getByTestId('engine-state').textContent).toContain('Stopped');
+    expect(screen.getByText('no Darhai Core chat is open')).toBeTruthy();
+  });
+
+  /** Before the read lands, "running" and "stopped" are both invented. */
+  it('says it is still checking rather than claiming a state it has not read', async () => {
+    render(<WCoreConfig />);
+    expect(screen.getByTestId('engine-chip').textContent).toBe('checking the engine…');
+    expect(screen.getByTestId('engine-state').textContent).toContain('Checking…');
+    // Then let the read land, so the pending update settles inside this test.
+    await waitFor(() => expect(screen.getByTestId('engine-chip').textContent).toContain('engine running'));
   });
 
   /**

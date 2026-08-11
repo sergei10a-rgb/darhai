@@ -405,7 +405,11 @@ describe('the engine’s own event payloads', () => {
     expect(validateEvent(event).valid).toBe(true);
     expect(dispatch(event, ctx)).toBe(true);
     const data = ctx.frames[0].data as GoalSnapshotFrame;
-    expect(data.taskCount).toBe(0);
+    // No count at all, not a count of zero. The record carried no `tasks` array,
+    // and `0` is the engine saying a goal HAS no tasks - a measurement the
+    // renderer prints and attributes ("The engine reported no tasks for this
+    // goal."). Silence must stay silence all the way up.
+    expect(data.taskCount).toBeUndefined();
     expect(data.tasks).toEqual([]);
     expect(data.objective).toBeUndefined();
   });

@@ -2457,6 +2457,21 @@ export type IWcoreRuntimeRequestOutcome = {
 };
 
 /**
+ * How many Darhai Core engines are running right now.
+ *
+ * The passive counterpart to {@link IWcoreRuntimeRequestOutcome}: it is read for
+ * a status card, so it must not write anything to any engine. `engines` counts
+ * live engine processes; `engineVersion` is the semver the most recently active
+ * one reported in its `ready`, `''` when none has. A host that has no reading
+ * MUST say so rather than printing its pinned build as though the engine had
+ * answered - that is the bug this type exists to make impossible.
+ */
+export type IWcoreEngineLiveness = {
+  engines: number;
+  engineVersion: string;
+};
+
+/**
  * Read-only engine introspection for the UI. HUMAN-ONLY - the snapshot
  * discloses which engine subsystems are enforced (sandbox isolation, policy
  * grading) and is remote-denied alongside the other `wcore*` readouts.
@@ -2474,6 +2489,10 @@ export const wcoreEngine = {
   // the tools out of a chat that is already open. Replies arrive as
   // `mcp_removal_result`, again correlated by `requestId`.
   withdrawMcpServer: buildProvider<IWcoreRuntimeRequestOutcome, { name: string }>('wcoreEngine.withdrawMcpServer'),
+  // How many engines are running and what version the newest one reported.
+  // Passive: it writes nothing to any engine, so a status card may call it on
+  // mount - which the two channels above must never be used for.
+  liveness: buildProvider<IWcoreEngineLiveness, void>('wcoreEngine.liveness'),
 };
 
 // Team Mode API

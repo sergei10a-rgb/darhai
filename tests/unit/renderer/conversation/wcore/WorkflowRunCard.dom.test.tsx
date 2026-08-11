@@ -621,3 +621,176 @@ describe('card disclosure control is reachable from the keyboard', () => {
     expect(headerOf().getAttribute('aria-expanded')).toBe('false');
   });
 });
+
+/**
+ * `aria-controls` must never name an element that is not there.
+ *
+ * The card unmounts its body when collapsed (`{expanded && <div id={bodyId}>}`),
+ * so a header that keeps announcing `aria-controls="workflow-run-…"` in the
+ * collapsed state is publishing a dangling IDREF - invalid ARIA, and assistive
+ * tech that offers "move to the controlled region" has nothing to move to at
+ * exactly the moment the user is asking what is hidden. The old test checked
+ * resolution in the EXPANDED state only, which is the state where it could not
+ * fail.
+ */
+describe('the disclosure control never points at an element that is not there', () => {
+  function headerOf(): HTMLElement {
+    return screen.getByTestId('card-disclosure-header');
+  }
+
+  /** Whatever `aria-controls` names, it has to exist. Checked in every state. */
+  function expectControlsResolves(state: string): void {
+    const controls = headerOf().getAttribute('aria-controls');
+    if (controls === null) return;
+    expect(controls, `${state}: aria-controls is present but empty`).not.toBe('');
+    expect(
+      document.getElementById(controls),
+      `${state}: aria-controls names "${controls}", which is not in the document`
+    ).toBeTruthy();
+  }
+
+  it('resolves while expanded, and stops claiming a target once collapsed', () => {
+    const message = lastMessage([fixture('workflow_started'), fixture('workflow_node_event')]);
+    render(<WorkflowRunCard message={message} />);
+
+    expect(headerOf().getAttribute('aria-expanded')).toBe('true');
+    expect(headerOf().getAttribute('aria-controls'), 'the expanded card must announce its body').toBeTruthy();
+    expectControlsResolves('expanded');
+
+    fireEvent.keyDown(headerOf(), { key: 'Enter' });
+    expect(headerOf().getAttribute('aria-expanded')).toBe('false');
+    expectControlsResolves('collapsed');
+
+    fireEvent.keyDown(headerOf(), { key: 'Enter' });
+    expect(headerOf().getAttribute('aria-expanded')).toBe('true');
+    expectControlsResolves('re-expanded');
+  });
+
+  it('holds for the neighbouring sub-agent card, which shares the header', () => {
+    render(
+      <SubAgentActivityCard
+        message={
+          {
+            id: 'm1',
+            type: 'sub_agent',
+            msg_id: 'call-1',
+            conversation_id: 'conv-1',
+            position: 'left',
+            content: { parentCallId: 'call-1', agentName: 'auditor', status: 'running', body: 'looking around' },
+          } as never
+        }
+      />
+    );
+
+    expectControlsResolves('sub-agent expanded');
+    fireEvent.keyDown(headerOf(), { key: 'Enter' });
+    expectControlsResolves('sub-agent collapsed');
+  });
+});
+
+/**
+ * A field the projection did not send must not be rendered as a number.
+ *
+ * The card's own docstring promises that "where the projection says nothing,
+ * the card says nothing rather than filling the gap with a zero", and the
+ * transform half-kept it: a missing `nodes` was coerced to `[]` and rendered as
+ * a confident "0 steps reported"; a missing `missingTotal` failed `> 0` and
+ * SUPPRESSED the lost-lines warning, so "never counted" was drawn exactly like
+ * "counted, nothing lost"; a missing `nodeCount` compared unequal to
+ * `nodes.length` and printed the literal "engine declared undefined".
+ *
+ * The in-tree reducer populates all three, so these drive `transformMessage`
+ * directly - which is the seam the defence lives at, and the only place a
+ * projection from a future engine or a third-party producer arrives through.
+ */
+describe('WorkflowRunCard - a projection that omits its measurements', () => {
+  /** Build a message from a raw projection body, the way the stream does. */
+  function messageFrom(data: Record<string, unknown>): IMessageWorkflowRun {
+    const message = transformMessage({
+      type: 'workflow_run',
+      data,
+      msg_id: String(data.runId ?? ''),
+      conversation_id: 'conv-1',
+    } as IResponseMessage);
+    expect(message?.type).toBe('workflow_run');
+    return message as IMessageWorkflowRun;
+  }
+
+  const COMPLETE = {
+    runId: 'run-9',
+    workflowId: 'desktop-audit',
+    name: 'Desktop audit',
+    nodeCount: 1,
+    status: 'running',
+    missingTotal: 0,
+    nodes: [{ nodeId: 'scan', state: 'running' }],
+  } as const;
+
+  function without(...keys: string[]): Record<string, unknown> {
+    const body: Record<string, unknown> = { ...COMPLETE };
+    for (const key of keys) delete body[key];
+    return body;
+  }
+
+  it('keeps a complete projection unchanged - the control for the three below', () => {
+    render(<WorkflowRunCard message={messageFrom({ ...COMPLETE })} />);
+    expect(screen.getByTestId('workflow-run-observed').textContent).toBe('1 steps reported');
+    expect(screen.queryByTestId('workflow-run-gap')).toBeNull();
+    expect(screen.queryByTestId('workflow-run-gap-unknown')).toBeNull();
+    expect(screen.getByText('scan')).toBeTruthy();
+  });
+
+  it('says the step count is unreported rather than reporting zero steps', () => {
+    render(<WorkflowRunCard message={messageFrom(without('nodes'))} />);
+
+    const observed = screen.getByTestId('workflow-run-observed').textContent ?? '';
+    expect(observed).toBe(lookup('conversation.workflowRun.nodesUnknown'));
+    expect(observed, 'absence was rendered as a measured zero').not.toContain('0');
+    // ...and the list area says no list arrived, which is a different fact from
+    // "a list arrived and was empty".
+    expect(screen.getByTestId('workflow-run-nodes-unknown')).toBeTruthy();
+    expect(screen.queryByTestId('workflow-run-empty')).toBeNull();
+  });
+
+  it('does not read a missing loss count as proof that nothing was lost', () => {
+    render(<WorkflowRunCard message={messageFrom(without('missingTotal'))} />);
+
+    expect(screen.queryByTestId('workflow-run-gap'), 'a count that was never sent must not be quantified').toBeNull();
+    const notice = screen.getByTestId('workflow-run-gap-unknown');
+    expect(notice.textContent).toBe(lookup('conversation.workflowRun.linesLostUnknown'));
+  });
+
+  it('omits the declared-count line instead of printing "declared undefined"', () => {
+    render(<WorkflowRunCard message={messageFrom(without('nodeCount'))} />);
+
+    const card = screen.getByTestId('workflow-run-card');
+    expect(card.textContent).not.toContain('undefined');
+    expect(card.textContent).not.toContain('NaN');
+    // The observed count is still a real measurement and is still shown.
+    expect(screen.getByTestId('workflow-run-observed').textContent).toBe('1 steps reported');
+  });
+
+  it('renders every field absent at once without inventing a single number', () => {
+    render(<WorkflowRunCard message={messageFrom(without('nodes', 'missingTotal', 'nodeCount'))} />);
+
+    const card = screen.getByTestId('workflow-run-card');
+    expect(card.textContent).not.toContain('undefined');
+    expect(card.textContent).not.toContain('0 steps');
+    expect(screen.getByTestId('workflow-run-gap-unknown')).toBeTruthy();
+    expect(screen.getByTestId('workflow-run-nodes-unknown')).toBeTruthy();
+  });
+
+  /**
+   * The transform is where absence has to survive; a message that carries a
+   * zero the engine never sent cannot be rescued by the component.
+   */
+  it('does not manufacture the fields on the way through transformMessage', () => {
+    const content = messageFrom(without('nodes', 'missingTotal', 'nodeCount')).content;
+    expect(content.nodes).toBeUndefined();
+    expect(content.missingTotal).toBeUndefined();
+    expect(content.nodeCount).toBeUndefined();
+    // What WAS sent still arrives.
+    expect(content.runId).toBe('run-9');
+    expect(content.status).toBe('running');
+  });
+});

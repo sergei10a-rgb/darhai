@@ -354,10 +354,13 @@
     "statusFailed": "Failed",
     "untitled": "Workflow",
     "nodesObserved": "{{observed}} steps reported",
+    "nodesUnknown": "Step count not reported",
     "nodesDeclared": "engine declared {{declared}}",
     "noNodesYet": "No step has reported yet",
     "noNodesReported": "The run ended without reporting a single step",
+    "noNodeList": "This run reported no step list at all",
     "linesLost": "{{lines}} stream lines were lost - this run may be incomplete",
+    "linesLostUnknown": "This run did not report whether any stream lines were lost",
     "retryable": "Can retry",
     "notRetryable": "Cannot retry",
     "runFailed": "The run failed",
@@ -391,5 +394,31 @@
   "delivery": {
     "unconfigured": "The agent tried to send a message over {{platform}}, but no {{platform}} channel is set up. Add one in Settings - Channels.",
     "failed": "The agent could not send a message over {{platform}}: {{error}}"
+  },
+  "anvilAlert": {
+    "retracted": {
+      "artifact_mutated": "The engine retracted its audit receipt: the artifact changed after the receipt was published.",
+      "gate_revoked": "The engine retracted its audit receipt: the gate it certified was revoked.",
+      "superseded": "The engine retracted its audit receipt: a later receipt replaced it.",
+      "unknown": "The engine retracted its audit receipt for a reason Darhai does not recognise: {{reason}}"
+    },
+    "refused": {
+      "malformed": "Darhai refused an audit record that breaks the engine's own published schema. Nothing it claims can be treated as verified.",
+      "version_mismatch": "Darhai refused an audit record written for a version of the audit contract it does not implement. It was not interpreted, so nothing here was verified and nothing was quietly accepted.",
+      "unknown_critical_extension": "An audit record requires reader extensions Darhai does not implement, so Darhai cannot say what it certifies. It was refused rather than shown as verified.",
+      "sequence_gap": "An audit record is missing from this session: one arrived ahead of the record Darhai was waiting for. This session’s audit trail is no longer provably complete.",
+      "sequence_conflict": "Two different audit records claim the same position in this session. Darhai cannot tell which one is genuine, so it trusts neither.",
+      "stale_replay": "An audit receipt the engine had already retracted arrived again. Darhai did not restore it - a retracted verdict stays retracted.",
+      "body_conflict": "One audit digest was seen vouching for two different records. Darhai cannot recompute the engine's digest, so it cannot say which of the two was altered - only that they cannot both be authentic.",
+      "invalidation_unlinked": "A retraction arrived for an audit receipt Darhai never saw published, so there is no verdict here to withdraw and the claim cannot be checked.",
+      "unknown": "Darhai refused an audit record it could not verify, for a reason it does not recognise: {{code}}"
+    },
+    "engineRecord": "Engine record: receipt {{receipt}}, position {{position}}.",
+    "engineRecordArtifact": "Engine record: receipt {{receipt}}, position {{position}}, artifact {{artifact}}.",
+    "noReceiptId": "not given",
+    "noPosition": "unreadable",
+    "noValue": "not given",
+    "publicationScope": "An audit receipt covers the artifact only as it stood when the receipt was published; Darhai does not watch that file afterwards, so silence is not proof that nothing else changed.",
+    "hostReason": "Darhai's reason: {{detail}}"
   }
 }

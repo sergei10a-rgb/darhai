@@ -31,15 +31,22 @@
     "statusWarn": "再認証が必要",
     "statusError": "エラー",
     "statusStopped": "無効",
+    "toolCount": "ツール {{count}} 個",
+    "toolCount_one": "ツール {{count}} 個",
+    "toolCount_other": "ツール {{count}} 個",
     "statusIdle": "アイドル",
-    "statusToolCount": "{{count}} 個のツールが利用可能",
     "statusToolCountLabel": "個のツール利用可能",
-    "statusReauthCount": "{{count}} 個が再認証必要",
+    "statusToolCountLabel_one": "個のツール利用可能",
+    "statusToolCountLabel_other": "個のツール利用可能",
     "statusReauthCountLabel": "再認証が必要",
-    "statusErrorCount": "{{count}} 個のエラー",
+    "statusReauthCountLabel_one": "再認証が必要",
+    "statusReauthCountLabel_other": "再認証が必要",
     "statusErrorCountLabel": "エラー",
-    "statusRunningCount": "{{count}} 個が実行中",
+    "statusErrorCountLabel_one": "エラー",
+    "statusErrorCountLabel_other": "エラー",
     "statusRunningCountLabel": "実行中",
+    "statusRunningCountLabel_one": "実行中",
+    "statusRunningCountLabel_other": "実行中",
     "logsToast": "ログビューアーは近日公開予定です。"
   },
   "byo": {
@@ -64,6 +71,22 @@
   "browse": {
     "title": "MCPライブラリ",
     "subtitle": "厳選されたコネクタ。閲覧してワンクリックでインストールし、セットアップガイドに従ってください。",
-    "searchPlaceholder": "MCPを検索…"
+    "searchPlaceholder": "MCPを検索…",
+    "entryCount": "{{count}} 件",
+    "entryCount_one": "{{count}} 件",
+    "entryCount_other": "{{count}} 件",
+    "recommendedTitle": "★ おすすめ",
+    "installRate": "{{percent}}% がインストール済み"
+  },
+  "detail": {
+    "estMinutes": "{{count}} 分",
+    "estMinutes_one": "{{count}} 分",
+    "estMinutes_other": "{{count}} 分",
+    "unknownEntry": "不明なエントリ: {{id}}",
+    "back": "← MCP ライブラリ",
+    "viewSource": "ソースを表示",
+    "transport": "トランスポート",
+    "runtime": "ランタイム",
+    "platforms": "プラットフォーム"
   }
 }

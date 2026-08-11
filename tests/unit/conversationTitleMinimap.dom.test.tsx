@@ -7,7 +7,7 @@
 import React from 'react';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import ConversationTitleMinimap from '../../src/renderer/pages/conversation/components/ConversationTitleMinimap';
+import ConversationTitleMinimap from '../../src/renderer/pages/conversation/components/title/ConversationTitleMinimap';
 
 const minimapMocks = vi.hoisted(() => ({
   getConversationMessages: vi.fn(),

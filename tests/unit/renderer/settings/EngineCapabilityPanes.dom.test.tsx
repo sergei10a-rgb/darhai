@@ -56,6 +56,7 @@ const { streamHandlers, setSectionCalls, sectionValues, mcpServers, engineBridge
   // built in a test from the REAL main-process producers, never hand-shaped.
   engineBridge: {
     snapshot: { value: null as unknown },
+    liveness: { value: { engines: 1, engineVersion: '' } as { engines: number; engineVersion: string } },
     diagnostics: { value: { engines: 0, sent: [], refused: [] } as EngineRequestOutcome },
     withdrawal: { value: { engines: 0, sent: [], refused: [] } as EngineRequestOutcome },
     diagnosticsCalls: { value: 0 },
@@ -91,11 +92,20 @@ vi.mock('react-router-dom', () => ({ useNavigate: () => vi.fn() }));
 // stable strings rather than whichever locale bundle happens to be loaded.
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string, opts?: Record<string, unknown> & { defaultValue?: string }) => {
-      let out = opts?.defaultValue ?? key;
+    t: (
+      key: string,
+      opts?: Record<string, unknown> & { defaultValue?: string; defaultValue_one?: string; defaultValue_other?: string }
+    ) => {
+      // Plural-aware, because the copy under test is. A stub that only reads
+      // `defaultValue` silently renders the KEY for every counted string, and
+      // the assertion then fails on the shape of the stub rather than on the
+      // component - which is exactly what happened when the counted labels
+      // moved to `_one`/`_other`.
+      const plural = opts?.count === 1 ? opts?.defaultValue_one : opts?.defaultValue_other;
+      let out = plural ?? opts?.defaultValue ?? key;
       if (opts) {
         for (const [k, v] of Object.entries(opts)) {
-          if (k === 'defaultValue') continue;
+          if (k.startsWith('defaultValue')) continue;
           out = out.replace(new RegExp(`{{${k}}}`, 'g'), String(v));
         }
       }
@@ -151,6 +161,7 @@ vi.mock('../../../../src/common', () => ({
           return Promise.resolve(engineBridge.withdrawal.value);
         },
       },
+      liveness: { invoke: () => Promise.resolve(engineBridge.liveness.value) },
     },
   },
 }));
@@ -340,6 +351,22 @@ function retainedSnapshot(...captures: string[]): unknown {
 }
 
 /**
+ * Dispatch one more event into the record that is ALREADY loaded.
+ *
+ * No reset: this is how a mid-session revision reaches the main process, and
+ * the ordering matters - `CapabilityActivationRecord.accept` runs BEFORE the
+ * handler emits, so a pane that re-reads the record on the frame is guaranteed
+ * to get an answer that already contains it.
+ */
+function recordThenEmit(event: Record<string, unknown>): CapabilityStreamFrame {
+  const ctx = recorder();
+  createDispatcher([capabilityActivationCapability])(event, ctx);
+  const frame = ctx.frames.at(-1);
+  expect(frame, 'the handler must have emitted a frame for this event').toBeDefined();
+  return frame as CapabilityStreamFrame;
+}
+
+/**
  * Press the pane's own button, then answer it the way the engine would.
  *
  * The reply is addressed to the `requestId` the (mocked) main process handed
@@ -360,6 +387,7 @@ beforeEach(() => {
   sectionValues.value = {};
   mcpServers.value = [];
   engineBridge.snapshot.value = null;
+  engineBridge.liveness.value = { engines: 1, engineVersion: '' };
   engineBridge.diagnostics.value = { engines: 0, sent: [], refused: [] };
   engineBridge.withdrawal.value = { engines: 0, sent: [], refused: [] };
   engineBridge.diagnosticsCalls.value = 0;
@@ -410,22 +438,68 @@ describe('Overview - engine capability readiness', () => {
     render(<OverviewPane version='0.12.26' />);
     await screen.findByTestId('engine-capabilities-table');
 
-    emit(
-      [
-        {
-          type: 'capability_activation',
-          data: { capability: 'mid_flight_monitor', stage: 'ready', reason: null, health: 'ok', remedy: 'unknown' },
-          msg_id: '',
-        },
-      ],
-      'conv-new'
-    );
+    // A NEW engine process. Its `ready` clears the retained record before it
+    // announces anything, so what the main process holds from here on is its
+    // rows alone - which is what the pane must end up showing.
+    resetCapabilityActivation();
+    const frame = recordThenEmit({
+      type: 'capability_activation',
+      capability: 'mid_flight_monitor',
+      stage: 'ready',
+    });
+    engineBridge.snapshot.value = buildWcoreCapabilitySnapshot();
+    emit([frame], 'conv-new');
 
-    // The retained record was cleared by that engine's own `ready`; keeping its
-    // rows alongside a live process's would be the blend the record guards.
+    // Keeping the dead process's rows alongside a live one's would be the blend
+    // the record itself guards against.
     const table = await screen.findByTestId('engine-capabilities-table');
     await waitFor(() => expect(within(table).getAllByRole('row').length - 1).toBe(1));
     expect(within(table).queryByText('delegate_isolation')).toBeNull();
+  });
+
+  /**
+   * THE MID-SESSION REVISION, and the assumption the old merge rule rested on.
+   *
+   * Retained rows were seeded under `conversationId: null`, so the FIRST live
+   * frame from any conversation replaced the whole 8-row table with a single
+   * row. The justification was that "any frame arriving after mount comes from
+   * an engine whose `ready` already cleared the record" - which holds only if
+   * activation frames never arrive mid-session, while `capabilityActivation.ts`
+   * implements `outcome_changed` and `health: 'changed'` for exactly the case
+   * where one does. The table would then collapse to one row, taking
+   * `delegate_isolation: isolation_not_enforced` - the safety statement this
+   * whole feature exists to surface - off a readout whose stated rule is that a
+   * missing row must never read as "not configured", and nothing re-pulls, so
+   * it never came back.
+   *
+   * Restore the wholesale replace (drop the `showingRetained` re-read in
+   * `OverviewPane`) and this goes red: 8 rows become 1.
+   */
+  it('keeps the other rows when the engine revises one verdict mid-session', async () => {
+    engineBridge.snapshot.value = retainedSnapshot('observed/capability_activation.default.jsonl');
+    render(<OverviewPane version='0.12.26' />);
+    const before = await screen.findByTestId('engine-capabilities-table');
+    expect(within(before).getAllByRole('row').length - 1).toBe(8);
+
+    // Same engine, same record - it is revising a verdict it already gave.
+    const frame = recordThenEmit({
+      type: 'capability_activation',
+      capability: 'mid_flight_monitor',
+      stage: 'outcome_changed',
+      reason: 'dependency_unavailable',
+    });
+    engineBridge.snapshot.value = buildWcoreCapabilitySnapshot();
+    emit([frame], 'conv-live');
+
+    const table = await screen.findByTestId('engine-capabilities-table');
+    await waitFor(() =>
+      expect(within(table).getByText('mid_flight_monitor').closest('tr')!.textContent).toContain('outcome changed')
+    );
+    // The seven capabilities the engine did NOT re-announce are still there.
+    expect(within(table).getAllByRole('row').length - 1).toBe(8);
+    expect(within(table).getByText('delegate_isolation').closest('tr')!.textContent).toContain(
+      'Isolation is NOT being enforced on this platform.'
+    );
   });
 
   it('separates "an engine said nothing" from "no engine has run"', async () => {
@@ -547,6 +621,40 @@ describe('Runtime - diagnostics readout', () => {
 
     await waitFor(() => expect(engineBridge.diagnosticsCalls.value).toBe(1));
     expect(await screen.findByTestId('diagnostics-pending')).toBeTruthy();
+  });
+
+  /**
+   * THE WAY OUT OF "waiting for its answer".
+   *
+   * There is no timeout in `useRuntimeDiagnostics` and that is deliberate - this
+   * layer cannot honour one honestly - so the control is the only escape. It
+   * used to carry `loading` for `pending` as well as `asking`, and Arco's
+   * `loading` blocks the handler: MEASURED, five further clicks after one
+   * reported-sent request produced zero additional invocations and the pane
+   * stayed on `diagnostics-pending` until the rail tab was switched, which no
+   * copy suggests. Put `phase === 'pending'` back into `loading` and this goes
+   * red at 1 call instead of 2.
+   */
+  it('can be asked again while an answer is still owed', async () => {
+    render(<RuntimePane />);
+    await screen.findByTestId('diagnostics-empty');
+
+    engineBridge.diagnostics.value = {
+      engines: 1,
+      sent: [{ conversationId: CONVERSATION, requestId: 'rd-1' }],
+      refused: [],
+    };
+    fireEvent.click(screen.getByRole('button', { name: 'Ask the engine' }));
+    await screen.findByTestId('diagnostics-pending');
+    expect(engineBridge.diagnosticsCalls.value).toBe(1);
+
+    engineBridge.diagnostics.value = {
+      engines: 1,
+      sent: [{ conversationId: CONVERSATION, requestId: 'rd-2' }],
+      refused: [],
+    };
+    fireEvent.click(screen.getByRole('button', { name: 'Ask again' }));
+    await waitFor(() => expect(engineBridge.diagnosticsCalls.value).toBe(2));
   });
 
   it('says there is no engine to ask rather than spinning', async () => {
@@ -1031,5 +1139,37 @@ describe('MCP library - engine withdrawal', () => {
     render(<InstalledPage />);
     emit([removalFrame()]);
     await waitFor(() => expect(screen.queryByTestId('engine-withdrawals')).toBeNull());
+  });
+
+  /**
+   * The other half of the correlation, which had no test.
+   *
+   * `InstalledPage` matches a reply on BOTH the request id and the conversation
+   * it was sent to; deleting the conversation half left all 40 tests in this
+   * file green, while the identical rule in `useRuntimeDiagnostics` has a named
+   * test ("ignores an answer from a different engine than the one it asked")
+   * that goes red under the same mutation. Asymmetric coverage of one rule is
+   * an invitation to delete the weaker half as redundant - so both halves are
+   * now pinned. Delete `if (conversationId !== msg.conversation_id) return;`
+   * and this goes red.
+   */
+  it('ignores a removal result from a different engine than the one it asked', async () => {
+    mcpServers.value = [SERVER];
+    const frame = removalFrame();
+    const requestId = (frame.data as { requestId: string }).requestId;
+    engineBridge.withdrawal.value = { engines: 2, sent: [{ conversationId: CONVERSATION, requestId }], refused: [] };
+
+    render(<InstalledPage />);
+    await confirmRemove();
+    await waitFor(() => expect(engineBridge.withdrawCalls.value.length).toBe(1));
+
+    // Same correlation id, WRONG engine. Each open chat holds its own copy of
+    // the tools, so crediting this answer to the chat that was asked would
+    // report tools pulled from a session that never dropped them.
+    emit([frame], 'some-other-conversation');
+
+    const notice = await screen.findByTestId('engine-withdrawals');
+    await waitFor(() => expect(notice.textContent).toContain('Waiting for its answer'));
+    expect(notice.textContent).not.toContain('tools withdrawn from the running engine');
   });
 });

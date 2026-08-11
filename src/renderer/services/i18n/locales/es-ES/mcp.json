@@ -96,9 +96,12 @@
       "title": "¿Ampliar el presupuesto?",
       "summary": "El motor se detuvo porque se alcanzó un límite de presupuesto. Puedes conceder más para que continúe. Si el turno pausado se reanuda o si el presupuesto extra solo se aplica a tu próximo mensaje lo decide el motor, no Дархай.",
       "confirm": "Conceder",
-      "reason": "Límite alcanzado",
-      "observed": "Consumido",
-      "limit": "Límite",
+      "reasonTokens": "Límite alcanzado (interpretado como límite de tokens por su nombre)",
+      "reasonCost": "Límite alcanzado (interpretado como límite en US$ por su nombre)",
+      "observedTokens": "Consumido (tokens)",
+      "observedCost": "Consumido (US$)",
+      "limitTokens": "Límite (tokens)",
+      "limitCost": "Límite (US$)",
       "unknown": "desconocido",
       "grantTokens": "Tokens a conceder",
       "grantCost": "Cantidad a conceder (US$)",
@@ -114,6 +117,10 @@
     "cost": "US$ {{cost}}",
     "both": "{{tokens}} y {{cost}}",
     "nothing": "nada",
+    "notSent": {
+      "undelivered": "Concediste {{amount}}, pero nunca llegó al motor: no se amplió nada. ({{reason}})",
+      "sessionLimit": "Дархай ya ha enviado todas las ampliaciones de presupuesto que envía en una sesión, así que no se abrió ningún diálogo."
+    },
     "reason": {
       "host_not_authorized": "esta copia de Дархай no puede ampliar presupuestos.",
       "managed_policy": "lo impide una política gestionada.",

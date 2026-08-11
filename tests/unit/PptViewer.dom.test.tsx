@@ -51,7 +51,7 @@ vi.mock('../../src/renderer/components/media/WebviewHost', () => ({
   ),
 }));
 
-import PptViewer from '../../src/renderer/pages/conversation/Preview/components/viewers/PptViewer';
+import PptViewer from '../../src/renderer/pages/conversation/Preview/components/viewers/office/PptViewer';
 
 describe('PptViewer', () => {
   beforeEach(() => {

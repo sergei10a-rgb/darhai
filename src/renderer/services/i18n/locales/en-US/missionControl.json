@@ -122,6 +122,7 @@
     "emptyTitle": "No goals reported",
     "emptyHint": "A goal appears here the moment the engine publishes one. The engine keeps them in its own journal, so a goal opened earlier shows up at its next update rather than right now.",
     "emptyHintUnavailable": "This engine build does not report durable goals, so nothing will appear here until that changes.",
+    "emptyHintLimited": "No goal has been published here yet, and the banner above says why this engine build may never publish one.",
     "unavailableTitle": "Durable goals are unavailable",
     "limitedTitle": "Durable goals are limited in this engine build",
     "gradeReported": "The engine graded this capability {{grade}}.",

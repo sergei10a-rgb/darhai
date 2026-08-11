@@ -7,15 +7,16 @@
 /**
  * Viewer components exports
  *
- * Read-only preview components for displaying various file types
+ * Read-only preview components for displaying various file types, grouped by
+ * how they actually render:
+ *
+ * - `text/`   - source text through SyntaxHighlighter + SelectionToolbar
+ * - `office/` - the `officecli watch` bridge family (Word/Excel/PowerPoint)
+ * - `web/`    - live web content inside an embedded frame
+ * - `media/`  - binary assets read off disk and shown natively
  */
 
-export { default as CodeViewer } from './CodeViewer';
-export { default as DiffViewer } from './DiffViewer';
-export { default as MarkdownViewer } from './MarkdownViewer';
-export { default as HTMLViewer } from './HTMLViewer';
-export { default as PDFViewer } from './PDFViewer';
-export { default as ExcelViewer } from './ExcelViewer';
-export { default as OfficeDocViewer } from './OfficeDocViewer';
-export { default as ImageViewer } from './ImageViewer';
-export { default as URLViewer } from './URLViewer';
+export * from './text';
+export * from './office';
+export * from './web';
+export * from './media';

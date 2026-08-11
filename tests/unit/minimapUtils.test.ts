@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import type { TMessage } from '@/common/chat/chatLib';
-import { MAX_LINE_LEN } from '@/renderer/pages/conversation/components/ConversationTitleMinimap/minimapTypes';
+import { MAX_LINE_LEN } from '@/renderer/pages/conversation/components/title/ConversationTitleMinimap/minimapTypes';
 import {
   buildSearchSnippet,
   buildTurnPreview,
-} from '@/renderer/pages/conversation/components/ConversationTitleMinimap/minimapUtils';
+} from '@/renderer/pages/conversation/components/title/ConversationTitleMinimap/minimapUtils';
 
 // Helper to create a text message with sensible defaults
 function textMsg(

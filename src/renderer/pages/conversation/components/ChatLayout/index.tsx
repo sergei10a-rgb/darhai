@@ -5,9 +5,9 @@ import type { PresetAssistantInfo } from '@/renderer/hooks/agent/usePresetAssist
 import FlexFullContainer from '@/renderer/components/layout/FlexFullContainer';
 import { useLayoutContext } from '@/renderer/hooks/context/LayoutContext';
 import { useResizableSplit } from '@/renderer/hooks/ui/useResizableSplit';
-import ConversationTabs from '@/renderer/pages/conversation/components/ConversationTabs';
-import ChatTitleEditor from '@/renderer/pages/conversation/components/ChatTitleEditor';
-import ConversationTitleMinimap from '@/renderer/pages/conversation/components/ConversationTitleMinimap';
+import ConversationTabs from '@/renderer/pages/conversation/components/navigation/ConversationTabs';
+import ChatTitleEditor from '@/renderer/pages/conversation/components/title/ChatTitleEditor';
+import ConversationTitleMinimap from '@/renderer/pages/conversation/components/title/ConversationTitleMinimap';
 import MobileWorkspaceOverlay from './MobileWorkspaceOverlay';
 import WorkspacePanelHeader, { DesktopWorkspaceToggle } from './WorkspacePanelHeader';
 import { useConversationTabs } from '@/renderer/pages/conversation/hooks/ConversationTabsContext';

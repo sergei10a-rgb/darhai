@@ -165,6 +165,35 @@ export const REQUEST_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
 export const MAX_ADDITIONAL_TOKENS = BigInt('18446744073709551615');
 
 /**
+ * The largest amount ONE press may put on the wire, per unit.
+ *
+ * HOST-SIDE PICKS, and the reason they exist. The schema bounds
+ * `additional_tokens` at 2^64-1 and bounds `additional_cost_usd` at
+ * `minimum: 0` and NOTHING ELSE - I read the branch: `{"minimum":0,"type":
+ * "number"}`. So on the money side the contract's own ceiling is infinity, and
+ * both figures a grant is derived from are strings the ENGINE wrote. A
+ * `budget_exceeded` with reason `max_cost_usd`, observed `999999999` and limit
+ * `0.01` therefore put US$999,999,998.99 one press away, with no ceiling and no
+ * second confirmation. That is the shape these two bound.
+ *
+ * Anchored, then picked. The contract's own example grant is
+ * `{"additional_cost_usd":2.5,"additional_tokens":250000}` (commands/
+ * continue_with_budget.json), which is the only statement anywhere about what a
+ * real grant looks like. These are ~40x and ~400x that, so no plausible grant
+ * meets them and no implausible one gets through. They are picks, not derived
+ * numbers, and are stated as picks - like {@link MAX_PENDING_GRANTS}.
+ *
+ * Refusing, not clamping. A clamped grant is a number the user did not press
+ * for; over the ceiling the command is refused and the gate raises no dialog at
+ * all (see `proposeBudgetGrant`), which is this subsystem's standing direction:
+ * send less, later, or not at all.
+ */
+export const MAX_GRANT_TOKENS = 100_000_000;
+
+/** @see MAX_GRANT_TOKENS - the money half of the same one-press ceiling. */
+export const MAX_GRANT_COST_USD = 100;
+
+/**
  * How many grants may await an answer at once.
  *
  * A HOST-SIDE CHOICE, not a contract number. The contract publishes
@@ -307,10 +336,23 @@ function costFault(value: unknown): string | undefined {
  * Fresh per press, never derived from the cap that triggered it. The contract
  * is silent on id lifetime, but it publishes `request_id_conflict`, so a
  * derived-and-therefore-stable id risks a permanent conflict against an engine
- * that remembers the first attempt; a fresh id risks double-granting if the
- * user presses twice, which is a HOST problem and is solved on the host side
- * (the caller de-dupes the dialog). Between "cannot ever grant again" and
- * "de-dupe upstream", the second is recoverable.
+ * that remembers the first attempt; a fresh id risks double-granting if one cap
+ * is answered twice, which is a HOST problem. Between "cannot ever grant again"
+ * and "de-dupe upstream", the second is recoverable - but only if the upstream
+ * de-dupe actually exists.
+ *
+ * WHERE THE DE-DUPE IS, precisely, because this note used to claim one that did
+ * not exist. `WCoreManager.resolveBudgetGrant` holds two host-side bounds:
+ *   - an in-flight set keyed by the cap itself (reason + observed + limit), so
+ *     the SAME `budget_exceeded` delivered twice raises one dialog and sends one
+ *     command. Measured before the set existed: two frames, two dialogs, two
+ *     commands, 8192 tokens granted for one 4096 overrun.
+ *   - a per-session count of grants actually sent
+ *     (`MAX_BUDGET_GRANTS_PER_SESSION` in `wcoreBudgetGate.ts`), which bounds
+ *     the re-trip loop - each grant raises the cap to what was already spent, so
+ *     a resumed turn can trip it again with different numbers and a new key.
+ * Both are named here because a fresh id per press is only safe with them, and
+ * a future reader deciding to derive ids instead must know what they are trading.
  *
  * Shape: `budget-<base36 ms>-<8 hex>` = 24 ASCII chars, always inside the
  * pattern and well under `maxLength: 128`.
@@ -357,6 +399,18 @@ export function buildContinueWithBudget(input: ContinueWithBudgetInput): BuildOu
   const costQualify = typeof cost === 'number' && cost > 0;
   if (!tokensQualify && !costQualify) {
     return { ok: false, reason: 'a grant must add at least 1 token or more than $0' };
+  }
+
+  // The one-press ceilings. Deliberately HERE and not in `tokensFault` /
+  // `costFault`: those two also validate the engine's ANSWER
+  // (`decodeBudgetGrantResult`), and an engine reporting a large amount it
+  // granted is a fact to display, not a malformed message to discard. A
+  // ceiling belongs on what this host SENDS.
+  if (typeof tokens === 'number' && tokens > MAX_GRANT_TOKENS) {
+    return { ok: false, reason: `additional_tokens must be <= ${MAX_GRANT_TOKENS} in one grant` };
+  }
+  if (typeof cost === 'number' && cost > MAX_GRANT_COST_USD) {
+    return { ok: false, reason: `additional_cost_usd must be <= ${MAX_GRANT_COST_USD} in one grant` };
   }
 
   const command: ContinueWithBudgetCommand = { type: 'continue_with_budget', request_id: input.requestId };

@@ -14,10 +14,20 @@ import type { ThoughtData } from '@/renderer/components/chat/ThoughtDisplay';
 import { useAddOrUpdateMessage } from '@/renderer/pages/conversation/Messages/hooks';
 import type { ExecutionPolicyFrame } from '@process/agent/wcore/capabilities/handlers/executionPolicy';
 import type { BudgetGrantFrameData } from '@process/agent/wcore/capabilities/handlers/budgetGrants';
+// Type-only, so nothing from the main process is pulled into the bundle: the
+// gate is where the HOST-side budget failures are defined, and this arm is what
+// makes one of them visible.
+import type { BudgetGrantNotSentFrameData } from '@process/task/wcoreBudgetGate';
 import type {
   HostDeliveryFrame,
   ProviderFailoverFrame,
 } from '@process/agent/wcore/capabilities/handlers/hostDelegatedDelivery';
+import type { AnvilAlertPayload } from '@process/agent/wcore/capabilities/handlers/anvilReceipts';
+import {
+  ANVIL_ALERT_MESSAGE_TYPE,
+  anvilAlertKey,
+  describeAnvilAlert,
+} from '@renderer/pages/conversation/platforms/wcore/anvilAlertNotice';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
@@ -166,6 +176,31 @@ export function describeBudgetGrant(frame: BudgetGrantFrameData, t: TFunction): 
   }
 
   return { content: t('mcp.budgetResult.granted', { amount: granted }), severity: 'success' };
+}
+
+/**
+ * The other half of the budget conversation: a grant that never reached the
+ * engine at all.
+ *
+ * Why this needs its own copy rather than reusing a refusal sentence. Every
+ * `mcp.budgetResult.reason.*` string describes a decision the ENGINE made and
+ * is therefore evidence the command arrived. This frame is the opposite - the
+ * host could not send it - and the two must not read the same, because only one
+ * of them is worth pressing again. MEASURED, and the reason this arm exists:
+ * with the engine unreachable the dialog raised, the user pressed Grant, and
+ * `responseStream.emit` was called ZERO times; the modal closed on a screen
+ * identical to a successful grant.
+ */
+export function describeBudgetNotSent(frame: BudgetGrantNotSentFrameData, t: TFunction): NoticeCopy {
+  if (frame.code === 'session_limit') {
+    return { content: t('mcp.budgetResult.notSent.sessionLimit'), severity: 'warning' };
+  }
+  const amount = describeAmount(frame.tokens ?? 0, frame.costUsd ?? 0, t);
+  return {
+    content: t('mcp.budgetResult.notSent.undelivered', { amount, reason: frame.detail ?? '' }),
+    // An error, not a warning: the user believes they spent something.
+    severity: 'error',
+  };
 }
 
 export const useWCoreMessage = (
@@ -459,6 +494,28 @@ export const useWCoreMessage = (
             });
           }
           break;
+        case 'budget_grant_not_sent':
+          {
+            // The host's own failure, not the engine's answer. Same arm shape
+            // and the same reasons as `budget_grant_result` above: the default
+            // arm would make this a junk bubble and flip `streamRunning` back on
+            // over a turn that is already dead.
+            const frame = message.data as BudgetGrantNotSentFrameData;
+            const notice = describeBudgetNotSent(frame, tRef.current);
+            addOrUpdateMessage({
+              id: uuid(),
+              type: 'tips',
+              // One line per failure, never the turn's msg_id. `code` rather
+              // than a uuid so a session-limit notice cannot pile up, while the
+              // undelivered one is deliberately per press - each is a separate
+              // amount the user believes they granted.
+              msg_id: frame.code === 'session_limit' ? 'budget:limit' : `budget:not-sent:${uuid()}`,
+              conversation_id: message.conversation_id,
+              position: 'center',
+              content: { content: notice.content, type: notice.severity },
+            });
+          }
+          break;
         case 'host_send_message_request':
           {
             // The capability announces FAILED deliveries only; a delivery that
@@ -471,6 +528,28 @@ export const useWCoreMessage = (
               // Keyed by call_id: one notice per delivery the engine asked for,
               // and never the turn's own msg_id (see the failover arm above).
               msg_id: `delivery:${frame.callId}`,
+              conversation_id: message.conversation_id,
+              position: 'center',
+              content: { content: notice.content, type: notice.severity },
+            });
+          }
+          break;
+        case ANVIL_ALERT_MESSAGE_TYPE:
+          {
+            // The engine's tamper-evident audit log reported a verdict this
+            // host cannot vouch for. Handled here rather than in `default` for
+            // both reasons the neighbouring arms give: `default` pushes the
+            // frame through transformMessage (which has no arm for it, so it
+            // logs "unsupported message type" and renders nothing) and flips
+            // `streamRunning` back on - and this frame is session-level, it
+            // travels with `msg_id: ''` and can arrive between turns, so it
+            // would leave the composer locked with nothing generating.
+            const frame = message.data as AnvilAlertPayload;
+            const notice = describeAnvilAlert(frame, tRef.current);
+            addOrUpdateMessage({
+              id: uuid(),
+              type: 'tips',
+              msg_id: anvilAlertKey(frame),
               conversation_id: message.conversation_id,
               position: 'center',
               content: { content: notice.content, type: notice.severity },

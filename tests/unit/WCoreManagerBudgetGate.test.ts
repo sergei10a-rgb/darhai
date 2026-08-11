@@ -16,30 +16,40 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { mockDb, mockSendCommand, mockRequestUserConfirmation, agentOptions } = vi.hoisted(() => ({
-  mockDb: {
-    getConversationMessages: vi.fn(() => ({ data: [] })),
-    getConversation: vi.fn(() => ({ success: false })),
-    updateConversation: vi.fn(),
-    createConversation: vi.fn(() => ({ success: true })),
-    insertMessage: vi.fn(),
-    updateMessage: vi.fn(),
-  },
-  mockSendCommand: vi.fn(),
-  // Typed parameter on purpose: an untyped `vi.fn(async () => ...)` records a
-  // zero-length call tuple, and reading `.mock.calls[0][0]` is then a type error.
-  mockRequestUserConfirmation: vi.fn(async (_input: Record<string, unknown>) => ({
-    approved: true,
-    requestId: 'r1',
-    fingerprint: 'fp',
-  })),
-  agentOptions: { current: null as null | { onStreamEvent: (event: unknown) => void } },
-}));
+const { mockDb, mockSendCommand, mockRequestUserConfirmation, mockResponseEmit, engine, agentOptions } = vi.hoisted(
+  () => ({
+    mockDb: {
+      getConversationMessages: vi.fn(() => ({ data: [] })),
+      getConversation: vi.fn(() => ({ success: false })),
+      updateConversation: vi.fn(),
+      createConversation: vi.fn(() => ({ success: true })),
+      insertMessage: vi.fn(),
+      updateMessage: vi.fn(),
+    },
+    mockSendCommand: vi.fn(),
+    // Typed parameter on purpose: an untyped `vi.fn(async () => ...)` records a
+    // zero-length call tuple, and reading `.mock.calls[0][0]` is then a type error.
+    mockRequestUserConfirmation: vi.fn(async (_input: Record<string, unknown>) => ({
+      approved: true,
+      requestId: 'r1',
+      fingerprint: 'fp',
+    })),
+    // The renderer-facing channel. Hoisted rather than inlined in the mock so a
+    // test can assert what the user was actually TOLD - the failure this file
+    // grew for is a grant that was never sent and never mentioned.
+    mockResponseEmit: vi.fn(),
+    // The engine's liveness, as `WCoreAgent.isAlive` reports it. Mutable,
+    // because "the engine is gone" is the likely state after a budget cap and
+    // has to be reachable from a test.
+    engine: { alive: true },
+    agentOptions: { current: null as null | { onStreamEvent: (event: unknown) => void } },
+  })
+);
 
 vi.mock('@/common', () => ({
   ipcBridge: {
     conversation: {
-      responseStream: { emit: vi.fn() },
+      responseStream: { emit: mockResponseEmit },
       confirmation: { add: { emit: vi.fn() }, update: { emit: vi.fn() }, remove: { emit: vi.fn() } },
     },
     cron: { onJobCreated: { emit: vi.fn() }, onJobRemoved: { emit: vi.fn() } },
@@ -95,7 +105,9 @@ vi.mock('@process/agent/wcore', () => ({
     setConfig = vi.fn();
     setMode = vi.fn();
     sendCommand = mockSendCommand;
-    isAlive = true;
+    get isAlive(): boolean {
+      return engine.alive;
+    }
     capabilities: unknown = null;
     injectConversationHistory = vi.fn().mockResolvedValue(undefined);
     constructor(options: { onStreamEvent: (event: unknown) => void }) {
@@ -108,6 +120,8 @@ vi.mock('@process/agent/wcore', () => ({
 import { WCoreManager } from '@/process/task/WCoreManager';
 // eslint-disable-next-line import/first
 import { pendingBudgetGrantIds, resetBudgetGrants } from '@process/agent/wcore/capabilities/handlers/budgetGrants';
+// eslint-disable-next-line import/first
+import { MAX_BUDGET_GRANTS_PER_SESSION } from '@process/task/wcoreBudgetGate';
 
 /** The engine's own cap event, as `WCoreAgent` forwards it (typed, no msg_id). */
 const CAP_FRAME = {
@@ -134,6 +148,7 @@ const settle = (): Promise<void> => new Promise((resolve) => setTimeout(resolve,
 beforeEach(() => {
   vi.clearAllMocks();
   resetBudgetGrants();
+  engine.alive = true;
   agentOptions.current = null;
   mockRequestUserConfirmation.mockResolvedValue({ approved: true, requestId: 'r1', fingerprint: 'fp' });
 });
@@ -202,6 +217,99 @@ describe('budget_exceeded reaches the user', () => {
     // the info line the user already has.
     expect(mockRequestUserConfirmation).not.toHaveBeenCalled();
     expect(mockSendCommand).not.toHaveBeenCalled();
+  });
+
+  it('asks once for a cap delivered twice, and sends one command', async () => {
+    // MEASURED before the in-flight ledger existed: the identical frame twice
+    // raised TWO dialogs and sent TWO `continue_with_budget` commands with
+    // different fresh request_ids - 8192 tokens granted for one 4096 overrun.
+    // The engine cannot catch it either: fresh ids never collide, so
+    // `request_id_conflict` never fires. `budgetGrants.ts` names this de-dupe
+    // as the price of minting a fresh id per press.
+    await startedManager();
+
+    agentOptions.current?.onStreamEvent(CAP_FRAME);
+    agentOptions.current?.onStreamEvent(CAP_FRAME);
+    await settle();
+
+    expect(mockRequestUserConfirmation).toHaveBeenCalledTimes(1);
+    expect(mockSendCommand).toHaveBeenCalledTimes(1);
+    expect(pendingBudgetGrantIds()).toHaveLength(1);
+  });
+
+  it('stops offering after the session grant limit, and says so once', async () => {
+    // The amount granted is `observed - limit`, which raises the cap to what has
+    // ALREADY been spent - so a resumed turn can re-trip it with new numbers,
+    // and each re-trip is a new cap key and therefore a new dialog. Nothing else
+    // in the host bounds that loop.
+    await startedManager();
+
+    for (let i = 0; i < MAX_BUDGET_GRANTS_PER_SESSION + 2; i += 1) {
+      // Different observed each time: a genuine re-trip, not a duplicate frame.
+      agentOptions.current?.onStreamEvent({
+        ...CAP_FRAME,
+        data: { reason: 'max_tokens_out', observed: String(8192 + i), limit: '4096' },
+      });
+      // Sequential on purpose, so `no-await-in-loop` does not apply: the cap
+      // under test is a COUNT of completed grants, and delivering all frames at
+      // once would exercise the in-flight de-dupe instead.
+      // eslint-disable-next-line no-await-in-loop
+      await settle();
+    }
+
+    expect(mockSendCommand).toHaveBeenCalledTimes(MAX_BUDGET_GRANTS_PER_SESSION);
+    // Silently disabling the feature would be the same defect as the one this
+    // file is about, so the limit reaches the transcript - once, not per cap.
+    const limits = mockResponseEmit.mock.calls
+      .map((call) => call[0] as { type?: string; data?: { code?: string } })
+      .filter((frame) => frame.type === 'budget_grant_not_sent' && frame.data?.code === 'session_limit');
+    expect(limits).toHaveLength(1);
+  });
+
+  it('tells the user when an approved grant could not be sent', async () => {
+    // THE failure this surface exists for. With the engine unreachable - the
+    // likely state, since `budget_exceeded` is what ended the turn - the dialog
+    // still raises, the user presses Grant, `sendContinueWithBudget` returns
+    // {ok:false}, and before this the ONLY trace was one mainLog line:
+    // `respond.invoke` resolved {settled:true}, the modal closed, and the screen
+    // was identical to a successful grant.
+    engine.alive = false;
+    await startedManager();
+
+    agentOptions.current?.onStreamEvent(CAP_FRAME);
+    await settle();
+
+    expect(mockRequestUserConfirmation).toHaveBeenCalledTimes(1);
+    expect(mockSendCommand).not.toHaveBeenCalled();
+    const notices = mockResponseEmit.mock.calls
+      .map((call) => call[0] as { type?: string; data?: { code?: string; tokens?: number } })
+      .filter((frame) => frame.type === 'budget_grant_not_sent');
+    expect(notices).toHaveLength(1);
+    expect(notices[0].data?.code).toBe('undelivered');
+    // It names the amount the user believes they granted.
+    expect(notices[0].data?.tokens).toBe(4096);
+  });
+
+  it('says nothing when the user refused - there is nothing undelivered', async () => {
+    // The counter-assertion for the test above: the notice must belong to a
+    // PRESS. A refusal that emitted "your grant never arrived" would be a new
+    // way to mislead, in the opposite direction.
+    mockRequestUserConfirmation.mockResolvedValue({
+      approved: false,
+      requestId: 'r1',
+      reason: 'declined',
+      message: 'nothing was granted',
+    } as never);
+    engine.alive = false;
+    await startedManager();
+
+    agentOptions.current?.onStreamEvent(CAP_FRAME);
+    await settle();
+
+    const notices = mockResponseEmit.mock.calls
+      .map((call) => call[0] as { type?: string })
+      .filter((frame) => frame.type === 'budget_grant_not_sent');
+    expect(notices).toEqual([]);
   });
 
   it('leaves every other stream event alone', async () => {

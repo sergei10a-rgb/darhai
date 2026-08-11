@@ -58,16 +58,22 @@ preview/
 │   │   ├── PreviewContextMenu.tsx     # Context menu
 │   │   ├── PreviewConfirmModals.tsx   # Confirmation dialogs
 │   │   └── PreviewHistoryDropdown.tsx # History version dropdown
-│   ├── viewers/                       # Viewer components
-│   │   ├── MarkdownViewer.tsx         # Markdown rendering
-│   │   ├── CodeViewer.tsx             # Code highlighting
-│   │   ├── ImageViewer.tsx            # Image viewer
-│   │   ├── DiffViewer.tsx             # Diff comparison
-│   │   ├── PDFViewer.tsx              # PDF viewer
-│   │   ├── OfficeDocViewer.tsx        # Office document viewer (Word, PPT)
-│   │   ├── ExcelViewer.tsx            # Excel viewer
-│   │   ├── HTMLViewer.tsx             # HTML rendering
-│   │   └── URLViewer.tsx              # URL web page viewer
+│   ├── viewers/                       # Viewer components, grouped by how they render
+│   │   ├── text/                      # Source text via SyntaxHighlighter + SelectionToolbar
+│   │   │   ├── MarkdownViewer.tsx     # Markdown rendering
+│   │   │   ├── CodeViewer.tsx         # Code highlighting
+│   │   │   └── DiffViewer.tsx         # Diff comparison
+│   │   ├── office/                    # The `officecli watch` bridge family
+│   │   │   ├── OfficeWatchViewer.tsx  # Shared child-process host (not exported)
+│   │   │   ├── OfficeDocViewer.tsx    # Word viewer
+│   │   │   ├── ExcelViewer.tsx        # Excel viewer
+│   │   │   └── PptViewer.tsx          # PowerPoint viewer
+│   │   ├── web/                       # Live web content in an embedded frame
+│   │   │   ├── HTMLViewer.tsx         # HTML rendering
+│   │   │   └── URLViewer.tsx          # URL web page viewer
+│   │   └── media/                     # Binary assets read off disk
+│   │       ├── ImageViewer.tsx        # Image viewer
+│   │       └── PDFViewer.tsx          # PDF viewer
 │   ├── editors/                       # Editor components
 │   │   ├── MarkdownEditor.tsx         # Markdown editor
 │   │   ├── TextEditor.tsx             # Code editor (Monaco)

@@ -123,7 +123,7 @@ vi.mock('@/renderer/pages/conversation/platforms/wcore/WCoreModelSelector', () =
 
 // Heavy dependency stubs.
 vi.mock('@/renderer/pages/cron', () => ({ CronJobManager: () => null }));
-vi.mock('@/renderer/pages/conversation/components/ConversationSkillsIndicator', () => ({
+vi.mock('@/renderer/pages/conversation/components/skills/ConversationSkillsIndicator', () => ({
   default: () => null,
 }));
 vi.mock('@/renderer/pages/conversation/platforms/openclaw/StarOfficeMonitorCard.tsx', () => ({

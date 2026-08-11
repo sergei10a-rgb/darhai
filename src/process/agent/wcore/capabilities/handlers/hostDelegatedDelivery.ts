@@ -57,18 +57,30 @@
  *     and a `host_send_message_request` into a transcript notice via
  *     {@link describeFailover} / {@link describeDelivery} in
  *     `platforms/wcore/useWCoreMessage.ts`.
- *  4. STILL OPEN. `WAYLAND_SEND_MESSAGE_HOST_DELEGATE=1` is not in the engine's
- *     spawn env (`envBuilder.buildEngineSpawnEnv`), so the engine never emits
- *     `host_send_message_request` and the delivery half is unreachable.
+ *  4. DONE, AND MECHANICALLY GATED ON (5). `WAYLAND_SEND_MESSAGE_HOST_DELEGATE`
+ *     is set by `envBuilder.buildEngineSpawnEnv` - but ONLY when
+ *     {@link HostDelegatedDeliveryCapability.hasMessageDeliverer} answers true.
+ *     Setting it without a deliverer would make the host DECLINE every send,
+ *     which is strictly worse than the engine keeping delivery itself, so the
+ *     gate is a read of live state rather than a note asking someone to check.
  *     MEASURED, not inferred: the bundled binary carries "send_message runs
  *     host-delegated (WAYLAND_SEND_MESSAGE_HOST_DELEGATE=1): sends are fulfilled
  *     by the host, not the engine".
- *  5. STILL OPEN. Nothing installs a {@link MessageDeliverer} via
- *     {@link HostDelegatedDeliveryCapability.setMessageDeliverer} - the adapter
- *     from {@link DeliveryRequest} to a running channel plugin's
- *     `sendMessage(chatId, IUnifiedOutgoingMessage)`. Until it does, this module
- *     DECLINES every delivery with "no delivery transport is installed", which
- *     is the honest answer and not a stall.
+ *  5. DONE. `agent/wcore/index.ts` installs {@link createChannelDeliverer} over
+ *     Darhai's channel fleet - the adapter from {@link DeliveryRequest} to a
+ *     RUNNING channel plugin's `sendMessage(chatId, IUnifiedOutgoingMessage)`.
+ *     A build that does not install one still DECLINES every delivery with "no
+ *     delivery transport is installed" (the honest answer, not a stall) and, by
+ *     (4), does not ask the engine to delegate in the first place.
+ *
+ *     WHAT DELEGATING BUYS, MEASURED rather than assumed. The engine's own
+ *     `send_message` reads channels from `<WAYLAND_HOME>/channels`, and Darhai
+ *     never writes there - it keeps channel config in its own database. Run
+ *     against the bundled v0.12.26 binary with the profile Darhai actually
+ *     spawns it under: `wayland-core channel list` answers "no channels
+ *     configured in ...\wayland-core\channels". So undelegated `send_message`
+ *     can reach NOTHING, while the fleet below is the one Darhai's own Settings
+ *     pane configures and starts.
  *  6. STILL OPEN. `resolve_unknown_tool_effect` needs a negotiated contract to
  *     be sendable. The gate reads it through {@link turnRecoveryCapability},
  *     and the decoder's `ready` arm does not call
@@ -101,7 +113,7 @@
  * in the research plan and NOT made here; this module only reports.
  */
 
-import type { BuiltinPluginType } from '@process/channels/types';
+import type { BuiltinPluginType, IUnifiedOutgoingMessage, PluginStatus, PluginType } from '@process/channels/types';
 
 import { gradeOf, isCapabilityAvailable, NO_CONTRACT } from '../contractNegotiation';
 import type { NegotiatedContract } from '../contractNegotiation';
@@ -682,6 +694,156 @@ export type DeliveryOutcome = { ok: true; messageId?: string } | { ok: false; er
  * throw and a rejection are both contained here anyway.
  */
 export type MessageDeliverer = (request: DeliveryRequest) => Promise<DeliveryOutcome>;
+
+/* -------------------------- delivery: the fleet -------------------------- */
+
+/**
+ * The part of a Darhai channel plugin this capability needs, and no more.
+ *
+ * A STRUCTURAL VIEW of `BasePlugin`, deliberately not an import of it:
+ * `@process/channels` loads every plugin transport it owns (baileys,
+ * matrix-js-sdk, imapflow/nodemailer, discord.js, twilio) at module scope, and
+ * a capability handler that dragged all of that into every test importing it
+ * would be paying for a fleet it only ever talks to through four members. The
+ * member TYPES are imported from `channels/types.ts`, so a rename there is a
+ * compile error here rather than a lookup that quietly matches nothing.
+ */
+export type DeliveryChannel = {
+  readonly type: PluginType;
+  readonly status: PluginStatus;
+  /** The operator's own thread on this channel, or null when it cannot open one. */
+  getSelfTarget(): string | null;
+  /** Resolves to the platform message id - exactly `host_send_message_result.message_id`. */
+  sendMessage(chatId: string, message: IUnifiedOutgoingMessage): Promise<string>;
+};
+
+/**
+ * Every channel plugin this build has instantiated, running or not.
+ *
+ * ASYNC because the only production implementation resolves `@process/channels`
+ * with a dynamic import (see requirement (5) in the file header). Stopped
+ * plugins are included on purpose: "slack is configured but not connected" and
+ * "no slack channel exists" are different problems for the user, and a fleet
+ * pre-filtered to running plugins cannot tell them apart.
+ */
+export type ChannelFleet = () => Promise<readonly DeliveryChannel[]>;
+
+/**
+ * The one plugin status a real message may be handed to.
+ *
+ * `PluginStatus` has eight members and only this one means the transport is
+ * connected; `ready` in particular means initialized-but-not-started, which is
+ * the value most likely to be mistaken for deliverable.
+ */
+export const DELIVERABLE_PLUGIN_STATUS: PluginStatus = 'running';
+
+/**
+ * Say why no channel was usable, in terms the user can act on.
+ *
+ * Two different sentences because they need two different actions: configure a
+ * channel, or connect the one already configured. The status list is quoted
+ * through {@link quoteWire} because the number of configured plugins is
+ * user-controlled and this string is handed back to the engine as an `error`.
+ */
+function describeUnusableFleet(fleet: readonly DeliveryChannel[], wanted: readonly BuiltinPluginType[]): string {
+  const wantedList = wanted.join(' or ');
+  const configured = fleet.filter(
+    (channel) => channel !== null && typeof channel === 'object' && wanted.includes(channel.type as BuiltinPluginType)
+  );
+  if (configured.length === 0) return `no ${wantedList} channel is configured in Darhai`;
+  const states = configured.map((channel) => `${channel.type}=${channel.status}`).join(', ');
+  return `the ${wantedList} channel is configured but not connected (${quoteWire(states)})`;
+}
+
+/**
+ * The adapter from a delegated send to Darhai's own channel fleet - the ONLY
+ * thing this app can honestly deliver a message through.
+ *
+ * WHAT IT DELIVERS THROUGH, AND WHAT IT REFUSES. There is no new transport
+ * here: every route is a channel plugin Darhai's Settings pane already
+ * configures and starts, reached through the same `sendMessage(chatId, msg)` a
+ * chat reply uses. {@link PLATFORM_PLUGIN_TYPES} decides which plugin types a
+ * given engine platform may use; a platform with no mapping never reaches this
+ * function (it is refused upstream with a stated reason), and a mapped platform
+ * whose plugin is absent or stopped is refused HERE with a stated reason. No
+ * path guesses a channel and none returns silently.
+ *
+ * PREFERENCE ORDER IS THE REQUEST'S, NOT THE FLEET'S. `email` resolves to
+ * `email-imap` then `email-agentmail`, so a user with both configured sends
+ * from their own address rather than the hosted relay. Iterating the fleet and
+ * taking the first match would hand that decision to whichever plugin happened
+ * to start first.
+ *
+ * IT NEVER THROWS AND NEVER RETRIES. Every failure is a `DeliveryOutcome` the
+ * capability turns into one `host_send_message_result`; a retry here would be a
+ * second real email.
+ */
+export function createChannelDeliverer(fleet: ChannelFleet): MessageDeliverer {
+  return async (request: DeliveryRequest): Promise<DeliveryOutcome> => {
+    let channels: readonly DeliveryChannel[];
+    try {
+      // `?? []` covers a fleet resolving to nothing: an empty fleet is "no
+      // channel is configured", which the refusal below already states, whereas
+      // an unguarded read would throw inside the adapter the engine is waiting on.
+      channels = (await fleet()) ?? [];
+    } catch (cause) {
+      return { ok: false, error: `Darhai's channel fleet could not be read: ${String(cause)}` };
+    }
+
+    let channel: DeliveryChannel | undefined;
+    for (const type of request.pluginTypes) {
+      channel = channels.find(
+        (candidate) =>
+          candidate !== null &&
+          typeof candidate === 'object' &&
+          candidate.type === type &&
+          candidate.status === DELIVERABLE_PLUGIN_STATUS
+      );
+      if (channel !== undefined) break;
+    }
+    if (channel === undefined) {
+      return {
+        ok: false,
+        error: `nothing running can deliver to ${request.platform}: ${describeUnusableFleet(channels, request.pluginTypes)}`,
+      };
+    }
+
+    // An ABSENT `chat_id` means "the host's default channel" (the engine's own
+    // tool doc), and a plugin's self target is the only default Darhai has: the
+    // operator's own thread on that channel. An empty string is treated the same
+    // as absent - the schema puts no `minLength` on the field, so an engine may
+    // send `""`, and delivering to an empty target is not a thing any plugin can do.
+    const requested = request.chatId;
+    const target = typeof requested === 'string' && requested.length > 0 ? requested : channel.getSelfTarget();
+    if (typeof target !== 'string' || target.length === 0) {
+      return {
+        ok: false,
+        error: `the request named no chat_id and the ${channel.type} channel has no default target, so nothing was sent`,
+      };
+    }
+
+    // Assembled field-by-field: `subject` absent must stay ABSENT, because a
+    // plugin reading `subject: undefined` as an explicit empty header sends an
+    // email with a blank subject line.
+    const message: IUnifiedOutgoingMessage = { type: 'text', text: request.body };
+    if (request.subject !== undefined) message.subject = request.subject;
+
+    let messageId: string;
+    try {
+      messageId = await channel.sendMessage(target, message);
+    } catch (cause) {
+      return { ok: false, error: `the ${channel.type} channel refused the send: ${String(cause)}` };
+    }
+
+    // A DELIVERED message with an unusable receipt is still DELIVERED. Passing
+    // the id up anyway would take `readDeliveryOutcome`'s "success with an
+    // unusable message id" arm, which answers the engine `ok:false` - reporting
+    // a message that really went out as a failure, after which the model is
+    // entitled to send it again. The receipt is dropped instead; `message_id` is
+    // optional in the schema and the engine's own compat fixture omits it.
+    return isWireId(messageId) ? { ok: true, messageId } : { ok: true };
+  };
+}
 
 /**
  * Decode `host_send_message_request`.
@@ -1505,6 +1667,16 @@ export type HostDelegatedDeliveryCapability = CapabilityHandler & {
    */
   setMessageDeliverer(deliverer: MessageDeliverer | null): void;
   /**
+   * Whether a transport is installed right now.
+   *
+   * THE MECHANICAL HALF OF THE SPAWN GATE. `envBuilder.buildEngineSpawnEnv`
+   * reads this to decide whether the engine may be told to delegate
+   * (`WAYLAND_SEND_MESSAGE_HOST_DELEGATE`), so the flag and the deliverer cannot
+   * drift apart: remove the installer and the next spawn stops asking for
+   * delegation, rather than asking for it and then declining every send.
+   */
+  hasMessageDeliverer(): boolean;
+  /**
    * Override where the negotiated contract comes from. Defaults to
    * {@link turnRecoveryCapability}, so ONE `ready` seed arms both capabilities;
    * `null` restores that default.
@@ -1881,6 +2053,10 @@ export function createHostDelegatedDeliveryCapability(): HostDelegatedDeliveryCa
 
     setMessageDeliverer(next: MessageDeliverer | null): void {
       deliverer = next;
+    },
+
+    hasMessageDeliverer(): boolean {
+      return deliverer !== null;
     },
 
     setContractSource(source: ContractSource | null): void {

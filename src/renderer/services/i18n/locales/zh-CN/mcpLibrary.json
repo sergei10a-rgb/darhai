@@ -31,15 +31,22 @@
     "statusWarn": "需要重新授权",
     "statusError": "错误",
     "statusStopped": "已禁用",
+    "toolCount": "{{count}} 个工具",
+    "toolCount_one": "{{count}} 个工具",
+    "toolCount_other": "{{count}} 个工具",
     "statusIdle": "空闲",
-    "statusToolCount": "{{count}} 个可用工具",
     "statusToolCountLabel": "个可用工具",
-    "statusReauthCount": "{{count}} 个需要重新授权",
+    "statusToolCountLabel_one": "个可用工具",
+    "statusToolCountLabel_other": "个可用工具",
     "statusReauthCountLabel": "需要重新授权",
-    "statusErrorCount": "{{count}} 个错误",
+    "statusReauthCountLabel_one": "需要重新授权",
+    "statusReauthCountLabel_other": "需要重新授权",
     "statusErrorCountLabel": "错误",
-    "statusRunningCount": "{{count}} 个运行中",
+    "statusErrorCountLabel_one": "错误",
+    "statusErrorCountLabel_other": "错误",
     "statusRunningCountLabel": "正在运行",
+    "statusRunningCountLabel_one": "正在运行",
+    "statusRunningCountLabel_other": "正在运行",
     "logsToast": "日志查看器即将推出。"
   },
   "byo": {
@@ -64,6 +71,22 @@
   "browse": {
     "title": "MCP 库",
     "subtitle": "精选连接器。浏览、一键安装并按照设置指南操作。",
-    "searchPlaceholder": "搜索 MCP…"
+    "searchPlaceholder": "搜索 MCP…",
+    "entryCount": "{{count}} 个条目",
+    "entryCount_one": "{{count}} 个条目",
+    "entryCount_other": "{{count}} 个条目",
+    "recommendedTitle": "★ 为你推荐",
+    "installRate": "{{percent}}% 已安装"
+  },
+  "detail": {
+    "estMinutes": "{{count}} 分钟",
+    "estMinutes_one": "{{count}} 分钟",
+    "estMinutes_other": "{{count}} 分钟",
+    "unknownEntry": "未知条目：{{id}}",
+    "back": "← MCP 库",
+    "viewSource": "查看源码",
+    "transport": "传输方式",
+    "runtime": "运行时",
+    "platforms": "平台"
   }
 }

@@ -100,6 +100,19 @@ the frames actually died. Four seams were missing, and each is now mechanical:
   their replies could never arrive and ~400 lines of renderer waited on nothing.
   Each now has a real producer: a budget gate on `budget_exceeded`, and two
   remote-denied IPC channels behind controls the user can press.
+- **A deny asserted only in prose.** Every `wcoreEngine.*` channel is listed in
+  `REMOTE_DENIED_KEYS`, and nothing tested it: deleting all three entries left
+  every allowlist suite green. `tests/unit/bridgeAllowlistWcoreEngine.redteam
+  .test.ts` now denies each key AND walks the provider registry, so a channel
+  added later without a deny line fails a named test rather than shipping.
+- **A status card that read a constant.** The header chip and the Overview
+  Engine/Version cards asked `acpConversation.getAvailableAgents`, which answers
+  "does Darhai ship the Core backend" — `available: true` unconditionally, no
+  version field — so they rendered `engine running · <pinned constant>` with no
+  engine process alive, while the Runtime pane beside them correctly said no
+  chat was open. `wcoreEngine.liveness` (passive: it writes nothing to any
+  engine) reports the live engine count and the semver from the last `ready`,
+  and the cards say which of reading-or-pin they are showing.
 
 The `ready` arm also gained the three calls it was documented to make and never
 did: `resetCapabilityActivation()`, `resetRuntimeRequests()`, and

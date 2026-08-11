@@ -13,20 +13,20 @@ import { usePreviewContext } from '../../context/PreviewContext';
 import { useResizableSplit } from '@/renderer/hooks/ui/useResizableSplit';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useEditorSettings } from '@renderer/hooks/settings/useEditorSettings';
-import CodePreview from '../viewers/CodeViewer';
-import DiffPreview from '../viewers/DiffViewer';
-import ExcelPreview from '../viewers/ExcelViewer';
+import CodePreview from '../viewers/text/CodeViewer';
+import DiffPreview from '../viewers/text/DiffViewer';
+import ExcelPreview from '../viewers/office/ExcelViewer';
 import HTMLEditor from '../editors/HTMLEditor';
 import HTMLRenderer from '../renderers/HTMLRenderer';
-import ImagePreview from '../viewers/ImageViewer';
+import ImagePreview from '../viewers/media/ImageViewer';
 import MarkdownEditor from '../editors/MarkdownEditor';
 import TipTapMarkdownEditor from '../editors/TipTapMarkdownEditor';
-import MarkdownPreview from '../viewers/MarkdownViewer';
-import PDFPreview from '../viewers/PDFViewer';
-import OfficeDocPreview from '../viewers/OfficeDocViewer';
-import PptViewer from '../viewers/PptViewer';
+import MarkdownPreview from '../viewers/text/MarkdownViewer';
+import PDFPreview from '../viewers/media/PDFViewer';
+import OfficeDocPreview from '../viewers/office/OfficeDocViewer';
+import PptViewer from '../viewers/office/PptViewer';
 import TextEditor from '../editors/TextEditor';
-import URLViewer from '../viewers/URLViewer';
+import URLViewer from '../viewers/web/URLViewer';
 import {
   PreviewTabs,
   PreviewToolbar,

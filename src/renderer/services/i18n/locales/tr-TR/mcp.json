@@ -96,9 +96,12 @@
       "title": "Bütçe artırılsın mı?",
       "summary": "Bir bütçe sınırına ulaşıldığı için motor durdu. Devam edebilmesi için daha fazlasını verebilirsiniz. Duraklatılan turun devam edip etmeyeceğine ya da ek bütçenin yalnızca bir sonraki mesajınızda kullanılacağına Дархай değil, motor karar verir.",
       "confirm": "Ver",
-      "reason": "Ulaşılan sınır",
-      "observed": "Kullanılan",
-      "limit": "Sınır",
+      "reasonTokens": "Ulaşılan sınır (adına bakılarak token sınırı olarak okundu)",
+      "reasonCost": "Ulaşılan sınır (adına bakılarak US$ sınırı olarak okundu)",
+      "observedTokens": "Kullanılan (token)",
+      "observedCost": "Kullanılan (US$)",
+      "limitTokens": "Sınır (token)",
+      "limitCost": "Sınır (US$)",
       "unknown": "bilinmiyor",
       "grantTokens": "Verilecek token",
       "grantCost": "Verilecek tutar (US$)",
@@ -114,6 +117,10 @@
     "cost": "US$ {{cost}}",
     "both": "{{tokens}} ve {{cost}}",
     "nothing": "hiçbir şey",
+    "notSent": {
+      "undelivered": "{{amount}} verdiniz ama bu motora hiç ulaşmadı; hiçbir şey artırılmadı. ({{reason}})",
+      "sessionLimit": "Дархай bir oturumda göndereceği bütçe artışlarının tamamını gönderdi, bu yüzden pencere açılmadı."
+    },
     "reason": {
       "host_not_authorized": "bu Дархай kurulumunun bütçe artırma yetkisi yok.",
       "managed_policy": "yönetilen bir ilke buna izin vermiyor.",

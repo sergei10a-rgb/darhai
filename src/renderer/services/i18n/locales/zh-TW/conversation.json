@@ -336,10 +336,13 @@
     "statusFailed": "已失敗",
     "untitled": "工作流程",
     "nodesObserved": "已回報 {{observed}} 個步驟",
+    "nodesUnknown": "未回報步驟數",
     "nodesDeclared": "引擎宣告為 {{declared}}",
     "noNodesYet": "尚未有任何步驟回報",
     "noNodesReported": "本次執行結束時未回報任何步驟",
+    "noNodeList": "本次執行完全沒有回報步驟清單",
     "linesLost": "串流中遺失了 {{lines}} 行 - 本次執行可能不完整",
+    "linesLostUnknown": "本次執行未回報串流是否有行遺失",
     "retryable": "可重試",
     "notRetryable": "不可重試",
     "runFailed": "本次執行失敗",
@@ -373,5 +376,31 @@
   "delivery": {
     "unconfigured": "智慧代理嘗試透過 {{platform}} 傳送訊息，但尚未設定 {{platform}} 通道。請在「設定 - 通道」中新增。",
     "failed": "智慧代理無法透過 {{platform}} 傳送訊息：{{error}}"
+  },
+  "anvilAlert": {
+    "retracted": {
+      "artifact_mutated": "引擎撤回了自己的稽核憑據：憑據發布之後，產物發生了變化。",
+      "gate_revoked": "引擎撤回了自己的稽核憑據：它所認證的關卡已被撤銷。",
+      "superseded": "引擎撤回了自己的稽核憑據：一份更新的憑據取代了它。",
+      "unknown": "引擎撤回了自己的稽核憑據，理由是 Darhai 無法辨識的：{{reason}}"
+    },
+    "refused": {
+      "malformed": "Darhai 拒絕了一筆違反引擎自身已公布結構的稽核記錄。它所聲稱的任何內容都不能視為已驗證。",
+      "version_mismatch": "Darhai 拒絕了一筆依其未實作的稽核契約版本撰寫的稽核記錄。該記錄未被解讀，因此沒有驗證任何內容，也沒有默默接受任何內容。",
+      "unknown_critical_extension": "該稽核記錄要求 Darhai 未實作的讀取擴充，Darhai 無法說明它認證了什麼，因此予以拒絕，而不是顯示為已驗證。",
+      "sequence_gap": "本工作階段缺少一筆稽核記錄：有一筆記錄搶在 Darhai 正在等待的那筆之前抵達。本工作階段的稽核鏈已無法證明是完整的。",
+      "sequence_conflict": "本工作階段中有兩筆不同的稽核記錄聲稱佔據同一位置。Darhai 無法判斷哪一筆是真的，因此兩筆都不信任。",
+      "stale_replay": "引擎已經撤回的稽核憑據再次抵達。Darhai 沒有恢復它——已撤回的結論仍然保持撤回。",
+      "body_conflict": "同一個稽核摘要被發現為兩筆不同的記錄背書。Darhai 無法重算引擎的摘要，因此說不出被更動的是哪一筆，只能說兩筆不可能都是真的。",
+      "invalidation_unlinked": "收到了一份撤回，針對的是 Darhai 從未見過其發布的稽核憑據，因此這裡沒有可撤回的結論，該主張也無法查核。",
+      "unknown": "Darhai 拒絕了一筆無法驗證的稽核記錄，其理由無法辨識：{{code}}"
+    },
+    "engineRecord": "引擎記錄：憑據 {{receipt}}，位置 {{position}}。",
+    "engineRecordArtifact": "引擎記錄：憑據 {{receipt}}，位置 {{position}}，產物 {{artifact}}。",
+    "noReceiptId": "未提供",
+    "noPosition": "無法讀取",
+    "noValue": "未提供",
+    "publicationScope": "稽核憑據只涵蓋憑據發布那一刻的產物狀態；此後 Darhai 不會監視該檔案，因此沒有提示並不能證明其他內容沒有更動。",
+    "hostReason": "Darhai 的判斷依據：{{detail}}"
   }
 }

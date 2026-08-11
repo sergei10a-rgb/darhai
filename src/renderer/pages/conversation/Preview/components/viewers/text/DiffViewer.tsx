@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { PreviewMetadata } from '../../context/PreviewContext';
+import type { PreviewMetadata } from '../../../context/PreviewContext';
 import { useTextSelection } from '@/renderer/hooks/ui/useTextSelection';
 import { Checkbox } from '@arco-design/web-react';
 import classNames from 'classnames';
@@ -14,7 +14,7 @@ import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 're
 import ReactDOM from 'react-dom';
 import { LightAsync as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vs, vs2015 } from 'react-syntax-highlighter/dist/esm/styles/hljs';
-import SelectionToolbar from '../renderers/SelectionToolbar';
+import SelectionToolbar from '../../renderers/SelectionToolbar';
 import { useTranslation } from 'react-i18next';
 import { sanitizeHtml } from '@/renderer/utils/sanitize';
 

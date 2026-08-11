@@ -336,10 +336,13 @@
     "statusFailed": "已失败",
     "untitled": "工作流",
     "nodesObserved": "已上报 {{observed}} 个步骤",
+    "nodesUnknown": "未上报步骤数",
     "nodesDeclared": "引擎声明为 {{declared}}",
     "noNodesYet": "还没有任何步骤上报",
     "noNodesReported": "本次运行结束时未上报任何步骤",
+    "noNodeList": "本次运行完全没有上报步骤列表",
     "linesLost": "流中丢失了 {{lines}} 行 - 本次运行可能不完整",
+    "linesLostUnknown": "本次运行未上报是否丢失了流中的行",
     "retryable": "可重试",
     "notRetryable": "不可重试",
     "runFailed": "本次运行失败",
@@ -373,5 +376,31 @@
   "delivery": {
     "unconfigured": "智能体尝试通过 {{platform}} 发送消息，但尚未配置 {{platform}} 通道。请在“设置 - 通道”中添加。",
     "failed": "智能体无法通过 {{platform}} 发送消息：{{error}}"
+  },
+  "anvilAlert": {
+    "retracted": {
+      "artifact_mutated": "引擎撤回了自己的审计凭据：凭据发布之后，产物发生了变化。",
+      "gate_revoked": "引擎撤回了自己的审计凭据：它所认证的关卡已被吊销。",
+      "superseded": "引擎撤回了自己的审计凭据：一份更新的凭据取代了它。",
+      "unknown": "引擎撤回了自己的审计凭据，理由是 Darhai 无法识别的：{{reason}}"
+    },
+    "refused": {
+      "malformed": "Darhai 拒绝了一条违反引擎自身已公布结构的审计记录。它所声称的任何内容都不能视为已验证。",
+      "version_mismatch": "Darhai 拒绝了一条按其未实现的审计契约版本编写的审计记录。该记录未被解读，因此没有验证任何内容，也没有悄悄接受任何内容。",
+      "unknown_critical_extension": "该审计记录要求 Darhai 未实现的读取扩展，Darhai 无法说明它认证了什么，因此予以拒绝，而不是显示为已验证。",
+      "sequence_gap": "本会话缺少一条审计记录：有一条记录抢在 Darhai 正在等待的那条之前到达。本会话的审计链已无法证明是完整的。",
+      "sequence_conflict": "本会话中有两条不同的审计记录声称占据同一位置。Darhai 无法判断哪一条是真的，因此两条都不信任。",
+      "stale_replay": "引擎已经撤回的审计凭据再次到达。Darhai 没有恢复它——已撤回的结论仍然保持撤回。",
+      "body_conflict": "同一个审计摘要被发现为两条不同的记录背书。Darhai 无法重算引擎的摘要，因此说不出被改动的是哪一条，只能说两条不可能都是真的。",
+      "invalidation_unlinked": "收到了一份撤回，针对的是 Darhai 从未见过其发布的审计凭据，因此这里没有可撤回的结论，该主张也无法核实。",
+      "unknown": "Darhai 拒绝了一条无法验证的审计记录，其理由无法识别：{{code}}"
+    },
+    "engineRecord": "引擎记录：凭据 {{receipt}}，位置 {{position}}。",
+    "engineRecordArtifact": "引擎记录：凭据 {{receipt}}，位置 {{position}}，产物 {{artifact}}。",
+    "noReceiptId": "未提供",
+    "noPosition": "无法读取",
+    "noValue": "未提供",
+    "publicationScope": "审计凭据只覆盖凭据发布那一刻的产物状态；此后 Darhai 不会监视该文件，因此没有提示并不能证明其他内容没有改动。",
+    "hostReason": "Darhai 的判断依据：{{detail}}"
   }
 }

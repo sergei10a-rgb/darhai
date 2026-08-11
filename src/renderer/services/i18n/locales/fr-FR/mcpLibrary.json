@@ -31,14 +31,26 @@
     "statusWarn": "Ré-autorisation requise",
     "statusError": "Erreur",
     "statusStopped": "Désactivé",
-    "statusToolCount": "{{count}} outils disponibles",
+    "toolCount": "{{count}} outils",
+    "toolCount_one": "{{count}} outil",
+    "toolCount_many": "{{count}} outils",
+    "toolCount_other": "{{count}} outils",
     "statusToolCountLabel": "outils disponibles",
-    "statusReauthCount": "{{count}} à ré-autoriser",
+    "statusToolCountLabel_one": "outil disponible",
+    "statusToolCountLabel_many": "outils disponibles",
+    "statusToolCountLabel_other": "outils disponibles",
     "statusReauthCountLabel": "à ré-autoriser",
-    "statusErrorCount": "{{count}} erreurs",
+    "statusReauthCountLabel_one": "à ré-autoriser",
+    "statusReauthCountLabel_many": "à ré-autoriser",
+    "statusReauthCountLabel_other": "à ré-autoriser",
     "statusErrorCountLabel": "erreurs",
-    "statusRunningCount": "{{count}} en cours d'exécution",
+    "statusErrorCountLabel_one": "erreur",
+    "statusErrorCountLabel_many": "erreurs",
+    "statusErrorCountLabel_other": "erreurs",
     "statusRunningCountLabel": "en cours d'exécution",
+    "statusRunningCountLabel_one": "en cours d'exécution",
+    "statusRunningCountLabel_many": "en cours d'exécution",
+    "statusRunningCountLabel_other": "en cours d'exécution",
     "logsToast": "Visionneuse de journaux bientôt disponible."
   },
   "byo": {
@@ -63,6 +75,24 @@
   "browse": {
     "title": "Bibliothèque MCP",
     "subtitle": "Connecteurs sélectionnés. Parcourez, installez en un clic et suivez le guide de configuration.",
-    "searchPlaceholder": "Rechercher des MCP…"
+    "searchPlaceholder": "Rechercher des MCP…",
+    "entryCount": "{{count}} entrées",
+    "entryCount_one": "{{count}} entrée",
+    "entryCount_many": "{{count}} entrées",
+    "entryCount_other": "{{count}} entrées",
+    "recommendedTitle": "★ Recommandé pour vous",
+    "installRate": "{{percent}} % installé"
+  },
+  "detail": {
+    "estMinutes": "{{count}} min",
+    "estMinutes_one": "{{count}} min",
+    "estMinutes_many": "{{count}} min",
+    "estMinutes_other": "{{count}} min",
+    "unknownEntry": "Entrée inconnue : {{id}}",
+    "back": "← Bibliothèque MCP",
+    "viewSource": "Voir le code source",
+    "transport": "Transport",
+    "runtime": "Environnement d’exécution",
+    "platforms": "Plateformes"
   }
 }

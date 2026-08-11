@@ -78,7 +78,18 @@ export function ServerRow({
         <div className='mcp-server-name'>{server.name ?? server.id}</div>
         <div className='mcp-server-pub'>{server.publisher ?? ''}</div>
       </div>
-      <div className='mcp-server-stats'>{server.toolCount ?? 0} tools</div>
+      {/* Plural-suffixed key, not a `{n} tools` literal: i18next resolves
+          `toolCount_<category>` from Intl.PluralRules for the active language,
+          so 1 reads "1 tool" and mn-MN keeps the numeral-singular noun. A plain
+          `defaultValue` string cannot pluralise - only `defaultValue_one` /
+          `_other` can - so both forms are spelled out here. */}
+      <div className='mcp-server-stats'>
+        {t('mcpLibrary.installed.toolCount', {
+          count: server.toolCount ?? 0,
+          defaultValue_one: '{{count}} tool',
+          defaultValue_other: '{{count}} tools',
+        })}
+      </div>
       <div className='mcp-server-status'>
         <span className={`mcp-status-pill mcp-status-${pillStatus}`}>
           {checking ? <RefreshCw size={11} className='mcp-spin' /> : <span className='mcp-dot' />} {pillLabel}

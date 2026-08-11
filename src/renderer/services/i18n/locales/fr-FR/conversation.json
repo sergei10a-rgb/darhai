@@ -336,10 +336,13 @@
     "statusFailed": "Échec",
     "untitled": "Workflow",
     "nodesObserved": "{{observed}} étapes signalées",
+    "nodesUnknown": "Nombre d’étapes non communiqué",
     "nodesDeclared": "le moteur en a déclaré {{declared}}",
     "noNodesYet": "Aucune étape signalée pour le moment",
     "noNodesReported": "L'exécution s'est terminée sans signaler la moindre étape",
+    "noNodeList": "Cette exécution n’a communiqué aucune liste d’étapes",
     "linesLost": "{{lines}} lignes du flux ont été perdues - cette exécution peut être incomplète",
+    "linesLostUnknown": "Cette exécution n’a pas indiqué si des lignes du flux ont été perdues",
     "retryable": "Peut être réessayé",
     "notRetryable": "Ne peut pas être réessayé",
     "runFailed": "L'exécution a échoué",
@@ -373,5 +376,31 @@
   "delivery": {
     "unconfigured": "L'agent a tenté d'envoyer un message via {{platform}}, mais aucun canal {{platform}} n'est configuré. Ajoutez-en un dans Paramètres - Canaux.",
     "failed": "L'agent n'a pas pu envoyer de message via {{platform}} : {{error}}"
+  },
+  "anvilAlert": {
+    "retracted": {
+      "artifact_mutated": "Le moteur a retiré son reçu d'audit : l'artefact a changé après la publication du reçu.",
+      "gate_revoked": "Le moteur a retiré son reçu d'audit : la barrière qu'il certifiait a été révoquée.",
+      "superseded": "Le moteur a retiré son reçu d'audit : un reçu ultérieur l'a remplacé.",
+      "unknown": "Le moteur a retiré son reçu d'audit pour une raison que Darhai ne reconnaît pas : {{reason}}"
+    },
+    "refused": {
+      "malformed": "Darhai a refusé un enregistrement d'audit qui viole le schéma publié par le moteur lui-même. Rien de ce qu'il affirme ne peut être considéré comme vérifié.",
+      "version_mismatch": "Darhai a refusé un enregistrement d'audit écrit pour une version du contrat d'audit qu'il n'implémente pas. Il n'a pas été interprété : rien n'a donc été vérifié, et rien n'a été accepté en silence.",
+      "unknown_critical_extension": "Un enregistrement d'audit exige des extensions de lecture que Darhai n'implémente pas ; Darhai ne peut donc pas dire ce qu'il certifie. Il a été refusé plutôt que présenté comme vérifié.",
+      "sequence_gap": "Un enregistrement d'audit manque dans cette session : un enregistrement est arrivé avant celui que Darhai attendait. La piste d'audit de cette session n'est plus démontrablement complète.",
+      "sequence_conflict": "Deux enregistrements d'audit différents revendiquent la même position dans cette session. Darhai ne peut pas déterminer lequel est authentique et n'en croit donc aucun.",
+      "stale_replay": "Un reçu d'audit que le moteur avait déjà retiré est arrivé de nouveau. Darhai ne l'a pas rétabli : un verdict retiré reste retiré.",
+      "body_conflict": "Une même empreinte d'audit a été vue en train de garantir deux enregistrements différents. Darhai ne peut pas recalculer l'empreinte du moteur : il ne peut donc pas dire lequel des deux a été modifié, seulement qu'ils ne peuvent pas être authentiques tous les deux.",
+      "invalidation_unlinked": "Un retrait est arrivé pour un reçu d'audit dont Darhai n'a jamais vu la publication : il n'y a donc ici aucun verdict à retirer, et l'affirmation ne peut pas être vérifiée.",
+      "unknown": "Darhai a refusé un enregistrement d'audit qu'il n'a pas pu vérifier, pour une raison qu'il ne reconnaît pas : {{code}}"
+    },
+    "engineRecord": "Enregistrement du moteur : reçu {{receipt}}, position {{position}}.",
+    "engineRecordArtifact": "Enregistrement du moteur : reçu {{receipt}}, position {{position}}, artefact {{artifact}}.",
+    "noReceiptId": "non indiqué",
+    "noPosition": "illisible",
+    "noValue": "non indiqué",
+    "publicationScope": "Un reçu d'audit ne couvre l'artefact que dans l'état où il était au moment de la publication du reçu ; Darhai ne surveille pas ce fichier ensuite, le silence ne prouve donc pas que rien d'autre n'a changé.",
+    "hostReason": "Raison de Darhai : {{detail}}"
   }
 }

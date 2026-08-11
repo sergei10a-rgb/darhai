@@ -12,7 +12,8 @@ import { useTranslation } from 'react-i18next';
 import CardDisclosureHeader from './CardDisclosureHeader';
 import styles from './WorkflowRunCard.module.css';
 
-type NodeState = IMessageWorkflowRun['content']['nodes'][number]['state'];
+type WorkflowRunNode = NonNullable<IMessageWorkflowRun['content']['nodes']>[number];
+type NodeState = WorkflowRunNode['state'];
 
 /**
  * Arco preset tag colour per node state. `blocked` is orange rather than red on
@@ -81,10 +82,20 @@ const WorkflowRunCard: React.FC<{ message: IMessageWorkflowRun }> = ({ message }
   // of showing a nameless header.
   const title = name || workflowId || t('conversation.workflowRun.untitled');
 
+  // Absence is a third state, not a zero. `nodes: []` means "a node list
+  // arrived and it was empty"; no `nodes` at all means the projection never
+  // reported one, and saying "0 steps reported" for that is the card asserting
+  // a measurement nobody made.
+  const observedNodes: WorkflowRunNode[] | null = Array.isArray(nodes) ? nodes : null;
+  const declaredCount = typeof nodeCount === 'number' ? nodeCount : null;
+  const lostLines = typeof missingTotal === 'number' ? missingTotal : null;
+
   // The engine's DECLARED node_count is shown only when it disagrees with what
   // actually arrived. Rendering "1 of 0" - which the `after-terminal` fixture
-  // produces - would report the engine's own inconsistency as a Darhai bug.
-  const declaredDiffers = nodeCount !== nodes.length;
+  // produces - would report the engine's own inconsistency as a Darhai bug; and
+  // with either side unknown there is no disagreement to report, only two
+  // unknowns, so the line is omitted rather than printed against `undefined`.
+  const declaredDiffers = declaredCount !== null && observedNodes !== null && declaredCount !== observedNodes.length;
 
   return (
     <div className={styles.container} data-testid='workflow-run-card' data-workflow-status={status}>
@@ -106,28 +117,49 @@ const WorkflowRunCard: React.FC<{ message: IMessageWorkflowRun }> = ({ message }
       {expanded && (
         <div className={styles.body} id={bodyId}>
           <div className={styles.meta}>
-            <span>{t('conversation.workflowRun.nodesObserved', { observed: nodes.length })}</span>
+            <span data-testid='workflow-run-observed'>
+              {observedNodes === null
+                ? t('conversation.workflowRun.nodesUnknown')
+                : t('conversation.workflowRun.nodesObserved', { observed: observedNodes.length })}
+            </span>
             {declaredDiffers && (
               <span className={styles.metaMuted}>
-                {t('conversation.workflowRun.nodesDeclared', { declared: nodeCount })}
+                {t('conversation.workflowRun.nodesDeclared', { declared: declaredCount })}
               </span>
             )}
           </div>
 
           {/* The stream lost lines. `missingTotal` and not `missingSequences.length`:
               the reducer caps the list it enumerates but always counts the true
-              loss, so the shorter list would under-report how much is missing. */}
-          {missingTotal > 0 && (
-            <div className={styles.warning} data-testid='workflow-run-gap'>
+              loss, so the shorter list would under-report how much is missing.
+              A projection that omits the field gets the same box with a
+              different sentence: staying silent would let "never counted" pass
+              for "counted, and nothing was lost". */}
+          {lostLines === null ? (
+            <div className={styles.warning} data-testid='workflow-run-gap-unknown'>
               <Attention theme='filled' size={13} className={styles.iconWarning} />
-              {/* `lines`, not `count`: i18next treats `count` as the plural
-                  selector and would look for `linesLost_one`/`_other` keys that
-                  no locale defines, silently dropping the number. */}
-              <span>{t('conversation.workflowRun.linesLost', { lines: missingTotal })}</span>
+              <span>{t('conversation.workflowRun.linesLostUnknown')}</span>
             </div>
+          ) : (
+            lostLines > 0 && (
+              <div className={styles.warning} data-testid='workflow-run-gap'>
+                <Attention theme='filled' size={13} className={styles.iconWarning} />
+                {/* `lines`, not `count`: i18next treats `count` as the plural
+                    selector and would look for `linesLost_one`/`_other` keys that
+                    no locale defines, silently dropping the number. */}
+                <span>{t('conversation.workflowRun.linesLost', { lines: lostLines })}</span>
+              </div>
+            )
           )}
 
-          {nodes.length === 0 ? (
+          {observedNodes === null ? (
+            // Distinct from the empty state below: there, a list arrived and was
+            // empty. Here no list arrived, so the card knows nothing about steps
+            // and says exactly that.
+            <div className={styles.empty} data-testid='workflow-run-nodes-unknown'>
+              {t('conversation.workflowRun.noNodeList')}
+            </div>
+          ) : observedNodes.length === 0 ? (
             // Not a blank panel: a run can legitimately be open with no node
             // event yet, and saying so is the difference between "nothing has
             // happened" and "the card is broken".
@@ -136,7 +168,7 @@ const WorkflowRunCard: React.FC<{ message: IMessageWorkflowRun }> = ({ message }
             </div>
           ) : (
             <ul className={styles.nodeList}>
-              {nodes.map((node) => (
+              {observedNodes.map((node) => (
                 <li key={node.nodeId} className={styles.node} data-node-state={node.state}>
                   <div className={styles.nodeHead}>
                     <span className={styles.nodeId}>{node.nodeId}</span>

@@ -153,9 +153,17 @@ const OVER_PROMISE =
  */
 function budgetRequest(overrides: Record<string, unknown> = {}) {
   const details: Detail[] = [
-    { labelKey: 'mcp.confirm.budgetGrant.reason', label: 'Cap reached', value: String(CAPPED.reason) },
-    { labelKey: 'mcp.confirm.budgetGrant.observed', label: 'Used', value: String(CAPPED.observed) },
-    { labelKey: 'mcp.confirm.budgetGrant.limit', label: 'Limit', value: String(CAPPED.limit) },
+    // The token variants, because this fixture is `max_tokens_out`. Every row
+    // carries its unit and the cap row says the unit was READ FROM THE NAME -
+    // the gate infers it from a free-form string the engine wrote, and the
+    // person pressing Grant is entitled to know that.
+    {
+      labelKey: 'mcp.confirm.budgetGrant.reasonTokens',
+      label: 'Cap reached (read as a token cap from this name)',
+      value: String(CAPPED.reason),
+    },
+    { labelKey: 'mcp.confirm.budgetGrant.observedTokens', label: 'Used (tokens)', value: String(CAPPED.observed) },
+    { labelKey: 'mcp.confirm.budgetGrant.limitTokens', label: 'Limit (tokens)', value: String(CAPPED.limit) },
     // BOTH halves of the engine's own example grant. `continue_with_budget`
     // carries either or both, and the two are not interchangeable: 2.5 is
     // either two and a half tokens or $2.50, so each rides a label that names
@@ -225,8 +233,12 @@ describe('budget grant in the confirmation dialog', () => {
     expect(screen.getByText(String(GRANTED.additional_tokens))).toBeTruthy();
 
     // Field names are translated, because this request is raised by the app.
-    expect(screen.getByText(en('mcp.confirm.budgetGrant.observed'))).toBeTruthy();
-    expect(screen.getByText(en('mcp.confirm.budgetGrant.limit'))).toBeTruthy();
+    expect(screen.getByText(en('mcp.confirm.budgetGrant.observedTokens'))).toBeTruthy();
+    expect(screen.getByText(en('mcp.confirm.budgetGrant.limitTokens'))).toBeTruthy();
+    // ...and each one names the unit, so no figure on this dialog is unitless.
+    for (const key of ['observedTokens', 'limitTokens', 'reasonTokens']) {
+      expect(en(`mcp.confirm.budgetGrant.${key}`).toLowerCase(), key).toContain('token');
+    }
   });
 
   it('tells tokens from dollars, and shows both halves of a two-quantity grant', async () => {
@@ -316,7 +328,7 @@ describe('budget grant in the confirmation dialog', () => {
     raise(
       budgetRequest({
         details: [
-          { labelKey: 'mcp.confirm.budgetGrant.limit', label: 'Limit', value: '' },
+          { labelKey: 'mcp.confirm.budgetGrant.limitTokens', label: 'Limit (tokens)', value: '' },
           { labelKey: 'mcp.confirm.budgetGrant.grantTokens', label: 'Tokens to grant', value: '' },
         ],
       })
@@ -344,7 +356,7 @@ describe('budget grant in the confirmation dialog', () => {
     render(<ToolConfirmationDialog />);
     raise(
       budgetRequest({
-        details: [{ labelKey: 'mcp.confirm.budgetGrant.limit', label: 'Limit', value: blank }],
+        details: [{ labelKey: 'mcp.confirm.budgetGrant.limitTokens', label: 'Limit (tokens)', value: blank }],
       })
     );
 
@@ -462,7 +474,7 @@ describe('budget grant in the confirmation dialog', () => {
     render(<ToolConfirmationDialog />);
     raise(
       budgetRequest({
-        details: [{ labelKey: 'mcp.confirm.budgetGrant.reason', label: 'Cap reached', value: hostile }],
+        details: [{ labelKey: 'mcp.confirm.budgetGrant.reasonTokens', label: 'Cap reached', value: hostile }],
       })
     );
 
@@ -481,9 +493,12 @@ describe('budget grant in the confirmation dialog', () => {
       'title',
       'summary',
       'confirm',
-      'reason',
-      'observed',
-      'limit',
+      'reasonTokens',
+      'reasonCost',
+      'observedTokens',
+      'observedCost',
+      'limitTokens',
+      'limitCost',
       'grantTokens',
       'grantCost',
       'footer',

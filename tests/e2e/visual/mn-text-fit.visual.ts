@@ -26,6 +26,8 @@ import {
   ensureSiderExpanded,
   gotoHash,
   hideFirstRunOverlay,
+  openWCoreConversation,
+  pushResponseFrame,
   setContentSize,
   settleFrozen,
   withInjectedCss,
@@ -254,5 +256,151 @@ test.describe('Mongolian text fit: detector is still alive', () => {
       await setContentSize(visual.app, VIEWPORT);
       await settleFrozen(visual.page);
     }
+  });
+});
+
+/**
+ * The composer's tool row, at the widths where a 33-character badge bites.
+ *
+ * This row was the one surface on the conversation screen that nothing
+ * measured. It carries three localized controls side by side - attach, the
+ * permission-mode selector, and the engine's effective-policy badge - and the
+ * badge is the longest string of the thirteen locales: mn-MN renders
+ * "Хөдөлгүүр: Ухаалаг / Бүрд нь асуух" (33 chars) where en-US renders
+ * "Engine: smart / prompt" (22). An Arco `Tag` is `white-space: nowrap`, so it
+ * cannot shrink; the only question is whether the row gives.
+ *
+ * The badge only exists once the engine has published a receipt, so the frame
+ * is pushed down the real response stream (`pushResponseFrame`) rather than
+ * faked into the DOM - the component, its copy and its layout are all the real
+ * ones, and only the engine that would have produced the frame is absent.
+ */
+test.describe('Mongolian text fit: conversation composer', () => {
+  const TOOLS_ROW = '[data-testid="wcore-sendbox-tools"]';
+
+  /** Open a conversation and give it the badge's frame. Returns nothing useful. */
+  async function openComposerWithBadge(): Promise<void> {
+    const conversationId = await openWCoreConversation(visual.page);
+    await pushResponseFrame(visual.app, {
+      type: 'execution_policy',
+      msg_id: '',
+      conversation_id: conversationId,
+      data: {
+        verdict: 'gap',
+        stale: true,
+        detail: 'revision 7 skips 2 revision(s) after 4',
+        announcedRevision: 7,
+        announcedReason: 'mode_change',
+        announcedEffectiveAtUnixMs: 1721000000000,
+        appliedRevision: 4,
+        policy: {
+          posture: 'smart',
+          approvals: 'prompt',
+          sandbox: 'bypass',
+          source: 'desktop_local_launch',
+          managed_floor_active: true,
+        },
+      },
+    });
+    await visual.page.locator('[data-testid="execution-policy-badge"]').first().waitFor({ timeout: 15_000 });
+    await settleFrozen(visual.page);
+  }
+
+  /**
+   * How far any control in the row sticks out past the row's own box.
+   *
+   * The overflow probe answers "is text CLIPPED", and this row does not clip -
+   * nothing in its ancestor chain sets `overflow: hidden`, so a control that
+   * does not fit simply paints outside the composer and the probe stays
+   * (correctly) quiet. Containment is therefore measured directly: it is the
+   * property that actually holds the row together, and it is the one a
+   * nowrap Arco `Tag` breaks.
+   */
+  function overhangPx(): Promise<number> {
+    return visual.page.evaluate((selector: string) => {
+      const row = document.querySelector(selector);
+      if (!row) return -1;
+      const box = row.getBoundingClientRect();
+      let worst = 0;
+      for (const child of Array.from(row.children)) {
+        const rect = child.getBoundingClientRect();
+        if (rect.width < 1 && rect.height < 1) continue;
+        worst = Math.max(worst, rect.right - box.right, box.left - rect.left);
+      }
+      return worst;
+    }, TOOLS_ROW);
+  }
+
+  /** The badge has to actually be on screen, or the scan measures the wrong row. */
+  async function expectBadgeMounted(where: string): Promise<void> {
+    const width = await visual.page.evaluate(() => {
+      const el = document.querySelector('[data-testid="execution-policy-badge"]');
+      return el === null ? 0 : el.getBoundingClientRect().width;
+    });
+    expect(width, `${where}: the policy badge is not rendered, so its fit was never measured`).toBeGreaterThan(1);
+  }
+
+  test.beforeAll(async () => {
+    await setContentSize(visual.app, VIEWPORT);
+    await openComposerWithBadge();
+  });
+
+  test.afterAll(async () => {
+    await setContentSize(visual.app, VIEWPORT);
+    await settleFrozen(visual.page);
+  });
+
+  test('the tool row fits at the baseline width', async () => {
+    await expectBadgeMounted('1280px');
+    const report = await scan(TOOLS_ROW);
+    expect(report.scanned, 'the composer tool row rendered no measurable text').toBeGreaterThan(0);
+    expectNoOverflow(report, 'composer tool row @ 1280px');
+  });
+
+  for (const size of NARROW_VIEWPORTS) {
+    test(`the tool row survives ${size.width}x${size.height}`, async () => {
+      await setContentSize(visual.app, size);
+      await settleFrozen(visual.page);
+      const report = await scan(TOOLS_ROW);
+      expect(report.viewport.width, 'window did not actually resize').toBe(size.width);
+      expect(report.rootFound, `the composer tool row is gone at ${size.width}px`).toBe(true);
+      await expectBadgeMounted(`${size.width}px`);
+      expectNoOverflow(report, `composer tool row @ ${size.width}x${size.height}`);
+      // ...and no control may sit outside the row it belongs to. This is the
+      // half the clipping probe cannot see, and the half a nowrap `Tag`
+      // actually breaks.
+      expect(
+        await overhangPx(),
+        `a control hangs outside the composer tool row at ${size.width}px`
+      ).toBeLessThanOrEqual(1);
+    });
+  }
+
+  /**
+   * The detector must be able to fail here too.
+   *
+   * The mutation reproduces the PRE-FIX layout rather than inventing a new
+   * one: `flex-wrap: nowrap` puts the row back on a single line, and the letter
+   * spacing stands in for a translation longer than mn-MN's. If the probe stays
+   * quiet through that, a clean report on this row proves nothing.
+   */
+  test('a badge too long for one line is detected on this row', async () => {
+    await setContentSize(visual.app, NARROW_VIEWPORTS[1]);
+    await settleFrozen(visual.page);
+    const before = await scan(TOOLS_ROW);
+    expectNoOverflow(before, 'composer tool row (pre-mutation control)');
+
+    expect(await overhangPx(), 'the row already overhangs before the mutation').toBeLessThanOrEqual(1);
+
+    const mutatedOverhang = await withInjectedCss(
+      visual.page,
+      '[data-testid="wcore-sendbox-tools"] { flex-wrap: nowrap !important; }' +
+        '[data-testid="execution-policy-badge"] { letter-spacing: 12px !important; }',
+      () => overhangPx()
+    );
+    expect(mutatedOverhang, 'the containment check did not notice a badge that cannot fit one line').toBeGreaterThan(1);
+
+    expect(await overhangPx(), 'the row stayed broken after the mutation was removed').toBeLessThanOrEqual(1);
+    expectNoOverflow(await scan(TOOLS_ROW), 'composer tool row (post-mutation)');
   });
 });

@@ -81,6 +81,11 @@ const KIND_KEYS = {
     // neutral "(empty)" the other kinds use and never as 0: on a spend
     // decision a missing number is a reason to hesitate, not a blank field.
     unknownValue: 'mcp.confirm.budgetGrant.unknown',
+    // The row LABELS carry the unit and say where the unit came from
+    // (`reasonTokens` / `observedCost` / ...), because the gate infers it from
+    // a free-form string the engine wrote. They are not listed here: the sender
+    // picks the token or money variant per request and passes it as `labelKey`,
+    // which is the only place that knows which unit was read.
     // No tool asked for this one - a budget cap did - so the footer must not
     // read "Requested by budget". On a dialog whose stated purpose is "so the
     // user knows what asked", that line has to answer the question.

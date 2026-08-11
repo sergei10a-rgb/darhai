@@ -102,7 +102,9 @@ export type DurableGoalView = {
    * How many tasks the ENGINE reported, which may exceed `tasks.length`: the
    * host keeps at most `MAX_TASKS_PER_GOAL` of them and says so via
    * {@link DurableGoalView.tasksTruncated}. Undefined until a snapshot arrives -
-   * a transition says nothing about tasks.
+   * a transition says nothing about tasks - and undefined again when the
+   * snapshot that arrived omitted the `tasks` array, which the schema allows.
+   * `0` is only ever the engine's own count, never this view's default.
    */
   taskCount?: number;
   tasks: GoalTaskSummary[];
@@ -181,7 +183,16 @@ function payloadIsCurrent(adopted: boolean, verdict: string): boolean {
   return adopted || verdict === 'unchanged';
 }
 
-/** Newest first, so the goal that just moved is the one at the top. */
+/**
+ * Newest first, so the goal that just moved is the one at the top.
+ *
+ * `toSorted` is STABLE, and that is what carries the tie: `seenAt` is a
+ * millisecond clock, and a burst of frames delivered in one tick all carry the
+ * SAME value, so the comparator returns 0 for every pair and the input order is
+ * the output order. Callers must therefore hand the goal that just moved in
+ * first - see the merge in {@link useDurableGoals} - or a same-millisecond
+ * burst orders itself oldest-first and the eviction below drops the newest.
+ */
 function sortBySeen(goals: DurableGoalView[]): DurableGoalView[] {
   return goals.toSorted((a, b) => b.seenAt - a.seenAt);
 }
@@ -226,10 +237,18 @@ function applySnapshot(prev: DurableGoalView | undefined, frame: GoalSnapshotFra
   if (frame.loopOwnerLeaseExpiresUnixMs !== undefined) {
     next.loopOwnerLeaseExpiresUnixMs = frame.loopOwnerLeaseExpiresUnixMs;
   }
-  next.taskCount = frame.taskCount;
-  next.tasks = frame.tasks;
-  next.tasksTruncated = frame.tasksTruncated;
-  next.dependsOnTruncated = frame.dependsOnTruncated;
+  // The count, the list and the two truncation notes are ONE reported fact -
+  // the goal's task list - so they move together or not at all. An absent
+  // `taskCount` means this snapshot carried no `tasks` array, and writing its
+  // empty list plus `tasksTruncated: false` over what an earlier snapshot named
+  // would erase tasks the engine never retracted and drop the note saying the
+  // kept list is cut.
+  if (frame.taskCount !== undefined) {
+    next.taskCount = frame.taskCount;
+    next.tasks = frame.tasks;
+    next.tasksTruncated = frame.tasksTruncated;
+    next.dependsOnTruncated = frame.dependsOnTruncated;
+  }
   next.textClamped = frame.textClamped;
   return next;
 }
@@ -374,6 +393,18 @@ export function useDurableGoals(): DurableGoalsState {
   });
   /** Whether the last successful read found a contract. Drives the re-ask below. */
   const contractKnown = useRef(false);
+  /**
+   * Which grade pull is the newest. An answer from an older one is discarded.
+   *
+   * Two engine starts in quick succession issue two overlapping invokes, and
+   * nothing in the IPC contract promises they resolve in the order they were
+   * sent. Today's main handler answers synchronously inside its async wrapper,
+   * so the inversion is not reachable - but the readout reports which engine is
+   * running, and the day that provider gains an await (reading the contract off
+   * disk, waiting on a spawning agent) the first engine's grade would silently
+   * overwrite the second's with nothing to catch it.
+   */
+  const pullSeq = useRef(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -387,10 +418,15 @@ export function useDurableGoals(): DurableGoalsState {
      * forever, no matter how correct its reducer is.
      */
     const readAvailability = (): void => {
+      const seq = (pullSeq.current += 1);
       void ipcBridge.wcoreEngine.capabilitySnapshot
         .invoke()
         .then((snapshot) => {
           if (cancelled) return;
+          // A newer pull was issued while this one was in flight, so this answer
+          // describes an engine that has already been replaced. Last-to-resolve
+          // must not beat last-to-be-asked.
+          if (seq !== pullSeq.current) return;
           const availability = readSnapshotAvailability(snapshot);
           contractKnown.current = availability.state !== 'unknown';
           setState((prev) => ({ ...prev, availability }));
@@ -444,7 +480,12 @@ export function useDurableGoals(): DurableGoalsState {
           updated = applyRefusal(existing, message.data as GoalControlRefusedFrame, seenAt);
         }
 
-        const merged = sortBySeen([...prev.goals.filter((goal) => goal.key !== key), updated]);
+        // The goal that just moved goes FIRST, not last. `prev.goals` is already
+        // newest-first and the sort is stable, so this is what decides the order
+        // when every frame in a burst shares one millisecond: appended last, an
+        // all-tie burst comes out oldest-first and `slice` then evicts the goal
+        // that arrived most recently while the pane says older ones were dropped.
+        const merged = sortBySeen([updated, ...prev.goals.filter((goal) => goal.key !== key)]);
         const kept = merged.slice(0, MAX_SHOWN_GOALS);
         return {
           ...prev,

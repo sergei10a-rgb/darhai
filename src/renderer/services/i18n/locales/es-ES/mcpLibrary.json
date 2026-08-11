@@ -31,14 +31,26 @@
     "statusWarn": "Requiere volver a autorizar",
     "statusError": "Error",
     "statusStopped": "Desactivado",
-    "statusToolCount": "{{count}} herramientas disponibles",
+    "toolCount": "{{count}} herramientas",
+    "toolCount_one": "{{count}} herramienta",
+    "toolCount_many": "{{count}} herramientas",
+    "toolCount_other": "{{count}} herramientas",
     "statusToolCountLabel": "herramientas disponibles",
-    "statusReauthCount": "{{count}} requieren volver a autorizar",
+    "statusToolCountLabel_one": "herramienta disponible",
+    "statusToolCountLabel_many": "herramientas disponibles",
+    "statusToolCountLabel_other": "herramientas disponibles",
     "statusReauthCountLabel": "requieren volver a autorizar",
-    "statusErrorCount": "{{count}} errores",
+    "statusReauthCountLabel_one": "requiere volver a autorizar",
+    "statusReauthCountLabel_many": "requieren volver a autorizar",
+    "statusReauthCountLabel_other": "requieren volver a autorizar",
     "statusErrorCountLabel": "errores",
-    "statusRunningCount": "{{count}} en ejecución",
+    "statusErrorCountLabel_one": "error",
+    "statusErrorCountLabel_many": "errores",
+    "statusErrorCountLabel_other": "errores",
     "statusRunningCountLabel": "en ejecución",
+    "statusRunningCountLabel_one": "en ejecución",
+    "statusRunningCountLabel_many": "en ejecución",
+    "statusRunningCountLabel_other": "en ejecución",
     "logsToast": "El visor de registros estará disponible pronto."
   },
   "byo": {
@@ -63,6 +75,24 @@
   "browse": {
     "title": "Biblioteca MCP",
     "subtitle": "Conectores seleccionados. Explora, instala con un clic y sigue la guía de configuración.",
-    "searchPlaceholder": "Buscar MCPs…"
+    "searchPlaceholder": "Buscar MCPs…",
+    "entryCount": "{{count}} entradas",
+    "entryCount_one": "{{count}} entrada",
+    "entryCount_many": "{{count}} entradas",
+    "entryCount_other": "{{count}} entradas",
+    "recommendedTitle": "★ Recomendado para ti",
+    "installRate": "{{percent}} % instalado"
+  },
+  "detail": {
+    "estMinutes": "{{count}} min",
+    "estMinutes_one": "{{count}} min",
+    "estMinutes_many": "{{count}} min",
+    "estMinutes_other": "{{count}} min",
+    "unknownEntry": "Entrada desconocida: {{id}}",
+    "back": "← Biblioteca MCP",
+    "viewSource": "Ver código fuente",
+    "transport": "Transporte",
+    "runtime": "Entorno de ejecución",
+    "platforms": "Plataformas"
   }
 }

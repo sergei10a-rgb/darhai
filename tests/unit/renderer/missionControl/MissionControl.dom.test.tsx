@@ -29,14 +29,22 @@
  */
 
 import { render, screen, act, cleanup } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // --- Hoist mocks ---
 const { streamListeners, noopOff, snapshotSource, language } = vi.hoisted(() => ({
   streamListeners: { value: [] as Array<(m: unknown) => void> },
   noopOff: () => {},
   // Wired to the real main-process builder below, once imports have evaluated.
-  snapshotSource: { read: (): unknown => undefined },
+  snapshotSource: {
+    read: (): unknown => undefined,
+    /** How many pulls this IPC seam answers by REJECTING, as a dead bridge does. */
+    rejections: 0,
+    /** Non-null while a test answers pulls by hand, so two can be in flight at once. */
+    deferred: null as Array<(snapshot: unknown) => void> | null,
+    /** How many pulls were issued. The pane's re-ask policy is counted, not assumed. */
+    pulls: 0,
+  },
   language: { value: 'en-US' },
 }));
 
@@ -53,6 +61,10 @@ vi.mock('react-i18next', () => ({
         'missionControl.goals.emptyTitle': 'No goals reported',
         'missionControl.goals.emptyHint': 'A goal appears here the moment the engine publishes one.',
         'missionControl.goals.emptyHintUnavailable': 'This engine build does not report durable goals.',
+        // A THIRD sentence, because `unavailable` and the other degraded grades
+        // are different claims: one says the build does not carry the
+        // capability, the others say it carries it and may not publish here.
+        'missionControl.goals.emptyHintLimited': 'The banner above says why this build may never publish one.',
         'missionControl.goals.unavailableTitle': 'Durable goals are unavailable',
         'missionControl.goals.limitedTitle': 'Durable goals are limited in this engine build',
         'missionControl.goals.gradeReported': 'The engine graded this capability {{grade}}.',
@@ -122,8 +134,25 @@ vi.mock('../../../../src/common', () => ({
       },
     },
     // The seam this pane's availability now comes from. Answered by the real
-    // main-process builder, not by a fixture of what it might return.
-    wcoreEngine: { capabilitySnapshot: { invoke: () => Promise.resolve(snapshotSource.read()) } },
+    // main-process builder, not by a fixture of what it might return - except
+    // where a test needs the two things a resolved answer cannot express: a
+    // bridge that FAILS, and two pulls in flight at the same time.
+    wcoreEngine: {
+      capabilitySnapshot: {
+        invoke: (): Promise<unknown> => {
+          snapshotSource.pulls += 1;
+          // Rejected, not thrown: `invoke` is a promise-returning IPC seam, and
+          // a main process that is not up yet answers by rejecting.
+          if (snapshotSource.rejections > 0) {
+            snapshotSource.rejections -= 1;
+            return Promise.reject(new Error('the capability snapshot bridge is unavailable'));
+          }
+          const queue = snapshotSource.deferred;
+          if (queue) return new Promise((resolve) => queue.push(resolve));
+          return Promise.resolve(snapshotSource.read());
+        },
+      },
+    },
     // Reached only by the Operations pane, which the tab-label test mounts.
     team: { agentStatusChanged: { on: () => noopOff }, listChanged: { on: () => noopOff } },
     cron: {
@@ -174,6 +203,14 @@ import MissionControlPage, { GoalsView } from '../../../../src/renderer/pages/mi
 // The renderer's availability now comes from the same function the IPC handler
 // calls. Nothing in between is re-implemented here.
 snapshotSource.read = buildWcoreCapabilitySnapshot;
+
+// The seam's own state, reset for every test in the file. A left-over rejection
+// or a still-open deferred queue would silently starve the next test's pull.
+beforeEach(() => {
+  snapshotSource.rejections = 0;
+  snapshotSource.deferred = null;
+  snapshotSource.pulls = 0;
+});
 
 type Frame = { type: string; data: unknown; msg_id: string };
 
@@ -694,5 +731,373 @@ describe('Mission Control - goals tab label', () => {
     // The count sits where the LOCALE put it, not where a template literal did.
     expect(screen.getByText('2 goals tracked')).toBeTruthy();
     expect(screen.queryByText('Goals · 2')).toBeNull();
+  });
+});
+
+/**
+ * The task count, which is a MEASUREMENT and was being invented.
+ *
+ * `goal.tasks` has no `required` entry and `goal` itself is
+ * `additionalProperties: true`, so a live snapshot may legally carry no task
+ * list at all. That used to arrive as `taskCount: 0`, and the pane says two
+ * different things about a zero and about silence - "Tasks 0" plus "The engine
+ * reported no tasks for this goal.", attributed to an engine that said nothing.
+ */
+describe('Mission Control - durable goals pane, the task count', () => {
+  beforeEach(() => {
+    streamListeners.value = [];
+    language.value = 'en-US';
+    resetGoalState();
+    resetEngineContract();
+    resetCapabilityActivation();
+  });
+
+  /** The fixture's own goal record, minus the one array the schema lets it omit. */
+  function snapshotWithoutTasks(): Record<string, unknown> {
+    const snapshot = examplePayload('event', 'goal_snapshot');
+    const goal = { ...(snapshot.goal as Record<string, unknown>) };
+    delete goal.tasks;
+    snapshot.goal = goal;
+    return snapshot;
+  }
+
+  it('claims nothing about tasks when the snapshot carries no task list', async () => {
+    await mountGoals();
+    const frame = emitFor(snapshotWithoutTasks());
+    // No count on the wire is what makes silence distinguishable one level up.
+    // A `0` here is the whole defect: every later reader can only read it as
+    // a number the engine published.
+    expect((frame.data as { taskCount?: number }).taskCount).toBeUndefined();
+    await deliver(frame);
+
+    // The goal is still rendered - only the claim about its tasks is withheld.
+    expect(screen.getByText('ship the release candidate')).toBeTruthy();
+    expect(screen.queryByText('Tasks')).toBeNull();
+    expect(screen.queryByText('The engine reported no tasks for this goal.')).toBeNull();
+    expect(screen.queryByText('0')).toBeNull();
+  });
+
+  it('says nothing about tasks when the whole goal payload is unreadable', async () => {
+    await mountGoals();
+    const snapshot = examplePayload('event', 'goal_snapshot');
+    // `goal` typed as an object in the schema, but this host decodes defensively
+    // and must not answer a payload it could not read with a measurement.
+    snapshot.goal = 'not-an-object';
+    const frame = emitFor(snapshot);
+    expect((frame.data as { taskCount?: number }).taskCount).toBeUndefined();
+    await deliver(frame);
+
+    expect(screen.queryByText('Tasks')).toBeNull();
+    expect(screen.queryByText('The engine reported no tasks for this goal.')).toBeNull();
+  });
+
+  it('still reports zero when the engine actually published an empty task list', async () => {
+    await mountGoals();
+    const snapshot = examplePayload('event', 'goal_snapshot');
+    snapshot.goal = { ...(snapshot.goal as Record<string, unknown>), tasks: [] };
+    const frame = emitFor(snapshot);
+    // The other half of the distinction: `0` is a real answer and must survive.
+    expect((frame.data as { taskCount?: number }).taskCount).toBe(0);
+    await deliver(frame);
+
+    expect(screen.getByText('Tasks')).toBeTruthy();
+    expect(screen.getByText('0')).toBeTruthy();
+    expect(screen.getByText('The engine reported no tasks for this goal.')).toBeTruthy();
+  });
+
+  it('keeps the task list an earlier snapshot named when a later one omits it', async () => {
+    await mountGoals();
+    await deliver(emitFor(examplePayload('event', 'goal_snapshot')));
+    expect(screen.getByText('task-publish')).toBeTruthy();
+
+    // The same goal, moved forward, carrying no task list. Silence is not a
+    // retraction: writing an empty list over the one already shown would delete
+    // two tasks the engine never said anything about.
+    const later = snapshotWithoutTasks();
+    later.cursor = { journal_digest: 'sha256:goalcursor', journal_sequence: 23 };
+    later.state_digest = 'sha256:goalstate-advanced';
+    const frame = emitFor(later);
+    expect((frame.data as { adopted: boolean }).adopted).toBe(true);
+    await deliver(frame);
+
+    expect(screen.getByText('task-publish')).toBeTruthy();
+    expect(screen.getByText('Tasks')).toBeTruthy();
+    expect(screen.queryByText('The engine reported no tasks for this goal.')).toBeNull();
+  });
+});
+
+/**
+ * Which goals survive the cap, and in what order.
+ *
+ * Both were asserted only by comment. The cap is not cosmetic: it decides which
+ * goal the user loses, and the note beside it says older ones were dropped -
+ * so dropping the newest would print a sentence that is exactly backwards.
+ *
+ * TWO INPUTS, because two different mechanisms decide the order. A burst
+ * delivered in one tick shares one `Date.now()`, so the comparator returns 0
+ * for every pair and only the merge order decides; goals arriving milliseconds
+ * apart are ordered by the comparator, which then overrides the merge order.
+ */
+describe('Mission Control - durable goals pane, ordering and eviction', () => {
+  beforeEach(() => {
+    streamListeners.value = [];
+    language.value = 'en-US';
+    resetGoalState();
+    resetEngineContract();
+    resetCapabilityActivation();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  /** Deliver one snapshot per goal id, through the real handler, without awaiting. */
+  function pushGoal(id: string, sequence: number): void {
+    const snapshot = examplePayload('event', 'goal_snapshot');
+    snapshot.goal_id = id;
+    snapshot.goal = { ...(snapshot.goal as Record<string, unknown>), goal_id: id, tasks: [] };
+    snapshot.state_digest = `sha256:goalstate-${sequence}`;
+    const frame = emitFor(snapshot);
+    for (const listener of streamListeners.value) {
+      listener({ type: frame.type, data: frame.data, msg_id: frame.msg_id, conversation_id: 'conv-1' });
+    }
+  }
+
+  /** The goal ids on screen, in document order. */
+  function renderedGoalIds(): Array<string | null> {
+    return screen.getAllByText(/^goal-\d+$/).map((node) => node.textContent);
+  }
+
+  it('evicts the OLDEST goal, not the one that just arrived', async () => {
+    await mountGoals();
+    // One tick, so every frame carries the same millisecond - the case the
+    // shipped app actually produces when an engine republishes a fleet of goals.
+    await act(async () => {
+      for (let i = 0; i <= MAX_SHOWN_GOALS; i += 1) pushGoal(`goal-${i}`, i);
+    });
+
+    const ids = renderedGoalIds();
+    expect(ids).toHaveLength(MAX_SHOWN_GOALS);
+    // The goal that just moved is the one the user is watching. Keeping the 64
+    // oldest and dropping it, while printing "Older goals were dropped", is the
+    // failure this asserts against.
+    expect(ids[0]).toBe(`goal-${MAX_SHOWN_GOALS}`);
+    expect(ids).not.toContain('goal-0');
+    expect(ids.at(-1)).toBe('goal-1');
+    expect(screen.getByText('Older goals were dropped.')).toBeTruthy();
+  });
+
+  it('lists goals newest first when they arrive milliseconds apart', async () => {
+    // A clock that MOVES, which is what gives the comparator anything to do:
+    // with distinct `seenAt` values the sort decides the order outright and the
+    // merge order above stops mattering. Deliveries in the shipped app are
+    // spread over time; the burst in the test above is the tie case.
+    let clock = 1_700_000_000_000;
+    vi.spyOn(Date, 'now').mockImplementation(() => (clock += 1000));
+
+    // One delivery per act, in order - the point is that they are NOT concurrent.
+    await mountGoals();
+    await act(async () => pushGoal('goal-a', 0));
+    await act(async () => pushGoal('goal-b', 1));
+    await act(async () => pushGoal('goal-c', 2));
+
+    const ids = screen.getAllByText(/^goal-[abc]$/).map((node) => node.textContent);
+    expect(ids).toEqual(['goal-c', 'goal-b', 'goal-a']);
+  });
+});
+
+/**
+ * `unchanged` - the verdict that carries every goal opened before this pane was.
+ *
+ * The host adopts nothing on an `unchanged` frame (the cursor did not move), so
+ * `adopted` is false and the naive reading is "refused". But the payload IS the
+ * current state, and for a renderer that has never seen this goal it is the
+ * only state it will get until the goal next moves. Every other rendering test
+ * drives a `seeded` or `advanced` frame, so nothing exercised this.
+ */
+describe('Mission Control - durable goals pane, an unchanged replay', () => {
+  beforeEach(() => {
+    streamListeners.value = [];
+    language.value = 'en-US';
+    resetGoalState();
+    resetEngineContract();
+    resetCapabilityActivation();
+  });
+
+  it('fills in a goal that was already running before the pane was opened', async () => {
+    // The first publication happens while the pane is closed: the HOST observes
+    // it and moves its cursor, the renderer never sees the frame.
+    emitFor(examplePayload('event', 'goal_snapshot'));
+
+    await mountGoals();
+    // The engine republishes the same position - the normal `unchanged` case.
+    const replay = emitFor(examplePayload('event', 'goal_snapshot'));
+    const data = replay.data as { verdict: string; adopted: boolean };
+    expect(data.verdict).toBe('unchanged');
+    expect(data.adopted).toBe(false);
+    await deliver(replay);
+
+    // Without the `unchanged` clause the card appears as an empty shell.
+    expect(screen.queryByText('Objective not reported')).toBeNull();
+    expect(screen.getByText('ship the release candidate')).toBeTruthy();
+    expect(screen.getByText('running')).toBeTruthy();
+    expect(screen.getByText('task-publish')).toBeTruthy();
+    // A benign replay is not a refusal, so no "not applied" banner may appear.
+    expect(screen.queryByText('Not applied: unchanged')).toBeNull();
+  });
+});
+
+/**
+ * What the readout does when the grade pull itself fails.
+ *
+ * The `contractKnown` ref exists for exactly one window - a mount-time pull that
+ * landed before any engine `ready` was recorded - and in the shipped app that
+ * window is only reachable when the pull REJECTED, because `recordEngineContract`
+ * runs in the `ready` arm and a goal frame cannot exist before `ready`. A mock
+ * that only ever resolves can never produce that input, so nothing here was
+ * covered: not the `.catch()`, not the re-ask, not its polarity.
+ */
+describe('Mission Control - durable goals availability, recovery', () => {
+  beforeEach(() => {
+    streamListeners.value = [];
+    language.value = 'en-US';
+    resetGoalState();
+    resetEngineContract();
+    resetCapabilityActivation();
+  });
+
+  /** An engine build whose contract omits this capability, so the grade is a verdict. */
+  function replayEngineWithoutGoals(): void {
+    const grades = gradesOf(readyFixture());
+    delete grades[DURABLE_GOALS_CAPABILITY_ID];
+    replayEngineStart(readyGrading(grades));
+  }
+
+  it('keeps its last honest readout when the grade pull fails', async () => {
+    replayEngineWithoutGoals();
+    snapshotSource.rejections = 1;
+
+    await mountGoals();
+
+    // The engine's answer never arrived, so no answer is rendered. Reporting
+    // "unavailable" here would turn a broken pipe into an engine verdict - and
+    // the two look identical to the user.
+    expect(snapshotSource.pulls).toBe(1);
+    expect(screen.queryByText('Durable goals are unavailable')).toBeNull();
+    expect(screen.queryByText('Durable goals are limited in this engine build')).toBeNull();
+    expect(screen.getByText('A goal appears here the moment the engine publishes one.')).toBeTruthy();
+  });
+
+  it('asks again on the next goal frame when the mount-time pull failed', async () => {
+    replayEngineWithoutGoals();
+    snapshotSource.rejections = 1;
+
+    await mountGoals();
+    expect(screen.queryByText('Durable goals are unavailable')).toBeNull();
+
+    // A goal frame is not the grade. It is proof an engine is publishing, which
+    // is the only other moment this renderer can go and ask for one.
+    await deliver(emitFor(examplePayload('event', 'goal_snapshot')));
+
+    expect(snapshotSource.pulls).toBe(2);
+    expect(screen.getByText('Durable goals are unavailable')).toBeTruthy();
+    expect(screen.getByText('ship the release candidate')).toBeTruthy();
+  });
+
+  it('stops asking once it has a grade', async () => {
+    replayEngineStart(readyFixture());
+    await mountGoals();
+    expect(snapshotSource.pulls).toBe(1);
+
+    // The re-ask is bounded by the ref, not by luck: an inverted condition here
+    // is one IPC round-trip per goal frame, forever.
+    await deliver(emitFor(examplePayload('event', 'goal_snapshot')));
+    expect(snapshotSource.pulls).toBe(1);
+  });
+
+  it('does not let a slower earlier pull overwrite a newer engine grade', async () => {
+    // Engine 1 grades the capability available. Its mount-time pull is held open.
+    replayEngineStart(readyFixture());
+    const engineOneAnswer = buildWcoreCapabilitySnapshot();
+    expect(engineOneAnswer.grades[DURABLE_GOALS_CAPABILITY_ID]).toBe('available');
+    snapshotSource.deferred = [];
+    render(<GoalsHarness />);
+    await act(async () => {});
+    expect(snapshotSource.deferred).toHaveLength(1);
+
+    // Engine 2 replaces it and does not carry the capability. Its activation
+    // frame is what tells the renderer to ask again.
+    replayEngineWithoutGoals();
+    const engineTwoAnswer = buildWcoreCapabilitySnapshot();
+    expect(engineTwoAnswer.grades[DURABLE_GOALS_CAPABILITY_ID]).toBeUndefined();
+    await act(async () => {
+      for (const listener of streamListeners.value) {
+        listener({
+          type: 'capability_activation',
+          msg_id: '',
+          conversation_id: 'conv-1',
+          data: { capability: 'smart_handoff', stage: 'enabled', health: 'ok' },
+        });
+      }
+    });
+    expect(snapshotSource.deferred).toHaveLength(2);
+
+    const [answerEngineOnePull, answerEngineTwoPull] = snapshotSource.deferred;
+    await act(async () => {
+      answerEngineTwoPull(engineTwoAnswer);
+    });
+    expect(screen.getByText('Durable goals are unavailable')).toBeTruthy();
+
+    // The first pull answers LAST, describing an engine that is gone. Last to
+    // resolve must not beat last to be asked.
+    await act(async () => {
+      answerEngineOnePull(engineOneAnswer);
+    });
+    expect(screen.getByText('Durable goals are unavailable')).toBeTruthy();
+  });
+});
+
+/**
+ * The empty-state hint, which flattened four grades back into one sentence the
+ * banner three lines above had just been careful to distinguish.
+ */
+describe('Mission Control - durable goals empty state, per grade', () => {
+  beforeEach(() => {
+    streamListeners.value = [];
+    language.value = 'en-US';
+    resetGoalState();
+    resetEngineContract();
+    resetCapabilityActivation();
+  });
+
+  it('does not tell a publication_bound build that it cannot report goals', async () => {
+    // `publication_bound` is not invented here: it is the grade this same
+    // fixture gives `anvil_receipts`. It means emission is CONDITIONAL, not
+    // absent - a correctly configured build of it does publish goals.
+    const grades = gradesOf(readyFixture());
+    const publicationBound = grades.anvil_receipts;
+    expect(publicationBound, 'the fixture no longer grades any capability publication_bound').toBe('publication_bound');
+    grades[DURABLE_GOALS_CAPABILITY_ID] = publicationBound;
+    replayEngineStart(readyGrading(grades));
+
+    await mountGoals();
+
+    expect(screen.getByText('Durable goals are limited in this engine build')).toBeTruthy();
+    expect(screen.getByText('Emission depends on how the engine is configured.')).toBeTruthy();
+    // The contradiction: a banner saying "publishes only when configured to"
+    // over a hint saying the build does not report durable goals at all.
+    expect(screen.queryByText('This engine build does not report durable goals.')).toBeNull();
+    expect(screen.getByText('The banner above says why this build may never publish one.')).toBeTruthy();
+  });
+
+  it('keeps the flat wording for the grade that actually means absent', async () => {
+    const grades = gradesOf(readyFixture());
+    delete grades[DURABLE_GOALS_CAPABILITY_ID];
+    replayEngineStart(readyGrading(grades));
+
+    await mountGoals();
+
+    expect(screen.getByText('This engine build does not report durable goals.')).toBeTruthy();
+    expect(screen.queryByText('The banner above says why this build may never publish one.')).toBeNull();
   });
 });

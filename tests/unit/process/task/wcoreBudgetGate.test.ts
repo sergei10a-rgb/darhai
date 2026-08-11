@@ -24,6 +24,7 @@
 
 import { describe, it, expect, vi } from 'vitest';
 import { fingerprintBudgetGrant, proposeBudgetGrant, resolveBudgetGrant } from '@process/task/wcoreBudgetGate';
+import { MAX_GRANT_COST_USD, MAX_GRANT_TOKENS } from '@process/agent/wcore/capabilities/handlers/budgetGrants';
 import type { ToolConfirmationOutcome } from '@process/services/toolConfirmation/types';
 import { examplePayload, validateEvent } from '../../../helpers/engineContract';
 
@@ -122,6 +123,57 @@ describe('proposeBudgetGrant: the amount is derived, never invented', () => {
     expect(none.ok === false && none.reason).toContain('no overrun');
   });
 
+  it('offers nothing for a cap name that could be either unit', () => {
+    // `max_spend` and `max_cost` are names a TOKEN cap plausibly wears, and both
+    // used to resolve to MONEY - so a 4096-token overrun would have been offered
+    // as "Amount to grant (US$) 4096". Only `usd` and `dollar` name a currency
+    // and nothing else, so everything else falls through to "no unit".
+    for (const reason of ['max_spend', 'max_cost', 'max_price']) {
+      const guessed = proposeBudgetGrant({ reason, observed: '8192', limit: '4096' });
+      expect(guessed.ok, reason).toBe(false);
+      expect(guessed.ok === false && guessed.reason, reason).toContain('no unit');
+    }
+    // The unambiguous ones still work, both spellings.
+    expect(proposeBudgetGrant({ reason: 'max_spend_usd', observed: '3', limit: '2' }).ok).toBe(true);
+    expect(proposeBudgetGrant({ reason: 'max_dollars', observed: '3', limit: '2' }).ok).toBe(true);
+  });
+
+  it('offers nothing when a token cap reports a fractional amount', () => {
+    // Reachable only with a fractional overrun ABOVE 1: at 0.5 the `< 1` floor
+    // catches it anyway, so this is the input that actually defends the
+    // safe-integer guard. Without it the dialog would offer "4096.5 tokens" -
+    // a figure `buildContinueWithBudget` refuses, i.e. a Grant that can only fail.
+    const fractional = proposeBudgetGrant({ reason: 'max_tokens_out', observed: '8192.5', limit: '4096' });
+    expect(fractional.ok).toBe(false);
+    expect(fractional.ok === false && fractional.reason).toContain('non-integer');
+  });
+
+  it('offers nothing above the one-press ceiling, in either unit', () => {
+    // MEASURED, and the reason the money ceiling exists: `max_cost_usd` with
+    // observed "999999999" against limit "0.01" produced a one-press proposal of
+    // US$999,999,998.99, printed by the dialog and put on the wire. The schema
+    // bounds `additional_cost_usd` with `minimum: 0` and nothing else.
+    const huge = proposeBudgetGrant({ reason: 'max_cost_usd', observed: '999999999', limit: '0.01' });
+    expect(huge.ok).toBe(false);
+    expect(huge.ok === false && huge.reason).toContain('ceiling');
+    expect(huge.ok === false && huge.reason).toContain(`US$${MAX_GRANT_COST_USD}`);
+
+    // The token ceiling is REACHABLE, unlike the contract bound it replaced:
+    // both operands are safe integers, so their difference can never approach
+    // 2^64-1 and a guard written against that could not fire.
+    const many = proposeBudgetGrant({ reason: 'max_tokens_out', observed: '1000000000', limit: '1' });
+    expect(many.ok).toBe(false);
+    expect(many.ok === false && many.reason).toContain('ceiling');
+
+    // Exactly at the ceiling is still offered - the bound is `>`, not `>=`.
+    expect(proposeBudgetGrant({ reason: 'max_tokens_out', observed: String(MAX_GRANT_TOKENS), limit: '0' }).ok).toBe(
+      true
+    );
+    expect(proposeBudgetGrant({ reason: 'max_cost_usd', observed: String(MAX_GRANT_COST_USD), limit: '0' }).ok).toBe(
+      true
+    );
+  });
+
   it('keeps a dollar overrun free of binary-float noise', () => {
     // 0.3 - 0.1 is 0.19999999999999998 in IEEE-754, and that string would be
     // both what the dialog shows and what goes on the wire.
@@ -170,6 +222,21 @@ describe('resolveBudgetGrant: nothing is spent without a press', () => {
     expect(d.grant).not.toHaveBeenCalled();
   });
 
+  it('an answer that is neither true nor false spends nothing', async () => {
+    // The gate reads `outcome.approved !== true`, not `=== false`. This repo
+    // compiles without strictNullChecks, so a reply that carries no `approved`
+    // at all type-checks - and under `=== false` it would fall THROUGH to the
+    // send. Default-deny means anything that is not an explicit press is a no.
+    const d = deps({ requestId: 'r1' } as unknown as ToolConfirmationOutcome);
+
+    const result = await resolveBudgetGrant(CAPPED, d);
+
+    expect(result.granted).toBe(false);
+    expect(result.approved).not.toBe(true);
+    expect(d.confirm).toHaveBeenCalledTimes(1);
+    expect(d.grant).not.toHaveBeenCalled();
+  });
+
   it('reports a press that could not be sent instead of claiming a grant', async () => {
     const d = deps(APPROVED, false);
 
@@ -177,6 +244,27 @@ describe('resolveBudgetGrant: nothing is spent without a press', () => {
 
     expect(result.granted).toBe(false);
     expect(result.reason).toContain('engine cannot be reached');
+    // `approved: true` beside `granted: false` is what lets the caller say the
+    // one thing the user needs to hear: you pressed, and nothing was sent. With
+    // the engine unreachable - the LIKELY state, since a budget cap is what
+    // ended the turn - this was previously indistinguishable from a refusal.
+    expect(result.approved).toBe(true);
+    // ...and the amount rides along, so the notice can name what was not granted.
+    expect(result.tokens).toBe(Number(CAPPED.observed) - Number(CAPPED.limit));
+    expect(result.costUsd).toBeUndefined();
+  });
+
+  it('does not claim a press that never happened when the dialog throws', async () => {
+    const d = deps(async () => {
+      throw new Error('gate exploded');
+    });
+
+    const result = await resolveBudgetGrant(CAPPED, d);
+
+    expect(result.granted).toBe(false);
+    // The throw came BEFORE any press, so the caller must not announce an
+    // undelivered grant to a user who was never asked.
+    expect(result.approved).toBe(false);
   });
 
   it('grants nothing when the dialog itself throws', async () => {
@@ -209,6 +297,37 @@ describe('what the user is shown before they spend', () => {
     expect(amountRow?.value).toBe(String(sent.additionalTokens));
     // ...and no unlabelled money row rides along with it.
     expect(input.details.some((row) => row.labelKey === 'mcp.confirm.budgetGrant.grantCost')).toBe(false);
+  });
+
+  it('gives EVERY row a unit, and says the unit was read from the cap name', async () => {
+    // Before this, `Used` and `Limit` carried no unit at all, so the whole unit
+    // signal on a spend dialog sat in one label - and nothing said the unit had
+    // been INFERRED from a string the engine chose.
+    const tokenDeps = deps(DECLINED);
+    await resolveBudgetGrant(CAPPED, tokenDeps);
+    const tokenRows = (tokenDeps.shown[0] as { details: Array<{ labelKey?: string }> }).details.map(
+      (row) => row.labelKey
+    );
+    expect(tokenRows).toEqual([
+      'mcp.confirm.budgetGrant.reasonTokens',
+      'mcp.confirm.budgetGrant.observedTokens',
+      'mcp.confirm.budgetGrant.limitTokens',
+      'mcp.confirm.budgetGrant.grantTokens',
+    ]);
+
+    const moneyDeps = deps(DECLINED);
+    await resolveBudgetGrant({ reason: 'max_cost_usd', observed: '3.00', limit: '2.50' }, moneyDeps);
+    const moneyRows = (moneyDeps.shown[0] as { details: Array<{ labelKey?: string }> }).details.map(
+      (row) => row.labelKey
+    );
+    expect(moneyRows).toEqual([
+      'mcp.confirm.budgetGrant.reasonCost',
+      'mcp.confirm.budgetGrant.observedCost',
+      'mcp.confirm.budgetGrant.limitCost',
+      'mcp.confirm.budgetGrant.grantCost',
+    ]);
+    // No row may keep a unitless label: the two sets must not overlap anywhere.
+    expect(tokenRows.filter((key) => moneyRows.includes(key))).toEqual([]);
   });
 
   it('uses the money label for a money cap', async () => {

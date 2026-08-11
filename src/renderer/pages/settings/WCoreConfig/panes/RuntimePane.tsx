@@ -336,7 +336,13 @@ const RuntimePane: React.FC = () => {
           <Button
             size='mini'
             type='secondary'
-            loading={phase === 'asking' || phase === 'pending'}
+            // `asking` ONLY - the IPC round-trip, which is bounded. `pending`
+            // deliberately leaves the control live: an answer is owed by an
+            // engine, this layer refuses to invent a timeout for it (see
+            // `useRuntimeDiagnostics`), and Arco's `loading` blocks the handler
+            // - so including it here made re-asking impossible and left
+            // switching rail tabs as the only escape, which no copy suggests.
+            loading={phase === 'asking'}
             onClick={ask}
             data-testid='diagnostics-ask'
           >

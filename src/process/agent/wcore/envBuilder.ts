@@ -9,6 +9,7 @@ import { isOpenAIHost, isLocalBaseUrl } from '@/common/utils/urlValidation';
 import { LOCAL_KEYLESS_PLACEHOLDER } from '@/common/utils/platformConstants';
 import { loadBaselineProviderCatalog } from '@process/providers/catalog/providerCatalogStore';
 import { getEnhancedEnv } from '@process/utils/shellEnv';
+import { hostDelegatedDeliveryCapability } from './capabilities/handlers/hostDelegatedDelivery';
 
 /**
  * The four wcore providers Wayland configures natively (each carries its own
@@ -469,6 +470,23 @@ const ENGINE_ENV_ALLOWLIST: readonly string[] = [
 ];
 
 /**
+ * The env var that moves the engine's `send_message` tool off its own channel
+ * table and onto this host.
+ *
+ * MEASURED against the bundled v0.12.26 binary, not inferred: it carries
+ * "send_message runs host-delegated (WAYLAND_SEND_MESSAGE_HOST_DELEGATE=1):
+ * sends are fulfilled by the host, not the engine channel table", and the name
+ * appears alongside `crates\wcore-agent\src\host_send_transport.rs`. `1` is the
+ * value that message names.
+ *
+ * DELIBERATELY ABSENT from {@link ENGINE_ENV_ALLOWLIST}, like `WAYLAND_HOME`: a
+ * value exported in the user's shell must not be able to switch the engine into
+ * host-delegated mode, because whether this host can actually deliver is a fact
+ * about the running build, not about the environment it was launched from.
+ */
+export const HOST_DELEGATED_SEND_ENV = 'WAYLAND_SEND_MESSAGE_HOST_DELEGATE';
+
+/**
  * Build the environment for the wcore engine spawn (SEC-1).
  *
  * Replaces the previous `getEnhancedEnv(env)` call, which spread ALL of
@@ -498,6 +516,14 @@ export function buildEngineSpawnEnv(opts: {
   providerEnv: Record<string, string>;
   toolKeys?: Record<string, string>;
   waylandHome?: string;
+  /**
+   * Who answers "does this build have a delivery transport?" for
+   * {@link HOST_DELEGATED_SEND_ENV}. Defaults to the shared
+   * `hostDelegatedDeliveryCapability`, which is the live state a real spawn must
+   * be judged against; injectable so a test can drive BOTH arms of the gate
+   * without mutating a process-wide singleton.
+   */
+  hostDelivery?: { hasMessageDeliverer(): boolean };
 }): Record<string, string> {
   const full = getEnhancedEnv(opts.providerEnv);
   const allowed = new Set(ENGINE_ENV_ALLOWLIST.map((name) => name.toUpperCase()));
@@ -532,6 +558,31 @@ export function buildEngineSpawnEnv(opts: {
   // `ProfileIsolationError` exists to prevent. Renaming it is not cosmetic.
   if (opts.waylandHome) {
     out.WAYLAND_HOME = opts.waylandHome;
+  }
+
+  // Host-delegated `send_message`, gated on a deliverer EXISTING - never on a
+  // comment promising one will.
+  //
+  // WHY THE GATE IS THE POINT. Asking the engine to delegate on a build with no
+  // deliverer is strictly WORSE than not asking: `hostDelegatedDelivery`
+  // answers every request `ok:false` with "no delivery transport is installed",
+  // so the model loses a tool it would otherwise have. Asking WITH a deliverer
+  // is strictly better: measured against the bundled binary under the profile
+  // Darhai spawns it with, `wayland-core channel list` reports "no channels
+  // configured", so the engine's own transport can reach nothing at all.
+  //
+  // Read from live capability state rather than from a caller's boolean so the
+  // decision cannot be made anywhere the deliverer is not.
+  const delivery = opts.hostDelivery ?? hostDelegatedDeliveryCapability;
+  if (delivery.hasMessageDeliverer() === true) {
+    out[HOST_DELEGATED_SEND_ENV] = '1';
+  } else {
+    // DELETED, not merely left unset. `providerEnv` and `toolKeys` are layered
+    // in above under names their callers choose, and a forwarded tool key of
+    // this name would otherwise switch the engine into host-delegated mode on a
+    // build with no deliverer - which is the exact regression this gate exists
+    // to prevent, arriving through the one door the allowlist does not guard.
+    delete out[HOST_DELEGATED_SEND_ENV];
   }
 
   return out;

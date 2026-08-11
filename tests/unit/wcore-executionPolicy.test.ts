@@ -20,10 +20,11 @@
  *
  * Routing goes through `createDispatcher`, the same function production builds
  * its dispatcher from, over a handler list this file supplies. It has to supply
- * one: the production `HANDLERS` array is still empty, so this capability is
- * not registered and `dispatchCapabilityEvent` would not route to it. What
- * these tests prove is the reducer and the handler; that the capability is
- * actually reached in the running app is a registration step outside this file.
+ * one - and, more to the point, its own capability INSTANCE: there is no module
+ * singleton to import, because the revision tracker is per-engine state and
+ * Darhai runs one engine per open conversation. What these tests prove is the
+ * reducer and the handler; that the capability is reached in the running app is
+ * `createCapabilitySet()`, pinned by `wcore-readySeed.test.ts`.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -33,7 +34,6 @@ import type { CapabilityContext } from '@process/agent/wcore/capabilities/types'
 import {
   createExecutionPolicyCapability,
   EXECUTION_POLICY_SUBCONTRACT_VERSION,
-  executionPolicyCapability,
   PolicyRevisionTracker,
 } from '@process/agent/wcore/capabilities/handlers/executionPolicy';
 import type {
@@ -166,7 +166,7 @@ describe('the contract surface this capability owns', () => {
     // ask the engine to re-send a revision it missed. That constraint is what
     // makes the gap rule's cost permanent for the session.
     expect(surface.commands).toEqual([]);
-    expect(executionPolicyCapability.handles).toContain('execution_policy');
+    expect(createExecutionPolicyCapability().handles).toContain('execution_policy');
   });
 
   /**
@@ -192,7 +192,7 @@ describe('the contract surface this capability owns', () => {
    * someone models the body instead of leaving the tag-only handler in place.
    */
   it('claims workspace_policy even though the contract still declares no payload for it', () => {
-    expect(executionPolicyCapability.handles).toContain('workspace_policy');
+    expect(createExecutionPolicyCapability().handles).toContain('workspace_policy');
     expect(readManifest().events.some((e) => e.type === 'workspace_policy')).toBe(false);
   });
 });

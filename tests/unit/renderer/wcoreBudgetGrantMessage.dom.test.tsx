@@ -23,7 +23,7 @@
  * landed in the locale resolves to its own name and the assertions fail.
  */
 
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -216,6 +216,98 @@ describe('budget_grant_result in the transcript', () => {
       'turn_in_progress',
     ]) {
       expect(typeof bundle.budgetResult.reason[reason], `en-US budgetResult.reason.${reason}`).toBe('string');
+    }
+  });
+});
+
+/**
+ * The host's own failures, which used to reach nobody at all.
+ *
+ * Every arm above describes a decision the ENGINE made, and therefore evidence
+ * that the command arrived. These two are the opposite: the press happened (or
+ * would have) and the host could not send it. Measured before this arm existed:
+ * with the engine unreachable, `responseStream.emit` was called ZERO times and
+ * the modal closed on a screen identical to a successful grant.
+ */
+describe('budget_grant_not_sent in the transcript', () => {
+  beforeEach(() => {
+    streamMocks.handlers.length = 0;
+    streamMocks.addOrUpdateMessage.mockClear();
+  });
+
+  function deliverNotSent(data: Record<string, unknown>, msgId = 'm1'): void {
+    act(() => {
+      for (const handler of streamMocks.handlers) {
+        handler({ type: 'budget_grant_not_sent', data, msg_id: msgId, conversation_id: CONVERSATION });
+      }
+    });
+  }
+
+  it('says the grant never reached the engine, and names the amount', () => {
+    const { result } = renderHook(() => useWCoreMessage(CONVERSATION));
+
+    deliverNotSent({ code: 'undelivered', detail: 'the engine cannot be reached', tokens: 4096 });
+
+    const notice = lastNotice();
+    expect(notice.type).toBe('tips');
+    // An error, not a warning: the user believes they spent something.
+    expect(notice.content.type).toBe('error');
+    expect(notice.content.content).toContain('4096');
+    expect(notice.content.content).toContain('the engine cannot be reached');
+    // A dead turn must not be shown as generating - the same reason this arm is
+    // not left to `default:`.
+    expect(result.current.running).toBe(false);
+  });
+
+  it('does not read like an engine refusal', () => {
+    renderHook(() => useWCoreMessage(CONVERSATION));
+
+    deliverNotSent({ code: 'undelivered', detail: 'the engine cannot be reached', tokens: 4096 });
+
+    // `mcp.budgetResult.refused` means the ENGINE answered, which is exactly
+    // what did NOT happen here. Only one of the two is worth pressing again.
+    const refusedPrefix = en('mcp.budgetResult.refused').split('{{')[0];
+    expect(lastNotice().content.content).not.toContain(refusedPrefix);
+  });
+
+  it('says the session grant limit stopped it, on its own line', () => {
+    renderHook(() => useWCoreMessage(CONVERSATION));
+
+    // `msg_id: ''` on purpose. The manager emits this frame with whatever msg_id
+    // it currently holds, and between turns that is the empty string - which is
+    // exactly the value the manager's OWN stream guard (`if (!data.msg_id)
+    // return;`) drops. This arm is fed through the capability context instead
+    // and must survive it, or the notice disappears in precisely the case it
+    // was written for: after the capped turn already died.
+    deliverNotSent({ code: 'session_limit' }, '');
+
+    const notice = lastNotice();
+    expect(notice.content.content).toBe(en('mcp.budgetResult.notSent.sessionLimit'));
+    expect(notice.content.type).toBe('warning');
+    // Keyed so a second session-limit notice replaces rather than stacks.
+    expect(notice.msg_id).toBe('budget:limit');
+  });
+
+  it('ships both host-failure sentences in every locale', () => {
+    // The engine's nine refusals already have this guard; the host's two did
+    // not exist, and an untranslated one would show its own key name.
+    const locales = readdirSync(LOCALES_DIR).filter((entry) => existsSync(join(LOCALES_DIR, entry, 'mcp.json')));
+    expect(locales.length).toBe(13);
+    for (const locale of locales) {
+      const bundle = JSON.parse(readFileSync(join(LOCALES_DIR, locale, 'mcp.json'), 'utf-8')) as {
+        budgetResult: { notSent?: Record<string, string> };
+      };
+      for (const key of ['undelivered', 'sessionLimit']) {
+        expect(typeof bundle.budgetResult.notSent?.[key], `${locale} budgetResult.notSent.${key}`).toBe('string');
+      }
+    }
+    // Mongolian must be Mongolian, not English left in place.
+    const mn = JSON.parse(readFileSync(join(LOCALES_DIR, 'mn-MN', 'mcp.json'), 'utf-8')) as {
+      budgetResult: { notSent: Record<string, string> };
+    };
+    for (const key of ['undelivered', 'sessionLimit']) {
+      expect(mn.budgetResult.notSent[key], `mn-MN ${key}`).toMatch(/[Ѐ-ӿ]/);
+      expect(mn.budgetResult.notSent[key], `mn-MN ${key}`).not.toBe(en(`mcp.budgetResult.notSent.${key}`));
     }
   });
 });

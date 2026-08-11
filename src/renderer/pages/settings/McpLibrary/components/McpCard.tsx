@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Check, Plus } from 'lucide-react';
 import type { CatalogIndexEntry } from '../types';
 import { TierBadge } from './TierBadge';
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export function McpCard({ entry, installed, onClick }: Props) {
+  const { t } = useTranslation();
   const isWaylandBuilt = entry.maintainerType === 'wayland';
   return (
     <div
@@ -48,13 +50,15 @@ export function McpCard({ entry, installed, onClick }: Props) {
             onClick();
           }}
         >
+          {/* The two states reuse the install-flow keys already shipped in
+              every locale rather than minting card-only duplicates. */}
           {installed ? (
             <>
-              <Check size={12} /> Installed
+              <Check size={12} /> {t('mcpLibrary.install.installed', 'Installed')}
             </>
           ) : (
             <>
-              <Plus size={12} /> Install
+              <Plus size={12} /> {t('mcpLibrary.install.button', 'Install')}
             </>
           )}
         </button>

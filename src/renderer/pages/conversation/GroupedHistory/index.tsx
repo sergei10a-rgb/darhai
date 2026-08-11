@@ -19,7 +19,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { emitter } from '@/renderer/utils/emitter';
 
-import WorkspaceCollapse from '../components/WorkspaceCollapse';
+import WorkspaceCollapse from '../components/navigation/WorkspaceCollapse';
 import ConversationRow from './ConversationRow';
 import DragOverlayContent from './DragOverlayContent';
 import SortableConversationRow from './SortableConversationRow';

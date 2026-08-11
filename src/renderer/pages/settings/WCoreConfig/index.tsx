@@ -4,12 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { ChevronLeft, LayoutGrid, Wrench, Plug, Brain, ShieldCheck, Users, Server } from 'lucide-react';
 import classNames from 'classnames';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ipcBridge } from '@/common';
 // The Darhai lockup, NOT the upstream one. This header used to show the
 // `Wayland Core` lockup under an `alt` that read "Darhai Core" - a screen
 // reader heard the product name while the eye saw the upstream brand. Caught
@@ -17,6 +16,7 @@ import { ipcBridge } from '@/common';
 // Upstream credit belongs in the licence and the docs, not in the chrome of a
 // pane the user opens to configure Darhai.
 import coreLockup from '@renderer/assets/logos/brand/darhai-lockup-white.png';
+import { useEngineStatus } from './components/useEngineStatus';
 import type { WCoreRailKey } from './panes/types';
 import OverviewPane from './panes/OverviewPane';
 import ServicesKeysPane from './panes/ServicesKeysPane';
@@ -53,20 +53,12 @@ const WCoreConfig: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [active, setActive] = useState<WCoreRailKey>('overview');
-  const [engineAvailable, setEngineAvailable] = useState<boolean | null>(null);
-  const [engineVersion, setEngineVersion] = useState<string | undefined>(undefined);
-
-  useEffect(() => {
-    void ipcBridge.acpConversation.getAvailableAgents.invoke().then((result) => {
-      if (result.success) {
-        const agent = result.data.find((a) => a.backend === 'wcore');
-        setEngineAvailable(Boolean(agent));
-        if (agent && 'version' in agent && typeof (agent as { version?: string }).version === 'string') {
-          setEngineVersion((agent as { version?: string }).version);
-        }
-      }
-    });
-  }, []);
+  // Both halves of the chip are READ, not compiled in. This used to ask
+  // `acpConversation.getAvailableAgents`, which reports whether Darhai SHIPS the
+  // Core backend (always yes, no version), so the chip said "engine running ·
+  // <pinned constant>" with no engine process alive and the stopped branch was
+  // dead code. See `useEngineStatus` for what that read still cannot see.
+  const { engines, engineVersion, settled } = useEngineStatus();
 
   const railEntries: RailEntry[] = useMemo(
     () => [
@@ -120,7 +112,10 @@ const WCoreConfig: React.FC = () => {
   const renderPane = (): React.ReactNode => {
     switch (active) {
       case 'overview':
-        return <OverviewPane version={engineVersion ?? PINNED_VERSION} />;
+        // The pinned build is passed as the FALLBACK, not as the answer: the
+        // pane prefers the version an engine actually reported and says which
+        // of the two it is showing.
+        return <OverviewPane version={PINNED_VERSION} />;
       case 'services':
         return <ServicesKeysPane />;
       case 'tools':
@@ -142,7 +137,18 @@ const WCoreConfig: React.FC = () => {
     void navigate('/settings', { replace: true });
   };
 
-  const versionLabel = engineVersion ?? PINNED_VERSION;
+  // The engine's own semver when one has reported it, the pinned build
+  // otherwise. Never the constant dressed up as a reading.
+  const versionLabel = engineVersion.length > 0 ? engineVersion : PINNED_VERSION;
+  // `settled` gates the claim: before the main process answers, "stopped" would
+  // be as invented as "running" was - so the chip has three states, not two,
+  // and the third one says out loud that Darhai has not looked yet.
+  const stopped = settled && engines === 0;
+  const chipLabel = !settled
+    ? t('settings.wcoreConfig.engineChecking', { defaultValue: 'checking the engine…' })
+    : stopped
+      ? t('settings.wcoreConfig.engineStopped', { defaultValue: 'engine stopped' })
+      : `${t('settings.wcoreConfig.engineRunning', { defaultValue: 'engine running' })} · ${versionLabel}`;
 
   return (
     <div className={styles.surface}>
@@ -181,11 +187,9 @@ const WCoreConfig: React.FC = () => {
           </div>
         </div>
         <div className={styles.topbarRight}>
-          <span className={classNames(styles.engineChip, { [styles.stopped]: engineAvailable === false })}>
+          <span className={classNames(styles.engineChip, { [styles.stopped]: stopped })} data-testid='engine-chip'>
             <span className={styles.chipDot} />
-            {engineAvailable === false
-              ? t('settings.wcoreConfig.engineStopped', { defaultValue: 'engine stopped' })
-              : `${t('settings.wcoreConfig.engineRunning', { defaultValue: 'engine running' })} · ${versionLabel}`}
+            {chipLabel}
           </span>
         </div>
       </header>

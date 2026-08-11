@@ -31,14 +31,26 @@
     "statusWarn": "Precisa de reautorização",
     "statusError": "Erro",
     "statusStopped": "Desabilitado",
-    "statusToolCount": "{{count}} ferramentas disponíveis",
+    "toolCount": "{{count}} ferramentas",
+    "toolCount_one": "{{count}} ferramenta",
+    "toolCount_many": "{{count}} ferramentas",
+    "toolCount_other": "{{count}} ferramentas",
     "statusToolCountLabel": "ferramentas disponíveis",
-    "statusReauthCount": "{{count}} precisam de reautorização",
+    "statusToolCountLabel_one": "ferramenta disponível",
+    "statusToolCountLabel_many": "ferramentas disponíveis",
+    "statusToolCountLabel_other": "ferramentas disponíveis",
     "statusReauthCountLabel": "precisam de reautorização",
-    "statusErrorCount": "{{count}} erros",
+    "statusReauthCountLabel_one": "precisa de reautorização",
+    "statusReauthCountLabel_many": "precisam de reautorização",
+    "statusReauthCountLabel_other": "precisam de reautorização",
     "statusErrorCountLabel": "erros",
-    "statusRunningCount": "{{count}} em execução",
+    "statusErrorCountLabel_one": "erro",
+    "statusErrorCountLabel_many": "erros",
+    "statusErrorCountLabel_other": "erros",
     "statusRunningCountLabel": "em execução",
+    "statusRunningCountLabel_one": "em execução",
+    "statusRunningCountLabel_many": "em execução",
+    "statusRunningCountLabel_other": "em execução",
     "logsToast": "Visualizador de logs em breve."
   },
   "byo": {
@@ -63,6 +75,24 @@
   "browse": {
     "title": "Biblioteca MCP",
     "subtitle": "Conectores selecionados. Navegue, instale com um clique e siga o guia de configuração.",
-    "searchPlaceholder": "Pesquisar MCPs…"
+    "searchPlaceholder": "Pesquisar MCPs…",
+    "entryCount": "{{count}} entradas",
+    "entryCount_one": "{{count}} entrada",
+    "entryCount_many": "{{count}} entradas",
+    "entryCount_other": "{{count}} entradas",
+    "recommendedTitle": "★ Recomendado para você",
+    "installRate": "{{percent}}% instalado"
+  },
+  "detail": {
+    "estMinutes": "{{count}} min",
+    "estMinutes_one": "{{count}} min",
+    "estMinutes_many": "{{count}} min",
+    "estMinutes_other": "{{count}} min",
+    "unknownEntry": "Entrada desconhecida: {{id}}",
+    "back": "← Biblioteca MCP",
+    "viewSource": "Ver código-fonte",
+    "transport": "Transporte",
+    "runtime": "Ambiente de execução",
+    "platforms": "Plataformas"
   }
 }

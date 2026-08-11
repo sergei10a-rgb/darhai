@@ -96,9 +96,12 @@
       "title": "要提高預算嗎？",
       "summary": "引擎因為達到預算上限而停止。你可以再授予一些，讓它繼續。被暫停的這一輪是否繼續，或額外預算只用於你的下一則訊息，由引擎決定，而不是 Дархай。",
       "confirm": "授予",
-      "reason": "觸及的上限",
-      "observed": "已用",
-      "limit": "上限",
+      "reasonTokens": "觸及的上限（依名稱判斷為 token 上限）",
+      "reasonCost": "觸及的上限（依名稱判斷為 US$ 上限）",
+      "observedTokens": "已用（token）",
+      "observedCost": "已用（US$）",
+      "limitTokens": "上限（token）",
+      "limitCost": "上限（US$）",
       "unknown": "未知",
       "grantTokens": "授予的 token 數量",
       "grantCost": "授予的金額（US$）",
@@ -114,6 +117,10 @@
     "cost": "US$ {{cost}}",
     "both": "{{tokens}} 和 {{cost}}",
     "nothing": "沒有任何額度",
+    "notSent": {
+      "undelivered": "你授予了 {{amount}}，但它並未送達引擎，什麼都沒有提高。（{{reason}}）",
+      "sessionLimit": "Дархай 已用完單次工作階段可傳送的預算追加次數，因此沒有跳出對話框。"
+    },
     "reason": {
       "host_not_authorized": "這台 Дархай 無權提高預算。",
       "managed_policy": "受管理原則禁止此操作。",

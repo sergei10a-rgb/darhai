@@ -336,10 +336,13 @@
     "statusFailed": "Fehlgeschlagen",
     "untitled": "Workflow",
     "nodesObserved": "{{observed}} Schritte gemeldet",
+    "nodesUnknown": "Schrittanzahl nicht gemeldet",
     "nodesDeclared": "Engine hat {{declared}} angegeben",
     "noNodesYet": "Noch kein Schritt gemeldet",
     "noNodesReported": "Der Lauf endete, ohne einen einzigen Schritt zu melden",
+    "noNodeList": "Dieser Lauf hat überhaupt keine Schrittliste gemeldet",
     "linesLost": "{{lines}} Stream-Zeilen gingen verloren - dieser Lauf kann unvollständig sein",
+    "linesLostUnknown": "Dieser Lauf hat nicht gemeldet, ob Stream-Zeilen verloren gingen",
     "retryable": "Wiederholbar",
     "notRetryable": "Nicht wiederholbar",
     "runFailed": "Der Lauf ist fehlgeschlagen",
@@ -373,5 +376,31 @@
   "delivery": {
     "unconfigured": "Der Agent wollte eine Nachricht über {{platform}} senden, aber es ist kein {{platform}}-Kanal eingerichtet. Legen Sie einen unter Einstellungen - Kanäle an.",
     "failed": "Der Agent konnte keine Nachricht über {{platform}} senden: {{error}}"
+  },
+  "anvilAlert": {
+    "retracted": {
+      "artifact_mutated": "Die Engine hat ihre Prüfquittung zurückgezogen: Das Artefakt wurde nach der Veröffentlichung der Quittung verändert.",
+      "gate_revoked": "Die Engine hat ihre Prüfquittung zurückgezogen: Das von ihr bestätigte Gate wurde widerrufen.",
+      "superseded": "Die Engine hat ihre Prüfquittung zurückgezogen: Eine spätere Quittung hat sie ersetzt.",
+      "unknown": "Die Engine hat ihre Prüfquittung aus einem Grund zurückgezogen, den Darhai nicht kennt: {{reason}}"
+    },
+    "refused": {
+      "malformed": "Darhai hat einen Prüfeintrag abgelehnt, der gegen das von der Engine selbst veröffentlichte Schema verstößt. Nichts, was er behauptet, darf als verifiziert gelten.",
+      "version_mismatch": "Darhai hat einen Prüfeintrag abgelehnt, der für eine Version des Prüfvertrags geschrieben wurde, die Darhai nicht umsetzt. Er wurde nicht ausgewertet - es wurde also nichts verifiziert und nichts stillschweigend übernommen.",
+      "unknown_critical_extension": "Ein Prüfeintrag verlangt Lese-Erweiterungen, die Darhai nicht umsetzt. Darhai kann deshalb nicht sagen, was er bestätigt, und hat ihn abgelehnt, statt ihn als verifiziert anzuzeigen.",
+      "sequence_gap": "In dieser Sitzung fehlt ein Prüfeintrag: Ein Eintrag traf vor dem ein, auf den Darhai gewartet hat. Die Prüfkette dieser Sitzung ist nicht mehr nachweislich lückenlos.",
+      "sequence_conflict": "Zwei verschiedene Prüfeinträge beanspruchen dieselbe Position in dieser Sitzung. Darhai kann nicht erkennen, welcher echt ist, und vertraut daher keinem von beiden.",
+      "stale_replay": "Eine Prüfquittung, die die Engine bereits zurückgezogen hatte, traf erneut ein. Darhai hat sie nicht wiederhergestellt - ein zurückgezogenes Urteil bleibt zurückgezogen.",
+      "body_conflict": "Ein Prüf-Hash wurde dabei beobachtet, wie er für zwei verschiedene Einträge bürgt. Darhai kann den Hash der Engine nicht nachrechnen und kann daher nicht sagen, welcher der beiden verändert wurde - nur, dass nicht beide echt sein können.",
+      "invalidation_unlinked": "Es traf ein Widerruf für eine Prüfquittung ein, deren Veröffentlichung Darhai nie gesehen hat. Es gibt hier also kein Urteil zum Zurückziehen, und die Behauptung lässt sich nicht prüfen.",
+      "unknown": "Darhai hat einen Prüfeintrag abgelehnt, den es nicht verifizieren konnte, aus einem Grund, den es nicht kennt: {{code}}"
+    },
+    "engineRecord": "Eintrag der Engine: Quittung {{receipt}}, Position {{position}}.",
+    "engineRecordArtifact": "Eintrag der Engine: Quittung {{receipt}}, Position {{position}}, Artefakt {{artifact}}.",
+    "noReceiptId": "nicht angegeben",
+    "noPosition": "nicht lesbar",
+    "noValue": "nicht angegeben",
+    "publicationScope": "Eine Prüfquittung deckt das Artefakt nur in dem Zustand ab, in dem es bei der Veröffentlichung der Quittung war; Darhai überwacht diese Datei danach nicht, Schweigen ist also kein Beweis dafür, dass sich sonst nichts geändert hat.",
+    "hostReason": "Grund von Darhai: {{detail}}"
   }
 }

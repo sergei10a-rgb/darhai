@@ -122,6 +122,7 @@
     "emptyTitle": "Nenhum objetivo relatado",
     "emptyHint": "Um objetivo aparece aqui assim que o motor o publica. O motor os mantém em seu próprio registro, então um objetivo aberto antes aparece na próxima atualização, e não agora.",
     "emptyHintUnavailable": "Esta versão do motor não relata objetivos persistentes, então nada aparecerá aqui até que isso mude.",
+    "emptyHintLimited": "Nenhum objetivo foi publicado aqui ainda, e o aviso acima explica por que esta versão do motor talvez nunca publique um.",
     "unavailableTitle": "Objetivos persistentes indisponíveis",
     "limitedTitle": "Objetivos persistentes são limitados nesta versão do motor",
     "gradeReported": "O motor classificou esta capacidade como {{grade}}.",

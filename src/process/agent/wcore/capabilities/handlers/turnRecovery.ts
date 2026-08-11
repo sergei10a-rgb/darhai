@@ -50,12 +50,13 @@
  *     `session_recovery_unavailable`, `turn_recovery_lifecycle` remains in
  *     `ACKNOWLEDGED_UNHANDLED_EVENTS` in `protocol.ts`, so the host no longer
  *     reports as knowingly-inert four events it now handles.
- *  3. STILL OPEN. The decoder's `ready` arm does not call {@link
- *     TurnRecoveryCapability.seedFromReady}. `ready` has its own arm and never
+ *  3. DONE. The decoder's `ready` arm calls {@link
+ *     TurnRecoveryCapability.seedFromReady}, through
+ *     `WCoreAgent.seedCapabilitiesFromReady`. `ready` has its own arm and never
  *     reaches the dispatcher, so the negotiated contract - which is the GATE on
- *     every command below - has no other way in. With no seed the gate is shut,
- *     which is the deliberate fail-closed default, so recovery is inert rather
- *     than wrong.
+ *     every command below - has no other way in. Without that call the gate
+ *     stayed shut, which is the deliberate fail-closed default, so recovery was
+ *     inert rather than wrong.
  *  4. STILL OPEN. `WCoreAgent.start()` does not call {@link
  *     TurnRecoveryCapability.beginResync} after `ready` and before the first
  *     `message`, and installs no durable cursor sink via {@link

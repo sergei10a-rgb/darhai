@@ -37,7 +37,8 @@ import { skillSuggestWatcher } from '@process/services/cron/SkillSuggestWatcher'
 import { getCostRecorder } from '@process/services/cost/CostRecorder';
 import { getToolConfirmationService } from '@process/services/toolConfirmation';
 import { resolveEngineApproval } from './wcoreApprovalGate';
-import { resolveBudgetGrant } from './wcoreBudgetGate';
+import { BUDGET_GRANT_NOT_SENT, MAX_BUDGET_GRANTS_PER_SESSION, resolveBudgetGrant } from './wcoreBudgetGate';
+import type { BudgetGrantDecision, BudgetGrantNotSentFrameData } from './wcoreBudgetGate';
 import { sendContinueWithBudget } from '@process/agent/wcore/capabilities/handlers/budgetGrants';
 import type { CapabilityContext } from '@process/agent/wcore/capabilities';
 import { forwardableFrameTypes } from '@process/agent/wcore/capabilities';
@@ -943,12 +944,32 @@ export class WCoreManager extends BaseAgentManager<WCoreManagerData, string> {
   }
 
   /**
+   * Caps whose dialog is on screen right now, keyed by the cap itself.
+   *
+   * MEASURED, and the reason this exists: delivering the identical
+   * `budget_exceeded` frame twice raised TWO dialogs, sent TWO
+   * `continue_with_budget` commands and left two ledger entries - 8192 tokens
+   * granted for one 4096 overrun. The engine cannot protect the user from that
+   * either, because every press mints a fresh request_id and so never collides
+   * with `request_id_conflict`. `budgetGrants.ts` documented this de-dupe as the
+   * price of fresh ids; this is where it actually lives.
+   */
+  private budgetDialogsInFlight = new Set<string>();
+
+  /** Grants actually sent this session. See {@link MAX_BUDGET_GRANTS_PER_SESSION}. */
+  private budgetGrantsSent = 0;
+
+  /** The session-limit notice is a fact about the session, so it is said once. */
+  private budgetLimitAnnounced = false;
+
+  /**
    * Offer a budget grant for the engine's `budget_exceeded`, if the user says so.
    *
    * Kept thin on purpose, exactly like {@link resolveEngineApproval}: the rules
    * for what may be offered - which unit, how much, and when to offer nothing -
    * live in `wcoreBudgetGate.ts`, where they are testable without an engine, a
-   * window or a socket.
+   * window or a socket. What lives HERE is the state a pure function cannot
+   * hold: which cap is already on screen, and how much this session has spent.
    */
   private async resolveBudgetGrant(event: { data?: unknown }): Promise<void> {
     const agent = this.agent;
@@ -957,20 +978,44 @@ export class WCoreManager extends BaseAgentManager<WCoreManagerData, string> {
     // `WCoreAgent` camel-cases its payloads, but `budget_exceeded` carries only
     // single-word fields, so these are the wire names unchanged.
     const data = (event.data ?? {}) as { reason?: string; observed?: string; limit?: string };
+    const request = { reason: data.reason ?? '', observed: data.observed ?? '', limit: data.limit ?? '' };
     const ctx = this.budgetCapabilityContext(agent);
 
-    const result = await resolveBudgetGrant(
-      { reason: data.reason ?? '', observed: data.observed ?? '', limit: data.limit ?? '' },
-      {
+    // NUL-joined: the three fields are engine-written strings, and a plain
+    // separator would let "a|b" plus "c" collide with "a" plus "b|c".
+    const capKey = [request.reason, request.observed, request.limit].join('\u0000');
+    if (this.budgetDialogsInFlight.has(capKey)) {
+      mainLog('[WCoreManager]', `budget cap "${request.reason}" is already awaiting an answer - not asking twice`);
+      return;
+    }
+
+    if (this.budgetGrantsSent >= MAX_BUDGET_GRANTS_PER_SESSION) {
+      mainLog('[WCoreManager]', `budget grant limit reached (${MAX_BUDGET_GRANTS_PER_SESSION}) - no dialog raised`);
+      if (!this.budgetLimitAnnounced) {
+        this.budgetLimitAnnounced = true;
+        this.emitBudgetGrantNotSent(ctx, { code: 'session_limit' });
+      }
+      return;
+    }
+
+    this.budgetDialogsInFlight.add(capKey);
+    let result: BudgetGrantDecision;
+    try {
+      result = await resolveBudgetGrant(request, {
         confirm: (input) => getToolConfirmationService().requestUserConfirmation(input),
         // The reachability probe is a required argument, not an option: the
         // capability context cannot tell a delivered command from a discarded
         // one, and the manager holds the agent that can.
         grant: (input) => sendContinueWithBudget(ctx, input, () => agent.isAlive),
-      }
-    );
+      });
+    } finally {
+      // `finally`, so a throw the gate somehow lets through cannot wedge this
+      // cap shut for the rest of the session.
+      this.budgetDialogsInFlight.delete(capKey);
+    }
 
     if (result.granted) {
+      this.budgetGrantsSent += 1;
       mainLog('[WCoreManager]', `budget grant sent as ${result.requestId ?? '?'}`);
       return;
     }
@@ -978,6 +1023,29 @@ export class WCoreManager extends BaseAgentManager<WCoreManagerData, string> {
     // logged either way so an offer that was never made can be told from one
     // the user declined.
     mainLog('[WCoreManager]', `no budget grant sent: ${result.reason ?? 'unknown'}`);
+
+    // ...but a log line is not an answer to the person who PRESSED. This branch
+    // is the failure the whole surface is about: with the engine unreachable -
+    // the likely state, since a budget cap is what ended the turn - the dialog
+    // raised, the user pressed Grant, `sendContinueWithBudget` returned
+    // `{ok:false}`, and nothing at all reached the screen. `respond.invoke`
+    // resolved `{settled:true}`, the modal closed, and a grant that never
+    // happened looked exactly like one that did. The dialog's own
+    // `answerUndelivered` alert covers only renderer->main; this failure is
+    // downstream of it.
+    if (result.approved === true) {
+      this.emitBudgetGrantNotSent(ctx, {
+        code: 'undelivered',
+        detail: result.reason,
+        tokens: result.tokens,
+        costUsd: result.costUsd,
+      });
+    }
+  }
+
+  /** One place that puts a host-side budget failure in front of the user. */
+  private emitBudgetGrantNotSent(ctx: CapabilityContext, data: BudgetGrantNotSentFrameData): void {
+    ctx.emit({ type: BUDGET_GRANT_NOT_SENT, data, msg_id: ctx.activeMsgId() });
   }
 
   private handleProcessExit(code: number | null, activeMsgId: string): void {

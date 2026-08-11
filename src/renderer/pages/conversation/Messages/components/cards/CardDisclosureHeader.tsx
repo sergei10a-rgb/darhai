@@ -5,7 +5,7 @@
  */
 
 import classNames from 'classnames';
-import React, { useId } from 'react';
+import React from 'react';
 import styles from './CardDisclosureHeader.module.css';
 
 /**
@@ -32,7 +32,16 @@ export const CardDisclosureHeader: React.FC<{
   onToggle: () => void;
   /** Visible summary text; also the control's accessible name. */
   label: string;
-  /** `id` of the region this row controls, so the toggle announces its target. */
+  /**
+   * `id` of the region this row controls, so the toggle announces its target.
+   *
+   * Both cards UNMOUNT that region while collapsed, which is why `aria-controls`
+   * below is conditional: an IDREF naming no element is invalid ARIA, and a
+   * screen reader offering "move to controlled region" would have nothing to
+   * move to. Required, not optional - a disclosure whose body has no id has
+   * nothing to announce, and the old `bodyId || useId()` fallback made the
+   * attribute LOOK valid while pointing at an element that never existed.
+   */
   bodyId: string;
   /** Status glyph shown before the arrow (spinner, tick, dot). */
   leading?: React.ReactNode;
@@ -44,8 +53,6 @@ export const CardDisclosureHeader: React.FC<{
   emphasis?: 'strong' | 'muted';
   'data-testid'?: string;
 }> = ({ expanded, onToggle, label, bodyId, leading, emphasis = 'strong', 'data-testid': testId }) => {
-  const fallbackId = useId();
-
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     // Enter and Space are what a native button answers to; `preventDefault`
     // stops Space from scrolling the transcript out from under the user.
@@ -60,7 +67,10 @@ export const CardDisclosureHeader: React.FC<{
       role='button'
       tabIndex={0}
       aria-expanded={expanded}
-      aria-controls={bodyId || fallbackId}
+      // Only while the region it names is actually mounted. `aria-expanded`
+      // carries the collapsed state on its own, and omitting `aria-controls` is
+      // valid for `role='button'`; pointing it at a removed element is not.
+      aria-controls={expanded ? bodyId : undefined}
       aria-label={label}
       className={classNames(styles.header, emphasis === 'muted' && styles.muted)}
       onClick={onToggle}

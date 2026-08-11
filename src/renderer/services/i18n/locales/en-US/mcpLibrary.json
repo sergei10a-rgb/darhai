@@ -31,14 +31,21 @@
     "statusWarn": "Needs re-authorization",
     "statusError": "Error",
     "statusStopped": "Disabled",
-    "statusToolCount": "{{count}} tools available",
+    "toolCount": "{{count}} tools",
+    "toolCount_one": "{{count}} tool",
+    "toolCount_other": "{{count}} tools",
     "statusToolCountLabel": "tools available",
-    "statusReauthCount": "{{count}} need re-auth",
+    "statusToolCountLabel_one": "tool available",
+    "statusToolCountLabel_other": "tools available",
     "statusReauthCountLabel": "need re-auth",
-    "statusErrorCount": "{{count}} errors",
+    "statusReauthCountLabel_one": "needs re-auth",
+    "statusReauthCountLabel_other": "need re-auth",
     "statusErrorCountLabel": "errors",
-    "statusRunningCount": "{{count}} running",
+    "statusErrorCountLabel_one": "error",
+    "statusErrorCountLabel_other": "errors",
     "statusRunningCountLabel": "running",
+    "statusRunningCountLabel_one": "running",
+    "statusRunningCountLabel_other": "running",
     "logsToast": "Log viewer coming soon."
   },
   "byo": {
@@ -63,6 +70,22 @@
   "browse": {
     "title": "MCP Library",
     "subtitle": "Curated connectors. Browse, install with one click, and follow the setup guide.",
-    "searchPlaceholder": "Search MCPs…"
+    "searchPlaceholder": "Search MCPs…",
+    "entryCount": "{{count}} entries",
+    "entryCount_one": "{{count}} entry",
+    "entryCount_other": "{{count}} entries",
+    "recommendedTitle": "★ Recommended for you",
+    "installRate": "{{percent}}% installed"
+  },
+  "detail": {
+    "estMinutes": "{{count}} min",
+    "estMinutes_one": "{{count}} min",
+    "estMinutes_other": "{{count}} min",
+    "unknownEntry": "Unknown entry: {{id}}",
+    "back": "← MCP Library",
+    "viewSource": "View source",
+    "transport": "Transport",
+    "runtime": "Runtime",
+    "platforms": "Platforms"
   }
 }

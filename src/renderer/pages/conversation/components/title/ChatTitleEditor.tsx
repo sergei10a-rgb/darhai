@@ -1,4 +1,4 @@
-import ConversationTitleMinimap from '@/renderer/pages/conversation/components/ConversationTitleMinimap';
+import ConversationTitleMinimap from '@/renderer/pages/conversation/components/title/ConversationTitleMinimap';
 import { Input } from '@arco-design/web-react';
 import classNames from 'classnames';
 import React from 'react';

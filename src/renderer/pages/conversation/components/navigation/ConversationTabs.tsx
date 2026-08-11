@@ -15,10 +15,10 @@ import { Dropdown, Menu, Message, Tag } from '@arco-design/web-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { useConversationTabs } from '../hooks/ConversationTabsContext';
-import { useConversationAgents } from '../hooks/useConversationAgents';
-import { applyDefaultConversationName } from '../utils/newConversationName';
-import { buildCliAgentParams, buildPresetAssistantParams } from '../utils/createConversationParams';
+import { useConversationTabs } from '../../hooks/ConversationTabsContext';
+import { useConversationAgents } from '../../hooks/useConversationAgents';
+import { applyDefaultConversationName } from '../../utils/newConversationName';
+import { buildCliAgentParams, buildPresetAssistantParams } from '../../utils/createConversationParams';
 import { useLayoutContext } from '@/renderer/hooks/context/LayoutContext';
 import { iconColors } from '@/renderer/styles/colors';
 

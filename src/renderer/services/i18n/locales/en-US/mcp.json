@@ -96,9 +96,12 @@
       "title": "Raise the budget?",
       "summary": "The engine stopped because a budget cap was reached. You can grant more and let it carry on. Whether the paused turn itself resumes, or the extra budget only applies to your next message, is the engine's decision - not Дархай's.",
       "confirm": "Grant",
-      "reason": "Cap reached",
-      "observed": "Used",
-      "limit": "Limit",
+      "reasonTokens": "Cap reached (read as a token cap from this name)",
+      "reasonCost": "Cap reached (read as a US$ cap from this name)",
+      "observedTokens": "Used (tokens)",
+      "observedCost": "Used (US$)",
+      "limitTokens": "Limit (tokens)",
+      "limitCost": "Limit (US$)",
       "unknown": "unknown",
       "grantTokens": "Tokens to grant",
       "grantCost": "Amount to grant (US$)",
@@ -114,6 +117,10 @@
     "cost": "US$ {{cost}}",
     "both": "{{tokens}} and {{cost}}",
     "nothing": "nothing",
+    "notSent": {
+      "undelivered": "You granted {{amount}}, but it never reached the engine - nothing was raised. ({{reason}})",
+      "sessionLimit": "Дархай has already sent as many budget grants as it will in one session, so this cap raised no dialog."
+    },
     "reason": {
       "host_not_authorized": "this copy of Дархай is not allowed to raise budgets.",
       "managed_policy": "a managed policy blocks it.",

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import type { CatalogIndexEntry } from '../types';
 import { McpCard } from './McpCard';
 
@@ -39,21 +40,26 @@ interface Props {
 }
 
 export function CategorySection({ category, entries, installedIds, onSelect }: Props) {
+  const { t } = useTranslation();
   if (entries.length === 0) return null;
   return (
-    <section className="mcp-cat-section">
-      <header className="mcp-cat-head">
+    <section className='mcp-cat-section'>
+      <header className='mcp-cat-head'>
         <h4>{labels[category] ?? category}</h4>
-        <span className="mcp-cat-count">{entries.length} entries</span>
+        {/* Plural-suffixed key rather than `{n} entries`: the category can hold
+            exactly one connector, and i18next picks the form from the active
+            language's Intl.PluralRules category. */}
+        <span className='mcp-cat-count'>
+          {t('mcpLibrary.browse.entryCount', {
+            count: entries.length,
+            defaultValue_one: '{{count}} entry',
+            defaultValue_other: '{{count}} entries',
+          })}
+        </span>
       </header>
-      <div className="mcp-grid">
+      <div className='mcp-grid'>
         {entries.map((e) => (
-          <McpCard
-            key={e.id}
-            entry={e}
-            installed={installedIds.has(e.id)}
-            onClick={() => onSelect(e.id)}
-          />
+          <McpCard key={e.id} entry={e} installed={installedIds.has(e.id)} onClick={() => onSelect(e.id)} />
         ))}
       </div>
     </section>

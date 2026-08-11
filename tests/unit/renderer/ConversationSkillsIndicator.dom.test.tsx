@@ -47,7 +47,7 @@ vi.mock('@/renderer/styles/colors', () => ({
 }));
 
 import type { TChatConversation } from '@/common/config/storage';
-import ConversationSkillsIndicator from '@/renderer/pages/conversation/components/ConversationSkillsIndicator';
+import ConversationSkillsIndicator from '@/renderer/pages/conversation/components/skills/ConversationSkillsIndicator';
 
 const createConversation = (loadedSkills?: Array<{ name: string; description: string }>): TChatConversation =>
   ({

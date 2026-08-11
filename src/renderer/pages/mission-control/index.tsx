@@ -375,6 +375,17 @@ export const GoalsView: React.FC<{ state: DurableGoalsState }> = ({ state }) => 
   // what the engine actually said instead of a re-worded verdict.
   const grade = availability.state === 'degraded' ? availability.grade : null;
   const gradeKey = grade !== null && EXPLAINED_GRADES.has(grade) ? grade : 'unrecognised';
+  // Three claims, not two. `unavailable` is the engine saying it does not carry
+  // this capability, and only then may the hint say so. Every other degraded
+  // grade means the capability EXISTS and may not publish here - telling that
+  // user their build "does not report durable goals" contradicts the banner
+  // three lines above, which was careful to name which grade the engine gave.
+  const emptyHintKey =
+    grade === null
+      ? 'missionControl.goals.emptyHint'
+      : grade === 'unavailable'
+        ? 'missionControl.goals.emptyHintUnavailable'
+        : 'missionControl.goals.emptyHintLimited';
 
   return (
     <>
@@ -408,9 +419,7 @@ export const GoalsView: React.FC<{ state: DurableGoalsState }> = ({ state }) => 
         <div className={styles.empty}>
           <Target size={40} className={styles.emptyRadar} />
           <span className={styles.emptyTitle}>{t('missionControl.goals.emptyTitle')}</span>
-          <span className={styles.emptyHint}>
-            {grade !== null ? t('missionControl.goals.emptyHintUnavailable') : t('missionControl.goals.emptyHint')}
-          </span>
+          <span className={styles.emptyHint}>{t(emptyHintKey)}</span>
         </div>
       ) : (
         <div className={styles.goalList}>

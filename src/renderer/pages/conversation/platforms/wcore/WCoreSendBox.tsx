@@ -542,7 +542,16 @@ const WCoreSendBox: React.FC<{
         defaultMultiLine={true}
         lockMultiLine={true}
         tools={
-          <div className='flex items-center gap-4px'>
+          // `flex-wrap` + `min-w-0`: the three controls here are all localized,
+          // and mn-MN is the longest of the thirteen - "Хөдөлгүүр: Ухаалаг /
+          // Бүрд нь асуух" is 33 characters against 22 for en-US. An Arco `Tag`
+          // is `white-space: nowrap` and will not shrink, so on a narrow window
+          // the row had no way to give: it could only push its neighbours out
+          // of the composer. Wrapping costs a line of height in the case where
+          // it fires and nothing at all where it does not.
+          // `tests/e2e/visual/mn-text-fit.visual.ts` measures this row at 900px
+          // and 760px with the real badge mounted.
+          <div className='flex flex-wrap items-center gap-4px min-w-0' data-testid='wcore-sendbox-tools'>
             <FileAttachButton openFileSelector={openFileSelector} onLocalFilesAdded={handleFilesAdded} />
             <AgentModeSelector
               backend='wcore'

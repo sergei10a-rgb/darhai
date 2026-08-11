@@ -25,8 +25,12 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { __testables, WCORE_MANAGER_AGENT_FIELD } from '@process/bridge/wcoreDiagnosticsBridge';
-import { negotiateContract } from '@process/agent/wcore/capabilities/contractNegotiation';
+import {
+  __testables,
+  WCORE_AGENT_CHILD_FIELD,
+  WCORE_MANAGER_AGENT_FIELD,
+} from '@process/bridge/wcoreDiagnosticsBridge';
+import { NO_CONTRACT, negotiateContract } from '@process/agent/wcore/capabilities/contractNegotiation';
 import {
   pendingRuntimeRequestIds,
   resetRuntimeRequests,
@@ -38,7 +42,7 @@ import type { IAgentManager } from '@process/task/IAgentManager';
 import type { IWorkerTaskManager } from '@process/task/IWorkerTaskManager';
 import { examplePayload, validateCommand } from '../helpers/engineContract';
 
-const { engineOf, liveEngines, requestRuntimeDiagnostics, withdrawMcpServer } = __testables;
+const { engineOf, liveEngines, requestRuntimeDiagnostics, withdrawMcpServer, engineLiveness } = __testables;
 
 /** A stand-in for one `WCoreManager` holding one live engine. */
 type FakeTask = {
@@ -51,6 +55,15 @@ type FakeTask = {
 function fakeTask(options: {
   type?: string;
   alive?: boolean;
+  /**
+   * Whether the child's stdin still accepts writes. Defaults to true, and it is
+   * a SEPARATE knob from `alive` on purpose: `WCoreAgent.isAlive` is
+   * `childProcess !== null` while its writer requires
+   * `childProcess.stdin.writable`, so an agent can answer alive and still drop
+   * every command. A fake without the child would be a fake that cannot express
+   * the gap this bridge has to close.
+   */
+  writable?: boolean;
   lastActivityAt?: number;
   contract?: unknown;
   agent?: unknown;
@@ -62,6 +75,7 @@ function fakeTask(options: {
       : {
           contract: options.contract ?? negotiateContract(examplePayload('event', 'ready')),
           isAlive: options.alive !== false,
+          [WCORE_AGENT_CHILD_FIELD]: { stdin: { writable: options.writable !== false } },
           sendCommand: (command: Record<string, unknown>) => written.push(command),
         };
   return {
@@ -174,6 +188,52 @@ describe('asking for a runtime diagnostics snapshot', () => {
     expect(pendingRuntimeRequestIds()).toEqual([]);
   });
 
+  /**
+   * The reported-sent-but-never-written gap.
+   *
+   * `isAlive` is `childProcess !== null`; the writer refuses unless
+   * `childProcess.stdin.writable`. A request that falls between them is
+   * recorded as sent, so the pane says "Asked the engine. Waiting for its
+   * answer…" about bytes that never left - with no timeout (by design) and no
+   * control to escape it. Restore `canReachEngine: () => engine.isAlive` and
+   * this goes red.
+   */
+  it('refuses when the engine is alive but its stdin can no longer be written', () => {
+    const task = fakeTask({ writable: false });
+    const outcome = requestRuntimeDiagnostics(fakeManager({ chat: task }));
+
+    expect(outcome.engines).toBe(1);
+    expect(outcome.sent).toEqual([]);
+    expect(outcome.refused).toHaveLength(1);
+    expect(outcome.refused[0].reason).toContain('cannot be reached');
+    expect(task.written).toHaveLength(0);
+    // Nothing may be owed: a ledger entry for an unwritten command is a
+    // correlation id no engine can ever answer.
+    expect(pendingRuntimeRequestIds()).toEqual([]);
+  });
+
+  /**
+   * The spawn window.
+   *
+   * `liveEngines` admits a task the moment the child exists, but the agent's
+   * contract is `NO_CONTRACT` until its own `ready` lands. Gating on the grades
+   * there accuses an engine that fully supports diagnostics of having refused
+   * them - which is exactly what a user sees who opens a chat and clicks
+   * straight into Settings. Delete the `hasSpoken` check and this goes red.
+   */
+  it('says the engine is still starting instead of quoting a grade it never gave', () => {
+    const task = fakeTask({ contract: NO_CONTRACT });
+    const outcome = requestRuntimeDiagnostics(fakeManager({ chat: task }));
+
+    expect(outcome.sent).toEqual([]);
+    expect(outcome.refused).toHaveLength(1);
+    expect(outcome.refused[0].reason).toContain('still starting');
+    // The accusation this replaces. `unavailable` is the engine's own word for
+    // a capability it does not have, and it never said it here.
+    expect(outcome.refused[0].reason).not.toContain('unavailable');
+    expect(task.written).toHaveLength(0);
+  });
+
   it('records the request so the engine’s reply settles it', () => {
     const task = fakeTask({});
     const outcome = requestRuntimeDiagnostics(fakeManager({ chat: task }));
@@ -225,6 +285,72 @@ describe('withdrawing an MCP server from live sessions', () => {
     expect(outcome.refused).toHaveLength(1);
     expect(task.written).toHaveLength(0);
   });
+
+  /**
+   * Per-engine, not per-request: one chat that cannot take the command must not
+   * make the page claim the others did, nor be listed under "waiting for its
+   * answer" forever. Both refusal reasons are the ones the user reads.
+   */
+  it('refuses only the engines that cannot take it, and says which fault it was', () => {
+    const starting = fakeTask({ contract: NO_CONTRACT, lastActivityAt: 3 });
+    const closed = fakeTask({ writable: false, lastActivityAt: 2 });
+    const healthy = fakeTask({ lastActivityAt: 1 });
+    const outcome = withdrawMcpServer(fakeManager({ starting, closed, healthy }), 'desktop-tools');
+
+    expect(outcome.engines).toBe(3);
+    expect(outcome.sent.map((e) => e.conversationId)).toEqual(['healthy']);
+    expect(healthy.written).toHaveLength(1);
+    expect(starting.written).toHaveLength(0);
+    expect(closed.written).toHaveLength(0);
+
+    const reasons = new Map(outcome.refused.map((e) => [e.conversationId, e.reason ?? '']));
+    expect(reasons.get('starting')).toContain('still starting');
+    expect(reasons.get('closed')).toContain('cannot be reached');
+  });
+});
+
+/**
+ * The passive liveness read behind the Settings header and the Overview
+ * "Engine" card.
+ *
+ * Those two used to key off `acpConversation.getAvailableAgents`, whose wcore
+ * entry is built `available: true` unconditionally and carries no version - so
+ * the chip rendered "engine running · <pinned constant>" with no engine
+ * process in existence, and the stopped branch could not fire at all. This
+ * channel answers from the same `liveEngines` the diagnostics round-trip uses,
+ * which is what makes the Overview agree with the Runtime pane beside it.
+ */
+describe('reporting engine liveness without asking the engine anything', () => {
+  it('counts the live engines and reports the version the newest one published', () => {
+    const liveness = engineLiveness(
+      fakeManager({ a: fakeTask({ lastActivityAt: 1 }), b: fakeTask({ lastActivityAt: 2 }) })
+    );
+    expect(liveness.engines).toBe(2);
+    // From the contract fixture's own `ready`, never from a constant in the UI.
+    expect(liveness.engineVersion).toBe(negotiateContract(examplePayload('event', 'ready')).engineVersion);
+    expect(liveness.engineVersion.length).toBeGreaterThan(0);
+  });
+
+  it('reports no engine and no version rather than a build number nobody read', () => {
+    expect(engineLiveness(fakeManager({ dead: fakeTask({ alive: false }) }))).toEqual({
+      engines: 0,
+      engineVersion: '',
+    });
+  });
+
+  it('reports an engine that has not published its ready with an empty version', () => {
+    // Running, but it has said nothing yet: the card must fall back to the
+    // pinned build and SAY that it is pinned, not present it as a reading.
+    const liveness = engineLiveness(fakeManager({ starting: fakeTask({ contract: NO_CONTRACT }) }));
+    expect(liveness).toEqual({ engines: 1, engineVersion: '' });
+  });
+
+  it('writes nothing to any engine - it is a status read, not a round-trip', () => {
+    const task = fakeTask({});
+    engineLiveness(fakeManager({ chat: task }));
+    expect(task.written).toEqual([]);
+    expect(pendingRuntimeRequestIds()).toEqual([]);
+  });
 });
 
 /**
@@ -249,5 +375,17 @@ describe('the field and members this bridge reads', () => {
     expect(AGENT_SRC).toContain('public contract: NegotiatedContract');
     expect(AGENT_SRC).toContain('get isAlive(): boolean');
     expect(AGENT_SRC).toContain('sendCommand(cmd: WCoreCommand): void');
+  });
+
+  it('WCoreAgent still holds the child in the field this bridge probes', () => {
+    // `isAlive` is not a transport probe, so the bridge reads the same field the
+    // writer does. A rename degrades to "refused", not to a false "sent" - but
+    // it would refuse EVERY request, so the name is pinned here.
+    expect(AGENT_SRC).toContain(`private ${WCORE_AGENT_CHILD_FIELD}: ChildProcess | null`);
+    expect(AGENT_SRC).toContain(`if (!this.${WCORE_AGENT_CHILD_FIELD}?.stdin?.writable) return;`);
+  });
+
+  it('WCoreAgent still starts on NO_CONTRACT, which is how "not ready yet" is told from "unavailable"', () => {
+    expect(AGENT_SRC).toContain('public contract: NegotiatedContract = NO_CONTRACT');
   });
 });

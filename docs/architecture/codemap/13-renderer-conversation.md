@@ -43,17 +43,17 @@ The conversation surface: everything under `src/renderer/pages/conversation/`. I
 | `components/ChatLayout/MobileWorkspaceOverlay.tsx` | Mobile: backdrop + fixed workspace panel + floating collapse handle |
 | `components/ChatLayout/WorkspaceOpenButton.tsx` | "Open workspace in…" (VS Code/Terminal/Explorer) via `ipcBridge.shell.*`; preference in localStorage `workspace-open-preference` |
 | `components/ChatSider.tsx` | Chooses `ChatWorkspace` per type with `eventPrefix` (`acp`/`codex`/`wcore`; gemini default) — only types with `extra.workspace` |
-| `components/ChatTitleEditor.tsx` | Presentational inline title editor (state from `useTitleRename`) |
+| `components/title/ChatTitleEditor.tsx` | Presentational inline title editor (state from `useTitleRename`) |
 | `components/ConversationChatConfirm.tsx` | Tool-permission banners above the sendbox; loads via `conversation.confirmation.list`, subscribes `add`/`update`/`remove`, answers via `conversation.confirmation.confirm` (line 54); auto-confirm via `conversation.approval.check` for gemini/wcore (lines 34-49) |
-| `components/ConversationSkillsIndicator.tsx` | Badge listing `conversation.extra.loadedSkills`; navigates to skill library |
-| `components/AddSkillToChatButton.tsx` | Skill picker popover → `ipcBridge.skills.addToConversation` |
-| `components/ConversationTabs.tsx` | Workspace tab strip: switch/close/context menus, "+" new conversation via `buildCliAgentParams`/`buildPresetAssistantParams` + `conversation.createWithConversation` |
-| `components/ConversationTitleMinimap/index.tsx` | Header minimap trigger + panel (message outline + in-conversation search) |
-| `components/ConversationTitleMinimap/useMinimapPanel.ts` | Minimap state: item extraction, search, keyboard nav, jump dispatch (`CHAT_MESSAGE_JUMP_EVENT`) |
-| `components/ConversationTitleMinimap/minimapTypes.ts` / `minimapUtils.ts` / `ConversationTitleMinimap.module.css` | Types, pure helpers, styles |
-| `components/ChatHistory.tsx` | Flat timeline-grouped history list (rename/delete/cron indicator) — older sidebar list, still exported |
-| `components/WorkspaceCollapse.tsx` | Simple collapsible section wrapper used by GroupedHistory |
-| `components/SkillRuleGenerator.tsx` | **Unmounted** (import commented at `ChatConversation.tsx:43`). Generates a skill/rule from conversation history: prompt asks agent to `write_file` + echo content between `---PRESET_BEGIN---`/`---PRESET_END---` (line 228), captures it from `conversation.responseStream` (lines 236-249), registers preset into `ConfigStorage('assistants')` + `acpConversation.refreshCustomAgents` (lines 269-288); "Load Rule" modal reads workspace `.json/.md/.py/.txt` and injects as a system-instruction message (lines 79-110) |
+| `components/skills/ConversationSkillsIndicator.tsx` | Badge listing `conversation.extra.loadedSkills`; navigates to skill library |
+| `components/skills/AddSkillToChatButton.tsx` | Skill picker popover → `ipcBridge.skills.addToConversation` |
+| `components/navigation/ConversationTabs.tsx` | Workspace tab strip: switch/close/context menus, "+" new conversation via `buildCliAgentParams`/`buildPresetAssistantParams` + `conversation.createWithConversation` |
+| `components/title/ConversationTitleMinimap/index.tsx` | Header minimap trigger + panel (message outline + in-conversation search) |
+| `components/title/ConversationTitleMinimap/useMinimapPanel.ts` | Minimap state: item extraction, search, keyboard nav, jump dispatch (`CHAT_MESSAGE_JUMP_EVENT`) |
+| `components/title/ConversationTitleMinimap/minimapTypes.ts` / `minimapUtils.ts` / `ConversationTitleMinimap.module.css` | Types, pure helpers, styles |
+| `components/navigation/ChatHistory.tsx` | Flat timeline-grouped history list (rename/delete/cron indicator) — older sidebar list, still exported |
+| `components/navigation/WorkspaceCollapse.tsx` | Simple collapsible section wrapper used by GroupedHistory |
+| `components/skills/SkillRuleGenerator.tsx` | **Unmounted** (import commented at `ChatConversation.tsx:43`). Generates a skill/rule from conversation history: prompt asks agent to `write_file` + echo content between `---PRESET_BEGIN---`/`---PRESET_END---` (line 228), captures it from `conversation.responseStream` (lines 236-249), registers preset into `ConfigStorage('assistants')` + `acpConversation.refreshCustomAgents` (lines 269-288); "Load Rule" modal reads workspace `.json/.md/.py/.txt` and injects as a system-instruction message (lines 79-110) |
 
 ### Message rendering (`Messages/`)
 
@@ -138,18 +138,18 @@ The conversation surface: everything under `src/renderer/pages/conversation/`. I
 | `Preview/components/PreviewPanel/PreviewConfirmModals.tsx` | Exit-edit / close-dirty-tab confirms |
 | `Preview/components/PreviewPanel/PreviewHistoryDropdown.tsx` | Git-based version dropdown (restore/select) |
 | `Preview/components/PreviewPanel/preview.css` / `index.ts` | Styles / barrel |
-| `Preview/components/viewers/MarkdownViewer.tsx` | Markdown render (largest viewer; mermaid/code blocks) |
-| `Preview/components/viewers/CodeViewer.tsx` | Read-only syntax-highlighted code |
-| `Preview/components/viewers/DiffViewer.tsx` | Unified diff render |
-| `Preview/components/viewers/HTMLViewer.tsx` | Blob-URL iframe HTML view with serialized inspector script, parent `postMessage` bridge |
-| `Preview/components/viewers/ImageViewer.tsx` | Image display (base64) |
-| `Preview/components/viewers/PDFViewer.tsx` | PDF display |
-| `Preview/components/viewers/OfficeDocViewer.tsx` | Word/Office doc display |
-| `Preview/components/viewers/OfficeWatchViewer.tsx` | Shared `officecli watch` child-process viewer (live Office rendering via local server) |
-| `Preview/components/viewers/ExcelViewer.tsx` | Spreadsheet display |
-| `Preview/components/viewers/PptViewer.tsx` | Presentation display |
-| `Preview/components/viewers/URLViewer.tsx` | Web page tab (webview/iframe; used by StarOffice monitor + agent web previews) |
-| `Preview/components/viewers/index.ts` | Barrel |
+| `Preview/components/viewers/text/MarkdownViewer.tsx` | Markdown render (largest viewer; mermaid/code blocks) |
+| `Preview/components/viewers/text/CodeViewer.tsx` | Read-only syntax-highlighted code |
+| `Preview/components/viewers/text/DiffViewer.tsx` | Unified diff render |
+| `Preview/components/viewers/web/HTMLViewer.tsx` | Blob-URL iframe HTML view with serialized inspector script, parent `postMessage` bridge |
+| `Preview/components/viewers/media/ImageViewer.tsx` | Image display (base64) |
+| `Preview/components/viewers/media/PDFViewer.tsx` | PDF display |
+| `Preview/components/viewers/office/OfficeDocViewer.tsx` | Word/Office doc display |
+| `Preview/components/viewers/office/OfficeWatchViewer.tsx` | Shared `officecli watch` child-process viewer (live Office rendering via local server) |
+| `Preview/components/viewers/office/ExcelViewer.tsx` | Spreadsheet display |
+| `Preview/components/viewers/office/PptViewer.tsx` | Presentation display |
+| `Preview/components/viewers/web/URLViewer.tsx` | Web page tab (webview/iframe; used by StarOffice monitor + agent web previews) |
+| `Preview/components/viewers/index.ts` | Barrel over the four groups (`text` / `office` / `web` / `media`), each with its own barrel |
 | `Preview/components/editors/TextEditor.tsx` | Monaco code editor |
 | `Preview/components/editors/MarkdownEditor.tsx` | Plain markdown editor (split-screen source side) |
 | `Preview/components/editors/TipTapMarkdownEditor.tsx` + `.module.css` | WYSIWYG markdown editor (TipTap), gated to `.md/.markdown/.mdx` (`PreviewPanel.tsx:55`) |
@@ -251,7 +251,7 @@ The conversation surface: everything under `src/renderer/pages/conversation/`. I
 
 1. **New agent backend/engine (e.g. an ECC-orchestrator or Odysseus engine surface)** → create `platforms/<name>/{<Name>Chat.tsx, <Name>SendBox.tsx}` mirroring `platforms/nanobot/NanobotChat.tsx` + `NanobotSendBox.tsx` (the minimal template using generic `conversation.sendMessage`/`conversation.responseStream`); register the type in `components/ChatConversation.tsx` switch (~line 364-390), `hooks/ConversationTabsContext.tsx:21` type union, `components/ChatSider.tsx` eventPrefix map, and `GroupedHistory/hooks/useConversationListSync.ts` stream list.
 2. **New agent-output card (review report, plan gate, memory-recall, team status)** → add the message type to `TMessage` in `src/common/chat/chatLib.ts`, a merge rule in `Messages/hooks.ts` `composeMessageWithIndex` (imitate the `sub_agent` block, lines 224-244), a render case in `Messages/MessageList.tsx:119-155`, and a card component mirroring `Messages/components/SubAgentActivityCard.tsx` (status+body) or `Messages/components/CronProposeCard.tsx` (actionable confirm/adjust card with IPC callback).
-3. **New per-conversation header action (e.g. "run checkpoint review", memory toggle)** → add to `headerExtraNode` in `components/ChatConversation.tsx:567-592` (and the gemini/wcore panel variants at lines 189-199/250-260), mirroring `components/AddSkillToChatButton.tsx` for a popover-with-IPC or `CronJobManager` for a stateful manager.
-4. **New Preview content type (e.g. mermaid graph, eval report, diff-review)** → extend `PreviewContentType` in `src/common/types/preview`, map extensions in `Preview/fileUtils.ts` `FILE_EXTENSION_MAP`, add a viewer in `Preview/components/viewers/` (imitate `DiffViewer.tsx` for text-based, `OfficeWatchViewer.tsx` for external-process rendering), and a dispatch branch in `Preview/components/PreviewPanel/PreviewPanel.tsx:644-722`. Services can open it programmatically via `ipcBridge.preview.open` or emitter `preview.open` (`PreviewContext.tsx:638-659`).
-5. **Skill/rule generation from conversation (ECC `skill-create` / Superpowers `writing-skills` analog)** → resurrect `components/SkillRuleGenerator.tsx` (currently commented out at `ChatConversation.tsx:43`): its capture protocol (`---PRESET_BEGIN---` sentinel over `conversation.responseStream`, lines 236-249) and preset registration into `ConfigStorage('assistants')` + `acpConversation.refreshCustomAgents` is the existing end-to-end path to turn a session into a reusable assistant.
+3. **New per-conversation header action (e.g. "run checkpoint review", memory toggle)** → add to `headerExtraNode` in `components/ChatConversation.tsx:567-592` (and the gemini/wcore panel variants at lines 189-199/250-260), mirroring `components/skills/AddSkillToChatButton.tsx` for a popover-with-IPC or `CronJobManager` for a stateful manager.
+4. **New Preview content type (e.g. mermaid graph, eval report, diff-review)** → extend `PreviewContentType` in `src/common/types/preview`, map extensions in `Preview/fileUtils.ts` `FILE_EXTENSION_MAP`, add a viewer in the matching `Preview/components/viewers/<group>/` (imitate `text/DiffViewer.tsx` for text-based, `office/OfficeWatchViewer.tsx` for external-process rendering), and a dispatch branch in `Preview/components/PreviewPanel/PreviewPanel.tsx:644-722`. Services can open it programmatically via `ipcBridge.preview.open` or emitter `preview.open` (`PreviewContext.tsx:638-659`).
+5. **Skill/rule generation from conversation (ECC `skill-create` / Superpowers `writing-skills` analog)** → resurrect `components/skills/SkillRuleGenerator.tsx` (currently commented out at `ChatConversation.tsx:43`): its capture protocol (`---PRESET_BEGIN---` sentinel over `conversation.responseStream`, lines 236-249) and preset registration into `ConfigStorage('assistants')` + `acpConversation.refreshCustomAgents` is the existing end-to-end path to turn a session into a reusable assistant.
 6. **Autonomous multi-step drivers (loops, plan execution)** → enqueue follow-up prompts through `platforms/useConversationCommandQueue.ts` (`enqueue`, pause/resume, sessionStorage-persisted) instead of racing `sendMessage`; busy-state detection comes free from the platform `use*Message` hooks.

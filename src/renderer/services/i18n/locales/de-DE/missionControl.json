@@ -122,6 +122,7 @@
     "emptyTitle": "Keine Ziele gemeldet",
     "emptyHint": "Ein Ziel erscheint hier, sobald die Engine es veröffentlicht. Die Engine führt sie in ihrem eigenen Journal, daher taucht ein früher geöffnetes Ziel erst bei seiner nächsten Aktualisierung auf.",
     "emptyHintUnavailable": "Diese Engine-Version meldet keine dauerhaften Ziele; hier erscheint nichts, bis sich das ändert.",
+    "emptyHintLimited": "Hier wurde noch kein Ziel veröffentlicht, und der Hinweis oben erklärt, warum diese Engine-Version möglicherweise nie eines veröffentlicht.",
     "unavailableTitle": "Dauerhafte Ziele sind nicht verfügbar",
     "limitedTitle": "Dauerhafte Ziele sind in dieser Engine-Version eingeschränkt",
     "gradeReported": "Die Engine bewertet diese Fähigkeit als {{grade}}.",

@@ -20,7 +20,7 @@ import { isConversationPinned } from '@renderer/pages/conversation/GroupedHistor
 import { refreshConversationCache } from '@/renderer/pages/conversation/utils/conversationCache';
 import { useCronJobConversations } from '@renderer/pages/cron/useCronJobs';
 import ConversationRow from '@renderer/pages/conversation/GroupedHistory/ConversationRow';
-import WorkspaceCollapse from '@renderer/pages/conversation/components/WorkspaceCollapse';
+import WorkspaceCollapse from '@renderer/pages/conversation/components/navigation/WorkspaceCollapse';
 import { getWorkspaceDisplayName } from '@/renderer/utils/workspace/workspace';
 import { useConversationHistoryContext } from '@renderer/hooks/context/ConversationHistoryContext';
 import { useLayoutContext } from '@renderer/hooks/context/LayoutContext';

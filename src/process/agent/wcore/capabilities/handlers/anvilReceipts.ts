@@ -25,10 +25,13 @@
  * below is load-bearing: without it the ledger works, these tests pass, and
  * every alert is discarded one process upstream of the user.
  *
- * WHAT IS STILL MISSING: nothing renders `anvil_receipt_alert`. The frame now
- * reaches the renderer's response stream and no surface reads it, so a
- * contradicted receipt is delivered and then ignored. That is the remaining
- * step for this capability, and it is a renderer change, not one in this file.
+ * The read side is wired too, and it lives entirely in the renderer:
+ * `useWCoreMessage` matches {@link ANVIL_ALERT_FRAME} (against its own
+ * `ANVIL_ALERT_MESSAGE_TYPE` constant, which a test pins to this one) and turns
+ * the payload into a centred transcript notice. Every field below that reaches
+ * `AnvilAlertPayload` therefore has a reader; adding a new `AnvilRejectCode`
+ * without giving it copy over there fails to compile, because the renderer
+ * grades severity through a `Record<AnvilRejectCode, …>`.
  *
  * WHY IT EXISTS. A tampered, replayed, conflicting or version-mismatched
  * receipt currently vanishes without so much as a console warning - the exact
@@ -738,10 +741,19 @@ export function createAnvilReceiptsCapability(ledger: AnvilLedger = createAnvilL
 }
 
 /**
- * A ready-to-register instance, sharing one ledger across the process.
+ * The registered instance, sharing one ledger across the process.
  *
- * NOT registered today - see the WIRING STATUS note at the top of this file.
- * Adding it to `HANDLERS` in `./index.ts` is what makes it live.
+ * REGISTERED: `createCapabilitySet()` in `./index.ts` lists it, so dispatch
+ * reaches it and `forwardableFrameTypes()` carries its projection past
+ * `WCoreManager`'s msg_id guard. The renderer reads it from there - see the
+ * WIRING STATUS note at the top of this file - so the path from a distrusted
+ * receipt to a sentence a user reads is now complete end to end.
+ *
+ * One ledger across every engine is deliberate here, unlike the per-agent
+ * execution-policy tracker: a digest that vouches for two different bodies is a
+ * contradiction whichever engine produced each sighting, and splitting the
+ * binding table per conversation would hide exactly the cross-run repeat this
+ * capability exists to catch.
  *
  * `handle` always answers `true`, including for every rejection. Returning
  * `false` would hand the event back to the dispatcher's caller as unhandled,

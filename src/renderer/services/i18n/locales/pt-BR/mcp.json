@@ -96,9 +96,12 @@
       "title": "Aumentar o orçamento?",
       "summary": "O mecanismo parou porque um limite de orçamento foi atingido. Você pode conceder mais para ele continuar. Se o turno pausado é retomado ou se o orçamento extra vale apenas para a sua próxima mensagem é decisão do mecanismo, não do Дархай.",
       "confirm": "Conceder",
-      "reason": "Limite atingido",
-      "observed": "Consumido",
-      "limit": "Limite",
+      "reasonTokens": "Limite atingido (lido como limite de tokens pelo nome)",
+      "reasonCost": "Limite atingido (lido como limite em US$ pelo nome)",
+      "observedTokens": "Consumido (tokens)",
+      "observedCost": "Consumido (US$)",
+      "limitTokens": "Limite (tokens)",
+      "limitCost": "Limite (US$)",
       "unknown": "desconhecido",
       "grantTokens": "Tokens a conceder",
       "grantCost": "Valor a conceder (US$)",
@@ -114,6 +117,10 @@
     "cost": "US$ {{cost}}",
     "both": "{{tokens}} e {{cost}}",
     "nothing": "nada",
+    "notSent": {
+      "undelivered": "Você concedeu {{amount}}, mas isso nunca chegou ao motor — nada foi aumentado. ({{reason}})",
+      "sessionLimit": "O Дархай já enviou o máximo de aumentos de orçamento de uma sessão, então nenhuma janela foi aberta."
+    },
     "reason": {
       "host_not_authorized": "esta instalação do Дархай não pode aumentar orçamentos.",
       "managed_policy": "uma política gerenciada impede isso.",

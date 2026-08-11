@@ -25,9 +25,10 @@
 
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
-import { executionPolicyCapability } from '@process/agent/wcore/capabilities/handlers/executionPolicy';
+import { createCapabilitySet } from '@process/agent/wcore/capabilities';
+import type { ExecutionPolicyCapability } from '@process/agent/wcore/capabilities/handlers/executionPolicy';
 import { turnRecoveryCapability } from '@process/agent/wcore/capabilities/handlers/turnRecovery';
 import type { CapabilityContext } from '@process/agent/wcore/capabilities';
 import { CONTRACT_V1 } from '../helpers/engineContract';
@@ -61,23 +62,42 @@ function recordingContext(): CapabilityContext & { said: string[]; frames: strin
   };
 }
 
-describe('execution policy is seeded from ready', () => {
-  beforeEach(() => {
-    executionPolicyCapability.reset();
-  });
+/**
+ * One agent's execution-policy capability, built the way the agent builds it.
+ *
+ * Through `createCapabilitySet()` rather than the factory directly: what these
+ * tests are about is the instance a running agent actually seeds, so if the set
+ * ever stopped carrying one they must fail rather than quietly exercise a
+ * private copy.
+ */
+function policyOfFreshAgent(): ExecutionPolicyCapability {
+  return createCapabilitySet().executionPolicy;
+}
 
+/** The revision the vendored `ready` states, as the receipt it states it with. */
+function readyReceipt(): Record<string, unknown> {
+  return readJson('events/ready.json').execution_policy as Record<string, unknown>;
+}
+
+/** The same receipt at a later revision - what a `mode_change` looks like. */
+function receiptAtRevision(revision: number): Record<string, unknown> {
+  return { ...readyReceipt(), revision, reason: 'mode_change' };
+}
+
+describe('execution policy is seeded from ready', () => {
   it('adopts the revision the engine states on ready', () => {
+    const policy = policyOfFreshAgent();
     // Before the seed there is nothing to render - which is exactly what the
     // user saw for the whole life of the app.
-    expect(executionPolicyCapability.tracker.current).toBeNull();
+    expect(policy.tracker.current).toBeNull();
 
-    const decision = executionPolicyCapability.seedFromReady(readJson('events/ready.json'), recordingContext());
+    const decision = policy.seedFromReady(readJson('events/ready.json'), recordingContext());
 
     expect(
       decision,
       'the contract fixture carries an execution_policy; a null seed means it was not read'
     ).not.toBeNull();
-    expect(executionPolicyCapability.tracker.current).not.toBeNull();
+    expect(policy.tracker.current).not.toBeNull();
   });
 
   /**
@@ -87,22 +107,90 @@ describe('execution policy is seeded from ready', () => {
    * sent.
    */
   it('stays uninitialised - and says so - when ready carries no policy', () => {
+    const policy = policyOfFreshAgent();
     const ctx = recordingContext();
-    const decision = executionPolicyCapability.seedFromReady(readJson('compat/events/ready.minimal.json'), ctx);
+    const decision = policy.seedFromReady(readJson('compat/events/ready.minimal.json'), ctx);
 
     expect(decision).toBeNull();
-    expect(executionPolicyCapability.tracker.current).toBeNull();
+    expect(policy.tracker.current).toBeNull();
     // "no receipt" and "a receipt this host refused" look identical from
     // outside unless the absence is stated.
     expect(ctx.said.length + ctx.frames.length).toBeGreaterThan(0);
   });
 
   it('does not let a dead engine.s revisions gate the live one', () => {
-    executionPolicyCapability.seedFromReady(readJson('events/ready.json'), recordingContext());
-    expect(executionPolicyCapability.tracker.current).not.toBeNull();
+    const policy = policyOfFreshAgent();
+    policy.seedFromReady(readJson('events/ready.json'), recordingContext());
+    expect(policy.tracker.current).not.toBeNull();
 
-    executionPolicyCapability.reset();
-    expect(executionPolicyCapability.tracker.current).toBeNull();
+    policy.reset();
+    expect(policy.tracker.current).toBeNull();
+  });
+});
+
+/**
+ * That reset is only safe because the capability belongs to ONE agent.
+ *
+ * Darhai keeps an engine per open conversation (`WorkerTaskManager.taskList`
+ * holds one `WCoreManager`, hence one `WCoreAgent`, per conversation), and a
+ * `ready` resets the policy tracker because a `ready` means a new engine
+ * process. Against a process-wide instance that reset rewound whatever the
+ * OTHER conversation's engine had already published - and a rewound tracker
+ * refuses that conversation's next legal receipt as a forward gap, which by
+ * this tracker's own rule it can never recover from for the life of the
+ * session. The user saw a foreign posture, permanently orange, warning about an
+ * update that had in fact arrived.
+ *
+ * The previous test for this called `reset()` on a single instance and asserted
+ * `current` was null - true of a shared instance too, which is why it passed
+ * while the defect was live. These drive TWO sets, the way two open
+ * conversations do.
+ */
+describe('two live conversations do not share a policy tracker', () => {
+  it('gives every agent its own capability instance', () => {
+    const a = createCapabilitySet();
+    const b = createCapabilitySet();
+    expect(a.executionPolicy).not.toBe(b.executionPolicy);
+    expect(a.executionPolicy.tracker).not.toBe(b.executionPolicy.tracker);
+    // The dispatcher has to be bound to the per-set handler list as well, or
+    // the isolation above is undone the moment an event is routed.
+    expect(a.dispatch).not.toBe(b.dispatch);
+    expect(a.handlers).toContain(a.executionPolicy);
+    expect(b.handlers).toContain(b.executionPolicy);
+  });
+
+  it('a second conversation starting does not strand the policy of the first', () => {
+    const ctx = recordingContext();
+    const a = createCapabilitySet();
+    const b = createCapabilitySet();
+
+    // Conversation A comes up and advances two revisions, exactly as a mode
+    // change would: seed 0, then 1, then 2.
+    a.executionPolicy.seedFromReady(readJson('events/ready.json'), ctx);
+    for (const revision of [1, 2]) {
+      expect(a.dispatch({ type: 'execution_policy', ...receiptAtRevision(revision) }, ctx)).toBe(true);
+    }
+    expect(a.executionPolicy.tracker.revision).toBe(2);
+    expect(a.executionPolicy.tracker.stale).toBe(false);
+
+    // Conversation B's engine reports ready. Its agent resets ITS tracker and
+    // seeds revision 0 - the shared-singleton version of this rewound A.
+    b.executionPolicy.reset();
+    b.executionPolicy.seedFromReady(readJson('events/ready.json'), ctx);
+    expect(b.executionPolicy.tracker.revision).toBe(0);
+
+    // A's next legal revision must still be adopted. On the shared instance the
+    // held revision was 0 by now, so revision 3 read as a gap of two and was
+    // refused - permanently.
+    expect(a.dispatch({ type: 'execution_policy', ...receiptAtRevision(3) }, ctx)).toBe(true);
+    expect(
+      a.executionPolicy.tracker.revision,
+      'conversation A refused its own next revision - a second conversation ready rewound its tracker'
+    ).toBe(3);
+    expect(a.executionPolicy.tracker.stale, 'A is warning about a gap that never happened').toBe(false);
+    // ...and B is untouched by A's traffic, which is the same property read the
+    // other way round.
+    expect(b.executionPolicy.tracker.revision).toBe(0);
   });
 });
 
@@ -154,11 +242,28 @@ describe('the decoder makes the call', () => {
     const body = AGENT_SRC.slice(AGENT_SRC.indexOf('private seedCapabilitiesFromReady('));
     const method = body.slice(0, body.indexOf('\n  /**', 1));
 
-    const reset = method.indexOf('executionPolicyCapability.reset()');
-    const policySeed = method.indexOf('executionPolicyCapability.seedFromReady(');
+    const reset = method.indexOf('this.capabilitySet.executionPolicy.reset()');
+    const policySeed = method.indexOf('this.capabilitySet.executionPolicy.seedFromReady(');
     expect(reset, 'the policy tracker is not reset for a new engine').toBeGreaterThan(-1);
     expect(policySeed).toBeGreaterThan(reset);
     expect(method).toContain('turnRecoveryCapability.seedFromReady(');
+  });
+
+  /**
+   * The seed and the dispatch have to land on the SAME per-agent instance.
+   *
+   * Asserted against the source because the alternative is booting an engine
+   * child, and what is at issue is one identifier: an agent that reaches for
+   * the registry's shared dispatcher puts every conversation's revisions back
+   * into one tracker, which is the defect the two-set tests above describe.
+   */
+  it('routes and seeds through the capability set the agent owns', () => {
+    expect(AGENT_SRC, 'the agent does not build a capability set of its own').toContain('createCapabilitySet()');
+    expect(AGENT_SRC, 'the decoder does not dispatch through the agent set').toContain('this.capabilitySet.dispatch(');
+    expect(
+      AGENT_SRC.includes('dispatchCapabilityEvent'),
+      'the agent is back on the registry-wide dispatcher, which every conversation shares'
+    ).toBe(false);
   });
 
   /**

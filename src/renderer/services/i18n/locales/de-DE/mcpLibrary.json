@@ -31,14 +31,21 @@
     "statusWarn": "Erneute Autorisierung erforderlich",
     "statusError": "Fehler",
     "statusStopped": "Deaktiviert",
-    "statusToolCount": "{{count}} Tools verfügbar",
+    "toolCount": "{{count}} Werkzeuge",
+    "toolCount_one": "{{count}} Werkzeug",
+    "toolCount_other": "{{count}} Werkzeuge",
     "statusToolCountLabel": "Tools verfügbar",
-    "statusReauthCount": "{{count}} erfordern erneute Autorisierung",
+    "statusToolCountLabel_one": "Tool verfügbar",
+    "statusToolCountLabel_other": "Tools verfügbar",
     "statusReauthCountLabel": "erfordern erneute Autorisierung",
-    "statusErrorCount": "{{count}} Fehler",
+    "statusReauthCountLabel_one": "erfordert erneute Autorisierung",
+    "statusReauthCountLabel_other": "erfordern erneute Autorisierung",
     "statusErrorCountLabel": "Fehler",
-    "statusRunningCount": "{{count}} aktiv",
+    "statusErrorCountLabel_one": "Fehler",
+    "statusErrorCountLabel_other": "Fehler",
     "statusRunningCountLabel": "aktiv",
+    "statusRunningCountLabel_one": "aktiv",
+    "statusRunningCountLabel_other": "aktiv",
     "logsToast": "Protokollanzeige folgt in Kürze."
   },
   "byo": {
@@ -63,6 +70,22 @@
   "browse": {
     "title": "MCP-Bibliothek",
     "subtitle": "Kuratierte Konnektoren. Stöbern, mit einem Klick installieren und der Einrichtungsanleitung folgen.",
-    "searchPlaceholder": "MCPs durchsuchen…"
+    "searchPlaceholder": "MCPs durchsuchen…",
+    "entryCount": "{{count}} Einträge",
+    "entryCount_one": "{{count}} Eintrag",
+    "entryCount_other": "{{count}} Einträge",
+    "recommendedTitle": "★ Für dich empfohlen",
+    "installRate": "{{percent}}% installiert"
+  },
+  "detail": {
+    "estMinutes": "{{count}} Min.",
+    "estMinutes_one": "{{count}} Min.",
+    "estMinutes_other": "{{count}} Min.",
+    "unknownEntry": "Unbekannter Eintrag: {{id}}",
+    "back": "← MCP-Bibliothek",
+    "viewSource": "Quellcode ansehen",
+    "transport": "Transport",
+    "runtime": "Laufzeit",
+    "platforms": "Plattformen"
   }
 }

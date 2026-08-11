@@ -26,10 +26,12 @@
  *
  * WIRING - the full path, and where each step stands:
  *
- *  1. DONE. `capabilities/index.ts` lists {@link executionPolicyCapability} in
- *     `HANDLERS`. The decoder's default arm calls `dispatchCapabilityEvent`
- *     (`wcore/index.ts`), so registration is the whole routing step - an
- *     unregistered handler is simply never reached.
+ *  1. DONE. `capabilities/index.ts` builds {@link createExecutionPolicyCapability}
+ *     into every capability set. The decoder's default arm dispatches through
+ *     the set its own `WCoreAgent` owns (`wcore/index.ts`), so membership of
+ *     that set is the whole routing step - a capability outside it is never
+ *     reached. There is deliberately NO module singleton; see the note on the
+ *     factory at the bottom of this file for why one would be a defect.
  *  2. DONE. Neither `execution_policy` nor `workspace_policy` remains in
  *     `ACKNOWLEDGED_UNHANDLED_EVENTS` in `protocol.ts`, so the decoder no
  *     longer counts as knowingly-ignored two events it now handles.
@@ -47,11 +49,12 @@
  *     `onExecutionPolicy`. It localizes {@link PolicyDecision.verdict}; the
  *     English {@link PolicyDecision.detail} below is shown as engine output,
  *     clearly labelled, never as the app's own explanation.
- *  5. STILL OPEN. The decoder's `ready` arm does not call {@link
- *     ExecutionPolicyCapability.seedFromReady}. `ready` has its own arm and
- *     never falls through to the dispatcher, so revision 0 - the posture the
- *     session STARTS in - has no way in and the badge stays absent until the
- *     first standalone `execution_policy` event.
+ *  5. DONE. The decoder's `ready` arm calls {@link
+ *     ExecutionPolicyCapability.seedFromReady} through
+ *     `WCoreAgent.seedCapabilitiesFromReady`. `ready` has its own arm and never
+ *     falls through to the dispatcher, so revision 0 - the posture the session
+ *     STARTS in - has no other way in, and without that call the badge stayed
+ *     absent until the first standalone `execution_policy` event.
  *
  * WHAT THE CONTRACT DOES NOT SETTLE, AND WHAT THIS MODULE CHOSE. The six
  * fixtures under `adversarial/policy/` declare INPUT only: there is no expected
@@ -722,9 +725,9 @@ export class PolicyRevisionTracker {
  * a first-class event with its own arm in the decoder (that is where
  * `capabilities` and the negotiated contract are read), and the dispatcher only
  * runs from the decoder's default arm, so a handler claiming `ready` would
- * register a type that never routes. The revision-0 seed must therefore be
- * pushed in by that arm calling {@link seedFromReady}. That call is still
- * missing - see step 5 of the WIRING note at the top of this file.
+ * register a type that never routes. The revision-0 seed is therefore pushed in
+ * by that arm calling {@link seedFromReady} - see step 5 of the WIRING note at
+ * the top of this file.
  */
 export type ExecutionPolicyCapability = CapabilityHandler & {
   /** The reducer this handler feeds. Exposed so the agent can read `current`/`stale`. */
@@ -739,7 +742,17 @@ export type ExecutionPolicyCapability = CapabilityHandler & {
    * receipt this host refused" look identical from outside otherwise.
    */
   seedFromReady(ready: unknown, ctx?: CapabilityContext): PolicyDecision | null;
-  /** Forget all revisions. For a new engine process; see {@link PolicyRevisionTracker.reset}. */
+  /**
+   * Forget all revisions, for a new engine process behind the SAME agent; see
+   * {@link PolicyRevisionTracker.reset}.
+   *
+   * Safe only because every `WCoreAgent` owns its own instance. Calling this on
+   * an instance two conversations shared would rewind a tracker the other
+   * conversation is still advancing, and a rewound tracker refuses that
+   * conversation's next legal receipt as a forward gap - permanently, per
+   * {@link PolicyRevisionTracker}'s own rule. That is why there is no module
+   * singleton to call it on.
+   */
   reset(): void;
 };
 
@@ -765,11 +778,14 @@ function toFrame(decision: PolicyDecision, receipt: unknown): ExecutionPolicyFra
  * turn-scoped: it can arrive between turns, and attaching it to whatever turn
  * happened to be open would file a session-wide fact under one message.
  *
- * That choice puts a REQUIREMENT on the layer above, which is not met today:
+ * That choice puts a REQUIREMENT on the layer above, and it is met:
  * `WCoreManager` drops frames with no `msg_id` (`if (!data.msg_id) return;`),
- * so it must gain an `execution_policy` pass-through ABOVE that guard, next to
- * the `sub_agent_event` one. Until it does, every frame emitted here is
- * discarded silently.
+ * so it checks `CAPABILITY_FRAME_TYPES` ABOVE that guard, next to the
+ * `sub_agent_event` pass-through. That set is derived from
+ * `forwardableFrameTypes()`, so this frame survives because the capability is
+ * in the set - see step 3 of the WIRING note at the top of this file. Were the
+ * check to move below the guard, every frame emitted here would be discarded
+ * silently again; `wcore-capabilityFrameForwarding.test.ts` pins the order.
  */
 function announce(ctx: CapabilityContext, decision: PolicyDecision, receipt: unknown): void {
   ctx.emit({ type: 'execution_policy', data: toFrame(decision, receipt), msg_id: '' });
@@ -778,11 +794,20 @@ function announce(ctx: CapabilityContext, decision: PolicyDecision, receipt: unk
 /**
  * Build a capability bound to its own tracker.
  *
- * A factory rather than a bare object because the tracker is per-engine state:
- * one shared instance across two engine processes would let one session's
- * revisions reject the other's. {@link executionPolicyCapability} is one such
- * instance, meant for the registry; anything that runs more than one engine at
- * a time builds its own.
+ * A factory and NOTHING ELSE - there is deliberately no module singleton to
+ * import, because the tracker is per-engine state and Darhai runs several
+ * engines at once: `WorkerTaskManager.taskList` holds one `WCoreManager` (hence
+ * one `WCoreAgent`, hence one engine child) per open conversation. A shared
+ * instance let one session's revisions reject the other's, and the `reset()`
+ * that a new `ready` performs rewound the tracker the other conversation was
+ * still advancing - after which its next legal receipt reads as a forward gap
+ * and, by this tracker's own rule, it can never advance again for the life of
+ * the session. The badge in the untouched conversation then showed the OTHER
+ * conversation's posture, permanently orange, with a "policy update never
+ * arrived" warning fabricated entirely by a second conversation existing.
+ *
+ * So the only way to get one is to build one, and `createCapabilitySet()` in
+ * `capabilities/index.ts` builds exactly one per agent.
  */
 export function createExecutionPolicyCapability(): ExecutionPolicyCapability {
   const tracker = new PolicyRevisionTracker();
@@ -855,12 +880,3 @@ export function createExecutionPolicyCapability(): ExecutionPolicyCapability {
     },
   };
 }
-
-/**
- * The instance intended for the capability registry.
- *
- * It is NOT registered yet: `HANDLERS` in `capabilities/index.ts` is still
- * empty, so nothing dispatches to it in the running app. See the WIRING note at
- * the top of this file for the three edits that change that.
- */
-export const executionPolicyCapability: ExecutionPolicyCapability = createExecutionPolicyCapability();

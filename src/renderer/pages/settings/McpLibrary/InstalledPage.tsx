@@ -382,8 +382,12 @@ export function InstalledPage() {
               )}
               {frame?.status === 'result' && (
                 <>
+                  {/* Plural-suffixed: the engine routinely withdraws exactly
+                      one tool, and "1 tools withdrawn" reads as a bug in the
+                      report the user is being asked to trust. */}
                   {t('settings.wcoreConfig.mcpSession.withdrawn', {
-                    defaultValue: '{{name}}: {{count}} tools withdrawn from the running engine.',
+                    defaultValue_one: '{{name}}: {{count}} tool withdrawn from the running engine.',
+                    defaultValue_other: '{{name}}: {{count}} tools withdrawn from the running engine.',
                     name: frame.name,
                     count: frame.removedToolCount,
                   })}
@@ -438,18 +442,42 @@ export function InstalledPage() {
         </div>
       )}
 
+      {/* The number stays its own bold node (that is the strip's design), so the
+          label beside it carries the plural: `count` is handed to every label so
+          i18next picks the form, instead of one frozen English plural reading
+          "1 errors" / "1 need re-auth". */}
       <div className='mcp-status-strip'>
         <div className='mcp-status-cell mcp-status-running'>
-          <b>{summary.running}</b> {t('mcpLibrary.installed.statusRunningCountLabel', 'Running')}
+          <b>{summary.running}</b>{' '}
+          {t('mcpLibrary.installed.statusRunningCountLabel', {
+            count: summary.running,
+            defaultValue_one: 'running',
+            defaultValue_other: 'running',
+          })}
         </div>
         <div className='mcp-status-cell mcp-status-warn'>
-          <b>{summary.warn}</b> {t('mcpLibrary.installed.statusReauthCountLabel', 'Needs re-auth')}
+          <b>{summary.warn}</b>{' '}
+          {t('mcpLibrary.installed.statusReauthCountLabel', {
+            count: summary.warn,
+            defaultValue_one: 'needs re-auth',
+            defaultValue_other: 'need re-auth',
+          })}
         </div>
         <div className='mcp-status-cell mcp-status-error'>
-          <b>{summary.error}</b> {t('mcpLibrary.installed.statusErrorCountLabel', 'Error')}
+          <b>{summary.error}</b>{' '}
+          {t('mcpLibrary.installed.statusErrorCountLabel', {
+            count: summary.error,
+            defaultValue_one: 'error',
+            defaultValue_other: 'errors',
+          })}
         </div>
         <div className='mcp-status-cell'>
-          <b>{summary.tools}</b> {t('mcpLibrary.installed.statusToolCountLabel', 'Tools available')}
+          <b>{summary.tools}</b>{' '}
+          {t('mcpLibrary.installed.statusToolCountLabel', {
+            count: summary.tools,
+            defaultValue_one: 'tool available',
+            defaultValue_other: 'tools available',
+          })}
         </div>
       </div>
 

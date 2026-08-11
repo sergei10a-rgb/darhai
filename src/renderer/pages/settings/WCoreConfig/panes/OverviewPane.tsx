@@ -4,13 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowRight, BookOpen, Brain, Globe, Link2, Server, Shield, Sparkles, Users, Wrench, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ipcBridge } from '@/common';
 import { useModelRegistry } from '@/renderer/hooks/useModelRegistry';
 import { useEngineConfigPath } from '../components/useEngineConfigPath';
+import { useEngineStatus } from '../components/useEngineStatus';
 import styles from './Panes.module.css';
 import type { EngineCapabilityFrame, EngineCapabilityHealth, EngineCapabilityRow } from './types';
 
@@ -29,10 +30,13 @@ type CapabilityRecord = {
    * `null` means the rows came from the main process's RETAINED record rather
    * than from frames this pane watched arrive. That record is reset on every
    * engine `ready`, so it always describes exactly one engine - Darhai just
-   * cannot say which conversation it belongs to. Treating `null` as its own
-   * identity is what makes the first live frame replace it rather than merge
-   * into it: any frame arriving after mount comes from an engine whose `ready`
-   * already cleared the record we read.
+   * cannot say which conversation it belongs to.
+   *
+   * A live frame arriving while the record is still unattributed is therefore
+   * NOT folded in and NOT thrown away: whether those rows are this engine's own
+   * earlier words or a dead engine's is a question only the main process can
+   * answer, so the record is re-read instead of guessed at. See the stream
+   * subscription below.
    */
   conversationId: string | null;
   rows: EngineCapabilityRow[];
@@ -85,6 +89,15 @@ function healthClass(health: EngineCapabilityHealth): string {
   return 'text-success font-medium';
 }
 
+/** Fold one row in, last-write-wins per capability, first-seen order. */
+function foldRow(base: readonly EngineCapabilityRow[], row: EngineCapabilityRow): EngineCapabilityRow[] {
+  const at = base.findIndex((existing) => existing.capability === row.capability);
+  if (at === -1) return [...base, row];
+  const rows = base.slice();
+  rows[at] = row;
+  return rows;
+}
+
 /** Fold one frame into the record, last-write-wins per capability, first-seen order. */
 function foldCapabilityFrame(
   previous: CapabilityRecord | null,
@@ -92,11 +105,25 @@ function foldCapabilityFrame(
   frame: EngineCapabilityFrame
 ): CapabilityRecord {
   const base = previous !== null && previous.conversationId === conversationId ? previous.rows : [];
-  const at = base.findIndex((row) => row.capability === frame.capability);
-  if (at === -1) return { conversationId, rows: [...base, frame] };
-  const rows = base.slice();
-  rows[at] = frame;
-  return { conversationId, rows };
+  return { conversationId, rows: foldRow(base, frame) };
+}
+
+/**
+ * Lay live rows over rows just read from the retained record.
+ *
+ * Both describe the same engine at that point - the record is re-read BECAUSE a
+ * frame from a live engine arrived - so the only question is ordering, and a
+ * frame this pane watched arrive is by definition not older than the record it
+ * raced. Merging rather than replacing is what keeps the seven capabilities an
+ * engine is NOT re-announcing when it revises the eighth.
+ */
+function mergeCapabilityRows(
+  base: readonly EngineCapabilityRow[],
+  newer: readonly EngineCapabilityRow[]
+): EngineCapabilityRow[] {
+  let rows = base.slice();
+  for (const row of newer) rows = foldRow(rows, row);
+  return rows;
 }
 
 /**
@@ -127,7 +154,13 @@ function readSnapshotRows(
 }
 
 type OverviewPaneProps = {
-  /** Engine version for the VERSION stat card (live, else the pinned build). */
+  /**
+   * The PINNED build, used only when no engine has reported a version.
+   *
+   * It is a fallback, not the answer: the pane reads the live semver from
+   * `wcoreEngine.liveness` and labels the card so a reading is never mistaken
+   * for the constant this prop carries.
+   */
   version: string;
 };
 
@@ -155,7 +188,12 @@ const labelProvider = (id: string): string =>
 const OverviewPane: React.FC<OverviewPaneProps> = ({ version }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [engineAvailable, setEngineAvailable] = useState<boolean | null>(null);
+  // Whether an engine is RUNNING and which build it reported, both read from
+  // the main process. This card used to ask `getAvailableAgents`, which answers
+  // "does Darhai ship the Core backend" (always yes, no version) - so it said
+  // "Running · <pinned constant>" with no engine process alive, while the
+  // Runtime pane one click away correctly said no chat was open.
+  const engine = useEngineStatus();
   // The ACTIVE profile, read rather than assumed. This card used to hardcode
   // "Default" and the path `~/.darhai/profiles/default` - wrong twice over: a
   // user on a named profile was told they were on the default one, and the
@@ -167,64 +205,108 @@ const OverviewPane: React.FC<OverviewPaneProps> = ({ version }) => {
   const [capabilities, setCapabilities] = useState<CapabilityRecord | null>(null);
   const [snapshot, setSnapshot] = useState<SnapshotState>({ settled: false, contractKnown: false, overflowed: false });
 
-  // The engine announces its own capability activation at every start - one
-  // frame per lifecycle step, MEASURED at 24 frames over 8 capabilities on
-  // v0.12.26. Darhai used to drop all of them, so `delegate_isolation:
-  // isolation_not_enforced` - the engine stating that delegate isolation is NOT
-  // being enforced, on a product that advertises sub-agents - was invisible.
+  /** Alive across the pane's life, so a late answer never sets state on a corpse. */
+  const mounted = useRef(true);
+  /** Newest pull wins; an earlier answer arriving late is dropped, not applied. */
+  const pullSeq = useRef(0);
+  /** True while the table shows the retained record and no live frame has replaced it. */
+  const showingRetained = useRef(false);
+
   useEffect(() => {
-    return ipcBridge.conversation.responseStream.on((message) => {
-      if (message.type !== 'capability_activation') return;
-      const frame = readCapabilityFrame(message.data);
-      if (frame === null) return;
-      setCapabilities((previous) => foldCapabilityFrame(previous, message.conversation_id, frame));
-    });
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
   }, []);
 
-  // MOUNT-TIME PULL, and the reason this table is not permanently empty.
-  //
-  // Every `capability_activation` frame is emitted once per engine process
-  // START - which happens while the user is in a chat, i.e. while this pane is
-  // unmounted (`/conversation/:id` and `/settings/wcore-config` are sibling
-  // routes). Subscribing alone means subscribing after the only frames that
-  // will ever be sent, forever. The main process retains the record; this reads
-  // it. The subscription above stays for the case the pull cannot cover: an
-  // engine that starts while Settings is already open.
-  useEffect(() => {
-    let alive = true;
+  /**
+   * Read the main process's retained readiness record.
+   *
+   * `attributeTo === null` is the MOUNT-TIME PULL, and the reason this table is
+   * not permanently empty. Every `capability_activation` frame is emitted once
+   * per engine process START - which happens while the user is in a chat, i.e.
+   * while this pane is unmounted (`/conversation/:id` and
+   * `/settings/wcore-config` are sibling routes). Subscribing alone means
+   * subscribing after the only frames that will ever be sent, forever.
+   *
+   * A conversation id means the RE-READ: a live frame arrived while the table
+   * still showed unattributed rows, so the record is read again and adopted
+   * under the engine that spoke.
+   */
+  const pullRecord = useCallback((attributeTo: string | null, fallback: EngineCapabilityFrame | null): void => {
+    const seq = ++pullSeq.current;
     ipcBridge.wcoreEngine.capabilitySnapshot
       .invoke()
       .then((result) => {
-        if (!alive) return;
+        if (!mounted.current || seq !== pullSeq.current) return;
         setSnapshot({
           settled: true,
           contractKnown: result.contractKnown === true,
           overflowed: result.overflowed === true,
         });
         const rows = readSnapshotRows(Array.isArray(result.activation) ? result.activation : []);
-        if (rows.length === 0) return;
-        // Seeded under `null`, never under a conversation id this pane made up.
-        // A live frame from any conversation then replaces it wholesale, which
-        // is correct: the record was cleared by that engine's own `ready`.
-        setCapabilities((previous) => (previous === null ? { conversationId: null, rows } : previous));
+        if (attributeTo === null) {
+          if (rows.length === 0) return;
+          // Seeded under `null`, never under a conversation id this pane made
+          // up, and only while nothing else has filled the table - a frame that
+          // arrived during the pull is newer than what the pull returned.
+          setCapabilities((previous) => {
+            if (previous !== null) return previous;
+            showingRetained.current = true;
+            return { conversationId: null, rows };
+          });
+          return;
+        }
+        setCapabilities((previous) => {
+          const live = previous !== null && previous.conversationId === attributeTo ? previous.rows : [];
+          return { conversationId: attributeTo, rows: mergeCapabilityRows(rows, live) };
+        });
       })
       .catch(() => {
-        // The record is unreadable; the table says so via `settled` rather than
-        // claiming the engine announced nothing.
-        if (alive) setSnapshot((previous) => ({ ...previous, settled: true }));
+        if (!mounted.current || seq !== pullSeq.current) return;
+        // The record is unreadable. On mount the table says so via `settled`
+        // rather than claiming the engine announced nothing; on a re-read the
+        // frame that triggered it must still land, so it is folded in alone -
+        // exactly what this pane did before the record could be re-read at all.
+        setSnapshot((previous) => ({ ...previous, settled: true }));
+        if (fallback !== null && attributeTo !== null) {
+          setCapabilities((previous) => foldCapabilityFrame(previous, attributeTo, fallback));
+        }
       });
-    return () => {
-      alive = false;
-    };
   }, []);
 
+  // The engine announces its own capability activation at every start - one
+  // frame per lifecycle step, MEASURED at 24 frames over 8 capabilities on
+  // v0.12.26. Darhai used to drop all of them, so `delegate_isolation:
+  // isolation_not_enforced` - the engine stating that delegate isolation is NOT
+  // being enforced, on a product that advertises sub-agents - was invisible.
+  //
+  // The subscription also covers what the mount pull cannot: an engine that
+  // starts while Settings is already open.
   useEffect(() => {
-    void ipcBridge.acpConversation.getAvailableAgents.invoke().then((result) => {
-      if (result.success) {
-        setEngineAvailable(result.data.some((a) => a.backend === 'wcore'));
+    return ipcBridge.conversation.responseStream.on((message) => {
+      if (message.type !== 'capability_activation') return;
+      const frame = readCapabilityFrame(message.data);
+      if (frame === null) return;
+      if (showingRetained.current) {
+        // The rows on screen belong to no conversation, so this frame can
+        // neither be folded into them (that blends two engines when a new one
+        // started) nor replace them (that drops the seven capabilities an
+        // engine is not re-announcing while it revises the eighth -
+        // `outcome_changed` and `health: 'changed'` exist precisely for that).
+        // `CapabilityActivationRecord.accept` runs BEFORE the frame is emitted,
+        // so the main process already holds the answer, this frame included.
+        showingRetained.current = false;
+        pullRecord(message.conversation_id, frame);
+        return;
       }
+      setCapabilities((previous) => foldCapabilityFrame(previous, message.conversation_id, frame));
     });
-  }, []);
+  }, [pullRecord]);
+
+  useEffect(() => {
+    pullRecord(null, null);
+  }, [pullRecord]);
 
   useEffect(() => {
     let alive = true;
@@ -313,7 +395,13 @@ const OverviewPane: React.FC<OverviewPaneProps> = ({ version }) => {
     ];
   }, [providers, providerCount, allocatedLabel, t]);
 
-  const stopped = engineAvailable === false;
+  // Three states, not two: before the read lands, "Stopped" would be as
+  // invented as "Running" was.
+  const stopped = engine.settled && engine.engines === 0;
+  // The engine's own semver when one reported it, the pinned build otherwise -
+  // and the card SAYS which of the two it is showing.
+  const liveVersion = engine.engineVersion.length > 0;
+  const versionLabel = liveVersion ? engine.engineVersion : version;
 
   const capabilityRows = capabilities?.rows ?? [];
 
@@ -388,14 +476,23 @@ const OverviewPane: React.FC<OverviewPaneProps> = ({ version }) => {
           <div className={styles.scLabel}>
             {t('settings.wcoreConfig.overview.scEngine', { defaultValue: 'Engine' })}
           </div>
-          <div className={styles.scValue}>
+          <div className={styles.scValue} data-testid='engine-state'>
             <span className={stopped ? `${styles.liveDot} ${styles.stopped}` : styles.liveDot} />
-            {stopped
-              ? t('settings.wcoreConfig.overview.scEngineStopped', { defaultValue: 'Stopped' })
-              : t('settings.wcoreConfig.overview.scEngineRunning', { defaultValue: 'Running' })}
+            {!engine.settled
+              ? t('settings.wcoreConfig.overview.scEngineChecking', { defaultValue: 'Checking…' })
+              : stopped
+                ? t('settings.wcoreConfig.overview.scEngineStopped', { defaultValue: 'Stopped' })
+                : t('settings.wcoreConfig.overview.scEngineRunning', { defaultValue: 'Running' })}
           </div>
           <div className={styles.scMeta}>
-            {t('settings.wcoreConfig.overview.scEngineMeta', { defaultValue: 'embedded · spawned in-process' })}
+            {/* The engine is spawned per chat, so "stopped" has a cause worth
+                naming - and it is the same fact the Runtime pane states when
+                its diagnostics button has nobody to ask. */}
+            {stopped
+              ? t('settings.wcoreConfig.overview.scEngineMetaIdle', {
+                  defaultValue: 'no Darhai Core chat is open',
+                })
+              : t('settings.wcoreConfig.overview.scEngineMeta', { defaultValue: 'embedded · spawned in-process' })}
           </div>
         </div>
         <div className={styles.statusCard}>
@@ -403,13 +500,21 @@ const OverviewPane: React.FC<OverviewPaneProps> = ({ version }) => {
             {t('settings.wcoreConfig.overview.scVersion', { defaultValue: 'Version' })}
           </div>
           <div className={styles.scValue}>
-            <span className={styles.scValueMono}>{version}</span>
+            <span className={styles.scValueMono} data-testid='engine-version'>
+              {versionLabel}
+            </span>
           </div>
-          <div className={styles.scMeta}>
-            {/* Names the product, not the upstream binary. The version itself
-                is the value line above; this says WHICH engine and that the
-                number is the pinned fallback until the live one reports in. */}
-            {t('settings.wcoreConfig.overview.scVersionMeta', { defaultValue: 'Darhai Core · pinned build' })}
+          <div className={styles.scMeta} data-testid='engine-version-meta'>
+            {/* Names the product, not the upstream binary - and says whether the
+                number above is a READING or the build Darhai was pinned to.
+                Printing "pinned build" under a live semver, or the pinned
+                constant under a label that promised a reading, are the same
+                lie in opposite directions. */}
+            {liveVersion
+              ? t('settings.wcoreConfig.overview.scVersionMetaLive', {
+                  defaultValue: 'Darhai Core · reported by the engine',
+                })
+              : t('settings.wcoreConfig.overview.scVersionMeta', { defaultValue: 'Darhai Core · pinned build' })}
           </div>
         </div>
         <div className={styles.statusCard}>

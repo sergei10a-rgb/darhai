@@ -15,6 +15,7 @@
 import type { ElectronApplication, Page } from 'playwright';
 import { freezeMotion, waitForSettle } from './fixture';
 import { ensureOnboardingComplete, resetOnboardingCache } from '../helpers/navigation';
+import { invokeBridge } from '../helpers/bridge';
 
 /** Narrow sizes Mongolian button pairs must still survive. */
 export const NARROW_VIEWPORTS = [
@@ -110,6 +111,64 @@ export async function gotoHash(page: Page, hash: string): Promise<void> {
     window.location.hash = target;
   }, hash);
   await settleFrozen(page);
+}
+
+/**
+ * The engine-backed conversation surface, open and ready to receive frames.
+ *
+ * WHY THIS EXISTS. Every other visual spec drives Settings or Mission Control,
+ * which are reachable by a hash alone. The conversation surface is not: it
+ * needs a conversation row in the database, and the wave-4 components that live
+ * there (`WorkflowRunCard`, `EffectivePolicyBadge`) had therefore never been
+ * rendered outside jsdom.
+ *
+ * No engine is started and none is needed - the components read the RENDERER
+ * stream, and {@link pushResponseFrame} puts real frames on it. The model
+ * reference is a placeholder because nothing here sends a turn.
+ *
+ * Returns the conversation id so callers can address their frames at it;
+ * `useWCoreMessage` drops any frame whose `conversation_id` does not match.
+ */
+export async function openWCoreConversation(page: Page): Promise<string> {
+  await hideFirstRunOverlay(page);
+  const created = await invokeBridge<{ id?: string } | null>(page, 'create-conversation', {
+    type: 'wcore',
+    name: 'Visual: engine capability surface',
+    model: { id: 'visual-placeholder', name: 'visual-placeholder', platform: 'wcore', useModel: 'visual-placeholder' },
+    extra: { backend: 'wcore' },
+  });
+  const id = created?.id;
+  if (!id) throw new Error('create-conversation returned no id; the conversation surface was never opened');
+  await gotoHash(page, `#/conversation/${id}`);
+  await page.waitForFunction((target: string) => window.location.hash.includes(target), id, { timeout: 15_000 });
+  await settleFrozen(page);
+  return id;
+}
+
+/**
+ * Put one frame on the renderer's response stream, through the real wire.
+ *
+ * The main process delivers `chat.response.stream` by sending the adapter's
+ * single IPC channel a `{name, data}` envelope (`common/adapter/main.ts`), and
+ * the preload hands that straight to the bridge - so this is the same path
+ * `WCoreManager` uses, not a stub of it. That matters: a helper that reached
+ * into React state would prove the component renders, not that the frame
+ * reaches it.
+ */
+export async function pushResponseFrame(
+  app: ElectronApplication,
+  frame: { type: string; data: unknown; msg_id: string; conversation_id: string }
+): Promise<void> {
+  await app.evaluate(
+    ({ BrowserWindow }, payload: string) => {
+      for (const win of BrowserWindow.getAllWindows()) {
+        if (!win.isDestroyed() && !win.webContents.isDestroyed()) {
+          win.webContents.send('office-ai-bridge-adapter', payload);
+        }
+      }
+    },
+    JSON.stringify({ name: 'chat.response.stream', data: frame })
+  );
 }
 
 /**

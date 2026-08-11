@@ -338,10 +338,13 @@
     "statusFailed": "Başarısız",
     "untitled": "İş akışı",
     "nodesObserved": "{{observed}} adım bildirildi",
+    "nodesUnknown": "Adım sayısı bildirilmedi",
     "nodesDeclared": "motor {{declared}} olarak bildirdi",
     "noNodesYet": "Henüz hiçbir adım bildirilmedi",
     "noNodesReported": "Çalıştırma tek bir adım bile bildirmeden sona erdi",
+    "noNodeList": "Bu çalıştırma hiçbir adım listesi bildirmedi",
     "linesLost": "Akıştan {{lines}} satır kayboldu - bu çalıştırma eksik olabilir",
+    "linesLostUnknown": "Bu çalıştırma akıştan satır kaybedilip kaybedilmediğini bildirmedi",
     "retryable": "Yeniden denenebilir",
     "notRetryable": "Yeniden denenemez",
     "runFailed": "Çalıştırma başarısız oldu",
@@ -375,5 +378,31 @@
   "delivery": {
     "unconfigured": "Aracı {{platform}} üzerinden mesaj göndermeye çalıştı, ancak kurulu bir {{platform}} kanalı yok. Ayarlar - Kanallar bölümünden ekleyin.",
     "failed": "Aracı {{platform}} üzerinden mesaj gönderemedi: {{error}}"
+  },
+  "anvilAlert": {
+    "retracted": {
+      "artifact_mutated": "Motor denetim makbuzunu geri çekti: makbuz yayımlandıktan sonra yapıt değişti.",
+      "gate_revoked": "Motor denetim makbuzunu geri çekti: makbuzun onayladığı kapı iptal edildi.",
+      "superseded": "Motor denetim makbuzunu geri çekti: daha yeni bir makbuz onun yerini aldı.",
+      "unknown": "Motor denetim makbuzunu Darhai'nin tanımadığı bir gerekçeyle geri çekti: {{reason}}"
+    },
+    "refused": {
+      "malformed": "Darhai, motorun kendi yayımladığı şemayı ihlal eden bir denetim kaydını reddetti. Kaydın hiçbir iddiası doğrulanmış sayılamaz.",
+      "version_mismatch": "Darhai, uygulamadığı bir denetim sözleşmesi sürümü için yazılmış bir denetim kaydını reddetti. Kayıt yorumlanmadı; dolayısıyla hiçbir şey doğrulanmadı ve hiçbir şey sessizce kabul edilmedi.",
+      "unknown_critical_extension": "Bir denetim kaydı, Darhai'nin uygulamadığı okuyucu uzantılarını gerektiriyor. Neyi onayladığı söylenemediği için doğrulanmış gibi gösterilmek yerine reddedildi.",
+      "sequence_gap": "Bu oturumda bir denetim kaydı eksik: Darhai'nin beklediği kayıttan önce başka bir kayıt geldi. Bu oturumun denetim izi artık eksiksiz olduğu kanıtlanabilir değil.",
+      "sequence_conflict": "Bu oturumda iki farklı denetim kaydı aynı konumu iddia ediyor. Darhai hangisinin gerçek olduğunu ayırt edemediği için ikisine de güvenmiyor.",
+      "stale_replay": "Motorun daha önce geri çektiği bir denetim makbuzu yeniden geldi. Darhai onu geri getirmedi: geri çekilmiş bir hüküm geri çekilmiş kalır.",
+      "body_conflict": "Tek bir denetim özeti iki farklı kayda kefil olurken görüldü. Darhai motorun özetini yeniden hesaplayamaz; bu yüzden hangisinin değiştirildiğini söyleyemez, yalnızca ikisinin birden gerçek olamayacağını söyleyebilir.",
+      "invalidation_unlinked": "Darhai'nin yayımlandığını hiç görmediği bir denetim makbuzu için geri çekme geldi; dolayısıyla burada geri çekilecek bir hüküm yok ve bu iddia denetlenemez.",
+      "unknown": "Darhai doğrulayamadığı bir denetim kaydını, tanımadığı bir gerekçeyle reddetti: {{code}}"
+    },
+    "engineRecord": "Motor kaydı: makbuz {{receipt}}, konum {{position}}.",
+    "engineRecordArtifact": "Motor kaydı: makbuz {{receipt}}, konum {{position}}, yapıt {{artifact}}.",
+    "noReceiptId": "belirtilmedi",
+    "noPosition": "okunamıyor",
+    "noValue": "belirtilmedi",
+    "publicationScope": "Bir denetim makbuzu yapıtı yalnızca makbuzun yayımlandığı andaki haliyle kapsar; Darhai o dosyayı sonrasında izlemez, bu yüzden sessizlik başka bir şeyin değişmediğinin kanıtı değildir.",
+    "hostReason": "Darhai'nin gerekçesi: {{detail}}"
   }
 }

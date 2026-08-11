@@ -96,9 +96,12 @@
       "title": "予算を増やしますか？",
       "summary": "予算の上限に達したため、エンジンが停止しました。追加で付与すれば、そのまま続けられます。停止したターンが再開されるのか、追加分が次のメッセージにしか使われないのかを決めるのは、Дархай ではなくエンジンです。",
       "confirm": "付与する",
-      "reason": "達した上限",
-      "observed": "使用量",
-      "limit": "上限",
+      "reasonTokens": "達した上限（この名前からトークンの上限と判断）",
+      "reasonCost": "達した上限（この名前から US$ の上限と判断）",
+      "observedTokens": "使用量（トークン）",
+      "observedCost": "使用量（US$）",
+      "limitTokens": "上限（トークン）",
+      "limitCost": "上限（US$）",
       "unknown": "不明",
       "grantTokens": "付与するトークン数",
       "grantCost": "付与する金額（US$）",
@@ -114,6 +117,10 @@
     "cost": "US$ {{cost}}",
     "both": "{{tokens}} と {{cost}}",
     "nothing": "なし",
+    "notSent": {
+      "undelivered": "{{amount}} を付与しましたが、エンジンには届きませんでした。何も引き上げられていません。（{{reason}}）",
+      "sessionLimit": "Дархай は 1 セッションで送る予算追加の上限に達したため、ダイアログは表示されませんでした。"
+    },
     "reason": {
       "host_not_authorized": "この Дархай には予算を増やす権限がありません。",
       "managed_policy": "管理ポリシーで禁止されています。",

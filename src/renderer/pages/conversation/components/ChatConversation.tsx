@@ -35,12 +35,12 @@ import WCoreModelSelector from '../platforms/wcore/WCoreModelSelector';
 import { useWCoreModelSelection } from '../platforms/wcore/useWCoreModelSelection';
 import { usePreviewContext } from '../Preview';
 import StarOfficeMonitorCard from '../platforms/openclaw/StarOfficeMonitorCard.tsx';
-import ConversationSkillsIndicator from './ConversationSkillsIndicator';
-import AddSkillToChatButton from './AddSkillToChatButton';
+import ConversationSkillsIndicator from './skills/ConversationSkillsIndicator';
+import AddSkillToChatButton from './skills/AddSkillToChatButton';
 import { WorkflowSurface } from '@/renderer/pages/guid/components/workflow/WorkflowSurface';
 import type { WCoreModelSelection } from '../platforms/wcore/useWCoreModelSelection';
 import type { GeminiModelSelection } from '../platforms/gemini/useGeminiModelSelection';
-// import SkillRuleGenerator from './components/SkillRuleGenerator'; // Temporarily hidden
+// import SkillRuleGenerator from './skills/SkillRuleGenerator'; // Temporarily hidden
 
 // Null-object model selection stubs used when a wcore or gemini conversation
 // is wrapped inside WorkflowSurface. The workflow chrome controls the flow;

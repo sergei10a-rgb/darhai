@@ -122,6 +122,7 @@
     "emptyTitle": "Bildirilen hedef yok",
     "emptyHint": "Motor bir hedef yayımladığı anda burada görünür. Motor hedefleri kendi günlüğünde tutar; daha önce açılmış bir hedef şimdi değil, bir sonraki güncellemesinde görünür.",
     "emptyHintUnavailable": "Bu motor sürümü kalıcı hedefleri bildirmiyor; bu değişene kadar burada bir şey görünmeyecek.",
+    "emptyHintLimited": "Burada henüz bir hedef yayımlanmadı; yukarıdaki bildirim, bu motor sürümünün neden hiç hedef yayımlamayabileceğini açıklıyor.",
     "unavailableTitle": "Kalıcı hedefler kullanılamıyor",
     "limitedTitle": "Bu motor sürümünde kalıcı hedefler sınırlı",
     "gradeReported": "Motor bu yeteneği {{grade}} olarak derecelendirdi.",

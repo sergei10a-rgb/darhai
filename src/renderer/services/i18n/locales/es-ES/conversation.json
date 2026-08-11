@@ -336,10 +336,13 @@
     "statusFailed": "Con errores",
     "untitled": "Flujo de trabajo",
     "nodesObserved": "{{observed}} pasos informados",
+    "nodesUnknown": "No se informó el número de pasos",
     "nodesDeclared": "el motor declaró {{declared}}",
     "noNodesYet": "Ningún paso ha informado todavía",
     "noNodesReported": "La ejecución terminó sin informar ni un solo paso",
+    "noNodeList": "Esta ejecución no informó ninguna lista de pasos",
     "linesLost": "Se perdieron {{lines}} líneas del flujo - esta ejecución puede estar incompleta",
+    "linesLostUnknown": "Esta ejecución no informó si se perdieron líneas del flujo",
     "retryable": "Se puede reintentar",
     "notRetryable": "No se puede reintentar",
     "runFailed": "La ejecución falló",
@@ -373,5 +376,31 @@
   "delivery": {
     "unconfigured": "El agente intentó enviar un mensaje por {{platform}}, pero no hay ningún canal de {{platform}} configurado. Añade uno en Ajustes - Canales.",
     "failed": "El agente no pudo enviar un mensaje por {{platform}}: {{error}}"
+  },
+  "anvilAlert": {
+    "retracted": {
+      "artifact_mutated": "El motor retiró su recibo de auditoría: el artefacto cambió después de que el recibo se publicara.",
+      "gate_revoked": "El motor retiró su recibo de auditoría: se revocó la compuerta que certificaba.",
+      "superseded": "El motor retiró su recibo de auditoría: un recibo posterior lo reemplazó.",
+      "unknown": "El motor retiró su recibo de auditoría por un motivo que Darhai no reconoce: {{reason}}"
+    },
+    "refused": {
+      "malformed": "Darhai rechazó un registro de auditoría que incumple el esquema publicado por el propio motor. Nada de lo que afirma puede darse por verificado.",
+      "version_mismatch": "Darhai rechazó un registro de auditoría escrito para una versión del contrato de auditoría que no implementa. No se interpretó, así que no se verificó nada ni se aceptó nada en silencio.",
+      "unknown_critical_extension": "Un registro de auditoría exige extensiones de lectura que Darhai no implementa, por lo que Darhai no puede decir qué certifica. Se rechazó en lugar de mostrarlo como verificado.",
+      "sequence_gap": "Falta un registro de auditoría en esta sesión: llegó uno por delante del que Darhai esperaba. La cadena de auditoría de esta sesión ya no puede demostrarse completa.",
+      "sequence_conflict": "Dos registros de auditoría distintos reclaman la misma posición en esta sesión. Darhai no puede saber cuál es auténtico, así que no confía en ninguno.",
+      "stale_replay": "Volvió a llegar un recibo de auditoría que el motor ya había retirado. Darhai no lo restauró: un veredicto retirado sigue retirado.",
+      "body_conflict": "Se vio un mismo resumen de auditoría avalando dos registros distintos. Darhai no puede recalcular el resumen del motor, así que no puede decir cuál de los dos fue alterado, solo que no pueden ser auténticos los dos.",
+      "invalidation_unlinked": "Llegó una retirada para un recibo de auditoría cuya publicación Darhai nunca vio, así que aquí no hay ningún veredicto que retirar y la afirmación no se puede comprobar.",
+      "unknown": "Darhai rechazó un registro de auditoría que no pudo verificar, por un motivo que no reconoce: {{code}}"
+    },
+    "engineRecord": "Registro del motor: recibo {{receipt}}, posición {{position}}.",
+    "engineRecordArtifact": "Registro del motor: recibo {{receipt}}, posición {{position}}, artefacto {{artifact}}.",
+    "noReceiptId": "no indicado",
+    "noPosition": "ilegible",
+    "noValue": "no indicado",
+    "publicationScope": "Un recibo de auditoría cubre el artefacto solo tal como estaba cuando se publicó el recibo; Darhai no vigila ese archivo después, así que el silencio no prueba que no haya cambiado nada más.",
+    "hostReason": "Motivo de Darhai: {{detail}}"
   }
 }

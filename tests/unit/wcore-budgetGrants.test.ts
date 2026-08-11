@@ -41,6 +41,8 @@ import type { CapabilityContext } from '@process/agent/wcore/capabilities/types'
 import {
   BUDGET_REFUSAL_REASONS,
   MAX_ADDITIONAL_TOKENS,
+  MAX_GRANT_COST_USD,
+  MAX_GRANT_TOKENS,
   MAX_PENDING_GRANTS,
   budgetGrantsCapability,
   buildApprovalResume,
@@ -353,6 +355,39 @@ describe('continue_with_budget: what the builder does produce', () => {
     expect(BigInt(Number('18446744073709551615')) > MAX_ADDITIONAL_TOKENS).toBe(true);
     expect(buildContinueWithBudget({ requestId: 'b1', additionalTokens: 2 ** 64 }).ok).toBe(false);
     expect(buildContinueWithBudget({ requestId: 'b1', additionalTokens: 10_000_000 }).ok).toBe(true);
+  });
+
+  it('refuses one grant larger than the host ceiling, in either unit', () => {
+    // The schema bounds `additional_cost_usd` with `minimum: 0` and NOTHING
+    // else - I read the branch - so on the money side the contract's own ceiling
+    // is infinity, and both figures a grant is derived from are strings the
+    // engine wrote. These two are host picks anchored on the contract's own
+    // example grant (US$2.50 / 250000 tokens).
+    expect(buildContinueWithBudget({ requestId: 'b1', additionalCostUsd: MAX_GRANT_COST_USD + 1 }).ok).toBe(false);
+    expect(buildContinueWithBudget({ requestId: 'b1', additionalTokens: MAX_GRANT_TOKENS + 1 }).ok).toBe(false);
+    // Exactly at the ceiling still builds: the bound is `>`, not `>=`.
+    expect(buildContinueWithBudget({ requestId: 'b1', additionalCostUsd: MAX_GRANT_COST_USD }).ok).toBe(true);
+    expect(buildContinueWithBudget({ requestId: 'b1', additionalTokens: MAX_GRANT_TOKENS }).ok).toBe(true);
+    // The contract's own example is nowhere near either ceiling - a real grant
+    // must not be caught by this.
+    expect(buildContinueWithBudget({ requestId: 'b1', additionalTokens: 250000, additionalCostUsd: 2.5 }).ok).toBe(
+      true
+    );
+  });
+
+  it('still ACCEPTS a large amount the engine reports it granted', () => {
+    // The ceiling is on what this host SENDS. `decodeBudgetGrantResult` shares
+    // the same field validators, and an engine reporting a big number it granted
+    // is a fact to display - discarding it would hide spend, which is the
+    // opposite of what the ceiling is for.
+    const decoded = decodeBudgetGrantResult({
+      type: 'budget_grant_result',
+      request_id: 'budget-001',
+      additional_tokens: MAX_GRANT_TOKENS * 10,
+      additional_cost_usd: MAX_GRANT_COST_USD * 10,
+      outcome: 'granted',
+    });
+    expect(decoded.ok).toBe(true);
   });
 });
 

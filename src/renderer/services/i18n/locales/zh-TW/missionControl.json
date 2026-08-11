@@ -122,6 +122,7 @@
     "emptyTitle": "尚未回報任何目標",
     "emptyHint": "引擎一發佈目標，這裡就會出現。引擎將目標記錄在自己的日誌中，因此較早開啟的目標會在下次更新時出現，而非現在。",
     "emptyHintUnavailable": "此引擎版本不會回報持久目標，在情況改變前這裡不會出現任何內容。",
+    "emptyHintLimited": "這裡尚未發布任何目標，上方的提示說明了此引擎版本為何可能永遠不會發布目標。",
     "unavailableTitle": "持久目標無法使用",
     "limitedTitle": "此引擎版本中的持久目標受限",
     "gradeReported": "引擎將此能力評為 {{grade}}。",

@@ -96,9 +96,12 @@
       "title": "예산을 늘릴까요?",
       "summary": "예산 한도에 도달해 엔진이 멈췄습니다. 더 부여하면 계속 진행할 수 있습니다. 멈춘 턴이 이어지는지, 아니면 추가 예산이 다음 메시지에만 쓰이는지는 Дархай가 아니라 엔진이 정합니다.",
       "confirm": "부여",
-      "reason": "도달한 한도",
-      "observed": "사용량",
-      "limit": "한도",
+      "reasonTokens": "도달한 한도(이름을 보고 토큰 한도로 판단)",
+      "reasonCost": "도달한 한도(이름을 보고 US$ 한도로 판단)",
+      "observedTokens": "사용량(토큰)",
+      "observedCost": "사용량(US$)",
+      "limitTokens": "한도(토큰)",
+      "limitCost": "한도(US$)",
       "unknown": "알 수 없음",
       "grantTokens": "부여할 토큰",
       "grantCost": "부여할 금액(US$)",
@@ -114,6 +117,10 @@
     "cost": "US$ {{cost}}",
     "both": "{{tokens}} 및 {{cost}}",
     "nothing": "없음",
+    "notSent": {
+      "undelivered": "{{amount}}을(를) 부여했지만 엔진에 전달되지 않아 아무것도 늘어나지 않았습니다. ({{reason}})",
+      "sessionLimit": "Дархай가 한 세션에서 보낼 예산 추가를 모두 보냈기 때문에 이 한도에는 창을 띄우지 않았습니다."
+    },
     "reason": {
       "host_not_authorized": "이 Дархай에는 예산을 늘릴 권한이 없습니다.",
       "managed_policy": "관리 정책이 이를 막고 있습니다.",

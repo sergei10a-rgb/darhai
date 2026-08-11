@@ -96,9 +96,12 @@
       "title": "Augmenter le budget ?",
       "summary": "Le moteur s’est arrêté car une limite de budget a été atteinte. Vous pouvez en accorder davantage pour qu’il continue. C’est le moteur, et non Дархай, qui décide si le tour en pause reprend ou si le budget supplémentaire ne servira qu’à votre prochain message.",
       "confirm": "Accorder",
-      "reason": "Limite atteinte",
-      "observed": "Consommé",
-      "limit": "Limite",
+      "reasonTokens": "Limite atteinte (lue comme une limite en jetons d’après ce nom)",
+      "reasonCost": "Limite atteinte (lue comme une limite en US$ d’après ce nom)",
+      "observedTokens": "Consommé (jetons)",
+      "observedCost": "Consommé (US$)",
+      "limitTokens": "Limite (jetons)",
+      "limitCost": "Limite (US$)",
       "unknown": "inconnu",
       "grantTokens": "Jetons à accorder",
       "grantCost": "Montant à accorder (US$)",
@@ -114,6 +117,10 @@
     "cost": "US$ {{cost}}",
     "both": "{{tokens}} et {{cost}}",
     "nothing": "rien",
+    "notSent": {
+      "undelivered": "Vous avez accordé {{amount}}, mais cela n’est jamais parvenu au moteur : rien n’a été augmenté. ({{reason}})",
+      "sessionLimit": "Дархай a déjà envoyé le maximum d’augmentations de budget pour une session ; aucune fenêtre n’a été ouverte pour cette limite."
+    },
     "reason": {
       "host_not_authorized": "cette installation de Дархай n’a pas le droit d’augmenter les budgets.",
       "managed_policy": "une politique gérée l’interdit.",

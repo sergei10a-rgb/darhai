@@ -449,16 +449,28 @@ export type IMessageWorkflowRun = IMessage<
      * engine is free to open a run with `node_count: 0` and then emit nodes,
      * and rendering "1 of 0" would report the engine's own inconsistency as a
      * Darhai bug. The card shows observed nodes and treats this as a hint.
+     *
+     * OPTIONAL, like the two fields below, and for one reason: absence and zero
+     * are different facts and the card must not confuse them. The in-tree
+     * reducer always populates all three, so this is defence against a future
+     * or third-party projection - but half-applied defence is worse than none,
+     * which is what shipped: `nodes` was coerced to `[]` (rendering a confident
+     * "0 steps reported"), while a missing `missingTotal` made `> 0` false and
+     * SUPPRESSED the lost-lines warning, and a missing `nodeCount` compared
+     * unequal to `nodes.length` and printed "engine declared undefined".
      */
-    nodeCount: number;
+    nodeCount?: number;
     status: 'running' | 'succeeded' | 'failed';
     /**
      * How many run sequences never arrived. Always the true count even when the
      * reducer capped its enumerated list, so a "N lines lost" line must read
-     * this and never `missingSequences.length`.
+     * this and never `missingSequences.length`. Absent means the projection did
+     * not say - which the card states, because silence here must never be read
+     * as "nothing was lost".
      */
-    missingTotal: number;
-    nodes: Array<{
+    missingTotal?: number;
+    /** Absent means no node list arrived at all; an empty array means one arrived and was empty. */
+    nodes?: Array<{
       nodeId: string;
       state: 'queued' | 'running' | 'succeeded' | 'failed' | 'blocked';
       failure?: WorkflowRunFailure;
@@ -737,9 +749,16 @@ export const transformMessage = (message: IResponseMessage): TMessage => {
       // `workflow_lifecycle_v1` projection. The main-process reducer has already
       // validated every field against the engine schema (unknown node states,
       // negative sequences and conflicting terminals never reach here), so this
-      // reads rather than re-validates. `nodes` is still length-checked because
-      // a missing array would crash the card, and a crashed card is a worse
-      // answer than an empty one.
+      // reads rather than re-validates.
+      //
+      // The three measurement fields are copied ONLY when the projection
+      // actually carried them, and are optional on the message type for the
+      // same reason. Coercing an absent `nodes` to `[]` turned "the projection
+      // said nothing" into the card asserting "0 steps reported"; copying an
+      // absent `missingTotal` straight through made `missingTotal > 0` false
+      // and silently suppressed the "N stream lines were lost" banner, so a
+      // projection that never mentioned loss read as one that reported none.
+      // Absence travels as absence and the card says "not reported".
       const run = message.data as IMessageWorkflowRun['content'];
       return {
         id: uuid(),
@@ -753,10 +772,10 @@ export const transformMessage = (message: IResponseMessage): TMessage => {
           runId: run.runId,
           workflowId: run.workflowId,
           name: run.name,
-          nodeCount: run.nodeCount,
+          ...(typeof run.nodeCount === 'number' && { nodeCount: run.nodeCount }),
           status: run.status,
-          missingTotal: run.missingTotal,
-          nodes: Array.isArray(run.nodes) ? run.nodes : [],
+          ...(typeof run.missingTotal === 'number' && { missingTotal: run.missingTotal }),
+          ...(Array.isArray(run.nodes) && { nodes: run.nodes }),
           ...(run.failure && { failure: run.failure }),
         },
       };

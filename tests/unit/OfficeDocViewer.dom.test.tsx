@@ -51,7 +51,7 @@ vi.mock('../../src/renderer/components/media/WebviewHost', () => ({
   ),
 }));
 
-import OfficeDocPreview from '../../src/renderer/pages/conversation/Preview/components/viewers/OfficeDocViewer';
+import OfficeDocPreview from '../../src/renderer/pages/conversation/Preview/components/viewers/office/OfficeDocViewer';
 
 describe('OfficeDocViewer', () => {
   beforeEach(() => {

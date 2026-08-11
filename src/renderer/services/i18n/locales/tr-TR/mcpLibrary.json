@@ -31,15 +31,22 @@
     "statusWarn": "Yeniden yetkilendirme gerekli",
     "statusError": "Hata",
     "statusStopped": "Devre dışı",
+    "toolCount": "{{count}} araç",
+    "toolCount_one": "{{count}} araç",
+    "toolCount_other": "{{count}} araç",
     "statusIdle": "Boşta",
-    "statusToolCount": "{{count}} araç kullanılabilir",
     "statusToolCountLabel": "araç mevcut",
-    "statusReauthCount": "{{count}} yeniden yetkilendirme gerekiyor",
+    "statusToolCountLabel_one": "araç mevcut",
+    "statusToolCountLabel_other": "araç mevcut",
     "statusReauthCountLabel": "yeniden yetkilendirme gerekiyor",
-    "statusErrorCount": "{{count}} hata",
+    "statusReauthCountLabel_one": "yeniden yetkilendirme gerekiyor",
+    "statusReauthCountLabel_other": "yeniden yetkilendirme gerekiyor",
     "statusErrorCountLabel": "hata",
-    "statusRunningCount": "{{count}} çalışıyor",
+    "statusErrorCountLabel_one": "hata",
+    "statusErrorCountLabel_other": "hata",
     "statusRunningCountLabel": "çalışıyor",
+    "statusRunningCountLabel_one": "çalışıyor",
+    "statusRunningCountLabel_other": "çalışıyor",
     "logsToast": "Günlük görüntüleyici yakında geliyor."
   },
   "byo": {
@@ -64,6 +71,22 @@
   "browse": {
     "title": "MCP Kitaplığı",
     "subtitle": "Seçilmiş bağlayıcılar. Göz atın, tek tıkla kurun ve kurulum kılavuzunu izleyin.",
-    "searchPlaceholder": "MCP ara…"
+    "searchPlaceholder": "MCP ara…",
+    "entryCount": "{{count}} kayıt",
+    "entryCount_one": "{{count}} kayıt",
+    "entryCount_other": "{{count}} kayıt",
+    "recommendedTitle": "★ Sizin için önerilenler",
+    "installRate": "%{{percent}} kurulu"
+  },
+  "detail": {
+    "estMinutes": "{{count}} dk",
+    "estMinutes_one": "{{count}} dk",
+    "estMinutes_other": "{{count}} dk",
+    "unknownEntry": "Bilinmeyen kayıt: {{id}}",
+    "back": "← MCP Kitaplığı",
+    "viewSource": "Kaynağı görüntüle",
+    "transport": "Taşıma",
+    "runtime": "Çalışma zamanı",
+    "platforms": "Platformlar"
   }
 }

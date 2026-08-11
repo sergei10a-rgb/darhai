@@ -121,7 +121,7 @@ export function DetailPage() {
     redirectUri: string;
   }>({ visible: false, server: null, redirectUri: 'http://localhost:57000/oauth/callback' });
 
-  if (!entry) return <div className='mcp-detail-page'>Unknown entry: {id}</div>;
+  if (!entry) return <div className='mcp-detail-page'>{t('mcpLibrary.detail.unknownEntry', { id })}</div>;
 
   const w = entry['x-wayland'];
 
@@ -275,7 +275,7 @@ export function DetailPage() {
     <div className='mcp-detail-page'>
       {contextHolder}
       <button className='mcp-back' onClick={() => navigate('/settings/mcp-library/browse')}>
-        ← MCP Library
+        {t('mcpLibrary.detail.back', '← MCP Library')}
       </button>
 
       <header className='mcp-detail-head'>
@@ -323,7 +323,7 @@ export function DetailPage() {
                 if (u) void openExternalUrl(u);
               }}
             >
-              <ExternalLink size={12} /> View source
+              <ExternalLink size={12} /> {t('mcpLibrary.detail.viewSource', 'View source')}
             </button>
           )}
         </div>
@@ -367,7 +367,14 @@ export function DetailPage() {
           <ul className='mcp-tool-groups'>
             {w.toolGroups?.map((g) => (
               <li key={g.label}>
-                <b>{g.label}</b> · {g.count} tools
+                {/* Same plural key the installed list uses - a group of one
+                    must not read "1 tools". */}
+                <b>{g.label}</b> ·{' '}
+                {t('mcpLibrary.installed.toolCount', {
+                  count: g.count,
+                  defaultValue_one: '{{count}} tool',
+                  defaultValue_other: '{{count}} tools',
+                })}
               </li>
             ))}
           </ul>
@@ -387,11 +394,11 @@ export function DetailPage() {
               <TierBadge tier={w.tier} /> <MaintainerBadge type={w.maintainerType} />
             </div>
             <dl>
-              <dt>Transport</dt>
+              <dt>{t('mcpLibrary.detail.transport', 'Transport')}</dt>
               <dd>{entry.packages[0]?.transport.type ?? entry.remotes?.[0]?.type ?? '-'}</dd>
-              <dt>Runtime</dt>
+              <dt>{t('mcpLibrary.detail.runtime', 'Runtime')}</dt>
               <dd>{entry.packages[0]?.runtimeHint ?? 'hosted'}</dd>
-              <dt>Platforms</dt>
+              <dt>{t('mcpLibrary.detail.platforms', 'Platforms')}</dt>
               <dd>{(w.platforms ?? ['all']).join(', ')}</dd>
             </dl>
           </div>

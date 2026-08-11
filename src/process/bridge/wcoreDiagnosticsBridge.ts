@@ -23,14 +23,29 @@
  * matches the frame to its own request. A promise that resolved with the
  * snapshot would need a timeout this layer cannot honour honestly.
  *
- * SECURITY - HUMAN/RENDERER ONLY. Both channels are remote-denied in
- * `bridgeAllowlist.ts`. The snapshot discloses the operator's config paths,
- * ignored environment overrides and which MCP servers failed to launch;
- * withdrawal MUTATES a running session by taking tools out of a live chat.
+ * IT ALSO ANSWERS ONE PASSIVE QUESTION. `ipcBridge.wcoreEngine.liveness` counts
+ * the live engines and reports the version the newest one published. It writes
+ * nothing to any engine, which is what makes it legal for a status card to call
+ * it on mount - and it lives here because this is where `liveEngines` is, so
+ * the Overview card and the Runtime pane answer from one source instead of
+ * contradicting each other.
+ *
+ * SECURITY - HUMAN/RENDERER ONLY. All three channels are remote-denied in
+ * `bridgeAllowlist.ts`, and `tests/unit/bridgeAllowlistWcoreEngine.redteam
+ * .test.ts` fails if a `wcoreEngine.*` channel is ever added without a deny
+ * line. The snapshot discloses the operator's config paths, ignored environment
+ * overrides and which MCP servers failed to launch; withdrawal MUTATES a
+ * running session by taking tools out of a live chat; liveness reports whether
+ * the local user has a chat open at all.
  */
 
 import { ipcBridge } from '@/common';
-import type { IWcoreEngineRequest, IWcoreRuntimeRequestOutcome } from '@/common/adapter/ipcBridge';
+import type {
+  IWcoreEngineLiveness,
+  IWcoreEngineRequest,
+  IWcoreRuntimeRequestOutcome,
+} from '@/common/adapter/ipcBridge';
+import { NO_CONTRACT } from '@process/agent/wcore/capabilities/contractNegotiation';
 import type { NegotiatedContract } from '@process/agent/wcore/capabilities/contractNegotiation';
 import type { CapabilityContext } from '@process/agent/wcore/capabilities/types';
 import {
@@ -69,6 +84,68 @@ type EngineTarget = { conversationId: string; engine: LiveEngine };
 
 /** The field on `WCoreManager` that holds the engine. Pinned by the seam test. */
 export const WCORE_MANAGER_AGENT_FIELD = 'agent';
+
+/** The field on `WCoreAgent` that holds the spawned child. Pinned by the seam test. */
+export const WCORE_AGENT_CHILD_FIELD = 'childProcess';
+
+/**
+ * Would a command written right now actually LEAVE this process?
+ *
+ * NOT the same question as `isAlive`, which is `childProcess !== null`, while
+ * the writer opens with `if (!this.childProcess?.stdin?.writable) return;` and
+ * drops the command in silence. Everything between those two conditions - a
+ * child that exited but has not been reaped, a stdin that took an EPIPE - is a
+ * request the ledger records as sent and no engine will ever answer. The pane
+ * then sits on "Asked the engine. Waiting for its answer…" with no timeout to
+ * end it (deliberately: see `useRuntimeDiagnostics`), so the only escape is
+ * remounting the pane, which no copy suggests.
+ *
+ * So the transport is probed exactly the way the writer probes it, through the
+ * same structural view {@link engineOf} already uses. Unreadable degrades to
+ * false: refusing a request the user can simply repeat is the safe direction,
+ * and `wcore-diagnosticsBridge.test.ts` pins the field name so a rename fails a
+ * named test instead of quietly refusing every request forever.
+ */
+function canWriteTo(engine: LiveEngine): boolean {
+  if (engine.isAlive !== true) return false;
+  const child = (engine as unknown as Record<string, unknown>)[WCORE_AGENT_CHILD_FIELD];
+  if (typeof child !== 'object' || child === null) return false;
+  const stdin = (child as { stdin?: unknown }).stdin;
+  if (typeof stdin !== 'object' || stdin === null) return false;
+  return (stdin as { writable?: unknown }).writable === true;
+}
+
+/** What the caller is told when the engine has not finished starting. */
+const STILL_STARTING =
+  'the engine is still starting and has not yet said which capabilities it supports, so nothing was sent';
+
+/**
+ * Has THIS engine published its `ready` yet?
+ *
+ * `liveEngines` admits a task the moment the child exists, but `WCoreAgent
+ * .contract` stays `NO_CONTRACT` - an empty grade map - until that engine's own
+ * `ready` arrives. Gating on the grades inside that window makes the host report
+ * `the engine graded runtime_diagnostics_v1 "unavailable"` about a capability
+ * the engine fully supports: open a Core chat, click into Settings, press Ask.
+ *
+ * That is precisely the conflation `IWcoreCapabilitySnapshot.contractKnown`
+ * exists to prevent - "an empty map means 'nothing is available' to a gate, but
+ * 'we have not asked yet' to a readout" - and this bridge was the one place
+ * that ignored it.
+ *
+ * Identity against `NO_CONTRACT` is the exact test (`WCoreAgent` holds that very
+ * object until `negotiateContract` replaces it, pinned by the seam test); the
+ * shape check behind it catches a contract that was replaced by an equally
+ * empty one, and leaves an engine that DID publish grades - even a `ready` that
+ * graded everything unavailable - to the real contract gate.
+ */
+function hasSpoken(engine: LiveEngine): boolean {
+  const contract = engine.contract;
+  if (contract === NO_CONTRACT) return false;
+  const grades = contract.grades as { size?: unknown } | undefined;
+  const graded = typeof grades?.size === 'number' && grades.size > 0;
+  return graded || contract.engineVersion !== '';
+}
 
 /**
  * The live engine behind one task, or null.
@@ -164,11 +241,16 @@ function requestRuntimeDiagnostics(workerTaskManager: IWorkerTaskManager): IWcor
   const engines = liveEngines(workerTaskManager);
   const target = engines[0];
   if (target === undefined) return { engines: 0, sent: [], refused: [] };
+  if (!hasSpoken(target.engine)) {
+    return collect(engines.length, [
+      { entry: { conversationId: target.conversationId, reason: STILL_STARTING }, ok: false },
+    ]);
+  }
 
   const outcome = sendGetRuntimeDiagnostics(
     sendContext(target.conversationId, target.engine),
     mintDiagnosticsRequestId(),
-    { contract: target.engine.contract, canReachEngine: () => target.engine.isAlive }
+    { contract: target.engine.contract, canReachEngine: () => canWriteTo(target.engine) }
   );
   return collect(engines.length, [{ entry: toRequest(target.conversationId, outcome), ok: outcome.ok === true }]);
 }
@@ -195,20 +277,51 @@ function withdrawMcpServer(workerTaskManager: IWorkerTaskManager, name: unknown)
   return collect(
     engines.length,
     engines.map((target) => {
+      if (!hasSpoken(target.engine)) {
+        return { entry: { conversationId: target.conversationId, reason: STILL_STARTING }, ok: false };
+      }
       const outcome = sendRemoveMcpServer(
         sendContext(target.conversationId, target.engine),
         { requestId: mintMcpRemovalRequestId(), name },
-        { contract: target.engine.contract, canReachEngine: () => target.engine.isAlive }
+        { contract: target.engine.contract, canReachEngine: () => canWriteTo(target.engine) }
       );
       return { entry: toRequest(target.conversationId, outcome), ok: outcome.ok === true };
     })
   );
 }
 
+/**
+ * How many Darhai Core engines are running, and which version they report.
+ *
+ * A PASSIVE read, unlike the two round-trips above: it writes nothing to any
+ * engine, so a status card may call it on mount. It exists because the Settings
+ * header and the Overview "Engine" card had no way to ask. They keyed off
+ * `acpConversation.getAvailableAgents`, whose wcore entry is built with
+ * `available: true` unconditionally and carries no version - so the chip said
+ * "engine running · <pinned constant>" whether or not any engine process
+ * existed, and the stopped branch was unreachable. `engines` here is the same
+ * count `requestRuntimeDiagnostics` reports, from the same `liveEngines`, which
+ * is what makes the Overview agree with the Runtime pane beside it.
+ *
+ * `engineVersion` is the semver from the last `ready` (`''` when no engine has
+ * published one yet), so a caller can tell a reported version from the build
+ * Darhai was pinned to instead of printing the constant as if it were a
+ * reading.
+ */
+function engineLiveness(workerTaskManager: IWorkerTaskManager): IWcoreEngineLiveness {
+  const engines = liveEngines(workerTaskManager);
+  // The most recently active engine's own contract, not the retained record:
+  // this answers "what is running", and the retained record survives the
+  // process that wrote it.
+  const version = engines[0] === undefined ? '' : engines[0].engine.contract.engineVersion;
+  return { engines: engines.length, engineVersion: typeof version === 'string' ? version : '' };
+}
+
 export function initWcoreDiagnosticsBridge(workerTaskManager: IWorkerTaskManager): void {
   ipcBridge.wcoreEngine.requestRuntimeDiagnostics.provider(async () => requestRuntimeDiagnostics(workerTaskManager));
   ipcBridge.wcoreEngine.withdrawMcpServer.provider(async ({ name }) => withdrawMcpServer(workerTaskManager, name));
+  ipcBridge.wcoreEngine.liveness.provider(async () => engineLiveness(workerTaskManager));
 }
 
 /** Exported for the seam test, which drives the real send path over fake tasks. */
-export const __testables = { engineOf, liveEngines, requestRuntimeDiagnostics, withdrawMcpServer };
+export const __testables = { engineOf, liveEngines, requestRuntimeDiagnostics, withdrawMcpServer, engineLiveness };

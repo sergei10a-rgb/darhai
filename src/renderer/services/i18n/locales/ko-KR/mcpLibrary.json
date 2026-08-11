@@ -31,15 +31,22 @@
     "statusWarn": "재인증 필요",
     "statusError": "오류",
     "statusStopped": "비활성화됨",
+    "toolCount": "도구 {{count}}개",
+    "toolCount_one": "도구 {{count}}개",
+    "toolCount_other": "도구 {{count}}개",
     "statusIdle": "유휴",
-    "statusToolCount": "{{count}}개의 도구 사용 가능",
     "statusToolCountLabel": "개 도구 사용 가능",
-    "statusReauthCount": "{{count}}개 재인증 필요",
+    "statusToolCountLabel_one": "개 도구 사용 가능",
+    "statusToolCountLabel_other": "개 도구 사용 가능",
     "statusReauthCountLabel": "재인증 필요",
-    "statusErrorCount": "{{count}}개의 오류",
+    "statusReauthCountLabel_one": "재인증 필요",
+    "statusReauthCountLabel_other": "재인증 필요",
     "statusErrorCountLabel": "오류",
-    "statusRunningCount": "{{count}}개 실행 중",
+    "statusErrorCountLabel_one": "오류",
+    "statusErrorCountLabel_other": "오류",
     "statusRunningCountLabel": "실행 중",
+    "statusRunningCountLabel_one": "실행 중",
+    "statusRunningCountLabel_other": "실행 중",
     "logsToast": "로그 뷰어가 곧 제공됩니다."
   },
   "byo": {
@@ -64,6 +71,22 @@
   "browse": {
     "title": "MCP 라이브러리",
     "subtitle": "엄선된 커넥터. 둘러보고 한 번의 클릭으로 설치한 뒤 설정 가이드를 따르세요.",
-    "searchPlaceholder": "MCP 검색…"
+    "searchPlaceholder": "MCP 검색…",
+    "entryCount": "{{count}}개 항목",
+    "entryCount_one": "{{count}}개 항목",
+    "entryCount_other": "{{count}}개 항목",
+    "recommendedTitle": "★ 추천",
+    "installRate": "{{percent}}% 설치됨"
+  },
+  "detail": {
+    "estMinutes": "{{count}}분",
+    "estMinutes_one": "{{count}}분",
+    "estMinutes_other": "{{count}}분",
+    "unknownEntry": "알 수 없는 항목: {{id}}",
+    "back": "← MCP 라이브러리",
+    "viewSource": "소스 보기",
+    "transport": "전송 방식",
+    "runtime": "런타임",
+    "platforms": "플랫폼"
   }
 }

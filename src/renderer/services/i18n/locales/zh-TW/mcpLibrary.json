@@ -31,15 +31,22 @@
     "statusWarn": "需要重新授權",
     "statusError": "錯誤",
     "statusStopped": "已停用",
+    "toolCount": "{{count}} 個工具",
+    "toolCount_one": "{{count}} 個工具",
+    "toolCount_other": "{{count}} 個工具",
     "statusIdle": "閒置",
-    "statusToolCount": "{{count}} 個可用工具",
     "statusToolCountLabel": "個可用工具",
-    "statusReauthCount": "{{count}} 個需要重新授權",
+    "statusToolCountLabel_one": "個可用工具",
+    "statusToolCountLabel_other": "個可用工具",
     "statusReauthCountLabel": "需要重新授權",
-    "statusErrorCount": "{{count}} 個錯誤",
+    "statusReauthCountLabel_one": "需要重新授權",
+    "statusReauthCountLabel_other": "需要重新授權",
     "statusErrorCountLabel": "錯誤",
-    "statusRunningCount": "{{count}} 個執行中",
+    "statusErrorCountLabel_one": "錯誤",
+    "statusErrorCountLabel_other": "錯誤",
     "statusRunningCountLabel": "正在執行",
+    "statusRunningCountLabel_one": "正在執行",
+    "statusRunningCountLabel_other": "正在執行",
     "logsToast": "日誌檢視器即將推出。"
   },
   "byo": {
@@ -64,6 +71,22 @@
   "browse": {
     "title": "MCP 資源庫",
     "subtitle": "精選連接器。瀏覽、一鍵安裝並依照設定指南操作。",
-    "searchPlaceholder": "搜尋 MCP…"
+    "searchPlaceholder": "搜尋 MCP…",
+    "entryCount": "{{count}} 個項目",
+    "entryCount_one": "{{count}} 個項目",
+    "entryCount_other": "{{count}} 個項目",
+    "recommendedTitle": "★ 為你推薦",
+    "installRate": "{{percent}}% 已安裝"
+  },
+  "detail": {
+    "estMinutes": "{{count}} 分鐘",
+    "estMinutes_one": "{{count}} 分鐘",
+    "estMinutes_other": "{{count}} 分鐘",
+    "unknownEntry": "未知項目：{{id}}",
+    "back": "← MCP 程式庫",
+    "viewSource": "檢視原始碼",
+    "transport": "傳輸方式",
+    "runtime": "執行環境",
+    "platforms": "平台"
   }
 }

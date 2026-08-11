@@ -21,15 +21,40 @@ import { PromptTimer } from '@process/acp/session/PromptTimer';
 import { wcoreStderrLevel } from './stderrLog';
 import type { WCoreEvent, WCoreCommand, WCoreCapabilities } from './protocol';
 import { ACKNOWLEDGED_UNHANDLED_EVENTS } from './protocol';
-import { dispatchCapabilityEvent } from './capabilities';
-import type { CapabilityContext } from './capabilities';
+import { createCapabilitySet } from './capabilities';
+import type { CapabilityContext, CapabilitySet } from './capabilities';
 import { NO_CONTRACT, negotiateContract } from './capabilities/contractNegotiation';
 import type { NegotiatedContract } from './capabilities/contractNegotiation';
 import { recordEngineContract } from './capabilities/engineContractStore';
 import { resetCapabilityActivation } from './capabilities/handlers/capabilityActivation';
-import { executionPolicyCapability } from './capabilities/handlers/executionPolicy';
+import { createChannelDeliverer, hostDelegatedDeliveryCapability } from './capabilities/handlers/hostDelegatedDelivery';
 import { turnRecoveryCapability } from './capabilities/handlers/turnRecovery';
 import { resetRuntimeRequests } from './capabilities/handlers/runtimeDiagnostics';
+
+/**
+ * Give `host_send_message_request` something to deliver through.
+ *
+ * WHY HERE. This module owns the engine process AND calls
+ * `buildEngineSpawnEnv`, which reads `hasMessageDeliverer()` to decide whether
+ * to ask the engine to delegate at all. Install and gate therefore cannot drift
+ * apart: delete this statement and the next spawn simply stops asking for
+ * delegation - the fail-closed direction - instead of asking and then declining
+ * every send.
+ *
+ * THE FLEET IS RESOLVED LAZILY, and that is not an optimisation. Importing
+ * `@process/channels` loads every plugin transport it owns (baileys,
+ * matrix-js-sdk, imapflow/nodemailer, discord.js, twilio) at module scope; a
+ * static import here would pull all of it into every unit test that constructs
+ * a `WCoreAgent`, and into app startup for users who have configured no channel
+ * at all. A delivery is already an awaited, network-bound operation, so paying
+ * for the module graph on the first one costs nothing that matters.
+ */
+hostDelegatedDeliveryCapability.setMessageDeliverer(
+  createChannelDeliverer(async () => {
+    const { getChannelManager } = await import('@process/channels/core/ChannelManager');
+    return getChannelManager().getPluginManager()?.getAllPlugins() ?? [];
+  })
+);
 
 const WCORE_PROJECT_CONFIG = '.wcore.toml';
 
@@ -219,6 +244,18 @@ export class WCoreAgent {
    * last one clears - edge-triggered on 0↔1 so nested waits do not double-toggle.
    */
   private readonly stallPauseReasons = new Set<string>();
+  /**
+   * This agent's capabilities, built for this agent alone.
+   *
+   * One `WCoreAgent` is one engine child, and Darhai keeps several alive at
+   * once (one per open conversation, via `WorkerTaskManager.taskList`). Any
+   * capability holding per-ENGINE state must therefore be per-agent: sharing
+   * one instance let this agent's `ready` - which resets the execution-policy
+   * tracker, because a `ready` means a new engine - rewind a tracker another
+   * conversation was still advancing, stranding that conversation's badge
+   * permanently stale on a posture that was never its own.
+   */
+  private readonly capabilitySet: CapabilitySet = createCapabilitySet();
   /** Consecutive failing tool results in the active turn; any success resets it. */
   private toolFailStreak = 0;
   /** Total tool calls issued in the active turn (backstop counter). */
@@ -504,6 +541,13 @@ export class WCoreAgent {
    * Order matters: `reset()` first, because a `ready` means a NEW engine
    * process and revisions from the dead one must not gate the live one.
    *
+   * That reset is safe ONLY because the capability belongs to this agent
+   * ({@link capabilitySet}). Against a process-wide instance it would rewind
+   * whatever revision another conversation's engine had already published, and
+   * that conversation could never advance again - the tracker refuses a
+   * forward gap for the life of the session. So the reset is scoped to the
+   * engine that is actually being replaced: this one.
+   *
    * Failures are contained. A seed that throws must not take down the `ready`
    * arm - losing a posture badge is recoverable, losing the arm that resolves
    * `readyResolve()` hangs every caller waiting to send.
@@ -511,8 +555,8 @@ export class WCoreAgent {
   private seedCapabilitiesFromReady(ready: Record<string, unknown>): void {
     const ctx = this.capabilityContext();
     try {
-      executionPolicyCapability.reset();
-      executionPolicyCapability.seedFromReady(ready, ctx);
+      this.capabilitySet.executionPolicy.reset();
+      this.capabilitySet.executionPolicy.seedFromReady(ready, ctx);
     } catch (cause) {
       console.warn('[WCoreAgent] execution policy seed failed', cause);
     }
@@ -1062,7 +1106,10 @@ export class WCoreAgent {
         // Capabilities handled outside this switch get first refusal. They live
         // in ./capabilities so nine independent engine subsystems do not all
         // land in one 1100-line file with one merge conflict between them.
-        if (dispatchCapabilityEvent(unknownEvent as Record<string, unknown>, this.capabilityContext())) {
+        // Dispatch goes through THIS agent's set, never the registry's shared
+        // one: per-engine state in a shared instance is how one conversation
+        // came to overwrite another's execution policy.
+        if (this.capabilitySet.dispatch(unknownEvent as Record<string, unknown>, this.capabilityContext())) {
           break;
         }
 

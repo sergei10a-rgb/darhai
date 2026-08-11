@@ -594,9 +594,12 @@ function parseTask(raw: unknown, notes: GoalParseNotes): GoalTaskEntry {
  * throwing handler is swallowed by the dispatcher, which turns a decode bug
  * into a silently unhandled safety-class event.
  */
-function parseGoalRecord(raw: unknown): { record: GoalRecord; notes: GoalParseNotes; reportedTaskCount: number } {
+function parseGoalRecord(raw: unknown): { record: GoalRecord; notes: GoalParseNotes; reportedTaskCount?: number } {
   const notes = newParseNotes();
-  if (!isRecord(raw)) return { record: {}, notes, reportedTaskCount: 0 };
+  // An unreadable goal payload is a goal this host learned NOTHING about, so it
+  // reports no count at all. Returning 0 here would hand the renderer a number
+  // it can only read as "the engine says this goal has no tasks".
+  if (!isRecord(raw)) return { record: {}, notes };
 
   const record: GoalRecord = {
     goal_id: clampedString(raw.goal_id, MAX_GOAL_ID_TEXT, notes),
@@ -648,7 +651,13 @@ function parseGoalRecord(raw: unknown): { record: GoalRecord; notes: GoalParseNo
   // not the goal: past the cap it is always exactly MAX_TASKS_PER_GOAL, so a
   // 900-task goal would report 256 - a number that reads as a measurement of the
   // goal while being a measurement of the ceiling.
-  let reportedTaskCount = 0;
+  //
+  // Left UNDEFINED when the array is absent, which this schema makes legal (see
+  // the block comment above). `0` is the engine saying "this goal has no tasks";
+  // silence is the engine saying nothing, and the renderer prints a different
+  // sentence for each. Seeding this at 0 made every silent payload claim the
+  // first - the same buffer-length-as-measurement error one level up.
+  let reportedTaskCount: number | undefined;
   if (Array.isArray(raw.tasks)) {
     reportedTaskCount = raw.tasks.length;
     notes.tasksTruncated = raw.tasks.length > MAX_TASKS_PER_GOAL;
@@ -1618,8 +1627,13 @@ export type GoalSnapshotFrame = {
    * How many tasks the ENGINE listed, which is not how many `tasks` carries:
    * that array stops at {@link MAX_TASKS_PER_GOAL}. When the two differ,
    * `tasksTruncated` is true and this is the larger, true number.
+   *
+   * OPTIONAL, and the distinction is the point: `goal.tasks` has no `required`
+   * entry, so a snapshot that omits it - or a `goal` that is unreadable - is the
+   * engine reporting no list, which is not a list of length zero. Absent means
+   * unknown; `0` is a measurement the engine actually published.
    */
-  taskCount: number;
+  taskCount?: number;
   tasksTruncated: boolean;
   /** Some task listed more dependencies than {@link MAX_DEPENDS_ON_PER_TASK}. */
   dependsOnTruncated: boolean;
@@ -1928,8 +1942,9 @@ export function createDurableGoalsCapability(): DurableGoalsCapability {
  * to be open would attach a session-wide fact to one message. That REQUIRES
  * this capability to be registered: `WCoreManager` forwards an empty-`msg_id`
  * frame only when its type is in `CAPABILITY_FRAME_TYPES`, which it builds from
- * the capability registry. Until then these frames are dropped (see the note at
- * the top of this file).
+ * the capability registry. It is registered - `HANDLERS` in
+ * `capabilities/index.ts` lists {@link durableGoalsCapability} - so these frames
+ * are forwarded (see item 3 of the wiring status at the top of this file).
  */
 function announce(
   ctx: CapabilityContext,
@@ -1954,11 +1969,13 @@ function announce(
 }
 
 /**
- * The instance intended for the capability registry.
+ * The instance the capability registry dispatches to.
  *
- * It is NOT registered: `HANDLERS` in `capabilities/index.ts` does not list it,
- * so nothing dispatches here and nothing this module emits reaches the renderer
- * in the running app. See the requirements note at the top of this file.
+ * REGISTERED: `HANDLERS` in `capabilities/index.ts` imports and lists it, so
+ * `dispatchCapabilityEvent` routes the three goal events here and the frames
+ * below reach the renderer in the running app. One instance only - registering
+ * a second would trip `assertNoOverlap`, which refuses two handlers claiming the
+ * same event type. See the wiring status at the top of this file.
  */
 export const durableGoalsCapability: DurableGoalsCapability = createDurableGoalsCapability();
 

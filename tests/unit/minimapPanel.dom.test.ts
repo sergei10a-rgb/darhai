@@ -27,8 +27,8 @@ vi.mock('../../src/renderer/utils/chat/chatMinimapEvents', () => ({
   dispatchChatMessageJump: mocks.dispatchChatMessageJump,
 }));
 
-import { useMinimapPanel } from '../../src/renderer/pages/conversation/components/ConversationTitleMinimap/useMinimapPanel';
-import type { TurnPreviewItem } from '../../src/renderer/pages/conversation/components/ConversationTitleMinimap/minimapTypes';
+import { useMinimapPanel } from '../../src/renderer/pages/conversation/components/title/ConversationTitleMinimap/useMinimapPanel';
+import type { TurnPreviewItem } from '../../src/renderer/pages/conversation/components/title/ConversationTitleMinimap/minimapTypes';
 
 // Helper: build a fake message array that buildTurnPreview can process
 const makeFakeMessages = (turns: { question: string; answer: string }[]) =>

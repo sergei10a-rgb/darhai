@@ -251,6 +251,16 @@ const REMOTE_DENIED_KEYS: ReadonlySet<string> = new Set([
   // a live chat. A paired WebUI must never be able to disarm the local user's
   // tooling mid-conversation.
   'wcoreEngine.withdrawMcpServer',
+  // Liveness is read-only, but it still reports how many Darhai Core chats the
+  // local user has open right now and which engine build is serving them - a
+  // presence signal and a version to match an exploit against. Denied for the
+  // same reason as the snapshot beside it: this whole namespace answers to the
+  // human at the machine, not to a paired client.
+  //
+  // Every key in this block is asserted by `bridgeAllowlistWcoreEngine.redteam
+  // .test.ts`; adding a `wcoreEngine.*` channel without a line there is what
+  // that test's exhaustiveness check exists to catch.
+  'wcoreEngine.liveness',
   // --- Wayland Core profile fs mutation (create/clone/activate/delete profile
   //     directories under the profiles root). Remote-denied (SEC-4). ---
   'wcoreProfiles.create',

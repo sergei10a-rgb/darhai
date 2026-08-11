@@ -3,8 +3,8 @@ import {
   PANEL_MARGIN,
   PANEL_MAX_WIDTH,
   PANEL_MIN_WIDTH,
-} from '@/renderer/pages/conversation/components/ConversationTitleMinimap/minimapTypes';
-import { getPanelWidth } from '@/renderer/pages/conversation/components/ConversationTitleMinimap/minimapUtils';
+} from '@/renderer/pages/conversation/components/title/ConversationTitleMinimap/minimapTypes';
+import { getPanelWidth } from '@/renderer/pages/conversation/components/title/ConversationTitleMinimap/minimapUtils';
 
 describe('getPanelWidth', () => {
   const originalInnerWidth = window.innerWidth;
