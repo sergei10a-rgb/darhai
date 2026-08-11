@@ -19,7 +19,7 @@
  * where everything goes to be ignored.
  */
 
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
@@ -88,6 +88,55 @@ describe('acknowledged-unhandled engine events', () => {
     for (const name of ['execution_policy', 'workspace_policy', 'capability_activation', 'provider_attempt']) {
       const covered = ACKNOWLEDGED_UNHANDLED_EVENTS.has(name) || claimed.has(name);
       expect(covered, `${name} is neither handled nor acknowledged - it would warn on every engine start`).toBe(true);
+    }
+  });
+});
+
+/**
+ * Nothing the RUNNING engine emits may hit the warn arm unannounced.
+ *
+ * The type union and the acknowledged list are both derived from the contract
+ * bundle, and the contract does not declare everything the binary sends. Three
+ * provider-routing frames are the proof: `provider_attempt`, `provider_failure`
+ * and `provider_retry` appear in no schema and in no manifest, yet one failing
+ * turn emits eight of them. Only the first was listed, so the other two hit the
+ * warn arm five times per failed turn - the exact noise the list exists to
+ * remove, introduced by the list being written from the contract alone.
+ *
+ * So this reads CAPTURES instead: every `observed/*.jsonl` is a real session
+ * recorded off the shipped binary. A capture is added by running the engine,
+ * not by reasoning about it, and from then on the names inside it are pinned.
+ */
+describe('every observed engine event is either handled or acknowledged', () => {
+  const OBSERVED_DIR = join(process.cwd(), 'tests/fixtures/engine-contract/desktop/v1/observed');
+
+  const captures = readdirSync(OBSERVED_DIR).filter((f) => f.endsWith('.jsonl'));
+
+  it('there are captures to check', () => {
+    // A sweep over zero files is green and worthless.
+    expect(captures.length).toBeGreaterThan(0);
+  });
+
+  it.each(captures)('%s emits nothing this host would warn about', (file) => {
+    const handled = handledEventTypes();
+    const claimed = new Set(claimedEventTypes());
+    const lines = readFileSync(join(OBSERVED_DIR, file), 'utf-8')
+      .split('\n')
+      .map((l) => l.trim())
+      .filter(Boolean);
+    expect(lines.length, `${file} is empty`).toBeGreaterThan(0);
+
+    for (const line of lines) {
+      const type = (JSON.parse(line) as { type?: unknown }).type;
+      expect(typeof type, `a frame in ${file} has no string type`).toBe('string');
+      const name = type as string;
+      const known = handled.has(name) || claimed.has(name) || ACKNOWLEDGED_UNHANDLED_EVENTS.has(name);
+      expect(
+        known,
+        `the engine emits "${name}" (captured in ${file}) and this host neither handles nor ` +
+          `acknowledges it - the decoder will warn on every one. Either decode it, or add it to ` +
+          `ACKNOWLEDGED_UNHANDLED_EVENTS with a comment saying what was measured.`
+      ).toBe(true);
     }
   });
 });

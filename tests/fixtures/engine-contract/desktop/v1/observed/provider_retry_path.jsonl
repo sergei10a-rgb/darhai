@@ -1,0 +1,14 @@
+{"msg_id": "probe-1", "type": "stream_start"}
+{"failure": "connection", "type": "provider_attempt"}
+{"failure": "connection", "type": "provider_failure"}
+{"failure": "connection", "type": "provider_retry"}
+{"message": "Provider stream failed (Connection error: error sending request); retrying (attempt 1/2)…", "msg_id": "probe-1", "type": "info"}
+{"failure": "connection", "type": "provider_attempt"}
+{"failure": "connection", "type": "provider_failure"}
+{"failure": "connection", "type": "provider_retry"}
+{"message": "Provider stream failed (Connection error: error sending request); retrying (attempt 2/2)…", "msg_id": "probe-1", "type": "info"}
+{"failure": "connection", "type": "provider_attempt"}
+{"failure": "connection", "type": "provider_failure"}
+{"error": {"code": "engine_error", "message": "Provider stream failed after retries: Connection error: error sending request", "retryable": true}, "type": "error"}
+{"error": {"code": "engine_error", "message": "API error: Connection error: error sending request", "retryable": false}, "type": "error"}
+{"finish_reason": "error", "msg_id": "probe-1", "type": "stream_end", "usage": {"input_tokens": 0, "output_tokens": 0}}

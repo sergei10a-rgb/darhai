@@ -361,8 +361,25 @@ export const ACKNOWLEDGED_UNHANDLED_EVENTS: ReadonlySet<string> = new Set([
   // ── Anvil receipts (tamper-evident audit log) ──────────────────────
   // ── Budget / goal / workflow subsystems Darhai does not expose ─────
   // ── Policy + capability announcements at engine start ──────────────
-  // ── Provider routing telemetry (Darhai reads provider_circuit_event) ─
-  'provider_attempt', // observed only; not in the contract bundle
+  // ── Provider routing telemetry ──────────────────────────────────────
+  // Three names, none of them in the contract bundle, all three MEASURED
+  // off the running v0.12.26 binary and captured in
+  // `tests/fixtures/engine-contract/desktop/v1/observed/provider_retry_path.jsonl`.
+  //
+  // One failing turn against an unreachable endpoint emits attempt x3,
+  // failure x3, retry x2 - eight frames whose entire payload is
+  // `{failure: "connection"}`. The same fact reaches the user through the
+  // `info` frames the engine emits alongside them, which carry the part a
+  // person can act on: "Provider stream failed (Connection error: error
+  // sending request); retrying (attempt 1/2)…". Decoding the three would
+  // add a counter to a line that already states the count.
+  //
+  // Listing only `provider_attempt` - which is what this list did until the
+  // capture was taken - left the other two hitting the warn arm five times
+  // per failed turn, which is exactly the noise this list exists to remove.
+  'provider_attempt',
+  'provider_failure',
+  'provider_retry',
   // ── Host-side request/response verbs Darhai does not implement ──────
   // ── Diagnostics + recovery surfaces (engine-driven, opt-in) ─────────
 ]);
