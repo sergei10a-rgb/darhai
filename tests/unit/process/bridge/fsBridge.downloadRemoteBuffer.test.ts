@@ -114,7 +114,7 @@ describe('downloadRemoteBuffer URL validation (ELECTRON-77)', () => {
     mockHttpsGet = undefined;
     vi.resetModules();
     // Re-import to register providers fresh
-    const mod = await import('@process/bridge/fsBridge');
+    const mod = await import('@process/bridge/workspace/fsBridge');
     mod.initFsBridge();
   });
 
@@ -148,7 +148,7 @@ describe('downloadRemoteBuffer redirect to non-whitelisted host (ELECTRON-9N)', 
   beforeEach(async () => {
     mockHttpsGet = undefined;
     vi.resetModules();
-    const mod = await import('@process/bridge/fsBridge');
+    const mod = await import('@process/bridge/workspace/fsBridge');
     mod.initFsBridge();
   });
 

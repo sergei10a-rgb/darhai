@@ -34,7 +34,7 @@ import {
   __resetUsageBridgeForTests,
   ensureUsageProviderRegistered,
   initUsageBridge,
-} from '@process/bridge/usageBridge';
+} from '@process/bridge/model/usageBridge';
 
 const providerFn = ipcBridge.usage.recordEvent.provider as unknown as ReturnType<typeof vi.fn>;
 let providerCallback: ((input: unknown) => unknown) | null = null;

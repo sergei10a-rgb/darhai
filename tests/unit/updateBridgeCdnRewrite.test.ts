@@ -112,7 +112,7 @@ type DownloadHandler = Parameters<UpdateBridge['download']['provider']>[0];
 
 const getCheckHandler = async (): Promise<CheckHandler> => {
   vi.resetModules();
-  const { initUpdateBridge } = await import('@process/bridge/updateBridge');
+  const { initUpdateBridge } = await import('@process/bridge/desktop/updateBridge');
   await import('@/common');
 
   initUpdateBridge();
@@ -182,7 +182,7 @@ describe('updateBridge download allowlist', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     try {
-      const { initUpdateBridge } = await import('@process/bridge/updateBridge');
+      const { initUpdateBridge } = await import('@process/bridge/desktop/updateBridge');
       await import('@/common');
 
       initUpdateBridge();
@@ -210,7 +210,7 @@ describe('updateBridge download allowlist', () => {
     vi.resetModules();
     vi.clearAllMocks();
 
-    const { initUpdateBridge } = await import('@process/bridge/updateBridge');
+    const { initUpdateBridge } = await import('@process/bridge/desktop/updateBridge');
     await import('@/common');
 
     initUpdateBridge();

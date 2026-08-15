@@ -59,7 +59,7 @@ vi.mock('electron', () => ({
   },
 }));
 
-import { initCronBridge } from '@/process/bridge/cronBridge';
+import { initCronBridge } from '@/process/bridge/agent/orchestration/cronBridge';
 import type { ICronJob, ICreateCronJobParams } from '@/common/adapter/ipcBridge';
 
 describe('cronBridge', () => {

@@ -40,8 +40,10 @@ src/process/
 
 ## Adding a New IPC Bridge
 
-1. Create `src/process/bridge/<domain>Bridge.ts`
-2. Register in `src/process/bridge/index.ts`
+1. Create `src/process/bridge/<responsibility>/<domain>Bridge.ts` - pick the existing responsibility
+   directory the bridge belongs to (`conversation`, `agent`, `model`, `engine`, `workspace`,
+   `knowledge`, `desktop`, `media`, `remote`); read that directory's `index.ts` header if unsure
+2. Re-export it from that directory's barrel, then register it in `src/process/bridge/index.ts`
 3. Expose channel in `src/preload.ts`
 4. Add renderer-side types if needed
 

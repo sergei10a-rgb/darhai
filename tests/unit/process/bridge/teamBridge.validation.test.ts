@@ -80,7 +80,7 @@ vi.mock('@process/team/suggestRoster', () => ({
 }));
 
 // Import after mocks
-const { initTeamBridge } = await import('@/process/bridge/teamBridge');
+const { initTeamBridge } = await import('@/process/bridge/agent/orchestration/teamBridge');
 const { suggestRoster } = await import('@process/team/suggestRoster');
 
 type ProviderCallback = (params: unknown) => Promise<unknown>;

@@ -485,7 +485,17 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
-  # Job 6: Test release scripts (fast, no build required)
+  # Job 6: Test the release scripts the release job actually runs (fast, no
+  # build required).
+  #
+  # This job used to run `prepare-release-assets.sh` + `verify-release-assets.sh`
+  # -- scripts `build-and-release.yml` abandoned. That left the repo with two
+  # release contracts where CI enforced the dead one, which is precisely how the
+  # six-feed requirement got dropped to three without anything going red. It now
+  # exercises the live path end to end.
+  #
+  # The job NAME is a branch-protection required check (see the header comment);
+  # rename it only alongside branch protection + pr-checks-docs.yml.
   release-script-test:
     name: Release Script Test
     if: github.event.action != 'closed' && github.event.pull_request.draft == false
@@ -495,14 +505,56 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
-      - name: Create mock build artifacts
-        shell: bash
-        run: bash scripts/create-mock-release-artifacts.sh build-artifacts
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
 
-      - name: Run prepare-release-assets script
+      - name: Write feeds over mock installers and check digest coverage
         shell: bash
-        run: bash scripts/prepare-release-assets.sh build-artifacts release-assets
+        run: |
+          set -euo pipefail
 
-      - name: Validate script output
+          VERSION=$(node -p "require('./package.json').version")
+          mapfile -t INSTALLERS < <(node scripts/make-updater-feeds.mjs --list-installers --version "$VERSION")
+          mapfile -t FEEDS < <(node scripts/make-updater-feeds.mjs --list-feeds)
+          if [ "${#INSTALLERS[@]}" -eq 0 ] || [ "${#FEEDS[@]}" -eq 0 ]; then
+            echo "::error::make-updater-feeds.mjs produced an empty list."
+            exit 1
+          fi
+
+          rm -rf mock-release-assets
+          mkdir -p mock-release-assets
+          for name in "${INSTALLERS[@]}"; do
+            printf 'mock %s' "$name" > "mock-release-assets/$name"
+          done
+
+          node scripts/make-updater-feeds.mjs mock-release-assets --version "$VERSION"
+
+          for feed in "${FEEDS[@]}"; do
+            test -s "mock-release-assets/$feed" || { echo "::error::missing feed $feed"; exit 1; }
+          done
+
+          # Every installer must have a digest in some latest*.yml, or
+          # updateBridge.ts deletes that download and reports an error.
+          for name in "${INSTALLERS[@]}"; do
+            grep -qF -- "- url: $name" mock-release-assets/latest*.yml \
+              || { echo "::error::no feed carries a digest for $name"; exit 1; }
+          done
+          echo "OK: ${#INSTALLERS[@]} installer(s) covered by ${#FEEDS[@]} feed(s)"
+
+      - name: Check the published-release overwrite guard
         shell: bash
-        run: bash scripts/verify-release-assets.sh release-assets
+        run: |
+          set -euo pipefail
+
+          node scripts/check-release-overwrite.mjs v0.0.0-test --missing
+          printf '{"isDraft":true,"assets":[{"name":"a"}]}' | node scripts/check-release-overwrite.mjs v0.0.0-test
+          printf '{"isDraft":false,"assets":[]}' | node scripts/check-release-overwrite.mjs v0.0.0-test
+
+          if printf '{"isDraft":false,"assets":[{"name":"a"}]}' \
+            | node scripts/check-release-overwrite.mjs v0.0.0-test; then
+            echo "::error::guard allowed overwriting a published release with assets"
+            exit 1
+          fi
+          echo "OK: published-with-assets is refused, the other three states pass"

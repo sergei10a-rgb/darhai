@@ -84,7 +84,7 @@ vi.mock('@process/webserver/config/constants', () => ({
   getCookieOptions: vi.fn(() => ({})),
 }));
 
-vi.mock('@process/bridge/webuiQR', () => ({
+vi.mock('@process/bridge/remote/webuiQR', () => ({
   verifyQRTokenDirect: vi.fn(),
 }));
 

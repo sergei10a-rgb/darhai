@@ -5,7 +5,7 @@
  */
 
 import { ipcBridge } from '@/common';
-import { showNotification } from '@process/bridge/notificationBridge';
+import { showNotification } from '@process/bridge/desktop/notificationBridge';
 import type { INoteEventEmitter } from './INoteEventEmitter';
 import type { NoteChangedEvent, NoteReminderFiredEvent } from '@/common/types/notes';
 

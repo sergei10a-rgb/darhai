@@ -16,7 +16,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // confinePath is the security gate. Mock it so we control accept/reject
 // deterministically, exactly mirroring how fsBridge confines its reads.
-vi.mock('../../../src/process/bridge/pathConfinement', () => ({
+vi.mock('../../../src/process/bridge/workspace/pathConfinement', () => ({
   confinePath: vi.fn(),
 }));
 
@@ -49,8 +49,8 @@ vi.mock('@process/services/completion/oneShot', () => ({
 }));
 
 import fs from 'fs/promises';
-import { confinePath } from '../../../src/process/bridge/pathConfinement';
-import { readSourceFiles } from '../../../src/process/bridge/projectBridge';
+import { confinePath } from '../../../src/process/bridge/workspace/pathConfinement';
+import { readSourceFiles } from '../../../src/process/bridge/workspace/projectBridge';
 
 const mockConfinePath = vi.mocked(confinePath);
 const mockReadFile = vi.mocked(fs.readFile);

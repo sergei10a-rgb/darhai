@@ -2344,7 +2344,9 @@
     "loadErrorsTitle": "Certains agents n'ont pas pu être chargés",
     "badge": {
       "active": "Actif",
-      "detected": "Détecté"
+      "detected": "Détecté",
+      "notInstalled": "Non installé",
+      "unknown": "Inconnu"
     },
     "toolbarToggle": {
       "label": "Afficher dans la barre d'outils",

@@ -685,6 +685,32 @@ export const acpConversation = {
         backend: string;
         name: string;
         kind?: string;
+        /**
+         * Whether this entry's LOCAL PREREQUISITE is satisfied, NOT whether
+         * Darhai ships the backend - presence in the array already answers
+         * that - and NOT whether an engine process is running (that is
+         * `wcoreEngine.liveness`, which is per-process).
+         *
+         * "Local prerequisite" differs per producer, and only these six exist:
+         *   - `wcore`          a Core binary resolves (AgentRegistry.createWCoreAgent)
+         *   - ACP builtin      the CLI was found on PATH (AcpDetector.detectBuiltinAgents,
+         *                      which filters on the PATH hit before building the entry)
+         *   - ACP extension    ALWAYS true - an extension adapter declares its own
+         *                      `defaultCliPath` (e.g. `bunx …`) and is deliberately
+         *                      trusted without a PATH check
+         *   - ACP custom       ALWAYS true - the user supplied the command; it stays
+         *                      unverified until `acp.test-custom-agent` runs
+         *   - `gemini`         ALWAYS true - an API-key backend with no local binary
+         *   - `remote`         ALWAYS true - a configured endpoint; reachability is a
+         *                      live probe, not a detection-time fact
+         *
+         * So `false` is a hard "this cannot run here"; `true` is only as strong
+         * as the producer above. Required, not optional: making it optional let a
+         * consumer read presence instead of this field and still typecheck.
+         */
+        available: boolean;
+        /** Engine semver when one has been reported; absent when not known. */
+        version?: string;
         cliPath?: string;
         supportedTransports?: string[];
         isExtension?: boolean;

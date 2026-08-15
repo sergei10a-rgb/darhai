@@ -22,7 +22,7 @@
  * never rejects the batch - each run reports its own `{ ok, error }`.
  */
 
-import { getMergedModelProviders } from '@process/bridge/modelBridge';
+import { getMergedModelProviders } from '@process/bridge/model/modelBridge';
 import { hydrateModelForSpawn } from '@process/providers/ipc/modelRegistryIpc';
 import { oneShotComplete, type PickedModel } from '@process/services/completion/oneShot';
 import { DEFAULT_ACCOUNT_ID } from '@/common/config/account';

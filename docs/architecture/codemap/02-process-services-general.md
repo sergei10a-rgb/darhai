@@ -22,10 +22,10 @@ talk to the DOM; persistence goes through `services/database` repositories or pl
   (initBridge.ts:82-120), then inside a `getDatabase().then` wires usage logger, cost recorder +
   analytics + budgets (initBridge.ts:149-198) and the `WorkflowSessionService`
   (initBridge.ts:218-235).
-- **Delayed background seeding** — `src/process/bridge/eccBridge.ts:27-31` fires
+- **Delayed background seeding** — `src/process/bridge/engine/extensions/eccBridge.ts:27-31` fires
   `seedEccIfAbsent()` 7 s after launch (`SEED_DELAY_MS`, line 15); the ECC install is idempotent
   and self-skipping. `WorkspaceSnapshotService.cleanupStaleSnapshots()` runs fire-and-forget at
-  bridge init (`src/process/bridge/workspaceSnapshotBridge.ts:14`).
+  bridge init (`src/process/bridge/workspace/workspaceSnapshotBridge.ts:14`).
 - **Per-conversation lifecycle** — `ConversationServiceImpl.createConversation` runs on every new
   chat (dispatched from conversationBridge); `ensureWorkspaceEccHooks` runs on agent spawn
   (`src/process/task/AcpAgentManager.ts:1217`); `CostRecorder.recordTurnFinish` runs at every
@@ -245,7 +245,7 @@ embedding-model fetch (EmbeddingService.ts:56-58); `OPENCLAW_CONFIG_PATH`/`CLAWD
    into `resources/bundled-<name>`, classify-install with a completion marker written last,
    sentinel ProcessConfig key for interrupted seeds, `utilityProcess.fork` with pinned
    HOME/USERPROFILE, and a delayed idempotent kick in a bridge mirroring
-   `src/process/bridge/eccBridge.ts` (7 s `SEED_DELAY_MS`). Wire status/toggles as
+   `src/process/bridge/engine/extensions/eccBridge.ts` (7 s `SEED_DELAY_MS`). Wire status/toggles as
    `<name>.get-status` IPC keys next to `ecc.get-status` (ipcBridge.ts:1649).
 2. **New per-spawn env/behavior toggle (e.g. more ECC gates, IJFW modes)** — copy the GateGuard
    triple: ProcessConfig key with default-on semantics (eccSystemService.ts:98-109), bridge

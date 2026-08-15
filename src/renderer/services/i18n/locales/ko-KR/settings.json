@@ -2319,7 +2319,9 @@
     "loadErrorsTitle": "일부 에이전트를 불러오지 못했습니다",
     "badge": {
       "active": "활성",
-      "detected": "감지됨"
+      "detected": "감지됨",
+      "notInstalled": "설치되지 않음",
+      "unknown": "알 수 없음"
     },
     "toolbarToggle": {
       "label": "툴바에 표시",

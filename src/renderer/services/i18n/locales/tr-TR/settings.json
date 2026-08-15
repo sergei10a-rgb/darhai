@@ -2317,7 +2317,9 @@
     "loadErrorsTitle": "Bazı ajanlar yüklenemedi",
     "badge": {
       "active": "Etkin",
-      "detected": "Algılandı"
+      "detected": "Algılandı",
+      "notInstalled": "Yüklü değil",
+      "unknown": "Bilinmiyor"
     },
     "toolbarToggle": {
       "label": "Araç çubuğunda göster",

@@ -7,8 +7,8 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { DARHAI_KNOWLEDGE_DIR } from './bootstrap';
-import { confinePath, resolveExternalReferencePath } from '@process/bridge/pathConfinement';
-import { resolveWithinApprovedDirectory } from '@process/bridge/userApprovedPaths';
+import { confinePath, resolveExternalReferencePath } from '@process/bridge/workspace/pathConfinement';
+import { resolveWithinApprovedDirectory } from '@process/bridge/workspace/userApprovedPaths';
 
 /**
  * Read, write, inject and manage a project's `.darhai/` knowledge.

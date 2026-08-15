@@ -101,7 +101,7 @@ vi.mock('node:dns', () => ({
   },
 }));
 
-import { initModelBridge } from '../../../src/process/bridge/modelBridge';
+import { initModelBridge } from '../../../src/process/bridge/model/modelBridge';
 
 function getFetchModelListHandler() {
   const handler = handlers.fetchModelList;

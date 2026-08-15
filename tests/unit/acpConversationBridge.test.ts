@@ -64,8 +64,14 @@ vi.mock('../../src/process/services/mcpServices/McpService', () => ({
   mcpService: { getSupportedTransportsForAgent: vi.fn(() => []) },
 }));
 
+// AgentRegistry is mocked wholesale below, so this module is not actually
+// loaded by these tests today. It is kept complete rather than trimmed: the
+// registry now calls `resolveWCoreBinary`, and a partial mock would turn any
+// future un-mocking of the registry into "resolveWCoreBinary is not a function"
+// rather than a readable failure.
 vi.mock('../../src/process/agent/wcore/binaryResolver', () => ({
   detectWCore: vi.fn(() => ({ available: false, path: null })),
+  resolveWCoreBinary: vi.fn(() => null),
 }));
 
 vi.mock('../../src/process/utils/mainLogger', () => ({
@@ -73,7 +79,7 @@ vi.mock('../../src/process/utils/mainLogger', () => ({
   mainWarn: vi.fn(),
 }));
 
-import { initAcpConversationBridge } from '../../src/process/bridge/acpConversationBridge';
+import { initAcpConversationBridge } from '../../src/process/bridge/conversation/acpConversationBridge';
 import type { IWorkerTaskManager } from '../../src/process/task/IWorkerTaskManager';
 
 function makeTaskManager(overrides?: Partial<IWorkerTaskManager>): IWorkerTaskManager {
@@ -185,6 +191,46 @@ describe('acpConversationBridge', () => {
     expect(order).toEqual(['whenReady', 'getDetectedAgents']);
     expect(result.success).toBe(true);
     expect(result.data).toHaveLength(1);
+  });
+
+  it('getAvailableAgents forwards available and version across the IPC seam', async () => {
+    // The provider maps an EXPLICIT field list, and `available`/`version` were
+    // both missing from it - so the renderer could only infer availability from
+    // presence in the array, and the engine's semver never arrived at all.
+    const { agentRegistry } = await import('../../src/process/agent/AgentRegistry');
+    vi.mocked(agentRegistry.getDetectedAgents).mockReturnValue([
+      {
+        id: 'wcore',
+        backend: 'wcore',
+        name: 'Darhai Core',
+        kind: 'wcore',
+        available: true,
+        cliPath: '/opt/darhai/wayland-core',
+        version: '0.12.26',
+      },
+    ]);
+
+    const result = await handlers['getAvailableAgents']();
+
+    expect(result.success).toBe(true);
+    expect(result.data[0].available).toBe(true);
+    expect(result.data[0].version).toBe('0.12.26');
+    expect(result.data[0].cliPath).toBe('/opt/darhai/wayland-core');
+  });
+
+  it('getAvailableAgents forwards available: false instead of dropping the entry', async () => {
+    const { agentRegistry } = await import('../../src/process/agent/AgentRegistry');
+    vi.mocked(agentRegistry.getDetectedAgents).mockReturnValue([
+      { id: 'wcore', backend: 'wcore', name: 'Darhai Core', kind: 'wcore', available: false },
+    ]);
+
+    const result = await handlers['getAvailableAgents']();
+
+    // Presence still means "Darhai ships this backend"; `available` carries
+    // whether it can be used. A caller must be able to tell them apart.
+    expect(result.data).toHaveLength(1);
+    expect(result.data[0].available).toBe(false);
+    expect(result.data[0].version).toBeUndefined();
   });
 
   it('getAvailableAgents returns error when registry throws', async () => {

@@ -23,7 +23,7 @@ const mocks = vi.hoisted(() => ({
   googleAuthGeminiComplete: vi.fn(),
 }));
 
-vi.mock('@process/bridge/modelBridge', () => ({ getMergedModelProviders: mocks.getMergedModelProviders }));
+vi.mock('@process/bridge/model/modelBridge', () => ({ getMergedModelProviders: mocks.getMergedModelProviders }));
 vi.mock('@process/services/compression', () => ({ compress: mocks.compress }));
 vi.mock('@process/services/completion/compressionMode', () => ({ getCompressionMode: mocks.getCompressionMode }));
 // The routing accessor pulls the storage graph; every case here pins `opts.model`

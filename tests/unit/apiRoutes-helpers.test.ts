@@ -35,17 +35,17 @@ vi.mock('@process/extensions', () => ({
   },
 }));
 
-vi.mock('@process/bridge/services/SpeechToTextService', () => ({
+vi.mock('@process/bridge/media/voice/SpeechToTextService', () => ({
   SpeechToTextService: {
     transcribe: vi.fn().mockResolvedValue({ text: 'transcribed text' }),
   },
 }));
 
-vi.mock('@process/bridge/pptPreviewBridge', () => ({
+vi.mock('@process/bridge/media/pptPreviewBridge', () => ({
   isActivePreviewPort: vi.fn().mockReturnValue(false),
 }));
 
-vi.mock('@process/bridge/officeWatchBridge', () => ({
+vi.mock('@process/bridge/media/officeWatchBridge', () => ({
   isActiveOfficeWatchPort: vi.fn().mockReturnValue(false),
 }));
 

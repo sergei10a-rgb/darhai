@@ -92,7 +92,7 @@ vi.mock('@process/utils/initStorage', () => ({
 }));
 
 // eslint-disable-next-line import/first
-import { initIjfwBridge } from '@process/bridge/ijfwBridge';
+import { initIjfwBridge } from '@process/bridge/engine/extensions/ijfwBridge';
 
 beforeEach(() => {
   providers.clear();

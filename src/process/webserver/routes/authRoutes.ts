@@ -13,7 +13,7 @@ import { AUTH_CONFIG, getCookieOptions } from '../config/constants';
 import { TokenUtils } from '@process/webserver/auth/middleware/TokenMiddleware';
 import { createAppError } from '../middleware/errorHandler';
 import { authRateLimiter, authenticatedActionLimiter, apiRateLimiter } from '../middleware/security';
-import { verifyQRTokenDirect } from '@process/bridge/webuiQR';
+import { verifyQRTokenDirect } from '@process/bridge/remote/webuiQR';
 import { pickLocale, QR_LOGIN_STRINGS, type QrLoginStrings } from '../i18n/qrLogin';
 
 const changePasswordSchema = z.object({

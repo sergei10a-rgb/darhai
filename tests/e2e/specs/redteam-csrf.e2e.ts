@@ -10,7 +10,7 @@
  * contract from the WebUI perspective.
  *
  * To reach the HTTP surface, the test boots the embedded webserver via the
- * `webui.start` bridge provider (registered in src/process/bridge/webuiBridge.ts).
+ * `webui.start` bridge provider (registered in src/process/bridge/remote/webuiBridge.ts).
  * If the bridge or webserver is unavailable in this run, the suite emits a
  * structured skip with the audit commit SHA so the gap stays visible.
  */

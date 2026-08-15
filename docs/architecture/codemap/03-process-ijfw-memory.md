@@ -28,8 +28,8 @@ per-project prelude blocks injected into `CLAUDE.md`/`AGENTS.md`.
   → if stale, lock + `npx ijfw-install`; fresh installs go live immediately, upgrades are staged
   to `~/.ijfw/mcp-server.pending` and activated next boot.
 - **IPC registration**: `initIjfwBridge()` is called from `src/process/bridge/index.ts:114`
-  (defined in `src/process/bridge/ijfwBridge.ts:23-92`); the drop-tab providers are registered by
-  `src/process/bridge/ijfwDropBridge.ts:246-248`.
+  (defined in `src/process/bridge/engine/extensions/ijfwBridge.ts:23-92`); the drop-tab providers are registered by
+  `src/process/bridge/engine/extensions/ijfwDropBridge.ts:246-248`.
 - **MCP child**: spawned lazily on the first `ijfwMcpClient.invoke()`
   (`src/process/services/ijfw/ijfwMcpClient.ts:164-229`, `ensureSpawned` at 291-318), respawned
   transparently after crashes with a 5 s backoff (`RESPAWN_BACKOFF_MS`, line 32).
@@ -54,8 +54,8 @@ per-project prelude blocks injected into `CLAUDE.md`/`AGENTS.md`.
 | `scripts/prepareIjfw.js` | Build-time staging of the bundled seed: runs `npx … ijfw-install --dir <tmp> --no-marketplace --yes`, copies `mcp-server` into `resources/bundled-ijfw/`, prunes `.git`/`.github`/`test*.js` (lines 34-35, 79-82) |
 | `resources/bundled-ijfw/mcp-server/` | The staged pure-JS IJFW server tree (`bin/`, `src/`, `data/`, `scripts/`, `templates/`, `tools/`, `package.json`, docs). One copy is valid for every platform/arch — no native binaries |
 
-Nearest consumers (outside strict scope, read for contracts): `src/process/bridge/ijfwBridge.ts`
-(IPC providers), `src/process/bridge/ijfwDropBridge.ts` (drop-tab file ingest into `~/.ijfw/dump`),
+Nearest consumers (outside strict scope, read for contracts): `src/process/bridge/engine/extensions/ijfwBridge.ts`
+(IPC providers), `src/process/bridge/engine/extensions/ijfwDropBridge.ts` (drop-tab file ingest into `~/.ijfw/dump`),
 `src/process/team/TeamSession.ts:68` + `src/process/team/VerificationGate.ts` (inject
 `ijfwMcpClient.invoke` as the cross-audit gate).
 

@@ -4,86 +4,100 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/**
+ * The single entry point that wires every IPC bridge into the main process.
+ * The individual bridges live in the nine responsibility directories imported
+ * below; this file only decides that they are initialized and in what order.
+ *
+ * Headroom: this directory is at the 10-child cap - nine responsibility
+ * directories plus this barrel - so it has none. A new bridge joins one of the
+ * nine; a genuinely new top-level responsibility cannot be added until one of
+ * them is split, and `tests/unit/process/bridge/bridgeDirectoryLimit.test.ts`
+ * fails the build rather than letting a tenth directory appear here.
+ */
+
 import { agentRegistry } from '@process/agent/AgentRegistry';
 import type { IChannelRepository } from '@process/services/database/IChannelRepository';
 import type { IConversationRepository } from '@process/services/database/IConversationRepository';
 import type { IConversationService } from '@process/services/IConversationService';
 import type { IWorkerTaskManager } from '@process/task/IWorkerTaskManager';
-import { initAcpConversationBridge } from './acpConversationBridge';
-import { initApplicationBridge } from './applicationBridge';
-import { initAuthBridge } from './authBridge';
-import { initBedrockBridge } from './bedrockBridge';
-import { initChannelBridge } from './channelBridge';
-import { initConversationBridge } from './conversationBridge';
-import { initCronBridge } from './cronBridge';
-import { initProjectBridge } from './projectBridge';
-import { initDatabaseBridge } from './databaseBridge';
-import { initDialogBridge } from './dialogBridge';
-import { initDocumentBridge } from './documentBridge';
-import { initFileWatchBridge } from './fileWatchBridge';
-import { initFsBridge } from './fsBridge';
-import { initGeminiBridge } from './geminiBridge';
-import { initGeminiConversationBridge } from './geminiConversationBridge';
-import { initKickoffBridge } from './kickoffBridge';
-import { initMcpBridge } from './mcpBridge';
-import { initModelBridge } from './modelBridge';
-import { initPreviewHistoryBridge } from './previewHistoryBridge';
-import { initShellBridge } from './shellBridge';
-import { initStarOfficeBridge } from './starOfficeBridge';
-import { initSpeechToTextBridge } from './speechToTextBridge';
-import { initVoiceAssetBridge } from './voiceAssetBridge';
-import { initVoiceSynthBridge } from './voiceSynthBridge';
-import { initSkillsBridge } from './skillsBridge';
-import { initTaskBridge } from './taskBridge';
-import { initUpdateBridge } from './updateBridge';
-import { initWebuiBridge } from './webuiBridge';
-import { initConstitutionBridge } from './constitutionBridge';
-import { initOnboardingBridge } from './onboardingBridge';
-import { initIjfwBridge } from './ijfwBridge';
-import { initEccBridge } from './eccBridge';
-import { initHookGuardBridge } from './hookGuardBridge';
-import { initToolConfirmationBridge } from './toolConfirmationBridge';
-import { initCompressionBridge } from './compressionBridge';
-import { initRoutingBridge } from './routingBridge';
-import { initOmnirouteGatewayBridge } from './omnirouteGatewayBridge';
-import { initIjfwDropBridge } from './ijfwDropBridge';
-import { initMemoryArchiveBridge, initPromotionSweep } from './memoryArchiveBridge';
-import { initWikiBridge } from './wikiBridge';
+import {
+  initAcpConversationBridge,
+  initCompressionBridge,
+  initConstitutionBridge,
+  initConversationBridge,
+  initGeminiConversationBridge,
+  initKickoffBridge,
+  initPendingSendBridge,
+  initToolConfirmationBridge,
+} from './conversation';
+import { initOnboardingBridge, initRemoteAgentBridge, initSkillsBridge, initStarOfficeBridge } from './agent';
+import { initCronBridge, initMissionControlBridge, initTaskBridge, initTeamBridge } from './agent/orchestration';
+import {
+  initCompareBridge,
+  initFusionBridge,
+  initModelBridge,
+  initOmnirouteGatewayBridge,
+  initRoutingBridge,
+} from './model';
+import { initAuthBridge, initBedrockBridge, initGeminiBridge } from './model/providers';
+import {
+  initCookbookBridge,
+  initHwfitBridge,
+  initWcoreConfigBridge,
+  initWcoreDiagnosticsBridge,
+  initWcoreEngineBridge,
+} from './engine';
+import {
+  initEccBridge,
+  initExtensionsBridge,
+  initHookGuardBridge,
+  initHubBridge,
+  initIjfwBridge,
+  initIjfwDropBridge,
+  initMcpBridge,
+} from './engine/extensions';
+import {
+  initFileWatchBridge,
+  initFsBridge,
+  initProjectBridge,
+  initShellBridge,
+  initWorkspaceSnapshotBridge,
+} from './workspace';
+import {
+  initDatabaseBridge,
+  initImportBridge,
+  initMemoryArchiveBridge,
+  initPromotionSweep,
+  initResearchBridge,
+  initWikiBridge,
+} from './knowledge';
+import {
+  initCalendarBridge,
+  initDocumentsBridge,
+  initEmailTriageBridge,
+  initLocalUserBridge,
+  initNoteBridge,
+} from './knowledge/records';
+import {
+  initAmbientBridge,
+  initApplicationBridge,
+  initDialogBridge,
+  initNotificationBridge,
+  initSystemSettingsBridge,
+  initUpdateBridge,
+  initWindowControlsBridge,
+} from './desktop';
+import { initDocumentBridge, initOfficeWatchBridge, initPptPreviewBridge, initPreviewHistoryBridge } from './media';
+import { initSpeechToTextBridge, initVoiceAssetBridge, initVoiceSynthBridge } from './media/voice';
+import { initChannelBridge, initWebuiBridge, initWeixinLoginBridge } from './remote';
 import { startWikiAutoSync } from '@process/services/wiki/wikiAutoSync';
-import { initImportBridge } from './importBridge';
-import { initSystemSettingsBridge } from './systemSettingsBridge';
-import { initAmbientBridge } from './ambientBridge';
-import { initWindowControlsBridge } from './windowControlsBridge';
-import { initNotificationBridge } from './notificationBridge';
-import { initPptPreviewBridge } from './pptPreviewBridge';
-import { initOfficeWatchBridge } from './officeWatchBridge';
-import { initExtensionsBridge } from './extensionsBridge';
-import { initWeixinLoginBridge } from './weixinLoginBridge';
-import { initWorkspaceSnapshotBridge } from './workspaceSnapshotBridge';
-import { initRemoteAgentBridge } from './remoteAgentBridge';
-import { initHubBridge } from './hubBridge';
-import { initTeamBridge } from './teamBridge';
-import { initMissionControlBridge } from './missionControlBridge';
-import { initHwfitBridge } from './hwfitBridge';
-import { initCookbookBridge } from './cookbookBridge';
-import { initCompareBridge } from './compareBridge';
-import { initFusionBridge } from './fusionBridge';
-import { initLocalUserBridge } from './localUserBridge';
-import { initNoteBridge } from './noteBridge';
-import { initCalendarBridge } from './calendarBridge';
-import { initDocumentsBridge } from './documentsBridge';
-import { initResearchBridge } from './researchBridge';
-import { initEmailTriageBridge } from './emailTriageBridge';
 import { initStorageBridge } from '@process/storage/storageIpc';
 import { initNicknamesBridge } from '@process/storage/nicknamesIpc';
 import { initSyncIpc } from '@process/sync/syncIpc';
 import type { TeamSessionService } from '@process/team/TeamSessionService';
 import { initModelRegistryIpc } from '@process/providers/ipc/modelRegistryIpc';
 import { initWcoreToolKeyIpc } from '@process/agent/wcore/toolKeyIpc';
-import { initWcoreConfigBridge } from './wcoreConfigBridge';
-import { initWcoreEngineBridge } from './wcoreEngineBridge';
-import { initWcoreDiagnosticsBridge } from './wcoreDiagnosticsBridge';
-import { initPendingSendBridge } from './pendingSendBridge';
 
 export interface BridgeDependencies {
   conversationService: IConversationService;
@@ -259,7 +273,7 @@ export {
   initImportBridge,
 };
 export { initModelRegistryIpc } from '@process/providers/ipc/modelRegistryIpc';
-export { disposeAllSnapshots } from './workspaceSnapshotBridge';
-export { disposeAllTeamSessions } from './teamBridge';
+export { disposeAllSnapshots } from './workspace/workspaceSnapshotBridge';
+export { disposeAllTeamSessions } from './agent/orchestration/teamBridge';
 // Export window-control utility functions
-export { registerWindowMaximizeListeners } from './windowControlsBridge';
+export { registerWindowMaximizeListeners } from './desktop/windowControlsBridge';

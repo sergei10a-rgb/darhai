@@ -15,7 +15,7 @@ the build-time pipeline that downloads, SHA-verifies and bundles the engine bina
   (`scripts/prepareWaylandCore.js:361`) before electron-builder packs. It places
   `resources/bundled-wayland-core/{platform}-{arch}/wayland-core[.exe]` + `manifest.json`.
 - **App start (main process)**: `src/process/bridge/index.ts:143` calls `initWcoreToolKeyIpc()`, then
-  `initWcoreConfigBridge()` (`src/process/bridge/wcoreConfigBridge.ts:77`) which wires
+  `initWcoreConfigBridge()` (`src/process/bridge/engine/wcoreConfigBridge.ts:77`) which wires
   `wcoreConfig.*` and, via `initWcoreProfileIpc()` (`profileStore.ts:200`), `wcoreProfiles.*`.
   `agentRegistry.initialize()` runs at `src/process/bridge/index.ts:158` (also
   `src/process/utils/initBridgeStandalone.ts:102` for standalone mode).
@@ -50,7 +50,7 @@ the build-time pipeline that downloads, SHA-verifies and bundles the engine bina
 | `scripts/prepareWaylandCore.js` | Build-time engine fetcher: pre-placed-binary path (line 410), GitHub release download from `FerroxLabs/wayland-core` (lines 35-36) pinned to `DEFAULT_WCORE_VERSION = 'v0.10.0'` (line 187), SHA-256 gate before extract/exec (line 172), release-build fail-closed logic (`isReleaseBuild()`, line 104), manifest writer |
 | `scripts/bundled-wcore-shasums.json` | Authoritative per-tag, per-platform SHA-256 of release *archives* (tags `v0.10.0`, `v0.9.6-rc.1`); bumped in lockstep with `DEFAULT_WCORE_VERSION` |
 | `resources/bundled-wayland-core/win32-x64/` | The bundled payload: `wayland-core.exe` + `manifest.json` (`sourceType`, `sha256`, `version`, `skipped` fields; current local manifest says `local-prebuilt`, `verified: false`, engine `wayland-core 0.10.0`) |
-| `src/process/bridge/wcoreConfigBridge.ts` | (adjacent, contract owner) `wcoreConfig.getSection/setSection` IPC over configBridge; sanitises `[security].env_passthrough` names via `SENSITIVE_ENV_RE` (line 35) — no API_KEY/SECRET/TOKEN/… names ever stored |
+| `src/process/bridge/engine/wcoreConfigBridge.ts` | (adjacent, contract owner) `wcoreConfig.getSection/setSection` IPC over configBridge; sanitises `[security].env_passthrough` names via `SENSITIVE_ENV_RE` (line 35) — no API_KEY/SECRET/TOKEN/… names ever stored |
 
 Sibling dirs `src/process/agent/{acp,gemini,nanobot,openclaw,remote}` are other engines (separate
 codemap areas); `AgentRegistry` is their common aggregation point.

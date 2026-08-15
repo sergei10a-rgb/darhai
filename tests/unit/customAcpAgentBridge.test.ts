@@ -30,7 +30,7 @@ vi.mock('@process/acp/types', () => ({
 }));
 
 import { execFileSync } from 'node:child_process';
-import { testCustomAgentConnection } from '@process/bridge/testCustomAgentConnection';
+import { testCustomAgentConnection } from '@process/bridge/agent/testCustomAgentConnection';
 
 describe('testCustomAgentConnection', () => {
   beforeEach(() => {

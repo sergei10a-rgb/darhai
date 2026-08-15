@@ -47,8 +47,115 @@ export const VIEWPORT = { width: 1280, height: 800 } as const;
  */
 export const FROZEN_TIME = new Date('2026-01-15T09:30:00.000Z');
 
+/**
+ * The build outputs a visual run actually executes.
+ *
+ * All three, not just the renderer: `package.json` `main` points at
+ * `out/main/index.js`, and a half-finished build that refreshed one and not the
+ * others is exactly the state a single-file check would wave through.
+ */
+const BUNDLE_OUTPUTS = ['out/main/index.js', 'out/preload/index.js', 'out/renderer/index.html'] as const;
+
+/** How many stale files to name before the message stops being readable. */
+const STALE_SAMPLE = 8;
+
 /** Directories created for launched apps, removed on {@link closeVisualApp}. */
 const runRoots = new Set<string>();
+
+/** Every file under `dir`, walked once. */
+function walkFiles(dir: string, out: string[]): string[] {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      walkFiles(full, out);
+    } else {
+      out.push(full);
+    }
+  }
+  return out;
+}
+
+/**
+ * Refuse to run when the built app predates the source a spec claims to be
+ * looking at.
+ *
+ * WHY EVERY DOM ASSERTION IN THIS SUITE NEEDS THIS
+ * ------------------------------------------------
+ * `electron .` with no `ELECTRON_RENDERER_URL` loads `out/renderer/index.html`
+ * (`package.json` `main` -> the built main's `fallbackFile`). That is a build
+ * ARTIFACT. Everything a spec reads off the screen therefore describes whatever
+ * was last built, while everything it imports from `@process/...` or
+ * `@renderer/...` runs from CURRENT source inside the test process. Unchecked,
+ * those are two different snapshots of the repo - and the consequence is not
+ * academic: deleting the single line that gives the budget dialog its own
+ * footer left `budgetGrantDialog.visual.ts` fully green, because the running
+ * renderer had never seen the deletion.
+ *
+ * A component is not under test if changing it cannot change the result, so
+ * this is a hard stop, not a warning. The remedy is one command and it is
+ * printed.
+ *
+ * SCOPED ON PURPOSE
+ * -----------------
+ * Callers pass the files they actually assert about rather than getting a blanket
+ * `src/**` check. Two reasons, both practical: a repo-wide check reddens every
+ * visual spec the moment anyone edits an unrelated module, and - more usefully -
+ * the argument list becomes the spec's own written claim about which source
+ * files it is photographing. Directories are accepted and walked, so
+ * `src/renderer/components/base` covers a component and its neighbours.
+ */
+export function assertBundleShowsSource(sourcePaths: readonly string[]): void {
+  const missing = BUNDLE_OUTPUTS.filter((rel) => !fs.existsSync(path.join(PROJECT_ROOT, rel)));
+  if (missing.length > 0) {
+    throw new Error(
+      `visual fixture: no app bundle to look at - ${missing.join(', ')} ${missing.length === 1 ? 'is' : 'are'} ` +
+        'missing. The visual suite launches the BUILT app. Run `bun run package` first.'
+    );
+  }
+
+  // The OLDEST output is the honest reference: a build that refreshed the
+  // renderer but died before the main process is still a stale bundle.
+  let bundleMtime = Number.POSITIVE_INFINITY;
+  let bundleFile = '';
+  for (const rel of BUNDLE_OUTPUTS) {
+    const mtime = fs.statSync(path.join(PROJECT_ROOT, rel)).mtimeMs;
+    if (mtime < bundleMtime) {
+      bundleMtime = mtime;
+      bundleFile = rel;
+    }
+  }
+
+  const inputs: string[] = [];
+  for (const rel of sourcePaths) {
+    const full = path.resolve(PROJECT_ROOT, rel);
+    // A path that does not exist is a spec claiming to watch a file that is
+    // gone - say so rather than silently watching nothing.
+    if (!fs.existsSync(full)) {
+      throw new Error(`visual fixture: ${rel} does not exist, so nothing is guarding the code this spec asserts about`);
+    }
+    if (fs.statSync(full).isDirectory()) {
+      walkFiles(full, inputs);
+    } else {
+      inputs.push(full);
+    }
+  }
+
+  const stale = inputs
+    .filter((file) => fs.statSync(file).mtimeMs > bundleMtime)
+    .map((file) => path.relative(PROJECT_ROOT, file));
+
+  if (stale.length > 0) {
+    const sample = stale.slice(0, STALE_SAMPLE).join('\n  ');
+    const rest = stale.length > STALE_SAMPLE ? `\n  ...and ${stale.length - STALE_SAMPLE} more` : '';
+    throw new Error(
+      'visual fixture: the built app is older than the source this spec asserts about.\n' +
+        `${stale.length} file(s) changed since ${bundleFile} was written ` +
+        `(${new Date(bundleMtime).toISOString()}):\n  ${sample}${rest}\n` +
+        'This suite launches the BUILT app, so every assertion below would describe the OLD code while ' +
+        'anything imported from src/ runs the NEW code. Run `bun run package`, then re-run this spec.'
+    );
+  }
+}
 
 /**
  * Every app this module has launched and not yet proved dead.

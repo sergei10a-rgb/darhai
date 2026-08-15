@@ -22,7 +22,7 @@ import { SqliteCostRepository } from '@process/services/cost/SqliteCostRepositor
 import { SqliteBudgetRepository } from '@process/services/cost/SqliteBudgetRepository';
 import { CostAnalyticsService } from '@process/services/cost/CostAnalyticsService';
 import { BudgetController } from '@process/services/cost/BudgetController';
-import { initCostBridge, initCostBudgetBridge, initCostFxBridge } from '@process/bridge/costBridge';
+import { initCostBridge, initCostBudgetBridge, initCostFxBridge } from '@process/bridge/model/costBridge';
 import { CostRecorder, setCostRecorder } from '@process/services/cost/CostRecorder';
 import { currentMntRateSync, startMntRateRefresh } from '@process/services/cost/fxRateService';
 import { getModelPricing } from '@process/services/cost/ModelPricing';
@@ -30,8 +30,8 @@ import { getDatabase } from '@process/services/database';
 import { FrequentlyUsedAggregator } from '@process/services/usage/FrequentlyUsedAggregator';
 import { SqliteUsageEventRepository } from '@process/services/usage/SqliteUsageEventRepository';
 import { UsageEventLogger } from '@process/services/usage/UsageEventLogger';
-import { ensureUsageProviderRegistered, initUsageBridge } from '@process/bridge/usageBridge';
-import { initWorkflowBridge, registerWorkflowBridge } from '@process/bridge/workflowBridge';
+import { ensureUsageProviderRegistered, initUsageBridge } from '@process/bridge/model/usageBridge';
+import { initWorkflowBridge, registerWorkflowBridge } from '@process/bridge/agent/orchestration/workflowBridge';
 import { WorkflowSessionRepository } from '@process/services/workflow/WorkflowSessionRepository';
 import { WorkflowSessionService, type DefaultModelProvider } from '@process/services/workflow/WorkflowSessionService';
 import {

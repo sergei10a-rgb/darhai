@@ -59,7 +59,7 @@ vi.mock('../../src/process/utils/initStorage', () => ({
   ProcessConfig: { get: vi.fn(async () => []) },
 }));
 
-vi.mock('../../src/process/bridge/migrationUtils', () => ({
+vi.mock('../../src/process/bridge/knowledge/migrationUtils', () => ({
   migrateConversationToDatabase: vi.fn(async () => {}),
 }));
 
@@ -81,7 +81,7 @@ vi.mock('../../src/process/task/agentUtils', () => ({
   prepareFirstMessage: vi.fn(async (msg: string) => msg),
 }));
 
-import { initConversationBridge } from '../../src/process/bridge/conversationBridge';
+import { initConversationBridge } from '../../src/process/bridge/conversation/conversationBridge';
 import type { IConversationService } from '../../src/process/services/IConversationService';
 import type { IWorkerTaskManager } from '../../src/process/task/IWorkerTaskManager';
 import type { TChatConversation } from '../../src/common/config/storage';

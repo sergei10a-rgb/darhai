@@ -149,13 +149,13 @@ describe('fsBridge listWorkspaceFiles', () => {
     const { registerPlatformServices } = await import('@/common/platform');
     const { NodePlatformServices } = await import('@/common/platform/NodePlatformServices');
     registerPlatformServices(new NodePlatformServices());
-    const mod = await import('@process/bridge/fsBridge');
+    const mod = await import('@process/bridge/workspace/fsBridge');
     mod.initFsBridge();
     // The workspace lives outside the static authorized roots (it can be any
     // user-chosen directory). Authorize it the same way the production
     // createUploadFile path does, so the write-confinement check accepts the
     // in-workspace write instead of rejecting it.
-    const { registerAuthorizedRoot } = await import('@process/bridge/pathConfinement');
+    const { registerAuthorizedRoot } = await import('@process/bridge/workspace/pathConfinement');
     registerAuthorizedRoot(workspaceRoot);
   });
 

@@ -34,15 +34,36 @@ type DetectedAgent = NonNullable<AvailableAgentsResponse['data']>[number] & { av
 const FEATURED_BACKENDS = ['wcore', 'claude', 'codex'];
 
 /**
- * The Wayland Core hero card always renders, even when the live agent
- * detector returns no entry for it - the engine is always-available once a
- * model is connected. We compose a static metadata-only record here so the
- * page never goes wcore-less, and let the live detection result decide the
- * "Active" vs "Detected" badge.
+ * What a card is allowed to claim about an agent.
+ *
+ *  - `active`      the producer says its local prerequisite is satisfied
+ *                  (`available: true` - see `acp.get-available-agents`)
+ *  - `unavailable` the producer says it is not (`available: false`)
+ *  - `unknown`     the detector returned no entry at all, so we have no answer
+ *
+ * `unknown` is a separate state on purpose: "the agents query failed" is not
+ * evidence that the engine is missing, and a card must not invent either verdict.
+ */
+type AgentStatus = 'active' | 'unavailable' | 'unknown';
+
+function statusOf(agent: DetectedAgent | undefined): AgentStatus {
+  // `=== true` / `=== false`: this repo compiles without strictNullChecks, so
+  // truthiness narrows nothing.
+  if (agent === undefined) return 'unknown';
+  return agent.available === true ? 'active' : 'unavailable';
+}
+
+/**
+ * The Darhai Core card always renders, even when the live agent detector
+ * returns no entry for it, so the page never goes wcore-less. The static
+ * record carries `available: false` because a record we invented locally
+ * cannot vouch for a binary - the card's badge is driven by `statusOf(
+ * detectedWcore)` instead, which reports `unknown` in exactly this case.
  */
 const WCORE_STATIC: DetectedAgent = {
   backend: 'wcore',
   name: 'Darhai Core',
+  available: false,
   isExtension: false,
   isPreset: false,
 };
@@ -102,14 +123,24 @@ const ToolbarToggle: React.FC<{
  */
 const AgentCard: React.FC<{
   agent: DetectedAgent;
+  /** Layout emphasis only - true when the live detector returned this agent. */
   hero: boolean;
+  /** What the badge is allowed to say. Deliberately NOT derived from `hero`. */
+  status: AgentStatus;
   shown: boolean;
   locked: boolean;
   onToggle: (shown: boolean) => void;
-}> = ({ agent, hero, shown, locked, onToggle }) => {
+}> = ({ agent, hero, status, shown, locked, onToggle }) => {
   const { t } = useTranslation();
   const scope = resolveAgentScope(agent.backend);
   const logo = agentLogo(agent);
+  const isActive = status === 'active';
+  const badgeKey =
+    status === 'active'
+      ? 'settings.agentsPage.badge.active'
+      : status === 'unavailable'
+        ? 'settings.agentsPage.badge.notInstalled'
+        : 'settings.agentsPage.badge.unknown';
 
   return (
     <div className={`${styles.card} ${hero ? styles.cardHero : ''}`} data-testid='agent-card'>
@@ -127,9 +158,12 @@ const AgentCard: React.FC<{
           <div className={styles.desc}>{t(`settings.agentsPage.about.${agent.backend}`, { defaultValue: '' })}</div>
         </div>
         <div className={styles.cardActions}>
-          <span className={`${styles.badge} ${hero ? styles.badgeActive : styles.badgeDetected}`}>
-            {hero && <span className={styles.badgeDot} />}
-            {t(hero ? 'settings.agentsPage.badge.active' : 'settings.agentsPage.badge.detected')}
+          <span
+            className={`${styles.badge} ${isActive ? styles.badgeActive : styles.badgeDetected}`}
+            data-testid={`agent-badge-${agent.backend}`}
+          >
+            {isActive && <span className={styles.badgeDot} />}
+            {t(badgeKey)}
           </span>
           <ToolbarToggle backend={agent.backend} shown={shown} locked={locked} onChange={onToggle} />
         </div>
@@ -199,12 +233,17 @@ const AgentsSettings: React.FC = () => {
   });
 
   const agents = detectedAgents ?? [];
-  // Wayland Core is always-available - render its hero from static metadata
-  // when the live detector doesn't return it, otherwise prefer the live row
-  // (so any future detector-supplied fields like `cliPath` flow through).
+  // The Core card always renders - from static metadata when the live detector
+  // doesn't return it, otherwise from the live row (so detector-supplied fields
+  // like `cliPath` flow through).
+  //
+  // `wcoreStatus` reads the entry's own `available`, NOT its presence. Presence
+  // only ever meant "Darhai ships the Core backend", which is unconditionally
+  // true - reading it as availability is what put a green "Active" chip on
+  // machines with no engine binary at all.
   const detectedWcore = agents.find((a) => a.backend === 'wcore');
   const wcoreAgent = detectedWcore ?? WCORE_STATIC;
-  const wcoreIsActive = Boolean(detectedWcore);
+  const wcoreStatus = statusOf(detectedWcore);
   const featuredRest = FEATURED_BACKENDS.filter((b) => b !== 'wcore').map((backend) =>
     agents.find((a) => a.backend === backend)
   );
@@ -251,7 +290,8 @@ const AgentsSettings: React.FC = () => {
               <AgentCard
                 key={agent.backend}
                 agent={agent}
-                hero={agent.backend === 'wcore' ? wcoreIsActive : true}
+                hero={agent.backend === 'wcore' ? detectedWcore !== undefined : true}
+                status={agent.backend === 'wcore' ? wcoreStatus : statusOf(agent)}
                 shown={agent.backend === 'wcore' ? true : !isHidden(agent.backend)}
                 locked={agent.backend === 'wcore'}
                 onToggle={(shown) => void setAgentHidden(agent.backend, !shown)}

@@ -12,7 +12,7 @@
 import { isTeamCapableBackend } from '@/common/types/teamTypes';
 import { getTeamAvailableModels } from '@/common/utils/teamModelUtils';
 import { ProcessConfig } from '@process/utils/initStorage';
-import { getMergedModelProviders } from '@process/bridge/modelBridge';
+import { getMergedModelProviders } from '@process/bridge/model/modelBridge';
 import { hasGeminiOauthCreds } from '../googleAuthCheck';
 import { agentRegistry } from '@process/agent/AgentRegistry';
 

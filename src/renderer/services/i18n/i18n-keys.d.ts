@@ -2406,6 +2406,8 @@ export type I18nKey =
   | 'settings.agentsPage.about.wcore'
   | 'settings.agentsPage.badge.active'
   | 'settings.agentsPage.badge.detected'
+  | 'settings.agentsPage.badge.notInstalled'
+  | 'settings.agentsPage.badge.unknown'
   | 'settings.agentsPage.empty'
   | 'settings.agentsPage.loadErrorsTitle'
   | 'settings.agentsPage.moreDetected'

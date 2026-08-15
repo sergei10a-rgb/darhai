@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { generateQRLoginUrlDirect, verifyQRTokenDirect } from '@process/bridge/webuiQR';
+import { generateQRLoginUrlDirect, verifyQRTokenDirect } from '@process/bridge/remote/webuiQR';
 
 vi.mock('@process/webserver/auth/repository/UserRepository', () => ({
   UserRepository: {

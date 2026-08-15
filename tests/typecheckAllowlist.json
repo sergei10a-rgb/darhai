@@ -2,7 +2,7 @@
   "note": "Files under tests/ that do not yet type-check. This list may only shrink - see scripts/typecheck-tests.mjs.",
   "generatedErrorCount": 1347,
   "files": [
-    "src/process/bridge/updateBridge.ts",
+    "src/process/bridge/desktop/updateBridge.ts",
     "src/process/channels/plugins/tier3/irc/IrcPlugin.ts",
     "src/process/webserver/auth/middleware/TokenMiddleware.ts",
     "src/process/webserver/middleware/security.ts",
@@ -67,7 +67,6 @@
     "tests/unit/RemoteAgentCore.test.ts",
     "tests/unit/RemoteAgentManager.test.ts",
     "tests/unit/RemoteSendBox.dom.test.tsx",
-    "tests/unit/SpeechToTextService.test.ts",
     "tests/unit/SystemModalContent.dom.test.tsx",
     "tests/unit/WCoreManagerContextUsage.test.ts",
     "tests/unit/WCoreManagerCron.test.ts",

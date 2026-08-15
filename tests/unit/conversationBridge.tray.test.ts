@@ -7,7 +7,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { IConversationService } from '@/process/services/IConversationService';
 import type { IWorkerTaskManager } from '@/process/task/IWorkerTaskManager';
-import { initConversationBridge } from '@process/bridge/conversationBridge';
+import { initConversationBridge } from '@process/bridge/conversation/conversationBridge';
 
 type Provider = (payload?: unknown) => Promise<unknown>;
 
@@ -137,7 +137,7 @@ vi.mock('@/process/utils/openclawUtils', () => ({
   computeOpenClawIdentityHash: vi.fn(async () => 'identity-hash'),
 }));
 
-vi.mock('@process/bridge/migrationUtils', () => ({
+vi.mock('@process/bridge/knowledge/migrationUtils', () => ({
   migrateConversationToDatabase: vi.fn(),
 }));
 

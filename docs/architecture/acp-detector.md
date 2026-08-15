@@ -204,13 +204,13 @@ All refresh methods remove the existing agents of the corresponding type before 
 
 ## Consumers
 
-| File                                            | Purpose                                                       |
-| ----------------------------------------------- | ------------------------------------------------------------- |
-| `src/process/bridge/acpConversationBridge.ts`   | IPC bridge: fetch agent list, health checks, model probing    |
-| `src/process/extensions/hub/HubInstaller.ts`    | refreshAll + verify detection results after extension install |
-| `src/process/extensions/hub/HubStateManager.ts` | Refresh built-in agents to determine extension install status |
-| `src/process/team/TeammateManager.ts`           | Filter available agent types for the Team feature             |
-| `src/process/channels/actions/SystemActions.ts` | Build the selectable agent list for channels                  |
+| File                                                       | Purpose                                                       |
+| ---------------------------------------------------------- | ------------------------------------------------------------- |
+| `src/process/bridge/conversation/acpConversationBridge.ts` | IPC bridge: fetch agent list, health checks, model probing    |
+| `src/process/extensions/hub/HubInstaller.ts`               | refreshAll + verify detection results after extension install |
+| `src/process/extensions/hub/HubStateManager.ts`            | Refresh built-in agents to determine extension install status |
+| `src/process/team/TeammateManager.ts`                      | Filter available agent types for the Team feature             |
+| `src/process/channels/actions/SystemActions.ts`            | Build the selectable agent list for channels                  |
 
 ## Fault-Tolerance Design
 

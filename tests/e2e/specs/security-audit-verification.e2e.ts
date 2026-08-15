@@ -234,7 +234,7 @@ test.describe('Security audit verification (W1-W4 runtime gate)', () => {
   //   for an Electron e2e suite.
   // - L5 (commit d440968f6): shellBridge no longer wraps Windows commands
   //   with `cmd.exe /c start`. Verified at source in
-  //   src/process/bridge/shellBridge.ts; the wrapper is unconditionally
+  //   src/process/bridge/workspace/shellBridge.ts; the wrapper is unconditionally
   //   skipped. Reproducing this at runtime requires Windows + a benign
   //   shell command, which our cross-platform suite cannot guarantee.
   // - H13 (commit ac3529e3e): React error boundaries are mounted at the

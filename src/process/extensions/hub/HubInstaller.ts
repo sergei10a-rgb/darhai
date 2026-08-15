@@ -17,7 +17,7 @@ import { ExtensionRegistry } from '@process/extensions/ExtensionRegistry';
 import { markExtensionForReinstall } from '@process/extensions/lifecycle/statePersistence';
 import { hubIndexManager } from '@process/extensions/hub/HubIndexManager';
 import { hubStateManager } from '@process/extensions/hub/HubStateManager';
-import { requireConfirmation } from '@process/bridge/webuiDirectAuth';
+import { requireConfirmation } from '@process/bridge/remote/webuiDirectAuth';
 import type { IHubExtension, HubContributes } from '@/common/types/hub';
 
 const execAsync = promisify(exec);

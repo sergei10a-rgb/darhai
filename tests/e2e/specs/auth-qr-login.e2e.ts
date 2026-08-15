@@ -178,6 +178,6 @@ test.describe('Auth: QR login', () => {
   // machine end-to-end (generate → verify → reject-replay) against an
   // in-memory store.
   test.skip('phone-scan UX flow - covered by unit test on verifyQRTokenDirect', () => {
-    // No-op: see src/process/bridge/webuiQR.ts.
+    // No-op: see src/process/bridge/remote/webuiQR.ts.
   });
 });

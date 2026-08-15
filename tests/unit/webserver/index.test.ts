@@ -123,7 +123,7 @@ vi.mock('@process/webserver/adapter', () => ({
   initWebAdapter: initWebAdapterMock,
 }));
 
-vi.mock('@process/bridge/webuiQR', () => ({
+vi.mock('@process/bridge/remote/webuiQR', () => ({
   generateQRLoginUrlDirect: vi.fn(() => ({ qrUrl: 'http://localhost:3000/qr' })),
 }));
 

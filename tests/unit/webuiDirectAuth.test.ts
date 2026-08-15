@@ -37,7 +37,7 @@ vi.mock('@process/webserver/auth/repository/UserRepository', () => ({
 
 describe('webuiDirectAuth', () => {
   beforeEach(async () => {
-    const { _resetRateLimitForTests } = await import('@process/bridge/webuiDirectAuth');
+    const { _resetRateLimitForTests } = await import('@process/bridge/remote/webuiDirectAuth');
     _resetRateLimitForTests();
     showMessageBoxMock.mockReset();
     verifyPasswordMock.mockReset();
@@ -46,7 +46,7 @@ describe('webuiDirectAuth', () => {
 
   describe('enforceRateLimit', () => {
     it('allows up to 5 requests per minute per key', async () => {
-      const { enforceRateLimit } = await import('@process/bridge/webuiDirectAuth');
+      const { enforceRateLimit } = await import('@process/bridge/remote/webuiDirectAuth');
       for (let i = 0; i < 5; i++) {
         expect(enforceRateLimit('test-key')).toBe(true);
       }
@@ -54,7 +54,7 @@ describe('webuiDirectAuth', () => {
     });
 
     it('uses independent buckets per key', async () => {
-      const { enforceRateLimit } = await import('@process/bridge/webuiDirectAuth');
+      const { enforceRateLimit } = await import('@process/bridge/remote/webuiDirectAuth');
       for (let i = 0; i < 5; i++) {
         enforceRateLimit('key-a');
       }
@@ -63,7 +63,7 @@ describe('webuiDirectAuth', () => {
     });
 
     it('admits a new request once an older entry falls outside the window', async () => {
-      const { enforceRateLimit } = await import('@process/bridge/webuiDirectAuth');
+      const { enforceRateLimit } = await import('@process/bridge/remote/webuiDirectAuth');
       const realNow = Date.now;
       let now = 1_000_000;
       Date.now = () => now;
@@ -84,7 +84,7 @@ describe('webuiDirectAuth', () => {
   describe('requireConfirmation', () => {
     it('returns true when the user clicks the confirm button (response 0)', async () => {
       showMessageBoxMock.mockResolvedValueOnce({ response: 0 });
-      const { requireConfirmation } = await import('@process/bridge/webuiDirectAuth');
+      const { requireConfirmation } = await import('@process/bridge/remote/webuiDirectAuth');
       const ok = await requireConfirmation({
         title: 'T',
         message: 'M',
@@ -96,7 +96,7 @@ describe('webuiDirectAuth', () => {
 
     it('returns false when the user cancels (response 1)', async () => {
       showMessageBoxMock.mockResolvedValueOnce({ response: 1 });
-      const { requireConfirmation } = await import('@process/bridge/webuiDirectAuth');
+      const { requireConfirmation } = await import('@process/bridge/remote/webuiDirectAuth');
       const ok = await requireConfirmation({
         title: 'T',
         message: 'M',
@@ -107,7 +107,7 @@ describe('webuiDirectAuth', () => {
 
     it('defaults the cancel button as the safe default', async () => {
       showMessageBoxMock.mockResolvedValueOnce({ response: 1 });
-      const { requireConfirmation } = await import('@process/bridge/webuiDirectAuth');
+      const { requireConfirmation } = await import('@process/bridge/remote/webuiDirectAuth');
       await requireConfirmation({
         title: 'T',
         message: 'M',
@@ -124,7 +124,7 @@ describe('webuiDirectAuth', () => {
 
   describe('verifyCurrentPassword', () => {
     it('returns false when the input is empty', async () => {
-      const { verifyCurrentPassword } = await import('@process/bridge/webuiDirectAuth');
+      const { verifyCurrentPassword } = await import('@process/bridge/remote/webuiDirectAuth');
       expect(await verifyCurrentPassword('')).toBe(false);
       // Underlying repository must not be consulted for empty input
       expect(getPrimaryWebUIUserMock).not.toHaveBeenCalled();
@@ -132,14 +132,14 @@ describe('webuiDirectAuth', () => {
 
     it('returns false when no admin user exists', async () => {
       getPrimaryWebUIUserMock.mockResolvedValueOnce(null);
-      const { verifyCurrentPassword } = await import('@process/bridge/webuiDirectAuth');
+      const { verifyCurrentPassword } = await import('@process/bridge/remote/webuiDirectAuth');
       expect(await verifyCurrentPassword('anything')).toBe(false);
       expect(verifyPasswordMock).not.toHaveBeenCalled();
     });
 
     it('returns false when the admin has no password_hash', async () => {
       getPrimaryWebUIUserMock.mockResolvedValueOnce({ id: '1', password_hash: '' });
-      const { verifyCurrentPassword } = await import('@process/bridge/webuiDirectAuth');
+      const { verifyCurrentPassword } = await import('@process/bridge/remote/webuiDirectAuth');
       expect(await verifyCurrentPassword('anything')).toBe(false);
       expect(verifyPasswordMock).not.toHaveBeenCalled();
     });
@@ -147,7 +147,7 @@ describe('webuiDirectAuth', () => {
     it('delegates to AuthService.verifyPassword when an admin exists', async () => {
       getPrimaryWebUIUserMock.mockResolvedValueOnce({ id: '1', password_hash: 'hash' });
       verifyPasswordMock.mockResolvedValueOnce(true);
-      const { verifyCurrentPassword } = await import('@process/bridge/webuiDirectAuth');
+      const { verifyCurrentPassword } = await import('@process/bridge/remote/webuiDirectAuth');
       expect(await verifyCurrentPassword('plain')).toBe(true);
       expect(verifyPasswordMock).toHaveBeenCalledWith('plain', 'hash');
     });
@@ -155,7 +155,7 @@ describe('webuiDirectAuth', () => {
     it('propagates a negative bcrypt comparison', async () => {
       getPrimaryWebUIUserMock.mockResolvedValueOnce({ id: '1', password_hash: 'hash' });
       verifyPasswordMock.mockResolvedValueOnce(false);
-      const { verifyCurrentPassword } = await import('@process/bridge/webuiDirectAuth');
+      const { verifyCurrentPassword } = await import('@process/bridge/remote/webuiDirectAuth');
       expect(await verifyCurrentPassword('wrong')).toBe(false);
     });
   });

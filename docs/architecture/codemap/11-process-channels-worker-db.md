@@ -131,7 +131,7 @@ Three main-process pillars. **Channels** (`src/process/channels/`) is the multi-
 
 ## Contracts & data flow
 
-**IPC (main↔renderer)** — channels code emits on `channel` bridge from `@/common/adapter/ipcBridge` (handlers registered in `src/process/bridge/channelBridge.ts`, outside this area): `pluginStatusChanged` (`gateway/PluginManager.ts:306,327`), `pairingRequested` (`pairing/PairingService.ts:87`), `userAuthorized` (`PairingService.ts:217,256`). Provider endpoints (get-plugin-status, enable/disable/test-plugin, pairing approve/reject, etc.) are listed in `channels/ARCHITECTURE.md` §8.
+**IPC (main↔renderer)** — channels code emits on `channel` bridge from `@/common/adapter/ipcBridge` (handlers registered in `src/process/bridge/remote/channelBridge.ts`, outside this area): `pluginStatusChanged` (`gateway/PluginManager.ts:306,327`), `pairingRequested` (`pairing/PairingService.ts:87`), `userAuthorized` (`PairingService.ts:217,256`). Provider endpoints (get-plugin-status, enable/disable/test-plugin, pairing approve/reject, etc.) are listed in `channels/ARCHITECTURE.md` §8.
 
 **Agent→Channel event bus** — single event name `channel.agent.message` on `channelEventBus` (`agent/ChannelEventBus.ts:13-16`). Agent managers emit per-conversation `IAgentMessageEvent` (an `IResponseMessage` + `conversation_id`); `ChannelMessageService` is the only consumer. This is the "dual-path broadcast": the same event also goes to the renderer via ipcBridge.
 

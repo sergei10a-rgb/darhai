@@ -2362,7 +2362,9 @@
     "loadErrorsTitle": "Some agents failed to load",
     "badge": {
       "active": "Active",
-      "detected": "Detected"
+      "detected": "Detected",
+      "notInstalled": "Not installed",
+      "unknown": "Unknown"
     },
     "toolbarToggle": {
       "label": "Show in toolbar",

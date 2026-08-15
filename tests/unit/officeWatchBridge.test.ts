@@ -138,7 +138,7 @@ vi.mock('@process/services/database', () => ({
 // The officecli auto-install path (consent dialog + pinned/checksummed remote
 // script) is unit-tested in its own module. Here we mock it so the bridge's
 // ENOENT-retry/decline behaviour can be driven deterministically.
-vi.mock('../../src/process/bridge/officecliInstaller', () => ({
+vi.mock('../../src/process/bridge/media/officecliInstaller', () => ({
   installOfficecli: (...args: any[]) => installOfficecliMock(...args),
 }));
 
@@ -191,9 +191,9 @@ async function emitWatchReady(child: ReturnType<typeof createMockChildProcess>, 
 
 // --- Tests ---
 
-let initOfficeWatchBridge: typeof import('../../src/process/bridge/officeWatchBridge').initOfficeWatchBridge;
-let stopAllOfficeWatchSessions: typeof import('../../src/process/bridge/officeWatchBridge').stopAllOfficeWatchSessions;
-let isActiveOfficeWatchPort: typeof import('../../src/process/bridge/officeWatchBridge').isActiveOfficeWatchPort;
+let initOfficeWatchBridge: typeof import('../../src/process/bridge/media/officeWatchBridge').initOfficeWatchBridge;
+let stopAllOfficeWatchSessions: typeof import('../../src/process/bridge/media/officeWatchBridge').stopAllOfficeWatchSessions;
+let isActiveOfficeWatchPort: typeof import('../../src/process/bridge/media/officeWatchBridge').isActiveOfficeWatchPort;
 
 beforeEach(async () => {
   vi.resetModules();
@@ -202,7 +202,7 @@ beforeEach(async () => {
   portConnectSucceeds.value = true;
   installOfficecliMock.mockReset();
 
-  const mod = await import('../../src/process/bridge/officeWatchBridge');
+  const mod = await import('../../src/process/bridge/media/officeWatchBridge');
   initOfficeWatchBridge = mod.initOfficeWatchBridge;
   stopAllOfficeWatchSessions = mod.stopAllOfficeWatchSessions;
   isActiveOfficeWatchPort = mod.isActiveOfficeWatchPort;

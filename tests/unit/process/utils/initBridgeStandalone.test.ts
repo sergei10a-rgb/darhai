@@ -77,91 +77,91 @@ vi.mock('@process/task/workerTaskManagerSingleton', () => ({
   workerTaskManager: {},
 }));
 
-vi.mock('@process/bridge/applicationBridgeCore', () => ({
+vi.mock('@process/bridge/desktop/applicationBridgeCore', () => ({
   initApplicationBridgeCore: (...args: unknown[]) => mocks.initApplicationBridgeCore(...args),
 }));
-vi.mock('@process/bridge/shellBridgeStandalone', () => ({
+vi.mock('@process/bridge/workspace/shellBridgeStandalone', () => ({
   initShellBridgeStandalone: (...args: unknown[]) => mocks.initShellBridgeStandalone(...args),
 }));
-vi.mock('@process/bridge/fileWatchBridge', () => ({
+vi.mock('@process/bridge/workspace/fileWatchBridge', () => ({
   initFileWatchBridge: (...args: unknown[]) => mocks.initFileWatchBridge(...args),
 }));
-vi.mock('@process/bridge/fsBridge', () => ({
+vi.mock('@process/bridge/workspace/fsBridge', () => ({
   initFsBridge: (...args: unknown[]) => mocks.initFsBridge(...args),
 }));
-vi.mock('@process/bridge/conversationBridge', () => ({
+vi.mock('@process/bridge/conversation/conversationBridge', () => ({
   initConversationBridge: (...args: unknown[]) => mocks.initConversationBridge(...args),
 }));
-vi.mock('@process/bridge/geminiConversationBridge', () => ({
+vi.mock('@process/bridge/conversation/geminiConversationBridge', () => ({
   initGeminiConversationBridge: (...args: unknown[]) => mocks.initGeminiConversationBridge(...args),
 }));
-vi.mock('@process/bridge/geminiBridge', () => ({
+vi.mock('@process/bridge/model/providers/geminiBridge', () => ({
   initGeminiBridge: (...args: unknown[]) => mocks.initGeminiBridge(...args),
 }));
-vi.mock('@process/bridge/bedrockBridge', () => ({
+vi.mock('@process/bridge/model/providers/bedrockBridge', () => ({
   initBedrockBridge: (...args: unknown[]) => mocks.initBedrockBridge(...args),
 }));
-vi.mock('@process/bridge/acpConversationBridge', () => ({
+vi.mock('@process/bridge/conversation/acpConversationBridge', () => ({
   initAcpConversationBridge: (...args: unknown[]) => mocks.initAcpConversationBridge(...args),
 }));
-vi.mock('@process/bridge/authBridge', () => ({
+vi.mock('@process/bridge/model/providers/authBridge', () => ({
   initAuthBridge: (...args: unknown[]) => mocks.initAuthBridge(...args),
 }));
-vi.mock('@process/bridge/modelBridge', () => ({
+vi.mock('@process/bridge/model/modelBridge', () => ({
   initModelBridge: (...args: unknown[]) => mocks.initModelBridge(...args),
 }));
-vi.mock('@process/bridge/previewHistoryBridge', () => ({
+vi.mock('@process/bridge/media/previewHistoryBridge', () => ({
   initPreviewHistoryBridge: (...args: unknown[]) => mocks.initPreviewHistoryBridge(...args),
 }));
-vi.mock('@process/bridge/documentBridge', () => ({
+vi.mock('@process/bridge/media/documentBridge', () => ({
   initDocumentBridge: (...args: unknown[]) => mocks.initDocumentBridge(...args),
 }));
-vi.mock('@process/bridge/pptPreviewBridge', () => ({
+vi.mock('@process/bridge/media/pptPreviewBridge', () => ({
   initPptPreviewBridge: (...args: unknown[]) => mocks.initPptPreviewBridge(...args),
 }));
-vi.mock('@process/bridge/officeWatchBridge', () => ({
+vi.mock('@process/bridge/media/officeWatchBridge', () => ({
   initOfficeWatchBridge: (...args: unknown[]) => mocks.initOfficeWatchBridge(...args),
 }));
-vi.mock('@process/bridge/channelBridge', () => ({
+vi.mock('@process/bridge/remote/channelBridge', () => ({
   initChannelBridge: (...args: unknown[]) => mocks.initChannelBridge(...args),
 }));
-vi.mock('@process/bridge/databaseBridge', () => ({
+vi.mock('@process/bridge/knowledge/databaseBridge', () => ({
   initDatabaseBridge: (...args: unknown[]) => mocks.initDatabaseBridge(...args),
 }));
-vi.mock('@process/bridge/extensionsBridge', () => ({
+vi.mock('@process/bridge/engine/extensions/extensionsBridge', () => ({
   initExtensionsBridge: (...args: unknown[]) => mocks.initExtensionsBridge(...args),
 }));
-vi.mock('@process/bridge/systemSettingsBridge', () => ({
+vi.mock('@process/bridge/desktop/systemSettingsBridge', () => ({
   initSystemSettingsBridge: (...args: unknown[]) => mocks.initSystemSettingsBridge(...args),
 }));
-vi.mock('@process/bridge/cronBridge', () => ({
+vi.mock('@process/bridge/agent/orchestration/cronBridge', () => ({
   initCronBridge: (...args: unknown[]) => mocks.initCronBridge(...args),
 }));
-vi.mock('@process/bridge/mcpBridge', () => ({
+vi.mock('@process/bridge/engine/extensions/mcpBridge', () => ({
   initMcpBridge: (...args: unknown[]) => mocks.initMcpBridge(...args),
 }));
-vi.mock('@process/bridge/notificationBridge', () => ({
+vi.mock('@process/bridge/desktop/notificationBridge', () => ({
   initNotificationBridge: (...args: unknown[]) => mocks.initNotificationBridge(...args),
 }));
-vi.mock('@process/bridge/taskBridge', () => ({
+vi.mock('@process/bridge/agent/orchestration/taskBridge', () => ({
   initTaskBridge: (...args: unknown[]) => mocks.initTaskBridge(...args),
 }));
-vi.mock('@process/bridge/starOfficeBridge', () => ({
+vi.mock('@process/bridge/agent/starOfficeBridge', () => ({
   initStarOfficeBridge: (...args: unknown[]) => mocks.initStarOfficeBridge(...args),
 }));
-vi.mock('@process/bridge/speechToTextBridge', () => ({
+vi.mock('@process/bridge/media/voice/speechToTextBridge', () => ({
   initSpeechToTextBridge: (...args: unknown[]) => mocks.initSpeechToTextBridge(...args),
 }));
-vi.mock('@process/bridge/hubBridge', () => ({
+vi.mock('@process/bridge/engine/extensions/hubBridge', () => ({
   initHubBridge: (...args: unknown[]) => mocks.initHubBridge(...args),
 }));
-vi.mock('@process/bridge/projectBridge', () => ({
+vi.mock('@process/bridge/workspace/projectBridge', () => ({
   initProjectBridge: (...args: unknown[]) => mocks.initProjectBridge(...args),
 }));
-vi.mock('@process/bridge/teamBridge', () => ({
+vi.mock('@process/bridge/agent/orchestration/teamBridge', () => ({
   initTeamBridge: (...args: unknown[]) => mocks.initTeamBridge(...args),
 }));
-vi.mock('@process/bridge/skillsBridge', () => ({
+vi.mock('@process/bridge/agent/skillsBridge', () => ({
   initSkillsBridge: (...args: unknown[]) => mocks.initSkillsBridge(...args),
 }));
 vi.mock('@process/team/repository/SqliteTeamRepository', () => ({

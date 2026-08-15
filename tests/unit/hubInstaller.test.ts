@@ -68,7 +68,7 @@ vi.mock('@process/utils', () => ({ getDataPath: () => '/data' }));
 // gate directly: default to "user clicked Install" (true); individual tests
 // override mockRequireConfirmation to assert the decline path.
 const mockRequireConfirmation = vi.fn(async () => true);
-vi.mock('@process/bridge/webuiDirectAuth', () => ({
+vi.mock('@process/bridge/remote/webuiDirectAuth', () => ({
   requireConfirmation: (...args: unknown[]) => mockRequireConfirmation(...args),
 }));
 

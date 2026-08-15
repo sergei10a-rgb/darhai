@@ -64,7 +64,7 @@ vi.mock('@process/webserver/middleware/security', () => ({
   apiRateLimiter: ((_req, _res, next) => next()) as RequestHandler,
 }));
 
-vi.mock('@process/bridge/webuiQR', () => ({
+vi.mock('@process/bridge/remote/webuiQR', () => ({
   verifyQRTokenDirect: vi.fn(),
 }));
 

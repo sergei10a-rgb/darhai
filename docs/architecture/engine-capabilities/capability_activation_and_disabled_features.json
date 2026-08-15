@@ -55,7 +55,7 @@
       "why": "This is the gate. `[compact] smart_enabled = true` alone moved smart_handoff from `unavailable/disabled_by_config` to `declared -> configured -> constructed -> ready` in an otherwise-empty isolated home. The bridge's lossless read-modify-write (documented lines 22-26) means adding `[compact]` cannot clobber the rest of a user's config."
     },
     {
-      "file": "src/process/bridge/wcoreConfigBridge.ts",
+      "file": "src/process/bridge/engine/wcoreConfigBridge.ts",
       "change": "NOTHING. Verify only. `ipcBridge.wcoreConfig.getSection` / `setSection` (lines 79 and 89) are already generic over the section name, and `src/common/adapter/bridgeAllowlist.ts:233-239` already remote-denies all three `wcoreConfig.*` verbs.",
       "why": "`[compact]` mutation reaches the renderer through the existing human-only, remote-denied path with zero new IPC surface. Adding a bespoke verb here would create a second, unaudited door into the same file."
     }

@@ -20,7 +20,7 @@
  *
  * SPEC §5.10 (consumer expectations) + §6.4 (`workflow.updateSessionState`
  * patch shape). The patch dispatcher on the main side
- * (`src/process/bridge/workflowBridge.ts`) always tags renderer-driven
+ * (`src/process/bridge/agent/orchestration/workflowBridge.ts`) always tags renderer-driven
  * step transitions with `source = 'user'`; the optional `source` argument
  * on `applyStepMarker` is forwarded only for the symmetric W5 path (the
  * `dispatchAutonomousStep` worker reports back via its own channel).

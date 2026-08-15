@@ -33,7 +33,7 @@ describe('feedbackBridge', () => {
   beforeEach(async () => {
     vi.resetModules();
     const { ipcMain } = await import('electron');
-    await import('@process/bridge/feedbackBridge');
+    await import('@process/bridge/desktop/feedbackBridge');
     // Extract the registered handler
     const handleCall = vi.mocked(ipcMain.handle).mock.calls.find(([channel]) => channel === 'feedback:collect-logs');
     expect(handleCall).toBeDefined();

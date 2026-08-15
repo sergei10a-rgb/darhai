@@ -17,7 +17,7 @@
 
 import { app } from 'electron';
 import { ProcessConfig } from './initStorage';
-import { setStartOnBootEnabled } from '@process/bridge/applicationBridge';
+import { setStartOnBootEnabled } from '@process/bridge/desktop/applicationBridge';
 
 export async function applyFirstRunDefaults(): Promise<void> {
   try {

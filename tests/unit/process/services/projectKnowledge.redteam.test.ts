@@ -25,11 +25,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // The three security gates. Mock them so we control accept/reject
 // deterministically. resolveExternalReferencePath is the owner-approved
 // relaxation (arbitrary folders, sensitive/unsafe still rejected).
-vi.mock('@process/bridge/pathConfinement', () => ({
+vi.mock('@process/bridge/workspace/pathConfinement', () => ({
   confinePath: vi.fn(),
   resolveExternalReferencePath: vi.fn(),
 }));
-vi.mock('@process/bridge/userApprovedPaths', () => ({
+vi.mock('@process/bridge/workspace/userApprovedPaths', () => ({
   resolveWithinApprovedDirectory: vi.fn(),
 }));
 
@@ -53,8 +53,8 @@ vi.mock('@process/services/projectKnowledge/bootstrap', () => ({
 }));
 
 import fs from 'fs/promises';
-import { confinePath, resolveExternalReferencePath } from '@process/bridge/pathConfinement';
-import { resolveWithinApprovedDirectory } from '@process/bridge/userApprovedPaths';
+import { confinePath, resolveExternalReferencePath } from '@process/bridge/workspace/pathConfinement';
+import { resolveWithinApprovedDirectory } from '@process/bridge/workspace/userApprovedPaths';
 import { addProjectReference } from '@process/services/projectKnowledge/knowledge';
 
 const mockConfinePath = vi.mocked(confinePath);

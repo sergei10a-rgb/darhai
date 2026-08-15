@@ -2344,7 +2344,9 @@
     "loadErrorsTitle": "Alguns agentes falharam ao carregar",
     "badge": {
       "active": "Ativo",
-      "detected": "Detectado"
+      "detected": "Detectado",
+      "notInstalled": "Não instalado",
+      "unknown": "Desconhecido"
     },
     "toolbarToggle": {
       "label": "Mostrar na barra de ferramentas",

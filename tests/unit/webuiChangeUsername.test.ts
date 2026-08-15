@@ -254,7 +254,7 @@ describe('WebuiService.changeUsername', () => {
       clearInitialAdminPassword: vi.fn(),
     }));
 
-    const { WebuiService } = await import('@/process/bridge/services/WebuiService');
+    const { WebuiService } = await import('@/process/bridge/remote/WebuiService');
     const result = await WebuiService.changeUsername('admin');
     expect(result).toBe('admin');
     expect(updateUsernameMock).not.toHaveBeenCalled();
@@ -284,7 +284,7 @@ describe('WebuiService.changeUsername', () => {
       clearInitialAdminPassword: vi.fn(),
     }));
 
-    const { WebuiService } = await import('@/process/bridge/services/WebuiService');
+    const { WebuiService } = await import('@/process/bridge/remote/WebuiService');
     await expect(WebuiService.changeUsername('ab')).rejects.toThrow('Username must be at least 3 characters long');
   });
 
@@ -310,7 +310,7 @@ describe('WebuiService.changeUsername', () => {
       clearInitialAdminPassword: vi.fn(),
     }));
 
-    const { WebuiService } = await import('@/process/bridge/services/WebuiService');
+    const { WebuiService } = await import('@/process/bridge/remote/WebuiService');
     await expect(WebuiService.changeUsername('taken')).rejects.toThrow('Username already exists');
   });
 
@@ -337,7 +337,7 @@ describe('WebuiService.changeUsername', () => {
       clearInitialAdminPassword: vi.fn(),
     }));
 
-    const { WebuiService } = await import('@/process/bridge/services/WebuiService');
+    const { WebuiService } = await import('@/process/bridge/remote/WebuiService');
     const result = await WebuiService.changeUsername('newname');
     expect(result).toBe('newname');
     expect(updateUsernameMock).toHaveBeenCalledWith('system_default_user', 'newname');
@@ -375,7 +375,7 @@ describe('WebuiService.getStatus', () => {
       clearInitialAdminPassword: vi.fn(),
     }));
 
-    const { WebuiService } = await import('@/process/bridge/services/WebuiService');
+    const { WebuiService } = await import('@/process/bridge/remote/WebuiService');
     const status = await WebuiService.getStatus({
       server: {} as never,
       wss: {} as never,

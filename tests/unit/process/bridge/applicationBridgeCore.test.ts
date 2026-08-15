@@ -40,13 +40,13 @@ describe('initApplicationBridgeCore', () => {
   });
 
   it('imports without requiring electron', async () => {
-    const mod = await import('@process/bridge/applicationBridgeCore');
+    const mod = await import('@process/bridge/desktop/applicationBridgeCore');
     expect(mod.initApplicationBridgeCore).toBeTypeOf('function');
   });
 
   it('registers systemInfo and updateSystemInfo providers', async () => {
     const { ipcBridge } = await import('@/common');
-    const { initApplicationBridgeCore } = await import('@process/bridge/applicationBridgeCore');
+    const { initApplicationBridgeCore } = await import('@process/bridge/desktop/applicationBridgeCore');
     initApplicationBridgeCore();
     expect(ipcBridge.application.systemInfo.provider).toHaveBeenCalledOnce();
     expect(ipcBridge.application.updateSystemInfo.provider).toHaveBeenCalledOnce();

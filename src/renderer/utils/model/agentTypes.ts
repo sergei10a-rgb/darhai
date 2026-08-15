@@ -17,6 +17,13 @@ export const DETECTED_AGENTS_SWR_KEY = 'agents.detected';
 export type AvailableAgent = {
   backend: string;
   name: string;
+  /**
+   * Whether the engine can be used, not whether Darhai ships it - every entry
+   * in this list is shipped. Read this instead of testing for presence.
+   */
+  available?: boolean;
+  /** Engine semver when one has been reported; absent when not known. */
+  version?: string;
   cliPath?: string;
   customAgentId?: string;
   isPreset?: boolean;

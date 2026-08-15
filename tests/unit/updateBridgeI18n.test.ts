@@ -73,13 +73,13 @@ describe('updateBridge lazy i18n', () => {
   });
 
   it('should load i18n lazily without throwing at module load time', async () => {
-    const module = await import('@process/bridge/updateBridge');
+    const module = await import('@process/bridge/desktop/updateBridge');
     expect(module).toBeDefined();
     expect(typeof module.pickRecommendedAsset).toBe('function');
   });
 
   it('should have getI18n function that returns i18n instance', async () => {
-    const module = await import('@process/bridge/updateBridge');
+    const module = await import('@process/bridge/desktop/updateBridge');
     expect(module).toBeDefined();
   });
 });

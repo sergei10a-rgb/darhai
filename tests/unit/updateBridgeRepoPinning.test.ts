@@ -80,7 +80,7 @@ const CANONICAL_REPO = 'sergei10a-rgb/darhai';
 
 const getCheckHandler = async () => {
   vi.resetModules();
-  const { initUpdateBridge } = await import('@process/bridge/updateBridge');
+  const { initUpdateBridge } = await import('@process/bridge/desktop/updateBridge');
   await import('@/common');
 
   initUpdateBridge();

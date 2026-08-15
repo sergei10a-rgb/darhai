@@ -69,11 +69,11 @@ import { initializeProcess } from './process';
 import { ProcessConfig } from './process/utils/initStorage';
 import { loadShellEnvironmentAsync, logEnvironmentDiagnostics, mergePaths } from './process/utils/shellEnv';
 import { initializeAcpDetector, registerWindowMaximizeListeners, disposeAllTeamSessions } from '@process/bridge';
-import './process/bridge/feedbackBridge';
-import { wasLaunchedAtLogin } from '@process/bridge/applicationBridge';
+import './process/bridge/desktop/feedbackBridge';
+import { wasLaunchedAtLogin } from '@process/bridge/desktop/applicationBridge';
 import { applyFirstRunDefaults } from '@process/utils/firstRunDefaults';
 import { migrateCredentialsToSafeStorage_v1 } from '@process/utils/credentialMigration';
-import { onCloseToTrayChanged, onLanguageChanged } from './process/bridge/systemSettingsBridge';
+import { onCloseToTrayChanged, onLanguageChanged } from './process/bridge/desktop/systemSettingsBridge';
 import { setInitialLanguage } from '@process/services/i18n';
 import { workerTaskManager } from './process/task/workerTaskManagerSingleton';
 import { setupApplicationMenu } from './process/utils/appMenu';
@@ -631,7 +631,7 @@ const createWindow = ({ showOnReady = true }: { showOnReady?: boolean } = {}): v
   const disableAutoUpdater =
     process.env.DARHAI_DISABLE_AUTO_UPDATE === '1' || process.env.DARHAI_E2E_TEST === '1' || isCiRuntime;
   if (!disableAutoUpdater) {
-    Promise.all([import('./process/services/autoUpdaterService'), import('./process/bridge/updateBridge')])
+    Promise.all([import('./process/services/autoUpdaterService'), import('./process/bridge/desktop/updateBridge')])
       .then(([{ autoUpdaterService }, { createAutoUpdateStatusBroadcast }]) => {
         // Create status broadcast callback that emits via ipcBridge (pure emitter, no window binding)
         const statusBroadcast = createAutoUpdateStatusBroadcast();
@@ -977,7 +977,7 @@ const handleAppReady = async (): Promise<void> => {
         if (!useAmbient) return;
 
         // Load + register bridge immediately (cheap, doesn't create windows).
-        const { initAmbientBridge } = await import('./process/bridge/ambientBridge');
+        const { initAmbientBridge } = await import('./process/bridge/desktop/ambientBridge');
         initAmbientBridge();
 
         // Create the ambient window *after* the main renderer has finished
@@ -1136,14 +1136,14 @@ app.on('open-url', (event, url) => {
 type CleanupModules = {
   ambient: typeof import('./process/ambient/ambientWindowManager');
   channels: typeof import('@process/channels');
-  webuiBridge: typeof import('@process/bridge/webuiBridge');
+  webuiBridge: typeof import('@process/bridge/remote/webuiBridge');
   webserverAdapter: typeof import('@process/webserver/adapter');
-  officeWatch: typeof import('@process/bridge/officeWatchBridge');
-  pptPreview: typeof import('@process/bridge/pptPreviewBridge');
+  officeWatch: typeof import('@process/bridge/media/officeWatchBridge');
+  pptPreview: typeof import('@process/bridge/media/pptPreviewBridge');
   // REL-WATCH-01: drain leaked fs.watch handles (renderer-initiated file
   // watchers) deterministically on quit so they don't outlive the process and
   // accumulate against inotify max_user_watches / EMFILE.
-  fileWatch: typeof import('@process/bridge/fileWatchBridge');
+  fileWatch: typeof import('@process/bridge/workspace/fileWatchBridge');
   // L15 (AUDIT-05 F17): close SQLite handle from before-quit so the DB file
   // is flushed/unlocked before process exit.
   database: typeof import('@process/services/database/export');
@@ -1171,13 +1171,13 @@ const prefetchCleanupModules = (): Promise<CleanupModules> => {
   return Promise.all([
     import('./process/ambient/ambientWindowManager'),
     import('@process/channels'),
-    import('@process/bridge/webuiBridge'),
+    import('@process/bridge/remote/webuiBridge'),
     import('@process/webserver/adapter'),
-    import('@process/bridge/officeWatchBridge'),
-    import('@process/bridge/pptPreviewBridge'),
+    import('@process/bridge/media/officeWatchBridge'),
+    import('@process/bridge/media/pptPreviewBridge'),
     import('@process/services/database/export'),
     import('@process/services/cron/cronServiceSingleton'),
-    import('@process/bridge/fileWatchBridge'),
+    import('@process/bridge/workspace/fileWatchBridge'),
     import('@process/services/notes/noteServiceSingleton'),
     import('@process/services/calendar/calendarServiceSingleton'),
     import('@process/services/cookbook/cookbookServeSingleton'),
@@ -1360,13 +1360,13 @@ const runQuitCleanup = async (): Promise<void> => {
     const entries = await Promise.all([
       safeImport('ambient', () => import('./process/ambient/ambientWindowManager')),
       safeImport('channels', () => import('@process/channels')),
-      safeImport('webuiBridge', () => import('@process/bridge/webuiBridge')),
+      safeImport('webuiBridge', () => import('@process/bridge/remote/webuiBridge')),
       safeImport('webserverAdapter', () => import('@process/webserver/adapter')),
-      safeImport('officeWatch', () => import('@process/bridge/officeWatchBridge')),
-      safeImport('pptPreview', () => import('@process/bridge/pptPreviewBridge')),
+      safeImport('officeWatch', () => import('@process/bridge/media/officeWatchBridge')),
+      safeImport('pptPreview', () => import('@process/bridge/media/pptPreviewBridge')),
       safeImport('database', () => import('@process/services/database/export')),
       safeImport('cron', () => import('@process/services/cron/cronServiceSingleton')),
-      safeImport('fileWatch', () => import('@process/bridge/fileWatchBridge')),
+      safeImport('fileWatch', () => import('@process/bridge/workspace/fileWatchBridge')),
       // notes + calendar were listed in the prefetch but NOT here, so whenever
       // the prefetch was unavailable (quit raced ready, or one import rejected)
       // their reminder scanners were silently never shut down.

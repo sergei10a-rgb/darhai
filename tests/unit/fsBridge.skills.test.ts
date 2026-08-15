@@ -4,7 +4,7 @@ import path from 'path';
 // Store all mock states at module scope to ensure they remain accessible in vi.doMock
 let mockFsStore: Record<string, any> = {};
 let mockCustomExternalPaths: Array<{ name: string; path: string }> = [];
-// User-approved write destinations (mirrors src/process/bridge/userApprovedPaths).
+// User-approved write destinations (mirrors src/process/bridge/workspace/userApprovedPaths).
 // The createZip destination is allowed when it is in an authorized root OR
 // inside one of these dialog/desktop-approved directories.
 let mockApprovedDirectories: string[] = [];
@@ -186,7 +186,7 @@ describe('fsBridge skills functionality', () => {
       });
       return inside ? resolved : null;
     };
-    vi.doMock('@process/bridge/userApprovedPaths', () => ({
+    vi.doMock('@process/bridge/workspace/userApprovedPaths', () => ({
       registerApprovedDirectory: vi.fn((dir: string) => {
         if (typeof dir === 'string' && dir.length > 0) mockApprovedDirectories.push(path.resolve(dir));
       }),
@@ -291,7 +291,7 @@ describe('fsBridge skills functionality', () => {
 
   // Helper macro to fetch the actual implemented provider endpoint
   const getProvider = async (channel: string) => {
-    const mod = await import('@process/bridge/fsBridge');
+    const mod = await import('@process/bridge/workspace/fsBridge');
     mod.initFsBridge();
     const ipcMod = await import('@/common');
     // Type assertion hack, accessing the internal registered function logic

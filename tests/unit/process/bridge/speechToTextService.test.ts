@@ -13,7 +13,7 @@ vi.mock('@process/utils/mainLogger', () => ({
 }));
 
 import { ProcessConfig } from '@process/utils/initStorage';
-import { SpeechToTextService } from '@process/bridge/services/SpeechToTextService';
+import { SpeechToTextService } from '@process/bridge/media/voice/SpeechToTextService';
 import { mainError, mainLog, mainWarn } from '@process/utils/mainLogger';
 
 describe('SpeechToTextService', () => {

@@ -24,7 +24,7 @@ const mocks = vi.hoisted(() => ({
   oneShotComplete: vi.fn(),
 }));
 
-vi.mock('@process/bridge/modelBridge', () => ({ getMergedModelProviders: mocks.getMergedModelProviders }));
+vi.mock('@process/bridge/model/modelBridge', () => ({ getMergedModelProviders: mocks.getMergedModelProviders }));
 vi.mock('@process/providers/ipc/modelRegistryIpc', () => ({ hydrateModelForSpawn: mocks.hydrateModelForSpawn }));
 vi.mock('@process/services/completion/oneShot', () => ({ oneShotComplete: mocks.oneShotComplete }));
 

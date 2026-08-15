@@ -191,7 +191,7 @@ import {
   MAX_GOAL_TEXT,
 } from '@process/agent/wcore/capabilities/handlers/durableGoals';
 import type { CapabilityContext } from '@process/agent/wcore/capabilities/types';
-import { buildWcoreCapabilitySnapshot } from '@process/bridge/wcoreEngineBridge';
+import { buildWcoreCapabilitySnapshot } from '@process/bridge/engine/wcoreEngineBridge';
 import { examplePayload, readFixture } from '../../../helpers/engineContract';
 import {
   DURABLE_GOALS_CAPABILITY_ID,

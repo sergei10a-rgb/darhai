@@ -69,7 +69,7 @@ describe('applicationBridge start-on-boot helpers', () => {
       updateCdpConfig: vi.fn(),
     }));
 
-    vi.doMock('@process/bridge/applicationBridgeCore', () => ({
+    vi.doMock('@process/bridge/desktop/applicationBridgeCore', () => ({
       initApplicationBridgeCore: vi.fn(),
     }));
   };
@@ -86,7 +86,7 @@ describe('applicationBridge start-on-boot helpers', () => {
       },
     }));
 
-    const { getStartOnBootStatus } = await import('@process/bridge/applicationBridge');
+    const { getStartOnBootStatus } = await import('@process/bridge/desktop/applicationBridge');
 
     expect(getStartOnBootStatus()).toEqual({
       supported: true,
@@ -111,7 +111,7 @@ describe('applicationBridge start-on-boot helpers', () => {
       },
     }));
 
-    const { wasLaunchedAtLogin } = await import('@process/bridge/applicationBridge');
+    const { wasLaunchedAtLogin } = await import('@process/bridge/desktop/applicationBridge');
 
     expect(wasLaunchedAtLogin()).toBe(true);
   });
@@ -137,7 +137,7 @@ describe('applicationBridge start-on-boot helpers', () => {
       },
     }));
 
-    const { START_ON_BOOT_WINDOWS_ARG, setStartOnBootEnabled } = await import('@process/bridge/applicationBridge');
+    const { START_ON_BOOT_WINDOWS_ARG, setStartOnBootEnabled } = await import('@process/bridge/desktop/applicationBridge');
     const status = setStartOnBootEnabled(true);
 
     expect(setLoginItemSettings).toHaveBeenCalledWith({
@@ -173,7 +173,7 @@ describe('applicationBridge start-on-boot helpers', () => {
     }));
 
     try {
-      const { wasLaunchedAtLogin } = await import('@process/bridge/applicationBridge');
+      const { wasLaunchedAtLogin } = await import('@process/bridge/desktop/applicationBridge');
 
       expect(wasLaunchedAtLogin()).toBe(true);
     } finally {
@@ -197,7 +197,7 @@ describe('applicationBridge start-on-boot helpers', () => {
       },
     }));
 
-    const { getStartOnBootStatus } = await import('@process/bridge/applicationBridge');
+    const { getStartOnBootStatus } = await import('@process/bridge/desktop/applicationBridge');
 
     expect(getStartOnBootStatus()).toEqual({
       supported: false,
@@ -219,7 +219,7 @@ describe('applicationBridge start-on-boot helpers', () => {
       },
     }));
 
-    const { wasLaunchedAtLogin } = await import('@process/bridge/applicationBridge');
+    const { wasLaunchedAtLogin } = await import('@process/bridge/desktop/applicationBridge');
 
     expect(wasLaunchedAtLogin()).toBe(false);
   });
@@ -277,7 +277,7 @@ describe('applicationBridge start-on-boot helpers', () => {
       updateCdpConfig: vi.fn(),
     }));
 
-    vi.doMock('@process/bridge/applicationBridgeCore', () => ({
+    vi.doMock('@process/bridge/desktop/applicationBridgeCore', () => ({
       initApplicationBridgeCore: vi.fn(),
     }));
 
@@ -289,7 +289,7 @@ describe('applicationBridge start-on-boot helpers', () => {
       },
     }));
 
-    const { initApplicationBridge } = await import('@process/bridge/applicationBridge');
+    const { initApplicationBridge } = await import('@process/bridge/desktop/applicationBridge');
     initApplicationBridge({
       getTask: vi.fn(),
       getOrBuildTask: vi.fn(),
@@ -359,7 +359,7 @@ describe('applicationBridge start-on-boot helpers', () => {
       updateCdpConfig: vi.fn(),
     }));
 
-    vi.doMock('@process/bridge/applicationBridgeCore', () => ({
+    vi.doMock('@process/bridge/desktop/applicationBridgeCore', () => ({
       initApplicationBridgeCore: vi.fn(),
     }));
 
@@ -371,7 +371,7 @@ describe('applicationBridge start-on-boot helpers', () => {
       },
     }));
 
-    const { initApplicationBridge } = await import('@process/bridge/applicationBridge');
+    const { initApplicationBridge } = await import('@process/bridge/desktop/applicationBridge');
     initApplicationBridge({
       getTask: vi.fn(),
       getOrBuildTask: vi.fn(),

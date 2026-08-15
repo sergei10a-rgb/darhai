@@ -117,7 +117,7 @@ src/process/channels/plugins/dingtalk/  # lowercase
 
 Cross-process communication MUST go through:
 
-- Main ↔ Renderer: IPC via `src/preload.ts` + `src/process/bridge/*.ts`
+- Main ↔ Renderer: IPC via `src/preload.ts` + `src/process/bridge/**/*.ts`
 - Main ↔ Worker: fork protocol via `src/process/worker/WorkerProtocol.ts`
 
 ## Main Process Naming
@@ -165,7 +165,7 @@ Test files must mirror the source file they test:
 | Source                                       | Test                                            |
 | -------------------------------------------- | ----------------------------------------------- |
 | `src/process/services/CronService.ts`        | `tests/unit/cronService.test.ts`                |
-| `src/process/bridge/fsBridge.ts`             | `tests/unit/fsBridge.test.ts`                   |
+| `src/process/bridge/workspace/fsBridge.ts`   | `tests/unit/fsBridge.test.ts`                   |
 | `src/renderer/utils/chat/latexDelimiters.ts` | `tests/unit/latexDelimiters.test.ts`            |
 | `src/renderer/hooks/ui/useAutoScroll.ts`     | `tests/unit/useAutoScroll.dom.test.ts`          |
 | `src/process/extensions/ExtensionLoader.ts`  | `tests/unit/extensions/extensionLoader.test.ts` |

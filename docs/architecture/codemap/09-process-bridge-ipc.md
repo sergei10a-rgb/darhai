@@ -13,7 +13,7 @@ The bridge layer is Darhai's entire renderer↔main IPC surface. Every cross-pro
 - **WebUI server path**: `src/process/webserver/adapter.ts:23` (`initWebAdapter`) registers a broadcaster into `src/common/adapter/registry.ts` and dispatches inbound WS messages through **both** `isAllowedInboundName` and `isAllowedForRemote` (`webserver/adapter.ts:36-47`) before hitting the shared bridge emitter.
 - **Standalone (no Electron)**: `src/server.ts:110` calls `initBridgeStandalone()` (`src/process/utils/initBridgeStandalone.ts:54`), which registers the Electron-safe subset of bridges (skips dialog/windowControls/update/webui; swaps `shellBridge` → `shellBridgeStandalone`, `applicationBridge` → `applicationBridgeCore`). The adapter is `src/common/adapter/standalone.ts` (Node `EventEmitter` instead of `ipcMain`, same allowlist check at line 28).
 - **Allowlist population**: keys only exist because `adapter/main.ts:17` / `standalone.ts:11` side-effect-import `./ipcBridge` — every `buildProvider`/`buildEmitter`/`buildStorage` call records its key at module load (`bridgeAllowlist.ts:74-115`). Without that import every renderer call would be rejected.
-- **eccBridge lifecycle**: `initEccBridge()` registers `ecc.getStatus` / `ecc.setGateGuard` providers and schedules a background `seedEccIfAbsent()` of the bundled ECC harness 7s after launch (`src/process/bridge/eccBridge.ts:15-31`).
+- **eccBridge lifecycle**: `initEccBridge()` registers `ecc.getStatus` / `ecc.setGateGuard` providers and schedules a background `seedEccIfAbsent()` of the bundled ECC harness 7s after launch (`src/process/bridge/engine/extensions/eccBridge.ts:15-31`).
 
 ## Key modules
 

@@ -131,15 +131,18 @@ import AgentsSettings from '../../../src/renderer/pages/settings/AgentSettings';
 // Fixtures
 // ---------------------------------------------------------------------------
 
+// Every entry carries `available`, because the bridge contract requires it and
+// the badge is derived from it. A fixture without the field would let the page
+// fall back to reading PRESENCE again without any test noticing.
 const AGENTS = [
-  { backend: 'wcore', name: 'Darhai Core' },
-  { backend: 'claude', name: 'Claude Code' },
-  { backend: 'codex', name: 'Codex' },
-  { backend: 'gemini', name: 'Gemini CLI' },
-  { backend: 'qwen', name: 'Qwen Code' },
+  { backend: 'wcore', name: 'Darhai Core', available: true },
+  { backend: 'claude', name: 'Claude Code', available: true },
+  { backend: 'codex', name: 'Codex', available: true },
+  { backend: 'gemini', name: 'Gemini CLI', available: true },
+  { backend: 'qwen', name: 'Qwen Code', available: true },
   // `vibe` is the one non-obvious backend → scope mapping: it maps to the
   // `mistral` scope key ("Runs Mistral models"), not a same-named key.
-  { backend: 'vibe', name: 'Vibe CLI' },
+  { backend: 'vibe', name: 'Vibe CLI', available: true },
 ];
 
 function agentsOk(data: unknown) {
@@ -257,6 +260,68 @@ describe('AgentsSettings (Packet 2D)', () => {
     expect(
       screen.getByText('No agents detected yet. Darhai Core is always available once a model is connected.')
     ).toBeTruthy();
+  });
+
+  // -------------------------------------------------------------------------
+  // The Darhai Core badge - what the card is allowed to claim
+  //
+  // This card is the ONLY routed consumer of `available` from
+  // `acp.get-available-agents`. It used to derive its green "Active" badge from
+  // `Boolean(agents.find(a => a.backend === 'wcore'))` - presence, which is
+  // unconditionally true because Darhai always ships the Core backend. So an
+  // engine that was not installed still read "Active". These pin the three
+  // answers the producer can actually give.
+  // -------------------------------------------------------------------------
+
+  it('calls Darhai Core "Active" only when the producer says available: true', async () => {
+    mockGetAvailableAgents.mockResolvedValue(agentsOk([{ backend: 'wcore', name: 'Darhai Core', available: true }]));
+    render(<AgentsSettings />);
+
+    const badge = await screen.findByTestId('agent-badge-wcore');
+    expect(badge.textContent).toBe('Active');
+    // The status dot renders only in the active state. CSS-module class names
+    // are stubbed out under Vitest (`css` is off in vitest.config.ts), so the
+    // dot ELEMENT is the only part of the green-chip treatment a DOM test can
+    // see - and it comes from the same `isActive` boolean as the colour class.
+    expect(badge.querySelector('span')).not.toBeNull();
+  });
+
+  it('does NOT call Darhai Core "Active" when the producer says available: false', async () => {
+    // The exact regression: the entry is present (Darhai ships the backend) but
+    // no Core binary resolved on this machine.
+    mockGetAvailableAgents.mockResolvedValue(agentsOk([{ backend: 'wcore', name: 'Darhai Core', available: false }]));
+    render(<AgentsSettings />);
+
+    const badge = await screen.findByTestId('agent-badge-wcore');
+    expect(badge.textContent).toBe('Not installed');
+    expect(badge.textContent).not.toBe('Active');
+    // No status dot: the active treatment is gone, not just its label.
+    expect(badge.querySelector('span')).toBeNull();
+  });
+
+  it('says "Unknown" - not "Not installed" - when the detector returned no Core entry', async () => {
+    // A failed agents query is not evidence that the engine is missing, so the
+    // card must not invent a negative verdict either.
+    mockGetAvailableAgents.mockResolvedValue({ success: false });
+    render(<AgentsSettings />);
+
+    const badge = await screen.findByTestId('agent-badge-wcore');
+    expect(badge.textContent).toBe('Unknown');
+  });
+
+  it('keeps reading the entry, not its presence, when other agents are listed too', async () => {
+    // Guards the shape the page actually receives: an unavailable Core sitting
+    // in a list of perfectly available ACP agents.
+    mockGetAvailableAgents.mockResolvedValue(
+      agentsOk([
+        { backend: 'wcore', name: 'Darhai Core', available: false },
+        { backend: 'claude', name: 'Claude Code', available: true },
+      ])
+    );
+    render(<AgentsSettings />);
+
+    expect((await screen.findByTestId('agent-badge-wcore')).textContent).toBe('Not installed');
+    expect((await screen.findByTestId('agent-badge-claude')).textContent).toBe('Active');
   });
 
   it('renders a "show in toolbar" toggle for each detected agent, on by default', async () => {

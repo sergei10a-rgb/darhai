@@ -23,8 +23,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // ----------------------------------------------------------------------------
 
 vi.mock('@/common', () => {
-  const suggestProvider = (globalThis as any).__suggestProviderMock ?? ((globalThis as any).__suggestProviderMock = vi.fn());
-  const telemetryProvider = (globalThis as any).__telemetryProviderMock ?? ((globalThis as any).__telemetryProviderMock = vi.fn());
+  const suggestProvider =
+    (globalThis as any).__suggestProviderMock ?? ((globalThis as any).__suggestProviderMock = vi.fn());
+  const telemetryProvider =
+    (globalThis as any).__telemetryProviderMock ?? ((globalThis as any).__telemetryProviderMock = vi.fn());
   return {
     ipcBridge: {
       kickoff: {
@@ -43,7 +45,8 @@ vi.mock('@process/services/kickoff/kickoffSingleton', () => {
 });
 
 vi.mock('@process/extensions/ExtensionRegistry', () => {
-  const whenInitialized = (globalThis as any).__whenInitializedMock ?? ((globalThis as any).__whenInitializedMock = vi.fn());
+  const whenInitialized =
+    (globalThis as any).__whenInitializedMock ?? ((globalThis as any).__whenInitializedMock = vi.fn());
   return {
     ExtensionRegistry: {
       getInstance: () => ({ whenInitialized }),
@@ -52,7 +55,8 @@ vi.mock('@process/extensions/ExtensionRegistry', () => {
 });
 
 vi.mock('@process/services/cron/cronReadiness', () => {
-  const waitForCronReady = (globalThis as any).__waitForCronReadyMock ?? ((globalThis as any).__waitForCronReadyMock = vi.fn());
+  const waitForCronReady =
+    (globalThis as any).__waitForCronReadyMock ?? ((globalThis as any).__waitForCronReadyMock = vi.fn());
   return {
     waitForCronReady: (...args: unknown[]) => waitForCronReady(...args),
   };
@@ -64,7 +68,7 @@ const engineSuggestMock: ReturnType<typeof vi.fn> = (globalThis as any).__engine
 const whenInitializedMock: ReturnType<typeof vi.fn> = (globalThis as any).__whenInitializedMock;
 const waitForCronReadyMock: ReturnType<typeof vi.fn> = (globalThis as any).__waitForCronReadyMock;
 
-import { initKickoffBridge } from '@process/bridge/kickoffBridge';
+import { initKickoffBridge } from '@process/bridge/conversation/kickoffBridge';
 import type { KickoffResult, KickoffTelemetryEvent } from '@process/services/kickoff/types';
 
 // Pulls the most-recently-registered handler from a `.provider` mock. The
@@ -219,7 +223,7 @@ describe('kickoffBridge.suggest - registry readiness', () => {
     vi.doMock('@process/services/cron/cronReadiness', () => ({
       waitForCronReady: () => Promise.resolve('ready' as const),
     }));
-    const { initKickoffBridge: initFresh } = await import('@process/bridge/kickoffBridge');
+    const { initKickoffBridge: initFresh } = await import('@process/bridge/conversation/kickoffBridge');
     initFresh();
     const handler = getSuggestHandler();
     const result = await handler({ assistantId: 'helm' });
@@ -301,9 +305,7 @@ describe('kickoffBridge.telemetry - validation', () => {
   it("silently drops payload with notRenderedReason: 'unknown'", async () => {
     const handler = getTelemetryHandler();
     const debugSpy = vi.spyOn(console, 'debug').mockImplementation(() => {});
-    await expect(
-      handler({ event: 'not_rendered', notRenderedReason: 'unknown' })
-    ).resolves.toBeUndefined();
+    await expect(handler({ event: 'not_rendered', notRenderedReason: 'unknown' })).resolves.toBeUndefined();
     expect(debugSpy).not.toHaveBeenCalled();
     debugSpy.mockRestore();
   });
@@ -311,9 +313,7 @@ describe('kickoffBridge.telemetry - validation', () => {
   it('silently drops payload with notRenderedReason longer than 128 chars', async () => {
     const handler = getTelemetryHandler();
     const debugSpy = vi.spyOn(console, 'debug').mockImplementation(() => {});
-    await expect(
-      handler({ event: 'not_rendered', notRenderedReason: 'a'.repeat(129) })
-    ).resolves.toBeUndefined();
+    await expect(handler({ event: 'not_rendered', notRenderedReason: 'a'.repeat(129) })).resolves.toBeUndefined();
     expect(debugSpy).not.toHaveBeenCalled();
     debugSpy.mockRestore();
   });
@@ -329,9 +329,7 @@ describe('kickoffBridge.telemetry - validation', () => {
   it('silently drops payload with invalid dismissReason', async () => {
     const handler = getTelemetryHandler();
     const debugSpy = vi.spyOn(console, 'debug').mockImplementation(() => {});
-    await expect(
-      handler({ event: 'dismissed', dismissReason: 'rage-quit' })
-    ).resolves.toBeUndefined();
+    await expect(handler({ event: 'dismissed', dismissReason: 'rage-quit' })).resolves.toBeUndefined();
     expect(debugSpy).not.toHaveBeenCalled();
     debugSpy.mockRestore();
   });

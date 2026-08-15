@@ -80,7 +80,7 @@ vi.mock('@process/services/memory/ijfwArchiveService', () => ({
 }));
 
 // eslint-disable-next-line import/first
-import { initImportBridge } from '@process/bridge/importBridge';
+import { initImportBridge } from '@process/bridge/knowledge/importBridge';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 

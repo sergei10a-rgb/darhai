@@ -7,7 +7,7 @@
 import { loadAnthropic } from '@/common/api/AnthropicRotatingClient';
 import { loadGoogleGenAI } from '@/common/api/GeminiRotatingClient';
 import { loadOpenAI as loadOpenAIClient } from '@/common/api/OpenAIRotatingClient';
-import { loadAwsBedrock, loadOpenAI as loadOpenAIBridge } from '@process/bridge/modelBridge';
+import { loadAwsBedrock, loadOpenAI as loadOpenAIBridge } from '@process/bridge/model/modelBridge';
 
 /**
  * Cron-aware pre-warm for the lazy AI SDK loaders.

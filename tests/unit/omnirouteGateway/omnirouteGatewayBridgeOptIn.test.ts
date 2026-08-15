@@ -80,7 +80,7 @@ beforeEach(async () => {
     registerOmnirouteQuitReaper: registerQuitReaper,
   }));
 
-  const mod = await import('@process/bridge/omnirouteGatewayBridge');
+  const mod = await import('@process/bridge/model/omnirouteGatewayBridge');
   mod.initOmnirouteGatewayBridge();
 });
 

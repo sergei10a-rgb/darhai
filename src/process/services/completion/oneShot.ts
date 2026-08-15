@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { getMergedModelProviders } from '@process/bridge/modelBridge';
+import { getMergedModelProviders } from '@process/bridge/model/modelBridge';
 import { isExactMirrorRowFor } from '@process/providers/legacyModelConfigBridge';
 import { OMNIROUTE_GATEWAY_PROVIDER_ID } from '@/common/types/omnirouteGateway';
 import type { IProvider } from '@/common/config/storage';

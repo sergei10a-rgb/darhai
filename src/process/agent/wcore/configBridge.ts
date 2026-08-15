@@ -205,6 +205,6 @@ export function setProfilesSection(value: WcoreProfilesSection, path?: string): 
   return setSection('profiles', value, path);
 }
 
-// NOTE: the human-only `wcoreConfig.*` IPC is wired in `bridge/wcoreConfigBridge.ts`,
+// NOTE: the human-only `wcoreConfig.*` IPC is wired in `bridge/engine/wcoreConfigBridge.ts`,
 // which routes through the typed `ipcBridge` adapter (remote-denied + security-sanitised).
 // A previous raw `ipcMain.handle` registrar here bypassed both layers and was removed.

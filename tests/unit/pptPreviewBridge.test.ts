@@ -102,7 +102,7 @@ vi.mock('@process/services/database', () => ({
 // The officecli auto-install path (consent dialog + pinned/checksummed remote
 // script) is unit-tested in its own module. Here we mock it so the bridge's
 // ENOENT-retry/decline behaviour can be driven deterministically.
-vi.mock('../../src/process/bridge/officecliInstaller', () => ({
+vi.mock('../../src/process/bridge/media/officecliInstaller', () => ({
   installOfficecli: (...args: any[]) => installOfficecliMock(...args),
 }));
 
@@ -147,9 +147,9 @@ async function emitWatchReady(child: ReturnType<typeof createMockChildProcess>, 
 
 // --- Tests ---
 
-let initPptPreviewBridge: typeof import('../../src/process/bridge/pptPreviewBridge').initPptPreviewBridge;
-let stopAllWatchSessions: typeof import('../../src/process/bridge/pptPreviewBridge').stopAllWatchSessions;
-let isActivePreviewPort: typeof import('../../src/process/bridge/pptPreviewBridge').isActivePreviewPort;
+let initPptPreviewBridge: typeof import('../../src/process/bridge/media/pptPreviewBridge').initPptPreviewBridge;
+let stopAllWatchSessions: typeof import('../../src/process/bridge/media/pptPreviewBridge').stopAllWatchSessions;
+let isActivePreviewPort: typeof import('../../src/process/bridge/media/pptPreviewBridge').isActivePreviewPort;
 
 beforeEach(async () => {
   vi.resetModules();
@@ -157,7 +157,7 @@ beforeEach(async () => {
   fakePort.value = 55555;
   installOfficecliMock.mockReset();
 
-  const mod = await import('../../src/process/bridge/pptPreviewBridge');
+  const mod = await import('../../src/process/bridge/media/pptPreviewBridge');
   initPptPreviewBridge = mod.initPptPreviewBridge;
   stopAllWatchSessions = mod.stopAllWatchSessions;
   isActivePreviewPort = mod.isActivePreviewPort;

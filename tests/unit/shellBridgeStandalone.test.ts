@@ -50,7 +50,7 @@ vi.mock('node:fs', () => ({
 
 // --- Tests ---
 
-let initShellBridgeStandalone: typeof import('../../src/process/bridge/shellBridgeStandalone').initShellBridgeStandalone;
+let initShellBridgeStandalone: typeof import('../../src/process/bridge/workspace/shellBridgeStandalone').initShellBridgeStandalone;
 
 // The standalone bridge captures `const isWindows = process.platform === 'win32'`
 // at module-load time, so the desired platform must be set BEFORE the dynamic
@@ -65,7 +65,7 @@ async function loadStandaloneForPlatform(platform: NodeJS.Platform): Promise<voi
 
   Object.defineProperty(process, 'platform', { value: platform, configurable: true });
 
-  const mod = await import('../../src/process/bridge/shellBridgeStandalone');
+  const mod = await import('../../src/process/bridge/workspace/shellBridgeStandalone');
   initShellBridgeStandalone = mod.initShellBridgeStandalone;
 }
 

@@ -42,7 +42,7 @@ vi.mock('@process/services/emailTriage/emailTriageServiceSingleton', () => ({
   emailTriageRepository: { getByMessageId: repoGet, listByPlugin: vi.fn(async () => []) },
 }));
 
-import { initEmailTriageBridge } from '@process/bridge/emailTriageBridge';
+import { initEmailTriageBridge } from '@process/bridge/knowledge/records/emailTriageBridge';
 
 const ENTRY: EmailTriageEntry = {
   messageId: '<m@x>',

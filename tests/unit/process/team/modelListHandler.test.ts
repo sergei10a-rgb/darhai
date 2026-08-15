@@ -31,7 +31,7 @@ vi.mock('@process/utils/initStorage', () => ({
   },
 }));
 
-vi.mock('@process/bridge/modelBridge', () => ({
+vi.mock('@process/bridge/model/modelBridge', () => ({
   getMergedModelProviders: vi.fn(async () => []),
 }));
 

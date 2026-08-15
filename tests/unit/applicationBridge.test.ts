@@ -105,7 +105,7 @@ describe('applicationBridge CDP functionality', () => {
 
   describe('initApplicationBridge', () => {
     it('should initialize without errors', async () => {
-      const { initApplicationBridge } = await import('@process/bridge/applicationBridge');
+      const { initApplicationBridge } = await import('@process/bridge/desktop/applicationBridge');
 
       const taskMgr = makeTaskManager();
       expect(() => initApplicationBridge(taskMgr)).not.toThrow();
@@ -114,7 +114,7 @@ describe('applicationBridge CDP functionality', () => {
 
   describe('CDP IPC handlers', () => {
     it('should register getCdpStatus handler', async () => {
-      const mod = await import('@process/bridge/applicationBridge');
+      const mod = await import('@process/bridge/desktop/applicationBridge');
       expect(mod.initApplicationBridge).toBeTypeOf('function');
     });
   });
@@ -262,7 +262,7 @@ describe('CDP configuration functions', () => {
     }));
 
     vi.resetModules();
-    const { initApplicationBridge } = await import('../../src/process/bridge/applicationBridge');
+    const { initApplicationBridge } = await import('../../src/process/bridge/desktop/applicationBridge');
     const taskMgr = makeTaskManager();
     initApplicationBridge(taskMgr);
 

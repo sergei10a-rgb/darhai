@@ -61,7 +61,7 @@ vi.mock('@process/webserver/auth/middleware/TokenMiddleware', () => ({
   },
 }));
 
-vi.mock('@process/bridge/webuiQR', () => ({
+vi.mock('@process/bridge/remote/webuiQR', () => ({
   verifyQRTokenDirect: mockVerifyQRTokenDirect,
 }));
 

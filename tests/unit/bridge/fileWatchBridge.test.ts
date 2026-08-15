@@ -6,7 +6,7 @@ import {
   isIgnoredOfficeTempFileName,
   scanWorkspaceOfficeFiles,
   shouldSkipWorkspaceOfficeScanDir,
-} from '@/process/bridge/fileWatchBridge';
+} from '@/process/bridge/workspace/fileWatchBridge';
 
 describe('fileWatchBridge office scan helpers', () => {
   it('detects Office temporary marker files', () => {

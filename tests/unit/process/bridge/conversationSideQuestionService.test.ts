@@ -4,7 +4,7 @@ import type {
   RequestPermissionResponse,
 } from '@agentclientprotocol/sdk';
 import type { TChatConversation } from '@/common/config/storage';
-import { ConversationSideQuestionService } from '@/process/bridge/services/ConversationSideQuestionService';
+import { ConversationSideQuestionService } from '@/process/bridge/conversation/ConversationSideQuestionService';
 import type { IConversationService } from '@/process/services/IConversationService';
 import type { ProtocolHandlers } from '@/process/acp/types';
 import { beforeEach, describe, expect, it, vi } from 'vitest';

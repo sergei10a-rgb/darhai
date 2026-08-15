@@ -25,7 +25,7 @@ const mocks = vi.hoisted(() => ({
   priceTokens: vi.fn(),
 }));
 
-vi.mock('@process/bridge/modelBridge', () => ({ getMergedModelProviders: mocks.getMergedModelProviders }));
+vi.mock('@process/bridge/model/modelBridge', () => ({ getMergedModelProviders: mocks.getMergedModelProviders }));
 vi.mock('@process/services/completion/routingStrategy', () => ({ getRoutingStrategy: mocks.getRoutingStrategy }));
 vi.mock('@process/services/completion/compressionMode', () => ({ getCompressionMode: mocks.getCompressionMode }));
 vi.mock('@process/services/completion/geminiOAuth', () => ({

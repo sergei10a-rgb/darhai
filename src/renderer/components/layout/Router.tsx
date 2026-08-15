@@ -228,10 +228,20 @@ const PanelRoute: React.FC<{ layout: React.ReactElement }> = ({ layout }) => {
   );
 };
 
-// Reference unused legacy components so dynamic imports stay valid for tooling.
-// WCoreSettings + ConstitutionSettings are now subsumed into the Wayland Core
-// surface (their routes redirect there); the underlying pages are still imported
-// here to keep their chunks discoverable, and reused as panes inside WCoreConfig.
+// Reference components that no <Route> below names, so their dynamic imports
+// stay valid for tooling.
+//
+// WCoreSettings is the only genuinely dead one: `/settings/wcore` redirects to
+// `/settings/wcore-config` (WCoreConfig) and NOTHING renders WCoreSettings.
+// An earlier version of this comment claimed it was "reused as a pane inside
+// WCoreConfig" - it is not; grep for the name and the only hits outside its own
+// file are the lazy import above and the `void` below. That claim mattered
+// because it let a dead page be cited as a live consumer of the agents IPC.
+//
+// Of the others: GeminiSettings is dead the same way (`/settings/gemini`
+// redirects to `/settings/models`); ConstitutionSettings IS routed at
+// `/settings/constitution` right above; and AgentSettings is the module the
+// routed `AgentsSettings` page re-exports, so it is live under another binding.
 void GeminiSettings;
 void AgentSettings;
 void WCoreSettings;

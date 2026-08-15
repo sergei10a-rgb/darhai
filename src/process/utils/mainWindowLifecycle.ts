@@ -5,7 +5,7 @@
  */
 
 import type { BrowserWindow } from 'electron';
-import { setApplicationMainWindow } from '../bridge/applicationBridge';
+import { setApplicationMainWindow } from '../bridge/desktop/applicationBridge';
 import { setDeepLinkMainWindow } from './deepLink';
 import { setTrayMainWindow } from './tray';
 

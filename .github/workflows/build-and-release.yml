@@ -15,6 +15,13 @@ on:
 env:
   BUN_INSTALL_REGISTRY: 'https://registry.npmjs.org/'
 
+# One release per ref. Two runs on the same tag would race to upload assets
+# onto the same release, and the loser overwrites files people are already
+# downloading. Never cancel: a half-uploaded release is worse than a slow one.
+concurrency:
+  group: build-and-release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build-pipeline:
     name: Build Pipeline
@@ -22,6 +29,13 @@ jobs:
     # dev 分支或正式 tag 触发构建（排除 -dev- tag，避免重复构建）
     if: github.ref == 'refs/heads/dev' || (startsWith(github.ref, 'refs/tags/') && !contains(github.ref, '-dev-'))
     with:
+      # electron-builder also emits mac/win .zip, .blockmap and builder-debug.yml
+      # into out/. Uploading only installers keeps the artifacts equal to the
+      # set scripts/make-updater-feeds.mjs writes feeds for, instead of leaving
+      # the release job to guess which of the extra files were meant to ship.
+      # The dropped mac .zip is why macOS cannot self-update through
+      # electron-updater - see docs/contributing/releasing.md.
+      upload_installers_only: true
       matrix: >-
         {"include":[
           {"platform":"macos-arm64","os":"macos-14","command":"node scripts/build-with-builder.js arm64 --mac --arm64","artifact-name":"macos-build-arm64","arch":"arm64"},
@@ -202,16 +216,27 @@ jobs:
     needs: [build-pipeline, create-tag]
     # Tag 推送时 create-tag 会被跳过，所以需要检查两种情况（排除 -dev- tag 避免重复）
     if: always() && needs.build-pipeline.result == 'success' && (needs.create-tag.result == 'success' || (startsWith(github.ref, 'refs/tags/') && !contains(github.ref, '-dev-')))
-    # dev 分支使用 dev-release 环境，正式 tag 使用 release 环境
-    environment: ${{ needs.create-tag.outputs.is_dev == 'true' && 'dev-release' || 'release' }}
+    # No `environment:`. This fork has zero Actions environments and zero repo
+    # secrets (measured), so `release` / `dev-release` would carry no protection
+    # rule and no secret - it would only add a deployment record that has to be
+    # created before the job may start. Everything below runs on the built-in
+    # GITHUB_TOKEN and the `contents: write` granted at the top of this file.
 
     steps:
       - name: Checkout code
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+
       - name: Get version for release
         id: version
+        shell: bash
         run: |
+          set -euo pipefail
+
           # 判断触发来源：正式 tag 推送 or dev 分支
           if [[ "$GITHUB_REF" == refs/tags/* ]]; then
             # 正式 Tag 推送触发（-dev- tag 已被排除，不会到达这里）
@@ -225,34 +250,181 @@ jobs:
             echo "🔧 Creating development release: $TAG_NAME"
           fi
 
-          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
-          echo "is_dev=$IS_DEV" >> $GITHUB_OUTPUT
+          # electron-builder names every installer from package.json, never from
+          # the tag, so the asset names below must come from package.json too.
+          PKG_VERSION=$(node -p "require('./package.json').version")
+
+          # A stable tag that disagrees with package.json means this commit
+          # builds installers for a different version than the tag claims: the
+          # release would be named v1.2.3 and carry Darhai-1.2.2-* files, and
+          # the updater feeds would point at names that do not exist. Fail here
+          # rather than publish that.
+          if [ "$IS_DEV" != "true" ] && [ "$TAG_NAME" != "v${PKG_VERSION}" ]; then
+            echo "::error::Tag $TAG_NAME does not match package.json version $PKG_VERSION."
+            echo "::error::Bump package.json and re-tag - the installers are named ${PKG_VERSION}."
+            exit 1
+          fi
+
+          echo "tag_name=$TAG_NAME" >> "$GITHUB_OUTPUT"
+          echo "is_dev=$IS_DEV" >> "$GITHUB_OUTPUT"
+          echo "pkg_version=$PKG_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Refuse to overwrite a published release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ steps.version.outputs.tag_name }}
+        run: |
+          set -euo pipefail
+
+          # Re-running this workflow on a tag that is already published would
+          # replace assets someone may be mid-download on. A draft, or a
+          # published release with no assets, is a failed earlier attempt and is
+          # safe to complete. The rule itself lives in
+          # scripts/check-release-overwrite.mjs so it is reachable from a test -
+          # as inline shell it could be neutered without anything going red.
+          if RELEASE_JSON=$(gh release view "$TAG_NAME" --json isDraft,assets 2>/dev/null); then
+            printf '%s' "$RELEASE_JSON" | node scripts/check-release-overwrite.mjs "$TAG_NAME"
+          else
+            node scripts/check-release-overwrite.mjs "$TAG_NAME" --missing
+          fi
 
       - name: Download all build artifacts
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           path: build-artifacts
 
-      - name: Prepare release assets (normalize updater metadata)
+      - name: Assemble release assets
         shell: bash
-        run: bash scripts/prepare-release-assets.sh build-artifacts release-assets
+        env:
+          VERSION: ${{ steps.version.outputs.pkg_version }}
+        run: |
+          set -euo pipefail
+
+          # The six build jobs upload one artifact directory each; this flattens
+          # them into release-assets/ by exact expected name. Matching by name
+          # rather than by glob means a rename in electron-builder.yml fails
+          # here, instead of quietly publishing a release short one platform.
+          #
+          # The list is NOT restated here. scripts/make-updater-feeds.mjs owns
+          # it, derived from the feed table, so an installer can never be
+          # uploaded without a channel file carrying its digest - which is
+          # exactly how ten installers came to ship behind three feeds.
+          mapfile -t EXPECTED < <(node scripts/make-updater-feeds.mjs --list-installers --version "$VERSION")
+          if [ "${#EXPECTED[@]}" -eq 0 ]; then
+            # mapfile succeeds with an empty array when the process substitution
+            # fails, and `set -e` does not see it - so check explicitly.
+            echo "::error::make-updater-feeds.mjs --list-installers produced no names."
+            exit 1
+          fi
+
+          rm -rf release-assets
+          mkdir -p release-assets
+
+          MISSING=0
+          for name in "${EXPECTED[@]}"; do
+            mapfile -t found < <(find build-artifacts -type f -name "$name" | sort)
+            if [ "${#found[@]}" -eq 0 ]; then
+              echo "::error::Missing installer: $name"
+              MISSING=$((MISSING + 1))
+              continue
+            fi
+            if [ "${#found[@]}" -gt 1 ]; then
+              # Two jobs produced the same file name; copying either one would
+              # publish an arbitrary winner.
+              echo "::error::Duplicate installer $name in ${#found[@]} artifacts:"
+              printf '::error::  %s\n' "${found[@]}"
+              MISSING=$((MISSING + 1))
+              continue
+            fi
+            cp -f "${found[0]}" "release-assets/$name"
+          done
+
+          if [ "$MISSING" -ne 0 ]; then
+            echo "::error::$MISSING installer(s) unusable - refusing to publish a partial release."
+            echo "Artifacts actually downloaded:"
+            find build-artifacts -type f | sort
+            exit 1
+          fi
+
+          echo "==> Installers staged:"
+          ls -lh release-assets
+
+      - name: Write electron-updater feeds
+        shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.pkg_version }}
+        run: |
+          set -euo pipefail
+          # Builds run --publish=never on purpose, so electron-builder emits no
+          # latest*.yml and there is nothing to normalize. The feeds are computed
+          # from the staged installers instead - see scripts/make-updater-feeds.mjs.
+          node scripts/make-updater-feeds.mjs release-assets --version "$VERSION"
+
+      - name: Verify the release is complete
+        shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.pkg_version }}
+        run: |
+          set -euo pipefail
+
+          # Both lists come from the writer, so there is no constant here to
+          # keep in sync - a constant is what previously had to be edited in
+          # lockstep before a missing feed could even be added.
+          mapfile -t FEEDS < <(node scripts/make-updater-feeds.mjs --list-feeds)
+          mapfile -t INSTALLERS < <(node scripts/make-updater-feeds.mjs --list-installers --version "$VERSION")
+          if [ "${#FEEDS[@]}" -eq 0 ] || [ "${#INSTALLERS[@]}" -eq 0 ]; then
+            echo "::error::make-updater-feeds.mjs produced an empty list."
+            exit 1
+          fi
+
+          EXPECTED_TOTAL=$(( ${#INSTALLERS[@]} + ${#FEEDS[@]} ))
+          ACTUAL=$(find release-assets -maxdepth 1 -type f | wc -l)
+          echo "==> release-assets contains $ACTUAL file(s):"
+          find release-assets -maxdepth 1 -type f | sort
+
+          for feed in "${FEEDS[@]}"; do
+            if [ ! -s "release-assets/$feed" ]; then
+              echo "::error::Missing or empty updater feed: $feed"
+              exit 1
+            fi
+          done
+
+          # The check that actually catches the failure this job exists to
+          # prevent: an installer nobody can verify. updateBridge.ts refuses to
+          # open a download whose name has no sha512 in some latest*.yml on the
+          # release, so an uncovered installer is a platform that cannot update.
+          UNCOVERED=0
+          for name in "${INSTALLERS[@]}"; do
+            if ! grep -qF -- "- url: $name" release-assets/latest*.yml; then
+              echo "::error::No updater feed carries a digest for $name."
+              UNCOVERED=$((UNCOVERED + 1))
+            fi
+          done
+          if [ "$UNCOVERED" -ne 0 ]; then
+            echo "::error::$UNCOVERED installer(s) would ship unverifiable - refusing to publish."
+            exit 1
+          fi
+
+          if [ "$ACTUAL" -ne "$EXPECTED_TOTAL" ]; then
+            echo "::error::Expected $EXPECTED_TOTAL release assets, found $ACTUAL."
+            exit 1
+          fi
 
       - name: Create Release
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
+          token: ${{ github.token }}
           tag_name: ${{ steps.version.outputs.tag_name }}
           name: ${{ steps.version.outputs.is_dev == 'true' && format('Development Build {0}', steps.version.outputs.tag_name) || steps.version.outputs.tag_name }}
-          files: |
-            release-assets/**/*.exe
-            release-assets/**/*.msi
-            release-assets/**/*.dmg
-            release-assets/**/*.deb
-            release-assets/**/*.AppImage
-            release-assets/**/*.rpm
-            release-assets/**/*.zip
-            release-assets/**/*.yml
+          files: release-assets/*
+          # A glob that matches nothing must fail. Publishing a release with the
+          # notes but none of the binaries is the failure mode this guards.
+          fail_on_unmatched_files: true
           generate_release_notes: true
-          draft: true
+          # Published, not drafted: a draft is what made every release so far a
+          # manual step, and `close-fixed-on-release.yml` waits on
+          # `release: published`. The "refuse to overwrite" step above is what
+          # keeps this from replacing a release that is already live.
+          draft: false
           prerelease: ${{ steps.version.outputs.is_dev == 'true' || contains(steps.version.outputs.tag_name, 'beta') || contains(steps.version.outputs.tag_name, 'alpha') || contains(steps.version.outputs.tag_name, 'rc') }}
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}

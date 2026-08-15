@@ -9,6 +9,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+import { settleTurns, settleUntil } from '../../helpers/eventLoop';
 import { startMonitor } from '@process/channels/plugins/weixin/WeixinMonitor';
 import type { MonitorOptions } from '@process/channels/plugins/weixin/WeixinMonitor';
 
@@ -85,7 +86,7 @@ describe('WeixinMonitor - text message delivery', () => {
     );
 
     startMonitor(makeOpts({ agent: { chat: agentChat }, abortSignal: controller.signal }));
-    await new Promise((r) => setTimeout(r, 60));
+    await settleUntil(() => sentBody !== undefined);
 
     expect(agentChat).toHaveBeenCalledOnce();
     expect(agentChat).toHaveBeenCalledWith(
@@ -128,7 +129,7 @@ describe('WeixinMonitor - text message delivery', () => {
     );
 
     startMonitor(makeOpts({ agent: { chat: agentChat }, abortSignal: controller.signal }));
-    await new Promise((r) => setTimeout(r, 60));
+    await settleUntil(() => sentBodies.length >= 1);
 
     expect(sentBodies).toHaveLength(1);
     const body = sentBodies[0] as {
@@ -156,7 +157,7 @@ describe('WeixinMonitor - text message delivery', () => {
     });
 
     startMonitor(makeOpts({ agent: { chat: agentChat }, abortSignal: controller.signal }));
-    await new Promise((r) => setTimeout(r, 60));
+    await settleUntil(() => agentChat.mock.calls.length > 0);
 
     expect(agentChat).toHaveBeenCalledOnce();
     expect(agentChat).toHaveBeenCalledWith(
@@ -177,7 +178,8 @@ describe('WeixinMonitor - text message delivery', () => {
     });
 
     startMonitor(makeOpts({ agent: { chat: agentChat }, abortSignal: controller.signal }));
-    await new Promise((r) => setTimeout(r, 60));
+    // Negative assertion: no terminal event to wait for, so spend the full budget.
+    await settleTurns();
 
     expect(agentChat).not.toHaveBeenCalled();
   });
@@ -191,7 +193,8 @@ describe('WeixinMonitor - text message delivery', () => {
     });
 
     startMonitor(makeOpts({ agent: { chat: agentChat }, abortSignal: controller.signal }));
-    await new Promise((r) => setTimeout(r, 60));
+    // Negative assertion: no terminal event to wait for, so spend the full budget.
+    await settleTurns();
 
     expect(agentChat).not.toHaveBeenCalled();
   });
@@ -250,7 +253,7 @@ describe('WeixinMonitor - text message delivery', () => {
     );
 
     startMonitor(makeOpts({ agent: { chat: agentChat }, abortSignal: controller.signal }));
-    await new Promise((r) => setTimeout(r, 80));
+    await settleUntil(() => sendBodies.length >= 3);
 
     expect(agentChat).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -325,8 +328,13 @@ describe('WeixinMonitor - text message delivery', () => {
     );
 
     startMonitor(makeOpts({ agent: { chat: agentChat }, abortSignal: controller.signal }));
-    await new Promise((r) => setTimeout(r, 80));
+    // The oversized media action is skipped but the trailing text is still
+    // sent, so `sendmessage` is this pipeline's terminal event. Asserting it
+    // arrived keeps the two negative checks below meaningful - without it a
+    // pipeline that never ran at all would satisfy them.
+    await settleUntil(() => fetchCalls.some((url) => url.includes('sendmessage')));
 
+    expect(fetchCalls.some((url) => url.includes('sendmessage'))).toBe(true);
     expect(fetchCalls.some((url) => url.includes('getuploadurl'))).toBe(false);
     expect(readSpy.mock.calls.some((call) => call[0] === mediaPath)).toBe(false);
   });
@@ -394,7 +402,7 @@ describe('WeixinMonitor - text message delivery', () => {
     );
 
     startMonitor(makeOpts({ agent: { chat: agentChat }, abortSignal: controller.signal }));
-    await new Promise((r) => setTimeout(r, 80));
+    await settleUntil(() => sentBody !== undefined);
 
     expect(agentChat).toHaveBeenCalledOnce();
     const call = agentChat.mock.calls[0]?.[0] as {
@@ -458,7 +466,8 @@ describe('WeixinMonitor - text message delivery', () => {
     );
 
     startMonitor(makeOpts({ agent: { chat: agentChat }, abortSignal: controller.signal }));
-    await new Promise((r) => setTimeout(r, 80));
+    // Negative assertion: no terminal event to wait for, so spend the full budget.
+    await settleTurns();
 
     expect(agentChat).not.toHaveBeenCalled();
   });
@@ -468,10 +477,10 @@ describe('WeixinMonitor - buf persistence', () => {
   it('writes get_updates_buf to disk after a successful response', async () => {
     const controller = mockFetchOnce({ ret: 0, msgs: [], get_updates_buf: 'saved_buf_xyz' });
 
-    startMonitor(makeOpts({ abortSignal: controller.signal }));
-    await new Promise((r) => setTimeout(r, 60));
-
     const bufFile = path.join(TEST_DIR, 'weixin-monitor', 'acc_test.buf');
+    startMonitor(makeOpts({ abortSignal: controller.signal }));
+    await settleUntil(() => fs.existsSync(bufFile));
+
     expect(fs.existsSync(bufFile)).toBe(true);
     expect(fs.readFileSync(bufFile, 'utf-8')).toBe('saved_buf_xyz');
   });
@@ -480,7 +489,8 @@ describe('WeixinMonitor - buf persistence', () => {
     const controller = mockFetchOnce({ ret: 0, msgs: [], get_updates_buf: '' });
 
     startMonitor(makeOpts({ abortSignal: controller.signal }));
-    await new Promise((r) => setTimeout(r, 60));
+    // Negative assertion: no terminal event to wait for, so spend the full budget.
+    await settleTurns();
 
     const bufFile = path.join(TEST_DIR, 'weixin-monitor', 'acc_test.buf');
     expect(fs.existsSync(bufFile)).toBe(false);
@@ -545,7 +555,8 @@ describe('WeixinMonitor - abort', () => {
     startMonitor(makeOpts({ abortSignal: controller.signal }));
 
     controller.abort();
-    await new Promise((r) => setTimeout(r, 30));
+    // Exactly-once assertion: drain the full budget so a second dial would show.
+    await settleTurns();
 
     expect(global.fetch).toHaveBeenCalledTimes(1);
   });
@@ -625,7 +636,7 @@ describe('WeixinMonitor - typing indicator integration', () => {
 
     const controller = makeTypingFetch({ msgs: [TEST_MSG], callOrder });
     startMonitor(makeOpts({ agent: { chat: agentChat }, abortSignal: controller.signal }));
-    await new Promise((r) => setTimeout(r, 80));
+    await settleUntil(() => callOrder.includes('agent.chat'));
 
     const typingIdx = callOrder.indexOf('sendtyping:TYPING');
     const agentIdx = callOrder.indexOf('agent.chat');
@@ -638,7 +649,7 @@ describe('WeixinMonitor - typing indicator integration', () => {
     const controller = makeTypingFetch({ msgs: [TEST_MSG], callOrder });
 
     startMonitor(makeOpts({ abortSignal: controller.signal }));
-    await new Promise((r) => setTimeout(r, 80));
+    await settleUntil(() => callOrder.includes('sendmessage'));
 
     const cancelIdx = callOrder.indexOf('sendtyping:CANCEL');
     const sendIdx = callOrder.indexOf('sendmessage');
@@ -652,7 +663,7 @@ describe('WeixinMonitor - typing indicator integration', () => {
     const controller = makeTypingFetch({ msgs: [TEST_MSG], callOrder });
 
     startMonitor(makeOpts({ agent: { chat: agentChat }, abortSignal: controller.signal }));
-    await new Promise((r) => setTimeout(r, 80));
+    await settleUntil(() => callOrder.includes('sendtyping:CANCEL'));
 
     expect(callOrder).toContain('sendtyping:CANCEL');
     expect(callOrder).not.toContain('sendmessage');

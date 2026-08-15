@@ -17,7 +17,7 @@ fail-closed quarantine for `blocked` verdicts.
    overwrite-on-update; ~L484-502). User skills dir `<config>/skills/` and `<config>/cron-skills/`
    are created if missing (~L504-513). It also registers the built-in `wayland-search-skills` stdio
    MCP server into the MCP catalog (~L818-864).
-2. **Bridge init** — `initSkillsBridge()` (`src/process/bridge/skillsBridge.ts:20`) is called from
+2. **Bridge init** — `initSkillsBridge()` (`src/process/bridge/agent/skillsBridge.ts:20`) is called from
    `src/process/bridge/index.ts:129` (Electron) and `src/process/utils/initBridgeStandalone.ts:97`
    (standalone server). On entry it synchronously calls `loadTeamSkills()` (team bundle overlay) and
    fire-and-forget `loadCliSkills()` (opt-in CLI discovery), then registers all `skills.*` IPC providers.
@@ -51,7 +51,7 @@ fail-closed quarantine for `blocked` verdicts.
 | `src/process/services/skills/SkillImport.ts` | Hardened importer for 4 vectors: folder / git / zip / single SKILL.md, all landing in `~/.darhai/skills/imported/<name>/` (`IMPORTED_DIR`, L28). Folder: rejects symlink root and symlink children (L189-198, L335-338). Git: allowlist `https://` or `git@host:` only (L130-134), `git clone --depth 1` via `exec` (L80-82). Zip (JSZip): rejects multi-SKILL.md zips (L241-247), symlink entries, zip-slip via mixed-separator-safe `resolveContainedEntry` (L155-166), 16 MiB/entry + 64 MiB total caps (L144-145), strips non-`.md`, warns on executable refs (L137). Every import → `SkillGuard.scan({llm:true})`; `blocked` → quarantine, else `registerSource` with `source:'imported'` (L349-390). Full `SkillImportIo` seam for tests (L34-97). |
 | `src/process/services/skills/SkillQuarantine.ts` | Moves blocked skills to `~/.darhai/skills/.quarantine/<name>/` (`QUARANTINE_DIR`, L22). `quarantine()` (move on disk, L45), `quarantineFromMemory()` (builder-modal flow: body never touches the live tree, L66-74), `isQuarantined()` (L76). Injectable `SkillQuarantineIo`. |
 | `src/process/services/skills/CliSkillDiscovery.ts` | Opt-in scan of `~/.claude/skills/`, `~/.codex/skills/`, `~/.gemini/skills/` (L45-52) for `<dir>/SKILL.md`; parses via `parseFrontmatter` from AcpSkillManager (L94); registers entries as `source:'cli-discovered'` with `sourceLabel` per CLI (L100-108). Gated on config `skills.cliDiscovery.enabled` (default off, L143-156); idempotent latch (L113, 138-140); restart required to re-scan. |
-| `src/process/bridge/skillsBridge.ts` | All `skills.*` IPC providers (see Contracts). Also owns the skill-builder save flow: kebab-cases the name, **scans before writing** (C3, L196-207), quarantines blocked bodies from memory, else writes `~/.darhai/skills/<kebab>/SKILL.md` + registers `source:'user'` (L209-226). `updateBody` restricts edits to `user`/`imported` sources and re-scans before persisting (L93-118). |
+| `src/process/bridge/agent/skillsBridge.ts` | All `skills.*` IPC providers (see Contracts). Also owns the skill-builder save flow: kebab-cases the name, **scans before writing** (C3, L196-207), quarantines blocked bodies from memory, else writes `~/.darhai/skills/<kebab>/SKILL.md` + registers `source:'user'` (L209-226). `updateBody` restricts edits to `user`/`imported` sources and re-scans before persisting (L93-118). |
 | `src/process/resources/skills/` (builtin) | App-bundled skills synced to `<config>/builtin-skills/`. Top level (advertised, opt-in per assistant): `book-chapter-draft`, `book-copy-editor`, `book-developmental-editor`, `book-nonfiction-architect`, `book-production`, `book-publisher`, `book-story-architect`, `cli-setup`, `hermes-setup`, `mermaid`, `moltbook`, `morph-ppt`, `morph-ppt-3d`, `officecli-academic-paper`, `officecli-data-dashboard`, `officecli-docx`, `officecli-financial-model`, `officecli-pitch-deck`, `officecli-pptx`, `officecli-word-form`, `officecli-xlsx`, `openclaw-setup`, `pdf`, `star-office-helper`, `story-roleplay`, `wayland-webui-setup`, `weixin-file-send`. `_builtin/` (auto-injected for ALL agents): `cron`, `office-cli`, `skill-creator`. Loader: `resolveBuiltinDir('src/process/resources/skills')` in `initStorage.ts:470` (viteStaticCopy strips the prefix when packaged, L437-461; standalone-server fallbacks L472-480). |
 | `src/process/resources/skills-library/` | Vendored library: `index.json` (2,105 entries: 1,973 `skill`, 107 `workflow`, 25 `agent-profile`; all `source:'wayland-library'`), `bodies/{agents,skills,workflows}/...` markdown trees, `discovery-queries.json` (2,003 retrieval eval queries, `{query, should_match, category_hint, should_not_match}`, topN 10). Packaged via `extraResources` to `<resources>/skills-library` (`SkillLibrary.ts:64-74`). |
 | `src/process/resources/builtinMcp/searchSkillsServer.ts` | Factory for the `wayland_search_skills` tool handler: builds BM25 index once over `library.list()` (L48-56), retrieves, then loads bodies inline (blocked bodies drop out via `loadBody` null, L74-79). Dep-injectable for tests. |
@@ -68,7 +68,7 @@ Closely-coupled adjacents (contracts cross into this area):
 | `src/process/utils/initAgent.ts` | Workspace symlinking of the bounded set; blocked/disabled skills never symlinked (L112-117, 136-137). |
 | `src/process/extensions/data/bundle-vendored/teamSkillMerge.ts` | Team bundle overlay: probes `~/dev/waylandteams` + userData variants for `contributes/skills.json` (L58-71), registers `source:'team'` entries with absolute paths; category derived from name prefix (L83-87); idempotent (L159-161). |
 | `src/process/services/semantic/skillSemanticLane.ts` | Vector lane over the same corpus: `skillDocs()` excludes blocked (L34-36); background reindex latch (L59-84); additive-only advert augmentation (L94-126). |
-| `src/process/bridge/fsBridge.ts` | Legacy/parallel skill IPC: `read-builtin-skill` (L1218), `list-available-skills` (L1268, skips `_builtin` at L1289, dedupe builtin>extension>custom at L1352-1358), `list-builtin-auto-skills` (L1373). |
+| `src/process/bridge/workspace/fsBridge.ts` | Legacy/parallel skill IPC: `read-builtin-skill` (L1218), `list-available-skills` (L1268, skips `_builtin` at L1289, dedupe builtin>extension>custom at L1352-1358), `list-builtin-auto-skills` (L1373). |
 
 ## Contracts & data flow
 
@@ -157,7 +157,7 @@ No dedicated skills table — the index is in-memory + on-disk JSON/markdown.
    mirroring `src/process/services/skills/CliSkillDiscovery.ts` (idempotent latch, config-flag gate,
    `parseFrontmatter`, `SkillLibrary.getInstance().registerSource()` with a new `SkillSource` value added
    to `src/common/types/skillTypes.ts:11`), and call it from `initSkillsBridge()`
-   (`src/process/bridge/skillsBridge.ts:25-30`) next to `loadTeamSkills()`/`loadCliSkills()`. The closest
+   (`src/process/bridge/agent/skillsBridge.ts:25-30`) next to `loadTeamSkills()`/`loadCliSkills()`. The closest
    analog for a manifest-driven bundle is `teamSkillMerge.ts` (absolute-path entries + derived category).
 2. **Vendoring a large skill corpus** — extend `src/process/resources/skills-library/index.json` +
    `bodies/` (relative paths, `security.verdict:'unscanned'`), or for a separate optional corpus copy the

@@ -12,7 +12,7 @@ resolution, a 24h auto-refresh scheduler, and legacy `model.config` migration/mi
 
 ## Entry points & lifecycle
 
-- **hwfit**: registered by `initHwfitBridge()` (`src/process/bridge/hwfitBridge.ts:142`), called from
+- **hwfit**: registered by `initHwfitBridge()` (`src/process/bridge/engine/hwfitBridge.ts:142`), called from
   `src/process/bridge/index.ts:136` during main-process IPC setup. Purely on-demand: the renderer's
   model-advisor page (`src/renderer/pages/model-advisor/*`) calls `hwfit.scanHardware` /
   `hwfit.rankModels` / `hwfit.catalogSize`. Hardware probes are cached 60s
@@ -183,7 +183,7 @@ explicit "intentionally keyless local provider" signal (`modelRegistryIpc.ts:120
 1. **New IPC service namespace (e.g. an ECC skill-registry or workflow engine)** — mirror the hwfit
    trio: process service under `src/process/services/<name>/` with a pure core + `index.ts` facade,
    a validating bridge file `src/process/bridge/<name>Bridge.ts` (imitate
-   `src/process/bridge/hwfitBridge.ts` clamping style), channel defs in
+   `src/process/bridge/engine/hwfitBridge.ts` clamping style), channel defs in
    `src/common/adapter/ipcBridge.ts` (imitate the `hwfit` block at line 1090), registration call in
    `src/process/bridge/index.ts:136`. Add remote-deny in `bridgeAllowlist.ts` if the surface is local-only.
 2. **New credentialed provider / external AI backend** — the checklist is exactly the per-file maps:

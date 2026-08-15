@@ -82,7 +82,7 @@ function setupMocks() {
 
   // The installer is unit-tested separately; mock it so the bridge's ENOENT
   // delegation + the installer's no-retry latch can be driven deterministically.
-  vi.doMock('../../src/process/bridge/officecliInstaller', () => ({
+  vi.doMock('../../src/process/bridge/media/officecliInstaller', () => ({
     installOfficecli: (...args: unknown[]) => installSpy(...args),
   }));
 
@@ -147,7 +147,7 @@ describe('pptPreviewBridge install guard', () => {
   });
 
   async function loadAndInit() {
-    const mod = await import('../../src/process/bridge/pptPreviewBridge');
+    const mod = await import('../../src/process/bridge/media/pptPreviewBridge');
     mod.initPptPreviewBridge();
     return mod;
   }

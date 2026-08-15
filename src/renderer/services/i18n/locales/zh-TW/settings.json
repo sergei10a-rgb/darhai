@@ -2319,7 +2319,9 @@
     "loadErrorsTitle": "部分智能體載入失敗",
     "badge": {
       "active": "運行中",
-      "detected": "已偵測"
+      "detected": "已偵測",
+      "notInstalled": "未安裝",
+      "unknown": "未知"
     },
     "toolbarToggle": {
       "label": "在工具列中顯示",

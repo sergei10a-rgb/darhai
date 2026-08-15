@@ -2612,7 +2612,9 @@
     "loadErrorsTitle": "Зарим агент ачаалагдсангүй",
     "badge": {
       "active": "Идэвхтэй",
-      "detected": "Илрүүлсэн"
+      "detected": "Илрүүлсэн",
+      "notInstalled": "Суулгаагүй",
+      "unknown": "Тодорхойгүй"
     },
     "toolbarToggle": {
       "label": "Хэрэгслийн самбарт харуулах",

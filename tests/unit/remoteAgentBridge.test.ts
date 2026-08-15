@@ -124,7 +124,7 @@ vi.mock('ws', () => ({
   },
 }));
 
-import { initRemoteAgentBridge } from '../../src/process/bridge/remoteAgentBridge';
+import { initRemoteAgentBridge } from '../../src/process/bridge/agent/remoteAgentBridge';
 
 // ---------------------------------------------------------------------------
 // Tests

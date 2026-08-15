@@ -25,7 +25,7 @@ registry. `data/bundle-vendored/` is a third leg: in-repo vendored data (wayland
   `onInstall`/`onActivate` hooks for enabled extensions via `needsInstallHook` (`:179-201`) →
   `savePersistedStates` (`:204`) → `resolveContributions()` (`:206`). Concurrent callers fold onto
   a cached `initializePromise` (INIT-1, `:76-93`); `whenInitialized()` (`:106-109`) is the "wait
-  until ready" hook consumed by `src/process/bridge/kickoffBridge.ts:100` (with a
+  until ready" hook consumed by `src/process/bridge/conversation/kickoffBridge.ts:100` (with a
   `Promise.race` timeout).
 - **Install flow** (`src/process/extensions/hub/HubInstaller.ts:112-227`): renderer invokes
   `hub.install` → native confirm dialog → resolve zip (bundled-first) → verify SHA-512 → extract →
@@ -64,14 +64,14 @@ registry. `data/bundle-vendored/` is a third leg: in-repo vendored data (wayland
 | `src/process/extensions/data/bundle-vendored/vendoredAssistantOverlay.ts` | `applyVendoredOverlay()`: static-imports `assistants.json` (build-time inline so it works packaged, `:47-51`) and patches ONLY missing `standing`/`teammates`/`rituals`/`kickoffs` onto live-loaded assistants; strips `ext-` id prefix for lookup (`:178`); empty `kickoffs` array counts as missing (G-M-4, `:209-217`); cached, test-reset hook. |
 | `src/process/extensions/data/bundle-vendored/agentProfileMerge.ts` | `mergeVendoredAgentProfiles()`: reads `skills-library/index.json` (path-probe `:83-99`), converts the 25 `type:'agent-profile'` entries into self-contained assistants (SKILL.md body → `context` + `prompts.system`, lucide avatar map `:171-208`, category mapping `:151-161`, curated `enabledSkills` from `agentProfileSkills.json`); appends id-deduped — live records win (`:311-333`). |
 | `src/process/extensions/data/bundle-vendored/agentProfileSkills.json` | Curated skill-slug arrays per agent-profile (25 keys, e.g. `executive-communicator`), BM25-derived + hand-audited. |
-| `src/process/extensions/data/bundle-vendored/teamSkillMerge.ts` | `loadTeamSkills()`: loads waylandteams `contributes/skills.json` from `~/dev/waylandteams` or app-support candidates (`:58-71`), registers entries on the `SkillLibrary` singleton with `source:'team'`, `sourceLabel:'Дархай багууд'`, category derived from name prefix (`:83-87`). Called once from `src/process/bridge/skillsBridge.ts:25` (NOT from ExtensionRegistry). |
+| `src/process/extensions/data/bundle-vendored/teamSkillMerge.ts` | `loadTeamSkills()`: loads waylandteams `contributes/skills.json` from `~/dev/waylandteams` or app-support candidates (`:58-71`), registers entries on the `SkillLibrary` singleton with `source:'team'`, `sourceLabel:'Дархай багууд'`, category derived from name prefix (`:83-87`). Called once from `src/process/bridge/agent/skillsBridge.ts:25` (NOT from ExtensionRegistry). |
 
 Adjacent extension subsystems (same directory tree, separate codemap area): `resolvers/*` (per-contribution converters, all using `toAssetUrl` + `isPathWithinDirectory`), `resolvers/utils/*` (env/`$file:` templating, semver engine validation, dependency topo-sort, dist-entry resolution), `sandbox/*` (permission analysis, worker-thread "sandbox" — `sandboxWorker.ts` documents it is NOT a security sandbox; `ExtensionStorage`/`createSandbox` not yet wired), `protocol/*` (`wayland-asset://` protocol + allowlist, Figma-style extension UI bridge).
 
 ## Contracts & data flow
 
 **IPC provider keys** (`src/common/adapter/ipcBridge.ts:1578-1593`, providers in
-`src/process/bridge/hubBridge.ts:6-53`):
+`src/process/bridge/engine/extensions/hubBridge.ts:6-53`):
 
 | Key | Direction | Notes |
 |---|---|---|
@@ -85,7 +85,7 @@ Adjacent extension subsystems (same directory tree, separate codemap area): `res
 
 **Remote-WS denial**: the entire `hub.` namespace is on the paired-device WebSocket denylist
 (`src/common/adapter/bridgeAllowlist.ts:135` — "remote-reachable RCE chain"). The second gate is
-`requireConfirmation` (`src/process/bridge/webuiDirectAuth.ts:71-90`), a main-process
+`requireConfirmation` (`src/process/bridge/remote/webuiDirectAuth.ts:71-90`), a main-process
 `dialog.showMessageBox` a compromised renderer cannot spoof (`HubInstaller.ts:124-138`).
 
 **Spawned processes / runtimes**:
@@ -176,7 +176,7 @@ Adjacent extension subsystems (same directory tree, separate codemap area): `res
    `data/bundle-vendored/agentProfileMerge.ts` — static JSON import + pure merge function called
    from `ExtensionRegistry.resolveContributions` (`ExtensionRegistry.ts:390-394`) — for
    assistant-shaped data, or imitate `teamSkillMerge.ts` + its call site
-   `src/process/bridge/skillsBridge.ts:25` for skill-shaped data registered on `SkillLibrary`.
+   `src/process/bridge/agent/skillsBridge.ts:25` for skill-shaped data registered on `SkillLibrary`.
    Follow the non-destructive-merge + cached + test-reset pattern.
 3. **New installable hub extension**: package a zip whose root has `aion-extension.json`, drop it in
    `resources/hub/` and append an entry to `resources/hub/index.json` mirroring the
@@ -192,7 +192,7 @@ Adjacent extension subsystems (same directory tree, separate codemap area): `res
    are the bundled `aionext-*` extensions whose onInstall installs the agent CLI.
 6. **New hub IPC surface**: add a `buildProvider` under the `hub` namespace in
    `src/common/adapter/ipcBridge.ts:1578-1593` and wire it in
-   `src/process/bridge/hubBridge.ts`; keep any code-executing operation behind
+   `src/process/bridge/engine/extensions/hubBridge.ts`; keep any code-executing operation behind
    `requireConfirmation` (`HubInstaller.ts:124-138`) and remember `hub.` stays on the remote-WS
    denylist (`src/common/adapter/bridgeAllowlist.ts:135`).
 7. **Cross-subsystem reactions** (e.g. re-index memory after an extension lands): subscribe to

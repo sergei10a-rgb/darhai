@@ -34,11 +34,11 @@ vi.mock('../../src/process/utils/initStorage', () => ({
   ProcessChat: { get: vi.fn(async () => []) },
 }));
 
-vi.mock('../../src/process/bridge/migrationUtils', () => ({
+vi.mock('../../src/process/bridge/knowledge/migrationUtils', () => ({
   migrateConversationToDatabase: vi.fn(async () => {}),
 }));
 
-import { initDatabaseBridge } from '../../src/process/bridge/databaseBridge';
+import { initDatabaseBridge } from '../../src/process/bridge/knowledge/databaseBridge';
 import type { IConversationRepository } from '../../src/process/services/database/IConversationRepository';
 import type { TChatConversation } from '../../src/common/config/storage';
 import type { TMessage } from '../../src/common/chat/chatLib';

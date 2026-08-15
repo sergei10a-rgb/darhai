@@ -46,7 +46,7 @@ vi.mock('@process/services/workflow/composeWorkflowSystemPrompt', () => ({
   composeWorkflowSystemPrompt: vi.fn(() => 'WORKFLOW_PROTOCOL_SENTINEL_BODY'),
 }));
 
-vi.mock('@process/bridge/constitutionBridge', () => ({
+vi.mock('@process/bridge/conversation/constitutionBridge', () => ({
   readConstitutionWithOverlay: vi.fn().mockReturnValue({ constitution: '', overlay: null }),
 }));
 

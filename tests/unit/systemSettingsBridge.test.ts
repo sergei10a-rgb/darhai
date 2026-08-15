@@ -46,7 +46,7 @@ vi.mock('@process/services/i18n', () => ({
   changeLanguage: vi.fn(async () => {}),
 }));
 
-import { initSystemSettingsBridge } from '@/process/bridge/systemSettingsBridge';
+import { initSystemSettingsBridge } from '@/process/bridge/desktop/systemSettingsBridge';
 
 describe('systemSettingsBridge', () => {
   beforeEach(() => {

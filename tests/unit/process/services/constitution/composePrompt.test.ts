@@ -7,11 +7,11 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('@process/bridge/constitutionBridge', () => ({
+vi.mock('@process/bridge/conversation/constitutionBridge', () => ({
   readConstitutionWithOverlay: vi.fn(),
 }));
 
-import { readConstitutionWithOverlay } from '@process/bridge/constitutionBridge';
+import { readConstitutionWithOverlay } from '@process/bridge/conversation/constitutionBridge';
 import { composePrompt } from '@process/services/constitution/composePrompt';
 
 const mockBridge = vi.mocked(readConstitutionWithOverlay);

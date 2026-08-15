@@ -11,7 +11,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { clearPendingSend, holdPendingSend, peekPendingSend, takePendingSend } from '@process/bridge/pendingSendBridge';
+import { clearPendingSend, holdPendingSend, peekPendingSend, takePendingSend } from '@process/bridge/conversation/pendingSendBridge';
 
 describe('pendingSend store (SEC-8)', () => {
   it('hold then peek reports hasPending with the minted id', () => {

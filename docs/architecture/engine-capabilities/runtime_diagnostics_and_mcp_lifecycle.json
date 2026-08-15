@@ -91,13 +91,13 @@
       "why": "`src/common/index.ts:7` does `export * as ipcBridge from './adapter/ipcBridge'`, so a new top-level `export const` is automatically reachable as `ipcBridge.wcoreRuntime.*` in the renderer. `conversationId` is required because the engine is per-conversation - there is no global engine handle."
     },
     {
-      "file": "src/process/bridge/wcoreRuntimeBridge.ts",
-      "change": "NEW FILE. `export function initWcoreRuntimeBridge(): void` registering both providers. Resolve the manager exactly the way acpConversationBridge.ts:117-127 does: `const task = workerTaskManager.getTask(conversationId); if (!task || !(task instanceof WCoreManager)) return { success: false, msg: '...' };` then delegate. Use `getTask` (non-building), NOT `getOrBuildTask` (used at line 144) - a Settings pane asking for diagnostics must never spawn an engine as a side effect.",
+      "file": "src/process/bridge/engine/wcoreRuntimeBridge.ts",
+      "change": "NEW FILE. `export function initWcoreRuntimeBridge(): void` registering both providers. Resolve the manager exactly the way conversation/acpConversationBridge.ts does: `const task = workerTaskManager.getTask(conversationId); if (!task || !(task instanceof WCoreManager)) return { success: false, msg: '...' };` then delegate. Use `getTask` (non-building), NOT `getOrBuildTask` (used at line 144) - a Settings pane asking for diagnostics must never spawn an engine as a side effect.",
       "why": "`workerTaskManager.getTask` is the existing, proven registry lookup for reaching a live WCoreManager from a bridge provider. `getOrBuildTask` would make opening a Settings pane spawn a wcore process."
     },
     {
       "file": "src/process/bridge/index.ts",
-      "change": "Add `import { initWcoreRuntimeBridge } from './wcoreRuntimeBridge';` alongside the existing wcore import (line 83), call `initWcoreRuntimeBridge();` next to `initMcpBridge();` (line 111), and add it to the re-export list near line 211.",
+      "change": "Export `initWcoreRuntimeBridge` from the `./engine` barrel, add it to the existing `from './engine'` import in `src/process/bridge/index.ts`, call `initWcoreRuntimeBridge();` next to `initMcpBridge();`, and add it to the re-export list at the bottom of the file.",
       "why": "That is the single registration seam; a provider declared in ipcBridge.ts but never `.provider()`-ed leaves the renderer promise pending forever."
     },
     {
@@ -180,10 +180,8 @@
     "The diagnostics MCP inventory is the ENGINE's list (`origin: global_config | project_config | profile_config | runtime_command | plugin`), which is a different set from Darhai's own `IMcpServer` library table backing McpLibrary. Joining the two on `name` is a guess. Render the engine list as engine-reported and do not attempt reconciliation.",
     "`gap-matrix.json` is described as 'generated' in tests/fixtures/engine-contract/README.md:34, but no generator script exists anywhere in the repo (grep for 'gap-matrix' hits only that README). Flipping the five entries for this capability from `implemented: false` to `true` will have to be done by hand, and a hand-edited 'generated' file can drift from reality without anything catching it.",
     "No conflict found between the contract and the gap-matrix for this capability: manifest.json and gap-matrix.json agree that all five types (3 events + 2 commands) are unimplemented, and agree on capability, criticality (all `safety`), and correlation key (all `request_id`). Nothing here required trusting one over the other.",
-    "AGENTS.md caps a directory at 10 direct children; `src/process/bridge/` already holds 83. Adding `wcoreRuntimeBridge.ts` follows the established local practice but widens an existing violation. Flagging rather than silently deciding - folding it into `wcoreConfigBridge.ts` is the alternative, at the cost of mixing config.toml file I/O with live-process IPC in one module."
+    "AGENTS.md caps a directory at 10 direct children (files AND subdirectories). `src/process/bridge/` used to hold 85 by that count - 83 files plus `__tests__/` and `services/` - and has since been split by responsibility, so a new file must name its subdirectory: live-process engine IPC belongs in `bridge/engine/`, which is why the path above is `bridge/engine/wcoreRuntimeBridge.ts`. `tests/unit/process/bridge/bridgeDirectoryLimit.test.ts` fails if that directory goes over the cap."
   ],
   "effortHours": 14,
-  "dependencies": [
-    "contract_negotiation"
-  ]
+  "dependencies": ["contract_negotiation"]
 }

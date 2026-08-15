@@ -194,7 +194,7 @@ src/
 When adding a new IPC channel, follow this pattern:
 
 ```typescript
-// src/process/bridge/[feature]Bridge.ts
+// src/process/bridge/[responsibility]/[feature]Bridge.ts
 import { bridge } from '@anthropic/platform';
 
 export const [featureName] = {
@@ -330,7 +330,7 @@ Result: A save dialog appears; after the user selects a location, the PDF file i
 **Main process (src/process/)**
 | File path | Action | Notes |
 |-----------|--------|-------|
-| src/process/bridge/exportBridge.ts | [x] Add | PDF export IPC channel definition |
+| src/process/bridge/workspace/exportBridge.ts | [x] Add | PDF export IPC channel definition |
 | src/process/services/ExportService.ts | [x] Add | PDF generation logic |
 
 **Renderer process (src/renderer/)**

@@ -88,7 +88,7 @@ Linux/macOS дээр аль нь ч унадаггүй тул хөгжүүлэг
 
 Дархай **Windows хэрэглэгчдэд түгээгддэг** тул энэ нь онолын биш, бодит эрсдэл.
 
-### 3.1 `src/process/bridge/constitutionBridge.ts:242-249`
+### 3.1 `src/process/bridge/conversation/constitutionBridge.ts:242-249`
 
 ```ts
 const tmp = `${path}.tmp`;
@@ -134,7 +134,7 @@ function rotateIfNeeded(logPath: string): void {
 энэ нь `constitutionBridge`-ээс бага эрсдэлтэй, гэхдээ `catch {}` нь `ENOENT`-ыг
 `EPERM`-ээс ялгадаггүй нь согог хэвээр.
 
-### 3.3 `src/process/bridge/ijfwDropBridge.ts:237`
+### 3.3 `src/process/bridge/engine/extensions/ijfwDropBridge.ts:237`
 
 `await fs.promises.rename(src, dest)` — нөхцөлийг шалгах шаардлагатай.
 

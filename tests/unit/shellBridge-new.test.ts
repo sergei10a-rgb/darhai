@@ -75,7 +75,7 @@ vi.mock('@/common', () => ({
 }));
 
 // Import the module being tested (this registers the providers)
-import { initShellBridge } from '../../src/process/bridge/shellBridge';
+import { initShellBridge } from '../../src/process/bridge/workspace/shellBridge';
 import { shell } from 'electron';
 import * as fs from 'fs';
 import { exec, spawn } from 'child_process';

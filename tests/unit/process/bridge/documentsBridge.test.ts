@@ -49,7 +49,7 @@ vi.mock('@process/services/documents/documentServiceSingleton', () => {
   return { documentService: svc };
 });
 
-import { initDocumentsBridge } from '@process/bridge/documentsBridge';
+import { initDocumentsBridge } from '@process/bridge/knowledge/records/documentsBridge';
 
 const g = globalThis as Record<string, unknown>;
 const service = g.__documentServiceMock as Record<string, ReturnType<typeof vi.fn>>;

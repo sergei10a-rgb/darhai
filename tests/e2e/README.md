@@ -247,7 +247,7 @@ bunx electron-vite build
 **Cause:** The IPC provider for `xxx` doesn't exist or wasn't registered.
 
 - Check `src/common/adapter/ipcBridge.ts` for the endpoint definition
-- Check the corresponding bridge file (e.g., `src/process/bridge/teamBridge.ts`) for `.provider()` registration
+- Check the corresponding bridge file (e.g., `src/process/bridge/agent/orchestration/teamBridge.ts`) for `.provider()` registration
 - Rebuild: `bunx electron-vite build`
 
 ### App launches but page is blank

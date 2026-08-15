@@ -26,7 +26,7 @@ Is it UI (React components, hooks, pages)?
   └── YES → src/renderer/              → see references/renderer.md
 
 Is it an IPC handler responding to renderer calls?
-  └── YES → src/process/bridge/        → see references/process.md
+  └── YES → src/process/bridge/<responsibility>/ → see references/process.md
 
 Is it business logic running in the main process?
   └── YES → src/process/services/      → see references/process.md
@@ -65,7 +65,7 @@ Is it a messaging channel (Lark, DingTalk, Telegram)?
 
 Cross-process communication:
 
-- Main ↔ Renderer: IPC via `src/preload.ts` + `src/process/bridge/*.ts`
+- Main ↔ Renderer: IPC via `src/preload.ts` + `src/process/bridge/**/*.ts`
 - Main ↔ Worker: fork protocol via `src/process/worker/WorkerProtocol.ts`
 
 ```typescript

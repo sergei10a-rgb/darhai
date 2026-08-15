@@ -2319,7 +2319,9 @@
     "loadErrorsTitle": "Не удалось загрузить некоторых агентов",
     "badge": {
       "active": "Активен",
-      "detected": "Обнаружен"
+      "detected": "Обнаружен",
+      "notInstalled": "Не установлено",
+      "unknown": "Неизвестно"
     },
     "toolbarToggle": {
       "label": "Показывать на панели",

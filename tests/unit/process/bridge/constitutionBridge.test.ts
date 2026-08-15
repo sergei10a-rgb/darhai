@@ -59,7 +59,7 @@ describe('readConstitutionWithOverlay', () => {
     // No CONSTITUTION.md, no overlay (assistantId omitted).
     fsMock.existsSync.mockReturnValue(false);
 
-    const { readConstitutionWithOverlay } = await import('@process/bridge/constitutionBridge');
+    const { readConstitutionWithOverlay } = await import('@process/bridge/conversation/constitutionBridge');
     const result = readConstitutionWithOverlay();
 
     // Bridge's `readConstitution` returns '' (no auto-seed of DEFAULT_CONSTITUTION on read;
@@ -82,7 +82,7 @@ describe('readConstitutionWithOverlay', () => {
       throw new Error(`unexpected readFileSync: ${String(p)}`);
     });
 
-    const { readConstitutionWithOverlay } = await import('@process/bridge/constitutionBridge');
+    const { readConstitutionWithOverlay } = await import('@process/bridge/conversation/constitutionBridge');
     const result = readConstitutionWithOverlay();
 
     expect(result).toEqual({ constitution: body, overlay: null });
@@ -96,7 +96,7 @@ describe('readConstitutionWithOverlay', () => {
       throw new Error(`unexpected readFileSync: ${String(p)}`);
     });
 
-    const { readConstitutionWithOverlay } = await import('@process/bridge/constitutionBridge');
+    const { readConstitutionWithOverlay } = await import('@process/bridge/conversation/constitutionBridge');
     const result = readConstitutionWithOverlay('foo');
 
     expect(result).toEqual({ constitution: body, overlay: null });
@@ -115,7 +115,7 @@ describe('readConstitutionWithOverlay', () => {
       throw new Error(`unexpected readFileSync: ${String(p)}`);
     });
 
-    const { readConstitutionWithOverlay } = await import('@process/bridge/constitutionBridge');
+    const { readConstitutionWithOverlay } = await import('@process/bridge/conversation/constitutionBridge');
     const result = readConstitutionWithOverlay('foo');
 
     expect(result).toEqual({ constitution: body, overlay: overlayBody });
@@ -129,7 +129,7 @@ describe('readConstitutionWithOverlay', () => {
       throw new Error(`unexpected readFileSync: ${String(p)}`);
     });
 
-    const { readConstitutionWithOverlay } = await import('@process/bridge/constitutionBridge');
+    const { readConstitutionWithOverlay } = await import('@process/bridge/conversation/constitutionBridge');
 
     const dangerousIds = ['../etc/passwd', 'a/b', '', 'foo bar', '..', './foo', 'foo/../bar'];
 
@@ -180,7 +180,7 @@ describe('specialist overlay CRUD', () => {
     it('returns [] when the specialists/ directory does not exist', async () => {
       fsMock.existsSync.mockReturnValue(false);
 
-      const { __test__ } = await import('@process/bridge/constitutionBridge');
+      const { __test__ } = await import('@process/bridge/conversation/constitutionBridge');
       const result = __test__.listConstitutionSpecialists();
 
       expect(result).toEqual([]);
@@ -202,7 +202,7 @@ describe('specialist overlay CRUD', () => {
         return { size };
       });
 
-      const { __test__ } = await import('@process/bridge/constitutionBridge');
+      const { __test__ } = await import('@process/bridge/conversation/constitutionBridge');
       const result = __test__.listConstitutionSpecialists();
 
       expect(result).toEqual([
@@ -224,7 +224,7 @@ describe('specialist overlay CRUD', () => {
         throw new Error(`unexpected readFileSync: ${String(p)}`);
       });
 
-      const { __test__ } = await import('@process/bridge/constitutionBridge');
+      const { __test__ } = await import('@process/bridge/conversation/constitutionBridge');
       const result = __test__.readConstitutionSpecialist('copy');
 
       expect(result).toBe(body);
@@ -233,7 +233,7 @@ describe('specialist overlay CRUD', () => {
     it("returns '' for a valid id when the overlay file is absent", async () => {
       fsMock.existsSync.mockReturnValue(false);
 
-      const { __test__ } = await import('@process/bridge/constitutionBridge');
+      const { __test__ } = await import('@process/bridge/conversation/constitutionBridge');
       const result = __test__.readConstitutionSpecialist('copy');
 
       expect(result).toBe('');
@@ -247,7 +247,7 @@ describe('specialist overlay CRUD', () => {
     it("returns '' for path-traversal ids without probing the dangerous path", async () => {
       const dangerousIds = ['../../etc/passwd', 'a/b', '', 'foo bar', '..', './foo'];
 
-      const { __test__ } = await import('@process/bridge/constitutionBridge');
+      const { __test__ } = await import('@process/bridge/conversation/constitutionBridge');
 
       for (const id of dangerousIds) {
         fsMock.existsSync.mockClear();
@@ -271,7 +271,7 @@ describe('specialist overlay CRUD', () => {
       fsMock.writeFileSync.mockReturnValue(undefined);
       fsMock.renameSync.mockReturnValue(undefined);
 
-      const { __test__ } = await import('@process/bridge/constitutionBridge');
+      const { __test__ } = await import('@process/bridge/conversation/constitutionBridge');
       const result = __test__.writeConstitutionSpecialist('copy', content);
 
       expect(result).toBe(true);
@@ -290,7 +290,7 @@ describe('specialist overlay CRUD', () => {
     it('returns false and does not write for an invalid id', async () => {
       const invalidIds = ['../../evil', 'a/b', ''];
 
-      const { __test__ } = await import('@process/bridge/constitutionBridge');
+      const { __test__ } = await import('@process/bridge/conversation/constitutionBridge');
 
       for (const id of invalidIds) {
         fsMock.mkdirSync.mockClear();
@@ -313,7 +313,7 @@ describe('specialist overlay CRUD', () => {
       fsMock.existsSync.mockImplementation((p) => p === overlayPath);
       fsMock.unlinkSync.mockReturnValue(undefined);
 
-      const { __test__ } = await import('@process/bridge/constitutionBridge');
+      const { __test__ } = await import('@process/bridge/conversation/constitutionBridge');
       const result = __test__.deleteConstitutionSpecialist('copy');
 
       expect(result).toBe(true);
@@ -323,7 +323,7 @@ describe('specialist overlay CRUD', () => {
     it('returns true (idempotent) for a valid id when the file is already absent', async () => {
       fsMock.existsSync.mockReturnValue(false);
 
-      const { __test__ } = await import('@process/bridge/constitutionBridge');
+      const { __test__ } = await import('@process/bridge/conversation/constitutionBridge');
       const result = __test__.deleteConstitutionSpecialist('copy');
 
       expect(result).toBe(true);
@@ -334,7 +334,7 @@ describe('specialist overlay CRUD', () => {
     it('returns false and does not unlink for an invalid id', async () => {
       const invalidIds = ['../../etc/passwd', 'a/b', ''];
 
-      const { __test__ } = await import('@process/bridge/constitutionBridge');
+      const { __test__ } = await import('@process/bridge/conversation/constitutionBridge');
 
       for (const id of invalidIds) {
         fsMock.existsSync.mockClear();

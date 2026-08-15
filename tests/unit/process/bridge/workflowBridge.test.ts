@@ -57,7 +57,7 @@ vi.mock('@/common', () => ({
 }));
 
 import type { WorkflowSession } from '@/common/types/workflowTypes';
-import { __resetWorkflowBridgeForTests, initWorkflowBridge } from '@process/bridge/workflowBridge';
+import { __resetWorkflowBridgeForTests, initWorkflowBridge } from '@process/bridge/agent/orchestration/workflowBridge';
 
 type ProviderHandler<I, O> = (input: I) => Promise<O>;
 

@@ -18,7 +18,7 @@ import { setupBasicMiddleware, setupCors, setupErrorHandler } from './setup';
 import { registerAuthRoutes } from './routes/authRoutes';
 import { registerApiRoutes } from './routes/apiRoutes';
 import { registerStaticRoutes, resolveRendererPath, VITE_DEV_PORT } from './routes/staticRoutes';
-import { generateQRLoginUrlDirect } from '@process/bridge/webuiQR';
+import { generateQRLoginUrlDirect } from '@process/bridge/remote/webuiQR';
 import { mountWebhookRoutes } from '@process/channels/webhook';
 
 // Express Request type extension is defined in src/webserver/types/express.d.ts

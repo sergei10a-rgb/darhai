@@ -51,7 +51,7 @@ vi.mock('@/common', () => ({
 }));
 
 // eslint-disable-next-line import/first
-import { initIjfwDropBridge } from '@process/bridge/ijfwDropBridge';
+import { initIjfwDropBridge } from '@process/bridge/engine/extensions/ijfwDropBridge';
 
 let originalCwd: string;
 let tmpCwd: string;

@@ -18,7 +18,7 @@ const { skillsState } = vi.hoisted(() => ({
 }));
 
 // Default: bridge returns empty constitution + null overlay (no rules block).
-vi.mock('@process/bridge/constitutionBridge', () => ({
+vi.mock('@process/bridge/conversation/constitutionBridge', () => ({
   readConstitutionWithOverlay: vi.fn().mockReturnValue({ constitution: '', overlay: null }),
 }));
 
@@ -63,7 +63,7 @@ vi.mock('@process/team/prompts/teamGuideAssistant.ts', () => ({
   resolveLeaderAssistantLabel: vi.fn().mockResolvedValue('Leader'),
 }));
 
-import { readConstitutionWithOverlay } from '@process/bridge/constitutionBridge';
+import { readConstitutionWithOverlay } from '@process/bridge/conversation/constitutionBridge';
 import { prepareFirstMessageWithSkillsIndex } from '@process/task/agentUtils';
 
 const mockBridge = vi.mocked(readConstitutionWithOverlay);

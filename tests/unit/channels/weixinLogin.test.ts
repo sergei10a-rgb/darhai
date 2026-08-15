@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { settleTurns, settleUntil } from '../../helpers/eventLoop';
 
 // Mock https before importing WeixinLogin
 vi.mock('https', () => ({
@@ -69,7 +70,7 @@ describe('startLogin', () => {
     const onError = vi.fn();
 
     const handle = startLogin({ onQR, onScanned, onDone, onError });
-    await new Promise((r) => setTimeout(r, 50));
+    await settleUntil(() => onDone.mock.calls.length > 0);
 
     expect(onQR).toHaveBeenCalledWith('https://qr.weixin.qq.com/abc', 'ticket_1');
     expect(onDone).toHaveBeenCalledWith({
@@ -99,7 +100,7 @@ describe('startLogin', () => {
       onDone,
       onError: vi.fn(),
     });
-    await new Promise((r) => setTimeout(r, 50));
+    await settleUntil(() => onDone.mock.calls.length > 0);
 
     expect(onDone).toHaveBeenCalledWith({
       accountId: 'user_x',
@@ -119,7 +120,7 @@ describe('startLogin', () => {
     const onScanned = vi.fn();
     const onDone = vi.fn();
     const handle = startLogin({ onQR: vi.fn(), onScanned, onDone, onError: vi.fn() });
-    await new Promise((r) => setTimeout(r, 100));
+    await settleUntil(() => onDone.mock.calls.length > 0);
 
     expect(onScanned).toHaveBeenCalledTimes(1);
     expect(onDone).toHaveBeenCalledTimes(1);
@@ -137,7 +138,7 @@ describe('startLogin', () => {
 
     const onDone = vi.fn();
     const handle = startLogin({ onQR, onScanned: vi.fn(), onDone, onError: vi.fn() });
-    await new Promise((r) => setTimeout(r, 100));
+    await settleUntil(() => onDone.mock.calls.length > 0);
 
     expect(onQR).toHaveBeenCalledTimes(2);
     expect(onQR).toHaveBeenNthCalledWith(2, 'https://qr2.example.com', 't2');
@@ -157,7 +158,7 @@ describe('startLogin', () => {
 
     const onError = vi.fn();
     const handle = startLogin({ onQR: vi.fn(), onScanned: vi.fn(), onDone: vi.fn(), onError });
-    await new Promise((r) => setTimeout(r, 200));
+    await settleUntil(() => onError.mock.calls.length > 0);
 
     expect(onError).toHaveBeenCalledWith(expect.any(Error));
     handle.abort();
@@ -177,7 +178,9 @@ describe('startLogin', () => {
     const onError = vi.fn();
     const handle = startLogin({ onQR: vi.fn(), onScanned: vi.fn(), onDone: vi.fn(), onError });
     handle.abort();
-    await new Promise((r) => setTimeout(r, 50));
+    // Negative assertion: there is no terminal callback to wait for, so spend
+    // the whole turn budget giving the aborted flow every chance to misfire.
+    await settleTurns();
 
     expect(onError).not.toHaveBeenCalled();
   });

@@ -59,18 +59,18 @@ vi.mock('child_process', () => ({
 
 vi.mock('fs', () => ({ existsSync: vi.fn(), statSync: vi.fn(() => ({ isDirectory: () => true })) }));
 
-vi.mock('../../src/process/bridge/pathConfinement', () => ({
+vi.mock('../../src/process/bridge/workspace/pathConfinement', () => ({
   confinePath: confinePathMock,
 }));
 
-let initShellBridge: typeof import('../../src/process/bridge/shellBridge').initShellBridge;
+let initShellBridge: typeof import('../../src/process/bridge/workspace/shellBridge').initShellBridge;
 
 beforeEach(async () => {
   vi.resetModules();
   vi.clearAllMocks();
   openPathProvider.fn = undefined;
   shellMock.openPath.mockResolvedValue('');
-  const mod = await import('../../src/process/bridge/shellBridge');
+  const mod = await import('../../src/process/bridge/workspace/shellBridge');
   initShellBridge = mod.initShellBridge;
   initShellBridge();
 });

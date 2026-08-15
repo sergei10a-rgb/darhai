@@ -72,7 +72,14 @@ export const SCREEN_REGISTRY: Readonly<Record<string, ScreenCoverage>> = {
   '/login': { skip: 'not covered yet - only reachable when a password is set; needs a seeded-auth profile' },
 
   // ── Core surfaces (planned) ──────────────────────────────────────────────
-  '/conversation/:id': { skip: 'not covered yet - needs a seeded conversation and a mocked agent' },
+  // Covered only for the budget-grant dialog, which opens OVER this route. The
+  // route's own body still needs a seeded conversation and a mocked agent
+  // before it can have a stable baseline, so these two claim the modal and
+  // nothing else. Both units are photographed because the whole point of the
+  // dialog is that a bare `2.5` must never be readable as either one.
+  '/conversation/:id': {
+    baselines: ['budget-grant-tokens.png', 'budget-grant-cost.png'],
+  },
   '/conversations': { skip: 'not covered yet - empty and populated states both need seeding' },
   '/projects': { skip: 'not covered yet - needs seeded projects' },
   '/project/:projectId': { skip: 'not covered yet - needs a seeded project id' },

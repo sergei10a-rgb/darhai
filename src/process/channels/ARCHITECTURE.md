@@ -604,7 +604,7 @@ created → initializing → ready → starting → running → stopping → sto
 | `channel.plugin-status-changed` | Main → UI | Plugin status changed (real-time UI update) |
 | `channel.user-authorized`       | Main → UI | User authorization succeeded             |
 
-IPC handlers are registered in the `initChannelBridge()` function in `src/process/bridge/channelBridge.ts`, called on app startup.
+IPC handlers are registered in the `initChannelBridge()` function in `src/process/bridge/remote/channelBridge.ts`, called on app startup.
 
 ---
 

@@ -7,6 +7,7 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { getEnhancedEnv } from '@process/utils/shellEnv';
 
 /**
  * Binary names to look for, in priority order:
@@ -35,7 +36,19 @@ function lookupOnPath(name: string): string | null {
   // constant today but defensive coding prevents future drift.
   const finder = process.platform === 'win32' ? 'where' : 'which';
   try {
-    const result = execFileSync(finder, [name], { encoding: 'utf-8', timeout: 5000 }).trim();
+    // Search the ENHANCED PATH, the same env `AcpDetector` builds for its own
+    // CLI probes, not the raw `process.env`.
+    //
+    // WHY IT MATTERS: on a GUI launch `process.env.PATH` has no login-shell
+    // entries yet. `src/index.ts` merges them in later and ASYNCHRONOUSLY,
+    // after boot-time agent detection has already run - so an engine installed
+    // under e.g. ~/.local/bin resolved to null at detection time and to a real
+    // path once the user actually opened a chat. That gap is precisely how
+    // `available: false` could sit on the Agents page for a whole session
+    // while Core chats worked. `getEnhancedEnv()` resolves the login-shell PATH
+    // itself (module-cached in shellEnv), so the answer no longer depends on
+    // boot ordering and matches what `WCoreAgent.start()` will find.
+    const result = execFileSync(finder, [name], { encoding: 'utf-8', timeout: 5000, env: getEnhancedEnv() }).trim();
     if (result && existsSync(result)) return result;
   } catch {
     // not found in PATH

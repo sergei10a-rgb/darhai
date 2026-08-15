@@ -11,10 +11,10 @@ watcher (`src/process/services/memory/ijfwArchiveService.ts`, covered in the mem
 
 ## Entry points & lifecycle
 
-- `initImportBridge()` (`src/process/bridge/importBridge.ts:75`) is called once at main-process
+- `initImportBridge()` (`src/process/bridge/knowledge/importBridge.ts:75`) is called once at main-process
   startup from `initAllBridges()` (`src/process/bridge/index.ts:121`). It registers all
   `memory.import.*` + `memory.ingest-files` IPC providers.
-- At the end of `initImportBridge()` (`src/process/bridge/importBridge.ts:298`),
+- At the end of `initImportBridge()` (`src/process/bridge/knowledge/importBridge.ts:298`),
   `startDropWatcherIfNeeded()` (`importBridge.ts:304-321`) auto-starts a singleton chokidar
   watcher on `~/Documents/Darhai-Memory` (module-level handle `_dropWatcherHandle`,
   `importBridge.ts:56`). It is also lazily re-attempted on every `processDropFolder` call
@@ -32,7 +32,7 @@ watcher (`src/process/services/memory/ijfwArchiveService.ts`, covered in the mem
 
 | File | Responsibility |
 | ---- | -------------- |
-| `src/process/bridge/importBridge.ts` | Registers the `memory.import.*` and `memory.ingest-files` IPC providers; zod-validates args; enforces the vault path allowlist; resolves the target memory dir; filters "source absent" pseudo-errors; owns the drop-watcher singleton; implements drag-drop ingest inline. |
+| `src/process/bridge/knowledge/importBridge.ts` | Registers the `memory.import.*` and `memory.ingest-files` IPC providers; zod-validates args; enforces the vault path allowlist; resolves the target memory dir; filters "source absent" pseudo-errors; owns the drop-watcher singleton; implements drag-drop ingest inline. |
 | `src/process/services/import/claudeNativeImporter.ts` | Walks `~/.claude/projects/<proj>/memory/*.md` (skipping `MEMORY.md`, `claudeNativeImporter.ts:32`), re-frontmatters each file as an observation, writes `claude-<sha1(proj:file)[0:12]>.md`. |
 | `src/process/services/import/claudeMemImporter.ts` | Opens `~/.claude-mem/claude-mem.db` read-only via better-sqlite3, reads the `observation` table, writes `observation-<sanitized-id>.md` per row. |
 | `src/process/services/import/obsidianImporter.ts` | `detectVaults()` scans `~/Documents` (depth 4) for `.obsidian/` dirs; `runObsidianImport()` walks a vault's `.md` files (skipping `.obsidian`, `.trash`, hidden dirs, symlinks), caps to most-recent N, and writes `obsidian-<sha256(relPath)[0:16]>.md`; `readConfinedVaultFile()` is the TOCTOU-hardened reader. |
@@ -182,7 +182,7 @@ returned (`importBridge.ts:49`, `obsidianImporter.ts:317-332`); vault md-count p
    `src/process/services/import/claudeNativeImporter.ts` (filesystem source) or
    `claudeMemImporter.ts` (SQLite source). Then: (a) declare a provider under `memory.import` in
    `src/common/adapter/ipcBridge.ts:2397-2415` with a `memory.import.<kebab>` channel, (b) add a
-   handler block in `initImportBridge()` (`src/process/bridge/importBridge.ts:75`) following the
+   handler block in `initImportBridge()` (`src/process/bridge/knowledge/importBridge.ts:75`) following the
    claudeMem block (`importBridge.ts:81-100`) — zod-validate args, `resolveMemoryDir()`, filter
    absent-source notes, log `[import] <name> done`. Watch the 10-children directory limit
    (AGENTS.md): `import/` holds 6 files; a 5th+ new importer forces a subdirectory split.

@@ -25,7 +25,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { buildWcoreCapabilitySnapshot } from '@process/bridge/wcoreEngineBridge';
+import { buildWcoreCapabilitySnapshot } from '@process/bridge/engine/wcoreEngineBridge';
 import { negotiateContract } from '@process/agent/wcore/capabilities/contractNegotiation';
 import { recordEngineContract, resetEngineContract } from '@process/agent/wcore/capabilities/engineContractStore';
 import {

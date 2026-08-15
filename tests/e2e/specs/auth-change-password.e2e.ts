@@ -196,6 +196,6 @@ test.describe('Auth: POST /api/auth/change-password', () => {
   // headless Playwright run cannot satisfy without main-process mocking. The
   // gate is exercised by tests/unit/process/bridge/webuiDirectAuth.spec.ts.
   test.skip('webui-direct-change-password native dialog gate - covered by unit test on requireConfirmation', () => {
-    // No-op: src/process/bridge/webuiDirectAuth.ts requireConfirmation.
+    // No-op: src/process/bridge/remote/webuiDirectAuth.ts requireConfirmation.
   });
 });

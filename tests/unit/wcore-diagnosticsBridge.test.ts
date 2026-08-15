@@ -29,7 +29,7 @@ import {
   __testables,
   WCORE_AGENT_CHILD_FIELD,
   WCORE_MANAGER_AGENT_FIELD,
-} from '@process/bridge/wcoreDiagnosticsBridge';
+} from '@process/bridge/engine/wcoreDiagnosticsBridge';
 import { NO_CONTRACT, negotiateContract } from '@process/agent/wcore/capabilities/contractNegotiation';
 import {
   pendingRuntimeRequestIds,

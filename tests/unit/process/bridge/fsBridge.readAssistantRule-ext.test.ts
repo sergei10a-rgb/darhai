@@ -127,7 +127,7 @@ describe('fsBridge.readAssistantRule - ext-* registry-context branch (C1 regress
     vi.resetModules();
     mockGetAssistants.mockReset();
     capturedReadAssistantRule.handler = null;
-    const { initFsBridge } = await import('@process/bridge/fsBridge');
+    const { initFsBridge } = await import('@process/bridge/workspace/fsBridge');
     initFsBridge();
     expect(capturedReadAssistantRule.handler).toBeTypeOf('function');
   });

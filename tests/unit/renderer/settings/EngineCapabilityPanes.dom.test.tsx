@@ -36,7 +36,7 @@ import {
 } from '@process/agent/wcore/capabilities/handlers/runtimeDiagnostics';
 import { negotiateContract } from '@process/agent/wcore/capabilities/contractNegotiation';
 import { recordEngineContract, resetEngineContract } from '@process/agent/wcore/capabilities/engineContractStore';
-import { buildWcoreCapabilitySnapshot } from '@process/bridge/wcoreEngineBridge';
+import { buildWcoreCapabilitySnapshot } from '@process/bridge/engine/wcoreEngineBridge';
 import { examplePayload, readFixture } from '../../../helpers/engineContract';
 
 // --- hoisted mock state ------------------------------------------------------

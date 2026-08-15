@@ -2344,7 +2344,9 @@
     "loadErrorsTitle": "Einige Agenten konnten nicht geladen werden",
     "badge": {
       "active": "Aktiv",
-      "detected": "Erkannt"
+      "detected": "Erkannt",
+      "notInstalled": "Nicht installiert",
+      "unknown": "Unbekannt"
     },
     "toolbarToggle": {
       "label": "In der Symbolleiste anzeigen",

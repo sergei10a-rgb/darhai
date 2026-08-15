@@ -15,7 +15,7 @@
 
 import { describe, it, expect } from 'vitest';
 import path from 'path';
-import { resolveExternalReferencePath } from '@process/bridge/pathConfinement';
+import { resolveExternalReferencePath } from '@process/bridge/workspace/pathConfinement';
 
 describe('resolveExternalReferencePath', () => {
   it('accepts an ordinary out-of-root content file (the relaxation)', () => {

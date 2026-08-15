@@ -49,7 +49,7 @@ vi.mock('openai', () => {
   return { default: MockOpenAI };
 });
 
-import { initModelBridge } from '../../src/process/bridge/modelBridge';
+import { initModelBridge } from '../../src/process/bridge/model/modelBridge';
 
 beforeEach(() => {
   vi.clearAllMocks();

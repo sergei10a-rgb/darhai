@@ -24,7 +24,16 @@ const WCoreSettings: React.FC = () => {
     void ipcBridge.acpConversation.getAvailableAgents.invoke().then((result) => {
       if (result.success) {
         const agent = result.data.find((a) => a.backend === 'wcore');
-        setAgentInfo(agent ? { available: true, path: agent.cliPath } : { available: false });
+        // The entry's own `available`, not the fact that it was FOUND. Darhai
+        // always ships the Core backend, so the entry is always in this list -
+        // reading presence as availability made this card say "Available" on a
+        // machine with no engine binary at all. `=== true` because this repo
+        // compiles without strictNullChecks.
+        setAgentInfo(
+          agent
+            ? { available: agent.available === true, version: agent.version, path: agent.cliPath }
+            : { available: false }
+        );
       }
     });
   }, []);

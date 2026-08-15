@@ -22,7 +22,7 @@ vi.mock('@process/utils/mainLogger', () => ({
 const fetchMock = vi.fn();
 vi.stubGlobal('fetch', fetchMock);
 
-const { SpeechToTextService } = await import('@/process/bridge/services/SpeechToTextService');
+const { SpeechToTextService } = await import('@/process/bridge/media/voice/SpeechToTextService');
 
 const baseConfig = {
   enabled: true,

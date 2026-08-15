@@ -2318,7 +2318,9 @@
     "loadErrorsTitle": "部分智能体加载失败",
     "badge": {
       "active": "运行中",
-      "detected": "已检测"
+      "detected": "已检测",
+      "notInstalled": "未安装",
+      "unknown": "未知"
     },
     "toolbarToggle": {
       "label": "在工具栏中显示",

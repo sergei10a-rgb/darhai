@@ -89,7 +89,7 @@ vi.mock('@/common', () => {
 });
 
 // --- Mock confinePath / registerAuthorizedRoot -----------------------------
-vi.mock('../../../src/process/bridge/pathConfinement', () => ({
+vi.mock('../../../src/process/bridge/workspace/pathConfinement', () => ({
   confinePath: (raw: unknown) => h.confinePath(raw),
   registerAuthorizedRoot: vi.fn(),
 }));
@@ -98,7 +98,7 @@ vi.mock('../../../src/process/bridge/pathConfinement', () => ({
 // createZip now accepts an out-of-root destination only when the user approved
 // it via the native dialog / Desktop default. The renderer cannot populate this
 // set, so an arbitrary out-of-root destination still fails closed.
-vi.mock('../../../src/process/bridge/userApprovedPaths', () => ({
+vi.mock('../../../src/process/bridge/workspace/userApprovedPaths', () => ({
   registerApprovedDirectory: vi.fn((dir: string) => {
     if (typeof dir === 'string' && dir.length > 0) h.approvedDirectories.push(dir);
   }),
@@ -137,7 +137,7 @@ vi.mock('jszip', () => {
 });
 vi.mock('@/common/config/constants', () => ({ DARHAI_TIMESTAMP_SEPARATOR: '__ts__' }));
 
-import { initFsBridge } from '../../../src/process/bridge/fsBridge';
+import { initFsBridge } from '../../../src/process/bridge/workspace/fsBridge';
 
 const OUT = '/etc/passwd';
 const SECRET = '/root/.ssh/id_rsa';

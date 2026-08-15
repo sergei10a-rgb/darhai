@@ -22,7 +22,7 @@ const mocks = vi.hoisted(() => ({
   googleAuthGeminiComplete: vi.fn(),
 }));
 
-vi.mock('@process/bridge/modelBridge', () => ({ getMergedModelProviders: mocks.getMergedModelProviders }));
+vi.mock('@process/bridge/model/modelBridge', () => ({ getMergedModelProviders: mocks.getMergedModelProviders }));
 vi.mock('@process/services/compression', () => ({ compress: mocks.compress }));
 vi.mock('@process/services/completion/compressionMode', () => ({ getCompressionMode: mocks.getCompressionMode }));
 vi.mock('@process/services/completion/geminiOAuth', () => ({

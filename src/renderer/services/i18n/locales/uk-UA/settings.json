@@ -2284,7 +2284,9 @@
     "loadErrorsTitle": "Не вдалося завантажити деяких агентів",
     "badge": {
       "active": "Активний",
-      "detected": "Виявлено"
+      "detected": "Виявлено",
+      "notInstalled": "Не встановлено",
+      "unknown": "Невідомо"
     },
     "toolbarToggle": {
       "label": "Показувати на панелі",

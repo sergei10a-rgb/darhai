@@ -1,4 +1,4 @@
-import { readConstitutionWithOverlay } from '@process/bridge/constitutionBridge';
+import { readConstitutionWithOverlay } from '@process/bridge/conversation/constitutionBridge';
 
 export interface ComposePromptOptions {
   /** Active assistant/specialist ID. Matches ~/.darhai/specialists/<id>.md. */

@@ -41,7 +41,7 @@ vi.mock('@process/services/hwfit', () => ({
   getCatalogSize: (...args: unknown[]) => mockGetCatalogSize(...args),
 }));
 
-import { initHwfitBridge } from '@process/bridge/hwfitBridge';
+import { initHwfitBridge } from '@process/bridge/engine/hwfitBridge';
 
 beforeEach(() => {
   vi.clearAllMocks();

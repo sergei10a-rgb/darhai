@@ -44,7 +44,7 @@ vi.mock('@process/acp/compat/LegacyConnectorFactory', () => ({
 }));
 vi.mock('@process/acp/types', () => ({ noopProtocolHandlers: {} }));
 
-import { checkAgentHealth, HEALTH_CHECK_BUDGET_MS } from '../../src/process/bridge/checkAgentHealth';
+import { checkAgentHealth, HEALTH_CHECK_BUDGET_MS } from '../../src/process/bridge/agent/checkAgentHealth';
 
 /** A promise that never settles - the exact shape of the audited hang. */
 const never = () => new Promise<never>(() => {});
