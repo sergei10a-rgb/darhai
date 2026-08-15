@@ -1378,6 +1378,35 @@ export const cookbook = {
 };
 
 /**
+ * Darhai's OWN llama.cpp runtime - the piece that makes "install Darhai and
+ * nothing else" true. `cookbook.serve` can only spawn a `llama-server` that
+ * exists; this namespace is how one comes to exist, by downloading a verified
+ * llama.cpp release into `userData/llamacpp/`.
+ *
+ * Remote-denied wholesale (the `llamaRuntime.` prefix in bridgeAllowlist
+ * REMOTE_DENIED_PREFIXES) because `install` downloads an executable from the
+ * network and the serve path then RUNS it - remote-reachable arbitrary-binary
+ * install + exec is the worst class in this codebase. `plan` and `status` are
+ * denied with it: `plan` reaches the network on the host's behalf, and `status`
+ * discloses host install paths. Only the trusted local renderer drives this.
+ */
+export const llamaRuntime = {
+  /** Current runtime snapshot (missing / downloading / ready / failed). */
+  status: buildProvider<import('@/common/types/llamacpp').LlamaRuntimeStatus, void>('llamaRuntime.status'),
+  /**
+   * What an install WOULD fetch - acceleration, fallback reason and measured
+   * byte total - so the UI can state it BEFORE the download rather than after.
+   */
+  plan: buildProvider<import('@/common/types/llamacpp').LlamaRuntimePlan, void>('llamaRuntime.plan'),
+  /** Download + install the runtime (progress via onStatus). Idempotent. */
+  install: buildProvider<import('@/common/types/llamacpp').LlamaRuntimeStatus, void>('llamaRuntime.install'),
+  /** Abort an in-flight install; the partial download survives for a resume. */
+  cancel: buildProvider<{ cancelled: boolean }, void>('llamaRuntime.cancel'),
+  /** Runtime-status changes, including per-asset download progress. */
+  onStatus: buildEmitter<import('@/common/types/llamacpp').LlamaRuntimeStatus>('llamaRuntime.on-status'),
+};
+
+/**
  * v0.6.2.6 - payload returned by cron.confirmProposal when action='edit'.
  * The renderer uses this to open CreateTaskDialog pre-filled so the user
  * can tweak the proposed cron before saving.

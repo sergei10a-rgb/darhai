@@ -92,5 +92,56 @@
       "ready": "Etkin · :{{port}}",
       "error": "Başarısız"
     }
+  },
+  "runtime": {
+    "disclose": "Darhai bunu bir kez indirir, böylece modeller bu bilgisayarda çalışır: {{size}}.",
+    "discloseNext": "Modelin kendisi ayrı bir indirmedir ve hemen ardından başlar.",
+    "sizeUnknown": "boyut belirtilmemiş",
+    "confirm": "İndir ve çalıştır",
+    "decline": "Şimdi değil",
+    "retry": "Yeniden dene",
+    "cancelNotYet": "Bu adım henüz durdurulamıyor. Birazdan yeniden deneyin.",
+    "stage": {
+      "runtime": "Kurulum",
+      "model": "Model"
+    },
+    "phase": {
+      "resolving": "Hazırlanıyor",
+      "downloading": "İndiriliyor",
+      "verifying": "Dosyalar denetleniyor",
+      "extracting": "Çıkarılıyor",
+      "installing": "Tamamlanıyor",
+      "done": "Tamamlandı"
+    },
+    "accel": {
+      "cuda": "NVIDIA ekran kartınız kullanılacak, böylece modeller hızlı yanıt verir.",
+      "rocm": "AMD ekran kartınız kullanılacak, böylece modeller hızlı yanıt verir.",
+      "metal": "Bu Mac'in grafik yongası kullanılacak, böylece modeller hızlı yanıt verir.",
+      "cpu": "İşlemci üzerinde çalışacak. İşi görür, ama yanıtlar ekran kartına kıyasla çok daha yavaş gelir."
+    },
+    "fallback": {
+      "METAL_NOT_ON_THIS_PLATFORM": "Apple'ın grafik hızlandırması yalnızca macOS'ta bulunur, bu yüzden burada işlemci çalışır.",
+      "METAL_REQUIRES_APPLE_SILICON": "Apple'ın grafik hızlandırması Apple yongalı bir Mac ister, bu yüzden burada işlemci çalışır.",
+      "NO_GPU_BUILD_FOR_TARGET": "Bu bilgisayarın ekran kartı için hiçbir şey yayımlanmıyor, bu yüzden işlemci çalışır.",
+      "CUDA_RUNTIME_UNAVAILABLE": "NVIDIA yardımcı dosyaları ne bu bilgisayarda ne de indirmede var, bu yüzden işlemci çalışır.",
+      "CUDA_DRIVER_TOO_OLD": "Bu bilgisayarın NVIDIA sürücüsü yayımlanan her şey için fazla eski, bu yüzden işlemci çalışır. Ekran kartı sürücüsünü güncellemek modelleri belirgin biçimde hızlandırır."
+    },
+    "note": {
+      "CUDA_LINE_OLDER_FOR_DRIVER": "Bu bilgisayarın NVIDIA sürücüsüne uyması için daha eski bir sürüm seçildi. Sürücü güncellenirse daha yenisi kullanılabilir.",
+      "CUDA_LINE_UNVERIFIED": "Darhai bu bilgisayarın NVIDIA sürücü sürümünü okuyamadı, bu yüzden ekran kartının kullanılacağını garanti edemez. Modeller yavaş kalırsa genelde ekran kartı sürücüsünü güncellemek yeterli olur.",
+      "VULKAN_BUILD_NOT_REQUESTABLE": "Bu ekran kartı için Darhai'nin henüz isteyemediği daha hızlı bir seçenek olabilir; şimdilik modeller işlemcide çalışacak."
+    },
+    "problem": {
+      "download": "İndirme bitmeden kesildi. Bağlantıyı denetleyip yeniden deneyin; gelen kısım saklandı.",
+      "offline": "Darhai indirme sunucusuna ulaşamadı. Bağlantıyı denetleyip yeniden deneyin.",
+      "server": "İndirme sunucusu, Darhai'nin okuyamadığı bir yanıt verdi. Daha sonra yeniden deneyin.",
+      "damaged": "İnen dosyalar yayımlanmış parmak izleriyle uyuşmadı ve atıldı. Yeniden deneyin.",
+      "unverified": "İndirme, denetlenecek bir parmak izi olmadan geldi; Darhai onu çalıştırmak yerine durdu.",
+      "unpack": "Dosyalar indi ama açılamadı. Diskte boş yer olup olmadığını denetleyip yeniden deneyin.",
+      "archive": "İnen dosyalar bütünüyle okunamadı, bu yüzden Darhai onları kullanmadı. Yeniden deneyin.",
+      "incomplete": "İndirme tamamlandı ama Darhai'nin ihtiyaç duyduğu şeyin bir parçası içinde yoktu. Daha sonra yeniden deneyin.",
+      "unsupported": "Bu bilgisayarda modeller yerel olarak çalıştırılamaz, çünkü ona uyan bir şey yayımlanmıyor. Buluttaki modeller yine de çalışır.",
+      "unknown": "Yerel modellerin hazırlanması tamamlanmadı. Yeniden deneyin."
+    }
   }
 }

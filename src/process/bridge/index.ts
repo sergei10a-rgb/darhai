@@ -44,6 +44,7 @@ import { initAuthBridge, initBedrockBridge, initGeminiBridge } from './model/pro
 import {
   initCookbookBridge,
   initHwfitBridge,
+  initLlamaRuntimeBridge,
   initWcoreConfigBridge,
   initWcoreDiagnosticsBridge,
   initWcoreEngineBridge,
@@ -168,6 +169,9 @@ export function initAllBridges(deps: BridgeDependencies): void {
   initMissionControlBridge(deps.teamSessionService);
   initHwfitBridge();
   initCookbookBridge();
+  // After cookbook: the runtime bridge is what makes cookbook's llama-server
+  // path reachable on a machine where the user installed only Darhai.
+  initLlamaRuntimeBridge();
   initCompareBridge();
   initFusionBridge();
   initLocalUserBridge();
@@ -250,6 +254,7 @@ export {
   initTeamBridge,
   initHwfitBridge,
   initCookbookBridge,
+  initLlamaRuntimeBridge,
   initCompareBridge,
   initFusionBridge,
   initLocalUserBridge,

@@ -92,5 +92,56 @@
       "ready": "Actif · :{{port}}",
       "error": "Échec"
     }
+  },
+  "runtime": {
+    "disclose": "Darhai le télécharge une seule fois pour que les modèles fonctionnent sur cet ordinateur : {{size}}.",
+    "discloseNext": "Le modèle lui-même est un téléchargement distinct qui démarre juste après.",
+    "sizeUnknown": "taille non indiquée",
+    "confirm": "Télécharger et lancer",
+    "decline": "Pas maintenant",
+    "retry": "Réessayer",
+    "cancelNotYet": "Cette étape ne peut pas encore être arrêtée. Réessayez dans un instant.",
+    "stage": {
+      "runtime": "Installation",
+      "model": "Modèle"
+    },
+    "phase": {
+      "resolving": "Préparation",
+      "downloading": "Téléchargement",
+      "verifying": "Vérification des fichiers",
+      "extracting": "Décompression",
+      "installing": "Finalisation",
+      "done": "Terminé"
+    },
+    "accel": {
+      "cuda": "Votre carte graphique NVIDIA sera utilisée, les modèles répondent donc vite.",
+      "rocm": "Votre carte graphique AMD sera utilisée, les modèles répondent donc vite.",
+      "metal": "La puce graphique de ce Mac sera utilisée, les modèles répondent donc vite.",
+      "cpu": "Cela tournera sur le processeur. Ça marche, mais les réponses arrivent bien plus lentement qu'avec une carte graphique."
+    },
+    "fallback": {
+      "METAL_NOT_ON_THIS_PLATFORM": "L'accélération graphique d'Apple n'existe que sur macOS, c'est donc le processeur qui travaille ici.",
+      "METAL_REQUIRES_APPLE_SILICON": "L'accélération graphique d'Apple exige un Mac à puce Apple, c'est donc le processeur qui travaille ici.",
+      "NO_GPU_BUILD_FOR_TARGET": "Rien n'est publié pour la carte graphique de cet ordinateur, c'est donc le processeur qui travaille.",
+      "CUDA_RUNTIME_UNAVAILABLE": "Les fichiers d'appoint NVIDIA manquent sur cet ordinateur comme dans le téléchargement, c'est donc le processeur qui travaille.",
+      "CUDA_DRIVER_TOO_OLD": "Le pilote NVIDIA de cet ordinateur est trop ancien pour tout ce qui est publié, c'est donc le processeur qui travaille. Mettre à jour le pilote graphique rendrait les modèles bien plus rapides."
+    },
+    "note": {
+      "CUDA_LINE_OLDER_FOR_DRIVER": "Une version plus ancienne a été retenue pour correspondre au pilote NVIDIA de cet ordinateur. Avec un pilote à jour, une plus récente conviendrait.",
+      "CUDA_LINE_UNVERIFIED": "Darhai n'a pas pu lire la version du pilote NVIDIA de cet ordinateur : il ne peut donc pas garantir que la carte graphique sera utilisée. Si les modèles sont lents, mettre à jour le pilote graphique suffit généralement.",
+      "VULKAN_BUILD_NOT_REQUESTABLE": "Il existe peut-être une option plus rapide pour cette carte graphique, que Darhai ne sait pas encore demander ; les modèles tourneront donc sur le processeur."
+    },
+    "problem": {
+      "download": "Le téléchargement s'est interrompu avant la fin. Vérifiez la connexion et réessayez ; ce qui est déjà arrivé est conservé.",
+      "offline": "Darhai n'a pas pu joindre le serveur de téléchargement. Vérifiez la connexion et réessayez.",
+      "server": "Le serveur de téléchargement a répondu quelque chose que Darhai n'a pas su lire. Réessayez plus tard.",
+      "damaged": "Les fichiers téléchargés ne correspondaient pas à leurs empreintes publiées ; ils ont été écartés. Réessayez.",
+      "unverified": "Le téléchargement est arrivé sans empreinte permettant de le vérifier, Darhai s'est donc arrêté au lieu de l'exécuter.",
+      "unpack": "Les fichiers ont été téléchargés mais n'ont pas pu être décompressés. Vérifiez qu'il reste de l'espace disque, puis réessayez.",
+      "archive": "Les fichiers téléchargés n'ont pas pu être lus en entier, Darhai ne les a donc pas utilisés. Réessayez.",
+      "incomplete": "Le téléchargement est allé au bout, mais une partie de ce dont Darhai a besoin n'était pas dedans. Réessayez plus tard.",
+      "unsupported": "Cet ordinateur ne peut pas exécuter de modèles en local : rien de compatible n'est publié. Les modèles dans le cloud fonctionnent toujours.",
+      "unknown": "La préparation des modèles locaux n'est pas allée au bout. Réessayez."
+    }
   }
 }

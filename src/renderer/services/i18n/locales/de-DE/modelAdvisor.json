@@ -92,5 +92,56 @@
       "ready": "Aktiv · :{{port}}",
       "error": "Fehlgeschlagen"
     }
+  },
+  "runtime": {
+    "disclose": "Darhai lädt dies einmalig herunter, damit Modelle auf diesem Computer laufen: {{size}}.",
+    "discloseNext": "Das Modell selbst ist ein eigener Download, der direkt danach startet.",
+    "sizeUnknown": "Größe nicht angegeben",
+    "confirm": "Herunterladen und starten",
+    "decline": "Jetzt nicht",
+    "retry": "Erneut versuchen",
+    "cancelNotYet": "Dieser Schritt lässt sich noch nicht abbrechen. Versuchen Sie es gleich noch einmal.",
+    "stage": {
+      "runtime": "Einrichtung",
+      "model": "Modell"
+    },
+    "phase": {
+      "resolving": "Wird vorbereitet",
+      "downloading": "Wird heruntergeladen",
+      "verifying": "Dateien werden geprüft",
+      "extracting": "Wird entpackt",
+      "installing": "Wird abgeschlossen",
+      "done": "Fertig"
+    },
+    "accel": {
+      "cuda": "Ihre NVIDIA-Grafikkarte wird genutzt, dadurch antworten Modelle schnell.",
+      "rocm": "Ihre AMD-Grafikkarte wird genutzt, dadurch antworten Modelle schnell.",
+      "metal": "Der Grafikchip dieses Mac wird genutzt, dadurch antworten Modelle schnell.",
+      "cpu": "Es läuft auf dem Prozessor. Das funktioniert, aber Antworten kommen viel langsamer als mit einer Grafikkarte."
+    },
+    "fallback": {
+      "METAL_NOT_ON_THIS_PLATFORM": "Apples Grafikbeschleunigung gibt es nur unter macOS, deshalb rechnet hier der Prozessor.",
+      "METAL_REQUIRES_APPLE_SILICON": "Apples Grafikbeschleunigung braucht einen Mac mit Apple-Chip, deshalb rechnet hier der Prozessor.",
+      "NO_GPU_BUILD_FOR_TARGET": "Für die Grafikkarte dieses Computers wird nichts veröffentlicht, deshalb rechnet der Prozessor.",
+      "CUDA_RUNTIME_UNAVAILABLE": "Die NVIDIA-Hilfsdateien fehlen sowohl auf diesem Computer als auch im Download, deshalb rechnet der Prozessor.",
+      "CUDA_DRIVER_TOO_OLD": "Der NVIDIA-Treiber dieses Computers ist zu alt für alles Veröffentlichte, deshalb rechnet der Prozessor. Ein Treiber-Update würde Modelle deutlich beschleunigen."
+    },
+    "note": {
+      "CUDA_LINE_OLDER_FOR_DRIVER": "Passend zum NVIDIA-Treiber dieses Computers wurde eine ältere Version gewählt. Mit aktuellem Treiber ginge eine neuere.",
+      "CUDA_LINE_UNVERIFIED": "Darhai konnte die NVIDIA-Treiberversion dieses Computers nicht auslesen und kann deshalb nicht zusichern, dass die Grafikkarte genutzt wird. Sind Modelle spürbar langsam, hilft meist ein Treiber-Update.",
+      "VULKAN_BUILD_NOT_REQUESTABLE": "Für diese Grafikkarte gibt es womöglich eine schnellere Möglichkeit, die Darhai noch nicht anfordern kann; deshalb laufen Modelle auf dem Prozessor."
+    },
+    "problem": {
+      "download": "Der Download brach vor dem Ende ab. Prüfen Sie die Verbindung und versuchen Sie es erneut; der bereits geladene Teil bleibt erhalten.",
+      "offline": "Darhai konnte den Download-Server nicht erreichen. Prüfen Sie die Verbindung und versuchen Sie es erneut.",
+      "server": "Der Download-Server antwortete mit etwas, das Darhai nicht lesen konnte. Versuchen Sie es später erneut.",
+      "damaged": "Die geladenen Dateien stimmten nicht mit ihren veröffentlichten Prüfsummen überein und wurden verworfen. Versuchen Sie es erneut.",
+      "unverified": "Zum Download gab es keine Prüfsumme, deshalb hat Darhai gestoppt, statt ihn auszuführen.",
+      "unpack": "Die Dateien wurden geladen, ließen sich aber nicht entpacken. Prüfen Sie, ob freier Speicherplatz vorhanden ist, und versuchen Sie es erneut.",
+      "archive": "Die geladenen Dateien ließen sich nicht vollständig lesen, deshalb hat Darhai sie nicht verwendet. Versuchen Sie es erneut.",
+      "incomplete": "Der Download war vollständig, aber ein Teil dessen, was Darhai braucht, war nicht enthalten. Versuchen Sie es später erneut.",
+      "unsupported": "Auf diesem Computer lassen sich Modelle nicht lokal ausführen, da nichts Passendes veröffentlicht wird. Cloud-Modelle funktionieren weiterhin.",
+      "unknown": "Die Einrichtung lokaler Modelle wurde nicht abgeschlossen. Versuchen Sie es erneut."
+    }
   }
 }

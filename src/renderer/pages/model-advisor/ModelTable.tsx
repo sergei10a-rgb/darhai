@@ -11,12 +11,15 @@ import type { ColumnProps } from '@arco-design/web-react/es/Table';
 import type { HwfitFitLevel, HwfitResult } from '@/common/types/hwfit';
 import CookbookServeControls from './CookbookServeControls';
 import type { CookbookController } from './useCookbookServe';
+import type { LlamaRuntimeUiController } from './useLlamaRuntime';
 import styles from './ModelAdvisor.module.css';
 
 type ModelTableProps = {
   results: HwfitResult[];
   loading: boolean;
   cookbook: CookbookController;
+  /** Shared across rows - there is one llama.cpp runtime per machine. */
+  runtime: LlamaRuntimeUiController;
 };
 
 /** Arco Tag color per fit level (semantic, not decorative). */
@@ -27,7 +30,7 @@ const FIT_COLOR: Record<HwfitFitLevel, string> = {
   too_tight: 'red',
 };
 
-const ModelTable: React.FC<ModelTableProps> = ({ results, loading, cookbook }) => {
+const ModelTable: React.FC<ModelTableProps> = ({ results, loading, cookbook, runtime }) => {
   const { t } = useTranslation();
 
   const columns = useMemo<ColumnProps<HwfitResult>[]>(
@@ -108,12 +111,17 @@ const ModelTable: React.FC<ModelTableProps> = ({ results, loading, cookbook }) =
       {
         title: t('modelAdvisor.cookbook.column'),
         dataIndex: 'ggufSources',
-        width: 260,
+        // Wider than the other action columns: this cell also carries the
+        // pre-download disclosure ("CPU build, 147 MB - no GPU build exists
+        // for this computer"), which must not be truncated into a lie.
+        width: 300,
         render: (_: unknown, row: HwfitResult) =>
-          row.ggufSources.length > 0 ? <CookbookServeControls modelId={row.name} controller={cookbook} /> : null,
+          row.ggufSources.length > 0 ? (
+            <CookbookServeControls modelId={row.name} controller={cookbook} runtime={runtime} />
+          ) : null,
       },
     ],
-    [t, cookbook]
+    [t, cookbook, runtime]
   );
 
   return (

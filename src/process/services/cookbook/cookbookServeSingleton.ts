@@ -23,11 +23,28 @@ import { LocalServeManager } from './LocalServeManager';
 import type { CookbookRegistryRepo } from './cookbookProviderRegistration';
 import { getCatalog, scanHardware } from '@process/services/hwfit';
 import type { HardwareProfile } from '@process/services/hwfit';
+import { llamaServerCandidates } from '@process/services/llamacpp';
 import { getModelRegistryRepository } from '@process/providers/ipc/modelRegistryIpc';
 
 /** Directory verified GGUF downloads live in (`userData/models/gguf`). */
 function ggufDir(): string {
   return path.join(app.getPath('userData'), 'models', 'gguf');
+}
+
+/**
+ * Absolute paths of Darhai's OWN `llama-server`, newest release first.
+ *
+ * This is the production wiring for `LocalServeManager`'s
+ * `llamaServerCandidates` dep, whose default is `() => []`. Without it the
+ * manager could only find a binary the user had put on PATH by hand, so
+ * `detectAvailability()` reported `llamaServer: false` on a machine where only
+ * Darhai was installed and the whole serve flow fell through to printing a
+ * shell command. Read fresh on every call - `llamaRuntime.install` can drop a
+ * binary in mid-session and the very next serve attempt must see it. Still
+ * `[]` when nothing is installed, so the degraded path is unchanged.
+ */
+function managedLlamaServers(): string[] {
+  return llamaServerCandidates(app.getPath('userData'));
 }
 
 /**
@@ -61,7 +78,7 @@ async function probeOllamaDaemon(): Promise<{ running: boolean; models: string[]
 
 export const cookbookServe = new CookbookServeService({
   downloadManager: new ModelDownloadManager(),
-  serveManager: new LocalServeManager(),
+  serveManager: new LocalServeManager({ llamaServerCandidates: managedLlamaServers }),
   getCatalog: () => getCatalog(),
   getRepo: () => getModelRegistryRepository() as CookbookRegistryRepo | null,
   getGgufDir: ggufDir,

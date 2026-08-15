@@ -43,6 +43,13 @@ export type CookbookController = {
   serve: (modelId: string, backend?: CookbookBackend) => Promise<void>;
   stopServe: () => Promise<void>;
   locateBackend: () => Promise<void>;
+  /**
+   * Re-probe which backends are installed. Call this after Darhai provisions
+   * its own llama.cpp: the SWR caches below were populated when no backend
+   * existed, so without a refresh the row would still think it must fall back
+   * to the copy-a-command path a moment after the binary landed.
+   */
+  refreshBackends: () => Promise<void>;
 };
 
 /**
@@ -139,6 +146,10 @@ export function useCookbookServe(): CookbookController {
     setServeStatus(status);
   }, []);
 
+  const refreshBackends = useCallback(async (): Promise<void> => {
+    await Promise.all([mutateBackend(), mutateSelection()]);
+  }, [mutateBackend, mutateSelection]);
+
   const locateBackend = useCallback(async (): Promise<void> => {
     const picked = await ipcBridge.dialog.showOpen.invoke({ properties: ['openFile'] });
     const path = picked?.[0];
@@ -164,5 +175,6 @@ export function useCookbookServe(): CookbookController {
     serve,
     stopServe,
     locateBackend,
+    refreshBackends,
   };
 }

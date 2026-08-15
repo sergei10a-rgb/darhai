@@ -14,9 +14,33 @@ import {
   LocalServeManager,
   buildServeCommand,
   ngpuLayersForVram,
+  parseServerCapabilities,
   type ChildProcessLike,
   type LocalServeDeps,
 } from '@process/services/cookbook/LocalServeManager';
+
+/**
+ * Verbatim excerpts from `llama-server.exe --help` of the build Darhai ships
+ * (llama.cpp b10441, measured on the reference machine). `--flash-attn` is
+ * included on purpose: it is the decoy that makes a naive "does the help text
+ * contain 'auto'" check report the wrong capability.
+ */
+const HELP_B10441 = [
+  "-fa,   --flash-attn <on|off|auto>       set Flash Attention use ('on', 'off', or 'auto', default: 'auto')",
+  '                                        (env: LLAMA_ARG_FLASH_ATTN)',
+  '--cors-origins ORIGINS                  comma-separated list of allowed origins for CORS (default: *)',
+  '                                        (env: LLAMA_ARG_CORS_ORIGINS)',
+  '-ngl,  --gpu-layers, --n-gpu-layers N   max. number of layers to store in VRAM, either an exact number,',
+  "                                        'auto', or 'all' (default: auto)",
+  '                                        (env: LLAMA_ARG_N_GPU_LAYERS)',
+].join('\n');
+
+/** A pre-`auto`, pre-`--cors-origins` llama-server: an exact number only. */
+const HELP_LEGACY = [
+  "-fa,   --flash-attn <on|off|auto>       set Flash Attention use ('on', 'off', or 'auto')",
+  '-ngl N, --n-gpu-layers N                number of layers to store in VRAM',
+  '--api-key KEY                           API key to use for authentication',
+].join('\n');
 
 /** A controllable fake child process. */
 class FakeChild implements ChildProcessLike {
@@ -61,6 +85,7 @@ const makeDeps = (over: Partial<LocalServeDeps> = {}): LocalServeDeps => ({
   llamaServerCandidates: () => [],
   env: () => ({}),
   readyTimeoutMs: 10000,
+  probeHelpText: () => HELP_B10441,
   ...over,
 });
 
@@ -77,6 +102,43 @@ describe('ngpuLayersForVram', () => {
   it('scales conservatively with VRAM and caps', () => {
     expect(ngpuLayersForVram(8)).toBe(24);
     expect(ngpuLayersForVram(9999)).toBe(999);
+  });
+});
+
+describe('parseServerCapabilities', () => {
+  it('reads both optional flags off the shipped build help text', () => {
+    expect(parseServerCapabilities(HELP_B10441)).toEqual({ autoGpuLayers: true, corsOrigins: true });
+  });
+
+  it('reports neither flag for a pre-auto llama-server', () => {
+    expect(parseServerCapabilities(HELP_LEGACY)).toEqual({ autoGpuLayers: false, corsOrigins: false });
+  });
+
+  it("does not count an 'auto' that belongs to a different option", () => {
+    // `--flash-attn ... 'auto'` sits BEFORE --n-gpu-layers in HELP_LEGACY, so a
+    // whole-text search would claim -ngl auto on a build that rejects it.
+    expect(HELP_LEGACY).toContain("'auto'");
+    expect(parseServerCapabilities(HELP_LEGACY).autoGpuLayers).toBe(false);
+  });
+
+  it("stops at the next option, so a later entry's 'auto' does not leak in", () => {
+    const next = [
+      '-ngl N, --n-gpu-layers N                number of layers to store in VRAM',
+      '                                        (env: LLAMA_ARG_N_GPU_LAYERS)',
+      "--spec-draft-ngl N                      an exact number, or 'auto'",
+    ].join('\n');
+    expect(parseServerCapabilities(next).autoGpuLayers).toBe(false);
+  });
+
+  it('does read an indented continuation line of the --n-gpu-layers entry', () => {
+    // b10441 puts 'auto' on the entry's SECOND line; a first-line-only check
+    // would report the capability as missing on the build Darhai ships.
+    expect(HELP_B10441.split('\n').find((l) => l.includes('--n-gpu-layers'))).not.toContain("'auto'");
+    expect(parseServerCapabilities(HELP_B10441).autoGpuLayers).toBe(true);
+  });
+
+  it('treats an unreadable probe as "no optional flags"', () => {
+    expect(parseServerCapabilities('')).toEqual({ autoGpuLayers: false, corsOrigins: false });
   });
 });
 
@@ -154,6 +216,103 @@ describe('LocalServeManager.startVllm', () => {
   it('rejects when no vllm binary is found', async () => {
     const mgr = new LocalServeManager(makeDeps({ resolveCommandPath: () => null }));
     await expect(mgr.startVllm({ hfRepo: 'org/Model' })).rejects.toThrow(/not found/);
+  });
+});
+
+describe('LocalServeManager.start GPU offload + CORS arguments', () => {
+  /** Spawn one llama-server and hand back the argv it was given. */
+  const argvForStart = async (
+    over: Partial<LocalServeDeps>,
+    opts: { ggufPath: string; ngl: number }
+  ): Promise<string[]> => {
+    const child = new FakeChild();
+    const spawn = vi.fn(() => child);
+    const mgr = new LocalServeManager(makeDeps({ spawn: spawn as unknown as LocalServeDeps['spawn'], ...over }));
+    const started = mgr.start(opts);
+    await tick();
+    child.emitStdout('server is listening\n');
+    await started;
+    return spawn.mock.calls[0][1] as unknown as string[];
+  };
+
+  it('delegates the layer count to llama.cpp when the build accepts -ngl auto', async () => {
+    // The shipped guess for an 8 GB card is 24. MEASURED on the reference
+    // machine (RTX 4070 Laptop 8 GB, b10441, real llama-server /completion,
+    // warm, median of three): Qwen2.5-0.5B 227.5 -> 299.4 tok/s and
+    // Qwen2.5-7B 29.1 -> 34.0, the latter while USING more of the card
+    // (6.6 -> 7.4 GiB) that the fixed count was leaving idle.
+    const args = await argvForStart({}, { ggufPath: '/m.gguf', ngl: ngpuLayersForVram(8) });
+    expect(args).toContain('--n-gpu-layers');
+    expect(args[args.indexOf('--n-gpu-layers') + 1]).toBe('auto');
+    expect(args).not.toContain('24');
+  });
+
+  it('keeps the numeric count for a llama-server build that has no auto', async () => {
+    const args = await argvForStart({ probeHelpText: () => HELP_LEGACY }, { ggufPath: '/m.gguf', ngl: 24 });
+    expect(args[args.indexOf('--n-gpu-layers') + 1]).toBe('24');
+  });
+
+  it('keeps a pure-CPU serve on the CPU even when auto is available', async () => {
+    // ngl 0 means "this host has no GPU budget" (or the user picked a CPU-only
+    // rig). `auto` would quietly start using a GPU that decision excluded.
+    const args = await argvForStart({}, { ggufPath: '/m.gguf', ngl: 0 });
+    expect(args[args.indexOf('--n-gpu-layers') + 1]).toBe('0');
+  });
+
+  it('restricts CORS to loopback origins when the build supports it', async () => {
+    // MEASURED against b10441: with the default `*`, an `Origin:
+    // https://evil.example` preflight to /v1/chat/completions came back with
+    // `Access-Control-Allow-Origin: https://evil.example` and
+    // `Access-Control-Allow-Credentials: true`; with `localhost` there was no
+    // allow-origin header at all.
+    const args = await argvForStart({}, { ggufPath: '/m.gguf', ngl: 24 });
+    expect(args).toContain('--cors-origins');
+    expect(args[args.indexOf('--cors-origins') + 1]).toBe('localhost');
+  });
+
+  it('omits --cors-origins on a build that would reject the flag', async () => {
+    const args = await argvForStart({ probeHelpText: () => HELP_LEGACY }, { ggufPath: '/m.gguf', ngl: 24 });
+    expect(args).not.toContain('--cors-origins');
+  });
+
+  it('probes a given binary --help at most once', async () => {
+    const probeHelpText = vi.fn(() => HELP_B10441);
+    const children = [new FakeChild(), new FakeChild()];
+    let n = 0;
+    const mgr = new LocalServeManager(
+      makeDeps({
+        probeHelpText,
+        spawn: () => children[n++],
+        allocatePort: vi.fn().mockResolvedValueOnce(51000).mockResolvedValueOnce(51001),
+      })
+    );
+
+    const first = mgr.start({ ggufPath: '/a.gguf', ngl: 24 });
+    await tick();
+    children[0].emitStdout('server is listening\n');
+    await first;
+
+    const second = mgr.start({ ggufPath: '/b.gguf', ngl: 24 });
+    await tick();
+    children[0].emitExit(0, null);
+    await tick();
+    children[1].emitStdout('server is listening\n');
+    await second;
+
+    expect(probeHelpText).toHaveBeenCalledTimes(1);
+  });
+
+  it('falls back to the numeric count when the probe itself throws', async () => {
+    const args = await argvForStart(
+      {
+        probeHelpText: () => {
+          throw new Error('EACCES');
+        },
+      },
+      { ggufPath: '/m.gguf', ngl: 24 }
+    );
+    expect(args[args.indexOf('--n-gpu-layers') + 1]).toBe('24');
+    expect(args).not.toContain('--cors-origins');
   });
 });
 

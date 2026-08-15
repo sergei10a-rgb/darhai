@@ -49,6 +49,22 @@ describe('parseNvidiaSmi', () => {
     // The name is stored verbatim as a string - never interpreted.
     expect(gpus[0].name).toBe('$(rm -rf /); evil');
   });
+
+  it('reads the driver version column', () => {
+    // Measured verbatim on the reference RTX 4070 box, 2026-08-15:
+    // `nvidia-smi --query-gpu=memory.total,name,driver_version --format=csv,noheader,nounits`
+    const gpus = parseNvidiaSmi('8188, NVIDIA GeForce RTX 4070 Laptop GPU, 610.62');
+    expect(gpus).toHaveLength(1);
+    expect(gpus[0].driverVersion).toBe('610.62');
+  });
+
+  it('reports an absent driver column as empty, never as a version', () => {
+    // Empty means NOT MEASURED, and the llama.cpp provisioner treats that
+    // differently from "old": it must not be read as clearance to install the
+    // newest CUDA build.
+    const gpus = parseNvidiaSmi('12282, NVIDIA GeForce RTX 4070');
+    expect(gpus[0].driverVersion).toBe('');
+  });
 });
 
 describe('isNvidiaDriverError', () => {
@@ -64,8 +80,8 @@ describe('isNvidiaDriverError', () => {
 describe('withIndices', () => {
   it('assigns sequential CUDA indices in row order', () => {
     const indexed = withIndices([
-      { name: 'A', vramGb: 24 },
-      { name: 'B', vramGb: 24 },
+      { name: 'A', vramGb: 24, driverVersion: '610.62' },
+      { name: 'B', vramGb: 24, driverVersion: '610.62' },
     ]);
     expect(indexed[0].index).toBe(0);
     expect(indexed[1].index).toBe(1);
@@ -113,6 +129,17 @@ describe('parseWindowsProbe', () => {
       JSON.stringify({ ram_gb: 16, gpu_name: 'Intel Iris', gpu_vram_gb: 2, gpu_count: 1, gpu_backend: 'cpu_x86' })
     );
     expect(info?.backend).toBe('cpu_x86');
+  });
+
+  it('carries the NVIDIA driver version through', () => {
+    const info = parseWindowsProbe(JSON.stringify({ ...JSON.parse(goodJson), gpu_driver: '610.62' }));
+    expect(info?.gpuDriverVersion).toBe('610.62');
+  });
+
+  it('reports a missing driver version as null, not as an empty version', () => {
+    // The WMI fallback path has no driver to report; null is what the CUDA-line
+    // decision reads as "not measured".
+    expect(parseWindowsProbe(goodJson)?.gpuDriverVersion).toBeNull();
   });
 });
 

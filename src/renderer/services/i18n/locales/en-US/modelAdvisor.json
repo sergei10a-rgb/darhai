@@ -92,5 +92,56 @@
       "ready": "Live · :{{port}}",
       "error": "Failed"
     }
+  },
+  "runtime": {
+    "disclose": "Darhai downloads this once so models can run on this computer: {{size}}.",
+    "discloseNext": "The model itself is a separate download that starts right after.",
+    "sizeUnknown": "size not stated",
+    "confirm": "Download and run",
+    "decline": "Not now",
+    "retry": "Try again",
+    "cancelNotYet": "This step cannot be stopped yet. Try again in a moment.",
+    "stage": {
+      "runtime": "Setup",
+      "model": "Model"
+    },
+    "phase": {
+      "resolving": "Getting ready",
+      "downloading": "Downloading",
+      "verifying": "Checking the files",
+      "extracting": "Unpacking",
+      "installing": "Finishing",
+      "done": "Done"
+    },
+    "accel": {
+      "cuda": "It will use your NVIDIA graphics card, so models answer quickly.",
+      "rocm": "It will use your AMD graphics card, so models answer quickly.",
+      "metal": "It will use this Mac's graphics chip, so models answer quickly.",
+      "cpu": "It will run on the processor. That works, but answers come much more slowly than with a graphics card."
+    },
+    "fallback": {
+      "METAL_NOT_ON_THIS_PLATFORM": "Apple's graphics acceleration exists only on macOS, so this computer uses the processor.",
+      "METAL_REQUIRES_APPLE_SILICON": "Apple's graphics acceleration needs an Apple-chip Mac, so this one uses the processor.",
+      "NO_GPU_BUILD_FOR_TARGET": "Nothing is published for this computer's graphics card, so it uses the processor.",
+      "CUDA_RUNTIME_UNAVAILABLE": "The NVIDIA support files are missing both from this computer and from the download, so it uses the processor.",
+      "CUDA_DRIVER_TOO_OLD": "This computer's NVIDIA driver is too old for anything published, so it uses the processor. Updating the graphics driver would make models much faster."
+    },
+    "note": {
+      "CUDA_LINE_OLDER_FOR_DRIVER": "An older version was chosen to match this computer's NVIDIA driver. Updating the driver would allow a newer one.",
+      "CUDA_LINE_UNVERIFIED": "Darhai could not read this computer's NVIDIA driver version, so it cannot promise the graphics card will be used. If models turn out slow, updating the graphics driver usually fixes it.",
+      "VULKAN_BUILD_NOT_REQUESTABLE": "There may be a faster option for this graphics card that Darhai cannot use yet, so models will run on the processor."
+    },
+    "problem": {
+      "download": "The download stopped before it finished. Check the connection and try again; the part that already arrived is kept.",
+      "offline": "Darhai could not reach the download server. Check the connection and try again.",
+      "server": "The download server answered with something Darhai could not read. Try again later.",
+      "damaged": "The downloaded files did not match their published fingerprints, so they were discarded. Try again.",
+      "unverified": "The download came with no fingerprint to check it against, so Darhai stopped instead of running it.",
+      "unpack": "The files downloaded but could not be unpacked. Check that there is free disk space, then try again.",
+      "archive": "The downloaded files could not be read in full, so Darhai did not use them. Try again.",
+      "incomplete": "The download finished, but part of what Darhai needs was not inside it. Try again later.",
+      "unsupported": "This computer cannot run models locally, because nothing is published that works on it. Cloud models still work.",
+      "unknown": "Setting up local models did not finish. Try again."
+    }
   }
 }

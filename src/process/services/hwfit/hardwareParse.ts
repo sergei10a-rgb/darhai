@@ -21,13 +21,22 @@ const MB_PER_GB = 1024;
 export type ParsedNvidiaGpu = {
   name: string;
   vramGb: number;
+  /**
+   * Installed driver version, e.g. "610.62". Empty when the probe did not
+   * report one — which is a DIFFERENT answer from "old": it decides which CUDA
+   * line llama.cpp is allowed to install, and an absent value must not be read
+   * as permission to install the newest one.
+   */
+  driverVersion: string;
 };
 
 /**
- * Parse `nvidia-smi --query-gpu=memory.total,name --format=csv,noheader,nounits`
- * output. Each line is "<mb>, <name>". Rows with a non-numeric memory value
- * (unified-memory parts report "[N/A]") are skipped here — the caller decides
- * how to treat a GPU list that came back empty.
+ * Parse `nvidia-smi --query-gpu=memory.total,name,driver_version
+ * --format=csv,noheader,nounits` output. Each line is "<mb>, <name>, <driver>".
+ * Rows with a non-numeric memory value (unified-memory parts report "[N/A]")
+ * are skipped here — the caller decides how to treat a GPU list that came back
+ * empty. The third column is optional: an older probe (or a caller that asked
+ * for two columns) still parses, with an empty driver version.
  */
 export function parseNvidiaSmi(output: string): ParsedNvidiaGpu[] {
   if (!output) return [];
@@ -41,7 +50,7 @@ export function parseNvidiaSmi(output: string): ParsedNvidiaGpu[] {
     if (!Number.isFinite(vramMb) || vramMb <= 0) continue;
     const name = parts[1];
     if (!name) continue;
-    gpus.push({ name, vramGb: vramMb / MB_PER_GB });
+    gpus.push({ name, vramGb: vramMb / MB_PER_GB, driverVersion: parts[2] || '' });
   }
   return gpus;
 }
@@ -73,6 +82,8 @@ export type ParsedWindowsInfo = {
   gpuVramGb: number | null;
   gpuCount: number;
   backend: HardwareBackend;
+  /** NVIDIA driver version, or null when the probe did not report one. */
+  gpuDriverVersion: string | null;
 };
 
 type RawWindowsJson = {
@@ -84,6 +95,7 @@ type RawWindowsJson = {
   gpu_vram_gb?: unknown;
   gpu_count?: unknown;
   gpu_backend?: unknown;
+  gpu_driver?: unknown;
 };
 
 function asNumber(value: unknown, fallback: number): number {
@@ -125,6 +137,7 @@ export function parseWindowsProbe(output: string): ParsedWindowsInfo | null {
     gpuVramGb: gpuName ? round1(asNumber(raw.gpu_vram_gb, 0)) : null,
     gpuCount: Math.max(0, Math.trunc(asNumber(raw.gpu_count, gpuName ? 1 : 0))),
     backend,
+    gpuDriverVersion: asString(raw.gpu_driver, '') || null,
   };
 }
 

@@ -41,7 +41,15 @@ const NVIDIA_PATH_CANDIDATES: readonly string[] = [
   '/usr/lib/wsl/lib/nvidia-smi',
 ];
 
-const NVIDIA_QUERY_ARGS = ['--query-gpu=memory.total,name', '--format=csv,noheader,nounits'];
+/**
+ * `driver_version` is queried alongside the memory/name pair because the
+ * llama.cpp provisioner has to choose between the CUDA 12.x and 13.x builds of
+ * the same release, and that choice is a driver fact: a 13.x build on a pre-580
+ * driver reports "Available devices: (none)", exits 0, and runs on the CPU.
+ * Measured on the reference box (2026-08-15): `8188, NVIDIA GeForce RTX 4070
+ * Laptop GPU, 610.62`. Same single spawn - one more column, no extra probe.
+ */
+const NVIDIA_QUERY_ARGS = ['--query-gpu=memory.total,name,driver_version', '--format=csv,noheader,nounits'];
 
 let cache: { ts: number; profile: HardwareProfile } | null = null;
 
@@ -104,6 +112,8 @@ type GpuDetection = {
   backend: HardwareBackend;
   gpuFamily?: string;
   unifiedMemory?: boolean;
+  /** NVIDIA driver version when the probe stated one, else null. */
+  gpuDriverVersion?: string | null;
 };
 
 /** Detect NVIDIA GPUs via nvidia-smi (PATH first, then absolute candidates). */
@@ -139,6 +149,7 @@ async function detectNvidia(): Promise<{ detection: GpuDetection | null; error: 
       gpuCount: gpus.length,
       gpus,
       backend: 'cuda',
+      gpuDriverVersion: parsed[0].driverVersion || null,
     },
     error: null,
   };
@@ -233,17 +244,22 @@ $cpu = Get-CimInstance Win32_Processor | Select-Object -First 1
 $r.cpu_name = $cpu.Name
 $r.cpu_cores = (Get-CimInstance Win32_Processor | Measure-Object -Property NumberOfLogicalProcessors -Sum).Sum
 try {
-  $nv = nvidia-smi --query-gpu=memory.total,name --format=csv,noheader,nounits 2>$null
+  $nv = nvidia-smi --query-gpu=memory.total,name,driver_version --format=csv,noheader,nounits 2>$null
   if ($LASTEXITCODE -eq 0 -and $nv) {
     $gpus = @()
     foreach ($line in $nv -split "\`n") {
       $p = $line -split ','
-      if ($p.Count -ge 2) { $gpus += [pscustomobject]@{name = $p[1].Trim(); vram_mb = [double]$p[0].Trim() } }
+      if ($p.Count -ge 2) {
+        $drv = ''
+        if ($p.Count -ge 3) { $drv = $p[2].Trim() }
+        $gpus += [pscustomobject]@{name = $p[1].Trim(); vram_mb = [double]$p[0].Trim(); driver = $drv }
+      }
     }
     $r.gpu_name = $gpus[0].name
     $r.gpu_vram_gb = [math]::Round(($gpus | Measure-Object -Property vram_mb -Sum).Sum / 1024, 1)
     $r.gpu_count = $gpus.Count
     $r.gpu_backend = 'cuda'
+    $r.gpu_driver = $gpus[0].driver
   }
 } catch {}
 if (-not $r.gpu_name) {
@@ -295,6 +311,7 @@ async function detectWindows(): Promise<HardwareProfile | null> {
     backend: parsed.backend,
     platform: 'windows',
     gpuError: null,
+    gpuDriverVersion: parsed.gpuDriverVersion,
   };
 }
 
@@ -398,6 +415,7 @@ function fromGpuDetection(gpu: GpuDetection): HardwareProfile {
     gpuFamily: gpu.gpuFamily,
     unifiedMemory: gpu.unifiedMemory,
     gpuError: null,
+    gpuDriverVersion: gpu.gpuDriverVersion === undefined ? null : gpu.gpuDriverVersion,
   };
 }
 

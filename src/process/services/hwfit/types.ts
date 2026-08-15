@@ -111,6 +111,13 @@ export type HardwareProfile = {
    */
   gpuError?: string | null;
   /**
+   * Installed NVIDIA driver version, exactly as nvidia-smi prints it (e.g.
+   * "610.62"), or null when nothing measured one. Not used for ranking: it
+   * decides which CUDA line the llama.cpp provisioner may install, because a
+   * CUDA 13.x build on a pre-580 driver falls back to the CPU without saying so.
+   */
+  gpuDriverVersion?: string | null;
+  /**
    * When true, the ranker scores models that must fit ON the GPU(s) only,
    * zeroing the CPU-offload budget. Set by the UI when the user picks an
    * explicit GPU config (simulated rig) rather than "use my RAM too".

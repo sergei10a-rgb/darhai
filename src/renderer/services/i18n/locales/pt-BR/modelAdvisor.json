@@ -92,5 +92,56 @@
       "ready": "Ativo · :{{port}}",
       "error": "Falhou"
     }
+  },
+  "runtime": {
+    "disclose": "O Darhai baixa isto uma única vez para que os modelos rodem neste computador: {{size}}.",
+    "discloseNext": "O modelo em si é um download separado, que começa logo depois.",
+    "sizeUnknown": "tamanho não informado",
+    "confirm": "Baixar e executar",
+    "decline": "Agora não",
+    "retry": "Tentar de novo",
+    "cancelNotYet": "Esta etapa ainda não pode ser interrompida. Tente de novo daqui a pouco.",
+    "stage": {
+      "runtime": "Instalação",
+      "model": "Modelo"
+    },
+    "phase": {
+      "resolving": "Preparando",
+      "downloading": "Baixando",
+      "verifying": "Conferindo os arquivos",
+      "extracting": "Descompactando",
+      "installing": "Concluindo",
+      "done": "Pronto"
+    },
+    "accel": {
+      "cuda": "Vai usar sua placa de vídeo NVIDIA, então os modelos respondem rápido.",
+      "rocm": "Vai usar sua placa de vídeo AMD, então os modelos respondem rápido.",
+      "metal": "Vai usar o chip gráfico deste Mac, então os modelos respondem rápido.",
+      "cpu": "Vai rodar no processador. Funciona, mas as respostas demoram bem mais do que com uma placa de vídeo."
+    },
+    "fallback": {
+      "METAL_NOT_ON_THIS_PLATFORM": "A aceleração gráfica da Apple só existe no macOS, então aqui quem trabalha é o processador.",
+      "METAL_REQUIRES_APPLE_SILICON": "A aceleração gráfica da Apple precisa de um Mac com chip Apple, então aqui quem trabalha é o processador.",
+      "NO_GPU_BUILD_FOR_TARGET": "Não se publica nada para a placa de vídeo deste computador, então quem trabalha é o processador.",
+      "CUDA_RUNTIME_UNAVAILABLE": "Os arquivos de apoio da NVIDIA não estão nem neste computador nem no download, então quem trabalha é o processador.",
+      "CUDA_DRIVER_TOO_OLD": "O driver NVIDIA deste computador é antigo demais para tudo o que é publicado, então quem trabalha é o processador. Atualizar o driver de vídeo deixaria os modelos bem mais rápidos."
+    },
+    "note": {
+      "CUDA_LINE_OLDER_FOR_DRIVER": "Foi escolhida uma versão mais antiga para combinar com o driver NVIDIA deste computador. Com o driver atualizado caberia uma mais nova.",
+      "CUDA_LINE_UNVERIFIED": "O Darhai não conseguiu ler a versão do driver NVIDIA deste computador, então não pode prometer que a placa de vídeo será usada. Se os modelos ficarem lentos, atualizar o driver de vídeo costuma resolver.",
+      "VULKAN_BUILD_NOT_REQUESTABLE": "Pode existir uma opção mais rápida para esta placa de vídeo que o Darhai ainda não sabe pedir, então os modelos vão rodar no processador."
+    },
+    "problem": {
+      "download": "O download parou antes de terminar. Verifique a conexão e tente de novo; a parte que já chegou fica guardada.",
+      "offline": "O Darhai não conseguiu alcançar o servidor de download. Verifique a conexão e tente de novo.",
+      "server": "O servidor de download respondeu algo que o Darhai não conseguiu ler. Tente mais tarde.",
+      "damaged": "Os arquivos baixados não bateram com as impressões digitais publicadas e foram descartados. Tente de novo.",
+      "unverified": "O download veio sem uma impressão digital para conferir, então o Darhai parou em vez de executá-lo.",
+      "unpack": "Os arquivos baixaram, mas não deu para descompactar. Verifique se há espaço livre em disco e tente de novo.",
+      "archive": "Os arquivos baixados não puderam ser lidos por inteiro, então o Darhai não os usou. Tente de novo.",
+      "incomplete": "O download terminou, mas parte do que o Darhai precisa não estava dentro. Tente mais tarde.",
+      "unsupported": "Este computador não consegue rodar modelos localmente, porque não se publica nada compatível. Modelos na nuvem continuam funcionando.",
+      "unknown": "A preparação dos modelos locais não terminou. Tente de novo."
+    }
   }
 }

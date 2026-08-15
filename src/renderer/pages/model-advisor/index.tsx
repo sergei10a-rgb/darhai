@@ -10,6 +10,7 @@ import { Cpu } from 'lucide-react';
 import PageShell from '@/renderer/components/layout/PageShell';
 import { useModelAdvisor } from './useModelAdvisor';
 import { useCookbookServe } from './useCookbookServe';
+import { useLlamaRuntime } from './useLlamaRuntime';
 import HardwarePanel from './HardwarePanel';
 import AdvisorToolbar from './AdvisorToolbar';
 import ModelTable from './ModelTable';
@@ -36,6 +37,8 @@ const ModelAdvisorPage: React.FC = () => {
     rescan,
   } = useModelAdvisor();
   const cookbook = useCookbookServe();
+  // One runtime per machine, so it is subscribed once here rather than per row.
+  const runtime = useLlamaRuntime();
 
   const [gpuOnly, setGpuOnly] = useState(true);
   const [rescanning, setRescanning] = useState(false);
@@ -96,7 +99,7 @@ const ModelAdvisorPage: React.FC = () => {
           <span className={styles.emptyHint}>{t('modelAdvisor.empty.hint')}</span>
         </div>
       ) : (
-        <ModelTable results={results} loading={rankLoading} cookbook={cookbook} />
+        <ModelTable results={results} loading={rankLoading} cookbook={cookbook} runtime={runtime} />
       )}
 
       <div className={styles.footer}>

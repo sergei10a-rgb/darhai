@@ -92,5 +92,56 @@
       "ready": "執行中 · :{{port}}",
       "error": "失敗"
     }
+  },
+  "runtime": {
+    "disclose": "Darhai 只需下載一次，之後模型就能在這台電腦上執行：{{size}}。",
+    "discloseNext": "模型本身是另一個下載，緊接著開始。",
+    "sizeUnknown": "未說明大小",
+    "confirm": "下載並執行",
+    "decline": "暫不",
+    "retry": "重試",
+    "cancelNotYet": "這一步暫時還停不下來，請稍後再試一次。",
+    "stage": {
+      "runtime": "安裝",
+      "model": "模型"
+    },
+    "phase": {
+      "resolving": "準備中",
+      "downloading": "下載中",
+      "verifying": "檢查檔案中",
+      "extracting": "解壓縮中",
+      "installing": "收尾中",
+      "done": "完成"
+    },
+    "accel": {
+      "cuda": "將使用你的 NVIDIA 顯示卡，因此模型回答很快。",
+      "rocm": "將使用你的 AMD 顯示卡，因此模型回答很快。",
+      "metal": "將使用這台 Mac 的圖形晶片，因此模型回答很快。",
+      "cpu": "將由處理器執行。可以用，但回答比用顯示卡慢得多。"
+    },
+    "fallback": {
+      "METAL_NOT_ON_THIS_PLATFORM": "蘋果的圖形加速只存在於 macOS，所以這裡由處理器執行。",
+      "METAL_REQUIRES_APPLE_SILICON": "蘋果的圖形加速需要蘋果自研晶片的 Mac，所以這台由處理器執行。",
+      "NO_GPU_BUILD_FOR_TARGET": "沒有為這台電腦的顯示卡發布任何版本，所以由處理器執行。",
+      "CUDA_RUNTIME_UNAVAILABLE": "這台電腦裡和下載檔裡都沒有 NVIDIA 的搭配檔案，所以由處理器執行。",
+      "CUDA_DRIVER_TOO_OLD": "這台電腦的 NVIDIA 驅動程式比所有已發布的版本都舊，所以由處理器執行。更新顯示卡驅動程式會讓模型快很多。"
+    },
+    "note": {
+      "CUDA_LINE_OLDER_FOR_DRIVER": "為配合這台電腦的 NVIDIA 驅動程式，選用了較舊的版本。更新驅動程式後可以用較新的版本。",
+      "CUDA_LINE_UNVERIFIED": "Darhai 讀不到這台電腦的 NVIDIA 驅動程式版本，因此無法保證會用上顯示卡。如果模型明顯偏慢，更新顯示卡驅動程式通常就能解決。",
+      "VULKAN_BUILD_NOT_REQUESTABLE": "這張顯示卡可能有更快的選擇，但 Darhai 目前還無法要求，所以模型會在處理器上執行。"
+    },
+    "problem": {
+      "download": "下載還沒完成就中斷了。請檢查連線後重試；已經下載好的部分會保留。",
+      "offline": "Darhai 連不上下載伺服器。請檢查連線後重試。",
+      "server": "下載伺服器回傳了 Darhai 讀不懂的內容。請稍後重試。",
+      "damaged": "下載的檔案與公布的檢查指紋不符，已捨棄。請重試。",
+      "unverified": "這次下載沒有附上可供檢查的指紋，Darhai 選擇停下而不是執行它。",
+      "unpack": "檔案下載好了但解壓縮失敗。請確認磁碟還有空間，然後重試。",
+      "archive": "下載的檔案無法完整讀取，Darhai 沒有使用它們。請重試。",
+      "incomplete": "下載完成了，但 Darhai 需要的東西少了一部分。請稍後重試。",
+      "unsupported": "這台電腦無法在本機執行模型，因為沒有發布適用於它的版本。雲端模型仍然可用。",
+      "unknown": "本機模型的準備沒有完成。請重試。"
+    }
   }
 }

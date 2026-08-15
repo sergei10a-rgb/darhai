@@ -171,6 +171,14 @@ const REMOTE_DENIED_PREFIXES: readonly string[] = [
   // renderer-local Model Advisor UI is unaffected; only remote WS callers are
   // blocked (matches how hwfit.* is denied wholesale).
   'cookbook.',
+  // Darhai's own llama.cpp runtime. `llamaRuntime.install` DOWNLOADS AN
+  // EXECUTABLE from a release feed and the cookbook serve path then SPAWNS it -
+  // remote-reachable arbitrary-binary install + exec, the worst class on this
+  // bridge, so the whole namespace is denied rather than just the write verbs.
+  // `plan` goes too (it makes the host reach the network on a remote caller's
+  // say-so), and so does `status` (it discloses host install paths and which
+  // release is on disk). The local Model Advisor is unaffected.
+  'llamaRuntime.',
 ];
 // Note: fs provider keys are registered WITHOUT an `fs.` prefix on the wire
 // (e.g. `write-file`, `remove-entry`), so the dangerous fs surface is enumerated
