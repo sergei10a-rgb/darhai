@@ -163,10 +163,19 @@ test.describe('Mongolian text fit: model advisor', () => {
     // This block photographs the advisor's own layout, so the built app has to
     // BE that layout: without this a CSS fix would look green while the running
     // renderer still carried the clipped table.
+    // `useCookbookServe.ts` and the Mongolian bundle are watched for the same
+    // reason as the three layout files: they change what is IN the action cell.
+    // The hook decides how many backends the chooser offers (one tag, or a
+    // Select that grew a third option when LM Studio joined), and the locale
+    // file supplies every word measured here - including the backend names,
+    // which are Latin brand strings sitting inside Mongolian copy in the
+    // narrowest column of the widest table in the app.
     assertBundleShowsSource([
       'src/renderer/pages/model-advisor/ModelTable.tsx',
       'src/renderer/pages/model-advisor/ModelAdvisor.module.css',
       'src/renderer/pages/model-advisor/CookbookServeControls.tsx',
+      'src/renderer/pages/model-advisor/useCookbookServe.ts',
+      'src/renderer/services/i18n/locales/mn-MN/modelAdvisor.json',
     ]);
     await setContentSize(visual.app, VIEWPORT);
     await gotoHash(visual.page, '#/model-advisor');

@@ -18,6 +18,10 @@
  *     port; GPU layers scale to the detected VRAM (0 = pure CPU).
  *   - `ollama`       -> {@link pullOllama} (`ollama pull`); the served model
  *     flows through the EXISTING keyless ollama-local provider (no spawn here).
+ *   - `lm-studio`    -> nothing is spawned at all: the user's own LM Studio is
+ *     already serving on loopback, so {@link detectAvailability} only reports
+ *     whether it is INSTALLED and whether it is SERVING (two facts, because
+ *     Darhai does not own that process - see {@link resolveLmStudioCli}).
  *   - none installed -> the caller falls back to the copy-command path built by
  *     {@link buildServeCommand}.
  *
@@ -46,6 +50,7 @@ import { promisify } from 'node:util';
 import { getEnhancedEnv } from '@process/utils/shellEnv';
 import type { CookbookBackend } from '@/common/types/cookbook';
 import type { BackendAvailability } from './backendPolicy';
+import { defaultLmStudioCliCandidates, defaultLmStudioServingProbe, LM_STUDIO_CLI_BINARIES } from './lmStudioDetect';
 
 /** Minimal child-process surface the manager relies on (test-substitutable). */
 export type ChildProcessLike = {
@@ -83,6 +88,33 @@ export type LocalServeDeps = {
    * reports `llamaServer: true` from {@link detectAvailability}.
    */
   llamaServerCandidates: () => string[];
+  /**
+   * Absolute candidate paths for LM Studio's `lms` CLI.
+   *
+   * Unlike {@link llamaServerCandidates} this DOES default to the real list
+   * ({@link defaultLmStudioCliCandidates}), because LM Studio lives under the
+   * user's home rather than under Darhai's Electron `userData` - so there is
+   * nothing production would have to remember to inject, and therefore no way
+   * to ship the silent "reports false on a machine that has it" bug that the
+   * llama.cpp candidate wiring once shipped.
+   *
+   * A TEST that constructs a bare manager must override this, or a developer
+   * box with LM Studio installed will answer differently from CI.
+   */
+  lmStudioCliCandidates: () => string[];
+  /**
+   * Is LM Studio's loopback server answering right now?
+   *
+   * Real network I/O by default, and cheap enough to sit on the availability
+   * path: MEASURED on the reference machine, a `fetch` to a closed loopback
+   * port rejects in 0.7-2.4 ms (three runs), versus 38.6 ms cold / 4.5 ms warm
+   * against the live server. The machine that must not be taxed - one without
+   * LM Studio - pays a connection refusal, not a timeout.
+   *
+   * Same test warning as {@link lmStudioCliCandidates}: override it, or a
+   * developer running LM Studio gets a different answer than CI.
+   */
+  lmStudioServingProbe: () => Promise<boolean>;
   /** Enhanced child-process environment. */
   env: () => Record<string, string>;
   /** Readiness timeout fallback (ms). */
@@ -382,6 +414,8 @@ export class LocalServeManager extends EventEmitter {
       healthProbe: defaultHealthProbe,
       resolveCommandPath: (cmd) => resolveOnPath(cmd),
       llamaServerCandidates: () => [],
+      lmStudioCliCandidates: defaultLmStudioCliCandidates,
+      lmStudioServingProbe: defaultLmStudioServingProbe,
       env: () => getEnhancedEnv() as Record<string, string>,
       readyTimeoutMs: DEFAULT_READY_TIMEOUT_MS,
       probeHelpText: defaultProbeHelpText,
@@ -474,13 +508,46 @@ export class LocalServeManager extends EventEmitter {
     return null;
   }
 
-  /** Report which local backend binaries are installed (hardware-agnostic). */
+  /**
+   * Resolve LM Studio's `lms` CLI: PATH first, then the home-dir candidates.
+   *
+   * Same two-step shape as {@link resolveLlamaServer}, and it needs the second
+   * step for the same kind of reason: LM Studio only puts `lms` on PATH when
+   * the user runs `lms bootstrap`, so PATH alone would report "no LM Studio" on
+   * plenty of machines that have it. Both name spellings are tried at each
+   * step - MEASURED on the reference machine, `~/.lmstudio/bin` WAS on PATH and
+   * the bare name `lms` still failed to resolve, because the directory holds
+   * only `lms.exe`.
+   */
+  resolveLmStudioCli(): string | null {
+    for (const name of LM_STUDIO_CLI_BINARIES) {
+      const found = this.deps.resolveCommandPath(name);
+      if (found) return found;
+    }
+    for (const candidate of this.deps.lmStudioCliCandidates()) {
+      const found = this.deps.resolveCommandPath(candidate);
+      if (found) return found;
+    }
+    return null;
+  }
+
+  /**
+   * Report what each local backend can do on this host (hardware-agnostic).
+   *
+   * LM Studio contributes TWO flags, because Darhai does not spawn it: its
+   * server is started by a person in a GUI app, so "installed" and "serving"
+   * are separate facts and a host can be the first without being the second.
+   * See {@link BackendAvailability}.
+   */
   async detectAvailability(): Promise<BackendAvailability> {
     const ollama = OLLAMA_BINARIES.some((n) => !!this.deps.resolveCommandPath(n));
+    const lmStudioServing = await this.deps.lmStudioServingProbe();
     return {
       ollama,
       llamaServer: !!this.resolveLlamaServer(),
       vllm: !!this.resolveVllm(),
+      lmStudioServing,
+      lmStudioInstalled: !!this.resolveLmStudioCli(),
     };
   }
 

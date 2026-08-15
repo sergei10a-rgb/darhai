@@ -18,18 +18,22 @@
 
 import { ipcBridge } from '@/common';
 import { cookbookServe } from '@process/services/cookbook/cookbookServeSingleton';
+import { COOKBOOK_BACKENDS } from '@/common/types/cookbook';
 import type { CookbookBackend, CookbookDownloadInfo, CookbookServeStatus } from '@/common/types/cookbook';
 
 /** Cap on any single id / path string handed across the boundary (chars). */
 const MAX_ID_LEN = 512;
 
-/** The set of accepted backend-override values (untrusted renderer input). */
-const VALID_BACKENDS: ReadonlySet<CookbookBackend> = new Set<CookbookBackend>([
-  'ollama',
-  'llama-server',
-  'vllm',
-  'none',
-]);
+/**
+ * The set of accepted backend-override values (untrusted renderer input).
+ *
+ * BUILT FROM the union's own runtime array rather than re-listing it. A `Set`
+ * literal is not exhaustive-checked by tsc, so a hand-written copy is a
+ * duplicate that can silently fall behind: `lm-studio` would have type-checked,
+ * linted and passed every existing test while the validator quietly rewrote the
+ * user's choice to `undefined` and served through the hardware default instead.
+ */
+const VALID_BACKENDS: ReadonlySet<CookbookBackend> = new Set<CookbookBackend>(COOKBOOK_BACKENDS);
 
 /** A trimmed string capped at {@link MAX_ID_LEN}, or empty when not a string. */
 function safeId(value: unknown): string {

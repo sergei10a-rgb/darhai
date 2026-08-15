@@ -7,6 +7,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   isLlamaServerProvisionable,
+  isLmStudioProvisionable,
+  isLmStudioViable,
   isVllmViable,
   selectBackend,
   VLLM_MIN_VRAM_GB,
@@ -18,6 +20,8 @@ const availability = (over: Partial<BackendAvailability> = {}): BackendAvailabil
   ollama: false,
   llamaServer: false,
   vllm: false,
+  lmStudioServing: false,
+  lmStudioInstalled: false,
   ...over,
 });
 
@@ -138,6 +142,126 @@ describe('selectBackend: llama.cpp is offerable because Darhai ships it', () => 
     const sel = selectBackend(input({ available: availability({ ollama: true }), canProvisionLlamaServer: false }));
     expect(sel.provisionable).toEqual([]);
     expect(sel.viable).toEqual(['ollama']);
+  });
+});
+
+/**
+ * LM Studio: one of the two runtimes the product owner names by hand.
+ *
+ * "someone who knows Ollama or LM Studio must be able to connect those" - and
+ * until now a machine with LM Studio serving eight models on 1234 got none of
+ * them: not in the union, not in availability, not probed. The two-flag shape
+ * is what makes the answer honest, because Darhai does not own that process:
+ * "LM Studio is here" and "LM Studio is answering" are different facts, and the
+ * middle case (here, but its server off) is a real machine that must be offered
+ * something other than "install LM Studio".
+ */
+describe('isLmStudioViable / isLmStudioProvisionable', () => {
+  it('is viable when the server answers, whatever the CLI search found', () => {
+    // Serving without an `lms` on disk is a REAL host: a portable or relocated
+    // install. It can serve, so it is viable - the CLI only buys "start it".
+    expect(isLmStudioViable(input({ available: availability({ lmStudioServing: true }) }))).toBe(true);
+    expect(
+      isLmStudioViable(input({ available: availability({ lmStudioServing: true, lmStudioInstalled: true }) }))
+    ).toBe(true);
+  });
+
+  it('is not viable when installed but not serving', () => {
+    expect(isLmStudioViable(input({ available: availability({ lmStudioInstalled: true }) }))).toBe(false);
+  });
+
+  it('is provisionable only when installed AND not already serving', () => {
+    expect(isLmStudioProvisionable(input({ available: availability({ lmStudioInstalled: true }) }))).toBe(true);
+    // Already serving: it belongs in `viable`, and a backend is never in both.
+    expect(
+      isLmStudioProvisionable(input({ available: availability({ lmStudioInstalled: true, lmStudioServing: true }) }))
+    ).toBe(false);
+    // Not installed: there is no `lms` to run, so "start it" cannot be offered.
+    expect(isLmStudioProvisionable(input({ available: availability({ lmStudioServing: true }) }))).toBe(false);
+    expect(isLmStudioProvisionable(input({ available: availability() }))).toBe(false);
+  });
+});
+
+describe('selectBackend: LM Studio in the chooser', () => {
+  it('a Windows box whose ONLY runtime is LM Studio serving -> lm-studio is chosen', () => {
+    const sel = selectBackend(
+      input({
+        platform: 'windows',
+        hwBackend: 'cuda',
+        vramGb: 8,
+        available: availability({ lmStudioServing: true, lmStudioInstalled: true }),
+      })
+    );
+    // The whole point: this host used to produce `chosen: 'none', viable: []`.
+    expect(sel.chosen).toBe('lm-studio');
+    expect(sel.viable).toEqual(['lm-studio']);
+    // Already usable, so it is not ALSO offered as something to start.
+    expect(sel.provisionable).toEqual(['llama-server']);
+  });
+
+  it('LM Studio installed but its server off -> provisionable, never viable', () => {
+    const sel = selectBackend(
+      input({ platform: 'windows', hwBackend: 'cuda', vramGb: 8, available: availability({ lmStudioInstalled: true }) })
+    );
+    expect(sel.viable).toEqual([]);
+    expect(sel.chosen).toBe('none');
+    // Ranked the same way `viable` is, so the concatenated chooser reads as one
+    // ordered list.
+    expect(sel.provisionable).toEqual(['lm-studio', 'llama-server']);
+  });
+
+  it('no LM Studio at all is a DIFFERENT host from one with its server off', () => {
+    const off = selectBackend(input({ available: availability({ lmStudioInstalled: true }) }));
+    const absent = selectBackend(input({ available: availability() }));
+    expect(off.provisionable).toContain('lm-studio');
+    expect(absent.provisionable).not.toContain('lm-studio');
+  });
+
+  /**
+   * Placement, asserted rather than described. LM Studio ranks below ollama
+   * because this selector serves a model the user picked from Darhai's catalog
+   * and ollama can go GET that model (`ollama pull hf.co/<repo>:<quant>`) while
+   * LM Studio serves only what it already holds - and because ollama is a
+   * background service while LM Studio's server lives inside a GUI app the user
+   * can close. It ranks above llama-server because a server already answering
+   * beats one Darhai must download a GGUF for and spawn.
+   */
+  it('ranks vllm > ollama > lm-studio > llama-server', () => {
+    const sel = selectBackend(
+      input({
+        vramGb: 24,
+        available: availability({ vllm: true, ollama: true, lmStudioServing: true, llamaServer: true }),
+      })
+    );
+    expect(sel.viable).toEqual(['vllm', 'ollama', 'lm-studio', 'llama-server']);
+    expect(sel.chosen).toBe('vllm');
+    expect(sel.provisionable).toEqual([]);
+  });
+
+  it('defaults to ollama over LM Studio, but still offers LM Studio', () => {
+    const sel = selectBackend(
+      input({
+        platform: 'windows',
+        hwBackend: 'cuda',
+        vramGb: 8,
+        available: availability({ ollama: true, lmStudioServing: true }),
+      })
+    );
+    expect(sel.chosen).toBe('ollama');
+    expect(sel.viable).toEqual(['ollama', 'lm-studio']);
+  });
+
+  it('prefers LM Studio over a llama-server Darhai would have to spawn', () => {
+    const sel = selectBackend(
+      input({
+        platform: 'windows',
+        hwBackend: 'cuda',
+        vramGb: 8,
+        available: availability({ lmStudioServing: true, llamaServer: true }),
+      })
+    );
+    expect(sel.chosen).toBe('lm-studio');
+    expect(sel.viable).toEqual(['lm-studio', 'llama-server']);
   });
 });
 

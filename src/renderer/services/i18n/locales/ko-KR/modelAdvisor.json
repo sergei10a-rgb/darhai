@@ -83,8 +83,15 @@
     "backend": {
       "vllm": "vLLM",
       "ollama": "Ollama",
+      "lmStudio": "LM Studio",
       "llamaServer": "llama.cpp",
       "none": "없음"
+    },
+    "lmStudio": {
+      "off": "이 컴퓨터에 LM Studio가 설치되어 있지만 로컬 서버가 실행 중이 아닙니다. LM Studio에서 로컬 서버를 시작한 뒤 계속을 누르세요.",
+      "stillOff": "LM Studio의 로컬 서버가 아직 응답하지 않습니다. LM Studio가 열려 있고 로컬 서버가 시작되었는지 확인한 뒤 계속을 누르세요.",
+      "checkFailed": "LM Studio의 로컬 서버가 실행 중인지 Darhai가 확인하지 못했습니다. 계속을 눌러 다시 시도하세요.",
+      "continue": "계속"
     },
     "status": {
       "downloading": "다운로드 중",

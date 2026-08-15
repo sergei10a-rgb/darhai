@@ -40,6 +40,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type {
+  CookbookBackendSelection,
   CookbookDownloadInfo,
   CookbookDownloadProgress,
   CookbookServeStatus,
@@ -90,6 +91,7 @@ vi.mock('../../../src/renderer/services/FileService', () => ({
 import CookbookServeControls, {
   ACCEL_LABEL_KEY,
   FALLBACK_LABEL_KEY,
+  LM_STUDIO_PROMPT_KEY,
   NOTE_LABEL_KEY,
   PHASE_LABEL_KEY,
   PROBLEM_KEY,
@@ -166,10 +168,15 @@ function progressAt(over: Partial<LlamaRuntimeProgress>): LlamaRuntimeProgress {
 
 /** A host with NO backend installed - the machine this whole feature is for. */
 function makeCookbook(over: Partial<CookbookController> = {}): CookbookController {
+  // A bare machine: nothing installed, and Darhai's own llama.cpp installable.
+  const selection: CookbookBackendSelection = over.selection ?? {
+    chosen: 'none',
+    viable: [],
+    provisionable: ['llama-server'],
+  };
   return {
     backend: 'none',
-    // A bare machine: nothing installed, and Darhai's own llama.cpp installable.
-    selection: { chosen: 'none', viable: [], provisionable: ['llama-server'] },
+    selection,
     serveStatus: IDLE_SERVE,
     downloads: {},
     progress: {},
@@ -178,7 +185,10 @@ function makeCookbook(over: Partial<CookbookController> = {}): CookbookControlle
     serve: vi.fn(async () => undefined),
     stopServe: vi.fn(async () => undefined),
     locateBackend: vi.fn(async () => undefined),
-    refreshBackends: vi.fn(async () => undefined),
+    // A re-probe that finds exactly what was already there is the honest
+    // default. Tests where the probe is supposed to DISCOVER something - the
+    // user started LM Studio's server between the two calls - override it.
+    refreshBackends: vi.fn(async () => selection),
     ...over,
   };
 }
@@ -1182,5 +1192,385 @@ describe('a host that already has a backend can still choose Darhai own runtime'
     await waitFor(() => expect(cookbook.serve).toHaveBeenCalledWith(MODEL, 'ollama'));
     expect(runtime.fetchPlan).not.toHaveBeenCalled();
     expect(runtime.install).not.toHaveBeenCalled();
+  });
+});
+
+/** `modelAdvisor.cookbook.*` lookup, for the LM Studio blocks below. */
+function lookupCookbook(locale: string, key: string): unknown {
+  const file = join(LOCALES_DIR, locale, 'modelAdvisor.json');
+  let node: unknown = JSON.parse(readFileSync(file, 'utf-8'));
+  for (const part of `cookbook.${key}`.split('.')) {
+    node = node && typeof node === 'object' ? (node as Record<string, unknown>)[part] : undefined;
+  }
+  return node;
+}
+
+/**
+ * LM Studio: the other tool the user may already have, and the one Darhai
+ * cannot start for them.
+ *
+ * The product rule is that anyone who knows Ollama or LM Studio connects it by
+ * name, and that shipping llama.cpp inside Darhai is only for the machine with
+ * NEITHER. LM Studio was missing from the backend union entirely, so a host
+ * with its server up and eight models on disk - measured, this one - was
+ * offered none of them.
+ *
+ * What makes it different from the other three, and what everything below is
+ * about: Darhai does not spawn it. Its server is started by a person in a GUI
+ * app, so "LM Studio is on this machine" and "LM Studio is answering" are
+ * separate facts, and the row must be able to report the second one missing
+ * WITHOUT reusing the llama.cpp download disclosure. Offering a half-gigabyte
+ * download of something else to a user who already installed the thing they
+ * picked is the specific wrong answer these tests pin down.
+ */
+describe('LM Studio can be picked by name, and its two states read differently', () => {
+  /**
+   * LM Studio's server is answering. Measured shape, not invented: on the
+   * reference machine `GET /api/v0/models` returned 200 in 60 ms listing 8
+   * models while `lms ps` reported none loaded - LM Studio loads on first
+   * request, so "serving" is the whole test and "loaded" is a latency hint.
+   */
+  const LM_STUDIO_SERVING = {
+    chosen: 'ollama' as const,
+    viable: ['ollama' as const, 'lm-studio' as const],
+    provisionable: ['llama-server' as const],
+  };
+  /** LM Studio is installed and its own server is switched off. */
+  const LM_STUDIO_IDLE = {
+    chosen: 'ollama' as const,
+    viable: ['ollama' as const],
+    provisionable: ['lm-studio' as const, 'llama-server' as const],
+  };
+  /** No LM Studio at all - the host the rest of this file already covers. */
+  const NO_LM_STUDIO = {
+    chosen: 'ollama' as const,
+    viable: ['ollama' as const],
+    provisionable: ['llama-server' as const],
+  };
+
+  /** Open the backend chooser and return every option label it lists. */
+  async function openChooser(): Promise<string[]> {
+    const view = document.querySelector('.arco-select-view') as HTMLElement | null;
+    expect(view, 'no backend chooser was rendered, so there was nothing to choose').toBeTruthy();
+    await userEvent.click(view as HTMLElement);
+    return Array.from(document.querySelectorAll('.arco-select-option')).map((o) => (o.textContent ?? '').trim());
+  }
+
+  /**
+   * Pick a backend by its rendered label. `fireEvent` for the option, for the
+   * reason documented on `chooseLlamaCpp` above: Arco's dropdown carries
+   * `pointer-events: none` through a transition jsdom never runs.
+   */
+  async function choose(labelKey: string): Promise<void> {
+    const labels = await openChooser();
+    const index = labels.indexOf(en(labelKey));
+    expect(index, `${en(labelKey)} was not offered as an option`).toBeGreaterThanOrEqual(0);
+    fireEvent.click(document.querySelectorAll('.arco-select-option')[index] as HTMLElement);
+    await waitFor(() =>
+      expect(
+        (document.querySelector('.arco-select-view-value') ?? document.querySelector('.arco-select-view'))?.textContent
+      ).toContain(en(labelKey))
+    );
+  }
+
+  const serveButton = (): HTMLElement => screen.getByRole('button', { name: en('modelAdvisor.cookbook.serve') });
+  const continueButton = (): HTMLElement =>
+    screen.getByRole('button', { name: en('modelAdvisor.cookbook.lmStudio.continue') });
+  const awaitPrompt = (): Promise<HTMLElement> =>
+    waitFor(() => screen.getByRole('button', { name: en('modelAdvisor.cookbook.lmStudio.continue') }));
+
+  it('offers LM Studio in the chooser, on the same footing as Ollama', async () => {
+    renderCell(makeCookbook({ selection: LM_STUDIO_SERVING }), makeRuntime());
+    expect(await openChooser()).toEqual([
+      en('modelAdvisor.cookbook.backend.ollama'),
+      en('modelAdvisor.cookbook.backend.lmStudio'),
+      en('modelAdvisor.cookbook.backend.llamaServer'),
+    ]);
+  });
+
+  it('offers an installed-but-idle LM Studio too, not only a serving one', async () => {
+    // `viable` alone would hide it exactly where a user is most likely to be:
+    // LM Studio is a desktop app, and its server is off whenever it is closed.
+    renderCell(makeCookbook({ selection: LM_STUDIO_IDLE }), makeRuntime());
+    expect(await openChooser()).toContain(en('modelAdvisor.cookbook.backend.lmStudio'));
+  });
+
+  it('serves through LM Studio with no download and no install', async () => {
+    const runtime = makeRuntime({ status: READY_RUNTIME, fetchPlan: vi.fn(async () => CPU_PLAN) });
+    const cookbook = makeCookbook({ selection: LM_STUDIO_SERVING });
+    renderCell(cookbook, runtime);
+
+    await choose('modelAdvisor.cookbook.backend.lmStudio');
+    await userEvent.click(serveButton());
+
+    // The model is already inside LM Studio's own process. Fetching a runtime
+    // or a GGUF for it would be Darhai duplicating what the user has.
+    await waitFor(() => expect(cookbook.serve).toHaveBeenCalledWith(MODEL, 'lm-studio'));
+    expect(cookbook.download).not.toHaveBeenCalled();
+    expect(runtime.fetchPlan).not.toHaveBeenCalled();
+    expect(runtime.install).not.toHaveBeenCalled();
+  });
+
+  it('asks the user to start the server instead of offering a download', async () => {
+    // The defect this test exists for: `provisionable` now carries TWO
+    // different offers, and the llama.cpp gate matched both. A user who picked
+    // the LM Studio they had already installed was shown a consent screen for
+    // half a gigabyte of llama.cpp - and confirming it would have served the
+    // model through that instead of through what they picked.
+    const runtime = makeRuntime({ fetchPlan: vi.fn(async () => CPU_PLAN) });
+    const cookbook = makeCookbook({ selection: LM_STUDIO_IDLE });
+    renderCell(cookbook, runtime);
+
+    await choose('modelAdvisor.cookbook.backend.lmStudio');
+    await userEvent.click(serveButton());
+
+    await waitFor(() => expect(document.body.textContent).toContain(en('modelAdvisor.cookbook.lmStudio.off')));
+    expect(runtime.fetchPlan).not.toHaveBeenCalled();
+    expect(runtime.install).not.toHaveBeenCalled();
+    expect(cookbook.download).not.toHaveBeenCalled();
+    expect(cookbook.serve).not.toHaveBeenCalled();
+    expect(document.body.textContent).not.toContain(en('modelAdvisor.runtime.discloseNext'));
+    expect(screen.queryByRole('button', { name: en('modelAdvisor.runtime.confirm') })).toBeNull();
+    // Nothing is happening, so nothing may look like it is.
+    expect(document.querySelector('.arco-progress')).toBeNull();
+  });
+
+  it('says nothing about LM Studio on a host that has none', async () => {
+    // The other half of "the two states read differently": a machine with no
+    // LM Studio must not be told to go and start one.
+    const runtime = makeRuntime({ fetchPlan: vi.fn(async () => CPU_PLAN) });
+    renderCell(makeCookbook({ selection: NO_LM_STUDIO }), runtime);
+
+    await choose('modelAdvisor.cookbook.backend.llamaServer');
+    await userEvent.click(serveButton());
+
+    await waitFor(() => expect(document.body.textContent).toContain(en('modelAdvisor.runtime.discloseNext')));
+    expect(document.body.textContent).not.toContain(en('modelAdvisor.cookbook.lmStudio.off'));
+  });
+
+  it('still discloses the runtime download when llama.cpp is the pick on that host', async () => {
+    // Excluding LM Studio from the provisioning gate must not exclude the
+    // backend the gate was built for, on the very host that has both.
+    const runtime = makeRuntime({ fetchPlan: vi.fn(async () => CPU_PLAN) });
+    renderCell(makeCookbook({ selection: LM_STUDIO_IDLE }), runtime);
+
+    await choose('modelAdvisor.cookbook.backend.llamaServer');
+    await userEvent.click(serveButton());
+
+    await waitFor(() => expect(screen.getByText(/30 MB/)).toBeTruthy());
+    expect(document.body.textContent).toContain(en('modelAdvisor.runtime.accel.cpu'));
+    expect(document.body.textContent).not.toContain(en('modelAdvisor.cookbook.lmStudio.off'));
+  });
+
+  it('serves in the SAME press once the user has started the server', async () => {
+    // One press does whatever it takes - this one just had a person in the
+    // middle of it. The answer is taken from the RESOLVED probe: re-reading
+    // `controller.selection` after awaiting would read the value captured when
+    // the press began, which still says the server is off.
+    const cookbook = makeCookbook({
+      selection: LM_STUDIO_IDLE,
+      refreshBackends: vi.fn(async () => LM_STUDIO_SERVING),
+    });
+    renderCell(cookbook, makeRuntime());
+
+    await choose('modelAdvisor.cookbook.backend.lmStudio');
+    await userEvent.click(serveButton());
+    await awaitPrompt();
+    await userEvent.click(continueButton());
+
+    expect(cookbook.refreshBackends).toHaveBeenCalled();
+    // The user's OWN pick. `undefined` would hand the choice back to main,
+    // whose ranking puts ollama above lm-studio - so this host would be served
+    // through Ollama by the very server the user just went and started.
+    await waitFor(() => expect(cookbook.serve).toHaveBeenCalledWith(MODEL, 'lm-studio'));
+  });
+
+  it('says the server is still not answering rather than serving into nothing', async () => {
+    const cookbook = makeCookbook({
+      selection: LM_STUDIO_IDLE,
+      refreshBackends: vi.fn(async () => LM_STUDIO_IDLE),
+    });
+    renderCell(cookbook, makeRuntime());
+
+    await choose('modelAdvisor.cookbook.backend.lmStudio');
+    await userEvent.click(serveButton());
+    await awaitPrompt();
+    await userEvent.click(continueButton());
+
+    await waitFor(() => expect(document.body.textContent).toContain(en('modelAdvisor.cookbook.lmStudio.stillOff')));
+    // Registering a provider against a dead endpoint produces a backend that
+    // looks connected and answers nothing.
+    expect(cookbook.serve).not.toHaveBeenCalled();
+    // Repeating the first sentence verbatim would read as a dead button, and
+    // the offer to try once more has to survive the miss.
+    expect(document.body.textContent).not.toContain(en('modelAdvisor.cookbook.lmStudio.off'));
+    expect(continueButton()).toBeTruthy();
+  });
+
+  it('does not claim the server is off when the check itself never completed', async () => {
+    // "Still not answering" is a statement about LM Studio. If the probe threw,
+    // Darhai measured nothing about LM Studio and may not make one.
+    const cookbook = makeCookbook({
+      selection: LM_STUDIO_IDLE,
+      refreshBackends: vi.fn(async () => {
+        throw new Error('bridge closed');
+      }),
+    });
+    renderCell(cookbook, makeRuntime());
+
+    await choose('modelAdvisor.cookbook.backend.lmStudio');
+    await userEvent.click(serveButton());
+    await awaitPrompt();
+    await userEvent.click(continueButton());
+
+    await waitFor(() => expect(document.body.textContent).toContain(en('modelAdvisor.cookbook.lmStudio.checkFailed')));
+    expect(document.body.textContent).not.toContain(en('modelAdvisor.cookbook.lmStudio.stillOff'));
+    expect(cookbook.serve).not.toHaveBeenCalled();
+    // A rejected probe is still an ending, not a spinner or a blank cell.
+    expect(continueButton()).toBeTruthy();
+  });
+
+  it('announces the question without calling it a failure', async () => {
+    // It replaces the button the user just pressed, so a screen reader has to
+    // hear it - but an installed LM Studio with its server off is a step left
+    // to take, not a fault, and `role='alert'` is the wrong urgency for that.
+    renderCell(makeCookbook({ selection: LM_STUDIO_IDLE }), makeRuntime());
+
+    await choose('modelAdvisor.cookbook.backend.lmStudio');
+    await userEvent.click(serveButton());
+
+    const live = await screen.findByRole('status');
+    expect(live.textContent).toContain(en('modelAdvisor.cookbook.lmStudio.off'));
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('lets the user back out, and leaves the chooser exactly as it was', async () => {
+    const cookbook = makeCookbook({ selection: LM_STUDIO_IDLE });
+    renderCell(cookbook, makeRuntime());
+
+    await choose('modelAdvisor.cookbook.backend.lmStudio');
+    await userEvent.click(serveButton());
+    await waitFor(() => screen.getByRole('button', { name: en('modelAdvisor.runtime.decline') }));
+    await userEvent.click(screen.getByRole('button', { name: en('modelAdvisor.runtime.decline') }));
+
+    await waitFor(() => expect(serveButton()).toBeTruthy());
+    expect(cookbook.serve).not.toHaveBeenCalled();
+    expect(cookbook.refreshBackends).not.toHaveBeenCalled();
+    expect(document.querySelector('.arco-select-view')?.textContent).toContain(
+      en('modelAdvisor.cookbook.backend.lmStudio')
+    );
+  });
+});
+
+describe('every LM Studio string ships in all 13 locales', () => {
+  /**
+   * Every `modelAdvisor.cookbook.*` key the component passes to `t`, gathered
+   * the two ways the runtime sweep above uses: the literals in the source, and
+   * the values of the exhaustive Record it builds union-driven keys from.
+   * Scoped to `cookbook` because that is the namespace this feature added to;
+   * `runtime` has its own sweep and its own rules.
+   */
+  function cookbookKeysTheComponentCanRender(): string[] {
+    const source = readFileSync(COMPONENT_PATH, 'utf-8');
+    const literals = [...source.matchAll(/'(modelAdvisor\.cookbook\.[A-Za-z0-9_.]+)'/g)].map((m) => m[1]);
+    return [...new Set([...literals, ...Object.values(LM_STUDIO_PROMPT_KEY)])];
+  }
+
+  /** The sentences. English left in place is what check-i18n cannot see. */
+  const LM_STUDIO_KEYS = ['lmStudio.off', 'lmStudio.stillOff', 'lmStudio.checkFailed', 'lmStudio.continue'];
+
+  it('maps every prompt state to a key, and every key to a real string', () => {
+    // `Record<LmStudioPrompt, string>` forbids a missing ENTRY; nothing in the
+    // type system forbids the string that entry NAMES being absent, and i18next
+    // then renders the key itself as screen text.
+    expect(Object.keys(LM_STUDIO_PROMPT_KEY).toSorted()).toEqual(['checkFailed', 'off', 'stillOff']);
+    for (const key of Object.values(LM_STUDIO_PROMPT_KEY)) {
+      expect(typeof en(key), key).toBe('string');
+    }
+  });
+
+  it.each(SUPPORTED_LOCALES)('%s resolves every cookbook key the component can render', (locale) => {
+    for (const key of cookbookKeysTheComponentCanRender()) {
+      const value = lookupCookbook(locale, key.replace(/^modelAdvisor\.cookbook\./, ''));
+      expect(typeof value, `${locale} ${key}`).toBe('string');
+      expect((value as string).trim().length, `${locale} ${key}`).toBeGreaterThan(0);
+    }
+  });
+
+  it.each(SUPPORTED_LOCALES.filter((l) => l !== 'en-US'))('%s translates them, not just copies them', (locale) => {
+    for (const key of LM_STUDIO_KEYS) {
+      expect(lookupCookbook(locale, key), `${locale} cookbook.${key}`).not.toBe(lookupCookbook('en-US', key));
+    }
+  });
+
+  it('names the product but never its internals', () => {
+    // "LM Studio" is a product the user chose to install, so naming IT is the
+    // point of the sentence. A build variant or a quant format is not.
+    const BANNED = [/llama\.cpp/i, /\bgguf\b/i, /\bCUDA\b/, /\bROCm\b/i, /\bQ[2-8]_K\b/i, /--?ngl\b/];
+    for (const locale of SUPPORTED_LOCALES) {
+      for (const key of LM_STUDIO_KEYS) {
+        const value = lookupCookbook(locale, key) as string;
+        for (const pattern of BANNED) {
+          expect(pattern.test(value), `${locale} cookbook.${key} = ${value}`).toBe(false);
+        }
+      }
+      expect(lookupCookbook(locale, 'lmStudio.off'), locale).toContain('LM Studio');
+    }
+  });
+
+  it('never puts a bare error constant where a sentence belongs', () => {
+    // The same rule the runtime problems keep: an ALL-CAPS English identifier
+    // is byte-identical in 13 languages and means nothing to the person
+    // reading it. Every state this path can reach is prose.
+    for (const locale of SUPPORTED_LOCALES) {
+      for (const key of LM_STUDIO_KEYS) {
+        const value = lookupCookbook(locale, key) as string;
+        expect(/\b[A-Z][A-Z0-9]*_[A-Z0-9_]{2,}\b/.test(value), `${locale} cookbook.${key} = ${value}`).toBe(false);
+      }
+    }
+  });
+
+  it('writes mn-MN in Mongolian, not English spelled in Cyrillic', () => {
+    // Same blocklist as the runtime sweep: a Cyrillic-range check alone passes
+    // transliteration by construction, which is how «релиз» once shipped.
+    // «старт»/«континью» are added because THIS copy is about starting
+    // something and continuing, which is exactly where they would creep in.
+    const TRANSLITERATIONS = [
+      'релиз',
+      'рантайм',
+      'билд',
+      'даунлоад',
+      'даунлоуд',
+      'инсталл',
+      'кэнсэл',
+      'кансел',
+      'эррор',
+      'фэйл',
+      'апдейт',
+      'старт',
+      'континью',
+      'чек',
+    ];
+    for (const key of LM_STUDIO_KEYS) {
+      const value = (lookupCookbook('mn-MN', key) as string).toLowerCase();
+      expect(/[Ѐ-ӿ]/.test(value), `mn-MN cookbook.${key} has no Cyrillic: ${value}`).toBe(true);
+      for (const word of TRANSLITERATIONS) {
+        expect(value.includes(word), `mn-MN cookbook.${key} transliterates "${word}": ${value}`).toBe(false);
+      }
+      // «хөдөлгүүр» is Darhai's OWN AI engine in mn-MN (memory.json, mcp.json).
+      // Reusing it for someone else's local server makes a grammatical sentence
+      // mean the wrong thing, and no automated locale check would catch it.
+      expect(value.includes('хөдөлгүүр'), `mn-MN cookbook.${key} = ${value}`).toBe(false);
+    }
+  });
+
+  it('introduces no placeholder and no counted noun', () => {
+    // These four are plain sentences. A `{{count}}` needs `_one`/`_other`
+    // siblings, and any stray `{{...}}` renders as literal braces on screen.
+    for (const locale of SUPPORTED_LOCALES) {
+      for (const key of LM_STUDIO_KEYS) {
+        expect(lookupCookbook(locale, key), `${locale} cookbook.${key}`).not.toContain('{{');
+      }
+    }
   });
 });

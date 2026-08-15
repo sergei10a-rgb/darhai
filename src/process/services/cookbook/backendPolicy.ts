@@ -20,6 +20,7 @@
  *   - `llama-server` the universal path: any OS, any VRAM (GPU layers scale via
  *                    ngpuLayersForVram; 0 layers = pure CPU on big-RAM boxes).
  *   - `ollama`       the easy cross-platform path when installed.
+ *   - `lm-studio`    the user's own LM Studio, when its loopback server is up.
  *
  * `chosen` is the most capable viable backend (default-selected, user-overridable
  * in the UI); `viable` lists every backend the host supports so the UI can offer
@@ -32,9 +33,18 @@
  * and `chosen` was not `'none'`, which is the only value that opens the
  * provisioning path; the machine had no route to Darhai's own runtime at all.
  * {@link selectBackend} answers both questions separately: `viable` stays
- * exactly "what is installed", and `provisionable` carries what Darhai can
- * install on request. Consent is unchanged - selecting a provisionable backend
- * runs the same pre-download disclosure, and nothing is fetched before yes.
+ * exactly "what can serve now", and `provisionable` carries what Darhai can
+ * make serve on request. Consent is unchanged - selecting a provisionable
+ * backend runs the same pre-download disclosure, and nothing is fetched before
+ * yes.
+ *
+ * LM Studio poses that same two-question split with a different verb, so it
+ * reuses the same two lists rather than adding a third. Its server is a GUI app
+ * the user starts, which makes "LM Studio is on this machine" and "LM Studio is
+ * answering right now" separate facts - hence two flags in
+ * {@link BackendAvailability}, not one. Serving makes it `viable`; installed
+ * without serving makes it `provisionable`, where the act Darhai offers is
+ * `lms server start` rather than a download.
  */
 
 import type { HardwareBackend, HardwarePlatform } from '@process/services/hwfit';
@@ -46,11 +56,25 @@ import type { CookbookBackend, CookbookBackendSelection } from '@/common/types/c
  */
 export const VLLM_MIN_VRAM_GB = 16;
 
-/** Which backend binaries the host actually has installed (probed separately). */
+/**
+ * What each backend can do on this host right now (probed separately).
+ *
+ * Three of these are one boolean because Darhai spawns them itself, so "the
+ * binary is there" is the whole answer. LM Studio needs TWO, because Darhai
+ * does not spawn it: its server is started by a person in a GUI app, so a host
+ * can have LM Studio and still have nothing listening. Collapsing that into one
+ * flag would force a choice between never offering an installed-but-idle LM
+ * Studio and claiming a dead endpoint is usable. Both flags are reported so the
+ * UI can say which of the two a host is.
+ */
 export type BackendAvailability = {
   ollama: boolean;
   llamaServer: boolean;
   vllm: boolean;
+  /** LM Studio's loopback server is answering its own API right now. */
+  lmStudioServing: boolean;
+  /** LM Studio's `lms` CLI was found, so Darhai could start that server. */
+  lmStudioInstalled: boolean;
 };
 
 /** The hardware + availability signals the selector reads. */
@@ -106,25 +130,77 @@ export function isVllmViable(input: BackendPolicyInput): boolean {
 }
 
 /**
- * Pick the viable backends for a host, the most capable one to default to, and
- * what Darhai could install if the user asks for it.
+ * True when LM Studio can serve RIGHT NOW: its loopback server is answering.
  *
- * Preference order: vllm > ollama > llama-server. Pure and total - a host with
- * no backend installed still yields `{ chosen: 'none', viable: [] }`, because
- * `chosen` and `viable` are strictly about what is installed NOW. That machine
- * is unchanged by design: it already reaches the runtime through the
- * `chosen === 'none'` disclosure, and putting a name in its dropdown would only
- * teach it a word ("llama.cpp") the one-press flow exists to spare it.
- * `provisionable` is what changes for everyone else: it lists llama.cpp
- * whenever this host could install it and has not, so a machine that already
- * has Ollama can still choose Darhai's own runtime.
+ * Deliberately independent of whether the `lms` CLI was found. A machine whose
+ * LM Studio lives somewhere {@link lmStudioCliCandidates} does not search - a
+ * portable copy, a relocated install - is still completely usable when its
+ * server is up, and reporting it as not-viable would be false about the one
+ * thing that matters. The CLI only buys the ability to START a stopped server.
+ */
+export function isLmStudioViable(input: BackendPolicyInput): boolean {
+  return input.available.lmStudioServing === true;
+}
+
+/**
+ * True when Darhai could get LM Studio serving: it is installed, and it is not
+ * answering yet.
+ *
+ * Both halves are required. Without `lmStudioInstalled` there is no `lms` to
+ * run, so offering "start it" would be a button that cannot work; without
+ * `lmStudioServing === false` the backend is already viable, and a backend must
+ * never appear in both lists.
+ */
+export function isLmStudioProvisionable(input: BackendPolicyInput): boolean {
+  return input.available.lmStudioInstalled === true && input.available.lmStudioServing === false;
+}
+
+/**
+ * Pick the viable backends for a host, the most capable one to default to, and
+ * what Darhai could make usable if the user asks for it.
+ *
+ * Preference order: **vllm > ollama > lm-studio > llama-server**. The order
+ * decides only the DEFAULT; every viable backend is offered, so ranking one
+ * lower never takes it away from a user who knows they want it.
+ *
+ * Why LM Studio sits below ollama and above llama-server - argued, not assumed:
+ *
+ *   - **Below ollama**, for one concrete reason. This selector serves a model
+ *     the user picked from Darhai's catalog, and ollama can GO GET that model
+ *     (`ollama pull hf.co/<repo>:<quant>`). LM Studio serves what it already
+ *     holds, so defaulting to it would mean defaulting to a backend that may
+ *     not have the chosen model at all. A second reason points the same way:
+ *     ollama runs as a background service, while LM Studio's server lives
+ *     inside a GUI app - measured on the reference machine, `lms server status`
+ *     reported the server up only because the app was open. A default should be
+ *     the choice most likely to still answer in an hour.
+ *   - **Above llama-server**, because a server that is already answering beats
+ *     one Darhai has to download a GGUF for and spawn. LM Studio being up means
+ *     the user has already made the decisions llama.cpp would ask them for.
+ *
+ * Pure and total - a host with nothing usable still yields
+ * `{ chosen: 'none', viable: [] }`, because `chosen` and `viable` are strictly
+ * about what can serve NOW. That machine is unchanged by design: it already
+ * reaches the runtime through the `chosen === 'none'` disclosure, and putting a
+ * name in its dropdown would only teach it a word ("llama.cpp") the one-press
+ * flow exists to spare it. `provisionable` is what changes for everyone else:
+ * it lists llama.cpp whenever this host could install it and has not, and
+ * LM Studio whenever it is installed but idle - so a machine that already has
+ * Ollama can still choose either.
  */
 export function selectBackend(input: BackendPolicyInput): CookbookBackendSelection {
   const viable: CookbookBackend[] = [];
   if (isVllmViable(input)) viable.push('vllm');
   if (input.available.ollama) viable.push('ollama');
+  if (isLmStudioViable(input)) viable.push('lm-studio');
   if (input.available.llamaServer) viable.push('llama-server');
-  const provisionable: CookbookBackend[] =
-    input.available.llamaServer === false && input.canProvisionLlamaServer === true ? ['llama-server'] : [];
+
+  // Same order as `viable`, so the chooser reads as one ranked list once the UI
+  // concatenates the two.
+  const provisionable: CookbookBackend[] = [];
+  if (isLmStudioProvisionable(input)) provisionable.push('lm-studio');
+  if (input.available.llamaServer === false && input.canProvisionLlamaServer === true) {
+    provisionable.push('llama-server');
+  }
   return { chosen: viable[0] ?? 'none', viable, provisionable };
 }

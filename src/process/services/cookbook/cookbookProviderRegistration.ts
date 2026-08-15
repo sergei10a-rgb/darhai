@@ -57,6 +57,18 @@ export type CookbookServeRegistration = {
   servedModelId: string;
   /** Human display label for the model. */
   displayName: string;
+  /**
+   * The `/v1` base URL to register, when it is NOT the loopback endpoint a
+   * Darhai-spawned server bound.
+   *
+   * Exists for LM Studio: its server is a long-lived GUI app the user owns, so
+   * Darhai never allocates its port - it reads where LM Studio already listens
+   * and registers that (`LM_STUDIO_BASE_URL`). Omitted by the llama-server and
+   * vLLM paths, which DO own their port and keep deriving the URL from it, so
+   * the loopback host stays a single hardcoded literal rather than something a
+   * caller could point anywhere.
+   */
+  baseUrl?: string;
 };
 
 /** Build the one-entry catalog model for a cookbook-served model. */
@@ -87,7 +99,7 @@ export function registerCookbookServeInRepo(repo: CookbookRegistryRepo, reg: Coo
       providerId: COOKBOOK_LOCAL_ID,
       connectedVia: 'cookbook-serve',
       state: 'connected',
-      creds: { key: '', baseUrl: `http://127.0.0.1:${reg.port}/v1` },
+      creds: { key: '', baseUrl: reg.baseUrl || `http://127.0.0.1:${reg.port}/v1` },
     });
     repo.replaceRegistryCatalog(COOKBOOK_LOCAL_ID, [toCatalogModel(reg)]);
     return true;

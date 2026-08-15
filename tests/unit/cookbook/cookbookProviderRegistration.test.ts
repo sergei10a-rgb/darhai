@@ -54,6 +54,22 @@ describe('registerCookbookServeInRepo', () => {
     });
   });
 
+  it('registers an explicit base URL verbatim, overriding the port derivation', () => {
+    // LM Studio: Darhai never allocated the port, so the URL is passed in
+    // rather than derived from one. The two are given DIFFERENT ports here on
+    // purpose - LM Studio's default happens to derive to the same string, so a
+    // same-port case could not tell an honoured `baseUrl` from an ignored one.
+    const { repo, calls } = makeRepo();
+    registerCookbookServeInRepo(repo, {
+      port: 1234,
+      servedModelId: 'qwen/qwen3.6-27b',
+      displayName: 'qwen/qwen3.6-27b',
+      baseUrl: 'http://127.0.0.1:4321/v1',
+    });
+    expect(calls.upsert.mock.calls[0][0].creds).toEqual({ key: '', baseUrl: 'http://127.0.0.1:4321/v1' });
+    expect(calls.replaceCatalog.mock.calls[0][1][0].id).toBe('qwen/qwen3.6-27b');
+  });
+
   it('is idempotent - a re-serve upserts again with the new port', () => {
     const { repo, calls } = makeRepo(true);
     registerCookbookServeInRepo(repo, { port: 8080, servedModelId: 'm', displayName: 'm' });

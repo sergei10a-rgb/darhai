@@ -86,10 +86,19 @@ function depsWithEmptyPath(candidates: () => string[]): LocalServeDeps {
     // fixture binary is a stub shell script - probing it for real would execute it.
     probeHelpText: () => '',
     llamaServerCandidates: candidates,
+    // "Nothing on PATH" has to mean nothing on this machine either: both LM
+    // Studio seams default to real probes (a home-directory scan and a loopback
+    // fetch), so a developer box running LM Studio would otherwise answer
+    // differently from CI on assertions that are not about LM Studio at all.
+    lmStudioCliCandidates: () => [],
+    lmStudioServingProbe: async () => false,
     env: () => ({}),
     readyTimeoutMs: 1000,
   };
 }
+
+/** The LM Studio half of `detectAvailability`, absent on these fixtures. */
+const NO_LM_STUDIO = { lmStudioServing: false, lmStudioInstalled: false };
 
 beforeEach(() => {
   userData = fs.mkdtempSync(path.join(os.tmpdir(), 'darhai-llama-'));
@@ -103,7 +112,7 @@ describe('Darhai finds the llama-server it installed itself', () => {
   it('reports llamaServer: true when only Darhai own copy exists', async () => {
     writeInstall(TAG);
     const mgr = new LocalServeManager(depsWithEmptyPath(() => llamaServerCandidates(userData)));
-    expect(await mgr.detectAvailability()).toEqual({ ollama: false, llamaServer: true, vllm: false });
+    expect(await mgr.detectAvailability()).toEqual({ ollama: false, llamaServer: true, vllm: false, ...NO_LM_STUDIO });
   });
 
   it('resolves the managed binary path itself, not just a boolean', () => {
@@ -124,7 +133,7 @@ describe('Darhai finds the llama-server it installed itself', () => {
     // explained by anything other than the candidate list.
     writeInstall(TAG);
     const mgr = new LocalServeManager(depsWithEmptyPath(() => []));
-    expect(await mgr.detectAvailability()).toEqual({ ollama: false, llamaServer: false, vllm: false });
+    expect(await mgr.detectAvailability()).toEqual({ ollama: false, llamaServer: false, vllm: false, ...NO_LM_STUDIO });
   });
 
   it('ignores a half-installed tree that never got its receipt', async () => {
@@ -132,6 +141,6 @@ describe('Darhai finds the llama-server it installed itself', () => {
     fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(path.join(dir, serverBinaryName(process.platform === 'win32' ? 'win32' : 'linux')), 'x');
     const mgr = new LocalServeManager(depsWithEmptyPath(() => llamaServerCandidates(userData)));
-    expect(await mgr.detectAvailability()).toEqual({ ollama: false, llamaServer: false, vllm: false });
+    expect(await mgr.detectAvailability()).toEqual({ ollama: false, llamaServer: false, vllm: false, ...NO_LM_STUDIO });
   });
 });

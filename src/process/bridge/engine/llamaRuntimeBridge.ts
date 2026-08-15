@@ -127,7 +127,9 @@ type ResolvedOk = {
 
 /** What {@link LlamaRuntimeController.resolve} established about a would-be install. */
 type Resolved =
-  ResolvedOk | { kind: 'unsupported'; reason: string } | { kind: 'unavailable'; errorCode: string; message: string };
+  | ResolvedOk
+  | { kind: 'unsupported'; reason: string }
+  | { kind: 'unavailable'; errorCode: string; message: string };
 
 /** Fallback identifier when a thrown value carries no `code` of its own. */
 const UNKNOWN_ERROR_CODE = 'LLAMACPP_UNKNOWN';
@@ -209,7 +211,8 @@ export class LlamaRuntimeController {
    * closed (press A, wait, press B, confirm A) to buy freshness, and a slightly
    * older llama.cpp tag is a complete, working release, while installing a
    * build the user never saw is the failure this whole surface exists to
-   * prevent. See §7 of docs/architecture/local-models.md.
+   * prevent. See §8 ("What is not handled yet") of
+   * docs/architecture/local-models.md.
    */
   private disclosed: ResolvedOk | null = null;
 

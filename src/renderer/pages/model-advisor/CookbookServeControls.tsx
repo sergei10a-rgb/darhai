@@ -8,7 +8,7 @@ import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Message, Progress, Select, Space, Tag, Tooltip } from '@arco-design/web-react';
 import { Attention, Copy, Download, FolderOpen, Loading, PlayOne, Power } from '@icon-park/react';
-import type { CookbookBackend } from '@/common/types/cookbook';
+import type { CookbookBackend, CookbookBackendSelection } from '@/common/types/cookbook';
 import type {
   LlamaRuntimeAcceleration,
   LlamaRuntimeFallbackCode,
@@ -27,10 +27,19 @@ type CookbookServeControlsProps = {
   runtime: LlamaRuntimeUiController;
 };
 
-/** i18n key per backend (the value is DATA, never interpolated into a command). */
-const BACKEND_LABEL_KEY: Record<CookbookBackend, string> = {
+/**
+ * i18n key per backend (the value is DATA, never interpolated into a command).
+ *
+ * Exported for the same reason as {@link FALLBACK_LABEL_KEY} below: the
+ * `Record<CookbookBackend, string>` makes tsc demand an ENTRY for every
+ * backend, but nothing in the type system demands that the entry's key exists
+ * in the thirteen locale files - a missing one renders the key itself as screen
+ * text. `backendSurfaceCoverage.dom.test.tsx` iterates this map to close that.
+ */
+export const BACKEND_LABEL_KEY: Record<CookbookBackend, string> = {
   vllm: 'modelAdvisor.cookbook.backend.vllm',
   ollama: 'modelAdvisor.cookbook.backend.ollama',
+  'lm-studio': 'modelAdvisor.cookbook.backend.lmStudio',
   'llama-server': 'modelAdvisor.cookbook.backend.llamaServer',
   none: 'modelAdvisor.cookbook.backend.none',
 };
@@ -145,6 +154,35 @@ type RuntimeProblem = { messageKey: string; code: string; retryable: boolean };
 type ProvisionStage = 'runtime' | 'model';
 
 /**
+ * What this row has to say about an LM Studio whose own server is not up.
+ *
+ * Three states and not a boolean, because they are three different facts and a
+ * user acts on each of them differently:
+ *  - `'off'`         we have not asked it to be started yet. An instruction.
+ *  - `'stillOff'`    the user said they started it and it is still not
+ *                    answering - so the instruction did not take, and repeating
+ *                    the first sentence verbatim would read as a dead button.
+ *  - `'checkFailed'` Darhai could not find out either way. Saying "still off"
+ *                    here would be a claim about LM Studio that was never
+ *                    measured; this is the one honest thing left to say.
+ */
+type LmStudioPrompt = 'off' | 'stillOff' | 'checkFailed';
+
+/**
+ * Prompt -> the sentence the user reads (see {@link PHASE_LABEL_KEY} for why
+ * this is an exhaustive `Record` and not a `lmStudio.${prompt}` template).
+ *
+ * Exported so the locale suites can iterate it: `Record` makes tsc demand an
+ * entry per state, but nothing in the type system demands the string that entry
+ * NAMES exists in thirteen files, and a missing one renders as its own key.
+ */
+export const LM_STUDIO_PROMPT_KEY: Record<LmStudioPrompt, string> = {
+  off: 'modelAdvisor.cookbook.lmStudio.off',
+  stillOff: 'modelAdvisor.cookbook.lmStudio.stillOff',
+  checkFailed: 'modelAdvisor.cookbook.lmStudio.checkFailed',
+};
+
+/**
  * Per-row download + serve controls for a GGUF-capable model.
  *
  * The promise this component keeps is that ONE press does whatever it takes.
@@ -161,9 +199,17 @@ type ProvisionStage = 'runtime' | 'model';
  *    rather than a bar frozen at 100%;
  *  - every stage that offers Cancel is a stage where Cancel does something.
  *
+ * That promise is about the machine with NOTHING on it. The machine that
+ * already has something gets a different promise, and the chooser is where the
+ * two meet: a user who knows Ollama or LM Studio picks it by name and Darhai
+ * downloads nothing. LM Studio is the one entry there that Darhai cannot start
+ * itself, so it is also the one that can be present-but-silent - see
+ * {@link LmStudioPrompt}.
+ *
  * Renders one of:
  *  - a backend chooser + Serve/Download button (idle),
  *  - the pre-download disclosure + confirm/decline (runtime missing, plan known),
+ *  - the "start LM Studio's server" instruction + continue/decline,
  *  - a two-stage progress surface, labelled runtime or model (working),
  *  - a status pill + Stop (this model is serving),
  *  - a problem block saying what failed and what can be done about it,
@@ -222,6 +268,16 @@ const CookbookServeControls: React.FC<CookbookServeControlsProps> = ({ modelId, 
    * fault, which is the one thing this surface is not allowed to do.
    */
   const [cancelledServe, setCancelledServe] = useState(false);
+  /**
+   * What this row is currently telling the user about LM Studio's own server,
+   * or null when it is not telling them anything.
+   *
+   * Null until the press, and null again the moment the server answers: the
+   * block that reads it is ALSO gated on the live `needsLmStudioStart`, so a
+   * server that came up while the prompt was on screen removes the prompt by
+   * itself rather than leaving stale copy behind a stale flag.
+   */
+  const [lmStudioPrompt, setLmStudioPrompt] = useState<LmStudioPrompt | null>(null);
 
   const dl = controller.downloads[modelId];
   const prog = controller.progress[modelId];
@@ -253,13 +309,33 @@ const CookbookServeControls: React.FC<CookbookServeControlsProps> = ({ modelId, 
    */
   const runtimeProbed = runtime.status.state !== 'unknown';
   /**
+   * The user picked LM Studio and it is not answering yet.
+   *
+   * `provisionable` carries TWO different offers now, and they are not the same
+   * act. For llama.cpp it means "Darhai can download this for you"; for LM
+   * Studio it means "LM Studio is already on this computer, its own server is
+   * just switched off". Darhai does not spawn LM Studio - a person starts it
+   * inside a GUI app - so the honest offer is an instruction plus a re-check,
+   * and routing it through the llama.cpp disclosure would ask a user who already
+   * has LM Studio to consent to a half-gigabyte download of something else
+   * entirely, then serve them through that instead.
+   */
+  const needsLmStudioStart = selected === 'lm-studio' && provisionable.includes('lm-studio') === true;
+  /**
    * This press must provision first. Two ways to get here, and they are the
    * same press: nothing is installed at all (`'none'`), or the user picked a
    * backend Darhai has yet to install. The second case is what a machine with
    * Ollama on it needs - the first alone left it with no path to llama.cpp.
+   *
+   * `needsLmStudioStart` is excluded rather than assumed away: a provisionable
+   * LM Studio satisfies `provisionable.includes(selected)` exactly as llama.cpp
+   * does, so without this the two offers would be the same branch.
    */
   const needsRuntime =
-    (selected === 'none' || provisionable.includes(selected)) && runtimeProbed === true && runtimeReady === false;
+    needsLmStudioStart === false &&
+    (selected === 'none' || provisionable.includes(selected)) &&
+    runtimeProbed === true &&
+    runtimeReady === false;
 
   /**
    * Record - or clear - "the user cancelled this model download" for BOTH
@@ -356,12 +432,60 @@ const CookbookServeControls: React.FC<CookbookServeControlsProps> = ({ modelId, 
     setPlan(answer);
   };
 
+  /**
+   * The user says LM Studio's server is running now. Find out, then get on with
+   * it - this is still the ONE press, it just had a person in the middle of it.
+   *
+   * The answer is READ FROM THE RESOLVED PROBE, not from `controller.selection`
+   * after awaiting: this closure holds the selection from the render that began
+   * the press, so re-reading the prop here would ask a question and then look at
+   * the old answer. That is the shape that once reported a user's own cancel as
+   * a failure, and it is why `refreshBackends` resolves with what it found.
+   */
+  const continueLmStudio = async (): Promise<void> => {
+    let next: CookbookBackendSelection;
+    try {
+      next = await controller.refreshBackends();
+    } catch {
+      // The probe itself did not complete, so nothing is known about LM Studio.
+      // Reporting "still off" here would be a measurement Darhai never made.
+      setLmStudioPrompt('checkFailed');
+      return;
+    }
+    if (next.viable.includes('lm-studio') === false) {
+      setLmStudioPrompt('stillOff');
+      return;
+    }
+    setLmStudioPrompt(null);
+    // The user's OWN pick, exactly as the provisioned-runtime path does it:
+    // `undefined` would hand the choice back to main, whose ranking puts ollama
+    // above lm-studio, so the model would be served through a backend the user
+    // did not just go and start by hand.
+    await controller.serve(modelId, 'lm-studio');
+  };
+
   const primaryAction = async (): Promise<void> => {
     // A fresh press is a fresh outcome: whatever the last cancel suppressed,
     // this attempt's failure is the user's to see.
     markModelCancelled(false);
+    // `needsRuntime` FIRST, and it is the single place LM Studio is excluded.
+    // Testing `needsLmStudioStart` ahead of it would make that exclusion
+    // unreachable - the branch order would mask a broken gate, and no test
+    // could tell a correct gate from a deleted one. Measured: with the LM
+    // Studio branch first, removing `needsLmStudioStart === false` from
+    // `needsRuntime` left all 127 tests green.
     if (needsRuntime === true) {
       await askThenProvision();
+      return;
+    }
+    if (needsLmStudioStart === true) {
+      // Nothing is fetched and nothing is spawned - this press only asks. The
+      // llama.cpp attempt state is cleared with it, so a failure left over from
+      // a previous pick cannot outrank the question this press is asking.
+      setPlan(null);
+      setAttempted(false);
+      setFailure(null);
+      setLmStudioPrompt('off');
       return;
     }
     if (needsGguf && !isDownloaded) {
@@ -437,7 +561,14 @@ const CookbookServeControls: React.FC<CookbookServeControlsProps> = ({ modelId, 
           <Select
             size='mini'
             value={selected}
-            onChange={(v) => setOverride(v as CookbookBackend)}
+            onChange={(v) => {
+              setOverride(v as CookbookBackend);
+              // Switching backend retracts the question this row was asking.
+              // The block below is gated on the live selection too, so this is
+              // belt-and-braces - but without it, switching away and back would
+              // re-open a "still not answering" the user never asked for again.
+              setLmStudioPrompt(null);
+            }}
             className={styles.backendSelect}
             aria-label={t('modelAdvisor.cookbook.backendTip')}
           >
@@ -558,6 +689,31 @@ const CookbookServeControls: React.FC<CookbookServeControlsProps> = ({ modelId, 
   // ── The two stages of the one press ───────────────────────────────────────
   if (stage === 'runtime') return runtimeStageBlock();
   if (stage === 'model') return modelStageBlock();
+
+  // ── LM Studio is here, its own server is not running ──────────────────────
+  // Deliberately NOT the pre-download disclosure below: there is nothing to
+  // download and nothing to consent to. Both halves of the gate are live, so
+  // the moment `refreshBackends` reports LM Studio serving, this block stops
+  // rendering on its own rather than waiting to be dismissed.
+  if (needsLmStudioStart === true && lmStudioPrompt !== null) {
+    return (
+      // role='status', not 'alert': an installed LM Studio with its server off
+      // is a step left to take, not a fault. It is still announced, because it
+      // replaces the button the user just pressed and a silent swap tells a
+      // screen-reader user nothing happened.
+      <div className={styles.runtimeBlock} role='status'>
+        <span className={styles.runtimeStage}>{t(LM_STUDIO_PROMPT_KEY[lmStudioPrompt])}</span>
+        <Space size={6}>
+          <Button size='mini' type='primary' icon={<PlayOne />} loading={busy} onClick={() => run(continueLmStudio)}>
+            {t('modelAdvisor.cookbook.lmStudio.continue')}
+          </Button>
+          <Button size='mini' onClick={() => setLmStudioPrompt(null)}>
+            {t('modelAdvisor.runtime.decline')}
+          </Button>
+        </Space>
+      </div>
+    );
+  }
 
   // ── Pre-download disclosure: what this machine gets, and what it costs ─────
   if (plan !== null && plan.kind === 'ok') {

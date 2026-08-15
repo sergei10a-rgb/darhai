@@ -17,6 +17,11 @@
  *   - `llama-server` -> download the GGUF + spawn a loopback OpenAI server +
  *                       cookbook-local provider; GPU layers scale to the VRAM.
  *   - `ollama`       -> `ollama pull hf.co/<repo>:<quant>` + ollama-local provider.
+ *   - `lm-studio`    -> NOTHING is downloaded and NOTHING is spawned: LM Studio
+ *                       is the user's own long-lived app, already serving the
+ *                       weights it holds. Serving through it is purely a
+ *                       provider registration against the endpoint it is
+ *                       already listening on - see {@link serveViaLmStudio}.
  *   - none installed -> the GGUF download still succeeds; status carries the exact
  *                       copy-command so the user is never worse off.
  *
@@ -47,6 +52,14 @@ import {
   type OllamaProbe,
   type OllamaRegistryRepo,
 } from '@process/onboarding/autoRegisterOllama';
+import {
+  defaultFetchLmStudioModels,
+  probeLmStudioServer,
+  LM_STUDIO_BASE_URL,
+  LM_STUDIO_DEFAULT_PORT,
+  type LmStudioModel,
+  type LmStudioServerProbe,
+} from './lmStudioDetect';
 
 /** Loopback port the local Ollama daemon binds by default. */
 const OLLAMA_LOCAL_PORT = 11434;
@@ -54,6 +67,89 @@ const OLLAMA_LOCAL_PORT = 11434;
 const OLLAMA_LOCAL_ID = 'ollama-local';
 /** Default quant used when a catalog model does not pin one. */
 const DEFAULT_QUANT = 'Q4_K_M';
+/** LM Studio model kind that must never be registered as a chat model. */
+const LM_STUDIO_EMBEDDINGS_TYPE = 'embeddings';
+/** LM Studio's own word for "the weights are in memory right now". */
+const LM_STUDIO_LOADED = 'loaded';
+/** How many of LM Studio's model ids a no-match error names before eliding. */
+const LM_STUDIO_ERROR_SAMPLE = 5;
+
+/**
+ * Every id the advisor's catalog knows this model by, for LM Studio matching.
+ *
+ * Two, not one, and both are the SAME weights under different names: the HF
+ * repo (`Qwen/Qwen3.6-27B`) and the GGUF repo the download path would use
+ * (`org/Model-GGUF`). LM Studio ids a model after the repo it was pulled from,
+ * and a user who downloaded the GGUF build has the second name, not the first.
+ */
+export function lmStudioMatchCandidates(model: HwfitCatalogModel): string[] {
+  const out: string[] = [];
+  if (typeof model.name === 'string' && model.name.length > 0) out.push(model.name);
+  for (const src of model.ggufSources ?? []) {
+    if (src && typeof src.repo === 'string' && src.repo.length > 0) out.push(src.repo);
+  }
+  return out;
+}
+
+/**
+ * Find the LM Studio model that IS one of `candidates`, or null.
+ *
+ * EXACT id, case-insensitively - deliberately no fuzzy fallback, and this is
+ * the part of the LM Studio path most worth being honest about, because the two
+ * id spaces are genuinely different namespaces. MEASURED against the live
+ * install's eight models and the 912-entry catalog:
+ *
+ *   lms `openai/gpt-oss-20b`  -> catalog `openai/gpt-oss-20b`   exact
+ *   lms `qwen/qwen3.6-27b`    -> catalog `Qwen/Qwen3.6-27B`     case only
+ *   lms `google/gemma-4-e4b`  -> no catalog entry               (correctly none)
+ *   lms `supergemma4-26b-uncensored-v2` and three other community
+ *       imports                                                 (correctly none)
+ *
+ * So case-insensitive equality already matched every LM Studio model that the
+ * catalog actually contains, and a basename fallback (`gpt-oss-20b`) would have
+ * bought nothing while introducing a real wrong-model risk: the catalog holds
+ * BOTH `openai/gpt-oss-20b` and `RedHatAI/gpt-oss-20b`, which are different
+ * publishers' builds. Serving one where the user asked for the other is exactly
+ * the silent lie this whole path must not tell - a mismatch is reported instead.
+ *
+ * Two filters ride along, both from LM Studio's own fields rather than a guess:
+ *  - `type: 'embeddings'` is never a chat model, so it is never a match even
+ *    when the id lines up.
+ *  - a model whose weights are already `state: 'loaded'` wins over an equally
+ *    matching one that is not, so the zero-cost option is preferred. Nothing is
+ *    excluded for being unloaded: LM Studio loads on first request.
+ */
+export function matchLmStudioModel(
+  candidates: readonly string[],
+  models: readonly LmStudioModel[]
+): LmStudioModel | null {
+  const wanted = new Set(candidates.map((c) => c.toLowerCase()));
+  const matches = models.filter(
+    (m) => m && typeof m.id === 'string' && m.type !== LM_STUDIO_EMBEDDINGS_TYPE && wanted.has(m.id.toLowerCase())
+  );
+  return matches.find((m) => m.state === LM_STUDIO_LOADED) ?? matches[0] ?? null;
+}
+
+/**
+ * The message for "LM Studio is up, but it does not hold this model".
+ *
+ * Names what LM Studio DOES have, because the fix is a user action in LM
+ * Studio and they cannot take it without knowing the gap. Bounded to
+ * {@link LM_STUDIO_ERROR_SAMPLE} ids - the reference install already holds
+ * eight, and a catalogue dump is not an error message.
+ */
+export function lmStudioNoMatchError(modelId: string, models: readonly LmStudioModel[]): string {
+  const servable = models.filter((m) => m && m.type !== LM_STUDIO_EMBEDDINGS_TYPE).map((m) => m.id);
+  if (servable.length === 0) {
+    return `LM Studio is running but has no models downloaded, so it cannot serve "${modelId}".`;
+  }
+  const shown = servable.slice(0, LM_STUDIO_ERROR_SAMPLE).join(', ');
+  const rest = servable.length > LM_STUDIO_ERROR_SAMPLE ? `, +${servable.length - LM_STUDIO_ERROR_SAMPLE} more` : '';
+  return (
+    `LM Studio does not have "${modelId}". It holds: ${shown}${rest}. ` +
+    `Download "${modelId}" in LM Studio, or serve it through another backend.`
+  );
+}
 
 /** Injectable collaborators for the orchestrator. */
 export type CookbookServeDeps = {
@@ -72,6 +168,19 @@ export type CookbookServeDeps = {
   getHardware: () => Promise<HardwareProfile>;
   /** Probe the local Ollama daemon `/api/tags` (for post-pull registration). */
   probeOllama?: () => Promise<OllamaProbe>;
+  /**
+   * Read LM Studio's OWN model endpoint: is it answering, and what does it
+   * hold. ONE fetch answers both, which is why the serve path does not
+   * re-check `/v1/models` - a 200 there would prove only that SOMETHING
+   * OpenAI-compatible owns the port, not that it is LM Studio.
+   *
+   * Unlike {@link probeOllama} this defaults to the real implementation, so
+   * production needs no wiring (cookbookServeSingleton stays untouched). It is
+   * only ever called on the `lm-studio` serve path, which a test reaches only
+   * by declaring `lmStudioServing: true` in the availability it injects - so a
+   * test that does NOT ask for LM Studio can never fall through to the network.
+   */
+  probeLmStudio?: () => Promise<LmStudioServerProbe>;
   /**
    * Host architecture (`process.arch` form). Injectable ONLY so a test can ask
    * what a machine llama.cpp publishes no build for would be offered; production
@@ -239,6 +348,10 @@ export class CookbookServeService {
         if (!repoId) return this.fail(modelId, 'llama-server', `no GGUF source for "${modelId}"`);
         return await this.serveViaLlamaServer(modelId, model.name, vramGb);
       }
+      // Deliberately AFTER the GGUF-source guards and never subject to one: LM
+      // Studio serves what it already holds, so a catalog model with no GGUF
+      // source is not a reason to refuse - only "LM Studio does not have it" is.
+      if (chosen === 'lm-studio') return await this.serveViaLmStudio(modelId, model);
       return await this.serveDegraded(modelId, vramGb);
     } catch (err) {
       return this.fail(modelId, this.status.backend, err instanceof Error ? err.message : String(err));
@@ -302,6 +415,71 @@ export class CookbookServeService {
     });
   }
 
+  /**
+   * Serve through the user's OWN LM Studio: no download, no spawn, no load.
+   *
+   * Every other backend here is something Darhai fetches or starts. LM Studio
+   * is a long-lived GUI app the user opened, already holding whatever weights
+   * they chose, so the only honest act is to point a provider at it and say
+   * which model it will answer as. Three consequences, each deliberate:
+   *
+   *  - **`lms load <id>` is NOT run.** It exists, and it is exactly the
+   *    surprise this path must not spring: loading a 20B evicts whatever the
+   *    user has in memory and takes minutes. LM Studio's own just-in-time
+   *    loading (MEASURED on the reference install: `justInTimeModelLoading:
+   *    true` in its server config) means the weights arrive on the FIRST
+   *    request - i.e. when the user actually sends a message, at LM Studio's
+   *    hands, under LM Studio's policy, exactly as if they had used it
+   *    directly. If they never send one, nothing was ever loaded.
+   *  - **A server Darhai DID spawn is stopped first.** `stop()` reaps only this
+   *    manager's own child, never LM Studio; without it a llama-server would
+   *    keep the GPU while the single `cookbook-local` provider had moved away
+   *    from it, and nothing would reach it again until quit.
+   *  - **The state is re-read, not remembered.** `lmStudioServing` was true
+   *    when the dropdown was built; the user can close LM Studio between that
+   *    and pressing Serve. The probe here is the one that decides.
+   */
+  private async serveViaLmStudio(modelId: string, model: HwfitCatalogModel): Promise<CookbookServeStatus> {
+    this.setStatus({ state: 'starting', modelId, backend: 'lm-studio', port: LM_STUDIO_DEFAULT_PORT });
+    await this.deps.serveManager.stop();
+
+    const probe = await this.probeLmStudio();
+    if (probe.serving !== true) {
+      return this.fail(modelId, 'lm-studio', 'LM Studio is not answering on its local server - is it still open?');
+    }
+
+    const match = matchLmStudioModel(lmStudioMatchCandidates(model), probe.models);
+    if (!match) return this.fail(modelId, 'lm-studio', lmStudioNoMatchError(modelId, probe.models));
+
+    const repo = this.deps.getRepo();
+    if (repo) {
+      registerCookbookServeInRepo(repo, {
+        port: LM_STUDIO_DEFAULT_PORT,
+        servedModelId: match.id,
+        displayName: match.id,
+        // LM Studio's port is a user setting, so the URL is imported from the
+        // one module that owns it rather than rebuilt here. KNOWN LIMIT: that
+        // module pins the default 1234, and the same constant decides
+        // viability - a relocated server is invisible to detection, so this
+        // path is never reached with any other port. `lms server status --json`
+        // reports the real one (measured: `{"running":true,"port":1234}`, ~320
+        // ms); threading it through BackendAvailability is the fix, and it
+        // belongs in the detection seam, not here.
+        baseUrl: LM_STUDIO_BASE_URL,
+      });
+    }
+    return this.setStatus({
+      state: 'ready',
+      modelId,
+      backend: 'lm-studio',
+      port: LM_STUDIO_DEFAULT_PORT,
+      providerId: COOKBOOK_LOCAL_ID,
+      // LM Studio's id, NOT the catalog's: this is the string the agent must
+      // put in `model`, and LM Studio answers to its own name only.
+      servedModel: match.id,
+    });
+  }
+
   private async serveDegraded(modelId: string, vramGb: number): Promise<CookbookServeStatus> {
     // No backend installed: the download must still succeed so the user is never
     // worse off than today. Then surface the exact hand-run serve command.
@@ -348,6 +526,12 @@ export class CookbookServeService {
   }
 
   // ── Internal helpers ──────────────────────────────────────────────────────
+
+  /** LM Studio's live model list; the real endpoint unless a test injects one. */
+  private probeLmStudio(): Promise<LmStudioServerProbe> {
+    if (this.deps.probeLmStudio) return this.deps.probeLmStudio();
+    return probeLmStudioServer({ fetchModels: defaultFetchLmStudioModels });
+  }
 
   private async registerOllamaLocal(): Promise<void> {
     const repo = this.deps.getRepo();

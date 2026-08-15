@@ -83,8 +83,15 @@
     "backend": {
       "vllm": "vLLM",
       "ollama": "Ollama",
+      "lmStudio": "LM Studio",
       "llamaServer": "llama.cpp",
       "none": "なし"
+    },
+    "lmStudio": {
+      "off": "このパソコンには LM Studio が入っていますが、ローカルサーバーが起動していません。LM Studio で起動してから「続ける」を押してください。",
+      "stillOff": "LM Studio のローカルサーバーがまだ応答しません。LM Studio を開き、ローカルサーバーを起動してから「続ける」を押してください。",
+      "checkFailed": "LM Studio のローカルサーバーが動いているかどうか、Darhai は確認できませんでした。「続ける」を押してもう一度お試しください。",
+      "continue": "続ける"
     },
     "status": {
       "downloading": "ダウンロード中",

@@ -83,8 +83,15 @@
     "backend": {
       "vllm": "vLLM",
       "ollama": "Ollama",
+      "lmStudio": "LM Studio",
       "llamaServer": "llama.cpp",
       "none": "Yok"
+    },
+    "lmStudio": {
+      "off": "LM Studio bu bilgisayarda kurulu, ancak yerel sunucusu çalışmıyor. LM Studio'da yerel sunucuyu başlatın, sonra Devam'a basın.",
+      "stillOff": "LM Studio'nun yerel sunucusu hâlâ yanıt vermiyor. LM Studio'nun açık ve yerel sunucusunun başlatılmış olduğundan emin olup Devam'a basın.",
+      "checkFailed": "Darhai, LM Studio'nun yerel sunucusunun çalışıp çalışmadığını denetleyemedi. Yeniden denemek için Devam'a basın.",
+      "continue": "Devam"
     },
     "status": {
       "downloading": "İndiriliyor",

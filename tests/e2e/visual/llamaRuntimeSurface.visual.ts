@@ -35,9 +35,21 @@ import { invokeBridge } from '../helpers/bridge';
 
 const OUT_DIR = path.resolve(__dirname, '..', 'screenshots', 'llama-runtime');
 
-/** The source this spec claims to be photographing. */
+/**
+ * The source this spec claims to be photographing.
+ *
+ * `useCookbookServe.ts` is here because the cell being photographed is not one
+ * branch, it is a CHOICE between branches: that hook owns `selection`, and
+ * `selection.viable`/`.provisionable` decide whether the cell shows a single
+ * tag, a two-option Select, or - since LM Studio joined the list - a
+ * three-option one whose provisionable entry offers a start rather than a
+ * download. A bundle built before a change there photographs the old chooser
+ * while every file above it looks current, which is precisely the stale-bundle
+ * case `assertBundleShowsSource` exists to refuse.
+ */
 const WATCHED = [
   'src/renderer/pages/model-advisor/CookbookServeControls.tsx',
+  'src/renderer/pages/model-advisor/useCookbookServe.ts',
   'src/renderer/pages/model-advisor/useLlamaRuntime.ts',
   'src/renderer/pages/model-advisor/ModelAdvisor.module.css',
   'src/renderer/pages/model-advisor/ModelTable.tsx',

@@ -83,8 +83,15 @@
     "backend": {
       "vllm": "vLLM",
       "ollama": "Ollama",
+      "lmStudio": "LM Studio",
       "llamaServer": "llama.cpp",
       "none": "无"
+    },
+    "lmStudio": {
+      "off": "这台电脑装有 LM Studio，但它的本地服务器没有运行。请在 LM Studio 里启动本地服务器，然后点击“继续”。",
+      "stillOff": "LM Studio 的本地服务器仍然没有响应。请确认 LM Studio 已打开并已启动本地服务器，然后点击“继续”。",
+      "checkFailed": "Darhai 无法确认 LM Studio 的本地服务器是否在运行。点击“继续”重试。",
+      "continue": "继续"
     },
     "status": {
       "downloading": "下载中",

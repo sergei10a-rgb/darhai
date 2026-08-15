@@ -83,8 +83,15 @@
     "backend": {
       "vllm": "vLLM",
       "ollama": "Ollama",
+      "lmStudio": "LM Studio",
       "llamaServer": "llama.cpp",
       "none": "Ninguno"
+    },
+    "lmStudio": {
+      "off": "LM Studio está instalado en este equipo, pero su servidor local no está en marcha. Inícialo en LM Studio y pulsa Continuar.",
+      "stillOff": "El servidor local de LM Studio sigue sin responder. Comprueba que LM Studio esté abierto y su servidor local iniciado, y pulsa Continuar.",
+      "checkFailed": "Darhai no pudo comprobar si el servidor local de LM Studio está en marcha. Pulsa Continuar para volver a intentarlo.",
+      "continue": "Continuar"
     },
     "status": {
       "downloading": "Descargando",

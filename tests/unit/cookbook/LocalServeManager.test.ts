@@ -84,6 +84,12 @@ const makeDeps = (over: Partial<LocalServeDeps> = {}): LocalServeDeps => ({
   healthProbe: vi.fn(async () => false),
   resolveCommandPath: (cmd) => (cmd.includes('llama-server') ? '/usr/bin/llama-server' : null),
   llamaServerCandidates: () => [],
+  // Both LM Studio seams default to REAL machine probes (home-dir scan + a
+  // loopback fetch). Pinned to "absent" here so a developer who happens to be
+  // running LM Studio gets the same answer as CI; the tests that are ABOUT LM
+  // Studio override these explicitly.
+  lmStudioCliCandidates: () => [],
+  lmStudioServingProbe: async () => false,
   env: () => ({}),
   readyTimeoutMs: 10000,
   probeHelpText: () => HELP_B10441,
@@ -186,11 +192,88 @@ describe('LocalServeManager.detectAvailability', () => {
         },
       })
     );
-    expect(await mgr.detectAvailability()).toEqual({ ollama: true, llamaServer: true, vllm: true });
+    expect(await mgr.detectAvailability()).toEqual({
+      ollama: true,
+      llamaServer: true,
+      vllm: true,
+      lmStudioServing: false,
+      lmStudioInstalled: false,
+    });
   });
   it('is all-false when nothing is installed', async () => {
     const mgr = new LocalServeManager(makeDeps({ resolveCommandPath: () => null, llamaServerCandidates: () => [] }));
-    expect(await mgr.detectAvailability()).toEqual({ ollama: false, llamaServer: false, vllm: false });
+    expect(await mgr.detectAvailability()).toEqual({
+      ollama: false,
+      llamaServer: false,
+      vllm: false,
+      lmStudioServing: false,
+      lmStudioInstalled: false,
+    });
+  });
+});
+
+/**
+ * The two LM Studio facts have to move independently, because they answer
+ * different questions and only one of them makes the backend usable.
+ *
+ * `resolveLmStudioCli` is asserted through `detectAvailability` AND directly,
+ * because the boolean alone cannot show WHICH of the two lookup steps found the
+ * binary - and the second step (the home directory) is the one that exists
+ * because LM Studio does not put `lms` on PATH until `lms bootstrap` is run.
+ */
+describe('LocalServeManager: LM Studio is two facts, not one', () => {
+  it('reports serving without installed - a portable copy the CLI search misses', async () => {
+    const mgr = new LocalServeManager(
+      makeDeps({
+        resolveCommandPath: () => null,
+        lmStudioCliCandidates: () => [],
+        lmStudioServingProbe: async () => true,
+      })
+    );
+    const availability = await mgr.detectAvailability();
+    expect(availability.lmStudioServing).toBe(true);
+    expect(availability.lmStudioInstalled).toBe(false);
+  });
+
+  it('reports installed without serving - LM Studio is there, its server is off', async () => {
+    const mgr = new LocalServeManager(
+      makeDeps({
+        resolveCommandPath: (c) => (c === '/home/u/.lmstudio/bin/lms' ? c : null),
+        lmStudioCliCandidates: () => ['/home/u/.lmstudio/bin/lms'],
+        lmStudioServingProbe: async () => false,
+      })
+    );
+    const availability = await mgr.detectAvailability();
+    expect(availability.lmStudioInstalled).toBe(true);
+    expect(availability.lmStudioServing).toBe(false);
+  });
+
+  it('finds `lms` in the home directory when PATH has nothing', () => {
+    const mgr = new LocalServeManager(
+      makeDeps({
+        // Refuses every bare name, so only the candidate list can succeed.
+        resolveCommandPath: (c) => (c === '/home/u/.lmstudio/bin/lms' ? c : null),
+        lmStudioCliCandidates: () => ['/home/u/.lmstudio/bin/lms'],
+      })
+    );
+    expect(mgr.resolveLmStudioCli()).toBe('/home/u/.lmstudio/bin/lms');
+  });
+
+  it('prefers a PATH hit over the home-directory candidates', () => {
+    const mgr = new LocalServeManager(
+      makeDeps({
+        resolveCommandPath: (c) => (c === 'lms' ? '/usr/local/bin/lms' : c.startsWith('/home') ? c : null),
+        lmStudioCliCandidates: () => ['/home/u/.lmstudio/bin/lms'],
+      })
+    );
+    expect(mgr.resolveLmStudioCli()).toBe('/usr/local/bin/lms');
+  });
+
+  it('is null when neither PATH nor the home directory has it', () => {
+    const mgr = new LocalServeManager(
+      makeDeps({ resolveCommandPath: () => null, lmStudioCliCandidates: () => ['/home/u/.lmstudio/bin/lms'] })
+    );
+    expect(mgr.resolveLmStudioCli()).toBeNull();
   });
 });
 

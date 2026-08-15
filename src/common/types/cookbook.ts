@@ -25,17 +25,55 @@
  *                       scale to the detected VRAM (0 = pure CPU on big-RAM boxes).
  *   - `ollama`       -> easy cross-platform path when installed: `ollama pull`
  *                       + the existing keyless ollama-local provider.
+ *   - `lm-studio`    -> the user's OWN LM Studio, already serving an
+ *                       OpenAI-compatible `/v1` on loopback (port 1234 by
+ *                       default, keyless). Darhai spawns nothing: the server is
+ *                       a GUI app the user started, so serving through it is a
+ *                       registration, not a launch.
  *   - `none`         -> no backend installed: the GGUF download still succeeds and
  *                       the UI offers a copy-command + locate-binary + "install
  *                       ollama or vllm" affordance so the user is never worse off.
  */
 
 /**
+ * Every local inference backend the serve path can drive, plus `'none'`.
+ *
+ * Declared as a runtime array with the union DERIVED from it, not as a bare
+ * union - the same shape as `LLAMA_RUNTIME_FALLBACK_CODES`, for the same reason
+ * and after the same near-miss. A union is invisible at runtime, so the one
+ * duplication that tsc cannot see - the thirteen locale files each backend
+ * needs a name in - could only be checked by a test that hard-codes its own
+ * list, which drifts the moment someone adds a backend. Adding a member here
+ * now fails `backendSurfaceCoverage.dom.test.tsx` in all 13 locales until the string
+ * exists, and fails `Record<CookbookBackend, ...>` at the label map and the
+ * serve dispatch until those are written too.
+ *
+ * Order is the ORDERING CONTRACT, not decoration: it is the order
+ * {@link selectBackend} emits `viable` and `provisionable` in - most capable
+ * first - so the UI's `[...viable, ...provisionable]` reads as one ranked list.
+ * `'none'` is last because it is not a backend; it is the absence of one.
+ */
+export const COOKBOOK_BACKENDS = ['vllm', 'ollama', 'lm-studio', 'llama-server', 'none'] as const;
+
+/**
  * A local inference backend the serve path can drive. Which ones are VIABLE is
  * decided per host by {@link selectBackend} from the hardware scan + installed
  * binaries; the most capable viable one is default-selected but user-overridable.
  */
-export type CookbookBackend = 'ollama' | 'llama-server' | 'vllm' | 'none';
+export type CookbookBackend = (typeof COOKBOOK_BACKENDS)[number];
+
+/**
+ * The backends that can actually serve a model - {@link COOKBOOK_BACKENDS}
+ * without `'none'`.
+ *
+ * Every one of these must be reachable: named in all 13 locales, accepted by
+ * the IPC validator, emitted by `selectBackend` for SOME host, and dispatched
+ * by `CookbookServeService.serve`. `'none'` is exempt from all four, which is
+ * exactly why it is subtracted here rather than special-cased at each site.
+ */
+export const SERVEABLE_COOKBOOK_BACKENDS = COOKBOOK_BACKENDS.filter(
+  (b): b is Exclude<CookbookBackend, 'none'> => b !== 'none'
+);
 
 /**
  * The hardware-adaptive backend choice for the current host: the default-selected
@@ -51,12 +89,27 @@ export type CookbookBackend = 'ollama' | 'llama-server' | 'vllm' | 'none';
  * fires when `chosen === 'none'`. Backends listed here are offered alongside
  * `viable`, and picking one runs the same pre-download disclosure a bare
  * machine gets, so nothing is fetched without the user saying yes. A backend is
- * never in both lists: once it is installed it is simply viable.
+ * never in both lists: once it is usable it is simply viable.
+ *
+ * LM Studio joins the SAME two lists rather than adding a third shape, because
+ * it poses the same question with a different verb. Its server is a GUI app the
+ * user starts, so "LM Studio is on this machine" and "LM Studio is answering
+ * right now" are different facts, and a host with LM Studio installed but its
+ * server off is not the same host as one without LM Studio at all. It is
+ * `viable` when its `/v1` answers and `provisionable` when only its `lms` CLI
+ * was found - the act Darhai offers is `lms server start` instead of a
+ * download, but the contract is identical: not usable yet, Darhai can make it
+ * usable, only after the user says yes.
  */
 export type CookbookBackendSelection = {
   chosen: CookbookBackend;
   viable: CookbookBackend[];
-  /** Backends Darhai can install on request but that are not installed yet. */
+  /**
+   * Backends that are NOT usable yet but that Darhai can make usable on
+   * request, with consent. The act is per backend: `llama-server` is a download
+   * + install, `lm-studio` is starting the local server of an app that is
+   * already on the machine.
+   */
   provisionable: CookbookBackend[];
 };
 
