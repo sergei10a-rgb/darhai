@@ -27,6 +27,7 @@ export {
   type LlamaAssetRef,
   type LlamaAssetRole,
   type LlamaAssetUnsupported,
+  type LlamaAssetUnsupportedCause,
   type LlamaBackendFallback,
   type LlamaFallbackCode,
   type LlamaPlatform,

@@ -42,10 +42,22 @@ export type CookbookBackend = 'ollama' | 'llama-server' | 'vllm' | 'none';
  * (most capable viable) backend plus every viable backend the user may override
  * to. `viable` never contains `'none'`; `chosen` is `'none'` only when nothing is
  * installed.
+ *
+ * `provisionable` is the answer to a question `viable` cannot express: "is it
+ * INSTALLED" is the wrong test for llama.cpp, because Darhai ships the ability
+ * to install it. A machine that already has Ollama used to see `viable:
+ * ['ollama']` and had NO path to Darhai's own runtime at all - not in the
+ * dropdown, and not through the zero-backend disclosure either, which only
+ * fires when `chosen === 'none'`. Backends listed here are offered alongside
+ * `viable`, and picking one runs the same pre-download disclosure a bare
+ * machine gets, so nothing is fetched without the user saying yes. A backend is
+ * never in both lists: once it is installed it is simply viable.
  */
 export type CookbookBackendSelection = {
   chosen: CookbookBackend;
   viable: CookbookBackend[];
+  /** Backends Darhai can install on request but that are not installed yet. */
+  provisionable: CookbookBackend[];
 };
 
 /** Lifecycle state of a per-model download. */

@@ -35,7 +35,7 @@
  *     accelerator nothing on this machine has been measured to support.
  *
  * The CUDA LINE is chosen from the measured driver, not by "newest wins" - see
- * {@link CUDA_MIN_DRIVER_MAJOR} and {@link pickCudaVersioned}.
+ * {@link CUDA_MIN_DRIVER} and {@link pickCudaVersioned}.
  *
  * The CUDA runtime split is the expensive decision and was measured by reading
  * each archive's central directory over HTTP Range:
@@ -133,8 +133,28 @@ export type LlamaAssetPlan = {
   noteCodes: LlamaNoteCode[];
 };
 
+/**
+ * WHY a target has no plan, as a stable identifier.
+ *
+ * `platform` / `arch` are permanent facts about the machine - llama.cpp has
+ * never published a FreeBSD or 32-bit build and no amount of retrying changes
+ * that. `asset-missing` is a fact about ONE RELEASE: the platform is supported,
+ * this particular release just does not (yet) list the archive. The two are
+ * indistinguishable in prose and must not be treated alike, because a GitHub
+ * release is created BEFORE its assets finish uploading - measured on
+ * ggml-org/llama.cpp b10442, published 14:58:24Z with its 26 assets landing
+ * between +15 s and +92 s, and the win/x64 CPU archive only at +53 s. Anything
+ * resolving `latest` inside that window sees a real release that genuinely
+ * lists no build for this machine. See {@link LlamaCppProvisioner.plan}, which
+ * walks back to a complete release rather than reporting an upload window as a
+ * permanent verdict.
+ */
+export type LlamaAssetUnsupportedCause = 'platform' | 'arch' | 'asset-missing';
+
 export type LlamaAssetUnsupported = {
   kind: 'unsupported';
+  /** Whether this is a fact about the machine or about one release. */
+  cause: LlamaAssetUnsupportedCause;
   reason: string;
 };
 
@@ -162,27 +182,60 @@ export type LlamaAssetPlanInput = {
    * Measured NVIDIA driver version, exactly as `nvidia-smi
    * --query-gpu=driver_version` prints it (e.g. `'610.62'`). Absent/empty means
    * NOT MEASURED, which is a different answer from "old" - see
-   * {@link CUDA_MIN_DRIVER_MAJOR}.
+   * {@link CUDA_MIN_DRIVER}.
    */
   driverVersion?: string | null;
 };
 
 /**
- * Minimum NVIDIA driver MAJOR version each CUDA major line needs.
+ * Minimum NVIDIA driver each CUDA MAJOR line needs, as the FULL dotted version
+ * NVIDIA publishes, per OS.
  *
- * Measured from NVIDIA's "CUDA Toolkit and Corresponding Driver Versions" table
- * (docs.nvidia.com/cuda/cuda-toolkit-release-notes, read 2026-08-15):
- * CUDA 13.0 GA needs `>=580.65.06` on Linux, CUDA 12.0 GA needs `>=525.60.13`
- * on Linux / `>=527.41` on Windows. Comparing MAJORS only is deliberate: within
- * one driver branch the Windows number is always at or above the Linux base
- * (527.41 is the r525 branch, 580.88 the r580 branch), so one integer test is
- * correct on both and does not need a per-OS table that would rot.
+ * Read from NVIDIA's "CUDA Toolkit and Corresponding Driver Versions" (Table 3
+ * of docs.nvidia.com/cuda/cuda-toolkit-release-notes, re-read 2026-08-15):
+ *
+ *   CUDA 12.0 GA  Linux x86_64 `>=525.60.13`   Windows `>=527.41`
+ *   CUDA 13.0 GA  Linux x86_64 `>=580.65.06`   Windows `N/A`
+ *
+ * Keyed by MAJOR because that is what actually gates loading: CUDA minor
+ * version compatibility means a binary built against 12.4 runs on any driver
+ * meeting the 12.0 GA floor. The line's own toolkit floor (12.4 wants
+ * >=550.54.14) is NOT the number to test.
+ *
+ * Comparing majors only - what this table used to store, `{'12': 525}` - is
+ * what the previous comment claimed was "correct on both". It is not, and the
+ * counter-example was internal to this file: `driverMajor >= 525` admits every
+ * Windows driver in 525.00-527.40, all of which the same comment cites as below
+ * the 527.41 floor. Those drivers then get a CUDA 12 build that cannot
+ * initialise, which llama.cpp reports as "Available devices: (none)", exit 0,
+ * on the CPU - the exact silent outcome this table exists to prevent, one
+ * branch below the case it caught. So the floors are stored whole and compared
+ * with {@link compareVersions}.
+ *
+ * NVIDIA prints `N/A` in the Windows column from CUDA 13 on, noting the Windows
+ * display driver is no longer bundled with the toolkit and must meet the stated
+ * minimum anyway - so Windows carries the published Linux number rather than an
+ * invented one.
  *
  * ADDING A LINE: when llama.cpp starts shipping a CUDA 14 build, put its floor
  * here. Until it is here it is treated as unverifiable, not as safe - see
  * {@link pickCudaVersioned}.
  */
-const CUDA_MIN_DRIVER_MAJOR: Readonly<Record<string, number>> = { '12': 525, '13': 580 };
+const CUDA_MIN_DRIVER: Readonly<Record<string, Readonly<{ win32: string; linux: string }>>> = {
+  '12': { win32: '527.41', linux: '525.60.13' },
+  '13': { win32: '580.65.06', linux: '580.65.06' },
+};
+
+/**
+ * The driver floor a CUDA line needs on a platform, or `''` when this file does
+ * not know one. macOS never reaches here (it has no CUDA build at all), so it
+ * shares the Linux column rather than needing a third one.
+ */
+function cudaDriverFloor(cudaVersion: string, platform: LlamaPlatform): string {
+  const row = CUDA_MIN_DRIVER[String(majorOf(cudaVersion))];
+  if (row === undefined) return '';
+  return platform === 'win32' ? row.win32 : row.linux;
+}
 
 const CPU_BACKENDS: ReadonlySet<HwfitBackend> = new Set(['cpu_x86', 'cpu_arm']);
 
@@ -266,24 +319,30 @@ type CudaPick = {
  *
  * An explicit `pin` always wins (it is a deliberate override). Otherwise the
  * answer is the newest line whose measured driver floor this machine meets. A
- * line with no floor in {@link CUDA_MIN_DRIVER_MAJOR} is UNVERIFIABLE, never
+ * line with no floor in {@link CUDA_MIN_DRIVER} is UNVERIFIABLE, never
  * "fine": it is used only when no line with a known floor is eligible, and
  * saying so is the note that comes back.
+ *
+ * The floor test is a FULL version comparison, not an integer one, and it is
+ * per-OS: on Windows CUDA 12 needs 527.41, which no integer test can express.
  */
 function pickCudaVersioned(
   assets: readonly string[],
   prefix: string,
   suffix: string,
   pin: string | undefined,
-  driverVersion: string | null | undefined
+  driverVersion: string | null | undefined,
+  platform: LlamaPlatform
 ): CudaPick {
   const all = allVersioned(assets, prefix, suffix);
   if (all.length === 0) return { hit: null, noteCodes: [], driverTooOld: false };
   const newest = all[0];
   if (pin) return { hit: all.find((h) => h.version === pin) || null, noteCodes: [], driverTooOld: false };
 
+  // The driver is "measured" only when its leading component parses; `''` and
+  // `'unknown'` are NOT MEASURED, which is a different answer from "too old".
   const driverMajor = majorOf(driverVersion || '');
-  const unknownFloor = all.filter((h) => CUDA_MIN_DRIVER_MAJOR[String(majorOf(h.version))] === undefined);
+  const unknownFloor = all.filter((h) => cudaDriverFloor(h.version, platform) === '');
 
   if (driverMajor === null) {
     // The driver was not measured. Offering the newest build is what shipped
@@ -293,9 +352,10 @@ function pickCudaVersioned(
     return { hit: newest, noteCodes: ['CUDA_LINE_UNVERIFIED'], driverTooOld: false };
   }
 
+  const measured = String(driverVersion);
   const eligible = all.filter((h) => {
-    const floor = CUDA_MIN_DRIVER_MAJOR[String(majorOf(h.version))];
-    return typeof floor === 'number' && driverMajor >= floor;
+    const floor = cudaDriverFloor(h.version, platform);
+    return floor !== '' && compareVersions(measured, floor) >= 0;
   });
   if (eligible.length > 0) {
     const chosen = eligible[0];
@@ -303,7 +363,7 @@ function pickCudaVersioned(
     // a newest line whose floor is simply not known here costs the user nothing
     // (they still get a verified GPU build), and telling them to update a driver
     // that is already new enough would be advice for a problem they do not have.
-    const newestFloorKnown = CUDA_MIN_DRIVER_MAJOR[String(majorOf(newest.version))] !== undefined;
+    const newestFloorKnown = cudaDriverFloor(newest.version, platform) !== '';
     const skippedForDriver = chosen.version !== newest.version && newestFloorKnown === true;
     return { hit: chosen, noteCodes: skippedForDriver ? ['CUDA_LINE_OLDER_FOR_DRIVER'] : [], driverTooOld: false };
   }
@@ -353,7 +413,7 @@ function findAcceleratedAsset(input: LlamaAssetPlanInput, platform: LlamaPlatfor
   const osPart = platform === 'win32' ? 'win' : 'ubuntu';
   if (backend === 'cuda') {
     const prefix = `llama-${tag}-bin-${osPart}-cuda-`;
-    return pickCudaVersioned(availableAssets, prefix, `-${arch}${ext}`, cudaVariant, driverVersion);
+    return pickCudaVersioned(availableAssets, prefix, `-${arch}${ext}`, cudaVariant, driverVersion, platform);
   }
   if (backend === 'rocm') {
     const hit = pickVersioned(availableAssets, `llama-${tag}-bin-${osPart}-rocm-`, `-${arch}${ext}`);
@@ -390,6 +450,10 @@ function cpuPlan(
   if (!input.availableAssets.includes(name)) {
     return {
       kind: 'unsupported',
+      // A fact about THIS RELEASE, not about this machine: a release that is
+      // still uploading lists a subset of its assets. The caller may retry
+      // against an older, complete release.
+      cause: 'asset-missing',
       reason: `llama.cpp release ${input.tag} ships no build for ${platform}/${arch} (expected asset "${name}")`,
     };
   }
@@ -443,11 +507,19 @@ export function cudaRuntimeDllNames(cudaVersion: string): string[] {
 export function planLlamaAssets(input: LlamaAssetPlanInput): LlamaAssetPlanResult {
   const platform = toPlatform(input.platform);
   if (!platform) {
-    return { kind: 'unsupported', reason: `llama.cpp publishes no build for platform "${input.platform}"` };
+    return {
+      kind: 'unsupported',
+      cause: 'platform',
+      reason: `llama.cpp publishes no build for platform "${input.platform}"`,
+    };
   }
   const arch = toArch(input.arch);
   if (!arch) {
-    return { kind: 'unsupported', reason: `llama.cpp publishes no build for architecture "${input.arch}"` };
+    return {
+      kind: 'unsupported',
+      cause: 'arch',
+      reason: `llama.cpp publishes no build for architecture "${input.arch}"`,
+    };
   }
 
   const backend = input.backend;
@@ -494,7 +566,11 @@ export function planLlamaAssets(input: LlamaAssetPlanInput): LlamaAssetPlanResul
     }
     const name = cpuAssetName(platform, arch, input.tag);
     if (!input.availableAssets.includes(name)) {
-      return { kind: 'unsupported', reason: `llama.cpp release ${input.tag} is missing "${name}"` };
+      return {
+        kind: 'unsupported',
+        cause: 'asset-missing',
+        reason: `llama.cpp release ${input.tag} is missing "${name}"`,
+      };
     }
     return {
       kind: 'ok',
@@ -547,7 +623,8 @@ export function planLlamaAssets(input: LlamaAssetPlanInput): LlamaAssetPlanResul
           code: 'CUDA_DRIVER_TOO_OLD',
           reason:
             `NVIDIA driver ${input.driverVersion} is older than every CUDA build in release ${input.tag} ` +
-            `(CUDA 13.x needs >=580, 12.x needs >=525); using the CPU build instead.`,
+            `(on ${platform}: CUDA 13.x needs >=${cudaDriverFloor('13', platform)}, ` +
+            `12.x needs >=${cudaDriverFloor('12', platform)}); using the CPU build instead.`,
         },
         notes,
         noteCodes

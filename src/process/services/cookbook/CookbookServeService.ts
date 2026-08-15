@@ -35,7 +35,7 @@ import type {
 import type { CatalogModel as HwfitCatalogModel, HardwareProfile } from '@process/services/hwfit';
 import { localGgufPath, type CookbookDownloadResult, type ModelDownloadManager } from './ModelDownloadManager';
 import { buildServeCommand, ngpuLayersForVram, type LocalServeManager } from './LocalServeManager';
-import { selectBackend } from './backendPolicy';
+import { isLlamaServerProvisionable, selectBackend } from './backendPolicy';
 import {
   COOKBOOK_LOCAL_ID,
   registerCookbookServeInRepo,
@@ -72,6 +72,12 @@ export type CookbookServeDeps = {
   getHardware: () => Promise<HardwareProfile>;
   /** Probe the local Ollama daemon `/api/tags` (for post-pull registration). */
   probeOllama?: () => Promise<OllamaProbe>;
+  /**
+   * Host architecture (`process.arch` form). Injectable ONLY so a test can ask
+   * what a machine llama.cpp publishes no build for would be offered; production
+   * leaves it unset and the real `process.arch` is read.
+   */
+  arch?: string;
   /** Emit a download-progress event to the renderer. */
   onProgress?: (p: CookbookDownloadProgress) => void;
   /** Emit a serve-status change to the renderer. */
@@ -199,6 +205,9 @@ export class CookbookServeService {
       hwBackend: profile.backend,
       vramGb,
       available,
+      // Main-process code, so `process.arch` is the real architecture of the
+      // host that would run the downloaded binary.
+      canProvisionLlamaServer: isLlamaServerProvisionable(profile.platform, this.deps.arch ?? process.arch),
     });
     return { selection, vramGb };
   }

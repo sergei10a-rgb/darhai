@@ -53,7 +53,7 @@ import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import type { HwfitBackend } from '@/common/types/hwfit';
 import type { ArchiveEntry } from './archiveEntry';
-import { planLlamaAssets, type LlamaAssetPlanResult, type LlamaAssetRef } from './assetMap';
+import { planLlamaAssets, type LlamaAssetPlan, type LlamaAssetPlanResult, type LlamaAssetRef } from './assetMap';
 import { collectInstallRequirements } from './binaryDeps';
 import { extractZip } from './zipReader';
 import { extractTarGz } from './tarReader';
@@ -135,11 +135,30 @@ export type LlamaInstallResult = {
 export type LlamaProvisionRequest = {
   /** Absolute `app.getPath('userData')`. */
   userDataDir: string;
-  backend: HwfitBackend;
-  /** Defaults to `process.platform` / `process.arch`. */
+  /**
+   * AN ALREADY-RESOLVED PLAN, INSTALLED VERBATIM.
+   *
+   * When this is set, {@link LlamaCppProvisioner.ensureInstalled} does not plan
+   * anything: it fetches the release named by `plan.tag` for the URLs and
+   * digests, and downloads exactly `plan.assets`. Every other field below is
+   * ignored, including `backend`, `platform`, `arch`, `cudaRuntimePresent` and
+   * `cudaVariant`.
+   *
+   * That is the point. The caller who shows the user "CPU build, 30 MB, because
+   * your driver predates every CUDA build" holds a plan; passing the INPUTS
+   * that produced it and re-planning here means every input has to be carried
+   * across, and the one that was not carried - the measured driver version -
+   * turned that disclosure into a 512.8 MB CUDA install of a build the driver
+   * cannot load. A pinned plan cannot be broken that way by adding a sixth
+   * input, because no input is read.
+   */
+  plan?: LlamaAssetPlan;
+  /** Required when {@link plan} is absent; ignored when it is present. */
+  backend?: HwfitBackend;
+  /** Defaults to `process.platform` / `process.arch`. Ignored with {@link plan}. */
   platform?: string;
   arch?: string;
-  /** Pin a release tag; omit for the latest. */
+  /** Pin a release tag; omit for the latest. Ignored with {@link plan}. */
   tag?: string;
   /** Skip the ~373 MB cudart archive because the DLLs already resolve. */
   cudaRuntimePresent?: boolean;
@@ -201,10 +220,54 @@ export class LlamaCppProvisioner extends EventEmitter {
    *
    * The UI calls this to show a size and, when the requested backend has no
    * build, the fallback reason - before the user commits to 500 MB.
+   *
+   * WHY THIS CAN ANSWER WITH A RELEASE THAT IS NOT `latest`. A GitHub release
+   * exists before its assets do: the release object is created first and the
+   * archives are uploaded into it over the following minute or two. MEASURED on
+   * ggml-org/llama.cpp b10442 (2026-08-15): created 14:58:24Z, its 26 assets
+   * landing between +15 s and +92 s, with `llama-b10442-bin-win-cpu-x64.zip`
+   * only at +53 s; the five releases before it took 88-134 s. Inside that
+   * window `latest` names a real release that genuinely lists no build for this
+   * machine, and a plain answer of "unsupported" is a PERMANENT verdict (the UI
+   * offers no retry for it) drawn from a 90-second fact. So when the release
+   * this machine needs is simply not there yet, ask the releases before it and
+   * take the newest one that does have it. An explicitly pinned `tag` is never
+   * walked back - that is a deliberate choice by the caller, not a guess at
+   * "the newest usable build".
    */
   async plan(request: LlamaProvisionRequest): Promise<{ release: LlamaRelease; plan: LlamaAssetPlanResult }> {
-    const release = await this.deps.releaseClient.fetchRelease(request.tag);
-    const plan = planLlamaAssets({
+    if (request.tag !== undefined) {
+      const pinned = await this.deps.releaseClient.fetchRelease(request.tag);
+      return { release: pinned, plan: this.planFor(pinned, request) };
+    }
+
+    let latest: LlamaRelease | null = null;
+    let latestError: unknown = null;
+    try {
+      latest = await this.deps.releaseClient.fetchRelease();
+    } catch (err) {
+      // A release whose assets have not started uploading has none at all, and
+      // that reads here as a malformed release. Everything else - offline, 404,
+      // rate limit - is a real failure and stays one.
+      if (!isMalformedRelease(err)) throw err;
+      latestError = err;
+    }
+
+    if (latest !== null) {
+      const plan = this.planFor(latest, request);
+      if (plan.kind !== 'unsupported' || plan.cause !== 'asset-missing') return { release: latest, plan };
+      const older = await this.walkBack(latest, request);
+      return older === null ? { release: latest, plan } : older;
+    }
+
+    const older = await this.walkBack(null, request);
+    if (older !== null) return older;
+    throw latestError;
+  }
+
+  /** Plan one release for this request. Pure apart from the platform defaults. */
+  private planFor(release: LlamaRelease, request: LlamaProvisionRequest): LlamaAssetPlanResult {
+    return planLlamaAssets({
       platform: request.platform || process.platform,
       arch: request.arch || process.arch,
       backend: request.backend,
@@ -213,7 +276,33 @@ export class LlamaCppProvisioner extends EventEmitter {
       cudaRuntimePresent: request.cudaRuntimePresent,
       cudaVariant: request.cudaVariant,
     });
-    return { release, plan };
+  }
+
+  /**
+   * The newest recent release that actually ships a build for this machine.
+   *
+   * Null when none of them does - which is the honest answer for a platform
+   * llama.cpp has stopped publishing for, and keeps the caller's `unsupported`
+   * intact instead of substituting a release that is no better.
+   */
+  private async walkBack(
+    skip: LlamaRelease | null,
+    request: LlamaProvisionRequest
+  ): Promise<{ release: LlamaRelease; plan: LlamaAssetPlanResult } | null> {
+    let recent: LlamaRelease[];
+    try {
+      recent = await this.deps.releaseClient.listRecent();
+    } catch {
+      // The walk-back is a second opinion, not a dependency: failing to get one
+      // must not turn a stated `unsupported` into a different error.
+      return null;
+    }
+    for (const release of recent) {
+      if (skip !== null && release.tag === skip.tag) continue;
+      const plan = this.planFor(release, request);
+      if (plan.kind === 'ok') return { release, plan };
+    }
+    return null;
   }
 
   /** True when a complete, verified install already exists for `tag`. */
@@ -245,11 +334,12 @@ export class LlamaCppProvisioner extends EventEmitter {
     // to come BEFORE `plan()`, because `plan()` fetches the release index: with
     // it second, a machine that is fully installed still fails on a network
     // that is down, which is the one situation where nothing needs the network.
-    if (request.tag !== undefined && isInstalled(userDataDir, request.tag)) {
-      return this.cachedResult(userDataDir, request.tag);
+    const pinnedTag = request.plan === undefined ? request.tag : request.plan.tag;
+    if (pinnedTag !== undefined && isInstalled(userDataDir, pinnedTag)) {
+      return this.cachedResult(userDataDir, pinnedTag);
     }
 
-    const { release, plan } = await this.plan(request);
+    const { release, plan } = await this.resolveInstall(request);
     if (plan.kind === 'unsupported') {
       throw new LlamaProvisionError('LLAMACPP_UNSUPPORTED', plan.reason);
     }
@@ -424,6 +514,24 @@ export class LlamaCppProvisioner extends EventEmitter {
     }
   }
 
+  /**
+   * What {@link ensureInstalled} will actually fetch.
+   *
+   * With {@link LlamaProvisionRequest.plan} set this is NOT a planning step:
+   * the approved plan is returned untouched and the only thing the release
+   * lookup contributes is the download URLs and the sha256 digests, read from
+   * the release the plan itself names. Nothing here can arrive at a different
+   * asset, a different acceleration or a different CUDA line than the caller
+   * disclosed, because nothing here re-decides any of them.
+   */
+  private async resolveInstall(
+    request: LlamaProvisionRequest
+  ): Promise<{ release: LlamaRelease; plan: LlamaAssetPlanResult }> {
+    const approved = request.plan;
+    if (approved === undefined) return this.plan(request);
+    return { release: await this.deps.releaseClient.fetchRelease(approved.tag), plan: approved };
+  }
+
   /** An install that is already on disk, reported without touching the network. */
   private cachedResult(userDataDir: string, tag: string): LlamaInstallResult {
     const serverPath = installedServerPath(userDataDir, tag);
@@ -591,6 +699,17 @@ export class LlamaCppProvisioner extends EventEmitter {
   ): void {
     this.emit('progress', { ...head, bytesDone, bytesTotal, totalBytesDone, totalBytesTotal });
   }
+}
+
+/**
+ * True for the one release-lookup failure that a newer release can cause and an
+ * older one can cure: a release object that carries no usable asset, which is
+ * what `latest` looks like in the seconds after it is created and before the
+ * first archive finishes uploading (MEASURED: 15 s on b10442).
+ */
+function isMalformedRelease(err: unknown): boolean {
+  const code = err && typeof err === 'object' ? (err as { code?: unknown }).code : undefined;
+  return code === 'LLAMACPP_RELEASE_MALFORMED';
 }
 
 /** Read a receipt we have already proved exists, or fail loudly. */

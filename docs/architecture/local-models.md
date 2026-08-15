@@ -66,6 +66,32 @@ detectAvailability() -> {"ollama":true,"llamaServer":true,"vllm":false}
 Ordering matters: `resolveLlamaServer()` prefers `PATH` over the managed install, so a
 user who already has llama.cpp keeps using theirs.
 
+### Who gets offered what
+
+`selectBackend` (`backendPolicy.ts`) answers two questions, not one:
+
+| field | means | example: host with Ollama only |
+| --- | --- | --- |
+| `viable` | installed **now** | `['ollama']` |
+| `chosen` | most capable of those | `'ollama'` |
+| `provisionable` | Darhai could install it | `['llama-server']` |
+
+The split exists because "is it installed" is the wrong question for the one backend
+that ships inside the app. Building the whole choice list from `viable` meant a machine
+with Ollama on it got `viable: ['ollama']` — llama.cpp was not in the dropdown, and
+`chosen` was not `'none'`, which is the only value that opens the pre-download
+disclosure. That machine had **no route at all** to Darhai's own runtime.
+
+The row now offers `viable ∪ provisionable`, and picking a provisionable backend runs
+the same disclosure a bare machine gets, so nothing is fetched before the user says yes.
+A machine with nothing installed is deliberately unchanged: `viable` is still `[]`, so it
+still sees no chooser and is never shown the words "llama.cpp".
+
+`provisionable` is gated on `isLlamaServerProvisionable(platform, arch)` — the same
+coarse win32/darwin/linux × x64/arm64 test `planLlamaAssets` applies before it touches
+the network. Whether a given release ships the asset is still a network question, and
+the plan call answers it honestly ("no build for this machine").
+
 ---
 
 ## 2. Where things are stored
@@ -118,6 +144,50 @@ Schema 1 counted files instead, and the count came from the same extractor that 
 them — so an extraction that dropped 19 of 62 members certified itself ready at 43 ≥ 43.
 A schema-1 receipt now reads as **not** ready, so a machine carrying one reinstalls rather
 than re-certifying a broken tree.
+
+### What the extractor refuses
+
+The archive names the files it writes, so `src/process/services/llamacpp/archiveEntry.ts`
+is the boundary. The sha256 check in step 3 is not a second opinion here: the digest comes
+from the same GitHub API that served the bytes, so a compromised release or a MITM'd
+download supplies both. Three rules, all enforced before anything is opened for writing:
+
+| Rule                                            | Refuses                                          |
+| ----------------------------------------------- | ------------------------------------------------ |
+| An entry may not be **placed** outside the root | `../../../.bashrc`, `C:\Windows\…`, `//server/…` |
+| A link may not **point** outside the root       | `libllama.dylib -> /etc/passwd`, `-> ../secret`  |
+| No member may be placed **under** a link        | `d -> .` plus `d/x -> ../victim`                 |
+
+Placement was always checked; the other two were added after a review built a tarball with
+a directory symlink escaping the staging tree and a hard link written through it, and got a
+real regular file created outside the destination with the extraction reporting success.
+The placement check cannot see that on its own — it is lexical, and `d/.profile` still
+looks inside. The third rule exists because two individually-contained links compose: `.`
+is the root and `../victim` normalises to `victim`, yet on disk `d` **is** the root, so
+`d/x` lands at the root and its `..` leaves the tree. Refusing to place anything under a
+link removes the precondition instead of the instance.
+
+The rule is _inside the root_, not _no `..`_: llama.cpp's own chains are relative
+(`libggml.dylib -> libggml.0.dylib -> libggml.0.20.0.dylib`), and a link that climbs out of
+a subdirectory back into the tree still works.
+
+MEASURED that this costs the real archives nothing — same four release archives, extracted
+before and after the checks, every file sha256'd against a libarchive extraction of the
+same archive:
+
+| Archive                                  | Members declared                 | Written              | Tree sha256 before → after |
+| ---------------------------------------- | -------------------------------- | -------------------- | -------------------------- |
+| `llama-b10441-bin-macos-arm64.tar.gz`    | 62 (43 files + 18 links + 1 dir) | 61, 18 real symlinks | `91eb3b42…` unchanged      |
+| `llama-b10441-bin-ubuntu-x64.tar.gz`     | 63 (52 files + 10 links + 1 dir) | 62, 10 real symlinks | `197463b8…` unchanged      |
+| `llama-b10441-bin-win-cpu-x64.zip`       | 51                               | 51                   | `ea1da47e…` unchanged      |
+| `llama-b10441-bin-win-cuda-13.3-x64.zip` | 52                               | 52                   | `3bfec497…` unchanged      |
+
+A zero-length zip member is also legal and now extracts. It used to abort the whole
+install: the reader asks for the byte range `[start, start - 1]`, and Node rejects that
+with a raw `ERR_OUT_OF_RANGE` before opening anything, so one empty file (a placeholder, an
+empty `LICENSE` stub) anywhere in a release zip would fail every Windows install of that
+release with a message about `"start"`. None of the four archives above contains one today
+— measured, 0 zero-byte members — so this was latent, not live.
 
 ---
 
@@ -177,14 +247,64 @@ a 512 MB download. Exactly the §3 failure above, from a different cause.
 
 So the driver version is now measured, not assumed. `NVIDIA_QUERY_ARGS` asks nvidia-smi for
 `driver_version` alongside memory and name, the Windows PowerShell probe carries it through
-as `gpu_driver`, and `assetMap` checks it against `CUDA_MIN_DRIVER_MAJOR` (`12` → 525,
-`13` → 580) before choosing a line. Below every floor it falls back to CPU with
-`CUDA_DRIVER_TOO_OLD` rather than downloading a build that cannot load. An empty string
-means _not measured_ and is never treated as a version — in that case it offers the newest
-line, which is the pre-existing behaviour, not a silent downgrade.
+as `gpu_driver`, and `assetMap` checks it against `CUDA_MIN_DRIVER` before choosing a line.
+Below every floor it falls back to CPU with `CUDA_DRIVER_TOO_OLD` rather than downloading a
+build that cannot load. An empty string means _not measured_ and is never treated as a
+version — in that case it offers the newest line, which is the pre-existing behaviour, not
+a silent downgrade.
+
+The floors are the versions NVIDIA publishes, whole, and compared whole — not their integer
+part. From Table 3 of the CUDA Toolkit release notes (re-read 2026-08-15):
+
+| CUDA line | Linux x86_64 | Windows                                         |
+| --------- | ------------ | ----------------------------------------------- |
+| 12.0 GA   | `525.60.13`  | `527.41`                                        |
+| 13.0 GA   | `580.65.06`  | `N/A` — driver unbundled, Linux minimum applies |
+
+Keyed by CUDA _major_ on purpose: minor version compatibility means a binary built against
+12.4 runs on any driver meeting the **12.0** floor, so 12.4's own `550.54.14` is not the
+number to test. What was wrong was the comparison, not the keying — the table used to store
+`{'12': 525}` and test `driverMajor >= 525`, which admits every Windows driver from 525.00
+to 527.40. Those are r525-branch drivers the file's own comment already cited as below the
+floor, and they were handed a CUDA 12 build that cannot initialise: `Available devices:
+(none)`, exit 0, CPU — one branch below the case the floor was added to catch.
 
 The reference machine reports driver **610.62**, so it clears the 13.x floor and gets
 `cuda-13.3`.
+
+### `latest` can name a release whose assets have not uploaded yet
+
+A GitHub release is created **before** its archives exist. **Measured** on the live API
+(`GET /repos/ggml-org/llama.cpp/releases?per_page=6`, 2026-08-15) — b10442 was created at
+14:58:24Z and its 26 assets landed one at a time afterwards:
+
+```
++15 s  cudart-llama-bin-win-cuda-12.4-x64.zip   <- first asset of the release
++37 s  llama-b10442-bin-macos-arm64.tar.gz
++51 s  llama-b10442-bin-ubuntu-x64.tar.gz
++53 s  llama-b10442-bin-win-cpu-x64.zip
++64 s  llama-b10442-bin-win-cuda-13.3-x64.zip
++92 s  llama-b10442-xcframework.zip             <- last asset
+```
+
+The five releases before it took **88–134 s** for the same upload, and six releases were
+published inside 19.5 h. Observed directly: at 15:0x the same `plan()` call answered
+
+```json
+{ "kind": "unsupported", "reason": "llama.cpp release b10442 ships no build for win32/x64
+  (expected asset \"llama-b10442-bin-win-cpu-x64.zip\")" }
+```
+
+and three minutes later returned `ok`. `LLAMACPP_UNSUPPORTED` is terminal in the UI — no
+retry is offered — so a 90-second upload window was presenting as "your computer cannot run
+local models at all".
+
+`LlamaCppProvisioner.plan()` now distinguishes the two kinds of "no build": `cause:
+'platform' | 'arch'` are permanent facts about the machine, `cause: 'asset-missing'` is a
+fact about one release. Only the last one walks back, taking the newest of the recent
+releases that does ship a build for this machine (one extra API request, and only in that
+case). An explicitly pinned `tag` is never walked back, and when no recent release has the
+asset either, the honest `unsupported` stands.
 
 `hasCudaRuntime()` searches `CUDA_PATH\bin`, every `PATH` entry, then `System32`. On the
 reference machine it returned `true` — because a _third-party_ directory
@@ -309,11 +429,36 @@ abort` appears when other placement flags are combined with it). The heuristic i
 `LocalServeManager` predated this llama.cpp capability.
 
 **What it does now.** `LocalServeManager` probes the resolved binary's `--help` once per
-binary path (measured 261 ms, 57 KB, exit 0; cached) and passes `--n-gpu-layers auto`
-when the build offers it, so llama.cpp measures **free** VRAM and fits the layers itself.
-`ngpuLayersForVram()` survives only as the fallback for builds whose help text does not
-list `auto` — which is why the probe reads the flag's own help entry structurally rather
-than grepping the whole text for the word.
+binary path and passes `--n-gpu-layers auto` when the build offers it, so llama.cpp
+measures **free** VRAM and fits the layers itself. `ngpuLayersForVram()` survives only as
+the fallback for builds whose help text does not list `auto` — which is why the probe
+reads the flag's own help entry structurally rather than grepping the whole text for the
+word.
+
+**The probe does not block the main process, and its cost is a cold cost.** An earlier
+version of this section quoted 261 ms; that was a warm re-run, and the run that actually
+happens is by construction the cold one — the first serve after the provisioner writes
+~670 MB of new files. Re-measured against the managed b10441 with the shipped
+`execFile`-based probe, counting 1 ms timer ticks that fire _during_ the call:
+
+| probe                    | wall time | stdout   | event-loop ticks during the call |
+| ------------------------ | --------- | -------- | -------------------------------- |
+| async, cold              | 1,504 ms  | 57,162 B | 102                              |
+| async, warm              | 223 ms    | 57,162 B | 21                               |
+| `execFileSync` (pre-fix) | 225 ms    | 57,162 B | **0**                            |
+
+Zero ticks is the defect: `execFileSync` parked the Electron main process — no IPC, no
+repaint — for the whole probe, and the ceiling it allowed was 15 s, which is reachable
+when a Windows AV real-time scan holds a just-extracted tree. The probe result is only
+needed to build argv, and that path is already async, so blocking was a choice.
+
+**A failed probe is no longer cached.** `defaultProbeHelpText` used to turn every failure
+— timeout, `EACCES`, `EBUSY`, non-zero exit — into `''`, which `parseServerCapabilities`
+reads as a measured `{autoGpuLayers: false, corsOrigins: false}`; that answer was then
+memoised for the app session. One unlucky first serve therefore reverted **both** fixes
+below (the 41% throughput loss and the CORS exposure) for every later serve, silently.
+The probe now rejects on failure, an empty dump counts as a failure, only a measured
+answer is cached, and the failure is logged.
 
 **For MoE models, the useful knob is not `-ngl`.** gpt-oss-20b is 13.2 GB of weights on a
 6.9 GB budget, so `-ngl` barely matters (6.8 vs 6.7). Moving _expert_ tensors to the CPU
@@ -462,6 +607,31 @@ the state is `missing` and pressing Serve re-discloses the FULL size — even th
 `fetchAsset` will resume from those bytes. The disclosure is pessimistic, not wrong, but
 it misrepresents the remaining cost.
 
+**The upload-window walk-back only covers a MISSING PLATFORM build, not a missing
+accelerated one.** Measured on b10442 above: `llama-b10442-bin-win-cpu-x64.zip` lands at
++53 s but `llama-b10442-bin-win-cuda-13.3-x64.zip` only at +64 s. A Windows NVIDIA machine
+resolving in that 11-second gap gets an `ok` plan — the CPU build, with
+`NO_GPU_BUILD_FOR_TARGET` — which reads as a permanent statement about the release and is
+not. Detecting it needs a comparison against an older release, and doing that on every
+degraded plan would cost a second API request for **every** Linux NVIDIA/AMD machine (which
+legitimately has no GPU build in any release) on **every** press, against an unauthenticated
+limit of 60/hour. So the cheap, wrong-in-one-direction answer stands for now: the user is
+offered a working CPU install of the newest release rather than a GPU install of the one
+before it. A per-machine "did the previous release ship better?" check, cached for the
+session, would close it.
+
+**One outstanding disclosure is never refreshed until it is used.** `plan()` re-states the
+resolution it is already holding instead of resolving again, which is what stops row A's
+card and row B's card from disagreeing (see `LlamaRuntimeController.disclosed`). The cost is
+that a card opened and dismissed leaves that resolution outstanding for the rest of the
+session, so a much later press can be offered a tag that is no longer `latest`. That is a
+complete, working release and exactly what the card says, so it is a staleness cost, not a
+correctness one — and a TTL is deliberately NOT the fix, because expiring the slot re-opens
+the "confirm A, install B" hole it was added to close. Closing it properly means keying the
+disclosure to the row that asked, which needs a payload on `llamaRuntime.plan` /
+`llamaRuntime.install`; both verbs take `void` today, and that is itself a security property
+of this remote-denied namespace.
+
 **Progress is emitted per stream chunk with no throttling**, so a 512.8 MB transfer at
 53.1 MB/s crosses IPC thousands of times, each one re-rendering the model table.
 `assetName` / `assetIndex` / `assetCount` also cross on every frame and are never
@@ -497,7 +667,16 @@ calibration fixed, just on hardware that was not in front of it.
 
 **Only one serve at a time, and no crash recovery.** An MVP default, not a hardware limit:
 `start()` stops any running server first, and there is no watchdog restart if
-`llama-server` dies mid-session.
+`llama-server` dies mid-session. A second Serve pressed while the first model is still
+_loading_ is now queued rather than dropped — it used to be handed back the first
+server's promise, so it resolved with the first server's port while the caller registered
+a provider under the second model's name. Measured against the real b10441 and the real
+GGUFs, pressing Serve on Qwen2.5-7B and then on Qwen2.5-0.5B one second later:
+
+```
+before: 1 spawn  | 7B port 61699, 0.5B port 61699 | /v1/models at the 0.5B's port -> …7B-Instruct.gguf
+after:  2 spawns | 7B port 50606, 0.5B port 61657 | /v1/models at the 0.5B's port -> …0.5B-Instruct.gguf
+```
 
 **Nothing measures the host before choosing a quant.** The advisor ranks against
 `gpuVramGb` (8), not against free VRAM (6.9 GB here, and lower with a browser open). A

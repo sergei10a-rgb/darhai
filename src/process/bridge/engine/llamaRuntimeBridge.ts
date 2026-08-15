@@ -32,10 +32,14 @@
  * sitting in `downloading` forever.
  *
  * BINDING. That answer is not advisory: `install()` CONSUMES the resolution
- * `plan()` disclosed instead of resolving again. Two independent resolutions
- * seconds apart can legitimately differ - "latest" moves several times a day -
- * so a re-resolving install would fetch a release the user never approved, of a
- * size they never saw. See {@link LlamaRuntimeController.disclosed}.
+ * `plan()` disclosed instead of resolving again, and hands the whole resolved
+ * PLAN to the provisioner rather than the inputs that produced it, so no layer
+ * below re-decides anything. Two independent resolutions seconds apart can
+ * legitimately differ - "latest" moves several times a day - so a re-resolving
+ * install would fetch a release the user never approved, of a size they never
+ * saw. There is also only ever ONE outstanding disclosure, shared by every
+ * caller, because 121 model rows share this one controller and each renders its
+ * own card. See {@link LlamaRuntimeController.disclosed}.
  */
 
 import { app } from 'electron';
@@ -105,20 +109,25 @@ export type LlamaRuntimeDeps = {
   emit: (status: LlamaRuntimeStatus) => void;
 };
 
-/** A would-be install, fully resolved: exactly the bytes an install will fetch. */
+/**
+ * A would-be install, fully resolved: exactly the bytes an install will fetch.
+ *
+ * `plan` is the whole answer, not a summary of one - which asset names, which
+ * acceleration, which CUDA line, and why it is weaker than the hardware if it
+ * is. Nothing about the decision is kept alongside it (the cudart probe result
+ * used to be), because a second copy of a decision is a second thing that can
+ * disagree with the plan actually installed.
+ */
 type ResolvedOk = {
   kind: 'ok';
   tag: string;
   plan: LlamaAssetPlan;
   downloadBytes: number | null;
-  cudaRuntimePresent: boolean;
 };
 
 /** What {@link LlamaRuntimeController.resolve} established about a would-be install. */
 type Resolved =
-  | ResolvedOk
-  | { kind: 'unsupported'; reason: string }
-  | { kind: 'unavailable'; errorCode: string; message: string };
+  ResolvedOk | { kind: 'unsupported'; reason: string } | { kind: 'unavailable'; errorCode: string; message: string };
 
 /** Fallback identifier when a thrown value carries no `code` of its own. */
 const UNKNOWN_ERROR_CODE = 'LLAMACPP_UNKNOWN';
@@ -171,16 +180,36 @@ export class LlamaRuntimeController {
   /** Sticky last failure, cleared when an install is started or one succeeds. */
   private failure: { code: string; message: string } | null = null;
   /**
-   * The resolution {@link plan} last handed out, held so {@link install} fetches
-   * EXACTLY what the user was shown.
+   * The OUTSTANDING resolution: what {@link plan} is currently telling everyone
+   * an install would fetch, held so {@link install} fetches exactly that.
    *
    * This is the whole point of the disclosure. `plan()` and `install()` are two
    * separate presses seconds apart, and `latest` moves several times a day: a
    * second, independent resolve can legitimately answer a different tag, a
    * different acceleration and a different byte total than the sentence the
    * user just said yes to. Re-resolving would make the disclosure decoration.
-   * Single-use on purpose - one disclosure authorises one install, and an
-   * install with nothing disclosed (nothing was promised) resolves fresh.
+   *
+   * OUTSTANDING, NOT "LAST WRITE WINS". There is one runtime per machine, so
+   * `useLlamaRuntime` is mounted once by the advisor page and all 121 model
+   * rows share this controller - but each row renders its disclosure card from
+   * its OWN React state. While this field was simply overwritten by every
+   * `plan()`, pressing Serve on row A, then on row B (a second resolve, and
+   * `latest` moves several times a day), then confirming A's card installed B's
+   * resolution: the card on screen said b10441 / 30 MB and b10442 / 99 MB was
+   * fetched, with no second confirmation and no trace in the UI. Binding the
+   * slot to "the row that asked" is not available here - IPC carries no row,
+   * every verb takes `void`, and that is a security property of this namespace
+   * worth keeping. So the slot is made STABLE instead: while a resolution is
+   * outstanding, every `plan()` hands back that same one. Two cards can then no
+   * longer disagree, because there is only ever one answer to disagree about.
+   *
+   * It is cleared when an install consumes it - success or failure - so the
+   * next press discloses afresh instead of silently reusing an old approval.
+   * Deliberately NOT expired on a timer: an expiry re-opens exactly the hole it
+   * closed (press A, wait, press B, confirm A) to buy freshness, and a slightly
+   * older llama.cpp tag is a complete, working release, while installing a
+   * build the user never saw is the failure this whole surface exists to
+   * prevent. See §7 of docs/architecture/local-models.md.
    */
   private disclosed: ResolvedOk | null = null;
 
@@ -247,7 +276,11 @@ export class LlamaRuntimeController {
 
   /** What an install would fetch, stated before anything is downloaded. */
   async plan(): Promise<LlamaRuntimePlan> {
-    const resolved = await this.resolve();
+    // An outstanding disclosure is re-stated, not replaced. Two rows asking
+    // seconds apart must be told the same thing, because either card can be the
+    // one the user goes back and confirms and only one of them can be installed.
+    const outstanding = this.disclosed;
+    const resolved = outstanding === null ? await this.resolve() : outstanding;
     // Whatever we are about to say, that is what install() must do. A failed
     // resolve clears the slot so a stale approval can never be substituted for
     // an answer the user did not get.
@@ -314,19 +347,23 @@ export class LlamaRuntimeController {
     this.deps.emit(this.status());
 
     try {
-      // Pin everything the description depended on. `ensureInstalled` re-plans
-      // internally, so an unpinned field is a field free to come back
-      // different: the TAG because "latest" moves several times a day, and the
-      // CUDA VARIANT because an unpinned re-plan re-runs "newest line wins"
-      // without the driver measurement that rejected it here.
+      // Hand over the APPROVED PLAN, not the inputs that produced it.
+      //
+      // This used to pin five fields - tag, backend, platform/arch,
+      // cudaRuntimePresent, cudaVariant - and let `ensureInstalled` re-plan
+      // from them. Every such field is a field that can be forgotten, and one
+      // was: `LlamaProvisionRequest` had no `driverVersion`, so a machine on
+      // driver 470.82 was shown "CPU build, 30 MB, CUDA_DRIVER_TOO_OLD"
+      // (cudaVariant null, so nothing to pin either) and the re-plan, blind to
+      // the driver, ran "newest line wins" and fetched the 512.8 MB CUDA 13.3
+      // pair - a build that reports "Available devices: (none)", exits 0 and
+      // runs on the CPU, with the receipt recording acceleration 'cuda'.
+      //
+      // A plan carries the answer instead of the question, so there is no sixth
+      // input to forget: the provisioner reads `plan.assets` and fetches those.
       await this.deps.provisioner.ensureInstalled({
         userDataDir: this.deps.userDataDir(),
-        backend: resolved.plan.requestedBackend,
-        platform: this.deps.platform(),
-        arch: this.deps.arch(),
-        tag: resolved.tag,
-        cudaRuntimePresent: resolved.cudaRuntimePresent,
-        cudaVariant: resolved.plan.cudaVariant === null ? undefined : resolved.plan.cudaVariant,
+        plan: resolved.plan,
       });
     } catch (err) {
       return this.failWith(errorCodeOf(err), errorMessageOf(err));
@@ -401,7 +438,8 @@ export class LlamaRuntimeController {
     let plan: LlamaAssetPlan = withDriver;
 
     // 2. Only now is it known which cudart line to look for on this machine.
-    let cudaRuntimePresent = false;
+    //    The probe's result is not carried out of here as a flag: it is spent
+    //    on this re-plan, and the plan that comes back IS the answer.
     const cudart = plan.assets.find((a) => a.role === 'cuda-runtime');
     if (cudart !== undefined) {
       const version = cudartVersion(cudart.name);
@@ -409,10 +447,7 @@ export class LlamaRuntimeController {
         const replanned = replan({ cudaRuntimePresent: true });
         // Only take the smaller plan if it is still a plan; otherwise keep the
         // safe one that fetches cudart.
-        if (replanned.kind === 'ok') {
-          plan = replanned;
-          cudaRuntimePresent = true;
-        }
+        if (replanned.kind === 'ok') plan = replanned;
       }
     }
 
@@ -421,7 +456,6 @@ export class LlamaRuntimeController {
       tag: first.release.tag,
       plan,
       downloadBytes: sumPlannedBytes(plan, first.release),
-      cudaRuntimePresent,
     };
   }
 

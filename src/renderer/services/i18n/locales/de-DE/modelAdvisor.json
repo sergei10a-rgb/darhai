@@ -42,12 +42,12 @@
     "params": "Params",
     "quant": "Quant",
     "vram": "Needs",
-    "speed": "Speed",
+    "speed": "Speed, tok/s",
     "context": "Context",
     "fit": "Fit",
     "score": "Score",
     "moe": "MoE",
-    "tps": "{{value}} tok/s"
+    "tps": "{{value}}"
   },
   "fit": {
     "perfect": "Perfekt",

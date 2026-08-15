@@ -13,6 +13,7 @@ vi.mock('@process/utils/shellEnv', () => ({ getEnhancedEnv: () => ({}) }));
 import {
   LocalServeManager,
   buildServeCommand,
+  defaultProbeHelpText,
   ngpuLayersForVram,
   parseServerCapabilities,
   type ChildProcessLike,
@@ -313,6 +314,192 @@ describe('LocalServeManager.start GPU offload + CORS arguments', () => {
     );
     expect(args[args.indexOf('--n-gpu-layers') + 1]).toBe('24');
     expect(args).not.toContain('--cors-origins');
+  });
+
+  it('uses a capability answer that only arrives asynchronously', async () => {
+    // The shipped probe spawns the binary WITHOUT blocking the main process, so
+    // the help text arrives on a later turn of the event loop. A manager that
+    // reads the return value synchronously sees a Promise, not a string, and
+    // silently drops both optional flags.
+    const args = await argvForStart(
+      { probeHelpText: () => Promise.resolve(HELP_B10441) },
+      { ggufPath: '/m.gguf', ngl: 24 }
+    );
+    expect(args[args.indexOf('--n-gpu-layers') + 1]).toBe('auto');
+    expect(args).toContain('--cors-origins');
+  });
+});
+
+describe('LocalServeManager capability probe caching', () => {
+  /** Run two sequential serves; hand back the argv of each. */
+  const argvForTwoStarts = async (over: Partial<LocalServeDeps>): Promise<[string[], string[]]> => {
+    const children = [new FakeChild(), new FakeChild()];
+    let n = 0;
+    const spawn = vi.fn((_cmd: string, _args: string[]) => children[n++]);
+    const mgr = new LocalServeManager(
+      makeDeps({
+        spawn: spawn as unknown as LocalServeDeps['spawn'],
+        allocatePort: vi.fn().mockResolvedValueOnce(51000).mockResolvedValueOnce(51001),
+        ...over,
+      })
+    );
+
+    const first = mgr.start({ ggufPath: '/a.gguf', ngl: 24 });
+    await tick();
+    children[0].emitStdout('server is listening\n');
+    await first;
+
+    const second = mgr.start({ ggufPath: '/b.gguf', ngl: 24 });
+    await tick();
+    children[0].emitExit(0, null); // let the internal stop() resolve
+    await tick();
+    children[1].emitStdout('server is listening\n');
+    await second;
+
+    return [spawn.mock.calls[0][1], spawn.mock.calls[1][1]];
+  };
+
+  it('retries the probe on the next serve instead of caching a failure for the session', async () => {
+    // The likeliest moment for the probe to fail is the FIRST serve after
+    // install - an antivirus hold on a just-written 512 MB tree. Caching that
+    // reverts `-ngl auto` (41% of throughput) and `--cors-origins localhost`
+    // (the drive-by-website read) for the rest of the app session, silently.
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const probeHelpText = vi
+      .fn<(binary: string) => string | Promise<string>>()
+      .mockImplementationOnce(() => {
+        throw new Error('EBUSY');
+      })
+      .mockImplementation(async () => HELP_B10441);
+
+    const [failed, retried] = await argvForTwoStarts({ probeHelpText });
+
+    expect(probeHelpText).toHaveBeenCalledTimes(2);
+    expect(failed[failed.indexOf('--n-gpu-layers') + 1]).toBe('24');
+    expect(failed).not.toContain('--cors-origins');
+    expect(retried[retried.indexOf('--n-gpu-layers') + 1]).toBe('auto');
+    expect(retried).toContain('--cors-origins');
+    // A failure that never reaches a log is indistinguishable from a measured "no".
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it('treats an empty --help dump as a failed probe, not as "this build has no flags"', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const probeHelpText = vi
+      .fn<(binary: string) => string | Promise<string>>()
+      .mockImplementationOnce(async () => '')
+      .mockImplementation(async () => HELP_B10441);
+
+    const [failed, retried] = await argvForTwoStarts({ probeHelpText });
+
+    expect(probeHelpText).toHaveBeenCalledTimes(2);
+    expect(failed).not.toContain('--cors-origins');
+    expect(retried).toContain('--cors-origins');
+    warn.mockRestore();
+  });
+
+  it('still caches a MEASURED "no", so an old build is probed only once', async () => {
+    const probeHelpText = vi.fn<(binary: string) => string | Promise<string>>(async () => HELP_LEGACY);
+
+    const [first, second] = await argvForTwoStarts({ probeHelpText });
+
+    expect(probeHelpText).toHaveBeenCalledTimes(1);
+    expect(first[first.indexOf('--n-gpu-layers') + 1]).toBe('24');
+    expect(second[second.indexOf('--n-gpu-layers') + 1]).toBe('24');
+  });
+});
+
+describe('defaultProbeHelpText', () => {
+  it('probes a real binary without parking the event loop', async () => {
+    // The one probe that actually runs is by construction the COLD one: the
+    // first serve after the provisioner writes 670 MB of new files. MEASURED on
+    // the reference machine - managed b10441 first run 1192 ms (230/201 ms warm
+    // after), hand-installed b10333 cold 1925 ms - and the ceiling the code
+    // picks is 15 s. execFileSync parks the Electron main process for all of it:
+    // no IPC, no repaint. This asserts the loop keeps turning DURING the probe.
+    let ticksDuringProbe = 0;
+    const timer = setInterval(() => {
+      ticksDuringProbe += 1;
+    }, 1);
+    try {
+      // `node --help` stands in for `llama-server --help`: a real child process
+      // that takes ~85 ms on this box and prints a real help dump.
+      const help = await defaultProbeHelpText(process.execPath);
+      expect(help).toContain('--version');
+    } finally {
+      clearInterval(timer);
+    }
+    expect(ticksDuringProbe).toBeGreaterThan(0);
+  });
+
+  it('rejects when the binary cannot be run, rather than reporting "no optional flags"', async () => {
+    await expect(defaultProbeHelpText('darhai-no-such-binary-xyzzy')).rejects.toThrow();
+  });
+});
+
+describe('LocalServeManager concurrent starts', () => {
+  /** Two children, two ports, spawn recorded. */
+  const twoServeManager = (): {
+    mgr: LocalServeManager;
+    children: FakeChild[];
+    spawn: ReturnType<typeof vi.fn>;
+  } => {
+    const children = [new FakeChild(), new FakeChild()];
+    let n = 0;
+    const spawn = vi.fn((_cmd: string, _args: string[]) => children[n++]);
+    const mgr = new LocalServeManager(
+      makeDeps({
+        spawn: spawn as unknown as LocalServeDeps['spawn'],
+        allocatePort: vi.fn().mockResolvedValueOnce(51000).mockResolvedValueOnce(51001),
+      })
+    );
+    return { mgr, children, spawn };
+  };
+
+  it("gives a serve started mid-launch its OWN process and port, not the first serve's", async () => {
+    // Reachable from the UI: every non-serving row renders an enabled Serve
+    // button and neither the hook nor the bridge guards a second press. The
+    // launch window is real - this repo measures 1.5-14.4 s from spawn to
+    // readiness, with a 20 s fallback.
+    const { mgr, children, spawn } = twoServeManager();
+
+    const first = mgr.start({ ggufPath: '/A.gguf', ngl: 24 });
+    await tick();
+    const second = mgr.start({ ggufPath: '/B.gguf', ngl: 24 });
+    await tick();
+    expect(spawn).toHaveBeenCalledTimes(1); // B waits; it does not race A's process
+
+    children[0].emitStdout('server is listening\n');
+    await expect(first).resolves.toBe(51000);
+    await tick();
+    children[0].emitExit(0, null); // B's launch stops A first (single-serve invariant)
+    await tick();
+    children[1].emitStdout('server is listening\n');
+    await expect(second).resolves.toBe(51001);
+
+    expect(spawn).toHaveBeenCalledTimes(2);
+    const argvB = spawn.mock.calls[1][1] as string[];
+    expect(argvB).toContain('/B.gguf');
+    expect(argvB[argvB.indexOf('--port') + 1]).toBe('51001');
+    expect(mgr.currentPort).toBe(51001);
+  });
+
+  it('runs the queued serve even when the one ahead of it fails', async () => {
+    const { mgr, children, spawn } = twoServeManager();
+
+    const first = mgr.start({ ggufPath: '/A.gguf', ngl: 24 });
+    await tick();
+    const second = mgr.start({ ggufPath: '/B.gguf', ngl: 24 });
+    await tick();
+    children[0].emitExit(1, null);
+    await expect(first).rejects.toThrow(/exited before readiness/);
+    await tick();
+    children[1].emitStdout('server is listening\n');
+    await expect(second).resolves.toBe(51001);
+
+    expect(spawn).toHaveBeenCalledTimes(2);
+    expect(spawn.mock.calls[1][1] as string[]).toContain('/B.gguf');
   });
 });
 

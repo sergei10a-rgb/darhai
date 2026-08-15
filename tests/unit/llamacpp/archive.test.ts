@@ -5,7 +5,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { mkdtemp, readFile, rm, stat, writeFile, readdir } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, stat, writeFile, readdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
 import { tmpdir } from 'node:os';
@@ -389,6 +389,69 @@ describe('extractTarGz - symlinks, which are most of a real llama.cpp tarball', 
     await expect(extractTarGz(tar, path.join(work, 'out'))).rejects.toThrow(/ARCHIVE_UNSAFE_ENTRY/);
   });
 
+  it('refuses a symlink whose RELATIVE target climbs out of the tree', async () => {
+    // The absolute case above was the only one covered. `..` is the same door
+    // with a different key: nothing rejects it, so the finished install holds a
+    // link that reads a file the archive never shipped - and the receipt lists
+    // it as an ordinary member.
+    const secret = path.join(work, 'OUTSIDE-SECRET.txt');
+    await writeFile(secret, 'SECRET BYTES');
+    const tar = await makeTarGz({
+      'llama-b10441/llama-server': { data: 'S' },
+      'llama-b10441/libllama.dylib': { type: '2', link: '../OUTSIDE-SECRET.txt' },
+    });
+    const dest = path.join(work, 'out');
+    await expect(extractTarGz(tar, dest)).rejects.toThrow(/ARCHIVE_UNSAFE_ENTRY/);
+    expect(existsSync(path.join(dest, 'libllama.dylib'))).toBe(false);
+  });
+
+  it('refuses a hard link written THROUGH a directory symlink, which plants a real file outside', async () => {
+    // The reviewer's archive, reproduced: a directory symlink that escapes the
+    // staging tree, then a hard link placed under it. Both members pass
+    // `safeEntryPath` - it is lexical, and `d/.profile` still looks inside -
+    // so the copy in pass 2 travels through the live link and writes a REGULAR
+    // file outside the destination, with the extraction reporting success.
+    const outside = path.join(work, 'OUTSIDE');
+    await mkdir(outside, { recursive: true });
+    const tar = await makeTarGz({
+      'llama-b10441/llama-server': { data: 'S' },
+      'llama-b10441/payload': { data: '#!/bin/sh\necho PWNED\n' },
+      'llama-b10441/d': { type: '2', link: '../OUTSIDE' },
+      'llama-b10441/d/.profile': { type: '1', link: 'llama-b10441/payload' },
+    });
+    await expect(extractTarGz(tar, path.join(work, 'out'))).rejects.toThrow(/ARCHIVE_UNSAFE_ENTRY/);
+    expect(existsSync(path.join(outside, '.profile'))).toBe(false);
+  });
+
+  it('refuses a member placed under a symlink even when both look contained', async () => {
+    // `a -> .` and `a/x -> ../victim` are each inside the tree on their own:
+    // `.` is the root, and `../victim` normalises to `victim` against `a`. On
+    // disk `a` IS the root, so `a/x` is written at the root and its `..` leaves
+    // the tree. Refusing to place anything under a link removes the class
+    // rather than the instance.
+    const tar = await makeTarGz({
+      'llama-b10441/llama-server': { data: 'S' },
+      'llama-b10441/victim': { data: 'REAL' },
+      'llama-b10441/a': { type: '2', link: '.' },
+      'llama-b10441/a/x': { type: '2', link: '../victim' },
+    });
+    await expect(extractTarGz(tar, path.join(work, 'out'))).rejects.toThrow(/ARCHIVE_UNSAFE_ENTRY/);
+  });
+
+  it('still materialises a relative target that climbs out of a subdirectory and back inside', async () => {
+    // The containment rule is "inside the extraction root", not "no `..`".
+    // llama.cpp's own chains are relative, and a link one directory down that
+    // names a sibling of its parent is contained - it must keep working.
+    const tar = await makeTarGz({
+      'llama-b10441/libggml.0.20.0.dylib': { data: 'REAL GGML', mode: 0o755 },
+      'llama-b10441/sub/libggml.dylib': { type: '2', link: '../libggml.0.20.0.dylib' },
+    });
+    const dest = path.join(work, 'out');
+    const entries = await extractTarGz(tar, dest);
+    expect(await readFile(path.join(dest, 'sub', 'libggml.dylib'), 'utf8')).toBe('REAL GGML');
+    expect(entries.map((e) => e.relPath).toSorted()).toEqual(['libggml.0.20.0.dylib', 'sub/libggml.dylib']);
+  });
+
   it('refuses a symlink whose target is not in the archive', async () => {
     const tar = await makeTarGz({
       'llama-b10441/llama-server': { data: 'S' },
@@ -476,5 +539,63 @@ describe('extractZip - symlink entries', () => {
     const entries = await extractZip(file, dest);
     expect(await readFile(path.join(dest, 'libllama.0.dylib'), 'utf8')).toBe('REAL LIBLLAMA');
     expect(entries.find((e) => e.relPath === 'libllama.0.dylib').kind).toBe('link');
+  });
+
+  it('refuses a zip symlink whose relative target climbs out of the tree', async () => {
+    // Same hole, reached through the other reader: a zip symlink stores its
+    // target as the payload, so `../OUTSIDE-SECRET.txt` arrives as content and
+    // was handed straight to symlink().
+    await writeFile(path.join(work, 'OUTSIDE-SECRET.txt'), 'SECRET BYTES');
+    const zip = new JSZip();
+    zip.file('llama-server.exe', 'SERVER');
+    zip.file('libllama.dylib', '../OUTSIDE-SECRET.txt', { unixPermissions: 0xa1ff });
+    const file = path.join(work, 'escape.zip');
+    await writeFile(file, await zip.generateAsync({ type: 'nodebuffer', platform: 'UNIX' }));
+
+    const dest = path.join(work, 'out');
+    await expect(extractZip(file, dest)).rejects.toThrow(/ARCHIVE_UNSAFE_ENTRY/);
+    expect(existsSync(path.join(dest, 'libllama.dylib'))).toBe(false);
+  });
+});
+
+describe('extractZip - zero-length members, which are legal zip', () => {
+  it('extracts a stored zero-byte member instead of crashing on an empty byte range', async () => {
+    // `end: start + compressedSize - 1` is `start - 1` for an empty member, and
+    // Node rejects that range before reading a byte. One empty file anywhere in
+    // a release zip therefore fails every install of that release, with a raw
+    // RangeError surfacing as LLAMACPP_EXTRACT_FAILED and no way forward.
+    const zip = await makeZip({ 'llama-server.exe': 'SERVER', 'empty.dll': '' }, { store: true });
+    const dest = path.join(work, 'out');
+    const entries = await extractZip(zip, dest);
+
+    expect(entries.map((e) => e.relPath).toSorted()).toEqual(['empty.dll', 'llama-server.exe']);
+    expect(await readFile(path.join(dest, 'empty.dll'))).toEqual(Buffer.alloc(0));
+    expect(entries.find((e) => e.relPath === 'empty.dll').bytes).toBe(0);
+    expect(await readFile(path.join(dest, 'llama-server.exe'), 'utf8')).toBe('SERVER');
+  });
+
+  it('extracts a deflated zero-byte member too', async () => {
+    // JSZip writes compressedSize 0 for an empty member under DEFLATE as well,
+    // so the deflate branch hits the same range.
+    const zip = await makeZip({ 'llama-server.exe': 'SERVER', LICENSE: '' });
+    const dest = path.join(work, 'out');
+    const entries = await extractZip(zip, dest);
+
+    expect(entries.map((e) => e.relPath).toSorted()).toEqual(['LICENSE', 'llama-server.exe']);
+    expect(await readFile(path.join(dest, 'LICENSE'))).toEqual(Buffer.alloc(0));
+  });
+
+  it('reports a zero-length symlink member as a typed archive error, not a RangeError', async () => {
+    // A symlink entry with no payload names nothing. That is malformed, and the
+    // module's contract is that malformed raises ArchiveError - not that the
+    // stream constructor throws first with a message about "start".
+    const zip = new JSZip();
+    zip.file('llama-server.exe', 'SERVER');
+    zip.file('libllama.dylib', '', { unixPermissions: 0xa1ff });
+    const file = path.join(work, 'empty-link.zip');
+    await writeFile(file, await zip.generateAsync({ type: 'nodebuffer', platform: 'UNIX' }));
+
+    await expect(extractZip(file, path.join(work, 'out'))).rejects.toThrow(ArchiveError);
+    await expect(extractZip(file, path.join(work, 'out2'))).rejects.toThrow(/ARCHIVE_MALFORMED/);
   });
 });

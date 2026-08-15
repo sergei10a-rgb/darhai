@@ -208,12 +208,36 @@ const CookbookServeControls: React.FC<CookbookServeControlsProps> = ({ modelId, 
    * value from the render that started it - which is always `false`.
    */
   const modelCancelled = useRef(false);
+  /**
+   * The same fact as `modelCancelled`, in state, because the RENDER needs it
+   * too and a ref does not re-render.
+   *
+   * The ref alone only ever guarded a REJECTED `controller.serve()`, and the
+   * main process does not produce one: `CookbookServeService.serve()` is
+   * documented "Never throws - a failure is reflected in the returned status",
+   * its catch calls `fail()` which sets `state:'error'`, and the bridge returns
+   * that status. So a cancelled model download RESOLVES, `provisionAndServe`
+   * falls through with no failure set, and the render below reaches the red
+   * `status.state === 'error'` tag - reporting the user's own choice as a
+   * fault, which is the one thing this surface is not allowed to do.
+   */
+  const [cancelledServe, setCancelledServe] = useState(false);
 
   const dl = controller.downloads[modelId];
   const prog = controller.progress[modelId];
   const status = controller.serveStatus;
   const { viable, chosen } = controller.selection;
-  const selected: CookbookBackend = override && viable.includes(override) ? override : chosen;
+  /**
+   * Backends Darhai can install on request. Separate from `viable` because
+   * "installed" is the wrong test for the one backend that ships inside the
+   * app: a host with Ollama on it saw `viable: ['ollama']`, so llama.cpp was
+   * neither in the chooser nor reachable through the `'none'` disclosure, and
+   * the machine had no route to Darhai's own runtime at all.
+   */
+  const provisionable = controller.selection.provisionable ?? [];
+  /** Everything the user may pick: installed now, or installable on request. */
+  const options: CookbookBackend[] = [...viable, ...provisionable.filter((b) => viable.includes(b) === false)];
+  const selected: CookbookBackend = override && options.includes(override) ? override : chosen;
   const isServingThis = status.modelId === modelId;
   const isDownloading = dl?.status === 'downloading' || (!!prog && dl?.status !== 'downloaded');
   const isDownloaded = dl?.status === 'downloaded';
@@ -228,8 +252,24 @@ const CookbookServeControls: React.FC<CookbookServeControlsProps> = ({ modelId, 
    * not asked yet".
    */
   const runtimeProbed = runtime.status.state !== 'unknown';
-  /** No backend at all AND no runtime of our own: this press must provision. */
-  const needsRuntime = selected === 'none' && runtimeProbed === true && runtimeReady === false;
+  /**
+   * This press must provision first. Two ways to get here, and they are the
+   * same press: nothing is installed at all (`'none'`), or the user picked a
+   * backend Darhai has yet to install. The second case is what a machine with
+   * Ollama on it needs - the first alone left it with no path to llama.cpp.
+   */
+  const needsRuntime =
+    (selected === 'none' || provisionable.includes(selected)) && runtimeProbed === true && runtimeReady === false;
+
+  /**
+   * Record - or clear - "the user cancelled this model download" for BOTH
+   * readers: the awaiting closure in `provisionAndServe` (ref) and the next
+   * render (state). One call site so the two can never drift apart.
+   */
+  const markModelCancelled = (cancelled: boolean): void => {
+    modelCancelled.current = cancelled;
+    setCancelledServe(cancelled);
+  };
 
   const run = async (fn: () => Promise<void>): Promise<void> => {
     setBusy(true);
@@ -255,7 +295,7 @@ const CookbookServeControls: React.FC<CookbookServeControlsProps> = ({ modelId, 
     setAttempted(true);
     setFailure(null);
     setCancelRefused(false);
-    modelCancelled.current = false;
+    markModelCancelled(false);
     setStage('runtime');
     try {
       const final = await runtime.install();
@@ -269,7 +309,12 @@ const CookbookServeControls: React.FC<CookbookServeControlsProps> = ({ modelId, 
       // longer half of the wait is labelled as itself and gets its own cancel.
       setStage('model');
       await controller.refreshBackends();
-      await controller.serve(modelId, undefined);
+      // The user's own pick, not `undefined`. Passing nothing lets main re-apply
+      // its own preference order (vllm > ollama > llama-server) to a re-probe
+      // that has just seen the newly installed runtime - so a user who chose
+      // Darhai's llama.cpp on an Ollama box would be served through Ollama, by
+      // the very install they asked for.
+      await controller.serve(modelId, serveBackend());
     } catch (err) {
       // A rejected serve must still end in a sentence. Cancelling the model
       // download rejects too, and that is the user's own doing, not a fault.
@@ -312,6 +357,9 @@ const CookbookServeControls: React.FC<CookbookServeControlsProps> = ({ modelId, 
   };
 
   const primaryAction = async (): Promise<void> => {
+    // A fresh press is a fresh outcome: whatever the last cancel suppressed,
+    // this attempt's failure is the user's to see.
+    markModelCancelled(false);
     if (needsRuntime === true) {
       await askThenProvision();
       return;
@@ -331,7 +379,7 @@ const CookbookServeControls: React.FC<CookbookServeControlsProps> = ({ modelId, 
 
   /** Stop the model download. Unlike the runtime, this always has a target. */
   const cancelModel = async (): Promise<void> => {
-    modelCancelled.current = true;
+    markModelCancelled(true);
     await controller.cancelDownload(modelId);
   };
 
@@ -353,17 +401,37 @@ const CookbookServeControls: React.FC<CookbookServeControlsProps> = ({ modelId, 
     // Only the row that pressed reports an install failure (the runtime is
     // global; every other row must stay quiet), and a cancellation is not one.
     if (attempted === false) return null;
+    // The resolved outcome of THIS row's press is authoritative and needs no
+    // corroboration from the shared status.
     const local = failure;
+    if (local !== null) return local.code === CANCELLED_CODE ? null : describeProblem(local.code);
+    // Everything below reads the SHARED `runtime.status`, which lags: it still
+    // carries the previous frame until the main process pushes the next one.
+    // `provisionAndServe` has already cleared `failure` and set `stage`
+    // synchronously, so without this guard a press made while the last attempt
+    // is still the newest frame re-renders the failure it is retrying - with
+    // `role='alert'` re-announcing it, and a Retry button inviting a second
+    // concurrent install - over a download that is already running.
+    if (stage !== null) return null;
     const globalFailed = runtime.status.state === 'failed';
-    if (local === null && globalFailed === false) return null;
-    const code = local === null ? runtime.status.errorCode || '' : local.code;
+    if (globalFailed === false) return null;
+    const code = runtime.status.errorCode || '';
     if (code === CANCELLED_CODE) return null;
     return describeProblem(code);
   };
 
-  /** The chosen-backend label, or an override Select when >1 backend is viable. */
+  /**
+   * The chosen-backend label, or an override Select when there is more than one
+   * option. Options, not `viable`: a host with one installed backend still has a
+   * real choice when Darhai can install another, and that choice is exactly the
+   * one this row used to withhold.
+   *
+   * A host with NOTHING installed is deliberately untouched. Its only option
+   * would be provisionable llama.cpp, and naming it in a chooser it cannot
+   * choose away from teaches a word the one-press flow exists to spare it.
+   */
   const backendChooser = (): React.ReactNode => {
-    if (viable.length > 1) {
+    if (options.length > 1) {
       return (
         <Tooltip content={t('modelAdvisor.cookbook.backendTip')}>
           <Select
@@ -373,7 +441,7 @@ const CookbookServeControls: React.FC<CookbookServeControlsProps> = ({ modelId, 
             className={styles.backendSelect}
             aria-label={t('modelAdvisor.cookbook.backendTip')}
           >
-            {viable.map((b) => (
+            {options.map((b) => (
               <Select.Option key={b} value={b}>
                 {t(BACKEND_LABEL_KEY[b])}
               </Select.Option>
@@ -554,7 +622,10 @@ const CookbookServeControls: React.FC<CookbookServeControlsProps> = ({ modelId, 
     );
   }
 
-  if (isServingThis && status.state === 'error') {
+  // `cancelledServe` and not `status.error`: the abort is reported through the
+  // ordinary error status, so the status alone cannot tell "the transfer broke"
+  // from "the user stopped it". Only this row knows which button was pressed.
+  if (isServingThis && status.state === 'error' && cancelledServe === false) {
     return (
       <Space size={6}>
         <Tooltip content={status.error ?? ''}>

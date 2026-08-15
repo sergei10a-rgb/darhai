@@ -19,7 +19,7 @@
  * evidence that it fits at 760px.
  */
 import { test, expect } from '@playwright/test';
-import { launchVisualApp, closeVisualApp, pinNondeterminism, type VisualApp } from './fixture';
+import { assertBundleShowsSource, launchVisualApp, closeVisualApp, pinNondeterminism, type VisualApp } from './fixture';
 import {
   NARROW_VIEWPORTS,
   SIDER_TOGGLE,
@@ -138,6 +138,124 @@ test.describe('Mongolian text fit: main surfaces at 1280x800', () => {
 
   test('whole settings screen has no clipped text or colliding button rows', async () => {
     expectNoOverflow(await scan('body'), 'settings screen (full sweep)');
+  });
+});
+
+/**
+ * The model advisor, which is a wide table of localized column headers next to
+ * numeric columns and an action button - the shape most likely to lose the
+ * argument with a 30-50% longer language. It is also the screen the local-model
+ * flow starts on, so a clipped action button there is a clipped entry point.
+ *
+ * The row content depends on the host's hardware, so these assert on FIT, never
+ * on which models appear.
+ *
+ * MEASURED before the fix, at all three widths: `Ажиллуулах` (the primary
+ * action) cut off by 280.3px and the score value by 38.4px, both by
+ * `div.arco-table-content-scroll` with `overflow: hidden` - no ellipsis, no
+ * scrollbar, nothing to recover them with. The table wanted 1035px of
+ * min-content inside a 958px pane at 1280, and inside 578px at 900 (the sider
+ * is still expanded there). See ModelAdvisor.module.css for the three rules
+ * that answer it and the numbers after.
+ */
+test.describe('Mongolian text fit: model advisor', () => {
+  test.beforeAll(async () => {
+    // This block photographs the advisor's own layout, so the built app has to
+    // BE that layout: without this a CSS fix would look green while the running
+    // renderer still carried the clipped table.
+    assertBundleShowsSource([
+      'src/renderer/pages/model-advisor/ModelTable.tsx',
+      'src/renderer/pages/model-advisor/ModelAdvisor.module.css',
+      'src/renderer/pages/model-advisor/CookbookServeControls.tsx',
+    ]);
+    await setContentSize(visual.app, VIEWPORT);
+    await gotoHash(visual.page, '#/model-advisor');
+    // The hardware scan lands after first paint, and until it does the table is
+    // EMPTY - a measurement taken then describes nothing and passes for it. Wait
+    // for a real row, then settle.
+    await visual.page.waitForSelector('tbody tr', { timeout: 120_000 });
+    await settleFrozen(visual.page);
+  });
+
+  test('the advisor table fits at the baseline width', async () => {
+    const rows = await visual.page.evaluate(() => document.querySelectorAll('tbody tr').length);
+    expect(rows, 'the advisor listed no models, so its layout was never measured').toBeGreaterThan(0);
+    const report = await scan('body');
+    expect(report.scanned, 'advisor rendered no measurable text').toBeGreaterThan(0);
+    expectNoOverflow(report, 'model advisor @ 1280');
+  });
+
+  /**
+   * Nothing breaks INSIDE a word that had room to stay whole.
+   *
+   * The overflow probe cannot see this: mid-word wrapping is not clipping, so a
+   * cell reading "118.8 | токе | н/с" is fully visible and fully unreadable.
+   * Arco's cells ship `word-break: break-all`, which is what produced exactly
+   * that, plus `Q4_K_ | M`, in cells whose content was less than half the cell's
+   * own width.
+   *
+   * The rule asserted here is deliberately narrow, so it cannot fire on honest
+   * wrapping: a span is at fault only when it paints on more than one line while
+   * being NARROWER than the box it sits in - i.e. it had the room and broke
+   * anyway. A long model id that genuinely needs two lines is untouched.
+   */
+  test('no cell breaks a word that had room to stay whole', async () => {
+    const guilty = await visual.page.evaluate(() => {
+      const out: { text: string; spanW: number; cellW: number; lines: number }[] = [];
+      for (const td of Array.from(document.querySelectorAll('.arco-table-td'))) {
+        const cellW = td.getBoundingClientRect().width;
+        for (const span of Array.from(td.querySelectorAll('span'))) {
+          if (span.querySelector('span') !== null) continue; // measure leaves only
+          const text = (span.textContent ?? '').trim();
+          if (text.length === 0) continue;
+          const rect = span.getBoundingClientRect();
+          const lh = parseFloat(getComputedStyle(span).lineHeight) || 20;
+          const lines = Math.round(rect.height / lh);
+          if (lines > 1 && rect.width < cellW - 1) {
+            out.push({ text, spanW: Math.round(rect.width), cellW: Math.round(cellW), lines });
+          }
+        }
+      }
+      return out;
+    });
+    expect(
+      guilty,
+      `these cells wrapped mid-word despite fitting:\n` +
+        guilty.map((g) => `  "${g.text}" - ${g.lines} lines, ${g.spanW}px inside a ${g.cellW}px cell`).join('\n')
+    ).toEqual([]);
+  });
+
+  test('and fits without needing to be scrolled sideways', async () => {
+    // The overflow probe (correctly) stops reporting text once a scrollable
+    // ancestor makes it reachable, so "no findings" alone would also be
+    // satisfied by a table that simply scrolls at every width. At the baseline
+    // width it must actually FIT: the primary action has to be on screen when
+    // the screen is the size the app opens at.
+    const table = await visual.page.evaluate(() => {
+      const el = document.querySelector('.arco-table-content-scroll') as HTMLElement | null;
+      return el === null ? null : { client: el.clientWidth, content: el.scrollWidth };
+    });
+    expect(table, 'the advisor table did not render, so its width was never measured').not.toBeNull();
+    expect(
+      table.content,
+      `the advisor needs ${table.content}px inside a ${table.client}px pane at 1280, so it opens scrolled`
+    ).toBeLessThanOrEqual(table.client);
+  });
+
+  for (const size of NARROW_VIEWPORTS) {
+    test(`the advisor survives ${size.width}x${size.height}`, async () => {
+      await setContentSize(visual.app, size);
+      await gotoHash(visual.page, '#/model-advisor');
+      await settleFrozen(visual.page);
+      const report = await scan('body');
+      expect(report.viewport.width, 'window did not actually resize').toBe(size.width);
+      expectNoOverflow(report, `model advisor @ ${size.width}x${size.height}`);
+    });
+  }
+
+  test.afterAll(async () => {
+    await setContentSize(visual.app, VIEWPORT);
+    await settleFrozen(visual.page);
   });
 });
 

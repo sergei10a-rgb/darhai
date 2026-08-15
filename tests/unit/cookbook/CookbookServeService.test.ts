@@ -40,7 +40,7 @@ type Harness = {
   serve: { start: ReturnType<typeof vi.fn>; startVllm: ReturnType<typeof vi.fn>; pullOllama: ReturnType<typeof vi.fn> };
 };
 
-const makeService = (opts: { available: BackendAvailability; hardware: HardwareProfile }): Harness => {
+const makeService = (opts: { available: BackendAvailability; hardware: HardwareProfile; arch?: string }): Harness => {
   const start = vi.fn(async () => 51500);
   const startVllm = vi.fn(async () => 51600);
   const pullOllama = vi.fn(async () => undefined);
@@ -73,6 +73,7 @@ const makeService = (opts: { available: BackendAvailability; hardware: HardwareP
     getRepo: () => null,
     getGgufDir: () => '/cache/gguf',
     getHardware: async () => opts.hardware,
+    arch: opts.arch ?? 'x64',
   };
   return { service: new CookbookServeService(deps), serve: { start, startVllm, pullOllama } };
 };
@@ -96,6 +97,28 @@ describe('CookbookServeService.backendSelection (hardware-adaptive)', () => {
     const sel = await service.backendSelection();
     expect(sel.viable).not.toContain('vllm');
     expect(sel.chosen).toBe('llama-server');
+  });
+
+  it("offers Darhai's own llama.cpp to a machine that only has ollama", async () => {
+    // The machine the defect was invisible on: a working backend is installed,
+    // so `chosen` is never `'none'` and the provisioning path never opens - and
+    // llama.cpp was not in the override list either.
+    const { service } = makeService({
+      hardware: profile({ platform: 'windows', backend: 'cuda', gpuVramGb: 8 }),
+      available: { ollama: true, llamaServer: false, vllm: false },
+    });
+    const sel = await service.backendSelection();
+    expect(sel.chosen).toBe('ollama');
+    expect(sel.provisionable).toEqual(['llama-server']);
+  });
+
+  it('offers nothing installable on an architecture with no published build', async () => {
+    const { service } = makeService({
+      hardware: profile({ platform: 'windows', backend: 'cpu_x86', gpuVramGb: 0, hasGpu: false }),
+      available: { ollama: true, llamaServer: false, vllm: false },
+      arch: 'ia32',
+    });
+    expect((await service.backendSelection()).provisionable).toEqual([]);
   });
 });
 

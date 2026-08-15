@@ -45,6 +45,17 @@ export type LlamaRelease = {
 const DEFAULT_REPO = 'ggml-org/llama.cpp';
 const API_BASE = 'https://api.github.com';
 
+/**
+ * How many recent releases {@link LlamaReleaseClient.listRecent} asks for.
+ *
+ * MEASURED on 2026-08-15: ggml-org/llama.cpp published b10434, b10435, b10436,
+ * b10437, b10441 and b10442 inside 19.5 h, and each one's 26 assets finished
+ * uploading 88-134 s after the release itself was created. Six is therefore
+ * about a day of history - far more than the one or two steps a walk-back past
+ * a still-uploading release needs, and still a single API request.
+ */
+const RECENT_RELEASE_COUNT = 6;
+
 export type LlamaReleaseClientDeps = {
   fetch: typeof globalThis.fetch;
   repo: string;
@@ -68,6 +79,12 @@ function toAsset(raw: unknown): LlamaReleaseAsset | null {
   return { name, url, bytes: size, sha256: parseDigest(r.digest) };
 }
 
+/** Every usable asset of one raw release record. */
+function assetsOf(record: Record<string, unknown>): LlamaReleaseAsset[] {
+  const raw = Array.isArray(record.assets) ? record.assets : [];
+  return raw.map(toAsset).filter((a): a is LlamaReleaseAsset => a !== null);
+}
+
 /**
  * Fetch a llama.cpp release. Omit `tag` for the latest.
  *
@@ -89,7 +106,64 @@ export class LlamaReleaseClient {
   async fetchRelease(tag?: string): Promise<LlamaRelease> {
     const suffix = tag ? `/tags/${encodeURIComponent(tag)}` : '/latest';
     const url = `${API_BASE}/repos/${this.deps.repo}/releases${suffix}`;
+    const body = await this.getJson(url);
 
+    if (!body || typeof body !== 'object') {
+      throw new LlamaReleaseError('LLAMACPP_RELEASE_MALFORMED', 'release body is not an object');
+    }
+    const record = body as Record<string, unknown>;
+    const resolvedTag = typeof record.tag_name === 'string' ? record.tag_name : '';
+    if (resolvedTag.length === 0) {
+      throw new LlamaReleaseError('LLAMACPP_RELEASE_MALFORMED', 'release has no tag_name');
+    }
+    const assets = assetsOf(record);
+    if (assets.length === 0) {
+      // A release created seconds ago genuinely has none yet - GitHub creates
+      // the release first and uploads afterwards. Callers resolving `latest`
+      // treat this as "ask an older one", not as "this repo is broken".
+      throw new LlamaReleaseError('LLAMACPP_RELEASE_MALFORMED', `release ${resolvedTag} lists no usable assets`);
+    }
+    return { tag: resolvedTag, assets };
+  }
+
+  /**
+   * The most recent releases, newest first, skipping drafts and any release
+   * that lists no usable asset yet.
+   *
+   * This exists for one reason: a GitHub release is published BEFORE its assets
+   * finish uploading, so `latest` can name a release that does not yet contain
+   * the archive this machine needs. MEASURED on ggml-org/llama.cpp b10442
+   * (2026-08-15): created 14:58:24Z, first asset +15 s, `win-cpu-x64` +53 s,
+   * last asset +92 s - and the five releases before it took 88-134 s. Without a
+   * second opinion, everything resolved inside that window reports the machine
+   * as having no build at all. See {@link LlamaCppProvisioner.plan}.
+   *
+   * `/releases` (unlike `/latest`) also lists prereleases; llama.cpp marks none
+   * of its `b*` builds as one, and a prerelease that shipped the asset is still
+   * a better answer than "your computer cannot run local models".
+   */
+  async listRecent(limit: number = RECENT_RELEASE_COUNT): Promise<LlamaRelease[]> {
+    const url = `${API_BASE}/repos/${this.deps.repo}/releases?per_page=${limit}`;
+    const body = await this.getJson(url);
+    if (!Array.isArray(body)) {
+      throw new LlamaReleaseError('LLAMACPP_RELEASE_MALFORMED', 'release list body is not an array');
+    }
+    const releases: LlamaRelease[] = [];
+    for (const raw of body) {
+      if (!raw || typeof raw !== 'object') continue;
+      const record = raw as Record<string, unknown>;
+      if (record.draft === true) continue;
+      const tag = typeof record.tag_name === 'string' ? record.tag_name : '';
+      if (tag.length === 0) continue;
+      const assets = assetsOf(record);
+      if (assets.length === 0) continue;
+      releases.push({ tag, assets });
+    }
+    return releases;
+  }
+
+  /** One GET against the API, with this layer's error codes. */
+  private async getJson(url: string): Promise<unknown> {
     let response: Response;
     try {
       response = await this.deps.fetch(url, {
@@ -104,29 +178,13 @@ export class LlamaReleaseClient {
         `${url} -> ${response.status} ${response.statusText || ''}`.trim()
       );
     }
-
-    let body: unknown;
     try {
-      body = await response.json();
+      return await response.json();
     } catch (err) {
       throw new LlamaReleaseError(
         'LLAMACPP_RELEASE_MALFORMED',
         `release JSON parse failed: ${err instanceof Error ? err.message : String(err)}`
       );
     }
-    if (!body || typeof body !== 'object') {
-      throw new LlamaReleaseError('LLAMACPP_RELEASE_MALFORMED', 'release body is not an object');
-    }
-    const record = body as Record<string, unknown>;
-    const resolvedTag = typeof record.tag_name === 'string' ? record.tag_name : '';
-    if (resolvedTag.length === 0) {
-      throw new LlamaReleaseError('LLAMACPP_RELEASE_MALFORMED', 'release has no tag_name');
-    }
-    const rawAssets = Array.isArray(record.assets) ? record.assets : [];
-    const assets = rawAssets.map(toAsset).filter((a): a is LlamaReleaseAsset => a !== null);
-    if (assets.length === 0) {
-      throw new LlamaReleaseError('LLAMACPP_RELEASE_MALFORMED', `release ${resolvedTag} lists no usable assets`);
-    }
-    return { tag: resolvedTag, assets };
   }
 }

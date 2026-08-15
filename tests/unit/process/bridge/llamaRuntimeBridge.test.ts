@@ -45,7 +45,7 @@ import {
   type LlamaProvisionerLike,
   type LlamaRuntimeDeps,
 } from '@process/bridge/engine/llamaRuntimeBridge';
-import { planLlamaAssets } from '@process/services/llamacpp';
+import { planLlamaAssets, type LlamaAssetPlan, type LlamaAssetPlanResult } from '@process/services/llamacpp';
 import type { LlamaRuntimeStatus } from '@/common/types/llamacpp';
 
 /** Placeholder callable, hoisted so the linter does not see a per-call closure. */
@@ -56,6 +56,8 @@ const USER_DATA = '/userData';
 
 const SERVER_CUDA = `llama-${TAG}-bin-win-cuda-13.3-x64.zip`;
 const CUDART = `cudart-llama-bin-win-cuda-13.3-x64.zip`;
+const SERVER_CUDA_12 = `llama-${TAG}-bin-win-cuda-12.4-x64.zip`;
+const CUDART_12 = `cudart-llama-bin-win-cuda-12.4-x64.zip`;
 const SERVER_CPU = `llama-${TAG}-bin-win-cpu-x64.zip`;
 
 const SERVER_CUDA_BYTES = 147_000_000;
@@ -108,18 +110,8 @@ function twoCudaLinesRelease() {
     assets: [
       { name: SERVER_CUDA, url: 'https://x/1', bytes: SERVER_CUDA_BYTES, sha256: 'a'.repeat(64) },
       { name: CUDART, url: 'https://x/2', bytes: CUDART_BYTES, sha256: 'b'.repeat(64) },
-      {
-        name: `llama-${TAG}-bin-win-cuda-12.4-x64.zip`,
-        url: 'https://x/4',
-        bytes: CUDA_12_BYTES,
-        sha256: 'd'.repeat(64),
-      },
-      {
-        name: `cudart-llama-bin-win-cuda-12.4-x64.zip`,
-        url: 'https://x/5',
-        bytes: CUDART_12_BYTES,
-        sha256: 'e'.repeat(64),
-      },
+      { name: SERVER_CUDA_12, url: 'https://x/4', bytes: CUDA_12_BYTES, sha256: 'd'.repeat(64) },
+      { name: CUDART_12, url: 'https://x/5', bytes: CUDART_12_BYTES, sha256: 'e'.repeat(64) },
       { name: SERVER_CPU, url: 'https://x/3', bytes: CPU_BYTES, sha256: 'c'.repeat(64) },
     ],
   };
@@ -132,6 +124,21 @@ type Harness = {
   ensureCalls: Array<Record<string, unknown>>;
   /** One entry per `provisioner.plan` call - i.e. per release-index fetch. */
   planCalls: Array<Record<string, unknown>>;
+  /**
+   * The archive names that actually reached disk, in order.
+   *
+   * This is the assertion that matters: which fields the bridge pinned is an
+   * implementation detail, WHAT GOT DOWNLOADED is the promise. A test that only
+   * checks `ensureCalls[0].tag` passes while a 512.8 MB CUDA pair is fetched
+   * behind a card that said "CPU build, 30 MB".
+   */
+  installedAssets: string[];
+  /**
+   * How many times `resolve()` has started, counted at its first dep call.
+   * `planCalls` cannot stand in for this: a resolve that throws from the
+   * release fetch never records one.
+   */
+  resolveAttempts: { count: number };
   provisioner: LlamaProvisionerLike & { fire: (p: Record<string, unknown>) => void };
 };
 
@@ -167,6 +174,7 @@ function makeHarness(opts: HarnessOptions = {}): Harness {
   const emitted: LlamaRuntimeStatus[] = [];
   const ensureCalls: Array<Record<string, unknown>> = [];
   const planCalls: Array<Record<string, unknown>> = [];
+  const installedAssets: string[] = [];
   let progressListener: (p: Record<string, unknown>) => void = NOOP;
   const installedTags = opts.installedTags ? [...opts.installedTags] : [];
 
@@ -174,29 +182,57 @@ function makeHarness(opts: HarnessOptions = {}): Harness {
   const nextRelease = (): ReturnType<typeof windowsRelease> =>
     releases[Math.min(planCalls.length - 1, releases.length - 1)];
 
+  type PlanRequest = {
+    backend: 'cuda' | 'cpu_x86' | 'metal';
+    cudaRuntimePresent?: boolean;
+    cudaVariant?: string;
+    tag?: string;
+  };
+
+  /**
+   * One resolution, done the way the REAL `LlamaCppProvisioner.plan` does it -
+   * including what it does NOT receive. `driverVersion` is deliberately absent:
+   * `LlamaProvisionRequest` has no such field, so a re-plan inside the
+   * provisioner is blind to the driver measurement. A harness that quietly
+   * supplied it would hide the exact defect this file has to be able to catch.
+   */
+  const resolveFor = (request: PlanRequest) => {
+    planCalls.push(request);
+    const pinned = request.tag ? releases.find((r) => r.tag === request.tag) : undefined;
+    const release = pinned || nextRelease();
+    return {
+      release,
+      plan: planLlamaAssets({
+        platform,
+        arch,
+        backend: request.backend,
+        tag: release.tag,
+        availableAssets: release.assets.map((a) => a.name),
+        cudaRuntimePresent: request.cudaRuntimePresent,
+        cudaVariant: request.cudaVariant,
+      }),
+    };
+  };
+
   const provisioner = {
-    plan: async (request: { backend: 'cuda' | 'cpu_x86' | 'metal'; cudaRuntimePresent?: boolean; tag?: string }) => {
+    plan: async (request: PlanRequest) => {
       if (opts.planError) throw opts.planError;
-      planCalls.push(request);
-      const pinned = request.tag ? releases.find((r) => r.tag === request.tag) : undefined;
-      const release = pinned || nextRelease();
-      return {
-        release,
-        plan: planLlamaAssets({
-          platform,
-          arch,
-          backend: request.backend,
-          tag: release.tag,
-          availableAssets: release.assets.map((a) => a.name),
-          cudaRuntimePresent: request.cudaRuntimePresent,
-        }),
-      };
+      return resolveFor(request);
     },
     ensureInstalled: async (request: Record<string, unknown>) => {
       ensureCalls.push(request);
       if (opts.gate) await opts.gate.promise;
       if (opts.installError) throw opts.installError;
-      installedTags.unshift(String(request.tag));
+      // Mirrors the real provisioner on BOTH branches. A pinned `plan` is
+      // installed verbatim and nothing is re-decided; without one it re-plans
+      // from the request's inputs against whatever "latest" is now - which is
+      // how an input nobody carried across (the driver version) turned a
+      // disclosed CPU install into a CUDA one.
+      const approved = request.plan as LlamaAssetPlan | undefined;
+      const chosen: LlamaAssetPlanResult = approved === undefined ? resolveFor(request as PlanRequest).plan : approved;
+      if (chosen.kind !== 'ok') throw Object.assign(new Error(chosen.reason), { code: 'LLAMACPP_UNSUPPORTED' });
+      for (const asset of chosen.assets) installedAssets.push(asset.name);
+      installedTags.unshift(chosen.tag);
       return {};
     },
     cancel: (): boolean => true,
@@ -230,9 +266,16 @@ function makeHarness(opts: HarnessOptions = {}): Harness {
     llamaRoot: (dir) => `${dir}/llamacpp`,
   };
 
+  const resolveAttempts = { count: 0 };
+
   const deps: LlamaRuntimeDeps = {
     userDataDir: () => USER_DATA,
-    hwBackend: async () => opts.backend || 'cuda',
+    hwBackend: async () => {
+      // `resolve()` calls this first, so it counts resolutions that are STARTED
+      // - including the ones that go on to fail.
+      resolveAttempts.count += 1;
+      return opts.backend || 'cuda';
+    },
     // 610.62 is the driver measured on the reference RTX 4070 box, so the
     // default harness machine is the one the feature was measured on.
     gpuDriverVersion: async () => (opts.driverVersion === undefined ? '610.62' : opts.driverVersion),
@@ -250,8 +293,15 @@ function makeHarness(opts: HarnessOptions = {}): Harness {
     emitted,
     ensureCalls,
     planCalls,
+    installedAssets,
+    resolveAttempts,
     provisioner: provisioner as unknown as Harness['provisioner'],
   };
+}
+
+/** The plan the bridge handed the provisioner on install call `index`. */
+function approvedPlan(ensureCalls: Array<Record<string, unknown>>, index = 0): LlamaAssetPlan {
+  return ensureCalls[index].plan as LlamaAssetPlan;
 }
 
 function openGate(): { promise: Promise<void>; release: () => void } {
@@ -359,19 +409,22 @@ describe('LlamaRuntimeController.plan - what it costs, before it costs it', () =
 
 describe('LlamaRuntimeController.install', () => {
   it('installs and ends ready, pinning the tag it disclosed', async () => {
-    const { controller, ensureCalls } = makeHarness({ backend: 'cuda' });
+    const { controller, ensureCalls, installedAssets } = makeHarness({ backend: 'cuda' });
     const status = await controller.install();
     expect(status.state).toBe('ready');
     expect(status.tag).toBe(TAG);
     expect(ensureCalls).toHaveLength(1);
-    expect(ensureCalls[0].tag).toBe(TAG);
-    expect(ensureCalls[0].cudaRuntimePresent).toBe(false);
+    expect(approvedPlan(ensureCalls).tag).toBe(TAG);
+    // The cudart archive is in the plan, which is what "the runtime is not
+    // already present" MEANS - asserted as the download it causes, not as the
+    // boolean that was passed.
+    expect(installedAssets).toEqual([SERVER_CUDA, CUDART]);
   });
 
   it('passes cudaRuntimePresent through so the 373 MB archive is skipped', async () => {
-    const { controller, ensureCalls } = makeHarness({ backend: 'cuda', cudaPresent: true });
+    const { controller, installedAssets } = makeHarness({ backend: 'cuda', cudaPresent: true });
     await controller.install();
-    expect(ensureCalls[0].cudaRuntimePresent).toBe(true);
+    expect(installedAssets).toEqual([SERVER_CUDA]);
   });
 
   it('fails with LLAMACPP_UNSUPPORTED instead of spinning on an unbuildable machine', async () => {
@@ -458,10 +511,10 @@ describe('LlamaRuntimeController.install - installs what it disclosed', () => {
     const status = await controller.install();
 
     expect(ensureCalls).toHaveLength(1);
-    expect(ensureCalls[0].tag).toBe(TAG);
+    expect(approvedPlan(ensureCalls).tag).toBe(TAG);
     expect(status.tag).toBe(TAG);
-    // One release fetch for the whole press: the approved resolution is reused,
-    // so there is no second answer that could disagree with the first.
+    // One resolution for the whole press: the approved plan is reused, so there
+    // is no second answer that could disagree with the first.
     expect(planCalls).toHaveLength(1);
     expect(shownBytes).toBe(CPU_BYTES + CUDART_BYTES);
   });
@@ -478,8 +531,8 @@ describe('LlamaRuntimeController.install - installs what it disclosed', () => {
     await controller.install();
 
     expect(ensureCalls).toHaveLength(2);
-    expect(ensureCalls[0].tag).toBe(TAG);
-    expect(ensureCalls[1].tag).toBe('b10440');
+    expect(approvedPlan(ensureCalls, 0).tag).toBe(TAG);
+    expect(approvedPlan(ensureCalls, 1).tag).toBe('b10440');
   });
 
   it('does not carry a failed plan forward as an approval', async () => {
@@ -493,8 +546,9 @@ describe('LlamaRuntimeController.install - installs what it disclosed', () => {
   });
 
   it('pins the CUDA line it disclosed, so the install cannot re-pick the newest', async () => {
-    // 552.22 is an r550 driver: CUDA 12 (floor 525) yes, CUDA 13 (floor 580) no.
-    const { controller, ensureCalls } = makeHarness({
+    // 552.22 is an r550 driver: CUDA 12 (floor 527.41 on Windows) yes,
+    // CUDA 13 (floor 580.65.06) no.
+    const { controller, ensureCalls, installedAssets } = makeHarness({
       backend: 'cuda',
       release: twoCudaLinesRelease(),
       driverVersion: '552.22',
@@ -506,20 +560,134 @@ describe('LlamaRuntimeController.install - installs what it disclosed', () => {
     expect(shown.downloadBytes).toBe(CUDA_12_BYTES + CUDART_12_BYTES);
 
     await controller.install();
-    expect(ensureCalls[0].cudaVariant).toBe('12.4');
+    expect(approvedPlan(ensureCalls).cudaVariant).toBe('12.4');
+    expect(installedAssets).toEqual([SERVER_CUDA_12, CUDART_12]);
+  });
+});
+
+/**
+ * The driver measurement has to SURVIVE the trip into the install.
+ *
+ * `resolve()` re-plans with the measured driver and may honestly answer "CPU
+ * build, because your driver predates every CUDA build in this release". That
+ * answer used to be reconstructed inside `ensureInstalled` from a handful of
+ * pinned INPUTS - and `LlamaProvisionRequest` had no `driverVersion`, while a
+ * CPU fallback has `cudaVariant: null` and so pinned nothing on the CUDA axis
+ * either. The re-plan therefore ran "newest line wins" blind, and a card that
+ * said 30 MB fetched 512.8 MB of CUDA 13.3 that the driver cannot load.
+ */
+describe('LlamaRuntimeController.install - the driver decision reaches the download', () => {
+  it('installs the CPU build it disclosed on a driver older than every CUDA line', async () => {
+    // 470.82 is below the CUDA 12 floor on either OS, so no line is loadable.
+    const { controller, ensureCalls, installedAssets } = makeHarness({
+      backend: 'cuda',
+      release: twoCudaLinesRelease(),
+      driverVersion: '470.82',
+    });
+
+    const shown = await controller.plan();
+    expect(shown.kind).toBe('ok');
+    if (shown.kind !== 'ok') return;
+    expect(shown.acceleration).toBe('cpu');
+    expect(shown.fallbackCode).toBe('CUDA_DRIVER_TOO_OLD');
+    expect(shown.downloadBytes).toBe(CPU_BYTES);
+
+    await controller.install();
+
+    // The bytes, not the boolean: the card promised the 30 MB CPU archive and
+    // nothing else, so that is the only archive allowed to reach disk.
+    expect(installedAssets).toEqual([SERVER_CPU]);
+    expect(approvedPlan(ensureCalls).acceleration).toBe('cpu');
+    expect(approvedPlan(ensureCalls).fallback.code).toBe('CUDA_DRIVER_TOO_OLD');
+  });
+
+  it('installs the disclosed CPU build even with no plan() beforehand', async () => {
+    // Straight to install: `runInstall` resolves for itself, and that
+    // resolution is equally bound - it is the same driver-aware answer.
+    const { controller, installedAssets } = makeHarness({
+      backend: 'cuda',
+      release: twoCudaLinesRelease(),
+      driverVersion: '470.82',
+    });
+    const status = await controller.install();
+    expect(status.state).toBe('ready');
+    expect(installedAssets).toEqual([SERVER_CPU]);
+  });
+});
+
+/**
+ * One outstanding disclosure, shared by every caller.
+ *
+ * `useLlamaRuntime` is mounted once and handed to all 121 advisor rows, but
+ * each row renders its card from its own React state. While `disclosed` was
+ * last-write-wins, pressing Serve on row A and then on row B re-resolved into
+ * the same slot, so confirming A's card installed B's resolution.
+ */
+describe('LlamaRuntimeController.plan - two rows cannot be told different things', () => {
+  it('re-states the outstanding disclosure instead of re-resolving for a second row', async () => {
+    const first = releaseFor(TAG, CPU_BYTES);
+    const moved = releaseFor('b10442', 99_000_000);
+    const { controller, ensureCalls, planCalls, installedAssets } = makeHarness({
+      backend: 'cuda',
+      releases: [first, moved],
+    });
+
+    const cardA = await controller.plan();
+    const cardB = await controller.plan();
+    expect(cardA.kind).toBe('ok');
+    expect(cardB.kind).toBe('ok');
+    if (cardA.kind !== 'ok' || cardB.kind !== 'ok') return;
+
+    // Row B is shown row A's answer, because only one of them can be installed.
+    expect(cardA.tag).toBe(TAG);
+    expect(cardB.tag).toBe(cardA.tag);
+    expect(cardB.downloadBytes).toBe(cardA.downloadBytes);
+    expect(planCalls).toHaveLength(1);
+
+    // The user goes back and confirms A's card.
+    await controller.install();
+    expect(approvedPlan(ensureCalls).tag).toBe(cardA.tag);
+    expect(installedAssets[0]).toBe(`llama-${cardA.tag}-bin-win-cuda-13.3-x64.zip`);
+  });
+
+  it('still discloses afresh once the outstanding one has been consumed', async () => {
+    const first = releaseFor(TAG, CPU_BYTES);
+    const moved = releaseFor('b10442', 99_000_000);
+    const { controller } = makeHarness({ backend: 'cuda', releases: [first, moved] });
+
+    await controller.plan();
+    await controller.install();
+    const after = await controller.plan();
+    expect(after.kind).toBe('ok');
+    if (after.kind !== 'ok') return;
+    expect(after.tag).toBe('b10442');
+  });
+
+  it('does not reuse a resolution that failed', async () => {
+    const offline = Object.assign(new Error('offline'), { code: 'LLAMACPP_OFFLINE' });
+    const { controller, resolveAttempts } = makeHarness({ planError: offline });
+    expect((await controller.plan()).kind).toBe('unavailable');
+    expect((await controller.plan()).kind).toBe('unavailable');
+    // Nothing was disclosed, so the second press really does ask again rather
+    // than re-stating a slot that was never filled.
+    expect(resolveAttempts.count).toBe(2);
   });
 });
 
 describe('LlamaRuntimeController.plan - the driver decides the CUDA line', () => {
   it('takes the newest line on the measured 610.62 driver', async () => {
-    const { controller, ensureCalls } = makeHarness({ backend: 'cuda', release: twoCudaLinesRelease() });
+    const { controller, ensureCalls, installedAssets } = makeHarness({
+      backend: 'cuda',
+      release: twoCudaLinesRelease(),
+    });
     const shown = await controller.plan();
     expect(shown.kind).toBe('ok');
     if (shown.kind !== 'ok') return;
     expect(shown.downloadBytes).toBe(SERVER_CUDA_BYTES + CUDART_BYTES);
     expect(shown.noteCodes).toEqual([]);
     await controller.install();
-    expect(ensureCalls[0].cudaVariant).toBe('13.3');
+    expect(approvedPlan(ensureCalls).cudaVariant).toBe('13.3');
+    expect(installedAssets).toEqual([SERVER_CUDA, CUDART]);
   });
 
   it('marks the line unverified when no driver version could be measured', async () => {

@@ -6,6 +6,7 @@
 
 import { describe, expect, it } from 'vitest';
 import {
+  isLlamaServerProvisionable,
   isVllmViable,
   selectBackend,
   VLLM_MIN_VRAM_GB,
@@ -25,6 +26,7 @@ const input = (over: Partial<BackendPolicyInput> = {}): BackendPolicyInput => ({
   hwBackend: 'cuda',
   vramGb: 24,
   available: availability(),
+  canProvisionLlamaServer: true,
   ...over,
 });
 
@@ -55,7 +57,9 @@ describe('selectBackend', () => {
     const sel = selectBackend(
       input({ platform: 'windows', hwBackend: 'cpu_x86', vramGb: 8, available: availability({ llamaServer: true }) })
     );
-    expect(sel).toEqual({ chosen: 'llama-server', viable: ['llama-server'] });
+    // Already installed, so it is viable and NOT also provisionable - a backend
+    // is never in both lists, or the UI would offer to install what is running.
+    expect(sel).toEqual({ chosen: 'llama-server', viable: ['llama-server'], provisionable: [] });
   });
 
   it('24GB Linux CUDA box with vllm installed -> vllm is chosen, offered ahead of others', () => {
@@ -87,6 +91,71 @@ describe('selectBackend', () => {
 
   it('nothing installed -> none, no viable backends', () => {
     const sel = selectBackend(input({ vramGb: 8, available: availability() }));
-    expect(sel).toEqual({ chosen: 'none', viable: [] });
+    // Unchanged on purpose: `chosen: 'none'` is what opens the one-press
+    // provisioning path, and `viable: []` is what keeps the word "llama.cpp"
+    // off a screen whose whole promise is that the user never needs it.
+    expect(sel.chosen).toBe('none');
+    expect(sel.viable).toEqual([]);
+    expect(sel.provisionable).toEqual(['llama-server']);
+  });
+});
+
+/**
+ * The user's right to choose Darhai's own llama.cpp.
+ *
+ * The product rule, in the owner's words: someone who knows Ollama or LM Studio
+ * must still be able to connect those, and a machine with NEITHER can run a
+ * model immediately because llama.cpp is inside Darhai. Building the choice list
+ * from "what is installed" alone broke the first half of that for everyone in
+ * the middle - a host with Ollama on it got `viable: ['ollama']`, so llama.cpp
+ * was absent from the chooser AND `chosen` was not `'none'`, which is the only
+ * value that opens the provisioning path. There was no route to it at all.
+ */
+describe('selectBackend: llama.cpp is offerable because Darhai ships it', () => {
+  it('offers it on a host that has ollama and no llama-server', () => {
+    const sel = selectBackend(
+      input({
+        platform: 'windows',
+        hwBackend: 'cuda',
+        vramGb: 8,
+        available: availability({ ollama: true }),
+      })
+    );
+    // The regression: this used to be the whole answer, with no llama.cpp in it.
+    expect(sel.viable).toEqual(['ollama']);
+    expect(sel.chosen).toBe('ollama');
+    // ...and this is the route that was missing.
+    expect(sel.provisionable).toEqual(['llama-server']);
+  });
+
+  it('offers it alongside vllm on a big Linux CUDA box', () => {
+    const sel = selectBackend(input({ vramGb: 80, available: availability({ vllm: true, ollama: true }) }));
+    expect(sel.chosen).toBe('vllm');
+    expect(sel.provisionable).toEqual(['llama-server']);
+  });
+
+  it('offers nothing to install on a target llama.cpp publishes no build for', () => {
+    const sel = selectBackend(input({ available: availability({ ollama: true }), canProvisionLlamaServer: false }));
+    expect(sel.provisionable).toEqual([]);
+    expect(sel.viable).toEqual(['ollama']);
+  });
+});
+
+describe('isLlamaServerProvisionable', () => {
+  it('is true for every platform + arch llama.cpp publishes a build for', () => {
+    for (const platform of ['windows', 'macos', 'linux'] as const) {
+      for (const arch of ['x64', 'arm64']) {
+        expect(isLlamaServerProvisionable(platform, arch), `${platform}/${arch}`).toBe(true);
+      }
+    }
+  });
+
+  it('is false for a platform or architecture with no published build', () => {
+    // `'unknown'` is hwfit's own value for a host it could not type, and a
+    // 32-bit build has never been published - neither may be offered as
+    // installable, because the plan call would only come back "no build".
+    expect(isLlamaServerProvisionable('unknown', 'x64')).toBe(false);
+    expect(isLlamaServerProvisionable('windows', 'ia32')).toBe(false);
+    expect(isLlamaServerProvisionable('linux', 'arm')).toBe(false);
   });
 });

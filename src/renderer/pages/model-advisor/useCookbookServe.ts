@@ -24,7 +24,7 @@ const IDLE_STATUS: CookbookServeStatus = {
   servedModel: null,
 };
 
-const EMPTY_SELECTION: CookbookBackendSelection = { chosen: 'none', viable: [] };
+const EMPTY_SELECTION: CookbookBackendSelection = { chosen: 'none', viable: [], provisionable: [] };
 
 /** State + actions for the cookbook download/serve controls in the advisor. */
 export type CookbookController = {

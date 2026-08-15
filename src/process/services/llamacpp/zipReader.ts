@@ -22,7 +22,7 @@
  */
 
 import { createReadStream, createWriteStream } from 'node:fs';
-import { open, mkdir } from 'node:fs/promises';
+import { open, mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { createInflateRaw } from 'node:zlib';
 import { pipeline } from 'node:stream/promises';
@@ -47,6 +47,9 @@ const METHOD_DEFLATE = 8;
 
 /** EOCD lives in the last 64 KiB + comment; scan a bit more for the zip64 locator. */
 const TAIL_SCAN_BYTES = 66_000;
+
+/** The payload of a zero-length member, which has no byte range to read. */
+const EMPTY = Buffer.alloc(0);
 
 type CentralEntry = {
   name: string;
@@ -188,8 +191,14 @@ function isZipSymlink(externalAttrs: number): boolean {
   return ((externalAttrs >>> 16) & 0xf000) === 0xa000;
 }
 
-/** Read one entry's payload into memory. Only used for link targets, which are one line. */
+/**
+ * Read one entry's payload into memory. Only used for link targets, which are one line.
+ *
+ * The empty case is not a shortcut: `end` would be `start - 1`, and Node rejects
+ * that range before a byte is read. See {@link extractZip}.
+ */
 async function readEntryBytes(zipPath: string, entry: CentralEntry, start: number): Promise<Buffer> {
+  if (entry.compressedSize === 0) return EMPTY;
   const source = createReadStream(zipPath, { start, end: start + entry.compressedSize - 1 });
   const chunks: Buffer[] = [];
   const collect = async (stream: NodeJS.ReadableStream): Promise<void> => {
@@ -250,12 +259,23 @@ export async function extractZip(zipPath: string, destDir: string): Promise<Arch
       continue;
     }
 
-    const source = createReadStream(zipPath, { start, end: start + entry.compressedSize - 1 });
-    const sink = createWriteStream(target, { mode: zipMode(entry.externalAttrs) ?? 0o644 });
-    if (entry.method === METHOD_DEFLATE) {
-      await pipeline(source, createInflateRaw(), sink);
+    if (entry.compressedSize === 0) {
+      // A zero-length member is legal zip and carries no payload at all - both
+      // STORE and DEFLATE write it with compressedSize 0. Streaming it asks for
+      // the byte range [start, start - 1], which Node rejects with a raw
+      // ERR_OUT_OF_RANGE before opening anything, so a single empty file (a
+      // placeholder, an empty LICENSE stub) in a release zip would fail every
+      // install of that release with a message about "start" and no way
+      // forward. There is nothing to read: create the file and move on.
+      await writeFile(target, EMPTY, { mode: zipMode(entry.externalAttrs) ?? 0o644 });
     } else {
-      await pipeline(source, sink);
+      const source = createReadStream(zipPath, { start, end: start + entry.compressedSize - 1 });
+      const sink = createWriteStream(target, { mode: zipMode(entry.externalAttrs) ?? 0o644 });
+      if (entry.method === METHOD_DEFLATE) {
+        await pipeline(source, createInflateRaw(), sink);
+      } else {
+        await pipeline(source, sink);
+      }
     }
 
     written.push({

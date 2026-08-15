@@ -453,6 +453,31 @@ describe('planLlamaAssets - machines with no build at all', () => {
     if (result.kind === 'unsupported') expect(result.reason).toContain('llama-b10437-bin-ubuntu-x64.tar.gz');
   });
 
+  /**
+   * "No build for FreeBSD" and "this release has not finished uploading" are
+   * both `unsupported` and both prose, but only one of them is permanent. The
+   * provisioner walks back to an older release for the second and must not for
+   * the first, so the difference has to be a field, not a sentence to parse.
+   */
+  it('separates a permanent platform fact from a one-release fact', () => {
+    const freebsd = plan('freebsd', 'x64', 'cpu_x86');
+    const ia32 = plan('win32', 'ia32', 'cpu_x86');
+    // A win/x64 machine against a release whose assets are still uploading:
+    // the cudart archives land first (measured at +15 s on b10442), the CPU
+    // archive only at +53 s.
+    const stillUploading = plan('win32', 'x64', 'cpu_x86', {
+      availableAssets: ['cudart-llama-bin-win-cuda-12.4-x64.zip', 'cudart-llama-bin-win-cuda-13.3-x64.zip'],
+    });
+
+    expect(freebsd.kind).toBe('unsupported');
+    expect(ia32.kind).toBe('unsupported');
+    expect(stillUploading.kind).toBe('unsupported');
+    if (freebsd.kind !== 'unsupported' || ia32.kind !== 'unsupported' || stillUploading.kind !== 'unsupported') return;
+    expect(freebsd.cause).toBe('platform');
+    expect(ia32.cause).toBe('arch');
+    expect(stillUploading.cause).toBe('asset-missing');
+  });
+
   it('accepts common arch aliases', () => {
     expect(ok(plan('linux', 'x86_64', 'cpu_x86')).arch).toBe('x64');
     expect(ok(plan('linux', 'aarch64', 'cpu_arm')).arch).toBe('arm64');
@@ -639,6 +664,70 @@ describe('planLlamaAssets - the CUDA line is a driver decision', () => {
     const result = ok(plan('win32', 'x64', 'cuda', { driverVersion: '470.82', availableAssets: onlyFuture }));
     expect(result.assets[0].name).toBe('llama-b10437-bin-win-cuda-14.0-x64.zip');
     expect(result.noteCodes).toContain('CUDA_LINE_UNVERIFIED');
+  });
+
+  /**
+   * The floor is a FULL version, and it is per-OS.
+   *
+   * NVIDIA's Table 3 (docs.nvidia.com/cuda/cuda-toolkit-release-notes, read
+   * 2026-08-15) states CUDA 12.0 GA as `>=525.60.13` on Linux x86_64 and
+   * `>=527.41` on Windows. `driverMajor >= 525` cannot express either: it
+   * admits every Windows driver from 525.00 to 527.40 - drivers the module's
+   * own comment cited as below the floor - and every Linux driver from 525.00
+   * to 525.60.12. Those machines then download ~640 MB of CUDA 12 that reports
+   * "Available devices: (none)", exits 0 and runs on the CPU.
+   */
+  describe('the floor is the published version, not its integer part', () => {
+    it('refuses a Windows driver between the 525 branch base and the 527.41 floor', () => {
+      // 526.98 and 527.37 are r525-branch Windows drivers below 527.41.
+      for (const driverVersion of ['525.14', '526.98', '527.37']) {
+        const result = ok(plan('win32', 'x64', 'cuda', { driverVersion }));
+        expect(result.acceleration, `driver ${driverVersion}`).toBe('cpu');
+        expect(result.fallback.code, `driver ${driverVersion}`).toBe('CUDA_DRIVER_TOO_OLD');
+        expect(result.assets.map((a) => a.name)).toEqual(['llama-b10437-bin-win-cpu-x64.zip']);
+      }
+    });
+
+    it('admits the exact published Windows floor, 527.41', () => {
+      const result = ok(plan('win32', 'x64', 'cuda', { driverVersion: '527.41' }));
+      expect(result.acceleration).toBe('cuda');
+      expect(result.cudaVariant).toBe('12.4');
+    });
+
+    it('uses the LINUX floor on Linux, where 526.98 is new enough', () => {
+      // The same driver, two answers - which is the whole reason one integer
+      // cannot serve both. b10437 ships no ubuntu-cuda build, so this uses a
+      // release that does; everything else about the machine is identical.
+      const linuxCuda = ['llama-b10437-bin-ubuntu-x64.tar.gz', 'llama-b10437-bin-ubuntu-cuda-12.4-x64.tar.gz'];
+      const admitted = ok(plan('linux', 'x64', 'cuda', { availableAssets: linuxCuda, driverVersion: '526.98' }));
+      expect(admitted.acceleration).toBe('cuda');
+      expect(admitted.cudaVariant).toBe('12.4');
+
+      const refused = ok(plan('linux', 'x64', 'cuda', { availableAssets: linuxCuda, driverVersion: '525.60.12' }));
+      expect(refused.acceleration).toBe('cpu');
+      expect(refused.fallback.code).toBe('CUDA_DRIVER_TOO_OLD');
+    });
+
+    it('refuses a CUDA 13 build on a driver below 580.65.06 but at major 580', () => {
+      const result = ok(plan('win32', 'x64', 'cuda', { driverVersion: '580.65.05' }));
+      // CUDA 13 is out, but CUDA 12 (>=527.41) is comfortably in - so this is
+      // the older-line branch, not a CPU fallback.
+      expect(result.acceleration).toBe('cuda');
+      expect(result.cudaVariant).toBe('12.4');
+      expect(result.noteCodes).toContain('CUDA_LINE_OLDER_FOR_DRIVER');
+    });
+
+    it('admits the exact published CUDA 13 floor, 580.65.06', () => {
+      const result = ok(plan('win32', 'x64', 'cuda', { driverVersion: '580.65.06' }));
+      expect(result.cudaVariant).toBe('13.3');
+      expect(result.noteCodes).toEqual([]);
+    });
+
+    it('names the real floors in the reason, not rounded majors', () => {
+      const result = ok(plan('win32', 'x64', 'cuda', { driverVersion: '470.82' }));
+      expect(result.fallback.reason).toContain('527.41');
+      expect(result.fallback.reason).toContain('580.65.06');
+    });
   });
 
   it('reports no cudaVariant for plans that are not CUDA ones', () => {

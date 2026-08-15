@@ -14,6 +14,16 @@
  * anything is opened for writing. Both readers call {@link safeEntryPath} for
  * every entry and neither has a code path that writes without it.
  *
+ * A link needs a second guard, because `safeEntryPath` is lexical and a link
+ * changes what a path means. It answers where a member is PLACED; where a link
+ * POINTS is checked in `linkTargetRelPath`, and whether a member is placed
+ * under a link at all in `assertNoMemberUnderLink`. Both run before anything is
+ * linked. Without them an archive could name `d -> ../../HOME` and then write
+ * `d/.profile` through it - a real file outside the destination, produced by an
+ * extraction that reported success. The sha256 check upstream is not an
+ * independent guard here: the digest comes from the same API that served the
+ * bytes, so a compromised release or a MITM'd download supplies both.
+ *
  * Links are not decoration. MEASURED on the real b10441 release: the
  * macos-arm64 tarball is 62 members - 43 regular files, 18 symlinks, 1
  * directory - and the ubuntu-x64 tarball is 63 members with 10 symlinks. Every
@@ -146,7 +156,23 @@ export function stripRoot(relPath: string, root: string | null): string | null {
 /** Longest chain of links an archive may ask us to follow before we call it a cycle. */
 const MAX_LINK_HOPS = 16;
 
-/** Where a link points, expressed as an archive-relative path. */
+/**
+ * Where a link points, expressed as an archive-relative path.
+ *
+ * Containment is decided HERE, not only in {@link safeEntryPath}, because that
+ * guard answers where a link is PLACED and says nothing about where it POINTS.
+ * Rejecting only an absolute target leaves `..` wide open: a symlink resolves
+ * against its own directory the moment it exists on disk, so `d -> ../../HOME`
+ * is a live door out of the tree, and every later member written under `d/`
+ * travels through it. `safeEntryPath` cannot see that - it is purely lexical,
+ * and `d/x` still looks inside.
+ *
+ * The rule is the one the real archives need: a target may name anything INSIDE
+ * the extraction root and nothing outside it. Measured on b10441, every symlink
+ * in both tarballs is a bare sibling name (`libggml.dylib -> libggml.0.dylib`),
+ * and a relative hop that climbs out of a subdirectory back into the root stays
+ * allowed - this is "inside the root", not "no `..`".
+ */
 function linkTargetRelPath(link: ArchiveLink): string {
   const target = link.target.replace(/\\/g, '/');
   if (target.length === 0) {
@@ -159,7 +185,49 @@ function linkTargetRelPath(link: ArchiveLink): string {
   // directory. Measured: every symlink in the b10441 tarballs is a bare sibling
   // name, so this only ever collapses to the same directory in practice.
   const base = link.hard ? '.' : path.posix.dirname(link.relPath);
-  return path.posix.normalize(path.posix.join(base, target));
+  const resolved = path.posix.normalize(path.posix.join(base, target));
+  if (resolved === '..' || resolved.startsWith('../')) {
+    throw new ArchiveError('ARCHIVE_UNSAFE_ENTRY', `link ${link.relPath} points outside the archive: ${link.target}`);
+  }
+  return resolved;
+}
+
+/** Every proper directory prefix of an archive-relative path, outermost first. */
+function ancestorPaths(relPath: string): string[] {
+  const parts = relPath.split('/').filter((s) => s.length > 0);
+  const out: string[] = [];
+  for (let i = 1; i < parts.length; i++) out.push(parts.slice(0, i).join('/'));
+  return out;
+}
+
+/**
+ * Refuse an archive that places any member under one of its own links.
+ *
+ * Target containment alone is not enough, because two individually-contained
+ * links compose into an escape: `a -> .` is the root, and `a/x -> ../victim`
+ * normalises to `victim` against `a`, so both pass. On disk `a` IS the root, so
+ * `a/x` is written at the root and its `..` leaves the tree. Any lexical guard
+ * has the same blind spot - a path only means what it says while no ancestor of
+ * it is a symlink.
+ *
+ * Removing the precondition removes the whole class. Nothing is lost: measured
+ * on b10441, all 18 macos-arm64 and 10 ubuntu-x64 symlinks are leaf siblings in
+ * the root directory and no member is placed under any of them. Regular files
+ * need no check here because both readers write every one of them before
+ * calling this, so no file can pass through a link that does not exist yet.
+ */
+function assertNoMemberUnderLink(links: readonly ArchiveLink[]): void {
+  const linkPaths = new Set(links.map((l) => l.relPath.replace(/\\/g, '/')));
+  for (const link of links) {
+    for (const ancestor of ancestorPaths(link.relPath.replace(/\\/g, '/'))) {
+      if (linkPaths.has(ancestor)) {
+        throw new ArchiveError(
+          'ARCHIVE_UNSAFE_ENTRY',
+          `${link.relPath} is placed under the link ${ancestor}, which decides where it really lands`
+        );
+      }
+    }
+  }
 }
 
 /**
@@ -176,6 +244,10 @@ function linkTargetRelPath(link: ArchiveLink): string {
  * `libggml.dylib -> libggml.0.dylib -> libggml.0.20.0.dylib`.
  */
 export async function materializeLinks(destDir: string, links: readonly ArchiveLink[]): Promise<ArchiveEntry[]> {
+  // Both checks run to completion before a single link exists on disk. That
+  // ordering is the point: an escaping link is not a bad file to clean up
+  // afterwards, it is a door the rest of the archive then walks through.
+  assertNoMemberUnderLink(links);
   const targets = new Map<string, string>();
   for (const link of links) targets.set(link.relPath, linkTargetRelPath(link));
 

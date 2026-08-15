@@ -105,9 +105,82 @@
   cursor: pointer;
 }
 
-/* ---- table ---- */
+/* ---- table ----
+
+   Eight localized columns, and mn-MN headers run 30-50% longer than the en-US
+   these widths were picked for. MEASURED on 2026-08-15 at 1280x800: the table's
+   min-content width was 1035px inside a 958px pane, and Arco clips that pane
+   with `overflow: hidden` - so the primary action button lost 280.3px of
+   "Ажиллуулах" and the score column 38.4px, with no ellipsis, no scrollbar and
+   nothing to recover them. The three rules below each do one job, and the third
+   is the only one that can be sufficient on its own:
+
+     1. the action cell WRAPS instead of forcing a one-line column (measured
+        254px -> 161px at 1280, 146px when squeezed);
+     2. the model name is CAPPED, so one 52-character catalog entry cannot push
+        the table past the pane by itself (inert on a host whose widest visible
+        name is shorter - measured 239px here);
+     3. whatever still does not fit SCROLLS rather than being cut off. This is
+        not a fallback for the other two: the sider leaves 578px at a 900px
+        window, and no eight-column table fits that. Measured after: 958px of
+        content in a 958px pane at 1280 (no scrollbar at the baseline width),
+        927px in 578px / 727px panes below it, and zero overflow findings at all
+        three widths.
+
+   `overflow-x: auto` with `overflow-y` left alone is also what makes this an
+   OPT-IN horizontal scroller rather than a pane that started drifting sideways -
+   the distinction tests/e2e/visual/probes/overflow.ts draws in its pass 3. */
 .table {
   margin-top: 4px;
+}
+.table :global(.arco-table-content-scroll) {
+  overflow-x: auto;
+}
+.table :global(.arco-table-td .arco-space) {
+  flex-wrap: wrap;
+}
+/* Arco's cells default to `word-break: break-all`, which breaks INSIDE a word at
+   whatever character happens to land on the edge. MEASURED at 1280x800 before
+   this rule: `118.8 токен/с` rendered over three lines as "118.8 | токе | н/с"
+   in a 72px cell whose content is only 32px wide, and `Q4_K_M` over two as
+   "Q4_K_ | M" in a 76px cell holding 39px of text - neither needed to break at
+   all. Mongolian is the worse case (a broken word stops being a word), but
+   `39.2` splitting after the dot is just as unreadable.
+
+   `normal` restores breaking at spaces, so `118.8 токен/с` becomes two whole
+   lines instead of three fragments. `anywhere` is the escape hatch for the one
+   case with no space to break at - a 52-character catalog model id - and unlike
+   `break-word` it lets the intrinsic min-content width shrink, which is what
+   keeps the table inside its pane.
+
+   MEASURED which element carries it, rather than guessing: walking every
+   stylesheet against the chain that ends at a quant span reported exactly one
+   rule, `.arco-table-cell { word-break: break-all }` - the inner DIV, not the
+   TD. A first attempt at `.arco-table-td` computed `normal` on the TD and left
+   the cell below it untouched, so the words still broke.
+
+   `word-break` was not the whole story either. Cells carry 16px of padding on
+   each side, so eight columns spend 256px on padding alone and the quant cell
+   is left with 44px of room for 48px of text. Three candidates were tried in
+   the live renderer rather than through three 20-minute rebuilds:
+     padding 6px + nowrap  -> 0 broken words, but 23px of horizontal scroll,
+                              and that scroll lands on the ACTION column;
+     nowrap + the unit moved from the speed cell into its header
+                           -> 0 broken words and 0 scroll, padding untouched.
+   The second is what shipped: `{{value}} tok/s` in every cell became `{{value}}`
+   with the unit stated once in the column header. */
+.table :global(.arco-table-cell) {
+  word-break: normal;
+}
+/* Numeric and technical columns: a quant name, a parameter count, a size, a
+   throughput and a score are each a single token. There is no reading of
+   `Q4_K_ / M` or `118.8 / токен/с` that helps anyone, so they never wrap. */
+.table :global(tbody td:nth-child(2) span),
+.table :global(tbody td:nth-child(3) span),
+.table :global(tbody td:nth-child(4) span),
+.table :global(tbody td:nth-child(5) span),
+.table :global(tbody td:nth-child(7) span) {
+  white-space: nowrap;
 }
 .modelCell {
   display: flex;
@@ -119,6 +192,7 @@
   font-size: 14px;
   font-weight: 600;
   color: var(--color-text-1);
+  max-width: 240px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -126,6 +200,13 @@
 .modelProvider {
   font-size: 12px;
   color: var(--color-text-3);
+  /* Capped and ellipsized like the name above it: `optimum-intel-internal-
+     testing` is a real catalog provider, and without this it would paint
+     straight through the neighbouring column. */
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .mono {
   font-family: var(--font-mono, ui-monospace, monospace);

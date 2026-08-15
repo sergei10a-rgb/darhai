@@ -81,6 +81,12 @@ const ModelTable: React.FC<ModelTableProps> = ({ results, loading, cookbook, run
         render: (gb: number) => <span>{gb} GB</span>,
       },
       {
+        // The unit lives in the HEADER, and `table.tps` is deliberately just
+        // `{{value}}`: repeating "tok/s" in every row cost the column enough
+        // width that Mongolian wrapped it to three lines mid-word ("118.8 |
+        // токе | н/с"), and stating it once was measured to remove both that
+        // and the table's horizontal scroll. The key is kept rather than
+        // inlined so the number still goes through i18n's locale formatting.
         title: t('modelAdvisor.table.speed'),
         dataIndex: 'speedTps',
         align: 'right',
@@ -114,6 +120,13 @@ const ModelTable: React.FC<ModelTableProps> = ({ results, loading, cookbook, run
         // Wider than the other action columns: this cell also carries the
         // pre-download disclosure ("CPU build, 147 MB - no GPU build exists
         // for this computer"), which must not be truncated into a lie.
+        //
+        // Every `width` here is a HINT, not a guarantee. Arco lays this table
+        // out at min-content once the pane is narrower than the sum, so these
+        // numbers stop applying exactly when they would matter: measured at
+        // 1280x800 the declared 300 renders as 161. What actually keeps the
+        // cell readable is in ModelAdvisor.module.css - the action cell wraps,
+        // the model name is capped, and the pane scrolls instead of clipping.
         width: 300,
         render: (_: unknown, row: HwfitResult) =>
           row.ggufSources.length > 0 ? (

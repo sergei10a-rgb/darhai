@@ -36,10 +36,14 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import type { CookbookDownloadProgress, CookbookServeStatus } from '../../../src/common/types/cookbook';
+import type {
+  CookbookDownloadInfo,
+  CookbookDownloadProgress,
+  CookbookServeStatus,
+} from '../../../src/common/types/cookbook';
 import type { LlamaRuntimePlan, LlamaRuntimeProgress, LlamaRuntimeStatus } from '../../../src/common/types/llamacpp';
 import { LLAMA_RUNTIME_FALLBACK_CODES, LLAMA_RUNTIME_NOTE_CODES } from '../../../src/common/types/llamacpp';
 
@@ -164,7 +168,8 @@ function progressAt(over: Partial<LlamaRuntimeProgress>): LlamaRuntimeProgress {
 function makeCookbook(over: Partial<CookbookController> = {}): CookbookController {
   return {
     backend: 'none',
-    selection: { chosen: 'none', viable: [] },
+    // A bare machine: nothing installed, and Darhai's own llama.cpp installable.
+    selection: { chosen: 'none', viable: [], provisionable: ['llama-server'] },
     serveStatus: IDLE_SERVE,
     downloads: {},
     progress: {},
@@ -218,6 +223,18 @@ function pending<T>(): Promise<T> {
 /** Placeholder until the harness below captures the real rejector. */
 const NOT_YET_REJECTABLE = (): void => undefined;
 
+/** Placeholder until the harness below captures the real resolver. */
+const NOT_YET_RESOLVABLE = (): void => undefined;
+
+/** A GGUF already sitting in the cache, so the press goes straight to serve. */
+const CACHED_GGUF: CookbookDownloadInfo = {
+  modelId: MODEL,
+  status: 'downloaded',
+  bytesDownloaded: 4_000_000,
+  totalBytes: 4_000_000,
+  filePath: '/models/Model-7B.gguf',
+};
+
 /**
  * A cell whose serve status arrives the way the real one does: idle until the
  * serve starts, then `downloading` with live byte progress, pushed from main.
@@ -252,6 +269,73 @@ function renderWithLiveServe(runtime: LlamaRuntimeUiController): {
   };
   render(<Harness />);
   return { cancelDownload, failServe: (reason) => reject(reason) };
+}
+
+/**
+ * A cell whose serve ends the way the MAIN PROCESS really ends one.
+ *
+ * `CookbookServeService.serve()` is documented "Never throws - a failure is
+ * reflected in the returned status" (CookbookServeService.ts:211); its catch
+ * calls `fail()`, which sets `state: 'error'`, and `cookbookBridge.ts:86`
+ * RETURNS that status instead of throwing. So an aborted model download reaches
+ * this component as a RESOLVED serve carrying `state:'error'` - never as a
+ * rejection. `renderWithLiveServe` above rejects, which is a path production
+ * cannot take, so a cancel test built on it passes against broken code.
+ */
+function renderWithResolvedServeError(over: { runtime?: LlamaRuntimeUiController; cached?: boolean } = {}): {
+  cancelDownload: ReturnType<typeof vi.fn>;
+  serve: ReturnType<typeof vi.fn>;
+  /** Main answers the serve with an error nobody asked for. */
+  breakServe: () => void;
+} {
+  const cancelDownload = vi.fn(async (_id: string) => undefined);
+  const serve = vi.fn(async (_id: string) => undefined);
+  const runtime =
+    over.runtime ?? makeRuntime({ fetchPlan: vi.fn(async () => CPU_PLAN), install: vi.fn(async () => READY_RUNTIME) });
+  let stop: () => void = NOT_YET_RESOLVABLE;
+  const Harness: React.FC = () => {
+    const [phase, setPhase] = React.useState<'idle' | 'downloading' | 'error'>('idle');
+    const finish = React.useRef<() => void>(NOT_YET_RESOLVABLE);
+    const toError = (): void => {
+      // Main aborts the transfer, then `serve()` RESOLVES with state:'error'.
+      setPhase('error');
+      finish.current();
+    };
+    stop = toError;
+    const serving = phase === 'downloading';
+    const cookbook = makeCookbook({
+      downloads: over.cached === true ? { [MODEL]: CACHED_GGUF } : {},
+      serveStatus:
+        serving === true
+          ? { ...IDLE_SERVE, state: 'downloading', modelId: MODEL, backend: 'llama-server' }
+          : phase === 'error'
+            ? { ...IDLE_SERVE, state: 'error', modelId: MODEL, backend: 'llama-server', error: 'download cancelled' }
+            : IDLE_SERVE,
+      progress: serving
+        ? { [MODEL]: { modelId: MODEL, bytesDownloaded: 1_000_000, totalBytes: 4_000_000 } as CookbookDownloadProgress }
+        : {},
+      serve: vi.fn(async (id: string) => {
+        await serve(id);
+        setPhase('downloading');
+        return new Promise<void>((resolve) => {
+          finish.current = resolve;
+        });
+      }),
+      cancelDownload: vi.fn(async (id: string) => {
+        await cancelDownload(id);
+        toError();
+      }),
+    });
+    return <CookbookServeControls modelId={MODEL} controller={cookbook} runtime={runtime} />;
+  };
+  render(<Harness />);
+  return {
+    cancelDownload,
+    serve,
+    breakServe: () => {
+      act(() => stop());
+    },
+  };
 }
 
 describe('the press never mentions llama.cpp', () => {
@@ -514,6 +598,119 @@ describe('the two stages are labelled as themselves and both cancels work', () =
 
     await waitFor(() => expect(runtime.cancel).toHaveBeenCalled());
     expect(document.body.textContent).not.toContain(en('modelAdvisor.runtime.cancelNotYet'));
+  });
+});
+
+describe('a cancel the user pressed is never reported back as a failure', () => {
+  it('returns to Serve when the cancelled download resolves as an error status', async () => {
+    // The path the real bridge takes. Before the fix the row rendered the red
+    // "Failed" tag plus Retry: the user pressed Cancel and was told they broke
+    // something. `modelCancelled` was a ref, so the RENDER could not see it.
+    const { cancelDownload } = renderWithResolvedServeError();
+    await pressServeAndConfirm();
+
+    await waitFor(() => screen.getByRole('button', { name: en('modelAdvisor.cookbook.cancel') }));
+    await userEvent.click(screen.getByRole('button', { name: en('modelAdvisor.cookbook.cancel') }));
+
+    expect(cancelDownload).toHaveBeenCalledWith(MODEL);
+    await waitFor(() => expect(screen.getByRole('button', { name: en('modelAdvisor.cookbook.serve') })).toBeTruthy());
+    expect(document.body.textContent, 'the row calls the user own cancel a failure').not.toContain(
+      en('modelAdvisor.cookbook.status.error')
+    );
+    expect(screen.queryByRole('button', { name: en('modelAdvisor.cookbook.retry') })).toBeNull();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('still reports a serve that broke on its own, with its retry', async () => {
+    // The other half: suppressing the tag unconditionally would hide every
+    // real serve failure, so the same harness must still produce one.
+    const { breakServe } = renderWithResolvedServeError();
+    await pressServeAndConfirm();
+
+    await waitFor(() => screen.getByRole('button', { name: en('modelAdvisor.cookbook.cancel') }));
+    breakServe();
+
+    await waitFor(() => expect(document.body.textContent).toContain(en('modelAdvisor.cookbook.status.error')));
+    expect(screen.getByRole('button', { name: en('modelAdvisor.cookbook.retry') })).toBeTruthy();
+  });
+
+  it('reports the failure of the NEXT press after a cancel, not silence', async () => {
+    // A cancelled row that is already installed and cached re-serves through
+    // `primaryAction`, not the two-stage flow. If the cancel flag survived that
+    // press, the row would go permanently deaf to its own serve failures.
+    const runtime = makeRuntime({ status: READY_RUNTIME });
+    const { breakServe } = renderWithResolvedServeError({ runtime, cached: true });
+
+    await userEvent.click(screen.getByRole('button', { name: en('modelAdvisor.cookbook.serve') }));
+    await waitFor(() => screen.getByRole('button', { name: en('modelAdvisor.cookbook.cancel') }));
+    await userEvent.click(screen.getByRole('button', { name: en('modelAdvisor.cookbook.cancel') }));
+    await waitFor(() => expect(screen.getByRole('button', { name: en('modelAdvisor.cookbook.serve') })).toBeTruthy());
+
+    await userEvent.click(screen.getByRole('button', { name: en('modelAdvisor.cookbook.serve') }));
+    await waitFor(() => screen.getByRole('button', { name: en('modelAdvisor.cookbook.cancel') }));
+    breakServe();
+
+    await waitFor(() => expect(document.body.textContent).toContain(en('modelAdvisor.cookbook.status.error')));
+  });
+});
+
+describe('a retry shows the install it started, not the failure it is retrying', () => {
+  it('renders the runtime stage while the shared status is still the old failure', async () => {
+    // `useLlamaRuntime.install` leaves `status.state === 'failed'` after a
+    // failed attempt and the next frame only arrives from main. `runtimeProblem`
+    // ran before the stage guards, so the row re-rendered the OLD error - with
+    // `role='alert'` re-announcing it and a Retry inviting a second install -
+    // over a download that was already running.
+    const runtime = makeRuntime({
+      status: {
+        ...MISSING_RUNTIME,
+        state: 'failed',
+        errorCode: 'LLAMACPP_DOWNLOAD_FAILED',
+        errorMessage: 'ECONNRESET',
+      },
+      fetchPlan: vi.fn(async () => CPU_PLAN),
+      install: pending,
+    });
+    renderCell(makeCookbook(), runtime);
+
+    await pressServeAndConfirm();
+
+    await waitFor(() => expect(document.body.textContent).toContain(en('modelAdvisor.runtime.stage.runtime')));
+    expect(document.body.textContent, 'the row shows the failure it is retrying').not.toContain(
+      en('modelAdvisor.runtime.problem.download')
+    );
+    expect(screen.queryByRole('alert')).toBeNull();
+    // Every stage that offers Cancel is a stage where Cancel does something -
+    // and the retried install is exactly such a stage.
+    expect(screen.getByRole('button', { name: en('modelAdvisor.cookbook.cancel') })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: en('modelAdvisor.runtime.retry') })).toBeNull();
+  });
+
+  it('reports the retry own failure once it resolves', async () => {
+    // The guard must hold only while the install is in flight: the attempt that
+    // follows still has to be able to fail out loud.
+    const runtime = makeRuntime({
+      status: {
+        ...MISSING_RUNTIME,
+        state: 'failed',
+        errorCode: 'LLAMACPP_DOWNLOAD_FAILED',
+        errorMessage: 'ECONNRESET',
+      },
+      fetchPlan: vi.fn(async () => CPU_PLAN),
+      install: vi.fn(async () => ({
+        ...MISSING_RUNTIME,
+        state: 'failed' as const,
+        errorCode: 'LLAMACPP_DIGEST_MISMATCH',
+        errorMessage: 'sha256 did not match',
+      })),
+    });
+    renderCell(makeCookbook(), runtime);
+
+    await pressServeAndConfirm();
+
+    await waitFor(() => expect(document.body.textContent).toContain('LLAMACPP_DIGEST_MISMATCH'));
+    expect(document.body.textContent).toContain(en('modelAdvisor.runtime.problem.damaged'));
+    expect(await screen.findByRole('alert')).toBeTruthy();
   });
 });
 
@@ -869,5 +1066,121 @@ describe('every runtime string ships in all 13 locales', () => {
       const value = (lookup('mn-MN', `runtime.${key}`) as string).toLowerCase();
       expect(value.includes('хөдөлгүүр'), `mn-MN runtime.${key} = ${value}`).toBe(false);
     }
+  });
+});
+
+/**
+ * The user's right to pick Darhai's own runtime, on a machine that is not empty.
+ *
+ * The product rule the owner stated: users pick from the dropdown; anyone who
+ * already knows Ollama or LM Studio must still be able to connect those; the
+ * point of shipping llama.cpp inside Darhai is that a machine with NEITHER can
+ * run a model immediately. The selector answered all of that from one question -
+ * "which binaries are installed" - and llama.cpp is the one backend that
+ * question is wrong for, because Darhai can install it. A host with Ollama on it
+ * therefore got `viable: ['ollama']`: no llama.cpp in the chooser, and
+ * `chosen !== 'none'` so the provisioning path never opened either. There was no
+ * route to it at all, and no error to notice.
+ *
+ * Everything below is the ollama host. The empty machine is covered by the rest
+ * of this file and must not move: it still sees no chooser and no name.
+ */
+describe('a host that already has a backend can still choose Darhai own runtime', () => {
+  const OLLAMA_HOST = {
+    chosen: 'ollama' as const,
+    viable: ['ollama' as const],
+    provisionable: ['llama-server' as const],
+  };
+
+  /** Open the backend chooser and return every option label it lists. */
+  async function openChooser(): Promise<string[]> {
+    const view = document.querySelector('.arco-select-view') as HTMLElement | null;
+    expect(view, 'no backend chooser was rendered, so there was nothing to choose').toBeTruthy();
+    await userEvent.click(view as HTMLElement);
+    return Array.from(document.querySelectorAll('.arco-select-option')).map((o) => (o.textContent ?? '').trim());
+  }
+
+  /**
+   * Open the chooser and pick the backend Darhai would have to install.
+   *
+   * `fireEvent` for the option, not `userEvent`: Arco's dropdown carries
+   * `pointer-events: none` through its open transition, and jsdom never runs
+   * the transition, so `userEvent`'s pointer check refuses a click a real user
+   * makes without trouble. Same reason tests/unit/renderer/team does it here.
+   */
+  async function chooseLlamaCpp(): Promise<void> {
+    const labels = await openChooser();
+    const index = labels.indexOf(en('modelAdvisor.cookbook.backend.llamaServer'));
+    expect(index, 'the runtime Darhai ships was not offered as an option').toBeGreaterThanOrEqual(0);
+    fireEvent.click(document.querySelectorAll('.arco-select-option')[index] as HTMLElement);
+    await waitFor(() =>
+      expect(
+        (document.querySelector('.arco-select-view-value') ?? document.querySelector('.arco-select-view'))?.textContent
+      ).toContain(en('modelAdvisor.cookbook.backend.llamaServer'))
+    );
+  }
+
+  it('lists the installed backend AND the one Darhai can install', async () => {
+    renderCell(makeCookbook({ selection: OLLAMA_HOST }), makeRuntime());
+    expect(await openChooser()).toEqual([
+      en('modelAdvisor.cookbook.backend.ollama'),
+      en('modelAdvisor.cookbook.backend.llamaServer'),
+    ]);
+  });
+
+  it('discloses the cost before a byte moves when that backend is picked', async () => {
+    const runtime = makeRuntime({ fetchPlan: vi.fn(async () => CPU_PLAN) });
+    renderCell(makeCookbook({ selection: OLLAMA_HOST }), runtime);
+
+    await chooseLlamaCpp();
+    await userEvent.click(screen.getByRole('button', { name: en('modelAdvisor.cookbook.serve') }));
+
+    // Same consent the empty machine gets: size, what the hardware gets, and
+    // the fact that the model is a second download - before any install.
+    await waitFor(() => expect(screen.getByText(/30 MB/)).toBeTruthy());
+    expect(document.body.textContent).toContain(en('modelAdvisor.runtime.accel.cpu'));
+    expect(runtime.install).not.toHaveBeenCalled();
+  });
+
+  it('downloads nothing when the user declines it', async () => {
+    const runtime = makeRuntime({ fetchPlan: vi.fn(async () => CPU_PLAN) });
+    const cookbook = makeCookbook({ selection: OLLAMA_HOST });
+    renderCell(cookbook, runtime);
+
+    await chooseLlamaCpp();
+    await userEvent.click(screen.getByRole('button', { name: en('modelAdvisor.cookbook.serve') }));
+    await waitFor(() => screen.getByRole('button', { name: en('modelAdvisor.runtime.decline') }));
+    await userEvent.click(screen.getByRole('button', { name: en('modelAdvisor.runtime.decline') }));
+
+    expect(runtime.install).not.toHaveBeenCalled();
+    expect(cookbook.serve).not.toHaveBeenCalled();
+  });
+
+  it('serves through the backend the user picked, not the installed default', async () => {
+    const runtime = makeRuntime({ fetchPlan: vi.fn(async () => CPU_PLAN), install: vi.fn(async () => READY_RUNTIME) });
+    const cookbook = makeCookbook({ selection: OLLAMA_HOST });
+    renderCell(cookbook, runtime);
+
+    await chooseLlamaCpp();
+    await pressServeAndConfirm();
+
+    await waitFor(() => expect(runtime.install).toHaveBeenCalled());
+    // `undefined` here would hand the decision back to main, which re-applies
+    // its own order (vllm > ollama > llama-server) to a re-probe that has just
+    // seen the new install - and would serve this model through Ollama using
+    // the very runtime the user asked for.
+    await waitFor(() => expect(cookbook.serve).toHaveBeenCalledWith(MODEL, 'llama-server'));
+  });
+
+  it('leaves the installed backend as the default press, with no install', async () => {
+    const runtime = makeRuntime({ fetchPlan: vi.fn(async () => CPU_PLAN) });
+    const cookbook = makeCookbook({ selection: OLLAMA_HOST });
+    renderCell(cookbook, runtime);
+
+    await userEvent.click(screen.getByRole('button', { name: en('modelAdvisor.cookbook.serve') }));
+
+    await waitFor(() => expect(cookbook.serve).toHaveBeenCalledWith(MODEL, 'ollama'));
+    expect(runtime.fetchPlan).not.toHaveBeenCalled();
+    expect(runtime.install).not.toHaveBeenCalled();
   });
 });

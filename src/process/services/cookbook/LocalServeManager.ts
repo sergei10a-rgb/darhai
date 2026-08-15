@@ -23,23 +23,26 @@
  *
  * One active serve at a time is an MVP DEFAULT design choice (not a hardware
  * limit): {@link start}/{@link startVllm} stop any existing process before
- * spawning. Readiness resolves on the FIRST of a stdout ready-signal, a
+ * spawning, and a serve requested while another is still LAUNCHING queues
+ * behind it (see {@link LocalServeManager.serialized}) rather than being
+ * dropped. Readiness resolves on the FIRST of a stdout ready-signal, a
  * successful `/health` poll, or a timeout fallback while the process is still
  * alive. Shutdown is SIGTERM -> 5s -> SIGKILL, so a spawned vLLM/llama-server is
  * always reaped (incl. the app before-quit path).
  *
  * GPU offload is delegated to llama.cpp, not guessed here - see
- * {@link resolveGpuLayersArg} and {@link ngpuLayersForVram}.
+ * {@link gpuLayersArg} and {@link ngpuLayersForVram}.
  *
  * // secondary: concurrent serves on higher-VRAM machines and crash-watchdog
  * auto-restart are deferred.
  */
 
-import { execFileSync, spawn as nodeSpawn } from 'node:child_process';
+import { execFile, spawn as nodeSpawn } from 'node:child_process';
 import { EventEmitter } from 'node:events';
 import net from 'node:net';
 import fs from 'node:fs';
 import path from 'node:path';
+import { promisify } from 'node:util';
 import { getEnhancedEnv } from '@process/utils/shellEnv';
 import type { CookbookBackend } from '@/common/types/cookbook';
 import type { BackendAvailability } from './backendPolicy';
@@ -86,13 +89,23 @@ export type LocalServeDeps = {
   readyTimeoutMs: number;
   /**
    * Read a backend binary's `--help` text so {@link parseServerCapabilities}
-   * can decide which flags it accepts. Measured on the reference machine
-   * (llama.cpp b10441, `llama-server.exe --help`): 261 ms, 57 KB on stdout,
-   * exit 0. The result is cached per binary path, so this runs at most once
-   * per resolved binary per app session. Returns '' when the probe fails,
-   * which reads as "no optional flags" - the conservative answer.
+   * can decide which flags it accepts.
+   *
+   * MUST NOT block: this runs in the Electron main process, so a synchronous
+   * child-process call parks the event loop - no IPC, no repaint - for its
+   * whole duration. The one probe that actually happens is by construction the
+   * COLD one, right after the provisioner writes ~670 MB of new files, and the
+   * ceiling {@link defaultProbeHelpText} allows is {@link PROBE_TIMEOUT_MS}.
+   * MEASURED on the reference machine, `llama-server.exe --help`, 57 KB on
+   * stdout, exit 0: managed b10441 1192 ms cold, then 230 / 201 ms warm; a
+   * hand-installed b10333 1925 ms cold, 532 ms warm. The 261 ms this comment
+   * used to quote was a warm re-run the production path never sees.
+   *
+   * A REJECTION (or an empty dump) means "the probe did not run", which is not
+   * the same answer as "this build has no such flag" - see
+   * {@link LocalServeManager.capabilitiesFor}: only a measured answer is cached.
    */
-  probeHelpText: (binary: string) => string;
+  probeHelpText: (binary: string) => string | Promise<string>;
 };
 
 /** Options for a llama-server start. */
@@ -125,6 +138,14 @@ const SUGGESTED_SERVE_PORT = 8080;
 const FORCE_KILL_MS = 5000;
 /** Default readiness timeout fallback (ms). */
 const DEFAULT_READY_TIMEOUT_MS = 20000;
+/**
+ * Ceiling for one `--help` capability probe (ms). Generous because the run that
+ * matters is the cold one; harmless because {@link defaultProbeHelpText} no
+ * longer blocks the main process while it waits.
+ */
+const PROBE_TIMEOUT_MS = 15000;
+/** Non-blocking child-process runner for the capability probe. */
+const execFileAsync = promisify(execFile);
 /**
  * `--cors-origins` value for the spawned llama-server.
  *
@@ -208,6 +229,20 @@ export type ServerCapabilities = {
 /** No optional flags: what an unreadable or ancient binary is assumed to be. */
 const NO_CAPABILITIES: ServerCapabilities = { autoGpuLayers: false, corsOrigins: false };
 
+/** Discard a settled value/reason without turning it into an unhandled rejection. */
+const noop = (): void => {};
+
+/**
+ * The `--n-gpu-layers` value to spawn with. `auto` whenever the build offers it
+ * AND this host has a GPU budget, so llama.cpp measures free VRAM and fits the
+ * layers itself instead of us guessing from total VRAM. `0` stays literal
+ * (pure-CPU serve); older builds keep the caller's number.
+ */
+function gpuLayersArg(caps: ServerCapabilities, ngl: number): string {
+  if (!Number.isFinite(ngl) || ngl <= 0) return '0';
+  return caps.autoGpuLayers ? GPU_LAYERS_AUTO : String(ngl);
+}
+
 /**
  * Extract one option's own help entry: the line `flag` occurs on, plus the
  * indented continuation lines under it. A new option starts at column 0, which
@@ -244,19 +279,29 @@ export function parseServerCapabilities(helpText: string): ServerCapabilities {
   };
 }
 
-/** Default `--help` probe: stdout only, short timeout, never throws. */
-export function defaultProbeHelpText(binary: string): string {
-  try {
-    return execFileSync(binary, ['--help'], {
-      encoding: 'utf8',
-      maxBuffer: 8 * 1024 * 1024,
-      timeout: 15000,
-      stdio: ['ignore', 'pipe', 'ignore'],
-      windowsHide: true,
-    });
-  } catch {
-    return '';
-  }
+/**
+ * Default `--help` probe: stdout only, bounded by {@link PROBE_TIMEOUT_MS}.
+ *
+ * ASYNCHRONOUS on purpose. The predecessor used `execFileSync`, which parks the
+ * Electron main process for the entire call; the only run that ever happens is
+ * the cold one (measured 1192-1925 ms on this box, up to the timeout when a
+ * Windows AV real-time scan holds a just-extracted tree), so the app froze for
+ * exactly as long as the probe took. The probe result is only needed to build
+ * argv, and that path is already async - blocking was a choice, not a
+ * constraint.
+ *
+ * It REJECTS on failure rather than reporting '' - '' would be swallowed by
+ * {@link parseServerCapabilities} as a measured "this build has no optional
+ * flags", which is a different claim from "the probe did not run".
+ */
+export async function defaultProbeHelpText(binary: string): Promise<string> {
+  const { stdout } = await execFileAsync(binary, ['--help'], {
+    encoding: 'utf8',
+    maxBuffer: 8 * 1024 * 1024,
+    timeout: PROBE_TIMEOUT_MS,
+    windowsHide: true,
+  });
+  return stdout;
 }
 
 /** Build the exact hand-run serve command for the degraded copy path. */
@@ -344,29 +389,47 @@ export class LocalServeManager extends EventEmitter {
     };
   }
 
-  /** Flags the given binary accepts; probed once per path, then cached. */
-  private capabilitiesFor(binary: string): ServerCapabilities {
+  /**
+   * Flags the given binary accepts. A MEASURED answer is cached per path, so a
+   * healthy binary is probed once per app session. A FAILED probe is NOT
+   * cached: it is not evidence about the build, and caching it silently
+   * reverted both optional flags - `-ngl auto` (41% of throughput, §5 of
+   * docs/architecture/local-models.md) and `--cors-origins localhost` (the
+   * drive-by-website read) - for every later serve in the session. The
+   * likeliest moment to fail is the FIRST serve after install, when an AV scan
+   * has a just-written 512 MB tree open, and that binary answers in ~200 ms a
+   * minute later. Failure is conservative for THIS launch and retried on the
+   * next one.
+   */
+  private async capabilitiesFor(binary: string): Promise<ServerCapabilities> {
     const cached = this.capabilities.get(binary);
     if (cached) return cached;
-    let probed: ServerCapabilities;
+
+    let helpText: string;
     try {
-      probed = parseServerCapabilities(this.deps.probeHelpText(binary));
-    } catch {
-      probed = { ...NO_CAPABILITIES };
+      helpText = await this.deps.probeHelpText(binary);
+    } catch (err) {
+      return this.probeFailed(binary, err);
     }
+    // An empty dump is a failed probe, not a build without flags: no real
+    // llama-server prints nothing (b10441 prints 57 KB and exits 0).
+    if (typeof helpText !== 'string' || helpText.trim().length === 0) {
+      return this.probeFailed(binary, new Error('--help produced no output'));
+    }
+
+    const probed = parseServerCapabilities(helpText);
     this.capabilities.set(binary, probed);
     return probed;
   }
 
-  /**
-   * The `--n-gpu-layers` value to spawn with. `auto` whenever the build offers
-   * it AND this host has a GPU budget, so llama.cpp measures free VRAM and
-   * fits the layers itself instead of us guessing from total VRAM. `0` stays
-   * literal (pure-CPU serve); older builds keep the caller's number.
-   */
-  private resolveGpuLayersArg(binary: string, ngl: number): string {
-    if (!Number.isFinite(ngl) || ngl <= 0) return '0';
-    return this.capabilitiesFor(binary).autoGpuLayers ? GPU_LAYERS_AUTO : String(ngl);
+  /** Record an unusable probe and answer conservatively WITHOUT caching it. */
+  private probeFailed(binary: string, err: unknown): ServerCapabilities {
+    console.warn(
+      `[LocalServeManager] --help probe failed for ${binary}; serving without the optional flags ` +
+        `(--n-gpu-layers auto, --cors-origins) and retrying the probe on the next serve:`,
+      err
+    );
+    return { ...NO_CAPABILITIES };
   }
 
   override emit<K extends keyof ServeEvents>(event: K, ...args: Parameters<ServeEvents[K]>): boolean {
@@ -459,11 +522,16 @@ export class LocalServeManager extends EventEmitter {
    * process is stopped first. Returns the bound port once ready.
    */
   async start(opts: LocalServeOptions): Promise<number> {
-    return this.serialized(() =>
-      this.launch({
+    return this.serialized(async () => {
+      const binary = this.resolveLlamaServer();
+      if (!binary) throw new Error('llama-server binary not found');
+      // Probe BEFORE launch(), so the cold probe cannot sit between the port
+      // allocation and the spawn that has to bind it.
+      const caps = await this.capabilitiesFor(binary);
+      return this.launch({
         label: 'llama-server',
-        resolveBinary: () => this.resolveLlamaServer(),
-        buildArgs: (port, binary) => {
+        resolveBinary: () => binary,
+        buildArgs: (port) => {
           const args = [
             '-m',
             opts.ggufPath,
@@ -472,15 +540,13 @@ export class LocalServeManager extends EventEmitter {
             '--port',
             String(port),
             '--n-gpu-layers',
-            this.resolveGpuLayersArg(binary, opts.ngl),
+            gpuLayersArg(caps, opts.ngl),
           ];
-          if (this.capabilitiesFor(binary).corsOrigins) {
-            args.push('--cors-origins', CORS_ORIGINS_LOOPBACK_ONLY);
-          }
+          if (caps.corsOrigins) args.push('--cors-origins', CORS_ORIGINS_LOOPBACK_ONLY);
           return args;
         },
-      })
-    );
+      });
+    });
   }
 
   /**
@@ -498,22 +564,40 @@ export class LocalServeManager extends EventEmitter {
     );
   }
 
-  /** Guard so concurrent start calls share one in-flight launch. */
+  /**
+   * Run launches one at a time, in the order they were asked for.
+   *
+   * QUEUE, not "share" and not "reject". The predecessor returned the in-flight
+   * `startPromise` without ever invoking `run`, so a second Serve pressed
+   * during the first model's load (measured 1.5-14.4 s) threw away its own
+   * argv - its ggufPath included - and resolved with the FIRST server's port.
+   * The caller then registered a provider named after the second model at a
+   * port serving the first model's weights, with nothing anywhere to reconcile
+   * them.
+   *
+   * Queueing was chosen over rejecting because pressing Serve on a second model
+   * is a legitimate thing to do: the second launch stops the first server (the
+   * single-serve invariant in {@link launch}) and each caller gets the port of
+   * the process that was actually spawned for it. A failed launch does not
+   * strand the queue - the next one still runs.
+   */
   private async serialized(run: () => Promise<number>): Promise<number> {
-    if (this.startPromise) return this.startPromise;
-    this.startPromise = run();
+    const ahead = this.startPromise;
+    // Swallow the predecessor's rejection here only; its own caller still sees it.
+    const mine = (ahead ? ahead.then(noop, noop) : Promise.resolve()).then(run);
+    this.startPromise = mine;
     try {
-      return await this.startPromise;
+      return await mine;
     } finally {
-      this.startPromise = null;
+      // Only the last launch in the queue clears the slot.
+      if (this.startPromise === mine) this.startPromise = null;
     }
   }
 
   private async launch(spec: {
     label: string;
     resolveBinary: () => string | null;
-    /** `binary` is the RESOLVED path, so args can depend on that build's flags. */
-    buildArgs: (port: number, binary: string) => string[];
+    buildArgs: (port: number) => string[];
   }): Promise<number> {
     // Single-serve invariant: stop any existing process before spawning a new one.
     if (this.process && !this.process.killed) {
@@ -524,7 +608,7 @@ export class LocalServeManager extends EventEmitter {
     if (!binary) throw new Error(`${spec.label} binary not found`);
 
     const port = await this.deps.allocatePort();
-    const args = spec.buildArgs(port, binary);
+    const args = spec.buildArgs(port);
     const child = this.deps.spawn(binary, args, { stdio: ['ignore', 'pipe', 'pipe'], env: this.deps.env() });
     this.process = child;
     this.portValue = port;
