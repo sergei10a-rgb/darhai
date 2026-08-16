@@ -179,6 +179,14 @@ const REMOTE_DENIED_PREFIXES: readonly string[] = [
   // say-so), and so does `status` (it discloses host install paths and which
   // release is on disk). The local Model Advisor is unaffected.
   'llamaRuntime.',
+  // Mongolian voice core. `install` downloads archives that put EXECUTABLE
+  // code on disk (audio.cpp server exe, an embedded CPython bundle) and the
+  // voice servers then spawn it - the same remote install+exec class as
+  // `llamaRuntime.`, so the whole namespace is denied, reads included
+  // (`status` discloses host install state; `ttsVoices` reads the running TTS
+  // server's voice list - it never starts the server, but still discloses
+  // what is installed and running). The local Voice settings UI is unaffected.
+  'mongolVoice.',
 ];
 // Note: fs provider keys are registered WITHOUT an `fs.` prefix on the wire
 // (e.g. `write-file`, `remove-entry`), so the dangerous fs surface is enumerated

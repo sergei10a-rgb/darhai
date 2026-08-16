@@ -1379,6 +1379,30 @@
   "textToSpeechDownloadSuccess": "Model downloaded successfully",
   "textToSpeechDownloadError": "Download failed",
   "textToSpeechCancelDownload": "Cancel",
+  "textToSpeechProviderKittenMn": "Mongolian voice — kitten-mn",
+  "textToSpeechVoiceDefault": "Bundle default",
+  "textToSpeechVoiceInstallFirst": "Install the Mongolian voice below to pick a voice.",
+  "speechToTextProviderNemotronMn": "Nemotron Mongolian v13",
+  "speechToTextNemotronDescription": "Nemotron Mongolian v13 runs fully offline on the CPU — measured about 12× faster than real time.",
+  "speechToTextNemotronInstallHint": "The Nemotron Mongolian model is not installed yet — install it from the “Mongolian voice” card.",
+  "mongolVoice": {
+    "title": "Mongolian voice",
+    "description": "Fully offline Mongolian speech on the CPU: synthesis about 5× and recognition about 12× faster than real time (measured).",
+    "componentSttRuntime": "Speech recognition runtime (audio.cpp)",
+    "componentSttModel": "Nemotron Mongolian recognition model",
+    "componentTtsBundle": "kitten-mn speech synthesis bundle",
+    "stateInstalled": "Installed",
+    "stateNotInstalled": "Not installed",
+    "stateDownloading": "Downloading…",
+    "stateFinalizing": "Installing…",
+    "installAll": "Install",
+    "cancel": "Cancel",
+    "totalDownload": "Will download {{size}}",
+    "sizeMb": "{{size}} MB",
+    "installed": "All components are installed",
+    "installError": "Install failed",
+    "unsupported": "Not available on this platform yet (currently Windows x64 only)."
+  },
   "mcp": "MCP Integration",
   "imageGenerationModel": "Image Model",
   "imageGenerationGuide": "Image Model Setup Guide",
@@ -2808,5 +2832,7 @@
     }
   },
   "deferUpdateWhileBusy": "Defer updates while busy",
-  "deferUpdateWhileBusyDesc": "Wait for active chats, scheduled tasks, and teams to finish before restarting to update. The update still applies on idle or on quit."
+  "deferUpdateWhileBusyDesc": "Wait for active chats, scheduled tasks, and teams to finish before restarting to update. The update still applies on idle or on quit.",
+  "textToSpeechTestPhraseKittenMn": "Сайн байна уу! Энэ бол монгол дуу хоолойн туршилт.",
+  "textToSpeechVoiceListAfterFirstSpeak": "The voice list appears after the first playback — the voice server starts on demand."
 }

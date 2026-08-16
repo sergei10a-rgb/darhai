@@ -18,9 +18,9 @@ import {
   safeEntryPath,
   stripRoot,
   type ArchiveEntry,
-} from '@process/services/llamacpp/archiveEntry';
-import { extractZip } from '@process/services/llamacpp/zipReader';
-import { extractTarGz } from '@process/services/llamacpp/tarReader';
+} from '@process/services/llamacpp/archive/archiveEntry';
+import { extractZip } from '@process/services/llamacpp/archive/zipReader';
+import { extractTarGz } from '@process/services/llamacpp/archive/tarReader';
 
 let work: string;
 

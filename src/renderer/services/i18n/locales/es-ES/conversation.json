@@ -232,7 +232,21 @@
       "permissionDenied": "Se denegó el permiso del micrófono",
       "recordingUnsupported": "La grabación en directo no es compatible aquí. Sube un archivo de audio en su lugar",
       "transcriptionFailed": "Error en la transcripción del audio",
-      "genericError": "La entrada de voz falló. Inténtalo de nuevo"
+      "genericError": "La entrada de voz falló. Inténtalo de nuevo",
+      "nemotronNotInstalled": "El paquete de voz mongola no está instalado: instálalo en Ajustes → Voz",
+      "nemotronStartFailed": "El reconocedor de voz local no se pudo iniciar. Inténtalo de nuevo o reinstálalo en Ajustes → Voz"
+    },
+    "tts": {
+      "readAloud": "Leer en voz alta",
+      "stopReading": "Detener la lectura",
+      "notInstalled": "La voz mongola no está instalada: instálala en Ajustes → Voz",
+      "textTooLong": "El texto supera el límite del motor de voz: solo se leerá el principio",
+      "startTimeout": "El motor de voz tardó demasiado en iniciarse; inténtalo de nuevo en un momento",
+      "startFailed": "El motor de voz no se pudo iniciar. Reinstalar la voz mongola en Ajustes → Voz puede solucionarlo",
+      "requestFailed": "La síntesis de voz falló. Inténtalo de nuevo",
+      "kokoroRemoved": "La voz Kokoro se eliminó (nunca funcionó): cambia a la voz mongola en Ajustes → Voz",
+      "systemNativeUnsupported": "La voz del sistema solo funciona en macOS: cambia a la voz mongola en Ajustes → Voz",
+      "genericError": "No se pudo leer en voz alta. Inténtalo de nuevo"
     }
   },
   "sideQuestion": {

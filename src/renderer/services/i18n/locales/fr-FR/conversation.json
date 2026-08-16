@@ -232,7 +232,21 @@
       "permissionDenied": "L'autorisation d'accès au microphone a été refusée",
       "recordingUnsupported": "L'enregistrement en direct n'est pas pris en charge ici. Veuillez importer un fichier audio à la place",
       "transcriptionFailed": "Échec de la transcription de l'audio",
-      "genericError": "Échec de la saisie vocale. Veuillez réessayer"
+      "genericError": "Échec de la saisie vocale. Veuillez réessayer",
+      "nemotronNotInstalled": "Le pack vocal mongol n'est pas installé — installez-le dans Réglages → Voix",
+      "nemotronStartFailed": "La reconnaissance vocale locale n'a pas pu démarrer. Réessayez ou réinstallez-la dans Réglages → Voix"
+    },
+    "tts": {
+      "readAloud": "Lire à voix haute",
+      "stopReading": "Arrêter la lecture",
+      "notInstalled": "La voix mongole n'est pas installée — installez-la dans Réglages → Voix",
+      "textTooLong": "Le texte dépasse la limite du moteur vocal — seul le début sera lu",
+      "startTimeout": "Le moteur vocal met trop de temps à démarrer — réessayez dans un instant",
+      "startFailed": "Le moteur vocal n'a pas pu démarrer. Réinstaller la voix mongole dans Réglages → Voix peut corriger le problème",
+      "requestFailed": "La synthèse vocale a échoué. Veuillez réessayer",
+      "kokoroRemoved": "La voix Kokoro a été retirée (elle n'a jamais fonctionné) — passez à la voix mongole dans Réglages → Voix",
+      "systemNativeUnsupported": "La voix système ne fonctionne que sur macOS — passez à la voix mongole",
+      "genericError": "La lecture à voix haute a échoué. Veuillez réessayer"
     }
   },
   "sideQuestion": {

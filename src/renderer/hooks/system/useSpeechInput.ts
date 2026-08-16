@@ -16,6 +16,8 @@ export type SpeechInputErrorCode =
   | 'audio-capture'
   | 'empty-transcript'
   | 'file-too-large'
+  | 'nemotron-not-installed'
+  | 'nemotron-start-failed'
   | 'network'
   | 'not-configured'
   | 'permission-denied'
@@ -122,7 +124,12 @@ export const pickRecordingMimeType = (): string => {
   return RECORDING_MIME_TYPES.find((mimeType) => MediaRecorder.isTypeSupported(mimeType)) || '';
 };
 
-const mapSpeechInputError = (error: unknown): SpeechInputErrorCode => {
+/**
+ * Serialized STT error -> stable UI code. Typed codes travel across IPC as
+ * the error MESSAGE prefix (`${code}: ${detail}`), so substring matching is
+ * the contract. Exported for direct unit testing of the mapping table.
+ */
+export const mapSpeechInputError = (error: unknown): SpeechInputErrorCode => {
   if (error instanceof DOMException) {
     switch (error.name) {
       case 'NotAllowedError':
@@ -146,6 +153,22 @@ const mapSpeechInputError = (error: unknown): SpeechInputErrorCode => {
     message.includes('STT_DISABLED')
   ) {
     return 'not-configured';
+  }
+  // Nemotron Mongolian STT (AudioCppServer / NemotronStt typed codes): the
+  // missing-install case gets its own code so the toast can point at the
+  // install card instead of a generic "voice input failed".
+  if (message.includes('NEMOTRON_MN_NOT_INSTALLED')) {
+    return 'nemotron-not-installed';
+  }
+  if (message.includes('NEMOTRON_MN_START_FAILED') || message.includes('NEMOTRON_MN_START_TIMEOUT')) {
+    return 'nemotron-start-failed';
+  }
+  if (
+    message.includes('NEMOTRON_MN_REQUEST_FAILED') ||
+    message.includes('NEMOTRON_MN_FFMPEG_MISSING') ||
+    message.includes('NEMOTRON_MN_AUDIO_CONVERT_FAILED')
+  ) {
+    return 'transcription-failed';
   }
   if (message.includes('STT_FILE_TOO_LARGE')) {
     return 'file-too-large';

@@ -45,19 +45,19 @@
 
 import { EventEmitter } from 'node:events';
 import { createHash } from 'node:crypto';
-import { createReadStream, createWriteStream } from 'node:fs';
+import { createReadStream } from 'node:fs';
 import fs from 'node:fs';
-import { mkdir, open, rename, rm, stat, writeFile } from 'node:fs/promises';
+import { mkdir, rename, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import type { HwfitBackend } from '@/common/types/hwfit';
-import type { ArchiveEntry } from './archiveEntry';
+import type { ArchiveEntry } from './archive/archiveEntry';
 import { planLlamaAssets, type LlamaAssetPlan, type LlamaAssetPlanResult, type LlamaAssetRef } from './assetMap';
 import { collectInstallRequirements } from './binaryDeps';
-import { extractZip } from './zipReader';
-import { extractTarGz } from './tarReader';
+import { extractZip } from './archive/zipReader';
+import { extractTarGz } from './archive/tarReader';
 import { LlamaReleaseClient, type LlamaRelease } from './releaseClient';
+import { ResumeDownloadError, resumeDownload } from './resumeDownload';
 import {
   RECEIPT_NAME,
   RECEIPT_SCHEMA,
@@ -179,16 +179,6 @@ async function sha256File(filePath: string): Promise<string> {
   const hash = createHash('sha256');
   await pipeline(createReadStream(filePath), hash);
   return hash.digest('hex');
-}
-
-/** Byte size of a file, or 0 when it does not exist. */
-async function sizeOf(filePath: string): Promise<number> {
-  try {
-    const s = await stat(filePath);
-    return s.size;
-  } catch {
-    return 0;
-  }
 }
 
 export class LlamaCppProvisioner extends EventEmitter {
@@ -610,12 +600,10 @@ export class LlamaCppProvisioner extends EventEmitter {
   }
 
   /**
-   * Download `url` to `destPath`, resuming from a `.part` file when one exists.
-   *
-   * A 500 MB transfer will be interrupted, so restarting from zero every time is
-   * not an option. The `.part` file is appended to under an HTTP Range request;
-   * a server that ignores the range (200 instead of 206) causes a clean restart
-   * from zero rather than a silently spliced, corrupt file.
+   * Download `url` to `destPath` via the shared {@link resumeDownload}, and
+   * translate its typed failures into this provisioner's vocabulary. The
+   * algorithm (Range resume, 200-restart, atomic `.part` rename) lives in
+   * `resumeDownload.ts` - it was extracted from here verbatim.
    */
   private async fetchAsset(
     destPath: string,
@@ -624,69 +612,17 @@ export class LlamaCppProvisioner extends EventEmitter {
     signal: AbortSignal,
     onBytes: (bytesDone: number) => void
   ): Promise<void> {
-    if (fs.existsSync(destPath)) {
-      // Already downloaded on an earlier attempt; the digest check still runs.
-      onBytes(await sizeOf(destPath));
-      return;
-    }
-    const partPath = `${destPath}.part`;
-    let already = await sizeOf(partPath);
-    if (expectedBytes > 0 && already >= expectedBytes) {
-      // A .part at or past the full size is not resumable - it is wrong.
-      await rm(partPath, { force: true });
-      already = 0;
-    }
-
-    const headers: Record<string, string> = {};
-    if (already > 0) headers.range = `bytes=${already}-`;
-
-    let response: Response;
     try {
-      response = await this.deps.fetch(url, { signal, headers });
+      await resumeDownload({ url, destPath, expectedBytes, signal, fetch: this.deps.fetch, onBytes });
     } catch (err) {
-      if (signal.aborted) throw new LlamaProvisionError('LLAMACPP_CANCELLED', 'download cancelled');
-      throw new LlamaProvisionError(
-        'LLAMACPP_DOWNLOAD_FAILED',
-        `${url}: ${err instanceof Error ? err.message : String(err)}`
-      );
+      if (err instanceof ResumeDownloadError) {
+        throw new LlamaProvisionError(
+          err.code === 'CANCELLED' ? 'LLAMACPP_CANCELLED' : 'LLAMACPP_DOWNLOAD_FAILED',
+          err.detail
+        );
+      }
+      throw err;
     }
-    if (!response.ok || !response.body) {
-      throw new LlamaProvisionError(
-        'LLAMACPP_DOWNLOAD_FAILED',
-        `${url} -> ${response.status} ${response.statusText || ''}`.trim()
-      );
-    }
-
-    // 206 means the range was honoured and we append. Anything else (notably a
-    // plain 200) means the server is sending the whole file, so start over.
-    const resuming = already > 0 && response.status === 206;
-    if (!resuming && already > 0) {
-      await rm(partPath, { force: true });
-      already = 0;
-    }
-
-    let bytesDone = already;
-    onBytes(bytesDone);
-    const handle = await open(partPath, resuming ? 'a' : 'w');
-    try {
-      const sink = createWriteStream('', { fd: handle.fd, autoClose: false });
-      const source = Readable.fromWeb(response.body as Parameters<typeof Readable.fromWeb>[0]);
-      source.on('data', (chunk: Buffer) => {
-        bytesDone += chunk.length;
-        onBytes(bytesDone);
-      });
-      await pipeline(source, sink);
-    } catch (err) {
-      if (signal.aborted) throw new LlamaProvisionError('LLAMACPP_CANCELLED', 'download cancelled mid-stream');
-      throw new LlamaProvisionError(
-        'LLAMACPP_DOWNLOAD_FAILED',
-        `${url}: ${err instanceof Error ? err.message : String(err)}`
-      );
-    } finally {
-      await handle.close();
-    }
-
-    await rename(partPath, destPath);
   }
 
   /** Assemble and emit one progress event. */

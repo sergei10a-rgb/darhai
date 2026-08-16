@@ -17,6 +17,7 @@ import React, { Suspense, useCallback, useEffect, useRef, useState } from 'react
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutContext } from '@renderer/hooks/context/LayoutContext';
 import { NavigationHistoryProvider } from '@renderer/hooks/context/NavigationHistoryContext';
+import { useAutoReadResponses } from '@renderer/hooks/chat/useAutoReadResponses';
 import { useDeepLink } from '@renderer/hooks/system/useDeepLink';
 import { useNotificationClick } from '@renderer/hooks/system/useNotificationClick';
 import { useDirectorySelection } from '@renderer/hooks/file/useDirectorySelection';
@@ -107,6 +108,9 @@ const Layout: React.FC<{
   const { contextHolder: directorySelectionContextHolder } = useDirectorySelection();
   useDeepLink();
   useNotificationClick();
+  // Auto-read finished assistant replies via the local TTS engine (app-wide,
+  // gated inside on the tools.textToSpeech enabled/autoReadResponses config).
+  useAutoReadResponses();
   const navigate = useNavigate();
   useConversationShortcuts({ navigate });
 

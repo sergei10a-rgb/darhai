@@ -4,7 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export type SpeechToTextProvider = 'openai' | 'deepgram' | 'whisper-local';
+/**
+ * - `'nemotron-mn'` - Nemotron Монгол v13mn ASR served by a Darhai-owned local
+ *                     audio.cpp server (CPU GGUF). Offline, keyless, the only
+ *                     provider tuned for Mongolian.
+ * - `'whisper-local'` - legacy entry kept so stored configs keep parsing. Its
+ *                     pinned binary downloads all 404 (whisper.cpp v1.7.1
+ *                     shipped no assets), so it is hidden from the UI.
+ */
+export type SpeechToTextProvider = 'openai' | 'deepgram' | 'nemotron-mn' | 'whisper-local';
 
 export type OpenAISpeechToTextConfig = {
   apiKey: string;
@@ -32,11 +40,20 @@ export type WhisperLocalSpeechToTextConfig = {
   language?: string;
 };
 
+/**
+ * Nemotron Монгол v13mn has no tunable options today: the model is Mongolian-
+ * only (its prompt slot is fixed at conversion time) and the server is owned
+ * and configured by Darhai. The type exists so future options (e.g. streaming
+ * on/off) land in config instead of code.
+ */
+export type NemotronMnSpeechToTextConfig = Record<string, never>;
+
 export type SpeechToTextConfig = {
   autoSend?: boolean;
   enabled: boolean;
   provider: SpeechToTextProvider;
   deepgram?: DeepgramSpeechToTextConfig;
+  nemotronMn?: NemotronMnSpeechToTextConfig;
   openai?: OpenAISpeechToTextConfig;
   whisperLocal?: WhisperLocalSpeechToTextConfig;
 };

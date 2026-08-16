@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CheckCircle2, ChevronDown, HelpCircle, Plus, RotateCcw } from 'lucide-react';
+import { ChevronDown, HelpCircle, Plus } from 'lucide-react';
 import {
   ConfigStorage,
   type IConfigStorageRefer,
@@ -14,8 +14,7 @@ import {
 import type { SpeechToTextConfig, SpeechToTextProvider } from '@/common/types/speech';
 import type { TextToSpeechConfig, TextToSpeechProvider } from '@/common/types/ttsTypes';
 import { DEFAULT_TTS_CONFIG, normalizeTextToSpeechConfig } from '@/common/types/ttsTypes';
-import { acpConversation, voiceAsset } from '@/common/adapter/ipcBridge';
-import type { VoiceAsset } from '@/common/types/voiceAsset';
+import { mongolVoice } from '@/common/adapter/ipcBridge';
 import {
   Divider,
   Form,
@@ -28,7 +27,6 @@ import {
   Switch,
   Input,
   Slider,
-  Progress,
 } from '@arco-design/web-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -41,6 +39,17 @@ import classNames from 'classnames';
 import { useNavigate } from 'react-router-dom';
 import { useSettingsViewMode } from '../settingsViewContext';
 import MicrophoneCheck from '@/renderer/pages/settings/VoiceSettings/MicrophoneCheck';
+import MongolVoiceInstallCard, {
+  NemotronInstallHint,
+} from '@/renderer/pages/settings/VoiceSettings/MongolVoiceInstallCard';
+import { useMongolVoice } from '@/renderer/pages/settings/VoiceSettings/useMongolVoice';
+import { TTS_CONFIG_CHANGED_EVENT } from '@/renderer/services/voice/ttsConfig';
+import { speakText, ttsErrorMessageKey } from '@/renderer/services/voice/ttsPlayback';
+import { isMacOS } from '@/renderer/utils/platform';
+
+// Re-exported so existing importers (VoiceSettings page) keep working; the
+// constant itself now lives beside the renderer TTS config reader it gates.
+export { TTS_CONFIG_CHANGED_EVENT };
 
 type MessageInstance = ReturnType<typeof Message.useMessage>[0];
 
@@ -48,7 +57,11 @@ const isBuiltinImageGenServer = (server: IMcpServer) => server.builtin === true 
 export const SPEECH_TO_TEXT_CONFIG_CHANGED_EVENT = 'wayland:speech-to-text-config-changed';
 export const DEFAULT_SPEECH_TO_TEXT_CONFIG: SpeechToTextConfig = {
   enabled: false,
-  provider: 'openai',
+  // The documented local-first default (docs/architecture/mongolian-voice.md):
+  // offline, keyless, and the only provider tuned for Mongolian. `enabled` is
+  // false by default, so no key prompt and no download happens until the user
+  // opts in - hosted providers remain one select away.
+  provider: 'nemotron-mn',
   openai: {
     apiKey: '',
     baseUrl: '',
@@ -66,160 +79,46 @@ export const DEFAULT_SPEECH_TO_TEXT_CONFIG: SpeechToTextConfig = {
   },
 };
 
-export const normalizeSpeechToTextConfig = (config?: SpeechToTextConfig): SpeechToTextConfig => ({
-  ...DEFAULT_SPEECH_TO_TEXT_CONFIG,
-  ...config,
-  openai: {
-    ...DEFAULT_SPEECH_TO_TEXT_CONFIG.openai,
-    ...config?.openai,
-  },
-  deepgram: {
-    ...DEFAULT_SPEECH_TO_TEXT_CONFIG.deepgram,
-    ...config?.deepgram,
-  },
-});
-
-// Whisper model asset descriptor - model + binary are both required for local STT.
-// destPath + sha256 are resolved server-side by voiceAssetRegistry.ts before
-// the download starts; the renderer just supplies the id + url.
-const WHISPER_MODEL_ASSETS: Record<string, VoiceAsset> = {
-  base: {
-    id: 'whisper-ggml-base',
-    url: 'https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin',
-    destPath: '',
-    sha256: '',
-  },
-  small: {
-    id: 'whisper-ggml-small',
-    url: 'https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin',
-    destPath: '',
-    sha256: '',
-  },
+export const normalizeSpeechToTextConfig = (config?: SpeechToTextConfig): SpeechToTextConfig => {
+  const merged: SpeechToTextConfig = {
+    ...DEFAULT_SPEECH_TO_TEXT_CONFIG,
+    ...config,
+    openai: {
+      ...DEFAULT_SPEECH_TO_TEXT_CONFIG.openai,
+      ...config?.openai,
+    },
+    deepgram: {
+      ...DEFAULT_SPEECH_TO_TEXT_CONFIG.deepgram,
+      ...config?.deepgram,
+    },
+  };
+  // 'whisper-local' never transcribed anything - its pinned binary downloads
+  // all 404 (docs/architecture/mongolian-voice.md) - so a stored selection of
+  // it carries no working intent to preserve. Upgrade it to the local default
+  // instead of surfacing a provider the UI no longer offers.
+  if (merged.provider === 'whisper-local') {
+    merged.provider = 'nemotron-mn';
+  }
+  return merged;
 };
 
-type DownloadState = 'idle' | 'downloading' | 'success' | 'error';
-
-const WhisperLocalDownloadControl: React.FC<{
-  model: string;
-  onModelChange: (model: string) => void;
-}> = ({ model, onModelChange }) => {
+/**
+ * Hint under an EMPTY kitten-mn voice picker. Which hint depends on why it is
+ * empty: bundle not installed -> point at the install card; bundle installed
+ * but its server idle -> explain that the list appears after the first speak
+ * (listing voices deliberately never starts the server, see mongolVoiceBridge).
+ */
+const KittenVoiceListHint: React.FC = () => {
   const { t } = useTranslation();
-  const [downloadState, setDownloadState] = useState<DownloadState>('idle');
-  const [errorMsg, setErrorMsg] = useState('');
-  const [installed, setInstalled] = useState<boolean | null>(null);
-  const cancelledRef = React.useRef(false);
-
-  // Probe install state on mount + every model switch so the UI shows
-  // "Installed" instead of a Download button when the file already exists
-  // on disk. Krug / Sutherland: don't make the user wonder.
-  useEffect(() => {
-    let cancelled = false;
-    const asset = WHISPER_MODEL_ASSETS[model];
-    if (!asset) return;
-    void voiceAsset.exists
-      .invoke({ id: asset.id })
-      .then((r) => {
-        if (!cancelled) setInstalled(Boolean(r?.installed));
-      })
-      .catch(() => {
-        if (!cancelled) setInstalled(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [model, downloadState]);
-
-  const handleDownload = useCallback(async () => {
-    const asset = WHISPER_MODEL_ASSETS[model];
-    if (!asset) return;
-    cancelledRef.current = false;
-    setDownloadState('downloading');
-    setErrorMsg('');
-    try {
-      await voiceAsset.download.invoke(asset);
-      if (!cancelledRef.current) setDownloadState('success');
-    } catch (err) {
-      if (!cancelledRef.current) {
-        setDownloadState('error');
-        setErrorMsg(err instanceof Error ? err.message : String(err));
-      }
-    }
-  }, [model]);
-
-  const handleCancel = useCallback(async () => {
-    cancelledRef.current = true;
-    const asset = WHISPER_MODEL_ASSETS[model];
-    if (asset) {
-      await voiceAsset.cancel.invoke({ assetId: asset.id }).catch(() => {});
-    }
-    setDownloadState('idle');
-  }, [model]);
-
+  const { status } = useMongolVoice();
+  if (status === null) return null;
   return (
-    <>
-      <Form.Item label={t('settings.speechToTextWhisperModel')}>
-        <DarhaiSelect value={model} onChange={onModelChange}>
-          <DarhaiSelect.Option value='base'>base</DarhaiSelect.Option>
-          <DarhaiSelect.Option value='small'>small</DarhaiSelect.Option>
-        </DarhaiSelect>
-      </Form.Item>
-      <Form.Item label={t('settings.speechToTextDownloadModel')}>
-        <div className='flex flex-col gap-8px'>
-          {downloadState === 'downloading' ? (
-            <>
-              <div className='flex items-center gap-8px'>
-                <Progress percent={0} animation className='flex-1' />
-                <Button size='mini' onClick={handleCancel}>
-                  {t('settings.speechToTextCancelDownload')}
-                </Button>
-              </div>
-              <span className='text-12px text-t-tertiary'>
-                {t('settings.speechToTextDownloadProgressNotReported', 'Downloading… (progress reporting coming soon)')}
-              </span>
-            </>
-          ) : installed ? (
-            <div className='flex items-center justify-between gap-8px h-32px px-12px rd-8px bg-[var(--color-fill-2)]'>
-              <span className='flex items-center gap-8px text-12px text-[var(--success)]'>
-                <CheckCircle2 size={14} />
-                {t('settings.speechToTextModelInstalled', { defaultValue: 'Installed' })}
-              </span>
-              <Button
-                type='text'
-                size='mini'
-                icon={<RotateCcw size={12} />}
-                onClick={handleDownload}
-                className='text-12px text-t-tertiary'
-              >
-                {t('settings.speechToTextRedownload', { defaultValue: 'Re-download' })}
-              </Button>
-            </div>
-          ) : (
-            <Button type='outline' onClick={handleDownload} size='small'>
-              {t('settings.speechToTextDownloadModel')}
-            </Button>
-          )}
-          {downloadState === 'error' && (
-            <span className='text-12px text-[var(--danger)]'>
-              {t('settings.speechToTextDownloadError')}: {errorMsg}
-            </span>
-          )}
-        </div>
-      </Form.Item>
-    </>
+    <span className='text-12px text-t-tertiary'>
+      {status.ttsReady === true
+        ? t('settings.textToSpeechVoiceListAfterFirstSpeak')
+        : t('settings.textToSpeechVoiceInstallFirst')}
+    </span>
   );
-};
-
-export const TTS_CONFIG_CHANGED_EVENT = 'wayland:tts-config-changed';
-
-// Hoisted out of the component body so React doesn't see a new object
-// identity every render - the previous in-body literal forced every
-// useCallback dependent on KOKORO_ASSET to re-create, which in turn
-// thrashed the install probe's effect.
-const KOKORO_ASSET: VoiceAsset = {
-  id: 'kokoro-onnx-model',
-  url: 'https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/kokoro-v1.0.onnx',
-  destPath: '',
-  sha256: '',
 };
 
 export const TextToSpeechSettingsSection: React.FC<{
@@ -227,48 +126,31 @@ export const TextToSpeechSettingsSection: React.FC<{
   onChange: (updater: (current: TextToSpeechConfig) => TextToSpeechConfig) => void;
 }> = ({ config, onChange }) => {
   const { t } = useTranslation();
-  const [downloadState, setDownloadState] = useState<DownloadState>('idle');
-  const [errorMsg, setErrorMsg] = useState('');
-  const [installed, setInstalled] = useState<boolean | null>(null);
-  const cancelledRef = React.useRef(false);
+  // Voices the installed kitten-mn bundle offers. Null = not fetched yet;
+  // [] = fetched and the bundle has nothing to offer (not installed / down),
+  // which renders as an "install first" hint rather than an error - an empty
+  // picker is the normal not-installed state on this surface.
+  const [kittenVoices, setKittenVoices] = useState<string[] | null>(null);
+  // True from pressing "Test voice" until the audio starts (or fails). The
+  // first kitten-mn start can take ~10-30 s (cold server + AV scan), so the
+  // button shows a spinner and refuses re-entry instead of looking dead.
+  const [isTestingVoice, setIsTestingVoice] = useState(false);
 
-  // Same install probe as Whisper - flip the UI from "Download Model" to
-  // "Installed" when the on-disk file already exists.
   useEffect(() => {
+    if (config.provider !== 'kitten-mn') return;
     let cancelled = false;
-    void voiceAsset.exists
-      .invoke({ id: KOKORO_ASSET.id })
+    void mongolVoice.ttsVoices
+      .invoke()
       .then((r) => {
-        if (!cancelled) setInstalled(Boolean(r?.installed));
+        if (!cancelled) setKittenVoices(Array.isArray(r?.voices) ? r.voices : []);
       })
       .catch(() => {
-        if (!cancelled) setInstalled(false);
+        if (!cancelled) setKittenVoices([]);
       });
     return () => {
       cancelled = true;
     };
-  }, [downloadState]);
-
-  const handleDownloadKokoro = useCallback(async () => {
-    cancelledRef.current = false;
-    setDownloadState('downloading');
-    setErrorMsg('');
-    try {
-      await voiceAsset.download.invoke(KOKORO_ASSET);
-      if (!cancelledRef.current) setDownloadState('success');
-    } catch (err) {
-      if (!cancelledRef.current) {
-        setDownloadState('error');
-        setErrorMsg(err instanceof Error ? err.message : String(err));
-      }
-    }
-  }, []);
-
-  const handleCancelDownload = useCallback(async () => {
-    cancelledRef.current = true;
-    await voiceAsset.cancel.invoke({ assetId: KOKORO_ASSET.id }).catch(() => {});
-    setDownloadState('idle');
-  }, []);
+  }, [config.provider]);
 
   const handleProviderChange = useCallback(
     (value: string) => {
@@ -278,9 +160,28 @@ export const TextToSpeechSettingsSection: React.FC<{
   );
 
   const handleTestVoice = useCallback(() => {
-    // Test playback uses window.speechSynthesis regardless of stored provider -
-    // gives users a "does my output device work" sanity check before they commit
-    // to downloading a local model or wiring a hosted provider key.
+    if (config.provider === 'kitten-mn') {
+      // Test with the REAL engine: the phrase goes through voiceSynth.speak,
+      // so the user hears the actual kitten-mn output (voice, speed, quality),
+      // not the browser's built-in speechSynthesis stand-in.
+      if (isTestingVoice) return;
+      setIsTestingVoice(true);
+      void (async () => {
+        try {
+          await speakText(
+            t('settings.textToSpeechTestPhraseKittenMn', 'Сайн байна уу! Энэ бол монгол дуу хоолойн туршилт.')
+          );
+        } catch (err) {
+          Message.error(t(ttsErrorMessageKey(err)));
+        } finally {
+          setIsTestingVoice(false);
+        }
+      })();
+      return;
+    }
+    // system-native (macOS-gated in the picker): keep the browser
+    // speechSynthesis sanity check - a "does my output device work" test that
+    // needs no local model.
     if (typeof window === 'undefined' || !window.speechSynthesis) return;
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(t('settings.textToSpeechTestPhrase', 'Voice check.'));
@@ -288,7 +189,7 @@ export const TextToSpeechSettingsSection: React.FC<{
       utterance.rate = config.speed;
     }
     window.speechSynthesis.speak(utterance);
-  }, [config.speed, t]);
+  }, [config.provider, config.speed, isTestingVoice, t]);
 
   return (
     <div className='px-[12px] md:px-[32px] py-[24px] bg-[var(--color-bg-2)] rd-12px border-2 border-solid border-[var(--color-border-2)]'>
@@ -311,21 +212,43 @@ export const TextToSpeechSettingsSection: React.FC<{
         <Form.Item label={t('settings.textToSpeechProvider')}>
           <div className='flex items-center gap-8px'>
             <DarhaiSelect value={config.provider} onChange={handleProviderChange} className='flex-1'>
-              <DarhaiSelect.Option value='kokoro-local'>
-                {t('settings.textToSpeechProviderKokoroLocal')}
-              </DarhaiSelect.Option>
-              <DarhaiSelect.Option value='system-native'>
-                {t('settings.textToSpeechProviderSystemNative')}
-              </DarhaiSelect.Option>
+              <DarhaiSelect.Option value='kitten-mn'>{t('settings.textToSpeechProviderKittenMn')}</DarhaiSelect.Option>
+              {/* macOS `say` only: on other platforms it returns silent empty
+                  audio, so the option is gated instead of shipped broken. */}
+              {isMacOS() && (
+                <DarhaiSelect.Option value='system-native'>
+                  {t('settings.textToSpeechProviderSystemNative')}
+                </DarhaiSelect.Option>
+              )}
             </DarhaiSelect>
-            <Button size='small' onClick={handleTestVoice}>
+            <Button size='small' onClick={handleTestVoice} loading={isTestingVoice} disabled={isTestingVoice}>
               {t('settings.textToSpeechTestVoice', 'Test voice')}
             </Button>
           </div>
         </Form.Item>
 
         <Form.Item label={t('settings.textToSpeechVoice')}>
-          <Input value={config.voice} onChange={(value) => onChange((current) => ({ ...current, voice: value }))} />
+          {config.provider === 'kitten-mn' ? (
+            <div className='flex flex-col gap-4px'>
+              <DarhaiSelect
+                value={config.voice}
+                onChange={(value) => onChange((current) => ({ ...current, voice: value as string }))}
+              >
+                {/* 'default' = the bundle's own default voice (the speak call
+                    omits the field), so a bundle update can rename its default
+                    without breaking stored configs. */}
+                <DarhaiSelect.Option value='default'>{t('settings.textToSpeechVoiceDefault')}</DarhaiSelect.Option>
+                {(kittenVoices ?? []).map((voice) => (
+                  <DarhaiSelect.Option key={voice} value={voice}>
+                    {voice}
+                  </DarhaiSelect.Option>
+                ))}
+              </DarhaiSelect>
+              {kittenVoices !== null && kittenVoices.length === 0 && <KittenVoiceListHint />}
+            </div>
+          ) : (
+            <Input value={config.voice} onChange={(value) => onChange((current) => ({ ...current, voice: value }))} />
+          )}
         </Form.Item>
 
         <Form.Item label={t('settings.textToSpeechSpeed')}>
@@ -353,46 +276,6 @@ export const TextToSpeechSettingsSection: React.FC<{
             onChange={(checked) => onChange((current) => ({ ...current, autoReadResponses: checked }))}
           />
         </Form.Item>
-
-        {config.provider === 'kokoro-local' && (
-          <Form.Item label={t('settings.textToSpeechDownloadModel')}>
-            <div className='flex flex-col gap-8px'>
-              {downloadState === 'downloading' ? (
-                <div className='flex items-center gap-8px'>
-                  <Progress percent={0} animation className='flex-1' />
-                  <Button size='mini' onClick={handleCancelDownload}>
-                    {t('settings.textToSpeechCancelDownload')}
-                  </Button>
-                </div>
-              ) : installed ? (
-                <div className='flex items-center justify-between gap-8px h-32px px-12px rd-8px bg-[var(--color-fill-2)]'>
-                  <span className='flex items-center gap-8px text-12px text-[var(--success)]'>
-                    <CheckCircle2 size={14} />
-                    {t('settings.textToSpeechModelInstalled', { defaultValue: 'Installed' })}
-                  </span>
-                  <Button
-                    type='text'
-                    size='mini'
-                    icon={<RotateCcw size={12} />}
-                    onClick={handleDownloadKokoro}
-                    className='text-12px text-t-tertiary'
-                  >
-                    {t('settings.textToSpeechRedownload', { defaultValue: 'Re-download' })}
-                  </Button>
-                </div>
-              ) : (
-                <Button type='outline' onClick={handleDownloadKokoro} size='small'>
-                  {t('settings.textToSpeechDownloadModel')}
-                </Button>
-              )}
-              {downloadState === 'error' && (
-                <span className='text-12px text-[var(--danger)]'>
-                  {t('settings.textToSpeechDownloadError')}: {errorMsg}
-                </span>
-              )}
-            </div>
-          </Form.Item>
-        )}
       </Form>
     </div>
   );
@@ -485,11 +368,14 @@ export const SpeechToTextSettingsSection: React.FC<{
       <Form layout='horizontal' labelAlign='left' className='space-y-12px'>
         <Form.Item label={t('settings.speechToTextProvider')}>
           <DarhaiSelect value={config.provider} onChange={handleProviderChange}>
+            <DarhaiSelect.Option value='nemotron-mn'>
+              {t('settings.speechToTextProviderNemotronMn')}
+            </DarhaiSelect.Option>
             <DarhaiSelect.Option value='openai'>{t('settings.speechToTextProviderOpenAI')}</DarhaiSelect.Option>
             <DarhaiSelect.Option value='deepgram'>{t('settings.speechToTextProviderDeepgram')}</DarhaiSelect.Option>
-            <DarhaiSelect.Option value='whisper-local'>
-              {t('settings.speechToTextProviderWhisperLocal')}
-            </DarhaiSelect.Option>
+            {/* 'whisper-local' is deliberately absent: its pinned binary
+                downloads all 404 (docs/architecture/mongolian-voice.md), so
+                offering it would sell a provider that cannot run. */}
           </DarhaiSelect>
         </Form.Item>
 
@@ -527,17 +413,15 @@ export const SpeechToTextSettingsSection: React.FC<{
               <Input value={config.openai?.language} onChange={(value) => handleOpenAIChange('language', value)} />
             </Form.Item>
           </>
-        ) : config.provider === 'whisper-local' ? (
-          <WhisperLocalDownloadControl
-            model={config.whisperLocal?.model ?? 'base'}
-            onModelChange={(model) =>
-              onChange((current) => ({
-                ...current,
-                whisperLocal: { ...current.whisperLocal, model },
-              }))
-            }
-          />
-        ) : (
+        ) : config.provider === 'nemotron-mn' ? (
+          <Form.Item label={t('settings.speechToTextModel')}>
+            <div className='flex flex-col gap-6px'>
+              <span className='text-13px text-t-secondary'>{t('settings.speechToTextNemotronDescription')}</span>
+              {/* Points at the install card while the runtime + model are missing. */}
+              <NemotronInstallHint />
+            </div>
+          </Form.Item>
+        ) : config.provider === 'deepgram' ? (
           <>
             <Form.Item label={renderSpeechToTextFieldLabel('settings.speechToTextApiKey', 'required')}>
               <Input.Password
@@ -574,7 +458,7 @@ export const SpeechToTextSettingsSection: React.FC<{
               />
             </Form.Item>
           </>
-        )}
+        ) : null}
       </Form>
     </div>
   );
@@ -959,6 +843,9 @@ const ToolsModalContent: React.FC = () => {
             </Form>
           </div>
           <SpeechToTextSettingsSection config={speechToTextConfig} onChange={updateSpeechToTextConfig} />
+          {/* Mongolian voice core: the components both local providers above
+              (nemotron-mn STT, kitten-mn TTS) need before they can run. */}
+          <MongolVoiceInstallCard />
         </div>
       </DarhaiScrollArea>
     </div>

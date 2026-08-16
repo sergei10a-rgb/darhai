@@ -90,7 +90,12 @@ import {
   initWindowControlsBridge,
 } from './desktop';
 import { initDocumentBridge, initOfficeWatchBridge, initPptPreviewBridge, initPreviewHistoryBridge } from './media';
-import { initSpeechToTextBridge, initVoiceAssetBridge, initVoiceSynthBridge } from './media/voice';
+import {
+  initMongolVoiceBridge,
+  initSpeechToTextBridge,
+  initVoiceAssetBridge,
+  initVoiceSynthBridge,
+} from './media/voice';
 import { initChannelBridge, initWebuiBridge, initWeixinLoginBridge } from './remote';
 import { startWikiAutoSync } from '@process/services/wiki/wikiAutoSync';
 import { initStorageBridge } from '@process/storage/storageIpc';
@@ -160,6 +165,7 @@ export function initAllBridges(deps: BridgeDependencies): void {
   initSpeechToTextBridge();
   initVoiceAssetBridge();
   initVoiceSynthBridge();
+  initMongolVoiceBridge();
   initSkillsBridge();
   initWeixinLoginBridge();
   initWorkspaceSnapshotBridge();
@@ -237,6 +243,7 @@ export {
   initPptPreviewBridge,
   initPreviewHistoryBridge,
   initShellBridge,
+  initMongolVoiceBridge,
   initSpeechToTextBridge,
   initVoiceAssetBridge,
   initVoiceSynthBridge,

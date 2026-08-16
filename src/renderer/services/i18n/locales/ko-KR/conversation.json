@@ -232,7 +232,21 @@
       "permissionDenied": "마이크 권한이 거부되었습니다",
       "recordingUnsupported": "현재 환경에서는 직접 녹음할 수 없습니다. 오디오 파일을 업로드해 주세요",
       "transcriptionFailed": "오디오 전사에 실패했습니다",
-      "genericError": "음성 입력에 실패했습니다. 다시 시도해 주세요"
+      "genericError": "음성 입력에 실패했습니다. 다시 시도해 주세요",
+      "nemotronNotInstalled": "몽골어 음성 팩이 설치되어 있지 않습니다 — 설정 → 음성에서 설치하세요",
+      "nemotronStartFailed": "로컬 음성 인식기를 시작하지 못했습니다. 다시 시도하거나 설정 → 음성에서 재설치하세요"
+    },
+    "tts": {
+      "readAloud": "소리 내어 읽기",
+      "stopReading": "읽기 중지",
+      "notInstalled": "몽골어 음성이 설치되어 있지 않습니다 — 설정 → 음성에서 설치하세요",
+      "textTooLong": "텍스트가 음성 엔진의 한도를 초과합니다 — 앞부분만 읽습니다",
+      "startTimeout": "음성 엔진 시작이 너무 오래 걸립니다 — 잠시 후 다시 시도하세요",
+      "startFailed": "음성 엔진을 시작하지 못했습니다. 설정 → 음성에서 몽골어 음성을 재설치하면 해결될 수 있습니다",
+      "requestFailed": "음성 합성에 실패했습니다. 다시 시도하세요",
+      "kokoroRemoved": "Kokoro 음성은 제거되었습니다(작동한 적이 없습니다) — 설정 → 음성에서 몽골어 음성으로 전환하세요",
+      "systemNativeUnsupported": "시스템 음성은 macOS에서만 작동합니다 — 몽골어 음성으로 전환하세요",
+      "genericError": "소리 내어 읽기에 실패했습니다. 다시 시도하세요"
     }
   },
   "sideQuestion": {

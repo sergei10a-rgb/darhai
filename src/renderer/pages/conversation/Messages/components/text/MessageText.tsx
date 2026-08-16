@@ -4,14 +4,22 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Copy } from 'lucide-react';
+import { Copy, Square, Volume2 } from 'lucide-react';
 import type { IMessageText } from '@/common/chat/chatLib';
 import { DARHAI_FILES_MARKER } from '@/common/config/constants';
 import { useConversationContextSafe } from '@/renderer/hooks/context/ConversationContext';
+import { getTtsConfig, TTS_CONFIG_CHANGED_EVENT } from '@/renderer/services/voice/ttsConfig';
+import {
+  onTtsPlaybackStopped,
+  prepareTextForSpeech,
+  speakText,
+  stopTtsPlayback,
+  ttsErrorMessageKey,
+} from '@/renderer/services/voice/ttsPlayback';
 import { iconColors } from '@/renderer/styles/colors';
 import { Alert, Message, Tooltip } from '@arco-design/web-react';
 import classNames from 'classnames';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { copyText } from '@/renderer/utils/ui/clipboard';
 import CollapsibleContent from '@renderer/components/chat/CollapsibleContent';
@@ -109,6 +117,31 @@ export const resolveMessageFilePath = (filePath: string, workspace?: string): st
   return `${normalizedWorkspace}/${normalizedFilePath}`.replace(/\/+/g, '/');
 };
 
+/**
+ * Whether the read-aloud button should render at all: mirrors the
+ * `tools.textToSpeech.enabled` switch, re-synced when settings fire the TTS
+ * config-changed event. Reads go through the cached config, so a long message
+ * list does not fan out into per-row IPC.
+ */
+const useTtsEnabled = (): boolean => {
+  const [enabled, setEnabled] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    const sync = () => {
+      void getTtsConfig().then((config) => {
+        if (!cancelled) setEnabled(config.enabled === true);
+      });
+    };
+    sync();
+    window.addEventListener(TTS_CONFIG_CHANGED_EVENT, sync);
+    return () => {
+      cancelled = true;
+      window.removeEventListener(TTS_CONFIG_CHANGED_EVENT, sync);
+    };
+  }, []);
+  return enabled;
+};
+
 const useFormatContent = (content: string) => {
   return useMemo(() => {
     try {
@@ -145,6 +178,12 @@ const MessageText: React.FC<{ message: IMessageText }> = ({ message }) => {
   const { data, json } = useFormatContent(text);
   const { t } = useTranslation();
   const [showCopyAlert, setShowCopyAlert] = useState(false);
+  const isTtsEnabled = useTtsEnabled();
+  // True from pressing read-aloud until this row's clip stops (spinner during
+  // synthesis, stop-square while speaking). Cleared by the playback-stopped
+  // subscription below, which also fires when ANOTHER row starts speaking.
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  useEffect(() => onTtsPlaybackStopped(() => setIsSpeaking(false)), []);
   const isUserMessage = message.position === 'right';
   const isTeammateMessage = message.position === 'left' && message.content.teammateMessage === true;
   const isTruncated = message.content.truncatedDueToBudget === true;
@@ -199,6 +238,52 @@ const MessageText: React.FC<{ message: IMessageText }> = ({ message }) => {
         style={{ lineHeight: 0 }}
       >
         <Copy size={16} color={iconColors.secondary} />
+      </div>
+    </Tooltip>
+  );
+
+  const handleReadAloud = () => {
+    if (isSpeaking) {
+      stopTtsPlayback();
+      setIsSpeaking(false);
+      return;
+    }
+    const speakable = prepareTextForSpeech(workflowSessionId ? stripWorkflowEnvelopes(text) : text);
+    if (speakable === '') return;
+    setIsSpeaking(true);
+    void (async () => {
+      try {
+        await speakText(speakable);
+        // Interrupting a previous clip fired the stopped notification (which
+        // cleared our flag) - re-assert it now that OUR clip is the one playing.
+        setIsSpeaking(true);
+      } catch (err) {
+        setIsSpeaking(false);
+        Message.error(t(ttsErrorMessageKey(err)));
+      }
+    })();
+  };
+
+  // Read-aloud: assistant text rows only, and only while TTS is enabled -
+  // spoken JSON payloads are noise, and user bubbles are the user's own words.
+  const speakButton = !isUserMessage && isTtsEnabled && !json && (
+    <Tooltip content={t(isSpeaking ? 'conversation.chat.tts.stopReading' : 'conversation.chat.tts.readAloud')}>
+      <div
+        className={classNames(
+          'p-4px rd-4px cursor-pointer hover:bg-3 transition-colors',
+          isSpeaking
+            ? ''
+            : 'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus-within:opacity-100 focus-within:pointer-events-auto'
+        )}
+        onClick={handleReadAloud}
+        style={{ lineHeight: 0 }}
+        data-testid='message-read-aloud'
+      >
+        {isSpeaking ? (
+          <Square size={16} color={iconColors.secondary} />
+        ) : (
+          <Volume2 size={16} color={iconColors.secondary} />
+        )}
       </div>
     </Tooltip>
   );
@@ -297,6 +382,7 @@ const MessageText: React.FC<{ message: IMessageText }> = ({ message }) => {
           })}
         >
           {copyButton}
+          {speakButton}
           {message.createdAt && (
             <span className='text-12px text-t-secondary opacity-0 group-hover:opacity-100 transition-opacity select-none'>
               {formatMessageTime(message.createdAt)}

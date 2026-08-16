@@ -1377,6 +1377,30 @@
   "textToSpeechDownloadSuccess": "Modell erfolgreich heruntergeladen",
   "textToSpeechDownloadError": "Download fehlgeschlagen",
   "textToSpeechCancelDownload": "Abbrechen",
+  "textToSpeechProviderKittenMn": "Mongolische Stimme — kitten-mn",
+  "textToSpeechVoiceDefault": "Standardstimme des Pakets",
+  "textToSpeechVoiceInstallFirst": "Installieren Sie zuerst unten die „Mongolische Stimme“, um eine Stimme auszuwählen.",
+  "speechToTextProviderNemotronMn": "Nemotron Mongolisch v13",
+  "speechToTextNemotronDescription": "Nemotron Mongolisch v13 läuft vollständig offline auf der CPU — gemessen etwa 12× schneller als Echtzeit.",
+  "speechToTextNemotronInstallHint": "Das Nemotron-Modell ist noch nicht installiert — installieren Sie es über die Karte „Mongolische Stimme“.",
+  "mongolVoice": {
+    "title": "Mongolische Stimme",
+    "description": "Vollständig offline mongolische Sprache auf der CPU: Synthese etwa 5× und Erkennung etwa 12× schneller als Echtzeit (gemessen).",
+    "componentSttRuntime": "Spracherkennungs-Runtime (audio.cpp)",
+    "componentSttModel": "Nemotron-Erkennungsmodell (Mongolisch)",
+    "componentTtsBundle": "kitten-mn-Sprachsynthese-Paket",
+    "stateInstalled": "Installiert",
+    "stateNotInstalled": "Nicht installiert",
+    "stateDownloading": "Wird heruntergeladen…",
+    "stateFinalizing": "Wird installiert…",
+    "installAll": "Installieren",
+    "cancel": "Abbrechen",
+    "totalDownload": "{{size}} werden heruntergeladen",
+    "sizeMb": "{{size}} MB",
+    "installed": "Alle Komponenten sind installiert",
+    "installError": "Installation fehlgeschlagen",
+    "unsupported": "Auf dieser Plattform noch nicht verfügbar (derzeit nur Windows x64)."
+  },
   "mcp": "MCP-Integration",
   "imageGenerationModel": "Bildmodell",
   "imageGenerationGuide": "Einrichtungsanleitung für Bildmodelle",
@@ -2790,5 +2814,7 @@
     }
   },
   "deferUpdateWhileBusy": "Updates bei Aktivität aufschieben",
-  "deferUpdateWhileBusyDesc": "Wartet, bis aktive Chats, geplante Aufgaben und Teams fertig sind, bevor zum Aktualisieren neu gestartet wird. Das Update wird bei Leerlauf oder beim Beenden trotzdem angewendet."
+  "deferUpdateWhileBusyDesc": "Wartet, bis aktive Chats, geplante Aufgaben und Teams fertig sind, bevor zum Aktualisieren neu gestartet wird. Das Update wird bei Leerlauf oder beim Beenden trotzdem angewendet.",
+  "textToSpeechTestPhraseKittenMn": "Сайн байна уу! Энэ бол монгол дуу хоолойн туршилт.",
+  "textToSpeechVoiceListAfterFirstSpeak": "Die Stimmenliste erscheint nach der ersten Wiedergabe – der Sprachserver startet bei Bedarf."
 }

@@ -14,6 +14,7 @@ import type {
 import { mainError, mainLog, mainWarn } from '@process/utils/mainLogger';
 import { ProcessConfig } from '@process/utils/initStorage';
 import { WhisperLocal } from '@process/services/voice/WhisperLocal';
+import { NEMOTRON_MN_MODEL, NemotronStt } from '@process/services/voice/mongol/NemotronStt';
 
 type OpenAITranscriptionResponse = {
   language?: string;
@@ -123,6 +124,14 @@ const resolveSpeechToTextConfig = async (): Promise<SpeechToTextConfig> => {
     mainWarn(STT_LOG_TAG, 'Speech-to-text request rejected because feature is disabled');
     throw new Error('STT_DISABLED');
   }
+  // 'whisper-local' never worked (its pinned binary downloads all 404 -
+  // whisper.cpp v1.7.1 shipped no assets), so a stored selection of it
+  // carries no user intent worth preserving. Upgrade it to the working local
+  // provider here as well as in the renderer's normalize, because a stored
+  // config reaches this dispatch without ever passing through Settings.
+  if (config.provider === 'whisper-local') {
+    return { ...config, provider: 'nemotron-mn' };
+  }
   return config;
 };
 
@@ -149,9 +158,14 @@ const resolveProviderModel = (config: SpeechToTextConfig): string | undefined =>
   if (config.provider === 'deepgram') {
     return config.deepgram?.model || DEFAULT_DEEPGRAM_MODEL;
   }
+  if (config.provider === 'nemotron-mn') {
+    // Nemotron Монгол ships exactly one model; nothing configurable today.
+    return NEMOTRON_MN_MODEL;
+  }
   return config.whisperLocal?.model || DEFAULT_WHISPER_LOCAL_MODEL;
 };
 
+// eslint-disable-next-line typescript-eslint/no-extraneous-class -- Static utility class matches project pattern
 export class SpeechToTextService {
   static async transcribe(request: SpeechToTextRequest): Promise<SpeechToTextResult> {
     const requestId = createRequestId();
@@ -174,7 +188,9 @@ export class SpeechToTextService {
           ? await this.transcribeWithOpenAI(config, request)
           : config.provider === 'deepgram'
             ? await this.transcribeWithDeepgram(config, request)
-            : await this.transcribeWithWhisperLocal(config, request);
+            : config.provider === 'nemotron-mn'
+              ? await NemotronStt.transcribe(request)
+              : await this.transcribeWithWhisperLocal(config, request);
 
       mainLog(STT_LOG_TAG, 'Transcription completed', {
         requestId,

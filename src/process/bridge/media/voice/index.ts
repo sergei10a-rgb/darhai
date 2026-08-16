@@ -15,6 +15,7 @@
  */
 
 export * from './SpeechToTextService';
+export * from './mongolVoiceBridge';
 export * from './speechToTextBridge';
 export * from './voiceAssetBridge';
 export * from './voiceSynthBridge';

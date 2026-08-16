@@ -1354,6 +1354,30 @@
   "textToSpeechDownloadSuccess": "模型下载成功",
   "textToSpeechDownloadError": "下载失败",
   "textToSpeechCancelDownload": "取消",
+  "textToSpeechProviderKittenMn": "蒙古语语音 — kitten-mn",
+  "textToSpeechVoiceDefault": "套件默认语音",
+  "textToSpeechVoiceInstallFirst": "请先安装下方的蒙古语语音，然后再选择语音。",
+  "speechToTextProviderNemotronMn": "Nemotron 蒙古语 v13",
+  "speechToTextNemotronDescription": "Nemotron 蒙古语 v13 在 CPU 上完全离线运行——实测约为实时速度的 12 倍。",
+  "speechToTextNemotronInstallHint": "Nemotron 蒙古语模型尚未安装——请在「蒙古语语音」卡片中安装。",
+  "mongolVoice": {
+    "title": "蒙古语语音",
+    "description": "在 CPU 上完全离线的蒙古语语音：语音合成约为实时速度的 5 倍，语音识别约为 12 倍（实测）。",
+    "componentSttRuntime": "语音识别运行时（audio.cpp）",
+    "componentSttModel": "Nemotron 蒙古语识别模型",
+    "componentTtsBundle": "kitten-mn 语音合成套件",
+    "stateInstalled": "已安装",
+    "stateNotInstalled": "未安装",
+    "stateDownloading": "下载中…",
+    "stateFinalizing": "安装中…",
+    "installAll": "安装",
+    "cancel": "取消",
+    "totalDownload": "将下载 {{size}}",
+    "sizeMb": "{{size}} MB",
+    "installed": "所有组件均已安装",
+    "installError": "安装失败",
+    "unsupported": "此平台暂不可用（目前仅支持 Windows x64）。"
+  },
   "mcp": "MCP 集成",
   "imageGenerationModel": "图像模型",
   "imageGenerationGuide": "图像模型配置指南",
@@ -2790,5 +2814,7 @@
     }
   },
   "deferUpdateWhileBusy": "忙碌时推迟更新",
-  "deferUpdateWhileBusyDesc": "等待进行中的对话、计划任务和团队完成后再重启更新。更新仍会在空闲或退出时应用。"
+  "deferUpdateWhileBusyDesc": "等待进行中的对话、计划任务和团队完成后再重启更新。更新仍会在空闲或退出时应用。",
+  "textToSpeechTestPhraseKittenMn": "Сайн байна уу! Энэ бол монгол дуу хоолойн туршилт.",
+  "textToSpeechVoiceListAfterFirstSpeak": "语音列表将在首次播放后显示——语音服务器按需启动。"
 }

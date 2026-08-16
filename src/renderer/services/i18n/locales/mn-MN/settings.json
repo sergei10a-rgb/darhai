@@ -3019,6 +3019,30 @@
   "textToSpeechRedownload": "Дахин татах",
   "textToSpeechTestPhrase": "Дуу хоолой шалгах.",
   "textToSpeechTestVoice": "Хоолой турших",
+  "textToSpeechProviderKittenMn": "Монгол дуу хоолой — kitten-mn",
+  "textToSpeechVoiceDefault": "Багцын анхдагч хоолой",
+  "textToSpeechVoiceInstallFirst": "Хоолой сонгохын тулд эхлээд дээрх «Монгол дуу хоолой»-г суулгана уу.",
+  "speechToTextProviderNemotronMn": "Nemotron Монгол v13mn",
+  "speechToTextNemotronDescription": "Nemotron Монгол v13mn нь CPU дээр бүрэн офлайн ажиллана — хэмжилтээр бодит цагаас ~12 дахин хурдан.",
+  "speechToTextNemotronInstallHint": "Nemotron Монгол загвар хараахан суулгаагүй байна — «Монгол дуу хоолой» картаас суулгана уу.",
+  "mongolVoice": {
+    "title": "Монгол дуу хоолой",
+    "description": "CPU дээр бүрэн офлайн монгол яриа: яриа нийлэгжүүлэлт бодит цагаас ~5 дахин, яриа таних ~12 дахин хурдан (хэмжсэн).",
+    "componentSttRuntime": "Яриа таних цөм (audio.cpp)",
+    "componentSttModel": "Nemotron Монгол v13mn таних загвар",
+    "componentTtsBundle": "kitten-mn яриа нийлэгжүүлэх багц",
+    "stateInstalled": "Суулгасан",
+    "stateNotInstalled": "Суулгаагүй",
+    "stateDownloading": "Татаж байна…",
+    "stateFinalizing": "Суулгаж байна…",
+    "installAll": "Суулгах",
+    "cancel": "Цуцлах",
+    "totalDownload": "Татах хэмжээ: {{size}}",
+    "sizeMb": "{{size}} МБ",
+    "installed": "Бүх бүрэлдэхүүн суулгагдсан",
+    "installError": "Суулгалт амжилтгүй",
+    "unsupported": "Энэ платформ дээр одоогоор бэлэн биш (одоо зөвхөн Windows x64)."
+  },
   "voiceMicCheckLabel": "Микрофон",
   "voiceMicDeviceDefault": "Системийн анхны микрофон",
   "voiceMicGradeGood": "Сайхан сонсогдож байна!",
@@ -3101,5 +3125,7 @@
     }
   },
   "deferUpdateWhileBusy": "Ажиллаж байхад шинэчлэлтийг хойшлуулах",
-  "deferUpdateWhileBusyDesc": "Идэвхтэй яриа, товлосон ажил, багууд дуусахыг хүлээж байж шинэчлэхээр дахин асаана. Шинэчлэлт нь сул зогсолт эсвэл хаах үед мөн л суана."
+  "deferUpdateWhileBusyDesc": "Идэвхтэй яриа, товлосон ажил, багууд дуусахыг хүлээж байж шинэчлэхээр дахин асаана. Шинэчлэлт нь сул зогсолт эсвэл хаах үед мөн л суана.",
+  "textToSpeechTestPhraseKittenMn": "Сайн байна уу! Энэ бол монгол дуу хоолойн туршилт.",
+  "textToSpeechVoiceListAfterFirstSpeak": "Хоолойн жагсаалт эхний уншуулалтын дараа гарна — дуу хоолойн сервер хэрэгцээт үедээ асдаг."
 }

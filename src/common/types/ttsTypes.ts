@@ -4,7 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export type TextToSpeechProvider = 'kokoro-local' | 'system-native';
+/**
+ * - `'kitten-mn'`   - Mongolian StyleTTS2 student model served by a bundled
+ *                     local HTTP service (CPU ONNX). The default: it is the
+ *                     only provider that actually speaks Mongolian.
+ * - `'system-native'` - macOS `say`. Only meaningful on darwin; other
+ *                     platforms return empty audio, so the UI gates it.
+ * - `'kokoro-local'` - legacy entry kept so stored configs keep parsing.
+ *                     It never worked (the CLI it shells out to does not
+ *                     exist) and is hidden from the UI; synthesis reports a
+ *                     typed error instead of silence.
+ */
+export type TextToSpeechProvider = 'kitten-mn' | 'kokoro-local' | 'system-native';
 
 export type TextToSpeechConfig = {
   enabled: boolean;
@@ -16,17 +27,23 @@ export type TextToSpeechConfig = {
 
 export const DEFAULT_TTS_CONFIG: TextToSpeechConfig = {
   enabled: false,
-  provider: 'kokoro-local',
+  provider: 'kitten-mn',
   voice: 'default',
   speed: 1.0,
   autoReadResponses: false,
 };
 
 /** Merges supplied config over defaults so old/absent configs upgrade cleanly. */
-export const normalizeTextToSpeechConfig = (config?: Partial<TextToSpeechConfig>): TextToSpeechConfig => ({
-  ...DEFAULT_TTS_CONFIG,
-  ...config,
-});
+export const normalizeTextToSpeechConfig = (config?: Partial<TextToSpeechConfig>): TextToSpeechConfig => {
+  const merged = { ...DEFAULT_TTS_CONFIG, ...config };
+  // 'kokoro-local' never produced audio (its CLI never existed), so a stored
+  // selection of it carries no user intent worth preserving - upgrade it to
+  // the working default instead of surfacing a dead provider.
+  if (merged.provider === 'kokoro-local') {
+    merged.provider = 'kitten-mn';
+  }
+  return merged;
+};
 
 /** Audio bytes returned from any TTS synthesis call. */
 export type TextToSpeechAudio = {

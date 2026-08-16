@@ -66,6 +66,12 @@ export {
 
 export { hasCudaRuntime, cudaSearchDirs, type CudaProbeDeps, type CudaProbeEnv } from './cudaRuntimeProbe';
 
-export { ArchiveError, commonRootPrefix, safeEntryPath, stripRoot, type ArchiveEntry } from './archiveEntry';
-export { extractZip } from './zipReader';
-export { extractTarGz } from './tarReader';
+export { ArchiveError, commonRootPrefix, safeEntryPath, stripRoot, type ArchiveEntry } from './archive/archiveEntry';
+export { extractZip } from './archive/zipReader';
+export { extractTarGz } from './archive/tarReader';
+export {
+  ResumeDownloadError,
+  resumeDownload,
+  type ResumeDownloadErrorCode,
+  type ResumeDownloadOptions,
+} from './resumeDownload';

@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   appendSpeechTranscript,
   getSpeechInputAvailabilityForEnvironment,
+  mapSpeechInputError,
   pickRecordingMimeType,
   useSpeechInput,
 } from '@/renderer/hooks/system/useSpeechInput';
@@ -65,6 +66,27 @@ describe('appendSpeechTranscript', () => {
 
   it('ignores empty speech text', () => {
     expect(appendSpeechTranscript('hello', '   ')).toBe('hello');
+  });
+});
+
+describe('mapSpeechInputError', () => {
+  // Typed codes travel across IPC as the error MESSAGE prefix (`${code}: ...`).
+  it.each([
+    ['NEMOTRON_MN_NOT_INSTALLED: the audio.cpp STT runtime is not installed', 'nemotron-not-installed'],
+    ['NEMOTRON_MN_START_FAILED: process exited before ready', 'nemotron-start-failed'],
+    ['NEMOTRON_MN_START_TIMEOUT: no answer within 30000ms', 'nemotron-start-failed'],
+    ['NEMOTRON_MN_REQUEST_FAILED: audio.cpp answered HTTP 500', 'transcription-failed'],
+    ['NEMOTRON_MN_FFMPEG_MISSING: ffmpeg was not found on PATH', 'transcription-failed'],
+    ['NEMOTRON_MN_AUDIO_CONVERT_FAILED: ffmpeg failed', 'transcription-failed'],
+    ['STT_DISABLED: speech to text is switched off', 'not-configured'],
+    ['STT_OPENAI_NOT_CONFIGURED: no key', 'not-configured'],
+    ['STT_REQUEST_FAILED: upstream 500', 'transcription-failed'],
+  ])('maps %s -> %s', (message, expected) => {
+    expect(mapSpeechInputError(new Error(message))).toBe(expected);
+  });
+
+  it('falls back to unknown for unrecognized failures', () => {
+    expect(mapSpeechInputError(new Error('boom'))).toBe('unknown');
   });
 });
 

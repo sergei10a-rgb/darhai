@@ -232,7 +232,21 @@
       "permissionDenied": "麦克风权限被拒绝",
       "recordingUnsupported": "当前环境不支持直接录音，请改为上传音频文件",
       "transcriptionFailed": "音频转写失败",
-      "genericError": "语音输入失败，请重试"
+      "genericError": "语音输入失败，请重试",
+      "nemotronNotInstalled": "蒙古语语音包尚未安装——请在「设置 → 语音」中安装",
+      "nemotronStartFailed": "本地语音识别器启动失败。请重试，或在「设置 → 语音」中重新安装"
+    },
+    "tts": {
+      "readAloud": "朗读",
+      "stopReading": "停止朗读",
+      "notInstalled": "蒙古语语音尚未安装——请在「设置 → 语音」中安装",
+      "textTooLong": "文本超出语音引擎的限制——只会朗读开头部分",
+      "startTimeout": "语音引擎启动超时——请稍后重试",
+      "startFailed": "语音引擎启动失败。可在「设置 → 语音」中重新安装蒙古语语音",
+      "requestFailed": "语音合成失败，请重试",
+      "kokoroRemoved": "Kokoro 语音已移除（它从未正常工作）——请在「设置 → 语音」中切换到蒙古语语音",
+      "systemNativeUnsupported": "系统语音仅支持 macOS——请切换到蒙古语语音",
+      "genericError": "朗读失败，请重试"
     }
   },
   "sideQuestion": {

@@ -499,6 +499,39 @@ export const voiceAsset = {
   localModelBase: buildProvider<{ url: string }, void>('voice-asset.local-model-base'),
 };
 
+/**
+ * Mongolian voice core (docs/architecture/mongolian-voice.md): install status,
+ * component install/cancel with live progress, and the kitten-mn voice list.
+ *
+ * The whole namespace is remote-denied (the `mongolVoice.` prefix in
+ * bridgeAllowlist REMOTE_DENIED_PREFIXES): `install` downloads archives that
+ * put EXECUTABLE code on disk and the voice servers then run it - the same
+ * install+exec class as `cookbook.` / `llamaRuntime.`, which a paired-device
+ * WebSocket caller must never drive. Only the trusted local renderer installs.
+ */
+export const mongolVoice = {
+  /** Per-component install state + aggregated sttReady / ttsReady. */
+  status: buildProvider<import('../types/mongolVoice').MongolVoiceStatusView, void>('mongolVoice.status'),
+  /** Install one component (progress via onProgress). Errors return as codes, never throw. */
+  install: buildProvider<
+    import('../types/mongolVoice').MongolVoiceInstallResult,
+    { component: import('../types/mongolVoice').MongolVoiceComponent }
+  >('mongolVoice.install'),
+  /** Abort an in-flight component install; the partial download survives for resume. */
+  cancel: buildProvider<{ cancelled: boolean }, { component: import('../types/mongolVoice').MongolVoiceComponent }>(
+    'mongolVoice.cancel'
+  ),
+  /**
+   * Voice ids the RUNNING kitten-mn bundle offers. `{ voices: [] }` when the
+   * bundle is not installed or its server is not currently up - listing
+   * voices NEVER starts the server (the first speak does), so an EMPTY picker
+   * is the normal idle state for the UI, not an error.
+   */
+  ttsVoices: buildProvider<{ voices: string[] }, void>('mongolVoice.tts-voices'),
+  /** Streaming install progress ({component, phase, bytesDone, bytesTotal}). */
+  onProgress: buildEmitter<import('../types/mongolVoice').MongolVoiceInstallProgress>('mongolVoice.on-progress'),
+};
+
 export const fileWatch = {
   startWatch: buildProvider<IBridgeResponse, { filePath: string }>('file-watch-start'), // Start watching file changes
   stopWatch: buildProvider<IBridgeResponse, { filePath: string }>('file-watch-stop'), // Stop watching file changes

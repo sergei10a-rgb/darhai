@@ -232,7 +232,21 @@
       "permissionDenied": "Microphone permission was denied",
       "recordingUnsupported": "Live recording is not supported here. Please upload an audio file instead",
       "transcriptionFailed": "Audio transcription failed",
-      "genericError": "Voice input failed. Please try again"
+      "genericError": "Voice input failed. Please try again",
+      "nemotronNotInstalled": "The Mongolian voice pack is not installed — install it in Settings → Voice",
+      "nemotronStartFailed": "The local speech recognizer failed to start. Try again, or reinstall it in Settings → Voice"
+    },
+    "tts": {
+      "readAloud": "Read aloud",
+      "stopReading": "Stop reading",
+      "notInstalled": "The Mongolian voice is not installed — install it in Settings → Voice",
+      "textTooLong": "The text exceeds the voice engine's limit — only the beginning can be read",
+      "startTimeout": "The voice engine took too long to start — try again in a moment",
+      "startFailed": "The voice engine failed to start. Reinstalling the Mongolian voice in Settings → Voice may fix it",
+      "requestFailed": "Speech synthesis failed. Please try again",
+      "kokoroRemoved": "The Kokoro voice was removed (it never worked) — switch to the Mongolian voice in Settings → Voice",
+      "systemNativeUnsupported": "The system voice only works on macOS — switch to the Mongolian voice in Settings → Voice",
+      "genericError": "Reading aloud failed. Please try again"
     }
   },
   "sideQuestion": {

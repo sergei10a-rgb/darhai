@@ -144,6 +144,30 @@ describe('SpeechInputButton', () => {
     expect(mockClearError).toHaveBeenCalled();
   });
 
+  it('maps a missing Mongolian voice install to its dedicated localized message', async () => {
+    speechToTextEnabled = true;
+    speechInputErrorCode = 'nemotron-not-installed';
+
+    render(<SpeechInputButton onTranscript={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(mockMessageError).toHaveBeenCalledWith('conversation.chat.speech.nemotronNotInstalled');
+    });
+    expect(mockClearError).toHaveBeenCalled();
+  });
+
+  it('maps a Mongolian recognizer start failure to its dedicated localized message', async () => {
+    speechToTextEnabled = true;
+    speechInputErrorCode = 'nemotron-start-failed';
+
+    render(<SpeechInputButton onTranscript={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(mockMessageError).toHaveBeenCalledWith('conversation.chat.speech.nemotronStartFailed');
+    });
+    expect(mockClearError).toHaveBeenCalled();
+  });
+
   it('shows a warning when recording ends without a detectable transcript', async () => {
     speechToTextEnabled = true;
     speechInputErrorCode = 'empty-transcript';

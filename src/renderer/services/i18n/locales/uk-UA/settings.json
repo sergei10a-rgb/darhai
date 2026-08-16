@@ -1352,6 +1352,30 @@
   "textToSpeechDownloadSuccess": "Модель успішно завантажена",
   "textToSpeechDownloadError": "Помилка завантаження",
   "textToSpeechCancelDownload": "Скасувати",
+  "textToSpeechProviderKittenMn": "Монгольський голос — kitten-mn",
+  "textToSpeechVoiceDefault": "Голос пакета за замовчуванням",
+  "textToSpeechVoiceInstallFirst": "Щоб вибрати голос, спочатку встановіть «Монгольський голос» нижче.",
+  "speechToTextProviderNemotronMn": "Nemotron монгольська v13",
+  "speechToTextNemotronDescription": "Nemotron монгольська v13 працює повністю офлайн на CPU — за вимірами приблизно у 12 разів швидше за реальний час.",
+  "speechToTextNemotronInstallHint": "Модель Nemotron ще не встановлено — встановіть її в картці «Монгольський голос».",
+  "mongolVoice": {
+    "title": "Монгольський голос",
+    "description": "Повністю офлайн монгольське мовлення на CPU: синтез приблизно у 5 разів, розпізнавання приблизно у 12 разів швидше за реальний час (виміряно).",
+    "componentSttRuntime": "Середовище розпізнавання мовлення (audio.cpp)",
+    "componentSttModel": "Модель розпізнавання Nemotron (монгольська)",
+    "componentTtsBundle": "Пакет синтезу мовлення kitten-mn",
+    "stateInstalled": "Встановлено",
+    "stateNotInstalled": "Не встановлено",
+    "stateDownloading": "Завантаження…",
+    "stateFinalizing": "Встановлення…",
+    "installAll": "Встановити",
+    "cancel": "Скасувати",
+    "totalDownload": "Буде завантажено {{size}}",
+    "sizeMb": "{{size}} МБ",
+    "installed": "Усі компоненти встановлено",
+    "installError": "Не вдалося встановити",
+    "unsupported": "Поки недоступно на цій платформі (наразі лише Windows x64)."
+  },
   "mcp": "Інтеграція MCP",
   "imageGenerationModel": "Модель для зображень",
   "imageGenerationGuide": "Посібник з налаштування моделі зображень",
@@ -2792,5 +2816,7 @@
     }
   },
   "deferUpdateWhileBusy": "Відкладати оновлення під час роботи",
-  "deferUpdateWhileBusyDesc": "Чекає завершення активних чатів, запланованих завдань і команд, перш ніж перезапускатися для оновлення. Оновлення все одно застосовується в режимі очікування або під час виходу."
+  "deferUpdateWhileBusyDesc": "Чекає завершення активних чатів, запланованих завдань і команд, перш ніж перезапускатися для оновлення. Оновлення все одно застосовується в режимі очікування або під час виходу.",
+  "textToSpeechTestPhraseKittenMn": "Сайн байна уу! Энэ бол монгол дуу хоолойн туршилт.",
+  "textToSpeechVoiceListAfterFirstSpeak": "Список голосів з'явиться після першого відтворення — голосовий сервер запускається за потреби."
 }

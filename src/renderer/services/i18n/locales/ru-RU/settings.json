@@ -1346,6 +1346,30 @@
   "textToSpeechDownloadSuccess": "Модель успешно загружена",
   "textToSpeechDownloadError": "Ошибка загрузки",
   "textToSpeechCancelDownload": "Отмена",
+  "textToSpeechProviderKittenMn": "Монгольский голос — kitten-mn",
+  "textToSpeechVoiceDefault": "Голос пакета по умолчанию",
+  "textToSpeechVoiceInstallFirst": "Чтобы выбрать голос, сначала установите «Монгольский голос» ниже.",
+  "speechToTextProviderNemotronMn": "Nemotron монгольский v13",
+  "speechToTextNemotronDescription": "Nemotron монгольский v13 работает полностью офлайн на CPU — по измерениям примерно в 12 раз быстрее реального времени.",
+  "speechToTextNemotronInstallHint": "Модель Nemotron ещё не установлена — установите её в карточке «Монгольский голос».",
+  "mongolVoice": {
+    "title": "Монгольский голос",
+    "description": "Полностью офлайн монгольская речь на CPU: синтез примерно в 5 раз, распознавание примерно в 12 раз быстрее реального времени (измерено).",
+    "componentSttRuntime": "Среда распознавания речи (audio.cpp)",
+    "componentSttModel": "Модель распознавания Nemotron (монгольский)",
+    "componentTtsBundle": "Пакет синтеза речи kitten-mn",
+    "stateInstalled": "Установлено",
+    "stateNotInstalled": "Не установлено",
+    "stateDownloading": "Загрузка…",
+    "stateFinalizing": "Установка…",
+    "installAll": "Установить",
+    "cancel": "Отмена",
+    "totalDownload": "Будет загружено {{size}}",
+    "sizeMb": "{{size}} МБ",
+    "installed": "Все компоненты установлены",
+    "installError": "Не удалось установить",
+    "unsupported": "Пока недоступно на этой платформе (сейчас только Windows x64)."
+  },
   "mcp": "Интеграция MCP",
   "imageGenerationModel": "Модель для изображений",
   "imageGenerationGuide": "Руководство по настройке модели изображений",
@@ -2793,5 +2817,7 @@
     }
   },
   "deferUpdateWhileBusy": "Откладывать обновления во время работы",
-  "deferUpdateWhileBusyDesc": "Дожидается завершения активных чатов, запланированных задач и команд, прежде чем перезапускаться для обновления. Обновление всё равно применяется в простое или при выходе."
+  "deferUpdateWhileBusyDesc": "Дожидается завершения активных чатов, запланированных задач и команд, прежде чем перезапускаться для обновления. Обновление всё равно применяется в простое или при выходе.",
+  "textToSpeechTestPhraseKittenMn": "Сайн байна уу! Энэ бол монгол дуу хоолойн туршилт.",
+  "textToSpeechVoiceListAfterFirstSpeak": "Список голосов появится после первого воспроизведения — голосовой сервер запускается по требованию."
 }

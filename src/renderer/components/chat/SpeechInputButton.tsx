@@ -62,6 +62,10 @@ const getErrorMessageKey = (errorCode: SpeechInputErrorCode) => {
       return 'conversation.chat.speech.emptyTranscript';
     case 'file-too-large':
       return 'conversation.chat.speech.fileTooLarge';
+    case 'nemotron-not-installed':
+      return 'conversation.chat.speech.nemotronNotInstalled';
+    case 'nemotron-start-failed':
+      return 'conversation.chat.speech.nemotronStartFailed';
     case 'network':
       return 'conversation.chat.speech.networkError';
     case 'not-configured':

@@ -12,8 +12,14 @@ vi.mock('@process/utils/mainLogger', () => ({
   mainWarn: vi.fn(),
 }));
 
+vi.mock('@process/services/voice/mongol/NemotronStt', () => ({
+  NEMOTRON_MN_MODEL: 'nemotron-mn-v13m',
+  NemotronStt: { transcribe: vi.fn() },
+}));
+
 import { ProcessConfig } from '@process/utils/initStorage';
 import { SpeechToTextService } from '@process/bridge/media/voice/SpeechToTextService';
+import { NemotronStt } from '@process/services/voice/mongol/NemotronStt';
 import { mainError, mainLog, mainWarn } from '@process/utils/mainLogger';
 
 describe('SpeechToTextService', () => {
@@ -191,6 +197,43 @@ describe('SpeechToTextService', () => {
       'Resolved speech-to-text provider',
       expect.objectContaining({
         provider: 'deepgram',
+      })
+    );
+  });
+
+  it('routes the nemotron-mn provider to the local NemotronStt service', async () => {
+    vi.mocked(ProcessConfig.get).mockResolvedValue({
+      enabled: true,
+      provider: 'nemotron-mn',
+    });
+    vi.mocked(NemotronStt.transcribe).mockResolvedValue({
+      language: 'mn',
+      model: 'nemotron-mn-v13m',
+      provider: 'nemotron-mn',
+      text: 'сайн байна уу',
+    });
+
+    const request = {
+      audioBuffer: new Uint8Array([1, 2, 3]),
+      fileName: 'sample.webm',
+      mimeType: 'audio/webm',
+    };
+    const result = await SpeechToTextService.transcribe(request);
+
+    expect(NemotronStt.transcribe).toHaveBeenCalledTimes(1);
+    expect(NemotronStt.transcribe).toHaveBeenCalledWith(request);
+    expect(result).toEqual({
+      language: 'mn',
+      model: 'nemotron-mn-v13m',
+      provider: 'nemotron-mn',
+      text: 'сайн байна уу',
+    });
+    expect(mainLog).toHaveBeenCalledWith(
+      '[SpeechToText]',
+      'Resolved speech-to-text provider',
+      expect.objectContaining({
+        model: 'nemotron-mn-v13m',
+        provider: 'nemotron-mn',
       })
     );
   });

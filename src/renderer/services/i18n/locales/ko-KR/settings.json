@@ -1354,6 +1354,30 @@
   "textToSpeechDownloadSuccess": "모델 다운로드 완료",
   "textToSpeechDownloadError": "다운로드 실패",
   "textToSpeechCancelDownload": "취소",
+  "textToSpeechProviderKittenMn": "몽골어 음성 — kitten-mn",
+  "textToSpeechVoiceDefault": "번들 기본 음성",
+  "textToSpeechVoiceInstallFirst": "음성을 선택하려면 먼저 아래의 몽골어 음성을 설치하세요.",
+  "speechToTextProviderNemotronMn": "Nemotron 몽골어 v13",
+  "speechToTextNemotronDescription": "Nemotron 몽골어 v13은 CPU에서 완전히 오프라인으로 동작하며, 실측 기준 실시간보다 약 12배 빠릅니다.",
+  "speechToTextNemotronInstallHint": "Nemotron 몽골어 모델이 아직 설치되지 않았습니다. '몽골어 음성' 카드에서 설치하세요.",
+  "mongolVoice": {
+    "title": "몽골어 음성",
+    "description": "CPU에서 완전히 오프라인으로 동작하는 몽골어 음성: 음성 합성은 실시간보다 약 5배, 음성 인식은 약 12배 빠릅니다(실측).",
+    "componentSttRuntime": "음성 인식 런타임(audio.cpp)",
+    "componentSttModel": "Nemotron 몽골어 인식 모델",
+    "componentTtsBundle": "kitten-mn 음성 합성 번들",
+    "stateInstalled": "설치됨",
+    "stateNotInstalled": "설치되지 않음",
+    "stateDownloading": "다운로드 중…",
+    "stateFinalizing": "설치 중…",
+    "installAll": "설치",
+    "cancel": "취소",
+    "totalDownload": "{{size}}를 다운로드합니다",
+    "sizeMb": "{{size}} MB",
+    "installed": "모든 구성 요소가 설치되었습니다",
+    "installError": "설치에 실패했습니다",
+    "unsupported": "이 플랫폼에서는 아직 사용할 수 없습니다(현재 Windows x64만 지원)."
+  },
   "mcp": "MCP 통합",
   "imageGenerationModel": "이미지 모델",
   "imageGenerationGuide": "이미지 모델 설정 가이드",
@@ -2791,5 +2815,7 @@
     }
   },
   "deferUpdateWhileBusy": "작업 중 업데이트 연기",
-  "deferUpdateWhileBusyDesc": "진행 중인 채팅, 예약된 작업, 팀이 끝날 때까지 기다린 후 업데이트를 위해 다시 시작합니다. 업데이트는 유휴 상태이거나 종료할 때 그대로 적용됩니다."
+  "deferUpdateWhileBusyDesc": "진행 중인 채팅, 예약된 작업, 팀이 끝날 때까지 기다린 후 업데이트를 위해 다시 시작합니다. 업데이트는 유휴 상태이거나 종료할 때 그대로 적용됩니다.",
+  "textToSpeechTestPhraseKittenMn": "Сайн байна уу! Энэ бол монгол дуу хоолойн туршилт.",
+  "textToSpeechVoiceListAfterFirstSpeak": "음성 목록은 첫 재생 후에 표시됩니다 — 음성 서버는 필요할 때 시작됩니다."
 }

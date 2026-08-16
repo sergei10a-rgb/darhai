@@ -1354,6 +1354,30 @@
   "textToSpeechDownloadSuccess": "Model başarıyla indirildi",
   "textToSpeechDownloadError": "İndirme başarısız",
   "textToSpeechCancelDownload": "İptal",
+  "textToSpeechProviderKittenMn": "Moğolca ses — kitten-mn",
+  "textToSpeechVoiceDefault": "Paketin varsayılan sesi",
+  "textToSpeechVoiceInstallFirst": "Bir ses seçmek için önce aşağıdaki Moğolca sesi yükleyin.",
+  "speechToTextProviderNemotronMn": "Nemotron Moğolca v13",
+  "speechToTextNemotronDescription": "Nemotron Moğolca v13, CPU üzerinde tamamen çevrimdışı çalışır — ölçümlere göre gerçek zamandan yaklaşık 12 kat hızlıdır.",
+  "speechToTextNemotronInstallHint": "Nemotron Moğolca modeli henüz yüklü değil — «Moğolca ses» kartından yükleyin.",
+  "mongolVoice": {
+    "title": "Moğolca ses",
+    "description": "CPU üzerinde tamamen çevrimdışı Moğolca konuşma: sentez gerçek zamandan yaklaşık 5 kat, tanıma yaklaşık 12 kat hızlı (ölçüldü).",
+    "componentSttRuntime": "Konuşma tanıma çalışma zamanı (audio.cpp)",
+    "componentSttModel": "Nemotron Moğolca tanıma modeli",
+    "componentTtsBundle": "kitten-mn konuşma sentezi paketi",
+    "stateInstalled": "Yüklü",
+    "stateNotInstalled": "Yüklü değil",
+    "stateDownloading": "İndiriliyor…",
+    "stateFinalizing": "Yükleniyor…",
+    "installAll": "Yükle",
+    "cancel": "İptal",
+    "totalDownload": "{{size}} indirilecek",
+    "sizeMb": "{{size}} MB",
+    "installed": "Tüm bileşenler yüklü",
+    "installError": "Yükleme başarısız",
+    "unsupported": "Bu platformda henüz kullanılamıyor (şu an yalnızca Windows x64)."
+  },
   "mcp": "MCP Entegrasyonu",
   "imageGenerationModel": "Görüntü Modeli",
   "imageGenerationGuide": "Görüntü Modeli Kurulum Rehberi",
@@ -2789,5 +2813,7 @@
     }
   },
   "deferUpdateWhileBusy": "Meşgulken güncellemeleri ertele",
-  "deferUpdateWhileBusyDesc": "Güncelleme için yeniden başlatmadan önce etkin sohbetlerin, zamanlanmış görevlerin ve ekiplerin bitmesini bekler. Güncelleme boşta veya çıkışta yine de uygulanır."
+  "deferUpdateWhileBusyDesc": "Güncelleme için yeniden başlatmadan önce etkin sohbetlerin, zamanlanmış görevlerin ve ekiplerin bitmesini bekler. Güncelleme boşta veya çıkışta yine de uygulanır.",
+  "textToSpeechTestPhraseKittenMn": "Сайн байна уу! Энэ бол монгол дуу хоолойн туршилт.",
+  "textToSpeechVoiceListAfterFirstSpeak": "Ses listesi ilk oynatmadan sonra görünür — ses sunucusu gerektiğinde başlar."
 }

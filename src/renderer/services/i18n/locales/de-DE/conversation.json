@@ -232,7 +232,21 @@
       "permissionDenied": "Mikrofonberechtigung wurde verweigert",
       "recordingUnsupported": "Live-Aufnahme wird hier nicht unterstützt. Bitte stattdessen eine Audiodatei hochladen",
       "transcriptionFailed": "Audiotranskription fehlgeschlagen",
-      "genericError": "Spracheingabe fehlgeschlagen. Bitte erneut versuchen"
+      "genericError": "Spracheingabe fehlgeschlagen. Bitte erneut versuchen",
+      "nemotronNotInstalled": "Das mongolische Sprachpaket ist nicht installiert – installieren Sie es unter Einstellungen → Stimme",
+      "nemotronStartFailed": "Die lokale Spracherkennung konnte nicht starten. Versuchen Sie es erneut oder installieren Sie sie unter Einstellungen → Stimme neu"
+    },
+    "tts": {
+      "readAloud": "Vorlesen",
+      "stopReading": "Vorlesen stoppen",
+      "notInstalled": "Die mongolische Stimme ist nicht installiert – installieren Sie sie unter Einstellungen → Stimme",
+      "textTooLong": "Der Text überschreitet das Limit der Sprach-Engine – nur der Anfang wird vorgelesen",
+      "startTimeout": "Die Sprach-Engine brauchte zu lange zum Starten – versuchen Sie es gleich noch einmal",
+      "startFailed": "Die Sprach-Engine konnte nicht starten. Eine Neuinstallation der mongolischen Stimme unter Einstellungen → Stimme kann helfen",
+      "requestFailed": "Die Sprachsynthese ist fehlgeschlagen. Bitte versuchen Sie es erneut",
+      "kokoroRemoved": "Die Kokoro-Stimme wurde entfernt (sie hat nie funktioniert) – wechseln Sie unter Einstellungen → Stimme zur mongolischen Stimme",
+      "systemNativeUnsupported": "Die Systemstimme funktioniert nur unter macOS – wechseln Sie zur mongolischen Stimme",
+      "genericError": "Vorlesen fehlgeschlagen. Bitte versuchen Sie es erneut"
     }
   },
   "sideQuestion": {

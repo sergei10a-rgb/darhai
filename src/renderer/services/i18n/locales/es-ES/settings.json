@@ -1377,6 +1377,30 @@
   "textToSpeechDownloadSuccess": "Modelo descargado correctamente",
   "textToSpeechDownloadError": "Error en la descarga",
   "textToSpeechCancelDownload": "Cancelar",
+  "textToSpeechProviderKittenMn": "Voz mongola — kitten-mn",
+  "textToSpeechVoiceDefault": "Voz predeterminada del paquete",
+  "textToSpeechVoiceInstallFirst": "Instala primero la «Voz mongola» de abajo para elegir una voz.",
+  "speechToTextProviderNemotronMn": "Nemotron mongol v13",
+  "speechToTextNemotronDescription": "Nemotron mongol v13 funciona totalmente sin conexión en la CPU: medido, unas 12 veces más rápido que el tiempo real.",
+  "speechToTextNemotronInstallHint": "El modelo Nemotron aún no está instalado: instálalo desde la tarjeta «Voz mongola».",
+  "mongolVoice": {
+    "title": "Voz mongola",
+    "description": "Habla mongola totalmente sin conexión en la CPU: síntesis unas 5 veces y reconocimiento unas 12 veces más rápido que el tiempo real (medido).",
+    "componentSttRuntime": "Entorno de reconocimiento de voz (audio.cpp)",
+    "componentSttModel": "Modelo de reconocimiento Nemotron (mongol)",
+    "componentTtsBundle": "Paquete de síntesis de voz kitten-mn",
+    "stateInstalled": "Instalado",
+    "stateNotInstalled": "No instalado",
+    "stateDownloading": "Descargando…",
+    "stateFinalizing": "Instalando…",
+    "installAll": "Instalar",
+    "cancel": "Cancelar",
+    "totalDownload": "Se descargarán {{size}}",
+    "sizeMb": "{{size}} MB",
+    "installed": "Todos los componentes están instalados",
+    "installError": "Error al instalar",
+    "unsupported": "Aún no disponible en esta plataforma (por ahora solo Windows x64)."
+  },
   "mcp": "Integración MCP",
   "imageGenerationModel": "Modelo de imagen",
   "imageGenerationGuide": "Guía de configuración del modelo de imagen",
@@ -2791,5 +2815,7 @@
     }
   },
   "deferUpdateWhileBusy": "Aplazar actualizaciones mientras hay actividad",
-  "deferUpdateWhileBusyDesc": "Espera a que terminen los chats activos, las tareas programadas y los equipos antes de reiniciar para actualizar. La actualización se aplica igualmente en reposo o al salir."
+  "deferUpdateWhileBusyDesc": "Espera a que terminen los chats activos, las tareas programadas y los equipos antes de reiniciar para actualizar. La actualización se aplica igualmente en reposo o al salir.",
+  "textToSpeechTestPhraseKittenMn": "Сайн байна уу! Энэ бол монгол дуу хоолойн туршилт.",
+  "textToSpeechVoiceListAfterFirstSpeak": "La lista de voces aparece tras la primera reproducción: el servidor de voz se inicia bajo demanda."
 }

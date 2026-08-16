@@ -233,6 +233,32 @@ vi.mock('@/common/adapter/ipcBridge', () => ({
       invoke: vi.fn(() => Promise.resolve({ success: true, data: [] })),
     },
   },
+  // The Mongolian voice surface the install card + provider selects talk to.
+  // Everything reports "not installed / no voices" - these tests exercise the
+  // image-gen + STT credential flows, not the voice install flow.
+  mongolVoice: {
+    status: {
+      invoke: vi.fn(() =>
+        Promise.resolve({
+          components: {
+            sttRuntime: { supported: true, pinned: true, installed: false, tag: 't', bytes: 0 },
+            sttModel: { supported: true, pinned: true, installed: false, tag: 't', bytes: 0 },
+            ttsBundle: { supported: true, pinned: true, installed: false, tag: 't', bytes: 0 },
+          },
+          sttReady: false,
+          ttsReady: false,
+        })
+      ),
+    },
+    install: { invoke: vi.fn(() => Promise.resolve({ ok: true, errorCode: null, errorMessage: null })) },
+    cancel: { invoke: vi.fn(() => Promise.resolve({ cancelled: false })) },
+    ttsVoices: { invoke: vi.fn(() => Promise.resolve({ voices: [] })) },
+    onProgress: { on: vi.fn(() => vi.fn()) },
+  },
+  voiceSynth: {
+    speak: { invoke: vi.fn(() => Promise.resolve({ data: [], mimeType: 'audio/wav' })) },
+    stop: { invoke: vi.fn() },
+  },
 }));
 
 vi.mock('@/renderer/hooks/mcp', () => ({
@@ -383,6 +409,11 @@ describe('ToolsModalContent image generation status refresh', () => {
 
   it('shows required and optional markers for OpenAI and Deepgram speech-to-text fields', async () => {
     render(<ToolsModalContent />);
+
+    // The default provider is now the local nemotron-mn (no credential
+    // fields) - switch to OpenAI first, the provider this test inspects.
+    const openAiProviderSelect = await screen.findByLabelText(/settings\.speechToTextProvider/);
+    fireEvent.change(openAiProviderSelect, { target: { value: 'openai' } });
 
     await screen.findByLabelText(/settings\.speechToTextApiKey/);
 

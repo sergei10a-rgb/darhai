@@ -227,7 +227,21 @@
       "permissionDenied": "Mikrofon izni reddedildi",
       "recordingUnsupported": "Bu ortamda doğrudan kayıt desteklenmiyor. Lütfen bir ses dosyası yükleyin",
       "transcriptionFailed": "Ses yazıya dönüştürülemedi",
-      "genericError": "Sesli giriş başarısız oldu. Lütfen tekrar deneyin"
+      "genericError": "Sesli giriş başarısız oldu. Lütfen tekrar deneyin",
+      "nemotronNotInstalled": "Moğolca ses paketi yüklü değil — Ayarlar → Ses bölümünden yükleyin",
+      "nemotronStartFailed": "Yerel konuşma tanıyıcı başlatılamadı. Yeniden deneyin veya Ayarlar → Ses bölümünden yeniden yükleyin"
+    },
+    "tts": {
+      "readAloud": "Sesli oku",
+      "stopReading": "Okumayı durdur",
+      "notInstalled": "Moğolca ses yüklü değil — Ayarlar → Ses bölümünden yükleyin",
+      "textTooLong": "Metin ses motorunun sınırını aşıyor — yalnızca başlangıcı okunacak",
+      "startTimeout": "Ses motorunun başlatılması çok uzun sürdü — birazdan yeniden deneyin",
+      "startFailed": "Ses motoru başlatılamadı. Ayarlar → Ses bölümünden Moğolca sesi yeniden yüklemek sorunu çözebilir",
+      "requestFailed": "Konuşma sentezi başarısız oldu. Lütfen yeniden deneyin",
+      "kokoroRemoved": "Kokoro sesi kaldırıldı (hiç çalışmadı) — Ayarlar → Ses bölümünden Moğolca sese geçin",
+      "systemNativeUnsupported": "Sistem sesi yalnızca macOS'ta çalışır — Moğolca sese geçin",
+      "genericError": "Sesli okuma başarısız oldu. Lütfen yeniden deneyin"
     }
   },
   "sideQuestion": {

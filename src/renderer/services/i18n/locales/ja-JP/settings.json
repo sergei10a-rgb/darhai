@@ -1354,6 +1354,30 @@
   "textToSpeechDownloadSuccess": "モデルのダウンロードが完了しました",
   "textToSpeechDownloadError": "ダウンロードに失敗しました",
   "textToSpeechCancelDownload": "キャンセル",
+  "textToSpeechProviderKittenMn": "モンゴル語音声 — kitten-mn",
+  "textToSpeechVoiceDefault": "バンドルの既定音声",
+  "textToSpeechVoiceInstallFirst": "音声を選ぶには、まず下の「モンゴル語音声」をインストールしてください。",
+  "speechToTextProviderNemotronMn": "Nemotron モンゴル語 v13",
+  "speechToTextNemotronDescription": "Nemotron モンゴル語 v13 は CPU 上で完全オフラインで動作します。実測で実時間の約 12 倍の速さです。",
+  "speechToTextNemotronInstallHint": "Nemotron モンゴル語モデルはまだインストールされていません。「モンゴル語音声」カードからインストールしてください。",
+  "mongolVoice": {
+    "title": "モンゴル語音声",
+    "description": "CPU 上で完全オフラインのモンゴル語音声：音声合成は実時間の約 5 倍、音声認識は約 12 倍の速さです（実測）。",
+    "componentSttRuntime": "音声認識ランタイム（audio.cpp）",
+    "componentSttModel": "Nemotron モンゴル語認識モデル",
+    "componentTtsBundle": "kitten-mn 音声合成バンドル",
+    "stateInstalled": "インストール済み",
+    "stateNotInstalled": "未インストール",
+    "stateDownloading": "ダウンロード中…",
+    "stateFinalizing": "インストール中…",
+    "installAll": "インストール",
+    "cancel": "キャンセル",
+    "totalDownload": "{{size}} をダウンロードします",
+    "sizeMb": "{{size}} MB",
+    "installed": "すべてのコンポーネントがインストール済みです",
+    "installError": "インストールに失敗しました",
+    "unsupported": "このプラットフォームではまだ利用できません（現在は Windows x64 のみ）。"
+  },
   "mcp": "MCP統合",
   "imageGenerationModel": "画像モデル",
   "imageGenerationGuide": "画像モデル設定ガイド",
@@ -2791,5 +2815,7 @@
     }
   },
   "deferUpdateWhileBusy": "作業中はアップデートを延期",
-  "deferUpdateWhileBusyDesc": "進行中のチャット、スケジュールされたタスク、チームの完了を待ってから再起動して更新します。アイドル時または終了時には引き続き適用されます。"
+  "deferUpdateWhileBusyDesc": "進行中のチャット、スケジュールされたタスク、チームの完了を待ってから再起動して更新します。アイドル時または終了時には引き続き適用されます。",
+  "textToSpeechTestPhraseKittenMn": "Сайн байна уу! Энэ бол монгол дуу хоолойн туршилт.",
+  "textToSpeechVoiceListAfterFirstSpeak": "音声リストは最初の再生後に表示されます。音声サーバーは必要時に起動します。"
 }

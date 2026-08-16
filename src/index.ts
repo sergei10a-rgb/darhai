@@ -1161,6 +1161,11 @@ type CleanupModules = {
   // Kill any spawned OmniRoute (C2 one-click runtime) from before-quit so the
   // Next.js server does not leak and hold port 20128 after the app quits.
   omniroute: typeof import('@process/services/omnirouteGateway/omnirouteRuntimeSingleton');
+  // Stop the Mongolian voice servers (audio.cpp STT + kitten-mn TTS) from
+  // before-quit so neither loopback server outlives the app - same class as
+  // the cookbook llama-server teardown above.
+  mongolStt: typeof import('@process/services/voice/mongol/AudioCppServer');
+  mongolTts: typeof import('@process/services/voice/mongol/KittenTtsServer');
   // Last-resort sweep for engine children (wcore / ACP / OpenClaw gateway) that
   // the graceful per-agent teardown did not finish killing. See childRegistry.ts.
   agentChildren: typeof import('@process/agent/childRegistry');
@@ -1182,6 +1187,8 @@ const prefetchCleanupModules = (): Promise<CleanupModules> => {
     import('@process/services/calendar/calendarServiceSingleton'),
     import('@process/services/cookbook/cookbookServeSingleton'),
     import('@process/services/omnirouteGateway/omnirouteRuntimeSingleton'),
+    import('@process/services/voice/mongol/AudioCppServer'),
+    import('@process/services/voice/mongol/KittenTtsServer'),
     import('@process/agent/childRegistry'),
   ]).then(
     ([
@@ -1198,6 +1205,8 @@ const prefetchCleanupModules = (): Promise<CleanupModules> => {
       calendar,
       cookbook,
       omniroute,
+      mongolStt,
+      mongolTts,
       agentChildren,
     ]) => ({
       ambient,
@@ -1213,6 +1222,8 @@ const prefetchCleanupModules = (): Promise<CleanupModules> => {
       calendar,
       cookbook,
       omniroute,
+      mongolStt,
+      mongolTts,
       agentChildren,
     })
   );
@@ -1465,6 +1476,21 @@ const runQuitCleanup = async (): Promise<void> => {
       PER_STEP_TIMEOUT_MS
     );
 
+    // Stop the Mongolian voice servers (audio.cpp STT + kitten-mn TTS) so
+    // neither Darhai-owned loopback server outlives the app. Both stops are
+    // tree-kills on Windows (taskkill /T /F), same discipline as the cookbook
+    // llama-server step above.
+    const mongolVoiceStep = withTimeout(
+      'mongolVoice.stopServers',
+      (async () => {
+        const stops: Promise<void>[] = [];
+        if (mods.mongolStt) stops.push(mods.mongolStt.stopAudioCppServer());
+        if (mods.mongolTts) stops.push(mods.mongolTts.kittenTtsServer.stop());
+        await Promise.all(stops);
+      })(),
+      PER_STEP_TIMEOUT_MS
+    );
+
     // Worker processes after DB + cron (M18 made workerTaskManager.clear() properly
     // await per-agent kill() with its own 3.5s bound).
     const workerStep = withTimeout('workerTaskManager.clear', workerTaskManager.clear(), PER_STEP_TIMEOUT_MS);
@@ -1545,6 +1571,7 @@ const runQuitCleanup = async (): Promise<void> => {
       calendarStep,
       cookbookStep,
       omnirouteStep,
+      mongolVoiceStep,
       workerStep,
       ambientStep,
       teamStep,

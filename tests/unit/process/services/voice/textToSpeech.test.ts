@@ -6,12 +6,14 @@
 
 import { DEFAULT_TTS_CONFIG, normalizeTextToSpeechConfig } from '@/common/types/ttsTypes';
 import type { TextToSpeechConfig } from '@/common/types/ttsTypes';
+import { KokoroLocal, KokoroLocalUnavailableError, type KokoroLocalRuntime } from '@process/services/voice/KokoroLocal';
 import {
-  KokoroLocal,
-  KokoroLocalUnavailableError,
-  type KokoroLocalRuntime,
-} from '@process/services/voice/KokoroLocal';
-import { synthesize } from '@process/services/voice/TextToSpeechService';
+  KokoroRemovedError,
+  SystemNativeUnsupportedError,
+  synthesize,
+} from '@process/services/voice/TextToSpeechService';
+import type { KittenTtsRuntime } from '@process/services/voice/mongol/KittenTts';
+import type { KittenHttpResponse, KittenTtsSession } from '@process/services/voice/mongol/KittenTtsServer';
 import { describe, expect, it, vi } from 'vitest';
 
 // ---------------------------------------------------------------------------
@@ -30,6 +32,35 @@ const fakeKokoroRuntime = (overrides: Partial<KokoroLocalRuntime> = {}): KokoroL
   resolveModel: (voice) => `/fake/kokoro-models/${voice}.onnx`,
   run: vi.fn(async () => new Uint8Array([82, 73, 70, 70])), // fake WAV header bytes
   ...overrides,
+});
+
+const fakeKittenSession: KittenTtsSession = {
+  baseUrl: 'http://127.0.0.1:5555',
+  manifest: {
+    name: 'kitten-mn-tts',
+    version: 1,
+    api: 'kitten-v1',
+    entry: 'python/python.exe',
+    args: ['service/server.py', '--onnx', '--port', '{port}'],
+    healthPath: '/api/status',
+    speakPath: '/api/speak',
+  },
+};
+
+const fakeKittenWav = (): ArrayBuffer => {
+  const buf = new ArrayBuffer(4);
+  new Uint8Array(buf).set([82, 73, 70, 70]); // 'RIFF'
+  return buf;
+};
+
+const fakeKittenRuntime = (): KittenTtsRuntime => ({
+  server: { ensureRunning: async () => fakeKittenSession, stop: async () => {}, isRunning: () => true },
+  fetch: async (): Promise<KittenHttpResponse> => ({
+    ok: true,
+    status: 200,
+    arrayBuffer: async () => fakeKittenWav(),
+    json: async () => ({}),
+  }),
 });
 
 // ---------------------------------------------------------------------------
@@ -86,29 +117,27 @@ describe('KokoroLocal.synthesize', () => {
   it('throws KokoroLocalUnavailableError when the binary is missing', async () => {
     const runtime = fakeKokoroRuntime({ resolveBinary: () => null });
     await expect(KokoroLocal.synthesize('hi', baseConfig(), runtime)).rejects.toBeInstanceOf(
-      KokoroLocalUnavailableError,
+      KokoroLocalUnavailableError
     );
   });
 
   it('throws KokoroLocalUnavailableError when the model is missing', async () => {
     const runtime = fakeKokoroRuntime({ resolveModel: () => null });
     await expect(KokoroLocal.synthesize('hi', baseConfig(), runtime)).rejects.toBeInstanceOf(
-      KokoroLocalUnavailableError,
+      KokoroLocalUnavailableError
     );
   });
 
   it('uses a coded error message the TTS service can surface to the user', async () => {
     const runtime = fakeKokoroRuntime({ resolveBinary: () => null });
-    await expect(KokoroLocal.synthesize('hi', baseConfig(), runtime)).rejects.toThrow(
-      /^TTS_KOKORO_LOCAL_UNAVAILABLE/,
-    );
+    await expect(KokoroLocal.synthesize('hi', baseConfig(), runtime)).rejects.toThrow(/^TTS_KOKORO_LOCAL_UNAVAILABLE/);
   });
 
   it('does not invoke run when the binary is missing', async () => {
     const run = vi.fn(async () => new Uint8Array(0));
     const runtime = fakeKokoroRuntime({ resolveBinary: () => null, run });
     await expect(KokoroLocal.synthesize('hi', baseConfig(), runtime)).rejects.toBeInstanceOf(
-      KokoroLocalUnavailableError,
+      KokoroLocalUnavailableError
     );
     expect(run).not.toHaveBeenCalled();
   });
@@ -119,31 +148,38 @@ describe('KokoroLocal.synthesize', () => {
 // ---------------------------------------------------------------------------
 
 describe('synthesize (TextToSpeechService)', () => {
-  it('routes kokoro-local to KokoroLocal and returns audio', async () => {
-    const runtime = fakeKokoroRuntime();
-    const result = await synthesize('Hello', baseConfig({ provider: 'kokoro-local' }), runtime);
+  it('routes kitten-mn to KittenTts and returns WAV audio', async () => {
+    const result = await synthesize('Сайн уу', baseConfig({ provider: 'kitten-mn' }), fakeKittenRuntime());
     expect(result.data.length).toBeGreaterThan(0);
+    expect(result.mimeType).toBe('audio/wav');
   });
 
-  it('routes system-native on non-macOS without crashing and returns empty audio', async () => {
-    // Guard: skip the real `say` invocation by only asserting the fallback path shape.
-    // On macOS in CI the `say` binary is present, but we only test the non-macOS branch here
-    // by mocking process.platform.
+  it('throws the typed TTS_KOKORO_REMOVED error for kokoro-local instead of invoking KokoroLocal', async () => {
+    const err = await synthesize('Hello', baseConfig({ provider: 'kokoro-local' })).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(KokoroRemovedError);
+    expect((err as KokoroRemovedError).code).toBe('TTS_KOKORO_REMOVED');
+    expect((err as Error).message).toMatch(/^TTS_KOKORO_REMOVED/);
+    // The message must explain WHY (404 binaries, non-existent CLI) so the
+    // user is not left guessing - see docs/architecture/mongolian-voice.md.
+    expect((err as Error).message).toContain('404');
+  });
+
+  it('refuses system-native on non-macOS with a typed error instead of silent empty audio', async () => {
+    // The old contract returned zero bytes of "audio" here, which made a
+    // misconfigured Windows install look healthy - the exact failure mode
+    // that kept the inherited voice layer broken unnoticed (adversarial
+    // review finding Б-6). The typed error is the stronger contract.
     const originalPlatform = process.platform;
     Object.defineProperty(process, 'platform', { value: 'linux', configurable: true });
     try {
-      const result = await synthesize('Hello', baseConfig({ provider: 'system-native' }));
-      expect(result.data).toBeInstanceOf(Uint8Array);
-      expect(result.mimeType).toBe('audio/wav');
+      const err = await synthesize('Hello', baseConfig({ provider: 'system-native' })).then(
+        () => null,
+        (e: unknown) => e
+      );
+      expect(err).toBeInstanceOf(SystemNativeUnsupportedError);
+      expect((err as SystemNativeUnsupportedError).code).toBe('TTS_SYSTEM_NATIVE_UNSUPPORTED');
     } finally {
       Object.defineProperty(process, 'platform', { value: originalPlatform, configurable: true });
     }
-  });
-
-  it('propagates KokoroLocalUnavailableError from the kokoro-local provider', async () => {
-    const runtime = fakeKokoroRuntime({ resolveBinary: () => null });
-    await expect(synthesize('Hi', baseConfig({ provider: 'kokoro-local' }), runtime)).rejects.toBeInstanceOf(
-      KokoroLocalUnavailableError,
-    );
   });
 });
