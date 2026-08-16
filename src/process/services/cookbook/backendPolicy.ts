@@ -48,6 +48,7 @@
  */
 
 import type { HardwareBackend, HardwarePlatform } from '@process/services/hwfit';
+import { SERVEABLE_COOKBOOK_BACKENDS } from '@/common/types/cookbook';
 import type { CookbookBackend, CookbookBackendSelection } from '@/common/types/cookbook';
 
 /**
@@ -188,19 +189,54 @@ export function isLmStudioProvisionable(input: BackendPolicyInput): boolean {
  * LM Studio whenever it is installed but idle - so a machine that already has
  * Ollama can still choose either.
  */
+/**
+ * Per-backend answers to the two questions, as exhaustive maps rather than an
+ * `if` chain.
+ *
+ * WHY A MAP. An `if` chain compiles fine when a backend is added to the union
+ * and forgotten here — the new member simply never appears in any host's
+ * `viable`, so it is in the dropdown for nobody and no error is raised
+ * anywhere. A `Record` over the union cannot be missing a member: `tsc` refuses
+ * the file. That moves this site from "a test catches it" to "it does not
+ * compile", which is the same standard `BACKEND_LABEL_KEY` and `VALID_BACKENDS`
+ * already meet.
+ *
+ * Iteration order comes from {@link SERVEABLE_COOKBOOK_BACKENDS}, which is the
+ * ranking — vllm > ollama > lm-studio > llama-server — so the ranking lives in
+ * exactly one place instead of being re-stated by the order of the branches.
+ */
+const VIABLE_WHEN: Record<Exclude<CookbookBackend, 'none'>, (input: BackendPolicyInput) => boolean> = {
+  vllm: isVllmViable,
+  ollama: (input) => input.available.ollama === true,
+  'lm-studio': isLmStudioViable,
+  'llama-server': (input) => input.available.llamaServer === true,
+};
+
+/**
+ * When Darhai could make a backend serve that is not serving now. The act
+ * differs per backend — a download for llama.cpp, a request to the user for LM
+ * Studio — but the question is the same, so it gets the same exhaustive shape.
+ * A backend Darhai cannot provision answers `false` explicitly rather than
+ * being absent, because "absent" is what this map exists to make impossible.
+ */
+const PROVISIONABLE_WHEN: Record<Exclude<CookbookBackend, 'none'>, (input: BackendPolicyInput) => boolean> = {
+  vllm: () => false,
+  ollama: () => false,
+  'lm-studio': isLmStudioProvisionable,
+  'llama-server': (input) => input.available.llamaServer === false && input.canProvisionLlamaServer === true,
+};
+
 export function selectBackend(input: BackendPolicyInput): CookbookBackendSelection {
   const viable: CookbookBackend[] = [];
-  if (isVllmViable(input)) viable.push('vllm');
-  if (input.available.ollama) viable.push('ollama');
-  if (isLmStudioViable(input)) viable.push('lm-studio');
-  if (input.available.llamaServer) viable.push('llama-server');
-
-  // Same order as `viable`, so the chooser reads as one ranked list once the UI
-  // concatenates the two.
   const provisionable: CookbookBackend[] = [];
-  if (isLmStudioProvisionable(input)) provisionable.push('lm-studio');
-  if (input.available.llamaServer === false && input.canProvisionLlamaServer === true) {
-    provisionable.push('llama-server');
+  // One pass in ranking order, so `viable` and `provisionable` are both ranked
+  // and the chooser reads as one list once the UI concatenates them.
+  for (const backend of SERVEABLE_COOKBOOK_BACKENDS) {
+    if (VIABLE_WHEN[backend](input) === true) {
+      viable.push(backend);
+    } else if (PROVISIONABLE_WHEN[backend](input) === true) {
+      provisionable.push(backend);
+    }
   }
   return { chosen: viable[0] ?? 'none', viable, provisionable };
 }

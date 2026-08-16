@@ -352,6 +352,15 @@ export class CookbookServeService {
       // Studio serves what it already holds, so a catalog model with no GGUF
       // source is not a reason to refuse - only "LM Studio does not have it" is.
       if (chosen === 'lm-studio') return await this.serveViaLmStudio(modelId, model);
+      if (chosen === 'none') return await this.serveDegraded(modelId, vramGb);
+
+      // Every serveable backend is dispatched above, so `chosen` is `never` by
+      // the time control reaches here. That assignment is the point: adding a
+      // member to CookbookBackend without a branch above stops COMPILING here,
+      // instead of falling into serveDegraded - the "copy this shell command"
+      // path meant for a host with no backend at all - and reporting that as
+      // the outcome of the user's explicit pick.
+      const _exhaustive: never = chosen;
       return await this.serveDegraded(modelId, vramGb);
     } catch (err) {
       return this.fail(modelId, this.status.backend, err instanceof Error ? err.message : String(err));

@@ -17,6 +17,7 @@ import type {
   LlamaRuntimePlan,
 } from '@/common/types/llamacpp';
 import { formatFileSize } from '@/renderer/services/FileService';
+import type { I18nKey } from '@/renderer/services/i18n/i18n-keys';
 import type { CookbookController } from './useCookbookServe';
 import type { LlamaRuntimeUiController } from './useLlamaRuntime';
 import styles from './ModelAdvisor.module.css';
@@ -30,13 +31,22 @@ type CookbookServeControlsProps = {
 /**
  * i18n key per backend (the value is DATA, never interpolated into a command).
  *
- * Exported for the same reason as {@link FALLBACK_LABEL_KEY} below: the
- * `Record<CookbookBackend, string>` makes tsc demand an ENTRY for every
- * backend, but nothing in the type system demands that the entry's key exists
- * in the thirteen locale files - a missing one renders the key itself as screen
- * text. `backendSurfaceCoverage.dom.test.tsx` iterates this map to close that.
+ * TWO things are compiler-enforced here, and they are different guarantees.
+ * `Record<CookbookBackend, …>` demands an ENTRY for every backend, so a new
+ * union member cannot be label-less. Typing the VALUE as `I18nKey` - the
+ * generated union of every key that actually exists in the locale files -
+ * additionally demands that the entry names a real key, which `string` did not:
+ * a typo, or a key added to the map before it was added to the 13 locale files,
+ * used to compile and render the key itself as screen text, because i18next
+ * falls back to the key.
+ *
+ * `backendSurfaceCoverage.dom.test.tsx` still iterates this map. It is now a
+ * second line rather than the only one: `I18nKey` is regenerated from the
+ * locale files by `scripts/generate-i18n-types.js`, so a stale checked-in
+ * `i18n-keys.d.ts` could in principle vouch for a key that has since been
+ * deleted, and the test reads the live files.
  */
-export const BACKEND_LABEL_KEY: Record<CookbookBackend, string> = {
+export const BACKEND_LABEL_KEY: Record<CookbookBackend, I18nKey> = {
   vllm: 'modelAdvisor.cookbook.backend.vllm',
   ollama: 'modelAdvisor.cookbook.backend.ollama',
   'lm-studio': 'modelAdvisor.cookbook.backend.lmStudio',
@@ -54,12 +64,20 @@ const CANCELLED_CODE = 'LLAMACPP_CANCELLED';
 /**
  * Phase -> label key.
  *
- * A `Record` over the union, not a `phase.${p}` template: adding a phase to
- * `LlamaRuntimePhase` now fails `tsc` right here instead of shipping a cell
- * that renders its own key name in 13 languages. This repo has already shipped
- * that bug once as `workflows.count`, and a template string cannot be checked.
+ * Two compiler guarantees, and every other map below follows the same shape.
+ *
+ * `Record` over the union, not a `phase.${p}` template: adding a phase to
+ * `LlamaRuntimePhase` fails `tsc` right here instead of shipping a cell that
+ * renders its own key name in 13 languages. This repo has already shipped that
+ * bug once as `workflows.count`, and a template string cannot be checked.
+ *
+ * `I18nKey` rather than `string` as the VALUE: the entry must name a key that
+ * exists. `string` accepted a typo, and accepted a key written here before it
+ * was added to the locale files - both of which compile, pass lint, and render
+ * the key itself on screen, because i18next falls back to the key when it
+ * cannot resolve one. Same failure as above, reached by a different route.
  */
-export const PHASE_LABEL_KEY: Record<LlamaRuntimePhase, string> = {
+export const PHASE_LABEL_KEY: Record<LlamaRuntimePhase, I18nKey> = {
   resolving: 'modelAdvisor.runtime.phase.resolving',
   downloading: 'modelAdvisor.runtime.phase.downloading',
   verifying: 'modelAdvisor.runtime.phase.verifying',
@@ -73,7 +91,7 @@ export const PHASE_LABEL_KEY: Record<LlamaRuntimePhase, string> = {
  * for why this is a Record). "NVIDIA CUDA" names a build variant; the copy
  * behind these keys says what it does to their models instead.
  */
-export const ACCEL_LABEL_KEY: Record<LlamaRuntimeAcceleration, string> = {
+export const ACCEL_LABEL_KEY: Record<LlamaRuntimeAcceleration, I18nKey> = {
   cuda: 'modelAdvisor.runtime.accel.cuda',
   rocm: 'modelAdvisor.runtime.accel.rocm',
   metal: 'modelAdvisor.runtime.accel.metal',
@@ -81,7 +99,7 @@ export const ACCEL_LABEL_KEY: Record<LlamaRuntimeAcceleration, string> = {
 };
 
 /** Why this machine is not getting its GPU (see PHASE_LABEL_KEY). */
-export const FALLBACK_LABEL_KEY: Record<LlamaRuntimeFallbackCode, string> = {
+export const FALLBACK_LABEL_KEY: Record<LlamaRuntimeFallbackCode, I18nKey> = {
   METAL_NOT_ON_THIS_PLATFORM: 'modelAdvisor.runtime.fallback.METAL_NOT_ON_THIS_PLATFORM',
   METAL_REQUIRES_APPLE_SILICON: 'modelAdvisor.runtime.fallback.METAL_REQUIRES_APPLE_SILICON',
   NO_GPU_BUILD_FOR_TARGET: 'modelAdvisor.runtime.fallback.NO_GPU_BUILD_FOR_TARGET',
@@ -97,7 +115,7 @@ export const FALLBACK_LABEL_KEY: Record<LlamaRuntimeFallbackCode, string> = {
  * process computing them and the transport dropping them on the floor is the
  * same silence as no message at all.
  */
-export const NOTE_LABEL_KEY: Record<LlamaRuntimeNoteCode, string> = {
+export const NOTE_LABEL_KEY: Record<LlamaRuntimeNoteCode, I18nKey> = {
   CUDA_LINE_OLDER_FOR_DRIVER: 'modelAdvisor.runtime.note.CUDA_LINE_OLDER_FOR_DRIVER',
   CUDA_LINE_UNVERIFIED: 'modelAdvisor.runtime.note.CUDA_LINE_UNVERIFIED',
   VULKAN_BUILD_NOT_REQUESTABLE: 'modelAdvisor.runtime.note.VULKAN_BUILD_NOT_REQUESTABLE',
@@ -112,7 +130,7 @@ export const NOTE_LABEL_KEY: Record<LlamaRuntimeNoteCode, string> = {
  * connection that drops mid-download, which deserves to say so. The code is
  * still rendered, small and separate, because a bug report needs it.
  */
-export const PROBLEM_KEY: Record<string, string> = {
+export const PROBLEM_KEY: Record<string, I18nKey> = {
   LLAMACPP_DOWNLOAD_FAILED: 'modelAdvisor.runtime.problem.download',
   LLAMACPP_OFFLINE: 'modelAdvisor.runtime.problem.offline',
   LLAMACPP_RELEASE_FETCH_FAILED: 'modelAdvisor.runtime.problem.offline',
@@ -133,7 +151,7 @@ export const PROBLEM_KEY: Record<string, string> = {
 };
 
 /** Used for a code no copy was written for, and for a bare failure with none. */
-export const PROBLEM_UNKNOWN_KEY = 'modelAdvisor.runtime.problem.unknown';
+export const PROBLEM_UNKNOWN_KEY: I18nKey = 'modelAdvisor.runtime.problem.unknown';
 
 /** Codes where pressing the button again cannot help, so no retry is offered. */
 export const PROBLEM_TERMINAL_CODES: readonly string[] = ['LLAMACPP_UNSUPPORTED', 'LLAMACPP_NO_ASSET'];

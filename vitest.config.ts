@@ -51,7 +51,7 @@ export default defineConfig({
   test: {
     globals: true,
     /**
-     * 30 s, not 10 s.
+     * 60 s. Raised from 30 s, which had itself been raised from 10 s.
      *
      * This budget is not "how long may this behaviour take" - almost every test
      * here finishes in milliseconds. It is "how long may this fork wait to be
@@ -60,17 +60,36 @@ export default defineConfig({
      * transforming and importing module graphs, so a single `await import(...)`
      * inside a test body can sit for tens of seconds behind other forks doing
      * the same thing. At 10 s that surfaced as `Test timed out in 10000ms` in
-     * whichever import-heavy file lost the draw that run -
-     * `autoUpdate.integration.test.ts` and `updateBridgeCdnRewrite.test.ts` were
-     * the two most recent - which is indistinguishable from a real hang and
-     * moves from run to run.
+     * whichever import-heavy file lost the draw that run - which is
+     * indistinguishable from a real hang and moves from run to run.
+     *
+     * MEASURED, not raised by feel. Two consecutive full runs failed exactly
+     * four tests - the same four both times, all `Test timed out in 30000ms` -
+     * and all four passed in ~5 s when their files ran alone. Re-running the
+     * whole suite with the ceiling temporarily at 300 s, to observe what the
+     * work actually costs rather than when it gives up:
+     *
+     *   ChannelModelSelectionRestore.dom  16.6 s   <- slowest test in the suite
+     *   skillLibraryRescan                15.8 s   <- had timed out at 30 s
+     *   skillResolverSync                 15.6 s   <- had timed out at 30 s
+     *   skillRecall                       15.1 s
+     *   autoUpdate.integration             9.6 s   <- had timed out at 30 s
+     *   updateBridgeCdnRewrite             9.4 s   <- had timed out at 30 s
+     *
+     * The same work therefore varies about 2x with scheduling luck: 15.8 s on a
+     * lucky run, past 30 s on an unlucky one. 30 s left the slowest files under
+     * 2x of headroom, which cannot absorb a 2x spread - and the suite only
+     * grows (1122 -> 1126 files, 13,586 tests at the time of measuring). 60 s
+     * is ~3.6x the slowest measured test, and is what the `io` project below
+     * already uses for the same reason.
      *
      * Raising it changes no assertion: a test that genuinely never completes
-     * still fails, 20 s later. It only stops the suite from reporting the
-     * machine's load as a product defect.
+     * still fails, 30 s later. It only stops the suite from reporting the
+     * machine's load as a product defect. If four tests time out again at 60 s,
+     * that is a real regression - re-measure rather than raise it again.
      */
-    testTimeout: 30_000,
-    hookTimeout: 30_000,
+    testTimeout: 60_000,
+    hookTimeout: 60_000,
     // Use projects to run different environments (Vitest 4+)
     projects: [
       // Node environment tests (existing tests)
