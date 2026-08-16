@@ -15,6 +15,7 @@
  * socket level (the process can crash between the health check and the POST).
  */
 
+import type { KittenVoiceOption } from '@/common/types/mongolVoice';
 import type { TextToSpeechAudio, TextToSpeechConfig } from '@/common/types/ttsTypes';
 import {
   kittenTtsServer,
@@ -119,11 +120,11 @@ export class KittenTts {
     return { data: bytes, mimeType: 'audio/wav' };
   }
 
-  /** Voice ids the running bundle offers (`voices` from the status endpoint). */
+  /** Voices the running bundle offers (`voices` from the status endpoint). */
   static async listVoices(
     runtime: KittenTtsRuntime = defaultKittenTtsRuntime,
     options?: KittenTtsListVoicesOptions
-  ): Promise<string[]> {
+  ): Promise<KittenVoiceOption[]> {
     // A read-only surface (the settings voice picker) must not spawn a 575 MB
     // python process as a side effect of being looked at: with
     // `startIfNeeded: false` a stopped server simply means "no voices yet".
@@ -139,7 +140,25 @@ export class KittenTts {
     if (status !== null && typeof status === 'object') {
       const voices = (status as Record<string, unknown>).voices;
       if (Array.isArray(voices)) {
-        return voices.filter((v): v is string => typeof v === 'string');
+        // The bundle's status endpoint returns objects like
+        // `{name: 'ref_male.wav', label: 'Батсайхан', gender: 'эр'}` - MEASURED
+        // against the real bundle; a string-only filter here returned [] for
+        // every real voice and the picker never populated. `name` (the full
+        // filename) is exactly what /api/speak accepts as `voice`, so it is
+        // the value; `label` is the human name shown in the picker. Plain
+        // strings are still accepted for forward compatibility.
+        return voices.flatMap((v): KittenVoiceOption[] => {
+          if (typeof v === 'string') return [{ name: v, label: v.replace(/\.wav$/i, '') }];
+          if (v !== null && typeof v === 'object') {
+            const row = v as Record<string, unknown>;
+            if (typeof row.name === 'string' && row.name.length > 0) {
+              const label =
+                typeof row.label === 'string' && row.label.length > 0 ? row.label : row.name.replace(/\.wav$/i, '');
+              return [{ name: row.name, label }];
+            }
+          }
+          return [];
+        });
       }
     }
     return [];

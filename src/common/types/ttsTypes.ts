@@ -29,7 +29,9 @@ export const DEFAULT_TTS_CONFIG: TextToSpeechConfig = {
   enabled: false,
   provider: 'kitten-mn',
   voice: 'default',
-  speed: 1.0,
+  // 1.4: serge listened to the kitten-mn output at 1.0 and asked for this
+  // (2026-08-16) - the model's natural pace reads slower than his preference.
+  speed: 1.4,
   autoReadResponses: false,
 };
 

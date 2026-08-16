@@ -182,10 +182,18 @@ describe('KittenTts.synthesize', () => {
 describe('KittenTts.listVoices', () => {
   it('returns the voices array from the status endpoint', async () => {
     const { runtime, fetch } = makeRuntime(async () =>
-      jsonResponse({ voices: ['default', 'mn-female'], max_chars: 512 })
+      jsonResponse({
+        // The real bundle returns OBJECT rows (measured); plain strings are the
+        // forward-compatibility fallback - both shapes are exercised here.
+        voices: [{ name: 'ref_studio.wav', label: 'Тунгалаг', gender: 'эм' }, 'mn-female.wav'],
+        max_chars: 512,
+      })
     );
     const voices = await KittenTts.listVoices(runtime);
-    expect(voices).toEqual(['default', 'mn-female']);
+    expect(voices).toEqual([
+      { name: 'ref_studio.wav', label: 'Тунгалаг' },
+      { name: 'mn-female.wav', label: 'mn-female' },
+    ]);
     expect(fetch.mock.calls[0][0]).toBe('http://127.0.0.1:45123/api/status');
   });
 
@@ -201,8 +209,11 @@ describe('KittenTts.listVoices', () => {
   });
 
   it('starts the server by default when it is not running (synthesize behaviour)', async () => {
-    const { runtime, ensureRunning } = makeRuntime(async () => jsonResponse({ voices: ['garav'] }), false);
-    await expect(KittenTts.listVoices(runtime)).resolves.toEqual(['garav']);
+    const { runtime, ensureRunning } = makeRuntime(
+      async () => jsonResponse({ voices: [{ name: 'garav.wav', label: 'Гарав' }] }),
+      false
+    );
+    await expect(KittenTts.listVoices(runtime)).resolves.toEqual([{ name: 'garav.wav', label: 'Гарав' }]);
     expect(ensureRunning).toHaveBeenCalledTimes(1);
   });
 
@@ -215,8 +226,20 @@ describe('KittenTts.listVoices', () => {
   });
 
   it('with startIfNeeded:false still queries an ALREADY-RUNNING server', async () => {
-    const { runtime, ensureRunning } = makeRuntime(async () => jsonResponse({ voices: ['garav', 'nomin'] }), true);
-    await expect(KittenTts.listVoices(runtime, { startIfNeeded: false })).resolves.toEqual(['garav', 'nomin']);
+    const { runtime, ensureRunning } = makeRuntime(
+      async () =>
+        jsonResponse({
+          voices: [
+            { name: 'garav.wav', label: 'Гарав' },
+            { name: 'nomin.wav', label: 'Номин' },
+          ],
+        }),
+      true
+    );
+    await expect(KittenTts.listVoices(runtime, { startIfNeeded: false })).resolves.toEqual([
+      { name: 'garav.wav', label: 'Гарав' },
+      { name: 'nomin.wav', label: 'Номин' },
+    ]);
     // ensureRunning on a healthy server is a health-check, not a spawn.
     expect(ensureRunning).toHaveBeenCalledTimes(1);
   });

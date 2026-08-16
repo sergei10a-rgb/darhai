@@ -527,7 +527,9 @@ export const mongolVoice = {
    * voices NEVER starts the server (the first speak does), so an EMPTY picker
    * is the normal idle state for the UI, not an error.
    */
-  ttsVoices: buildProvider<{ voices: string[] }, void>('mongolVoice.tts-voices'),
+  ttsVoices: buildProvider<{ voices: import('../types/mongolVoice').KittenVoiceOption[] }, void>(
+    'mongolVoice.tts-voices'
+  ),
   /** Streaming install progress ({component, phase, bytesDone, bytesTotal}). */
   onProgress: buildEmitter<import('../types/mongolVoice').MongolVoiceInstallProgress>('mongolVoice.on-progress'),
 };

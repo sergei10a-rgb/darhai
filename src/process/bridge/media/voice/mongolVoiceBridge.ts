@@ -30,6 +30,7 @@ import { ipcBridge } from '@/common';
 import { getPlatformServices } from '@/common/platform';
 import { MONGOL_VOICE_COMPONENTS } from '@/common/types/mongolVoice';
 import type {
+  KittenVoiceOption,
   MongolVoiceComponent,
   MongolVoiceInstallProgress,
   MongolVoiceInstallResult,
@@ -61,7 +62,7 @@ export type MongolVoiceBridgeDeps = {
    * the Voice settings page cannot spawn the bundle's python process. A
    * stopped server yields `[]` - the first speak is what starts it.
    */
-  listVoices: () => Promise<string[]>;
+  listVoices: () => Promise<KittenVoiceOption[]>;
   /** Push one progress frame to the renderer. */
   emitProgress: (p: MongolVoiceInstallProgress) => void;
 };
@@ -158,7 +159,7 @@ export function initMongolVoiceBridge(deps?: Partial<MongolVoiceBridgeDeps>): vo
     return { cancelled: provisioner.cancel(id) };
   });
 
-  ipcBridge.mongolVoice.ttsVoices.provider(async (): Promise<{ voices: string[] }> => {
+  ipcBridge.mongolVoice.ttsVoices.provider(async (): Promise<{ voices: KittenVoiceOption[] }> => {
     try {
       return { voices: await resolved.listVoices() };
     } catch {

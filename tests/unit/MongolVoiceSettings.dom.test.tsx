@@ -233,11 +233,14 @@ describe('TextToSpeechSettingsSection provider options', () => {
   });
 
   it('lists the bundle voices (and no hint) once they exist', async () => {
-    mockTtsVoicesInvoke.mockResolvedValue({ voices: ['garav'] });
+    mockTtsVoicesInvoke.mockResolvedValue({ voices: [{ name: 'garav.wav', label: 'Гарав' }] });
     render(<TextToSpeechSettingsSection config={TTS_CONFIG} onChange={() => {}} />);
     await waitFor(() => {
-      expect(screen.getByTestId('option-garav')).toBeInTheDocument();
+      // The option VALUE is the wire name (what /api/speak accepts) while the
+      // visible text is the human label - both halves of the contract matter.
+      expect(screen.getByTestId('option-garav.wav')).toBeInTheDocument();
     });
+    expect(screen.getByText('Гарав')).toBeInTheDocument();
     expect(screen.queryByText('settings.textToSpeechVoiceInstallFirst')).not.toBeInTheDocument();
   });
 

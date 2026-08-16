@@ -65,3 +65,14 @@ export type MongolVoiceInstallResult = {
   errorCode: string | null;
   errorMessage: string | null;
 };
+
+/**
+ * One voice the installed TTS bundle offers. `name` is the identifier the
+ * bundle's speak endpoint accepts verbatim (the reference wav's filename,
+ * e.g. `ref_male.wav` - the stem alone is rejected with HTTP 400, measured);
+ * `label` is the human name shown in the picker (e.g. «Батсайхан»).
+ */
+export type KittenVoiceOption = {
+  name: string;
+  label: string;
+};

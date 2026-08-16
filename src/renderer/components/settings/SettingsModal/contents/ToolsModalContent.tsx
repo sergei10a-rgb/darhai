@@ -11,6 +11,7 @@ import {
   type IMcpServer,
   BUILTIN_IMAGE_GEN_ID,
 } from '@/common/config/storage';
+import type { KittenVoiceOption } from '@/common/types/mongolVoice';
 import type { SpeechToTextConfig, SpeechToTextProvider } from '@/common/types/speech';
 import type { TextToSpeechConfig, TextToSpeechProvider } from '@/common/types/ttsTypes';
 import { DEFAULT_TTS_CONFIG, normalizeTextToSpeechConfig } from '@/common/types/ttsTypes';
@@ -130,7 +131,7 @@ export const TextToSpeechSettingsSection: React.FC<{
   // [] = fetched and the bundle has nothing to offer (not installed / down),
   // which renders as an "install first" hint rather than an error - an empty
   // picker is the normal not-installed state on this surface.
-  const [kittenVoices, setKittenVoices] = useState<string[] | null>(null);
+  const [kittenVoices, setKittenVoices] = useState<KittenVoiceOption[] | null>(null);
   // True from pressing "Test voice" until the audio starts (or fails). The
   // first kitten-mn start can take ~10-30 s (cold server + AV scan), so the
   // button shows a spinner and refuses re-entry instead of looking dead.
@@ -239,8 +240,8 @@ export const TextToSpeechSettingsSection: React.FC<{
                     without breaking stored configs. */}
                 <DarhaiSelect.Option value='default'>{t('settings.textToSpeechVoiceDefault')}</DarhaiSelect.Option>
                 {(kittenVoices ?? []).map((voice) => (
-                  <DarhaiSelect.Option key={voice} value={voice}>
-                    {voice}
+                  <DarhaiSelect.Option key={voice.name} value={voice.name}>
+                    {voice.label}
                   </DarhaiSelect.Option>
                 ))}
               </DarhaiSelect>
