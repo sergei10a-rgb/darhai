@@ -150,8 +150,21 @@ export const GPU_BANDWIDTH: Readonly<Record<string, number>> = {
   '3060 laptop': 336,
   '3050 ti laptop': 224,
   '3050 laptop': 224,
-  // // secondary: Turing mobile ("Max-Q") names are inconsistent across driver
-  // versions and are not covered; those still match their desktop key.
+  // Turing-era mobile parts. The driver reports them as "... with Max-Q
+  // Design" (no "Laptop" token), which `lookupBandwidth` normalises to
+  // "... max-q" so both driver spellings land here rather than on the desktop
+  // key. Values are bus width x Max-Q memory data rate / 8 - the Max-Q SKUs
+  // run their memory slower than the identically-named desktop part, which is
+  // exactly why matching the desktop key was wrong. Turing mobile parts
+  // WITHOUT the Max-Q suffix share the desktop memory config, so the desktop
+  // key is already correct for them.
+  '2080 super max-q': 352,
+  '2080 max-q': 384,
+  '2070 super max-q': 352,
+  '2070 max-q': 384,
+  '2060 max-q': 264,
+  '1660 ti max-q': 288,
+  '1650 max-q': 128,
   // Apple Silicon unified-memory bandwidth (GB/s), keyed off the chip name.
   'm1 ultra': 800,
   'm1 max': 400,
@@ -228,10 +241,18 @@ const PER_TOKEN_OVERHEAD_GB = 0.21;
 const FALLBACK_OVERHEAD_B = PER_TOKEN_OVERHEAD_GB / DEFAULT_BYTES_PER_PARAM;
 const MOE_SPEED_FACTOR = 0.8;
 
-/** Look up a GPU's memory bandwidth by matching a substring of its name. */
+/**
+ * Look up a GPU's memory bandwidth by matching a substring of its name.
+ *
+ * Turing mobiles cross nvidia-smi as either "RTX 2080 Super with Max-Q
+ * Design" or, on other driver generations, "RTX 2080 Super Max-Q". The
+ * longer spelling is collapsed to the shorter before matching, so one
+ * `... max-q` key in the table covers both - without it the substring walk
+ * lands on the desktop key and hands the part a bandwidth it does not have.
+ */
 export function lookupBandwidth(gpuName: string | null | undefined): number | null {
   if (!gpuName) return null;
-  const gn = gpuName.toLowerCase();
+  const gn = gpuName.toLowerCase().replace(/\bwith\s+max-q\s+design\b/g, 'max-q');
   for (const key of BW_KEYS_SORTED) {
     if (gn.includes(key)) return GPU_BANDWIDTH[key];
   }

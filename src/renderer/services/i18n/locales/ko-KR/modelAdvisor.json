@@ -95,6 +95,7 @@
     },
     "status": {
       "downloading": "다운로드 중",
+      "calibrating": "속도 조정 중 (최초 1회, 약 2분)…",
       "starting": "시작 중",
       "ready": "실행 중 · :{{port}}",
       "error": "실패"
@@ -108,6 +109,7 @@
     "decline": "나중에",
     "retry": "다시 시도",
     "cancelNotYet": "이 단계는 아직 멈출 수 없습니다. 잠시 후 다시 눌러 주세요.",
+    "expired": "이전에 표시된 내용이 오래되어 아무것도 다운로드하지 않았습니다. 새로 고친 내용을 확인하고 다시 확정해 주세요.",
     "stage": {
       "runtime": "설치",
       "model": "모델"

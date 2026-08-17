@@ -880,6 +880,76 @@ describe('a machine with no build is told so, not left spinning', () => {
   });
 });
 
+describe('an expired disclosure sends the user back to a fresh card, not to disk', () => {
+  it('re-plans and asks again instead of reporting a failure', async () => {
+    // Main refuses a Confirm whose card aged past the disclosure TTL: install()
+    // resolves `failed` carrying LLAMACPP_DISCLOSURE_EXPIRED and fetches
+    // nothing. The row's job is to fetch the fresh plan, show it with the
+    // "was refreshed" notice, and wait for a NEW Confirm - not to render a red
+    // failure over a press the user made in good faith, and never to install
+    // anything the user has not just been shown.
+    const freshPlan: LlamaRuntimePlan = { ...CPU_PLAN, tag: 'b10456', downloadBytes: 99 * 1024 * 1024 };
+    const fetchPlan = vi
+      .fn<() => Promise<LlamaRuntimePlan>>()
+      .mockResolvedValueOnce(CPU_PLAN)
+      .mockResolvedValue(freshPlan);
+    const install = vi
+      .fn<() => Promise<LlamaRuntimeStatus>>()
+      .mockResolvedValueOnce({
+        ...MISSING_RUNTIME,
+        state: 'failed',
+        errorCode: 'LLAMACPP_DISCLOSURE_EXPIRED',
+        errorMessage: 'disclosure aged past its TTL',
+      })
+      .mockResolvedValue(READY_RUNTIME);
+    const runtime = makeRuntime({ fetchPlan, install });
+    const cookbook = makeCookbook();
+    renderCell(cookbook, runtime);
+
+    await pressServeAndConfirm();
+
+    // The fresh card: today's numbers, plus the reason the card reappeared.
+    await waitFor(() => expect(fetchPlan).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(screen.getByText(/99 MB/)).toBeTruthy());
+    expect(document.body.textContent).toContain(en('modelAdvisor.runtime.expired'));
+    // Not an accusation: no alert, no ALL-CAPS code, no red failure block.
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(document.body.textContent).not.toContain('LLAMACPP_DISCLOSURE_EXPIRED');
+    // And no second install behind the user's back: one press, one attempt.
+    expect(install).toHaveBeenCalledTimes(1);
+    expect(cookbook.serve).not.toHaveBeenCalled();
+
+    // Only the user's NEW Confirm installs the refreshed plan.
+    await userEvent.click(screen.getByRole('button', { name: en('modelAdvisor.runtime.confirm') }));
+    await waitFor(() => expect(install).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(cookbook.serve).toHaveBeenCalled());
+  });
+
+  it('does not carry the notice onto a card the user opened afresh', async () => {
+    // The "was refreshed" sentence explains one specific press. After declining
+    // that card, a brand-new Serve press asks plan() anew and its card must
+    // read as a first offer, not as another expiry.
+    const install = vi.fn<() => Promise<LlamaRuntimeStatus>>().mockResolvedValueOnce({
+      ...MISSING_RUNTIME,
+      state: 'failed',
+      errorCode: 'LLAMACPP_DISCLOSURE_EXPIRED',
+      errorMessage: 'disclosure aged past its TTL',
+    });
+    const runtime = makeRuntime({ fetchPlan: vi.fn(async () => CPU_PLAN), install });
+    renderCell(makeCookbook(), runtime);
+
+    await pressServeAndConfirm();
+    await waitFor(() => expect(document.body.textContent).toContain(en('modelAdvisor.runtime.expired')));
+
+    await userEvent.click(screen.getByRole('button', { name: en('modelAdvisor.runtime.decline') }));
+    await waitFor(() => screen.getByRole('button', { name: en('modelAdvisor.cookbook.serve') }));
+    await userEvent.click(screen.getByRole('button', { name: en('modelAdvisor.cookbook.serve') }));
+
+    await waitFor(() => screen.getByRole('button', { name: en('modelAdvisor.runtime.confirm') }));
+    expect(document.body.textContent).not.toContain(en('modelAdvisor.runtime.expired'));
+  });
+});
+
 describe('every runtime string ships in all 13 locales', () => {
   /**
    * Every key this component can reach, gathered two ways so neither kind of
@@ -914,6 +984,7 @@ describe('every runtime string ships in all 13 locales', () => {
     'decline',
     'retry',
     'cancelNotYet',
+    'expired',
     'accel.cuda',
     'accel.rocm',
     'accel.metal',

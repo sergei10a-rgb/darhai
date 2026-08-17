@@ -40,6 +40,7 @@ import type {
 import type { CatalogModel as HwfitCatalogModel, HardwareProfile } from '@process/services/hwfit';
 import { localGgufPath, type CookbookDownloadResult, type ModelDownloadManager } from './ModelDownloadManager';
 import { buildServeCommand, ngpuLayersForVram, type LocalServeManager } from './LocalServeManager';
+import type { MoeOffloadRequest } from './moeCalibration';
 import { isLlamaServerProvisionable, selectBackend } from './backendPolicy';
 import {
   COOKBOOK_LOCAL_ID,
@@ -53,12 +54,13 @@ import {
   type OllamaRegistryRepo,
 } from '@process/onboarding/autoRegisterOllama';
 import {
+  defaultExecLmStudioServerStatus,
   defaultFetchLmStudioModels,
-  probeLmStudioServer,
-  LM_STUDIO_BASE_URL,
+  lmStudioBaseUrl,
+  probeLmStudioForServe,
   LM_STUDIO_DEFAULT_PORT,
   type LmStudioModel,
-  type LmStudioServerProbe,
+  type LmStudioServeProbe,
 } from './lmStudioDetect';
 
 /** Loopback port the local Ollama daemon binds by default. */
@@ -180,18 +182,39 @@ export type CookbookServeDeps = {
    * by declaring `lmStudioServing: true` in the availability it injects - so a
    * test that does NOT ask for LM Studio can never fall through to the network.
    */
-  probeLmStudio?: () => Promise<LmStudioServerProbe>;
+  probeLmStudio?: () => Promise<LmStudioServeProbe>;
   /**
    * Host architecture (`process.arch` form). Injectable ONLY so a test can ask
    * what a machine llama.cpp publishes no build for would be offered; production
    * leaves it unset and the real `process.arch` is read.
    */
   arch?: string;
+  /**
+   * Measured `--n-cpu-moe` planner for MoE models that do not fit in VRAM
+   * (moeCalibration.ts). Answers the value to pass, or null for "no flag"
+   * (dense model, fits fully resident, layer count unknowable). Optional so
+   * every existing test - and any host without the calibrator wired - keeps
+   * the exact pre-MoE behaviour; production injects the real calibrator in
+   * cookbookServeSingleton.ts.
+   */
+  planNCpuMoe?: (req: MoeOffloadRequest) => Promise<number | null>;
+  /**
+   * Abort the in-flight `--n-cpu-moe` calibration bench, if one is running
+   * (MoeOffloadCalibrator.cancel in production). Pulled by BOTH stop paths -
+   * stopServe and the before-quit stopAll - because the bench is a real child
+   * process holding a 20-50 GB model mapped, and on Windows a dead parent does
+   * not reap it. Optional for the same reason `planNCpuMoe` is: a host with no
+   * calibrator wired has nothing to abort.
+   */
+  cancelCalibration?: () => void;
   /** Emit a download-progress event to the renderer. */
   onProgress?: (p: CookbookDownloadProgress) => void;
   /** Emit a serve-status change to the renderer. */
   onStatus?: (s: CookbookServeStatus) => void;
 };
+
+/** Discard a settled value/reason without turning it into an unhandled rejection. */
+const noopServe = (): void => {};
 
 const IDLE_STATUS: CookbookServeStatus = {
   state: 'idle',
@@ -205,6 +228,16 @@ const IDLE_STATUS: CookbookServeStatus = {
 export class CookbookServeService {
   private status: CookbookServeStatus = { ...IDLE_STATUS };
   private readonly downloads = new Map<string, CookbookDownloadInfo>();
+  /**
+   * Bumped by every stop request (stopServe / stopAll). A serve captures the
+   * value when it starts and re-checks it after its long awaits (download +
+   * calibration, minutes each): a mismatch means the user stopped things in
+   * the meantime, and the serve must abandon the launch instead of spawning a
+   * server and overwriting the 'stopped' status with 'ready'.
+   */
+  private stopEpoch = 0;
+  /** The serve currently running, so a second press queues behind it. */
+  private serveInFlight: Promise<CookbookServeStatus> | null = null;
 
   constructor(private readonly deps: CookbookServeDeps) {}
 
@@ -305,7 +338,11 @@ export class CookbookServeService {
   }
 
   /** Read hardware + installed binaries and compute the backend selection. */
-  private async resolveSelection(): Promise<{ selection: CookbookBackendSelection; vramGb: number }> {
+  private async resolveSelection(): Promise<{
+    selection: CookbookBackendSelection;
+    vramGb: number;
+    gpuName: string | null;
+  }> {
     const profile = await this.deps.getHardware();
     const available = await this.deps.serveManager.detectAvailability();
     const vramGb = profile.hasGpu && typeof profile.gpuVramGb === 'number' ? profile.gpuVramGb : 0;
@@ -318,7 +355,7 @@ export class CookbookServeService {
       // host that would run the downloaded binary.
       canProvisionLlamaServer: isLlamaServerProvisionable(profile.platform, this.deps.arch ?? process.arch),
     });
-    return { selection, vramGb };
+    return { selection, vramGb, gpuName: profile.gpuName ?? null };
   }
 
   /**
@@ -327,13 +364,39 @@ export class CookbookServeService {
    * among the viable backends; when absent or not viable the default is used.
    * The download step is backend-specific (GGUF for llama.cpp; self-pull for
    * ollama + vllm). Never throws - a failure is reflected in the returned status.
+   *
+   * SERIALISED at the service level, one serve at a time in press order - the
+   * same queue-not-share shape as `LocalServeManager.serialized`, and needed
+   * even though that queue exists: the manager serialises only the SPAWN,
+   * while the download and the minutes-long calibration that precede it ran
+   * concurrently. Pressing Serve on B while A was calibrating ran two benches
+   * against the same GPU at once, and the contended - i.e. wrong - winner was
+   * cached PERMANENTLY under A's model key. Each press still gets the status
+   * of its own serve, and a failed serve does not strand the queue.
    */
   async serve(modelId: string, backend?: CookbookBackend): Promise<CookbookServeStatus> {
+    const ahead = this.serveInFlight;
+    // serveNow never rejects, but swallow a predecessor's rejection anyway so
+    // an unforeseen one cannot poison every serve queued behind it.
+    const mine = (ahead === null ? Promise.resolve() : ahead.then(noopServe, noopServe)).then(() =>
+      this.serveNow(modelId, backend)
+    );
+    this.serveInFlight = mine;
+    try {
+      return await mine;
+    } finally {
+      // Only the last serve in the queue clears the slot.
+      if (this.serveInFlight === mine) this.serveInFlight = null;
+    }
+  }
+
+  /** One serve, start to finish. Only ever entered by the queue in {@link serve}. */
+  private async serveNow(modelId: string, backend?: CookbookBackend): Promise<CookbookServeStatus> {
     try {
       const model = this.resolveModel(modelId);
       if (!model) return this.fail(modelId, 'none', `unknown model "${modelId}"`);
 
-      const { selection, vramGb } = await this.resolveSelection();
+      const { selection, vramGb, gpuName } = await this.resolveSelection();
       const chosen = backend && selection.viable.includes(backend) ? backend : selection.chosen;
 
       if (chosen === 'vllm') return await this.serveViaVllm(modelId, model.name);
@@ -346,13 +409,13 @@ export class CookbookServeService {
       }
       if (chosen === 'llama-server') {
         if (!repoId) return this.fail(modelId, 'llama-server', `no GGUF source for "${modelId}"`);
-        return await this.serveViaLlamaServer(modelId, model.name, vramGb);
+        return await this.serveViaLlamaServer(modelId, model, vramGb, gpuName);
       }
       // Deliberately AFTER the GGUF-source guards and never subject to one: LM
       // Studio serves what it already holds, so a catalog model with no GGUF
       // source is not a reason to refuse - only "LM Studio does not have it" is.
       if (chosen === 'lm-studio') return await this.serveViaLmStudio(modelId, model);
-      if (chosen === 'none') return await this.serveDegraded(modelId, vramGb);
+      if (chosen === 'none') return await this.serveDegraded(modelId, model, vramGb, gpuName);
 
       // Every serveable backend is dispatched above, so `chosen` is `never` by
       // the time control reaches here. That assignment is the point: adding a
@@ -361,7 +424,7 @@ export class CookbookServeService {
       // path meant for a host with no backend at all - and reporting that as
       // the outcome of the user's explicit pick.
       const _exhaustive: never = chosen;
-      return await this.serveDegraded(modelId, vramGb);
+      return await this.serveDegraded(modelId, model, vramGb, gpuName);
     } catch (err) {
       return this.fail(modelId, this.status.backend, err instanceof Error ? err.message : String(err));
     }
@@ -404,14 +467,33 @@ export class CookbookServeService {
 
   private async serveViaLlamaServer(
     modelId: string,
-    servedModelId: string,
-    vramGb: number
+    model: HwfitCatalogModel,
+    vramGb: number,
+    gpuName: string | null
   ): Promise<CookbookServeStatus> {
+    const servedModelId = model.name;
+    const epoch = this.stopEpoch;
     this.setStatus({ state: 'downloading', modelId, backend: 'llama-server' });
     const dl = await this.download(modelId);
+    // MoE expert offload, decided BEFORE 'starting': for a MoE model that does
+    // not fit in VRAM this may run a one-time llama-bench calibration (~1-3
+    // min, cached per model+GPU), reported as its own 'calibrating' state.
+    const nCpuMoe = await this.resolveNCpuMoe(modelId, model, dl.filePath, vramGb, gpuName);
+    if (this.stopEpoch !== epoch) {
+      // A Stop arrived during the download/calibration minutes. Its status
+      // ('stopped') is the user's last word: launching now would spawn a
+      // server nobody asked to keep and overwrite that word with 'ready'.
+      // The aborted calibration already answered through its fallback and
+      // cached nothing, so the next press starts clean.
+      return this.status;
+    }
     this.setStatus({ state: 'starting', modelId, backend: 'llama-server' });
     const ngl = ngpuLayersForVram(vramGb);
-    const port = await this.deps.serveManager.start({ ggufPath: dl.filePath, ngl });
+    const port = await this.deps.serveManager.start({
+      ggufPath: dl.filePath,
+      ngl,
+      nCpuMoe: nCpuMoe ?? undefined,
+    });
     const repo = this.deps.getRepo();
     if (repo) registerCookbookServeInRepo(repo, { port, servedModelId, displayName: servedModelId });
     return this.setStatus({
@@ -422,6 +504,38 @@ export class CookbookServeService {
       providerId: COOKBOOK_LOCAL_ID,
       servedModel: servedModelId,
     });
+  }
+
+  /**
+   * The `--n-cpu-moe` value for this serve, or null for "no flag". Delegates
+   * to the injected planner; a missing planner and a planner that THROWS both
+   * answer null, because expert offload is an optimisation and must never turn
+   * a servable model into a failed serve.
+   */
+  private async resolveNCpuMoe(
+    modelId: string,
+    model: HwfitCatalogModel,
+    ggufPath: string,
+    vramGb: number,
+    gpuName: string | null
+  ): Promise<number | null> {
+    const planner = this.deps.planNCpuMoe;
+    if (!planner) return null;
+    try {
+      return await planner({
+        modelId: model.name,
+        ggufPath,
+        isMoeHint: model.isMoe === true,
+        gpuName,
+        vramGb,
+        onCalibrating: () => {
+          this.setStatus({ state: 'calibrating', modelId, backend: 'llama-server' });
+        },
+      });
+    } catch (err) {
+      console.warn(`[CookbookServeService] MoE offload planning failed for "${modelId}"; serving without it:`, err);
+      return null;
+    }
   }
 
   /**
@@ -463,25 +577,22 @@ export class CookbookServeService {
     const repo = this.deps.getRepo();
     if (repo) {
       registerCookbookServeInRepo(repo, {
-        port: LM_STUDIO_DEFAULT_PORT,
+        port: probe.port,
         servedModelId: match.id,
         displayName: match.id,
-        // LM Studio's port is a user setting, so the URL is imported from the
-        // one module that owns it rather than rebuilt here. KNOWN LIMIT: that
-        // module pins the default 1234, and the same constant decides
-        // viability - a relocated server is invisible to detection, so this
-        // path is never reached with any other port. `lms server status --json`
-        // reports the real one (measured: `{"running":true,"port":1234}`, ~320
-        // ms); threading it through BackendAvailability is the fix, and it
-        // belongs in the detection seam, not here.
-        baseUrl: LM_STUDIO_BASE_URL,
+        // The registered URL must be the URL the models were FOUND on: the
+        // probe detects the user's configured port from `lms server status`
+        // (measured: `{"running":true,"port":12399}` when relocated) and
+        // carries it here, so a server moved off 1234 is registered where it
+        // actually listens instead of at the default.
+        baseUrl: lmStudioBaseUrl(probe.port),
       });
     }
     return this.setStatus({
       state: 'ready',
       modelId,
       backend: 'lm-studio',
-      port: LM_STUDIO_DEFAULT_PORT,
+      port: probe.port,
       providerId: COOKBOOK_LOCAL_ID,
       // LM Studio's id, NOT the catalog's: this is the string the agent must
       // put in `model`, and LM Studio answers to its own name only.
@@ -489,12 +600,24 @@ export class CookbookServeService {
     });
   }
 
-  private async serveDegraded(modelId: string, vramGb: number): Promise<CookbookServeStatus> {
+  private async serveDegraded(
+    modelId: string,
+    model: HwfitCatalogModel,
+    vramGb: number,
+    gpuName: string | null
+  ): Promise<CookbookServeStatus> {
     // No backend installed: the download must still succeed so the user is never
     // worse off than today. Then surface the exact hand-run serve command.
+    const epoch = this.stopEpoch;
     this.setStatus({ state: 'downloading', modelId, backend: 'none' });
     const dl = await this.download(modelId);
     const ngl = ngpuLayersForVram(vramGb);
+    // On a host with no backend there is no llama-bench either, so the planner
+    // answers the measured all-layers fallback for a too-big MoE model - the
+    // copy-paste advice must not be the plain `-ngl` that is slower than CPU.
+    const nCpuMoe = await this.resolveNCpuMoe(modelId, model, dl.filePath, vramGb, gpuName);
+    // Same rule as serveViaLlamaServer: a Stop pressed during the waits wins.
+    if (this.stopEpoch !== epoch) return this.status;
     return this.setStatus({
       state: 'needs_backend',
       modelId,
@@ -502,12 +625,18 @@ export class CookbookServeService {
       port: null,
       providerId: null,
       servedModel: null,
-      serveCommand: buildServeCommand(dl.filePath, ngl),
+      serveCommand: buildServeCommand(dl.filePath, ngl, undefined, nCpuMoe ?? undefined),
     });
   }
 
   /** Stop the active serve and flip the cookbook-local provider to offline. */
   async stopServe(): Promise<CookbookServeStatus> {
+    // Before anything async: the epoch bump is what tells an in-flight serve
+    // (waiting on its download or calibration) that this Stop happened, and
+    // the cancel is what reaches the bench child itself - `serveManager.stop`
+    // only reaps a server that was already spawned.
+    this.stopEpoch += 1;
+    this.deps.cancelCalibration?.();
     await this.deps.serveManager.stop();
     const repo = this.deps.getRepo();
     if (repo) markCookbookServeStoppedInRepo(repo);
@@ -528,18 +657,26 @@ export class CookbookServeService {
 
   /**
    * Stop everything for app quit. A spawned llama-server MUST be killed or it
-   * leaks and holds the GPU. Wired into the before-quit CleanupModules bundle.
+   * leaks and holds the GPU - and so must an in-flight calibration bench: it
+   * is a separate child holding a 20-50 GB model mapped, Windows does not reap
+   * it with the parent, and `serveManager.stop` has never heard of it. Wired
+   * into the before-quit CleanupModules bundle.
    */
   async stopAll(): Promise<void> {
+    this.stopEpoch += 1;
+    this.deps.cancelCalibration?.();
     await this.deps.serveManager.stop();
   }
 
   // ── Internal helpers ──────────────────────────────────────────────────────
 
-  /** LM Studio's live model list; the real endpoint unless a test injects one. */
-  private probeLmStudio(): Promise<LmStudioServerProbe> {
+  /** LM Studio's live model list AND the port it was found on. */
+  private probeLmStudio(): Promise<LmStudioServeProbe> {
     if (this.deps.probeLmStudio) return this.deps.probeLmStudio();
-    return probeLmStudioServer({ fetchModels: defaultFetchLmStudioModels });
+    return probeLmStudioForServe({
+      fetchModels: defaultFetchLmStudioModels,
+      execServerStatus: defaultExecLmStudioServerStatus,
+    });
   }
 
   private async registerOllamaLocal(): Promise<void> {

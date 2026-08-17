@@ -141,7 +141,18 @@ export type LocalServeDeps = {
 };
 
 /** Options for a llama-server start. */
-export type LocalServeOptions = { ggufPath: string; ngl: number };
+export type LocalServeOptions = {
+  ggufPath: string;
+  ngl: number;
+  /**
+   * `--n-cpu-moe` value for a MoE model that does not fit in VRAM: keep the
+   * expert weights of the first N layers on the CPU. Comes from the measured
+   * calibration (moeCalibration.ts) or its all-layers fallback; absent for
+   * dense models and models that fit. Only passed when the build's `--help`
+   * lists the flag - see {@link parseServerCapabilities}.
+   */
+  nCpuMoe?: number;
+};
 
 /** Options for a vLLM start: the Hugging Face repo vLLM self-downloads + serves. */
 export type LocalServeVllmOptions = { hfRepo: string };
@@ -256,10 +267,12 @@ export type ServerCapabilities = {
   autoGpuLayers: boolean;
   /** `--cors-origins` - restricts which web origins may read this server. */
   corsOrigins: boolean;
+  /** `--n-cpu-moe` - keeps MoE expert weights of the first N layers on CPU. */
+  cpuMoe: boolean;
 };
 
 /** No optional flags: what an unreadable or ancient binary is assumed to be. */
-const NO_CAPABILITIES: ServerCapabilities = { autoGpuLayers: false, corsOrigins: false };
+const NO_CAPABILITIES: ServerCapabilities = { autoGpuLayers: false, corsOrigins: false, cpuMoe: false };
 
 /** Discard a settled value/reason without turning it into an unhandled rejection. */
 const noop = (): void => {};
@@ -274,6 +287,16 @@ function gpuLayersArg(caps: ServerCapabilities, ngl: number): string {
   if (!Number.isFinite(ngl) || ngl <= 0) return '0';
   return caps.autoGpuLayers ? GPU_LAYERS_AUTO : String(ngl);
 }
+
+/**
+ * `--n-gpu-layers` value when expert offload is active: the literal `99` the
+ * calibration measured with (`-ngl 99 --n-cpu-moe N` -> 27.8 tok/s on
+ * Qwen3.6-35B-A3B vs 8.3 for `-ngl 99` alone). NOT `auto`: with the expert
+ * tensors already pinned to the CPU by `--n-cpu-moe`, `auto`'s own fit answers
+ * a different question against the same free-VRAM budget, and that combination
+ * is not the one any number here was measured under.
+ */
+const GPU_LAYERS_ALL_FOR_MOE = '99';
 
 /**
  * Extract one option's own help entry: the line `flag` occurs on, plus the
@@ -302,12 +325,18 @@ function helpEntryFor(helpText: string, flag: string): string {
  * itself, not anywhere in the 57 KB dump - "auto" occurs in unrelated options
  * (`--flash-attn auto`, `--spec-draft-ngl auto`), so a whole-text search would
  * report the capability on builds that lack it.
+ *
+ * `cpuMoe` needs a boundary after the flag name, not a substring test: b10441's
+ * help also lists `--n-cpu-moe-draft` (an alias of `--spec-draft-n-cpu-moe`),
+ * which CONTAINS `--n-cpu-moe`, so `includes()` would report the serve flag on
+ * a hypothetical build that only has the draft one.
  */
 export function parseServerCapabilities(helpText: string): ServerCapabilities {
   if (typeof helpText !== 'string' || helpText.length === 0) return { ...NO_CAPABILITIES };
   return {
     autoGpuLayers: helpEntryFor(helpText, '--n-gpu-layers').includes(`'${GPU_LAYERS_AUTO}'`),
     corsOrigins: helpText.includes('--cors-origins'),
+    cpuMoe: /(^|[\s,])--n-cpu-moe([\s,]|$)/m.test(helpText),
   };
 }
 
@@ -336,9 +365,25 @@ export async function defaultProbeHelpText(binary: string): Promise<string> {
   return stdout;
 }
 
-/** Build the exact hand-run serve command for the degraded copy path. */
-export function buildServeCommand(ggufPath: string, ngl: number, port = SUGGESTED_SERVE_PORT): string {
-  return `llama-server -m "${ggufPath}" --host 127.0.0.1 --port ${port} --n-gpu-layers ${ngl}`;
+/**
+ * Build the exact hand-run serve command for the degraded copy path.
+ *
+ * `nCpuMoe` mirrors what the managed path would pass for a MoE model that does
+ * not fit in VRAM: `-ngl 99 --n-cpu-moe N` (the measured 3.4x combination),
+ * instead of the plain `-ngl` that was measured SLOWER than pure CPU on such a
+ * model. The copy-paste advice must not be worse than what the app itself does.
+ */
+export function buildServeCommand(
+  ggufPath: string,
+  ngl: number,
+  port = SUGGESTED_SERVE_PORT,
+  nCpuMoe?: number
+): string {
+  const base = `llama-server -m "${ggufPath}" --host 127.0.0.1 --port ${port}`;
+  if (typeof nCpuMoe === 'number' && Number.isFinite(nCpuMoe) && nCpuMoe > 0) {
+    return `${base} --n-gpu-layers ${GPU_LAYERS_ALL_FOR_MOE} --n-cpu-moe ${Math.round(nCpuMoe)}`;
+  }
+  return `${base} --n-gpu-layers ${ngl}`;
 }
 
 /** Allocate a free ephemeral loopback port via a throwaway listen(0). */
@@ -595,6 +640,12 @@ export class LocalServeManager extends EventEmitter {
       // Probe BEFORE launch(), so the cold probe cannot sit between the port
       // allocation and the spawn that has to bind it.
       const caps = await this.capabilitiesFor(binary);
+      // Expert offload only when BOTH the caller asked for it and the build
+      // accepts the flag - an older build keeps the exact behaviour it had.
+      const moeOffload =
+        typeof opts.nCpuMoe === 'number' && Number.isFinite(opts.nCpuMoe) && opts.nCpuMoe > 0 && caps.cpuMoe
+          ? Math.round(opts.nCpuMoe)
+          : null;
       return this.launch({
         label: 'llama-server',
         resolveBinary: () => binary,
@@ -607,8 +658,11 @@ export class LocalServeManager extends EventEmitter {
             '--port',
             String(port),
             '--n-gpu-layers',
-            gpuLayersArg(caps, opts.ngl),
+            // The MoE combination is the one that was measured: `-ngl 99
+            // --n-cpu-moe N` (see GPU_LAYERS_ALL_FOR_MOE for why not `auto`).
+            moeOffload === null ? gpuLayersArg(caps, opts.ngl) : GPU_LAYERS_ALL_FOR_MOE,
           ];
+          if (moeOffload !== null) args.push('--n-cpu-moe', String(moeOffload));
           if (caps.corsOrigins) args.push('--cors-origins', CORS_ORIGINS_LOOPBACK_ONLY);
           return args;
         },

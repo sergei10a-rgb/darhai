@@ -89,6 +89,17 @@ export type LlamaProvisionErrorCode =
  */
 const STALE_STAGING_MS = 60 * 60 * 1000;
 
+/**
+ * Minimum spacing between two progress events INSIDE one phase of one asset.
+ *
+ * Without it, progress crossed IPC once per stream chunk: a 512.8 MB transfer
+ * at the measured 53.1 MB/s emitted thousands of events, each one re-rendering
+ * the model table. Phase and asset boundaries always emit, and so does the
+ * final 100% of a sized download, so nothing the UI narrates from can be lost
+ * - only the mid-download byte spam is thinned to ~10 frames a second.
+ */
+export const PROGRESS_EMIT_INTERVAL_MS = 100;
+
 export class LlamaProvisionError extends Error {
   constructor(
     public readonly code: LlamaProvisionErrorCode,
@@ -184,6 +195,8 @@ async function sha256File(filePath: string): Promise<string> {
 export class LlamaCppProvisioner extends EventEmitter {
   private readonly deps: LlamaProvisionDeps;
   private controller: AbortController | null = null;
+  /** The last progress frame that actually went out, for the throttle. */
+  private lastEmit: { atMs: number; phase: LlamaProvisionPhase; assetName: string | null } | null = null;
 
   constructor(deps?: Partial<LlamaProvisionDeps>) {
     super();
@@ -625,7 +638,16 @@ export class LlamaCppProvisioner extends EventEmitter {
     }
   }
 
-  /** Assemble and emit one progress event. */
+  /**
+   * Assemble and emit one progress event, throttled to
+   * {@link PROGRESS_EMIT_INTERVAL_MS} inside a phase.
+   *
+   * Three kinds of event always pass: the first frame of a new phase or a new
+   * asset (the UI's narrative beats), and the final 100% of a sized transfer
+   * (a bar that stops at 97% reads as a hang). Everything in between is byte
+   * spam, and dropping a frame of it loses nothing the next frame does not
+   * restate - every event carries absolute totals, not deltas.
+   */
   private emitProgress(
     head: { phase: LlamaProvisionPhase; assetName: string | null; assetIndex: number; assetCount: number },
     bytesDone: number,
@@ -633,6 +655,12 @@ export class LlamaCppProvisioner extends EventEmitter {
     totalBytesDone: number,
     totalBytesTotal: number | null
   ): void {
+    const atMs = this.deps.now().getTime();
+    const last = this.lastEmit;
+    const boundary = last === null || last.phase !== head.phase || last.assetName !== head.assetName;
+    const finalByte = bytesTotal !== null && bytesTotal > 0 && bytesDone >= bytesTotal;
+    if (!boundary && !finalByte && atMs - last.atMs < PROGRESS_EMIT_INTERVAL_MS) return;
+    this.lastEmit = { atMs, phase: head.phase, assetName: head.assetName };
     this.emit('progress', { ...head, bytesDone, bytesTotal, totalBytesDone, totalBytesTotal });
   }
 }

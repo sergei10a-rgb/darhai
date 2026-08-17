@@ -18,24 +18,21 @@ const TOOLKIT = 'C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v13.3';
 const dll = (dir: string, name: string) => path.join(dir, name);
 
 describe('cudaSearchDirs', () => {
-  it('looks in the CUDA Toolkit bin, then PATH, then System32', () => {
+  it('looks in the CUDA Toolkit bin, then System32 - and nowhere else', () => {
     const dirs = cudaSearchDirs({
-      pathVar: 'C:\\bin;C:\\other',
       cudaPath: TOOLKIT,
       systemRoot: 'C:\\Windows',
     });
-    expect(dirs[0]).toBe(path.join(TOOLKIT, 'bin'));
-    expect(dirs).toContain('C:\\bin');
-    expect(dirs).toContain(path.join('C:\\Windows', 'System32'));
+    expect(dirs).toEqual([path.join(TOOLKIT, 'bin'), path.join('C:\\Windows', 'System32')]);
   });
 
-  it('tolerates an empty PATH and an absent CUDA_PATH', () => {
-    expect(cudaSearchDirs({ pathVar: '' })).toEqual([]);
+  it('is empty when neither CUDA_PATH nor SystemRoot is set', () => {
+    expect(cudaSearchDirs({})).toEqual([]);
   });
 });
 
 describe('hasCudaRuntime', () => {
-  const env = { pathVar: 'C:\\bin', cudaPath: TOOLKIT, systemRoot: 'C:\\Windows' };
+  const env = { cudaPath: TOOLKIT, systemRoot: 'C:\\Windows' };
   const bin = path.join(TOOLKIT, 'bin');
 
   it('is true when all three DLLs resolve', () => {
@@ -58,7 +55,7 @@ describe('hasCudaRuntime', () => {
     // Measured on the dev box: an NVIDIA driver puts nvcuda.dll in System32 and
     // installs none of the cudart/cuBLAS DLLs. CUDA_PATH was empty.
     const existsSync = fsWith([path.join('C:\\Windows', 'System32', 'nvcuda.dll')]);
-    expect(hasCudaRuntime('13.3', { pathVar: '', systemRoot: 'C:\\Windows' }, { existsSync })).toBe(false);
+    expect(hasCudaRuntime('13.3', { systemRoot: 'C:\\Windows' }, { existsSync })).toBe(false);
   });
 
   it('matches the DLL names of the requested CUDA line', () => {
@@ -72,20 +69,39 @@ describe('hasCudaRuntime', () => {
     expect(hasCudaRuntime('13.3', env, { existsSync })).toBe(false);
   });
 
-  it('ignores our own managed install directory', () => {
-    // Those DLLs being there is a consequence of a previous download, not
-    // evidence that the machine supplies them - counting them would be circular.
-    const managed = 'C:\\Users\\x\\AppData\\Roaming\\Darhai\\llamacpp\\versions\\b10437';
+  it('is not satisfied by a third-party llama.cpp directory on PATH', () => {
+    // Measured on the reference machine: a hand-installed llama.cpp at
+    // C:\claude\llamacpp was on PATH, its cudart DLLs satisfied the probe, the
+    // 373 MB cudart archive was skipped - and deleting that directory later
+    // silently lost the GPU ("Available devices: (none)", exit 0). PATH is
+    // therefore not part of the probe at all: the DLLs exist, but the two
+    // sanctioned locations do not carry them, so the answer must be false.
+    const foreign = 'C:\\claude\\llamacpp';
     const existsSync = fsWith([
-      dll(managed, 'cudart64_13.dll'),
-      dll(managed, 'cublas64_13.dll'),
-      dll(managed, 'cublasLt64_13.dll'),
+      dll(foreign, 'cudart64_13.dll'),
+      dll(foreign, 'cublas64_13.dll'),
+      dll(foreign, 'cublasLt64_13.dll'),
     ]);
-    expect(hasCudaRuntime('13.3', { pathVar: managed }, { existsSync, excludeDirs: [path.dirname(managed)] })).toBe(
-      false
-    );
+    expect(hasCudaRuntime('13.3', { systemRoot: 'C:\\Windows' }, { existsSync })).toBe(false);
+    // And no way to smuggle the directory in: the search list is closed.
+    expect(cudaSearchDirs({ systemRoot: 'C:\\Windows' })).not.toContain(foreign);
+  });
+
+  it('ignores our own managed install directory even via CUDA_PATH', () => {
+    // Those DLLs being there is a consequence of a previous download, not
+    // evidence that the machine supplies them - counting them would be
+    // circular. Guarded even for a CUDA_PATH pointed (or leaked) into our
+    // own install root.
+    const managedRoot = 'C:\\Users\\x\\AppData\\Roaming\\Darhai\\llamacpp';
+    const managedBin = path.join(managedRoot, 'versions', 'b10437');
+    const existsSync = fsWith([
+      dll(path.join(managedBin, 'bin'), 'cudart64_13.dll'),
+      dll(path.join(managedBin, 'bin'), 'cublas64_13.dll'),
+      dll(path.join(managedBin, 'bin'), 'cublasLt64_13.dll'),
+    ]);
+    expect(hasCudaRuntime('13.3', { cudaPath: managedBin }, { existsSync, excludeDirs: [managedRoot] })).toBe(false);
     // Without the exclusion it would wrongly report the runtime as present.
-    expect(hasCudaRuntime('13.3', { pathVar: managed }, { existsSync })).toBe(true);
+    expect(hasCudaRuntime('13.3', { cudaPath: managedBin }, { existsSync })).toBe(true);
   });
 
   it('is false when nothing is installed at all', () => {

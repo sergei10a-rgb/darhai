@@ -110,6 +110,41 @@ describe('mobile GPUs are not given their desktop namesake bandwidth', () => {
       expect(key.length).toBeGreaterThan(key.slice(0, -' laptop'.length).length);
     }
   });
+
+  it('reads a Turing Max-Q part as its own mobile SKU, not its desktop namesake', () => {
+    // The driver reports Turing mobiles as "... with Max-Q Design" - there is
+    // no "Laptop" token - so these used to resolve to the desktop key. Each
+    // expectation is bus width x memory data rate / 8 for the Max-Q variant.
+    expect(lookupBandwidth('NVIDIA GeForce RTX 2080 Super with Max-Q Design')).toBe(352);
+    expect(lookupBandwidth('NVIDIA GeForce RTX 2080 with Max-Q Design')).toBe(384);
+    expect(lookupBandwidth('NVIDIA GeForce RTX 2070 Super with Max-Q Design')).toBe(352);
+    expect(lookupBandwidth('NVIDIA GeForce RTX 2070 with Max-Q Design')).toBe(384);
+    expect(lookupBandwidth('NVIDIA GeForce RTX 2060 with Max-Q Design')).toBe(264);
+    expect(lookupBandwidth('NVIDIA GeForce GTX 1660 Ti with Max-Q Design')).toBe(288);
+    // The desktop names must be untouched by the mobile keys.
+    expect(lookupBandwidth('NVIDIA GeForce RTX 2080 Super')).toBe(496);
+    expect(lookupBandwidth('NVIDIA GeForce RTX 2070')).toBe(448);
+  });
+
+  it('matches the shorter "Max-Q" spelling some driver versions report', () => {
+    // The same physical part crosses nvidia-smi as either "... with Max-Q
+    // Design" or "... Max-Q" depending on driver generation; both must land
+    // on the mobile key.
+    expect(lookupBandwidth('GeForce RTX 2080 Super Max-Q')).toBe(352);
+    expect(lookupBandwidth('GeForce RTX 2060 Max-Q')).toBe(264);
+  });
+
+  it('never rates a Max-Q part above its desktop namesake', () => {
+    const overrated: string[] = [];
+    for (const [key, value] of Object.entries(GPU_BANDWIDTH)) {
+      if (!key.endsWith(' max-q')) continue;
+      const desktop = GPU_BANDWIDTH[key.slice(0, -' max-q'.length)];
+      if (typeof desktop === 'number' && value > desktop) {
+        overrated.push(`${key}=${value} > ${key.slice(0, -' max-q'.length)}=${desktop}`);
+      }
+    }
+    expect(overrated).toEqual([]);
+  });
 });
 
 describe('per-token overhead bounds the estimate for tiny models', () => {

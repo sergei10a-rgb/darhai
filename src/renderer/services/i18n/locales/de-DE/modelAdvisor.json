@@ -95,6 +95,7 @@
     },
     "status": {
       "downloading": "Wird heruntergeladen",
+      "calibrating": "Geschwindigkeit wird abgestimmt (einmalig, ca. 2 Min.) …",
       "starting": "Startet",
       "ready": "Aktiv · :{{port}}",
       "error": "Fehlgeschlagen"
@@ -108,6 +109,7 @@
     "decline": "Jetzt nicht",
     "retry": "Erneut versuchen",
     "cancelNotYet": "Dieser Schritt lässt sich noch nicht abbrechen. Versuchen Sie es gleich noch einmal.",
+    "expired": "Die zuvor angezeigten Angaben waren veraltet, daher wurde nichts heruntergeladen. Prüfen Sie die aktualisierten Angaben und bestätigen Sie erneut.",
     "stage": {
       "runtime": "Einrichtung",
       "model": "Modell"

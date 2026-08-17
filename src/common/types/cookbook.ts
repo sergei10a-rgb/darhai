@@ -124,6 +124,13 @@ export type CookbookDownloadStatus = 'idle' | 'downloading' | 'downloaded' | 'er
 export type CookbookServeState =
   | 'idle'
   | 'downloading'
+  /**
+   * One-time measured `--n-cpu-moe` calibration for a MoE model that does not
+   * fit in VRAM (~1-3 min, llama-bench sweep, cached per model+GPU). Its own
+   * state rather than a flavour of `starting`, because the honest label is
+   * different: nothing is being started yet, and the wait is much longer.
+   */
+  | 'calibrating'
   | 'starting'
   | 'ready'
   | 'error'

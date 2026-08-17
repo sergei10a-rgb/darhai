@@ -61,6 +61,7 @@ import {
   type LlamaRelease,
 } from '@process/services/llamacpp';
 import type { HwfitBackend } from '@/common/types/hwfit';
+import { LLAMACPP_DISCLOSURE_EXPIRED } from '@/common/types/llamacpp';
 import type { LlamaRuntimePlan, LlamaRuntimeProgress, LlamaRuntimeStatus } from '@/common/types/llamacpp';
 
 /** The provisioner surface this bridge drives (structural, so tests can fake it). */
@@ -107,6 +108,8 @@ export type LlamaRuntimeDeps = {
   cudaPresent: (cudaVersion: string, excludeDir: string) => boolean;
   /** Push a status frame to the renderer. */
   emit: (status: LlamaRuntimeStatus) => void;
+  /** Clock in epoch ms, injectable for tests. Defaults to `Date.now`. */
+  now?: () => number;
 };
 
 /**
@@ -123,7 +126,29 @@ type ResolvedOk = {
   tag: string;
   plan: LlamaAssetPlan;
   downloadBytes: number | null;
+  /** When this resolution was made (epoch ms), for the staleness cut-off. */
+  resolvedAt: number;
 };
+
+/**
+ * How long an outstanding disclosure may be re-stated and consumed.
+ *
+ * A short expiry would re-open the "confirm A, install B" hole the stable slot
+ * exists to close - two presses seconds apart MUST keep getting one answer. A
+ * slot held forever means a card confirmed a day later installs a tag that
+ * stopped being `latest` long ago. 24 h separates the two cleanly: within a
+ * sitting nothing ever expires, and a disclosure a day old no longer counts.
+ *
+ * What expiry MEANS differs by verb, because only one of them moves bytes.
+ * `plan()` resolves afresh - the user is simply shown today's release. An
+ * `install()` that finds its slot expired REFUSES with
+ * {@link LLAMACPP_DISCLOSURE_EXPIRED} and downloads nothing: resolving afresh
+ * here would install a release the user never saw (a card that said "b10441,
+ * CPU, 30 MB" could silently fetch a 512 MB CUDA pair of a newer tag), which
+ * is the exact substitution the disclosure exists to forbid. The renderer
+ * answers the code by re-planning and asking for a second Confirm.
+ */
+const DISCLOSURE_TTL_MS = 24 * 60 * 60 * 1000;
 
 /** What {@link LlamaRuntimeController.resolve} established about a would-be install. */
 type Resolved =
@@ -207,18 +232,33 @@ export class LlamaRuntimeController {
    *
    * It is cleared when an install consumes it - success or failure - so the
    * next press discloses afresh instead of silently reusing an old approval.
-   * Deliberately NOT expired on a timer: an expiry re-opens exactly the hole it
-   * closed (press A, wait, press B, confirm A) to buy freshness, and a slightly
-   * older llama.cpp tag is a complete, working release, while installing a
-   * build the user never saw is the failure this whole surface exists to
-   * prevent. See §8 ("What is not handled yet") of
-   * docs/architecture/local-models.md.
+   * Not expired on any SHORT timer: that re-opens exactly the hole it closed
+   * (press A, wait, press B, confirm A) to buy freshness. The one expiry it
+   * does have is {@link DISCLOSURE_TTL_MS}: a slot older than a day reads as
+   * never-disclosed to {@link freshDisclosure}, so `plan()` resolves afresh -
+   * while `install()` refuses with {@link LLAMACPP_DISCLOSURE_EXPIRED} rather
+   * than install a resolution nobody was shown (see {@link runInstall}).
    */
   private disclosed: ResolvedOk | null = null;
+  /** Epoch-ms clock; injected in tests, `Date.now` in production. */
+  private readonly now: () => number;
 
   constructor(deps: LlamaRuntimeDeps) {
     this.deps = deps;
+    this.now = deps.now ?? ((): number => Date.now());
     this.deps.provisioner.on('progress', (p) => this.onProgress(p));
+  }
+
+  /**
+   * The outstanding disclosure, unless it has aged past
+   * {@link DISCLOSURE_TTL_MS} - a stale one reads as "nothing disclosed", so
+   * every consumer falls back to resolving afresh.
+   */
+  private freshDisclosure(): ResolvedOk | null {
+    const outstanding = this.disclosed;
+    if (outstanding === null) return null;
+    if (this.now() - outstanding.resolvedAt >= DISCLOSURE_TTL_MS) return null;
+    return outstanding;
   }
 
   /**
@@ -282,7 +322,8 @@ export class LlamaRuntimeController {
     // An outstanding disclosure is re-stated, not replaced. Two rows asking
     // seconds apart must be told the same thing, because either card can be the
     // one the user goes back and confirms and only one of them can be installed.
-    const outstanding = this.disclosed;
+    // A disclosure past its TTL no longer counts as outstanding.
+    const outstanding = this.freshDisclosure();
     const resolved = outstanding === null ? await this.resolve() : outstanding;
     // Whatever we are about to say, that is what install() must do. A failed
     // resolve clears the slot so a stale approval can never be substituted for
@@ -336,8 +377,20 @@ export class LlamaRuntimeController {
     // acceleration, the fallback reason and the byte total the user approved
     // are the ones installed. Consumed even on failure, so the next press
     // discloses afresh instead of silently reusing an old approval.
-    const approved = this.disclosed;
+    const outstanding = this.disclosed;
+    const approved = this.freshDisclosure();
     this.disclosed = null;
+    if (outstanding !== null && approved === null) {
+      // A disclosure EXISTED and aged past its TTL: the sentence the user said
+      // yes to is no longer the sentence an install would act on. Installing a
+      // fresh, never-shown resolution here would be the silent substitution the
+      // disclosure exists to forbid - so nothing is fetched. The renderer
+      // catches this code, re-plans (which shows today's card), and only a new
+      // Confirm installs. A press with NO plan() beforehand is different: no
+      // sentence was ever said, so the resolve below is the first and only
+      // answer, and installing it breaks no promise.
+      return this.failWith(LLAMACPP_DISCLOSURE_EXPIRED, 'disclosure aged past its TTL; re-plan and confirm again');
+    }
     const resolved = approved === null ? await this.resolve() : approved;
     if (resolved.kind === 'unsupported') {
       return this.failWith('LLAMACPP_UNSUPPORTED', resolved.reason);
@@ -459,6 +512,7 @@ export class LlamaRuntimeController {
       tag: first.release.tag,
       plan,
       downloadBytes: sumPlannedBytes(plan, first.release),
+      resolvedAt: this.now(),
     };
   }
 
@@ -493,11 +547,13 @@ function productionController(): LlamaRuntimeController {
     arch: () => process.arch,
     provisioner: new LlamaCppProvisioner(),
     layout: { installedServerPath, listInstalledTags, readReceipt, llamaRoot },
+    // No PATH here on purpose: the probe reads only CUDA_PATH\bin and
+    // System32, so a third-party llama.cpp on PATH can no longer masquerade
+    // as the machine's own CUDA runtime (see cudaRuntimeProbe.ts).
     cudaPresent: (version, excludeDir) =>
       hasCudaRuntime(
         version,
         {
-          pathVar: process.env.PATH || '',
           cudaPath: process.env.CUDA_PATH,
           systemRoot: process.env.SystemRoot,
         },

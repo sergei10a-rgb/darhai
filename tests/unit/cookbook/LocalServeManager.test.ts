@@ -31,16 +31,33 @@ const HELP_B10441 = [
   '                                        (env: LLAMA_ARG_FLASH_ATTN)',
   '--cors-origins ORIGINS                  comma-separated list of allowed origins for CORS (default: *)',
   '                                        (env: LLAMA_ARG_CORS_ORIGINS)',
+  '-ncmoe, --n-cpu-moe N                   keep the Mixture of Experts (MoE) weights of the first N layers in the',
+  '                                        CPU',
+  '                                        (env: LLAMA_ARG_N_CPU_MOE)',
   '-ngl,  --gpu-layers, --n-gpu-layers N   max. number of layers to store in VRAM, either an exact number,',
   "                                        'auto', or 'all' (default: auto)",
   '                                        (env: LLAMA_ARG_N_GPU_LAYERS)',
+  '--spec-draft-n-cpu-moe, --spec-draft-ncmoe, -ncmoed, --n-cpu-moe-draft N',
+  '                                        keep the Mixture of Experts (MoE) weights of the first N layers in the',
+  '                                        CPU for the draft model',
 ].join('\n');
 
-/** A pre-`auto`, pre-`--cors-origins` llama-server: an exact number only. */
+/** A pre-`auto`, pre-`--cors-origins`, pre-`--n-cpu-moe` llama-server. */
 const HELP_LEGACY = [
   "-fa,   --flash-attn <on|off|auto>       set Flash Attention use ('on', 'off', or 'auto')",
   '-ngl N, --n-gpu-layers N                number of layers to store in VRAM',
   '--api-key KEY                           API key to use for authentication',
+].join('\n');
+
+/**
+ * The decoy build: it has ONLY the draft-model variant, whose alias
+ * `--n-cpu-moe-draft` CONTAINS the serve flag's name. A substring test reports
+ * `cpuMoe: true` here and the spawn then dies on an unknown argument.
+ */
+const HELP_DRAFT_MOE_ONLY = [
+  '--spec-draft-n-cpu-moe, --spec-draft-ncmoe, -ncmoed, --n-cpu-moe-draft N',
+  '                                        keep the Mixture of Experts (MoE) weights of the first N layers in the',
+  '                                        CPU for the draft model',
 ].join('\n');
 
 /** A controllable fake child process. */
@@ -113,12 +130,19 @@ describe('ngpuLayersForVram', () => {
 });
 
 describe('parseServerCapabilities', () => {
-  it('reads both optional flags off the shipped build help text', () => {
-    expect(parseServerCapabilities(HELP_B10441)).toEqual({ autoGpuLayers: true, corsOrigins: true });
+  it('reads all three optional flags off the shipped build help text', () => {
+    expect(parseServerCapabilities(HELP_B10441)).toEqual({ autoGpuLayers: true, corsOrigins: true, cpuMoe: true });
   });
 
-  it('reports neither flag for a pre-auto llama-server', () => {
-    expect(parseServerCapabilities(HELP_LEGACY)).toEqual({ autoGpuLayers: false, corsOrigins: false });
+  it('reports no flags for a pre-auto llama-server', () => {
+    expect(parseServerCapabilities(HELP_LEGACY)).toEqual({ autoGpuLayers: false, corsOrigins: false, cpuMoe: false });
+  });
+
+  it('does not mistake --n-cpu-moe-draft for the serve flag', () => {
+    // The alias literally contains '--n-cpu-moe'; only a boundary-aware match
+    // keeps a draft-only build from being handed a flag it rejects.
+    expect(HELP_DRAFT_MOE_ONLY).toContain('--n-cpu-moe');
+    expect(parseServerCapabilities(HELP_DRAFT_MOE_ONLY).cpuMoe).toBe(false);
   });
 
   it("does not count an 'auto' that belongs to a different option", () => {
@@ -145,13 +169,27 @@ describe('parseServerCapabilities', () => {
   });
 
   it('treats an unreadable probe as "no optional flags"', () => {
-    expect(parseServerCapabilities('')).toEqual({ autoGpuLayers: false, corsOrigins: false });
+    expect(parseServerCapabilities('')).toEqual({ autoGpuLayers: false, corsOrigins: false, cpuMoe: false });
   });
 });
 
 describe('buildServeCommand', () => {
   it('builds the exact hand-run llama-server command', () => {
     expect(buildServeCommand('/c/m.gguf', 24)).toBe(
+      'llama-server -m "/c/m.gguf" --host 127.0.0.1 --port 8080 --n-gpu-layers 24'
+    );
+  });
+
+  it('emits the measured MoE combination when an offload count is known', () => {
+    // `-ngl 99 --n-cpu-moe N` is the measured 3.4x pairing; the copy-paste
+    // advice must not be the plain -ngl that is slower than pure CPU there.
+    expect(buildServeCommand('/c/moe.gguf', 24, undefined, 36)).toBe(
+      'llama-server -m "/c/moe.gguf" --host 127.0.0.1 --port 8080 --n-gpu-layers 99 --n-cpu-moe 36'
+    );
+  });
+
+  it('ignores a non-positive offload count', () => {
+    expect(buildServeCommand('/c/m.gguf', 24, undefined, 0)).toBe(
       'llama-server -m "/c/m.gguf" --host 127.0.0.1 --port 8080 --n-gpu-layers 24'
     );
   });
@@ -307,7 +345,7 @@ describe('LocalServeManager.start GPU offload + CORS arguments', () => {
   /** Spawn one llama-server and hand back the argv it was given. */
   const argvForStart = async (
     over: Partial<LocalServeDeps>,
-    opts: { ggufPath: string; ngl: number }
+    opts: { ggufPath: string; ngl: number; nCpuMoe?: number }
   ): Promise<string[]> => {
     const child = new FakeChild();
     const spawn = vi.fn(() => child);
@@ -341,6 +379,31 @@ describe('LocalServeManager.start GPU offload + CORS arguments', () => {
     // rig). `auto` would quietly start using a GPU that decision excluded.
     const args = await argvForStart({}, { ggufPath: '/m.gguf', ngl: 0 });
     expect(args[args.indexOf('--n-gpu-layers') + 1]).toBe('0');
+  });
+
+  it('pairs --n-cpu-moe with the literal -ngl 99 it was measured under', async () => {
+    // MEASURED (Qwen3.6-35B-A3B Q4_K_M, 8 GB card, b10441): `-ngl 99` alone
+    // 8.3 tok/s, `-ngl 99 --n-cpu-moe 36` 27.8 tok/s. The pairing is the
+    // contract - auto's own fit was not what any of those numbers ran under.
+    const args = await argvForStart({}, { ggufPath: '/moe.gguf', ngl: 24, nCpuMoe: 36 });
+    expect(args[args.indexOf('--n-cpu-moe') + 1]).toBe('36');
+    expect(args[args.indexOf('--n-gpu-layers') + 1]).toBe('99');
+  });
+
+  it('drops the offload count on a build whose help has no --n-cpu-moe', async () => {
+    const args = await argvForStart(
+      { probeHelpText: () => HELP_LEGACY },
+      { ggufPath: '/moe.gguf', ngl: 24, nCpuMoe: 36 }
+    );
+    expect(args).not.toContain('--n-cpu-moe');
+    // The pre-MoE behaviour is fully preserved, numeric -ngl included.
+    expect(args[args.indexOf('--n-gpu-layers') + 1]).toBe('24');
+  });
+
+  it('serves exactly as before when no offload count is requested', async () => {
+    const args = await argvForStart({}, { ggufPath: '/m.gguf', ngl: 24 });
+    expect(args).not.toContain('--n-cpu-moe');
+    expect(args[args.indexOf('--n-gpu-layers') + 1]).toBe('auto');
   });
 
   it('restricts CORS to loopback origins when the build supports it', async () => {

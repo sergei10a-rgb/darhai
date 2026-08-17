@@ -18,7 +18,7 @@
  * Studio installed and serving) can make an assertion pass by accident.
  */
 
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -27,12 +27,26 @@ import { resolveOnPath } from '@process/services/cookbook/LocalServeManager';
 import {
   LM_STUDIO_BASE_URL,
   LM_STUDIO_MODELS_URL,
+  defaultLmStudioServingProbe,
   detectLmStudio,
   detectLmStudioCli,
+  detectLmStudioPort,
   lmStudioCliCandidates,
+  lmStudioModelsUrl,
+  parseLmStudioStatusPort,
   probeLmStudioServer,
   type LmStudioDetectDeps,
 } from '@process/services/cookbook/lmStudioDetect';
+
+/**
+ * `lms server status --json` stdout, verbatim as the reference machine's CLI
+ * answered it (2026-08-17, exit 0 in all three states): server up, server
+ * stopped - the `port` field is the CONFIGURED port and is present either way -
+ * and server restarted on a moved port via `lms server start --port 12399`.
+ */
+const STATUS_UP = '{"running":true,"port":1234}';
+const STATUS_DOWN = '{"running":false,"port":1234}';
+const STATUS_MOVED = '{"running":true,"port":12399}';
 
 /**
  * A verbatim slice of `GET http://127.0.0.1:1234/api/v0/models` as the live LM
@@ -89,6 +103,11 @@ const NO_MACHINE: LmStudioDetectDeps = {
   homeDir: () => path.join(os.tmpdir(), 'darhai-no-such-home-9d3f1a'),
   platform: () => process.platform,
   fetchModels: async () => null,
+  // The property that must not regress: a host with no CLI never pays for a
+  // CLI start-up. A call here is a loud failure, not a stubbed answer.
+  execServerStatus: async () => {
+    throw new Error('execServerStatus must not run on a machine with no lms CLI');
+  },
 };
 
 let home = '';
@@ -228,6 +247,22 @@ describe('probeLmStudioServer', () => {
   it('reads LM Studio own endpoint, not the OpenAI shim', () => {
     expect(LM_STUDIO_MODELS_URL).toBe('http://127.0.0.1:1234/api/v0/models');
     expect(LM_STUDIO_BASE_URL).toBe('http://127.0.0.1:1234/v1');
+    expect(lmStudioModelsUrl(12399)).toBe('http://127.0.0.1:12399/api/v0/models');
+  });
+
+  it('probes the port it is GIVEN - a moved server is probed where it lives', async () => {
+    const seen: string[] = [];
+    const probe = await probeLmStudioServer(
+      {
+        fetchModels: async (url) => {
+          seen.push(url);
+          return LIVE_BODY;
+        },
+      },
+      12399
+    );
+    expect(seen).toEqual(['http://127.0.0.1:12399/api/v0/models']);
+    expect(probe.serving).toBe(true);
   });
 
   it('parses the live payload, including the fields the /v1 shim cannot carry', async () => {
@@ -299,12 +334,59 @@ describe('probeLmStudioServer', () => {
   });
 });
 
+describe('parseLmStudioStatusPort', () => {
+  it('reads all three measured shapes: server up, server stopped, server moved', () => {
+    expect(parseLmStudioStatusPort(STATUS_UP)).toBe(1234);
+    // Stopped is NOT portless: the field is the configured port (measured).
+    expect(parseLmStudioStatusPort(STATUS_DOWN)).toBe(1234);
+    expect(parseLmStudioStatusPort(STATUS_MOVED)).toBe(12399);
+    // The CLI ends its stdout with a newline; JSON.parse must not care.
+    expect(parseLmStudioStatusPort(`${STATUS_UP}\n`)).toBe(1234);
+  });
+
+  it('answers null for anything that does not carry a valid TCP port', () => {
+    expect(parseLmStudioStatusPort('')).toBeNull();
+    expect(parseLmStudioStatusPort('lms: command failed')).toBeNull();
+    expect(parseLmStudioStatusPort('null')).toBeNull();
+    expect(parseLmStudioStatusPort('"1234"')).toBeNull();
+    expect(parseLmStudioStatusPort('{"running":true}')).toBeNull();
+    expect(parseLmStudioStatusPort('{"port":"1234"}')).toBeNull();
+    expect(parseLmStudioStatusPort('{"port":0}')).toBeNull();
+    expect(parseLmStudioStatusPort('{"port":65536}')).toBeNull();
+    expect(parseLmStudioStatusPort('{"port":1234.5}')).toBeNull();
+  });
+});
+
+describe('detectLmStudioPort', () => {
+  it('never runs the CLI when there is no CLI - the bare host stays untaxed', async () => {
+    const exec = vi.fn(async () => STATUS_MOVED);
+    expect(await detectLmStudioPort(null, { execServerStatus: exec })).toBe(1234);
+    expect(exec).not.toHaveBeenCalled();
+  });
+
+  it('reads the configured port through the found CLI, once', async () => {
+    const exec = vi.fn(async () => STATUS_MOVED);
+    expect(await detectLmStudioPort('/somewhere/lms', { execServerStatus: exec })).toBe(12399);
+    expect(exec).toHaveBeenCalledTimes(1);
+    expect(exec).toHaveBeenCalledWith('/somewhere/lms');
+  });
+
+  it('falls back to 1234 when the CLI fails or answers garbage', async () => {
+    expect(await detectLmStudioPort('/somewhere/lms', { execServerStatus: async () => null })).toBe(1234);
+    expect(await detectLmStudioPort('/somewhere/lms', { execServerStatus: async () => 'not json' })).toBe(1234);
+  });
+});
+
 describe('detectLmStudio: installed and serving move independently', () => {
-  const withCli = (fetchModels: LmStudioDetectDeps['fetchModels']): LmStudioDetectDeps => ({
+  const withCli = (
+    fetchModels: LmStudioDetectDeps['fetchModels'],
+    execServerStatus: LmStudioDetectDeps['execServerStatus'] = async () => STATUS_UP
+  ): LmStudioDetectDeps => ({
     resolveCommandPath: (cmd) => resolveOnPath(cmd, ''),
     homeDir: () => home,
     platform: () => process.platform,
     fetchModels,
+    execServerStatus,
   });
 
   it('installed AND serving', async () => {
@@ -318,7 +400,15 @@ describe('detectLmStudio: installed and serving move independently', () => {
 
   it('installed, NOT serving - the host that gets offered "start it"', async () => {
     const cli = writeCli(process.platform === 'win32' ? 'lms.exe' : 'lms');
-    expect(await detectLmStudio(withCli(async () => null))).toEqual({
+    expect(
+      await detectLmStudio(
+        withCli(
+          async () => null,
+          // The measured stopped-server answer: still exit 0, still carries the port.
+          async () => STATUS_DOWN
+        )
+      )
+    ).toEqual({
       installed: true,
       serving: false,
       cliPath: cli,
@@ -326,7 +416,7 @@ describe('detectLmStudio: installed and serving move independently', () => {
   });
 
   it('serving, NOT installed - a portable copy the CLI search cannot see', async () => {
-    expect(await detectLmStudio(withCli(async () => LIVE_BODY))).toEqual({
+    expect(await detectLmStudio(withCli(async () => LIVE_BODY, NO_MACHINE.execServerStatus))).toEqual({
       installed: false,
       serving: true,
       cliPath: null,
@@ -335,5 +425,77 @@ describe('detectLmStudio: installed and serving move independently', () => {
 
   it('neither - a machine with no LM Studio at all', async () => {
     expect(await detectLmStudio(NO_MACHINE)).toEqual({ installed: false, serving: false, cliPath: null });
+  });
+
+  it('aims the probe at the port the CLI reports - the measured moved-server host', async () => {
+    // MEASURED 2026-08-17: after `lms server start --port 12399`, /api/v0/models
+    // answered 8 models on 12399 while 1234 REFUSED. This fetch stub is that
+    // host: only the moved port answers, so probing 1234 would read as down.
+    writeCli(process.platform === 'win32' ? 'lms.exe' : 'lms');
+    const seen: string[] = [];
+    const result = await detectLmStudio(
+      withCli(
+        async (url) => {
+          seen.push(url);
+          return url === lmStudioModelsUrl(12399) ? LIVE_BODY : null;
+        },
+        async () => STATUS_MOVED
+      )
+    );
+    expect(seen).toEqual([lmStudioModelsUrl(12399)]);
+    expect(result.serving).toBe(true);
+  });
+
+  it('keeps the 1234 fallback when the CLI is found but cannot answer', async () => {
+    writeCli(process.platform === 'win32' ? 'lms.exe' : 'lms');
+    const seen: string[] = [];
+    const result = await detectLmStudio(
+      withCli(
+        async (url) => {
+          seen.push(url);
+          return LIVE_BODY;
+        },
+        async () => null
+      )
+    );
+    // Exactly the pre-port-detection behaviour: probe the default port.
+    expect(seen).toEqual([LM_STUDIO_MODELS_URL]);
+    expect(result.serving).toBe(true);
+  });
+});
+
+describe('defaultLmStudioServingProbe (the availability seam LocalServeManager wires)', () => {
+  it('runs CLI -> port -> probe once each, and follows a moved port', async () => {
+    writeCli(process.platform === 'win32' ? 'lms.exe' : 'lms');
+    const exec = vi.fn(async () => STATUS_MOVED);
+    const seen: string[] = [];
+    const serving = await defaultLmStudioServingProbe({
+      resolveCommandPath: (cmd) => resolveOnPath(cmd, ''),
+      homeDir: () => home,
+      platform: () => process.platform,
+      fetchModels: async (url) => {
+        seen.push(url);
+        return url === lmStudioModelsUrl(12399) ? LIVE_BODY : null;
+      },
+      execServerStatus: exec,
+    });
+    expect(serving).toBe(true);
+    // One status call per availability read - the cost stays bounded.
+    expect(exec).toHaveBeenCalledTimes(1);
+    expect(seen).toEqual([lmStudioModelsUrl(12399)]);
+  });
+
+  it('stays a cheap refusal on a machine with no LM Studio at all', async () => {
+    const seen: string[] = [];
+    const serving = await defaultLmStudioServingProbe({
+      ...NO_MACHINE,
+      fetchModels: async (url) => {
+        seen.push(url);
+        return null;
+      },
+    });
+    expect(serving).toBe(false);
+    // No CLI -> no status call (NO_MACHINE throws on one) -> default-port probe.
+    expect(seen).toEqual([LM_STUDIO_MODELS_URL]);
   });
 });

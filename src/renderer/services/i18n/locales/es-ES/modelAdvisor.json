@@ -95,6 +95,7 @@
     },
     "status": {
       "downloading": "Descargando",
+      "calibrating": "Ajustando velocidad (una vez, ~2 min)…",
       "starting": "Iniciando",
       "ready": "Activo · :{{port}}",
       "error": "Falló"
@@ -108,6 +109,7 @@
     "decline": "Ahora no",
     "retry": "Reintentar",
     "cancelNotYet": "Este paso todavía no se puede detener. Inténtalo dentro de un momento.",
+    "expired": "Los datos mostrados antes habían quedado desactualizados, así que no se descargó nada. Revisa los datos actualizados y confirma de nuevo.",
     "stage": {
       "runtime": "Instalación",
       "model": "Modelo"

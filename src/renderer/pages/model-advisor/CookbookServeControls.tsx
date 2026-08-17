@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { Button, Message, Progress, Select, Space, Tag, Tooltip } from '@arco-design/web-react';
 import { Attention, Copy, Download, FolderOpen, Loading, PlayOne, Power } from '@icon-park/react';
 import type { CookbookBackend, CookbookBackendSelection } from '@/common/types/cookbook';
+import { LLAMACPP_DISCLOSURE_EXPIRED } from '@/common/types/llamacpp';
 import type {
   LlamaRuntimeAcceleration,
   LlamaRuntimeFallbackCode,
@@ -148,6 +149,10 @@ export const PROBLEM_KEY: Record<string, I18nKey> = {
   LLAMACPP_UNSUPPORTED: 'modelAdvisor.runtime.problem.unsupported',
   LLAMACPP_NO_ASSET: 'modelAdvisor.runtime.problem.unsupported',
   LLAMACPP_UNKNOWN: 'modelAdvisor.runtime.problem.unknown',
+  // Normally intercepted by `provisionAndServe`, which re-plans and shows the
+  // fresh card instead of a failure block; kept here so the code still reads
+  // as its own sentence if it ever surfaces through the generic problem path.
+  [LLAMACPP_DISCLOSURE_EXPIRED]: 'modelAdvisor.runtime.expired',
 };
 
 /** Used for a code no copy was written for, and for a bare failure with none. */
@@ -241,6 +246,14 @@ const CookbookServeControls: React.FC<CookbookServeControlsProps> = ({ modelId, 
   const [plan, setPlan] = useState<LlamaRuntimePlan | null>(null);
   /** True while `plan()` is in flight - honest "asking", not "downloading". */
   const [planning, setPlanning] = useState(false);
+  /**
+   * True when the card on screen exists because the previous Confirm found its
+   * disclosure expired: main refused with {@link LLAMACPP_DISCLOSURE_EXPIRED},
+   * this row re-planned, and the fresh card must SAY why it reappeared -
+   * otherwise the user watches their Confirm apparently do nothing and the
+   * same card come back, which reads as a dead button.
+   */
+  const [expired, setExpired] = useState(false);
   /** Non-null only in the row that started the install, so one row owns the surface. */
   const [stage, setStage] = useState<ProvisionStage | null>(null);
   /**
@@ -383,9 +396,33 @@ const CookbookServeControls: React.FC<CookbookServeControlsProps> = ({ modelId, 
   /** Serve through the user's override when they set one; else let main decide. */
   const serveBackend = (): CookbookBackend | undefined => (selected === 'none' ? undefined : selected);
 
+  /**
+   * The Confirm found its disclosure expired: main installed NOTHING. Fetch the
+   * fresh plan and put it back in front of the user with the reason it
+   * reappeared - consent is per-card, so only a new Confirm may install.
+   */
+  const replanAfterExpiry = async (): Promise<void> => {
+    // Not an attempt any more: the sticky `failed` status main keeps for this
+    // refusal must not outrank the fresh card this row is about to show.
+    setAttempted(false);
+    let answer: LlamaRuntimePlan;
+    setPlanning(true);
+    try {
+      answer = await runtime.fetchPlan();
+    } catch {
+      setPlan({ kind: 'unavailable', errorCode: 'LLAMACPP_UNKNOWN' });
+      return;
+    } finally {
+      setPlanning(false);
+    }
+    setExpired(true);
+    setPlan(answer);
+  };
+
   /** Provision the runtime, then serve. The single press behind both stages. */
   const provisionAndServe = async (): Promise<void> => {
     setPlan(null);
+    setExpired(false);
     setAttempted(true);
     setFailure(null);
     setCancelRefused(false);
@@ -393,6 +430,14 @@ const CookbookServeControls: React.FC<CookbookServeControlsProps> = ({ modelId, 
     setStage('runtime');
     try {
       const final = await runtime.install();
+      // The disclosure aged out between the card and this Confirm. Main
+      // deliberately fetched nothing - see LLAMACPP_DISCLOSURE_EXPIRED - and
+      // this is not a fault to report but a question to re-ask: show the fresh
+      // card and wait for a new Confirm rather than install an unseen plan.
+      if (final.state !== 'ready' && final.errorCode === LLAMACPP_DISCLOSURE_EXPIRED) {
+        await replanAfterExpiry();
+        return;
+      }
       // Do NOT go on to serve after a failed install: that falls through to the
       // copy-a-command path and hides the real reason.
       if (final.state !== 'ready') {
@@ -423,8 +468,11 @@ const CookbookServeControls: React.FC<CookbookServeControlsProps> = ({ modelId, 
   /** Ask what an install would cost BEFORE anything is downloaded. */
   const askThenProvision = async (): Promise<void> => {
     // Clear the last answer AND the last attempt, so a retry shows the fresh
-    // outcome rather than the failure it is retrying.
+    // outcome rather than the failure it is retrying. The expiry notice goes
+    // with them: it explained the PREVIOUS press, and a card opened afresh
+    // must read as a first offer.
     setPlan(null);
+    setExpired(false);
     setAttempted(false);
     setFailure(null);
     setCancelRefused(false);
@@ -654,13 +702,19 @@ const CookbookServeControls: React.FC<CookbookServeControlsProps> = ({ modelId, 
   const modelStageBlock = (): React.ReactNode => {
     const fetching = isServingThis && status.state === 'downloading';
     const starting = isServingThis && status.state === 'starting';
+    // One-time measured `--n-cpu-moe` calibration for a MoE model that does
+    // not fit in VRAM. Its own label because the wait is minutes, not seconds,
+    // and calling it "starting" for that long reads as a hang.
+    const calibrating = isServingThis && status.state === 'calibrating';
     const counting = fetching === true && !!prog && prog.totalBytes > 0;
     const pct = counting === true ? Math.min(100, Math.round((prog.bytesDownloaded / prog.totalBytes) * 100)) : 0;
     const label = fetching
       ? 'modelAdvisor.cookbook.status.downloading'
-      : starting
-        ? 'modelAdvisor.cookbook.status.starting'
-        : PHASE_LABEL_KEY.resolving;
+      : calibrating
+        ? 'modelAdvisor.cookbook.status.calibrating'
+        : starting
+          ? 'modelAdvisor.cookbook.status.starting'
+          : PHASE_LABEL_KEY.resolving;
     return (
       <div className={styles.runtimeBlock}>
         <span className={styles.runtimeStage}>
@@ -738,7 +792,12 @@ const CookbookServeControls: React.FC<CookbookServeControlsProps> = ({ modelId, 
     const size =
       plan.downloadBytes === null ? t('modelAdvisor.runtime.sizeUnknown') : formatFileSize(plan.downloadBytes);
     return (
-      <div className={styles.runtimeBlock}>
+      // role='status' when the card reappeared after an expired Confirm: it
+      // replaces the progress surface the press opened, and a silent swap
+      // tells a screen-reader user their Confirm did nothing. Not 'alert' -
+      // a refreshed offer is a step left to take, not a fault.
+      <div className={styles.runtimeBlock} role={expired === true ? 'status' : undefined}>
+        {expired === true ? <span className={styles.runtimeHint}>{t('modelAdvisor.runtime.expired')}</span> : null}
         <span className={styles.runtimeStage}>{t('modelAdvisor.runtime.disclose', { size })}</span>
         <span className={styles.runtimeHint}>{t(ACCEL_LABEL_KEY[plan.acceleration])}</span>
         {plan.fallbackCode === null ? null : (
@@ -756,7 +815,15 @@ const CookbookServeControls: React.FC<CookbookServeControlsProps> = ({ modelId, 
           <Button size='mini' type='primary' icon={<Download />} onClick={() => void provisionAndServe()}>
             {t('modelAdvisor.runtime.confirm')}
           </Button>
-          <Button size='mini' onClick={() => setPlan(null)}>
+          <Button
+            size='mini'
+            onClick={() => {
+              setPlan(null);
+              // The notice explains the card it sits on; do not let it haunt
+              // the next one.
+              setExpired(false);
+            }}
+          >
             {t('modelAdvisor.runtime.decline')}
           </Button>
         </Space>
@@ -765,7 +832,10 @@ const CookbookServeControls: React.FC<CookbookServeControlsProps> = ({ modelId, 
   }
 
   // ── This model is the active serve ────────────────────────────────────────
-  if (isServingThis && (status.state === 'starting' || status.state === 'downloading')) {
+  if (
+    isServingThis &&
+    (status.state === 'starting' || status.state === 'downloading' || status.state === 'calibrating')
+  ) {
     return modelStageBlock();
   }
 

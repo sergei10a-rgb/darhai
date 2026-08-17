@@ -116,7 +116,8 @@ export function useCookbookServe(): CookbookController {
     const offStatus = ipcBridge.cookbook.onServeStatus.on((s: CookbookServeStatus) => {
       setServeStatus(s);
       // A serve transition off 'downloading' means the cache changed.
-      if (s.state !== 'downloading' && s.state !== 'starting') void mutateDownloads();
+      // 'calibrating' is in-flight work like the other two, not a settling.
+      if (s.state !== 'downloading' && s.state !== 'starting' && s.state !== 'calibrating') void mutateDownloads();
     });
     return () => {
       offProgress();

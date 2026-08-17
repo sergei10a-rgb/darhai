@@ -28,7 +28,12 @@ import type { LocalServeManager } from '@process/services/cookbook/LocalServeMan
 import type { ModelDownloadManager } from '@process/services/cookbook/ModelDownloadManager';
 import type { CatalogModel, HardwareProfile } from '@process/services/hwfit';
 
-const { fetchModels } = vi.hoisted(() => ({
+const { fetchModels, execServerStatus } = vi.hoisted(() => ({
+  // The CLI seam is stubbed alongside the network seam: the default probe now
+  // asks `lms server status --json` for the configured port first, and this
+  // test must stay hermetic on a machine that HAS LM Studio (a real status
+  // call would report whatever port the developer's install uses).
+  execServerStatus: vi.fn(async (_cliPath: string) => null as string | null),
   fetchModels: vi.fn(async (_url: string) => ({
     data: [
       {
@@ -60,7 +65,7 @@ const { fetchModels } = vi.hoisted(() => ({
 
 vi.mock('@process/services/cookbook/lmStudioDetect', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@process/services/cookbook/lmStudioDetect')>();
-  return { ...actual, defaultFetchLmStudioModels: fetchModels };
+  return { ...actual, defaultFetchLmStudioModels: fetchModels, defaultExecLmStudioServerStatus: execServerStatus };
 });
 
 const MODEL: CatalogModel = {

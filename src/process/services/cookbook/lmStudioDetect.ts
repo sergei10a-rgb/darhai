@@ -28,7 +28,7 @@
  * reusing the split 15aed2b53 introduced for llama.cpp instead of inventing a
  * third shape.
  *
- * Two measurements on the reference machine (Windows 11, LM Studio 0.3.x, its
+ * Three measurements on the reference machine (Windows 11, LM Studio 0.3.x, its
  * server up on 1234) shaped what follows:
  *
  *   1. `resolveOnPath('lms')` -> null, `resolveOnPath('lms.exe')` -> the real
@@ -40,10 +40,26 @@
  *      makes it acceptable for {@link probeLmStudioServer} to run on every
  *      availability read: the cost on a machine WITHOUT LM Studio - the case
  *      that must not be taxed - is a connection refusal, not a timeout.
+ *   3. The port is the user's to change, and `lms server status --json` reports
+ *      it in BOTH server states (measured 2026-08-17, exit 0 each time):
+ *      `{"running":true,"port":1234}` at 313.8 / 329.1 ms warm,
+ *      `{"running":false,"port":1234}` at 416.3 ms - the field carries the
+ *      CONFIGURED port even while nothing is listening on it. After
+ *      `lms server start --port 12399` it answered `{"running":true,"port":12399}`,
+ *      `/api/v0/models` served 8 models on 12399, and 1234 REFUSED - which is
+ *      exactly the host a probe pinned to 1234 misreports as "no LM Studio".
+ *      So {@link detectLmStudioPort} asks the CLI for the real port before the
+ *      probe, and only when the CLI was found: the ~300-420 ms status call is
+ *      paid solely by machines that HAVE LM Studio, while a bare host keeps its
+ *      measured ~1 ms refusal on the 1234 fallback. Once per availability read,
+ *      never cached across reads - a user can move the port mid-session.
  */
 
+import { execFile } from 'node:child_process';
+import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { promisify } from 'node:util';
 
 /** Loopback port LM Studio's local server binds unless the user changed it. */
 export const LM_STUDIO_DEFAULT_PORT = 1234;
@@ -59,18 +75,24 @@ export const LM_STUDIO_HOST = '127.0.0.1';
 export const LM_STUDIO_BASE_URL = `http://${LM_STUDIO_HOST}:${LM_STUDIO_DEFAULT_PORT}/v1`;
 
 /**
- * LM Studio's OWN model endpoint, and deliberately not the `/v1/models` shim.
+ * LM Studio's OWN model endpoint on the given port, and deliberately not the
+ * `/v1/models` shim.
  *
  * Two reasons, both load-bearing. It carries fields the OpenAI shape has no
  * room for - measured against the live install: `type` (llm | vlm |
  * embeddings), `state` ("loaded" | "not-loaded"), `arch`, `quantization`,
  * `max_context_length`, `capabilities`. And because the path is LM Studio's
- * alone, a 200 from it identifies WHICH server is on 1234. A probe of
+ * alone, a 200 from it identifies WHICH server is on that port. A probe of
  * `/v1/models` would answer 200 for any OpenAI-compatible process that happened
- * to bind that port, and Darhai would report "LM Studio is available" about
- * something else entirely.
+ * to bind it, and Darhai would report "LM Studio is available" about something
+ * else entirely.
  */
-export const LM_STUDIO_MODELS_URL = `http://${LM_STUDIO_HOST}:${LM_STUDIO_DEFAULT_PORT}/api/v0/models`;
+export function lmStudioModelsUrl(port: number): string {
+  return `http://${LM_STUDIO_HOST}:${port}/api/v0/models`;
+}
+
+/** {@link lmStudioModelsUrl} on the default port - the pre-detection fallback. */
+export const LM_STUDIO_MODELS_URL = lmStudioModelsUrl(LM_STUDIO_DEFAULT_PORT);
 
 /**
  * Binary names to look for on PATH, BOTH spellings.
@@ -83,6 +105,15 @@ export const LM_STUDIO_CLI_BINARIES = ['lms', 'lms.exe'] as const;
 
 /** How long a single availability probe may hang before it counts as "no". */
 const PROBE_TIMEOUT_MS = 1500;
+
+/**
+ * How long `lms server status --json` may run before the port falls back to
+ * {@link LM_STUDIO_DEFAULT_PORT}. Measured 313.8-416.3 ms on the reference
+ * machine (a 115 MB binary starting up each call); 3000 leaves room for a
+ * cold antivirus scan of that binary without stalling an availability read
+ * indefinitely.
+ */
+const STATUS_TIMEOUT_MS = 3000;
 
 /** One model LM Studio knows about, as its native API reports it. */
 export type LmStudioModel = {
@@ -133,6 +164,13 @@ export type LmStudioDetectDeps = {
   platform: () => NodeJS.Platform;
   /** Fetch LM Studio's model endpoint. Defaults to a timed `globalThis.fetch`. */
   fetchModels: (url: string) => Promise<unknown>;
+  /**
+   * Run `<cliPath> server status --json` and return its raw stdout, or null on
+   * ANY failure (spawn error, non-zero exit, timeout) - the caller has one
+   * fallback for all of them. Required, not optional: an omitted seam would
+   * silently pin the probe back to 1234, which is the defect this seam closes.
+   */
+  execServerStatus: (cliPath: string) => Promise<string | null>;
 };
 
 /**
@@ -170,7 +208,66 @@ export function defaultLmStudioDeps(resolveCommandPath: (cmd: string) => string 
     homeDir: () => os.homedir(),
     platform: () => process.platform,
     fetchModels: defaultFetchLmStudioModels,
+    execServerStatus: defaultExecLmStudioServerStatus,
   };
+}
+
+/**
+ * Resolve an executable on PATH, or verify an absolute path (X_OK), for the
+ * default probe alone.
+ *
+ * A copy of LocalServeManager's `resolveOnPath`, NOT an import: LocalServeManager
+ * imports this module (its LM Studio defaults live here), so the reverse import
+ * would close a cycle. Everything injectable still receives the manager's own
+ * resolver through {@link defaultLmStudioDeps}; only the zero-argument
+ * {@link defaultLmStudioServingProbe} - wired as a `LocalServeDeps` default
+ * with no way to be handed one - needs a resolver of its own.
+ */
+function resolveExecutableForDefaults(cmd: string): string | null {
+  if (cmd.includes('/') || cmd.includes('\\')) {
+    try {
+      fs.accessSync(cmd, fs.constants.X_OK);
+      return cmd;
+    } catch {
+      return null;
+    }
+  }
+  const sep = process.platform === 'win32' ? ';' : ':';
+  for (const dir of (process.env.PATH || '').split(sep)) {
+    if (!dir) continue;
+    const candidate = path.join(dir, cmd);
+    try {
+      fs.accessSync(candidate, fs.constants.X_OK);
+      return candidate;
+    } catch {
+      // continue
+    }
+  }
+  return null;
+}
+
+const execFileAsync = promisify(execFile);
+
+/**
+ * The production {@link LmStudioDetectDeps.execServerStatus}: run the found
+ * `lms` with `server status --json`, bounded by {@link STATUS_TIMEOUT_MS}.
+ *
+ * Null for every failure, the same one-answer contract as
+ * {@link defaultFetchLmStudioModels} - a CLI that cannot answer costs the
+ * caller nothing but the 1234 fallback it already had.
+ */
+export async function defaultExecLmStudioServerStatus(cliPath: string): Promise<string | null> {
+  try {
+    const { stdout } = await execFileAsync(cliPath, ['server', 'status', '--json'], {
+      encoding: 'utf8',
+      maxBuffer: 1024 * 1024,
+      timeout: STATUS_TIMEOUT_MS,
+      windowsHide: true,
+    });
+    return stdout;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -185,10 +282,66 @@ export function defaultLmStudioCliCandidates(): string[] {
   return lmStudioCliCandidates(os.homedir(), process.platform);
 }
 
-/** Is LM Studio answering on this machine? The manager's default probe. */
-export async function defaultLmStudioServingProbe(): Promise<boolean> {
-  const probe = await probeLmStudioServer({ fetchModels: defaultFetchLmStudioModels });
-  return probe.serving;
+/**
+ * The port in one `lms server status --json` stdout, or null.
+ *
+ * The measured shapes (2026-08-17): `{"running":true,"port":1234}` with the
+ * server up, `{"running":false,"port":1234}` with it down, and
+ * `{"running":true,"port":12399}` after `lms server start --port 12399`. The
+ * `port` field is the CONFIGURED port and is present in both states, so
+ * `running` is deliberately not read here - whether anything is listening is
+ * the probe's question, and the probe answers it against this port either way.
+ *
+ * Null for anything that is not a JSON object carrying a valid TCP port:
+ * the caller's fallback is {@link LM_STUDIO_DEFAULT_PORT}, and a half-trusted
+ * number would aim the probe at a port no server was ever configured on.
+ */
+export function parseLmStudioStatusPort(stdout: string): number | null {
+  let body: unknown;
+  try {
+    body = JSON.parse(stdout);
+  } catch {
+    return null;
+  }
+  if (!body || typeof body !== 'object') return null;
+  const port = (body as { port?: unknown }).port;
+  if (typeof port !== 'number' || !Number.isInteger(port) || port < 1 || port > 65535) return null;
+  return port;
+}
+
+/**
+ * The port LM Studio's server is configured on, best-effort.
+ *
+ * The status call runs ONLY when the CLI was found - that keeps the measured
+ * property that matters: a machine without LM Studio pays a ~1 ms connection
+ * refusal on the fallback port, never a ~300-420 ms CLI start-up for a feature
+ * it does not have. When the CLI is missing, errors, or answers something
+ * unparseable, the answer is {@link LM_STUDIO_DEFAULT_PORT} - exactly the
+ * behaviour this module had before the port was read at all.
+ */
+export async function detectLmStudioPort(
+  cliPath: string | null,
+  deps: Pick<LmStudioDetectDeps, 'execServerStatus'>
+): Promise<number> {
+  if (cliPath === null) return LM_STUDIO_DEFAULT_PORT;
+  const stdout = await deps.execServerStatus(cliPath);
+  if (stdout === null) return LM_STUDIO_DEFAULT_PORT;
+  return parseLmStudioStatusPort(stdout) ?? LM_STUDIO_DEFAULT_PORT;
+}
+
+/**
+ * Is LM Studio answering on this machine? The manager's default probe.
+ *
+ * One {@link detectLmStudio} pass: find the CLI, ask IT for the real port
+ * (once - this function is called once per `detectAvailability`, so the
+ * status cost is once per availability read), then probe that port. A server
+ * the user moved off 1234 is found instead of misreported as absent.
+ */
+export async function defaultLmStudioServingProbe(
+  deps: LmStudioDetectDeps = defaultLmStudioDeps(resolveExecutableForDefaults)
+): Promise<boolean> {
+  const availability = await detectLmStudio(deps);
+  return availability.serving;
 }
 
 /**
@@ -241,9 +394,17 @@ function toModel(raw: unknown): LmStudioModel | null {
  * Studio. An empty `data` array is still `serving: true` - a running LM Studio
  * with no models downloaded is up, just not useful yet, and those are different
  * things for the caller to say.
+ *
+ * `port` defaults to {@link LM_STUDIO_DEFAULT_PORT} so a caller with no better
+ * knowledge behaves exactly as before; the availability path passes the port
+ * {@link detectLmStudioPort} read from the CLI, which is what finds a server
+ * the user moved.
  */
-export async function probeLmStudioServer(deps: Pick<LmStudioDetectDeps, 'fetchModels'>): Promise<LmStudioServerProbe> {
-  const body = await deps.fetchModels(LM_STUDIO_MODELS_URL);
+export async function probeLmStudioServer(
+  deps: Pick<LmStudioDetectDeps, 'fetchModels'>,
+  port: number = LM_STUDIO_DEFAULT_PORT
+): Promise<LmStudioServerProbe> {
+  const body = await deps.fetchModels(lmStudioModelsUrl(port));
   if (!body || typeof body !== 'object') return { serving: false, models: [] };
   const raw = (body as { data?: unknown }).data;
   if (!Array.isArray(raw)) return { serving: false, models: [] };
@@ -279,12 +440,49 @@ export function detectLmStudioCli(
 /**
  * Both LM Studio facts for this host, in one call.
  *
- * The two probes are independent and run concurrently: neither answer is
- * derivable from the other. A server can be up while the CLI is somewhere this
- * search does not reach (a portable install), and that host is still fully
- * usable - `serving` alone is what makes LM Studio viable.
+ * The two answers stay independent - a server can be up while the CLI is
+ * somewhere this search does not reach (a portable install), and that host is
+ * still fully usable, because `serving` alone is what makes LM Studio viable.
+ * The STEPS are no longer concurrent, though: the CLI, when found, is asked
+ * for the configured port first ({@link detectLmStudioPort}, one status call
+ * per detection), so the probe aims at the port the user actually chose. A
+ * host without the CLI skips the status call entirely and probes the 1234
+ * fallback, exactly as before.
  */
 export async function detectLmStudio(deps: LmStudioDetectDeps): Promise<LmStudioAvailability> {
-  const [cliPath, probe] = await Promise.all([Promise.resolve(detectLmStudioCli(deps)), probeLmStudioServer(deps)]);
+  const cliPath = detectLmStudioCli(deps);
+  const port = await detectLmStudioPort(cliPath, deps);
+  const probe = await probeLmStudioServer(deps, port);
   return { installed: cliPath !== null, serving: probe.serving, cliPath };
+}
+
+/** A serve-path probe answer: the models AND the port they were found on. */
+export type LmStudioServeProbe = LmStudioServerProbe & {
+  /** The port the probe actually asked - detected from the CLI, else 1234. */
+  port: number;
+};
+
+/**
+ * The serve path's probe: same CLI-first port detection as
+ * {@link detectLmStudio}, but the caller also needs the model list and the
+ * port itself, because whatever URL gets REGISTERED for the agent to call
+ * must be the URL the models were found on. Splitting "is it serving" from
+ * "which port" across two calls is how the old code registered 1234 for a
+ * server it had just found elsewhere.
+ */
+export async function probeLmStudioForServe(overrides: Partial<LmStudioDetectDeps> = {}): Promise<LmStudioServeProbe> {
+  // Callers pass their IMPORTED seam functions as overrides (the manager
+  // hands in `defaultFetchLmStudioModels`/`defaultExecLmStudioServerStatus`
+  // by name) so a test that mocks this module's exports intercepts the
+  // network and the CLI; internal bindings would silently bypass the mock.
+  const deps: LmStudioDetectDeps = { ...defaultLmStudioDeps(resolveExecutableForDefaults), ...overrides };
+  const cliPath = detectLmStudioCli(deps);
+  const port = await detectLmStudioPort(cliPath, deps);
+  const probe = await probeLmStudioServer(deps, port);
+  return { ...probe, port };
+}
+
+/** The `/v1` OpenAI-compatible base URL for a detected LM Studio port. */
+export function lmStudioBaseUrl(port: number): string {
+  return `http://${LM_STUDIO_HOST}:${port}/v1`;
 }

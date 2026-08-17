@@ -165,6 +165,8 @@ type HarnessOptions = {
   installedTags?: string[];
   /** Resolve `ensureInstalled` only when this is called. */
   gate?: { promise: Promise<void>; release: () => void };
+  /** Mutable fake clock; the controller reads `nowMs` on every `now()` call. */
+  clock?: { nowMs: number };
 };
 
 function makeHarness(opts: HarnessOptions = {}): Harness {
@@ -285,6 +287,7 @@ function makeHarness(opts: HarnessOptions = {}): Harness {
     layout,
     cudaPresent: () => opts.cudaPresent === true,
     emit: (status) => emitted.push(status),
+    ...(opts.clock ? { now: () => (opts.clock as { nowMs: number }).nowMs } : {}),
   };
 
   return {
@@ -671,6 +674,102 @@ describe('LlamaRuntimeController.plan - two rows cannot be told different things
     // Nothing was disclosed, so the second press really does ask again rather
     // than re-stating a slot that was never filled.
     expect(resolveAttempts.count).toBe(2);
+  });
+});
+
+/**
+ * A disclosure is a sentence said to a person, and a person walks away.
+ *
+ * The outstanding slot is deliberately not expired on a short timer - that
+ * re-opens the "confirm A, install B" hole the slot exists to close. But held
+ * FOREVER it makes a card confirmed a day later install a tag that stopped
+ * being `latest` long ago. The compromise: a disclosure older than 24 h is
+ * stale. `plan()` resolves afresh so the user is shown today's release; an
+ * `install()` that finds only a stale slot REFUSES with
+ * `LLAMACPP_DISCLOSURE_EXPIRED` and fetches nothing, because the one thing it
+ * could install afresh is a resolution the user has never seen. The consent
+ * principle is literal: only a plan that was put in front of the user reaches
+ * disk, and an expired card costs a re-plan plus a second Confirm, never a
+ * silent substitution.
+ */
+describe('LlamaRuntimeController - a disclosure does not outlive its day', () => {
+  const DAY_MS = 24 * 60 * 60 * 1000;
+
+  it('re-states a disclosure younger than 24 h', async () => {
+    const clock = { nowMs: 0 };
+    const first = releaseFor(TAG, CPU_BYTES);
+    const moved = releaseFor('b10442', 99_000_000);
+    const { controller, planCalls } = makeHarness({ backend: 'cuda', releases: [first, moved], clock });
+
+    const cardA = await controller.plan();
+    clock.nowMs = DAY_MS - 1;
+    const cardB = await controller.plan();
+
+    expect(cardA.kind).toBe('ok');
+    expect(cardB.kind).toBe('ok');
+    if (cardA.kind !== 'ok' || cardB.kind !== 'ok') return;
+    expect(cardB.tag).toBe(cardA.tag);
+    expect(planCalls).toHaveLength(1);
+  });
+
+  it('re-resolves a plan() once the outstanding disclosure is older than 24 h', async () => {
+    const clock = { nowMs: 0 };
+    const first = releaseFor(TAG, CPU_BYTES);
+    const moved = releaseFor('b10442', 99_000_000);
+    const { controller, planCalls } = makeHarness({ backend: 'cuda', releases: [first, moved], clock });
+
+    await controller.plan();
+    clock.nowMs = DAY_MS + 1;
+    const after = await controller.plan();
+
+    expect(after.kind).toBe('ok');
+    if (after.kind !== 'ok') return;
+    // The user is shown today's release, not yesterday's slot.
+    expect(after.tag).toBe('b10442');
+    expect(planCalls).toHaveLength(2);
+  });
+
+  it('does not install a stale approval - install() refuses with LLAMACPP_DISCLOSURE_EXPIRED', async () => {
+    // INVERTED from the earlier "install() resolves afresh" pinning, which had
+    // blessed a real consent hole rather than a fix: resolving afresh INSIDE
+    // install() sent a resolution the user never saw straight to disk. A card
+    // that said "b10441, CPU, 30 MB" confirmed a day later fetched whatever
+    // "latest" was by then - a different tag, of a different size, possibly a
+    // different acceleration - with no disclosure anywhere. The principle this
+    // file states at the top is that ONLY a stated plan is installed, so an
+    // expired slot must cost a re-plan and a second Confirm, not a download.
+    const clock = { nowMs: 0 };
+    const first = releaseFor(TAG, CPU_BYTES);
+    const moved = releaseFor('b10442', 99_000_000);
+    const { controller, ensureCalls, installedAssets } = makeHarness({
+      backend: 'cuda',
+      releases: [first, moved],
+      clock,
+    });
+
+    await controller.plan();
+    clock.nowMs = DAY_MS + 1;
+    const status = await controller.install();
+
+    // Refused with the typed code - and the provisioner was NEVER reached, so
+    // not one byte of the never-shown resolution went to disk.
+    expect(status.state).toBe('failed');
+    expect(status.errorCode).toBe('LLAMACPP_DISCLOSURE_EXPIRED');
+    expect(ensureCalls).toHaveLength(0);
+    expect(installedAssets).toEqual([]);
+
+    // The renderer's reaction is a fresh plan(): the user is shown today's
+    // release as a new card...
+    const after = await controller.plan();
+    expect(after.kind).toBe('ok');
+    if (after.kind !== 'ok') return;
+    expect(after.tag).toBe('b10442');
+
+    // ...and only the new Confirm installs - exactly what that card said.
+    const installed = await controller.install();
+    expect(installed.state).toBe('ready');
+    expect(ensureCalls).toHaveLength(1);
+    expect(approvedPlan(ensureCalls).tag).toBe('b10442');
   });
 });
 

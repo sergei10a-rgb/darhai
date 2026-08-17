@@ -82,11 +82,11 @@ user who already has llama.cpp keeps using theirs.
 
 `selectBackend` (`backendPolicy.ts`) answers two questions, not one:
 
-| field | means | example: host with Ollama only |
-| --- | --- | --- |
-| `viable` | can serve **now** | `['ollama']` |
-| `chosen` | most capable of those | `'ollama'` |
-| `provisionable` | Darhai could make it serve | `['llama-server']` |
+| field           | means                      | example: host with Ollama only |
+| --------------- | -------------------------- | ------------------------------ |
+| `viable`        | can serve **now**          | `['ollama']`                   |
+| `chosen`        | most capable of those      | `'ollama'`                     |
+| `provisionable` | Darhai could make it serve | `['llama-server']`             |
 
 The split exists because "is it installed" is the wrong question for the one backend
 that ships inside the app. Building the whole choice list from `viable` meant a machine
@@ -115,13 +115,13 @@ decides only the default; every entry is offered.
 `CookbookBackend` is a union declared in `src/common/types/cookbook.ts`, but adding a
 member to it is not one edit. It obliges five more, and `tsc` catches exactly **one**:
 
-| downstream site | needs | who catches a miss |
-| --- | --- | --- |
-| `BACKEND_LABEL_KEY` (CookbookServeControls) | an i18n **key** | **tsc** — it is a `Record` over the union |
-| 13 × `modelAdvisor.json` | the **string** that key names | the guard test |
-| `selectBackend` (backendPolicy) | a branch that emits it | the guard test |
-| `CookbookServeService.serve` | a dispatch branch | the guard test |
-| `VALID_BACKENDS` (cookbookBridge) | acceptance over IPC | **construction** |
+| downstream site                             | needs                         | who catches a miss                        |
+| ------------------------------------------- | ----------------------------- | ----------------------------------------- |
+| `BACKEND_LABEL_KEY` (CookbookServeControls) | an i18n **key**               | **tsc** — it is a `Record` over the union |
+| 13 × `modelAdvisor.json`                    | the **string** that key names | the guard test                            |
+| `selectBackend` (backendPolicy)             | a branch that emits it        | the guard test                            |
+| `CookbookServeService.serve`                | a dispatch branch             | the guard test                            |
+| `VALID_BACKENDS` (cookbookBridge)           | acceptance over IPC           | **construction**                          |
 
 A backend added to the union and the label map alone compiles, lints and passes every
 pre-existing test, while:
@@ -147,11 +147,11 @@ its own copy of the list drifts the moment someone adds a backend, which is the 
 
 MEASURED by mutation, three ways — every one restored afterwards:
 
-| mutation | result |
-| --- | --- |
-| add a fake `'mlx'` member to `COOKBOOK_BACKENDS` | **16 tests fail** (13 locales + label map + key-name check + reachability), and `tsc` fails at `BACKEND_LABEL_KEY` |
-| delete `cookbook.backend.lmStudio` from `mn-MN` only | **2 tests fail**, naming `mn-MN modelAdvisor.cookbook.backend.lmStudio` |
-| delete the `chosen === 'lm-studio'` branch from `serve()` | **1 test fails**: `serve(override=lm-studio) fell through: expected 'none' to be 'lm-studio'` |
+| mutation                                                  | result                                                                                                             |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| add a fake `'mlx'` member to `COOKBOOK_BACKENDS`          | **16 tests fail** (13 locales + label map + key-name check + reachability), and `tsc` fails at `BACKEND_LABEL_KEY` |
+| delete `cookbook.backend.lmStudio` from `mn-MN` only      | **2 tests fail**, naming `mn-MN modelAdvisor.cookbook.backend.lmStudio`                                            |
+| delete the `chosen === 'lm-studio'` branch from `serve()` | **1 test fails**: `serve(override=lm-studio) fell through: expected 'none' to be 'lm-studio'`                      |
 
 ---
 
@@ -367,10 +367,14 @@ releases that does ship a build for this machine (one extra API request, and onl
 case). An explicitly pinned `tag` is never walked back, and when no recent release has the
 asset either, the honest `unsupported` stands.
 
-`hasCudaRuntime()` searches `CUDA_PATH\bin`, every `PATH` entry, then `System32`. On the
-reference machine it returned `true` — because a _third-party_ directory
-(`C:\claude\llamacpp`, a hand-installed llama.cpp) was on `PATH`. `excludeDirs` only
-excludes Darhai's own install root. See [What is not handled yet](#8-what-is-not-handled-yet).
+`hasCudaRuntime()` searches `CUDA_PATH\bin` and `System32` — and deliberately **not**
+`PATH`. It used to, and on the reference machine it returned `true` because a
+_third-party_ directory (`C:\claude\llamacpp`, a hand-installed llama.cpp) was on `PATH`
+with its own cudart copies: the 373 MB archive was skipped, and deleting that unrelated
+directory later would silently lose the GPU exactly as measured above. A directory Darhai
+does not own says nothing durable about the machine, so the probe now reads only the two
+locations the runtime is installed to by its owners. Erring this way costs at most a
+re-download of an archive the machine already had; erring the old way cost the GPU.
 
 ---
 
@@ -657,11 +661,11 @@ user runs `lms bootstrap`, so "not on `PATH`" says nothing at all.
 `{"running":true,"port":1234}` — and it is still the wrong instrument. Measured,
 alternating cold and warm:
 
-| probe | cost |
-| --- | --- |
+| probe                                   | cost                                             |
+| --------------------------------------- | ------------------------------------------------ |
 | `GET /api/v0/models` (what Darhai uses) | **39.3 ms** cold, then 4.0 / 2.6 / 11.8 / 7.9 ms |
-| `lms server status` | 530.2 ms, then 379.5 ms |
-| `lms ps` | 449.3 ms, then 411.5 ms |
+| `lms server status`                     | 530.2 ms, then 379.5 ms                          |
+| `lms ps`                                | 449.3 ms, then 411.5 ms                          |
 
 Warm against warm that is **~65×**, and every CLI run pays it again: an invocation is that
 115 MB binary starting up, while the HTTP probe is one loopback request. The HTTP probe
@@ -672,14 +676,39 @@ together rather than making the caller ask twice.
 The cost that actually needed bounding is the machine **without** LM Studio, because that
 machine must not pay for a feature it is not using. It does not:
 
-| host | `detectAvailability()` |
-| --- | --- |
-| LM Studio installed and serving | 33.7 / 30.6 / 31.7 ms |
-| nothing installed, port closed | 24.4 ms first, then 1.5 / 1.0 / 1.0 / 1.0 ms |
+| host                            | `detectAvailability()`                       |
+| ------------------------------- | -------------------------------------------- |
+| LM Studio installed and serving | 33.7 / 30.6 / 31.7 ms                        |
+| nothing installed, port closed  | 24.4 ms first, then 1.5 / 1.0 / 1.0 / 1.0 ms |
 
 A `fetch` to a closed loopback port rejects with `ECONNREFUSED` in **0.7–2.3 ms** (five
 runs). The 1500 ms timeout in `defaultFetchLmStudioModels` is there for a hung socket, not
 for the common case — nothing on a bare host waits for it.
+
+### The one question that IS the CLI's: the port
+
+The HTTP probe can only knock on a port it was told about, and the port is a user setting.
+The CLI is the instrument that reports it, and it does so in **both** server states —
+measured (2026-08-17), exit 0 each time:
+
+```
+server up                             ->  {"running":true,"port":1234}     313.8 / 329.1 ms
+server stopped                        ->  {"running":false,"port":1234}    416.3 ms
+after `lms server start --port 12399` ->  {"running":true,"port":12399}
+```
+
+The `port` field is the **configured** port, present even while nothing listens on it —
+which is exactly right for the probe, whose job is to find out whether anything does. With
+the server moved to 12399, `/api/v0/models` answered 8 models there while 1234 **refused**;
+that host is the one a probe pinned to 1234 misreports as "no LM Studio".
+
+So `detectLmStudioPort` runs `lms server status --json` **only when the CLI was found**,
+once per availability read, and every failure — no CLI, non-zero exit, timeout,
+unparseable stdout — falls back to 1234, the exact behaviour the module had before the
+port was read at all. The ~300–420 ms status cost lands solely on machines that HAVE LM
+Studio; the bare host keeps its measured ~1 ms refusal. The result is never cached across
+reads, because the user can move the port mid-session, and a session-long cache would
+re-create the very defect this closes.
 
 ### Why LM Studio's own endpoint, and not the `/v1` shim
 
@@ -687,18 +716,26 @@ Both are up on 1234. They are not interchangeable, for two independent reasons.
 
 **The shim cannot carry the answer.** Measured against the same eight models:
 
-| endpoint | fields per model |
-| --- | --- |
-| `/v1/models` | `id`, `object`, `owned_by` |
+| endpoint         | fields per model                                                                                                                 |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `/v1/models`     | `id`, `object`, `owned_by`                                                                                                       |
 | `/api/v0/models` | `id`, `object`, `type`, `publisher`, `arch`, `compatibility_type`, `quantization`, `state`, `max_context_length`, `capabilities` |
 
 One entry, verbatim:
 
 ```json
-{ "id": "qwen3.6-35b-a3b-uncensored-hauhaucs-aggressive", "object": "model",
-  "type": "vlm", "publisher": "HauhauCS", "arch": "qwen35moe",
-  "compatibility_type": "gguf", "quantization": "Q4_K_M", "state": "not-loaded",
-  "max_context_length": 262144, "capabilities": ["tool_use"] }
+{
+  "id": "qwen3.6-35b-a3b-uncensored-hauhaucs-aggressive",
+  "object": "model",
+  "type": "vlm",
+  "publisher": "HauhauCS",
+  "arch": "qwen35moe",
+  "compatibility_type": "gguf",
+  "quantization": "Q4_K_M",
+  "state": "not-loaded",
+  "max_context_length": 262144,
+  "capabilities": ["tool_use"]
+}
 ```
 
 `type` is what keeps an embeddings model from being registered as a chat model — the
@@ -739,23 +776,23 @@ minutes, and if the user never sends a message, nothing was ever loaded.
 
 ### How it differs from ollama, and from Darhai's own llama.cpp
 
-| | Darhai's llama.cpp | ollama | LM Studio |
-| --- | --- | --- | --- |
-| who installs it | **Darhai** (§1) | the user | the user |
-| who starts the server | Darhai (`spawn`) | a background service | **a person, in a GUI** |
-| who stops it | Darhai, incl. on quit | the service manager | **the person** |
-| can Darhai fetch a chosen model | yes (GGUF, §4) | yes (`ollama pull hf.co/…`) | **no — it serves what it holds** |
-| serve cost for a catalog model | download + spawn | `pull` + register | **register only, 0 bytes** |
-| port | ephemeral, allocated per serve | 11434 | 1234 by default, **user-settable** |
-| bind address (measured, `netstat`) | `127.0.0.1` (`--host`) | `127.0.0.1:11434` | **`0.0.0.0:1234`** |
-| CORS (measured) | `*` by default → pinned to `localhost` (§5) | n/a | none sent (`cors: false`) |
-| API key | none, deliberately (§5) | none | none |
+|                                    | Darhai's llama.cpp                          | ollama                      | LM Studio                          |
+| ---------------------------------- | ------------------------------------------- | --------------------------- | ---------------------------------- |
+| who installs it                    | **Darhai** (§1)                             | the user                    | the user                           |
+| who starts the server              | Darhai (`spawn`)                            | a background service        | **a person, in a GUI**             |
+| who stops it                       | Darhai, incl. on quit                       | the service manager         | **the person**                     |
+| can Darhai fetch a chosen model    | yes (GGUF, §4)                              | yes (`ollama pull hf.co/…`) | **no — it serves what it holds**   |
+| serve cost for a catalog model     | download + spawn                            | `pull` + register           | **register only, 0 bytes**         |
+| port                               | ephemeral, allocated per serve              | 11434                       | 1234 by default, **user-settable** |
+| bind address (measured, `netstat`) | `127.0.0.1` (`--host`)                      | `127.0.0.1:11434`           | **`0.0.0.0:1234`**                 |
+| CORS (measured)                    | `*` by default → pinned to `localhost` (§5) | n/a                         | none sent (`cors: false`)          |
+| API key                            | none, deliberately (§5)                     | none                        | none                               |
 
 Two rows deserve the argument behind them.
 
 **LM Studio is ranked below ollama, and above llama-server.** Below ollama for one
 concrete reason: this selector serves a model the user picked from Darhai's catalog, and
-ollama can go and *get* that model. LM Studio serves what it already holds, so defaulting
+ollama can go and _get_ that model. LM Studio serves what it already holds, so defaulting
 to it would mean defaulting to a backend that may not have the chosen model at all — and
 `matchLmStudioModel` correctly refuses rather than serving a lookalike. A second reason
 points the same way: ollama runs as a background service, LM Studio's server lives inside
@@ -773,7 +810,7 @@ TCP    127.0.0.1:11434    LISTENING    11344      <- ollama
 
 `~/.lmstudio/.internal/http-server-config.json` says why: `"networkInterface": "0.0.0.0"`.
 
-Darhai *connects* to `127.0.0.1:1234` (`LM_STUDIO_HOST` is loopback, and both URL guards
+Darhai _connects_ to `127.0.0.1:1234` (`LM_STUDIO_HOST` is loopback, and both URL guards
 let that through on purpose — `assertSafeBaseUrl` in `modelBridge.ts` is a narrow
 deny-list that rejects `169.254.0.0/16` and non-http schemes while deliberately keeping
 loopback and RFC-1918 usable, and its comment names LM Studio on `127.0.0.1:1234` by way
@@ -781,7 +818,7 @@ of example; `isLocalHost` in `urlValidation.ts` is what permits an empty API key
 local host at all). But connecting to loopback does not make the LISTENER loopback-only.
 §5 makes the point that binding `127.0.0.1` does not contain a browser; this is the other
 half of the same lesson: Darhai can pin its **own** server's host and CORS, and it can pin
-neither on a process it does not own. What it *can* do is not misrepresent it, and today
+neither on a process it does not own. What it _can_ do is not misrepresent it, and today
 it says nothing at all — see §8.
 
 The one piece of good news here is measured too. With `"cors": false`, a `GET` carrying
@@ -795,8 +832,9 @@ For llama.cpp, a provisionable backend means a download Darhai performs after co
 LM Studio it means something Darhai deliberately does **not** do.
 
 `resolveLmStudioCli()` finds the absolute path of `lms`, and that path is used for exactly
-one thing: reporting `lmStudioInstalled`. Nothing in the app spawns it. `lms server start`
-appears in this repo only in comments. Starting a user's GUI application's server without
+two things: reporting `lmStudioInstalled`, and asking `lms server status --json` for the
+configured port before the probe (see above). Both are reads. Nothing in the app changes
+LM Studio's state through it — `lms server start` appears in this repo only in comments. Starting a user's GUI application's server without
 being asked is not provisioning, it is a surprise — so the offer is a sentence and a
 button that re-checks:
 
@@ -860,13 +898,15 @@ say so once, or say nothing and be silently less safe than the sentence implies.
 mitigating measurement is that `"cors": false` means a browser cannot read the response
 cross-origin; a LAN peer is not a browser and is unaffected by that.
 
-**The port is pinned to 1234.** `LM_STUDIO_DEFAULT_PORT` decides detection AND the
-registered `baseUrl`, so a user who moved LM Studio's server is invisible to detection and
-never reaches the serve path at all — the failure is "LM Studio not found", not a wrong
-URL, which is the better of the two failures but still wrong. `lms server status --json`
-reports the real port (measured: `{"running":true,"port":1234}`, 380–530 ms), and so does
-LM Studio's own config file at no process cost. The fix belongs in the detection seam,
-threaded through `BackendAvailability`, not at the registration site.
+**The registered `baseUrl` is still pinned to 1234.** Detection is not, anymore: the
+availability probe asks `lms server status --json` for the configured port first (§6), so
+a moved server is now correctly reported as viable. But `serveViaLmStudio` still re-probes
+and registers against `LM_STUDIO_BASE_URL` — the 1234 constant — so on a moved-port host
+the dropdown now honestly offers LM Studio and pressing Serve then fails with "not
+answering", about a server that IS answering one port over. The failure moved closer to
+the truth (the backend appears, and the serve-time message invites a re-check) but the
+remaining half of the fix is threading the detected port through `BackendAvailability`
+into the registration site, so the serve path aims where detection already looked.
 
 **Nothing re-probes while a serve is live.** `serveViaLmStudio` re-reads the state at the
 moment of serving — which closes the "dropdown said yes, user quit the app" window — but
@@ -910,12 +950,13 @@ copy-paste-the-command escape hatch shown when the managed path fails, so the fa
 advice is now worse than what the app itself does. It should print `auto` when the
 resolved binary supports it.
 
-**Release-metadata fetches have no timeout.** On a captive portal or blackholed DNS,
-`plan()` is an unbounded spinner. `cancel()` is also a genuine no-op during that window —
-the provisioner's `AbortController` does not exist until after the release lookup — so
-the UI tells the truth ("this step cannot be stopped yet") rather than pretending, but
-the underlying gap is real: the one moment a user who just read "512.8 MB" is most likely
-to press Cancel is the one moment it cannot work.
+**`cancel()` is still a no-op during the release lookup.** The metadata fetch itself is
+no longer unbounded — `releaseClient.getJson` aborts after 15 s
+(`RELEASE_FETCH_TIMEOUT_MS`, ~25× the measured 595 ms healthy fetch) and surfaces the
+typed `LLAMACPP_OFFLINE` — but the provisioner's own `AbortController` still does not
+exist until after the release lookup, so during that window the UI's "this step cannot
+be stopped yet" remains the honest sentence. The spinner is now bounded by the deadline
+rather than by the network's patience.
 
 **A resumed session under-reports what is already downloaded.** `status()` reads
 `versions/` and never `downloads/*.part`, so after a cancel or an app close mid-download
@@ -936,31 +977,25 @@ offered a working CPU install of the newest release rather than a GPU install of
 before it. A per-machine "did the previous release ship better?" check, cached for the
 session, would close it.
 
-**One outstanding disclosure is never refreshed until it is used.** `plan()` re-states the
-resolution it is already holding instead of resolving again, which is what stops row A's
-card and row B's card from disagreeing (see `LlamaRuntimeController.disclosed`). The cost is
-that a card opened and dismissed leaves that resolution outstanding for the rest of the
-session, so a much later press can be offered a tag that is no longer `latest`. That is a
-complete, working release and exactly what the card says, so it is a staleness cost, not a
-correctness one — and a TTL is deliberately NOT the fix, because expiring the slot re-opens
-the "confirm A, install B" hole it was added to close. Closing it properly means keying the
-disclosure to the row that asked, which needs a payload on `llamaRuntime.plan` /
-`llamaRuntime.install`; both verbs take `void` today, and that is itself a security property
-of this remote-denied namespace.
+**One outstanding disclosure is re-stated within a day, and only a day.** `plan()`
+re-states the resolution it is already holding instead of resolving again, which is what
+stops row A's card and row B's card from disagreeing (see
+`LlamaRuntimeController.disclosed`). The slot now carries a timestamp: a disclosure older
+than 24 h (`DISCLOSURE_TTL_MS`) reads as never-disclosed, so both `plan()` and `install()`
+resolve afresh rather than offer or fetch yesterday's tag. A SHORT expiry would re-open
+the "confirm A, install B" hole the stable slot closes — two presses seconds apart must
+keep getting one answer — and 24 h never fires inside a sitting, while a stale slot is
+dropped, never silently installed. Keying the disclosure to the row that asked would
+close the remaining day-wide window, but needs a payload on `llamaRuntime.plan` /
+`llamaRuntime.install`; both verbs take `void` today, and that is itself a security
+property of this remote-denied namespace.
 
-**Progress is emitted per stream chunk with no throttling**, so a 512.8 MB transfer at
-53.1 MB/s crosses IPC thousands of times, each one re-rendering the model table.
-`assetName` / `assetIndex` / `assetCount` also cross on every frame and are never
-rendered, so a two-archive CUDA install (147 MB + 373 MB) shows one merged bar and never
-says there are two.
-
-**`hasCudaRuntime()` can be satisfied by a directory Darhai does not own.** It searches
-every `PATH` entry and excludes only Darhai's own install root, so an unrelated
-third-party llama.cpp on `PATH` makes the probe return `true`, drops the 373 MB cudart
-archive, and produces an install that silently loses the GPU if that directory later
-disappears (proven in §3: `Available devices: (none)`, exit 0, no log). Options: always
-fetch the archive; restrict the probe to `CUDA_PATH\bin` + `System32`; or record the
-resolving directory in the receipt and re-verify before serving.
+**The multi-asset fields cross IPC and are never rendered.** Progress itself is now
+throttled — inside one phase of one asset at most one event per 100 ms
+(`PROGRESS_EMIT_INTERVAL_MS`); phase and asset boundaries and the final 100% of a sized
+transfer always emit — but `assetName` / `assetIndex` / `assetCount` still go unrendered,
+so a two-archive CUDA install (147 MB + 373 MB) shows one merged bar and never says there
+are two.
 
 **Reasoning models return an empty answer to a naive client.** gpt-oss-20b emits its
 chain of thought as `delta.reasoning_content` and the answer as `delta.content`. Measured:
@@ -974,12 +1009,6 @@ account for `reasoning_content`, and the token budget must allow for it.
 logs it, but no hash is pinned, so nothing is verified — deliberate (GGUF repos rarely
 publish one) and worth stating: the llama.cpp binaries are verified, the model weights are
 not.
-
-**Turing-era mobile GPUs still match their desktop namesake.** The mobile-SKU bandwidth
-keys added during calibration cover the 40/50-series "Laptop GPU" naming; older parts are
-reported as e.g. "GeForce RTX 2080 Super with Max-Q Design", which contains no `laptop`
-token and so still resolves to the desktop key. The error is the same class the
-calibration fixed, just on hardware that was not in front of it.
 
 **Only one serve at a time, and no crash recovery.** An MVP default, not a hardware limit:
 `start()` stops any running server first, and there is no watchdog restart if

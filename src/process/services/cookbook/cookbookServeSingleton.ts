@@ -15,11 +15,13 @@
  */
 
 import { app } from 'electron';
+import fs from 'node:fs';
 import path from 'node:path';
 import { ipcBridge } from '@/common';
 import { CookbookServeService } from './CookbookServeService';
 import { ModelDownloadManager } from './ModelDownloadManager';
 import { LocalServeManager } from './LocalServeManager';
+import { MoeOffloadCalibrator } from './moeCalibration';
 import type { CookbookRegistryRepo } from './cookbookProviderRegistration';
 import { getCatalog, scanHardware } from '@process/services/hwfit';
 import type { HardwareProfile } from '@process/services/hwfit';
@@ -76,14 +78,49 @@ async function probeOllamaDaemon(): Promise<{ running: boolean; models: string[]
   }
 }
 
+const serveManager = new LocalServeManager({ llamaServerCandidates: managedLlamaServers });
+
+/** Both spellings, because the managed dir and a hand install differ only by OS. */
+const LLAMA_BENCH_BINARIES = ['llama-bench.exe', 'llama-bench'] as const;
+
+/**
+ * The `llama-bench` that ships BESIDE the resolved `llama-server` - same
+ * release, same acceleration, so what it measures is what the serve will run.
+ * Verified against the managed b10441 install on the reference machine: the
+ * archive carries `llama-bench.exe` next to `llama-server.exe`. Null when the
+ * resolved server has no bench sibling (or no server resolves at all), which
+ * the calibrator answers with its measured all-layers fallback.
+ */
+function resolveBenchBinary(): string | null {
+  const server = serveManager.resolveLlamaServer();
+  if (!server) return null;
+  const dir = path.dirname(server);
+  for (const name of LLAMA_BENCH_BINARIES) {
+    const candidate = path.join(dir, name);
+    if (fs.existsSync(candidate)) return candidate;
+  }
+  return null;
+}
+
+const moeCalibrator = new MoeOffloadCalibrator({
+  userDataDir: () => app.getPath('userData'),
+  resolveBenchBinary,
+});
+
 export const cookbookServe = new CookbookServeService({
   downloadManager: new ModelDownloadManager(),
-  serveManager: new LocalServeManager({ llamaServerCandidates: managedLlamaServers }),
+  serveManager,
   getCatalog: () => getCatalog(),
   getRepo: () => getModelRegistryRepository() as CookbookRegistryRepo | null,
   getGgufDir: ggufDir,
   getHardware: detectedHardware,
   probeOllama: probeOllamaDaemon,
+  planNCpuMoe: (req) => moeCalibrator.resolveNCpuMoe(req),
+  // Both stop paths (stopServe + before-quit stopAll) pull this so a running
+  // llama-bench dies with the serve instead of outliving the app on Windows.
+  cancelCalibration: () => {
+    moeCalibrator.cancel();
+  },
   onProgress: (p) => ipcBridge.cookbook.onDownloadProgress.emit(p),
   onStatus: (s) => ipcBridge.cookbook.onServeStatus.emit(s),
 });

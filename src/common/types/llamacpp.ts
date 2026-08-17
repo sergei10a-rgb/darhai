@@ -89,6 +89,19 @@ export const LLAMA_RUNTIME_NOTE_CODES = [
 
 export type LlamaRuntimeNoteCode = (typeof LLAMA_RUNTIME_NOTE_CODES)[number];
 
+/**
+ * The code `install()` answers when the outstanding disclosure aged past its
+ * TTL between the card and the Confirm press. NOTHING is installed on this
+ * path: the only thing an expired install could fetch is a resolution the user
+ * has never seen, which is exactly the substitution the disclosure exists to
+ * forbid. The renderer catches this code, calls `plan()` again - which
+ * resolves afresh and shows today's card - and only a new Confirm installs.
+ *
+ * Lives in `common` because both sides need the same literal: the bridge
+ * returns it and the advisor row branches on it.
+ */
+export const LLAMACPP_DISCLOSURE_EXPIRED = 'LLAMACPP_DISCLOSURE_EXPIRED';
+
 /** Live progress of an install. Byte totals are null when genuinely unknown. */
 export type LlamaRuntimeProgress = {
   phase: LlamaRuntimePhase;

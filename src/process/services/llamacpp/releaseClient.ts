@@ -46,6 +46,18 @@ const DEFAULT_REPO = 'ggml-org/llama.cpp';
 const API_BASE = 'https://api.github.com';
 
 /**
+ * Hard deadline for one metadata request, headers AND body.
+ *
+ * On a captive portal or blackholed DNS a fetch can sit unresolved for
+ * minutes, and `plan()` was an unbounded spinner for exactly that long - the
+ * one moment a user who just read a download size is most likely to press
+ * Cancel, and the one window where the provisioner's own AbortController does
+ * not exist yet. The healthy case is nowhere near this: the metadata fetch
+ * MEASURED 595 ms on the reference machine, so 15 s is ~25x headroom.
+ */
+export const RELEASE_FETCH_TIMEOUT_MS = 15_000;
+
+/**
  * How many recent releases {@link LlamaReleaseClient.listRecent} asks for.
  *
  * MEASURED on 2026-08-15: ggml-org/llama.cpp published b10434, b10435, b10436,
@@ -162,29 +174,59 @@ export class LlamaReleaseClient {
     return releases;
   }
 
-  /** One GET against the API, with this layer's error codes. */
+  /**
+   * One GET against the API, with this layer's error codes.
+   *
+   * Bounded by {@link RELEASE_FETCH_TIMEOUT_MS}: the AbortController covers
+   * the whole exchange - a fetch whose headers never arrive AND a body that
+   * stalls mid-stream both abort - and surfaces as `LLAMACPP_OFFLINE`, because
+   * to the caller a network that will not answer and a network that is absent
+   * are the same fact. The message still names the deadline so a log reader
+   * can tell the two apart.
+   */
   private async getJson(url: string): Promise<unknown> {
-    let response: Response;
+    const controller = new AbortController();
+    const deadline = setTimeout(() => controller.abort(), RELEASE_FETCH_TIMEOUT_MS);
+    const timedOut = (): boolean => controller.signal.aborted;
     try {
-      response = await this.deps.fetch(url, {
-        headers: { accept: 'application/vnd.github+json', 'x-github-api-version': '2022-11-28' },
-      });
-    } catch (err) {
-      throw new LlamaReleaseError('LLAMACPP_OFFLINE', err instanceof Error ? err.message : String(err));
-    }
-    if (!response.ok) {
-      throw new LlamaReleaseError(
-        'LLAMACPP_RELEASE_FETCH_FAILED',
-        `${url} -> ${response.status} ${response.statusText || ''}`.trim()
-      );
-    }
-    try {
-      return await response.json();
-    } catch (err) {
-      throw new LlamaReleaseError(
-        'LLAMACPP_RELEASE_MALFORMED',
-        `release JSON parse failed: ${err instanceof Error ? err.message : String(err)}`
-      );
+      let response: Response;
+      try {
+        response = await this.deps.fetch(url, {
+          headers: { accept: 'application/vnd.github+json', 'x-github-api-version': '2022-11-28' },
+          signal: controller.signal,
+        });
+      } catch (err) {
+        throw new LlamaReleaseError(
+          'LLAMACPP_OFFLINE',
+          timedOut()
+            ? `${url}: no response within ${RELEASE_FETCH_TIMEOUT_MS} ms`
+            : err instanceof Error
+              ? err.message
+              : String(err)
+        );
+      }
+      if (!response.ok) {
+        throw new LlamaReleaseError(
+          'LLAMACPP_RELEASE_FETCH_FAILED',
+          `${url} -> ${response.status} ${response.statusText || ''}`.trim()
+        );
+      }
+      try {
+        return await response.json();
+      } catch (err) {
+        if (timedOut()) {
+          throw new LlamaReleaseError(
+            'LLAMACPP_OFFLINE',
+            `${url}: response body stalled past ${RELEASE_FETCH_TIMEOUT_MS} ms`
+          );
+        }
+        throw new LlamaReleaseError(
+          'LLAMACPP_RELEASE_MALFORMED',
+          `release JSON parse failed: ${err instanceof Error ? err.message : String(err)}`
+        );
+      }
+    } finally {
+      clearTimeout(deadline);
     }
   }
 }

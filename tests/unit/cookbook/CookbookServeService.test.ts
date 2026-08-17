@@ -5,13 +5,18 @@
  */
 
 import { describe, expect, it, vi } from 'vitest';
+import { settleTurns } from '../../helpers/eventLoop';
 import { CookbookServeService, type CookbookServeDeps } from '@process/services/cookbook/CookbookServeService';
 import type { LocalServeManager } from '@process/services/cookbook/LocalServeManager';
 import type { ModelDownloadManager } from '@process/services/cookbook/ModelDownloadManager';
 import type { BackendAvailability } from '@process/services/cookbook/backendPolicy';
-import type { LmStudioModel, LmStudioServerProbe } from '@process/services/cookbook/lmStudioDetect';
+import { LM_STUDIO_DEFAULT_PORT } from '@process/services/cookbook/lmStudioDetect';
+import type { LmStudioModel, LmStudioServeProbe, LmStudioServerProbe } from '@process/services/cookbook/lmStudioDetect';
 import type { CookbookRegistryRepo } from '@process/services/cookbook/cookbookProviderRegistration';
 import type { CatalogModel, HardwareProfile } from '@process/services/hwfit';
+
+/** Placeholder callable, hoisted so the linter does not see a per-call closure. */
+const NOOP = (): void => undefined;
 
 const MODEL: CatalogModel = {
   name: 'org/Model',
@@ -78,7 +83,13 @@ const makeService = (opts: {
   arch?: string;
   catalog?: CatalogModel[];
   /** What LM Studio's own endpoint answers on this run. */
-  lmStudio?: LmStudioServerProbe;
+  lmStudio?: LmStudioServerProbe & { port?: number };
+  /** MoE offload planner; absent = the pre-MoE service (production default). */
+  planNCpuMoe?: CookbookServeDeps['planNCpuMoe'];
+  /** Abort hook for the in-flight calibration bench (moeCalibration.cancel). */
+  cancelCalibration?: CookbookServeDeps['cancelCalibration'];
+  /** Collects every status frame the service emits, in order. */
+  statuses?: Array<{ state: string }>;
 }): Harness => {
   const start = vi.fn(async () => 51500);
   const startVllm = vi.fn(async () => 51600);
@@ -120,9 +131,11 @@ const makeService = (opts: {
   // Throws rather than defaulting to the real probe: a case that reaches the LM
   // Studio path without declaring what LM Studio answers must FAIL here, never
   // fall through to the developer's own running LM Studio and diverge from CI.
-  const probeLmStudio = vi.fn(async (): Promise<LmStudioServerProbe> => {
+  const probeLmStudio = vi.fn(async (): Promise<LmStudioServeProbe> => {
     if (!opts.lmStudio) throw new Error('probeLmStudio not stubbed by this test');
-    return opts.lmStudio;
+    // Default to LM Studio's stock port; a test proves port threading by
+    // overriding it (the registered baseUrl must follow the probe's port).
+    return { port: LM_STUDIO_DEFAULT_PORT, ...opts.lmStudio };
   });
 
   const deps: CookbookServeDeps = {
@@ -134,6 +147,9 @@ const makeService = (opts: {
     getHardware: async () => opts.hardware,
     arch: opts.arch ?? 'x64',
     probeLmStudio,
+    planNCpuMoe: opts.planNCpuMoe,
+    cancelCalibration: opts.cancelCalibration,
+    onStatus: opts.statuses ? (s) => opts.statuses?.push({ state: s.state }) : undefined,
   };
   return {
     service: new CookbookServeService(deps),
@@ -279,6 +295,26 @@ describe('CookbookServeService.serve via LM Studio', () => {
     expect(models[0].id).toBe('org/Model');
   });
 
+  it('registers a server the user moved off 1234 at its DETECTED port', async () => {
+    // The probe carries the port it actually found the models on (measured:
+    // `lms server status --json` reports the configured port even when the
+    // server was relocated). The registered baseUrl must follow it - the old
+    // code pinned 1234 here and handed the agent a dead URL.
+    const { service, repo } = makeService({
+      hardware: lmStudioHost,
+      available: servingLmStudio,
+      lmStudio: { serving: true, models: [lmModel({ id: 'org/Model' })], port: 12399 },
+    });
+
+    const status = await service.serve(MODEL.name);
+
+    expect(status.state).toBe('ready');
+    expect(status.port).toBe(12399);
+    expect(repo.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ creds: { key: '', baseUrl: 'http://127.0.0.1:12399/v1' } })
+    );
+  });
+
   it("matches LM Studio's lowercased id against the catalog's cased HF repo", async () => {
     // The exact pair measured on the reference install: LM Studio reports
     // `qwen/qwen3.6-27b`, the catalog carries `Qwen/Qwen3.6-27B`.
@@ -419,5 +455,229 @@ describe('CookbookServeService.serve via LM Studio', () => {
     const sel = await withOllama.service.backendSelection();
     expect(sel.chosen).toBe('ollama');
     expect(sel.viable).toContain('lm-studio');
+  });
+});
+
+/**
+ * MoE expert offload on the llama-server path. The planner is a seam
+ * (moeCalibration.ts in production); what these cases pin is the CONTRACT
+ * around it: when it answers, its number reaches the spawn; when it is absent,
+ * fails, or declines, the serve is byte-identical to the pre-MoE service.
+ */
+describe('CookbookServeService: MoE expert offload', () => {
+  const moeModel: CatalogModel = { ...MODEL, isMoe: true };
+  const gpu8 = profile({ platform: 'windows', gpuVramGb: 8 });
+
+  it('passes the planned --n-cpu-moe to the spawn and reports a calibrating phase', async () => {
+    const statuses: Array<{ state: string }> = [];
+    const planNCpuMoe = vi.fn(async (req: { onCalibrating?: () => void }) => {
+      req.onCalibrating?.();
+      return 36;
+    });
+    const { service, serve } = makeService({
+      available: { llamaServer: true },
+      hardware: gpu8,
+      catalog: [moeModel],
+      planNCpuMoe,
+      statuses,
+    });
+
+    const status = await service.serve(MODEL.name);
+
+    expect(status.state).toBe('ready');
+    expect(serve.start).toHaveBeenCalledWith(expect.objectContaining({ nCpuMoe: 36 }));
+    // The planner was told everything it keys the cache by, plus the hint.
+    expect(planNCpuMoe).toHaveBeenCalledWith(
+      expect.objectContaining({
+        modelId: MODEL.name,
+        ggufPath: '/cache/org_Model.gguf',
+        isMoeHint: true,
+        gpuName: 'Test GPU',
+        vramGb: 8,
+      })
+    );
+    // The calibration got its own visible phase, between download and start.
+    const calibratingAt = statuses.findIndex((s) => s.state === 'calibrating');
+    const readyAt = statuses.findIndex((s) => s.state === 'ready');
+    expect(calibratingAt).toBeGreaterThanOrEqual(0);
+    expect(calibratingAt).toBeLessThan(readyAt);
+  });
+
+  it('serves without the flag when the planner answers null', async () => {
+    const { service, serve } = makeService({
+      available: { llamaServer: true },
+      hardware: gpu8,
+      planNCpuMoe: async () => null,
+    });
+    const status = await service.serve(MODEL.name);
+    expect(status.state).toBe('ready');
+    expect(serve.start).toHaveBeenCalledWith(expect.objectContaining({ nCpuMoe: undefined }));
+  });
+
+  it('serves exactly as before when no planner is wired at all', async () => {
+    const { service, serve } = makeService({ available: { llamaServer: true }, hardware: gpu8, catalog: [moeModel] });
+    const status = await service.serve(MODEL.name);
+    expect(status.state).toBe('ready');
+    expect(serve.start).toHaveBeenCalledWith(expect.objectContaining({ nCpuMoe: undefined }));
+  });
+
+  it('a planner that throws costs the optimisation, never the serve', async () => {
+    const { service, serve } = makeService({
+      available: { llamaServer: true },
+      hardware: gpu8,
+      catalog: [moeModel],
+      planNCpuMoe: async () => {
+        throw new Error('bench exploded');
+      },
+    });
+    const status = await service.serve(MODEL.name);
+    expect(status.state).toBe('ready');
+    expect(serve.start).toHaveBeenCalledWith(expect.objectContaining({ nCpuMoe: undefined }));
+  });
+
+  it('the degraded copy-command carries the MoE combination too', async () => {
+    const { service } = makeService({
+      available: {},
+      hardware: gpu8,
+      catalog: [moeModel],
+      planNCpuMoe: async () => 40,
+    });
+    const status = await service.serve(MODEL.name);
+    expect(status.state).toBe('needs_backend');
+    expect(status.serveCommand).toContain('--n-gpu-layers 99 --n-cpu-moe 40');
+  });
+});
+
+/**
+ * A Stop pressed DURING the calibration minutes must actually stop things.
+ *
+ * Calibration is the one multi-minute window between the press and the spawn.
+ * Before the fix, `stopServe` inside that window only flipped the status: the
+ * bench child kept running (20-50 GB model mapped, and on Windows a dead
+ * parent does not reap it), and when the sweep finished the serve carried on -
+ * spawned the server and overwrote the user's 'stopped' with 'ready'.
+ */
+describe('CookbookServeService: Stop wins over an in-flight calibration', () => {
+  const moeModel: CatalogModel = { ...MODEL, isMoe: true };
+  const gpu8 = profile({ platform: 'windows', gpuVramGb: 8 });
+
+  it("does not overwrite 'stopped' or spawn the server after a mid-calibration Stop", async () => {
+    const statuses: Array<{ state: string }> = [];
+    let releaseCalibration: () => void = NOOP;
+    const gate = new Promise<void>((resolve) => {
+      releaseCalibration = resolve;
+    });
+    const planNCpuMoe = vi.fn(async (req: { onCalibrating?: () => void }) => {
+      req.onCalibrating?.();
+      await gate;
+      return 36;
+    });
+    const cancelCalibration = vi.fn();
+    const { service, serve } = makeService({
+      available: { llamaServer: true },
+      hardware: gpu8,
+      catalog: [moeModel],
+      planNCpuMoe,
+      cancelCalibration,
+      statuses,
+    });
+
+    const serving = service.serve(MODEL.name);
+    await vi.waitFor(() => expect(statuses.some((s) => s.state === 'calibrating')).toBe(true));
+
+    const stopped = await service.stopServe();
+    expect(stopped.state).toBe('stopped');
+    // The stop reached the bench, not just the status field.
+    expect(cancelCalibration).toHaveBeenCalledTimes(1);
+
+    releaseCalibration();
+    const final = await serving;
+
+    // The user's Stop is the last word: no spawn, no 'ready' minutes later.
+    expect(serve.start).not.toHaveBeenCalled();
+    expect(final.state).toBe('stopped');
+    expect(service.serveStatus().state).toBe('stopped');
+    expect(statuses.at(-1)?.state).toBe('stopped');
+  });
+
+  it('stopAll (before-quit) aborts the in-flight bench too', async () => {
+    let releaseCalibration: () => void = NOOP;
+    const gate = new Promise<void>((resolve) => {
+      releaseCalibration = resolve;
+    });
+    const cancelCalibration = vi.fn();
+    const planNCpuMoe = vi.fn(async () => {
+      await gate;
+      return 36;
+    });
+    const { service, serve } = makeService({
+      available: { llamaServer: true },
+      hardware: gpu8,
+      catalog: [moeModel],
+      planNCpuMoe,
+      cancelCalibration,
+    });
+
+    const serving = service.serve(MODEL.name);
+    await vi.waitFor(() => expect(planNCpuMoe).toHaveBeenCalledTimes(1));
+    await service.stopAll();
+    expect(cancelCalibration).toHaveBeenCalledTimes(1);
+
+    releaseCalibration();
+    await serving;
+    // App quit: nothing may be spawned by a serve that outlived the quit.
+    expect(serve.start).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * One serve at a time, at the SERVICE level. `LocalServeManager.serialized`
+ * already queues the spawns, but the download + calibration that precede a
+ * spawn ran unserialised: pressing Serve on B while A was calibrating ran two
+ * benches and two downloads concurrently, and the gazumped bench's winner was
+ * cached PERMANENTLY (the cache has no notion of a contended measurement).
+ */
+describe('CookbookServeService.serve: concurrent presses are serialised', () => {
+  const moeModel: CatalogModel = { ...MODEL, isMoe: true };
+  const gpu8 = profile({ platform: 'windows', gpuVramGb: 8 });
+
+  it('makes the second serve wait for the first to settle', async () => {
+    let releaseFirst: () => void = NOOP;
+    const gate = new Promise<void>((resolve) => {
+      releaseFirst = resolve;
+    });
+    let calibrations = 0;
+    const planNCpuMoe = vi.fn(async () => {
+      calibrations += 1;
+      if (calibrations === 1) await gate;
+      return 36;
+    });
+    const { service, serve, download } = makeService({
+      available: { llamaServer: true },
+      hardware: gpu8,
+      catalog: [moeModel],
+      planNCpuMoe,
+    });
+
+    const first = service.serve(MODEL.name);
+    await vi.waitFor(() => expect(planNCpuMoe).toHaveBeenCalledTimes(1));
+    const second = service.serve(MODEL.name);
+
+    // Give the (wrongly) concurrent path every chance to run before asserting.
+    // Event-loop turns, not wall clock: a loaded 24-fork run can stall a real
+    // timer past any budget while microtasks still drain deterministically.
+    await settleTurns(50);
+    // While A is still calibrating, B has started NOTHING: no second download,
+    // no second bench - so no interleaved measurement can reach the cache.
+    expect(download).toHaveBeenCalledTimes(1);
+    expect(planNCpuMoe).toHaveBeenCalledTimes(1);
+
+    releaseFirst();
+    const [a, b] = await Promise.all([first, second]);
+
+    expect(a.state).toBe('ready');
+    expect(b.state).toBe('ready');
+    expect(download).toHaveBeenCalledTimes(2);
+    expect(serve.start).toHaveBeenCalledTimes(2);
   });
 });

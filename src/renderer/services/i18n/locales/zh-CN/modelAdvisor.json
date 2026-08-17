@@ -95,6 +95,7 @@
     },
     "status": {
       "downloading": "下载中",
+      "calibrating": "正在调优速度（仅首次，约 2 分钟）…",
       "starting": "启动中",
       "ready": "运行中 · :{{port}}",
       "error": "失败"
@@ -108,6 +109,7 @@
     "decline": "暂不",
     "retry": "重试",
     "cancelNotYet": "这一步暂时还停不下来，请稍后再试一次。",
+    "expired": "之前显示的信息已过期，因此没有下载任何内容。请查看更新后的信息并再次确认。",
     "stage": {
       "runtime": "安装",
       "model": "模型"
