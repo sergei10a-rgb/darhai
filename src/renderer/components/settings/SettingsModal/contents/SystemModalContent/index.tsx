@@ -21,6 +21,7 @@ import { useSettingsViewMode } from '../../settingsViewContext';
 import DevSettings from './DevSettings';
 import DirInputItem from './DirInputItem';
 import PreferenceRow from './PreferenceRow';
+import SandboxSettings from './SandboxSettings';
 
 /**
  * System settings content component
@@ -464,6 +465,9 @@ const SystemModalContent: React.FC = () => {
               )}
             </Form>
           </div>
+
+          {/* OS-level host-execution sandbox (opt-in, Windows-only, partial enforcement) */}
+          <SandboxSettings />
 
           {/* Developer settings: DevTools + CDP (only visible in dev mode) */}
           <DevSettings />

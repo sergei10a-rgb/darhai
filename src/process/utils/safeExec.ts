@@ -16,6 +16,9 @@
 
 import type { ChildProcess } from 'child_process';
 import { spawn, execFile } from 'child_process';
+// Type-only import: keeps the koffi-backed sandbox module out of the module
+// graph unless a caller actually opts in (the runtime import below is dynamic).
+import type { SandboxPolicy } from '@process/services/sandbox';
 
 type ExecResult = { stdout: string; stderr: string };
 
@@ -42,6 +45,17 @@ function killChild(child: ChildProcess, isWindows: boolean): void {
 interface SafeExecOptions {
   timeout?: number;
   env?: NodeJS.ProcessEnv;
+  /**
+   * OPT-IN OS-level sandbox (default OFF). When set to a confined policy
+   * (`read-only` / `workspace-write`), {@link safeExecFile} runs the executable
+   * under a Windows `CreateRestrictedToken` write-restricted token instead of a
+   * plain spawn. Fail-closed: if the sandbox cannot be enforced (non-Windows,
+   * bindings/token failure) the call REJECTS and the command never runs — it
+   * does not silently fall back to an unconfined spawn. A `danger-full-access`
+   * policy is a no-op (plain spawn), matching the sandbox vocabulary. Only
+   * honored by {@link safeExecFile} (argv, no shell), never {@link safeExec}.
+   */
+  sandbox?: SandboxPolicy;
 }
 
 /**
@@ -135,6 +149,14 @@ export function safeExec(command: string, options: SafeExecOptions = {}): Promis
 export function safeExecFile(file: string, args: string[], options: SafeExecOptions = {}): Promise<ExecResult> {
   const isWindows = process.platform === 'win32';
 
+  // Opt-in confined path. `danger-full-access` is intentionally NOT confined
+  // (plain spawn below); only the two confining modes route through the OS
+  // sandbox. Fail-closed is owned by runSandboxed — it rejects rather than
+  // falling back to an unconfined spawn.
+  if (options.sandbox && options.sandbox.mode !== 'danger-full-access') {
+    return runViaSandbox(file, args, options.sandbox);
+  }
+
   return new Promise((resolve, reject) => {
     const child = spawn(file, args, {
       detached: !isWindows,
@@ -187,5 +209,28 @@ export function safeExecFile(file: string, args: string[], options: SafeExecOpti
     });
 
     if (!isWindows) child.unref();
+  });
+}
+
+/**
+ * Run an executable under the OS-level sandbox and adapt the confined result to
+ * the {@link ExecResult} contract (reject on non-zero exit, like the plain
+ * spawn path). The sandbox module is imported dynamically so koffi is loaded
+ * ONLY when a caller opts into confinement — the default path never touches it.
+ *
+ * @param file Executable to run (no shell).
+ * @param args Argument vector, passed verbatim.
+ * @param sandbox The confined policy (mode + workspace root).
+ */
+async function runViaSandbox(file: string, args: string[], sandbox: SandboxPolicy): Promise<ExecResult> {
+  const { runSandboxed } = await import('@process/services/sandbox');
+  const result = await runSandboxed(sandbox, file, args);
+  if (result.code === 0) {
+    return { stdout: result.stdout, stderr: result.stderr };
+  }
+  throw Object.assign(new Error(`Command failed with exit code ${result.code}`), {
+    stdout: result.stdout,
+    stderr: result.stderr,
+    code: result.code,
   });
 }

@@ -479,6 +479,23 @@ export interface IConfigStorageRefer {
    * `TODO(orchestrator)` marker there).
    */
   'wcore.rawEngineMode'?: boolean;
+  /**
+   * OPT-IN OS-level process sandbox for host-side native command execution
+   * (ffmpeg, audio.cpp, llama.cpp, CLI probes) routed through `safeExecFile`.
+   * Default (absent) = OFF: nothing is confined and the koffi backend is never
+   * loaded. When `enabled`, matching spawns run under a Windows
+   * `CreateRestrictedToken` write-restricted token in the chosen `mode`.
+   *
+   * Enforcement is ALWAYS partial on Windows (the ACL backend keeps Everyone in
+   * the restricting list for process startup and cannot fence NTFS hard links),
+   * and the whole feature is Windows-only — the Settings card discloses both.
+   * Fail-closed by construction: if the sandbox cannot be built, the command is
+   * refused rather than run unconfined (see `src/process/services/sandbox`).
+   */
+  'security.hostSandbox'?: {
+    enabled: boolean;
+    mode: 'read-only' | 'workspace-write';
+  };
 }
 
 export interface IEnvStorageRefer {

@@ -2952,5 +2952,17 @@
     "remove": "Remove",
     "rollback": "Undo last change",
     "rollbackHint": "Reverts the most recent add or remove."
+  },
+  "sandbox": {
+    "title": "Process Sandbox (host commands)",
+    "enable": "Confine host command execution",
+    "enableDesc": "Run native tools (ffmpeg, local model runners, CLI probes) under an OS-level restricted token. Off by default.",
+    "mode": "Confinement mode",
+    "modeReadOnly": "Read-only",
+    "modeReadOnlyDesc": "The command cannot write outside the paths its startup needs. Strictest.",
+    "modeWorkspaceWrite": "Workspace write",
+    "modeWorkspaceWriteDesc": "The command may also write inside the current workspace folder.",
+    "partialWarning": "Enforcement is partial: the Windows ACL boundary keeps limited ambient write access and cannot fence hard-linked files. Treat it as defense-in-depth, not an absolute jail.",
+    "windowsOnly": "The process sandbox is available on Windows only. On this platform it stays off."
   }
 }
