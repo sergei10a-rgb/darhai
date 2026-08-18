@@ -1,0 +1,36 @@
+[
+  {
+    "data": {
+      "actionable": false,
+      "budget": null,
+      "capability": "turn_recovery_v1",
+      "cursor": null,
+      "detail": "request_id \"recovery-request-001\" was never minted here; the engine does not volunteer recovery snapshots",
+      "lifecycle": null,
+      "pendingTurn": null,
+      "sessionId": "session-desktop-001",
+      "severity": "warning",
+      "unavailableReason": null,
+      "verdict": "rejected_unsolicited"
+    },
+    "msg_id": "",
+    "type": "turn_recovery_lifecycle"
+  },
+  {
+    "data": {
+      "actionable": false,
+      "budget": null,
+      "capability": "turn_recovery_v1",
+      "cursor": null,
+      "detail": "request_id \"recovery-request-001\" was never minted here; the engine does not volunteer recovery snapshots",
+      "lifecycle": null,
+      "pendingTurn": null,
+      "sessionId": "session-desktop-001",
+      "severity": "warning",
+      "unavailableReason": null,
+      "verdict": "rejected_unsolicited"
+    },
+    "msg_id": "",
+    "type": "turn_recovery_lifecycle"
+  }
+]

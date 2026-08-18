@@ -1,0 +1,16 @@
+{
+  "pairs": [
+    {
+      "en": "docs/README.en.md",
+      "mn": "docs/README.md",
+      "enHash": "a182ac04d7a1631ea0163ae545c2e00fe8b1c098",
+      "mnHash": "73ce54932085c1580832cbb429db547e2de98c9f"
+    },
+    {
+      "en": "docs/introduction.en.md",
+      "mn": "docs/introduction.md",
+      "enHash": "24991cb42fedc10fe57ea5f59c4f5d28177d491a",
+      "mnHash": "304a05d1f9b9fe3126d4c6cb64f148a6bea049f9"
+    }
+  ]
+}

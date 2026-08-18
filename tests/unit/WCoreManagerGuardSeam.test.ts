@@ -184,3 +184,61 @@ describe('WCoreManager guard seam - allow / disabled passthrough', () => {
     expect(emitConfirmationAdd).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('WCoreManager guard seam - repeat-tool-reminder', () => {
+  afterEach(() => vi.clearAllMocks());
+
+  /** The system messages the manager streamed - the reminder's delivery path. */
+  function systemNotices(): string[] {
+    return emitResponseStream.mock.calls
+      .map((c) => c[0] as { type?: string; data?: string })
+      .filter((a) => a?.type === 'system')
+      .map((a) => a.data ?? '');
+  }
+
+  it('nudges once the same benign tool call repeats to the first threshold (3)', () => {
+    const manager = createManager('default');
+    setGuard(manager, false); // guard off: isolate the reminder from deny/warn
+
+    handle(manager, execContent('git status', 'c1'));
+    handle(manager, execContent('git status', 'c2'));
+    expect(systemNotices(), 'no nudge before the threshold').toHaveLength(0);
+
+    handle(manager, execContent('git status', 'c3'));
+    expect(systemNotices(), 'the 3rd identical attempt nudges').toHaveLength(1);
+  });
+
+  it('observes each tool call once - a restreamed callId does not double-count', () => {
+    const manager = createManager('default');
+    setGuard(manager, false);
+
+    // Same callId restreams as its status advances; the chain must not advance.
+    handle(manager, execContent('git status', 'same'));
+    handle(manager, execContent('git status', 'same'));
+    handle(manager, execContent('git status', 'same'));
+
+    expect(systemNotices(), 'one distinct callId is count 1, never hits 3').toHaveLength(0);
+  });
+
+  it('a new user turn resets the chain (sendMessage)', async () => {
+    const manager = createManager('default');
+    setGuard(manager, false);
+
+    handle(manager, execContent('git status', 'c1'));
+    handle(manager, execContent('git status', 'c2'));
+    handle(manager, execContent('git status', 'c3'));
+    expect(systemNotices()).toHaveLength(1);
+
+    vi.clearAllMocks();
+    // A user turn is a context change - the manager resets the chain at the top
+    // of sendMessage (before any agent I/O), so the next three identical
+    // attempts nudge again. The agent send is mocked and its result irrelevant.
+    (manager as unknown as { agent: { send: unknown } }).agent.send = vi.fn().mockResolvedValue(undefined);
+    await manager.sendMessage({ content: 'carry on', msg_id: 'm-turn-2' }).catch(() => undefined);
+
+    handle(manager, execContent('git status', 'd1'));
+    handle(manager, execContent('git status', 'd2'));
+    handle(manager, execContent('git status', 'd3'));
+    expect(systemNotices(), 'chain reset by the new turn, so the 3rd nudges').toHaveLength(1);
+  });
+});

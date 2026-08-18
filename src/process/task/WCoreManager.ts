@@ -16,7 +16,7 @@ import { BaseApprovalStore, type IApprovalKey } from '@/common/chat/approval';
 import { ToolConfirmationOutcome } from '../agent/gemini/cli/tools/tools';
 import { WCoreAgent, type StdioMcpOption } from '@process/agent/wcore';
 import type { WCoreCapabilities } from '@process/agent/wcore/protocol';
-import { getHookGuardConfig, normalizeWcore, safeEvaluate } from '@process/agent/guard';
+import { getHookGuardConfig, normalizeWcore, RepeatToolReminder, safeEvaluate } from '@process/agent/guard';
 import type { GuardRule, GuardVerdict, WCoreToolLike } from '@process/agent/guard';
 import { buildSystemInstructionsWithSkillsIndex } from './agentUtils';
 import { buildResumeHistoryText } from './resumeHistory';
@@ -183,6 +183,16 @@ export class WCoreManager extends BaseAgentManager<WCoreManagerData, string> {
    * current engine does not produce but a future one could.
    */
   private readonly gatedCallIds = new Map<string, 'inline' | 'modal'>();
+
+  /**
+   * Repeat-tool-reminder: advisory nudge when the model hammers the same tool
+   * call. Keyed by `this` (one chain per manager = per agent). Reset on every
+   * user turn - repetition across a user interjection is not a loop. Each tool
+   * call is observed exactly once via {@link observedCallIds}.
+   */
+  private readonly repeatReminder = new RepeatToolReminder();
+
+  private readonly observedCallIds = new Set<string>();
   private agent: WCoreAgent | null = null;
   private agentReady: Promise<void>;
   /**
@@ -425,12 +435,17 @@ export class WCoreManager extends BaseAgentManager<WCoreManagerData, string> {
     cronBusyGuard.setProcessing(this.conversation_id, false);
     this.confirmations = [];
     this.gatedCallIds.clear();
+    this.observedCallIds.clear();
     if (this.agent) {
       this.agent.stop();
     }
   }
 
   async sendMessage(data: { content: string; msg_id: string; files?: string[] }) {
+    // A new user turn is a context change: repetition measured across it is not
+    // a loop, so reset the repeat-reminder chain and the per-turn observed set.
+    this.repeatReminder.reset(this);
+    this.observedCallIds.clear();
     const message: TMessage = {
       id: data.msg_id,
       type: 'text',
@@ -585,6 +600,16 @@ export class WCoreManager extends BaseAgentManager<WCoreManagerData, string> {
         // auto-approve, stored "always allow", asking the user) is a complete
         // answer, so the modal path must not raise a second prompt for it.
         this.gatedCallIds.set(content.callId, 'inline');
+      }
+
+      // Repeat-tool-reminder: observe every tool attempt exactly once (a
+      // tool_group restreams as its status advances, so key on callId). This
+      // runs BEFORE the guard verdict on purpose - a model hammering a DENIED
+      // call is exactly the loop worth nudging - and never blocks (advisory).
+      if (!this.observedCallIds.has(content.callId)) {
+        this.observedCallIds.add(content.callId);
+        const notice = this.repeatReminder.observe(this, content.name, this.guardToolFromConfirmation(content).args);
+        if (notice) this.emitGuardNotice(notice.text);
       }
 
       // Native pre-tool guard (Phase 3): runs BEFORE tryAutoApprove and the

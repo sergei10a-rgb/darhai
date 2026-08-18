@@ -1,0 +1,36 @@
+[
+  {
+    "data": "",
+    "msg_id": "{{msg1}}",
+    "type": "start"
+  },
+  {
+    "data": "Provider stream failed (Connection error: error sending request); retrying (attempt 1/2)…",
+    "msg_id": "{{msg1}}",
+    "type": "info"
+  },
+  {
+    "data": "Provider stream failed (Connection error: error sending request); retrying (attempt 2/2)…",
+    "msg_id": "{{msg1}}",
+    "type": "info"
+  },
+  {
+    "data": "Provider stream failed after retries: Connection error: error sending request",
+    "msg_id": "{{msg1}}",
+    "type": "error"
+  },
+  {
+    "data": "API error: Connection error: error sending request",
+    "msg_id": "",
+    "type": "error"
+  },
+  {
+    "data": {
+      "finish_reason": "error",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    "msg_id": "{{msg1}}",
+    "type": "finish"
+  }
+]

@@ -1,0 +1,288 @@
+[
+  {
+    "data": {
+      "capability": "pricing_refresher",
+      "health": "ok",
+      "reason": null,
+      "remedy": "unknown",
+      "stage": "declared"
+    },
+    "msg_id": null,
+    "type": "capability_activation"
+  },
+  {
+    "data": {
+      "capability": "pricing_refresher",
+      "health": "declined",
+      "reason": "disabled_by_config",
+      "remedy": "config",
+      "stage": "unavailable"
+    },
+    "msg_id": null,
+    "type": "capability_activation"
+  },
+  {
+    "data": {
+      "capability": "mid_flight_monitor",
+      "health": "ok",
+      "reason": null,
+      "remedy": "unknown",
+      "stage": "declared"
+    },
+    "msg_id": null,
+    "type": "capability_activation"
+  },
+  {
+    "data": {
+      "capability": "mid_flight_monitor",
+      "health": "ok",
+      "reason": null,
+      "remedy": "unknown",
+      "stage": "configured"
+    },
+    "msg_id": null,
+    "type": "capability_activation"
+  },
+  {
+    "data": {
+      "capability": "mid_flight_monitor",
+      "health": "ok",
+      "reason": null,
+      "remedy": "unknown",
+      "stage": "constructed"
+    },
+    "msg_id": null,
+    "type": "capability_activation"
+  },
+  {
+    "data": {
+      "capability": "mid_flight_monitor",
+      "health": "ok",
+      "reason": null,
+      "remedy": "unknown",
+      "stage": "ready"
+    },
+    "msg_id": null,
+    "type": "capability_activation"
+  },
+  {
+    "data": {
+      "capability": "cooldown_tracker",
+      "health": "ok",
+      "reason": null,
+      "remedy": "unknown",
+      "stage": "declared"
+    },
+    "msg_id": null,
+    "type": "capability_activation"
+  },
+  {
+    "data": {
+      "capability": "cooldown_tracker",
+      "health": "ok",
+      "reason": null,
+      "remedy": "unknown",
+      "stage": "configured"
+    },
+    "msg_id": null,
+    "type": "capability_activation"
+  },
+  {
+    "data": {
+      "capability": "cooldown_tracker",
+      "health": "ok",
+      "reason": null,
+      "remedy": "unknown",
+      "stage": "constructed"
+    },
+    "msg_id": null,
+    "type": "capability_activation"
+  },
+  {
+    "data": {
+      "capability": "cooldown_tracker",
+      "health": "ok",
+      "reason": null,
+      "remedy": "unknown",
+      "stage": "ready"
+    },
+    "msg_id": null,
+    "type": "capability_activation"
+  },
+  {
+    "data": {
+      "capability": "learned_policy",
+      "health": "ok",
+      "reason": null,
+      "remedy": "unknown",
+      "stage": "declared"
+    },
+    "msg_id": null,
+    "type": "capability_activation"
+  },
+  {
+    "data": {
+      "capability": "learned_policy",
+      "health": "declined",
+      "reason": "disabled_by_config",
+      "remedy": "config",
+      "stage": "unavailable"
+    },
+    "msg_id": null,
+    "type": "capability_activation"
+  },
+  {
+    "data": {
+      "capability": "smart_handoff",
+      "health": "ok",
+      "reason": null,
+      "remedy": "unknown",
+      "stage": "declared"
+    },
+    "msg_id": null,
+    "type": "capability_activation"
+  },
+  {
+    "data": {
+      "capability": "smart_handoff",
+      "health": "ok",
+      "reason": null,
+      "remedy": "unknown",
+      "stage": "configured"
+    },
+    "msg_id": null,
+    "type": "capability_activation"
+  },
+  {
+    "data": {
+      "capability": "smart_handoff",
+      "health": "ok",
+      "reason": null,
+      "remedy": "unknown",
+      "stage": "constructed"
+    },
+    "msg_id": null,
+    "type": "capability_activation"
+  },
+  {
+    "data": {
+      "capability": "smart_handoff",
+      "health": "ok",
+      "reason": null,
+      "remedy": "unknown",
+      "stage": "ready"
+    },
+    "msg_id": null,
+    "type": "capability_activation"
+  },
+  {
+    "data": {
+      "capability": "delegate_isolation",
+      "health": "ok",
+      "reason": null,
+      "remedy": "unknown",
+      "stage": "declared"
+    },
+    "msg_id": null,
+    "type": "capability_activation"
+  },
+  {
+    "data": {
+      "capability": "delegate_isolation",
+      "health": "declined",
+      "reason": "isolation_not_enforced",
+      "remedy": "not_configurable",
+      "stage": "unavailable"
+    },
+    "msg_id": null,
+    "type": "capability_activation"
+  },
+  {
+    "data": {
+      "capability": "procedure_skill_drafting",
+      "health": "ok",
+      "reason": null,
+      "remedy": "unknown",
+      "stage": "declared"
+    },
+    "msg_id": null,
+    "type": "capability_activation"
+  },
+  {
+    "data": {
+      "capability": "procedure_skill_drafting",
+      "health": "ok",
+      "reason": null,
+      "remedy": "unknown",
+      "stage": "configured"
+    },
+    "msg_id": null,
+    "type": "capability_activation"
+  },
+  {
+    "data": {
+      "capability": "procedure_skill_drafting",
+      "health": "ok",
+      "reason": null,
+      "remedy": "unknown",
+      "stage": "constructed"
+    },
+    "msg_id": null,
+    "type": "capability_activation"
+  },
+  {
+    "data": {
+      "capability": "procedure_skill_drafting",
+      "health": "ok",
+      "reason": null,
+      "remedy": "unknown",
+      "stage": "ready"
+    },
+    "msg_id": null,
+    "type": "capability_activation"
+  },
+  {
+    "data": {
+      "capability": "legacy_auto_skill_drafting",
+      "health": "ok",
+      "reason": null,
+      "remedy": "unknown",
+      "stage": "declared"
+    },
+    "msg_id": null,
+    "type": "capability_activation"
+  },
+  {
+    "data": {
+      "capability": "legacy_auto_skill_drafting",
+      "health": "ok",
+      "reason": null,
+      "remedy": "unknown",
+      "stage": "configured"
+    },
+    "msg_id": null,
+    "type": "capability_activation"
+  },
+  {
+    "data": {
+      "capability": "legacy_auto_skill_drafting",
+      "health": "ok",
+      "reason": null,
+      "remedy": "unknown",
+      "stage": "constructed"
+    },
+    "msg_id": null,
+    "type": "capability_activation"
+  },
+  {
+    "data": {
+      "capability": "legacy_auto_skill_drafting",
+      "health": "ok",
+      "reason": null,
+      "remedy": "unknown",
+      "stage": "ready"
+    },
+    "msg_id": null,
+    "type": "capability_activation"
+  }
+]

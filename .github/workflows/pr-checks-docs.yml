@@ -41,6 +41,17 @@ jobs:
       - name: Run postinstall
         run: npm run postinstall || true
 
+      # Bilingual documentation pairing gate. Enforces every en/mn pair listed in
+      # docs/i18n/manifest.json: both sides present, recorded blob hashes match,
+      # switchers present, and structural signatures aligned. See docs/i18n/README.md.
+      - name: Verify translation pairing
+        run: bunx tsx scripts/verify-translation-pairing.ts
+
+      # Counter-check: prove the gate above actually rejects every class of drift.
+      # A gate that never goes red is an empty test — this must run alongside it.
+      - name: Verify translation pairing gate is healthy
+        run: bunx tsx tools/verify-translation-gate.ts
+
       - name: Install prek
         run: npm install -g @j178/prek
 
