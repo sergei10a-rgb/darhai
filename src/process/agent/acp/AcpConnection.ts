@@ -264,6 +264,7 @@ export class AcpConnection {
       case 'kiro':
       case 'hermes':
       case 'snow':
+      case 'prime':
         if (!cliPath) {
           throw new Error(`CLI path is required for ${backend} backend`);
         }
@@ -1158,21 +1159,16 @@ export class AcpConnection {
   // teams fall through to the unchanged legacy direct-fs path.
   private async handleReadOperation(params: { path: string; sessionId?: string }): Promise<{ content: string }> {
     const conversationId = this.conversationId ?? '';
-    const gated = await gateAcpFileOp(
-      conversationId,
-      'read',
-      { path: params.path },
-      async () => {
-        const resolvedReadPath = this.resolveWorkspacePath(params.path);
-        this.onFileOperation({
-          method: 'fs/read_text_file',
-          path: resolvedReadPath,
-          sessionId: params.sessionId || '',
-        });
-        const { content } = await readTextFile(resolvedReadPath);
-        return { kind: 'read' as const, content };
-      }
-    );
+    const gated = await gateAcpFileOp(conversationId, 'read', { path: params.path }, async () => {
+      const resolvedReadPath = this.resolveWorkspacePath(params.path);
+      this.onFileOperation({
+        method: 'fs/read_text_file',
+        path: resolvedReadPath,
+        sessionId: params.sessionId || '',
+      });
+      const { content } = await readTextFile(resolvedReadPath);
+      return { kind: 'read' as const, content };
+    });
     if (gated.kind !== 'read') {
       throw new Error('handleReadOperation: gate returned non-read result');
     }

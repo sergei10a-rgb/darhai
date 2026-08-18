@@ -55,6 +55,7 @@ export type AcpBackendAll =
   | 'kiro' // Kiro CLI (AWS)
   | 'hermes' // Hermes Agent CLI (Nous Research)
   | 'snow' // Snow AI CLI
+  | 'prime' // Prime Intellect prime-agent CLI (ACP via `prime-agent --mode acp`)
   | 'custom'; // User-configured custom ACP agent (extension adapters)
 
 // Superset type covering all execution engine backends (ACP + non-ACP).
@@ -443,6 +444,27 @@ export const ACP_BACKENDS_ALL: Record<AcpBackendAll, AcpBackendConfig> = {
     enabled: true,
     supportsStreaming: false,
     acpArgs: ['--acp'],
+  },
+  prime: {
+    id: 'prime',
+    name: 'Prime Agent',
+    // Disclosure surfaced to the user: prime-agent's Python (IPython) kernel is
+    // currently reliable only on WSL/Linux. On native Windows the kernel may fail
+    // to start because prime resolves the venv interpreter at `<venv>/bin/python`
+    // (kernel/bootstrap.ts), which on Windows lives at `<venv>/Scripts/python.exe`
+    // instead - see prime-agent issue #660. The ACP connection itself still spawns,
+    // so this is a runtime caveat, not a startup crash on the Darhai side.
+    description:
+      'IPython-backed coding agent by Prime Intellect. Note: reliable only on WSL/Linux today; ' +
+      'on native Windows the Python kernel may fail to start (prime resolves the venv interpreter ' +
+      'at bin/python, which is Scripts\\python.exe on Windows - upstream issue #660).',
+    cliCommand: 'prime-agent',
+    // prime authenticates via environment API keys (PRIME_API_KEY, ANTHROPIC_API_KEY,
+    // etc.), not an interactive login flow - same posture as droid.
+    authRequired: false,
+    enabled: true, // ✅ Prime Intellect prime-agent CLI, launched via `prime-agent --mode acp`
+    supportsStreaming: false,
+    acpArgs: ['--mode', 'acp'], // prime selects ACP server mode with `--mode acp`
   },
   custom: {
     id: 'custom',
@@ -980,7 +1002,11 @@ export interface AcpSessionModes {
 
 /** Unified model info that abstracts over both stable and unstable APIs */
 export type AcpModelInfoSourceDetail =
-  'cc-switch' | 'acp-config-option' | 'acp-models' | 'persisted-model' | 'codex-stream';
+  | 'cc-switch'
+  | 'acp-config-option'
+  | 'acp-models'
+  | 'persisted-model'
+  | 'codex-stream';
 
 export interface AcpModelInfo {
   /** Currently active model ID */
@@ -1138,4 +1164,7 @@ export interface AcpFileWriteMessage {
  * TypeScript can automatically narrow the type based on the method field.
  */
 export type AcpIncomingMessage =
-  AcpSessionUpdateNotification | AcpPermissionRequestMessage | AcpFileReadMessage | AcpFileWriteMessage;
+  | AcpSessionUpdateNotification
+  | AcpPermissionRequestMessage
+  | AcpFileReadMessage
+  | AcpFileWriteMessage;
