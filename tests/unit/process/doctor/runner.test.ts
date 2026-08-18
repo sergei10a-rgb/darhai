@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { runDoctor } from '@process/doctor/runner';
 import type { DoctorCheck, DoctorCheckOutcome } from '@process/doctor/types';
+import { settleTurns } from '../../../helpers/eventLoop';
 
 function makeCheck(id: string, run: () => Promise<DoctorCheckOutcome>): DoctorCheck {
   return { id, titleKey: `settings.doctor.checks.${id}.title`, category: 'system', run };

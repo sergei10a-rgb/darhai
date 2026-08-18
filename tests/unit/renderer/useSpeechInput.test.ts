@@ -32,7 +32,7 @@ vi.mock('@/common', () => ({
       chunk: { invoke: vi.fn(async () => undefined) },
       stop: { invoke: vi.fn(async () => ({ text: '' })) },
       cancel: { invoke: vi.fn(async () => undefined) },
-      onDelta: { on: vi.fn(() => () => undefined) },
+      onDelta: { on: vi.fn((): (() => void) => () => undefined) },
     },
   },
 }));

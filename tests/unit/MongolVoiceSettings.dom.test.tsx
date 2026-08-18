@@ -85,11 +85,11 @@ vi.mock('@/renderer/pages/settings/ToolsSettings/McpAgentStatusDisplay', () => (
 }));
 
 vi.mock('@/renderer/hooks/agent/useConfigModelListWithImage', () => ({
-  default: () => ({ modelListWithImage: [] }),
+  default: () => ({ modelListWithImage: [] as never[] }),
 }));
 
 vi.mock('@/renderer/hooks/mcp', () => ({
-  useMcpServers: () => ({ mcpServers: [], saveMcpServers: vi.fn() }),
+  useMcpServers: () => ({ mcpServers: [] as never[], saveMcpServers: vi.fn() }),
   useMcpAgentStatus: () => ({
     agentInstallStatus: {},
     setAgentInstallStatus: vi.fn(),
@@ -132,7 +132,7 @@ vi.mock('@/common/adapter/ipcBridge', () => ({
     install: { invoke: (...args: unknown[]) => mockInstallInvoke(...args) },
     cancel: { invoke: (...args: unknown[]) => mockCancelInvoke(...args) },
     ttsVoices: { invoke: (...args: unknown[]) => mockTtsVoicesInvoke(...args) },
-    onProgress: { on: (...args: unknown[]) => mockOnProgressOn(...args) },
+    onProgress: { on: (..._args: unknown[]) => mockOnProgressOn() },
   },
   voiceSynth: {
     speak: { invoke: (...args: unknown[]) => mockVoiceSynthSpeak(...args) },

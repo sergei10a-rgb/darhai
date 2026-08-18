@@ -50,8 +50,8 @@ vi.mock('@/common', () => ({
           servedModel: null,
         })),
       },
-      onDownloadProgress: { on: () => () => undefined },
-      onServeStatus: { on: () => () => undefined },
+      onDownloadProgress: { on: (): (() => void) => () => undefined },
+      onServeStatus: { on: (): (() => void) => () => undefined },
     },
   },
 }));

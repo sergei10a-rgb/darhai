@@ -31,8 +31,8 @@ const FAKE_BASE_URL = `http://127.0.0.1:${FAKE_PORT}`;
 /** Controllable stand-in for the spawned audiocpp_server.exe. */
 class FakeChild implements AudioCppChildProcess {
   pid = FAKE_PID;
-  stdout = null;
-  stderr = null;
+  stdout: AudioCppChildProcess['stdout'] = null;
+  stderr: AudioCppChildProcess['stderr'] = null;
   killed = false;
   private readonly listeners = new Map<string, Array<(...args: unknown[]) => void>>();
 

@@ -55,7 +55,7 @@ test.describe('Mongolian voice settings: photographs', () => {
         throw new Error('visual: onboarding detection disabled for this run');
       });
     });
-    await visual.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => undefined);
+    await visual.page.reload({ waitUntil: 'domcontentloaded' }).catch((): undefined => undefined);
     await visual.page.evaluate(() => {
       window.location.hash = '#/settings/voice';
     });

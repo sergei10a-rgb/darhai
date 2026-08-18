@@ -108,7 +108,7 @@ describe('defaultLiveConnect over a real loopback server', () => {
   it('recovers over the real transport when the server answers with an SSE error payload', async () => {
     mode = 'error';
     captured.length = 0;
-    const batch = vi.fn(async () => 'нөөц зам');
+    const batch = vi.fn(async (_wav: Buffer) => 'нөөц зам');
     const live = liveOver(batch);
 
     await live.start({});

@@ -221,8 +221,8 @@ describe('every serveable backend reaches an implementation', () => {
       detectBackend: async () => 'none' as const,
       start: async () => 51500,
       startVllm: async () => 51600,
-      pullOllama: async () => undefined,
-      stop: async () => undefined,
+      pullOllama: async (): Promise<void> => undefined,
+      stop: async (): Promise<void> => undefined,
       setBackendBinary: () => true,
     } as unknown as LocalServeManager;
 
@@ -258,6 +258,7 @@ describe('every serveable backend reaches an implementation', () => {
       probeLmStudio: async () => ({
         serving: true,
         models: [{ id: 'org/model', type: 'llm', state: 'not-loaded' }],
+        port: 1234,
       }),
       probeOllama: async () => ({ ok: true, models: [] }) as never,
       arch: 'x64',

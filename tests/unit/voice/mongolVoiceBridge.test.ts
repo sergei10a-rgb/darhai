@@ -226,9 +226,13 @@ describe('mongolVoiceBridge.cancel', () => {
 describe('mongolVoiceBridge.ttsVoices', () => {
   it('returns the bundle voices', async () => {
     const provisioner = fakeProvisioner(fullStatus({ bundle: true }));
-    initMongolVoiceBridge({ provisioner: () => provisioner, listVoices: async () => ['garav', 'nomin'] });
+    const voices = [
+      { name: 'garav', label: 'Гарав' },
+      { name: 'nomin', label: 'Номин' },
+    ];
+    initMongolVoiceBridge({ provisioner: () => provisioner, listVoices: async () => voices });
     const handler = lastHandler<VoicesHandler>(voicesProviderMock, 'ttsVoices');
-    await expect(handler()).resolves.toEqual({ voices: ['garav', 'nomin'] });
+    await expect(handler()).resolves.toEqual({ voices });
   });
 
   it('resolves { voices: [] } when the voice list throws (not installed is a normal state)', async () => {
