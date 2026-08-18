@@ -18,3 +18,18 @@ export { protect, restore } from './guard';
 export type { GuardedText } from './guard';
 export type { CompressionMode } from '@/common/types/compression';
 export { COMPRESSION_MODES, isCompressionMode } from '@/common/types/compression';
+export {
+  codePointLength,
+  DEFAULTS as TOOL_RESULT_PRUNE_DEFAULTS,
+  PRUNE_MARKER,
+  pruneToolResultBlocks,
+  pruneToolResultText,
+  resolveToolResultPruneConfig,
+} from './toolResultPruner';
+export type {
+  BlockPruneResult,
+  ResolvedToolResultPruneConfig,
+  TextPruneResult,
+  ToolResultBlock,
+  ToolResultPruneConfig,
+} from './toolResultPruner';

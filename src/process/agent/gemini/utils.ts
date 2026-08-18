@@ -16,6 +16,7 @@ import { GeminiEventType as ServerGeminiEventType } from '@office-ai/aioncli-cor
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore - executeToolCall is not re-exported from main entry but exists in subpath
 import { executeToolCall } from '@office-ai/aioncli-core/dist/src/core/nonInteractiveToolExecutor.js';
+import { pruneToolResultText } from '@process/services/compression';
 import * as fs from 'fs';
 import * as path from 'path';
 import { parseAndFormatApiError } from './cli/errorParsing';
@@ -551,6 +552,17 @@ export const handleCompletedTools = (
 const COMPACT_TEXT_THRESHOLD = 10000;
 // How many characters to keep when truncating a large functionResponse text.
 const COMPACT_TEXT_KEEP = 2000;
+// Unicode-safe head+tail prune budget for an oversized functionResponse text.
+// Replaces the old head-only `slice`, which split surrogate pairs (a Mongolian
+// or emoji code point straddling the 2000th UTF-16 unit produced a broken
+// character); Array.from-based pruning cuts on code-point boundaries and keeps
+// a short tail so the model retains the START and END of a long result.
+const GEMINI_TOOL_PRUNE_CONFIG = {
+  thresholdChars: COMPACT_TEXT_THRESHOLD,
+  headChars: COMPACT_TEXT_KEEP,
+  tailChars: 512,
+} as const;
+const REREAD_HINT = ' Use read_file tool to re-read if needed.';
 
 /**
  * Compact large tool call responses (functionResponse) already stored in
@@ -596,24 +608,24 @@ export function compactToolResponsesInHistory(geminiClient: GeminiClient): void 
         }
 
         // Case 2: response.output is a very long string
-        if ('output' in resp && typeof resp.output === 'string' && resp.output.length > COMPACT_TEXT_THRESHOLD) {
-          resp.output =
-            resp.output.slice(0, COMPACT_TEXT_KEEP) +
-            `\n\n... [${resp.output.length - COMPACT_TEXT_KEEP} characters truncated from history. Use read_file tool to re-read if needed.]`;
-          modified = true;
-          continue;
+        if ('output' in resp && typeof resp.output === 'string') {
+          const result = pruneToolResultText(resp.output, GEMINI_TOOL_PRUNE_CONFIG);
+          if (result.pruned) {
+            resp.output = result.text + REREAD_HINT;
+            modified = true;
+            continue;
+          }
         }
       }
 
       // Case 3: response is a raw string (some tool results)
-      if (typeof resp === 'string' && resp.length > COMPACT_TEXT_THRESHOLD) {
-        fnResp.response = {
-          output:
-            resp.slice(0, COMPACT_TEXT_KEEP) +
-            `\n\n... [${resp.length - COMPACT_TEXT_KEEP} characters truncated from history. Use read_file tool to re-read if needed.]`,
-        };
-        modified = true;
-        continue;
+      if (typeof resp === 'string') {
+        const result = pruneToolResultText(resp, GEMINI_TOOL_PRUNE_CONFIG);
+        if (result.pruned) {
+          fnResp.response = { output: result.text + REREAD_HINT };
+          modified = true;
+          continue;
+        }
       }
 
       // Case 4: response contains an array (llmContent from read_many_files etc.)
@@ -632,19 +644,21 @@ export function compactToolResponsesInHistory(geminiClient: GeminiClient): void 
                 modified = true;
               }
               // Nested long string
-              if (typeof item === 'string' && item.length > COMPACT_TEXT_THRESHOLD) {
-                value[j] =
-                  item.slice(0, COMPACT_TEXT_KEEP) +
-                  `\n\n... [${item.length - COMPACT_TEXT_KEEP} characters truncated from history.]`;
-                modified = true;
+              if (typeof item === 'string') {
+                const nested = pruneToolResultText(item, GEMINI_TOOL_PRUNE_CONFIG);
+                if (nested.pruned) {
+                  value[j] = nested.text + REREAD_HINT;
+                  modified = true;
+                }
               }
             }
             // Also check if the array-valued field itself is a large string
-          } else if (typeof value === 'string' && value.length > COMPACT_TEXT_THRESHOLD) {
-            (resp as Record<string, unknown>)[key] =
-              value.slice(0, COMPACT_TEXT_KEEP) +
-              `\n\n... [${value.length - COMPACT_TEXT_KEEP} characters truncated from history.]`;
-            modified = true;
+          } else if (typeof value === 'string') {
+            const fieldResult = pruneToolResultText(value, GEMINI_TOOL_PRUNE_CONFIG);
+            if (fieldResult.pruned) {
+              (resp as Record<string, unknown>)[key] = fieldResult.text + REREAD_HINT;
+              modified = true;
+            }
           }
         }
       }
