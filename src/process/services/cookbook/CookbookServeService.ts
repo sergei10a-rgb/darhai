@@ -40,6 +40,7 @@ import type {
 import type { CatalogModel as HwfitCatalogModel, HardwareProfile } from '@process/services/hwfit';
 import { localGgufPath, type CookbookDownloadResult, type ModelDownloadManager } from './ModelDownloadManager';
 import { buildServeCommand, ngpuLayersForVram, type LocalServeManager } from './LocalServeManager';
+import { readGgufMoeMeta } from './ggufMoeMeta';
 import type { MoeOffloadRequest } from './moeCalibration';
 import { isLlamaServerProvisionable, selectBackend } from './backendPolicy';
 import {
@@ -215,6 +216,23 @@ export type CookbookServeDeps = {
 
 /** Discard a settled value/reason without turning it into an unhandled rejection. */
 const noopServe = (): void => {};
+
+/**
+ * `<arch>.block_count` of a downloaded GGUF, or undefined when the header does
+ * not state one (or cannot be read). Only consulted when expert offload is
+ * active: it turns the all-layers `--n-gpu-layers` into the model's real
+ * `block_count + 1` instead of a magic constant (see
+ * {@link gpuLayersAllForMoe} in LocalServeManager.ts). A read failure answers
+ * undefined - the serve then rides llama.cpp's own clamp, it must never fail.
+ */
+function moeBlockCountOf(ggufPath: string): number | undefined {
+  try {
+    const blockCount = readGgufMoeMeta(ggufPath).blockCount;
+    return blockCount === null ? undefined : blockCount;
+  } catch {
+    return undefined;
+  }
+}
 
 const IDLE_STATUS: CookbookServeStatus = {
   state: 'idle',
@@ -493,6 +511,7 @@ export class CookbookServeService {
       ggufPath: dl.filePath,
       ngl,
       nCpuMoe: nCpuMoe ?? undefined,
+      moeBlockCount: nCpuMoe === null ? undefined : moeBlockCountOf(dl.filePath),
     });
     const repo = this.deps.getRepo();
     if (repo) registerCookbookServeInRepo(repo, { port, servedModelId, displayName: servedModelId });
@@ -625,7 +644,13 @@ export class CookbookServeService {
       port: null,
       providerId: null,
       servedModel: null,
-      serveCommand: buildServeCommand(dl.filePath, ngl, undefined, nCpuMoe ?? undefined),
+      serveCommand: buildServeCommand(
+        dl.filePath,
+        ngl,
+        undefined,
+        nCpuMoe ?? undefined,
+        nCpuMoe === null ? undefined : moeBlockCountOf(dl.filePath)
+      ),
     });
   }
 

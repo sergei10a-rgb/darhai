@@ -258,7 +258,10 @@
       "streak_pill": "{{sessions}} sessões · maior sequência de {{longestDays}}d",
       "streak_empty": "Nenhuma sessão ainda",
       "import_btn": "Importar…",
-      "settings_btn": "Configurações"
+      "settings_btn": "Configurações",
+      "archive": "Arquivo",
+      "allProjects": "Todos os projetos",
+      "add": "Adicionar"
     },
     "stats": {
       "memories": "Memórias",
@@ -376,7 +379,14 @@
       "kbd_capture": "captura rápida",
       "kbd_search": "buscar",
       "kbd_close": "fechar inspetor",
-      "spend_today": "${{usd}} hoje"
+      "spend_today": "${{usd}} hoje",
+      "dropFolder": {
+        "open": "Abrir pasta no Finder",
+        "today": "{{count}} hoje",
+        "today_one": "{{count}} hoje",
+        "today_many": "{{count}} hoje",
+        "today_other": "{{count}} hoje"
+      }
     },
     "threshold_modal": {
       "title": "Ajustar promoção automática",
@@ -414,12 +424,13 @@
         "idle": "ocioso"
       },
       "claudeMem": {
-        "title": "claude-mem",
-        "hint": "Clique para importar de ~/.claude-mem/claude-mem.db",
+        "title": "Claude",
+        "hint": "Importa da memória do Claude Code (~/.claude/projects) e do claude-mem",
         "count": "~{{count}} entradas importadas",
         "btn": "Importar",
         "success": "{{count}} entradas importadas · {{errors}} erros",
-        "error": "A importação falhou. Tente novamente."
+        "error": "A importação falhou. Tente novamente.",
+        "cardTitle": "Importar claude-mem"
       },
       "obsidian": {
         "title": "Cofre do Obsidian",
@@ -427,15 +438,30 @@
         "count": "~{{count}} entradas importadas",
         "btn": "Importar",
         "success": "{{count}} entradas importadas · {{errors}} erros",
-        "error": "A importação do Obsidian falhou. Tente novamente."
+        "error": "A importação do Obsidian falhou. Tente novamente.",
+        "scanBtn": "Procurar vaults",
+        "noVaults": "Nenhum vault do Obsidian encontrado — use “Escolher pasta…”",
+        "scanError": "Falha ao procurar vaults. Tente novamente.",
+        "chooseFolderBtn": "Escolher pasta…",
+        "capped": "Importadas as {{count}} notas mais recentes de {{total}}",
+        "capped_one": "Importada a nota mais recente de {{total}}",
+        "capped_many": "Importadas as {{count}} notas mais recentes de {{total}}",
+        "capped_other": "Importadas as {{count}} notas mais recentes de {{total}}",
+        "previewInfo": "{{count}} notas · {{size}} — pressione Importar para confirmar",
+        "previewInfo_one": "{{count}} nota · {{size}} — pressione Importar para confirmar",
+        "previewInfo_many": "{{count}} notas · {{size}} — pressione Importar para confirmar",
+        "previewInfo_other": "{{count}} notas · {{size}} — pressione Importar para confirmar",
+        "progress": "Importando… {{done}} / {{total}}",
+        "cardTitle": "Importar vault do Obsidian"
       },
       "devScan": {
-        "title": "Varredura de ~/dev",
-        "hint": "Varre ~/dev em busca de diretórios de memória existentes",
+        "title": "Projetos de dev",
+        "hint": "Procura projetos IJFW em pastas de desenvolvimento comuns",
         "count": "~{{count}} entradas importadas",
         "btn": "Importar",
         "success": "{{count}} entradas importadas de {{projects}} projetos",
-        "error": "A importação por varredura de dev falhou. Tente novamente."
+        "error": "A importação por varredura de dev falhou. Tente novamente.",
+        "cardTitle": "Escanear ~/dev"
       },
       "dropFolder": {
         "title": "Pasta de drop",
@@ -444,8 +470,10 @@
         "openBtn": "Abrir pasta",
         "processBtn": "Processar agora",
         "success": "{{count}} arquivos processados · {{errors}} erros",
-        "error": "O processamento falhou. Tente novamente."
-      }
+        "error": "O processamento falhou. Tente novamente.",
+        "cardTitle": "Monitorar pasta de entrada"
+      },
+      "detectedEntries": "~{{n}} entradas detectadas"
     },
     "regionLabel": "Arquivo de memória",
     "composer": {
@@ -463,6 +491,122 @@
       "hint": "para lembrar",
       "submit": "Lembrar",
       "charCount": "{{count}} caracteres"
+    },
+    "drawer": {
+      "edit": "Editar",
+      "delete": "Excluir",
+      "close": "Fechar painel",
+      "usedNTimes": "Usado {{count}}× esta semana",
+      "usedNTimes_one": "Usado {{count}}× esta semana",
+      "usedNTimes_many": "Usado {{count}}× esta semana",
+      "usedNTimes_other": "Usado {{count}}× esta semana",
+      "alreadyPromoted": "Já promovido ✓",
+      "promote": "↑ Promover para o Wiki",
+      "openFile": "Abrir arquivo",
+      "copy": "Copiar",
+      "promotionScore": "Pontuação de promoção",
+      "autoPromotesAt": "promove automaticamente em {{n}}",
+      "scoreFormula": "Fórmula da pontuação",
+      "why": "Por quê",
+      "noWhy": "Sem nota de \"Por quê\"",
+      "summary": "Resumo",
+      "howToApply": "Como aplicar",
+      "noHowTo": "Sem nota de \"Como aplicar\"",
+      "usedInWild": "Uso real",
+      "usedNTimesWeek": "Usado {{count}}× esta semana",
+      "usedNTimesWeek_one": "Usado {{count}}× esta semana",
+      "usedNTimesWeek_many": "Usado {{count}}× esta semana",
+      "usedNTimesWeek_other": "Usado {{count}}× esta semana",
+      "line": "linha",
+      "tags": "Tags"
+    },
+    "editor": {
+      "title": "Editar memória",
+      "save": "Salvar",
+      "cancel": "Cancelar",
+      "summaryLabel": "Resumo",
+      "typeLabel": "Tipo",
+      "tagsLabel": "Tags",
+      "bodyLabel": "Conteúdo",
+      "toastSaved": "Memória atualizada",
+      "toastError": "Não foi possível atualizar a memória",
+      "toastCollision": "Outra memória já usa esse resumo. Escolha um diferente.",
+      "bodySeparatorWarn": "O conteúdo contém uma linha composta apenas por \"---\". O formato deste arquivo lê essa linha como o início de uma nova entrada, o que corromperia a próxima; remova-a para salvar.",
+      "toastBodySeparator": "Não salvo: o conteúdo tem uma linha somente com \"---\", que corromperia a próxima entrada do arquivo. Remova essa linha e tente novamente."
+    },
+    "delete": {
+      "confirmTitle": "Excluir esta memória?",
+      "confirmContent": "Isso remove a entrada permanentemente do arquivo de memória. Não é possível desfazer pelo aplicativo.",
+      "confirmOk": "Excluir",
+      "confirmCancel": "Cancelar",
+      "toastDeleted": "Memória excluída",
+      "toastError": "Não foi possível excluir a memória"
+    },
+    "toast": {
+      "promoted": "Promovido para o wiki",
+      "pathCopied": "Caminho copiado",
+      "copied": "Copiado"
+    },
+    "filter": {
+      "results": "resultados",
+      "searchPlaceholder": "Pesquisar memórias… (type:decision tag:design)",
+      "allTypes": "Todos os tipos",
+      "typesSelected": "tipos",
+      "clearAll": "Limpar tudo",
+      "allProjects": "Todos os projetos",
+      "searchProjects": "Pesquisar projetos…",
+      "noProjects": "Nenhum projeto encontrado",
+      "time": {
+        "all": "Todo o período",
+        "today": "Hoje",
+        "7d": "7 dias",
+        "30d": "30 dias",
+        "custom": "Período personalizado…",
+        "from": "De",
+        "to": "Até",
+        "apply": "Aplicar"
+      }
+    },
+    "dragDrop": {
+      "toastIngested": "Arquivos importados",
+      "toastNoFiles": "Nenhum arquivo importado",
+      "toastError": "Falha ao importar os arquivos"
+    },
+    "chip": {
+      "memories": "Memórias",
+      "decisions": "Decisões",
+      "wiki": "Wiki",
+      "thisWeek": "esta semana",
+      "viewAsFilter": "Ver como filtro"
+    },
+    "type": {
+      "decision": "Decisão",
+      "pattern": "Padrão",
+      "session": "Sessão",
+      "observation": "Observação",
+      "wiki": "Wiki",
+      "preference": "Preferência"
+    },
+    "streak": {
+      "tooltip": "Sequência em todos os projetos",
+      "sessions": "sessões",
+      "dayStreak": " dias seguidos"
+    },
+    "empty": {
+      "search": "Pesquisar memórias… (type:decision tag:design)",
+      "headline": "Sua memória está vazia. Vamos resolver isso.",
+      "subline": "Importe de uma fonte abaixo ou adicione sua primeira memória."
+    },
+    "status": {
+      "brainLive": "Cérebro ativo",
+      "brainOffline": "Cérebro offline",
+      "clis": "CLIs",
+      "lastDream": "Último sonho {{ago}} · {{facts}} fatos extraídos · {{promoted}} candidatos perto do limite",
+      "kbd": {
+        "search": "pesquisar",
+        "navigate": "navegar",
+        "close": "fechar"
+      }
     }
   }
 }

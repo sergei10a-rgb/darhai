@@ -14,6 +14,7 @@ import * as path from 'node:path';
 import * as crypto from 'node:crypto';
 import log from 'electron-log';
 import { globalMemoryDir } from '../memory/memoryRoots';
+import { parseWikilinks } from '../wiki/wikilinkResolver';
 
 export type VaultInfo = {
   path: string;
@@ -30,6 +31,22 @@ export type ObsidianImportResult = {
   /** True when the import was capped to `maxFiles` most-recent files. */
   capped: boolean;
 };
+
+export type ObsidianVaultPreview = {
+  /** Number of .md files in the vault (bounded by PREVIEW_MAX_FILES). */
+  mdCount: number;
+  /** Sum of the .md files' sizes in bytes. */
+  totalBytes: number;
+};
+
+/** Bound the preview walk so a pathological directory cannot stall the UI. */
+const PREVIEW_MAX_FILES = 20_000;
+
+/**
+ * Unique [[wikilink]] target names carried into the generated frontmatter.
+ * Capped so a hub note with hundreds of links keeps the frontmatter bounded.
+ */
+const MAX_FRONTMATTER_LINKS = 20;
 
 // ===== Vault detection =====
 
@@ -119,8 +136,15 @@ function extractH1(content: string): string | null {
   return match ? match[1].trim() : null;
 }
 
+/**
+ * A leading Obsidian `---…---` frontmatter fence, CRLF-tolerant. Shared by
+ * detection, tag extraction and stripping so the three can never disagree
+ * about whether a note "has frontmatter" (M3).
+ */
+const LEADING_FRONTMATTER_RE = /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/;
+
 function parseFrontmatterTags(content: string): string[] {
-  const match = content.match(/^---\n([\s\S]*?)\n---/);
+  const match = content.match(LEADING_FRONTMATTER_RE);
   if (!match) return [];
   const fm = match[1];
   // Match `tags: [a, b]` or `tags:\n  - a\n  - b`
@@ -142,7 +166,44 @@ function parseFrontmatterTags(content: string): string[] {
 }
 
 function stripFrontmatter(content: string): string {
-  return content.replace(/^---\n[\s\S]*?\n---\n?/, '').trim();
+  return content.replace(LEADING_FRONTMATTER_RE, '').trim();
+}
+
+/**
+ * Unique [[wikilink]] target names from a note body, in order of first
+ * appearance. Names are sanitized for the inline `[a, b]` frontmatter array
+ * (commas/brackets/newlines would break the top-level comma split on re-read)
+ * and the list is capped at MAX_FRONTMATTER_LINKS.
+ */
+export function extractWikilinkNames(body: string): string[] {
+  const seen = new Set<string>();
+  const names: string[] = [];
+  for (const link of parseWikilinks(body)) {
+    const clean = link.name
+      .replace(/[,[\]\r\n]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (clean.length === 0 || seen.has(clean)) continue;
+    seen.add(clean);
+    names.push(clean);
+    if (names.length >= MAX_FRONTMATTER_LINKS) break;
+  }
+  return names;
+}
+
+/**
+ * Expand a leading `~` (both `~/` POSIX and `~\` Windows) and resolve to an
+ * absolute path. Shared by import and preview so the renderer never has to
+ * pre-expand paths.
+ */
+export function expandVaultPath(rawVaultPath: string): string {
+  let vaultPath = rawVaultPath;
+  if (vaultPath === '~') {
+    vaultPath = os.homedir();
+  } else if (vaultPath.startsWith('~/') || vaultPath.startsWith('~' + path.sep)) {
+    vaultPath = path.join(os.homedir(), vaultPath.slice(2));
+  }
+  return path.resolve(vaultPath);
 }
 
 function buildFrontmatter(fields: Record<string, string | string[] | number>): string {
@@ -265,22 +326,46 @@ async function walkMdFiles(dir: string, skip: string[]): Promise<string[]> {
 }
 
 /**
+ * Count the .md notes of a vault and sum their byte size WITHOUT reading any
+ * note body. Used by the renderer to show a preview ("N notes · X MB") before
+ * the user commits to an import. Never throws; an unreadable/absent vault
+ * previews as zero.
+ */
+export async function previewVault(rawVaultPath: string): Promise<ObsidianVaultPreview> {
+  const vaultPath = expandVaultPath(rawVaultPath);
+  const preview: ObsidianVaultPreview = { mdCount: 0, totalBytes: 0 };
+  try {
+    await fs.promises.access(vaultPath);
+  } catch {
+    return preview;
+  }
+  const skipDirs = [path.join(vaultPath, '.obsidian'), path.join(vaultPath, '.trash')];
+  const mdFiles = await walkMdFiles(vaultPath, skipDirs);
+  for (const filePath of mdFiles.slice(0, PREVIEW_MAX_FILES)) {
+    preview.mdCount++;
+    try {
+      preview.totalBytes += (await fs.promises.stat(filePath)).size;
+    } catch {
+      // Unreadable size - still counted as a note.
+    }
+  }
+  return preview;
+}
+
+/**
  * Import all .md files from an Obsidian vault into `ijfwMemoryDir`.
  */
 export async function runObsidianImport(
   rawVaultPath: string,
-  opts?: { ijfwMemoryDir?: string; maxFiles?: number }
+  opts?: {
+    ijfwMemoryDir?: string;
+    maxFiles?: number;
+    /** Called as files are processed (imported, skipped or errored). */
+    onProgress?: (done: number, total: number) => void;
+  }
 ): Promise<ObsidianImportResult> {
   // Expand tilde in main process (renderer must not pass unexpanded paths).
-  let vaultPath = rawVaultPath;
-  // Expand a leading `~`, matching both `~/` (POSIX) and `~\` (Windows) and
-  // joining via path.join so separators stay platform-correct.
-  if (vaultPath === '~') {
-    vaultPath = os.homedir();
-  } else if (vaultPath.startsWith('~/') || vaultPath.startsWith('~' + path.sep)) {
-    vaultPath = path.join(os.homedir(), vaultPath.slice(2));
-  }
-  vaultPath = path.resolve(vaultPath);
+  const vaultPath = expandVaultPath(rawVaultPath);
 
   const memDir = opts?.ijfwMemoryDir ?? globalMemoryDir();
   const result: ObsidianImportResult = { imported: 0, skipped: 0, errors: [], total: 0, capped: false };
@@ -332,6 +417,17 @@ export async function runObsidianImport(
     result.capped = true;
   }
 
+  // Progress is reported on every path through the loop (imported, deduped,
+  // guarded or errored) so the renderer's counter always reaches the total.
+  const totalToProcess = mdFiles.length;
+  let processed = 0;
+  const reportProgress = (): void => {
+    processed++;
+    if (processed % 25 === 0 || processed === totalToProcess) {
+      opts?.onProgress?.(processed, totalToProcess);
+    }
+  };
+
   for (const filePath of mdFiles) {
     try {
       const relativePath = path.relative(vaultPath, filePath);
@@ -359,11 +455,12 @@ export async function runObsidianImport(
       const bodyOnly = stripFrontmatter(rawContent);
       const h1 = extractH1(bodyOnly);
       const summary = h1 ?? bodyOnly.slice(0, 280).replace(/\n/g, ' ');
+      const links = extractWikilinkNames(bodyOnly);
 
       const stat = await fs.promises.stat(filePath);
       const storedAt = stat.mtimeMs;
 
-      const frontmatter = buildFrontmatter({
+      const fields: Record<string, string | string[] | number> = {
         type: 'observation',
         summary: summary.replace(/[\r\n]+/g, ' ').slice(0, 200),
         stored: new Date(storedAt).toISOString(),
@@ -371,14 +468,26 @@ export async function runObsidianImport(
         tags,
         source: 'obsidian',
         source_path: relativePath.replace(/[\r\n]+/g, ' '),
-      });
+      };
+      // [[Wikilink]] targets keep the vault's link graph queryable after import
+      // (Darhai's wiki layer resolves the same [[...]] syntax).
+      if (links.length > 0) fields.links = links;
+      const frontmatter = buildFrontmatter(fields);
 
-      const fileContent = `${frontmatter}\n${rawContent}\n`;
+      // Write the BODY only when the note carries its own frontmatter (M3):
+      // writing rawContent verbatim used to produce a double `---…---` fence,
+      // which parseMarkdownBlocks splits into a phantom empty-body entry plus
+      // a second block wearing the note's own frontmatter. The note's tags are
+      // already merged into the generated frontmatter above.
+      const noteBody = LEADING_FRONTMATTER_RE.test(rawContent) ? bodyOnly : rawContent;
+      const fileContent = `${frontmatter}\n${noteBody}\n`;
       await fs.promises.writeFile(destFile, fileContent, 'utf8');
       result.imported++;
     } catch (err) {
       log.warn('[obsidianImporter] failed to import file', { filePath, err });
       result.errors.push(`${filePath}: ${String(err)}`);
+    } finally {
+      reportProgress();
     }
   }
 

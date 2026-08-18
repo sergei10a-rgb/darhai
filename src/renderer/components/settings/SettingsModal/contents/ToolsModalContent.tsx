@@ -43,6 +43,7 @@ import MicrophoneCheck from '@/renderer/pages/settings/VoiceSettings/MicrophoneC
 import MongolVoiceInstallCard, {
   NemotronInstallHint,
 } from '@/renderer/pages/settings/VoiceSettings/MongolVoiceInstallCard';
+import PersonalDictEditor from '@/renderer/pages/settings/VoiceSettings/PersonalDictEditor';
 import { useMongolVoice } from '@/renderer/pages/settings/VoiceSettings/useMongolVoice';
 import { TTS_CONFIG_CHANGED_EVENT } from '@/renderer/services/voice/ttsConfig';
 import { speakText, ttsErrorMessageKey } from '@/renderer/services/voice/ttsPlayback';
@@ -415,13 +416,23 @@ export const SpeechToTextSettingsSection: React.FC<{
             </Form.Item>
           </>
         ) : config.provider === 'nemotron-mn' ? (
-          <Form.Item label={t('settings.speechToTextModel')}>
-            <div className='flex flex-col gap-6px'>
-              <span className='text-13px text-t-secondary'>{t('settings.speechToTextNemotronDescription')}</span>
-              {/* Points at the install card while the runtime + model are missing. */}
-              <NemotronInstallHint />
-            </div>
-          </Form.Item>
+          <>
+            <Form.Item label={t('settings.speechToTextModel')}>
+              <div className='flex flex-col gap-6px'>
+                <span className='text-13px text-t-secondary'>{t('settings.speechToTextNemotronDescription')}</span>
+                {/* Points at the install card while the runtime + model are missing. */}
+                <NemotronInstallHint />
+              </div>
+            </Form.Item>
+            {/* Wrong → right pairs applied to transcripts after glossfix
+                (personalDict.ts) - whole word only, never inside a longer word. */}
+            <Form.Item label={t('settings.speechToTextPersonalDict')}>
+              <PersonalDictEditor
+                dict={config.personalDict ?? {}}
+                onChange={(next) => onChange((current) => ({ ...current, personalDict: next }))}
+              />
+            </Form.Item>
+          </>
         ) : config.provider === 'deepgram' ? (
           <>
             <Form.Item label={renderSpeechToTextFieldLabel('settings.speechToTextApiKey', 'required')}>

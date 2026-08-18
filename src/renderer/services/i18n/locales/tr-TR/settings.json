@@ -1890,7 +1890,8 @@
     "images": "Görsel Üretme",
     "voice": "Ses",
     "groupEngine": "ENGINE",
-    "ecc": "ECC altyapısı"
+    "ecc": "ECC altyapısı",
+    "doctor": "Tanılama"
   },
   "channelsIndex": {
     "title": "Kanallar",
@@ -2815,5 +2816,100 @@
   "deferUpdateWhileBusy": "Meşgulken güncellemeleri ertele",
   "deferUpdateWhileBusyDesc": "Güncelleme için yeniden başlatmadan önce etkin sohbetlerin, zamanlanmış görevlerin ve ekiplerin bitmesini bekler. Güncelleme boşta veya çıkışta yine de uygulanır.",
   "textToSpeechTestPhraseKittenMn": "Сайн байна уу! Энэ бол монгол дуу хоолойн туршилт.",
-  "textToSpeechVoiceListAfterFirstSpeak": "Ses listesi ilk oynatmadan sonra görünür — ses sunucusu gerektiğinde başlar."
+  "textToSpeechVoiceListAfterFirstSpeak": "Ses listesi ilk oynatmadan sonra görünür — ses sunucusu gerektiğinde başlar.",
+  "speechToTextPersonalDict": "Kişisel sözlük",
+  "speechToTextPersonalDictDescription": "Tanıyıcının sesinizde sürekli yanlış duyduğu kelimeleri düzeltir. Her kayıt, dökümde yalnızca tam bir kelimeyi değiştirir; asla daha uzun bir kelimenin parçasını değiştirmez.",
+  "speechToTextPersonalDictWrong": "Yanlış tanınan",
+  "speechToTextPersonalDictRight": "Şununla değiştir",
+  "speechToTextPersonalDictAdd": "Ekle",
+  "speechToTextPersonalDictRemove": "Kaldır",
+  "speechToTextPersonalDictEmpty": "Henüz kayıt yok. Tanıyıcının sürekli yanlış duyduğu bir kelimeyi düzeltmek için bir çift ekleyin.",
+  "doctor": {
+    "title": "Tanılama",
+    "subtitle": "Darhai'nin alt sistemlerini tek seferde denetler: çalışma zamanları, hizmetler, yerel modeller, bellek ve disk.",
+    "run": "Tanılamayı çalıştır",
+    "running": "Çalışıyor…",
+    "runError": "Tanılama çalıştırılamadı: {{error}}",
+    "empty": "Henüz tanılama çalıştırılmadı.",
+    "counts": "{{pass}} başarılı · {{warn}} uyarı · {{fail}} hata",
+    "remediationLabel": "Çözüm:",
+    "overall": {
+      "pass": "Her şey yolunda",
+      "warn": "Dikkat gerekli",
+      "fail": "Sorunlar bulundu"
+    },
+    "status": {
+      "pass": "Tamam",
+      "warn": "Uyarı",
+      "fail": "Hata"
+    },
+    "category": {
+      "runtime": "Çalışma zamanları",
+      "services": "Hizmetler",
+      "models": "Yerel modeller",
+      "system": "Sistem"
+    },
+    "checks": {
+      "bun": {
+        "title": "Bun çalışma zamanı",
+        "ok": "Paketlenmiş bun bulundu: {{path}}",
+        "fallback": "Paketlenmiş bun bulunamadı; yerleşik MCP sunucuları node'a düşer.",
+        "fallbackFix": "Paketlenmiş bun'u geri getirmek için Darhai'yi yeniden yükleyin.",
+        "missing": "Çözümlenen bun ikili dosyası yok: {{path}}",
+        "missingFix": "Darhai'yi yeniden yükleyerek bun'u geri getirin."
+      },
+      "mcp": {
+        "title": "Yerleşik MCP sunucuları",
+        "ok": "{{total}} yerleşik MCP sunucusundan {{enabled}} tanesi etkin.",
+        "none": "Kayıtlı yerleşik MCP sunucusu yok.",
+        "noneFix": "Darhai'yi yeniden başlatın; yerleşik sunucular açılışta kaydedilir.",
+        "disabled": "{{total}} yerleşik MCP sunucusunun tümü devre dışı.",
+        "disabledFix": "Gerekenleri Ayarlar → MCP Kitaplığı üzerinden etkinleştirin."
+      },
+      "llama": {
+        "title": "llama.cpp çalışma zamanı",
+        "ok": "llama.cpp {{tag}} yüklü ve doğrulandı.",
+        "none": "Yerel llama.cpp çalışma zamanı yüklü değil.",
+        "noneFix": "Yerel modeller için Model Danışmanından yükleyin.",
+        "broken": "llama.cpp {{tag}} kurulumu doğrulamayı geçemedi (eksik dosya veya kitaplık).",
+        "brokenFix": "Çalışma zamanını Model Danışmanından yeniden yükleyin."
+      },
+      "voice": {
+        "title": "Moğolca ses",
+        "ok": "{{total}} ses bileşeninin tümü yüklü.",
+        "partial": "{{total}} bileşenden {{installed}} tanesi yüklü; eksik: {{missing}}.",
+        "partialFix": "Eksik bileşenleri Ayarlar → Ses üzerinden yükleyin.",
+        "unsupported": "Bu platformda kullanılabilir ses bileşeni yok."
+      },
+      "ffmpeg": {
+        "title": "ffmpeg",
+        "ok": "ffmpeg bulundu: {{path}}",
+        "missing": "PATH içinde ffmpeg bulunamadı; video kareleri ve Moğolca konuşma ön işleme çalışmayacak.",
+        "missingFix": "ffmpeg'i yükleyin ve PATH içinde olduğundan emin olun."
+      },
+      "omniroute": {
+        "title": "OmniRoute ağ geçidi",
+        "ok": "Ağ geçidi yanıt veriyor; {{models}} model kullanılabilir.",
+        "stopped": "OmniRoute ağ geçidi çalışmıyor.",
+        "stoppedFix": "Ağ geçidi modelleri kullanıyorsanız Ayarlardan başlatın.",
+        "unreachable": "Kendi ağ geçidi sürecimiz çalışıyor görünüyor ama bağlantı noktası yanıt vermiyor ({{error}}).",
+        "unreachableFix": "Ağ geçidini Ayarlardan durdurup yeniden başlatın."
+      },
+      "memory": {
+        "title": "Bellek dizini",
+        "ok": "Bellek dizini sağlıklı: {{projects}} projede {{total}} kayıt.",
+        "empty": "Bellek dizini 0 kayıt bildiriyor - boş ya da henüz yüklenmedi.",
+        "emptyFix": "Kayıtlı bellekleriniz varsa dizinlemeyi tetiklemek için Bellek sayfasını açın ve tanılamayı yeniden çalıştırın."
+      },
+      "disk": {
+        "title": "Disk alanı",
+        "ok": "Veri biriminde {{freeGb}} GB boş alan var.",
+        "low": "Yalnızca {{freeGb}} GB boş; model indirmeleri başarısız olmaya başlayacak.",
+        "lowFix": "Disk alanı açın veya büyük verileri başka birime taşıyın.",
+        "critical": "Disk alanı kritik düzeyde az: {{freeGb}} GB boş.",
+        "criticalFix": "Hemen alan açın - uygulama hatalı davranabilir.",
+        "unknown": "Bu sistemde boş alan belirlenemedi."
+      }
+    }
+  }
 }

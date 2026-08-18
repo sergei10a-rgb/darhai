@@ -136,6 +136,9 @@ export const SCREEN_REGISTRY: Readonly<Record<string, ScreenCoverage>> = {
   '/settings/theme': { skip: 'not covered yet' },
   '/settings/tools': { skip: 'not covered yet' },
   '/settings/tools/mcp': { skip: 'not covered yet - legacy alias route' },
+  '/settings/doctor': {
+    skip: 'structure covered by DoctorSettingsPanel dom tests; pixel baseline not captured yet',
+  },
   '/settings/voice': { skip: 'not covered yet' },
   '/settings/wcore': { skip: 'not covered yet - legacy alias route' },
   '/settings/wcore-config': { skip: 'not covered yet' },

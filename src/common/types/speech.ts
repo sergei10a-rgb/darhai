@@ -51,6 +51,14 @@ export type NemotronMnSpeechToTextConfig = Record<string, never>;
 export type SpeechToTextConfig = {
   autoSend?: boolean;
   enabled: boolean;
+  /**
+   * Personal correction dictionary (wrong → right), applied to local Nemotron
+   * transcripts AFTER glossfix as whole-word, case-insensitive replacements -
+   * a match never fires inside a longer word (personalDict.ts). Lets a user
+   * fix words the recognizer keeps mishearing for their voice («коён» →
+   * «хоёр») without touching the model.
+   */
+  personalDict?: Record<string, string>;
   provider: SpeechToTextProvider;
   deepgram?: DeepgramSpeechToTextConfig;
   nemotronMn?: NemotronMnSpeechToTextConfig;

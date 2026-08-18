@@ -258,7 +258,10 @@
       "streak_pill": "{{sessions}} Sitzungen · {{longestDays}} T längste Serie",
       "streak_empty": "Noch keine Sitzungen",
       "import_btn": "Importieren…",
-      "settings_btn": "Einstellungen"
+      "settings_btn": "Einstellungen",
+      "archive": "Archiv",
+      "allProjects": "Alle Projekte",
+      "add": "Hinzufügen"
     },
     "stats": {
       "memories": "Gedächtnisse",
@@ -376,7 +379,13 @@
       "kbd_capture": "Schnellerfassung",
       "kbd_search": "Suche",
       "kbd_close": "Inspektor schließen",
-      "spend_today": "{{usd}} $ heute"
+      "spend_today": "{{usd}} $ heute",
+      "dropFolder": {
+        "open": "Ordner im Finder öffnen",
+        "today": "{{count}} heute",
+        "today_one": "{{count}} heute",
+        "today_other": "{{count}} heute"
+      }
     },
     "threshold_modal": {
       "title": "Automatische Beförderung anpassen",
@@ -414,12 +423,13 @@
         "idle": "inaktiv"
       },
       "claudeMem": {
-        "title": "claude-mem",
-        "hint": "Klicken, um aus ~/.claude-mem/claude-mem.db zu importieren",
+        "title": "Claude",
+        "hint": "Importiert aus dem Claude-Code-Speicher (~/.claude/projects) und claude-mem",
         "count": "~{{count}} Einträge importiert",
         "btn": "Importieren",
         "success": "{{count}} Einträge importiert · {{errors}} Fehler",
-        "error": "Import fehlgeschlagen. Versuche es erneut."
+        "error": "Import fehlgeschlagen. Versuche es erneut.",
+        "cardTitle": "claude-mem importieren"
       },
       "obsidian": {
         "title": "Obsidian-Vault",
@@ -427,15 +437,28 @@
         "count": "~{{count}} Einträge importiert",
         "btn": "Importieren",
         "success": "{{count}} Einträge importiert · {{errors}} Fehler",
-        "error": "Obsidian-Import fehlgeschlagen. Versuche es erneut."
+        "error": "Obsidian-Import fehlgeschlagen. Versuche es erneut.",
+        "scanBtn": "Vaults suchen",
+        "noVaults": "Keine Obsidian-Vaults gefunden — nutze „Ordner wählen…“",
+        "scanError": "Vault-Suche fehlgeschlagen. Bitte erneut versuchen.",
+        "chooseFolderBtn": "Ordner wählen…",
+        "capped": "Die {{count}} neuesten von {{total}} Notizen importiert",
+        "capped_one": "Die {{count}} neueste von {{total}} Notizen importiert",
+        "capped_other": "Die {{count}} neuesten von {{total}} Notizen importiert",
+        "previewInfo": "{{count}} Notizen · {{size}} — zum Bestätigen auf Importieren klicken",
+        "previewInfo_one": "{{count}} Notiz · {{size}} — zum Bestätigen auf Importieren klicken",
+        "previewInfo_other": "{{count}} Notizen · {{size}} — zum Bestätigen auf Importieren klicken",
+        "progress": "Importiere… {{done}} / {{total}}",
+        "cardTitle": "Obsidian-Vault importieren"
       },
       "devScan": {
-        "title": "~/dev-Scan",
-        "hint": "Scannt ~/dev nach vorhandenen Gedächtnisverzeichnissen",
+        "title": "Dev-Projekte",
+        "hint": "Durchsucht übliche Entwicklungsordner nach IJFW-Projekten",
         "count": "~{{count}} Einträge importiert",
         "btn": "Importieren",
         "success": "{{count}} Einträge aus {{projects}} Projekten importiert",
-        "error": "Dev-Scan-Import fehlgeschlagen. Versuche es erneut."
+        "error": "Dev-Scan-Import fehlgeschlagen. Versuche es erneut.",
+        "cardTitle": "~/dev scannen"
       },
       "dropFolder": {
         "title": "Ablageordner",
@@ -444,8 +467,10 @@
         "openBtn": "Ordner öffnen",
         "processBtn": "Jetzt verarbeiten",
         "success": "{{count}} Dateien verarbeitet · {{errors}} Fehler",
-        "error": "Verarbeitung fehlgeschlagen. Versuche es erneut."
-      }
+        "error": "Verarbeitung fehlgeschlagen. Versuche es erneut.",
+        "cardTitle": "Drop-Ordner überwachen"
+      },
+      "detectedEntries": "~{{n}} Einträge erkannt"
     },
     "regionLabel": "Erinnerungsarchiv",
     "composer": {
@@ -463,6 +488,120 @@
       "hint": "zum Merken",
       "submit": "Merken",
       "charCount": "{{count}} Zeichen"
+    },
+    "drawer": {
+      "edit": "Bearbeiten",
+      "delete": "Löschen",
+      "close": "Panel schließen",
+      "usedNTimes": "{{count}}× diese Woche verwendet",
+      "usedNTimes_one": "{{count}}× diese Woche verwendet",
+      "usedNTimes_other": "{{count}}× diese Woche verwendet",
+      "alreadyPromoted": "Bereits befördert ✓",
+      "promote": "↑ Ins Wiki befördern",
+      "openFile": "Datei öffnen",
+      "copy": "Kopieren",
+      "promotionScore": "Beförderungspunktzahl",
+      "autoPromotesAt": "automatische Beförderung bei {{n}}",
+      "scoreFormula": "Punktformel",
+      "why": "Warum",
+      "noWhy": "Keine „Warum“-Notiz",
+      "summary": "Zusammenfassung",
+      "howToApply": "Anwendung",
+      "noHowTo": "Keine „Anwendung“-Notiz",
+      "usedInWild": "Praxiseinsatz",
+      "usedNTimesWeek": "{{count}}× diese Woche verwendet",
+      "usedNTimesWeek_one": "{{count}}× diese Woche verwendet",
+      "usedNTimesWeek_other": "{{count}}× diese Woche verwendet",
+      "line": "Zeile",
+      "tags": "Tags"
+    },
+    "editor": {
+      "title": "Erinnerung bearbeiten",
+      "save": "Speichern",
+      "cancel": "Abbrechen",
+      "summaryLabel": "Zusammenfassung",
+      "typeLabel": "Typ",
+      "tagsLabel": "Tags",
+      "bodyLabel": "Inhalt",
+      "toastSaved": "Erinnerung aktualisiert",
+      "toastError": "Erinnerung konnte nicht aktualisiert werden",
+      "toastCollision": "Eine andere Erinnerung verwendet diese Zusammenfassung bereits. Bitte eine andere wählen.",
+      "bodySeparatorWarn": "Der Inhalt enthält eine Zeile, die nur aus \"---\" besteht. Dieses Dateiformat liest eine solche Zeile als Beginn eines neuen Eintrags, was den nächsten Eintrag beschädigen würde - entfernen Sie sie, um zu speichern.",
+      "toastBodySeparator": "Nicht gespeichert: Der Inhalt enthält eine Zeile nur mit \"---\", die den nächsten Eintrag der Datei beschädigen würde. Entfernen Sie die Zeile und versuchen Sie es erneut."
+    },
+    "delete": {
+      "confirmTitle": "Diese Erinnerung löschen?",
+      "confirmContent": "Der Eintrag wird dauerhaft aus seiner Speicherdatei entfernt. Dies kann in der App nicht rückgängig gemacht werden.",
+      "confirmOk": "Löschen",
+      "confirmCancel": "Abbrechen",
+      "toastDeleted": "Erinnerung gelöscht",
+      "toastError": "Erinnerung konnte nicht gelöscht werden"
+    },
+    "toast": {
+      "promoted": "Ins Wiki befördert",
+      "pathCopied": "Pfad kopiert",
+      "copied": "Kopiert"
+    },
+    "filter": {
+      "results": "Ergebnisse",
+      "searchPlaceholder": "Erinnerungen durchsuchen… (type:decision tag:design)",
+      "allTypes": "Alle Typen",
+      "typesSelected": "Typen",
+      "clearAll": "Alle löschen",
+      "allProjects": "Alle Projekte",
+      "searchProjects": "Projekte suchen…",
+      "noProjects": "Keine Projekte gefunden",
+      "time": {
+        "all": "Gesamter Zeitraum",
+        "today": "Heute",
+        "7d": "7 Tage",
+        "30d": "30 Tage",
+        "custom": "Benutzerdefinierter Zeitraum…",
+        "from": "Von",
+        "to": "Bis",
+        "apply": "Anwenden"
+      }
+    },
+    "dragDrop": {
+      "toastIngested": "Dateien importiert",
+      "toastNoFiles": "Keine Dateien importiert",
+      "toastError": "Import per Drag & Drop fehlgeschlagen"
+    },
+    "chip": {
+      "memories": "Erinnerungen",
+      "decisions": "Entscheidungen",
+      "wiki": "Wiki",
+      "thisWeek": "diese Woche",
+      "viewAsFilter": "Als Filter anzeigen"
+    },
+    "type": {
+      "decision": "Entscheidung",
+      "pattern": "Muster",
+      "session": "Sitzung",
+      "observation": "Beobachtung",
+      "wiki": "Wiki",
+      "preference": "Präferenz"
+    },
+    "streak": {
+      "tooltip": "Serie über alle Projekte",
+      "sessions": "Sitzungen",
+      "dayStreak": " Tage in Folge"
+    },
+    "empty": {
+      "search": "Erinnerungen durchsuchen… (type:decision tag:design)",
+      "headline": "Dein Gedächtnis ist leer. Ändern wir das.",
+      "subline": "Importiere aus einer Quelle unten oder füge deine erste Erinnerung hinzu."
+    },
+    "status": {
+      "brainLive": "Gehirn aktiv",
+      "brainOffline": "Gehirn offline",
+      "clis": "CLIs",
+      "lastDream": "Letzter Traum {{ago}} · {{facts}} Fakten extrahiert · {{promoted}} Kandidaten nahe der Schwelle",
+      "kbd": {
+        "search": "suchen",
+        "navigate": "navigieren",
+        "close": "schließen"
+      }
     }
   }
 }

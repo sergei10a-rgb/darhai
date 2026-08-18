@@ -115,6 +115,24 @@
       "auto": "每天自動更新匯率",
       "manual": "自訂匯率",
       "manualHint": "在此輸入的匯率會覆蓋自動取得的匯率。留空則恢復自動。"
+    },
+    "circuitBreaker": {
+      "title": "花費斷路器",
+      "hint": "花費達到上限時,正在執行的代理將被停止。達到 80% 時會提前警告。",
+      "enable": "啟用",
+      "limit": "上限",
+      "currencyMnt": "₮ 圖格里克",
+      "currencyUsd": "$ 美元",
+      "periodDay": "每天",
+      "periodSession": "每工作階段",
+      "warnTitle": "花費接近上限",
+      "warnBody": "您 {{limit}} 上限中已花費 {{spent}}(超過 80%)。",
+      "tripTitle": "已達花費上限 - 代理已停止",
+      "tripBody": "花費達到 {{spent}},觸及您的 {{limit}} 上限;已停止 {{stopped}} 個正在執行的代理。請在 任務控制 → 花費 中提高或關閉上限後繼續。",
+      "tripBodyNoAgents": "花費達到 {{spent}}，觸及您的 {{limit}} 上限。當時沒有正在執行的代理；任何新的執行都會在其下一次計費回合後被停止。請在 任務控制 → 花費 中提高或關閉上限後繼續。",
+      "rateMissingTitle": "消費上限暫時未生效 - 缺少匯率",
+      "rateMissingBody": "您的上限以圖格里克設定（{{limit}}₮），但尚未取得 MNT 匯率，因此上限暫時不會生效。請將上限改為美元，或等待匯率載入。",
+      "reactiveNote": "上限會在每個回合的花費記錄之後檢查（被動式）：已在進行中的回合會先完成，停止才會生效。"
     }
   },
   "goals": {

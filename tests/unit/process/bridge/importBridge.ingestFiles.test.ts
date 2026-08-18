@@ -40,6 +40,8 @@ vi.mock('@/common', () => ({
         claudeMem: { provider: (h: Handler) => providers.set('claudeMem', h) },
         obsidianVault: { provider: (h: Handler) => providers.set('obsidianVault', h) },
         obsidianDetectVaults: { provider: (h: Handler) => providers.set('obsidianDetectVaults', h) },
+        obsidianPreview: { provider: (h: Handler) => providers.set('obsidianPreview', h) },
+        obsidianProgress: { emit: (_p: unknown): void => undefined },
         scanDevDir: { provider: (h: Handler) => providers.set('scanDevDir', h) },
         processDropFolder: { provider: (h: Handler) => providers.set('processDropFolder', h) },
         getDropFolderStatus: { provider: (h: Handler) => providers.set('getDropFolderStatus', h) },
@@ -56,6 +58,8 @@ vi.mock('@process/services/import/claudeMemImporter', () => ({
 vi.mock('@process/services/import/obsidianImporter', () => ({
   runObsidianImport: vi.fn().mockResolvedValue({ imported: 0, skipped: 0, errors: [], total: 0, capped: false }),
   detectVaults: vi.fn().mockResolvedValue([]),
+  expandVaultPath: vi.fn((p: string) => p),
+  previewVault: vi.fn().mockResolvedValue({ mdCount: 0, totalBytes: 0 }),
 }));
 vi.mock('@process/services/import/claudeNativeImporter', () => ({
   runClaudeNativeImport: vi.fn().mockResolvedValue({ imported: 0, skipped: 0, errors: [] }),

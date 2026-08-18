@@ -115,6 +115,24 @@
       "auto": "Kurs täglich aktualisieren",
       "manual": "Eigener Kurs",
       "manualHint": "Ein hier eingegebener Kurs überschreibt den abgerufenen. Leer lassen, um zum abgerufenen Kurs zurückzukehren."
+    },
+    "circuitBreaker": {
+      "title": "Ausgaben-Notschalter",
+      "hint": "Erreichen die Ausgaben die Obergrenze, werden laufende Agenten gestoppt. Bei 80 % gibt es eine Frühwarnung.",
+      "enable": "Aktivieren",
+      "limit": "Obergrenze",
+      "currencyMnt": "₮ MNT",
+      "currencyUsd": "$ USD",
+      "periodDay": "Pro Tag",
+      "periodSession": "Pro Sitzung",
+      "warnTitle": "Ausgaben nahe der Obergrenze",
+      "warnBody": "{{spent}} Ihrer Obergrenze von {{limit}} wurden ausgegeben (80 %+).",
+      "tripTitle": "Ausgabengrenze erreicht - Agenten gestoppt",
+      "tripBody": "Die Ausgaben erreichten {{spent}} bei einer Obergrenze von {{limit}}; {{stopped}} laufende(r) Agent(en) wurden gestoppt. Erhöhen oder deaktivieren Sie die Grenze unter Mission Control → Kosten.",
+      "tripBodyNoAgents": "Die Ausgaben erreichten {{spent}} bei einer Obergrenze von {{limit}}. In diesem Moment lief kein Agent; jeder neue Lauf wird nach seinem nächsten erfassten Zug gestoppt. Erhöhen oder deaktivieren Sie die Grenze unter Mission Control → Kosten.",
+      "rateMissingTitle": "Ausgabengrenze vorübergehend inaktiv - kein Wechselkurs",
+      "rateMissingBody": "Ihre Grenze ist in Tögrög ({{limit}}₮) gesetzt, aber es wurde noch kein MNT-Wechselkurs geladen, daher wird die Grenze vorübergehend NICHT durchgesetzt. Stellen Sie die Grenze auf USD um oder warten Sie, bis der Kurs geladen ist.",
+      "reactiveNote": "Die Grenze wird geprüft, nachdem die Kosten jedes Zugs erfasst wurden (reaktiv): Ein bereits laufender Zug endet, bevor der Stopp greift."
     }
   },
   "goals": {

@@ -41,7 +41,7 @@ export type LlamaRuntimeState = 'unknown' | 'missing' | 'downloading' | 'ready' 
 export type LlamaRuntimePhase = 'resolving' | 'downloading' | 'verifying' | 'extracting' | 'installing' | 'done';
 
 /** What the installed (or planned) build actually accelerates with. */
-export type LlamaRuntimeAcceleration = 'cuda' | 'rocm' | 'metal' | 'cpu';
+export type LlamaRuntimeAcceleration = 'cuda' | 'rocm' | 'metal' | 'vulkan' | 'cpu';
 
 /**
  * Why the build on offer is weaker than the hardware scan asked for. A stable

@@ -161,6 +161,20 @@ export function initApplicationBridge(workerTaskManager: IWorkerTaskManager): vo
   // Platform-agnostic handlers: systemInfo, updateSystemInfo, getPath
   initApplicationBridgeCore();
 
+  // Doctor: run the full diagnostic battery. Checks are rebuilt per run so a
+  // just-installed runtime is observed without a restart; the runner bounds
+  // every check so this provider always resolves. Remote-denied ('doctor.').
+  // The registry reaches into many subsystems (llama.cpp, voice, memory,
+  // OmniRoute, i18n), so it is imported lazily - a Doctor run pays that cost,
+  // cold-start and this module's tests do not.
+  ipcBridge.doctor.run.provider(async () => {
+    const [{ buildDoctorChecks }, { runDoctor }] = await Promise.all([
+      import('@process/doctor/registry'),
+      import('@process/doctor/runner'),
+    ]);
+    return runDoctor(buildDoctorChecks());
+  });
+
   ipcBridge.application.restart.provider(async () => {
     // Clean up all worker processes and wait for child processes to exit
     await workerTaskManager.clear();

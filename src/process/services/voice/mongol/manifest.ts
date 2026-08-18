@@ -97,17 +97,54 @@ export const MONGOL_VOICE_ASSETS: readonly MongolVoicePinnedAsset[] = [
 ];
 
 /**
- * What this platform can install today.
+ * `process.platform`-`process.arch` keys with a published voice core. Widening
+ * support = adding a member here plus its asset row in
+ * {@link MONGOL_VOICE_ASSETS_BY_PLATFORM} - no logic changes anywhere.
+ */
+export type MongolVoicePlatformKey = 'win32-x64';
+
+/**
+ * The pinned asset set per platform. One key today, because that is what
+ * exists to download - a DISTRIBUTION gap, not a project limit: both cores are
+ * portable (audio.cpp is Apache-2.0 C++; the TTS service is Python + ONNX).
  *
- * win32-x64 only, because that is what exists to download: audio.cpp
- * release-0.6 ships Windows-only prebuilts, and the first TTS bundle embeds
- * Windows CPython. This is a distribution gap, not a project limit - both
- * cores are portable (audio.cpp is Apache-2.0 C++; the TTS service is
- * Python + ONNX), so support widens by adding manifest rows, not code.
+ * ADDING `darwin-arm64` / `linux-x64` (etc.) - exactly what a new row needs:
+ *
+ *   1. `stt-runtime` - an audio.cpp build FOR THAT PLATFORM. Release-0.6 of
+ *      0xShug0/audio.cpp ships Windows-only prebuilts, so this means compiling
+ *      `audiocpp_server` there (plain CMake C++ build) and publishing the
+ *      archive with a measured sha256 + byte size. Note {@link STT_SERVER_RELPATH}
+ *      is the WINDOWS binary name (`audiocpp_server.exe`); a non-Windows row
+ *      must carry its own relpath (extend the row type with `serverRelPath`
+ *      when the second platform lands, keyed the same way as the assets).
+ *   2. `stt-model` - platform-neutral: the SAME pinned GGUF row
+ *      ({@link STT_MODEL_ASSET}) is reused as-is, no new upload.
+ *   3. `tts-bundle` - kitten-mn `tools/build_darhai_bundle.py` re-run with
+ *      THAT platform's embedded CPython + onnxruntime wheel (the current
+ *      bundle embeds Windows CPython). The `bundle.json` contract
+ *      ({@link KittenBundleManifest}) is already platform-neutral - `entry`
+ *      simply names the platform's launcher - so Darhai's spawn/health code
+ *      needs no change. Pin sha256 + bytes exactly like the win32 row.
+ *
+ * Every entry stays PINNED (url + sha256 + bytes): an empty hash is refused by
+ * the provisioner (`VOICE_HASH_UNPINNED`), on every platform equally.
+ */
+export const MONGOL_VOICE_ASSETS_BY_PLATFORM: Record<MongolVoicePlatformKey, readonly MongolVoicePinnedAsset[]> = {
+  'win32-x64': MONGOL_VOICE_ASSETS,
+};
+
+/**
+ * What this platform can install today, derived from the asset table: a
+ * platform supports STT when its row ships both the runtime and the model, and
+ * TTS when it ships the bundle. A platform without a row answers `false` for
+ * both - the honest "not published yet", never "cannot".
  */
 export function mongolVoiceSupport(platform: string, arch: string): { stt: boolean; tts: boolean } {
-  const isWinX64 = platform === 'win32' && arch === 'x64';
-  return { stt: isWinX64, tts: isWinX64 };
+  const row = MONGOL_VOICE_ASSETS_BY_PLATFORM[`${platform}-${arch}` as MongolVoicePlatformKey] as
+    readonly MongolVoicePinnedAsset[] | undefined;
+  if (row === undefined) return { stt: false, tts: false };
+  const has = (component: MongolVoiceComponent): boolean => row.some((a) => a.component === component);
+  return { stt: has('stt-runtime') && has('stt-model'), tts: has('tts-bundle') };
 }
 
 // ---------------------------------------------------------------------------

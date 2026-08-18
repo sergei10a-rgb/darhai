@@ -74,6 +74,7 @@
     "serve": "Çalıştır",
     "stop": "Durdur",
     "cancel": "İptal",
+    "cancelCalibration": "Ayarlamayı iptal et",
     "retry": "Yeniden dene",
     "copyCommand": "Komutu kopyala",
     "locate": "İkili dosyayı seç",
@@ -126,6 +127,7 @@
       "cuda": "NVIDIA ekran kartınız kullanılacak, böylece modeller hızlı yanıt verir.",
       "rocm": "AMD ekran kartınız kullanılacak, böylece modeller hızlı yanıt verir.",
       "metal": "Bu Mac'in grafik yongası kullanılacak, böylece modeller hızlı yanıt verir.",
+      "vulkan": "Ekran kartınız Vulkan üzerinden kullanılacak, böylece modeller hızlı yanıt verir.",
       "cpu": "İşlemci üzerinde çalışacak. İşi görür, ama yanıtlar ekran kartına kıyasla çok daha yavaş gelir."
     },
     "fallback": {

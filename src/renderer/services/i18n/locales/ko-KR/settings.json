@@ -1892,7 +1892,8 @@
     "images": "이미지 생성",
     "voice": "음성",
     "groupEngine": "ENGINE",
-    "ecc": "ECC 하네스"
+    "ecc": "ECC 하네스",
+    "doctor": "진단"
   },
   "channelsIndex": {
     "title": "채널",
@@ -2817,5 +2818,100 @@
   "deferUpdateWhileBusy": "작업 중 업데이트 연기",
   "deferUpdateWhileBusyDesc": "진행 중인 채팅, 예약된 작업, 팀이 끝날 때까지 기다린 후 업데이트를 위해 다시 시작합니다. 업데이트는 유휴 상태이거나 종료할 때 그대로 적용됩니다.",
   "textToSpeechTestPhraseKittenMn": "Сайн байна уу! Энэ бол монгол дуу хоолойн туршилт.",
-  "textToSpeechVoiceListAfterFirstSpeak": "음성 목록은 첫 재생 후에 표시됩니다 — 음성 서버는 필요할 때 시작됩니다."
+  "textToSpeechVoiceListAfterFirstSpeak": "음성 목록은 첫 재생 후에 표시됩니다 — 음성 서버는 필요할 때 시작됩니다.",
+  "speechToTextPersonalDict": "개인 사전",
+  "speechToTextPersonalDictDescription": "인식기가 사용자의 발음에서 자주 잘못 알아듣는 단어를 교정합니다. 각 항목은 전사 텍스트에서 완전한 단어만 바꾸며, 더 긴 단어의 일부는 절대 바꾸지 않습니다.",
+  "speechToTextPersonalDictWrong": "잘못 인식된 단어",
+  "speechToTextPersonalDictRight": "바꿀 단어",
+  "speechToTextPersonalDictAdd": "추가",
+  "speechToTextPersonalDictRemove": "삭제",
+  "speechToTextPersonalDictEmpty": "아직 항목이 없습니다. 자주 잘못 인식되는 단어와 올바른 단어의 쌍을 추가하세요.",
+  "doctor": {
+    "title": "진단",
+    "subtitle": "Darhai의 하위 시스템을 한 번에 점검합니다: 런타임, 서비스, 로컬 모델, 메모리, 디스크.",
+    "run": "진단 실행",
+    "running": "실행 중…",
+    "runError": "진단을 실행하지 못했습니다: {{error}}",
+    "empty": "아직 진단을 실행하지 않았습니다.",
+    "counts": "{{pass}}개 정상 · {{warn}}개 경고 · {{fail}}개 실패",
+    "remediationLabel": "해결:",
+    "overall": {
+      "pass": "모두 정상",
+      "warn": "주의 필요",
+      "fail": "문제 발견"
+    },
+    "status": {
+      "pass": "정상",
+      "warn": "경고",
+      "fail": "실패"
+    },
+    "category": {
+      "runtime": "런타임",
+      "services": "서비스",
+      "models": "로컬 모델",
+      "system": "시스템"
+    },
+    "checks": {
+      "bun": {
+        "title": "Bun 런타임",
+        "ok": "번들된 bun을 찾았습니다: {{path}}",
+        "fallback": "번들된 bun을 찾지 못해 내장 MCP 서버가 node로 동작합니다.",
+        "fallbackFix": "Darhai를 다시 설치하면 번들된 bun이 복원됩니다.",
+        "missing": "확인된 bun 바이너리가 존재하지 않습니다: {{path}}",
+        "missingFix": "Darhai를 다시 설치하여 bun을 복원하세요."
+      },
+      "mcp": {
+        "title": "내장 MCP 서버",
+        "ok": "내장 MCP 서버 {{total}}개 중 {{enabled}}개가 활성화되어 있습니다.",
+        "none": "등록된 내장 MCP 서버가 없습니다.",
+        "noneFix": "Darhai를 다시 시작하세요. 내장 서버는 시작 시 등록됩니다.",
+        "disabled": "내장 MCP 서버 {{total}}개가 모두 비활성화되어 있습니다.",
+        "disabledFix": "설정 → MCP 라이브러리에서 필요한 서버를 활성화하세요."
+      },
+      "llama": {
+        "title": "llama.cpp 런타임",
+        "ok": "llama.cpp {{tag}}이(가) 설치되어 있고 검증되었습니다.",
+        "none": "로컬 llama.cpp 런타임이 설치되어 있지 않습니다.",
+        "noneFix": "로컬 모델을 사용하려면 모델 어드바이저에서 설치하세요.",
+        "broken": "llama.cpp {{tag}} 설치가 검증에 실패했습니다(파일 또는 라이브러리 누락).",
+        "brokenFix": "모델 어드바이저에서 런타임을 다시 설치하세요."
+      },
+      "voice": {
+        "title": "몽골어 음성",
+        "ok": "음성 구성 요소 {{total}}개가 모두 설치되어 있습니다.",
+        "partial": "{{total}}개 중 {{installed}}개 설치됨. 누락: {{missing}}.",
+        "partialFix": "설정 → 음성에서 누락된 구성 요소를 설치하세요.",
+        "unsupported": "이 플랫폼에서 사용할 수 있는 음성 구성 요소가 없습니다."
+      },
+      "ffmpeg": {
+        "title": "ffmpeg",
+        "ok": "ffmpeg를 찾았습니다: {{path}}",
+        "missing": "PATH에서 ffmpeg를 찾을 수 없습니다. 비디오 프레임과 몽골어 음성 전처리가 동작하지 않습니다.",
+        "missingFix": "ffmpeg를 설치하고 PATH에 추가하세요."
+      },
+      "omniroute": {
+        "title": "OmniRoute 게이트웨이",
+        "ok": "게이트웨이가 응답 중입니다. 모델 {{models}}개 사용 가능.",
+        "stopped": "OmniRoute 게이트웨이가 실행 중이 아닙니다.",
+        "stoppedFix": "게이트웨이 모델을 사용한다면 설정에서 시작하세요.",
+        "unreachable": "자체 게이트웨이 프로세스는 실행 중이라고 하지만 포트가 응답하지 않습니다({{error}}).",
+        "unreachableFix": "설정에서 게이트웨이를 중지했다가 다시 시작하세요."
+      },
+      "memory": {
+        "title": "메모리 인덱스",
+        "ok": "메모리 인덱스가 정상입니다: 프로젝트 {{projects}}개, 항목 {{total}}개.",
+        "empty": "메모리 인덱스가 0개 항목을 보고합니다 - 비어 있거나 아직 로드되지 않았습니다.",
+        "emptyFix": "저장된 메모리가 있다면 메모리 페이지를 열어 인덱싱을 트리거한 뒤 진단을 다시 실행하세요."
+      },
+      "disk": {
+        "title": "디스크 공간",
+        "ok": "데이터 볼륨에 {{freeGb}} GB의 여유 공간이 있습니다.",
+        "low": "여유 공간이 {{freeGb}} GB뿐입니다. 모델 다운로드가 실패하기 시작합니다.",
+        "lowFix": "디스크 공간을 확보하거나 큰 데이터를 옮기세요.",
+        "critical": "디스크 공간이 심각하게 부족합니다: {{freeGb}} GB.",
+        "criticalFix": "지금 바로 공간을 확보하세요. 앱이 오작동할 수 있습니다.",
+        "unknown": "이 시스템에서 여유 공간을 확인할 수 없습니다."
+      }
+    }
+  }
 }

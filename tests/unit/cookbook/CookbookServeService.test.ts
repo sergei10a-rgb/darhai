@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import { settleTurns } from '../../helpers/eventLoop';
 import { CookbookServeService, type CookbookServeDeps } from '@process/services/cookbook/CookbookServeService';
@@ -17,6 +20,51 @@ import type { CatalogModel, HardwareProfile } from '@process/services/hwfit';
 
 /** Placeholder callable, hoisted so the linter does not see a per-call closure. */
 const NOOP = (): void => undefined;
+
+/** One little-endian GGUF string: u64 byte length + utf8 bytes. */
+const ggufStr = (s: string): Buffer => {
+  const bytes = Buffer.from(s, 'utf8');
+  const len = Buffer.alloc(8);
+  len.writeBigUInt64LE(BigInt(bytes.length));
+  return Buffer.concat([len, bytes]);
+};
+
+/** One little-endian u32. */
+const u32 = (n: number): Buffer => {
+  const b = Buffer.alloc(4);
+  b.writeUInt32LE(n);
+  return b;
+};
+
+/** One little-endian u64. */
+const u64 = (n: number): Buffer => {
+  const b = Buffer.alloc(8);
+  b.writeBigUInt64LE(BigInt(n));
+  return b;
+};
+
+/**
+ * Write a minimal REAL GGUF v3 header to a temp file: magic, version, zero
+ * tensors, and the two keys the moe meta reader looks for. Delete the parent
+ * temp dir after use.
+ */
+function writeTempGguf(architecture: string, blockCount: number): string {
+  const header = Buffer.concat([
+    u32(0x46554747), // ASCII "GGUF"
+    u32(3), // version
+    u64(0), // tensor count
+    u64(2), // metadata kv count
+    ggufStr('general.architecture'),
+    u32(8), // GgufType.String
+    ggufStr(architecture),
+    ggufStr(`${architecture}.block_count`),
+    u32(4), // GgufType.Uint32
+    u32(blockCount),
+  ]);
+  const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'darhai-gguf-')), 'model.gguf');
+  fs.writeFileSync(file, header);
+  return file;
+}
 
 const MODEL: CatalogModel = {
   name: 'org/Model',
@@ -90,6 +138,8 @@ const makeService = (opts: {
   cancelCalibration?: CookbookServeDeps['cancelCalibration'];
   /** Collects every status frame the service emits, in order. */
   statuses?: Array<{ state: string }>;
+  /** Where the download fake claims the GGUF landed; a REAL path makes the GGUF header readable. */
+  downloadFilePath?: string;
 }): Harness => {
   const start = vi.fn(async () => 51500);
   const startVllm = vi.fn(async () => 51600);
@@ -109,7 +159,7 @@ const makeService = (opts: {
 
   const download = vi.fn(async () => ({
     modelId: MODEL.name,
-    filePath: '/cache/org_Model.gguf',
+    filePath: opts.downloadFilePath ?? '/cache/org_Model.gguf',
     cached: false,
     bytesWritten: 10,
   }));
@@ -544,7 +594,31 @@ describe('CookbookServeService: MoE expert offload', () => {
     });
     const status = await service.serve(MODEL.name);
     expect(status.state).toBe('needs_backend');
-    expect(status.serveCommand).toContain('--n-gpu-layers 99 --n-cpu-moe 40');
+    // The fake GGUF on disk has no readable header, so no block count is known
+    // and "all layers" is the 999 that llama.cpp clamps at n_layer + 1.
+    expect(status.serveCommand).toContain('--n-gpu-layers 999 --n-cpu-moe 40');
+  });
+
+  it('reads the real block count off the downloaded GGUF and hands it to the serve', async () => {
+    // A REAL header on disk, because this is a wiring test: the meta reader is
+    // covered in ggufMoeMeta.test.ts and the -ngl mapping in
+    // LocalServeManager.test.ts, but neither proves the service actually reads
+    // the file it just downloaded and passes the count on to start().
+    const ggufPath = writeTempGguf('qwen35moe', 43);
+    try {
+      const { service, serve } = makeService({
+        available: { llamaServer: true },
+        hardware: gpu8,
+        catalog: [moeModel],
+        planNCpuMoe: async () => 36,
+        downloadFilePath: ggufPath,
+      });
+      const status = await service.serve(MODEL.name);
+      expect(status.state).toBe('ready');
+      expect(serve.start).toHaveBeenCalledWith(expect.objectContaining({ nCpuMoe: 36, moeBlockCount: 43 }));
+    } finally {
+      fs.rmSync(path.dirname(ggufPath), { recursive: true, force: true });
+    }
   });
 });
 

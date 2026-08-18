@@ -1917,7 +1917,8 @@
     "agents": "Agents",
     "constitution": "Constitution",
     "groupEngine": "ENGINE",
-    "ecc": "ECC harness"
+    "ecc": "ECC harness",
+    "doctor": "Diagnostics"
   },
   "channelsIndex": {
     "title": "Channels",
@@ -2834,5 +2835,100 @@
   "deferUpdateWhileBusy": "Defer updates while busy",
   "deferUpdateWhileBusyDesc": "Wait for active chats, scheduled tasks, and teams to finish before restarting to update. The update still applies on idle or on quit.",
   "textToSpeechTestPhraseKittenMn": "Сайн байна уу! Энэ бол монгол дуу хоолойн туршилт.",
-  "textToSpeechVoiceListAfterFirstSpeak": "The voice list appears after the first playback — the voice server starts on demand."
+  "textToSpeechVoiceListAfterFirstSpeak": "The voice list appears after the first playback — the voice server starts on demand.",
+  "speechToTextPersonalDict": "Personal dictionary",
+  "speechToTextPersonalDictDescription": "Fix words the recognizer keeps mishearing for your voice. Each entry replaces a whole word in the transcript - never part of a longer word.",
+  "speechToTextPersonalDictWrong": "Misheard as",
+  "speechToTextPersonalDictRight": "Replace with",
+  "speechToTextPersonalDictAdd": "Add",
+  "speechToTextPersonalDictRemove": "Remove",
+  "speechToTextPersonalDictEmpty": "No entries yet. Add a pair to correct a word the recognizer keeps getting wrong.",
+  "doctor": {
+    "title": "Diagnostics",
+    "subtitle": "Run a health check across Darhai's subsystems: runtimes, services, local models, memory and disk.",
+    "run": "Run diagnostics",
+    "running": "Running…",
+    "runError": "Diagnostics failed to run: {{error}}",
+    "empty": "No diagnostics have been run yet.",
+    "counts": "{{pass}} passed · {{warn}} warnings · {{fail}} failed",
+    "remediationLabel": "Fix:",
+    "overall": {
+      "pass": "All good",
+      "warn": "Needs attention",
+      "fail": "Problems found"
+    },
+    "status": {
+      "pass": "OK",
+      "warn": "Warning",
+      "fail": "Failed"
+    },
+    "category": {
+      "runtime": "Runtimes",
+      "services": "Services",
+      "models": "Local models",
+      "system": "System"
+    },
+    "checks": {
+      "bun": {
+        "title": "Bun runtime",
+        "ok": "Bundled bun found: {{path}}",
+        "fallback": "Bundled bun was not found; builtin MCP servers fall back to node.",
+        "fallbackFix": "Reinstall Darhai so the bundled bun runtime is restored.",
+        "missing": "The resolved bun binary does not exist: {{path}}",
+        "missingFix": "Reinstall Darhai to restore the bundled bun runtime."
+      },
+      "mcp": {
+        "title": "Builtin MCP servers",
+        "ok": "{{enabled}} of {{total}} builtin MCP servers are enabled.",
+        "none": "No builtin MCP servers are registered.",
+        "noneFix": "Restart Darhai; builtin servers are registered on startup.",
+        "disabled": "All {{total}} builtin MCP servers are disabled.",
+        "disabledFix": "Enable the ones you need in Settings → MCP Library."
+      },
+      "llama": {
+        "title": "llama.cpp runtime",
+        "ok": "llama.cpp {{tag}} is installed and verified.",
+        "none": "The local llama.cpp runtime is not installed.",
+        "noneFix": "Install it from the Model Advisor when you want local models.",
+        "broken": "The llama.cpp {{tag}} install failed verification (missing files or libraries).",
+        "brokenFix": "Reinstall the runtime from the Model Advisor."
+      },
+      "voice": {
+        "title": "Mongolian voice",
+        "ok": "All {{total}} voice components are installed.",
+        "partial": "{{installed}} of {{total}} voice components installed; missing: {{missing}}.",
+        "partialFix": "Install the missing components in Settings → Voice.",
+        "unsupported": "No voice component is available for this platform."
+      },
+      "ffmpeg": {
+        "title": "ffmpeg",
+        "ok": "ffmpeg found: {{path}}",
+        "missing": "ffmpeg was not found on PATH; video frames and Mongolian speech-to-text preprocessing will not work.",
+        "missingFix": "Install ffmpeg and make sure it is on PATH."
+      },
+      "omniroute": {
+        "title": "OmniRoute gateway",
+        "ok": "The gateway is answering; {{models}} models are available.",
+        "stopped": "The OmniRoute gateway is not running.",
+        "stoppedFix": "Start it from Settings if you use gateway models.",
+        "unreachable": "Our own gateway process claims to run, but the port does not answer ({{error}}).",
+        "unreachableFix": "Stop and restart the gateway from Settings."
+      },
+      "memory": {
+        "title": "Memory index",
+        "ok": "The memory index is healthy: {{total}} entries across {{projects}} projects.",
+        "empty": "The memory index reports 0 entries - it is either empty or has not loaded yet.",
+        "emptyFix": "If you have saved memories, open the Memory page to trigger indexing, then run the doctor again."
+      },
+      "disk": {
+        "title": "Disk space",
+        "ok": "{{freeGb}} GB free on the data volume.",
+        "low": "Only {{freeGb}} GB free; model downloads will start failing.",
+        "lowFix": "Free up disk space or move large data off this volume.",
+        "critical": "Critically low disk space: {{freeGb}} GB free.",
+        "criticalFix": "Free up disk space now - the app may misbehave.",
+        "unknown": "Free disk space could not be determined on this system."
+      }
+    }
+  }
 }

@@ -174,6 +174,13 @@ export type LlamaProvisionRequest = {
   /** Skip the ~373 MB cudart archive because the DLLs already resolve. */
   cudaRuntimePresent?: boolean;
   cudaVariant?: string;
+  /**
+   * Detected GPU name from the hardware scan, or null when there is none. On
+   * Windows this is what lets a non-NVIDIA GPU machine (typed `cpu_x86` by
+   * hwfit) receive the Vulkan build instead of the CPU one - see
+   * {@link LlamaAssetPlanInput.gpuName}.
+   */
+  gpuName?: string | null;
 };
 
 /** Injectable I/O so tests never touch the network. */
@@ -278,6 +285,7 @@ export class LlamaCppProvisioner extends EventEmitter {
       availableAssets: release.assets.map((a) => a.name),
       cudaRuntimePresent: request.cudaRuntimePresent,
       cudaVariant: request.cudaVariant,
+      gpuName: request.gpuName,
     });
   }
 

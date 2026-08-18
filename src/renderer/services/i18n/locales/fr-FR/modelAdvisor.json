@@ -74,6 +74,7 @@
     "serve": "Lancer",
     "stop": "Arrêter",
     "cancel": "Annuler",
+    "cancelCalibration": "Annuler le réglage",
     "retry": "Réessayer",
     "copyCommand": "Copier la commande",
     "locate": "Localiser le binaire",
@@ -126,6 +127,7 @@
       "cuda": "Votre carte graphique NVIDIA sera utilisée, les modèles répondent donc vite.",
       "rocm": "Votre carte graphique AMD sera utilisée, les modèles répondent donc vite.",
       "metal": "La puce graphique de ce Mac sera utilisée, les modèles répondent donc vite.",
+      "vulkan": "Votre carte graphique sera utilisée via Vulkan, les modèles répondent donc vite.",
       "cpu": "Cela tournera sur le processeur. Ça marche, mais les réponses arrivent bien plus lentement qu'avec une carte graphique."
     },
     "fallback": {

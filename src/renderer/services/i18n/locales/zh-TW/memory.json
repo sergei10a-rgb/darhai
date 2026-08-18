@@ -258,7 +258,10 @@
       "streak_pill": "{{sessions}} 次工作階段 · 最長連續 {{longestDays}} 天",
       "streak_empty": "尚無工作階段記錄",
       "import_btn": "匯入…",
-      "settings_btn": "設定"
+      "settings_btn": "設定",
+      "archive": "封存",
+      "allProjects": "所有專案",
+      "add": "新增"
     },
     "stats": {
       "memories": "記憶",
@@ -376,7 +379,13 @@
       "kbd_capture": "快速記錄",
       "kbd_search": "搜尋",
       "kbd_close": "關閉檢視",
-      "spend_today": "今日花費 ${{usd}}"
+      "spend_today": "今日花費 ${{usd}}",
+      "dropFolder": {
+        "open": "在 Finder 中開啟資料夾",
+        "today": "今天 {{count}}",
+        "today_one": "今天 {{count}}",
+        "today_other": "今天 {{count}}"
+      }
     },
     "threshold_modal": {
       "title": "調整自動升級",
@@ -414,12 +423,13 @@
         "idle": "閒置"
       },
       "claudeMem": {
-        "title": "claude-mem",
-        "hint": "點按以從 ~/.claude-mem/claude-mem.db 匯入",
+        "title": "Claude",
+        "hint": "從 Claude Code 記憶（~/.claude/projects）與 claude-mem 匯入",
         "count": "已匯入約 {{count}} 筆項目",
         "btn": "匯入",
         "success": "已匯入 {{count}} 筆項目 · {{errors}} 個錯誤",
-        "error": "匯入失敗，請重試。"
+        "error": "匯入失敗，請重試。",
+        "cardTitle": "匯入 claude-mem"
       },
       "obsidian": {
         "title": "Obsidian 知識庫",
@@ -427,15 +437,28 @@
         "count": "已匯入約 {{count}} 筆項目",
         "btn": "匯入",
         "success": "已匯入 {{count}} 筆項目 · {{errors}} 個錯誤",
-        "error": "Obsidian 匯入失敗，請重試。"
+        "error": "Obsidian 匯入失敗，請重試。",
+        "scanBtn": "掃描 vault",
+        "noVaults": "找不到 Obsidian vault——請使用「選擇資料夾…」",
+        "scanError": "掃描失敗，請再試一次。",
+        "chooseFolderBtn": "選擇資料夾…",
+        "capped": "已匯入 {{total}} 則筆記中最新的 {{count}} 則",
+        "capped_one": "已匯入 {{total}} 則筆記中最新的 {{count}} 則",
+        "capped_other": "已匯入 {{total}} 則筆記中最新的 {{count}} 則",
+        "previewInfo": "{{count}} 則筆記 · {{size}}——按「匯入」確認",
+        "previewInfo_one": "{{count}} 則筆記 · {{size}}——按「匯入」確認",
+        "previewInfo_other": "{{count}} 則筆記 · {{size}}——按「匯入」確認",
+        "progress": "匯入中… {{done}} / {{total}}",
+        "cardTitle": "匯入 Obsidian 儲存庫"
       },
       "devScan": {
-        "title": "~/dev 掃描",
-        "hint": "掃描 ~/dev 以尋找現有的記憶目錄",
+        "title": "開發專案",
+        "hint": "在常見開發目錄中掃描 IJFW 專案",
         "count": "已匯入約 {{count}} 筆項目",
         "btn": "匯入",
         "success": "已從 {{projects}} 個專案匯入 {{count}} 筆項目",
-        "error": "Dev 掃描匯入失敗，請重試。"
+        "error": "Dev 掃描匯入失敗，請重試。",
+        "cardTitle": "掃描 ~/dev"
       },
       "dropFolder": {
         "title": "拖放資料夾",
@@ -444,8 +467,10 @@
         "openBtn": "開啟資料夾",
         "processBtn": "立即處理",
         "success": "已處理 {{count}} 個檔案 · {{errors}} 個錯誤",
-        "error": "處理失敗，請重試。"
-      }
+        "error": "處理失敗，請重試。",
+        "cardTitle": "監看投放資料夾"
+      },
+      "detectedEntries": "偵測到約 {{n}} 筆記錄"
     },
     "regionLabel": "記憶封存",
     "composer": {
@@ -463,6 +488,120 @@
       "hint": "記住",
       "submit": "記住",
       "charCount": "{{count}} 個字元"
+    },
+    "drawer": {
+      "edit": "編輯",
+      "delete": "刪除",
+      "close": "關閉面板",
+      "usedNTimes": "本週使用 {{count}} 次",
+      "usedNTimes_one": "本週使用 {{count}} 次",
+      "usedNTimes_other": "本週使用 {{count}} 次",
+      "alreadyPromoted": "已提升 ✓",
+      "promote": "↑ 提升到維基",
+      "openFile": "開啟檔案",
+      "copy": "複製",
+      "promotionScore": "提升分數",
+      "autoPromotesAt": "達到 {{n}} 時自動提升",
+      "scoreFormula": "分數公式",
+      "why": "原因",
+      "noWhy": "未記錄「原因」",
+      "summary": "摘要",
+      "howToApply": "如何套用",
+      "noHowTo": "未記錄「如何套用」",
+      "usedInWild": "實際使用",
+      "usedNTimesWeek": "本週使用 {{count}} 次",
+      "usedNTimesWeek_one": "本週使用 {{count}} 次",
+      "usedNTimesWeek_other": "本週使用 {{count}} 次",
+      "line": "行",
+      "tags": "標籤"
+    },
+    "editor": {
+      "title": "編輯記憶",
+      "save": "儲存",
+      "cancel": "取消",
+      "summaryLabel": "摘要",
+      "typeLabel": "類型",
+      "tagsLabel": "標籤",
+      "bodyLabel": "內容",
+      "toastSaved": "記憶已更新",
+      "toastError": "無法更新記憶",
+      "toastCollision": "已有其他記憶使用該摘要，請換一個。",
+      "bodySeparatorWarn": "內文中包含僅由 \"---\" 組成的行。此檔案格式會把該行讀作新記錄的開始，從而破壞下一筆記錄——請刪除後再儲存。",
+      "toastBodySeparator": "未儲存：內文包含僅由 \"---\" 組成的行，會破壞此檔案中的下一筆記錄。請刪除該行後重試。"
+    },
+    "delete": {
+      "confirmTitle": "刪除這條記憶？",
+      "confirmContent": "該條目將從記憶檔案中永久刪除，無法在應用程式內復原。",
+      "confirmOk": "刪除",
+      "confirmCancel": "取消",
+      "toastDeleted": "記憶已刪除",
+      "toastError": "無法刪除記憶"
+    },
+    "toast": {
+      "promoted": "已提升到維基",
+      "pathCopied": "路徑已複製",
+      "copied": "已複製"
+    },
+    "filter": {
+      "results": "筆結果",
+      "searchPlaceholder": "搜尋記憶…（type:decision tag:design）",
+      "allTypes": "所有類型",
+      "typesSelected": "個類型",
+      "clearAll": "清除全部",
+      "allProjects": "所有專案",
+      "searchProjects": "搜尋專案…",
+      "noProjects": "找不到專案",
+      "time": {
+        "all": "全部時間",
+        "today": "今天",
+        "7d": "7 天",
+        "30d": "30 天",
+        "custom": "自訂範圍…",
+        "from": "開始",
+        "to": "結束",
+        "apply": "套用"
+      }
+    },
+    "dragDrop": {
+      "toastIngested": "檔案已匯入",
+      "toastNoFiles": "未匯入任何檔案",
+      "toastError": "拖放匯入失敗"
+    },
+    "chip": {
+      "memories": "記憶",
+      "decisions": "決策",
+      "wiki": "維基",
+      "thisWeek": "本週",
+      "viewAsFilter": "以篩選檢視"
+    },
+    "type": {
+      "decision": "決策",
+      "pattern": "模式",
+      "session": "工作階段",
+      "observation": "觀察",
+      "wiki": "維基",
+      "preference": "偏好"
+    },
+    "streak": {
+      "tooltip": "跨所有專案的連續紀錄",
+      "sessions": "個工作階段",
+      "dayStreak": " 天連續"
+    },
+    "empty": {
+      "search": "搜尋記憶…（type:decision tag:design）",
+      "headline": "你的記憶是空的。來填滿它吧。",
+      "subline": "從下方來源匯入，或新增你的第一筆記憶。"
+    },
+    "status": {
+      "brainLive": "大腦上線",
+      "brainOffline": "大腦離線",
+      "clis": "個 CLI",
+      "lastDream": "上次夢境 {{ago}} · 擷取了 {{facts}} 條事實 · {{promoted}} 個候選接近門檻",
+      "kbd": {
+        "search": "搜尋",
+        "navigate": "導覽",
+        "close": "關閉"
+      }
     }
   }
 }

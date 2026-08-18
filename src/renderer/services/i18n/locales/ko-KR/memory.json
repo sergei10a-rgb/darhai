@@ -258,7 +258,10 @@
       "streak_pill": "{{sessions}}회 세션 · 최장 {{longestDays}}일 연속",
       "streak_empty": "아직 세션이 없습니다",
       "import_btn": "가져오기…",
-      "settings_btn": "설정"
+      "settings_btn": "설정",
+      "archive": "아카이브",
+      "allProjects": "모든 프로젝트",
+      "add": "추가"
     },
     "stats": {
       "memories": "메모리",
@@ -376,7 +379,13 @@
       "kbd_capture": "빠른 캡처",
       "kbd_search": "검색",
       "kbd_close": "검사 창 닫기",
-      "spend_today": "오늘 ${{usd}}"
+      "spend_today": "오늘 ${{usd}}",
+      "dropFolder": {
+        "open": "Finder에서 폴더 열기",
+        "today": "오늘 {{count}}",
+        "today_one": "오늘 {{count}}",
+        "today_other": "오늘 {{count}}"
+      }
     },
     "threshold_modal": {
       "title": "자동 승격 조정",
@@ -414,12 +423,13 @@
         "idle": "대기 중"
       },
       "claudeMem": {
-        "title": "claude-mem",
-        "hint": "~/.claude-mem/claude-mem.db에서 가져오려면 클릭하세요",
+        "title": "Claude",
+        "hint": "Claude Code 메모리(~/.claude/projects)와 claude-mem에서 가져옵니다",
         "count": "약 {{count}}개 항목 가져옴",
         "btn": "가져오기",
         "success": "{{count}}개 항목 가져옴 · 오류 {{errors}}개",
-        "error": "가져오기에 실패했습니다. 다시 시도하세요."
+        "error": "가져오기에 실패했습니다. 다시 시도하세요.",
+        "cardTitle": "claude-mem 가져오기"
       },
       "obsidian": {
         "title": "Obsidian 보관함",
@@ -427,15 +437,28 @@
         "count": "약 {{count}}개 항목 가져옴",
         "btn": "가져오기",
         "success": "{{count}}개 항목 가져옴 · 오류 {{errors}}개",
-        "error": "Obsidian 가져오기에 실패했습니다. 다시 시도하세요."
+        "error": "Obsidian 가져오기에 실패했습니다. 다시 시도하세요.",
+        "scanBtn": "Vault 검색",
+        "noVaults": "Obsidian vault를 찾을 수 없습니다 — “폴더 선택…”을 사용하세요",
+        "scanError": "Vault 검색에 실패했습니다. 다시 시도하세요.",
+        "chooseFolderBtn": "폴더 선택…",
+        "capped": "총 {{total}}개의 노트 중 최신 {{count}}개를 가져왔습니다",
+        "capped_one": "총 {{total}}개의 노트 중 최신 {{count}}개를 가져왔습니다",
+        "capped_other": "총 {{total}}개의 노트 중 최신 {{count}}개를 가져왔습니다",
+        "previewInfo": "노트 {{count}}개 · {{size}} — 가져오기를 눌러 확인",
+        "previewInfo_one": "노트 {{count}}개 · {{size}} — 가져오기를 눌러 확인",
+        "previewInfo_other": "노트 {{count}}개 · {{size}} — 가져오기를 눌러 확인",
+        "progress": "가져오는 중… {{done}} / {{total}}",
+        "cardTitle": "Obsidian 볼트 가져오기"
       },
       "devScan": {
-        "title": "~/dev 검색",
-        "hint": "~/dev에서 기존 메모리 디렉터리를 검색합니다",
+        "title": "개발 프로젝트",
+        "hint": "일반적인 개발 폴더에서 IJFW 프로젝트를 검색합니다",
         "count": "약 {{count}}개 항목 가져옴",
         "btn": "가져오기",
         "success": "{{projects}}개 프로젝트에서 {{count}}개 항목 가져옴",
-        "error": "Dev 검색 가져오기에 실패했습니다. 다시 시도하세요."
+        "error": "Dev 검색 가져오기에 실패했습니다. 다시 시도하세요.",
+        "cardTitle": "~/dev 스캔"
       },
       "dropFolder": {
         "title": "폴더에 끌어다 놓기",
@@ -444,8 +467,10 @@
         "openBtn": "폴더 열기",
         "processBtn": "지금 처리",
         "success": "{{count}}개 파일 처리됨 · 오류 {{errors}}개",
-        "error": "처리에 실패했습니다. 다시 시도하세요."
-      }
+        "error": "처리에 실패했습니다. 다시 시도하세요.",
+        "cardTitle": "드롭 폴더 감시"
+      },
+      "detectedEntries": "약 {{n}}개 항목 감지됨"
     },
     "regionLabel": "메모리 아카이브",
     "composer": {
@@ -463,6 +488,120 @@
       "hint": "눌러 기억",
       "submit": "기억하기",
       "charCount": "{{count}}자"
+    },
+    "drawer": {
+      "edit": "편집",
+      "delete": "삭제",
+      "close": "패널 닫기",
+      "usedNTimes": "이번 주 {{count}}회 사용",
+      "usedNTimes_one": "이번 주 {{count}}회 사용",
+      "usedNTimes_other": "이번 주 {{count}}회 사용",
+      "alreadyPromoted": "이미 승격됨 ✓",
+      "promote": "↑ 위키로 승격",
+      "openFile": "파일 열기",
+      "copy": "복사",
+      "promotionScore": "승격 점수",
+      "autoPromotesAt": "{{n}}에서 자동 승격",
+      "scoreFormula": "점수 공식",
+      "why": "이유",
+      "noWhy": "'이유' 기록 없음",
+      "summary": "요약",
+      "howToApply": "적용 방법",
+      "noHowTo": "'적용 방법' 기록 없음",
+      "usedInWild": "실제 사용",
+      "usedNTimesWeek": "이번 주 {{count}}회 사용",
+      "usedNTimesWeek_one": "이번 주 {{count}}회 사용",
+      "usedNTimesWeek_other": "이번 주 {{count}}회 사용",
+      "line": "행",
+      "tags": "태그"
+    },
+    "editor": {
+      "title": "메모리 편집",
+      "save": "저장",
+      "cancel": "취소",
+      "summaryLabel": "요약",
+      "typeLabel": "유형",
+      "tagsLabel": "태그",
+      "bodyLabel": "내용",
+      "toastSaved": "메모리가 업데이트되었습니다",
+      "toastError": "메모리를 업데이트할 수 없습니다",
+      "toastCollision": "다른 메모리가 이미 해당 요약을 사용 중입니다. 다른 요약을 선택하세요.",
+      "bodySeparatorWarn": "본문에 \"---\"만 있는 줄이 있습니다. 이 파일 형식은 해당 줄을 새 항목의 시작으로 읽어 다음 항목을 손상시킵니다. 저장하려면 그 줄을 제거하세요.",
+      "toastBodySeparator": "저장되지 않음: 본문에 \"---\"만 있는 줄이 있어 이 파일의 다음 항목이 손상될 수 있습니다. 해당 줄을 제거하고 다시 시도하세요."
+    },
+    "delete": {
+      "confirmTitle": "이 메모리를 삭제할까요?",
+      "confirmContent": "항목이 메모리 파일에서 영구적으로 삭제됩니다. 앱에서 되돌릴 수 없습니다.",
+      "confirmOk": "삭제",
+      "confirmCancel": "취소",
+      "toastDeleted": "메모리가 삭제되었습니다",
+      "toastError": "메모리를 삭제할 수 없습니다"
+    },
+    "toast": {
+      "promoted": "위키로 승격됨",
+      "pathCopied": "경로 복사됨",
+      "copied": "복사됨"
+    },
+    "filter": {
+      "results": "개 결과",
+      "searchPlaceholder": "기억 검색… (type:decision tag:design)",
+      "allTypes": "모든 유형",
+      "typesSelected": "개 유형",
+      "clearAll": "모두 지우기",
+      "allProjects": "모든 프로젝트",
+      "searchProjects": "프로젝트 검색…",
+      "noProjects": "프로젝트를 찾을 수 없음",
+      "time": {
+        "all": "전체 기간",
+        "today": "오늘",
+        "7d": "7일",
+        "30d": "30일",
+        "custom": "사용자 지정 범위…",
+        "from": "시작",
+        "to": "종료",
+        "apply": "적용"
+      }
+    },
+    "dragDrop": {
+      "toastIngested": "파일을 가져왔습니다",
+      "toastNoFiles": "가져온 파일이 없습니다",
+      "toastError": "드래그 앤 드롭 가져오기 실패"
+    },
+    "chip": {
+      "memories": "기억",
+      "decisions": "결정",
+      "wiki": "위키",
+      "thisWeek": "이번 주",
+      "viewAsFilter": "필터로 보기"
+    },
+    "type": {
+      "decision": "결정",
+      "pattern": "패턴",
+      "session": "세션",
+      "observation": "관찰",
+      "wiki": "위키",
+      "preference": "선호"
+    },
+    "streak": {
+      "tooltip": "모든 프로젝트에 걸친 연속 기록",
+      "sessions": "세션",
+      "dayStreak": "일 연속"
+    },
+    "empty": {
+      "search": "기억 검색… (type:decision tag:design)",
+      "headline": "기억이 비어 있습니다. 채워 봅시다.",
+      "subline": "아래 소스에서 가져오거나 첫 번째 기억을 추가하세요."
+    },
+    "status": {
+      "brainLive": "브레인 온라인",
+      "brainOffline": "브레인 오프라인",
+      "clis": "CLI",
+      "lastDream": "마지막 드림 {{ago}} · 사실 {{facts}}개 추출 · 후보 {{promoted}}개 임계값 근접",
+      "kbd": {
+        "search": "검색",
+        "navigate": "이동",
+        "close": "닫기"
+      }
     }
   }
 }

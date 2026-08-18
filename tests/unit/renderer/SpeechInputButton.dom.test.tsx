@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 let speechToTextEnabled = false;
 let speechInputAvailability: 'record' | 'file' | 'unsupported' = 'record';
-let speechInputStatus: 'idle' | 'recording' | 'transcribing' | 'error' = 'idle';
+let speechInputStatus: 'idle' | 'connecting' | 'recording' | 'transcribing' | 'error' = 'idle';
 let speechInputRecordingDurationMs = 0;
 let speechInputRecordingLevels = [0.12, 0.18, 0.24, 0.16];
 
@@ -16,6 +16,7 @@ const mockMessageError = vi.fn();
 const mockMessageWarning = vi.fn();
 let speechInputErrorCode: string | null = null;
 let speechInputErrorMessage: string | null = null;
+let lastUseSpeechInputOptions: Record<string, unknown> | null = null;
 
 vi.mock('@/common/config/storage', () => ({
   ConfigStorage: {
@@ -31,18 +32,21 @@ vi.mock('@/common/config/storage', () => ({
 }));
 
 vi.mock('@/renderer/hooks/system/useSpeechInput', () => ({
-  useSpeechInput: () => ({
-    availability: speechInputAvailability,
-    clearError: mockClearError,
-    errorCode: speechInputErrorCode,
-    errorMessage: speechInputErrorMessage,
-    recordingDurationMs: speechInputRecordingDurationMs,
-    recordingLevels: speechInputRecordingLevels,
-    startRecording: mockStartRecording,
-    status: speechInputStatus,
-    stopRecording: mockStopRecording,
-    transcribeFile: mockTranscribeFile,
-  }),
+  useSpeechInput: (options: Record<string, unknown>) => {
+    lastUseSpeechInputOptions = options;
+    return {
+      availability: speechInputAvailability,
+      clearError: mockClearError,
+      errorCode: speechInputErrorCode,
+      errorMessage: speechInputErrorMessage,
+      recordingDurationMs: speechInputRecordingDurationMs,
+      recordingLevels: speechInputRecordingLevels,
+      startRecording: mockStartRecording,
+      status: speechInputStatus,
+      stopRecording: mockStopRecording,
+      transcribeFile: mockTranscribeFile,
+    };
+  },
 }));
 
 vi.mock('react-i18next', () => ({
@@ -72,6 +76,7 @@ describe('SpeechInputButton', () => {
     speechInputRecordingLevels = [0.12, 0.18, 0.24, 0.16];
     speechInputErrorCode = null;
     speechInputErrorMessage = null;
+    lastUseSpeechInputOptions = null;
     vi.clearAllMocks();
   });
 
@@ -223,6 +228,31 @@ describe('SpeechInputButton', () => {
     });
     expect(button).toBeDisabled();
     expect(screen.getByText('conversation.chat.speech.transcribingShort')).toBeInTheDocument();
+  });
+
+  it('shows a spinner and disables the button while the live STT server is connecting', async () => {
+    speechToTextEnabled = true;
+    speechInputStatus = 'connecting';
+
+    render(<SpeechInputButton onTranscript={vi.fn()} />);
+
+    const button = await screen.findByRole('button', {
+      name: 'conversation.chat.speech.processing',
+    });
+    expect(button).toBeDisabled();
+    expect(button.querySelector('.speech-loader-spinner')).not.toBeNull();
+  });
+
+  it('forwards the live transcript stream into the speech hook', async () => {
+    speechToTextEnabled = true;
+    const onLiveTranscript = vi.fn();
+
+    render(<SpeechInputButton onTranscript={vi.fn()} onLiveTranscript={onLiveTranscript} />);
+
+    await screen.findByRole('button', {
+      name: 'conversation.chat.speech.recordTooltip',
+    });
+    expect(lastUseSpeechInputOptions?.onLiveTranscript).toBe(onLiveTranscript);
   });
 
   it('opens the file picker when only file upload is available', async () => {

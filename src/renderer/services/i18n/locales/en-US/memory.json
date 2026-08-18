@@ -258,7 +258,10 @@
       "streak_pill": "{{sessions}} sessions · {{longestDays}}d longest streak",
       "streak_empty": "No sessions yet",
       "import_btn": "Import…",
-      "settings_btn": "Settings"
+      "settings_btn": "Settings",
+      "archive": "Archive",
+      "allProjects": "All projects",
+      "add": "Add"
     },
     "stats": {
       "memories": "Memories",
@@ -376,7 +379,13 @@
       "kbd_capture": "quick capture",
       "kbd_search": "search",
       "kbd_close": "close inspector",
-      "spend_today": "${{usd}} today"
+      "spend_today": "${{usd}} today",
+      "dropFolder": {
+        "open": "Open folder in Finder",
+        "today": "{{count}} today",
+        "today_one": "{{count}} today",
+        "today_other": "{{count}} today"
+      }
     },
     "threshold_modal": {
       "title": "Tune auto-promotion",
@@ -414,12 +423,13 @@
         "idle": "idle"
       },
       "claudeMem": {
-        "title": "claude-mem",
-        "hint": "Click to import from ~/.claude-mem/claude-mem.db",
+        "title": "Claude",
+        "hint": "Import from Claude Code memory (~/.claude/projects) and claude-mem",
         "count": "~{{count}} entries imported",
         "btn": "Import",
         "success": "Imported {{count}} entries · {{errors}} errors",
-        "error": "Import failed. Try again."
+        "error": "Import failed. Try again.",
+        "cardTitle": "Import claude-mem"
       },
       "obsidian": {
         "title": "Obsidian vault",
@@ -427,15 +437,28 @@
         "count": "~{{count}} entries imported",
         "btn": "Import",
         "success": "Imported {{count}} entries · {{errors}} errors",
-        "error": "Obsidian import failed. Try again."
+        "error": "Obsidian import failed. Try again.",
+        "scanBtn": "Scan for vaults",
+        "noVaults": "No Obsidian vaults found — use “Choose folder…”",
+        "scanError": "Vault scan failed. Try again.",
+        "chooseFolderBtn": "Choose folder…",
+        "capped": "Imported the {{count}} most recent of {{total}} notes",
+        "capped_one": "Imported the {{count}} most recent note of {{total}}",
+        "capped_other": "Imported the {{count}} most recent of {{total}} notes",
+        "previewInfo": "{{count}} notes · {{size}} — press Import to confirm",
+        "previewInfo_one": "{{count}} note · {{size}} — press Import to confirm",
+        "previewInfo_other": "{{count}} notes · {{size}} — press Import to confirm",
+        "progress": "Importing… {{done}} / {{total}}",
+        "cardTitle": "Import Obsidian vault"
       },
       "devScan": {
-        "title": "~/dev scan",
-        "hint": "Scans ~/dev for existing memory directories",
+        "title": "Dev projects",
+        "hint": "Scans common dev folders for IJFW projects",
         "count": "~{{count}} entries imported",
         "btn": "Import",
         "success": "Imported {{count}} entries from {{projects}} projects",
-        "error": "Dev scan import failed. Try again."
+        "error": "Dev scan import failed. Try again.",
+        "cardTitle": "Scan ~/dev"
       },
       "dropFolder": {
         "title": "Drop folder",
@@ -444,8 +467,10 @@
         "openBtn": "Open folder",
         "processBtn": "Process now",
         "success": "Processed {{count}} files · {{errors}} errors",
-        "error": "Processing failed. Try again."
-      }
+        "error": "Processing failed. Try again.",
+        "cardTitle": "Watch drop folder"
+      },
+      "detectedEntries": "~{{n}} entries detected"
     },
     "regionLabel": "Memory Archive",
     "composer": {
@@ -463,6 +488,120 @@
       "hint": "to Remember",
       "submit": "Remember",
       "charCount": "{{count}} characters"
+    },
+    "drawer": {
+      "edit": "Edit",
+      "delete": "Delete",
+      "close": "Close drawer",
+      "usedNTimes": "Used {{count}}× this week",
+      "usedNTimes_one": "Used {{count}}× this week",
+      "usedNTimes_other": "Used {{count}}× this week",
+      "alreadyPromoted": "Already promoted ✓",
+      "promote": "↑ Promote to Wiki",
+      "openFile": "Open file",
+      "copy": "Copy",
+      "promotionScore": "Promotion score",
+      "autoPromotesAt": "auto-promotes at {{n}}",
+      "scoreFormula": "Score formula",
+      "why": "Why",
+      "noWhy": "No \"Why\" recorded",
+      "summary": "Summary",
+      "howToApply": "How to apply",
+      "noHowTo": "No \"How to apply\" recorded",
+      "usedInWild": "Used in the wild",
+      "usedNTimesWeek": "Used {{count}}× this week",
+      "usedNTimesWeek_one": "Used {{count}}× this week",
+      "usedNTimesWeek_other": "Used {{count}}× this week",
+      "line": "line",
+      "tags": "Tags"
+    },
+    "editor": {
+      "title": "Edit memory",
+      "save": "Save",
+      "cancel": "Cancel",
+      "summaryLabel": "Summary",
+      "typeLabel": "Type",
+      "tagsLabel": "Tags",
+      "bodyLabel": "Body",
+      "toastSaved": "Memory updated",
+      "toastError": "Could not update memory",
+      "toastCollision": "Another memory already uses that summary. Choose a different one.",
+      "bodySeparatorWarn": "The body contains a line that is only \"---\". This file format reads that line as the start of a new entry, which would corrupt the next entry - remove it to save.",
+      "toastBodySeparator": "Not saved: the body contains a line with only \"---\", which would corrupt the next entry in this file. Remove that line and try again."
+    },
+    "delete": {
+      "confirmTitle": "Delete this memory?",
+      "confirmContent": "This permanently removes the entry from its memory file. It cannot be undone from the app.",
+      "confirmOk": "Delete",
+      "confirmCancel": "Cancel",
+      "toastDeleted": "Memory deleted",
+      "toastError": "Could not delete memory"
+    },
+    "toast": {
+      "promoted": "Promoted to wiki",
+      "pathCopied": "Path copied",
+      "copied": "Copied"
+    },
+    "filter": {
+      "results": "results",
+      "searchPlaceholder": "Search memories… (type:decision tag:design)",
+      "allTypes": "All types",
+      "typesSelected": "types",
+      "clearAll": "Clear all",
+      "allProjects": "All projects",
+      "searchProjects": "Search projects…",
+      "noProjects": "No projects found",
+      "time": {
+        "all": "All time",
+        "today": "Today",
+        "7d": "7 days",
+        "30d": "30 days",
+        "custom": "Custom range…",
+        "from": "From",
+        "to": "To",
+        "apply": "Apply"
+      }
+    },
+    "dragDrop": {
+      "toastIngested": "Files ingested",
+      "toastNoFiles": "No files were ingested",
+      "toastError": "Drop ingest failed"
+    },
+    "chip": {
+      "memories": "Memories",
+      "decisions": "Decisions",
+      "wiki": "Wiki",
+      "thisWeek": "this week",
+      "viewAsFilter": "View as filter"
+    },
+    "type": {
+      "decision": "Decision",
+      "pattern": "Pattern",
+      "session": "Session",
+      "observation": "Observation",
+      "wiki": "Wiki",
+      "preference": "Preference"
+    },
+    "streak": {
+      "tooltip": "Streak across all projects",
+      "sessions": "sessions",
+      "dayStreak": "-day streak"
+    },
+    "empty": {
+      "search": "Search memories… (type:decision tag:design)",
+      "headline": "Your memory is empty. Let's fix that.",
+      "subline": "Import from a source below or add your first memory."
+    },
+    "status": {
+      "brainLive": "Brain live",
+      "brainOffline": "Brain offline",
+      "clis": "CLIs",
+      "lastDream": "Last dream {{ago}} · {{facts}} facts extracted · {{promoted}} candidates near threshold",
+      "kbd": {
+        "search": "search",
+        "navigate": "navigate",
+        "close": "close"
+      }
     }
   }
 }

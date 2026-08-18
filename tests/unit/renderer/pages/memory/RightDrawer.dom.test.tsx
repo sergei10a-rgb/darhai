@@ -35,7 +35,13 @@ vi.mock('react-markdown', () => ({
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, fallback: string, _opts?: Record<string, unknown>) => fallback ?? _key,
+    t: (key: string, opts?: unknown) => {
+      if (typeof opts === 'string') return opts;
+      if (opts && typeof opts === 'object' && 'defaultValue' in (opts as Record<string, unknown>)) {
+        return String((opts as { defaultValue: unknown }).defaultValue);
+      }
+      return key;
+    },
   }),
 }));
 
@@ -51,6 +57,8 @@ vi.mock('@arco-design/web-react', async () => {
 vi.mock('@icon-park/react', () => ({
   Close: (p: Record<string, unknown>) => <span data-testid='icon-close' {...p} />,
   Copy: (p: Record<string, unknown>) => <span data-testid='icon-copy' {...p} />,
+  Delete: (p: Record<string, unknown>) => <span data-testid='icon-delete' {...p} />,
+  Edit: (p: Record<string, unknown>) => <span data-testid='icon-edit' {...p} />,
   LinkOne: (p: Record<string, unknown>) => <span data-testid='icon-link' {...p} />,
   FileCode: (p: Record<string, unknown>) => <span data-testid='icon-file-code' {...p} />,
   Help: (p: Record<string, unknown>) => <span data-testid='icon-help' {...p} />,
@@ -138,6 +146,26 @@ describe('RightDrawer', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
+  it('clicking Edit calls onEdit with the full entry (#414)', () => {
+    const onEdit = vi.fn();
+    render(<RightDrawer entry={MOCK_ENTRY} onClose={vi.fn()} onEdit={onEdit} />);
+    fireEvent.click(screen.getByTestId('drawer-edit-btn'));
+    expect(onEdit).toHaveBeenCalledTimes(1);
+    expect(onEdit).toHaveBeenCalledWith(MOCK_ENTRY);
+  });
+
+  it('clicking Delete calls onDelete with the full entry and nothing else (#414)', () => {
+    const onDelete = vi.fn();
+    const onClose = vi.fn();
+    render(<RightDrawer entry={MOCK_ENTRY} onClose={onClose} onDelete={onDelete} />);
+    fireEvent.click(screen.getByTestId('drawer-delete-btn'));
+    expect(onDelete).toHaveBeenCalledTimes(1);
+    expect(onDelete).toHaveBeenCalledWith(MOCK_ENTRY);
+    // The row action only ASKS - it must not close the drawer by itself; the
+    // shell's confirm dialog owns the destructive step.
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
   it('Esc key calls onClose', () => {
     const onClose = vi.fn();
     render(<RightDrawer entry={MOCK_ENTRY} onClose={onClose} />);
@@ -208,9 +236,7 @@ describe('RightDrawer', () => {
 
     // Wait for the async fetch to resolve
     await waitFor(() => expect(screen.getByTestId('source-panel-anchor')).toBeTruthy());
-    expect(screen.getByTestId('source-panel-anchor').textContent).toContain(
-      'Use Arco components everywhere.',
-    );
+    expect(screen.getByTestId('source-panel-anchor').textContent).toContain('Use Arco components everywhere.');
   });
 
   it('shows error message when IPC returns ok=false', async () => {

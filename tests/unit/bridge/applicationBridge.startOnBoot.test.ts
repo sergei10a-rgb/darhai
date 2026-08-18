@@ -42,6 +42,9 @@ describe('applicationBridge start-on-boot helpers', () => {
           getStartOnBootStatus: { provider: vi.fn() },
           setStartOnBoot: { provider: vi.fn() },
         },
+        doctor: {
+          run: { provider: vi.fn() },
+        },
       },
     }));
 
@@ -137,7 +140,8 @@ describe('applicationBridge start-on-boot helpers', () => {
       },
     }));
 
-    const { START_ON_BOOT_WINDOWS_ARG, setStartOnBootEnabled } = await import('@process/bridge/desktop/applicationBridge');
+    const { START_ON_BOOT_WINDOWS_ARG, setStartOnBootEnabled } =
+      await import('@process/bridge/desktop/applicationBridge');
     const status = setStartOnBootEnabled(true);
 
     expect(setLoginItemSettings).toHaveBeenCalledWith({
@@ -250,6 +254,9 @@ describe('applicationBridge start-on-boot helpers', () => {
             }),
           },
         },
+        doctor: {
+          run: { provider: vi.fn() },
+        },
       },
     }));
 
@@ -331,6 +338,9 @@ describe('applicationBridge start-on-boot helpers', () => {
               capturedHandlers.setStartOnBoot = fn;
             }),
           },
+        },
+        doctor: {
+          run: { provider: vi.fn() },
         },
       },
     }));

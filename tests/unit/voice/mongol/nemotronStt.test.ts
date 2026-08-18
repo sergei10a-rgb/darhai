@@ -18,6 +18,9 @@ import { describe, expect, it, vi } from 'vitest';
 // Same mock the videoFrames tests use.
 vi.mock('@process/utils/initStorage', () => ({
   getSystemDir: () => ({ cacheDir: tmpdir() }),
+  // Referenced by defaultNemotronSttDeps.loadPersonalDict; the tests below
+  // always inject their own dict, so this is import-time plumbing only.
+  ProcessConfig: { get: async (): Promise<undefined> => undefined },
 }));
 
 import {
@@ -44,17 +47,23 @@ type Harness = {
   fetch: ReturnType<typeof vi.fn>;
   ensureRunning: ReturnType<typeof vi.fn>;
   convertToWav: ReturnType<typeof vi.fn>;
+  loadPersonalDict: ReturnType<typeof vi.fn>;
 };
 
-const makeHarness = (fetchImpl?: () => Promise<TranscriptionResponse>): Harness => {
+const makeHarness = (
+  fetchImpl?: () => Promise<TranscriptionResponse>,
+  personalDict: Record<string, string> = {}
+): Harness => {
   const fetch = vi.fn(fetchImpl ?? (async () => okResponse(' сайн байна уу ')));
   const ensureRunning = vi.fn(async () => BASE_URL);
   const convertToWav = vi.fn(async () => Buffer.from('converted-wav'));
+  const loadPersonalDict = vi.fn(async () => personalDict);
   return {
-    deps: { fetch, ensureRunning, convertToWav } as unknown as NemotronSttDeps,
+    deps: { fetch, ensureRunning, convertToWav, loadPersonalDict } as unknown as NemotronSttDeps,
     fetch,
     ensureRunning,
     convertToWav,
+    loadPersonalDict,
   };
 };
 
@@ -162,6 +171,22 @@ describe('NemotronStt', () => {
     expect((failure as NemotronSttError).code).toBe('NEMOTRON_MN_REQUEST_FAILED');
     expect(h.fetch).toHaveBeenCalledTimes(1);
     expect(h.ensureRunning).toHaveBeenCalledTimes(1);
+  });
+
+  it('applies the personal dictionary to the transcript (whole word only)', async () => {
+    const h = makeHarness(async () => okResponse('коён цаг коёнхон'), { коён: 'хоёр' });
+    const result = await NemotronStt.transcribe(wavRequest(Uint8Array.from([1])), h.deps);
+    expect(h.loadPersonalDict).toHaveBeenCalledTimes(1);
+    expect(result.text).toBe('хоёр цаг коёнхон');
+  });
+
+  it('runs glossfix FIRST and the personal dictionary on its output', async () => {
+    // The dict entry targets the Latin form glossfix produces («имэйл» →
+    // «email»), so it can only fire if the order is glossfix → dict. Reversed,
+    // the dict would see «имэйл», match nothing, and the assert fails.
+    const h = makeHarness(async () => okResponse('имэйл илгээ'), { email: 'цахим шуудан' });
+    const result = await NemotronStt.transcribe(wavRequest(Uint8Array.from([1])), h.deps);
+    expect(result.text).toBe('цахим шуудан илгээ');
   });
 
   it('classifies WAV mime types with and without codec parameters', () => {

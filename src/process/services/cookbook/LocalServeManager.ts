@@ -152,6 +152,13 @@ export type LocalServeOptions = {
    * lists the flag - see {@link parseServerCapabilities}.
    */
   nCpuMoe?: number;
+  /**
+   * `<arch>.block_count` of the served GGUF (its transformer layer count), when
+   * the header stated one. Only read while {@link nCpuMoe} is active: it turns
+   * the all-layers `--n-gpu-layers` into the model's real `block_count + 1`
+   * instead of a magic constant - see {@link gpuLayersAllForMoe}.
+   */
+  moeBlockCount?: number | null;
 };
 
 /** Options for a vLLM start: the Hugging Face repo vLLM self-downloads + serves. */
@@ -289,14 +296,37 @@ function gpuLayersArg(caps: ServerCapabilities, ngl: number): string {
 }
 
 /**
- * `--n-gpu-layers` value when expert offload is active: the literal `99` the
- * calibration measured with (`-ngl 99 --n-cpu-moe N` -> 27.8 tok/s on
- * Qwen3.6-35B-A3B vs 8.3 for `-ngl 99` alone). NOT `auto`: with the expert
- * tensors already pinned to the CPU by `--n-cpu-moe`, `auto`'s own fit answers
- * a different question against the same free-VRAM budget, and that combination
- * is not the one any number here was measured under.
+ * `--n-gpu-layers` upper bound when expert offload is active and the model's
+ * layer count is NOT known. llama.cpp clamps the value at `n_layer + 1`
+ * (read from llama-model.cpp on 2026-08-17: `act_gpu_layers =
+ * std::min(n_gpu_layers, n_layer_all + 1)`), so an over-large number means
+ * "all" on every model - which the previous literal `99` did not: a >99-layer
+ * model (Llama-405B has 126 blocks) silently kept its deepest layers off the
+ * GPU.
  */
-const GPU_LAYERS_ALL_FOR_MOE = '99';
+export const GPU_LAYERS_ALL_FOR_MOE_FALLBACK = '999';
+
+/**
+ * The `--n-gpu-layers` value meaning "every layer" for the expert-offload
+ * combination (`-ngl <all> --n-cpu-moe N`, the measured 3.4x pairing:
+ * 27.8 tok/s on Qwen3.6-35B-A3B vs 8.3 without the pinned experts). NOT
+ * `auto`: with the expert tensors already pinned to the CPU by `--n-cpu-moe`,
+ * `auto`'s own fit answers a different question against the same free-VRAM
+ * budget, and that combination is not the one any number here was measured
+ * under.
+ *
+ * "All" in llama.cpp semantics is `block_count + 1` - the +1 is the
+ * non-repeating output layer (llama-model.cpp `n_gpu_layers()` defaults to
+ * `n_layer_all + 1`). When the GGUF header stated its block count we say that
+ * number; when it did not, {@link GPU_LAYERS_ALL_FOR_MOE_FALLBACK} relies on
+ * llama.cpp's own clamp instead.
+ */
+export function gpuLayersAllForMoe(moeBlockCount?: number | null): string {
+  if (typeof moeBlockCount === 'number' && Number.isFinite(moeBlockCount) && moeBlockCount >= 1) {
+    return String(Math.round(moeBlockCount) + 1);
+  }
+  return GPU_LAYERS_ALL_FOR_MOE_FALLBACK;
+}
 
 /**
  * Extract one option's own help entry: the line `flag` occurs on, plus the
@@ -377,11 +407,12 @@ export function buildServeCommand(
   ggufPath: string,
   ngl: number,
   port = SUGGESTED_SERVE_PORT,
-  nCpuMoe?: number
+  nCpuMoe?: number,
+  moeBlockCount?: number | null
 ): string {
   const base = `llama-server -m "${ggufPath}" --host 127.0.0.1 --port ${port}`;
   if (typeof nCpuMoe === 'number' && Number.isFinite(nCpuMoe) && nCpuMoe > 0) {
-    return `${base} --n-gpu-layers ${GPU_LAYERS_ALL_FOR_MOE} --n-cpu-moe ${Math.round(nCpuMoe)}`;
+    return `${base} --n-gpu-layers ${gpuLayersAllForMoe(moeBlockCount)} --n-cpu-moe ${Math.round(nCpuMoe)}`;
   }
   return `${base} --n-gpu-layers ${ngl}`;
 }
@@ -658,9 +689,9 @@ export class LocalServeManager extends EventEmitter {
             '--port',
             String(port),
             '--n-gpu-layers',
-            // The MoE combination is the one that was measured: `-ngl 99
-            // --n-cpu-moe N` (see GPU_LAYERS_ALL_FOR_MOE for why not `auto`).
-            moeOffload === null ? gpuLayersArg(caps, opts.ngl) : GPU_LAYERS_ALL_FOR_MOE,
+            // The MoE combination is the one that was measured: `-ngl <all>
+            // --n-cpu-moe N` (see gpuLayersAllForMoe for why not `auto`).
+            moeOffload === null ? gpuLayersArg(caps, opts.ngl) : gpuLayersAllForMoe(opts.moeBlockCount),
           ];
           if (moeOffload !== null) args.push('--n-cpu-moe', String(moeOffload));
           if (caps.corsOrigins) args.push('--cors-origins', CORS_ORIGINS_LOOPBACK_ONLY);

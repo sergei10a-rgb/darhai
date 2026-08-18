@@ -60,6 +60,7 @@ const plan = (
     cudaVariant?: string;
     availableAssets?: string[];
     driverVersion?: string | null;
+    gpuName?: string | null;
   } = {}
 ): LlamaAssetPlanResult =>
   planLlamaAssets({
@@ -71,6 +72,7 @@ const plan = (
     cudaRuntimePresent: extra.cudaRuntimePresent,
     cudaVariant: extra.cudaVariant,
     driverVersion: extra.driverVersion,
+    gpuName: extra.gpuName,
   });
 
 /** Assert an `ok` plan and hand it back narrowed. */
@@ -585,6 +587,116 @@ describe('planLlamaAssets - archive shape', () => {
     const withoutVulkan = B10437_ASSETS.filter((a) => !a.includes('vulkan'));
     const result = ok(plan('win32', 'x64', 'cpu_x86', { availableAssets: withoutVulkan }));
     expect(result.noteCodes).not.toContain('VULKAN_BUILD_NOT_REQUESTABLE');
+  });
+});
+
+/**
+ * The Vulkan decision.
+ *
+ * hwfit has no `vulkan` backend member: on Windows a non-NVIDIA GPU machine is
+ * typed `cpu_x86` by the WMI fallback, with the GPU's NAME as the only evidence
+ * a Vulkan-capable device exists. Asset names verified against the live release
+ * index on 2026-08-17 (`gh api repos/ggml-org/llama.cpp/releases/latest`,
+ * b10470): `llama-b10470-bin-win-vulkan-x64.zip` and
+ * `llama-b10470-bin-ubuntu-vulkan-{x64,arm64}.tar.gz` are the published names.
+ */
+describe('planLlamaAssets - Vulkan for non-NVIDIA GPUs on Windows', () => {
+  const VULKAN_WIN = `llama-${TAG}-bin-win-vulkan-x64.zip`;
+
+  it('plans the Vulkan build for a Windows AMD GPU that hwfit typed cpu_x86', () => {
+    const result = ok(plan('win32', 'x64', 'cpu_x86', { gpuName: 'AMD Radeon RX 7800 XT' }));
+    expect(result.acceleration).toBe('vulkan');
+    expect(result.assets.map((a) => a.name)).toEqual([VULKAN_WIN]);
+    expect(result.fallback).toBeNull();
+    // The build IS requested now, so the "cannot request it" note must not show.
+    expect(result.noteCodes).not.toContain('VULKAN_BUILD_NOT_REQUESTABLE');
+  });
+
+  it('plans the Vulkan build for a Windows Intel Arc GPU', () => {
+    const result = ok(plan('win32', 'x64', 'cpu_x86', { gpuName: 'Intel(R) Arc(TM) A770 Graphics' }));
+    expect(result.acceleration).toBe('vulkan');
+    expect(result.assets.map((a) => a.name)).toEqual([VULKAN_WIN]);
+  });
+
+  it('keeps the CUDA path unchanged for an NVIDIA machine', () => {
+    const result = ok(plan('win32', 'x64', 'cuda', { gpuName: 'NVIDIA GeForce RTX 4070 Laptop GPU' }));
+    expect(result.acceleration).toBe('cuda');
+    expect(result.assets[0].name).toBe('llama-b10437-bin-win-cuda-13.3-x64.zip');
+  });
+
+  it('keeps CPU when the machine has no GPU at all', () => {
+    const noName = ok(plan('win32', 'x64', 'cpu_x86', { gpuName: null }));
+    expect(noName.acceleration).toBe('cpu');
+    const absent = ok(plan('win32', 'x64', 'cpu_x86'));
+    expect(absent.acceleration).toBe('cpu');
+  });
+
+  it('does not pick Vulkan for an NVIDIA-named GPU that hwfit typed cpu_x86', () => {
+    // nvidia-smi failing while WMI still names the card means the NVIDIA driver
+    // state is unknown - Vulkan needs that same driver, so nothing is proven.
+    const result = ok(plan('win32', 'x64', 'cpu_x86', { gpuName: 'NVIDIA GeForce GTX 1660' }));
+    expect(result.acceleration).toBe('cpu');
+    expect(result.noteCodes).toContain('VULKAN_BUILD_NOT_REQUESTABLE');
+  });
+
+  it('does not pick Vulkan for NVIDIA datacenter cards named without an NVIDIA prefix (L1)', () => {
+    // WMI often reports bare model names ("H100 PCIe", "A100-SXM4-80GB") with
+    // no "NVIDIA" prefix; those are still NVIDIA cards whose route is CUDA.
+    for (const gpuName of [
+      'H100 PCIe',
+      'A100-SXM4-80GB',
+      'H200 NVL',
+      'L40S',
+      'L40',
+      'L4',
+      'V100-PCIE-16GB',
+      'T4',
+      'B200',
+    ]) {
+      const result = ok(plan('win32', 'x64', 'cpu_x86', { gpuName }));
+      expect(result.acceleration, gpuName).toBe('cpu');
+      expect(result.noteCodes, gpuName).toContain('VULKAN_BUILD_NOT_REQUESTABLE');
+    }
+  });
+
+  it('datacenter-name matching stays clear of AMD/Intel names (L1 guard)', () => {
+    // These contain near-miss substrings (MI100, A770, A40, B580) and must
+    // still take the Vulkan route on a Windows cpu_x86 machine.
+    for (const gpuName of [
+      'AMD Instinct MI100',
+      'AMD Radeon Instinct MI100',
+      'Intel(R) Arc(TM) A770 Graphics',
+      'Intel Arc Pro A40',
+      'Intel Arc B580',
+      'AMD Radeon RX 6400',
+    ]) {
+      const result = ok(plan('win32', 'x64', 'cpu_x86', { gpuName }));
+      expect(result.acceleration, gpuName).toBe('vulkan');
+    }
+  });
+
+  it('keeps the CPU answer (with the note) on Linux even with an AMD GPU name', () => {
+    // The Windows-only rule: hwfit types Linux AMD as `rocm` (a different path),
+    // so a Linux cpu_x86 answer with a GPU name is not a measured Vulkan case.
+    const result = ok(plan('linux', 'x64', 'cpu_x86', { gpuName: 'AMD Radeon RX 7800 XT' }));
+    expect(result.acceleration).toBe('cpu');
+    expect(result.noteCodes).toContain('VULKAN_BUILD_NOT_REQUESTABLE');
+  });
+
+  it('falls back to CPU when the release ships no Windows Vulkan asset', () => {
+    const withoutVulkan = B10437_ASSETS.filter((a) => !a.includes('vulkan'));
+    const result = ok(
+      plan('win32', 'x64', 'cpu_x86', { gpuName: 'AMD Radeon RX 7800 XT', availableAssets: withoutVulkan })
+    );
+    expect(result.acceleration).toBe('cpu');
+    expect(result.assets.map((a) => a.name)).toEqual(['llama-b10437-bin-win-cpu-x64.zip']);
+  });
+
+  it('ships the Vulkan plan as a zip with the Windows server binary name', () => {
+    const result = ok(plan('win32', 'x64', 'cpu_x86', { gpuName: 'AMD Radeon RX 6600' }));
+    expect(result.assets[0].format).toBe('zip');
+    expect(result.serverBinaryName).toBe('llama-server.exe');
+    expect(result.cudaVariant).toBeNull();
   });
 });
 

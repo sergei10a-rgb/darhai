@@ -115,6 +115,24 @@
       "auto": "Actualizar el tipo cada día",
       "manual": "Tu tipo",
       "manualHint": "El tipo que introduzcas aquí sustituye al obtenido. Déjalo vacío para volver al automático."
+    },
+    "circuitBreaker": {
+      "title": "Cortacircuitos de gasto",
+      "hint": "Cuando el gasto alcanza el límite, los agentes en ejecución se detienen. Recibirás un aviso al 80%.",
+      "enable": "Activar",
+      "limit": "Límite",
+      "currencyMnt": "₮ MNT",
+      "currencyUsd": "$ USD",
+      "periodDay": "Por día",
+      "periodSession": "Por sesión",
+      "warnTitle": "Gasto cerca del límite",
+      "warnBody": "Se ha gastado {{spent}} de tu límite de {{limit}} (más del 80%).",
+      "tripTitle": "Límite de gasto alcanzado: agentes detenidos",
+      "tripBody": "El gasto llegó a {{spent}} frente a tu límite de {{limit}}; se detuvieron {{stopped}} agente(s). Sube o desactiva el límite en Mission Control → Coste para continuar.",
+      "tripBodyNoAgents": "El gasto llegó a {{spent}} frente a tu límite de {{limit}}. No había agentes en ejecución en ese momento; cualquier nueva ejecución se detendrá tras su siguiente turno registrado. Sube o desactiva el límite en Mission Control → Coste para continuar.",
+      "rateMissingTitle": "Límite de gasto temporalmente inactivo: sin tipo de cambio",
+      "rateMissingBody": "Tu límite está en tögrög ({{limit}}₮), pero aún no se ha obtenido el tipo de cambio del MNT, así que el límite NO se aplica temporalmente. Cambia el límite a USD o espera a que cargue el tipo de cambio.",
+      "reactiveNote": "El límite se comprueba después de registrar el coste de cada turno (reactivo): un turno ya en curso termina antes de que la parada surta efecto."
     }
   },
   "goals": {

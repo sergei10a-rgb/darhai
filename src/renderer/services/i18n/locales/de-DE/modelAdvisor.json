@@ -74,6 +74,7 @@
     "serve": "Starten",
     "stop": "Stoppen",
     "cancel": "Abbrechen",
+    "cancelCalibration": "Abstimmung abbrechen",
     "retry": "Erneut versuchen",
     "copyCommand": "Befehl kopieren",
     "locate": "Binärdatei suchen",
@@ -126,6 +127,7 @@
       "cuda": "Ihre NVIDIA-Grafikkarte wird genutzt, dadurch antworten Modelle schnell.",
       "rocm": "Ihre AMD-Grafikkarte wird genutzt, dadurch antworten Modelle schnell.",
       "metal": "Der Grafikchip dieses Mac wird genutzt, dadurch antworten Modelle schnell.",
+      "vulkan": "Ihre Grafikkarte wird über Vulkan genutzt, dadurch antworten Modelle schnell.",
       "cpu": "Es läuft auf dem Prozessor. Das funktioniert, aber Antworten kommen viel langsamer als mit einer Grafikkarte."
     },
     "fallback": {

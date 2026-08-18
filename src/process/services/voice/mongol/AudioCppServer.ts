@@ -85,9 +85,7 @@ const STT_MODEL_FILENAME = STT_MODEL_ASSET.filename ?? 'nemotron-mn-v13m-q8_0.gg
 
 /** Why the local Nemotron STT server cannot serve right now. */
 export type AudioCppUnavailableCode =
-  | 'NEMOTRON_MN_NOT_INSTALLED'
-  | 'NEMOTRON_MN_START_FAILED'
-  | 'NEMOTRON_MN_START_TIMEOUT';
+  'NEMOTRON_MN_NOT_INSTALLED' | 'NEMOTRON_MN_START_FAILED' | 'NEMOTRON_MN_START_TIMEOUT';
 
 /**
  * Typed lifecycle failure. The message starts with the code so
@@ -396,7 +394,28 @@ export class AudioCppServer {
  */
 export const audioCppServer = new AudioCppServer();
 
+/** Callbacks fired at the start of {@link stopAudioCppServer}. */
+const serverStopListeners: Array<() => void> = [];
+
+/**
+ * Register a callback that runs when the app-level stop path shuts the
+ * singleton server down. NemotronLive uses this to cancel any active live
+ * dictation session before the server owning its socket disappears (app quit
+ * path) - registered here instead of imported there to keep the dependency
+ * one-directional (NemotronLive -> AudioCppServer, never back).
+ */
+export function registerAudioCppServerStopListener(listener: () => void): void {
+  serverStopListeners.push(listener);
+}
+
 /** Stop the singleton's server process (app shutdown path). */
 export function stopAudioCppServer(): Promise<void> {
+  for (const listener of serverStopListeners) {
+    try {
+      listener();
+    } catch {
+      // A cleanup listener must never block app shutdown.
+    }
+  }
   return audioCppServer.stop();
 }

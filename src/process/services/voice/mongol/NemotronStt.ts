@@ -23,12 +23,14 @@
 
 import type { SpeechToTextAudioBuffer, SpeechToTextRequest, SpeechToTextResult } from '@/common/types/speech';
 import { resolveFfmpegBinary } from '@process/services/video/videoFrames';
+import { ProcessConfig } from '@process/utils/initStorage';
 import { safeExecFile } from '@process/utils/safeExec';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { audioCppServer, STT_SERVER_MODEL_ID } from './AudioCppServer';
 import { glossfix } from './glossfix';
+import { applyPersonalDict } from './personalDict';
 
 /** Reported model id: the fine-tune's public name, not the server's config id. */
 export const NEMOTRON_MN_MODEL = 'nemotron-mn-v13m';
@@ -43,9 +45,7 @@ const TARGET_SAMPLE_RATE = '16000';
 const WAV_MIME_SUBTYPES = new Set(['audio/wav', 'audio/x-wav', 'audio/wave']);
 
 export type NemotronSttErrorCode =
-  | 'NEMOTRON_MN_FFMPEG_MISSING'
-  | 'NEMOTRON_MN_AUDIO_CONVERT_FAILED'
-  | 'NEMOTRON_MN_REQUEST_FAILED';
+  'NEMOTRON_MN_FFMPEG_MISSING' | 'NEMOTRON_MN_AUDIO_CONVERT_FAILED' | 'NEMOTRON_MN_REQUEST_FAILED';
 
 /**
  * Typed transcription failure. The message starts with the code so
@@ -72,6 +72,8 @@ export type NemotronSttDeps = {
   ensureRunning: () => Promise<string>;
   /** Convert non-WAV request audio to 16 kHz mono WAV. */
   convertToWav: (audio: Buffer, mimeType: string) => Promise<Buffer>;
+  /** Load the user's personal correction dictionary (wrong → right). */
+  loadPersonalDict: () => Promise<Record<string, string>>;
 };
 
 /** True when the recording can go to the server without conversion. */
@@ -198,6 +200,17 @@ export const defaultNemotronSttDeps: NemotronSttDeps = {
   fetch: (url, init) => globalThis.fetch(url, init),
   ensureRunning: () => audioCppServer.ensureRunning(),
   convertToWav: defaultConvertToWav,
+  // A broken stored config must degrade to "no corrections", never fail the
+  // transcription that already succeeded.
+  loadPersonalDict: async () => {
+    try {
+      const config = await ProcessConfig.get('tools.speechToText');
+      const dict = config?.personalDict;
+      return dict !== null && typeof dict === 'object' ? dict : {};
+    } catch {
+      return {};
+    }
+  },
 };
 
 /**
@@ -213,14 +226,17 @@ export class NemotronStt {
     const raw = toBuffer(request.audioBuffer);
     const wav = isWavMimeType(request.mimeType) === true ? raw : await deps.convertToWav(raw, request.mimeType);
     const text = await transcribeWithRestart(wav, deps);
+    const personalDict = await deps.loadPersonalDict();
     return {
       language: 'mn',
       model: NEMOTRON_MN_MODEL,
       provider: 'nemotron-mn',
       // The model's one systematic weakness is Cyrillic-spelled foreign terms
       // ("имэйлээр"); the glossary pass restores their Latin form. See
-      // glossfix.ts for why its false-positive rate is trusted.
-      text: glossfix(text),
+      // glossfix.ts for why its false-positive rate is trusted. The user's
+      // personal dictionary runs AFTER it, on its output, so an entry can
+      // target the final Latin form of a term glossfix just restored.
+      text: applyPersonalDict(glossfix(text), personalDict),
     };
   }
 }

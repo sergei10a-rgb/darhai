@@ -74,6 +74,7 @@
     "serve": "运行",
     "stop": "停止",
     "cancel": "取消",
+    "cancelCalibration": "取消调优",
     "retry": "重试",
     "copyCommand": "复制命令",
     "locate": "定位程序",
@@ -126,6 +127,7 @@
       "cuda": "将使用你的 NVIDIA 显卡，因此模型回答很快。",
       "rocm": "将使用你的 AMD 显卡，因此模型回答很快。",
       "metal": "将使用这台 Mac 的图形芯片，因此模型回答很快。",
+      "vulkan": "将通过 Vulkan 使用你的显卡，因此模型回答很快。",
       "cpu": "将由处理器运行。能用，但回答比用显卡慢得多。"
     },
     "fallback": {

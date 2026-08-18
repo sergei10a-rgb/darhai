@@ -34,6 +34,7 @@ export const OS_RESOURCE_TESTS: readonly string[] = [
   'tests/unit/team-TeammateManager.test.ts',
   'tests/unit/teamMcpServerEvents.test.ts',
   'tests/unit/test_acp_connection_disconnect.ts',
+  'tests/unit/voice/mongol/nemotronLiveChunked.test.ts',
   'tests/unit/webserver/csrfSecret.test.ts',
   'tests/unit/webserver/index.test.ts',
 ];

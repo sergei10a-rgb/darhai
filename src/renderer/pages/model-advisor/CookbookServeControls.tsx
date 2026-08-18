@@ -96,6 +96,7 @@ export const ACCEL_LABEL_KEY: Record<LlamaRuntimeAcceleration, I18nKey> = {
   cuda: 'modelAdvisor.runtime.accel.cuda',
   rocm: 'modelAdvisor.runtime.accel.rocm',
   metal: 'modelAdvisor.runtime.accel.metal',
+  vulkan: 'modelAdvisor.runtime.accel.vulkan',
   cpu: 'modelAdvisor.runtime.accel.cpu',
 };
 
@@ -731,6 +732,16 @@ const CookbookServeControls: React.FC<CookbookServeControlsProps> = ({ modelId, 
         {fetching === true ? (
           <Button size='mini' status='danger' onClick={() => void cancelModel()}>
             {t('modelAdvisor.cookbook.cancel')}
+          </Button>
+        ) : calibrating === true ? (
+          // Every stage that offers Cancel is a stage where Cancel does
+          // something - and calibration always had one in main (`stopServe`
+          // bumps the stop epoch and aborts the bench child); only this button
+          // was missing, leaving a 1-8 minute wait nothing could interrupt.
+          // Its own label, not the generic Cancel: the user is cancelling the
+          // one-time tuning, and the next press will simply run it again.
+          <Button size='mini' status='danger' loading={busy} onClick={() => run(controller.stopServe)}>
+            {t('modelAdvisor.cookbook.cancelCalibration')}
           </Button>
         ) : null}
       </div>

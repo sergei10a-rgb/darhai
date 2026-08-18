@@ -12,12 +12,19 @@ import {
   useSpeechInput,
   type SpeechInputAvailability,
   type SpeechInputErrorCode,
+  type SpeechLivePhase,
 } from '@/renderer/hooks/system/useSpeechInput';
 
 type SpeechInputButtonProps = {
   disabled?: boolean;
   locale?: string;
   onTranscript: (transcript: string) => void;
+  /**
+   * Live dictation stream (nemotron-mn). Partials carry the FULL accumulated
+   * text and must REPLACE the consumer's live region; `final` commits it.
+   * Wire with `createSpeechLiveTranscriptHandler` from useSpeechInput.
+   */
+  onLiveTranscript?: (transcript: string, phase: SpeechLivePhase) => void;
   /**
    * 'prominent' renders the mic as a tier-1 affordance (brand-tinted) and
    * enables hold-⌥Space push-to-talk. Used on the new-chat Launch Pad surface.
@@ -108,6 +115,7 @@ const SpeechInputButton: React.FC<SpeechInputButtonProps> = ({
   disabled,
   locale,
   onTranscript,
+  onLiveTranscript,
   variant = 'default',
 }) => {
   const { t } = useTranslation();
@@ -128,10 +136,13 @@ const SpeechInputButton: React.FC<SpeechInputButtonProps> = ({
   } = useSpeechInput({
     locale,
     onTranscript,
+    onLiveTranscript,
   });
 
   const isRecording = status === 'recording';
-  const isProcessing = status === 'transcribing';
+  // 'connecting' (live dictation booting the local STT server) shares the
+  // processing affordance: spinner + disabled until the session is live.
+  const isProcessing = status === 'transcribing' || status === 'connecting';
   const showSpeechFeedback = isRecording || isProcessing;
   const displayedWaveformLevels = useMemo(() => {
     if (recordingLevels.length > 0) {

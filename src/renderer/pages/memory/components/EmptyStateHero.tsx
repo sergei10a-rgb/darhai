@@ -39,28 +39,28 @@ const CARDS: CardDef[] = [
   {
     key: 'claude-mem',
     icon: '🧠',
-    titleKey: 'archive.import.claudeMem.cardTitle',
+    titleKey: 'memory.archive.import.claudeMem.cardTitle',
     titleFallback: 'Import claude-mem',
     defaultSubline: 'Click to scan ~/.claude-mem/',
   },
   {
     key: 'obsidian',
     icon: '📓',
-    titleKey: 'archive.import.obsidian.cardTitle',
+    titleKey: 'memory.archive.import.obsidian.cardTitle',
     titleFallback: 'Import Obsidian vault',
     defaultSubline: 'Click to detect vaults',
   },
   {
     key: 'drop',
     icon: '📂',
-    titleKey: 'archive.import.dropFolder.cardTitle',
+    titleKey: 'memory.archive.import.dropFolder.cardTitle',
     titleFallback: 'Watch drop folder',
     defaultSubline: '~/Documents/Darhai-Memory/',
   },
   {
     key: 'dev-scan',
     icon: '🔍',
-    titleKey: 'archive.import.devScan.cardTitle',
+    titleKey: 'memory.archive.import.devScan.cardTitle',
     titleFallback: 'Scan ~/dev',
     defaultSubline: 'Click to scan ~/dev/',
   },
@@ -115,7 +115,7 @@ const EmptyStateHero: React.FC<EmptyStateHeroProps> = ({ onImportComplete, onSea
         setLoading((prev) => ({ ...prev, [key]: false }));
       }
     },
-    [onImportComplete],
+    [onImportComplete]
   );
 
   return (
@@ -124,7 +124,9 @@ const EmptyStateHero: React.FC<EmptyStateHeroProps> = ({ onImportComplete, onSea
       <div className={styles.searchWrap}>
         <Input
           className={styles.searchInput}
-          placeholder={t('archive.empty.search', 'Search memories… (type:decision tag:design)')}
+          placeholder={t('memory.archive.empty.search', {
+            defaultValue: 'Search memories… (type:decision tag:design)',
+          })}
           allowClear
           onChange={(val) => onSearchChange?.(val)}
           data-testid='empty-hero-search'
@@ -133,10 +135,10 @@ const EmptyStateHero: React.FC<EmptyStateHeroProps> = ({ onImportComplete, onSea
 
       {/* Headline */}
       <h2 className={styles.headline} data-testid='empty-hero-headline'>
-        {t('archive.empty.headline', 'Your memory is empty. Let\'s fix that.')}
+        {t('memory.archive.empty.headline', { defaultValue: "Your memory is empty. Let's fix that." })}
       </h2>
       <p className={styles.subline} data-testid='empty-hero-subline'>
-        {t('archive.empty.subline', 'Import from a source below or add your first memory.')}
+        {t('memory.archive.empty.subline', { defaultValue: 'Import from a source below or add your first memory.' })}
       </p>
 
       {/* Import CTA cards */}
@@ -144,9 +146,13 @@ const EmptyStateHero: React.FC<EmptyStateHeroProps> = ({ onImportComplete, onSea
         {CARDS.map((card) => {
           const detectedCount = counts[card.key];
           const isLoading = loading[card.key] === true;
-          const subline = detectedCount !== undefined
-            ? t('archive.import.detectedEntries', '~{{n}} entries detected', { n: detectedCount })
-            : card.defaultSubline;
+          const subline =
+            detectedCount !== undefined
+              ? t('memory.archive.import.detectedEntries', {
+                  n: detectedCount,
+                  defaultValue: '~{{n}} entries detected',
+                })
+              : card.defaultSubline;
 
           return (
             <button
@@ -160,11 +166,9 @@ const EmptyStateHero: React.FC<EmptyStateHeroProps> = ({ onImportComplete, onSea
               <div className={styles.cardIcon} aria-hidden>
                 {card.icon}
               </div>
-              <div className={styles.cardTitle}>
-                {t(card.titleKey, card.titleFallback)}
-              </div>
+              <div className={styles.cardTitle}>{t(card.titleKey, { defaultValue: card.titleFallback })}</div>
               <div className={styles.cardSubline}>
-                {isLoading ? t('archive.import.importing', 'Importing…') : subline}
+                {isLoading ? t('memory.archive.import.importing', { defaultValue: 'Importing…' }) : subline}
               </div>
             </button>
           );

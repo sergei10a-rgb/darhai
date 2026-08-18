@@ -40,7 +40,7 @@ import { useUploadState } from '@renderer/hooks/file/useUploadState';
 import UploadProgressBar from '@renderer/components/media/UploadProgressBar';
 import { allSupportedExts } from '@renderer/services/FileService';
 import SpeechInputButton from '@/renderer/components/chat/SpeechInputButton';
-import { appendSpeechTranscript } from '@/renderer/hooks/system/useSpeechInput';
+import { appendSpeechTranscript, createSpeechLiveTranscriptHandler } from '@/renderer/hooks/system/useSpeechInput';
 import { getConversationInputHistory, isCaretOnFirstLine } from '@/renderer/utils/chat/messageHistory';
 import './sendbox.css';
 
@@ -1280,6 +1280,17 @@ const SendBox: React.FC<{
     },
     [latestInputRef, setInputRef]
   );
+  // Live dictation (nemotron-mn): each partial REPLACES the live region in
+  // the input (never appends), preserving text typed around it. Reads go
+  // through latestInputRef because deltas arrive after awaits, when the
+  // render-time prop may be stale. Lazy useState keeps ONE handler (and its
+  // internal region state) for the component's lifetime.
+  const [handleSpeechLiveTranscript] = useState(() =>
+    createSpeechLiveTranscriptHandler({
+      getCurrentValue: () => latestInputRef.current,
+      setValue: (value) => setInputRef.current(value),
+    })
+  );
   const speechLocale = i18n?.language || 'en-US';
 
   const hasDraftToSend = input.trim().length > 0 || domSnippets.length > 0;
@@ -1606,6 +1617,7 @@ const SendBox: React.FC<{
                 disabled={disabled || isLoading || loading || isUploading}
                 locale={speechLocale}
                 onTranscript={handleSpeechTranscript}
+                onLiveTranscript={handleSpeechLiveTranscript}
               />
               {sendButtonPrefix}
               {renderActionButtons()}
@@ -1620,6 +1632,7 @@ const SendBox: React.FC<{
                 disabled={disabled || isLoading || loading || isUploading}
                 locale={speechLocale}
                 onTranscript={handleSpeechTranscript}
+                onLiveTranscript={handleSpeechLiveTranscript}
               />
               {sendButtonPrefix}
               {renderActionButtons()}

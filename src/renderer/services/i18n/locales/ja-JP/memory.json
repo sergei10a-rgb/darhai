@@ -258,7 +258,10 @@
       "streak_pill": "{{sessions}} セッション · 最長 {{longestDays}} 日連続",
       "streak_empty": "まだセッションがありません",
       "import_btn": "インポート…",
-      "settings_btn": "設定"
+      "settings_btn": "設定",
+      "archive": "アーカイブ",
+      "allProjects": "すべてのプロジェクト",
+      "add": "追加"
     },
     "stats": {
       "memories": "メモリ",
@@ -376,7 +379,13 @@
       "kbd_capture": "クイックキャプチャ",
       "kbd_search": "検索",
       "kbd_close": "インスペクターを閉じる",
-      "spend_today": "本日 ${{usd}}"
+      "spend_today": "本日 ${{usd}}",
+      "dropFolder": {
+        "open": "Finder でフォルダーを開く",
+        "today": "今日 {{count}}",
+        "today_one": "今日 {{count}}",
+        "today_other": "今日 {{count}}"
+      }
     },
     "threshold_modal": {
       "title": "自動プロモートを調整",
@@ -414,12 +423,13 @@
         "idle": "待機中"
       },
       "claudeMem": {
-        "title": "claude-mem",
-        "hint": "クリックして ~/.claude-mem/claude-mem.db からインポート",
+        "title": "Claude",
+        "hint": "Claude Code のメモリ（~/.claude/projects）と claude-mem からインポート",
         "count": "約 {{count}} 件のエントリをインポートしました",
         "btn": "インポート",
         "success": "{{count}} 件のエントリをインポートしました · {{errors}} 件のエラー",
-        "error": "インポートに失敗しました。もう一度お試しください。"
+        "error": "インポートに失敗しました。もう一度お試しください。",
+        "cardTitle": "claude-mem をインポート"
       },
       "obsidian": {
         "title": "Obsidian ボールト",
@@ -427,15 +437,28 @@
         "count": "約 {{count}} 件のエントリをインポートしました",
         "btn": "インポート",
         "success": "{{count}} 件のエントリをインポートしました · {{errors}} 件のエラー",
-        "error": "Obsidian のインポートに失敗しました。もう一度お試しください。"
+        "error": "Obsidian のインポートに失敗しました。もう一度お試しください。",
+        "scanBtn": "Vault をスキャン",
+        "noVaults": "Obsidian の Vault が見つかりません。「フォルダを選択…」をご利用ください",
+        "scanError": "Vault のスキャンに失敗しました。もう一度お試しください。",
+        "chooseFolderBtn": "フォルダを選択…",
+        "capped": "{{total}} 件のノートのうち最新の {{count}} 件をインポートしました",
+        "capped_one": "{{total}} 件のノートのうち最新の {{count}} 件をインポートしました",
+        "capped_other": "{{total}} 件のノートのうち最新の {{count}} 件をインポートしました",
+        "previewInfo": "{{count}} 件のノート · {{size}} — 「インポート」を押して確定",
+        "previewInfo_one": "{{count}} 件のノート · {{size}} — 「インポート」を押して確定",
+        "previewInfo_other": "{{count}} 件のノート · {{size}} — 「インポート」を押して確定",
+        "progress": "インポート中… {{done}} / {{total}}",
+        "cardTitle": "Obsidian ボールトをインポート"
       },
       "devScan": {
-        "title": "~/dev スキャン",
-        "hint": "~/dev をスキャンして既存のメモリディレクトリを検索します",
+        "title": "開発プロジェクト",
+        "hint": "一般的な開発フォルダから IJFW プロジェクトを検索します",
         "count": "約 {{count}} 件のエントリをインポートしました",
         "btn": "インポート",
         "success": "{{projects}} 件のプロジェクトから {{count}} 件のエントリをインポートしました",
-        "error": "Dev スキャンのインポートに失敗しました。もう一度お試しください。"
+        "error": "Dev スキャンのインポートに失敗しました。もう一度お試しください。",
+        "cardTitle": "~/dev をスキャン"
       },
       "dropFolder": {
         "title": "ドロップフォルダ",
@@ -444,8 +467,10 @@
         "openBtn": "フォルダを開く",
         "processBtn": "今すぐ処理",
         "success": "{{count}} 件のファイルを処理しました · {{errors}} 件のエラー",
-        "error": "処理に失敗しました。もう一度お試しください。"
-      }
+        "error": "処理に失敗しました。もう一度お試しください。",
+        "cardTitle": "ドロップフォルダーを監視"
+      },
+      "detectedEntries": "約 {{n}} 件のエントリを検出"
     },
     "regionLabel": "メモリーアーカイブ",
     "composer": {
@@ -463,6 +488,120 @@
       "hint": "で記憶",
       "submit": "記憶する",
       "charCount": "{{count}}文字"
+    },
+    "drawer": {
+      "edit": "編集",
+      "delete": "削除",
+      "close": "パネルを閉じる",
+      "usedNTimes": "今週 {{count}} 回使用",
+      "usedNTimes_one": "今週 {{count}} 回使用",
+      "usedNTimes_other": "今週 {{count}} 回使用",
+      "alreadyPromoted": "昇格済み ✓",
+      "promote": "↑ ウィキに昇格",
+      "openFile": "ファイルを開く",
+      "copy": "コピー",
+      "promotionScore": "昇格スコア",
+      "autoPromotesAt": "{{n}} で自動昇格",
+      "scoreFormula": "スコアの計算式",
+      "why": "理由",
+      "noWhy": "「理由」の記録なし",
+      "summary": "要約",
+      "howToApply": "適用方法",
+      "noHowTo": "「適用方法」の記録なし",
+      "usedInWild": "実際の使用",
+      "usedNTimesWeek": "今週 {{count}} 回使用",
+      "usedNTimesWeek_one": "今週 {{count}} 回使用",
+      "usedNTimesWeek_other": "今週 {{count}} 回使用",
+      "line": "行",
+      "tags": "タグ"
+    },
+    "editor": {
+      "title": "メモリを編集",
+      "save": "保存",
+      "cancel": "キャンセル",
+      "summaryLabel": "要約",
+      "typeLabel": "種類",
+      "tagsLabel": "タグ",
+      "bodyLabel": "本文",
+      "toastSaved": "メモリを更新しました",
+      "toastError": "メモリを更新できませんでした",
+      "toastCollision": "この要約は別のメモリで既に使われています。別の要約を選んでください。",
+      "bodySeparatorWarn": "本文に \"---\" だけの行が含まれています。このファイル形式ではその行が新しいエントリの開始と解釈され、次のエントリを壊してしまいます。保存するにはその行を削除してください。",
+      "toastBodySeparator": "保存されませんでした: 本文に \"---\" だけの行があり、このファイルの次のエントリを壊すおそれがあります。その行を削除して再試行してください。"
+    },
+    "delete": {
+      "confirmTitle": "このメモリを削除しますか？",
+      "confirmContent": "エントリはメモリファイルから完全に削除されます。アプリから元に戻すことはできません。",
+      "confirmOk": "削除",
+      "confirmCancel": "キャンセル",
+      "toastDeleted": "メモリを削除しました",
+      "toastError": "メモリを削除できませんでした"
+    },
+    "toast": {
+      "promoted": "ウィキに昇格しました",
+      "pathCopied": "パスをコピーしました",
+      "copied": "コピーしました"
+    },
+    "filter": {
+      "results": "件の結果",
+      "searchPlaceholder": "記憶を検索…（type:decision tag:design）",
+      "allTypes": "すべてのタイプ",
+      "typesSelected": "タイプ",
+      "clearAll": "すべてクリア",
+      "allProjects": "すべてのプロジェクト",
+      "searchProjects": "プロジェクトを検索…",
+      "noProjects": "プロジェクトが見つかりません",
+      "time": {
+        "all": "全期間",
+        "today": "今日",
+        "7d": "7日間",
+        "30d": "30日間",
+        "custom": "カスタム範囲…",
+        "from": "開始",
+        "to": "終了",
+        "apply": "適用"
+      }
+    },
+    "dragDrop": {
+      "toastIngested": "ファイルを取り込みました",
+      "toastNoFiles": "取り込まれたファイルはありません",
+      "toastError": "ドラッグ＆ドロップの取り込みに失敗しました"
+    },
+    "chip": {
+      "memories": "記憶",
+      "decisions": "決定",
+      "wiki": "ウィキ",
+      "thisWeek": "今週",
+      "viewAsFilter": "フィルターとして表示"
+    },
+    "type": {
+      "decision": "決定",
+      "pattern": "パターン",
+      "session": "セッション",
+      "observation": "観察",
+      "wiki": "ウィキ",
+      "preference": "好み"
+    },
+    "streak": {
+      "tooltip": "全プロジェクトにわたる連続記録",
+      "sessions": "セッション",
+      "dayStreak": " 日連続"
+    },
+    "empty": {
+      "search": "記憶を検索…（type:decision tag:design）",
+      "headline": "記憶は空です。埋めていきましょう。",
+      "subline": "下のソースからインポートするか、最初の記憶を追加してください。"
+    },
+    "status": {
+      "brainLive": "ブレイン稼働中",
+      "brainOffline": "ブレインオフライン",
+      "clis": "CLI",
+      "lastDream": "前回のドリーム {{ago}} · {{facts}} 件の事実を抽出 · {{promoted}} 件の候補がしきい値付近",
+      "kbd": {
+        "search": "検索",
+        "navigate": "移動",
+        "close": "閉じる"
+      }
     }
   }
 }

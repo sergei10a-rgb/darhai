@@ -534,6 +534,41 @@ export const mongolVoice = {
   onProgress: buildEmitter<import('../types/mongolVoice').MongolVoiceInstallProgress>('mongolVoice.on-progress'),
 };
 
+/**
+ * Live (streaming) Mongolian dictation over the audio.cpp `/live` SSE route
+ * (docs/architecture/mongolian-voice.md). The main process owns the chunked
+ * HTTP request and the SSE parsing (NemotronLive); the renderer only feeds
+ * PCM and renders text.
+ *
+ * Contract:
+ *   - `start` opens ONE session; a new start cancels the previous one.
+ *   - `chunk` feeds raw PCM 16 kHz mono s16le as number[].
+ *   - `onDelta` carries `{ text }` where text is the FULL accumulated partial
+ *     - the renderer REPLACES its display with it (deltas are merged in main,
+ *     exactly once; nothing is ever appended renderer-side).
+ *   - `stop` resolves `{ text }` - the final, glossfixed transcript.
+ *   - Failures reject with an Error whose message starts with a stable code
+ *     (NEMOTRON_MN_NOT_INSTALLED / NEMOTRON_MN_START_* from the server
+ *     lifecycle, NEMOTRON_MN_LIVE_* from the live session), the same
+ *     convention as speechToText.transcribe.
+ *
+ * Remote (paired-device WS) callers are NOT denied - deliberately matching
+ * speechToText.transcribe / voiceSynth.speak: the transcription surface is
+ * remote-allowed, only the install+exec surface (`mongolVoice.*`) is denied.
+ */
+export const sttLive = {
+  /** Open a live dictation session (cancels any previous one). */
+  start: buildProvider<void, void>('sttLive.start'),
+  /** Feed one raw PCM chunk (16 kHz mono s16le bytes as number[]). */
+  chunk: buildProvider<void, { data: number[] }>('sttLive.chunk'),
+  /** Finish the session; resolves the final glossfixed transcript. */
+  stop: buildProvider<{ text: string }, void>('sttLive.stop'),
+  /** Abort the session, discarding buffered audio. Safe when idle. */
+  cancel: buildProvider<void, void>('sttLive.cancel'),
+  /** FULL accumulated partial text (replace, never append, renderer-side). */
+  onDelta: buildEmitter<{ text: string }>('sttLive.on-delta'),
+};
+
 export const fileWatch = {
   startWatch: buildProvider<IBridgeResponse, { filePath: string }>('file-watch-start'), // Start watching file changes
   stopWatch: buildProvider<IBridgeResponse, { filePath: string }>('file-watch-stop'), // Stop watching file changes
@@ -1646,13 +1681,7 @@ export interface IConversationTurnCompletedEvent {
   sessionId: string;
   status: 'pending' | 'running' | 'finished';
   state:
-    | 'ai_generating'
-    | 'ai_waiting_input'
-    | 'ai_waiting_confirmation'
-    | 'initializing'
-    | 'stopped'
-    | 'error'
-    | 'unknown';
+    'ai_generating' | 'ai_waiting_input' | 'ai_waiting_confirmation' | 'initializing' | 'stopped' | 'error' | 'unknown';
   detail: string;
   canSendMessage: boolean;
   runtime: {
@@ -2142,8 +2171,7 @@ export const omnirouteGateway = {
 export type IjfwDropEntry = { name: string; size: number; mtimeMs: number };
 
 export type IjfwDropIngestResult =
-  | { ok: true; name: string }
-  | { ok: false; error: string; errorReason: IjfwErrorReason };
+  { ok: true; name: string } | { ok: false; error: string; errorReason: IjfwErrorReason };
 
 // --- Models & Providers redesign (Wave 0 contract) ------------------------
 // New two-tier model registry. Distinct from the legacy `providers` namespace
@@ -2962,6 +2990,28 @@ export const cost = {
   >('cost.setMntRateSettings'),
   /** The stored rate settings, for the Settings page. */
   mntRateSettings: buildProvider<{ auto: boolean; manualMntPerUsd?: number }, void>('cost.mntRateSettings'),
+  // --- Cost circuit-breaker (session/day spend cap). Both notices are
+  //     main -> renderer pushes from CostCircuitBreaker; remote-denied with the
+  //     rest of cost.* since they disclose spend.
+  /** One-time-per-period early warning at 80% of the configured cap. */
+  circuitBreakerWarning:
+    buildEmitter<import('@process/services/cost/CostCircuitBreaker').CircuitBreakerNotice>(
+      'cost.circuitBreakerWarning'
+    ),
+  /** The cap was reached: running agents were stopped. */
+  circuitBreakerTripped:
+    buildEmitter<import('@process/services/cost/CostCircuitBreaker').CircuitBreakerTrip>('cost.circuitBreakerTripped'),
+};
+
+// ==================== Doctor (diagnostics) ====================
+// One-shot health-check battery over Darhai's subsystems (bun runtime, builtin
+// MCP, llama.cpp receipt, Mongolian voice, ffmpeg, OmniRoute, memory index,
+// disk space). Ported from the upstream doctor registry/runner (e4324b592).
+// Remote-denied by the `doctor.` prefix in bridgeAllowlist.ts: the report
+// discloses local install/connectivity posture a paired device has no use for.
+export const doctor = {
+  /** Run every registered check and return the aggregated report. */
+  run: buildProvider<import('@process/doctor/types').DoctorReport, void>('doctor.run'),
 };
 
 // ==================== Memory Archive (v0.6.4) ====================
@@ -3015,6 +3065,13 @@ export const memory = {
   setAutoExtractEnabled: buildProvider<void, { enabled: boolean }>('memory.set-auto-extract-enabled'),
   /** Undo a recent promotion within the 24h grace window (added W3). */
   undoPromotion: buildProvider<{ ok: boolean; error?: string }, { id: string }>('memory.undo-promotion'),
+  /** Edit one memory entry in place (#414); returns the new id if the summary changed. Remote-denied. */
+  updateEntry: buildProvider<
+    { ok: boolean; error?: string; newId?: string },
+    { id: string; summary?: string; type?: string; tags?: string[]; body?: string }
+  >('memory.update-entry'),
+  /** Hard-delete one memory entry from its source file (#414). Remote-denied. */
+  deleteEntry: buildProvider<{ ok: boolean; error?: string }, { id: string }>('memory.delete-entry'),
   /** Trigger an immediate promotion sweep (added W3). */
   forceSweep: buildProvider<void, void>('memory.force-sweep'),
   /** Read a windowed slice of a source file centred on `line` for inline display. */
@@ -3035,6 +3092,12 @@ export const memory = {
     obsidianDetectVaults: buildProvider<{ vaults: { path: string; mdCount: number }[] }, void>(
       'memory.import.obsidian-detect-vaults'
     ),
+    /** Preview a vault before import: note count + total byte size (no reads of note bodies). */
+    obsidianPreview: buildProvider<{ ok: boolean; mdCount: number; totalBytes: number }, { vaultPath: string }>(
+      'memory.import.obsidian-preview'
+    ),
+    /** Fired while an Obsidian vault import runs: processed/total counters. */
+    obsidianProgress: buildEmitter<{ done: number; total: number }>('memory.import.obsidian-progress'),
     scanDevDir: buildProvider<{ count: number; projectsFound: number; errors: string[] }, void>(
       'memory.import.scan-dev-dir'
     ),

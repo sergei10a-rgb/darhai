@@ -115,6 +115,24 @@
       "auto": "Atualizar a taxa diariamente",
       "manual": "Sua taxa",
       "manualHint": "Uma taxa informada aqui substitui a obtida. Deixe vazio para voltar à automática."
+    },
+    "circuitBreaker": {
+      "title": "Disjuntor de gastos",
+      "hint": "Quando o gasto atinge o limite, os agentes em execução são interrompidos. Você recebe um aviso aos 80%.",
+      "enable": "Ativar",
+      "limit": "Limite",
+      "currencyMnt": "₮ MNT",
+      "currencyUsd": "$ USD",
+      "periodDay": "Por dia",
+      "periodSession": "Por sessão",
+      "warnTitle": "Gasto próximo do limite",
+      "warnBody": "{{spent}} do seu limite de {{limit}} já foi gasto (80%+).",
+      "tripTitle": "Limite de gastos atingido - agentes interrompidos",
+      "tripBody": "O gasto chegou a {{spent}} contra seu limite de {{limit}}; {{stopped}} agente(s) em execução foram interrompidos. Aumente ou desative o limite em Mission Control → Custo para continuar.",
+      "tripBodyNoAgents": "O gasto chegou a {{spent}} contra seu limite de {{limit}}. Nenhum agente estava em execução naquele momento; qualquer nova execução será interrompida após seu próximo turno registrado. Aumente ou desative o limite em Mission Control → Custo para continuar.",
+      "rateMissingTitle": "Limite de gastos temporariamente inativo - sem taxa de câmbio",
+      "rateMissingBody": "Seu limite está em tögrög ({{limit}}₮), mas a taxa de câmbio do MNT ainda não foi obtida, então o limite está temporariamente SEM efeito. Mude o limite para USD ou aguarde a taxa carregar.",
+      "reactiveNote": "O limite é verificado depois que o custo de cada turno é registrado (reativo): um turno já em andamento termina antes de a parada valer."
     }
   },
   "goals": {

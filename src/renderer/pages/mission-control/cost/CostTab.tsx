@@ -14,6 +14,7 @@ import { Button, Radio } from '@arco-design/web-react';
 import { RefreshCw } from 'lucide-react';
 import { formatTokenCount, formatSpend } from '@renderer/utils/format/tokens';
 import { useMntRate } from '@renderer/hooks/cost/useMntRate';
+import { CircuitBreakerPanel } from './CircuitBreakerPanel';
 import { MntRatePanel } from './MntRatePanel';
 import { type CostPeriod } from './costChart';
 import { useCostAnalytics } from './useCostAnalytics';
@@ -59,6 +60,8 @@ export const CostTab: React.FC = () => {
       </div>
 
       <MntRatePanel />
+
+      <CircuitBreakerPanel />
 
       <div className={styles.cards}>
         <SummaryCard

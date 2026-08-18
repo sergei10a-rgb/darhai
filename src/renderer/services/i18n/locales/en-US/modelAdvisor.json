@@ -74,6 +74,7 @@
     "serve": "Serve",
     "stop": "Stop",
     "cancel": "Cancel",
+    "cancelCalibration": "Cancel tuning",
     "retry": "Retry",
     "copyCommand": "Copy command",
     "locate": "Locate binary",
@@ -126,6 +127,7 @@
       "cuda": "It will use your NVIDIA graphics card, so models answer quickly.",
       "rocm": "It will use your AMD graphics card, so models answer quickly.",
       "metal": "It will use this Mac's graphics chip, so models answer quickly.",
+      "vulkan": "It will use this computer's graphics card through Vulkan, so models answer quickly.",
       "cpu": "It will run on the processor. That works, but answers come much more slowly than with a graphics card."
     },
     "fallback": {

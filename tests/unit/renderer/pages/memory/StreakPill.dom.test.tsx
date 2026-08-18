@@ -16,7 +16,13 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string, fallback: string) => fallback ?? key,
+    t: (key: string, opts?: unknown) => {
+      if (typeof opts === 'string') return opts;
+      if (opts && typeof opts === 'object' && 'defaultValue' in (opts as Record<string, unknown>)) {
+        return String((opts as { defaultValue: unknown }).defaultValue);
+      }
+      return key;
+    },
   }),
 }));
 

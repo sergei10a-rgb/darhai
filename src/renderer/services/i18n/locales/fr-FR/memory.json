@@ -258,7 +258,10 @@
       "streak_pill": "{{sessions}} sessions · {{longestDays}} j de série la plus longue",
       "streak_empty": "Aucune session pour l'instant",
       "import_btn": "Importer…",
-      "settings_btn": "Paramètres"
+      "settings_btn": "Paramètres",
+      "archive": "Archive",
+      "allProjects": "Tous les projets",
+      "add": "Ajouter"
     },
     "stats": {
       "memories": "Mémoires",
@@ -376,7 +379,14 @@
       "kbd_capture": "capture rapide",
       "kbd_search": "rechercher",
       "kbd_close": "fermer l'inspecteur",
-      "spend_today": "{{usd}} $ aujourd'hui"
+      "spend_today": "{{usd}} $ aujourd'hui",
+      "dropFolder": {
+        "open": "Ouvrir le dossier dans le Finder",
+        "today": "{{count}} aujourd'hui",
+        "today_one": "{{count}} aujourd'hui",
+        "today_many": "{{count}} aujourd'hui",
+        "today_other": "{{count}} aujourd'hui"
+      }
     },
     "threshold_modal": {
       "title": "Régler la promotion automatique",
@@ -414,12 +424,13 @@
         "idle": "inactif"
       },
       "claudeMem": {
-        "title": "claude-mem",
-        "hint": "Cliquez pour importer depuis ~/.claude-mem/claude-mem.db",
+        "title": "Claude",
+        "hint": "Importe depuis la mémoire de Claude Code (~/.claude/projects) et claude-mem",
         "count": "~{{count}} entrées importées",
         "btn": "Importer",
         "success": "{{count}} entrées importées · {{errors}} erreurs",
-        "error": "L'import a échoué. Réessayez."
+        "error": "L'import a échoué. Réessayez.",
+        "cardTitle": "Importer claude-mem"
       },
       "obsidian": {
         "title": "Coffre Obsidian",
@@ -427,15 +438,30 @@
         "count": "~{{count}} entrées importées",
         "btn": "Importer",
         "success": "{{count}} entrées importées · {{errors}} erreurs",
-        "error": "L'import Obsidian a échoué. Réessayez."
+        "error": "L'import Obsidian a échoué. Réessayez.",
+        "scanBtn": "Rechercher des vaults",
+        "noVaults": "Aucun vault Obsidian trouvé — utilisez « Choisir un dossier… »",
+        "scanError": "Échec de la recherche. Réessayez.",
+        "chooseFolderBtn": "Choisir un dossier…",
+        "capped": "Importation des {{count}} notes les plus récentes sur {{total}}",
+        "capped_one": "Importation de la note la plus récente sur {{total}}",
+        "capped_many": "Importation des {{count}} notes les plus récentes sur {{total}}",
+        "capped_other": "Importation des {{count}} notes les plus récentes sur {{total}}",
+        "previewInfo": "{{count}} notes · {{size}} — appuyez sur Importer pour confirmer",
+        "previewInfo_one": "{{count}} note · {{size}} — appuyez sur Importer pour confirmer",
+        "previewInfo_many": "{{count}} notes · {{size}} — appuyez sur Importer pour confirmer",
+        "previewInfo_other": "{{count}} notes · {{size}} — appuyez sur Importer pour confirmer",
+        "progress": "Importation… {{done}} / {{total}}",
+        "cardTitle": "Importer un vault Obsidian"
       },
       "devScan": {
-        "title": "Analyse de ~/dev",
-        "hint": "Analyse ~/dev à la recherche de répertoires de mémoire existants",
+        "title": "Projets de dev",
+        "hint": "Recherche des projets IJFW dans les dossiers de développement courants",
         "count": "~{{count}} entrées importées",
         "btn": "Importer",
         "success": "{{count}} entrées importées depuis {{projects}} projets",
-        "error": "L'analyse de dev a échoué. Réessayez."
+        "error": "L'analyse de dev a échoué. Réessayez.",
+        "cardTitle": "Analyser ~/dev"
       },
       "dropFolder": {
         "title": "Dossier de dépôt",
@@ -444,8 +470,10 @@
         "openBtn": "Ouvrir le dossier",
         "processBtn": "Traiter maintenant",
         "success": "{{count}} fichiers traités · {{errors}} erreurs",
-        "error": "Le traitement a échoué. Réessayez."
-      }
+        "error": "Le traitement a échoué. Réessayez.",
+        "cardTitle": "Surveiller le dossier de dépôt"
+      },
+      "detectedEntries": "~{{n}} entrées détectées"
     },
     "regionLabel": "Archive de mémoire",
     "composer": {
@@ -463,6 +491,122 @@
       "hint": "pour mémoriser",
       "submit": "Mémoriser",
       "charCount": "{{count}} caractères"
+    },
+    "drawer": {
+      "edit": "Modifier",
+      "delete": "Supprimer",
+      "close": "Fermer le panneau",
+      "usedNTimes": "Utilisé {{count}}× cette semaine",
+      "usedNTimes_one": "Utilisé {{count}}× cette semaine",
+      "usedNTimes_many": "Utilisé {{count}}× cette semaine",
+      "usedNTimes_other": "Utilisé {{count}}× cette semaine",
+      "alreadyPromoted": "Déjà promu ✓",
+      "promote": "↑ Promouvoir vers le Wiki",
+      "openFile": "Ouvrir le fichier",
+      "copy": "Copier",
+      "promotionScore": "Score de promotion",
+      "autoPromotesAt": "promotion automatique à {{n}}",
+      "scoreFormula": "Formule du score",
+      "why": "Pourquoi",
+      "noWhy": "Aucune note « Pourquoi »",
+      "summary": "Résumé",
+      "howToApply": "Comment appliquer",
+      "noHowTo": "Aucune note « Comment appliquer »",
+      "usedInWild": "Utilisation réelle",
+      "usedNTimesWeek": "Utilisé {{count}}× cette semaine",
+      "usedNTimesWeek_one": "Utilisé {{count}}× cette semaine",
+      "usedNTimesWeek_many": "Utilisé {{count}}× cette semaine",
+      "usedNTimesWeek_other": "Utilisé {{count}}× cette semaine",
+      "line": "ligne",
+      "tags": "Étiquettes"
+    },
+    "editor": {
+      "title": "Modifier la mémoire",
+      "save": "Enregistrer",
+      "cancel": "Annuler",
+      "summaryLabel": "Résumé",
+      "typeLabel": "Type",
+      "tagsLabel": "Étiquettes",
+      "bodyLabel": "Contenu",
+      "toastSaved": "Mémoire mise à jour",
+      "toastError": "Impossible de mettre à jour la mémoire",
+      "toastCollision": "Une autre mémoire utilise déjà ce résumé. Choisissez-en un autre.",
+      "bodySeparatorWarn": "Le contenu comporte une ligne composée uniquement de \"---\". Le format de ce fichier lit cette ligne comme le début d’une nouvelle entrée, ce qui corromprait la suivante ; supprimez-la pour enregistrer.",
+      "toastBodySeparator": "Non enregistré : le contenu contient une ligne composée uniquement de \"---\", ce qui corromprait l’entrée suivante du fichier. Supprimez-la et réessayez."
+    },
+    "delete": {
+      "confirmTitle": "Supprimer cette mémoire ?",
+      "confirmContent": "Cette action supprime définitivement l'entrée de son fichier de mémoire. Impossible à annuler depuis l'application.",
+      "confirmOk": "Supprimer",
+      "confirmCancel": "Annuler",
+      "toastDeleted": "Mémoire supprimée",
+      "toastError": "Impossible de supprimer la mémoire"
+    },
+    "toast": {
+      "promoted": "Promu vers le wiki",
+      "pathCopied": "Chemin copié",
+      "copied": "Copié"
+    },
+    "filter": {
+      "results": "résultats",
+      "searchPlaceholder": "Rechercher des souvenirs… (type:decision tag:design)",
+      "allTypes": "Tous les types",
+      "typesSelected": "types",
+      "clearAll": "Tout effacer",
+      "allProjects": "Tous les projets",
+      "searchProjects": "Rechercher des projets…",
+      "noProjects": "Aucun projet trouvé",
+      "time": {
+        "all": "Toute la période",
+        "today": "Aujourd'hui",
+        "7d": "7 jours",
+        "30d": "30 jours",
+        "custom": "Plage personnalisée…",
+        "from": "Du",
+        "to": "Au",
+        "apply": "Appliquer"
+      }
+    },
+    "dragDrop": {
+      "toastIngested": "Fichiers importés",
+      "toastNoFiles": "Aucun fichier importé",
+      "toastError": "Échec de l'import par glisser-déposer"
+    },
+    "chip": {
+      "memories": "Souvenirs",
+      "decisions": "Décisions",
+      "wiki": "Wiki",
+      "thisWeek": "cette semaine",
+      "viewAsFilter": "Voir comme filtre"
+    },
+    "type": {
+      "decision": "Décision",
+      "pattern": "Modèle",
+      "session": "Session",
+      "observation": "Observation",
+      "wiki": "Wiki",
+      "preference": "Préférence"
+    },
+    "streak": {
+      "tooltip": "Série sur tous les projets",
+      "sessions": "sessions",
+      "dayStreak": " jours d'affilée"
+    },
+    "empty": {
+      "search": "Rechercher des souvenirs… (type:decision tag:design)",
+      "headline": "Votre mémoire est vide. Remédions-y.",
+      "subline": "Importez depuis une source ci-dessous ou ajoutez votre premier souvenir."
+    },
+    "status": {
+      "brainLive": "Cerveau actif",
+      "brainOffline": "Cerveau hors ligne",
+      "clis": "CLI",
+      "lastDream": "Dernier rêve {{ago}} · {{facts}} faits extraits · {{promoted}} candidats proches du seuil",
+      "kbd": {
+        "search": "rechercher",
+        "navigate": "naviguer",
+        "close": "fermer"
+      }
     }
   }
 }

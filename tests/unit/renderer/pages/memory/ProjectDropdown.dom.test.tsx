@@ -17,7 +17,13 @@ import type { ProjectSummary } from '@/common/types/memory';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, fallback: string) => fallback ?? _key,
+    t: (key: string, opts?: unknown) => {
+      if (typeof opts === 'string') return opts;
+      if (opts && typeof opts === 'object' && 'defaultValue' in (opts as Record<string, unknown>)) {
+        return String((opts as { defaultValue: unknown }).defaultValue);
+      }
+      return key;
+    },
   }),
 }));
 

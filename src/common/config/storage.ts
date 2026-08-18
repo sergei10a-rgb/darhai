@@ -304,6 +304,20 @@ export interface IConfigStorageRefer {
     /** Last successful fetch. `asOf` is epoch ms. */
     fetched?: { mntPerUsd: number; asOf: number };
   };
+  /**
+   * Cost circuit-breaker: a session/daily spend cap that STOPS running agents
+   * when reached (with a one-time early warning at 80%). Read by the main
+   * process on every recorded turn; normalized defensively there
+   * (normalizeCircuitBreakerSettings), so a partially-written value can never
+   * arm a broken kill switch.
+   */
+  'cost.circuitBreaker'?: {
+    enabled: boolean;
+    /** Cap in `currency` units. Must be > 0 to be enforceable. */
+    limitAmount: number;
+    currency: 'MNT' | 'USD';
+    period: 'session' | 'day';
+  };
   // Per-category notification preferences (master switch lives in system.notificationEnabled via systemSettingsBridge)
   'notifications.agentFinished'?: boolean;
   'notifications.agentError'?: boolean;
@@ -886,7 +900,10 @@ export interface IMcpServerTransportStreamableHTTP {
 }
 
 export type IMcpServerTransport =
-  IMcpServerTransportStdio | IMcpServerTransportSSE | IMcpServerTransportHTTP | IMcpServerTransportStreamableHTTP;
+  | IMcpServerTransportStdio
+  | IMcpServerTransportSSE
+  | IMcpServerTransportHTTP
+  | IMcpServerTransportStreamableHTTP;
 
 /**
  * MCP server provenance. Used by the MCP Library UI to group servers into

@@ -92,6 +92,13 @@ export type LlamaRuntimeDeps = {
    */
   gpuDriverVersion: () => Promise<string | null>;
   /**
+   * Detected GPU name from the same hardware scan, or null when none was seen.
+   * On Windows an AMD/Intel GPU machine is typed `cpu_x86` by hwfit, so the
+   * name is the only signal that lets the planner offer the Vulkan build
+   * instead of the CPU one.
+   */
+  gpuName: () => Promise<string | null>;
+  /**
    * Target platform/arch, passed EXPLICITLY on every call rather than left to
    * each layer's own `process.*` default. The plan the user is shown, the
    * re-plan after the CUDA probe and the install must all describe the same
@@ -152,9 +159,7 @@ const DISCLOSURE_TTL_MS = 24 * 60 * 60 * 1000;
 
 /** What {@link LlamaRuntimeController.resolve} established about a would-be install. */
 type Resolved =
-  | ResolvedOk
-  | { kind: 'unsupported'; reason: string }
-  | { kind: 'unavailable'; errorCode: string; message: string };
+  ResolvedOk | { kind: 'unsupported'; reason: string } | { kind: 'unavailable'; errorCode: string; message: string };
 
 /** Fallback identifier when a thrown value carries no `code` of its own. */
 const UNKNOWN_ERROR_CODE = 'LLAMACPP_UNKNOWN';
@@ -459,15 +464,18 @@ export class LlamaRuntimeController {
     const userDataDir = this.deps.userDataDir();
     let backend: HwfitBackend;
     let driverVersion: string | null;
+    let gpuName: string | null;
     let first: { release: LlamaRelease; plan: LlamaAssetPlanResult };
     try {
       backend = await this.deps.hwBackend();
       driverVersion = await this.deps.gpuDriverVersion();
+      gpuName = await this.deps.gpuName();
       first = await this.deps.provisioner.plan({
         userDataDir,
         backend,
         platform: this.deps.platform(),
         arch: this.deps.arch(),
+        gpuName,
       });
     } catch (err) {
       return { kind: 'unavailable', errorCode: errorCodeOf(err), message: errorMessageOf(err) };
@@ -483,6 +491,7 @@ export class LlamaRuntimeController {
         tag: first.release.tag,
         availableAssets,
         driverVersion,
+        gpuName,
         ...extra,
       });
 
@@ -543,6 +552,9 @@ function productionController(): LlamaRuntimeController {
     // in-flight callers, so this reads the driver off the profile the backend
     // decision just came from.
     gpuDriverVersion: async () => (await scanHardware(false)).gpuDriverVersion || null,
+    // Same cached scan again: the WMI fallback names the AMD/Intel card even
+    // when the backend it reports is cpu_x86, and that name is the Vulkan gate.
+    gpuName: async () => (await scanHardware(false)).gpuName || null,
     platform: () => process.platform,
     arch: () => process.arch,
     provisioner: new LlamaCppProvisioner(),

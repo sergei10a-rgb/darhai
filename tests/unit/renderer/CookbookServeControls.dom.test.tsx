@@ -429,13 +429,11 @@ describe('the CPU build is disclosed BEFORE the download', () => {
 
   it('renders every note the plan carries, not just the fallback', async () => {
     const runtime = makeRuntime({
-      fetchPlan: vi.fn(
-        async (): Promise<LlamaRuntimePlan> => ({
-          ...CPU_PLAN,
-          fallbackCode: null,
-          noteCodes: ['VULKAN_BUILD_NOT_REQUESTABLE', 'CUDA_LINE_UNVERIFIED'],
-        })
-      ),
+      fetchPlan: vi.fn(async (): Promise<LlamaRuntimePlan> => ({
+        ...CPU_PLAN,
+        fallbackCode: null,
+        noteCodes: ['VULKAN_BUILD_NOT_REQUESTABLE', 'CUDA_LINE_UNVERIFIED'],
+      })),
     });
     renderCell(makeCookbook(), runtime);
     await userEvent.click(screen.getByRole('button', { name: en('modelAdvisor.cookbook.serve') }));
@@ -462,8 +460,9 @@ describe('the CPU build is disclosed BEFORE the download', () => {
       }),
     });
     const cookbook = makeCookbook({
-      refreshBackends: vi.fn(async () => {
+      refreshBackends: vi.fn(async (): Promise<CookbookBackendSelection> => {
         order.push('refresh');
+        return { chosen: 'none', viable: [], provisionable: ['llama-server'] };
       }),
       serve: vi.fn(async () => {
         order.push('serve');
@@ -608,6 +607,55 @@ describe('the two stages are labelled as themselves and both cancels work', () =
 
     await waitFor(() => expect(runtime.cancel).toHaveBeenCalled());
     expect(document.body.textContent).not.toContain(en('modelAdvisor.runtime.cancelNotYet'));
+  });
+});
+
+describe('the minutes-long calibration can be cancelled', () => {
+  it('offers a cancel during calibration, wired to stopServe', async () => {
+    // Main has carried this cancel path all along (`stopServe` bumps the stop
+    // epoch and aborts the bench child); the UI just never showed a button in
+    // the 'calibrating' state, so a 1-8 minute wait could only be sat out.
+    const stopServe = vi.fn(async () => undefined);
+    const cookbook = makeCookbook({
+      downloads: { [MODEL]: CACHED_GGUF },
+      serveStatus: { ...IDLE_SERVE, state: 'calibrating', modelId: MODEL, backend: 'llama-server' },
+      stopServe,
+    });
+    renderCell(cookbook, makeRuntime({ status: READY_RUNTIME }));
+
+    expect(document.body.textContent).toContain(en('modelAdvisor.cookbook.status.calibrating'));
+    await userEvent.click(screen.getByRole('button', { name: en('modelAdvisor.cookbook.cancelCalibration') }));
+    expect(stopServe).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns to Serve cleanly after the cancel, not to a failure block', async () => {
+    // `stopServe` resolves with main's IDLE/'stopped' status (modelId null),
+    // the hook writes it into serveStatus, and this row must offer Serve
+    // again - the user's own cancel is not a fault to report.
+    const stopServe = vi.fn(async () => undefined);
+    const Harness: React.FC = () => {
+      const [cancelled, setCancelled] = React.useState(false);
+      const cookbook = makeCookbook({
+        downloads: { [MODEL]: CACHED_GGUF },
+        serveStatus: cancelled
+          ? { ...IDLE_SERVE, state: 'stopped' }
+          : { ...IDLE_SERVE, state: 'calibrating', modelId: MODEL, backend: 'llama-server' },
+        stopServe: vi.fn(async () => {
+          await stopServe();
+          setCancelled(true);
+        }),
+      });
+      return (
+        <CookbookServeControls modelId={MODEL} controller={cookbook} runtime={makeRuntime({ status: READY_RUNTIME })} />
+      );
+    };
+    render(<Harness />);
+
+    await userEvent.click(screen.getByRole('button', { name: en('modelAdvisor.cookbook.cancelCalibration') }));
+
+    await waitFor(() => expect(screen.getByRole('button', { name: en('modelAdvisor.cookbook.serve') })).toBeTruthy());
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(document.body.textContent).not.toContain(en('modelAdvisor.cookbook.status.error'));
   });
 });
 
@@ -831,9 +879,10 @@ describe('a failure says what happened, in the user words', () => {
 describe('a machine with no build is told so, not left spinning', () => {
   it('renders the unsupported sentence, no progress bar, and never installs', async () => {
     const runtime = makeRuntime({
-      fetchPlan: vi.fn(
-        async (): Promise<LlamaRuntimePlan> => ({ kind: 'unsupported', reason: 'no asset for freebsd/x64' })
-      ),
+      fetchPlan: vi.fn(async (): Promise<LlamaRuntimePlan> => ({
+        kind: 'unsupported',
+        reason: 'no asset for freebsd/x64',
+      })),
     });
     renderCell(makeCookbook(), runtime);
 
@@ -848,9 +897,10 @@ describe('a machine with no build is told so, not left spinning', () => {
 
   it('offers a retry when the release list was merely unreachable', async () => {
     const runtime = makeRuntime({
-      fetchPlan: vi.fn(
-        async (): Promise<LlamaRuntimePlan> => ({ kind: 'unavailable', errorCode: 'LLAMACPP_RELEASE_FETCH_FAILED' })
-      ),
+      fetchPlan: vi.fn(async (): Promise<LlamaRuntimePlan> => ({
+        kind: 'unavailable',
+        errorCode: 'LLAMACPP_RELEASE_FETCH_FAILED',
+      })),
     });
     renderCell(makeCookbook(), runtime);
     await userEvent.click(screen.getByRole('button', { name: en('modelAdvisor.cookbook.serve') }));

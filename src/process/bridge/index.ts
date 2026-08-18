@@ -93,6 +93,7 @@ import { initDocumentBridge, initOfficeWatchBridge, initPptPreviewBridge, initPr
 import {
   initMongolVoiceBridge,
   initSpeechToTextBridge,
+  initSttLiveBridge,
   initVoiceAssetBridge,
   initVoiceSynthBridge,
 } from './media/voice';
@@ -163,6 +164,7 @@ export function initAllBridges(deps: BridgeDependencies): void {
   initTaskBridge(deps.workerTaskManager);
   initStarOfficeBridge();
   initSpeechToTextBridge();
+  initSttLiveBridge();
   initVoiceAssetBridge();
   initVoiceSynthBridge();
   initMongolVoiceBridge();
@@ -245,6 +247,7 @@ export {
   initShellBridge,
   initMongolVoiceBridge,
   initSpeechToTextBridge,
+  initSttLiveBridge,
   initVoiceAssetBridge,
   initVoiceSynthBridge,
   initSkillsBridge,

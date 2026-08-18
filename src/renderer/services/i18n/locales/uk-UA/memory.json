@@ -258,7 +258,10 @@
       "streak_pill": "{{sessions}} сесій · {{longestDays}} дн. макс. серія",
       "streak_empty": "Сесій ще немає",
       "import_btn": "Імпорт…",
-      "settings_btn": "Налаштування"
+      "settings_btn": "Налаштування",
+      "archive": "Архів",
+      "allProjects": "Усі проєкти",
+      "add": "Додати"
     },
     "stats": {
       "memories": "Записи",
@@ -376,7 +379,15 @@
       "kbd_capture": "швидкий захват",
       "kbd_search": "пошук",
       "kbd_close": "закрити інспектор",
-      "spend_today": "${{usd}} сьогодні"
+      "spend_today": "${{usd}} сьогодні",
+      "dropFolder": {
+        "open": "Відкрити теку у Finder",
+        "today": "{{count}} сьогодні",
+        "today_one": "{{count}} сьогодні",
+        "today_few": "{{count}} сьогодні",
+        "today_many": "{{count}} сьогодні",
+        "today_other": "{{count}} сьогодні"
+      }
     },
     "threshold_modal": {
       "title": "Налаштування автопідвищення",
@@ -414,12 +425,13 @@
         "idle": "очікування"
       },
       "claudeMem": {
-        "title": "claude-mem",
-        "hint": "Натисніть, щоб імпортувати з ~/.claude-mem/claude-mem.db",
+        "title": "Claude",
+        "hint": "Імпорт із пам'яті Claude Code (~/.claude/projects) та claude-mem",
         "count": "~{{count}} записів імпортовано",
         "btn": "Імпортувати",
         "success": "Імпортовано {{count}} записів · {{errors}} помилок",
-        "error": "Не вдалося імпортувати. Спробуйте ще раз."
+        "error": "Не вдалося імпортувати. Спробуйте ще раз.",
+        "cardTitle": "Імпорт claude-mem"
       },
       "obsidian": {
         "title": "Сховище Obsidian",
@@ -427,15 +439,32 @@
         "count": "~{{count}} записів імпортовано",
         "btn": "Імпортувати",
         "success": "Імпортовано {{count}} записів · {{errors}} помилок",
-        "error": "Не вдалося імпортувати з Obsidian. Спробуйте ще раз."
+        "error": "Не вдалося імпортувати з Obsidian. Спробуйте ще раз.",
+        "scanBtn": "Знайти сховища",
+        "noVaults": "Сховищ Obsidian не знайдено — скористайтеся «Вибрати теку…»",
+        "scanError": "Не вдалося виконати пошук. Спробуйте ще раз.",
+        "chooseFolderBtn": "Вибрати теку…",
+        "capped": "Імпортовано {{count}} найновіших із {{total}} нотаток",
+        "capped_one": "Імпортовано {{count}} найновішу з {{total}} нотаток",
+        "capped_few": "Імпортовано {{count}} найновіші з {{total}} нотаток",
+        "capped_many": "Імпортовано {{count}} найновіших із {{total}} нотаток",
+        "capped_other": "Імпортовано {{count}} найновіших із {{total}} нотаток",
+        "previewInfo": "{{count}} нотаток · {{size}} — натисніть «Імпорт» для підтвердження",
+        "previewInfo_one": "{{count}} нотатка · {{size}} — натисніть «Імпорт» для підтвердження",
+        "previewInfo_few": "{{count}} нотатки · {{size}} — натисніть «Імпорт» для підтвердження",
+        "previewInfo_many": "{{count}} нотаток · {{size}} — натисніть «Імпорт» для підтвердження",
+        "previewInfo_other": "{{count}} нотатки · {{size}} — натисніть «Імпорт» для підтвердження",
+        "progress": "Імпорт… {{done}} / {{total}}",
+        "cardTitle": "Імпорт сховища Obsidian"
       },
       "devScan": {
-        "title": "Сканування ~/dev",
-        "hint": "Сканує ~/dev на наявність наявних каталогів пам'яті",
+        "title": "Dev-проєкти",
+        "hint": "Шукає проєкти IJFW у типових теках розробки",
         "count": "~{{count}} записів імпортовано",
         "btn": "Імпортувати",
         "success": "Імпортовано {{count}} записів із {{projects}} проєктів",
-        "error": "Не вдалося імпортувати зі сканування dev. Спробуйте ще раз."
+        "error": "Не вдалося імпортувати зі сканування dev. Спробуйте ще раз.",
+        "cardTitle": "Сканувати ~/dev"
       },
       "dropFolder": {
         "title": "Тека для перетягування",
@@ -444,8 +473,10 @@
         "openBtn": "Відкрити теку",
         "processBtn": "Обробити зараз",
         "success": "Оброблено {{count}} файлів · {{errors}} помилок",
-        "error": "Не вдалося обробити. Спробуйте ще раз."
-      }
+        "error": "Не вдалося обробити. Спробуйте ще раз.",
+        "cardTitle": "Стежити за текою завантаження"
+      },
+      "detectedEntries": "Виявлено записів: ~{{n}}"
     },
     "regionLabel": "Архів пам’яті",
     "composer": {
@@ -463,6 +494,124 @@
       "hint": "щоб запам’ятати",
       "submit": "Запам’ятати",
       "charCount": "{{count}} символів"
+    },
+    "drawer": {
+      "edit": "Редагувати",
+      "delete": "Видалити",
+      "close": "Закрити панель",
+      "usedNTimes": "Використано {{count}}× цього тижня",
+      "usedNTimes_one": "Використано {{count}} раз цього тижня",
+      "usedNTimes_few": "Використано {{count}} рази цього тижня",
+      "usedNTimes_many": "Використано {{count}} разів цього тижня",
+      "usedNTimes_other": "Використано {{count}} разу цього тижня",
+      "alreadyPromoted": "Уже підвищено ✓",
+      "promote": "↑ Підвищити до вікі",
+      "openFile": "Відкрити файл",
+      "copy": "Копіювати",
+      "promotionScore": "Бал підвищення",
+      "autoPromotesAt": "автопідвищення при {{n}}",
+      "scoreFormula": "Формула балу",
+      "why": "Чому",
+      "noWhy": "Нотатка «Чому» відсутня",
+      "summary": "Підсумок",
+      "howToApply": "Як застосовувати",
+      "noHowTo": "Нотатка «Як застосовувати» відсутня",
+      "usedInWild": "Реальне використання",
+      "usedNTimesWeek": "Використано {{count}}× цього тижня",
+      "usedNTimesWeek_one": "Використано {{count}} раз цього тижня",
+      "usedNTimesWeek_few": "Використано {{count}} рази цього тижня",
+      "usedNTimesWeek_many": "Використано {{count}} разів цього тижня",
+      "usedNTimesWeek_other": "Використано {{count}} разу цього тижня",
+      "line": "рядок",
+      "tags": "Теги"
+    },
+    "editor": {
+      "title": "Редагувати запис",
+      "save": "Зберегти",
+      "cancel": "Скасувати",
+      "summaryLabel": "Підсумок",
+      "typeLabel": "Тип",
+      "tagsLabel": "Теги",
+      "bodyLabel": "Вміст",
+      "toastSaved": "Запис оновлено",
+      "toastError": "Не вдалося оновити запис",
+      "toastCollision": "Інший запис уже використовує цей підсумок. Виберіть інший.",
+      "bodySeparatorWarn": "У тексті є рядок, що складається лише з \"---\". Формат цього файлу читає такий рядок як початок нового запису, що пошкодить наступний запис - видаліть його, щоб зберегти.",
+      "toastBodySeparator": "Не збережено: у тексті є рядок лише з \"---\", який пошкодив би наступний запис файлу. Видаліть його та спробуйте ще раз."
+    },
+    "delete": {
+      "confirmTitle": "Видалити цей запис?",
+      "confirmContent": "Запис буде назавжди видалено з файлу пам'яті. Скасувати із застосунку неможливо.",
+      "confirmOk": "Видалити",
+      "confirmCancel": "Скасувати",
+      "toastDeleted": "Запис видалено",
+      "toastError": "Не вдалося видалити запис"
+    },
+    "toast": {
+      "promoted": "Підвищено до вікі",
+      "pathCopied": "Шлях скопійовано",
+      "copied": "Скопійовано"
+    },
+    "filter": {
+      "results": "результатів",
+      "searchPlaceholder": "Пошук спогадів… (type:decision tag:design)",
+      "allTypes": "Усі типи",
+      "typesSelected": "типів",
+      "clearAll": "Очистити все",
+      "allProjects": "Усі проєкти",
+      "searchProjects": "Пошук проєктів…",
+      "noProjects": "Проєктів не знайдено",
+      "time": {
+        "all": "За весь час",
+        "today": "Сьогодні",
+        "7d": "7 днів",
+        "30d": "30 днів",
+        "custom": "Власний діапазон…",
+        "from": "З",
+        "to": "По",
+        "apply": "Застосувати"
+      }
+    },
+    "dragDrop": {
+      "toastIngested": "Файли імпортовано",
+      "toastNoFiles": "Жодного файлу не імпортовано",
+      "toastError": "Помилка імпорту перетягуванням"
+    },
+    "chip": {
+      "memories": "Спогади",
+      "decisions": "Рішення",
+      "wiki": "Вікі",
+      "thisWeek": "цього тижня",
+      "viewAsFilter": "Показати як фільтр"
+    },
+    "type": {
+      "decision": "Рішення",
+      "pattern": "Патерн",
+      "session": "Сесія",
+      "observation": "Спостереження",
+      "wiki": "Вікі",
+      "preference": "Уподобання"
+    },
+    "streak": {
+      "tooltip": "Серія по всіх проєктах",
+      "sessions": "сесій",
+      "dayStreak": " днів поспіль"
+    },
+    "empty": {
+      "search": "Пошук спогадів… (type:decision tag:design)",
+      "headline": "Ваша пам'ять порожня. Виправмо це.",
+      "subline": "Імпортуйте з джерела нижче або додайте перший спогад."
+    },
+    "status": {
+      "brainLive": "Мозок активний",
+      "brainOffline": "Мозок офлайн",
+      "clis": "CLI",
+      "lastDream": "Останній сон {{ago}} · видобуто фактів: {{facts}} · кандидатів біля порогу: {{promoted}}",
+      "kbd": {
+        "search": "пошук",
+        "navigate": "навігація",
+        "close": "закрити"
+      }
     }
   }
 }

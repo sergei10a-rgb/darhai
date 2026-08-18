@@ -64,6 +64,7 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
+  min-width: 0;
   color: var(--color-text-3);
   background: none;
   border: none;
@@ -76,6 +77,15 @@
 
 .dropChip:hover {
   color: var(--color-text-1);
+}
+
+/* A vault path has unbounded length; without a cap it pushes the left
+   cluster under the right-side kbd hints at narrow widths. */
+.dropPath {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .dropBadge {

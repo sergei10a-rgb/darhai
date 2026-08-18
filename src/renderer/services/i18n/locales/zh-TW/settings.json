@@ -1892,7 +1892,8 @@
     "images": "圖片生成",
     "voice": "語音",
     "groupEngine": "ENGINE",
-    "ecc": "ECC 工具鏈"
+    "ecc": "ECC 工具鏈",
+    "doctor": "診斷"
   },
   "channelsIndex": {
     "title": "訊息渠道",
@@ -2817,5 +2818,100 @@
   "deferUpdateWhileBusy": "忙碌時延後更新",
   "deferUpdateWhileBusyDesc": "等待進行中的對話、排程任務和團隊完成後再重新啟動更新。更新仍會在閒置或結束時套用。",
   "textToSpeechTestPhraseKittenMn": "Сайн байна уу! Энэ бол монгол дуу хоолойн туршилт.",
-  "textToSpeechVoiceListAfterFirstSpeak": "語音清單將在首次播放後顯示——語音伺服器隨需啟動。"
+  "textToSpeechVoiceListAfterFirstSpeak": "語音清單將在首次播放後顯示——語音伺服器隨需啟動。",
+  "speechToTextPersonalDict": "個人詞典",
+  "speechToTextPersonalDictDescription": "修正辨識器在你的語音中經常聽錯的詞。每筆記錄只替換轉寫文字中的完整詞語，絕不會替換較長詞語的一部分。",
+  "speechToTextPersonalDictWrong": "誤辨識為",
+  "speechToTextPersonalDictRight": "替換為",
+  "speechToTextPersonalDictAdd": "新增",
+  "speechToTextPersonalDictRemove": "刪除",
+  "speechToTextPersonalDictEmpty": "尚無記錄。新增一組詞對來修正辨識器經常聽錯的詞。",
+  "doctor": {
+    "title": "診斷",
+    "subtitle": "對 Darhai 的各子系統進行健康檢查:執行環境、服務、本機模型、記憶與磁碟。",
+    "run": "執行診斷",
+    "running": "執行中…",
+    "runError": "診斷執行失敗:{{error}}",
+    "empty": "尚未執行過診斷。",
+    "counts": "{{pass}} 項通過 · {{warn}} 項警告 · {{fail}} 項失敗",
+    "remediationLabel": "修復:",
+    "overall": {
+      "pass": "一切正常",
+      "warn": "需要注意",
+      "fail": "發現問題"
+    },
+    "status": {
+      "pass": "正常",
+      "warn": "警告",
+      "fail": "失敗"
+    },
+    "category": {
+      "runtime": "執行環境",
+      "services": "服務",
+      "models": "本機模型",
+      "system": "系統"
+    },
+    "checks": {
+      "bun": {
+        "title": "Bun 執行環境",
+        "ok": "找到內建 bun:{{path}}",
+        "fallback": "找不到內建 bun;內建 MCP 伺服器將改用 node。",
+        "fallbackFix": "重新安裝 Darhai 以還原內建 bun 執行環境。",
+        "missing": "解析到的 bun 執行檔不存在:{{path}}",
+        "missingFix": "重新安裝 Darhai 以還原內建 bun 執行環境。"
+      },
+      "mcp": {
+        "title": "內建 MCP 伺服器",
+        "ok": "{{total}} 個內建 MCP 伺服器中有 {{enabled}} 個已啟用。",
+        "none": "沒有註冊任何內建 MCP 伺服器。",
+        "noneFix": "重新啟動 Darhai;內建伺服器會在啟動時註冊。",
+        "disabled": "全部 {{total}} 個內建 MCP 伺服器均已停用。",
+        "disabledFix": "在 設定 → MCP 程式庫 中啟用所需的伺服器。"
+      },
+      "llama": {
+        "title": "llama.cpp 執行環境",
+        "ok": "llama.cpp {{tag}} 已安裝並通過驗證。",
+        "none": "本機 llama.cpp 執行環境未安裝。",
+        "noneFix": "如需本機模型,請透過模型顧問安裝。",
+        "broken": "llama.cpp {{tag}} 安裝未通過驗證(缺少檔案或程式庫)。",
+        "brokenFix": "請透過模型顧問重新安裝執行環境。"
+      },
+      "voice": {
+        "title": "蒙古語語音",
+        "ok": "全部 {{total}} 個語音元件均已安裝。",
+        "partial": "{{total}} 個語音元件中已安裝 {{installed}} 個;缺少:{{missing}}。",
+        "partialFix": "在 設定 → 語音 中安裝缺少的元件。",
+        "unsupported": "此平台沒有可用的語音元件。"
+      },
+      "ffmpeg": {
+        "title": "ffmpeg",
+        "ok": "找到 ffmpeg:{{path}}",
+        "missing": "在 PATH 中找不到 ffmpeg;影片畫格與蒙古語語音前處理將無法運作。",
+        "missingFix": "請安裝 ffmpeg 並確認其在 PATH 中。"
+      },
+      "omniroute": {
+        "title": "OmniRoute 閘道",
+        "ok": "閘道正常回應;{{models}} 個模型可用。",
+        "stopped": "OmniRoute 閘道未在執行。",
+        "stoppedFix": "如果使用閘道模型,請在設定中啟動它。",
+        "unreachable": "本應用的閘道程序聲稱在執行,但連接埠無回應({{error}})。",
+        "unreachableFix": "請在設定中停止並重新啟動閘道。"
+      },
+      "memory": {
+        "title": "記憶索引",
+        "ok": "記憶索引健康:{{projects}} 個專案共 {{total}} 筆記錄。",
+        "empty": "記憶索引回報 0 筆記錄 - 它是空的或尚未載入。",
+        "emptyFix": "如果您已儲存過記憶，請開啟「記憶」頁面以觸發索引，然後重新執行診斷。"
+      },
+      "disk": {
+        "title": "磁碟空間",
+        "ok": "資料磁碟區剩餘 {{freeGb}} GB。",
+        "low": "僅剩 {{freeGb}} GB;模型下載將開始失敗。",
+        "lowFix": "請釋放磁碟空間或將大型資料移至其他磁碟區。",
+        "critical": "磁碟空間嚴重不足:剩餘 {{freeGb}} GB。",
+        "criticalFix": "請立即釋放空間,否則應用程式可能異常。",
+        "unknown": "無法判斷此系統的可用磁碟空間。"
+      }
+    }
+  }
 }

@@ -16,7 +16,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, fallback: string, _opts?: Record<string, unknown>) => fallback ?? _key,
+    t: (key: string, opts?: unknown) => {
+      if (typeof opts === 'string') return opts;
+      if (opts && typeof opts === 'object' && 'defaultValue' in (opts as Record<string, unknown>)) {
+        return String((opts as { defaultValue: unknown }).defaultValue);
+      }
+      return key;
+    },
   }),
 }));
 
@@ -39,17 +45,15 @@ vi.mock('@arco-design/web-react', async () => {
   const actual = await vi.importActual<Record<string, unknown>>('@arco-design/web-react');
   return {
     ...actual,
-    Input: ({ placeholder, onChange, 'data-testid': testId }: {
+    Input: ({
+      placeholder,
+      onChange,
+      'data-testid': testId,
+    }: {
       placeholder?: string;
       onChange?: (val: string) => void;
       'data-testid'?: string;
-    }) => (
-      <input
-        placeholder={placeholder}
-        data-testid={testId}
-        onChange={(e) => onChange?.(e.target.value)}
-      />
-    ),
+    }) => <input placeholder={placeholder} data-testid={testId} onChange={(e) => onChange?.(e.target.value)} />,
   };
 });
 
@@ -80,7 +84,7 @@ describe('EmptyStateHero', () => {
       render(<EmptyStateHero />);
     });
     const headline = screen.getByTestId('empty-hero-headline');
-    expect(headline.textContent).toContain("Your memory is empty");
+    expect(headline.textContent).toContain('Your memory is empty');
   });
 
   it('renders the search input', async () => {

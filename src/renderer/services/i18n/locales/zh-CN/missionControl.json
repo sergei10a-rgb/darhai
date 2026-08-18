@@ -115,6 +115,24 @@
       "auto": "每天自动更新汇率",
       "manual": "自定义汇率",
       "manualHint": "在此输入的汇率将覆盖自动获取的汇率。留空则恢复自动。"
+    },
+    "circuitBreaker": {
+      "title": "花费断路器",
+      "hint": "花费达到上限时,正在运行的代理将被停止。达到 80% 时会提前警告。",
+      "enable": "启用",
+      "limit": "上限",
+      "currencyMnt": "₮ 图格里克",
+      "currencyUsd": "$ 美元",
+      "periodDay": "每天",
+      "periodSession": "每会话",
+      "warnTitle": "花费接近上限",
+      "warnBody": "您 {{limit}} 上限中已花费 {{spent}}(超过 80%)。",
+      "tripTitle": "已达花费上限 - 代理已停止",
+      "tripBody": "花费达到 {{spent}},触及您的 {{limit}} 上限;已停止 {{stopped}} 个正在运行的代理。请在 任务控制 → 花费 中提高或关闭上限后继续。",
+      "tripBodyNoAgents": "花费达到 {{spent}}，触及您的 {{limit}} 上限。当时没有正在运行的代理；任何新的运行都会在其下一次计费回合后被停止。请在 任务控制 → 花费 中提高或关闭上限后继续。",
+      "rateMissingTitle": "消费上限暂时未生效 - 缺少汇率",
+      "rateMissingBody": "您的上限以图格里克设置（{{limit}}₮），但尚未获取 MNT 汇率，因此上限暂时不会生效。请将上限改为美元，或等待汇率加载。",
+      "reactiveNote": "上限在每个回合的花费记录之后检查（被动式）：已在进行中的回合会先完成，停止才会生效。"
     }
   },
   "goals": {

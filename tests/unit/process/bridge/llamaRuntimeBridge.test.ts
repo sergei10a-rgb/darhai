@@ -162,6 +162,8 @@ type HarnessOptions = {
   cudaPresent?: boolean;
   /** Measured NVIDIA driver version; null means the probe stated none. */
   driverVersion?: string | null;
+  /** Detected GPU name from the hardware scan; null means no GPU was seen. */
+  gpuName?: string | null;
   installedTags?: string[];
   /** Resolve `ensureInstalled` only when this is called. */
   gate?: { promise: Promise<void>; release: () => void };
@@ -189,6 +191,7 @@ function makeHarness(opts: HarnessOptions = {}): Harness {
     cudaRuntimePresent?: boolean;
     cudaVariant?: string;
     tag?: string;
+    gpuName?: string | null;
   };
 
   /**
@@ -212,6 +215,7 @@ function makeHarness(opts: HarnessOptions = {}): Harness {
         availableAssets: release.assets.map((a) => a.name),
         cudaRuntimePresent: request.cudaRuntimePresent,
         cudaVariant: request.cudaVariant,
+        gpuName: request.gpuName,
       }),
     };
   };
@@ -281,6 +285,7 @@ function makeHarness(opts: HarnessOptions = {}): Harness {
     // 610.62 is the driver measured on the reference RTX 4070 box, so the
     // default harness machine is the one the feature was measured on.
     gpuDriverVersion: async () => (opts.driverVersion === undefined ? '610.62' : opts.driverVersion),
+    gpuName: async () => (opts.gpuName === undefined ? null : opts.gpuName),
     platform: () => platform,
     arch: () => arch,
     provisioner: provisioner as unknown as LlamaProvisionerLike,
@@ -832,5 +837,27 @@ describe('LlamaRuntimeController.plan - the driver decides the CUDA line', () =>
     expect(shown.acceleration).toBe('cpu');
     expect(shown.fallbackCode).toBeNull();
     expect(shown.noteCodes).toContain('VULKAN_BUILD_NOT_REQUESTABLE');
+  });
+
+  it('discloses and installs the Vulkan build for a named non-NVIDIA GPU', async () => {
+    // The same cpu_x86 machine, but the hardware scan NAMED the AMD card: the
+    // GPU name is the one signal hwfit's backend union cannot carry, and it has
+    // to reach the planner for the Vulkan build to be chosen and installed.
+    const vulkanName = `llama-${TAG}-bin-win-vulkan-x64.zip`;
+    const release = twoCudaLinesRelease();
+    release.assets.push({ name: vulkanName, url: 'https://x/6', bytes: 34_580_767, sha256: 'f'.repeat(64) });
+    const { controller, installedAssets } = makeHarness({
+      backend: 'cpu_x86',
+      release,
+      gpuName: 'AMD Radeon RX 7800 XT',
+    });
+    const shown = await controller.plan();
+    expect(shown.kind).toBe('ok');
+    if (shown.kind !== 'ok') return;
+    expect(shown.acceleration).toBe('vulkan');
+    expect(shown.fallbackCode).toBeNull();
+    expect(shown.downloadBytes).toBe(34_580_767);
+    await controller.install();
+    expect(installedAssets).toEqual([vulkanName]);
   });
 });

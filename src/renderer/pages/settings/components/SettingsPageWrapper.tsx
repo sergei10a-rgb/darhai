@@ -1,4 +1,5 @@
 import {
+  Activity,
   BookOpen,
   Bot,
   Brain,
@@ -153,6 +154,12 @@ export function getBuiltinSettingsNavItems(isDesktop: boolean, t: TranslateFn): 
       label: t('settings.sider.ecc', { defaultValue: 'ECC harness' }),
       icon: <ShieldCheck size={16} />,
       path: 'ecc',
+    },
+    doctor: {
+      id: 'doctor',
+      label: t('settings.sider.doctor', { defaultValue: 'Diagnostics' }),
+      icon: <Activity size={16} />,
+      path: 'doctor',
     },
     about: { id: 'about', label: t('settings.about'), icon: <Info size={16} />, path: 'about' },
   };

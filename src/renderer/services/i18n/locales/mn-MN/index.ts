@@ -41,7 +41,6 @@ import workflows from './workflows.json';
 import models from './models.json';
 import research from './research.json';
 import conversations from './conversations.json';
-import archive from './archive.json';
 import wiki from './wiki.json';
 
 export default {
@@ -83,6 +82,5 @@ export default {
   models,
   research,
   conversations,
-  archive,
   wiki,
 };

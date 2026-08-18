@@ -1913,7 +1913,8 @@
     "agents": "Agentes",
     "constitution": "Constitución",
     "groupEngine": "ENGINE",
-    "ecc": "Arnés ECC"
+    "ecc": "Arnés ECC",
+    "doctor": "Diagnóstico"
   },
   "channelsIndex": {
     "title": "Canales",
@@ -2817,5 +2818,100 @@
   "deferUpdateWhileBusy": "Aplazar actualizaciones mientras hay actividad",
   "deferUpdateWhileBusyDesc": "Espera a que terminen los chats activos, las tareas programadas y los equipos antes de reiniciar para actualizar. La actualización se aplica igualmente en reposo o al salir.",
   "textToSpeechTestPhraseKittenMn": "Сайн байна уу! Энэ бол монгол дуу хоолойн туршилт.",
-  "textToSpeechVoiceListAfterFirstSpeak": "La lista de voces aparece tras la primera reproducción: el servidor de voz se inicia bajo demanda."
+  "textToSpeechVoiceListAfterFirstSpeak": "La lista de voces aparece tras la primera reproducción: el servidor de voz se inicia bajo demanda.",
+  "speechToTextPersonalDict": "Diccionario personal",
+  "speechToTextPersonalDictDescription": "Corrige palabras que el reconocedor confunde constantemente con tu voz. Cada entrada reemplaza solo una palabra completa en la transcripción, nunca parte de una palabra más larga.",
+  "speechToTextPersonalDictWrong": "Se reconoce como",
+  "speechToTextPersonalDictRight": "Reemplazar por",
+  "speechToTextPersonalDictAdd": "Añadir",
+  "speechToTextPersonalDictRemove": "Eliminar",
+  "speechToTextPersonalDictEmpty": "Aún no hay entradas. Añade un par para corregir una palabra que el reconocedor suele oír mal.",
+  "doctor": {
+    "title": "Diagnóstico",
+    "subtitle": "Comprueba los subsistemas de Darhai: entornos de ejecución, servicios, modelos locales, memoria y disco.",
+    "run": "Ejecutar diagnóstico",
+    "running": "Ejecutando…",
+    "runError": "No se pudo ejecutar el diagnóstico: {{error}}",
+    "empty": "Aún no se ha ejecutado ningún diagnóstico.",
+    "counts": "{{pass}} correctos · {{warn}} avisos · {{fail}} fallos",
+    "remediationLabel": "Solución:",
+    "overall": {
+      "pass": "Todo correcto",
+      "warn": "Requiere atención",
+      "fail": "Se encontraron problemas"
+    },
+    "status": {
+      "pass": "OK",
+      "warn": "Aviso",
+      "fail": "Fallo"
+    },
+    "category": {
+      "runtime": "Entornos",
+      "services": "Servicios",
+      "models": "Modelos locales",
+      "system": "Sistema"
+    },
+    "checks": {
+      "bun": {
+        "title": "Entorno bun",
+        "ok": "bun incluido encontrado: {{path}}",
+        "fallback": "No se encontró el bun incluido; los servidores MCP integrados usan node.",
+        "fallbackFix": "Reinstala Darhai para restaurar el entorno bun incluido.",
+        "missing": "El binario bun resuelto no existe: {{path}}",
+        "missingFix": "Reinstala Darhai para restaurar el entorno bun incluido."
+      },
+      "mcp": {
+        "title": "Servidores MCP integrados",
+        "ok": "{{enabled}} de {{total}} servidores MCP integrados están activados.",
+        "none": "No hay servidores MCP integrados registrados.",
+        "noneFix": "Reinicia Darhai; los servidores integrados se registran al arrancar.",
+        "disabled": "Los {{total}} servidores MCP integrados están desactivados.",
+        "disabledFix": "Activa los que necesites en Ajustes → Biblioteca MCP."
+      },
+      "llama": {
+        "title": "Entorno llama.cpp",
+        "ok": "llama.cpp {{tag}} está instalado y verificado.",
+        "none": "El entorno local llama.cpp no está instalado.",
+        "noneFix": "Instálalo desde el Asesor de modelos si quieres modelos locales.",
+        "broken": "La instalación de llama.cpp {{tag}} no pasó la verificación (faltan archivos o bibliotecas).",
+        "brokenFix": "Reinstala el entorno desde el Asesor de modelos."
+      },
+      "voice": {
+        "title": "Voz mongola",
+        "ok": "Los {{total}} componentes de voz están instalados.",
+        "partial": "{{installed}} de {{total}} componentes instalados; faltan: {{missing}}.",
+        "partialFix": "Instala los componentes que faltan en Ajustes → Voz.",
+        "unsupported": "No hay componentes de voz disponibles para esta plataforma."
+      },
+      "ffmpeg": {
+        "title": "ffmpeg",
+        "ok": "ffmpeg encontrado: {{path}}",
+        "missing": "No se encontró ffmpeg en PATH; los fotogramas de vídeo y el preprocesado de voz mongola no funcionarán.",
+        "missingFix": "Instala ffmpeg y asegúrate de que esté en PATH."
+      },
+      "omniroute": {
+        "title": "Pasarela OmniRoute",
+        "ok": "La pasarela responde; hay {{models}} modelos disponibles.",
+        "stopped": "La pasarela OmniRoute no está en ejecución.",
+        "stoppedFix": "Iníciala desde Ajustes si usas modelos de pasarela.",
+        "unreachable": "Nuestro proceso de pasarela dice estar en ejecución, pero el puerto no responde ({{error}}).",
+        "unreachableFix": "Detén y reinicia la pasarela desde Ajustes."
+      },
+      "memory": {
+        "title": "Índice de memoria",
+        "ok": "El índice de memoria está sano: {{total}} entradas en {{projects}} proyectos.",
+        "empty": "El índice de memoria informa 0 entradas: está vacío o aún no se ha cargado.",
+        "emptyFix": "Si tienes memorias guardadas, abre la página de Memoria para iniciar la indexación y vuelve a ejecutar el diagnóstico."
+      },
+      "disk": {
+        "title": "Espacio en disco",
+        "ok": "{{freeGb}} GB libres en el volumen de datos.",
+        "low": "Solo quedan {{freeGb}} GB; las descargas de modelos empezarán a fallar.",
+        "lowFix": "Libera espacio o mueve datos grandes a otro volumen.",
+        "critical": "Espacio en disco críticamente bajo: {{freeGb}} GB libres.",
+        "criticalFix": "Libera espacio ahora: la aplicación puede fallar.",
+        "unknown": "No se pudo determinar el espacio libre en este sistema."
+      }
+    }
+  }
 }

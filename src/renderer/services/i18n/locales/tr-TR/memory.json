@@ -258,7 +258,10 @@
       "streak_pill": "{{sessions}} oturum · en uzun {{longestDays}} günlük seri",
       "streak_empty": "Henüz oturum yok",
       "import_btn": "İçe aktar…",
-      "settings_btn": "Ayarlar"
+      "settings_btn": "Ayarlar",
+      "archive": "Arşiv",
+      "allProjects": "Tüm projeler",
+      "add": "Ekle"
     },
     "stats": {
       "memories": "Anılar",
@@ -376,7 +379,13 @@
       "kbd_capture": "hızlı yakalama",
       "kbd_search": "ara",
       "kbd_close": "denetçiyi kapat",
-      "spend_today": "Bugün ${{usd}}"
+      "spend_today": "Bugün ${{usd}}",
+      "dropFolder": {
+        "open": "Klasörü Finder'da aç",
+        "today": "bugün {{count}}",
+        "today_one": "bugün {{count}}",
+        "today_other": "bugün {{count}}"
+      }
     },
     "threshold_modal": {
       "title": "Otomatik yükseltmeyi ayarla",
@@ -414,12 +423,13 @@
         "idle": "boşta"
       },
       "claudeMem": {
-        "title": "claude-mem",
-        "hint": "~/.claude-mem/claude-mem.db konumundan içe aktarmak için tıklayın",
+        "title": "Claude",
+        "hint": "Claude Code belleğinden (~/.claude/projects) ve claude-mem'den içe aktarır",
         "count": "~{{count}} kayıt içe aktarıldı",
         "btn": "İçe aktar",
         "success": "{{count}} kayıt içe aktarıldı · {{errors}} hata",
-        "error": "İçe aktarma başarısız oldu. Tekrar deneyin."
+        "error": "İçe aktarma başarısız oldu. Tekrar deneyin.",
+        "cardTitle": "claude-mem içe aktar"
       },
       "obsidian": {
         "title": "Obsidian kasası",
@@ -427,15 +437,28 @@
         "count": "~{{count}} kayıt içe aktarıldı",
         "btn": "İçe aktar",
         "success": "{{count}} kayıt içe aktarıldı · {{errors}} hata",
-        "error": "Obsidian içe aktarma başarısız oldu. Tekrar deneyin."
+        "error": "Obsidian içe aktarma başarısız oldu. Tekrar deneyin.",
+        "scanBtn": "Vault ara",
+        "noVaults": "Obsidian vault bulunamadı — “Klasör seç…” seçeneğini kullanın",
+        "scanError": "Vault araması başarısız oldu. Tekrar deneyin.",
+        "chooseFolderBtn": "Klasör seç…",
+        "capped": "{{total}} nottan en yeni {{count}} tanesi içe aktarıldı",
+        "capped_one": "{{total}} nottan en yeni {{count}} tanesi içe aktarıldı",
+        "capped_other": "{{total}} nottan en yeni {{count}} tanesi içe aktarıldı",
+        "previewInfo": "{{count}} not · {{size}} — onaylamak için İçe aktar'a basın",
+        "previewInfo_one": "{{count}} not · {{size}} — onaylamak için İçe aktar'a basın",
+        "previewInfo_other": "{{count}} not · {{size}} — onaylamak için İçe aktar'a basın",
+        "progress": "İçe aktarılıyor… {{done}} / {{total}}",
+        "cardTitle": "Obsidian kasasını içe aktar"
       },
       "devScan": {
-        "title": "~/dev taraması",
-        "hint": "Mevcut bellek dizinleri için ~/dev tarar",
+        "title": "Geliştirme projeleri",
+        "hint": "Yaygın geliştirme klasörlerinde IJFW projelerini arar",
         "count": "~{{count}} kayıt içe aktarıldı",
         "btn": "İçe aktar",
         "success": "{{projects}} projeden {{count}} kayıt içe aktarıldı",
-        "error": "Dev taraması içe aktarma başarısız oldu. Tekrar deneyin."
+        "error": "Dev taraması içe aktarma başarısız oldu. Tekrar deneyin.",
+        "cardTitle": "~/dev tara"
       },
       "dropFolder": {
         "title": "Klasöre bırak",
@@ -444,8 +467,10 @@
         "openBtn": "Klasörü aç",
         "processBtn": "Şimdi işle",
         "success": "{{count}} dosya işlendi · {{errors}} hata",
-        "error": "İşleme başarısız oldu. Tekrar deneyin."
-      }
+        "error": "İşleme başarısız oldu. Tekrar deneyin.",
+        "cardTitle": "Bırakma klasörünü izle"
+      },
+      "detectedEntries": "~{{n}} kayıt algılandı"
     },
     "regionLabel": "Bellek arşivi",
     "composer": {
@@ -463,6 +488,120 @@
       "hint": "hatırlamak için",
       "submit": "Hatırla",
       "charCount": "{{count}} karakter"
+    },
+    "drawer": {
+      "edit": "Düzenle",
+      "delete": "Sil",
+      "close": "Paneli kapat",
+      "usedNTimes": "Bu hafta {{count}}× kullanıldı",
+      "usedNTimes_one": "Bu hafta {{count}}× kullanıldı",
+      "usedNTimes_other": "Bu hafta {{count}}× kullanıldı",
+      "alreadyPromoted": "Zaten yükseltildi ✓",
+      "promote": "↑ Wiki'ye yükselt",
+      "openFile": "Dosyayı aç",
+      "copy": "Kopyala",
+      "promotionScore": "Yükseltme puanı",
+      "autoPromotesAt": "{{n}} değerinde otomatik yükseltilir",
+      "scoreFormula": "Puan formülü",
+      "why": "Neden",
+      "noWhy": "\"Neden\" notu yok",
+      "summary": "Özet",
+      "howToApply": "Nasıl uygulanır",
+      "noHowTo": "\"Nasıl uygulanır\" notu yok",
+      "usedInWild": "Gerçek kullanım",
+      "usedNTimesWeek": "Bu hafta {{count}}× kullanıldı",
+      "usedNTimesWeek_one": "Bu hafta {{count}}× kullanıldı",
+      "usedNTimesWeek_other": "Bu hafta {{count}}× kullanıldı",
+      "line": "satır",
+      "tags": "Etiketler"
+    },
+    "editor": {
+      "title": "Belleği düzenle",
+      "save": "Kaydet",
+      "cancel": "İptal",
+      "summaryLabel": "Özet",
+      "typeLabel": "Tür",
+      "tagsLabel": "Etiketler",
+      "bodyLabel": "İçerik",
+      "toastSaved": "Bellek güncellendi",
+      "toastError": "Bellek güncellenemedi",
+      "toastCollision": "Başka bir bellek bu özeti zaten kullanıyor. Farklı bir özet seçin.",
+      "bodySeparatorWarn": "İçerikte yalnızca \"---\" içeren bir satır var. Bu dosya biçimi böyle bir satırı yeni bir kaydın başlangıcı olarak okur ve sonraki kaydı bozar; kaydetmek için bu satırı silin.",
+      "toastBodySeparator": "Kaydedilmedi: içerikte yalnızca \"---\" olan bir satır var; bu, dosyadaki sonraki kaydı bozardı. O satırı silip yeniden deneyin."
+    },
+    "delete": {
+      "confirmTitle": "Bu bellek silinsin mi?",
+      "confirmContent": "Girdi, bellek dosyasından kalıcı olarak silinir. Uygulamadan geri alınamaz.",
+      "confirmOk": "Sil",
+      "confirmCancel": "İptal",
+      "toastDeleted": "Bellek silindi",
+      "toastError": "Bellek silinemedi"
+    },
+    "toast": {
+      "promoted": "Wiki'ye yükseltildi",
+      "pathCopied": "Yol kopyalandı",
+      "copied": "Kopyalandı"
+    },
+    "filter": {
+      "results": "sonuç",
+      "searchPlaceholder": "Anıları ara… (type:decision tag:design)",
+      "allTypes": "Tüm türler",
+      "typesSelected": "tür",
+      "clearAll": "Tümünü temizle",
+      "allProjects": "Tüm projeler",
+      "searchProjects": "Proje ara…",
+      "noProjects": "Proje bulunamadı",
+      "time": {
+        "all": "Tüm zamanlar",
+        "today": "Bugün",
+        "7d": "7 gün",
+        "30d": "30 gün",
+        "custom": "Özel aralık…",
+        "from": "Başlangıç",
+        "to": "Bitiş",
+        "apply": "Uygula"
+      }
+    },
+    "dragDrop": {
+      "toastIngested": "Dosyalar içe aktarıldı",
+      "toastNoFiles": "Hiçbir dosya içe aktarılmadı",
+      "toastError": "Sürükle-bırak içe aktarma başarısız"
+    },
+    "chip": {
+      "memories": "Anılar",
+      "decisions": "Kararlar",
+      "wiki": "Wiki",
+      "thisWeek": "bu hafta",
+      "viewAsFilter": "Filtre olarak görüntüle"
+    },
+    "type": {
+      "decision": "Karar",
+      "pattern": "Desen",
+      "session": "Oturum",
+      "observation": "Gözlem",
+      "wiki": "Wiki",
+      "preference": "Tercih"
+    },
+    "streak": {
+      "tooltip": "Tüm projelerdeki seri",
+      "sessions": "oturum",
+      "dayStreak": " günlük seri"
+    },
+    "empty": {
+      "search": "Anıları ara… (type:decision tag:design)",
+      "headline": "Belleğiniz boş. Hadi dolduralım.",
+      "subline": "Aşağıdaki bir kaynaktan içe aktarın veya ilk anınızı ekleyin."
+    },
+    "status": {
+      "brainLive": "Beyin çevrimiçi",
+      "brainOffline": "Beyin çevrimdışı",
+      "clis": "CLI",
+      "lastDream": "Son rüya {{ago}} · {{facts}} olgu çıkarıldı · {{promoted}} aday eşiğe yakın",
+      "kbd": {
+        "search": "ara",
+        "navigate": "gezin",
+        "close": "kapat"
+      }
     }
   }
 }

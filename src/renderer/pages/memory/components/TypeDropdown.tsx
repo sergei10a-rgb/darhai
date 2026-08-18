@@ -36,12 +36,18 @@ type TypeDef = {
 };
 
 const TYPE_DEFS: TypeDef[] = [
-  { type: 'decision', label: 'Decision', labelKey: 'archive.type.decision', color: '#FF7A45', glyph: '◆' },
-  { type: 'pattern', label: 'Pattern', labelKey: 'archive.type.pattern', color: '#5EEAD4', glyph: '▲' },
-  { type: 'session', label: 'Session', labelKey: 'archive.type.session', color: '#7DD3FC', glyph: '⏱' },
-  { type: 'observation', label: 'Observation', labelKey: 'archive.type.observation', color: '#94A3B8', glyph: '◯' },
-  { type: 'wiki', label: 'Wiki', labelKey: 'archive.type.wiki', color: '#C084FC', glyph: '📚' },
-  { type: 'preference', label: 'Preference', labelKey: 'archive.type.preference', color: '#FCD34D', glyph: '⚙' },
+  { type: 'decision', label: 'Decision', labelKey: 'memory.archive.type.decision', color: '#FF7A45', glyph: '◆' },
+  { type: 'pattern', label: 'Pattern', labelKey: 'memory.archive.type.pattern', color: '#5EEAD4', glyph: '▲' },
+  { type: 'session', label: 'Session', labelKey: 'memory.archive.type.session', color: '#7DD3FC', glyph: '⏱' },
+  {
+    type: 'observation',
+    label: 'Observation',
+    labelKey: 'memory.archive.type.observation',
+    color: '#94A3B8',
+    glyph: '◯',
+  },
+  { type: 'wiki', label: 'Wiki', labelKey: 'memory.archive.type.wiki', color: '#C084FC', glyph: '📚' },
+  { type: 'preference', label: 'Preference', labelKey: 'memory.archive.type.preference', color: '#FCD34D', glyph: '⚙' },
 ];
 
 // ---------------------------------------------------------------------------
@@ -53,20 +59,18 @@ const TypeDropdown: React.FC<TypeDropdownProps> = ({ typeCounts, selected, onFil
 
   const toggleType = useCallback(
     (type: MemoryType) => {
-      const next = selected.includes(type)
-        ? selected.filter((s) => s !== type)
-        : [...selected, type];
+      const next = selected.includes(type) ? selected.filter((s) => s !== type) : [...selected, type];
       onFilterChange(next);
     },
-    [selected, onFilterChange],
+    [selected, onFilterChange]
   );
 
   const selectedLabel =
     selected.length === 0
-      ? t('archive.filter.allTypes', 'All types')
+      ? t('memory.archive.filter.allTypes', { defaultValue: 'All types' })
       : selected.length === 1
         ? (TYPE_DEFS.find((d) => d.type === selected[0])?.label ?? selected[0])
-        : `${selected.length} ${t('archive.filter.typesSelected', 'types')}`;
+        : `${selected.length} ${t('memory.archive.filter.typesSelected', { defaultValue: 'types' })}`;
 
   const dropdownContent = (
     <div className={styles.panel} data-testid='type-dropdown-panel'>
@@ -82,14 +86,12 @@ const TypeDropdown: React.FC<TypeDropdownProps> = ({ typeCounts, selected, onFil
             onClick={() => toggleType(def.type)}
             data-testid={`type-option-${def.type}`}
           >
-            <span
-              className={styles.dot}
-              style={{ background: def.color }}
-              aria-hidden
-            />
-            <span className={styles.typeLabel}>{t(def.labelKey, def.label)}</span>
+            <span className={styles.dot} style={{ background: def.color }} aria-hidden />
+            <span className={styles.typeLabel}>{t(def.labelKey, { defaultValue: def.label })}</span>
             <span className={styles.typeCount}>{count.toLocaleString()}</span>
-            <span className={styles.check} aria-hidden>{isChecked ? '✓' : ''}</span>
+            <span className={styles.check} aria-hidden>
+              {isChecked ? '✓' : ''}
+            </span>
           </button>
         );
       })}
@@ -100,25 +102,23 @@ const TypeDropdown: React.FC<TypeDropdownProps> = ({ typeCounts, selected, onFil
           onClick={() => onFilterChange([])}
           data-testid='type-clear-btn'
         >
-          {t('archive.filter.clearAll', 'Clear all')}
+          {t('memory.archive.filter.clearAll', { defaultValue: 'Clear all' })}
         </button>
       )}
     </div>
   );
 
   return (
-    <Dropdown
-      droplist={dropdownContent}
-      trigger='click'
-      position='bl'
-    >
+    <Dropdown droplist={dropdownContent} trigger='click' position='bl'>
       <button
         type='button'
         className={`${styles.trigger}${selected.length > 0 ? ` ${styles.triggerActive}` : ''}`}
         data-testid='type-dropdown-btn'
       >
         {selectedLabel}
-        <span className={styles.arrow} aria-hidden>▾</span>
+        <span className={styles.arrow} aria-hidden>
+          ▾
+        </span>
       </button>
     </Dropdown>
   );

@@ -54,6 +54,20 @@ const autoExtractSchema = z.object({ enabled: z.boolean() });
 
 const undoSchema = z.object({ id: z.string().min(1).max(64) });
 
+// Edit/delete of one entry (#414). Caps mirror the index clamps in
+// ijfwArchiveService (MAX_SUMMARY_CHARS / MAX_TAGS / MAX_TAG_CHARS) so a
+// renderer bug can never write a block the indexer would then truncate.
+// Exported for the IPC-validation unit test.
+export const updateEntrySchema = z.object({
+  id: z.string().min(1).max(64),
+  summary: z.string().min(1).max(500).optional(),
+  type: z.string().min(1).max(40).optional(),
+  tags: z.array(z.string().max(128)).max(64).optional(),
+  body: z.string().max(100_000).optional(),
+});
+
+export const deleteEntrySchema = z.object({ id: z.string().min(1).max(64) });
+
 const readSourceContextSchema = z.object({
   path: z.string().min(1),
   line: z.number().int().min(0),
@@ -222,6 +236,38 @@ export function initMemoryArchiveBridge(): void {
     if (!parsed.success) return;
     setAutoExtractEnabled(parsed.data.enabled);
     log.info('[memory-archive] setAutoExtractEnabled', { enabled: parsed.data.enabled });
+  });
+
+  ipcBridge.memory.updateEntry.provider(async (args) => {
+    const parsed = updateEntrySchema.safeParse(args);
+    if (!parsed.success) return { ok: false, error: 'invalid args' };
+    const { id, ...patch } = parsed.data;
+    // Require at least one field to change.
+    if (
+      patch.summary === undefined &&
+      patch.type === undefined &&
+      patch.tags === undefined &&
+      patch.body === undefined
+    ) {
+      return { ok: false, error: 'no_changes' };
+    }
+    try {
+      return await svc.editEntry(id, patch);
+    } catch (err) {
+      log.error('[memory-archive] updateEntry failed', { err });
+      return { ok: false, error: (err as Error).message };
+    }
+  });
+
+  ipcBridge.memory.deleteEntry.provider(async (args) => {
+    const parsed = deleteEntrySchema.safeParse(args);
+    if (!parsed.success) return { ok: false, error: 'invalid id' };
+    try {
+      return await svc.deleteEntry(parsed.data.id);
+    } catch (err) {
+      log.error('[memory-archive] deleteEntry failed', { err });
+      return { ok: false, error: (err as Error).message };
+    }
   });
 
   ipcBridge.memory.undoPromotion.provider(async (args) => {

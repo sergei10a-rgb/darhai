@@ -1913,7 +1913,8 @@
     "agents": "Agenten",
     "constitution": "Constitution",
     "groupEngine": "ENGINE",
-    "ecc": "ECC-Harness"
+    "ecc": "ECC-Harness",
+    "doctor": "Diagnose"
   },
   "channelsIndex": {
     "title": "Kanäle",
@@ -2816,5 +2817,100 @@
   "deferUpdateWhileBusy": "Updates bei Aktivität aufschieben",
   "deferUpdateWhileBusyDesc": "Wartet, bis aktive Chats, geplante Aufgaben und Teams fertig sind, bevor zum Aktualisieren neu gestartet wird. Das Update wird bei Leerlauf oder beim Beenden trotzdem angewendet.",
   "textToSpeechTestPhraseKittenMn": "Сайн байна уу! Энэ бол монгол дуу хоолойн туршилт.",
-  "textToSpeechVoiceListAfterFirstSpeak": "Die Stimmenliste erscheint nach der ersten Wiedergabe – der Sprachserver startet bei Bedarf."
+  "textToSpeechVoiceListAfterFirstSpeak": "Die Stimmenliste erscheint nach der ersten Wiedergabe – der Sprachserver startet bei Bedarf.",
+  "speechToTextPersonalDict": "Persönliches Wörterbuch",
+  "speechToTextPersonalDictDescription": "Korrigiert Wörter, die die Erkennung bei Ihrer Stimme immer wieder falsch versteht. Jeder Eintrag ersetzt nur ein ganzes Wort im Transkript – nie einen Teil eines längeren Wortes.",
+  "speechToTextPersonalDictWrong": "Erkannt als",
+  "speechToTextPersonalDictRight": "Ersetzen durch",
+  "speechToTextPersonalDictAdd": "Hinzufügen",
+  "speechToTextPersonalDictRemove": "Entfernen",
+  "speechToTextPersonalDictEmpty": "Noch keine Einträge. Fügen Sie ein Paar hinzu, um ein ständig falsch erkanntes Wort zu korrigieren.",
+  "doctor": {
+    "title": "Diagnose",
+    "subtitle": "Prüft Darhais Subsysteme: Laufzeitumgebungen, Dienste, lokale Modelle, Speicher und Festplatte.",
+    "run": "Diagnose ausführen",
+    "running": "Läuft…",
+    "runError": "Diagnose konnte nicht ausgeführt werden: {{error}}",
+    "empty": "Es wurde noch keine Diagnose ausgeführt.",
+    "counts": "{{pass}} bestanden · {{warn}} Warnungen · {{fail}} fehlgeschlagen",
+    "remediationLabel": "Lösung:",
+    "overall": {
+      "pass": "Alles in Ordnung",
+      "warn": "Aufmerksamkeit nötig",
+      "fail": "Probleme gefunden"
+    },
+    "status": {
+      "pass": "OK",
+      "warn": "Warnung",
+      "fail": "Fehler"
+    },
+    "category": {
+      "runtime": "Laufzeitumgebungen",
+      "services": "Dienste",
+      "models": "Lokale Modelle",
+      "system": "System"
+    },
+    "checks": {
+      "bun": {
+        "title": "Bun-Laufzeit",
+        "ok": "Mitgeliefertes bun gefunden: {{path}}",
+        "fallback": "Mitgeliefertes bun nicht gefunden; eingebaute MCP-Server nutzen node.",
+        "fallbackFix": "Installieren Sie Darhai neu, um die bun-Laufzeit wiederherzustellen.",
+        "missing": "Die aufgelöste bun-Binärdatei existiert nicht: {{path}}",
+        "missingFix": "Installieren Sie Darhai neu, um die bun-Laufzeit wiederherzustellen."
+      },
+      "mcp": {
+        "title": "Eingebaute MCP-Server",
+        "ok": "{{enabled}} von {{total}} eingebauten MCP-Servern sind aktiviert.",
+        "none": "Keine eingebauten MCP-Server registriert.",
+        "noneFix": "Starten Sie Darhai neu; eingebaute Server werden beim Start registriert.",
+        "disabled": "Alle {{total}} eingebauten MCP-Server sind deaktiviert.",
+        "disabledFix": "Aktivieren Sie die benötigten unter Einstellungen → MCP-Bibliothek."
+      },
+      "llama": {
+        "title": "llama.cpp-Laufzeit",
+        "ok": "llama.cpp {{tag}} ist installiert und verifiziert.",
+        "none": "Die lokale llama.cpp-Laufzeit ist nicht installiert.",
+        "noneFix": "Installieren Sie sie über den Modellberater für lokale Modelle.",
+        "broken": "Die llama.cpp-Installation {{tag}} bestand die Prüfung nicht (fehlende Dateien oder Bibliotheken).",
+        "brokenFix": "Installieren Sie die Laufzeit über den Modellberater neu."
+      },
+      "voice": {
+        "title": "Mongolische Stimme",
+        "ok": "Alle {{total}} Sprachkomponenten sind installiert.",
+        "partial": "{{installed}} von {{total}} Komponenten installiert; fehlend: {{missing}}.",
+        "partialFix": "Installieren Sie die fehlenden Komponenten unter Einstellungen → Stimme.",
+        "unsupported": "Für diese Plattform ist keine Sprachkomponente verfügbar."
+      },
+      "ffmpeg": {
+        "title": "ffmpeg",
+        "ok": "ffmpeg gefunden: {{path}}",
+        "missing": "ffmpeg nicht im PATH gefunden; Videoframes und mongolische Sprachvorverarbeitung funktionieren nicht.",
+        "missingFix": "Installieren Sie ffmpeg und stellen Sie sicher, dass es im PATH ist."
+      },
+      "omniroute": {
+        "title": "OmniRoute-Gateway",
+        "ok": "Das Gateway antwortet; {{models}} Modelle verfügbar.",
+        "stopped": "Das OmniRoute-Gateway läuft nicht.",
+        "stoppedFix": "Starten Sie es in den Einstellungen, wenn Sie Gateway-Modelle nutzen.",
+        "unreachable": "Unser Gateway-Prozess meldet sich als laufend, aber der Port antwortet nicht ({{error}}).",
+        "unreachableFix": "Stoppen und starten Sie das Gateway in den Einstellungen neu."
+      },
+      "memory": {
+        "title": "Speicherindex",
+        "ok": "Der Speicherindex ist gesund: {{total}} Einträge in {{projects}} Projekten.",
+        "empty": "Der Speicherindex meldet 0 Einträge - er ist leer oder noch nicht geladen.",
+        "emptyFix": "Wenn Sie gespeicherte Erinnerungen haben, öffnen Sie die Speicher-Seite, um die Indizierung anzustoßen, und führen Sie die Diagnose erneut aus."
+      },
+      "disk": {
+        "title": "Festplattenspeicher",
+        "ok": "{{freeGb}} GB frei auf dem Datenvolume.",
+        "low": "Nur noch {{freeGb}} GB frei; Modell-Downloads werden fehlschlagen.",
+        "lowFix": "Geben Sie Speicherplatz frei oder verschieben Sie große Daten.",
+        "critical": "Kritisch wenig Speicherplatz: {{freeGb}} GB frei.",
+        "criticalFix": "Geben Sie sofort Speicherplatz frei - die App kann fehlschlagen.",
+        "unknown": "Der freie Speicherplatz konnte nicht ermittelt werden."
+      }
+    }
+  }
 }

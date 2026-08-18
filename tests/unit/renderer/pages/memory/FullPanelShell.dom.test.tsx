@@ -136,6 +136,8 @@ const { mockMemory, mockShell, mockIjfw } = vi.hoisted(() => {
       promote: { invoke: vi.fn() },
       setQuickAdd: { invoke: vi.fn() },
       setPromotionThreshold: { invoke: vi.fn() },
+      updateEntry: { invoke: vi.fn() },
+      deleteEntry: { invoke: vi.fn() },
       onIndexChanged: mockIndexChangedEmitter,
       import: {
         claudeMem: { invoke: vi.fn() },
@@ -173,6 +175,10 @@ vi.mock('@/common', () => ({
   },
 }));
 
+// Captures the config passed to Modal.confirm so the delete-gate test can
+// assert deleteEntry fires ONLY from the confirm dialog's onOk (#414).
+const mockModalConfirm = vi.hoisted(() => vi.fn((_cfg: unknown) => ({ close: vi.fn() })));
+
 vi.mock('@arco-design/web-react', async () => {
   const actual = await vi.importActual<Record<string, unknown>>('@arco-design/web-react');
   return {
@@ -182,6 +188,13 @@ vi.mock('@arco-design/web-react', async () => {
       error: vi.fn(),
       info: vi.fn(),
     },
+    // Modal.confirm is captured (delete gate); the component form renders its
+    // children when visible so any other Modal usage in the tree still works.
+    Modal: Object.assign(
+      ({ visible, children }: { visible?: boolean; children?: React.ReactNode }) =>
+        visible ? <div data-testid='arco-modal'>{children}</div> : null,
+      { confirm: mockModalConfirm }
+    ),
     Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
     Popover: ({ children }: { children: React.ReactNode }) => <>{children}</>,
     Dropdown: ({ children, droplist }: { children: React.ReactNode; droplist: React.ReactNode }) => (
@@ -196,6 +209,8 @@ vi.mock('@arco-design/web-react', async () => {
 vi.mock('@icon-park/react', () => ({
   Close: (p: Record<string, unknown>) => <span data-testid='icon-close' {...p} />,
   Copy: (p: Record<string, unknown>) => <span data-testid='icon-copy' {...p} />,
+  Delete: (p: Record<string, unknown>) => <span data-testid='icon-delete' {...p} />,
+  Edit: (p: Record<string, unknown>) => <span data-testid='icon-edit' {...p} />,
   LinkOne: (p: Record<string, unknown>) => <span data-testid='icon-link' {...p} />,
   FileCode: (p: Record<string, unknown>) => <span data-testid='icon-file-code' {...p} />,
   Help: (p: Record<string, unknown>) => <span data-testid='icon-help' {...p} />,
@@ -203,7 +218,13 @@ vi.mock('@icon-park/react', () => ({
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, fallback: string, _opts?: Record<string, unknown>) => fallback ?? _key,
+    t: (key: string, opts?: unknown) => {
+      if (typeof opts === 'string') return opts;
+      if (opts && typeof opts === 'object' && 'defaultValue' in (opts as Record<string, unknown>)) {
+        return String((opts as { defaultValue: unknown }).defaultValue);
+      }
+      return key;
+    },
   }),
 }));
 
@@ -350,5 +371,57 @@ describe('FullPanelShell (v0.6.4 Mail-style)', () => {
     });
     expect(screen.getByTestId('memory-list-pane')).toBeTruthy();
     expect(screen.queryByTestId('empty-state-hero')).toBeNull();
+  });
+
+  it('delete fires ONLY from the confirm dialog onOk, never from the bare button click (#414)', async () => {
+    mockMemory.deleteEntry.invoke.mockResolvedValue({ ok: true });
+    await act(async () => {
+      renderShell(['/memory?entry=entry-001']);
+    });
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 30));
+    });
+
+    const deleteBtn = screen.getByTestId('drawer-delete-btn');
+    expect(deleteBtn).toBeTruthy();
+
+    // Click Delete: the confirm dialog is requested, but nothing changes yet.
+    await act(async () => {
+      fireEvent.click(deleteBtn);
+    });
+    expect(mockModalConfirm).toHaveBeenCalledTimes(1);
+    expect(mockMemory.deleteEntry.invoke).not.toHaveBeenCalled();
+
+    // The confirm dialog carries an i18n cancel action (required by the port).
+    const cfg = mockModalConfirm.mock.calls[0]![0] as {
+      cancelText?: string;
+      okText?: string;
+      onOk?: () => Promise<void> | void;
+    };
+    expect(cfg.cancelText).toBeTruthy();
+    expect(cfg.okText).toBeTruthy();
+
+    // Only firing the dialog's onOk performs the hard delete.
+    await act(async () => {
+      await cfg.onOk?.();
+    });
+    expect(mockMemory.deleteEntry.invoke).toHaveBeenCalledTimes(1);
+    expect(mockMemory.deleteEntry.invoke).toHaveBeenCalledWith({ id: 'entry-001' });
+  });
+
+  it('Edit opens the entry editor prefilled from the selected entry (#414)', async () => {
+    await act(async () => {
+      renderShell(['/memory?entry=entry-001']);
+    });
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 30));
+    });
+
+    expect(screen.queryByTestId('entry-editor-summary')).toBeNull();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('drawer-edit-btn'));
+    });
+    const summaryInput = screen.getByTestId('entry-editor-summary') as HTMLInputElement;
+    expect(summaryInput.value).toBe('Always use Arco components');
   });
 });

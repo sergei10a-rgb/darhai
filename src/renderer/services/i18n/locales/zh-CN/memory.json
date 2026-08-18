@@ -258,7 +258,10 @@
       "streak_pill": "{{sessions}} 次会话 · 最长连续 {{longestDays}} 天",
       "streak_empty": "暂无会话记录",
       "import_btn": "导入…",
-      "settings_btn": "设置"
+      "settings_btn": "设置",
+      "archive": "归档",
+      "allProjects": "所有项目",
+      "add": "添加"
     },
     "stats": {
       "memories": "记忆",
@@ -376,7 +379,13 @@
       "kbd_capture": "快速记录",
       "kbd_search": "搜索",
       "kbd_close": "关闭检视",
-      "spend_today": "今日花费 ${{usd}}"
+      "spend_today": "今日花费 ${{usd}}",
+      "dropFolder": {
+        "open": "在 Finder 中打开文件夹",
+        "today": "今天 {{count}}",
+        "today_one": "今天 {{count}}",
+        "today_other": "今天 {{count}}"
+      }
     },
     "threshold_modal": {
       "title": "调整自动升级",
@@ -414,12 +423,13 @@
         "idle": "空闲"
       },
       "claudeMem": {
-        "title": "claude-mem",
-        "hint": "点击以从 ~/.claude-mem/claude-mem.db 导入",
+        "title": "Claude",
+        "hint": "从 Claude Code 记忆（~/.claude/projects）和 claude-mem 导入",
         "count": "已导入约 {{count}} 条",
         "btn": "导入",
         "success": "已导入 {{count}} 条 · {{errors}} 个错误",
-        "error": "导入失败。请重试。"
+        "error": "导入失败。请重试。",
+        "cardTitle": "导入 claude-mem"
       },
       "obsidian": {
         "title": "Obsidian 仓库",
@@ -427,15 +437,28 @@
         "count": "已导入约 {{count}} 条",
         "btn": "导入",
         "success": "已导入 {{count}} 条 · {{errors}} 个错误",
-        "error": "Obsidian 导入失败。请重试。"
+        "error": "Obsidian 导入失败。请重试。",
+        "scanBtn": "扫描 vault",
+        "noVaults": "未找到 Obsidian vault——请使用“选择文件夹…”",
+        "scanError": "扫描失败，请重试。",
+        "chooseFolderBtn": "选择文件夹…",
+        "capped": "已导入 {{total}} 条笔记中最新的 {{count}} 条",
+        "capped_one": "已导入 {{total}} 条笔记中最新的 {{count}} 条",
+        "capped_other": "已导入 {{total}} 条笔记中最新的 {{count}} 条",
+        "previewInfo": "{{count}} 条笔记 · {{size}}——点击“导入”确认",
+        "previewInfo_one": "{{count}} 条笔记 · {{size}}——点击“导入”确认",
+        "previewInfo_other": "{{count}} 条笔记 · {{size}}——点击“导入”确认",
+        "progress": "导入中… {{done}} / {{total}}",
+        "cardTitle": "导入 Obsidian 仓库"
       },
       "devScan": {
-        "title": "~/dev 扫描",
-        "hint": "扫描 ~/dev 以查找现有的记忆目录",
+        "title": "开发项目",
+        "hint": "在常见开发目录中扫描 IJFW 项目",
         "count": "已导入约 {{count}} 条",
         "btn": "导入",
         "success": "已从 {{projects}} 个项目导入 {{count}} 条",
-        "error": "Dev 扫描导入失败。请重试。"
+        "error": "Dev 扫描导入失败。请重试。",
+        "cardTitle": "扫描 ~/dev"
       },
       "dropFolder": {
         "title": "拖放文件夹",
@@ -444,8 +467,10 @@
         "openBtn": "打开文件夹",
         "processBtn": "立即处理",
         "success": "已处理 {{count}} 个文件 · {{errors}} 个错误",
-        "error": "处理失败。请重试。"
-      }
+        "error": "处理失败。请重试。",
+        "cardTitle": "监视投放文件夹"
+      },
+      "detectedEntries": "检测到约 {{n}} 条记录"
     },
     "regionLabel": "记忆归档",
     "composer": {
@@ -463,6 +488,120 @@
       "hint": "记住",
       "submit": "记住",
       "charCount": "{{count}} 个字符"
+    },
+    "drawer": {
+      "edit": "编辑",
+      "delete": "删除",
+      "close": "关闭面板",
+      "usedNTimes": "本周使用 {{count}} 次",
+      "usedNTimes_one": "本周使用 {{count}} 次",
+      "usedNTimes_other": "本周使用 {{count}} 次",
+      "alreadyPromoted": "已提升 ✓",
+      "promote": "↑ 提升到维基",
+      "openFile": "打开文件",
+      "copy": "复制",
+      "promotionScore": "提升分数",
+      "autoPromotesAt": "达到 {{n}} 时自动提升",
+      "scoreFormula": "分数公式",
+      "why": "原因",
+      "noWhy": "未记录\"原因\"",
+      "summary": "摘要",
+      "howToApply": "如何应用",
+      "noHowTo": "未记录\"如何应用\"",
+      "usedInWild": "实际使用",
+      "usedNTimesWeek": "本周使用 {{count}} 次",
+      "usedNTimesWeek_one": "本周使用 {{count}} 次",
+      "usedNTimesWeek_other": "本周使用 {{count}} 次",
+      "line": "行",
+      "tags": "标签"
+    },
+    "editor": {
+      "title": "编辑记忆",
+      "save": "保存",
+      "cancel": "取消",
+      "summaryLabel": "摘要",
+      "typeLabel": "类型",
+      "tagsLabel": "标签",
+      "bodyLabel": "内容",
+      "toastSaved": "记忆已更新",
+      "toastError": "无法更新记忆",
+      "toastCollision": "已有其他记忆使用该摘要，请换一个。",
+      "bodySeparatorWarn": "正文中包含仅由 \"---\" 组成的行。此文件格式会把该行读作新记录的开始，从而破坏下一条记录——请删除后再保存。",
+      "toastBodySeparator": "未保存：正文包含仅由 \"---\" 组成的行，会破坏此文件中的下一条记录。请删除该行后重试。"
+    },
+    "delete": {
+      "confirmTitle": "删除这条记忆？",
+      "confirmContent": "该条目将从记忆文件中永久删除，无法在应用内撤销。",
+      "confirmOk": "删除",
+      "confirmCancel": "取消",
+      "toastDeleted": "记忆已删除",
+      "toastError": "无法删除记忆"
+    },
+    "toast": {
+      "promoted": "已提升到维基",
+      "pathCopied": "路径已复制",
+      "copied": "已复制"
+    },
+    "filter": {
+      "results": "条结果",
+      "searchPlaceholder": "搜索记忆…（type:decision tag:design）",
+      "allTypes": "所有类型",
+      "typesSelected": "个类型",
+      "clearAll": "清除全部",
+      "allProjects": "所有项目",
+      "searchProjects": "搜索项目…",
+      "noProjects": "未找到项目",
+      "time": {
+        "all": "全部时间",
+        "today": "今天",
+        "7d": "7 天",
+        "30d": "30 天",
+        "custom": "自定义范围…",
+        "from": "开始",
+        "to": "结束",
+        "apply": "应用"
+      }
+    },
+    "dragDrop": {
+      "toastIngested": "文件已导入",
+      "toastNoFiles": "未导入任何文件",
+      "toastError": "拖放导入失败"
+    },
+    "chip": {
+      "memories": "记忆",
+      "decisions": "决策",
+      "wiki": "维基",
+      "thisWeek": "本周",
+      "viewAsFilter": "作为筛选查看"
+    },
+    "type": {
+      "decision": "决策",
+      "pattern": "模式",
+      "session": "会话",
+      "observation": "观察",
+      "wiki": "维基",
+      "preference": "偏好"
+    },
+    "streak": {
+      "tooltip": "跨所有项目的连续记录",
+      "sessions": "个会话",
+      "dayStreak": " 天连续"
+    },
+    "empty": {
+      "search": "搜索记忆…（type:decision tag:design）",
+      "headline": "你的记忆是空的。来填充它吧。",
+      "subline": "从下方来源导入，或添加你的第一条记忆。"
+    },
+    "status": {
+      "brainLive": "大脑在线",
+      "brainOffline": "大脑离线",
+      "clis": "个 CLI",
+      "lastDream": "上次梦境 {{ago}} · 提取了 {{facts}} 条事实 · {{promoted}} 个候选接近阈值",
+      "kbd": {
+        "search": "搜索",
+        "navigate": "导航",
+        "close": "关闭"
+      }
     }
   }
 }

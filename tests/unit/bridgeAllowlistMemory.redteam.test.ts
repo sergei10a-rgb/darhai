@@ -26,3 +26,25 @@ describe('isAllowedForRemote - memory auto-extract toggle', () => {
     expect(isAllowedForRemote('subscribe-memory.get-auto-extract-enabled')).toBe(true);
   });
 });
+
+/**
+ * Memory entry mutation (#414 port). update-entry rewrites and delete-entry
+ * hard-deletes the user's on-disk memory files - a paired-device WebSocket
+ * caller must never reach either, or a remote peer could destroy or silently
+ * rewrite local memories. The read providers the paired UI legitimately needs
+ * stay allowed.
+ */
+describe('isAllowedForRemote - memory entry mutation (#414)', () => {
+  it('denies memory.update-entry for remote callers', () => {
+    expect(isAllowedForRemote('subscribe-memory.update-entry')).toBe(false);
+  });
+
+  it('denies memory.delete-entry for remote callers', () => {
+    expect(isAllowedForRemote('subscribe-memory.delete-entry')).toBe(false);
+  });
+
+  it('keeps the read providers allowed for the paired UI', () => {
+    expect(isAllowedForRemote('subscribe-memory.list-entries')).toBe(true);
+    expect(isAllowedForRemote('subscribe-memory.get-entry')).toBe(true);
+  });
+});

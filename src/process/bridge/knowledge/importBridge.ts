@@ -18,7 +18,12 @@ import { getIjfwArchiveService } from '@process/services/memory/ijfwArchiveServi
 import { GLOBAL_PROJECT_NAME, globalMemoryDir, registerProject } from '@process/services/memory/memoryRoots';
 import { runClaudeMemImport } from '@process/services/import/claudeMemImporter';
 import { runClaudeNativeImport } from '@process/services/import/claudeNativeImporter';
-import { runObsidianImport, detectVaults } from '@process/services/import/obsidianImporter';
+import {
+  runObsidianImport,
+  detectVaults,
+  expandVaultPath,
+  previewVault,
+} from '@process/services/import/obsidianImporter';
 import { detectConfiguredVaults, getConfiguredVaultPaths } from '@process/services/import/obsidianVaultConfig';
 import { runDevScanImport, scanForMemoryDirs } from '@process/services/import/devScanImporter';
 import {
@@ -84,6 +89,30 @@ async function refreshArchive(): Promise<void> {
   }
 }
 
+/**
+ * Expand + resolve a renderer-supplied vault path and enforce the vault-path
+ * policy shared by import and preview: the path must live inside the home
+ * directory subtree OR be a vault Obsidian itself has registered
+ * (obsidian.json), which the user may legitimately keep outside home
+ * (e.g. C:\claude\Main memory). Returns the resolved path, or null when the
+ * path is not allowed.
+ */
+async function resolveAllowedVaultPath(rawVaultPath: string): Promise<string | null> {
+  const vaultPath = expandVaultPath(rawVaultPath);
+  const homeDir = os.homedir();
+  const insideHome = vaultPath === homeDir || vaultPath.startsWith(homeDir + path.sep);
+  if (insideHome) return vaultPath;
+  const configured = await getConfiguredVaultPaths();
+  let real = vaultPath;
+  try {
+    real = await fs.promises.realpath(vaultPath);
+  } catch {
+    // keep lexical path
+  }
+  if (configured.has(vaultPath) || configured.has(real)) return vaultPath;
+  return null;
+}
+
 export function initImportBridge(): void {
   // ── claude importer (native memory + claude-mem DB) ──────────────────────
   // The "Claude" source imports from BOTH Claude Code's native memory files
@@ -120,41 +149,23 @@ export function initImportBridge(): void {
       return { count: 0, errors: ['invalid args'] };
     }
     try {
-      // Expand tilde and resolve to absolute path in main process
-      let vaultPath = parsed.data.vaultPath;
-      // Expand a leading `~`, matching both `~/` (POSIX) and `~\` (Windows)
-      // and joining via path.join so separators stay platform-correct.
-      if (vaultPath === '~') {
-        vaultPath = os.homedir();
-      } else if (vaultPath.startsWith('~/') || vaultPath.startsWith('~' + path.sep)) {
-        vaultPath = path.join(os.homedir(), vaultPath.slice(2));
-      }
-      vaultPath = path.resolve(vaultPath);
-      // Allow a vault inside the home dir subtree OR one Obsidian itself has
-      // registered (obsidian.json), which the user may legitimately keep outside
-      // home (e.g. C:\claude\Main memory). Any other path is rejected.
-      const homeDir = os.homedir();
-      const insideHome = vaultPath === homeDir || vaultPath.startsWith(homeDir + path.sep);
-      if (!insideHome) {
-        const configured = await getConfiguredVaultPaths();
-        let real = vaultPath;
-        try {
-          real = await fs.promises.realpath(vaultPath);
-        } catch {
-          // keep lexical path
-        }
-        if (!configured.has(vaultPath) && !configured.has(real)) {
-          log.warn('[import] obsidianVault path not allowed', { vaultPath });
-          return {
-            count: 0,
-            errors: ['vault path must be within home directory or a configured Obsidian vault'],
-          };
-        }
+      // Expand tilde, resolve, and enforce the vault-path policy in main process.
+      const vaultPath = await resolveAllowedVaultPath(parsed.data.vaultPath);
+      if (vaultPath === null) {
+        log.warn('[import] obsidianVault path not allowed', { vaultPath: parsed.data.vaultPath });
+        return {
+          count: 0,
+          errors: ['vault path must be within home directory or a configured Obsidian vault'],
+        };
       }
       const memDir = await resolveMemoryDir();
       const { imported, skipped, errors, total, capped } = await runObsidianImport(vaultPath, {
         ijfwMemoryDir: memDir,
         maxFiles: OBSIDIAN_MAX_FILES,
+        // Stream progress to the renderer so a large vault shows a live counter.
+        onProgress: (done, totalFiles) => {
+          ipcBridge.memory.import.obsidianProgress.emit({ done, total: totalFiles });
+        },
       });
       log.info('[import] obsidianVault done', {
         vaultPath,
@@ -193,6 +204,28 @@ export function initImportBridge(): void {
     } catch (err) {
       log.error('[import] obsidianDetectVaults threw', { err });
       return { vaults: [] };
+    }
+  });
+
+  // ── obsidian vault preview (count + size, no note bodies read) ───────────
+  ipcBridge.memory.import.obsidianPreview.provider(async (args) => {
+    const parsed = obsidianVaultSchema.safeParse(args);
+    if (!parsed.success) {
+      log.warn('[import] obsidianPreview invalid args', { args });
+      return { ok: false, mdCount: 0, totalBytes: 0 };
+    }
+    try {
+      const vaultPath = await resolveAllowedVaultPath(parsed.data.vaultPath);
+      if (vaultPath === null) {
+        log.warn('[import] obsidianPreview path not allowed', { vaultPath: parsed.data.vaultPath });
+        return { ok: false, mdCount: 0, totalBytes: 0 };
+      }
+      const { mdCount, totalBytes } = await previewVault(vaultPath);
+      log.info('[import] obsidianPreview', { vaultPath, mdCount, totalBytes });
+      return { ok: true, mdCount, totalBytes };
+    } catch (err) {
+      log.error('[import] obsidianPreview threw', { err });
+      return { ok: false, mdCount: 0, totalBytes: 0 };
     }
   });
 

@@ -1892,7 +1892,8 @@
     "images": "画像生成",
     "voice": "音声",
     "groupEngine": "ENGINE",
-    "ecc": "ECC ハーネス"
+    "ecc": "ECC ハーネス",
+    "doctor": "診断"
   },
   "channelsIndex": {
     "title": "チャンネル",
@@ -2817,5 +2818,100 @@
   "deferUpdateWhileBusy": "作業中はアップデートを延期",
   "deferUpdateWhileBusyDesc": "進行中のチャット、スケジュールされたタスク、チームの完了を待ってから再起動して更新します。アイドル時または終了時には引き続き適用されます。",
   "textToSpeechTestPhraseKittenMn": "Сайн байна уу! Энэ бол монгол дуу хоолойн туршилт.",
-  "textToSpeechVoiceListAfterFirstSpeak": "音声リストは最初の再生後に表示されます。音声サーバーは必要時に起動します。"
+  "textToSpeechVoiceListAfterFirstSpeak": "音声リストは最初の再生後に表示されます。音声サーバーは必要時に起動します。",
+  "speechToTextPersonalDict": "パーソナル辞書",
+  "speechToTextPersonalDictDescription": "認識エンジンがあなたの声で聞き間違えやすい単語を修正します。各エントリは文字起こし内の単語全体のみを置き換え、長い単語の一部を置き換えることはありません。",
+  "speechToTextPersonalDictWrong": "誤認識される語",
+  "speechToTextPersonalDictRight": "置き換える語",
+  "speechToTextPersonalDictAdd": "追加",
+  "speechToTextPersonalDictRemove": "削除",
+  "speechToTextPersonalDictEmpty": "まだエントリがありません。よく聞き間違えられる単語と正しい単語のペアを追加してください。",
+  "doctor": {
+    "title": "診断",
+    "subtitle": "Darhai の各サブシステムをまとめて点検します:ランタイム、サービス、ローカルモデル、メモリ、ディスク。",
+    "run": "診断を実行",
+    "running": "実行中…",
+    "runError": "診断を実行できませんでした: {{error}}",
+    "empty": "まだ診断を実行していません。",
+    "counts": "{{pass}} 件正常 · {{warn}} 件警告 · {{fail}} 件失敗",
+    "remediationLabel": "対処:",
+    "overall": {
+      "pass": "すべて正常",
+      "warn": "要注意",
+      "fail": "問題が見つかりました"
+    },
+    "status": {
+      "pass": "正常",
+      "warn": "警告",
+      "fail": "失敗"
+    },
+    "category": {
+      "runtime": "ランタイム",
+      "services": "サービス",
+      "models": "ローカルモデル",
+      "system": "システム"
+    },
+    "checks": {
+      "bun": {
+        "title": "Bun ランタイム",
+        "ok": "同梱の bun が見つかりました: {{path}}",
+        "fallback": "同梱の bun が見つからず、内蔵 MCP サーバーは node で動作します。",
+        "fallbackFix": "Darhai を再インストールすると同梱の bun が復元されます。",
+        "missing": "解決された bun バイナリが存在しません: {{path}}",
+        "missingFix": "Darhai を再インストールして bun を復元してください。"
+      },
+      "mcp": {
+        "title": "内蔵 MCP サーバー",
+        "ok": "{{total}} 個の内蔵 MCP サーバーのうち {{enabled}} 個が有効です。",
+        "none": "内蔵 MCP サーバーが登録されていません。",
+        "noneFix": "Darhai を再起動してください。内蔵サーバーは起動時に登録されます。",
+        "disabled": "{{total}} 個の内蔵 MCP サーバーがすべて無効です。",
+        "disabledFix": "設定 → MCP ライブラリで必要なものを有効にしてください。"
+      },
+      "llama": {
+        "title": "llama.cpp ランタイム",
+        "ok": "llama.cpp {{tag}} はインストール済みで検証済みです。",
+        "none": "ローカルの llama.cpp ランタイムがインストールされていません。",
+        "noneFix": "ローカルモデルを使う場合はモデルアドバイザーからインストールしてください。",
+        "broken": "llama.cpp {{tag}} のインストールが検証に失敗しました(ファイルまたはライブラリの欠落)。",
+        "brokenFix": "モデルアドバイザーからランタイムを再インストールしてください。"
+      },
+      "voice": {
+        "title": "モンゴル語音声",
+        "ok": "{{total}} 個の音声コンポーネントがすべてインストール済みです。",
+        "partial": "{{total}} 個中 {{installed}} 個をインストール済み。不足: {{missing}}。",
+        "partialFix": "設定 → 音声 から不足コンポーネントをインストールしてください。",
+        "unsupported": "このプラットフォームで利用できる音声コンポーネントはありません。"
+      },
+      "ffmpeg": {
+        "title": "ffmpeg",
+        "ok": "ffmpeg が見つかりました: {{path}}",
+        "missing": "PATH に ffmpeg が見つかりません。動画フレームとモンゴル語音声の前処理が動作しません。",
+        "missingFix": "ffmpeg をインストールし、PATH に追加してください。"
+      },
+      "omniroute": {
+        "title": "OmniRoute ゲートウェイ",
+        "ok": "ゲートウェイが応答しています。{{models}} 個のモデルが利用可能です。",
+        "stopped": "OmniRoute ゲートウェイは動作していません。",
+        "stoppedFix": "ゲートウェイのモデルを使う場合は設定から起動してください。",
+        "unreachable": "自前のゲートウェイプロセスは動作中のはずですが、ポートが応答しません({{error}})。",
+        "unreachableFix": "設定からゲートウェイを停止して再起動してください。"
+      },
+      "memory": {
+        "title": "メモリインデックス",
+        "ok": "メモリインデックスは正常です: {{projects}} プロジェクトに {{total}} 件。",
+        "empty": "メモリインデックスは 0 件と報告しています - 空か、まだ読み込まれていません。",
+        "emptyFix": "保存済みのメモリがある場合は、メモリページを開いてインデックス作成を促し、診断を再実行してください。"
+      },
+      "disk": {
+        "title": "ディスク空き容量",
+        "ok": "データボリュームに {{freeGb}} GB の空きがあります。",
+        "low": "空きが {{freeGb}} GB しかありません。モデルのダウンロードが失敗し始めます。",
+        "lowFix": "ディスクの空きを確保するか、大きなデータを移動してください。",
+        "critical": "ディスク空き容量が危機的です: {{freeGb}} GB。",
+        "criticalFix": "今すぐ空きを確保してください。アプリが誤動作する可能性があります。",
+        "unknown": "このシステムでは空き容量を判定できませんでした。"
+      }
+    }
+  }
 }

@@ -21,7 +21,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Button, Tag, Tooltip } from '@arco-design/web-react';
-import { Close, Copy, LinkOne, FileCode, Help } from '@icon-park/react';
+import { Close, Copy, Delete, Edit, LinkOne, FileCode, Help } from '@icon-park/react';
 import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 import type { MemoryEntry, MemoryType } from '@/common/types/memory';
@@ -49,6 +49,10 @@ export type RightDrawerProps = {
   onPromote?: (id: string) => void;
   onOpenSource?: (path: string, line: number) => void;
   onCopy?: (text: string) => void;
+  /** Open the editor for this entry (#414). */
+  onEdit?: (entry: ExtendedEntry) => void;
+  /** Ask to delete this entry (#414) - the shell shows the confirm dialog. */
+  onDelete?: (entry: ExtendedEntry) => void;
 };
 
 // ---------------------------------------------------------------------------
@@ -223,6 +227,8 @@ const RightDrawer: React.FC<RightDrawerProps> = ({
   onPromote,
   onOpenSource,
   onCopy,
+  onEdit,
+  onDelete,
 }) => {
   const { t } = useTranslation();
 
@@ -270,7 +276,7 @@ const RightDrawer: React.FC<RightDrawerProps> = ({
                 type='secondary'
                 icon={<Close theme='outline' size='12' />}
                 onClick={onClose}
-                aria-label={t('archive.drawer.close', 'Close drawer')}
+                aria-label={t('memory.archive.drawer.close', { defaultValue: 'Close drawer' })}
                 data-testid='drawer-close-btn'
               />
               <h2 className={styles.title} data-testid='drawer-title'>
@@ -300,7 +306,12 @@ const RightDrawer: React.FC<RightDrawerProps> = ({
                 <>
                   <span className={styles.metaSep}>·</span>
                   <span className={styles.refPill} data-testid='drawer-ref-pill'>
-                    ↺ {t('archive.drawer.usedNTimes', 'Used {{count}}× this week', { count: entry.referencedBy })}
+                    ↺{' '}
+                    {t('memory.archive.drawer.usedNTimes', {
+                      count: entry.referencedBy,
+                      defaultValue_one: 'Used {{count}}× this week',
+                      defaultValue_other: 'Used {{count}}× this week',
+                    })}
                   </span>
                 </>
               )}
@@ -319,8 +330,8 @@ const RightDrawer: React.FC<RightDrawerProps> = ({
               data-testid='drawer-promote-btn'
             >
               {entry.type === 'wiki'
-                ? t('archive.drawer.alreadyPromoted', 'Already promoted ✓')
-                : t('archive.drawer.promote', '↑ Promote to Wiki')}
+                ? t('memory.archive.drawer.alreadyPromoted', { defaultValue: 'Already promoted ✓' })
+                : t('memory.archive.drawer.promote', { defaultValue: '↑ Promote to Wiki' })}
             </Button>
             <Button
               type='text'
@@ -329,7 +340,7 @@ const RightDrawer: React.FC<RightDrawerProps> = ({
               onClick={() => onOpenSource?.(entry.sourcePath, entry.sourceLine)}
               data-testid='drawer-open-btn'
             >
-              {t('archive.drawer.openFile', 'Open file')}
+              {t('memory.archive.drawer.openFile', { defaultValue: 'Open file' })}
             </Button>
             <Button
               type='text'
@@ -338,7 +349,26 @@ const RightDrawer: React.FC<RightDrawerProps> = ({
               onClick={() => onCopy?.(entry.body)}
               data-testid='drawer-copy-btn'
             >
-              {t('archive.drawer.copy', 'Copy')}
+              {t('memory.archive.drawer.copy', { defaultValue: 'Copy' })}
+            </Button>
+            <Button
+              type='text'
+              size='small'
+              icon={<Edit theme='outline' size='13' />}
+              onClick={() => onEdit?.(entry)}
+              data-testid='drawer-edit-btn'
+            >
+              {t('memory.archive.drawer.edit')}
+            </Button>
+            <Button
+              type='text'
+              size='small'
+              status='danger'
+              icon={<Delete theme='outline' size='13' />}
+              onClick={() => onDelete?.(entry)}
+              data-testid='drawer-delete-btn'
+            >
+              {t('memory.archive.drawer.delete')}
             </Button>
           </div>
 
@@ -346,9 +376,13 @@ const RightDrawer: React.FC<RightDrawerProps> = ({
           <div className={styles.scoreWrap} data-testid='drawer-score-wrap'>
             <div className={styles.scoreLabel}>
               <span className={styles.scoreText} data-testid='drawer-score-text'>
-                {t('archive.drawer.promotionScore', 'Promotion score')} {entry.promotionScore}/100
+                {t('memory.archive.drawer.promotionScore', { defaultValue: 'Promotion score' })} {entry.promotionScore}
+                /100
                 {' - '}
-                {t('archive.drawer.autoPromotesAt', 'auto-promotes at {{n}}', { n: promotionThreshold })}
+                {t('memory.archive.drawer.autoPromotesAt', {
+                  n: promotionThreshold,
+                  defaultValue: 'auto-promotes at {{n}}',
+                })}
               </span>
               {/* Host element for Arco's ref - see the note in Inspector.tsx. */}
               <Tooltip content={SCORE_TOOLTIP} position='top'>
@@ -357,7 +391,7 @@ const RightDrawer: React.FC<RightDrawerProps> = ({
                     theme='outline'
                     size='13'
                     style={{ cursor: 'help', opacity: 0.6 }}
-                    aria-label={t('archive.drawer.scoreFormula', 'Score formula')}
+                    aria-label={t('memory.archive.drawer.scoreFormula', { defaultValue: 'Score formula' })}
                   />
                 </span>
               </Tooltip>
@@ -388,19 +422,21 @@ const RightDrawer: React.FC<RightDrawerProps> = ({
           <div className={styles.body} data-testid='drawer-body'>
             {/* Why - must be visible without scrolling (K3 fix) - placed first */}
             <div className={styles.section} data-testid='drawer-section-why'>
-              <h3 className={styles.sectionLabel}>{t('archive.drawer.why', 'Why')}</h3>
+              <h3 className={styles.sectionLabel}>{t('memory.archive.drawer.why', { defaultValue: 'Why' })}</h3>
               <div className={styles.sectionContent}>
                 {entry.why ? (
                   <p>{entry.why}</p>
                 ) : (
-                  <span className={styles.absent}>{t('archive.drawer.noWhy', 'No "Why" recorded')}</span>
+                  <span className={styles.absent}>
+                    {t('memory.archive.drawer.noWhy', { defaultValue: 'No "Why" recorded' })}
+                  </span>
                 )}
               </div>
             </div>
 
             {/* Summary */}
             <div className={styles.section} data-testid='drawer-section-summary'>
-              <h3 className={styles.sectionLabel}>{t('archive.drawer.summary', 'Summary')}</h3>
+              <h3 className={styles.sectionLabel}>{t('memory.archive.drawer.summary', { defaultValue: 'Summary' })}</h3>
               <div className={styles.sectionContent}>
                 <p>{entry.summary}</p>
               </div>
@@ -408,12 +444,16 @@ const RightDrawer: React.FC<RightDrawerProps> = ({
 
             {/* How to apply */}
             <div className={styles.section} data-testid='drawer-section-howto'>
-              <h3 className={styles.sectionLabel}>{t('archive.drawer.howToApply', 'How to apply')}</h3>
+              <h3 className={styles.sectionLabel}>
+                {t('memory.archive.drawer.howToApply', { defaultValue: 'How to apply' })}
+              </h3>
               <div className={styles.sectionContent}>
                 {entry.howToApply ? (
                   <p>{entry.howToApply}</p>
                 ) : (
-                  <span className={styles.absent}>{t('archive.drawer.noHowTo', 'No "How to apply" recorded')}</span>
+                  <span className={styles.absent}>
+                    {t('memory.archive.drawer.noHowTo', { defaultValue: 'No "How to apply" recorded' })}
+                  </span>
                 )}
               </div>
             </div>
@@ -421,9 +461,15 @@ const RightDrawer: React.FC<RightDrawerProps> = ({
             {/* Used in the wild (S4 fix) */}
             {Array.isArray(entry.dereferences) && entry.dereferences.length > 0 && (
               <div className={styles.section} data-testid='drawer-section-derefs'>
-                <h3 className={styles.sectionLabel}>{t('archive.drawer.usedInWild', 'Used in the wild')}</h3>
+                <h3 className={styles.sectionLabel}>
+                  {t('memory.archive.drawer.usedInWild', { defaultValue: 'Used in the wild' })}
+                </h3>
                 <p className={styles.derefHeader}>
-                  {t('archive.drawer.usedNTimesWeek', 'Used {{count}}× this week', { count: entry.referencedBy })}
+                  {t('memory.archive.drawer.usedNTimesWeek', {
+                    count: entry.referencedBy,
+                    defaultValue_one: 'Used {{count}}× this week',
+                    defaultValue_other: 'Used {{count}}× this week',
+                  })}
                 </p>
                 <div className={styles.derefList}>
                   {entry.dereferences.map((d, i) => (
@@ -443,7 +489,8 @@ const RightDrawer: React.FC<RightDrawerProps> = ({
                       data-testid='drawer-deref-card'
                     >
                       <div className={styles.derefMeta}>
-                        {d.source} · {t('archive.drawer.line', 'line')} {d.line} · {formatRelative(d.lastAt)}
+                        {d.source} · {t('memory.archive.drawer.line', { defaultValue: 'line' })} {d.line} ·{' '}
+                        {formatRelative(d.lastAt)}
                       </div>
                       <div className={styles.derefPreview}>"{d.preview}"</div>
                     </div>
@@ -455,7 +502,7 @@ const RightDrawer: React.FC<RightDrawerProps> = ({
             {/* Tags */}
             {Array.isArray(entry.tags) && entry.tags.length > 0 && (
               <div className={styles.section} data-testid='drawer-section-tags'>
-                <h3 className={styles.sectionLabel}>{t('archive.drawer.tags', 'Tags')}</h3>
+                <h3 className={styles.sectionLabel}>{t('memory.archive.drawer.tags', { defaultValue: 'Tags' })}</h3>
                 <div className={styles.tagRow}>
                   {entry.tags.map((tag) => (
                     <Tag key={tag} size='small' color='arcoblue'>

@@ -115,6 +115,24 @@
       "auto": "Refresh the rate daily",
       "manual": "Your rate",
       "manualHint": "A rate you enter here overrides the fetched one. Leave it empty to go back to the fetched rate."
+    },
+    "circuitBreaker": {
+      "title": "Spend circuit-breaker",
+      "hint": "When spend reaches the cap, running agents are stopped. You get an early warning at 80%.",
+      "enable": "Enable",
+      "limit": "Cap",
+      "currencyMnt": "₮ MNT",
+      "currencyUsd": "$ USD",
+      "periodDay": "Per day",
+      "periodSession": "Per session",
+      "warnTitle": "Spending near the cap",
+      "warnBody": "{{spent}} of your {{limit}} cap has been spent (80%+).",
+      "tripTitle": "Spend cap reached - agents stopped",
+      "tripBody": "Spend hit {{spent}} against your {{limit}} cap; {{stopped}} running agent(s) were stopped. Raise or disable the cap in Mission Control → Cost to continue.",
+      "tripBodyNoAgents": "Spend hit {{spent}} against your {{limit}} cap. No agents were running at that moment; any new run will be stopped after its next recorded turn. Raise or disable the cap in Mission Control → Cost to continue.",
+      "rateMissingTitle": "Spend cap temporarily inactive - no exchange rate",
+      "rateMissingBody": "Your cap is set in tögrög ({{limit}}₮), but no MNT exchange rate has been fetched yet, so the cap is temporarily NOT enforced. Switch the cap to USD or wait for the rate to load.",
+      "reactiveNote": "The cap is checked after each turn’s cost is recorded (reactive): a turn already in flight finishes before the stop takes effect."
     }
   },
   "goals": {

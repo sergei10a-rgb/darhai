@@ -16,6 +16,7 @@ import * as path from 'node:path';
 import * as crypto from 'node:crypto';
 import log from 'electron-log';
 import { parseMarkdownBlocks } from './markdownFrontmatter';
+import { applyDelete, applyEdit, type MemoryBlockPatch } from './memoryEntryMutation';
 import { computePromotionScore } from './promotionScore';
 import { matchesQuery } from './memorySearch';
 import {
@@ -301,6 +302,8 @@ class IjfwArchiveService {
   private initPromise: Promise<void> | null = null;
   /** Tracks the currently-running rebuild so IPC callers can await it. */
   private activeRebuild: Promise<void> | null = null;
+  /** Serializes edit/delete so two mutations never interleave on one file. */
+  private mutationTail: Promise<void> = Promise.resolve();
   private watcherFactory: WatcherFactory;
 
   constructor(watcherFactory?: WatcherFactory) {
@@ -734,6 +737,109 @@ class IjfwArchiveService {
     await this.rebuildNow();
   }
 
+  /**
+   * Surgically edit one memory entry in place (idea from upstream f55f934b6,
+   * #414). Read → pure transform → atomic write → AWAITED reindex, so the very
+   * next lexical search (the Cyrillic-first `matchesQuery` lane runs over the
+   * rebuilt in-memory index) sees the new text and no longer sees the old.
+   *
+   * Editing the summary changes the derived id; the (possibly new) id is
+   * returned so the UI can re-select the row.
+   */
+  async editEntry(id: string, patch: MemoryBlockPatch): Promise<{ ok: boolean; error?: string; newId?: string }> {
+    await this.init();
+    return this.withMutationLock(async () => {
+      const entry = this.index.byId.get(id);
+      if (!entry) return { ok: false, error: 'not_found' };
+      if (!isManagedMemoryPath(entry.sourcePath)) return { ok: false, error: 'unmanaged_path' };
+
+      let content: string;
+      try {
+        content = await fs.promises.readFile(entry.sourcePath, 'utf8');
+      } catch {
+        return { ok: false, error: 'read_failed' };
+      }
+
+      const result = applyEdit(content, entry.summary, patch);
+      if (result.ok === false) return { ok: false, error: result.error };
+
+      try {
+        await atomicWriteFile(entry.sourcePath, result.content);
+      } catch (err) {
+        log.error('[memory-archive] editEntry write failed', { id, err });
+        return { ok: false, error: 'write_failed' };
+      }
+
+      await this.rebuildNow();
+
+      // Resolve the (possibly new) id after the summary change. `stored` is
+      // never patchable, so storedAt is stable across the edit - match on it
+      // too, so a renamed summary cannot re-resolve to a sibling block's id.
+      const newSummary = (patch.summary ?? entry.summary).slice(0, 80);
+      const updated = this.index.all.find(
+        (e) =>
+          e.sourcePath === entry.sourcePath && e.storedAt === entry.storedAt && e.summary.slice(0, 80) === newSummary
+      );
+      return { ok: true, newId: updated?.id ?? id };
+    });
+  }
+
+  /**
+   * Hard-delete one memory entry from its source file (idea from upstream
+   * f55f934b6, #414 - the renderer gates this behind an explicit confirm
+   * dialog stating it cannot be undone from the app). When the file's last
+   * entry is removed the file itself is unlinked. The reindex is awaited so
+   * the entry is gone from search/list the moment the call returns.
+   */
+  async deleteEntry(id: string): Promise<{ ok: boolean; error?: string }> {
+    await this.init();
+    return this.withMutationLock(async () => {
+      const entry = this.index.byId.get(id);
+      if (!entry) return { ok: false, error: 'not_found' };
+      if (!isManagedMemoryPath(entry.sourcePath)) return { ok: false, error: 'unmanaged_path' };
+
+      let content: string;
+      try {
+        content = await fs.promises.readFile(entry.sourcePath, 'utf8');
+      } catch {
+        return { ok: false, error: 'read_failed' };
+      }
+
+      const result = applyDelete(content, entry.summary);
+      if (result.ok === false) return { ok: false, error: result.error };
+
+      try {
+        if (result.remainingBlocks === 0) {
+          await fs.promises.unlink(entry.sourcePath);
+        } else {
+          await atomicWriteFile(entry.sourcePath, result.content);
+        }
+      } catch (err) {
+        log.error('[memory-archive] deleteEntry write failed', { id, err });
+        return { ok: false, error: 'write_failed' };
+      }
+
+      await this.rebuildNow();
+      return { ok: true };
+    });
+  }
+
+  /** FIFO gate: each mutation waits for the previous one to fully land. */
+  private async withMutationLock<T>(operation: () => Promise<T>): Promise<T> {
+    const previous = this.mutationTail;
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    this.mutationTail = previous.then(() => gate);
+    await previous;
+    try {
+      return await operation();
+    } finally {
+      release();
+    }
+  }
+
   indexStats(): IndexStats {
     return {
       total: this.index.all.length,
@@ -759,6 +865,32 @@ class IjfwArchiveService {
  */
 function sanitizeYamlScalar(s: string): string {
   return s.replace(/[\r\n]+/g, ' ').slice(0, 200);
+}
+
+/**
+ * Write via temp file + rename so the directory watcher never observes a
+ * partial write (mirrors wikiWriter's atomic write).
+ */
+async function atomicWriteFile(filePath: string, contents: string): Promise<void> {
+  const tmp = `${filePath}.tmp-${process.pid}-${Date.now()}`;
+  try {
+    await fs.promises.writeFile(tmp, contents, 'utf8');
+    await fs.promises.rename(tmp, filePath);
+  } catch (err) {
+    await fs.promises.unlink(tmp).catch((): void => undefined);
+    throw err;
+  }
+}
+
+/**
+ * Guard for mutating operations: only ever touch files inside a `.ijfw/memory`
+ * store. All indexed sourcePaths come from there, but this makes the invariant
+ * explicit so an edit/delete can never escape the store.
+ */
+function isManagedMemoryPath(filePath: string): boolean {
+  const parts = path.resolve(filePath).split(path.sep);
+  const marker = parts.lastIndexOf('.ijfw');
+  return marker !== -1 && parts[marker + 1] === 'memory' && marker + 2 < parts.length;
 }
 
 function groupBy<T>(items: T[], key: (item: T) => string): Map<string, T[]> {

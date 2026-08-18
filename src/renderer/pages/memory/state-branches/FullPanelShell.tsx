@@ -30,13 +30,13 @@
 import { formatShortcut } from '@/renderer/utils/ui/shortcutLabel';
 import React, { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Input, Message } from '@arco-design/web-react';
+import { Button, Input, Message, Modal } from '@arco-design/web-react';
 import type { RefInputType } from '@arco-design/web-react/es/Input/interface';
 import { Archive, BookOpen, Search, Import as ImportIcon, Settings2, Plus } from 'lucide-react';
 import { ipcBridge } from '@/common';
 import { memory as memoryBridge, ijfw as ijfwBridge } from '@/common/adapter/ipcBridge';
 import type { IjfwStatusPayload } from '@/common/adapter/ipcBridge';
-import type { LastDream, ListFilter, MemoryType } from '@/common/types/memory';
+import type { LastDream, ListFilter, MemoryEntry, MemoryType } from '@/common/types/memory';
 import { useTranslation } from 'react-i18next';
 import MemoryList from '../components/MemoryList';
 import RightDrawer from '../components/RightDrawer';
@@ -49,6 +49,7 @@ import EmptyStateHero from '../components/EmptyStateHero';
 import MemoryStatusBar from '../components/MemoryStatusBar';
 import ImportDrawer from '../components/ImportDrawer';
 import ComposerModal from '../components/ComposerModal';
+import EntryEditorModal from '../components/EntryEditorModal';
 import { useMemoryIndex } from '../hooks/useMemoryIndex';
 import { useSelectedEntry } from '../hooks/useSelectedEntry';
 import type { TimeWindow } from '../components/TimeDropdown';
@@ -62,11 +63,9 @@ type PromotionThresholdModalModule = { default: React.ComponentType<{ onClose: (
 
 const PromotionThresholdModalLazy = lazy(
   () =>
-    import('../components/PromotionThresholdModal').catch(
-      (): PromotionThresholdModalModule => ({
-        default: () => null,
-      })
-    ) as Promise<PromotionThresholdModalModule>
+    import('../components/PromotionThresholdModal').catch((): PromotionThresholdModalModule => ({
+      default: () => null,
+    })) as Promise<PromotionThresholdModalModule>
 );
 
 // ---------------------------------------------------------------------------
@@ -119,6 +118,7 @@ const FullPanelShell: React.FC = () => {
   const [showThresholdModal, setShowThresholdModal] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [composerOpen, setComposerOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<(MemoryEntry & { body: string }) | null>(null);
   const [dragOver, setDragOver] = useState(false);
 
   const searchRef = useRef<RefInputType>(null);
@@ -258,11 +258,51 @@ const FullPanelShell: React.FC = () => {
         const errMsg = 'error' in result ? result.error : 'Promotion failed';
         Message.error(errMsg);
       } else {
-        Message.success(t('archive.toast.promoted', 'Promoted to wiki'));
+        Message.success(t('memory.archive.toast.promoted', { defaultValue: 'Promoted to wiki' }));
         reload();
       }
     },
     [reload, t]
+  );
+
+  // Edit an entry (#414): the selected entry already carries its full body.
+  const handleEdit = useCallback((entry: MemoryEntry & { body: string }) => {
+    setEditTarget(entry);
+  }, []);
+
+  // After a successful edit, re-select by the (possibly new) id and refresh.
+  const handleEditorSaved = useCallback(
+    (newId: string) => {
+      setEditTarget(null);
+      reload();
+      selectEntry(newId);
+    },
+    [reload, selectEntry]
+  );
+
+  // Delete an entry (#414). Hard delete on disk - the confirm dialog is the
+  // only path that fires the IPC call, and its copy says it cannot be undone.
+  const handleDelete = useCallback(
+    (entry: MemoryEntry & { body: string }) => {
+      Modal.confirm({
+        title: t('memory.archive.delete.confirmTitle'),
+        content: t('memory.archive.delete.confirmContent'),
+        okText: t('memory.archive.delete.confirmOk'),
+        cancelText: t('memory.archive.delete.confirmCancel'),
+        okButtonProps: { status: 'danger' },
+        onOk: async () => {
+          const result = await memoryBridge.deleteEntry.invoke({ id: entry.id });
+          if (result.ok) {
+            Message.success(t('memory.archive.delete.toastDeleted'));
+            clearSelection();
+            reload();
+          } else {
+            Message.error(t('memory.archive.delete.toastError'));
+          }
+        },
+      });
+    },
+    [t, clearSelection, reload]
   );
 
   // Open source file
@@ -270,7 +310,7 @@ const FullPanelShell: React.FC = () => {
     (path: string, _line: number) => {
       ipcBridge.shell.openFile.invoke(path).catch(() => {
         void navigator.clipboard.writeText(path);
-        Message.success(t('archive.toast.pathCopied', 'Path copied'));
+        Message.success(t('memory.archive.toast.pathCopied', { defaultValue: 'Path copied' }));
       });
     },
     [t]
@@ -279,7 +319,7 @@ const FullPanelShell: React.FC = () => {
   const handleCopy = useCallback(
     (text: string) => {
       void navigator.clipboard.writeText(text);
-      Message.success(t('archive.toast.copied', 'Copied'));
+      Message.success(t('memory.archive.toast.copied', { defaultValue: 'Copied' }));
     },
     [t]
   );
@@ -301,7 +341,9 @@ const FullPanelShell: React.FC = () => {
   const showEmptyHero = entries.length === 0 && !isLoading && !hasActiveFilters;
 
   // Result count for filter bar
-  const resultCountLabel = isLoading ? '' : `${total.toLocaleString()} ${t('archive.filter.results', 'results')}`;
+  const resultCountLabel = isLoading
+    ? ''
+    : `${total.toLocaleString()} ${t('memory.archive.filter.results', { defaultValue: 'results' })}`;
 
   const projectSelected = filter.project !== 'all' ? filter.project : null;
   const typeCounts = stats?.typeCounts ?? {
@@ -351,14 +393,16 @@ const FullPanelShell: React.FC = () => {
         const result = await memoryBridge.ingestFiles.invoke({ files: filePayloads });
         if (result.ingested > 0) {
           Message.success(
-            t('archive.dragDrop.toastIngested', `Ingested ${result.ingested} file${result.ingested === 1 ? '' : 's'}`)
+            t('memory.archive.dragDrop.toastIngested', {
+              defaultValue: `Ingested ${result.ingested} file${result.ingested === 1 ? '' : 's'}`,
+            })
           );
           reload();
         } else {
-          Message.warning(t('archive.dragDrop.toastNoFiles', 'No files were ingested'));
+          Message.warning(t('memory.archive.dragDrop.toastNoFiles', { defaultValue: 'No files were ingested' }));
         }
       } catch (err) {
-        Message.error(t('archive.dragDrop.toastError', 'Drop ingest failed'));
+        Message.error(t('memory.archive.dragDrop.toastError', { defaultValue: 'Drop ingest failed' }));
         console.error('[FullPanelShell] drag-drop ingest error', err);
       }
     },
@@ -393,12 +437,14 @@ const FullPanelShell: React.FC = () => {
             <span className={styles.breadcrumbIcon} aria-hidden>
               <Archive size={20} />
             </span>
-            <span className={styles.breadcrumbPrimary}>{t('archive.topbar.archive', 'Archive')}</span>
+            <span className={styles.breadcrumbPrimary}>
+              {t('memory.archive.topbar.archive', { defaultValue: 'Archive' })}
+            </span>
             <span className={styles.breadcrumbSep} aria-hidden>
               ·
             </span>
             <span className={styles.breadcrumbProject}>
-              {projects[0]?.basename ?? t('archive.topbar.allProjects', 'All projects')}
+              {projects[0]?.basename ?? t('memory.archive.topbar.allProjects', { defaultValue: 'All projects' })}
             </span>
           </span>
 
@@ -440,7 +486,7 @@ const FullPanelShell: React.FC = () => {
             data-testid='memory-btn-quickadd'
             className={styles.addBtn}
           >
-            {t('archive.topbar.add', 'Add')}
+            {t('memory.archive.topbar.add', { defaultValue: 'Add' })}
           </Button>
           {/* Settings cog */}
           <Button
@@ -466,7 +512,9 @@ const FullPanelShell: React.FC = () => {
                 {formatShortcut(['mod', 'K'])}
               </kbd>
             }
-            placeholder={t('archive.filter.searchPlaceholder', 'Search memories… (type:decision tag:design)')}
+            placeholder={t('memory.archive.filter.searchPlaceholder', {
+              defaultValue: 'Search memories… (type:decision tag:design)',
+            })}
             value={filter.search ?? ''}
             onChange={handleSearchChange}
             allowClear
@@ -516,6 +564,8 @@ const FullPanelShell: React.FC = () => {
               onPromote={handlePromote}
               onOpenSource={handleOpenSource}
               onCopy={handleCopy}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
             />
           </>
         )}
@@ -529,6 +579,14 @@ const FullPanelShell: React.FC = () => {
 
       {/* ---- Composer modal ---- */}
       <ComposerModal open={composerOpen} onClose={() => setComposerOpen(false)} />
+
+      {/* ---- Entry editor modal (#414) ---- */}
+      <EntryEditorModal
+        open={editTarget !== null}
+        entry={editTarget}
+        onClose={() => setEditTarget(null)}
+        onSaved={handleEditorSaved}
+      />
 
       {/* ---- Threshold modal ---- */}
       {showThresholdModal && (

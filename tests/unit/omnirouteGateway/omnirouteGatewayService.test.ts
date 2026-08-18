@@ -192,6 +192,35 @@ describe('testOmnirouteGatewayConnection', () => {
     expect(fetchImpl).not.toHaveBeenCalled();
   });
 
+  it('aborts the underlying fetch on its own timeout - the probe can never dangle (M1)', async () => {
+    // The doctor's runner races each check at 30s but a lost race does NOT
+    // cancel the underlying promise; the probe itself must abort its fetch.
+    vi.useFakeTimers();
+    try {
+      let aborted = false;
+      const hangingFetch = vi.fn(
+        (_url: unknown, init?: { signal?: AbortSignal }) =>
+          new Promise((_resolve, reject) => {
+            init?.signal?.addEventListener('abort', () => {
+              aborted = true;
+              const err = new Error('aborted');
+              err.name = 'AbortError';
+              reject(err);
+            });
+          })
+      ) as unknown as typeof fetch;
+
+      const resultPromise = testOmnirouteGatewayConnection(BASE_URL, 'key', hangingFetch);
+      await vi.advanceTimersByTimeAsync(10_000);
+      const result = await resultPromise;
+
+      expect(aborted).toBe(true);
+      expect(result).toEqual({ ok: false, error: 'timeout' });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('a non-2xx answer surfaces the status token', async () => {
     const fetchImpl = vi.fn(async () => ({
       ok: false,

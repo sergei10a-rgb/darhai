@@ -115,6 +115,24 @@
       "auto": "Actualiser le taux chaque jour",
       "manual": "Votre taux",
       "manualHint": "Un taux saisi ici remplace celui récupéré. Laissez vide pour revenir au taux automatique."
+    },
+    "circuitBreaker": {
+      "title": "Coupe-circuit de dépenses",
+      "hint": "Quand la dépense atteint le plafond, les agents en cours sont arrêtés. Un avertissement arrive à 80 %.",
+      "enable": "Activer",
+      "limit": "Plafond",
+      "currencyMnt": "₮ MNT",
+      "currencyUsd": "$ USD",
+      "periodDay": "Par jour",
+      "periodSession": "Par session",
+      "warnTitle": "Dépenses proches du plafond",
+      "warnBody": "{{spent}} de votre plafond de {{limit}} a été dépensé (80 %+).",
+      "tripTitle": "Plafond de dépenses atteint - agents arrêtés",
+      "tripBody": "La dépense a atteint {{spent}} pour un plafond de {{limit}} ; {{stopped}} agent(s) en cours ont été arrêtés. Augmentez ou désactivez le plafond dans Mission Control → Coût pour continuer.",
+      "tripBodyNoAgents": "La dépense a atteint {{spent}} pour un plafond de {{limit}}. Aucun agent ne tournait à ce moment ; toute nouvelle exécution sera arrêtée après son prochain tour comptabilisé. Augmentez ou désactivez le plafond dans Mission Control → Coût pour continuer.",
+      "rateMissingTitle": "Plafond de dépenses temporairement inactif : pas de taux de change",
+      "rateMissingBody": "Votre plafond est défini en tögrögs ({{limit}}₮), mais aucun taux de change MNT n’a encore été récupéré : le plafond n’est temporairement PAS appliqué. Passez le plafond en USD ou attendez le chargement du taux.",
+      "reactiveNote": "Le plafond est vérifié après l’enregistrement du coût de chaque tour (réactif) : un tour déjà en cours se termine avant que l’arrêt ne prenne effet."
     }
   },
   "goals": {

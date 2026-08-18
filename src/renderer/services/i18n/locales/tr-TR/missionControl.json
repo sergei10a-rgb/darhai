@@ -115,6 +115,24 @@
       "auto": "Kuru her gün güncelle",
       "manual": "Kendi kurunuz",
       "manualHint": "Buraya girdiğiniz kur, alınan kurun yerine geçer. Otomatiğe dönmek için boş bırakın."
+    },
+    "circuitBreaker": {
+      "title": "Harcama devre kesici",
+      "hint": "Harcama üst sınıra ulaştığında çalışan aracılar durdurulur. %80'de erken uyarı alırsınız.",
+      "enable": "Etkinleştir",
+      "limit": "Üst sınır",
+      "currencyMnt": "₮ MNT",
+      "currencyUsd": "$ USD",
+      "periodDay": "Günlük",
+      "periodSession": "Oturum başına",
+      "warnTitle": "Harcama üst sınıra yaklaşıyor",
+      "warnBody": "{{limit}} üst sınırınızın {{spent}} kadarı harcandı (%80+).",
+      "tripTitle": "Harcama üst sınırına ulaşıldı - aracılar durduruldu",
+      "tripBody": "Harcama {{spent}} olarak {{limit}} üst sınırınıza ulaştı; çalışan {{stopped}} aracı durduruldu. Devam etmek için Görev Kontrol → Maliyet bölümünden sınırı yükseltin veya kapatın.",
+      "tripBodyNoAgents": "Harcama {{spent}} olarak {{limit}} üst sınırınıza ulaştı. O anda çalışan aracı yoktu; her yeni çalıştırma, bir sonraki kaydedilen turdan sonra durdurulacak. Devam etmek için Görev Kontrol → Maliyet bölümünden sınırı yükseltin veya kapatın.",
+      "rateMissingTitle": "Harcama sınırı geçici olarak devre dışı - döviz kuru yok",
+      "rateMissingBody": "Sınırınız tögrög ({{limit}}₮) olarak ayarlı, ancak MNT kuru henüz alınamadığı için sınır geçici olarak uygulanmıyor. Sınırı USD'ye çevirin veya kurun yüklenmesini bekleyin.",
+      "reactiveNote": "Sınır, her turun maliyeti kaydedildikten sonra denetlenir (reaktif): halihazırda süren bir tur, durdurma etkili olmadan önce tamamlanır."
     }
   },
   "goals": {

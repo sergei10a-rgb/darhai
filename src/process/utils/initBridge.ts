@@ -22,6 +22,7 @@ import { SqliteCostRepository } from '@process/services/cost/SqliteCostRepositor
 import { SqliteBudgetRepository } from '@process/services/cost/SqliteBudgetRepository';
 import { CostAnalyticsService } from '@process/services/cost/CostAnalyticsService';
 import { BudgetController } from '@process/services/cost/BudgetController';
+import { CostCircuitBreaker } from '@process/services/cost/CostCircuitBreaker';
 import { initCostBridge, initCostBudgetBridge, initCostFxBridge } from '@process/bridge/model/costBridge';
 import { CostRecorder, setCostRecorder } from '@process/services/cost/CostRecorder';
 import { currentMntRateSync, startMntRateRefresh } from '@process/services/cost/fxRateService';
@@ -210,7 +211,41 @@ void getDatabase()
         ipcBridge.cost.budgetAlert.emit(alert);
       });
       initCostBudgetBridge(budgetController);
-      costRecorder.setTurnRecordedHook((ctx) => budgetController.checkAfterTurn(ctx));
+
+      // Cost circuit-breaker: a user-set session/day cap (tögrög or USD) that
+      // STOPS running agents the moment recorded spend crosses it, with a
+      // one-time 80% warning per period. It hooks the exact point where cost
+      // is counted (the recorder's turn-recorded hook) and reuses the existing
+      // stop mechanism (IAgentManager.stop) - the turn is cancelled, the
+      // backend process stays alive, and the user can resume by raising or
+      // disabling the cap. Settings are re-read per check so a change in the
+      // renderer applies to the very next recorded turn.
+      const circuitBreaker = new CostCircuitBreaker({
+        loadSettings: () => ProcessConfig.get('cost.circuitBreaker'),
+        spendUsd: (window) => costAnalytics.summary(window).costUsd,
+        mntPerUsd: currentMntRateSync,
+        stopActiveAgents: async () => {
+          const tasks = workerTaskManager.listTasks();
+          const results = await Promise.allSettled(
+            tasks.map(async ({ id }) => {
+              const task = workerTaskManager.getTask(id);
+              if (!task || task.status !== 'running') return false;
+              await task.stop();
+              return true;
+            })
+          );
+          return results.filter((r) => r.status === 'fulfilled' && r.value === true).length;
+        },
+        emitWarning: (notice) => ipcBridge.cost.circuitBreakerWarning.emit(notice),
+        emitTripped: (trip) => ipcBridge.cost.circuitBreakerTripped.emit(trip),
+      });
+
+      costRecorder.setTurnRecordedHook((ctx) => {
+        budgetController.checkAfterTurn(ctx);
+        // Fire-and-forget: the breaker never throws, and the recording path
+        // must not wait on a stop round-trip.
+        void circuitBreaker.onTurnRecorded();
+      });
 
       // Stamp each spend row with the tögrög rate in force when it happened, so
       // a past total stops moving every time the exchange rate does. The refresh

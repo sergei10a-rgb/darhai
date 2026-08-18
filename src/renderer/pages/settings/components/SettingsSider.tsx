@@ -1,4 +1,5 @@
 import {
+  Activity,
   Bot,
   BookOpen,
   Brain,
@@ -56,6 +57,7 @@ export const BUILTIN_TAB_IDS = [
   'storage',
   'ijfw',
   'ecc',
+  'doctor',
   // ABOUT
   'about',
 ] as const;
@@ -280,6 +282,12 @@ const SettingsSider: React.FC<{ collapsed?: boolean; tooltipEnabled?: boolean }>
         label: t('settings.sider.ecc', { defaultValue: 'ECC harness' }),
         icon: <ShieldCheck />,
         path: 'ecc',
+      },
+      doctor: {
+        id: 'doctor',
+        label: t('settings.sider.doctor', { defaultValue: 'Diagnostics' }),
+        icon: <Activity />,
+        path: 'doctor',
       },
       about: {
         id: 'about',

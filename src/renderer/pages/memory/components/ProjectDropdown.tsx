@@ -35,21 +35,15 @@ const ProjectDropdown: React.FC<ProjectDropdownProps> = ({ projects, selected, o
   const { t } = useTranslation();
   const [search, setSearch] = useState('');
 
-  const maxCount = useMemo(
-    () => Math.max(...projects.map((p) => p.count), 1),
-    [projects],
-  );
+  const maxCount = useMemo(() => Math.max(...projects.map((p) => p.count), 1), [projects]);
 
   const filtered = useMemo(
-    () =>
-      projects.filter((p) =>
-        p.basename.toLowerCase().includes(search.toLowerCase()),
-      ),
-    [projects, search],
+    () => projects.filter((p) => p.basename.toLowerCase().includes(search.toLowerCase())),
+    [projects, search]
   );
 
   const selectedLabel = useMemo(() => {
-    if (!selected) return t('archive.filter.allProjects', 'All projects');
+    if (!selected) return t('memory.archive.filter.allProjects', { defaultValue: 'All projects' });
     const proj = projects.find((p) => p.path === selected || p.basename === selected);
     return proj?.basename ?? selected;
   }, [selected, projects, t]);
@@ -58,7 +52,7 @@ const ProjectDropdown: React.FC<ProjectDropdownProps> = ({ projects, selected, o
     (key: string) => {
       onSelect(key === '__all' ? null : key);
     },
-    [onSelect],
+    [onSelect]
   );
 
   const dropdownContent = (
@@ -66,20 +60,18 @@ const ProjectDropdown: React.FC<ProjectDropdownProps> = ({ projects, selected, o
       <div className={styles.searchWrap}>
         <Input
           size='small'
-          placeholder={t('archive.filter.searchProjects', 'Search projects…')}
+          placeholder={t('memory.archive.filter.searchProjects', { defaultValue: 'Search projects…' })}
           value={search}
           onChange={setSearch}
           allowClear
           data-testid='project-dropdown-search'
         />
       </div>
-      <Menu
-        className={styles.menu}
-        onClickMenuItem={handleMenuClick}
-        selectedKeys={selected ? [selected] : ['__all']}
-      >
+      <Menu className={styles.menu} onClickMenuItem={handleMenuClick} selectedKeys={selected ? [selected] : ['__all']}>
         <Menu.Item key='__all' data-testid='project-option-all'>
-          <span className={styles.allOption}>{t('archive.filter.allProjects', 'All projects')}</span>
+          <span className={styles.allOption}>
+            {t('memory.archive.filter.allProjects', { defaultValue: 'All projects' })}
+          </span>
         </Menu.Item>
         {filtered.map((proj) => {
           const barWidth = Math.round((proj.count / maxCount) * 100);
@@ -97,7 +89,9 @@ const ProjectDropdown: React.FC<ProjectDropdownProps> = ({ projects, selected, o
         })}
         {filtered.length === 0 && (
           <Menu.Item key='__empty' disabled>
-            <span className={styles.emptyLabel}>{t('archive.filter.noProjects', 'No projects found')}</span>
+            <span className={styles.emptyLabel}>
+              {t('memory.archive.filter.noProjects', { defaultValue: 'No projects found' })}
+            </span>
           </Menu.Item>
         )}
       </Menu>
@@ -105,18 +99,16 @@ const ProjectDropdown: React.FC<ProjectDropdownProps> = ({ projects, selected, o
   );
 
   return (
-    <Dropdown
-      droplist={dropdownContent}
-      trigger='click'
-      position='bl'
-    >
+    <Dropdown droplist={dropdownContent} trigger='click' position='bl'>
       <button
         type='button'
         className={`${styles.trigger}${selected ? ` ${styles.triggerActive}` : ''}`}
         data-testid='project-dropdown-btn'
       >
         {selectedLabel}
-        <span className={styles.arrow} aria-hidden>▾</span>
+        <span className={styles.arrow} aria-hidden>
+          ▾
+        </span>
       </button>
     </Dropdown>
   );

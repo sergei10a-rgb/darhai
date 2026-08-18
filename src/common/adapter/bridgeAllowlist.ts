@@ -187,6 +187,13 @@ const REMOTE_DENIED_PREFIXES: readonly string[] = [
   // server's voice list - it never starts the server, but still discloses
   // what is installed and running). The local Voice settings UI is unaffected.
   'mongolVoice.',
+  // Doctor diagnostics. `doctor.run` is read-only but its report aggregates
+  // the host's install/connectivity posture in one payload (which runtimes are
+  // on disk and where, which local services answer, free disk space) - exactly
+  // the reconnaissance a paired-device caller has no legitimate use for. The
+  // local Settings diagnostics page is unaffected. Mirrors the upstream
+  // decision to remote-deny doctor.run at introduction (e4324b592).
+  'doctor.',
 ];
 // Note: fs provider keys are registered WITHOUT an `fs.` prefix on the wire
 // (e.g. `write-file`, `remove-entry`), so the dangerous fs surface is enumerated
@@ -446,6 +453,14 @@ const REMOTE_DENIED_KEYS: ReadonlySet<string> = new Set([
   //     persistent memory. A paired-device WebSocket caller must never flip it;
   //     the read (memory.get-auto-extract-enabled) stays allowed. ---
   'memory.set-auto-extract-enabled',
+  // --- Memory entry mutation (#414). The memory.* namespace is deliberately
+  //     open to the paired WebUI for reads, but update-entry / delete-entry
+  //     perform a hard, unrecoverable rewrite/delete of the user's on-disk
+  //     memory files. A paired-device WebSocket caller must never rewrite or
+  //     destroy local memories; only the trusted local user may. Reads stay
+  //     allowed - same pattern as memory.set-auto-extract-enabled above. ---
+  'memory.update-entry',
+  'memory.delete-entry',
   // --- ecc harness: persisted config mutation (silently weakens agent gates) ---
   'ecc.set-gate-guard',
   // --- native pre-tool guard: persisted config mutation that gates AGENT TOOL

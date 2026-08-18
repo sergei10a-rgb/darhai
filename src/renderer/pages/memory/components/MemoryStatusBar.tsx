@@ -78,11 +78,7 @@ function abbreviatePath(p: string): string {
 // Component
 // ---------------------------------------------------------------------------
 
-const MemoryStatusBar: React.FC<MemoryStatusBarProps> = ({
-  brainLive,
-  cliCount,
-  lastDream,
-}) => {
+const MemoryStatusBar: React.FC<MemoryStatusBarProps> = ({ brainLive, cliCount, lastDream }) => {
   const { t } = useTranslation();
   const [dropStatus, setDropStatus] = useState<DropFolderStatus | null>(null);
   const [openPathError, setOpenPathError] = useState<string | null>(null);
@@ -129,30 +125,36 @@ const MemoryStatusBar: React.FC<MemoryStatusBarProps> = ({
       {/* Left: status info */}
       <div className={styles.left}>
         <span className={styles.pill} data-testid='status-brain-pill'>
-          <span
-            className={`${styles.dot} ${brainLive ? styles.dotLive : styles.dotOffline}`}
-            aria-hidden
-          />
-          <span>{brainLive ? t('archive.status.brainLive', 'Brain live') : t('archive.status.brainOffline', 'Brain offline')}</span>
+          <span className={`${styles.dot} ${brainLive ? styles.dotLive : styles.dotOffline}`} aria-hidden />
+          <span>
+            {brainLive
+              ? t('memory.archive.status.brainLive', { defaultValue: 'Brain live' })
+              : t('memory.archive.status.brainOffline', { defaultValue: 'Brain offline' })}
+          </span>
         </span>
 
         {cliCount > 0 && (
           <>
-            <span className={styles.sep} aria-hidden>·</span>
+            <span className={styles.sep} aria-hidden>
+              ·
+            </span>
             <span className={styles.pill} data-testid='status-cli-pill'>
-              {cliCount} {t('archive.status.clis', 'CLIs')}
+              {cliCount} {t('memory.archive.status.clis', { defaultValue: 'CLIs' })}
             </span>
           </>
         )}
 
         {lastDream && (
           <>
-            <span className={styles.sep} aria-hidden>·</span>
+            <span className={styles.sep} aria-hidden>
+              ·
+            </span>
             <span className={styles.pill} data-testid='status-dream-pill'>
-              {t('archive.status.lastDream', 'Last dream {{ago}} · {{facts}} facts extracted · {{promoted}} candidates near threshold', {
+              {t('memory.archive.status.lastDream', {
                 ago: formatMs(lastDream.agoMs),
                 facts: lastDream.factsExtracted,
                 promoted: lastDream.promoted,
+                defaultValue: 'Last dream {{ago}} · {{facts}} facts extracted · {{promoted}} candidates near threshold',
               })}
             </span>
           </>
@@ -160,14 +162,18 @@ const MemoryStatusBar: React.FC<MemoryStatusBarProps> = ({
 
         {dropStatus !== null && (
           <>
-            <span className={styles.sep} aria-hidden>·</span>
+            <span className={styles.sep} aria-hidden>
+              ·
+            </span>
             <button
               type='button'
               className={styles.dropChip}
               data-testid='status-drop-folder-chip'
-              title={openPathError
-                ? openPathError
-                : t('archive.statusbar.dropFolder.open', 'Open folder in Finder')}
+              title={
+                openPathError
+                  ? openPathError
+                  : t('memory.archive.statusbar.dropFolder.open', { defaultValue: 'Open folder in Finder' })
+              }
               onClick={handleOpenDropFolder}
             >
               <span
@@ -175,10 +181,14 @@ const MemoryStatusBar: React.FC<MemoryStatusBarProps> = ({
                 aria-hidden
               />
               <span aria-hidden>📁</span>
-              <span>{abbreviatePath(dropStatus.path)}</span>
+              <span className={styles.dropPath}>{abbreviatePath(dropStatus.path)}</span>
               {dropStatus.ingestedToday > 0 && (
                 <span className={styles.dropBadge} data-testid='status-drop-badge'>
-                  {t('archive.statusbar.dropFolder.today', '{{count}} today', { count: dropStatus.ingestedToday })}
+                  {t('memory.archive.statusbar.dropFolder.today', {
+                    count: dropStatus.ingestedToday,
+                    defaultValue_one: '{{count}} today',
+                    defaultValue_other: '{{count}} today',
+                  })}
                 </span>
               )}
             </button>
@@ -191,19 +201,31 @@ const MemoryStatusBar: React.FC<MemoryStatusBarProps> = ({
         <span className={styles.kbd} data-testid='status-kbd-search'>
           {formatShortcut(['mod', 'K'])}
         </span>
-        <span className={styles.kbdLabel}>{t('archive.status.kbd.search', 'search')}</span>
-        <span className={styles.kbdSep} aria-hidden>·</span>
-        <span className={styles.kbd} data-testid='status-kbd-nav-j'>J</span>
-        <span className={styles.kbd} data-testid='status-kbd-nav-k'>K</span>
-        <span className={styles.kbdLabel}>{t('archive.status.kbd.navigate', 'navigate')}</span>
-        <span className={styles.kbdSep} aria-hidden>·</span>
+        <span className={styles.kbdLabel}>{t('memory.archive.status.kbd.search', { defaultValue: 'search' })}</span>
+        <span className={styles.kbdSep} aria-hidden>
+          ·
+        </span>
+        <span className={styles.kbd} data-testid='status-kbd-nav-j'>
+          J
+        </span>
+        <span className={styles.kbd} data-testid='status-kbd-nav-k'>
+          K
+        </span>
+        <span className={styles.kbdLabel}>{t('memory.archive.status.kbd.navigate', { defaultValue: 'navigate' })}</span>
+        <span className={styles.kbdSep} aria-hidden>
+          ·
+        </span>
         <span className={styles.kbd} data-testid='status-kbd-focus'>
           {formatShortcut(['mod', 'K'])}
         </span>
         <span className={styles.kbdLabel}>/</span>
-        <span className={styles.kbdSep} aria-hidden>·</span>
-        <span className={styles.kbd} data-testid='status-kbd-close'>Esc</span>
-        <span className={styles.kbdLabel}>{t('archive.status.kbd.close', 'close')}</span>
+        <span className={styles.kbdSep} aria-hidden>
+          ·
+        </span>
+        <span className={styles.kbd} data-testid='status-kbd-close'>
+          Esc
+        </span>
+        <span className={styles.kbdLabel}>{t('memory.archive.status.kbd.close', { defaultValue: 'close' })}</span>
       </div>
     </div>
   );

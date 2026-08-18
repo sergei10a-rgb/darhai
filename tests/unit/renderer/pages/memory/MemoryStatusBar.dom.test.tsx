@@ -16,12 +16,21 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, fallback: string, opts?: Record<string, unknown>) => {
-      if (!opts) return fallback ?? _key;
-      // Simple interpolation: replace {{key}} with opts[key]
-      return (fallback ?? _key).replace(/\{\{(\w+)\}\}/g, (_: string, k: string) =>
-        String(opts[k] ?? `{{${k}}}`),
-      );
+    t: (key: string, opts?: unknown) => {
+      if (typeof opts === 'string') return opts;
+      if (opts && typeof opts === 'object') {
+        const o = opts as Record<string, unknown>;
+        // Mirror i18next default-value resolution: with `count`, the plural
+        // suffix wins (one at 1, other elsewhere); plain defaultValue otherwise.
+        const plural =
+          typeof o.count === 'number' ? (o.count === 1 ? o.defaultValue_one : o.defaultValue_other) : undefined;
+        const template = typeof plural === 'string' ? plural : o.defaultValue;
+        if (typeof template === 'string') {
+          // Simple interpolation: replace {{key}} with o[key]
+          return template.replace(/\{\{(\w+)\}\}/g, (_: string, k: string) => String(o[k] ?? `{{${k}}}`));
+        }
+      }
+      return key;
     },
   }),
 }));
@@ -46,10 +55,8 @@ vi.mock('@/common', () => ({
 import { ipcBridge } from '@/common';
 import MemoryStatusBar from '@renderer/pages/memory/components/MemoryStatusBar';
 
-const mockGetDropFolderStatus = () =>
-  vi.mocked(ipcBridge.memory.import.getDropFolderStatus.invoke);
-const mockOpenPath = () =>
-  vi.mocked(ipcBridge.shell.openPath.invoke);
+const mockGetDropFolderStatus = () => vi.mocked(ipcBridge.memory.import.getDropFolderStatus.invoke);
+const mockOpenPath = () => vi.mocked(ipcBridge.shell.openPath.invoke);
 
 beforeEach(() => {
   mockGetDropFolderStatus().mockResolvedValue({
@@ -89,11 +96,7 @@ describe('MemoryStatusBar', () => {
 
   it('renders last dream pill when lastDream is provided', () => {
     render(
-      <MemoryStatusBar
-        brainLive
-        cliCount={5}
-        lastDream={{ factsExtracted: 14, promoted: 3, agoMs: 8 * 60 * 1000 }}
-      />,
+      <MemoryStatusBar brainLive cliCount={5} lastDream={{ factsExtracted: 14, promoted: 3, agoMs: 8 * 60 * 1000 }} />
     );
     const dreamPill = screen.getByTestId('status-dream-pill');
     expect(dreamPill.textContent).toContain('14');

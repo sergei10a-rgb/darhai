@@ -181,10 +181,28 @@ describe('buildServeCommand', () => {
   });
 
   it('emits the measured MoE combination when an offload count is known', () => {
-    // `-ngl 99 --n-cpu-moe N` is the measured 3.4x pairing; the copy-paste
+    // `-ngl <all> --n-cpu-moe N` is the measured 3.4x pairing; the copy-paste
     // advice must not be the plain -ngl that is slower than pure CPU there.
+    // With no block count measured, "all" is the safe upper bound 999 (llama.cpp
+    // clamps -ngl at n_layer + 1 - llama-model.cpp `act_gpu_layers`).
     expect(buildServeCommand('/c/moe.gguf', 24, undefined, 36)).toBe(
-      'llama-server -m "/c/moe.gguf" --host 127.0.0.1 --port 8080 --n-gpu-layers 99 --n-cpu-moe 36'
+      'llama-server -m "/c/moe.gguf" --host 127.0.0.1 --port 8080 --n-gpu-layers 999 --n-cpu-moe 36'
+    );
+  });
+
+  it('uses the measured block count + 1 as "all layers" when the GGUF stated one', () => {
+    // llama.cpp full offload is n_layer + 1 (the +1 is the output layer):
+    // llama-model.cpp `n_gpu_layers()` answers `hparams.n_layer_all + 1`.
+    expect(buildServeCommand('/c/moe.gguf', 24, undefined, 36, 43)).toBe(
+      'llama-server -m "/c/moe.gguf" --host 127.0.0.1 --port 8080 --n-gpu-layers 44 --n-cpu-moe 36'
+    );
+  });
+
+  it('is not capped at 99 for a model with more than 99 layers', () => {
+    // The literal '99' silently left layers 100+ OFF the GPU for deep models
+    // (e.g. Llama-405B has 126 blocks). 127 = 126 + 1 offloads all of them.
+    expect(buildServeCommand('/c/deep-moe.gguf', 24, undefined, 60, 126)).toBe(
+      'llama-server -m "/c/deep-moe.gguf" --host 127.0.0.1 --port 8080 --n-gpu-layers 127 --n-cpu-moe 60'
     );
   });
 
@@ -381,13 +399,21 @@ describe('LocalServeManager.start GPU offload + CORS arguments', () => {
     expect(args[args.indexOf('--n-gpu-layers') + 1]).toBe('0');
   });
 
-  it('pairs --n-cpu-moe with the literal -ngl 99 it was measured under', async () => {
+  it('pairs --n-cpu-moe with an all-layers -ngl, not auto', async () => {
     // MEASURED (Qwen3.6-35B-A3B Q4_K_M, 8 GB card, b10441): `-ngl 99` alone
     // 8.3 tok/s, `-ngl 99 --n-cpu-moe 36` 27.8 tok/s. The pairing is the
     // contract - auto's own fit was not what any of those numbers ran under.
+    // Without a measured block count, "all" is 999 (llama.cpp clamps at
+    // n_layer + 1), because the literal 99 is NOT "all" for >99-layer models.
     const args = await argvForStart({}, { ggufPath: '/moe.gguf', ngl: 24, nCpuMoe: 36 });
     expect(args[args.indexOf('--n-cpu-moe') + 1]).toBe('36');
-    expect(args[args.indexOf('--n-gpu-layers') + 1]).toBe('99');
+    expect(args[args.indexOf('--n-gpu-layers') + 1]).toBe('999');
+  });
+
+  it('uses block count + 1 as the all-layers -ngl when the caller measured it', async () => {
+    const args = await argvForStart({}, { ggufPath: '/moe.gguf', ngl: 24, nCpuMoe: 36, moeBlockCount: 40 });
+    expect(args[args.indexOf('--n-cpu-moe') + 1]).toBe('36');
+    expect(args[args.indexOf('--n-gpu-layers') + 1]).toBe('41');
   });
 
   it('drops the offload count on a build whose help has no --n-cpu-moe', async () => {

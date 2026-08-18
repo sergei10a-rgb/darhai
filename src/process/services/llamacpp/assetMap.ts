@@ -23,16 +23,21 @@
  *   - macOS ships `macos-arm64` (contains `libggml-metal.dylib`) and
  *     `macos-x64` (contains only `libggml-blas.dylib` - NO Metal). An Intel Mac
  *     asking for `metal` therefore also gets a stated CPU fallback.
- *   - `win-vulkan-x64` / `ubuntu-vulkan-*` exist but are unreachable from
- *     {@link HwfitBackend}, which has no `vulkan` member. A Windows machine
- *     with an Intel/other GPU is typed `cpu_x86` by hwfit and lands on the CPU
- *     build. That is not silently accepted: EVERY cpu outcome checks the
- *     release for a Vulkan build and, when one exists, emits
- *     `VULKAN_BUILD_NOT_REQUESTABLE` in {@link LlamaAssetPlan.noteCodes} so the
- *     user is told they are getting the slow build and why. Reaching the Vulkan
- *     build itself is deliberately NOT done here: hwfit reports no
- *     Vulkan-capable device, so choosing that build would be picking an
- *     accelerator nothing on this machine has been measured to support.
+ *   - `win-vulkan-x64` / `ubuntu-vulkan-*` exist but {@link HwfitBackend} has
+ *     no `vulkan` member to request them with. On Windows a non-NVIDIA GPU
+ *     machine is typed `cpu_x86` by hwfit's WMI fallback, with the GPU's NAME
+ *     as the only evidence a Vulkan-capable device exists - so that name is an
+ *     input here ({@link LlamaAssetPlanInput.gpuName}). A cpu-typed Windows
+ *     target whose scan named a non-NVIDIA GPU gets the Vulkan build when the
+ *     release ships one (re-verified against the live index on 2026-08-17,
+ *     b10470: `llama-b10470-bin-win-vulkan-x64.zip` plus
+ *     `llama-b10470-bin-ubuntu-vulkan-{x64,arm64}.tar.gz`). An NVIDIA-named
+ *     GPU never takes this path: its route is CUDA, and a cpu-typed NVIDIA
+ *     machine means the driver probe failed - the same driver Vulkan needs.
+ *     A cpu outcome that could NOT take the Vulkan build still says so: it
+ *     emits `VULKAN_BUILD_NOT_REQUESTABLE` in {@link LlamaAssetPlan.noteCodes}
+ *     whenever the release ships one, so nobody is quietly handed the slow
+ *     build while a faster one sat in the same release.
  *
  * The CUDA LINE is chosen from the measured driver, not by "newest wins" - see
  * {@link CUDA_MIN_DRIVER} and {@link pickCudaVersioned}.
@@ -63,7 +68,7 @@ export type LlamaPlatform = 'win32' | 'darwin' | 'linux';
 export type LlamaArch = 'x64' | 'arm64';
 
 /** What the chosen build actually accelerates with. */
-export type LlamaAcceleration = 'cuda' | 'rocm' | 'metal' | 'cpu';
+export type LlamaAcceleration = 'cuda' | 'rocm' | 'metal' | 'vulkan' | 'cpu';
 
 /** Container format of a release asset - drives which extractor runs. */
 export type LlamaArchiveFormat = 'zip' | 'tar.gz';
@@ -185,6 +190,15 @@ export type LlamaAssetPlanInput = {
    * {@link CUDA_MIN_DRIVER}.
    */
   driverVersion?: string | null;
+  /**
+   * Name of the detected GPU exactly as the hardware scan reported it (e.g.
+   * `'AMD Radeon RX 7800 XT'`, `'Intel(R) Arc(TM) A770 Graphics'`), or
+   * null/absent when the machine has none. This matters for exactly one
+   * decision: hwfit types every non-NVIDIA-GPU Windows machine as `cpu_x86`
+   * (the WMI fallback), so the name is the only signal that a Vulkan-capable
+   * device exists - see {@link vulkanPlan}.
+   */
+  gpuName?: string | null;
 };
 
 /**
@@ -430,6 +444,65 @@ function vulkanAssetName(platform: LlamaPlatform, arch: LlamaArch, tag: string):
 }
 
 /**
+ * True when a GPU name reads as an NVIDIA product.
+ *
+ * Used to keep the Vulkan path away from NVIDIA cards: their route is CUDA,
+ * and an NVIDIA card that ended up on a CPU backend means the driver probe
+ * failed - the same driver a Vulkan ICD depends on, so nothing is proven for
+ * Vulkan either. `\b` on the model prefixes so AMD's "RX 7800" can never match
+ * "RTX"/"GTX".
+ *
+ * Datacenter models (A100/H100/H200/L4/L40/L40S/V100/T4/B200) are listed
+ * explicitly because WMI often reports them WITHOUT an "NVIDIA" prefix
+ * ("H100 PCIe", "A100-SXM4-80GB"). Every one is word-bounded so AMD/Intel
+ * names with near-miss substrings (Instinct MI100, Arc A770/Pro A40, Arc
+ * B580) can never match (L1).
+ */
+const NVIDIA_NAME_RE =
+  /nvidia|geforce|quadro|tesla|\brtx\b|\bgtx\b|\ba100\b|\bh100\b|\bh200\b|\bl40s?\b|\bl4\b|\bv100\b|\bt4\b|\bb200\b/i;
+
+/**
+ * The Vulkan plan for a CPU-typed machine whose hardware scan NAMED a
+ * non-NVIDIA GPU, or null when this machine has not earned it.
+ *
+ * Windows-only by design: that is the one platform where hwfit demonstrably
+ * types AMD/Intel GPU machines as `cpu_x86` (the WMI fallback in
+ * `hardwareDetect.ts` reports the name but hard-codes the backend), so a
+ * cpu-typed target with a non-NVIDIA name IS the AMD/Intel-GPU-on-Windows
+ * machine. Linux AMD is typed `rocm` and takes the rocm/fallback path instead;
+ * widening this gate to Linux would be choosing an accelerator for a machine
+ * shape no probe here has measured.
+ *
+ * Nothing outside `availableAssets` is ever named, so this cannot 404: a
+ * release without the Vulkan archive simply answers null and the caller falls
+ * through to the CPU plan (which then emits its "a Vulkan build exists that
+ * we could not take" note only when one actually does).
+ */
+function vulkanPlan(input: LlamaAssetPlanInput, platform: LlamaPlatform, arch: LlamaArch): LlamaAssetPlan | null {
+  if (platform !== 'win32') return null;
+  const gpuName = typeof input.gpuName === 'string' ? input.gpuName.trim() : '';
+  if (gpuName === '' || NVIDIA_NAME_RE.test(gpuName)) return null;
+  const name = vulkanAssetName(platform, arch, input.tag);
+  if (name === '' || !input.availableAssets.includes(name)) return null;
+  return {
+    kind: 'ok',
+    tag: input.tag,
+    platform,
+    arch,
+    requestedBackend: input.backend,
+    acceleration: 'vulkan',
+    assets: [{ role: 'server', name, format: formatFor(platform) }],
+    serverBinaryName: serverBinaryName(platform),
+    // Vulkan is STRONGER than the requested cpu backend, not weaker - the
+    // fallback slot is for the opposite direction only.
+    fallback: null,
+    cudaVariant: null,
+    notes: [`Vulkan build selected: the hardware scan named a non-NVIDIA GPU ("${gpuName}") on Windows.`],
+    noteCodes: [],
+  };
+}
+
+/**
  * Build the plain-CPU plan, optionally recording why an accelerated build was
  * skipped.
  *
@@ -526,8 +599,12 @@ export function planLlamaAssets(input: LlamaAssetPlanInput): LlamaAssetPlanResul
   const notes: string[] = [];
   const noteCodes: LlamaNoteCode[] = [];
 
-  // Plain CPU request: the CPU build is the answer, not a fallback.
+  // Plain CPU request: the CPU build is the answer, not a fallback - unless
+  // the hardware scan named a non-NVIDIA GPU on Windows, in which case the
+  // Vulkan build (when this release ships it) is what that GPU can actually use.
   if (CPU_BACKENDS.has(backend)) {
+    const vulkan = vulkanPlan(input, platform, arch);
+    if (vulkan !== null) return vulkan;
     return cpuPlan(input, platform, arch, null, notes, noteCodes);
   }
 

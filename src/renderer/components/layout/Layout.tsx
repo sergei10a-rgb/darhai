@@ -18,6 +18,7 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutContext } from '@renderer/hooks/context/LayoutContext';
 import { NavigationHistoryProvider } from '@renderer/hooks/context/NavigationHistoryContext';
 import { useAutoReadResponses } from '@renderer/hooks/chat/useAutoReadResponses';
+import { useCircuitBreakerNotices } from '@renderer/hooks/cost/useCircuitBreakerNotices';
 import { useDeepLink } from '@renderer/hooks/system/useDeepLink';
 import { useNotificationClick } from '@renderer/hooks/system/useNotificationClick';
 import { useDirectorySelection } from '@renderer/hooks/file/useDirectorySelection';
@@ -108,6 +109,9 @@ const Layout: React.FC<{
   const { contextHolder: directorySelectionContextHolder } = useDirectorySelection();
   useDeepLink();
   useNotificationClick();
+  // Cost circuit-breaker notices must survive any page - the breaker stops
+  // agents from the main process and the explanation has to reach the user.
+  useCircuitBreakerNotices();
   // Auto-read finished assistant replies via the local TTS engine (app-wide,
   // gated inside on the tools.textToSpeech enabled/autoReadResponses config).
   useAutoReadResponses();

@@ -1891,7 +1891,8 @@
     "images": "图像生成",
     "voice": "语音",
     "groupEngine": "ENGINE",
-    "ecc": "ECC 工具链"
+    "ecc": "ECC 工具链",
+    "doctor": "诊断"
   },
   "channelsIndex": {
     "title": "消息渠道",
@@ -2816,5 +2817,100 @@
   "deferUpdateWhileBusy": "忙碌时推迟更新",
   "deferUpdateWhileBusyDesc": "等待进行中的对话、计划任务和团队完成后再重启更新。更新仍会在空闲或退出时应用。",
   "textToSpeechTestPhraseKittenMn": "Сайн байна уу! Энэ бол монгол дуу хоолойн туршилт.",
-  "textToSpeechVoiceListAfterFirstSpeak": "语音列表将在首次播放后显示——语音服务器按需启动。"
+  "textToSpeechVoiceListAfterFirstSpeak": "语音列表将在首次播放后显示——语音服务器按需启动。",
+  "speechToTextPersonalDict": "个人词典",
+  "speechToTextPersonalDictDescription": "修正识别器在你的语音中经常听错的词。每条记录只替换转写文本中的完整词语，绝不会替换较长词语的一部分。",
+  "speechToTextPersonalDictWrong": "误识别为",
+  "speechToTextPersonalDictRight": "替换为",
+  "speechToTextPersonalDictAdd": "添加",
+  "speechToTextPersonalDictRemove": "删除",
+  "speechToTextPersonalDictEmpty": "暂无记录。添加一组词对来纠正识别器经常听错的词。",
+  "doctor": {
+    "title": "诊断",
+    "subtitle": "对 Darhai 的各子系统进行健康检查:运行时、服务、本地模型、记忆与磁盘。",
+    "run": "运行诊断",
+    "running": "正在运行…",
+    "runError": "诊断运行失败:{{error}}",
+    "empty": "尚未运行过诊断。",
+    "counts": "{{pass}} 项通过 · {{warn}} 项警告 · {{fail}} 项失败",
+    "remediationLabel": "修复:",
+    "overall": {
+      "pass": "一切正常",
+      "warn": "需要注意",
+      "fail": "发现问题"
+    },
+    "status": {
+      "pass": "正常",
+      "warn": "警告",
+      "fail": "失败"
+    },
+    "category": {
+      "runtime": "运行时",
+      "services": "服务",
+      "models": "本地模型",
+      "system": "系统"
+    },
+    "checks": {
+      "bun": {
+        "title": "Bun 运行时",
+        "ok": "找到内置 bun:{{path}}",
+        "fallback": "未找到内置 bun;内置 MCP 服务器将回退到 node。",
+        "fallbackFix": "重新安装 Darhai 以恢复内置 bun 运行时。",
+        "missing": "解析到的 bun 二进制文件不存在:{{path}}",
+        "missingFix": "重新安装 Darhai 以恢复内置 bun 运行时。"
+      },
+      "mcp": {
+        "title": "内置 MCP 服务器",
+        "ok": "{{total}} 个内置 MCP 服务器中有 {{enabled}} 个已启用。",
+        "none": "没有注册任何内置 MCP 服务器。",
+        "noneFix": "重启 Darhai;内置服务器会在启动时注册。",
+        "disabled": "全部 {{total}} 个内置 MCP 服务器均已禁用。",
+        "disabledFix": "在 设置 → MCP 库 中启用所需的服务器。"
+      },
+      "llama": {
+        "title": "llama.cpp 运行时",
+        "ok": "llama.cpp {{tag}} 已安装并通过验证。",
+        "none": "本地 llama.cpp 运行时未安装。",
+        "noneFix": "如需本地模型,请通过模型顾问安装。",
+        "broken": "llama.cpp {{tag}} 安装未通过验证(缺少文件或库)。",
+        "brokenFix": "请通过模型顾问重新安装运行时。"
+      },
+      "voice": {
+        "title": "蒙古语语音",
+        "ok": "全部 {{total}} 个语音组件均已安装。",
+        "partial": "{{total}} 个语音组件中已安装 {{installed}} 个;缺少:{{missing}}。",
+        "partialFix": "在 设置 → 语音 中安装缺少的组件。",
+        "unsupported": "此平台没有可用的语音组件。"
+      },
+      "ffmpeg": {
+        "title": "ffmpeg",
+        "ok": "找到 ffmpeg:{{path}}",
+        "missing": "在 PATH 中未找到 ffmpeg;视频帧与蒙古语语音预处理将无法工作。",
+        "missingFix": "请安装 ffmpeg 并确保其在 PATH 中。"
+      },
+      "omniroute": {
+        "title": "OmniRoute 网关",
+        "ok": "网关正常响应;{{models}} 个模型可用。",
+        "stopped": "OmniRoute 网关未在运行。",
+        "stoppedFix": "如果使用网关模型,请在设置中启动它。",
+        "unreachable": "本应用的网关进程声称在运行,但端口无响应({{error}})。",
+        "unreachableFix": "请在设置中停止并重新启动网关。"
+      },
+      "memory": {
+        "title": "记忆索引",
+        "ok": "记忆索引健康:{{projects}} 个项目共 {{total}} 条记录。",
+        "empty": "记忆索引报告 0 条记录 - 它为空或尚未加载。",
+        "emptyFix": "如果您已保存过记忆，请打开\"记忆\"页面以触发索引，然后重新运行诊断。"
+      },
+      "disk": {
+        "title": "磁盘空间",
+        "ok": "数据卷剩余 {{freeGb}} GB。",
+        "low": "仅剩 {{freeGb}} GB;模型下载将开始失败。",
+        "lowFix": "请释放磁盘空间或将大文件移至其他卷。",
+        "critical": "磁盘空间严重不足:剩余 {{freeGb}} GB。",
+        "criticalFix": "请立即释放空间,否则应用可能异常。",
+        "unknown": "无法确定此系统的可用磁盘空间。"
+      }
+    }
+  }
 }

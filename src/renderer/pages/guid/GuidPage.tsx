@@ -36,7 +36,8 @@ import GuidModelSelector from './components/GuidModelSelector';
 import MentionDropdown, { MentionSelectorBadge } from './components/MentionDropdown';
 import FeedbackReportModal from '@/renderer/components/settings/SettingsModal/contents/FeedbackReportModal';
 import SpeechInputButton from '@/renderer/components/chat/SpeechInputButton';
-import { appendSpeechTranscript } from '@/renderer/hooks/system/useSpeechInput';
+import { appendSpeechTranscript, createSpeechLiveTranscriptHandler } from '@/renderer/hooks/system/useSpeechInput';
+import { useLatestRef } from '@/renderer/hooks/ui/useLatestRef';
 import { useHiddenAgents } from '@renderer/hooks/assistant/useHiddenAgents';
 import { cycleAgentKey, filterVisibleAgents } from './hooks/agentSelectionUtils';
 import { useGuidAgentSelection } from './hooks/useGuidAgentSelection';
@@ -861,6 +862,17 @@ const GuidPage: React.FC = () => {
     },
     [guidInput.setInput]
   );
+  // Live dictation (nemotron-mn): partials REPLACE the live region instead of
+  // appending. The ref keeps reads fresh across await boundaries; the lazy
+  // useState keeps ONE stateful handler for the page's lifetime.
+  const latestGuidInputRef = useLatestRef(guidInput.input);
+  const guidSetInputRef = useLatestRef(guidInput.setInput);
+  const [handleSpeechLiveTranscript] = useState(() =>
+    createSpeechLiveTranscriptHandler({
+      getCurrentValue: () => latestGuidInputRef.current,
+      setValue: (value) => guidSetInputRef.current(value),
+    })
+  );
 
   // Build the action row
   const actionRowNode = (
@@ -893,7 +905,12 @@ const GuidPage: React.FC = () => {
       loading={guidInput.loading}
       isButtonDisabled={send.isButtonDisabled}
       speechInputNode={
-        <SpeechInputButton variant='prominent' locale={i18n.language} onTranscript={handleSpeechTranscript} />
+        <SpeechInputButton
+          variant='prominent'
+          locale={i18n.language}
+          onTranscript={handleSpeechTranscript}
+          onLiveTranscript={handleSpeechLiveTranscript}
+        />
       }
       onSend={() => {
         // MED-3: only record telemetry on successful send. handleSend
