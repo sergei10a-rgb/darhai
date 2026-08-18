@@ -17,7 +17,7 @@ vi.mock('@/common/adapter/ipcBridge', () => {
   const g = globalThis as Record<string, unknown>;
   const mk = (name: string): ReturnType<typeof vi.fn> => (g[name] ??= vi.fn()) as ReturnType<typeof vi.fn>;
   // Emitter `.on` returns an unsubscribe fn; a fresh no-op per call is fine here.
-  const onStub = (): ReturnType<typeof vi.fn> => vi.fn().mockReturnValue(() => undefined);
+  const onStub = (): ReturnType<typeof vi.fn> => vi.fn().mockReturnValue((): undefined => undefined);
   return {
     subscriptionOAuth: {
       getProviders: { invoke: mk('__cardGetProviders') },

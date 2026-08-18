@@ -124,3 +124,63 @@ describe('ContextUsageIndicator readout', () => {
     expect(screen.queryByTestId('context-usage-over')).toBeNull();
   });
 });
+
+/**
+ * The context breakdown and the tögrög cost readout.
+ *
+ * The ring alone says "how full", not "of what" and not "what has it cost". The
+ * popover now names both halves of the window (used / free) and, when the cost
+ * service has a figure for this chat, prints it in tögrög. The rules the display
+ * must not break: free never goes negative past the window, the cost row is a
+ * real recorded number (never a $0.00 placeholder), and a missing rate falls
+ * back to dollars rather than inventing a tögrög figure.
+ */
+describe('ContextUsageIndicator breakdown and spend', () => {
+  const open = (props: Record<string, unknown>): HTMLElement => {
+    const { container } = render(
+      React.createElement(ContextUsageIndicator, props as unknown as React.ComponentProps<typeof ContextUsageIndicator>)
+    );
+    fireEvent.mouseEnter(container.querySelector('.context-usage-indicator') as HTMLElement);
+    return container;
+  };
+
+  it('names the used and free halves of the window', async () => {
+    open({ tokenUsage: { totalTokens: 50_000 }, contextLimit: 200_000 });
+    const breakdown = await screen.findByTestId('context-usage-breakdown');
+    // 50K used of a 200K window leaves 150K free - both must be legible.
+    expect(breakdown.textContent ?? '').toContain('50.0K');
+    expect(breakdown.textContent ?? '').toContain('150K');
+  });
+
+  it('never reports negative free space once the window overflows', async () => {
+    open({ tokenUsage: { totalTokens: 1_400_000 }, contextLimit: 1_000_000 });
+    const breakdown = await screen.findByTestId('context-usage-breakdown');
+    // Overflowed by 400K: free is clamped at 0, never "-400K".
+    expect(breakdown.textContent ?? '').not.toContain('-');
+    expect(breakdown.textContent ?? '').toContain('0');
+  });
+
+  it('shows the tögrög cost when the cost service supplies one', async () => {
+    open({ tokenUsage: { totalTokens: 50_000 }, contextLimit: 200_000, spendUsd: 0.5, spendMnt: 1750 });
+    const spend = await screen.findByTestId('context-usage-spend');
+    // Dollars first, tögrög alongside - the shared formatSpend convention.
+    expect(spend.textContent ?? '').toContain('$0.50');
+    expect(spend.textContent ?? '').toContain('1,750₮');
+  });
+
+  it('falls back to dollars alone when no rate is known', async () => {
+    open({ tokenUsage: { totalTokens: 50_000 }, contextLimit: 200_000, spendUsd: 0.5, spendMnt: null });
+    const spend = await screen.findByTestId('context-usage-spend');
+    expect(spend.textContent ?? '').toContain('$0.50');
+    expect(spend.textContent ?? '').not.toContain('₮');
+  });
+
+  it('hides the cost row entirely when spend is zero or unknown', () => {
+    // A zero spend must not render as "$0.00" - that reads as a measured
+    // nothing, when the truth is the turn simply has not been priced yet.
+    open({ tokenUsage: { totalTokens: 50_000 }, contextLimit: 200_000, spendUsd: 0 });
+    expect(screen.queryByTestId('context-usage-spend')).toBeNull();
+    open({ tokenUsage: { totalTokens: 50_000 }, contextLimit: 200_000 });
+    expect(screen.queryByTestId('context-usage-spend')).toBeNull();
+  });
+});

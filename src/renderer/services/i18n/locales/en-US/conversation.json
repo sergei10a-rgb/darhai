@@ -286,7 +286,10 @@
   },
   "contextUsage": {
     "contextUsed": "context used",
-    "overLimit": "Over the limit - start a new chat"
+    "overLimit": "Over the limit - start a new chat",
+    "used": "Used",
+    "free": "Free",
+    "spend": "This chat's cost"
   },
   "skill_generator": {
     "title": "Generate Skill/Rule",

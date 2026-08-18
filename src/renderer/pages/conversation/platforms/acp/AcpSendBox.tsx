@@ -6,6 +6,7 @@ import { uuid } from '@/common/utils';
 import AcpConfigSelector from '@/renderer/components/agent/AcpConfigSelector';
 import AgentModeSelector from '@/renderer/components/agent/AgentModeSelector';
 import ContextUsageIndicator from '@/renderer/components/agent/ContextUsageIndicator';
+import { useContextSpend } from '@/renderer/hooks/cost/useContextSpend';
 import CommandQueuePanel from '@/renderer/components/chat/CommandQueuePanel';
 import SendBox from '@/renderer/components/chat/sendbox';
 import ThoughtDisplay from '@/renderer/components/chat/ThoughtDisplay';
@@ -122,6 +123,7 @@ const AcpSendBox: React.FC<{
     currentModelId,
     hasThinkingMessage,
   } = useAcpMessage(conversation_id);
+  const { spendUsd, spendMnt } = useContextSpend(conversation_id);
   const { t } = useTranslation();
   const teamPermission = useTeamPermission();
   // In team mode, all agents show the permission mode selector (members don't propagate)
@@ -455,6 +457,8 @@ Please check your local CLI tool authentication status`,
               // warned before overflowing.
               contextLimit={contextLimit > 0 ? contextLimit : getModelContextLimit(currentModelId ?? undefined)}
               size={24}
+              spendUsd={spendUsd}
+              spendMnt={spendMnt}
             />
           ) : undefined
         }

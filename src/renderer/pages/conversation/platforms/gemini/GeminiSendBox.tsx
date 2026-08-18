@@ -4,6 +4,7 @@ import { uuid } from '@/common/utils';
 import AgentModeSelector from '@/renderer/components/agent/AgentModeSelector';
 import AgentSetupCard from '@/renderer/components/agent/AgentSetupCard';
 import ContextUsageIndicator from '@/renderer/components/agent/ContextUsageIndicator';
+import { useContextSpend } from '@/renderer/hooks/cost/useContextSpend';
 import CommandQueuePanel from '@/renderer/components/chat/CommandQueuePanel';
 import SendBox from '@/renderer/components/chat/sendbox';
 import ThoughtDisplay from '@/renderer/components/chat/ThoughtDisplay';
@@ -142,6 +143,8 @@ const GeminiSendBox: React.FC<{
     resetState,
     hasThinkingMessage,
   } = useGeminiMessage(conversation_id, handleGeminiError);
+
+  const { spendUsd, spendMnt } = useContextSpend(conversation_id);
 
   const { atPath, uploadFile, setAtPath, setUploadFile, content, setContent } = useSendBoxDraft(conversation_id);
 
@@ -474,6 +477,8 @@ const GeminiSendBox: React.FC<{
             tokenUsage={tokenUsage}
             contextLimit={getModelContextLimit(currentModel?.useModel)}
             size={24}
+            spendUsd={spendUsd}
+            spendMnt={spendMnt}
           />
         }
         prefix={
