@@ -16,3 +16,4 @@
 export * from './authBridge';
 export * from './bedrockBridge';
 export * from './geminiBridge';
+export * from './subscriptionOAuthBridge';

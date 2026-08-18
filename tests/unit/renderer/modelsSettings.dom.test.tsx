@@ -115,6 +115,13 @@ vi.mock('../../../src/renderer/pages/settings/components/SettingsPageShell', () 
     React.createElement('div', { 'data-testid': 'settings-shell' }, children),
 }));
 
+// The subscription-OAuth card lives on this page but owns its own test and its
+// own `subscriptionOAuth` IPC namespace; stub it out so these provider-table
+// tests do not need to mock that surface.
+vi.mock('../../../src/renderer/pages/settings/ModelsSettings/components/SubscriptionOAuthCard', () => ({
+  default: () => null,
+}));
+
 // Deep-link hook - controllable per test so we can exercise the seed flow.
 const mockConsumePendingDeepLink = vi.fn();
 vi.mock('../../../src/renderer/hooks/system/useDeepLink', () => ({

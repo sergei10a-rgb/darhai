@@ -19,6 +19,7 @@ export * from './databaseBridge';
 export * from './importBridge';
 export * from './memoryArchiveBridge';
 export * from './migrationUtils';
+export * from './refineBridge';
 export * from './researchBridge';
 export * from './wikiBridge';
 export * from './records';

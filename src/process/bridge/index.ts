@@ -40,7 +40,7 @@ import {
   initOmnirouteGatewayBridge,
   initRoutingBridge,
 } from './model';
-import { initAuthBridge, initBedrockBridge, initGeminiBridge } from './model/providers';
+import { initAuthBridge, initBedrockBridge, initGeminiBridge, initSubscriptionOAuthBridge } from './model/providers';
 import {
   initCookbookBridge,
   initHwfitBridge,
@@ -70,6 +70,7 @@ import {
   initImportBridge,
   initMemoryArchiveBridge,
   initPromotionSweep,
+  initRefineBridge,
   initResearchBridge,
   initWikiBridge,
 } from './knowledge';
@@ -128,6 +129,7 @@ export function initAllBridges(deps: BridgeDependencies): void {
   // extra Gemini helper bridges (subscription detection, etc.) must be available after the conversation bridge is initialized / extra helpers after core bridges
   initGeminiBridge();
   initBedrockBridge();
+  initSubscriptionOAuthBridge();
   initAcpConversationBridge(deps.workerTaskManager);
   initAuthBridge();
   initModelBridge();
@@ -156,6 +158,7 @@ export function initAllBridges(deps: BridgeDependencies): void {
   initOmnirouteGatewayBridge();
   initMemoryArchiveBridge();
   initPromotionSweep();
+  initRefineBridge();
   initWikiBridge();
   startWikiAutoSync();
   initImportBridge();

@@ -187,6 +187,21 @@ const REMOTE_DENIED_PREFIXES: readonly string[] = [
   // server's voice list - it never starts the server, but still discloses
   // what is installed and running). The local Voice settings UI is unaffected.
   'mongolVoice.',
+  // Subscription OAuth (sign in with a Claude Max / ChatGPT / Copilot
+  // subscription). `startLogin` opens a browser and mints a stored credential,
+  // `setGate` flips a persisted ToS policy, and `disconnect` deletes a
+  // credential - the same login/credential-mutation class as `mcp.login-oauth`
+  // and `modelRegistry.connect` (both already denied). The whole namespace is
+  // denied, reads included: `getStatus` discloses which subscriptions are
+  // connected on the host, and `getProviders`/`getGate` expose the feature's
+  // local policy. The renderer-local Models settings UI is unaffected.
+  'subscriptionOAuth.',
+  // /refine rule surface. `applyRules` and `rollback` rewrite the user's on-disk
+  // global rule set (the same hard-mutation class as `memory.update-entry` /
+  // `memory.delete-entry`, already denied), and `listRules` discloses the local
+  // user's rules. The whole namespace is remote-denied; the local Memory
+  // settings UI is unaffected.
+  'refine.',
   // Doctor diagnostics. `doctor.run` is read-only but its report aggregates
   // the host's install/connectivity posture in one payload (which runtimes are
   // on disk and where, which local services answer, free disk space) - exactly

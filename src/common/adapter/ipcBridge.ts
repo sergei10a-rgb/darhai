@@ -1477,6 +1477,101 @@ export const llamaRuntime = {
 };
 
 /**
+ * Sign into Darhai with an existing Claude Max / ChatGPT / GitHub Copilot
+ * subscription instead of an API key (docs: the subscription-OAuth subsystem).
+ * The feature is OFF by default and gated behind a ToS disclosure the user must
+ * accept (`setGate`) before any `startLogin` can bind a port, open a browser or
+ * fetch a token.
+ *
+ * The whole namespace is remote-denied (the `subscriptionOAuth.` prefix in
+ * bridgeAllowlist REMOTE_DENIED_PREFIXES): `startLogin` opens a browser + mints
+ * a stored credential, `setGate` flips a persisted policy, and `disconnect`
+ * deletes a credential - the same login/credential class as `mcp.login-oauth`
+ * and `modelRegistry.connect`, so a paired-device WebSocket caller must never
+ * reach any of it (reads included: `getStatus` discloses which subscriptions are
+ * connected on the host).
+ */
+export const subscriptionOAuth = {
+  /** The connectable providers plus the disclosure the UI must show first. */
+  getProviders: buildProvider<import('@/common/types/subscriptionOAuth').SubscriptionProvidersView, void>(
+    'subscriptionOAuth.get-providers'
+  ),
+  /** Current gate state (enabled + disclosureAcknowledged), both default false. */
+  getGate: buildProvider<import('@/common/types/subscriptionOAuth').SubscriptionOAuthGateView, void>(
+    'subscriptionOAuth.get-gate'
+  ),
+  /** Persist the gate. Returns the stored state so the UI reflects exactly what was saved. */
+  setGate: buildProvider<
+    import('@/common/types/subscriptionOAuth').SubscriptionOAuthGateView,
+    { enabled: boolean; disclosureAcknowledged: boolean }
+  >('subscriptionOAuth.set-gate'),
+  /**
+   * Run a login end-to-end. Refuses (never throws across IPC) with a
+   * machine-readable reason when the gate is closed; otherwise drives the
+   * provider's OAuth flow, surfacing the browser step via `onAuth`, free-text
+   * requests via `onPrompt`, and progress via `onProgress`.
+   */
+  startLogin: buildProvider<
+    import('@/common/types/subscriptionOAuth').SubscriptionLoginResult,
+    { providerId: import('@/common/types/subscriptionOAuth').SubscriptionProviderId }
+  >('subscriptionOAuth.start-login'),
+  /** Whether a provider currently has stored (connected) credentials. */
+  getStatus: buildProvider<
+    import('@/common/types/subscriptionOAuth').SubscriptionConnectionStatus,
+    { providerId: import('@/common/types/subscriptionOAuth').SubscriptionProviderId }
+  >('subscriptionOAuth.get-status'),
+  /** Delete a provider's stored credentials (disconnect). */
+  disconnect: buildProvider<
+    { disconnected: boolean },
+    { providerId: import('@/common/types/subscriptionOAuth').SubscriptionProviderId }
+  >('subscriptionOAuth.disconnect'),
+  /** Answer an in-flight `onPrompt` request (the free-text the flow asked for). */
+  submitPrompt: buildProvider<void, { promptId: string; value: string }>('subscriptionOAuth.submit-prompt'),
+  /** A login needs the browser; main also opens it. Carries the URL for the UI. */
+  onAuth: buildEmitter<import('@/common/types/subscriptionOAuth').SubscriptionAuthEvent>('subscriptionOAuth.on-auth'),
+  /** A login needs free-text input; the UI collects it and calls `submitPrompt`. */
+  onPrompt:
+    buildEmitter<import('@/common/types/subscriptionOAuth').SubscriptionPromptEvent>('subscriptionOAuth.on-prompt'),
+  /** Progress messages during a login (e.g. token exchange). */
+  onProgress: buildEmitter<import('@/common/types/subscriptionOAuth').SubscriptionProgressEvent>(
+    'subscriptionOAuth.on-progress'
+  ),
+};
+
+/**
+ * The /refine rule surface (docs: the continual-harness rule primitives). Adds
+ * scope-aware behavioral rules on top of Darhai's fact memory: `session` rules
+ * live only for the current run, `global` rules are durable cross-session
+ * lessons, and a whole pass can be rolled back.
+ *
+ * The mutating verbs are remote-denied (the `refine.` prefix in bridgeAllowlist
+ * REMOTE_DENIED_PREFIXES): `applyRules` and `rollback` rewrite the user's
+ * on-disk global rule set - the same hard-mutation class as `memory.update-entry`
+ * / `memory.delete-entry`. `listRules` is denied with them for consistency (it
+ * discloses the local user's rules). Only the trusted local renderer drives it.
+ */
+export const refine = {
+  /** Current rules for a scope (session rules are per-process). */
+  listRules: buildProvider<
+    { rules: import('@process/services/memory/refine/rule').RefineRule[] },
+    { scope: import('@process/services/memory/refine/rule').RuleScope }
+  >('refine.list-rules'),
+  /** Run one refinement pass (add/remove edits) over a scope; returns the pass result. */
+  applyRules: buildProvider<
+    import('@process/services/memory/refine/rule').RefineResult,
+    {
+      scope: import('@process/services/memory/refine/rule').RuleScope;
+      edits: import('@process/services/memory/refine/rule').RuleEdit[];
+    }
+  >('refine.apply-rules'),
+  /** Roll back the LAST applied pass. `ok:false` when there is nothing to undo. */
+  rollback: buildProvider<
+    { ok: boolean; result: import('@process/services/memory/refine/rule').RefineResult | null },
+    void
+  >('refine.rollback'),
+};
+
+/**
  * v0.6.2.6 - payload returned by cron.confirmProposal when action='edit'.
  * The renderer uses this to open CreateTaskDialog pre-filled so the user
  * can tweak the proposed cron before saving.
@@ -1681,7 +1776,13 @@ export interface IConversationTurnCompletedEvent {
   sessionId: string;
   status: 'pending' | 'running' | 'finished';
   state:
-    'ai_generating' | 'ai_waiting_input' | 'ai_waiting_confirmation' | 'initializing' | 'stopped' | 'error' | 'unknown';
+    | 'ai_generating'
+    | 'ai_waiting_input'
+    | 'ai_waiting_confirmation'
+    | 'initializing'
+    | 'stopped'
+    | 'error'
+    | 'unknown';
   detail: string;
   canSendMessage: boolean;
   runtime: {
@@ -2171,7 +2272,8 @@ export const omnirouteGateway = {
 export type IjfwDropEntry = { name: string; size: number; mtimeMs: number };
 
 export type IjfwDropIngestResult =
-  { ok: true; name: string } | { ok: false; error: string; errorReason: IjfwErrorReason };
+  | { ok: true; name: string }
+  | { ok: false; error: string; errorReason: IjfwErrorReason };
 
 // --- Models & Providers redesign (Wave 0 contract) ------------------------
 // New two-tier model registry. Distinct from the legacy `providers` namespace

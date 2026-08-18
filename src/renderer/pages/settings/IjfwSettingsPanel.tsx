@@ -20,6 +20,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ipcBridge } from '@/common';
 import SettingsPageWrapper from './components/SettingsPageWrapper';
+import RefineRulesCard from './components/RefineRulesCard';
 
 const IJFW_GITHUB_URL = 'https://github.com/FerroxLabs/ijfw';
 
@@ -132,10 +133,7 @@ const IjfwSettingsPanel: React.FC = () => {
           </code>
         </div>
 
-        <div
-          className='flex flex-col gap-6px p-16px rd-12px bg-aou-1'
-          data-testid='ijfw-settings-about'
-        >
+        <div className='flex flex-col gap-6px p-16px rd-12px bg-aou-1' data-testid='ijfw-settings-about'>
           <Typography.Text className='text-14px font-semibold'>
             {t('memory.settings.about_title', { defaultValue: 'IJFW Memory' })}
           </Typography.Text>
@@ -154,6 +152,9 @@ const IjfwSettingsPanel: React.FC = () => {
             {t('memory.brand.github_link', { defaultValue: 'IJFW GitHub' })}
           </Button>
         </div>
+
+        {/* /refine: scope-aware behavioral rules on top of fact memory (add / remove / rollback). */}
+        <RefineRulesCard />
       </div>
     </SettingsPageWrapper>
   );

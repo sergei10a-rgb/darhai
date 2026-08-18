@@ -2930,5 +2930,27 @@
         "unknown": "Free disk space could not be determined on this system."
       }
     }
+  },
+  "subscriptionOAuth": {
+    "title": "Sign in with a subscription",
+    "description": "Use an existing Claude Max / ChatGPT / GitHub Copilot subscription instead of an API key. Off by default; accept the terms notice first.",
+    "experimental": "experimental",
+    "connected": "Connected",
+    "disconnect": "Disconnect",
+    "login": "Sign in",
+    "browserOpened": "Opening your browser to sign in…",
+    "promptSubmit": "Submit"
+  },
+  "refineRules": {
+    "title": "Refinement rules",
+    "description": "Scope-aware behavioral rules on top of fact memory.",
+    "scopeSession": "Session",
+    "scopeGlobal": "Global",
+    "addPlaceholder": "Add a rule…",
+    "add": "Add",
+    "empty": "No rules yet.",
+    "remove": "Remove",
+    "rollback": "Undo last change",
+    "rollbackHint": "Reverts the most recent add or remove."
   }
 }

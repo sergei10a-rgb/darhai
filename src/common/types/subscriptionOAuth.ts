@@ -69,14 +69,14 @@ export function getSubscriptionProviderInfo(id: string): SubscriptionProviderInf
 
 /**
  * The disclosure the user MUST see and accept before any subscription login.
- * Rendered verbatim; `{subscription}` is replaced with the chosen provider's
- * {@link SubscriptionProviderInfo.subscriptionName}. Bilingual on purpose -
+ * Provider-agnostic on purpose: the card lists every provider below it, so the
+ * disclosure names them collectively rather than templating one in. Bilingual -
  * Дархай's audience is Mongolian, but the ToS terms are the vendor's English.
  */
 export const SUBSCRIPTION_OAUTH_DISCLOSURE = {
   title: 'Захиалгаараа нэвтрэх — анхаарах зүйл',
   body: [
-    'Энэ нь таны {subscription} захиалгыг Дархай дотор шууд ашиглана. API түлхүүр шаардлагагүй.',
+    'Энэ нь таны одоо байгаа захиалгыг (Claude Max, ChatGPT, эсвэл Copilot) Дархай дотор шууд ашиглана. API түлхүүр шаардлагагүй.',
     'Тухайн үйлчилгээний Үйлчилгээний нөхцөл (ToS)-ийг гуравдагч апп-аар ашиглах нь зөрчилдож болзошгүй. Үүнийг та өөрөө хариуцна.',
     'Нэвтрэлт зөвхөн таны зөвшөөрлөөр, зориудаар эхэлнэ. Дархай автоматаар нэвтрэхгүй.',
     'Токеныг таны төхөөрөмжийн үйлдлийн системийн түлхүүрийн сан (Keychain / DPAPI / libsecret)-аар шифрлэж хадгална.',
@@ -84,7 +84,47 @@ export const SUBSCRIPTION_OAUTH_DISCLOSURE = {
   acknowledgeLabel: 'Ойлголоо, нөхцөлийг өөрөө хариуцна',
 } as const;
 
-/** Fill `{subscription}` in each disclosure line for a given provider. */
-export function renderDisclosureBody(subscriptionName: string): string[] {
-  return SUBSCRIPTION_OAUTH_DISCLOSURE.body.map((line) => line.replace('{subscription}', subscriptionName));
-}
+// ===== IPC transport shapes (main <-> renderer) =====
+// These are the only shapes that cross the bridge. They restate the plain-data
+// contract above so the renderer never imports any main-process (Node/Electron)
+// module and no token material ever appears in a transport type.
+
+/** The user-controlled gate for the whole feature (transport copy). */
+export type SubscriptionOAuthGateView = {
+  enabled: boolean;
+  disclosureAcknowledged: boolean;
+};
+
+/** `getProviders` payload: the provider list plus the disclosure to render. */
+export type SubscriptionProvidersView = {
+  providers: readonly SubscriptionProviderInfo[];
+  disclosure: {
+    title: string;
+    /** The provider-agnostic disclosure lines, rendered verbatim. */
+    body: readonly string[];
+    acknowledgeLabel: string;
+  };
+};
+
+/** Why a `startLogin` refused, mirrored from the process-side gate denial reasons. */
+export type SubscriptionLoginRefusal = 'disabled' | 'disclosure-not-acknowledged' | 'unknown-provider' | 'error';
+
+/** `startLogin` result: `ok` on success, else a machine-readable refusal. */
+export type SubscriptionLoginResult = { ok: true } | { ok: false; reason: SubscriptionLoginRefusal; message?: string };
+
+/** `getStatus` result: is this provider currently connected (has stored creds)? */
+export type SubscriptionConnectionStatus = { connected: boolean };
+
+/** Emitted when a login needs the browser (main also opens it) - so the UI can show the URL. */
+export type SubscriptionAuthEvent = { providerId: SubscriptionProviderId; url: string; instructions?: string };
+
+/** Emitted when a login needs free-text input; the UI answers via `submitPrompt`. */
+export type SubscriptionPromptEvent = {
+  providerId: SubscriptionProviderId;
+  promptId: string;
+  message: string;
+  placeholder?: string;
+};
+
+/** Emitted for progress messages during a login (token exchange, etc.). */
+export type SubscriptionProgressEvent = { providerId: SubscriptionProviderId; message: string };

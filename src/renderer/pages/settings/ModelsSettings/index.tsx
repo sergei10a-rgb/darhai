@@ -18,6 +18,7 @@ import ConnectPanel from './components/ConnectPanel';
 import ConnectedRow from './components/ConnectedRow';
 import EmptyState from './components/EmptyState';
 import OmniRouteGatewayCard from './components/OmniRouteGatewayCard';
+import SubscriptionOAuthCard from './components/SubscriptionOAuthCard';
 import ManageProvider from './ManageProvider';
 import { isCloudProvider } from './providerCatalog';
 import styles from './ModelsSettings.module.css';
@@ -402,6 +403,10 @@ const ModelsSettingsInner: React.FC = () => {
       {/* Opt-in external relay (Phase 7b): full Mongolian disclosure card,
           default OFF - see OmniRouteGatewayCard for the 4 owner conditions. */}
       <OmniRouteGatewayCard />
+
+      {/* Sign in with an existing Claude Max / ChatGPT / Copilot subscription -
+          disclosure-gated, default OFF (SubscriptionOAuthCard). */}
+      <SubscriptionOAuthCard />
 
       <BrowseModal visible={browseOpen} onClose={handleBrowseClose} initialProvider={browseInitialProvider} />
     </SettingsPageShell>
