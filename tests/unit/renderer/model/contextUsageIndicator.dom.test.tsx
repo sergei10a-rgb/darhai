@@ -22,7 +22,56 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import ContextUsageIndicator from '@renderer/components/agent/ContextUsageIndicator';
+import ContextUsageIndicator, { formatTokenCount } from '@renderer/components/agent/ContextUsageIndicator';
+
+/**
+ * The three figures in the popover have to add up.
+ *
+ * A screenshot of the running app read `14.5% · 152.0K / 1M` above
+ * `Used: 152.0K   Free: 896.6K` - and 152 + 896.6 is not 1000. The cause was in
+ * `hideZeroDecimals`: it ran `toFixed(1)` FIRST and then `Math.floor` on the
+ * unrounded value, so it did not hide a `.0`, it truncated a real fraction. The
+ * default window is 1_048_576, which lands exactly in that hole, so the most
+ * common case on screen silently dropped 48_576 tokens - and only the free
+ * figure, formatted through a different magnitude, gave it away.
+ *
+ * The flag's own docstring says "show 1M instead of 1.0M", which is only ever
+ * true of a whole magnitude. That is what these tests pin.
+ */
+describe('formatTokenCount', () => {
+  it('drops the decimal only when the magnitude is genuinely whole', () => {
+    // Exactly 1M: nothing is being hidden, so the tidy form is honest.
+    expect(formatTokenCount(1_000_000, true)).toBe('1M');
+    // The default context window. `1M` here is a 48_576-token lie.
+    expect(formatTokenCount(1_048_576, true)).toBe('1.0M');
+    // Same trap one magnitude down.
+    expect(formatTokenCount(204_800, true)).toBe('204.8K');
+    expect(formatTokenCount(200_000, true)).toBe('200K');
+  });
+
+  it('never reports a smaller number than it rounded to', () => {
+    // 999_999 rounds to "1000.0K", but the old floor took 999 from the
+    // UNROUNDED value and printed "999K" - a figure lower than both.
+    expect(formatTokenCount(999_999, true)).toBe('1000.0K');
+  });
+
+  it('keeps the popover self-consistent: used + free reads as the limit', () => {
+    const limit = 1_048_576;
+    const used = 152_000;
+    // These are the exact three strings the popover renders side by side.
+    expect(formatTokenCount(used)).toBe('152.0K');
+    expect(formatTokenCount(limit, true)).toBe('1.0M');
+    expect(formatTokenCount(limit - used, true)).toBe('896.6K');
+    // 152.0K + 896.6K = 1048.6K, which rounds to the 1.0M shown as the limit.
+    expect(formatTokenCount(used + (limit - used), true)).toBe('1.0M');
+  });
+
+  it('is unchanged when the flag is off', () => {
+    expect(formatTokenCount(1_000_000)).toBe('1.0M');
+    expect(formatTokenCount(1_048_576)).toBe('1.0M');
+    expect(formatTokenCount(999)).toBe('999');
+  });
+});
 
 /** The ring's dash offset, which is what a bad percentage corrupts. */
 function dashOffsetOf(container: HTMLElement): number {

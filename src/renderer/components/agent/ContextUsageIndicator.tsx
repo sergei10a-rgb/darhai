@@ -201,20 +201,31 @@ const ContextUsageIndicator: React.FC<ContextUsageIndicatorProps> = ({
 
 /**
  * Format token count for display
+ *
+ * `hideZeroDecimals` tidies a WHOLE magnitude - 1_000_000 reads "1M" rather
+ * than "1.0M". It must not tidy anything else.
+ *
+ * The test for "whole" is the value itself, not its rounded text. Checking
+ * `toFixed(1).endsWith('.0')` and then flooring the UNROUNDED value made the
+ * two disagree, and the flag stopped hiding a decimal and started truncating a
+ * real fraction: the default 1_048_576-token window printed as "1M", dropping
+ * 48_576 tokens, and 999_999 - which rounds UP to "1000.0K" - printed as the
+ * smaller "999K". On screen the loss showed up as a popover that contradicted
+ * itself, because the free figure beside it was formatted through a different
+ * magnitude and kept its precision.
+ *
  * @param count token count
- * @param hideZeroDecimals when true, hide the ".0" decimal (e.g. show "1M" instead of "1.0M"); defaults to false
- * @returns formatted string such as "37.0K" or "1.2M"; when hideZeroDecimals is true, "1.0M" is shown as "1M"
+ * @param hideZeroDecimals when true, drop the ".0" for a whole magnitude (e.g. "1M" not "1.0M"); defaults to false
+ * @returns formatted string such as "37.0K" or "1.2M"
  */
 export function formatTokenCount(count: number, hideZeroDecimals = false): string {
   if (count >= 1_000_000) {
     const value = count / 1_000_000;
-    const formatted = value.toFixed(1);
-    return hideZeroDecimals && formatted.endsWith('.0') ? `${Math.floor(value)}M` : `${formatted}M`;
+    return hideZeroDecimals && Number.isInteger(value) ? `${value}M` : `${value.toFixed(1)}M`;
   }
   if (count >= 1_000) {
     const value = count / 1_000;
-    const formatted = value.toFixed(1);
-    return hideZeroDecimals && formatted.endsWith('.0') ? `${Math.floor(value)}K` : `${formatted}K`;
+    return hideZeroDecimals && Number.isInteger(value) ? `${value}K` : `${value.toFixed(1)}K`;
   }
   return count.toString();
 }
