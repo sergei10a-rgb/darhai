@@ -2244,6 +2244,8 @@
     "exportPassphrasePlaceholder": "包含密钥时必填",
     "exportAll": "导出全部",
     "restore": "从备份恢复",
+    "restoreConfirmTitle": "从备份恢复？",
+    "restoreConfirmBody": "当前数据将被备份替换。恢复完成后 Дархай 会重新启动。",
     "exportSuccess": "备份已保存",
     "exportFailed": "无法导出备份",
     "restoreSuccess": "恢复完成。请重启 Дархай 以查看恢复的数据。",

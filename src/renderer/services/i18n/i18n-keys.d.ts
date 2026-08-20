@@ -4413,6 +4413,8 @@ export type I18nKey =
   | 'settings.storagePage.resetTitle'
   | 'settings.storagePage.resetTypePlaceholder'
   | 'settings.storagePage.restore'
+  | 'settings.storagePage.restoreConfirmBody'
+  | 'settings.storagePage.restoreConfirmTitle'
   | 'settings.storagePage.restoreFailed'
   | 'settings.storagePage.restoreSuccess'
   | 'settings.storagePage.sync.backendCloudRelay'

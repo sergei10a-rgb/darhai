@@ -2243,6 +2243,8 @@
     "exportPassphrasePlaceholder": "Anahtarlar dahil edildiğinde gereklidir",
     "exportAll": "Her şeyi dışa aktar",
     "restore": "Yedekten geri yükle",
+    "restoreConfirmTitle": "Yedekten geri yüklensin mi?",
+    "restoreConfirmBody": "Mevcut verileriniz yedekle değiştirilir. Geri yükleme bitince Дархай yeniden başlar.",
     "exportSuccess": "Yedek kaydedildi",
     "exportFailed": "Yedek dışa aktarılamadı",
     "restoreSuccess": "Geri yükleme tamamlandı. Verileri görmek için Дархай uygulamasını yeniden başlatın.",

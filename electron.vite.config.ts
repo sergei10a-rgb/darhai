@@ -73,7 +73,17 @@ export default defineConfig(({ mode }) => {
       plugins: [
         // externalizeDepsPlugin replaces our custom getExternalDeps() + pluginExternalizeDynamicImports.
         // 'fix-path' excluded so it gets bundled inline (only 3KB).
-        externalizeDepsPlugin({ exclude: ['fix-path'] }),
+        //
+        // 'gpt-tokenizer' is excluded for a correctness reason, not a size one.
+        // electron-builder.yml lists the node_modules it ships one by one, and
+        // this package is not on that list - so left external, the built app
+        // resolves `import('gpt-tokenizer/encoding/o200k_base')` against a
+        // directory that is not there. Token counting then falls back to
+        // chars/4, which undercounts Cyrillic by 1.6x: correct in development,
+        // wrong for every user, and only visible in a packaged build. Bundling
+        // it makes the two environments behave the same. The rank table is a
+        // dynamic import, so it stays a separate lazily-loaded chunk.
+        externalizeDepsPlugin({ exclude: ['fix-path', 'gpt-tokenizer'] }),
         ...(!isDevelopment
           ? [
               viteStaticCopy({

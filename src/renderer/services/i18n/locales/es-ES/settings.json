@@ -2270,6 +2270,8 @@
     "exportPassphrasePlaceholder": "Obligatoria cuando se incluyen claves",
     "exportAll": "Exportar todo",
     "restore": "Restaurar desde copia de seguridad",
+    "restoreConfirmTitle": "¿Restaurar desde la copia de seguridad?",
+    "restoreConfirmBody": "Tus datos actuales se sustituyen por la copia. Дархай se reinicia al terminar.",
     "exportSuccess": "Copia de seguridad guardada",
     "exportFailed": "No se pudo exportar la copia de seguridad",
     "restoreSuccess": "Restauración completada. Reinicia Дархай para ver los datos.",

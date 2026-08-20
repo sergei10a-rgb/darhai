@@ -123,6 +123,13 @@ export function initStorageBridge(): void {
       passphrase: opts.passphrase,
     });
     invalidateUsageCache();
+    // The database on disk has been replaced, but this process still holds the
+    // pre-restore data in memory - the renderer would keep showing the old
+    // conversations and the restore would look like it did nothing. Relaunch,
+    // exactly as resetAll does after wiping. Only on success: a refused import
+    // throws above and must leave the running app untouched.
+    app.relaunch();
+    app.quit();
     return { ok: true };
   });
 

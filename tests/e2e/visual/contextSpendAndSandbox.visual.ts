@@ -65,6 +65,7 @@ const SEEDED_OUTPUT_TOKENS = 12_000;
  */
 const BACKUP_EXPORT_LABEL = 'Бүгдийг экспортлох';
 const BACKUP_RESTORE_LABEL = 'Нөөцлөлтөөс сэргээх';
+const RESTORE_CONFIRM_TITLE = 'Нөөцлөлтөөс сэргээх үү?';
 
 const MODE_READ_ONLY = 'Зөвхөн унших';
 const MODE_WORKSPACE_WRITE = 'Ажлын талбарт бичих';
@@ -352,6 +353,44 @@ test('backup card renders both actions', async () => {
   await expect(visual.page.getByRole('button', { name: BACKUP_RESTORE_LABEL })).toBeVisible();
 
   await snap('backup-card');
+});
+
+test('restore asks before it starts, because it relaunches the app', async () => {
+  await gotoHash(visual.page, '#/settings/storage');
+
+  const restore = visual.page.getByRole('button', { name: BACKUP_RESTORE_LABEL });
+  await restore.scrollIntoViewIfNeeded();
+  await restore.click();
+
+  // The confirmation must appear BEFORE the OS file dialog - which is why this
+  // click is safe to make in a test at all. If the gate were missing, this step
+  // would open a native dialog and hang the run.
+  const dialogText = visual.page.getByText(RESTORE_CONFIRM_TITLE);
+  await expect(dialogText).toBeVisible({ timeout: 10_000 });
+
+  // THE DIALOG'S OWN BUTTONS MUST BE MONGOLIAN TOO.
+  //
+  // Arco's static dialogs mount outside the React tree, so they read their
+  // locale from a module-level slot that ANY <ConfigProvider> overwrites while
+  // `effectGlobalModal` is on - and it defaults to on. GuidPage mounts a
+  // provider purely to scope popups and passes no locale, so Arco filled it
+  // from its own defaults (zh-CN) and every confirmation in the app rendered
+  // 取消 / 确定 beneath Mongolian text. This assertion is the only place that
+  // catches it: the static dialogs use the pre-React-18 `ReactDOM.render`, so
+  // they cannot be rendered in jsdom at all.
+  const modal = visual.page.locator('.arco-modal').first();
+  const modalText = (await modal.textContent()) ?? '';
+  expect(modalText, 'the confirm dialog rendered Chinese buttons').not.toContain('确定');
+  expect(modalText).not.toContain('取消');
+  expect(modalText).toContain('Болсон');
+  expect(modalText).toContain('Цуцлах');
+
+  await snap('backup-restore-confirm');
+
+  // Leave the app as we found it: decline, and prove the card is usable again.
+  await visual.page.getByRole('button', { name: 'Цуцлах' }).click();
+  await expect(dialogText).toHaveCount(0, { timeout: 10_000 });
+  await expect(restore).toBeVisible();
 });
 
 test('sandbox card: collapsed by default, mode picker and enforcement notice after enabling', async () => {

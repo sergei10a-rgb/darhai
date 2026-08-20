@@ -40,6 +40,12 @@ vi.mock('@arco-design/web-react', async () => {
       warning: (g.__msgWarning ??= vi.fn()),
       info: (g.__msgInfo ??= vi.fn()),
     },
+    Modal: {
+      ...actual.Modal,
+      // Record the confirm call so a test can assert the gate exists, and let
+      // each test decide whether the user accepts by invoking onOk itself.
+      confirm: (g.__modalConfirm ??= vi.fn()),
+    },
   };
 });
 
@@ -58,6 +64,20 @@ const exportAll = g.__exportAll as ReturnType<typeof vi.fn>;
 const importBackup = g.__importBackup as ReturnType<typeof vi.fn>;
 const msgSuccess = g.__msgSuccess as ReturnType<typeof vi.fn>;
 const msgError = g.__msgError as ReturnType<typeof vi.fn>;
+const modalConfirm = g.__modalConfirm as ReturnType<typeof vi.fn>;
+
+/**
+ * Click Restore and accept the confirmation, the way a user would.
+ *
+ * Restore relaunches the app on success, so it is gated behind a confirm
+ * dialog; the tests below are about what happens AFTER consent.
+ */
+function restoreAndAccept(): void {
+  fireEvent.click(restoreButton());
+  const call = modalConfirm.mock.calls[0]?.[0] as { onOk?: () => void } | undefined;
+  if (!call?.onOk) throw new Error('Restore did not open a confirmation dialog');
+  call.onOk();
+}
 
 import BackupCard from '@renderer/pages/settings/StorageSettings/BackupCard';
 
@@ -66,6 +86,7 @@ beforeEach(() => {
   importBackup.mockReset();
   msgSuccess.mockReset();
   msgError.mockReset();
+  modalConfirm.mockReset();
 });
 
 afterEach(() => vi.clearAllMocks());
@@ -116,10 +137,30 @@ describe('BackupCard export', () => {
 });
 
 describe('BackupCard restore', () => {
-  it('confirms a completed restore', async () => {
+  it('asks before doing anything, because a restore relaunches the app', () => {
     importBackup.mockResolvedValue({ ok: true });
     render(<BackupCard />);
     fireEvent.click(restoreButton());
+    // The click alone must not reach the main process: a successful restore
+    // relaunches, which would interrupt whatever turn is in flight.
+    expect(modalConfirm).toHaveBeenCalledTimes(1);
+    expect(importBackup).not.toHaveBeenCalled();
+  });
+
+  it('does nothing when the confirmation is declined', () => {
+    importBackup.mockResolvedValue({ ok: true });
+    render(<BackupCard />);
+    fireEvent.click(restoreButton());
+    // Declining = never invoking onOk. Nothing else may run.
+    expect(importBackup).not.toHaveBeenCalled();
+    expect(msgSuccess).not.toHaveBeenCalled();
+    expect(msgError).not.toHaveBeenCalled();
+  });
+
+  it('confirms a completed restore', async () => {
+    importBackup.mockResolvedValue({ ok: true });
+    render(<BackupCard />);
+    restoreAndAccept();
     await waitFor(() => expect(msgSuccess).toHaveBeenCalledTimes(1));
     expect(msgError).not.toHaveBeenCalled();
   });
@@ -127,7 +168,7 @@ describe('BackupCard restore', () => {
   it('stays quiet when the user dismisses the open dialog', async () => {
     importBackup.mockResolvedValue({ ok: false, canceled: true });
     render(<BackupCard />);
-    fireEvent.click(restoreButton());
+    restoreAndAccept();
     await waitFor(() => expect(importBackup).toHaveBeenCalled());
     expect(msgSuccess).not.toHaveBeenCalled();
     expect(msgError).not.toHaveBeenCalled();
@@ -141,7 +182,7 @@ describe('BackupCard restore', () => {
       new Error('[backupImport] Refusing to restore: the archive’s database entry is not a SQLite file')
     );
     render(<BackupCard />);
-    fireEvent.click(restoreButton());
+    restoreAndAccept();
     await waitFor(() => expect(msgError).toHaveBeenCalledTimes(1));
     expect(String(msgError.mock.calls[0]?.[0] ?? '')).toContain('not a SQLite file');
     expect(msgSuccess).not.toHaveBeenCalled();
@@ -150,7 +191,7 @@ describe('BackupCard restore', () => {
   it('clears the busy state after a failure so the button can be used again', async () => {
     importBackup.mockRejectedValue(new Error('nope'));
     render(<BackupCard />);
-    fireEvent.click(restoreButton());
+    restoreAndAccept();
     await waitFor(() => expect(msgError).toHaveBeenCalled());
     // A button left spinning after an error strands the user on a dead card.
     await waitFor(() => expect(restoreButton()).not.toBeDisabled());

@@ -2245,6 +2245,8 @@
     "exportPassphrasePlaceholder": "キーを含める場合は必須です",
     "exportAll": "すべてをエクスポート",
     "restore": "バックアップから復元",
+    "restoreConfirmTitle": "バックアップから復元しますか？",
+    "restoreConfirmBody": "現在のデータはバックアップで置き換えられます。復元後に Дархай が再起動します。",
     "exportSuccess": "バックアップを保存しました",
     "exportFailed": "バックアップをエクスポートできませんでした",
     "restoreSuccess": "復元が完了しました。Дархай を再起動すると反映されます。",

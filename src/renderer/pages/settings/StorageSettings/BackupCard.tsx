@@ -1,4 +1,4 @@
-import { Button, Checkbox, Input, Message } from '@arco-design/web-react';
+import { Button, Checkbox, Input, Message, Modal } from '@arco-design/web-react';
 import { Archive } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -46,7 +46,7 @@ const BackupCard: React.FC = () => {
       .finally(() => setExporting(false));
   };
 
-  const handleImport = () => {
+  const runImport = () => {
     setImporting(true);
     void storage.importBackup
       .invoke({})
@@ -55,6 +55,18 @@ const BackupCard: React.FC = () => {
       )
       .catch((error: unknown) => reportThrow(error, t('settings.storagePage.restoreFailed')))
       .finally(() => setImporting(false));
+  };
+
+  // Ask before opening the file dialog, not after: a successful restore
+  // relaunches the app, which interrupts whatever turn is in flight. The
+  // dialog's own cancel button is not consent for that.
+  const handleImport = () => {
+    Modal.confirm({
+      title: t('settings.storagePage.restoreConfirmTitle'),
+      content: t('settings.storagePage.restoreConfirmBody'),
+      okButtonProps: { status: 'warning' },
+      onOk: runImport,
+    });
   };
 
   return (

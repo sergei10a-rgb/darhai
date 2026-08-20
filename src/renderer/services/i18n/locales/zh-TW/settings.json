@@ -2245,6 +2245,8 @@
     "exportPassphrasePlaceholder": "包含金鑰時為必填",
     "exportAll": "匯出全部",
     "restore": "從備份還原",
+    "restoreConfirmTitle": "從備份還原？",
+    "restoreConfirmBody": "目前的資料將被備份取代。還原完成後 Дархай 會重新啟動。",
     "exportSuccess": "備份已儲存",
     "exportFailed": "無法匯出備份",
     "restoreSuccess": "還原完成。請重新啟動 Дархай 以查看還原的資料。",

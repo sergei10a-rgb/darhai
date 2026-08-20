@@ -953,7 +953,18 @@ const GuidPage: React.FC = () => {
   }
 
   return (
-    <ConfigProvider getPopupContainer={() => guidContainerRef.current || document.body}>
+    // This provider exists only to scope popups to the guid container. It must
+    // NOT publish itself globally: Arco's static dialogs (Modal.confirm and
+    // friends) read their locale from a module-level slot that any provider
+    // overwrites when these two flags are on - and they default to on. Passing
+    // no `locale` here means Arco fills it from its own defaults, which are
+    // zh-CN, so mounting this page turned every confirmation in the app Chinese
+    // until restart. Seen on screen: a Mongolian restore dialog above 取消 / 确定.
+    <ConfigProvider
+      getPopupContainer={() => guidContainerRef.current || document.body}
+      effectGlobalModal={false}
+      effectGlobalNotice={false}
+    >
       <div ref={guidContainerRef} className={styles.guidContainer}>
         <div className={styles.guidLayout}>
           {showPresetHero ? (

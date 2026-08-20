@@ -2288,6 +2288,8 @@
     "exportPassphrasePlaceholder": "Required when keys are included",
     "exportAll": "Export everything",
     "restore": "Restore from backup",
+    "restoreConfirmTitle": "Restore from backup?",
+    "restoreConfirmBody": "Your current data is replaced by the backup. Дархай restarts once the restore finishes.",
     "exportSuccess": "Backup saved",
     "exportFailed": "Could not export the backup",
     "restoreSuccess": "Restore finished. Restart Дархай to see the restored data.",

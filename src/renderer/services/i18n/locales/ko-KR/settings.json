@@ -2245,6 +2245,8 @@
     "exportPassphrasePlaceholder": "키를 포함할 경우 필수",
     "exportAll": "전체 내보내기",
     "restore": "백업에서 복원",
+    "restoreConfirmTitle": "백업에서 복원할까요?",
+    "restoreConfirmBody": "현재 데이터가 백업으로 대체됩니다. 복원이 끝나면 Дархай가 다시 시작됩니다.",
     "exportSuccess": "백업이 저장되었습니다",
     "exportFailed": "백업을 내보낼 수 없습니다",
     "restoreSuccess": "복원이 완료되었습니다. Дархай를 다시 시작하면 반영됩니다.",
