@@ -811,7 +811,11 @@ const GuidPage: React.FC = () => {
           }
         }
         await agentSelection.refreshCustomAgents();
-        const agentName = ACP_BACKENDS_ALL[nextType as keyof typeof ACP_BACKENDS_ALL]?.name || nextType;
+        // `wcore` is not an ACP backend, so it has no entry in ACP_BACKENDS_ALL
+        // and used to fall through to the raw id - surfacing "Switched to wcore".
+        const agentName =
+          ACP_BACKENDS_ALL[nextType as keyof typeof ACP_BACKENDS_ALL]?.name ||
+          (nextType === 'wcore' ? t('guid.wcoreName') : nextType);
         Message.success(t('guid.switchedToAgent', { agent: agentName }));
       } catch (error) {
         console.error('[GuidPage] Failed to switch preset agent type:', error);

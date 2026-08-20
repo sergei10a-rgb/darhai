@@ -32,6 +32,17 @@ export type TokenUsage = {
   output_tokens: number;
   cache_read_tokens?: number;
   cache_write_tokens?: number;
+  /**
+   * The engine's OWN measure of how full the active context window is, 0-100.
+   *
+   * Declared by the published contract (`core-event.schema.json`,
+   * `stream_end.usage`) and present in the checked-in fixture, but it was
+   * missing from this type - so it arrived at runtime while every reader that
+   * consulted the type believed it did not exist. It is the best fill figure
+   * available: it needs no division against a context limit guessed from a
+   * model id. Optional because a ≤0.1.21 engine omits it.
+   */
+  active_window_percent?: number;
 };
 
 /**
@@ -151,6 +162,16 @@ export type WCoreEvent =
       type: 'stream_end';
       msg_id: string;
       usage?: TokenUsage;
+      /**
+       * Per-turn delta of the same five figures. Declared by the contract
+       * schema and present in the checked-in fixture, so it is typed here
+       * rather than left as an undocumented runtime surprise.
+       *
+       * NOTHING IN THIS CODEBASE READS IT (verified by search, 2026-08-20).
+       * `buildFinishPayload` forwards only `usage` + `finish_reason`, so the
+       * delta never reaches the renderer. Recorded, not chased.
+       */
+      usage_delta?: TokenUsage;
       /**
        * Why the model stopped. Optional for protocol back-compat: wcore ≤0.1.21
        * omits this field. When `length`, the response was truncated because the

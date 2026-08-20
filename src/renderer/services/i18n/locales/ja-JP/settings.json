@@ -343,6 +343,7 @@
   "geminiBaseUrl": "Gemini API ベース URL",
   "cacheDir": "キャッシュディレクトリ",
   "workDir": "作業ディレクトリ",
+  "workDirDisplayName": "Darhai 作業フォルダー",
   "logDir": "ログディレクトリ",
   "dirNotConfigured": "まだ設定されていません",
   "cacheClean": "Cache Cleanup",
@@ -2224,7 +2225,7 @@
     "title": "ストレージ",
     "comingSoon": "使用状況の内訳、バックアップ、復元、同期は、次回リリースで導入されます。",
     "usageTitle": "ストレージ使用状況",
-    "totalUsed": "{{total}} 中 {{used}} 使用",
+    "totalUsed": "{{used}} 使用中",
     "usageStale": "{{ago}}に更新",
     "refresh": "更新",
     "conversations": "会話",
@@ -2244,6 +2245,10 @@
     "exportPassphrasePlaceholder": "キーを含める場合は必須です",
     "exportAll": "すべてをエクスポート",
     "restore": "バックアップから復元",
+    "exportSuccess": "バックアップを保存しました",
+    "exportFailed": "バックアップをエクスポートできませんでした",
+    "restoreSuccess": "復元が完了しました。Дархай を再起動すると反映されます。",
+    "restoreFailed": "バックアップから復元できませんでした",
     "syncTitle": "同期（E2EE）",
     "syncComingSoon": "フォルダーまたはリレーへのエンドツーエンド暗号化同期。",
     "resetTitle": "Darhaiをリセット",
@@ -2312,8 +2317,9 @@
     "resetConfirmBody": "現在の編集内容は失われます。デフォルトの憲章が復元されます。",
     "resetCancel": "キャンセル",
     "loading": "読み込み中…",
-    "tokenCount": "{{value}} トークン",
-    "tokenWarning": "遵守上限（約 2,000 トークン）に近づいています。専門オーバーレイへの分割を検討してください。",
+    "tokenCount": "≈{{value}} トークン ({{counter}})",
+    "tokenCountHint": "概算です。OpenAI の o200k_base トークナイザーで計測しています。Claude と Gemini は非公開の独自トークナイザーを使うため実際の数は異なります。キリル文字での実測差はトークナイザー間で 1.6〜3.0 倍でした。",
+    "tokenWarning": "推奨上限（約 2,000 トークン）を超えています。スペシャリストオーバーレイへの分割を検討してください。",
     "tokenError": "遵守上限を超えています。セクションを ~/.darhai/specialists/<id>.md の専門オーバーレイに移動してください。"
   },
   "constitutionSpecialists": {
@@ -2332,7 +2338,7 @@
     "cancel": "キャンセル",
     "empty": "専門オーバーレイはまだありません。追加すると、特定のアシスタントに追加ルールを与えられます。",
     "close": "閉じる",
-    "tokenCount": "{{value}} トークン"
+    "tokenCount": "≈{{value}} トークン ({{counter}})"
   },
   "agentsPage": {
     "title": "エージェント",
@@ -2646,7 +2652,7 @@
       "modeHeadless": "Headless server",
       "runtimeMode": "Runtime mode",
       "runtimeModeDesc": "Currently: embedded local engine",
-      "endpoint": "wcore endpoint",
+      "endpoint": "Darhai Core エンドポイント",
       "endpointDesc": "Embedded · spawned in-process",
       "running": "Running",
       "concurrency": "Concurrency",

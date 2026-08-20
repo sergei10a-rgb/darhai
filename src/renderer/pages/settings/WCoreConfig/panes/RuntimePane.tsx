@@ -249,7 +249,7 @@ const RuntimePane: React.FC = () => {
           <div className={styles.listRow}>
             <div>
               <div className={`${styles.lrLabel} ${styles.lrLabelMono}`}>
-                {t('settings.wcoreConfig.runtime.endpoint', { defaultValue: 'wcore endpoint' })}
+                {t('settings.wcoreConfig.runtime.endpoint', { defaultValue: 'Darhai Core endpoint' })}
               </div>
               <div className={styles.lrDesc}>
                 {t('settings.wcoreConfig.runtime.endpointDesc', { defaultValue: 'Embedded · spawned in-process' })}

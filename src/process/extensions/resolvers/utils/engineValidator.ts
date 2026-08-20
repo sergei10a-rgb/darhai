@@ -122,7 +122,7 @@ export function validateEngineCompatibility(extension: LoadedExtension): EngineV
     if (!satisfiesVersion(DARHAI_VERSION, engine.wayland)) {
       result.valid = false;
       result.issues.push(
-        `Extension "${extension.manifest.name}" requires Wayland ${engine.wayland} but current version is ${DARHAI_VERSION}`
+        `Extension "${extension.manifest.name}" requires Darhai ${engine.wayland} but current version is ${DARHAI_VERSION}`
       );
     }
   }

@@ -363,7 +363,7 @@ router.get('/shortcuts', fileOperationLimiter, (_req, res) => {
   try {
     const shortcuts = [
       {
-        name: 'Wayland Directory',
+        name: 'Darhai Directory',
         path: process.cwd(),
         icon: '🤖',
       },

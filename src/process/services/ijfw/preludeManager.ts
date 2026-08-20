@@ -16,7 +16,11 @@ import log from 'electron-log';
 
 const MARK_START = '<!-- IJFW-PRELUDE-START -->';
 const MARK_END = '<!-- IJFW-PRELUDE-END -->';
-const DISABLED_NOTICE = '<!-- IJFW-PRELUDE-DISABLED-BY-WAYLAND: Memory layer initializing. -->';
+// Write-only marker: `mutatePreludeBlock` replaces the whole MARK_START..MARK_END
+// span regardless of what is inside it, and `discoverTargets` matches only
+// MARK_START - so no read path compares against this literal and renaming it
+// strands nothing in a user's existing CLAUDE.md / AGENTS.md.
+const DISABLED_NOTICE = '<!-- IJFW-PRELUDE-DISABLED-BY-DARHAI: Memory layer initializing. -->';
 const PRELUDE_BLOCK = 'Project memory at .ijfw/memory/. Call `ijfw_memory_prelude` for full context.';
 
 const MANAGED_FILES = ['CLAUDE.md', 'AGENTS.md', 'GEMINI.md', '.cursorrules'] as const;

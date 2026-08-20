@@ -11,6 +11,8 @@ import { useTranslation } from 'react-i18next';
 import type { SaveState } from '@renderer/components/settings/shared/feedback/SavedIndicator';
 import SavedIndicator from '@renderer/components/settings/shared/feedback/SavedIndicator';
 import TipTapMarkdownEditor from '@renderer/pages/conversation/Preview/components/editors/TipTapMarkdownEditor';
+import { TOKEN_COUNTER_HINT, TOKEN_COUNTER_LABEL } from '@/common/utils/tokenCount';
+import { useTokenEstimate } from './useTokenEstimate';
 
 const SAVE_DEBOUNCE_MS = 500;
 const SAVED_FLASH_MS = 1500;
@@ -81,35 +83,35 @@ const SpecialistOverlayEditor: React.FC<SpecialistOverlayEditorProps> = ({ id, o
     [id]
   );
 
-  const approxTokens = Math.ceil(value.length / 4);
+  // Same shared counter as the Constitution editor - see useTokenEstimate.
+  const estimate = useTokenEstimate(value);
+  const approxTokens = estimate.tokens;
 
   return (
     <div className='b-1 b-color-border-2 rd-8px p-12px flex flex-col gap-8px bg-fill-1'>
       <div className='flex items-center justify-between'>
         <div className='flex items-center gap-8px'>
           <span className='text-13px font-medium text-t-primary'>{id}</span>
-          <span className='text-11px text-t-tertiary'>
-            {t('settings.constitutionSpecialists.tokenCount', '{{value}} tokens', {
+          <span
+            className='text-11px text-t-tertiary'
+            data-testid='overlay-token-count'
+            title={t('settings.constitutionPage.tokenCountHint', TOKEN_COUNTER_HINT)}
+          >
+            {t('settings.constitutionSpecialists.tokenCount', '≈{{value}} tokens ({{counter}})', {
               value: approxTokens.toLocaleString(),
+              counter: TOKEN_COUNTER_LABEL[estimate.counter],
             })}
           </span>
         </div>
         <div className='flex items-center gap-8px'>
           <SavedIndicator state={saveState} />
-          <Button
-            type='secondary'
-            size='small'
-            icon={<ChevronDown size={14} />}
-            onClick={onClose}
-          >
+          <Button type='secondary' size='small' icon={<ChevronDown size={14} />} onClick={onClose}>
             {t('settings.constitutionSpecialists.close', 'Close')}
           </Button>
         </div>
       </div>
       {loading ? (
-        <div className='text-12px text-t-secondary py-8px'>
-          {t('settings.constitutionPage.loading', 'Loading…')}
-        </div>
+        <div className='text-12px text-t-secondary py-8px'>{t('settings.constitutionPage.loading', 'Loading…')}</div>
       ) : (
         <TipTapMarkdownEditor value={value} onChange={handleChange} />
       )}

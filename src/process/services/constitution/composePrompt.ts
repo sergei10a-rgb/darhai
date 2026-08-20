@@ -1,4 +1,10 @@
 import { readConstitutionWithOverlay } from '@process/bridge/conversation/constitutionBridge';
+import {
+  estimateTokens,
+  getLoadedTokenEncoder,
+  loadTokenEncoder,
+  type TokenCounterId,
+} from '@/common/utils/tokenCount';
 
 export interface ComposePromptOptions {
   /** Active assistant/specialist ID. Matches ~/.darhai/specialists/<id>.md. */
@@ -10,8 +16,16 @@ export interface ComposePromptOptions {
 export interface ComposedPrompt {
   /** Final composed string, ready to inject into provider system slot. */
   text: string;
-  /** Estimated tokens (Math.ceil(length/4)). For observability + Settings UI. */
+  /**
+   * Approximate token count of `text`. Read it together with `tokenCounter` -
+   * the number means nothing without knowing which counter produced it.
+   */
   approxTokens: number;
+  /**
+   * Which counter produced `approxTokens`: the real o200k_base tokenizer, or
+   * the `length / 4` fallback used before the tokenizer has finished loading.
+   */
+  tokenCounter: TokenCounterId;
   /**
    * Anthropic cache_control marker. Pass to messages.create as the
    * cache_control on the LAST block of the `system` array (a single
@@ -52,10 +66,17 @@ export function composePrompt(opts?: ComposePromptOptions): ComposedPrompt {
   }
   const parts = [constitution, overlay ?? '', basePrompt].filter((p) => p && p.length > 0);
   const text = parts.join('\n\n---\n\n');
-  const approxTokens = Math.ceil(text.length / 4);
+  // Warm the tokenizer on first use, never at boot: `composePrompt` is reached
+  // from `conversationBridge`, which is on the main-process startup path, and
+  // the o200k rank table MEASURED ~145 ms to load cold. Until that resolves,
+  // `estimateTokens` returns the labelled `chars-div-4` fallback rather than
+  // pretending the heuristic is a token count.
+  void loadTokenEncoder();
+  const estimate = estimateTokens(text, getLoadedTokenEncoder());
   return {
     text,
-    approxTokens,
+    approxTokens: estimate.tokens,
+    tokenCounter: estimate.counter,
     anthropicCacheControl: cacheControl,
     hadOverlay: overlay !== null,
   };

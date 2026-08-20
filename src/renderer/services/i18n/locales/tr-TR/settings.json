@@ -343,6 +343,7 @@
   "geminiBaseUrl": "Gemini API Temel URL",
   "cacheDir": "Önbellek Dizini",
   "workDir": "Çalışma Dizini",
+  "workDirDisplayName": "Darhai çalışma klasörü",
   "logDir": "Günlük Dizini",
   "dirNotConfigured": "Henüz yapılandırılmadı",
   "cacheClean": "Önbellek Temizliği",
@@ -2222,7 +2223,7 @@
     "title": "Depolama",
     "comingSoon": "Kullanım dökümü, yedekleme, geri yükleme ve eşitleme sonraki sürümde geliyor.",
     "usageTitle": "Depolama kullanımı",
-    "totalUsed": "{{total}} içinden {{used}} kullanıldı",
+    "totalUsed": "{{used}} kullanılıyor",
     "usageStale": "{{ago}} güncellendi",
     "refresh": "Yenile",
     "conversations": "Konuşmalar",
@@ -2242,6 +2243,10 @@
     "exportPassphrasePlaceholder": "Anahtarlar dahil edildiğinde gereklidir",
     "exportAll": "Her şeyi dışa aktar",
     "restore": "Yedekten geri yükle",
+    "exportSuccess": "Yedek kaydedildi",
+    "exportFailed": "Yedek dışa aktarılamadı",
+    "restoreSuccess": "Geri yükleme tamamlandı. Verileri görmek için Дархай uygulamasını yeniden başlatın.",
+    "restoreFailed": "Yedekten geri yüklenemedi",
     "syncTitle": "Eşitleme (E2EE)",
     "syncComingSoon": "Bir klasöre veya aktarıcıya uçtan uca şifreli eşitleme.",
     "resetTitle": "Darhai'i sıfırla",
@@ -2310,8 +2315,9 @@
     "resetConfirmBody": "Mevcut düzenlemeleriniz kaybolacak. Varsayılan Anayasa geri yüklenecek.",
     "resetCancel": "İptal",
     "loading": "Yükleniyor…",
-    "tokenCount": "{{value}} token",
-    "tokenWarning": "Uyum üst sınırına (~2,000 token) yaklaşılıyor. Bölümleri uzman katmanlarına ayırmayı düşünün.",
+    "tokenCount": "≈{{value}} token ({{counter}})",
+    "tokenCountHint": "Yaklaşık. OpenAI o200k_base tokenizer ile sayıldı. Claude ve Gemini kendi (herkese açık olmayan) tokenizer'larını kullanır, bu yüzden gerçek sayı farklıdır - Kiril metinde ölçülen fark: tokenizer'lar arasında 1,6x-3,0x.",
+    "tokenWarning": "Önerilen ~2.000 belirteç sınırı aşıldı. Uzman katmanlarına bölmeyi düşünün.",
     "tokenError": "Uyum üst sınırı aşıldı. Bölümleri ~/.darhai/specialists/<id>.md konumundaki uzman katmanlarına taşıyın."
   },
   "constitutionSpecialists": {
@@ -2330,7 +2336,7 @@
     "cancel": "İptal",
     "empty": "Henüz uzman katmanı yok. Belirli bir asistana ek kurallar vermek için bir tane ekleyin.",
     "close": "Kapat",
-    "tokenCount": "{{value}} token"
+    "tokenCount": "≈{{value}} token ({{counter}})"
   },
   "agentsPage": {
     "title": "Ajanlar",
@@ -2644,7 +2650,7 @@
       "modeHeadless": "Headless server",
       "runtimeMode": "Runtime mode",
       "runtimeModeDesc": "Currently: embedded local engine",
-      "endpoint": "wcore endpoint",
+      "endpoint": "Darhai Core uç noktası",
       "endpointDesc": "Embedded · spawned in-process",
       "running": "Running",
       "concurrency": "Concurrency",

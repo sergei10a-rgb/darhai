@@ -34,7 +34,7 @@ export async function bootstrapProjectKnowledge(
 
   await writeIfAbsent(
     path.join(root, 'CONTEXT.md'),
-    `# ${projectName}\n\n${description ? description + '\n\n' : ''}> Project context for Wayland. Edit this file to give every chat in this project shared background.\n`
+    `# ${projectName}\n\n${description ? description + '\n\n' : ''}> Project context for Darhai. Edit this file to give every chat in this project shared background.\n`
   );
   await writeIfAbsent(
     path.join(root, 'rules.md'),

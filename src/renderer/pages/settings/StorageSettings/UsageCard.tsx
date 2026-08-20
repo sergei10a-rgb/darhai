@@ -39,8 +39,12 @@ const UsageCard: React.FC = () => {
         </div>
       ) : (
         <>
+          {/* No denominator: `computeUsage` sums the app's own directories, not
+              the volume, so there is no capacity to divide by. The template used
+              to read "{{total}}-аас {{used}} ашигласан" with a literal '-' passed
+              for total, which rendered on screen as "--аас 1.6 MB ашигласан". */}
           <p className='text-12px text-[var(--color-text-3)] mb-8px'>
-            {t('settings.storagePage.totalUsed', { used: formatBytes(total), total: '-' })}
+            {t('settings.storagePage.totalUsed', { used: formatBytes(total) })}
           </p>
 
           {/* Multi-segment progress bar */}

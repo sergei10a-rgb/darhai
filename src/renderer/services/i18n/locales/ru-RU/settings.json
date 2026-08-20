@@ -343,6 +343,7 @@
   "geminiBaseUrl": "Базовый URL Gemini API",
   "cacheDir": "Папка кэша",
   "workDir": "Рабочая папка",
+  "workDirDisplayName": "Рабочая папка Darhai",
   "logDir": "Папка логов",
   "dirNotConfigured": "Не настроено",
   "cacheClean": "Очистка кэша",
@@ -2224,7 +2225,7 @@
     "title": "Хранилище",
     "comingSoon": "Разбивка использования, резервное копирование, восстановление и синхронизация появятся в следующем выпуске.",
     "usageTitle": "Использование хранилища",
-    "totalUsed": "Использовано {{used}} из {{total}}",
+    "totalUsed": "Использовано {{used}}",
     "usageStale": "Обновлено {{ago}}",
     "refresh": "Обновить",
     "conversations": "Беседы",
@@ -2244,6 +2245,10 @@
     "exportPassphrasePlaceholder": "Обязательно при включении ключей",
     "exportAll": "Экспортировать всё",
     "restore": "Восстановить из резервной копии",
+    "exportSuccess": "Резервная копия сохранена",
+    "exportFailed": "Не удалось создать резервную копию",
+    "restoreSuccess": "Восстановление завершено. Перезапустите Дархай, чтобы увидеть данные.",
+    "restoreFailed": "Не удалось восстановить из резервной копии",
     "syncTitle": "Синхронизация (E2EE)",
     "syncComingSoon": "Сквозное шифрование при синхронизации с папкой или ретранслятором.",
     "resetTitle": "Сбросить Darhai",
@@ -2312,8 +2317,9 @@
     "resetConfirmBody": "Текущие изменения будут потеряны. Будет восстановлена Конституция по умолчанию.",
     "resetCancel": "Отмена",
     "loading": "Загрузка…",
-    "tokenCount": "{{value}} токенов",
-    "tokenWarning": "Приближается предел соблюдения (~2,000 токенов). Рассмотрите разделение на специализированные оверлеи.",
+    "tokenCount": "≈{{value}} токенов ({{counter}})",
+    "tokenCountHint": "Приблизительно. Подсчитано токенизатором OpenAI o200k_base. У Claude и Gemini свои (закрытые) токенизаторы, поэтому реальное число отличается — измеренный разброс на кириллице: в 1,6–3,0 раза между токенизаторами.",
+    "tokenWarning": "Превышен рекомендуемый предел (~2,000 токенов). Рассмотрите разделение на специализированные оверлеи.",
     "tokenError": "Превышен предел соблюдения. Переместите разделы в специализированные оверлеи в ~/.darhai/specialists/<id>.md."
   },
   "constitutionSpecialists": {
@@ -2332,7 +2338,7 @@
     "cancel": "Отмена",
     "empty": "Пока нет специализированных оверлеев. Добавьте один, чтобы задать дополнительные правила для конкретного ассистента.",
     "close": "Закрыть",
-    "tokenCount": "{{value}} токенов"
+    "tokenCount": "≈{{value}} токенов ({{counter}})"
   },
   "agentsPage": {
     "title": "Агенты",
@@ -2646,7 +2652,7 @@
       "modeHeadless": "Headless server",
       "runtimeMode": "Runtime mode",
       "runtimeModeDesc": "Currently: embedded local engine",
-      "endpoint": "wcore endpoint",
+      "endpoint": "Эндпоинт Darhai Core",
       "endpointDesc": "Embedded · spawned in-process",
       "running": "Running",
       "concurrency": "Concurrency",

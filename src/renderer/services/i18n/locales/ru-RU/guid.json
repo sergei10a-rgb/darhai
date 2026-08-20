@@ -8,6 +8,8 @@
   "promptExamplesHint": "Попробуйте примеры промптов:",
   "agentSwitcherLabel": "Агент",
   "switchedToAgent": "Переключено на {{agent}}",
+  "wcoreName": "Darhai Core",
+  "createWcoreFailed": "Не удалось создать разговор Darhai Core. Убедитесь, что движок Darhai Core установлен.",
   "hint": {
     "search": "Нажмите {{key}} для поиска",
     "backend": "{{key}} для бэкенда",

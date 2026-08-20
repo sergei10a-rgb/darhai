@@ -8,6 +8,8 @@
   "promptExamplesHint": "試試這些可點擊的案例提示詞：",
   "agentSwitcherLabel": "Agent",
   "switchedToAgent": "已切換到 {{agent}}",
+  "wcoreName": "Darhai Core",
+  "createWcoreFailed": "無法建立 Darhai Core 對話。請確認已安裝 Darhai Core 引擎。",
   "hint": {
     "search": "按 {{key}} 搜尋",
     "backend": "{{key}} 切換後端",

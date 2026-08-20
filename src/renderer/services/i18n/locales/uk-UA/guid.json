@@ -8,6 +8,8 @@
   "promptExamplesHint": "Спробуйте приклади промптів:",
   "agentSwitcherLabel": "Агент",
   "switchedToAgent": "Переключено на {{agent}}",
+  "wcoreName": "Darhai Core",
+  "createWcoreFailed": "Не вдалося створити розмову Darhai Core. Переконайтеся, що рушій Darhai Core встановлено.",
   "hint": {
     "search": "Натисніть {{key}} для пошуку",
     "backend": "{{key}} для бекенду",

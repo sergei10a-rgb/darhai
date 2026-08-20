@@ -343,6 +343,7 @@
   "geminiBaseUrl": "Gemini API Base URL",
   "cacheDir": "缓存目录",
   "workDir": "工作目录",
+  "workDirDisplayName": "Darhai 工作文件夹",
   "logDir": "日志目录",
   "dirNotConfigured": "尚未配置目录",
   "cacheClean": "缓存清理",
@@ -2223,7 +2224,7 @@
     "title": "存储",
     "comingSoon": "用量明细、备份、恢复和同步将在下个版本推出。",
     "usageTitle": "存储用量",
-    "totalUsed": "已使用 {{used}}，共 {{total}}",
+    "totalUsed": "已使用 {{used}}",
     "usageStale": "更新于 {{ago}}",
     "refresh": "刷新",
     "conversations": "对话",
@@ -2243,6 +2244,10 @@
     "exportPassphrasePlaceholder": "包含密钥时必填",
     "exportAll": "导出全部",
     "restore": "从备份恢复",
+    "exportSuccess": "备份已保存",
+    "exportFailed": "无法导出备份",
+    "restoreSuccess": "恢复完成。请重启 Дархай 以查看恢复的数据。",
+    "restoreFailed": "无法从备份恢复",
     "syncTitle": "同步（端到端加密）",
     "syncComingSoon": "端到端加密同步到文件夹或中继服务器。",
     "resetTitle": "重置 Darhai",
@@ -2311,8 +2316,9 @@
     "resetConfirmBody": "当前的编辑内容将丢失。系统将恢复默认章程。",
     "resetCancel": "取消",
     "loading": "加载中…",
-    "tokenCount": "{{value}} 个令牌",
-    "tokenWarning": "即将达到遵循上限（约 2,000 个令牌）。请考虑拆分为专家叠加层。",
+    "tokenCount": "≈{{value}} 个令牌 ({{counter}})",
+    "tokenCountHint": "近似值。使用 OpenAI 的 o200k_base 分词器统计。Claude 与 Gemini 使用各自未公开的分词器，因此实际数量不同——在西里尔文本上实测差异为分词器之间 1.6-3.0 倍。",
+    "tokenWarning": "已超过约 2,000 个令牌的建议上限。请考虑拆分为专家叠加层。",
     "tokenError": "已超过遵循上限。请将章节移至 ~/.darhai/specialists/<id>.md 中的专家叠加层。"
   },
   "constitutionSpecialists": {
@@ -2331,7 +2337,7 @@
     "cancel": "取消",
     "empty": "暂无专家叠加层。添加一个即可为特定智能体提供额外规则。",
     "close": "关闭",
-    "tokenCount": "{{value}} 个令牌"
+    "tokenCount": "≈{{value}} 个令牌 ({{counter}})"
   },
   "agentsPage": {
     "title": "智能体",
@@ -2645,7 +2651,7 @@
       "modeHeadless": "Headless server",
       "runtimeMode": "Runtime mode",
       "runtimeModeDesc": "Currently: embedded local engine",
-      "endpoint": "wcore endpoint",
+      "endpoint": "Darhai Core 端点",
       "endpointDesc": "Embedded · spawned in-process",
       "running": "Running",
       "concurrency": "Concurrency",

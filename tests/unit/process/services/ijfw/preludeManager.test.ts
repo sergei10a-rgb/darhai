@@ -14,15 +14,17 @@ vi.mock('electron-log', () => ({
 }));
 
 // eslint-disable-next-line import/first
-import {
-  applyPreludeForStatus,
-  discoverTargets,
-} from '@process/services/ijfw/preludeManager';
+import { applyPreludeForStatus, discoverTargets } from '@process/services/ijfw/preludeManager';
 
 const MARK_START = '<!-- IJFW-PRELUDE-START -->';
 const MARK_END = '<!-- IJFW-PRELUDE-END -->';
 const ACTIVE_LINE = 'Project memory at .ijfw/memory/. Call `ijfw_memory_prelude` for full context.';
-const DISABLED_LINE = '<!-- IJFW-PRELUDE-DISABLED-BY-WAYLAND: Memory layer initializing. -->';
+const DISABLED_LINE = '<!-- IJFW-PRELUDE-DISABLED-BY-DARHAI: Memory layer initializing. -->';
+// Old-brand marker. Nothing in preludeManager reads the disabled notice back
+// (mutatePreludeBlock replaces the whole marker span, discoverTargets matches
+// only MARK_START), so a file still carrying the old marker must be rewritten
+// to the new one rather than left alone.
+const LEGACY_DISABLED_LINE = '<!-- IJFW-PRELUDE-DISABLED-BY-WAYLAND: Memory layer initializing. -->';
 
 function mkProject(): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'ijfw-prelude-'));
@@ -43,9 +45,7 @@ describe('ijfw/preludeManager', () => {
     it('writes the active block when status is installed_current and markers exist', async () => {
       const file = path.join(dir, 'CLAUDE.md');
       fs.writeFileSync(file, `Header\n${MARK_START}\nold content\n${MARK_END}\nFooter\n`);
-      await applyPreludeForStatus('installed_current', [
-        { projectDir: dir, files: ['CLAUDE.md'] },
-      ]);
+      await applyPreludeForStatus('installed_current', [{ projectDir: dir, files: ['CLAUDE.md'] }]);
       const updated = fs.readFileSync(file, 'utf-8');
       expect(updated).toContain(MARK_START);
       expect(updated).toContain(ACTIVE_LINE);
@@ -58,9 +58,7 @@ describe('ijfw/preludeManager', () => {
     it('writes the active block when status is installed_empty', async () => {
       const file = path.join(dir, 'AGENTS.md');
       fs.writeFileSync(file, `${MARK_START}\nstale\n${MARK_END}`);
-      await applyPreludeForStatus('installed_empty', [
-        { projectDir: dir, files: ['AGENTS.md'] },
-      ]);
+      await applyPreludeForStatus('installed_empty', [{ projectDir: dir, files: ['AGENTS.md'] }]);
       const updated = fs.readFileSync(file, 'utf-8');
       expect(updated).toContain(ACTIVE_LINE);
       expect(updated).not.toContain(DISABLED_LINE);
@@ -69,9 +67,7 @@ describe('ijfw/preludeManager', () => {
     it('writes the disabled notice when status is uninstalled', async () => {
       const file = path.join(dir, 'CLAUDE.md');
       fs.writeFileSync(file, `Header\n${MARK_START}\nactive content\n${MARK_END}\nFooter\n`);
-      await applyPreludeForStatus('uninstalled', [
-        { projectDir: dir, files: ['CLAUDE.md'] },
-      ]);
+      await applyPreludeForStatus('uninstalled', [{ projectDir: dir, files: ['CLAUDE.md'] }]);
       const updated = fs.readFileSync(file, 'utf-8');
       expect(updated).toContain(DISABLED_LINE);
       expect(updated).not.toContain(ACTIVE_LINE);
@@ -79,21 +75,37 @@ describe('ijfw/preludeManager', () => {
       expect(updated).toContain('Footer');
     });
 
+    it('rewrites a file still carrying the old-brand disabled marker', async () => {
+      const file = path.join(dir, 'CLAUDE.md');
+      fs.writeFileSync(file, `Header\n${MARK_START}\n${LEGACY_DISABLED_LINE}\n${MARK_END}\nFooter\n`);
+      await applyPreludeForStatus('uninstalled', [{ projectDir: dir, files: ['CLAUDE.md'] }]);
+      const updated = fs.readFileSync(file, 'utf-8');
+      expect(updated).toContain(DISABLED_LINE);
+      expect(updated).not.toContain(LEGACY_DISABLED_LINE);
+      expect(updated).toContain('Header');
+      expect(updated).toContain('Footer');
+    });
+
+    it('re-enables a file that was left with the old-brand disabled marker', async () => {
+      const file = path.join(dir, 'AGENTS.md');
+      fs.writeFileSync(file, `${MARK_START}\n${LEGACY_DISABLED_LINE}\n${MARK_END}`);
+      await applyPreludeForStatus('installed_current', [{ projectDir: dir, files: ['AGENTS.md'] }]);
+      const updated = fs.readFileSync(file, 'utf-8');
+      expect(updated).toContain(ACTIVE_LINE);
+      expect(updated).not.toContain(LEGACY_DISABLED_LINE);
+    });
+
     it('NEVER injects markers into a file that does not already contain them', async () => {
       const file = path.join(dir, 'CLAUDE.md');
       const original = 'No markers anywhere here.\n';
       fs.writeFileSync(file, original);
-      await applyPreludeForStatus('installed_current', [
-        { projectDir: dir, files: ['CLAUDE.md'] },
-      ]);
+      await applyPreludeForStatus('installed_current', [{ projectDir: dir, files: ['CLAUDE.md'] }]);
       expect(fs.readFileSync(file, 'utf-8')).toBe(original);
     });
 
     it('silently skips files that do not exist', async () => {
       // No file written - should not throw.
-      await applyPreludeForStatus('installed_current', [
-        { projectDir: dir, files: ['CLAUDE.md', 'AGENTS.md'] },
-      ]);
+      await applyPreludeForStatus('installed_current', [{ projectDir: dir, files: ['CLAUDE.md', 'AGENTS.md'] }]);
     });
 
     it('preserves surrounding content exactly on enable transition', async () => {
@@ -101,9 +113,7 @@ describe('ijfw/preludeManager', () => {
       const before = '# Title\n\nSome text\n';
       const after = '\n## Section 2\nMore text';
       fs.writeFileSync(file, `${before}${MARK_START}\nold\n${MARK_END}${after}`);
-      await applyPreludeForStatus('installed_current', [
-        { projectDir: dir, files: ['CLAUDE.md'] },
-      ]);
+      await applyPreludeForStatus('installed_current', [{ projectDir: dir, files: ['CLAUDE.md'] }]);
       const updated = fs.readFileSync(file, 'utf-8');
       expect(updated.startsWith(before)).toBe(true);
       expect(updated.endsWith(after)).toBe(true);
@@ -112,13 +122,9 @@ describe('ijfw/preludeManager', () => {
     it('is idempotent: re-applying installed_current does not change content', async () => {
       const file = path.join(dir, 'CLAUDE.md');
       fs.writeFileSync(file, `${MARK_START}\nold\n${MARK_END}`);
-      await applyPreludeForStatus('installed_current', [
-        { projectDir: dir, files: ['CLAUDE.md'] },
-      ]);
+      await applyPreludeForStatus('installed_current', [{ projectDir: dir, files: ['CLAUDE.md'] }]);
       const firstPass = fs.readFileSync(file, 'utf-8');
-      await applyPreludeForStatus('installed_current', [
-        { projectDir: dir, files: ['CLAUDE.md'] },
-      ]);
+      await applyPreludeForStatus('installed_current', [{ projectDir: dir, files: ['CLAUDE.md'] }]);
       const secondPass = fs.readFileSync(file, 'utf-8');
       expect(secondPass).toBe(firstPass);
     });

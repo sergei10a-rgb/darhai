@@ -364,6 +364,7 @@
   "geminiBaseUrl": "URL base de la API de Gemini",
   "cacheDir": "Directorio de caché",
   "workDir": "Directorio de trabajo",
+  "workDirDisplayName": "Carpeta de trabajo de Darhai",
   "logDir": "Directorio de registros",
   "dirNotConfigured": "Aún sin configurar",
   "cacheClean": "Limpieza de caché",
@@ -2249,7 +2250,7 @@
     "title": "Almacenamiento",
     "comingSoon": "El desglose de uso, la copia de seguridad, la restauración y la sincronización llegan en la próxima versión.",
     "usageTitle": "Uso del almacenamiento",
-    "totalUsed": "{{used}} usado de {{total}}",
+    "totalUsed": "{{used}} en uso",
     "usageStale": "Actualizado {{ago}}",
     "refresh": "Actualizar",
     "conversations": "Conversaciones",
@@ -2269,6 +2270,10 @@
     "exportPassphrasePlaceholder": "Obligatoria cuando se incluyen claves",
     "exportAll": "Exportar todo",
     "restore": "Restaurar desde copia de seguridad",
+    "exportSuccess": "Copia de seguridad guardada",
+    "exportFailed": "No se pudo exportar la copia de seguridad",
+    "restoreSuccess": "Restauración completada. Reinicia Дархай para ver los datos.",
+    "restoreFailed": "No se pudo restaurar la copia de seguridad",
     "syncTitle": "Sincronización (E2EE)",
     "syncComingSoon": "Sincronización cifrada de extremo a extremo a una carpeta o un relay.",
     "resetTitle": "Restablecer Darhai",
@@ -2337,8 +2342,9 @@
     "resetConfirmBody": "Tus ediciones actuales se perderán. Se restaurará la Constitución predeterminada.",
     "resetCancel": "Cancelar",
     "loading": "Cargando…",
-    "tokenCount": "{{value}} tokens",
-    "tokenWarning": "Te acercas al límite de adherencia (~2000 tokens). Considera dividirla en superposiciones de especialistas.",
+    "tokenCount": "≈{{value}} tokens ({{counter}})",
+    "tokenCountHint": "Aproximado. Contado con el tokenizador o200k_base de OpenAI. Claude y Gemini usan los suyos, que no son públicos, así que el recuento real difiere: dispersión medida en texto cirílico de 1,6x-3,0x entre tokenizadores.",
+    "tokenWarning": "Se ha superado el límite recomendado (~2000 tokens). Considera dividirlo en superposiciones de especialista.",
     "tokenError": "Has superado el límite de adherencia. Mueve secciones a superposiciones de especialistas en ~/.darhai/specialists/<id>.md."
   },
   "constitutionSpecialists": {
@@ -2357,7 +2363,7 @@
     "cancel": "Cancelar",
     "empty": "Aún no hay superposiciones de especialistas. Añade una para darle reglas adicionales a un asistente concreto.",
     "close": "Cerrar",
-    "tokenCount": "{{value}} tokens"
+    "tokenCount": "≈{{value}} tokens ({{counter}})"
   },
   "agentsPage": {
     "title": "Agentes",
@@ -2645,7 +2651,7 @@
       "modeHeadless": "Headless server",
       "runtimeMode": "Runtime mode",
       "runtimeModeDesc": "Currently: embedded local engine",
-      "endpoint": "wcore endpoint",
+      "endpoint": "Endpoint de Darhai Core",
       "endpointDesc": "Embedded · spawned in-process",
       "running": "Running",
       "concurrency": "Concurrency",

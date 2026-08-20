@@ -350,7 +350,7 @@ export class WCoreAgent {
   async start(): Promise<void> {
     const binaryPath = resolveWCoreBinary();
     if (!binaryPath) {
-      throw new Error('wcore binary not found');
+      throw new Error('Darhai Core engine binary not found');
     }
 
     // Resolve the provider key in main at dispatch (audit C4/C5): the model

@@ -385,7 +385,7 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
         });
 
         if (!conversation || !conversation.id) {
-          alert('Failed to create Darhai Core conversation. Please ensure wcore is installed.');
+          Message.error(t('guid.createWcoreFailed'));
           return false;
         }
 

@@ -434,7 +434,11 @@ const SystemModalContent: React.FC = () => {
             </Collapse>
             <Form form={form} layout='vertical' className='space-y-16px' onValuesChange={handleValuesChange}>
               <DirInputItem label={t('settings.cacheDir')} field='cacheDir' />
-              <DirInputItem label={t('settings.workDir')} field='workDir' />
+              <DirInputItem
+                label={t('settings.workDir')}
+                field='workDir'
+                displayName={t('settings.workDirDisplayName')}
+              />
               {/* Log directory (read-only, click to open in file manager) */}
               <div className='!mt-32px'>
                 <Form.Item label={t('settings.logDir')}>

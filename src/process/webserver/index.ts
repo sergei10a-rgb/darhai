@@ -200,7 +200,7 @@ function displayInitialCredentials(
   const { qrUrl } = generateQRLoginUrlDirect(port, allowRemote);
 
   console.log('\n' + '='.repeat(70));
-  console.log('🎉 Wayland Web Server Started');
+  console.log('🎉 Darhai Web Server Started');
   console.log('='.repeat(70));
   console.log(`\n📍 Local URL:    ${localUrl}`);
 

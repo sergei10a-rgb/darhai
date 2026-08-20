@@ -1776,13 +1776,7 @@ export interface IConversationTurnCompletedEvent {
   sessionId: string;
   status: 'pending' | 'running' | 'finished';
   state:
-    | 'ai_generating'
-    | 'ai_waiting_input'
-    | 'ai_waiting_confirmation'
-    | 'initializing'
-    | 'stopped'
-    | 'error'
-    | 'unknown';
+    'ai_generating' | 'ai_waiting_input' | 'ai_waiting_confirmation' | 'initializing' | 'stopped' | 'error' | 'unknown';
   detail: string;
   canSendMessage: boolean;
   runtime: {
@@ -2272,8 +2266,7 @@ export const omnirouteGateway = {
 export type IjfwDropEntry = { name: string; size: number; mtimeMs: number };
 
 export type IjfwDropIngestResult =
-  | { ok: true; name: string }
-  | { ok: false; error: string; errorReason: IjfwErrorReason };
+  { ok: true; name: string } | { ok: false; error: string; errorReason: IjfwErrorReason };
 
 // --- Models & Providers redesign (Wave 0 contract) ------------------------
 // New two-tier model registry. Distinct from the legacy `providers` namespace
@@ -2868,10 +2861,15 @@ export const storage = {
   openDir: buildProvider<void, string>('storage:openDir'),
   clearDir: buildProvider<void, string>('storage:clearDir'),
   changeDir: buildProvider<string | null, void>('storage:changeDir'),
-  exportAll: buildProvider<{ ok: boolean; path?: string }, { includeKeys: boolean; passphrase?: string }>(
-    'storage:exportAll'
-  ),
-  importBackup: buildProvider<{ ok: boolean }, { passphrase?: string }>('storage:importBackup'),
+  // `canceled` separates "the user dismissed the OS dialog" from "the operation
+  // failed". Without it both arrive as `ok: false`, and the renderer has to
+  // choose between raising an error toast on every dismissed dialog or staying
+  // silent on real failures - it used to do the latter.
+  exportAll: buildProvider<
+    { ok: boolean; path?: string; canceled?: boolean },
+    { includeKeys: boolean; passphrase?: string }
+  >('storage:exportAll'),
+  importBackup: buildProvider<{ ok: boolean; canceled?: boolean }, { passphrase?: string }>('storage:importBackup'),
   resetAll: buildProvider<void, void>('storage:resetAll'),
 };
 

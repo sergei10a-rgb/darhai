@@ -235,7 +235,9 @@ describe('GAP-2: WCoreManager Context Usage Persistence', () => {
         CONV_ID,
         expect.objectContaining({
           extra: expect.objectContaining({
-            lastTokenUsage: { totalTokens: 5800 },
+            // Still input + output, and now alongside the figures it was
+            // summed from rather than instead of them - see AC-6.
+            lastTokenUsage: { totalTokens: 5800, inputTokens: 5000, outputTokens: 800 },
           }),
         })
       );
@@ -256,12 +258,19 @@ describe('GAP-2: WCoreManager Context Usage Persistence', () => {
 
       await vi.advanceTimersByTimeAsync(200);
 
-      // totalTokens is still input + output, not including cache
+      // totalTokens is still input + output, not including cache - but the
+      // cache figures are kept beside it instead of being thrown away.
       expect(mockDb.updateConversation).toHaveBeenCalledWith(
         CONV_ID,
         expect.objectContaining({
           extra: expect.objectContaining({
-            lastTokenUsage: { totalTokens: 3500 },
+            lastTokenUsage: {
+              totalTokens: 3500,
+              inputTokens: 3000,
+              outputTokens: 500,
+              cacheReadTokens: 1000,
+              cacheWriteTokens: 200,
+            },
           }),
         })
       );
@@ -352,6 +361,112 @@ describe('GAP-2: WCoreManager Context Usage Persistence', () => {
         ([, updates]: [string, any]) => updates?.extra?.lastTokenUsage
       );
       expect(usageCalls).toHaveLength(0);
+    });
+  });
+
+  // ── AC-6: The record written here must not be narrower than the one
+  //          the renderer writes on the very same finish frame ─────────
+  //
+  // Both processes persist `extra.lastTokenUsage` when a turn finishes: the
+  // renderer's `useWCoreMessage` writes all five engine figures, and this
+  // manager wrote `{ totalTokens }` alone. The two races - whichever lands
+  // second wins the key - so a narrow write here silently strips the four
+  // extra figures, and the loss only becomes visible after a restart, when the
+  // ring rehydrates from disk and has nothing but the inflated sum to divide.
+  //
+  // The fix is to make BOTH writes carry the same shape, so the order of the
+  // race stops mattering.
+
+  describe('AC-6: persists every figure the engine sent, not just the sum', () => {
+    it('writes the wide record the renderer also writes', async () => {
+      emitEvent(manager, { type: 'start', data: '', msg_id: 'msg-1' });
+      emitEvent(manager, {
+        type: 'finish',
+        data: {
+          input_tokens: 120,
+          output_tokens: 40,
+          cache_read_tokens: 16,
+          cache_write_tokens: 8,
+          active_window_percent: 37,
+        },
+        msg_id: 'msg-1',
+      });
+
+      await vi.advanceTimersByTimeAsync(200);
+
+      expect(mockDb.updateConversation).toHaveBeenCalledWith(
+        CONV_ID,
+        expect.objectContaining({
+          extra: expect.objectContaining({
+            lastTokenUsage: {
+              totalTokens: 160,
+              inputTokens: 120,
+              outputTokens: 40,
+              cacheReadTokens: 16,
+              cacheWriteTokens: 8,
+              activeWindowPercent: 37,
+            },
+          }),
+        })
+      );
+    });
+
+    it('records a turn that reported only a window percentage', async () => {
+      // `totalTokens` is 0 there, and the old `totalTokens <= 0` gate threw the
+      // whole reading away - including the one figure that was measured.
+      emitEvent(manager, { type: 'start', data: '', msg_id: 'msg-1' });
+      emitEvent(manager, { type: 'finish', data: { active_window_percent: 42 }, msg_id: 'msg-1' });
+
+      await vi.advanceTimersByTimeAsync(200);
+
+      const usageCalls = mockDb.updateConversation.mock.calls.filter(
+        ([, updates]: [string, any]) => updates?.extra?.lastTokenUsage
+      );
+      expect(usageCalls).toHaveLength(1);
+      expect(usageCalls[0][1].extra.lastTokenUsage).toEqual({ totalTokens: 0, activeWindowPercent: 42 });
+    });
+
+    it('keeps a genuine zero rather than dropping it', async () => {
+      // 0% full is a real reading about a fresh window; "absent" is a different
+      // claim, and a truthiness filter cannot tell them apart.
+      emitEvent(manager, { type: 'start', data: '', msg_id: 'msg-1' });
+      emitEvent(manager, {
+        type: 'finish',
+        data: { input_tokens: 900, output_tokens: 100, cache_read_tokens: 0, active_window_percent: 0 },
+        msg_id: 'msg-1',
+      });
+
+      await vi.advanceTimersByTimeAsync(200);
+
+      const usageCalls = mockDb.updateConversation.mock.calls.filter(
+        ([, updates]: [string, any]) => updates?.extra?.lastTokenUsage
+      );
+      expect(usageCalls[0][1].extra.lastTokenUsage).toEqual({
+        totalTokens: 1000,
+        inputTokens: 900,
+        outputTokens: 100,
+        cacheReadTokens: 0,
+        activeWindowPercent: 0,
+      });
+    });
+
+    it('omits a non-numeric figure instead of persisting NaN', async () => {
+      emitEvent(manager, { type: 'start', data: '', msg_id: 'msg-1' });
+      emitEvent(manager, {
+        type: 'finish',
+        data: { input_tokens: 700, output_tokens: 300, cache_read_tokens: 'lots' },
+        msg_id: 'msg-1',
+      });
+
+      await vi.advanceTimersByTimeAsync(200);
+
+      const usageCalls = mockDb.updateConversation.mock.calls.filter(
+        ([, updates]: [string, any]) => updates?.extra?.lastTokenUsage
+      );
+      const stored = usageCalls[0][1].extra.lastTokenUsage;
+      expect(stored.cacheReadTokens).toBeUndefined();
+      expect(stored.totalTokens).toBe(1000);
+      expect(Number.isNaN(stored.totalTokens)).toBe(false);
     });
   });
 });

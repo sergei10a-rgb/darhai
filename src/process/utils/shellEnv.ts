@@ -899,8 +899,10 @@ export async function logEnvironmentDiagnostics(): Promise<void> {
     const isWindows = process.platform === 'win32';
     const isElectron = typeof process.versions.electron === 'string';
 
-    // Electron-specific values - only available in desktop mode
-    let appVersion = '(unknown)';
+    // Electron-specific values - only available in desktop mode.
+    // Seed the version from platform services so the headless web server / CLI
+    // print the real package version instead of "(unknown)".
+    let appVersion = getPlatformServices().paths.getVersion();
     let mode = 'standalone';
     let userDataPath: string | undefined;
     let logFilePath: string | undefined;
@@ -934,7 +936,7 @@ export async function logEnvironmentDiagnostics(): Promise<void> {
 
     const lines: string[] = [
       `${ENV_TAG} ${ENV_DIVIDER}`,
-      `${ENV_TAG}   Wayland v${appVersion} (${mode})`,
+      `${ENV_TAG}   Darhai v${appVersion} (${mode})`,
       `${ENV_TAG}   OS       : ${process.platform} ${os.release()} (${process.arch})`,
     ];
 

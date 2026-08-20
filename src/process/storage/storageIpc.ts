@@ -7,6 +7,14 @@ import { backupExport } from './backupExport';
 import { backupImport } from './backupImport';
 import { resetAll } from './resetAll';
 
+/**
+ * The app's real data directory is `getDataPath()` (src/process/utils/utils.ts),
+ * which appends `wayland` to the Electron `userData` path. See the note in
+ * `resetAll.ts` for why this is a local constant rather than a `getDataPath()`
+ * call.
+ */
+const DATA_DIR = 'wayland';
+
 function getUserData(): string {
   return app.getPath('userData');
 }
@@ -17,6 +25,26 @@ function getLogsDir(): string {
   } catch {
     return path.join(getUserData(), 'logs');
   }
+}
+
+/**
+ * The app's OWN cache directory - `getDataPath()/cache`, which is what
+ * `HubInstaller` writes into (`getDataPath()/cache/hub`).
+ *
+ * This used to be `<userData>/cache`, which is NOT the app's cache at all.
+ * MEASURED on this machine (`%APPDATA%/Darhai`): that path is Chromium's HTTP
+ * cache, sitting beside `Code Cache`, `GPUCache`, `Network` and `Local
+ * Storage`, and holding a `Cache_Data` directory. Windows paths are
+ * case-insensitive, so `path.join(userData, 'cache')` and Chromium's `Cache`
+ * resolve to the same directory: the settings "clear cache" button deleted the
+ * browser cache of a running Electron session - which Chromium owns and may
+ * have open - while the app's own cache grew forever, untouched and invisible.
+ *
+ * Only the app's cache is ours to clear. Chromium's belongs to the session and
+ * is managed by `session.clearCache()`, never by `fs.rmSync`.
+ */
+function getAppCacheDir(): string {
+  return path.join(getUserData(), DATA_DIR, 'cache');
 }
 
 export function initStorageBridge(): void {
@@ -30,20 +58,22 @@ export function initStorageBridge(): void {
     const k = kind as 'workspace' | 'cache' | 'logs';
     const dirs: Record<string, string> = {
       workspace: getUserData(),
-      cache: path.join(getUserData(), 'cache'),
+      cache: getAppCacheDir(),
       logs: getLogsDir(),
     };
     const dirPath = dirs[k] ?? getUserData();
-    if (fs.existsSync(dirPath)) {
-      await shell.openPath(dirPath);
-    }
+    // The cache directory is created lazily by its first writer, so on a fresh
+    // install it does not exist yet. Create it rather than letting the button
+    // silently do nothing.
+    fs.mkdirSync(dirPath, { recursive: true });
+    await shell.openPath(dirPath);
   });
 
   // Clear a directory (cache or logs only - workspace not clearable)
   ipcBridge.storage.clearDir.provider(async (kind) => {
     const k = kind as 'cache' | 'logs';
     const dirs: Record<string, string> = {
-      cache: path.join(getUserData(), 'cache'),
+      cache: getAppCacheDir(),
       logs: getLogsDir(),
     };
     const dirPath = dirs[k];
@@ -63,10 +93,13 @@ export function initStorageBridge(): void {
   ipcBridge.storage.exportAll.provider(async (opts) => {
     const result = await dialog.showSaveDialog({
       title: 'Export Дархай data',
-      defaultPath: `wayland-backup-${new Date().toISOString().slice(0, 10)}.zip`,
+      // Cosmetic only. `backupImport` reads the archive's CONTENTS (its entry
+      // names), never its filename, so archives written under the old
+      // `wayland-backup-*` name - or renamed by the user - still restore.
+      defaultPath: `darhai-backup-${new Date().toISOString().slice(0, 10)}.zip`,
       filters: [{ name: 'ZIP archive', extensions: ['zip'] }],
     });
-    if (result.canceled || !result.filePath) return { ok: false };
+    if (result.canceled || !result.filePath) return { ok: false, canceled: true };
     await backupExport({
       userData: getUserData(),
       destPath: result.filePath,
@@ -83,7 +116,7 @@ export function initStorageBridge(): void {
       filters: [{ name: 'ZIP archive', extensions: ['zip'] }],
       properties: ['openFile'],
     });
-    if (result.canceled || !result.filePaths[0]) return { ok: false };
+    if (result.canceled || !result.filePaths[0]) return { ok: false, canceled: true };
     await backupImport({
       userData: getUserData(),
       srcPath: result.filePaths[0],

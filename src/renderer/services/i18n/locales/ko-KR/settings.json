@@ -343,6 +343,7 @@
   "geminiBaseUrl": "Gemini API 기본 URL",
   "cacheDir": "캐시 디렉토리",
   "workDir": "작업 디렉토리",
+  "workDirDisplayName": "Darhai 작업 폴더",
   "logDir": "로그 디렉토리",
   "dirNotConfigured": "아직 구성되지 않음",
   "cacheClean": "캐시 정리",
@@ -2224,7 +2225,7 @@
     "title": "저장소",
     "comingSoon": "사용량 분석, 백업, 복원, 동기화는 다음 릴리스에서 제공됩니다.",
     "usageTitle": "저장소 사용량",
-    "totalUsed": "{{total}} 중 {{used}} 사용",
+    "totalUsed": "{{used}} 사용 중",
     "usageStale": "{{ago}} 업데이트됨",
     "refresh": "새로고침",
     "conversations": "대화",
@@ -2244,6 +2245,10 @@
     "exportPassphrasePlaceholder": "키를 포함할 경우 필수",
     "exportAll": "전체 내보내기",
     "restore": "백업에서 복원",
+    "exportSuccess": "백업이 저장되었습니다",
+    "exportFailed": "백업을 내보낼 수 없습니다",
+    "restoreSuccess": "복원이 완료되었습니다. Дархай를 다시 시작하면 반영됩니다.",
+    "restoreFailed": "백업에서 복원할 수 없습니다",
     "syncTitle": "동기화 (E2EE)",
     "syncComingSoon": "폴더 또는 릴레이로의 종단 간 암호화 동기화입니다.",
     "resetTitle": "Darhai 초기화",
@@ -2312,8 +2317,9 @@
     "resetConfirmBody": "현재 편집 내용이 사라집니다. 기본 헌장이 복원됩니다.",
     "resetCancel": "취소",
     "loading": "로딩 중…",
-    "tokenCount": "{{value}} 토큰",
-    "tokenWarning": "준수 한도(~2,000 토큰)에 근접하고 있습니다. 전문 오버레이로 분할하는 것을 고려하세요.",
+    "tokenCount": "≈{{value}} 토큰 ({{counter}})",
+    "tokenCountHint": "대략적인 값입니다. OpenAI o200k_base 토크나이저로 계산했습니다. Claude와 Gemini는 공개되지 않은 자체 토크나이저를 사용하므로 실제 개수는 다릅니다 - 키릴 문자 텍스트에서 측정된 편차는 토크나이저 간 1.6~3.0배입니다.",
+    "tokenWarning": "권장 상한(약 2,000 토큰)을 초과했습니다. 전문가 오버레이로 분리하는 것을 고려하세요.",
     "tokenError": "준수 한도를 초과했습니다. 섹션을 ~/.darhai/specialists/<id>.md의 전문 오버레이로 이동하세요."
   },
   "constitutionSpecialists": {
@@ -2332,7 +2338,7 @@
     "cancel": "취소",
     "empty": "아직 전문 오버레이가 없습니다. 추가하면 특정 어시스턴트에 추가 규칙을 부여할 수 있습니다.",
     "close": "닫기",
-    "tokenCount": "{{value}} 토큰"
+    "tokenCount": "≈{{value}} 토큰 ({{counter}})"
   },
   "agentsPage": {
     "title": "에이전트",
@@ -2646,7 +2652,7 @@
       "modeHeadless": "Headless server",
       "runtimeMode": "Runtime mode",
       "runtimeModeDesc": "Currently: embedded local engine",
-      "endpoint": "wcore endpoint",
+      "endpoint": "Darhai Core 엔드포인트",
       "endpointDesc": "Embedded · spawned in-process",
       "running": "Running",
       "concurrency": "Concurrency",

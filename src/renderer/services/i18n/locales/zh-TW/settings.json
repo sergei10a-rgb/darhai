@@ -343,6 +343,7 @@
   "geminiBaseUrl": "Gemini API Base URL",
   "cacheDir": "緩存目錄",
   "workDir": "工作目錄",
+  "workDirDisplayName": "Darhai 工作資料夾",
   "logDir": "日誌目錄",
   "dirNotConfigured": "尚未設定目錄",
   "cacheClean": "Cache Cleanup",
@@ -2224,7 +2225,7 @@
     "title": "儲存",
     "comingSoon": "用量明細、備份、還原與同步將於下一版推出。",
     "usageTitle": "儲存空間用量",
-    "totalUsed": "已使用 {{used}}，共 {{total}}",
+    "totalUsed": "已使用 {{used}}",
     "usageStale": "更新於 {{ago}}",
     "refresh": "重新整理",
     "conversations": "對話",
@@ -2244,6 +2245,10 @@
     "exportPassphrasePlaceholder": "包含金鑰時為必填",
     "exportAll": "匯出全部",
     "restore": "從備份還原",
+    "exportSuccess": "備份已儲存",
+    "exportFailed": "無法匯出備份",
+    "restoreSuccess": "還原完成。請重新啟動 Дархай 以查看還原的資料。",
+    "restoreFailed": "無法從備份還原",
     "syncTitle": "同步（端對端加密）",
     "syncComingSoon": "端對端加密同步至資料夾或中繼伺服器。",
     "resetTitle": "重設 Darhai",
@@ -2312,8 +2317,9 @@
     "resetConfirmBody": "目前的編輯內容將遺失。系統將還原預設章程。",
     "resetCancel": "取消",
     "loading": "載入中…",
-    "tokenCount": "{{value}} 個權杖",
-    "tokenWarning": "即將達到遵循上限（約 2,000 個權杖）。請考慮拆分為專家疊加層。",
+    "tokenCount": "≈{{value}} 個權杖 ({{counter}})",
+    "tokenCountHint": "近似值。使用 OpenAI 的 o200k_base 分詞器統計。Claude 與 Gemini 使用各自未公開的分詞器，因此實際數量不同——在西里爾文字上實測差異為分詞器之間 1.6-3.0 倍。",
+    "tokenWarning": "已超過約 2,000 個 token 的建議上限。請考慮拆分為專家疊加層。",
     "tokenError": "已超過遵循上限。請將章節移至 ~/.darhai/specialists/<id>.md 中的專家疊加層。"
   },
   "constitutionSpecialists": {
@@ -2332,7 +2338,7 @@
     "cancel": "取消",
     "empty": "尚無專家疊加層。新增一個即可為特定智慧型代理提供額外規則。",
     "close": "關閉",
-    "tokenCount": "{{value}} 個權杖"
+    "tokenCount": "≈{{value}} 個權杖 ({{counter}})"
   },
   "agentsPage": {
     "title": "智能體",
@@ -2646,7 +2652,7 @@
       "modeHeadless": "Headless server",
       "runtimeMode": "Runtime mode",
       "runtimeModeDesc": "Currently: embedded local engine",
-      "endpoint": "wcore endpoint",
+      "endpoint": "Darhai Core 端點",
       "endpointDesc": "Embedded · spawned in-process",
       "running": "Running",
       "concurrency": "Concurrency",

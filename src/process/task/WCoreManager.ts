@@ -10,7 +10,7 @@ import { transformMessage } from '@/common/chat/chatLib';
 import type { IResponseMessage } from '@/common/adapter/ipcBridge';
 import { channelEventBus } from '@process/channels/agent/ChannelEventBus';
 import { teamEventBus } from '@process/team/teamEventBus';
-import type { TProviderWithModel } from '@/common/config/storage';
+import type { TokenUsageData, TProviderWithModel } from '@/common/config/storage';
 import { ProcessConfig } from '@process/utils/initStorage';
 import { BaseApprovalStore, type IApprovalKey } from '@/common/chat/approval';
 import { ToolConfirmationOutcome } from '../agent/gemini/cli/tools/tools';
@@ -100,6 +100,17 @@ type WCoreApprovalKey = IApprovalKey & {
 
 function isValidCommandName(name: string): boolean {
   return /^[a-zA-Z_][a-zA-Z0-9_-]*$/.test(name);
+}
+
+/**
+ * A usage figure the engine actually reported, or `undefined`.
+ *
+ * Deliberately not `Number(v) || 0`: `0` is a real reading (a fresh window, an
+ * uncached turn) and a `||` chain erases it, while a non-numeric value would
+ * become NaN, get persisted, and later render as "NaN%".
+ */
+function usageCount(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
 }
 
 export class WCoreApprovalStore extends BaseApprovalStore<WCoreApprovalKey> {
@@ -850,11 +861,45 @@ export class WCoreManager extends BaseAgentManager<WCoreManagerData, string> {
     this.emitToEventBuses(ipcMsg);
   }
 
+  /**
+   * Persist this turn's usage to `extra.lastTokenUsage`.
+   *
+   * WHY THE WIDE SHAPE. The renderer's `useWCoreMessage` writes the SAME key on
+   * the SAME finish frame, carrying all five engine figures. This write and
+   * that one race, and whichever lands second wins the key outright. While this
+   * method wrote `{ totalTokens }` alone it could therefore strip the four
+   * other figures back off the record - a loss invisible until the app is
+   * restarted and the ring rehydrates from disk with nothing but the inflated
+   * input+output sum to divide. Writing the same shape from both sides makes
+   * the order of that race stop mattering.
+   *
+   * `totalTokens` keeps its old value and its old position: every existing
+   * reader gates on it and every persisted record carries it.
+   */
   private saveContextUsage(data: unknown): void {
-    if (!data || typeof data !== 'object' || !('input_tokens' in data)) return;
-    const usage = data as { input_tokens: number; output_tokens: number };
-    const totalTokens = (usage.input_tokens || 0) + (usage.output_tokens || 0);
-    if (totalTokens <= 0) return;
+    if (!data || typeof data !== 'object') return;
+    const usage = data as Record<string, unknown>;
+
+    const inputTokens = usageCount(usage.input_tokens);
+    const outputTokens = usageCount(usage.output_tokens);
+    const activeWindowPercent = usageCount(usage.active_window_percent);
+    const totalTokens = (inputTokens ?? 0) + (outputTokens ?? 0);
+
+    // Same gate as the renderer's `rehydrateTokenUsage`: a frame with no usable
+    // figure at all must not overwrite a real reading with zeros - but a turn
+    // that reported only a window percentage IS a reading, and the old
+    // `totalTokens <= 0` test discarded it.
+    const hasReading = totalTokens > 0 || (inputTokens ?? 0) > 0 || (activeWindowPercent ?? 0) > 0;
+    if (!hasReading) return;
+
+    const lastTokenUsage: TokenUsageData = {
+      totalTokens,
+      inputTokens,
+      outputTokens,
+      cacheReadTokens: usageCount(usage.cache_read_tokens),
+      cacheWriteTokens: usageCount(usage.cache_write_tokens),
+      activeWindowPercent,
+    };
 
     void (async () => {
       try {
@@ -863,7 +908,7 @@ export class WCoreManager extends BaseAgentManager<WCoreManagerData, string> {
         if (result.success && result.data && result.data.type === 'wcore') {
           const conversation = result.data;
           db.updateConversation(this.conversation_id, {
-            extra: { ...conversation.extra, lastTokenUsage: { totalTokens } },
+            extra: { ...conversation.extra, lastTokenUsage },
           } as Partial<typeof conversation>);
         }
       } catch {
@@ -1126,7 +1171,7 @@ export class WCoreManager extends BaseAgentManager<WCoreManagerData, string> {
         repo.updateRegistryProviderState(providerId, 'error', 'unauthorized');
         mainWarn(
           '[WCoreManager]',
-          `Provider '${providerId}' key rejected by Wayland Core (401/invalid x-api-key); ` +
+          `Provider '${providerId}' key rejected by Darhai Core (401/invalid x-api-key); ` +
             'marked error/unauthorized. Re-key it in Models & Providers to restore.'
         );
       } catch (err) {

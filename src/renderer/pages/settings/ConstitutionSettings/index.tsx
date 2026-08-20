@@ -11,7 +11,9 @@ import { useTranslation } from 'react-i18next';
 import type { SaveState } from '@renderer/components/settings/shared/feedback/SavedIndicator';
 import SettingsPageShell from '@renderer/pages/settings/components/SettingsPageShell';
 import TipTapMarkdownEditor from '@renderer/pages/conversation/Preview/components/editors/TipTapMarkdownEditor';
+import { TOKEN_COUNTER_HINT, TOKEN_COUNTER_LABEL, tokenLevel as levelForTokens } from '@/common/utils/tokenCount';
 import SpecialistOverlays from './SpecialistOverlays';
+import { useTokenEstimate } from './useTokenEstimate';
 
 type TocEntry = { id: string; text: string; level: number };
 
@@ -134,17 +136,15 @@ const ConstitutionSettings: React.FC = () => {
 
   const toc = useMemo(() => parseToc(value), [value]);
 
-  // Token estimate uses the same heuristic as composePrompt so the
-  // user-visible number matches what the backend composer estimates.
-  const approxTokens = Math.ceil(value.length / 4);
-  const tokenLevel: 'ok' | 'warning' | 'error' =
-    approxTokens >= 3000 ? 'error' : approxTokens >= 2000 ? 'warning' : 'ok';
+  // Counted by the shared module, the same one composePrompt uses, so the
+  // user-visible number matches what the backend composer reports. The old
+  // inline `Math.ceil(value.length / 4)` undercounted Cyrillic by ~1.6x, which
+  // made the ceiling warnings below fire far too late for a Mongolian user.
+  const estimate = useTokenEstimate(value);
+  const approxTokens = estimate.tokens;
+  const tokenLevel = levelForTokens(approxTokens);
   const tokenCountClass =
-    tokenLevel === 'error'
-      ? 'text-danger'
-      : tokenLevel === 'warning'
-        ? 'text-warning'
-        : 'text-t-tertiary';
+    tokenLevel === 'error' ? 'text-danger' : tokenLevel === 'warning' ? 'text-warning' : 'text-t-tertiary';
 
   const scrollToHeading = useCallback((id: string, text: string): void => {
     const root = editorRoot.current;
@@ -209,28 +209,34 @@ const ConstitutionSettings: React.FC = () => {
       )}
 
       {loading ? (
-        <div className='text-t-secondary p-16px'>
-          {t('settings.constitutionPage.loading', 'Loading…')}
-        </div>
+        <div className='text-t-secondary p-16px'>{t('settings.constitutionPage.loading', 'Loading…')}</div>
       ) : (
         <div className='flex gap-16px items-start'>
           <div className='flex-1 min-w-0 flex flex-col gap-8px'>
             <div className='flex flex-col gap-2px'>
-              <span className={`text-12px font-medium ${tokenCountClass}`}>
-                {t('settings.constitutionPage.tokenCount', '{{value}} tokens', {
+              <span
+                className={`text-12px font-medium ${tokenCountClass}`}
+                data-testid='constitution-token-count'
+                title={t('settings.constitutionPage.tokenCountHint', TOKEN_COUNTER_HINT)}
+              >
+                {t('settings.constitutionPage.tokenCount', '≈{{value}} tokens ({{counter}})', {
                   value: approxTokens.toLocaleString(),
+                  counter: TOKEN_COUNTER_LABEL[estimate.counter],
                 })}
               </span>
               {tokenLevel === 'warning' && (
-                <span className='text-11px text-warning'>
+                // This fires at tokens >= TOKEN_WARNING_TOKENS - the guideline is
+                // already REACHED, so the copy must not say "approaching". Seen
+                // on screen at 2,767 tokens reading "approaching (~2,000)".
+                <span className='text-11px text-warning' data-testid='constitution-token-warning'>
                   {t(
                     'settings.constitutionPage.tokenWarning',
-                    'Approaching adherence ceiling (~2,000 tokens). Consider splitting into specialist overlays.'
+                    'Past the ~2,000 token guideline. Consider splitting into specialist overlays.'
                   )}
                 </span>
               )}
               {tokenLevel === 'error' && (
-                <span className='text-11px text-danger'>
+                <span className='text-11px text-danger' data-testid='constitution-token-error'>
                   {t(
                     'settings.constitutionPage.tokenError',
                     'Past the adherence ceiling. Move sections into specialist overlays at ~/.darhai/specialists/<id>.md.'

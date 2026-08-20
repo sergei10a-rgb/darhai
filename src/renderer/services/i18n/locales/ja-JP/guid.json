@@ -8,6 +8,8 @@
   "promptExamplesHint": "Try example prompts:",
   "agentSwitcherLabel": "Agent",
   "switchedToAgent": "{{agent}} に切り替えました",
+  "wcoreName": "Darhai Core",
+  "createWcoreFailed": "Darhai Core の会話を作成できませんでした。Darhai Core エンジンがインストールされているか確認してください。",
   "hint": {
     "search": "{{key}} で検索",
     "backend": "{{key}} でバックエンド切替",

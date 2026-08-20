@@ -63,6 +63,9 @@ const SEEDED_OUTPUT_TOKENS = 12_000;
  * and pinning the literal here means a translation change that silently drops
  * these controls fails this spec instead of passing it.
  */
+const BACKUP_EXPORT_LABEL = 'Бүгдийг экспортлох';
+const BACKUP_RESTORE_LABEL = 'Нөөцлөлтөөс сэргээх';
+
 const MODE_READ_ONLY = 'Зөвхөн унших';
 const MODE_WORKSPACE_WRITE = 'Ажлын талбарт бичих';
 const PARTIAL_WARNING_PREFIX = 'Хамгаалалт хэсэгчилсэн';
@@ -265,15 +268,19 @@ test('context-usage popover shows the used/free breakdown and the ₮ spend', as
   // 0.5 USD at the pinned rate: the ₮ figure is arithmetic, not a live quote.
   await expect(spend).toContainText('1,790₮');
 
-  // The three figures must agree with each other. `152.0K` used out of the
-  // default `1_048_576` window leaves `896.6K` free, and the limit has to be
-  // shown at a rounding those two add up to - a bare `1M` here was the bug this
-  // spec's first screenshot exposed: it truncated 48_576 tokens, so the panel
-  // read `152.0K / 1M` above `Free: 896.6K` and contradicted itself.
+  // WHAT SITS IN THE WINDOW IS INPUT. The frame above reports 140K in and 12K
+  // out; the old code added them and drew 152K, overstating the fill by 8.6%.
+  // With no `active_window_percent` on this frame the fill falls to the input
+  // count: 140_000 of 1_048_576 is 13.4%, leaving 908.6K free.
+  await expect(figure).toContainText('13.4%');
+  await expect(figure).toContainText('140.0K');
   await expect(figure).toContainText('1.0M');
+  // The output tokens must NOT appear as used - that was the whole bug.
+  await expect(figure).not.toContainText('152.0K');
   const breakdownText = (await visual.page.getByTestId('context-usage-breakdown').textContent()) ?? '';
-  expect(breakdownText).toContain('152.0K');
-  expect(breakdownText).toContain('896.6K');
+  expect(breakdownText).toContain('140.0K');
+  // 140.0K + 908.6K = 1048.6K, which rounds to the 1.0M shown as the limit.
+  expect(breakdownText).toContain('908.6K');
 
   // `snap()` is deliberately not used: its `stableScreenshot` needs two
   // byte-identical frames, and the hover has to survive between them. It does -
@@ -284,6 +291,67 @@ test('context-usage popover shows the used/free breakdown and the ₮ spend', as
   // Still open after the capture: proves the screenshot above photographed the
   // popover rather than an empty composer.
   await expect(figure).toBeVisible();
+
+  // 7. The engine's OWN fill measure outranks our division. A second frame
+  //    carrying `active_window_percent` must move the reading to it - proving
+  //    the precedence in the BUILT app, not just in jsdom.
+  await pushResponseFrame(visual.app, {
+    type: 'finish',
+    msg_id: 'context-spend-visual-2',
+    conversation_id: id as string,
+    data: {
+      input_tokens: SEEDED_INPUT_TOKENS,
+      output_tokens: SEEDED_OUTPUT_TOKENS,
+      active_window_percent: 42,
+    },
+  });
+  await expect(figure).toContainText('42.0%', { timeout: 10_000 });
+  // 42% of the 1_048_576 window is 440.4K - a figure that can only come from
+  // the engine's percentage, never from the 140K input count.
+  await expect(figure).toContainText('440.4K');
+
+  fs.writeFileSync(
+    path.join(OUT_DIR, 'context-usage-engine-percent.png'),
+    await visual.page.screenshot({ animations: 'disabled' })
+  );
+});
+
+test('constitution page counts tokens with a real tokenizer, not chars/4', async () => {
+  await gotoHash(visual.page, '#/settings/constitution');
+
+  const readout = visual.page.getByTestId('constitution-token-count');
+  await readout.scrollIntoViewIfNeeded();
+  await expect(readout).toBeVisible({ timeout: 15_000 });
+
+  const text = (await readout.textContent()) ?? '';
+  // The number must be qualified: an approximation sign, and the name of the
+  // tokenizer that produced it. A bare exact-looking figure would be a lie -
+  // this is not the provider's own tokenizer.
+  expect(text).toContain('≈');
+  expect(text.toLowerCase()).toContain('o200k');
+
+  // The measured trap: chars/4 undercounts this Cyrillic document by ~1.6x and
+  // reported 1,791 tokens. Anything near that figure means the old estimate is
+  // still live somewhere in the renderer.
+  expect(text).not.toContain('1,791');
+  const digits = text.replace(/[^\d]/g, '');
+  expect(Number(digits), `token readout was "${text}"`).toBeGreaterThan(2_000);
+
+  await snap('constitution-token-count');
+});
+
+test('backup card renders both actions', async () => {
+  await gotoHash(visual.page, '#/settings/storage');
+
+  // Located by the Mongolian labels the running app actually shows. The card's
+  // handlers open OS dialogs, which a test cannot drive, so this proves the
+  // surface renders - the outcome reporting is covered by the DOM test.
+  const exportButton = visual.page.getByRole('button', { name: BACKUP_EXPORT_LABEL });
+  await exportButton.scrollIntoViewIfNeeded();
+  await expect(exportButton).toBeVisible({ timeout: 15_000 });
+  await expect(visual.page.getByRole('button', { name: BACKUP_RESTORE_LABEL })).toBeVisible();
+
+  await snap('backup-card');
 });
 
 test('sandbox card: collapsed by default, mode picker and enforcement notice after enabling', async () => {

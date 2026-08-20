@@ -35,6 +35,85 @@ interface ContextUsageIndicatorProps {
   spendMnt?: number | null;
 }
 
+/** Which of the three figures the fill was actually taken from. */
+export type ContextFillSource = 'engineWindowPercent' | 'inputTokens' | 'legacyTotal';
+
+export interface ContextFill {
+  source: ContextFillSource;
+  /** True, unclamped fill of the window, in percent. Never NaN or Infinity. */
+  percent: number;
+  /** Tokens resident in the window - always consistent with `percent` × limit. */
+  used: number;
+}
+
+/**
+ * A figure the engine actually reported.
+ *
+ * Deliberately not a truthiness check: `0` is a real reading - a fresh window
+ * is genuinely 0% full, and an uncached turn genuinely read 0 cached tokens.
+ * A `||` chain would erase those and silently fall through to a worse source.
+ * Anything non-finite (a corrupt record, a `Number('lots')`) is treated as
+ * absent so it degrades to the next source instead of poisoning the arithmetic.
+ */
+function reported(value: number | undefined): value is number {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0;
+}
+
+/**
+ * Decide WHICH number describes how full the context window is.
+ *
+ * The ring used to compute `(input_tokens + output_tokens) / limit`. Output
+ * tokens are what came BACK from the model; what SITS IN the window is the
+ * input. On the engine contract fixture that sum reads 160 where the resident
+ * truth is 120 - a 33% overstatement that grows with every turn.
+ *
+ * Precedence, best source first. Each step can be absent, so this is a chain
+ * rather than a replacement:
+ *
+ *   1. `activeWindowPercent` - the engine's OWN measure of its OWN window.
+ *      Exact, and needs no division against a limit we guessed from a model id.
+ *   2. `inputTokens / limit` - what actually sits in the window, divided by the
+ *      best limit the caller could supply.
+ *   3. `totalTokens / limit` - the legacy inflated sum. Overstates the fill, but
+ *      it is all a record persisted before the widening carries, and rendering
+ *      such a record as zero would empty a full ring on every app restart.
+ *
+ * `used` is derived FROM the winning percentage rather than picked
+ * independently, so the ring, the percentage and the used/free line can never
+ * contradict each other. When the engine's percent wins, `used` is therefore
+ * that percentage of the window we know about - the engine reports a ratio, not
+ * a resident token count, and showing `inputTokens` beside a percentage
+ * computed some other way is exactly the self-contradiction this file has
+ * already shipped once.
+ *
+ * HONESTY NOTE: that the engine sends `active_window_percent` at all is proved
+ * from the published contract schema and the host/renderer code path (see
+ * `tests/unit/wcore-contextUsageContract.test.ts`), not from a frame captured
+ * off a running engine. Step 1 may simply never fire against a given build -
+ * which is why steps 2 and 3 exist and are tested independently.
+ */
+export function resolveContextFill(usage: TokenUsageData | null | undefined, contextLimit: number): ContextFill {
+  // A zero, negative or missing limit would divide by zero or invert the ring.
+  const limit = Number.isFinite(contextLimit) && contextLimit > 0 ? contextLimit : DEFAULT_CONTEXT_LIMIT;
+
+  if (!usage || typeof usage !== 'object') {
+    return { source: 'legacyTotal', percent: 0, used: 0 };
+  }
+
+  if (reported(usage.activeWindowPercent)) {
+    const percent = usage.activeWindowPercent;
+    return { source: 'engineWindowPercent', percent, used: Math.round((percent / 100) * limit) };
+  }
+
+  if (reported(usage.inputTokens)) {
+    const used = usage.inputTokens;
+    return { source: 'inputTokens', percent: (used / limit) * 100, used };
+  }
+
+  const used = reported(usage.totalTokens) ? usage.totalTokens : 0;
+  return { source: 'legacyTotal', percent: (used / limit) * 100, used };
+}
+
 const ContextUsageIndicator: React.FC<ContextUsageIndicatorProps> = ({
   tokenUsage,
   contextLimit = DEFAULT_CONTEXT_LIMIT,
@@ -65,8 +144,11 @@ const ContextUsageIndicator: React.FC<ContextUsageIndicatorProps> = ({
         };
       }
 
-      const total = Number.isFinite(tokenUsage.totalTokens) ? tokenUsage.totalTokens : 0;
-      const rawPct = Math.max(0, (total / limit) * 100);
+      // WHICH figure describes the fill is decided in one place, so the ring
+      // and every line of the popover below are drawn from the same source.
+      const fill = resolveContextFill(tokenUsage, limit);
+      const total = fill.used;
+      const rawPct = Math.max(0, fill.percent);
       // Clamp the RING only: usage above the window is real (an over-long turn),
       // but an unclamped percentage drives the dash offset negative and draws a
       // corrupt arc. Past 100% the ring is simply full.

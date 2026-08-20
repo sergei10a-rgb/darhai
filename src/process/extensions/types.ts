@@ -81,7 +81,7 @@ export const ExtensionMetaSchema = z
             message: 'Engine version must be a valid semver range (e.g., "^1.0.0", ">=1.0.0 <2.0.0")',
           })
           .optional()
-          .describe('Compatible Wayland core version range'),
+          .describe('Compatible Darhai Core version range'),
       })
       .optional(),
     /**

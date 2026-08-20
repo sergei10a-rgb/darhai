@@ -8,6 +8,8 @@
   "promptExamplesHint": "Try example prompts:",
   "agentSwitcherLabel": "Agent",
   "switchedToAgent": "{{agent}} olarak değiştirildi",
+  "wcoreName": "Darhai Core",
+  "createWcoreFailed": "Darhai Core sohbeti oluşturulamadı. Darhai Core motorunun kurulu olduğundan emin olun.",
   "hint": {
     "search": "Aramak için {{key}} tuşuna basın",
     "backend": "Arka uç için {{key}}",

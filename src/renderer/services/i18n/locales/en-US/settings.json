@@ -364,6 +364,7 @@
   "geminiBaseUrl": "Gemini API Base URL",
   "cacheDir": "Cache Directory",
   "workDir": "Work Directory",
+  "workDirDisplayName": "Darhai work folder",
   "logDir": "Log Directory",
   "dirNotConfigured": "Not configured yet",
   "cacheClean": "Cache Cleanup",
@@ -2267,7 +2268,7 @@
     "title": "Storage",
     "comingSoon": "Usage breakdown, backup, restore, and sync land in the next release.",
     "usageTitle": "Storage usage",
-    "totalUsed": "{{used}} used of {{total}}",
+    "totalUsed": "{{used}} used",
     "usageStale": "Updated {{ago}}",
     "refresh": "Refresh",
     "conversations": "Conversations",
@@ -2287,6 +2288,10 @@
     "exportPassphrasePlaceholder": "Required when keys are included",
     "exportAll": "Export everything",
     "restore": "Restore from backup",
+    "exportSuccess": "Backup saved",
+    "exportFailed": "Could not export the backup",
+    "restoreSuccess": "Restore finished. Restart Дархай to see the restored data.",
+    "restoreFailed": "Could not restore the backup",
     "syncTitle": "Sync (E2EE)",
     "syncComingSoon": "End-to-end encrypted sync to a folder or relay.",
     "resetTitle": "Reset Darhai",
@@ -2355,8 +2360,9 @@
     "resetConfirmBody": "Your current edits will be lost. The default Constitution will be restored.",
     "resetCancel": "Cancel",
     "loading": "Loading…",
-    "tokenCount": "{{value}} tokens",
-    "tokenWarning": "Approaching adherence ceiling (~2,000 tokens). Consider splitting into specialist overlays.",
+    "tokenCount": "≈{{value}} tokens ({{counter}})",
+    "tokenCountHint": "Approximate. Counted with the OpenAI o200k_base tokenizer. Claude and Gemini use their own tokenizers, which are not public, so the real count differs - measured spread on Cyrillic text: 1.6x-3.0x between tokenizers.",
+    "tokenWarning": "Past the ~2,000 token guideline. Consider splitting into specialist overlays.",
     "tokenError": "Past the adherence ceiling. Move sections into specialist overlays at ~/.darhai/specialists/<id>.md."
   },
   "constitutionSpecialists": {
@@ -2375,7 +2381,7 @@
     "cancel": "Cancel",
     "empty": "No specialist overlays yet. Add one to give a specific assistant extra rules.",
     "close": "Close",
-    "tokenCount": "{{value}} tokens"
+    "tokenCount": "≈{{value}} tokens ({{counter}})"
   },
   "agentsPage": {
     "title": "Agents",
@@ -2663,7 +2669,7 @@
       "modeHeadless": "Headless server",
       "runtimeMode": "Runtime mode",
       "runtimeModeDesc": "Currently: embedded local engine",
-      "endpoint": "wcore endpoint",
+      "endpoint": "Darhai Core endpoint",
       "endpointDesc": "Embedded · spawned in-process",
       "running": "Running",
       "concurrency": "Concurrency",

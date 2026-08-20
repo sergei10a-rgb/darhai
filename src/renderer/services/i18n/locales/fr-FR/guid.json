@@ -8,6 +8,8 @@
   "promptExamplesHint": "Essayez des exemples de prompts :",
   "agentSwitcherLabel": "Agent",
   "switchedToAgent": "Basculé vers {{agent}}",
+  "wcoreName": "Darhai Core",
+  "createWcoreFailed": "Impossible de créer la conversation Darhai Core. Vérifiez que le moteur Darhai Core est installé.",
   "hint": {
     "search": "Appuyez sur {{key}} pour rechercher",
     "backend": "{{key}} pour le backend",

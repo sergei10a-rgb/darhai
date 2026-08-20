@@ -18,7 +18,16 @@ import { useTranslation } from 'react-i18next';
 const DirInputItem: React.FC<{
   label: string;
   field: string;
-}> = ({ label, field }) => {
+  /**
+   * Friendly name shown on the primary line instead of the raw path.
+   *
+   * The default work directory still lives in the on-disk `wayland` folder
+   * (renaming it would strand existing user data), so the row leads with a
+   * branded label and demotes the absolute path to a secondary line. The path
+   * stays visible, selectable, and in the tooltip.
+   */
+  displayName?: string;
+}> = ({ label, field, displayName }) => {
   const { t } = useTranslation();
   return (
     <Form.Item label={label} field={field}>
@@ -41,11 +50,30 @@ const DirInputItem: React.FC<{
             });
         };
 
+        const pathText = currentValue || t('settings.dirNotConfigured');
+
         return (
-          <div className='aion-dir-input h-[32px] flex items-center rounded-8px border border-solid border-transparent pl-14px bg-[var(--fill-0)]'>
-            <Tooltip content={currentValue || t('settings.dirNotConfigured')} position='top'>
-              <div className='flex-1 min-w-0 text-13px text-t-primary truncate '>
-                {currentValue || t('settings.dirNotConfigured')}
+          <div
+            className={`aion-dir-input flex items-center rounded-8px border border-solid border-transparent pl-14px bg-[var(--fill-0)] ${
+              displayName ? 'min-h-[46px] py-4px' : 'h-[32px]'
+            }`}
+          >
+            <Tooltip content={pathText} position='top'>
+              <div className='flex-1 min-w-0'>
+                {displayName ? (
+                  <>
+                    <div className='text-13px text-t-primary truncate'>{displayName}</div>
+                    <div
+                      className='text-11px text-t-tertiary truncate'
+                      style={{ userSelect: 'text', cursor: 'text' }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {pathText}
+                    </div>
+                  </>
+                ) : (
+                  <div className='text-13px text-t-primary truncate '>{pathText}</div>
+                )}
               </div>
             </Tooltip>
             <Button

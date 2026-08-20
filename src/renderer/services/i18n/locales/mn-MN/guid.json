@@ -8,6 +8,8 @@
   "promptExamplesHint": "Жишээ промпт туршина уу:",
   "agentSwitcherLabel": "Агент",
   "switchedToAgent": "{{agent}} руу шилжлээ",
+  "wcoreName": "Дархай Core",
+  "createWcoreFailed": "Дархай Core яриа үүсгэж чадсангүй. Дархай Core хөдөлгүүр суусан эсэхийг шалгана уу.",
   "hint": {
     "search": "Хайхын тулд {{key}} дарна уу",
     "backend": "Backend-д {{key}}",

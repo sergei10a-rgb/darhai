@@ -364,6 +364,7 @@
   "geminiBaseUrl": "Gemini API-Basis-URL",
   "cacheDir": "Cache-Verzeichnis",
   "workDir": "Arbeitsverzeichnis",
+  "workDirDisplayName": "Darhai-Arbeitsordner",
   "logDir": "Protokollverzeichnis",
   "dirNotConfigured": "Noch nicht konfiguriert",
   "cacheClean": "Cache-Bereinigung",
@@ -2249,7 +2250,7 @@
     "title": "Speicher",
     "comingSoon": "Nutzungsaufschlüsselung, Sicherung, Wiederherstellung und Synchronisierung kommen im nächsten Release.",
     "usageTitle": "Speichernutzung",
-    "totalUsed": "{{used}} von {{total}} verwendet",
+    "totalUsed": "{{used}} belegt",
     "usageStale": "Aktualisiert {{ago}}",
     "refresh": "Aktualisieren",
     "conversations": "Gespräche",
@@ -2269,6 +2270,10 @@
     "exportPassphrasePlaceholder": "Erforderlich, wenn Schlüssel einbezogen werden",
     "exportAll": "Alles exportieren",
     "restore": "Aus Sicherung wiederherstellen",
+    "exportSuccess": "Sicherung gespeichert",
+    "exportFailed": "Sicherung konnte nicht exportiert werden",
+    "restoreSuccess": "Wiederherstellung abgeschlossen. Starten Sie Дархай neu, um die Daten zu sehen.",
+    "restoreFailed": "Wiederherstellung aus der Sicherung fehlgeschlagen",
     "syncTitle": "Synchronisierung (E2EE)",
     "syncComingSoon": "Ende-zu-Ende-verschlüsselte Synchronisierung zu einem Ordner oder Relay.",
     "resetTitle": "Darhai zurücksetzen",
@@ -2337,8 +2342,9 @@
     "resetConfirmBody": "Deine aktuellen Änderungen gehen verloren. Die Standard-Constitution wird wiederhergestellt.",
     "resetCancel": "Abbrechen",
     "loading": "Wird geladen…",
-    "tokenCount": "{{value}} Tokens",
-    "tokenWarning": "Nähert sich der Adhärenz-Obergrenze (~2.000 Tokens). Erwäge, den Inhalt in Spezialisten-Overlays aufzuteilen.",
+    "tokenCount": "≈{{value}} Tokens ({{counter}})",
+    "tokenCountHint": "Ungefährer Wert. Gezählt mit dem o200k_base-Tokenizer von OpenAI. Claude und Gemini nutzen eigene, nicht öffentliche Tokenizer, daher weicht die echte Zahl ab - gemessene Spanne bei kyrillischem Text: 1,6x-3,0x zwischen Tokenizern.",
+    "tokenWarning": "Die Richtgrenze von ca. 2.000 Token ist überschritten. Erwägen Sie eine Aufteilung in Spezialisten-Overlays.",
     "tokenError": "Adhärenz-Obergrenze überschritten. Verschiebe Abschnitte in Spezialisten-Overlays unter ~/.darhai/specialists/<id>.md."
   },
   "constitutionSpecialists": {
@@ -2357,7 +2363,7 @@
     "cancel": "Abbrechen",
     "empty": "Noch keine Spezialisten-Overlays. Füge eines hinzu, um einem bestimmten Assistenten zusätzliche Regeln zu geben.",
     "close": "Schließen",
-    "tokenCount": "{{value}} Tokens"
+    "tokenCount": "≈{{value}} Tokens ({{counter}})"
   },
   "agentsPage": {
     "title": "Agenten",
@@ -2645,7 +2651,7 @@
       "modeHeadless": "Headless server",
       "runtimeMode": "Runtime mode",
       "runtimeModeDesc": "Currently: embedded local engine",
-      "endpoint": "wcore endpoint",
+      "endpoint": "Darhai Core-Endpunkt",
       "endpointDesc": "Embedded · spawned in-process",
       "running": "Running",
       "concurrency": "Concurrency",
