@@ -5,6 +5,7 @@
  */
 
 import { getAgentLogo } from '@/renderer/utils/model/agentLogo';
+import { getBackendLabel } from '@/renderer/utils/model/backendLabel';
 import { CUSTOM_AVATAR_IMAGE_MAP } from '../constants';
 import type { AvailableAgent, MentionOption } from '../types';
 import { getAgentKey } from './agentSelectionUtils';
@@ -40,6 +41,24 @@ type UseGuidMentionOptions = {
 };
 
 /**
+ * Display label for an agent key.
+ *
+ * `getAgentKey` yields either a bare backend id ("wcore", "claude") or a
+ * composite "custom:<uuid>" / "remote:<uuid>". Only the backend segment carries
+ * display meaning, so the id suffix is dropped before the shared label map is
+ * consulted - otherwise a custom agent would render its uuid.
+ *
+ * `getBackendLabel` capitalizes anything it does not know, so an unrecognized
+ * backend still produces readable text rather than an empty string. The final
+ * `|| agentKey` keeps the result no worse than the raw key if the map ever
+ * returns empty for a non-empty key.
+ */
+const getAgentKeyLabel = (agentKey: string): string => {
+  const backendId = agentKey.split(':')[0] ?? '';
+  return getBackendLabel(backendId) || agentKey;
+};
+
+/**
  * Hook that manages the @ mention system for agent selection.
  */
 export const useGuidMention = ({
@@ -62,7 +81,11 @@ export const useGuidMention = ({
     const agents = availableAgents || [];
     return agents.map((agent) => {
       const key = getAgentKey(agent);
-      const label = agent.name || agent.backend;
+      // Same raw-id leak as `selectedAgentLabel` below: a detected agent that
+      // arrives without a `name` used to render its bare backend id as the
+      // dropdown row. The raw id stays in `tokens` further down, so typing
+      // "@wcore" still matches the humanized row.
+      const label = agent.name || getBackendLabel(agent.backend);
       const avatarValue = agent.customAgentId
         ? agent.avatar || customAgentAvatarMap.get(agent.customAgentId)
         : undefined;
@@ -118,7 +141,13 @@ export const useGuidMention = ({
     [stripMentionToken, setSelectedAgentKey, setInput]
   );
 
-  const selectedAgentLabel = selectedAgentInfo?.name || selectedAgentKey;
+  // `availableAgents` arrives over SWR, so `selectedAgentInfo` is undefined on
+  // the first frame and this fallback is what the user actually sees. Returning
+  // the raw key leaked the internal engine id ("wcore") into three surfaces in
+  // GuidPage.tsx: the composer placeholder, the mention badge and the hero
+  // title. Route it through the shared label map so the first frame shows the
+  // same user-facing name as every frame after it.
+  const selectedAgentLabel = selectedAgentInfo?.name || getAgentKeyLabel(selectedAgentKey);
   const mentionMenuActiveOption = filteredMentionOptions[mentionActiveIndex] || filteredMentionOptions[0];
   const mentionMenuSelectedKey =
     mentionOpen || mentionSelectorOpen ? mentionMenuActiveOption?.key || selectedAgentKey : selectedAgentKey;

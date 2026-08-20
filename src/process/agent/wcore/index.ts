@@ -58,6 +58,35 @@ hostDelegatedDeliveryCapability.setMessageDeliverer(
 
 const WCORE_PROJECT_CONFIG = '.wcore.toml';
 
+/**
+ * Flatten a `stream_end` into the payload the renderer receives as `finish`.
+ *
+ * `usage` is SPREAD WHOLE rather than field-picked, and that is the point.
+ * The contract declares five integers there - `input_tokens`, `output_tokens`,
+ * `cache_read_tokens`, `cache_write_tokens`, `active_window_percent` - and marks
+ * the object `additionalProperties: true`, so the engine may add a sixth without
+ * a contract major. A host that listed today's fields would drop tomorrow's
+ * silently: the renderer would simply read `undefined` and render a ring anyway.
+ * Spreading costs nothing and cannot go stale.
+ *
+ * Extracted from the event switch so the forwarding has a seam to test against
+ * the published fixture (`tests/unit/wcore-contextUsageContract.test.ts`);
+ * inline in a class method it could only be exercised by booting an engine.
+ *
+ * Returns `''` for a turn that reported neither usage nor a finish reason,
+ * preserving the pre-existing contract with the renderer, which treats the empty
+ * string as "nothing to record" rather than "zero tokens used".
+ */
+export function buildFinishPayload(event: {
+  usage?: Record<string, unknown>;
+  finish_reason?: string;
+}): Record<string, unknown> | '' {
+  const payload: Record<string, unknown> = {};
+  if (event.usage) Object.assign(payload, event.usage);
+  if (event.finish_reason) payload.finish_reason = event.finish_reason;
+  return Object.keys(payload).length > 0 ? payload : '';
+}
+
 /** Default turn-stall timeout: 10 minutes of zero forward progress. */
 const DEFAULT_TURN_STALL_TIMEOUT_MS = 600_000;
 /** Never arm a stall deadline shorter than this - protects against a misconfig. */
@@ -764,10 +793,7 @@ export class WCoreAgent {
         break;
 
       case 'stream_end': {
-        const finishPayload: Record<string, unknown> = {};
-        if (event.usage) Object.assign(finishPayload, event.usage);
-        if (event.finish_reason) finishPayload.finish_reason = event.finish_reason;
-        const payload = Object.keys(finishPayload).length > 0 ? finishPayload : '';
+        const payload = buildFinishPayload(event);
         this.onStreamEvent({ type: 'finish', data: payload, msg_id: event.msg_id });
         this.activeMsgId = null;
         // Turn completed: disarm the stall watchdog.

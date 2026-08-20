@@ -526,9 +526,47 @@ interface IChatConversation<T, Extra> {
   channelChatId?: string;
 }
 
-// Token usage statistics data type
+/**
+ * Token usage for the most recent turn, as read by the context-usage ring.
+ *
+ * BACKWARD COMPATIBILITY IS THE CONSTRAINT HERE. Conversations persisted before
+ * this type was widened store exactly `{ totalTokens }` in
+ * `extra.lastTokenUsage`, and those records are rehydrated on open. So
+ * `totalTokens` stays REQUIRED and keeps its original meaning (input + output):
+ * making it optional would let an old record read as `undefined` and empty a
+ * full ring on restart, and redefining it would move the bug rather than fix it.
+ *
+ * The remaining fields are OPTIONAL because only the wcore engine reports them -
+ * the acp and gemini paths, and every record written before the widening, simply
+ * leave them undefined. `undefined` therefore means "not reported", which a
+ * consumer MUST NOT collapse to 0: a missing `inputTokens` is not an empty
+ * context window.
+ *
+ * On the distinction that motivated the widening: `totalTokens` OVERSTATES how
+ * full the window is, because output tokens do not sit in the context window -
+ * `inputTokens` is what does. `activeWindowPercent` is the engine's own fill
+ * measure and needs no context-limit guess at all.
+ */
 export interface TokenUsageData {
+  /**
+   * Input + output tokens. Retained for backward compatibility and still the
+   * field every existing reader gates on. Overstates context fill - prefer
+   * `inputTokens` or `activeWindowPercent` when present.
+   */
   totalTokens: number;
+  /** Tokens occupying the context window this turn (engine `input_tokens`). */
+  inputTokens?: number;
+  /** Tokens generated this turn (engine `output_tokens`). Not resident in the window. */
+  outputTokens?: number;
+  /** Tokens served from the prompt cache (engine `cache_read_tokens`). */
+  cacheReadTokens?: number;
+  /** Tokens written to the prompt cache (engine `cache_write_tokens`). */
+  cacheWriteTokens?: number;
+  /**
+   * The engine's OWN measure of how full the active context window is, 0-100.
+   * Authoritative where present: it needs no division against a guessed limit.
+   */
+  activeWindowPercent?: number;
 }
 
 export type TChatConversation =

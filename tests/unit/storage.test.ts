@@ -47,7 +47,9 @@ describe('computeUsage', () => {
   });
 
   it('counts conversation bytes correctly', async () => {
-    writeFixture(userData, 'conversations/a.json', 'hello world'); // 11 bytes
+    // Conversations live in the SQLite database under the real data directory
+    // (`getDataPath()` = <userData>/wayland), not in a `conversations/` folder.
+    writeFixture(userData, 'wayland/wayland.db', 'hello world'); // 11 bytes
     const result = await computeUsage(userData, logsDir);
     const conv = result.breakdown.find((b) => b.label === 'conversations');
     expect(conv?.bytes).toBe(11);
@@ -55,7 +57,8 @@ describe('computeUsage', () => {
   });
 
   it('counts cache bytes correctly', async () => {
-    writeFixture(userData, 'cache/x.bin', 'abc'); // 3 bytes
+    // Non-database bytes inside the real data directory: scratch workspaces.
+    writeFixture(userData, 'wayland/wcore-temp-1/x.bin', 'abc'); // 3 bytes
     const result = await computeUsage(userData, logsDir);
     const cache = result.breakdown.find((b) => b.label === 'cache');
     expect(cache?.bytes).toBe(3);
@@ -69,19 +72,19 @@ describe('computeUsage', () => {
   });
 
   it('returns cached result within TTL', async () => {
-    writeFixture(userData, 'conversations/a.json', 'a');
+    writeFixture(userData, 'wayland/wayland.db', 'a');
     const first = await computeUsage(userData, logsDir);
     // Write more data - should NOT be reflected due to cache
-    writeFixture(userData, 'conversations/b.json', 'bbb');
+    writeFixture(userData, 'wayland/extension-states.json', 'bbb');
     const second = await computeUsage(userData, logsDir);
     expect(second.computedAt).toBe(first.computedAt);
   });
 
   it('recomputes after invalidateUsageCache()', async () => {
-    writeFixture(userData, 'conversations/a.json', 'a');
+    writeFixture(userData, 'wayland/wayland.db', 'a');
     const first = await computeUsage(userData, logsDir);
     invalidateUsageCache();
-    writeFixture(userData, 'conversations/b.json', 'bbb');
+    writeFixture(userData, 'wayland/extension-states.json', 'bbb');
     const second = await computeUsage(userData, logsDir);
     // computedAt may be equal if both calls happen within the same ms tick;
     // what matters is that the result is fresh (not served from the old cache)

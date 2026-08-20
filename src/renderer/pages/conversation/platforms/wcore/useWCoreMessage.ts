@@ -32,10 +32,97 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 
+/**
+ * The `usage` object of a wcore `stream_end`, as the engine contract declares
+ * it (`schema/core-event.schema.json`, `stream_end.usage`). All five are
+ * optional here because the engine omits the object entirely on some turns and
+ * `additionalProperties: true` lets it grow; nothing may assume a field arrived.
+ */
 type TokenUsage = {
   input_tokens?: number;
   output_tokens?: number;
+  cache_read_tokens?: number;
+  cache_write_tokens?: number;
+  active_window_percent?: number;
 };
+
+/**
+ * A wire figure, or `undefined` when the engine did not report a usable one.
+ *
+ * Deliberately NOT `Number(v) || 0`: `0` is a real reading (a fresh window, an
+ * uncached turn) and a `||` chain erases it, while `Number('lots')` yields NaN,
+ * which propagates into every arithmetic consumer and renders as "NaN%".
+ * Anything that is not a finite number is reported as absent instead.
+ */
+function asCount(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+}
+
+/**
+ * Turn a `finish` payload into the renderer's token-usage state.
+ *
+ * The engine sends five integers; this used to keep two of them and add them
+ * together. Both halves of that were wrong for the context ring: `input_tokens`
+ * is what actually SITS IN the window, so folding `output_tokens` in inflates
+ * the fill figure, and `active_window_percent` is the engine's own fill measure,
+ * which beats dividing anything by a hardcoded default limit.
+ *
+ * `totalTokens` is still computed exactly as before and still first in the
+ * shape. Every current reader gates on it, and persisted records carry it -
+ * changing its value here would have been a second bug, not a fix. The added
+ * fields sit alongside it so a consumer can choose a better number when it has
+ * one, without any reader being forced to change at the same time.
+ */
+export function toTokenUsage(raw: unknown): TokenUsageData | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const usage = raw as TokenUsage;
+
+  const inputTokens = asCount(usage.input_tokens);
+  const outputTokens = asCount(usage.output_tokens);
+  const activeWindowPercent = asCount(usage.active_window_percent);
+
+  // A payload with none of the three meaningful figures is a `finish` that
+  // carried only a finish_reason (or nothing at all). Recording it would
+  // overwrite a real reading with zeros.
+  if (inputTokens === undefined && outputTokens === undefined && activeWindowPercent === undefined) {
+    return null;
+  }
+
+  return {
+    totalTokens: (inputTokens ?? 0) + (outputTokens ?? 0),
+    inputTokens,
+    outputTokens,
+    cacheReadTokens: asCount(usage.cache_read_tokens),
+    cacheWriteTokens: asCount(usage.cache_write_tokens),
+    activeWindowPercent,
+  };
+}
+
+/**
+ * Accept a `extra.lastTokenUsage` record read back from the database.
+ *
+ * MIGRATION. Conversations persisted before the widening store `{ totalTokens }`
+ * and nothing else. Those records must still rehydrate: reading one as zero
+ * would empty a full ring the moment the app restarts, and throwing on one would
+ * take down the conversation-load effect around it. An old record therefore
+ * passes through unchanged, with the new fields left `undefined` rather than
+ * defaulted to 0 - "never reported" is not "measured as empty".
+ *
+ * The legacy `totalTokens > 0` gate is kept, but widened: a turn that reported
+ * only `activeWindowPercent` is a real reading, and the old gate discarded it.
+ * A record with no usable figure at all - `{}`, `{ totalTokens: 0 }`, or a
+ * corrupt non-object - is reported as no reading, exactly as before.
+ */
+export function rehydrateTokenUsage(stored: TokenUsageData | null | undefined): TokenUsageData | null {
+  if (!stored || typeof stored !== 'object') return null;
+
+  const hasReading =
+    (asCount(stored.totalTokens) ?? 0) > 0 ||
+    (asCount(stored.inputTokens) ?? 0) > 0 ||
+    (asCount(stored.activeWindowPercent) ?? 0) > 0;
+
+  return hasReading ? stored : null;
+}
 
 /** What a capability notice looks like once it is copy rather than a frame. */
 export type NoticeCopy = { content: string; severity: IMessageTips['content']['type'] };
@@ -353,11 +440,8 @@ export const useWCoreMessage = (
         case 'finish':
           {
             // wcore stream_end carries usage in data field
-            const usageData = message.data as TokenUsage | undefined;
-            if (usageData && typeof usageData === 'object' && 'input_tokens' in usageData) {
-              const newTokenUsage: TokenUsageData = {
-                totalTokens: (usageData.input_tokens || 0) + (usageData.output_tokens || 0),
-              };
+            const newTokenUsage = toTokenUsage(message.data);
+            if (newTokenUsage) {
               setTokenUsage(newTokenUsage);
               void ipcBridge.conversation.update.invoke({
                 id: conversation_id,
@@ -618,9 +702,10 @@ export const useWCoreMessage = (
       waitingResponseRef.current = isRunning;
       // Load persisted token usage stats
       if (res.type === 'wcore' && res.extra?.lastTokenUsage) {
-        const { lastTokenUsage } = res.extra;
-        if (lastTokenUsage.totalTokens > 0) {
-          setTokenUsage(lastTokenUsage);
+        // Old records hold `{ totalTokens }` only; the helper accepts both shapes.
+        const restored = rehydrateTokenUsage(res.extra.lastTokenUsage);
+        if (restored) {
+          setTokenUsage(restored);
         }
       }
       setHasHydratedRunningState(true);
