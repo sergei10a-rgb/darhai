@@ -58,47 +58,51 @@
 | `e41615065` | WCore turn ахицгүй гацахад watchdog зогсоож алдаа гаргана (heartbeat дангаараа амьд байлгахгүй) | `d4dea79ae` |
 | `c98088d05`+`49a49fcd9` | MCP сервер холбогдож чадаагүйг гаргана; engine stderr-ийг түвшнээр нь ангилж console.error үер зогсооно | `359e9c9c5` |
 
-## Үлдсэн (7 агентаар кодтой тулгаж БАТАЛСАН, засаагүй)
+## Үлдсэн (2026-08-21-нд дахин баталсан)
 
-23 мөрийг бүгдийг нь бодит кодтой тулгаж шалгав — **бүгд «real»**, нэг нь ч
-хуучирсан/хамааралгүй биш байв. Хэмжээгээр эрэмбэлэв (S = хагас өдөр, L = хэд хоног).
+10 мөрөөс: **8 нь үнэхээр нээлттэй** (кодоор дахин баталсан), **1 давхардсан** (`c98088d05+49a49fcd9`
+— энэ файлын өөрийнх нь «Зассан» хүснэгтэд `359e9c9c5` гэж бүртгэгдсэн байсан), **1 нь энэ
+ээлжид шалгагдаагүй** (`f9e334b8b`).
 
-> **✅ v0.9.7-mn.10 «Найдвартай зөвшөөрөл» нийтлэгдсэн** (2026-08-08): дээрх
-> 6 Tier-4 засвар (DashScope, keyless Ollama, idle-clock, acceptEdits,
-> respawn-banner, MCP Library, allow-always) + Windows атомт бичилт.
-> 13 asset, sha512 хоёр аргаар тулгасан, public latest.yml = 200 + byte-ижил.
-> `3afb6b93c` (uninstaller) + `3b1f59382` (max_tokens) хойшлуулсан; үлдсэн
-> 10 M/L зүйл mn.11 рүү.
+> **Гол олдвор нь мөр биш, ХОЙШЛУУЛАЛТЫН ШАЛТГААН байлаа.** Доорх хоёр зүйлийг хойшлуулсан
+> үндэслэл хоёулаа хүчингүй болсон — дэлгэрэнгүйг хүснэгтийн доор үз. Tier 1-д 10-аас 4 мөр
+> хуучирсан байсан бол Tier 4-д ердөө 1 (10%): энэ хүснэгт аль хэдийн нэг удаа 7-агентын
+> шалгалт дамжсан тул дүгнэлт нь хуучраагүй, харин **блокер нь арилсан** байв.
 
-| хэмжээ | sha | юу |
-|--------|-----|----|
-| S | `3afb6b93c` | Uninstaller leaves HKCU residue: darhai:// protocol handler + start-on-boot Run/StartupApproved entries survive uninstall (**хойшлуулсан — доор**) |
-| M | `3b1f59382` | max_tokens guessed from model NAME substring - breaks unknown/custom model ids |
-| M | `58566e9ed` | Custom OpenAI-compatible endpoint without /models hard-fails connect (no chat-completions fallback, no no-models landing) |
-| M | `e2f75273b` | No right-click cut/copy/paste menu; Ctrl+C on agent messages copies nothing (shadow DOM) |
-| M | `none` | Closing active tab shows wrong conversation (no navigation, jumps to last tab); Ctrl+Z cannot undo a paste in the composer |
-| M | `c98088d05+49a49fcd9` | Engine mcp_failed events swallowed; all engine stderr logged as console.error |
-| M | `03a31bd06` | Windows triple fix: Hermes stdio hardening, OpenClaw localhost/IPv4 divergence, OpenClaw PATHEXT resolution |
-| L | `f8725979e + 26d6b9eed` | Chat auto-scroll snaps to bottom while user reads history |
-| L | `dc52d184d` | User-enabled MCP connectors silently missing on some backends (Codex/wcore/Gemini) |
-| L | `f9e334b8b` | Real session-start failure cause hidden — user sees only generic start-failure strings |
+| хэмжээ | sha | юу | нотолгоо (Дархайн код) |
+|--------|-----|----|------------------------|
+| S | `e2f75273b` | Баруун товчны cut/copy/paste цэс огт байхгүй; агентын прозон дээр Ctrl+C юу ч хуулдаггүй (shadow DOM); scrollbar hover-гүйгээр үл харагдана | `src/process/utils/contextMenu.ts` БАЙХГҮЙ; `src/index.ts:360` дээр `attachContextMenu` дуудагдаагүй; `src/renderer/utils/shadowSelection.ts` БАЙХГҮЙ атал `Markdown/ShadowView.tsx:300` = `attachShadow({mode:'open'})`; `styles/themes/base.css:110-111` thumb `transparent` |
+| S | `none` | Идэвхтэй таб хаахад БУРУУ яриа үлдэнэ (навигаци хийгддэггүй, сүүлийн таб руу үсэрдэг); composer дээр Ctrl+Z paste-ыг буцаадаггүй | `ConversationTabsContext.tsx:133-147` (`filtered[filtered.length-1]`, router хүрэлцээгүй); `ConversationTabs.tsx:179-190` зөвхөн 1-таб тохиолдолд navigate; `usePasteService.ts:44-53` + `sendbox.tsx:976-993` `setInput()` — native undo stack-д ордоггүй |
+| S | `3afb6b93c` | Uninstall хийсний дараа HKCU-д үлдэгдэл: `darhai://` протокол + start-on-boot Run/StartupApproved (**зөвхөн багцалсан build дээр илэрнэ**) | `resources/windows-installer-{x64,arm64}.nsh` = зөвхөн `.onVerifyInstDir`, `customUnInstall` алга; `src/index.ts:1112-1118` бүр асаалтад `setAsDefaultProtocolClient`, `removeAsDefaultProtocolClient` хаана ч алга; `applicationBridge.ts:142-149` `setLoginItemSettings({enabled:true})` |
+| M | `3b1f59382` | `max_tokens`-ыг загварын НЭРНИЙ дэд-мөрөөр таана — танихгүй/захиалгат/локал id эвдэрнэ | `wcore/envBuilder.ts:149,151-159,236-239`; каталогийн `limit.output` хэрэглэгддэггүй (`CatalogAssembler.ts:149` зөвхөн `context`); truncation heuristic `WCoreManager.ts:401-402,826-828` үүнээс хамаарна; тест `wcoreEnvBuilder.reasoningModels.test.ts:29-67` таамгийг бэхэлсэн |
+| M | `58566e9ed` | `/models`-гүй OpenAI-нийцтэй custom endpoint холбогдож ЧАДАХГҮЙ; chat-completions fallback ч, no-models landing ч, **гараар загвар нэмэх оролт ч** байхгүй | `ConnectionTester.ts:205-212` (404→`unknown`, хоосон→`no-models`), `:326-332` `chatCompletionsUrl` нь customBaseUrl-ыг ХАРДАГГҮЙ; `modelRegistryIpc.ts:620-623` custom-base чөлөөлөлтгүй; `ConnectPanel.tsx:221-225` / `BrowseModal.tsx:439-468` — model-id талбар алга |
+| M | `03a31bd06` | Windows гурвалсан: Hermes/Kimi stdio hardening алга; OpenClaw probe(IPv4) ба ws(raw) зөрөх; OpenClaw PATHEXT | `acpConnectors.ts:628-664` env hardening алга (`HERMES_ACCEPT_HOOKS` репод 0 hit, зөвхөн `skills/hermes-setup/SKILL.md:79,98`); `openclaw/index.ts:132` vs `:153`; `OpenClawGatewayManager.ts:61-83` нүцгэн нэрээр probe. **Засвар = Дархайн одоо байгаа `windowsLauncher.ts:160-181` `adaptWindowsLauncher`-ыг дуудах, upstream-ийг порт хийх БИШ** |
+| L | `f8725979e + 26d6b9eed` | Хэрэглэгч түүх уншиж байхад чат доош нь татна | `useAutoScroll.ts:169-175` (`atBottom` латчийг арчина), `:197-206` (150мс guard streaming-д тасралтгүй шинэчлэгддэг), `:208-211` (нэг эвентийн `delta < -10`, хуримтлал алга); wheel/touch 0 hit. Файл нь upstream-ийн `26d6b9eed^`-ээс ч хуучин (`USER_SCROLL_UP_DELTA`, `streamingSignature()` алга). ⚠️ `tests/unit/useAutoScroll.dom.test.ts:357` нь УСТГАХ ЁСТОЙ зан үйлийг бэхэлсэн — эхлээд тестийг дарж бичнэ |
+| L | `dc52d184d` | Асаалттай MCP connector зарим backend-д чимээгүй хүрдэггүй (Codex/wcore/Gemini) | (1) `mcpSessionConfig.ts:61` `status === 'connected'` чанга; форм/JSON-оор нэмсэн нь status-гүй/`disconnected` (`useMcpServerCRUD.ts:43-49`, `JsonImportModal.tsx:212,232`); (2) `WCoreManager.ts:297-303` зөвхөн team MCP inject хийдэг, `wcore/configMcpServers.ts` алга; (3) `WCoreMcpAgent.ts:48-64,190-192` `--config-path` (default profile) руу бичдэг атал engine `profilePaths.ts:230` идэвхтэй профайлыг уншина; (4) `AcpAgentManager.ts`-д bootstrap `syncMcpToAgents` алга |
+| L | `f9e334b8b` | Session-start бүтэлгүйтлийн ЖИНХЭНЭ шалтгаан нуугдана — хэрэглэгч ерөнхий мөр л хардаг | ⚠️ **Энэ ээлжид аудит хийгдээгүй.** Тогтоосон зүйл: `git merge-base --is-ancestor f9e334b8b HEAD` → NO. Credential-recovery UI хэсэг нь дээрх «аль хэдийн» хүснэгтэд бий; үлдсэн хэсгийн код-нотолгоо цуглуулаагүй |
 
-**⚠️ `3b1f59382` (max_tokens нэрээр таах) — ЗОРИУД ХОЙШЛУУЛСАН.** Дээрх шалгалт
-урьдчилсан нөхцөл илрүүлэв: upstream энэ таамгийг устгаж чадсан нь тэдний
-хөдөлгүүр (v0.12.16+) max_tokens-ыг өөрөө загвар тус бүрээр тогтоодог болсон
-учраас. Манай fork хөдөлгүүрийг **v0.10.0** дээр тогтоосон. Хуучин хөдөлгүүр
-дээр desktop-ийн анхдагчийг устгавал Gemini Pro/reasoning загварууд **хоосон
-хариу** буцаах регресст ордог. Тиймээс энэ нь хөдөлгүүрийн хувилбар ахиулах
-(+ SHA мөрүүд) шаардана — тусад нь, зориудаар хийх ажил.
+### Хойшлуулалтын хоёр үндэслэл ХҮЧИНГҮЙ болсон (2026-08-21 хэмжсэн)
 
-**⚠️ `3afb6b93c` (uninstaller HKCU үлдэгдэл) — ХЭМЖИЛТ ХҮРТЭЛ ХОЙШЛУУЛСАН.**
-Протоколын түлхүүр (`HKCU\Software\Classes\darhai`) устгах нь детерминист,
-аюулгүй. Гэвч start-on-boot-ийн `Run` утгын НЭР (`electron.app.Darhai` гэж
-таамаглаж буй) нь Electron хувилбараас хамаардаг бөгөөд манай fork
-`setAppUserModelId` дууддаггүй. Буруу нэр бичвэл цэвэрлэгээ **чимээгүй юу ч
-хийхгүй** — «зассан» мэт харагдаад ажиллахгүй. Багцалсан installer барьж,
-autostart асаагаад `HKCU\...\Run`-ийн жинхэнэ утгын нэрийг **нүдээр хэмжсэний
-дараа** л .nsh-д бичнэ (measure-never-guess). Тусдаа, багц-барилттай ажил.
+**`3b1f59382`** — «манай fork хөдөлгүүрийг v0.10.0 дээр тогтоосон» гэж хойшлуулсан байв.
+Бодит байдал: `scripts/prepareWaylandCore.js:187` = **v0.12.26**, багцалсан binary `--version`
+мөн адил. Upstream-ийн шаардсан босго v0.12.16 → блокер аль хэдийн арилсан.
+Дархайд upstream-ээс **илүү сайн зам** бий: `modelsDevSchema.ts:27-30` дээр `limit.output` аль
+хэдийн задлагддаг атал `CatalogAssembler.ts:149` зөвхөн `context`-ыг уншдаг.
+
+**`3afb6b93c`** — «`setAppUserModelId` дуудагддаггүй тул Run утгын нэр танигдахгүй» гэж
+хойшлуулсан байв. Бодит байдал: `src/index.ts:123` дээр `app.setAppUserModelId(...)`
+дуудагддаг, `appIdentity.ts:23` = `'mn.darhai.app'`, `electron-builder.yml:1` appId ижил →
+утгын нэр детерминист.
+
+### Итгэлгүй үлдсэн зүйл (шударгаар)
+
+1. Хөдөлгүүр өөрөө per-model output cap тогтоодог эсэхийг **хэмжээгүй** — `3b1f59382`-ыг
+   засахын өмнө нэг жинхэнэ turn ажиллуулж `finish_reason`-ыг харах ёстой.
+2. `3afb6b93c` — багцалсан installer барьж, uninstall хийгээд HKCU-г **нүдээр хараагүй**.
+3. `03a31bd06` — Windows дээр Hermes/OpenClaw сессийг **бодитоор ажиллуулж уналтыг хараагүй**.
+4. `e2f75273b` ба таб/undo — механизм кодоос тодорхой ч **апп ажиллуулж баталгаажуулаагүй**.
+5. `f9e334b8b` — **огт аудит хийгдээгүй**; «үлдсэн» гэдэг нь зөвхөн `merge-base` шалгалтад
+   тулгуурлаж байна, кодын нотолгоогүй.
 
 ## Өнчин процессын засварын тэмдэглэл (`ac4aa1866`)
 
