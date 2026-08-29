@@ -117,6 +117,15 @@
     "help": "Yardım",
     "checkForUpdates": "Güncellemeleri denetle..."
   },
+  "contextMenu": {
+    "cut": "Kes",
+    "copy": "Kopyala",
+    "paste": "Yapıştır",
+    "pasteAsPlainText": "Düz metin olarak yapıştır",
+    "selectAll": "Tümünü seç",
+    "copyLinkAddress": "Bağlantı adresini kopyala",
+    "copyImage": "Görseli kopyala"
+  },
   "webview": {
     "urlPlaceholder": "URL girin...",
     "resetZoom": "Yakınlaştırmayı sıfırla",

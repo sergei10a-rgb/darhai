@@ -117,6 +117,15 @@
     "help": "ヘルプ",
     "checkForUpdates": "アップデートを確認..."
   },
+  "contextMenu": {
+    "cut": "切り取り",
+    "copy": "コピー",
+    "paste": "貼り付け",
+    "pasteAsPlainText": "プレーンテキストとして貼り付け",
+    "selectAll": "すべて選択",
+    "copyLinkAddress": "リンクのアドレスをコピー",
+    "copyImage": "画像をコピー"
+  },
   "webview": {
     "urlPlaceholder": "URLを入力...",
     "resetZoom": "ズームをリセット",

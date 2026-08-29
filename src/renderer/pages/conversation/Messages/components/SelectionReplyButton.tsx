@@ -8,6 +8,7 @@ import { Quote } from 'lucide-react';
 import type { TMessage } from '@/common/chat/chatLib';
 import { emitter } from '@/renderer/utils/emitter';
 import { useLayoutContext } from '@/renderer/hooks/context/LayoutContext';
+import { readSelectionText } from '@/renderer/utils/shadowSelection';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -99,8 +100,14 @@ const SelectionReplyButton: React.FC<{ messages: TMessage[] }> = ({ messages }) 
         if (!mounted) return;
 
         const sel = getEffectiveSelection(e.target);
-        if (!sel || sel.isCollapsed) return;
-        const text = sel.toString().trim();
+        // NOT `sel.isCollapsed`: Chromium reports a selection lying wholly
+        // inside one shadow root as collapsed while the text is visibly
+        // highlighted, so that flag hid the button on every agent answer.
+        // `readSelectionText` walks the composed tree and never returns less
+        // than the engine's own string, so a light-tree selection is unchanged
+        // while a shadow one stops being truncated at the boundary.
+        if (!sel || sel.rangeCount === 0) return;
+        const text = readSelectionText(sel).trim();
         if (!text) return;
 
         const msgEl = findMessageElement(sel);
@@ -154,6 +161,7 @@ const SelectionReplyButton: React.FC<{ messages: TMessage[] }> = ({ messages }) 
   return (
     <div
       ref={buttonRef}
+      data-testid='selection-reply'
       className='fixed z-9999 flex items-center gap-4px px-10px py-6px rd-8px cursor-pointer transition-colors select-none'
       style={{
         top: pos.top,

@@ -117,6 +117,15 @@
     "help": "Aide",
     "checkForUpdates": "Rechercher des mises à jour..."
   },
+  "contextMenu": {
+    "cut": "Couper",
+    "copy": "Copier",
+    "paste": "Coller",
+    "pasteAsPlainText": "Coller comme texte brut",
+    "selectAll": "Tout sélectionner",
+    "copyLinkAddress": "Copier l’adresse du lien",
+    "copyImage": "Copier l’image"
+  },
   "webview": {
     "urlPlaceholder": "Saisir une URL...",
     "resetZoom": "Réinitialiser le zoom",

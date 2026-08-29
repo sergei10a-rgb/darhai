@@ -117,6 +117,15 @@
     "help": "Тусламж",
     "checkForUpdates": "Шинэчлэлт шалгах..."
   },
+  "contextMenu": {
+    "cut": "Таслах",
+    "copy": "Хуулах",
+    "paste": "Буулгах",
+    "pasteAsPlainText": "Энгийн бичвэрээр буулгах",
+    "selectAll": "Бүгдийг сонгох",
+    "copyLinkAddress": "Холбоосын хаягийг хуулах",
+    "copyImage": "Зургийг хуулах"
+  },
   "webview": {
     "urlPlaceholder": "URL оруулна уу...",
     "resetZoom": "Томруулалтыг анхны байдалд оруулах",

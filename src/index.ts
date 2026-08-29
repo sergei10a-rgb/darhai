@@ -77,6 +77,7 @@ import { onCloseToTrayChanged, onLanguageChanged } from './process/bridge/deskto
 import { setInitialLanguage } from '@process/services/i18n';
 import { workerTaskManager } from './process/task/workerTaskManagerSingleton';
 import { setupApplicationMenu } from './process/utils/appMenu';
+import { attachContextMenu } from './process/utils/contextMenu';
 import { createQuitBarrier } from './process/utils/quitBarrier';
 import { registerSyncQuitReapers } from './process/utils/quitReapers';
 import { startWebServer } from './process/webserver';
@@ -622,6 +623,9 @@ const createWindow = ({ showOnReady = true }: { showOnReady?: boolean } = {}): v
   initMainAdapterWithWindow(mainWindow);
   bindMainWindowReferences(mainWindow);
   setupApplicationMenu();
+  // Right-click menu for the main window. The ambient bubble (ambientWindowManager)
+  // and preview <webview>s own their own webContents and are not covered here.
+  attachContextMenu(mainWindow);
 
   setupZoomForWindow(mainWindow);
   registerWindowMaximizeListeners(mainWindow);

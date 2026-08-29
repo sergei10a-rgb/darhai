@@ -118,6 +118,15 @@
     "help": "Довідка",
     "checkForUpdates": "Перевірити оновлення..."
   },
+  "contextMenu": {
+    "cut": "Вирізати",
+    "copy": "Копіювати",
+    "paste": "Вставити",
+    "pasteAsPlainText": "Вставити як звичайний текст",
+    "selectAll": "Виділити все",
+    "copyLinkAddress": "Копіювати адресу посилання",
+    "copyImage": "Копіювати зображення"
+  },
   "webview": {
     "urlPlaceholder": "Введіть URL...",
     "resetZoom": "Скинути масштаб",

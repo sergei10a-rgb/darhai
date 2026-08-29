@@ -117,6 +117,15 @@
     "help": "帮助",
     "checkForUpdates": "检查更新..."
   },
+  "contextMenu": {
+    "cut": "剪切",
+    "copy": "复制",
+    "paste": "粘贴",
+    "pasteAsPlainText": "粘贴为纯文本",
+    "selectAll": "全选",
+    "copyLinkAddress": "复制链接地址",
+    "copyImage": "复制图片"
+  },
   "webview": {
     "urlPlaceholder": "输入网址...",
     "resetZoom": "重置缩放",

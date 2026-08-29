@@ -12,7 +12,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { renderHook } from '@testing-library/react';
 
 vi.mock('@/renderer/utils/model/agentLogo', () => ({
-  getAgentLogo: () => undefined,
+  getAgentLogo: (): undefined => undefined,
 }));
 
 vi.mock('@/renderer/pages/guid/constants', () => ({

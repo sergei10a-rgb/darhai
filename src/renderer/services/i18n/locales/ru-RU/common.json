@@ -117,6 +117,15 @@
     "help": "Справка",
     "checkForUpdates": "Проверить обновления..."
   },
+  "contextMenu": {
+    "cut": "Вырезать",
+    "copy": "Копировать",
+    "paste": "Вставить",
+    "pasteAsPlainText": "Вставить как обычный текст",
+    "selectAll": "Выделить всё",
+    "copyLinkAddress": "Копировать адрес ссылки",
+    "copyImage": "Копировать изображение"
+  },
   "webview": {
     "urlPlaceholder": "Введите URL...",
     "resetZoom": "Сбросить масштаб",

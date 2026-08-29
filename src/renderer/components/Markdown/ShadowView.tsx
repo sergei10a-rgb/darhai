@@ -8,6 +8,7 @@ import { theme } from '@office-ai/platform';
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
 import { addImportantToAll } from '@renderer/utils/theme/customCssProcessor';
+import { registerShadowRoot } from '@renderer/utils/shadowSelection';
 
 /**
  * Create the base style element for Shadow DOM with CSS variables, theme styles, and optional custom CSS.
@@ -275,6 +276,17 @@ const ShadowView = ({ children }: { children: React.ReactNode }) => {
     // Update styles when custom CSS changes
     updateStyles(root);
   }, [root, customCss, updateStyles]);
+
+  React.useEffect(() => {
+    if (!root) return;
+
+    // Prose rendered here is invisible to a plain document.getSelection():
+    // Chromium retargets boundary points to this host, so the text inside is
+    // dropped from what JavaScript reads (Ctrl+C itself is unaffected - the
+    // engine's own copy is shadow-aware). Selection.getComposedRanges only
+    // un-retargets roots it is handed, so hand it this one.
+    return registerShadowRoot(root);
+  }, [root]);
 
   React.useEffect(() => {
     if (!root) return;

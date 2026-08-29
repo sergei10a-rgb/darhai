@@ -117,6 +117,15 @@
     "help": "도움말",
     "checkForUpdates": "업데이트 확인..."
   },
+  "contextMenu": {
+    "cut": "잘라내기",
+    "copy": "복사",
+    "paste": "붙여넣기",
+    "pasteAsPlainText": "서식 없이 붙여넣기",
+    "selectAll": "모두 선택",
+    "copyLinkAddress": "링크 주소 복사",
+    "copyImage": "이미지 복사"
+  },
   "webview": {
     "urlPlaceholder": "URL 입력...",
     "resetZoom": "확대/축소 재설정",

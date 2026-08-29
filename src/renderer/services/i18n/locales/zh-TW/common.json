@@ -117,6 +117,15 @@
     "help": "說明",
     "checkForUpdates": "檢查更新..."
   },
+  "contextMenu": {
+    "cut": "剪下",
+    "copy": "複製",
+    "paste": "貼上",
+    "pasteAsPlainText": "貼上為純文字",
+    "selectAll": "全選",
+    "copyLinkAddress": "複製連結位址",
+    "copyImage": "複製圖片"
+  },
   "webview": {
     "urlPlaceholder": "輸入網址...",
     "resetZoom": "重設縮放",
